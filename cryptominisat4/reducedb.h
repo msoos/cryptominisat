@@ -35,7 +35,7 @@ class ReduceDB
 {
 public:
     ReduceDB(Solver* solver);
-    void reduce_db_and_update_reset_stats(bool lock_clauses_in = true);
+    void reduce_db_and_update_reset_stats();
     const CleaningStats& get_cleaning_stats() const;
 
     uint64_t get_nbReduceDB() const
@@ -69,7 +69,7 @@ private:
         , uint64_t sumConflicts
     );
 
-    CleaningStats reduceDB(bool lock_clauses_in);
+    CleaningStats reduceDB();
     void lock_most_UIP_used_clauses();
 
     void sort_red_cls(ClauseClean clean_type);

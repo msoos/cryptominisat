@@ -210,7 +210,7 @@ void ReduceDB::print_best_red_clauses_if_required() const
     }
 }
 
-CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
+CleaningStats ReduceDB::reduceDB()
 {
     const double myTime = cpuTime();
     nbReduceDB++;
@@ -219,10 +219,6 @@ CleaningStats ReduceDB::reduceDB(bool lock_clauses_in)
     tmpStats.origNumLits = solver->litStats.redLits;
 
     const uint64_t sumConfl = solver->sumConflicts();
-
-    if (lock_clauses_in) {
-        lock_most_UIP_used_clauses();
-    }
 
     move_to_never_cleaned();
     int64_t num_to_reduce = solver->longRedCls.size();
@@ -338,46 +334,6 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
     }
 }
 
-void ReduceDB::lock_most_UIP_used_clauses()
-{
-    if (solver->conf.lock_uip_per_dbclean == 0)
-        return;
-
-    std::function<bool (const ClOffset, const ClOffset)> uipsort
-        = [&] (const ClOffset a, const ClOffset b) -> bool {
-            const Clause& a_cl = *solver->cl_alloc.ptr(a);
-            const Clause& b_cl = *solver->cl_alloc.ptr(b);
-
-            return a_cl.stats.used_for_uip_creation > b_cl.stats.used_for_uip_creation;
-    };
-    std::sort(solver->longRedCls.begin(), solver->longRedCls.end(), uipsort);
-
-    size_t locked = 0;
-    size_t skipped = 0;
-    for(size_t i = 0
-        ; i < solver->longRedCls.size() && locked < solver->conf.lock_uip_per_dbclean
-        ; i++
-    ) {
-        const ClOffset offs = solver->longRedCls[i];
-        Clause& cl = *solver->cl_alloc.ptr(offs);
-        if (!cl.stats.locked
-            && cl.stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
-        ) {
-            cl.stats.locked = true;
-            locked++;
-            //std::cout << "Locked: " << cl << endl;
-        } else {
-            skipped++;
-            //std::cout << "skipped: " << cl << endl;
-        }
-    }
-
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [DBclean] UIP"
-        << " Locked: " << locked << " skipped: " << skipped << endl;
-    }
-}
-
 #ifdef STATS_NEEDED
 bool ReduceDB::red_cl_too_young(const Clause* cl) const
 {
@@ -447,7 +403,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
     solver->longRedCls.resize(solver->longRedCls.size() - (i - j));
 }
 
-void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
+void ReduceDB::reduce_db_and_update_reset_stats()
 {
     ClauseUsageStats irred_cl_usage_stats = sumClauseData(solver->longIrredCls);
     ClauseUsageStats red_cl_usage_stats = sumClauseData(solver->longRedCls);
@@ -465,7 +421,7 @@ void ReduceDB::reduce_db_and_update_reset_stats(bool lock_clauses_in)
         sum_cl_usage_stats.print();
     }
 
-    CleaningStats iterCleanStat = reduceDB(lock_clauses_in);
+    CleaningStats iterCleanStat = reduceDB();
 
     if (solver->sqlStats) {
         solver->sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);

@@ -106,8 +106,7 @@ struct ClauseStats
     #endif
 
     ClauseStats() :
-        glue(0x7fffff)
-        , used_for_uip_creation(0)
+        glue(0x1fffffff)
         , locked(false)
         , marked_clause(false)
         , ttl(0)
@@ -122,9 +121,9 @@ struct ClauseStats
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t visited_literals = 0; ///<Number of literals visited
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
+    uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
     #endif
-    uint32_t glue:23;
-    uint32_t used_for_uip_creation:6; ///Number of times the claue was using during 1st UIP conflict generation
+    uint32_t glue:29;
     uint32_t locked:1;
     uint32_t marked_clause:1;
     uint32_t ttl:1;
@@ -133,6 +132,7 @@ struct ClauseStats
     ///originally learnt. Only makes sense for redundant clauses
     ResolutionTypes<uint16_t> resolutions;
 
+    //multiplier is SolverConf->multiplier_perf_values_after_cl_clean
     void clear(const double multiplier)
     {
         activity = 0;
@@ -142,8 +142,8 @@ struct ClauseStats
         propagations_made = (double)propagations_made * multiplier;
         visited_literals = 0;
         clause_looked_at = 0;
-        #endif
         used_for_uip_creation = (double)used_for_uip_creation*multiplier;
+        #endif
     }
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
@@ -161,8 +161,8 @@ struct ClauseStats
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.visited_literals = first.visited_literals + second.visited_literals;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
-        #endif
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
+        #endif
         ret.locked = first.locked | second.locked;
 
         return ret;
@@ -179,8 +179,8 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "numProp " << stats.propagations_made<< " ";
     os << "numLitVisit " << stats.visited_literals<< " ";
     os << "numLook " << stats.clause_looked_at<< " ";
-    #endif
     os << "used_for_uip_creation" << stats.used_for_uip_creation << " ";
+    #endif
 
     return os;
 }
@@ -425,9 +425,8 @@ public:
             << std::setw(6) << std::fixed << std::setprecision(4)
             << (10.0*(double)stats.weighted_prop_and_confl(1.0, 1.0)/(double)stats.visited_literals);
         }
-        ;
-        #endif
         cout << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
+        #endif
         cout << endl;
     }
 };

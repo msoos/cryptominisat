@@ -63,8 +63,8 @@ struct ClauseUsageStats
         sumProp += cl.stats.propagations_made;
         sumLitVisited += cl.stats.visited_literals;
         sumLookedAt += cl.stats.clause_looked_at;
-        #endif
         sumUsedUIP += cl.stats.used_for_uip_creation;
+        #endif
     }
     void print() const;
 };

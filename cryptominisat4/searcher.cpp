@@ -442,7 +442,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 resolutions.irredL++;
                 stats.resolvs.irredL++;
             }
+            #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
+            #endif
             if (cl->red() && update_polarity_and_activity) {
                 bumpClauseAct(cl);
                 if (conf.update_glues_on_analyze) {

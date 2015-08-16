@@ -147,7 +147,6 @@ class SolverConf
         double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clauseDecayActivity;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
-        size_t   lock_uip_per_dbclean;
         double   multiplier_perf_values_after_cl_clean;
         unsigned glue_must_keep_clause_if_below_or_eq;
 

@@ -91,9 +91,9 @@ struct CleaningStats
             numLookedAt += cl->stats.clause_looked_at;
             numProp += cl->stats.propagations_made;
             age += sumConfl - cl->stats.introduced_at_conflict;
+            used_for_uip_creation += cl->stats.used_for_uip_creation;
             #endif
             resol += cl->stats.resolutions;
-            used_for_uip_creation += cl->stats.used_for_uip_creation;
         }
 
 
