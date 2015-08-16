@@ -16,7 +16,6 @@ public:
         solver(_solver) {
     }
     Features extract();
-    void print_stats() const;
 
 private:
     void fill_vars_cls();
