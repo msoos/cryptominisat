@@ -3367,7 +3367,6 @@ Var Solver::num_active_vars() const
 Features Solver::calculate_features() const
 {
     FeatureExtract extract(this);
-    extract.fill_vars_cls();
     Features feat = extract.extract();
     feat.avg_confl_size = hist.conflSizeHistLT.avg();
     feat.avg_confl_glue = hist.glueHistLT.avg();

@@ -15,7 +15,7 @@ template<class Function, class Function2>
 void FeatureExtract::for_one_clause(
     const Watched& cl
     , const Lit lit
-    ,  Function func
+    ,  Function func_each_cl
     ,  Function2 func_each_lit
 ) const {
     unsigned neg_vars = 0;
@@ -37,7 +37,7 @@ void FeatureExtract::for_one_clause(
             pos_vars += !cl.lit2().sign();
             size = 2;
             neg_vars = size - pos_vars;
-            func(size, pos_vars, neg_vars);
+            func_each_cl(size, pos_vars, neg_vars);
             func_each_lit(lit, size, pos_vars, neg_vars);
             func_each_lit(cl.lit2(), size, pos_vars, neg_vars);
             break;
@@ -60,7 +60,7 @@ void FeatureExtract::for_one_clause(
             pos_vars += !cl.lit3().sign();
             size = 3;
             neg_vars = size - pos_vars;
-            func(size, pos_vars, neg_vars);
+            func_each_cl(size, pos_vars, neg_vars);
             func_each_lit(lit, size, pos_vars, neg_vars);
             func_each_lit(cl.lit2(), size, pos_vars, neg_vars);
             func_each_lit(cl.lit3(), size, pos_vars, neg_vars);
@@ -83,7 +83,7 @@ void FeatureExtract::for_one_clause(
             }
             size = clause.size();
             neg_vars = size - pos_vars;
-            func(size, pos_vars, neg_vars);
+            func_each_cl(size, pos_vars, neg_vars);
             for (const Lit cl_lit : clause) {
                 func_each_lit(cl_lit, size, pos_vars, neg_vars);
             }
@@ -93,12 +93,12 @@ void FeatureExtract::for_one_clause(
 }
 
 template<class Function, class Function2>
-void FeatureExtract::for_all_clauses(Function func, Function2 func_each_lit) const
+void FeatureExtract::for_all_clauses(Function func_each_cl, Function2 func_each_lit) const
 {
     for (size_t i = 0; i < solver->nVars() * 2; i++) {
         Lit lit = Lit::toLit(i);
         for (const Watched & w : solver->watches[lit.toInt()]) {
-            for_one_clause(w, lit, func, func_each_lit);
+            for_one_clause(w, lit, func_each_cl, func_each_lit);
         }
     }
 }
@@ -107,11 +107,9 @@ void FeatureExtract::fill_vars_cls()
 {
     feat.numVars = solver->nVars();
     feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins + solver->binTri.irredTris;
-    feat.binary = solver->binTri.irredBins;
-    feat.trinary = solver->binTri.irredTris;
     myVars.resize(solver->nVars());
 
-    auto func = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> bool {
+    auto func_each_cl = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> bool {
         if (pos_vars <= 1 ) {
             feat.horn += 1;
             return true;
@@ -128,12 +126,146 @@ void FeatureExtract::fill_vars_cls()
         }
         myVars[lit.var()].size++;
     };
-    for_all_clauses(func, func_each_lit);
+    for_all_clauses(func_each_cl, func_each_lit);
+}
+
+void FeatureExtract::calculate_clause_stats()
+{
+    auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
+    auto func_each_cl = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
+        if (size == 0 ) {
+            return;
+        }
+
+        double _size = (double)size / (double)feat.numVars;
+        feat.vcg_cls_min = std::min(feat.vcg_cls_min, _size);
+        feat.vcg_cls_max = std::max(feat.vcg_cls_max, _size);
+        feat.vcg_cls_mean += _size;
+
+        double _pnr = 0.5 + ((2.0 * (double)pos_vars - (double)size) / (2.0 * (double)size));
+        feat.pnr_cls_min = std::min(feat.pnr_cls_min, _pnr);
+        feat.pnr_cls_max = std::min(feat.pnr_cls_max, _pnr);
+        feat.pnr_cls_mean += _pnr;
+    };
+    for_all_clauses(func_each_cl, empty_func);
+
+    feat.vcg_cls_mean /= (double)feat.numClauses;
+    feat.pnr_cls_mean /= (double)feat.numClauses;
+    feat.horn /= (double)feat.numClauses;
+    feat.binary = (double)solver->binTri.irredBins/(double)feat.numClauses;
+    feat.trinary = (double)solver->binTri.irredTris/(double)feat.numClauses;
+
+    feat.vcg_cls_spread = feat.vcg_cls_max - feat.vcg_cls_min;
+    feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;
+}
+
+void FeatureExtract::calculate_variable_stats()
+{
+    for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
+        if ( myVars[vv].size == 0 ) {
+            continue;
+        }
+
+        double _size = myVars[vv].size / (double)feat.numClauses;
+        feat.vcg_var_min = std::min(feat.vcg_var_min, _size);
+        feat.vcg_var_max = std::min(feat.vcg_var_max, _size);
+        feat.vcg_var_mean += _size;
+
+        double _pnr = 0.5 + ((2.0 * myVars[vv].numPos - myVars[vv].size)
+                             / (2.0 * myVars[vv].size));
+        feat.pnr_var_min = std::min(feat.pnr_var_min, _pnr);
+        feat.pnr_var_max = std::min(feat.pnr_var_max, _pnr);
+        feat.pnr_var_mean += _pnr;
+
+        double _horn = myVars[vv].horn / (double)feat.numClauses;
+        feat.horn_min = std::min(feat.horn_max, _horn);
+        feat.horn_max = std::min(feat.horn_max, _horn);
+        feat.horn_mean += _horn;
+    }
+
+    if (feat.vcg_var_mean > 0) {
+        feat.vcg_var_mean /= (double)feat.numVars;
+    }
+    if (feat.pnr_var_mean > 0) {
+        feat.pnr_var_mean /= (double)feat.numVars;
+    }
+    if (feat.horn_mean > 0) {
+        feat.horn_mean /= (double)feat.numVars;
+    }
+
+    feat.vcg_var_spread = feat.vcg_var_max - feat.vcg_var_min;
+    feat.pnr_var_spread = feat.pnr_var_max - feat.pnr_var_min;
+    feat.horn_spread = feat.horn_max - feat.horn_min;
+}
+
+void FeatureExtract::calculate_extra_clause_stats()
+{
+    auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
+    auto each_clause = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
+        if ( size == 0 ) {
+            return;
+        }
+
+        double _size = (double)size / (double)feat.numVars;
+        feat.vcg_cls_std += (feat.vcg_cls_mean - _size) * (feat.vcg_cls_mean - _size);
+
+        double _pnr = 0.5 + ((2.0 * (double)pos_vars - (double)size) / (2.0 * (double)size));
+        feat.pnr_cls_std += (feat.pnr_cls_mean - _pnr) * (feat.pnr_cls_mean - _pnr);
+    };
+    for_all_clauses(each_clause, empty_func);
+
+    if ( feat.vcg_cls_std > feat.eps && feat.vcg_cls_mean > feat.eps ) {
+        feat.vcg_cls_std = sqrt(feat.vcg_cls_std / (double)feat.numClauses) / feat.vcg_cls_mean;
+    } else {
+        feat.vcg_cls_std = 0;
+    }
+    if ( feat.pnr_cls_std > feat.eps && feat.pnr_cls_mean > feat.eps ) {
+        feat.pnr_cls_std = sqrt(feat.pnr_cls_std / (double)feat.numClauses) / feat.pnr_cls_mean;
+    } else {
+        feat.pnr_cls_std = 0;
+    }
+}
+
+void FeatureExtract::calculate_extra_var_stats()
+{
+    for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
+        if ( myVars[vv].size == 0 ) {
+            continue;
+        }
+
+        double _size = myVars[vv].size / (double)feat.numClauses;
+        feat.vcg_var_std += (feat.vcg_var_mean - _size) * (feat.vcg_var_mean - _size);
+
+        double _pnr = 0.5 + ((2.0 * myVars[vv].numPos - myVars[vv].size) / (2.0 * myVars[vv].size));
+        feat.pnr_var_std += (feat.pnr_var_mean - _pnr) * (feat.pnr_var_mean - _pnr);
+
+        double _horn = myVars[vv].horn / (double)feat.numClauses;
+        feat.horn_std += (feat.horn_mean - _horn) * (feat.horn_mean - _horn);
+    }
+    if ( feat.vcg_var_std > feat.eps && feat.vcg_var_mean > feat.eps ) {
+        feat.vcg_var_std = sqrt(feat.vcg_var_std / (double)feat.numVars) / feat.vcg_var_mean;
+    } else {
+        feat.vcg_var_std = 0;
+    }
+
+    if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps ) {
+        feat.pnr_var_std = sqrt(feat.pnr_var_std / (double)feat.numVars) / feat.pnr_var_mean;
+    } else {
+        feat.pnr_var_std = 0;
+    }
+
+    if ( feat.horn_std / (double)feat.numVars > feat.eps && feat.horn_mean > feat.eps ) {
+        feat.horn_std = sqrt(feat.horn_std / (double)feat.numVars) / feat.horn_mean;
+    } else {
+        feat.horn_std = 0;
+    }
 }
 
 Features FeatureExtract::extract()
 {
     double start_time = cpuTime();
+    fill_vars_cls();
+
     feat.numVars = 0;
     for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
         if ( myVars[vv].size > 0 ) {
@@ -141,143 +273,11 @@ Features FeatureExtract::extract()
         }
     }
 
-    auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
-    auto func = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
-        if (size == 0 ) {
-            return;
-        }
+    calculate_clause_stats();
+    calculate_variable_stats();
 
-        double _size = (double)size / (1.0 * feat.numVars);
-        if ( _size < feat.vcg_cls_min ) {
-            feat.vcg_cls_min = _size;
-        }
-        if ( _size > feat.vcg_cls_max ) {
-            feat.vcg_cls_max = _size;
-        }
-        feat.vcg_cls_mean += _size;
-
-        double _pnr = 0.5 + ((2.0 * (double)pos_vars - (double)size) / (2.0 * (double)size));
-        if ( _pnr < feat.pnr_cls_min ) {
-            feat.pnr_cls_min = _pnr;
-        }
-        if ( _pnr > feat.pnr_cls_max ) {
-            feat.pnr_cls_max = _pnr;
-        }
-        feat.pnr_cls_mean += _pnr;
-    };
-    for_all_clauses(func, empty_func);
-
-    feat.vcg_cls_mean /= 1.0 * feat.numClauses;
-    feat.pnr_cls_mean /= 1.0 * feat.numClauses;
-    feat.horn /= 1.0 * feat.numClauses;
-    feat.binary /= 1.0 * feat.numClauses;
-    feat.trinary /= 1.0 * feat.numClauses;
-
-    feat.vcg_cls_spread = feat.vcg_cls_max - feat.vcg_cls_min;
-    feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;
-
-    for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
-        if ( myVars[vv].size == 0 ) {
-            continue;
-        }
-
-        double _size = myVars[vv].size / (1.0 * feat.numClauses);
-        if ( vv == 0 || _size < feat.vcg_var_min ) {
-            feat.vcg_var_min = _size;
-        }
-        if ( vv == 0 || _size > feat.vcg_var_max ) {
-            feat.vcg_var_max = _size;
-        }
-        feat.vcg_var_mean += _size;
-
-        double _pnr = 0.5 + ((2.0 * myVars[vv].numPos - myVars[vv].size)
-                             / (2.0 * myVars[vv].size));
-        if ( vv == 0 || _pnr < feat.pnr_var_min ) {
-            feat.pnr_var_min = _pnr;
-        }
-        if ( vv == 0 || _pnr > feat.pnr_var_max ) {
-            feat.pnr_var_max = _pnr;
-        }
-        feat.pnr_var_mean += _pnr;
-
-        double _horn = myVars[vv].horn / (1.0 * feat.numClauses);
-        if ( vv == 0 || _horn < feat.horn_min ) {
-            feat.horn_min = _horn;
-        }
-        if ( vv == 0 || _horn > feat.horn_max ) {
-            feat.horn_max = _horn;
-        }
-        feat.horn_mean += _horn;
-    }
-    if (feat.vcg_var_mean > 0) {
-        feat.vcg_var_mean /= 1.0 * feat.numVars;
-    }
-    if (feat.pnr_var_mean > 0) {
-        feat.pnr_var_mean /= 1.0 * feat.numVars;
-    }
-    if (feat.horn_mean > 0) {
-        feat.horn_mean /= 1.0 * feat.numVars;
-    }
-
-    feat.vcg_var_spread = feat.vcg_var_max - feat.vcg_var_min;
-    feat.pnr_var_spread = feat.pnr_var_max - feat.pnr_var_min;
-    feat.horn_spread = feat.horn_max - feat.horn_min;
-
-    auto func2 = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
-        if ( size == 0 ) {
-            return;
-        }
-
-        double _size = (double)size / (1.0 * feat.numVars);
-        feat.vcg_cls_std += (feat.vcg_cls_mean - _size) * (feat.vcg_cls_mean - _size);
-
-        double _pnr = 0.5 + ((2.0 * (double)pos_vars - (double)size) / (2.0 * (double)size));
-        feat.pnr_cls_std += (feat.pnr_cls_mean - _pnr) * (feat.pnr_cls_mean - _pnr);
-    };
-    for_all_clauses(func2, empty_func);
-
-    if ( feat.vcg_cls_std > feat.eps && feat.vcg_cls_mean > feat.eps ) {
-        feat.vcg_cls_std = sqrt(feat.vcg_cls_std / (1.0 * feat.numClauses)) / feat.vcg_cls_mean;
-    } else {
-        feat.vcg_cls_std = 0;
-    }
-    if ( feat.pnr_cls_std > feat.eps && feat.pnr_cls_mean > feat.eps ) {
-        feat.pnr_cls_std = sqrt(feat.pnr_cls_std / (1.0 * feat.numClauses)) / feat.pnr_cls_mean;
-    } else {
-        feat.pnr_cls_std = 0;
-    }
-
-    for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
-        if ( myVars[vv].size == 0 ) {
-            continue;
-        }
-
-        double _size = myVars[vv].size / (1.0 * feat.numClauses);
-        feat.vcg_var_std += (feat.vcg_var_mean - _size) * (feat.vcg_var_mean - _size);
-
-        double _pnr = 0.5 + ((2.0 * myVars[vv].numPos - myVars[vv].size) / (2.0 * myVars[vv].size));
-        feat.pnr_var_std += (feat.pnr_var_mean - _pnr) * (feat.pnr_var_mean - _pnr);
-
-        double _horn = myVars[vv].horn / (1.0 * feat.numClauses);
-        feat.horn_std += (feat.horn_mean - _horn) * (feat.horn_mean - _horn);
-    }
-    if ( feat.vcg_var_std > feat.eps && feat.vcg_var_mean > feat.eps ) {
-        feat.vcg_var_std = sqrt(feat.vcg_var_std / (1.0 * feat.numVars)) / feat.vcg_var_mean;
-    } else {
-        feat.vcg_var_std = 0;
-    }
-
-    if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps ) {
-        feat.pnr_var_std = sqrt(feat.pnr_var_std / (1.0 * feat.numVars)) / feat.pnr_var_mean;
-    } else {
-        feat.pnr_var_std = 0;
-    }
-
-    if ( feat.horn_std / (1.0 * feat.numVars) > feat.eps && feat.horn_mean > feat.eps ) {
-        feat.horn_std = sqrt(feat.horn_std / (1.0 * feat.numVars)) / feat.horn_mean;
-    } else {
-        feat.horn_std = 0;
-    }
+    calculate_extra_clause_stats();
+    calculate_extra_var_stats();
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [features] extracted"
@@ -287,7 +287,7 @@ Features FeatureExtract::extract()
 
     double tmp = feat.numVars;
     if (tmp > 0) {
-        tmp /= (1.0 * feat.numClauses);
+        tmp /= (double)feat.numClauses;
     }
     feat.var_cl_ratio = tmp;
 

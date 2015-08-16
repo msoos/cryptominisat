@@ -15,11 +15,17 @@ public:
     FeatureExtract(const Solver* _solver) :
         solver(_solver) {
     }
-    void fill_vars_cls();
     Features extract();
     void print_stats() const;
 
 private:
+    void fill_vars_cls();
+    void calculate_clause_stats();
+    void calculate_variable_stats();
+    void calculate_extra_var_stats();
+    void calculate_extra_clause_stats();
+
+
     const Solver* solver;
     template<class Function, class Function2>
     void for_one_clause(
@@ -29,7 +35,7 @@ private:
         ,  Function2 func_each_lit
     ) const;
     template<class Function, class Function2>
-    void for_all_clauses(Function func,  Function2 func_each_lit) const;
+    void for_all_clauses(Function for_each_clause,  Function2 func_each_lit) const;
     struct VARIABLE {
         int numPos = 0;
         int size = 0;
