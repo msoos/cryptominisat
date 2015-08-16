@@ -92,6 +92,9 @@ struct Features
     double decisions_per_conflict = 0.0;
     double learnt_bins_per_confl = 0;
     double learnt_tris_per_confl = 0;
+
+    uint64_t num_gates_found_last;
+    uint64_t num_xors_found_last;
 };
 
 }

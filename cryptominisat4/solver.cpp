@@ -3392,7 +3392,8 @@ Features Solver::calculate_features() const
     feat.learnt_bins_per_confl = (double)sumStats.learntBins / (double)sumStats.conflStats.numConflicts;
     feat.learnt_tris_per_confl = (double)sumStats.learntTris / (double)sumStats.conflStats.numConflicts;
 
-    //feat.num_gates_found_last =
+    feat.num_gates_found_last = sumStats.num_gates_found_last;
+    feat.num_xors_found_last = sumStats.num_xors_found_last;
 
     if (conf.verbosity >= 1) {
         feat.print_stats();
