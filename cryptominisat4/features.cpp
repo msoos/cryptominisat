@@ -1,75 +1,97 @@
+/*
+ * CryptoMiniSat
+ *
+ * Copyright (c) 2009-2015, Mate Soos. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation
+ * version 2.0 of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301  USA
+*/
+
 #include "features.h"
-#include <stdio.h>
+#include <iostream>
+using std::cout;
+using std::endl;
 
 using namespace CMSat;
 
 
 void Features::print_stats() const
 {
-    const char* sep = ", ";
+    cout << "c [features] ";
+    cout << "numVars " << numVars << ", ";
+    cout << "numClauses " << numClauses << ", ";
+    cout << "var_cl_ratio " << var_cl_ratio << ", ";
 
-    fprintf( stdout, "c [features] ");
-    fprintf( stdout, "numVars %d%s", numVars, sep );
-    fprintf( stdout, "numClauses %d%s", numClauses, sep );
-    //was: (numVars/(1.0*numClauses)
-    fprintf( stdout, "var_cl_ratio %.5f%s", var_cl_ratio, sep );
+    cout << "vcg_var_mean " << vcg_var_mean << ", ";
+    cout << "vcg_var_std " << vcg_var_std << ", ";
+    cout << "vcg_var_min " << vcg_var_min << ", ";
+    cout << "vcg_var_max " << vcg_var_max << ", ";
+    cout << "vcg_var_spread " << vcg_var_spread << ", ";
 
-    fprintf( stdout, "vcg_var_mean %.5f%s", vcg_var_mean, sep );
-    fprintf( stdout, "vcg_var_std %.5f%s", vcg_var_std, sep );
-    fprintf( stdout, "vcg_var_min %.5f%s", vcg_var_min, sep );
-    fprintf( stdout, "vcg_var_max %.5f%s", vcg_var_max, sep );
-    fprintf( stdout, "vcg_var_spread %.5f%s", vcg_var_spread, sep );
+    cout << "vcg_cls_mean " << vcg_cls_mean << ", ";
+    cout << "vcg_cls_std " << vcg_cls_std << ", ";
+    cout << "vcg_cls_min " << vcg_cls_min << ", ";
+    cout << "vcg_cls_max " << vcg_cls_max << ", ";
+    cout << "vcg_cls_spread " << vcg_cls_spread << ", ";
 
-    fprintf( stdout, "vcg_cls_mean %.5f%s", vcg_cls_mean, sep );
-    fprintf( stdout, "vcg_cls_std %.5f%s", vcg_cls_std, sep );
-    fprintf( stdout, "vcg_cls_min %.5f%s", vcg_cls_min, sep );
-    fprintf( stdout, "vcg_cls_max %.5f%s", vcg_cls_max, sep );
-    fprintf( stdout, "vcg_cls_spread %.5f%s", vcg_cls_spread, sep );
+    cout << "pnr_var_mean " << pnr_var_mean << ", ";
+    cout << "pnr_var_std " << pnr_var_std << ", ";
+    cout << "pnr_var_min " << pnr_var_min << ", ";
+    cout << "pnr_var_max " << pnr_var_max << ", ";
+    cout << "pnr_var_spread " << pnr_var_spread << ", ";
 
-    fprintf( stdout, "pnr_var_mean %.5f%s", pnr_var_mean, sep );
-    fprintf( stdout, "pnr_var_std %.5f%s", pnr_var_std, sep );
-    fprintf( stdout, "pnr_var_min %.5f%s", pnr_var_min, sep );
-    fprintf( stdout, "pnr_var_max %.5f%s", pnr_var_max, sep );
-    fprintf( stdout, "pnr_var_spread %.5f%s", pnr_var_spread, sep );
+    cout << "pnr_cls_mean " << pnr_cls_mean << ", ";
+    cout << "pnr_cls_std " << pnr_cls_std << ", ";
+    cout << "pnr_cls_min " << pnr_cls_min << ", ";
+    cout << "pnr_cls_max " << pnr_cls_max << ", ";
+    cout << "pnr_cls_spread " << pnr_cls_spread << ", ";
 
-    fprintf( stdout, "pnr_cls_mean %.5f%s", pnr_cls_mean, sep );
-    fprintf( stdout, "pnr_cls_std %.5f%s", pnr_cls_std, sep );
-    fprintf( stdout, "pnr_cls_min %.5f%s", pnr_cls_min, sep );
-    fprintf( stdout, "pnr_cls_max %.5f%s", pnr_cls_max, sep );
-    fprintf( stdout, "pnr_cls_spread %.5f%s", pnr_cls_spread, sep );
+    cout << "binary " << binary << ", ";
+    cout << "trinary " << trinary << ", ";
+    cout << "horn_mean " << horn_mean << ", ";
+    cout << "horn_std " << horn_std << ", ";
+    cout << "horn_min " << horn_min << ", ";
+    cout << "horn_max " << horn_max << ", ";
+    cout << "horn_spread " << horn_spread << ", ";
+    cout << "horn " << horn << ", ";
 
-    fprintf( stdout, "binary %.5f%s", binary, sep );
-    fprintf( stdout, "trinary %.5f%s", trinary, sep );
-    fprintf( stdout, "horn_mean %.5f%s", horn_mean, sep );
-    fprintf( stdout, "horn_std %.5f%s", horn_std, sep );
-    fprintf( stdout, "horn_min %.5f%s", horn_min, sep );
-    fprintf( stdout, "horn_max %.5f%s", horn_max, sep );
-    fprintf( stdout, "horn_spread %.5f%s", horn_spread, sep );
-    fprintf( stdout, "horn %.5f%s", horn, sep);
+    cout << "avg_confl_size " << avg_confl_size << ", ";
+    cout << "avg_confl_glue " << avg_confl_glue << ", ";
+    cout << "avg_num_resolutions " << avg_num_resolutions << ", ";
+    cout << "avg_trail_depth_delta " << avg_trail_depth_delta << ", ";
+    cout << "avg_branch_depth " << avg_branch_depth << ", ";
+    cout << "avg_branch_depth_delta " << avg_branch_depth_delta << ", ";
 
-    fprintf( stdout, "avg_confl_size %.5f%s", avg_confl_size, sep);
-    fprintf( stdout, "avg_confl_glue %.5f%s", avg_confl_glue, sep);
-    fprintf( stdout, "avg_num_resolutions %.5f%s", avg_num_resolutions, sep);
-    fprintf( stdout, "avg_trail_depth_delta %.5f%s", avg_trail_depth_delta, sep);
-    fprintf( stdout, "avg_branch_depth %.5f%s", avg_branch_depth, sep);
-    fprintf( stdout, "avg_branch_depth_delta %.5f%s", avg_branch_depth_delta, sep);
+    cout << "confl_size_min " << confl_size_min << ", ";
+    cout << "confl_size_max " << confl_size_max << ", ";
+    cout << "confl_glue_min " << confl_glue_min << ", ";
+    cout << "confl_glue_max " << confl_glue_max << ", ";
+    cout << "branch_depth_min " << branch_depth_min << ", ";
+    cout << "branch_depth_max " << branch_depth_max << ", ";
+    cout << "trail_depth_delta_min " << trail_depth_delta_min << ", ";
+    cout << "trail_depth_delta_max " << trail_depth_delta_max << ", ";
+    cout << "num_resolutions_min " << num_resolutions_min << ", ";
+    cout << "num_resolutions_max " << num_resolutions_max << ", ";
 
-    fprintf( stdout, "confl_size_min %.5f%s", confl_size_min, sep);
-    fprintf( stdout, "confl_size_max %.5f%s", confl_size_max, sep);
-    fprintf( stdout, "confl_glue_min %.5f%s", confl_glue_min, sep);
-    fprintf( stdout, "confl_glue_max %.5f%s", confl_glue_max, sep);
-    fprintf( stdout, "branch_depth_min %.5f%s", branch_depth_min, sep);
-    fprintf( stdout, "branch_depth_max %.5f%s", branch_depth_max, sep);
-    fprintf( stdout, "trail_depth_delta_min %.5f%s", trail_depth_delta_min, sep);
-    fprintf( stdout, "trail_depth_delta_max %.5f%s", trail_depth_delta_max, sep);
-    fprintf( stdout, "num_resolutions_min %.5f%s", num_resolutions_min, sep);
-    fprintf( stdout, "num_resolutions_max %.5f%s", num_resolutions_max, sep);
+    cout << "props_per_confl " << props_per_confl << ", ";
+    cout << "confl_per_restart " << confl_per_restart << ", ";
+    cout << "decisions_per_conflict " << decisions_per_conflict << ", ";
+    cout << "learnt_bins_per_confl " << learnt_bins_per_confl << ", ";
+    cout << "learnt_tris_per_confl "<< learnt_tris_per_confl << ", ";
 
-    fprintf( stdout, "props_per_confl %.5f%s", props_per_confl, sep);
-    fprintf( stdout, "confl_per_restart %.5f%s", confl_per_restart, sep);
-    fprintf( stdout, "decisions_per_conflict %.5f%s", decisions_per_conflict, sep);
-    fprintf( stdout, "learnt_bins_per_confl %.8f%s", learnt_bins_per_confl, sep);
-    fprintf( stdout, "learnt_tris_per_confl %.8f", learnt_tris_per_confl);
-
-    fprintf( stdout, "\n");
+    cout << "learnt_tris_per_confl " << num_gates_found_last << ", ";
+    cout << "num_xors_found_last " << num_xors_found_last;
+    cout << endl;
 }
