@@ -23,6 +23,7 @@
 #define _FEATURES_H_
 
 #include <limits>
+#include <cstdint>
 
 namespace CMSat {
 
