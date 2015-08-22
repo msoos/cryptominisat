@@ -301,11 +301,7 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many concflicts")
-
     ;
-
-    std::ostringstream s_perf_multip;
-    s_perf_multip << std::setprecision(2) << conf.multiplier_perf_values_after_cl_clean;
 
     std::ostringstream s_incclean;
 
@@ -316,8 +312,6 @@ void Main::add_supported_options()
     reduceDBOptions.add_options()
     ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier, s_clean_confl_multiplier.str())
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
-    ("perfmult", po::value(&conf.multiplier_perf_values_after_cl_clean)->default_value(conf.multiplier_perf_values_after_cl_clean, s_perf_multip.str())
-        , "Multiply clause performance values by this number after every clause cleaning")
     ("clearstat", po::value(&conf.doClearStatEveryClauseCleaning)->default_value(conf.doClearStatEveryClauseCleaning)
         , "Clear clause statistics data of each clause after clause cleaning")
     ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())

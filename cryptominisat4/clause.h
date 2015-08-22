@@ -82,29 +82,6 @@ struct ResolutionTypes
 
 struct ClauseStats
 {
-    #ifdef STATS_NEEDED
-    double weighted_prop_and_confl(
-        const double prop_weight
-        , const double confl_weight
-    ) const {
-        return ((double)propagations_made)*prop_weight
-            + ((double)conflicts_made)*confl_weight;
-    }
-
-    double calc_usefulness_depth() const
-    {
-        double useful = 0;
-        if (conflicts_made > 0) {
-            uint64_t sum_tmp = sum_of_branch_depth_conflict;
-            if (sum_tmp == 0) {
-                sum_tmp = 1;
-            }
-            useful += ((double)conflicts_made*(double)conflicts_made)/(double)sum_tmp;
-        }
-        return useful;
-    }
-    #endif
-
     ClauseStats() :
         glue(0x1fffffff)
         , locked(false)
@@ -132,17 +109,16 @@ struct ClauseStats
     ///originally learnt. Only makes sense for redundant clauses
     ResolutionTypes<uint16_t> resolutions;
 
-    //multiplier is SolverConf->multiplier_perf_values_after_cl_clean
-    void clear(const double multiplier)
+    void clear()
     {
         activity = 0;
         #ifdef STATS_NEEDED
-        conflicts_made = (double)conflicts_made * multiplier;
-        sum_of_branch_depth_conflict = (double)sum_of_branch_depth_conflict * multiplier;
-        propagations_made = (double)propagations_made * multiplier;
+        conflicts_made = 0;
+        sum_of_branch_depth_conflict = 0;
+        propagations_made = 0;;
         visited_literals = 0;
         clause_looked_at = 0;
-        used_for_uip_creation = (double)used_for_uip_creation*multiplier;
+        used_for_uip_creation = 0;
         #endif
     }
 
@@ -419,13 +395,7 @@ public:
         << " Props: " << std::setw(10) << stats.propagations_made
         << " Lit visited: " << std::setw(10)<< stats.visited_literals
         << " Looked at: " << std::setw(10)<< stats.clause_looked_at
-        << " Props&confls/Litsvisited*10: ";
-        if (stats.visited_literals > 0) {
-            cout
-            << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats.weighted_prop_and_confl(1.0, 1.0)/(double)stats.visited_literals);
-        }
-        cout << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
+        << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
         #endif
         cout << endl;
     }

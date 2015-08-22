@@ -49,7 +49,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
-        , multiplier_perf_values_after_cl_clean(0)
         , glue_must_keep_clause_if_below_or_eq(5)
 
         //Restarting

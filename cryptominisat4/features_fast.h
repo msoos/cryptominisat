@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <limits>
+#include <utility>
 #include "features.h"
 using std::vector;
+using std::pair;
+using std::make_pair;
 
 namespace CMSat {
 
@@ -23,6 +26,7 @@ private:
     void calculate_variable_stats();
     void calculate_extra_var_stats();
     void calculate_extra_clause_stats();
+    void calculate_red_cl_distributions();
 
 
     const Solver* solver;

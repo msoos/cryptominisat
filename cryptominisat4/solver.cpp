@@ -1791,12 +1791,12 @@ void Solver::clear_clauses_stats()
 {
     for(ClOffset offs: longIrredCls) {
         Clause* cl = cl_alloc.ptr(offs);
-        cl->stats.clear(0);
+        cl->stats.clear();
     }
 
     for(ClOffset offs: longRedCls) {
         Clause* cl = cl_alloc.ptr(offs);
-        cl->stats.clear(conf.multiplier_perf_values_after_cl_clean);
+        cl->stats.clear();
     }
 }
 

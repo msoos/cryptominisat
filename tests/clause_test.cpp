@@ -74,27 +74,4 @@ BOOST_AUTO_TEST_CASE(convert_to_string2)
     BOOST_CHECK_EQUAL( ss.str(), "1 -2 3");
 }
 
-#ifdef STATS_NEEDED
-BOOST_AUTO_TEST_CASE(weighted_prop_and_confl)
-{
-    Clause& cl = *allocate_space_for(3);
-    cl.stats.propagations_made = 10;
-    cl.stats.conflicts_made = 7;
-
-    BOOST_CHECK_EQUAL( cl.stats.weighted_prop_and_confl(1.0, 1.0), 17);
-    BOOST_CHECK_EQUAL( cl.stats.weighted_prop_and_confl(1.0, 2.0), 24);
-}
-
-BOOST_AUTO_TEST_CASE(clear)
-{
-    Clause& cl = *allocate_space_for(3);
-    cl.stats.propagations_made = 10;
-    cl.stats.conflicts_made = 7;
-    cl.stats.clear(0.0);
-
-    BOOST_CHECK_EQUAL( cl.stats.propagations_made, 0);
-    BOOST_CHECK_EQUAL( cl.stats.conflicts_made, 0);
-}
-#endif
-
 BOOST_AUTO_TEST_SUITE_END()

@@ -1,9 +1,5 @@
-#include <iostream>
-#include <fstream>
-#include <string.h>
-#include <stdio.h>
 #include <vector>
-#include <math.h>
+#include <cmath>
 
 #include "solver.h"
 #include "features_fast.h"
@@ -261,6 +257,67 @@ void FeatureExtract::calculate_extra_var_stats()
     }
 }
 
+void FeatureExtract::calculate_red_cl_distributions()
+{
+    double glue_mean = 0;
+    double glue_var = 0;
+
+    double size_mean = 0;
+    double size_var = 0;
+
+    double uip_use_mean = 0;
+    double uip_use_var = 0;
+
+    double activity_mean = 0;
+    double activity_var = 0;
+
+    //Calculate means
+    for(ClOffset off: solver->longRedCls)
+    {
+        const Clause& cl = *solver->cl_alloc.ptr(off);
+        size_mean += cl.size();
+        glue_mean += cl.stats.glue;
+        activity_mean += cl.stats.activity;
+        #ifdef STATS_NEEDED
+        uip_use_mean += cl.stats.used_for_uip_creation;
+        #endif
+    }
+    size_mean /= solver->longRedCls.size();
+    glue_mean /= solver->longRedCls.size();
+    activity_mean /= solver->longRedCls.size();
+    #ifdef STATS_NEEDED
+    uip_use_mean /= solver->longRedCls.size();
+    #endif
+
+    //Calculate variances
+    for(ClOffset off: solver->longRedCls)
+    {
+        const Clause& cl = *solver->cl_alloc.ptr(off);
+        size_var += std::pow(size_mean-cl.size(), 2);
+        glue_var += std::pow(glue_mean-cl.stats.glue, 2);
+        activity_var += std::pow(uip_use_mean-cl.stats.activity, 2);
+        #ifdef STATS_NEEDED
+        uip_use_var += std::pow(uip_use_mean-cl.stats.used_for_uip_creation, 2);
+        #endif
+    }
+    size_var /= solver->longRedCls.size();
+    glue_var /= solver->longRedCls.size();
+    activity_var /= solver->longRedCls.size();
+    #ifdef STATS_NEEDED
+    uip_use_var /= solver->longRedCls.size();
+    #endif
+
+    //Assign calculated values
+    feat.glue_distr_mean = glue_mean;
+    feat.glue_distr_var = glue_var;
+    feat.size_distr_mean = size_mean;
+    feat.size_distr_var = size_var;
+    feat.uip_use_distr_mean = uip_use_mean;
+    feat.uip_use_distr_var = uip_use_var;
+    feat.activity_distr_mean = activity_mean;
+    feat.activity_distr_var = activity_var;
+}
+
 Features FeatureExtract::extract()
 {
     double start_time = cpuTime();
@@ -272,6 +329,9 @@ Features FeatureExtract::extract()
             feat.numVars++;
         }
     }
+    if (feat.numVars > 0) {
+        feat.var_cl_ratio = (double)feat.numVars/ (double)feat.numClauses;
+    }
 
     calculate_clause_stats();
     calculate_variable_stats();
@@ -279,17 +339,13 @@ Features FeatureExtract::extract()
     calculate_extra_clause_stats();
     calculate_extra_var_stats();
 
+    calculate_red_cl_distributions();
+
     if (solver->conf.verbosity >= 2) {
         cout << "c [features] extracted"
         << solver->conf.print_times(cpuTime() - start_time)
         << endl;
     }
-
-    double tmp = feat.numVars;
-    if (tmp > 0) {
-        tmp /= (double)feat.numClauses;
-    }
-    feat.var_cl_ratio = tmp;
 
     return feat;
 }

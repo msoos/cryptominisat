@@ -34,6 +34,17 @@ void Features::print_stats() const
     cout << "numClauses " << numClauses << ", ";
     cout << "var_cl_ratio " << var_cl_ratio << ", ";
 
+
+    //Clause distribution
+    cout << "binary " << binary << ", ";
+    cout << "trinary " << trinary << ", ";
+    cout << "horn " << horn << ", ";
+    cout << "horn_mean " << horn_mean << ", ";
+    cout << "horn_std " << horn_std << ", ";
+    cout << "horn_min " << horn_min << ", ";
+    cout << "horn_max " << horn_max << ", ";
+    cout << "horn_spread " << horn_spread << ", ";
+
     cout << "vcg_var_mean " << vcg_var_mean << ", ";
     cout << "vcg_var_std " << vcg_var_std << ", ";
     cout << "vcg_var_min " << vcg_var_min << ", ";
@@ -58,40 +69,42 @@ void Features::print_stats() const
     cout << "pnr_cls_max " << pnr_cls_max << ", ";
     cout << "pnr_cls_spread " << pnr_cls_spread << ", ";
 
-    cout << "binary " << binary << ", ";
-    cout << "trinary " << trinary << ", ";
-    cout << "horn_mean " << horn_mean << ", ";
-    cout << "horn_std " << horn_std << ", ";
-    cout << "horn_min " << horn_min << ", ";
-    cout << "horn_max " << horn_max << ", ";
-    cout << "horn_spread " << horn_spread << ", ";
-    cout << "horn " << horn << ", ";
-
+    //Conflicts
     cout << "avg_confl_size " << avg_confl_size << ", ";
-    cout << "avg_confl_glue " << avg_confl_glue << ", ";
-    cout << "avg_num_resolutions " << avg_num_resolutions << ", ";
-    cout << "avg_trail_depth_delta " << avg_trail_depth_delta << ", ";
-    cout << "avg_branch_depth " << avg_branch_depth << ", ";
-    cout << "avg_branch_depth_delta " << avg_branch_depth_delta << ", ";
-
     cout << "confl_size_min " << confl_size_min << ", ";
     cout << "confl_size_max " << confl_size_max << ", ";
+    cout << "avg_confl_glue " << avg_confl_glue << ", ";
     cout << "confl_glue_min " << confl_glue_min << ", ";
     cout << "confl_glue_max " << confl_glue_max << ", ";
-    cout << "branch_depth_min " << branch_depth_min << ", ";
-    cout << "branch_depth_max " << branch_depth_max << ", ";
-    cout << "trail_depth_delta_min " << trail_depth_delta_min << ", ";
-    cout << "trail_depth_delta_max " << trail_depth_delta_max << ", ";
+    cout << "avg_num_resolutions " << avg_num_resolutions << ", ";
     cout << "num_resolutions_min " << num_resolutions_min << ", ";
     cout << "num_resolutions_max " << num_resolutions_max << ", ";
-
-    cout << "props_per_confl " << props_per_confl << ", ";
-    cout << "confl_per_restart " << confl_per_restart << ", ";
-    cout << "decisions_per_conflict " << decisions_per_conflict << ", ";
     cout << "learnt_bins_per_confl " << learnt_bins_per_confl << ", ";
     cout << "learnt_tris_per_confl "<< learnt_tris_per_confl << ", ";
 
-    cout << "learnt_tris_per_confl " << num_gates_found_last << ", ";
+    //Search
+    cout << "avg_branch_depth " << avg_branch_depth << ", ";
+    cout << "branch_depth_min " << branch_depth_min << ", ";
+    cout << "branch_depth_max " << branch_depth_max << ", ";
+    cout << "avg_trail_depth_delta " << avg_trail_depth_delta << ", ";
+    cout << "trail_depth_delta_min " << trail_depth_delta_min << ", ";
+    cout << "trail_depth_delta_max " << trail_depth_delta_max << ", ";
+    cout << "avg_branch_depth_delta " << avg_branch_depth_delta << ", ";
+    cout << "props_per_confl " << props_per_confl << ", ";
+    cout << "confl_per_restart " << confl_per_restart << ", ";
+    cout << "decisions_per_conflict " << decisions_per_conflict << ", ";
+
+    //learnt distributions
+    cout << "glue_distr_mean " << glue_distr_mean << ", ";
+    cout << "glue_distr_var " << glue_distr_var << ", ";
+    cout << "size_distr_mean " << size_distr_mean << ", ";
+    cout << "size_distr_var " << size_distr_var << ", ";
+    cout << "uip_use_distr_mean " << uip_use_distr_mean << ", ";
+    cout << "uip_use_distr_var " << uip_use_distr_var << ", ";
+    cout << "activity_distr_mean " << activity_distr_mean << ", ";
+    cout << "activity_distr_var " << activity_distr_var << ", ";
+
+    cout << "num_gates_found_last " << num_gates_found_last << ", ";
     cout << "num_xors_found_last " << num_xors_found_last;
     cout << endl;
 }
