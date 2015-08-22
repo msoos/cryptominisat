@@ -102,29 +102,23 @@ class Strengthener {
         //Vars for strengthen implicit
         struct StrImplicitData
         {
-            uint64_t remLitFromBin;
-            uint64_t remLitFromTri;
-            uint64_t remLitFromTriByBin;
-            uint64_t remLitFromTriByTri;
-            uint64_t stampRem;
+            uint64_t remLitFromBin = 0;
+            uint64_t remLitFromTri = 0;
+            uint64_t remLitFromTriByBin = 0;
+            uint64_t remLitFromTriByTri = 0;
+            uint64_t stampRem = 0;
+
+            uint64_t numWatchesLooked = 0;
 
             //For delayed enqueue and binary adding
             //Used for strengthening
             vector<Lit> toEnqueue;
             vector<BinaryClause> binsToAdd;
 
-            uint64_t numWatchesLooked;
-
             void clear()
             {
-                remLitFromBin = 0;
-                remLitFromTri = 0;
-                remLitFromTriByBin = 0;
-                remLitFromTriByTri = 0;
-                stampRem = 0;
-                numWatchesLooked = 0;
-                toEnqueue.clear();
-                binsToAdd.clear();
+                StrImplicitData tmp;
+                *this = tmp;
             }
 
             void print(
@@ -136,7 +130,6 @@ class Strengthener {
             ) const;
         };
         StrImplicitData str_impl_data;
-        // end
 
         bool remove_or_shrink_clause(Clause& cl, ClOffset& offset);
         void str_and_sub_cl_with_cache_for_all_lits(
