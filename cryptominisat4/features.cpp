@@ -21,6 +21,7 @@
 
 #include "features.h"
 #include <iostream>
+using std::string;
 using std::cout;
 using std::endl;
 
@@ -94,17 +95,23 @@ void Features::print_stats() const
     cout << "confl_per_restart " << confl_per_restart << ", ";
     cout << "decisions_per_conflict " << decisions_per_conflict << ", ";
 
-    //learnt distributions
-    cout << "glue_distr_mean " << glue_distr_mean << ", ";
-    cout << "glue_distr_var " << glue_distr_var << ", ";
-    cout << "size_distr_mean " << size_distr_mean << ", ";
-    cout << "size_distr_var " << size_distr_var << ", ";
-    cout << "uip_use_distr_mean " << uip_use_distr_mean << ", ";
-    cout << "uip_use_distr_var " << uip_use_distr_var << ", ";
-    cout << "activity_distr_mean " << activity_distr_mean << ", ";
-    cout << "activity_distr_var " << activity_distr_var << ", ";
+    //distributions
+    irred_cl_distrib.print("irred-");
+    red_cl_distrib.print("red-");
 
     cout << "num_gates_found_last " << num_gates_found_last << ", ";
     cout << "num_xors_found_last " << num_xors_found_last;
     cout << endl;
+}
+
+void Features::Distrib::print(const string& pre_print) const
+{
+    cout << pre_print <<"glue_distr_mean " << glue_distr_mean << ", ";
+    cout << pre_print <<"glue_distr_var " << glue_distr_var << ", ";
+    cout << pre_print <<"size_distr_mean " << size_distr_mean << ", ";
+    cout << pre_print <<"size_distr_var " << size_distr_var << ", ";
+    cout << pre_print <<"uip_use_distr_mean " << uip_use_distr_mean << ", ";
+    cout << pre_print <<"uip_use_distr_var " << uip_use_distr_var << ", ";
+    cout << pre_print <<"activity_distr_mean " << activity_distr_mean << ", ";
+    cout << pre_print <<"activity_distr_var " << activity_distr_var << ", ";
 }

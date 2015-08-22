@@ -24,6 +24,7 @@
 
 #include <limits>
 #include <cstdint>
+#include <string>
 
 namespace CMSat {
 
@@ -98,14 +99,20 @@ struct Features
     double decisions_per_conflict = 0.0;
 
     //learnt distributions
-    double glue_distr_mean = 0;
-    double glue_distr_var = 0;
-    double size_distr_mean = 0;
-    double size_distr_var = 0;
-    double uip_use_distr_mean = 0;
-    double uip_use_distr_var = 0;
-    double activity_distr_mean = 0;
-    double activity_distr_var = 0;
+    struct Distrib {
+        double glue_distr_mean = 0;
+        double glue_distr_var = 0;
+        double size_distr_mean = 0;
+        double size_distr_var = 0;
+        double uip_use_distr_mean = 0;
+        double uip_use_distr_var = 0;
+        double activity_distr_mean = 0;
+        double activity_distr_var = 0;
+
+        void print(const std::string& pre_print) const;
+    };
+    Distrib red_cl_distrib;
+    Distrib irred_cl_distrib;
 
     //High-level features
     uint64_t num_gates_found_last;

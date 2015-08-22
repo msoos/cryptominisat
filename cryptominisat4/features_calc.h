@@ -5,6 +5,7 @@
 #include <limits>
 #include <utility>
 #include "features.h"
+#include "cloffset.h"
 using std::vector;
 using std::pair;
 using std::make_pair;
@@ -26,7 +27,10 @@ private:
     void calculate_variable_stats();
     void calculate_extra_var_stats();
     void calculate_extra_clause_stats();
-    void calculate_red_cl_distributions();
+    void calculate_cl_distributions(
+        const vector<ClOffset>& clauses
+        , struct Features::Distrib& distrib_data
+    );
 
 
     const Solver* solver;

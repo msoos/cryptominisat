@@ -257,8 +257,10 @@ void FeaturesCalc::calculate_extra_var_stats()
     }
 }
 
-void FeaturesCalc::calculate_red_cl_distributions()
-{
+void FeaturesCalc::calculate_cl_distributions(
+    const vector<ClOffset>& clauses
+    , struct Features::Distrib& distrib_data
+) {
     double glue_mean = 0;
     double glue_var = 0;
 
@@ -308,14 +310,14 @@ void FeaturesCalc::calculate_red_cl_distributions()
     #endif
 
     //Assign calculated values
-    feat.glue_distr_mean = glue_mean;
-    feat.glue_distr_var = glue_var;
-    feat.size_distr_mean = size_mean;
-    feat.size_distr_var = size_var;
-    feat.uip_use_distr_mean = uip_use_mean;
-    feat.uip_use_distr_var = uip_use_var;
-    feat.activity_distr_mean = activity_mean;
-    feat.activity_distr_var = activity_var;
+    distrib_data.glue_distr_mean = glue_mean;
+    distrib_data.glue_distr_var = glue_var;
+    distrib_data.size_distr_mean = size_mean;
+    distrib_data.size_distr_var = size_var;
+    distrib_data.uip_use_distr_mean = uip_use_mean;
+    distrib_data.uip_use_distr_var = uip_use_var;
+    distrib_data.activity_distr_mean = activity_mean;
+    distrib_data.activity_distr_var = activity_var;
 }
 
 Features FeaturesCalc::extract()
@@ -339,7 +341,8 @@ Features FeaturesCalc::extract()
     calculate_extra_clause_stats();
     calculate_extra_var_stats();
 
-    calculate_red_cl_distributions();
+    calculate_cl_distributions(solver->longRedCls, feat.red_cl_distrib);
+    calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [features] extracted"
