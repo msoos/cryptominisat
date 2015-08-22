@@ -274,7 +274,7 @@ void FeaturesCalc::calculate_cl_distributions(
     double activity_var = 0;
 
     //Calculate means
-    for(ClOffset off: solver->longRedCls)
+    for(ClOffset off: clauses)
     {
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_mean += cl.size();
@@ -284,15 +284,15 @@ void FeaturesCalc::calculate_cl_distributions(
         uip_use_mean += cl.stats.used_for_uip_creation;
         #endif
     }
-    size_mean /= solver->longRedCls.size();
-    glue_mean /= solver->longRedCls.size();
-    activity_mean /= solver->longRedCls.size();
+    size_mean /= clauses.size();
+    glue_mean /= clauses.size();
+    activity_mean /= clauses.size();
     #ifdef STATS_NEEDED
-    uip_use_mean /= solver->longRedCls.size();
+    uip_use_mean /= clauses.size();
     #endif
 
     //Calculate variances
-    for(ClOffset off: solver->longRedCls)
+    for(ClOffset off: clauses)
     {
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_var += std::pow(size_mean-cl.size(), 2);
@@ -302,11 +302,11 @@ void FeaturesCalc::calculate_cl_distributions(
         uip_use_var += std::pow(uip_use_mean-cl.stats.used_for_uip_creation, 2);
         #endif
     }
-    size_var /= solver->longRedCls.size();
-    glue_var /= solver->longRedCls.size();
-    activity_var /= solver->longRedCls.size();
+    size_var /= clauses.size();
+    glue_var /= clauses.size();
+    activity_var /= clauses.size();
     #ifdef STATS_NEEDED
-    uip_use_var /= solver->longRedCls.size();
+    uip_use_var /= clauses.size();
     #endif
 
     //Assign calculated values
