@@ -515,18 +515,10 @@ class Searcher : public HyperEngine
         double luby(double y, int x);
 
         //SQL
-        vector<Var> calcVarsToDump() const;
         #ifdef STATS_NEEDED
         void dump_restart_sql();
-        void printVarStatsSQL();
-        void printClauseDistribSQL();
         PropStats lastSQLPropStats;
         Stats lastSQLGlobalStats;
-        void calcVariances(
-            const vector<VarData>& data
-            , double& avgDecLevelVar
-            , double& avgTrailLevelVar
-        );
         #endif
 
 

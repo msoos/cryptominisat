@@ -45,23 +45,6 @@ public:
         , const Searcher* searcher
     ) override;
 
-    #ifdef STATS_NEEDED_EXTRA
-    void clauseSizeDistrib(
-        uint64_t sumConflicts
-        , const vector<uint32_t>& sizes
-    ) override;
-
-    void clauseGlueDistrib(
-        uint64_t sumConflicts
-        , const vector<uint32_t>& glues
-    ) override;
-
-    void clauseSizeGlueScatter(
-        uint64_t sumConflicts
-        , boost::multi_array<uint32_t, 2>& sizeAndGlue
-    ) override;
-    #endif
-
     void reduceDB(
         const ClauseUsageStats& irredStats
         , const ClauseUsageStats& redStats
@@ -105,32 +88,6 @@ private:
     void initTimePassedSTMT();
     void initMemUsedSTMT();
     void initTimePassedMinSTMT();
-    #ifdef STATS_NEEDED_EXTRA
-    struct StmtClsDistrib {
-        StmtClsDistrib() :
-            stmt(NULL)
-        {}
-
-        vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt = NULL;
-
-        //Variables
-        uint64_t sumConflicts;
-        vector<uint64_t> value;
-        vector<uint64_t> num;
-    };
-    void initClauseDistribSTMT(
-        const Solver* solver
-        , StmtClsDistrib& stmt
-        , const string& tableName
-        , const string& valueName
-        , const size_t numInserts
-    );
-    void initSizeGlueScatterSTMT(
-        const Solver* solver
-        , const size_t numInserts
-    );
-    #endif
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
 
@@ -357,25 +314,6 @@ private:
         uint64_t numVarsElimed;
         uint64_t trailSize;
     };
-
-    #ifdef STATS_NEEDED_EXTRA
-    struct StmtSizeGlueScatter {
-        StmtSizeGlueScatter() :
-            stmt(NULL)
-        {}
-        vector<MYSQL_BIND>  bind;
-        MYSQL_STMT  *stmt = NULL;
-
-        //Variables
-        uint64_t sumConflicts;
-        vector<uint64_t> size;
-        vector<uint64_t> glue;
-        vector<uint64_t> num;
-    };
-    StmtSizeGlueScatter stmtSizeGlueScatter;
-    StmtClsDistrib stmtClsDistribSize;
-    StmtClsDistrib stmtClsDistribGlue;
-    #endif
 
     StmtRst stmtRst;
 

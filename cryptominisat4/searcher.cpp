@@ -1458,29 +1458,6 @@ void Searcher::resetStats()
 {
     startTime = cpuTime();
 
-    //About vars
-    #ifdef STATS_NEEDED_EXTRA
-    for(vector<VarData>::iterator
-        it = varData.begin(), end = varData.end()
-        ; it != end
-        ; ++it
-    ) {
-        it->stats.reset();
-    }
-
-    //Clause data
-    if (conf.dumpClauseDistribPer != 0) {
-        clauseSizeDistrib.resize(conf.dumpClauseDistribMaxSize, 0);
-        clauseGlueDistrib.resize(conf.dumpClauseDistribMaxGlue, 0);
-        sizeAndGlue.resize(boost::extents[conf.dumpClauseDistribMaxSize][conf.dumpClauseDistribMaxGlue]);
-        for(size_t i = 0; i < sizeAndGlue.shape()[0]; i++) {
-            for(size_t i2 = 0; i2 < sizeAndGlue.shape()[1]; i2++) {
-                sizeAndGlue[i][i2] = 0;
-            }
-        }
-    }
-    #endif
-
     //Rest solving stats
     stats.clear();
     propStats.clear();
@@ -1613,42 +1590,6 @@ struct MyPolarData
     }
 };
 
-/*void Searcher::printVarStatsSQL()
-{
-    vector<MyPolarData> polarData;
-    for(size_t i = 0; i < varData.size(); i++) {
-        if (varData[i].posPolarSet == 0 && varData[i].negPolarSet == 0)
-            continue;
-
-        polarData.push_back(MyPolarData(
-            varData[i].posPolarSet
-            , varData[i].negPolarSet
-            , varData[i].flippedPolarity
-        ));
-    }
-    std::sort(polarData.begin(), polarData.end());
-
-    for(size_t i = 0; i < polarData.size(); i++) {
-        solver->sqlFile
-        << "insert into `polarSet`"
-        << "("
-        << " `runID`, `simplifications`"
-        << " , `order`, `pos`, `neg`, `total`, `flipped`"
-        << ")"
-        << " values ("
-        //Position
-        << "  " << solver->get_solve_stats().runID
-        << ", " << solver->get_solve_stats().numSimplify
-        //Data
-        << ", " << i
-        << ", " << polarData[i].pos
-        << ", " << polarData[i].neg
-        << ", " << polarData[i].pos + polarData[i].neg
-        << ", " << polarData[i].flipped
-        << " );" << endl;
-    }
-}*/
-
 #ifdef STATS_NEEDED
 void Searcher::dump_restart_sql()
 {
@@ -1684,25 +1625,6 @@ struct VarDumpOrder
         return polarSetSum > other.polarSetSum;
     }
 };
-
-#ifdef STATS_NEEDED_EXTRA
-void Searcher::printClauseDistribSQL()
-{
-    solver->sqlStats->clauseSizeDistrib(
-        sumConflicts()
-        , clauseSizeDistrib
-    );
-    solver->sqlStats->clauseGlueDistrib(
-        sumConflicts()
-        , clauseGlueDistrib
-    );
-
-    solver->sqlStats->clauseSizeGlueScatter(
-        sumConflicts()
-        , sizeAndGlue
-    );
-}
-#endif
 
 void Searcher::print_restart_stat()
 {
@@ -2058,14 +1980,6 @@ void Searcher::finish_up_solve(const lbool status)
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
         dump_restart_sql();
-        //printVarStatsSQL();
-
-        #ifdef STATS_NEEDED_EXTRA
-        if (conf.dumpClauseDistribPer != 0) {
-            printClauseDistribSQL();
-            std::fill(clauseSizeDistrib.begin(), clauseSizeDistrib.end(), 0);
-        }
-        #endif
     }
     #endif
 
