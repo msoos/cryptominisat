@@ -55,8 +55,11 @@ struct ClauseUsageStats
         return *this;
     }
 
-    void addStat(const Clause& cl)
-    {
+    void addStat(const Clause&
+    #ifdef STATS_NEEDED
+    cl
+    #endif
+    ) {
         num++;
         #ifdef STATS_NEEDED
         sumConfl += cl.stats.conflicts_made;
