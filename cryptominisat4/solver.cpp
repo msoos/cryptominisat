@@ -56,7 +56,7 @@
 #include "clausedumper.h"
 #include "sccfinder.h"
 #include "intree.h"
-#include "features_fast.h"
+#include "features_calc.h"
 #include "GitSHA1.h"
 #include "features_to_reconf.h"
 #include "trim.h"

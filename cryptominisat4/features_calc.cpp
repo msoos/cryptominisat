@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "solver.h"
-#include "features_fast.h"
+#include "features_calc.h"
 
 using std::vector;
 using namespace CMSat;

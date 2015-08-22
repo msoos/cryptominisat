@@ -52,7 +52,7 @@ set(cryptoms_lib_files
     bva.cpp
     intree.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-    features_fast.cpp
+    features_calc.cpp
     features_to_reconf.cpp
     features.cpp
 #    watcharray.cpp
