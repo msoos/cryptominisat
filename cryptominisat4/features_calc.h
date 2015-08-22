@@ -13,9 +13,9 @@ namespace CMSat {
 
 class Solver;
 
-struct FeatureExtract {
+struct FeaturesCalc {
 public:
-    FeatureExtract(const Solver* _solver) :
+    FeaturesCalc(const Solver* _solver) :
         solver(_solver) {
     }
     Features extract();

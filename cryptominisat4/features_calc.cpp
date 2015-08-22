@@ -8,7 +8,7 @@ using std::vector;
 using namespace CMSat;
 
 template<class Function, class Function2>
-void FeatureExtract::for_one_clause(
+void FeaturesCalc::for_one_clause(
     const Watched& cl
     , const Lit lit
     ,  Function func_each_cl
@@ -89,7 +89,7 @@ void FeatureExtract::for_one_clause(
 }
 
 template<class Function, class Function2>
-void FeatureExtract::for_all_clauses(Function func_each_cl, Function2 func_each_lit) const
+void FeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_each_lit) const
 {
     for (size_t i = 0; i < solver->nVars() * 2; i++) {
         Lit lit = Lit::toLit(i);
@@ -99,7 +99,7 @@ void FeatureExtract::for_all_clauses(Function func_each_cl, Function2 func_each_
     }
 }
 
-void FeatureExtract::fill_vars_cls()
+void FeaturesCalc::fill_vars_cls()
 {
     feat.numVars = solver->nVars();
     feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins + solver->binTri.irredTris;
@@ -125,7 +125,7 @@ void FeatureExtract::fill_vars_cls()
     for_all_clauses(func_each_cl, func_each_lit);
 }
 
-void FeatureExtract::calculate_clause_stats()
+void FeaturesCalc::calculate_clause_stats()
 {
     auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
     auto func_each_cl = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
@@ -155,7 +155,7 @@ void FeatureExtract::calculate_clause_stats()
     feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;
 }
 
-void FeatureExtract::calculate_variable_stats()
+void FeaturesCalc::calculate_variable_stats()
 {
     for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
         if ( myVars[vv].size == 0 ) {
@@ -194,7 +194,7 @@ void FeatureExtract::calculate_variable_stats()
     feat.horn_spread = feat.horn_max - feat.horn_min;
 }
 
-void FeatureExtract::calculate_extra_clause_stats()
+void FeaturesCalc::calculate_extra_clause_stats()
 {
     auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
     auto each_clause = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
@@ -222,7 +222,7 @@ void FeatureExtract::calculate_extra_clause_stats()
     }
 }
 
-void FeatureExtract::calculate_extra_var_stats()
+void FeaturesCalc::calculate_extra_var_stats()
 {
     for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
         if ( myVars[vv].size == 0 ) {
@@ -257,7 +257,7 @@ void FeatureExtract::calculate_extra_var_stats()
     }
 }
 
-void FeatureExtract::calculate_red_cl_distributions()
+void FeaturesCalc::calculate_red_cl_distributions()
 {
     double glue_mean = 0;
     double glue_var = 0;
@@ -318,7 +318,7 @@ void FeatureExtract::calculate_red_cl_distributions()
     feat.activity_distr_var = activity_var;
 }
 
-Features FeatureExtract::extract()
+Features FeaturesCalc::extract()
 {
     double start_time = cpuTime();
     fill_vars_cls();
