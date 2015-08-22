@@ -174,37 +174,6 @@ CREATE TABLE `finishup` (
 );
 create index `idx11` on `finishup` (`runID`);
 
-
-
-
-DROP TABLE IF EXISTS `sizeGlue`;
-CREATE TABLE `sizeGlue` (
-  `runID` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
-  `size` int(10) NOT NULL,
-  `glue` int(10) NOT NULL,
-  `num` int(20) NOT NULL
-);
-create index `idx8` on `sizeGlue` (`runID`, `conflicts`);
-
-DROP TABLE IF EXISTS `clauseGlueDistrib`;
-CREATE TABLE `clauseGlueDistrib` (
-  `runID` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
-  `glue` int(10) NOT NULL,
-  `num` int(20) NOT NULL
-);
-create index `idx1` on `clauseGlueDistrib` (`runID`,`conflicts`,`glue`);
-
-DROP TABLE IF EXISTS `clauseSizeDistrib`;
-CREATE TABLE `clauseSizeDistrib` (
-  `runID` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
-  `size` int(10) NOT NULL,
-  `num` int(20) NOT NULL
-);
-create index `idx2` on `clauseSizeDistrib` (`runID`,`conflicts`,`size`);
-
 DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
   `runID` bigint(20) NOT NULL,
