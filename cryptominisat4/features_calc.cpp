@@ -297,7 +297,7 @@ void FeaturesCalc::calculate_cl_distributions(
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_var += std::pow(size_mean-cl.size(), 2);
         glue_var += std::pow(glue_mean-cl.stats.glue, 2);
-        activity_var += std::pow(uip_use_mean-cl.stats.activity, 2);
+        activity_var += std::pow(activity_mean-cl.stats.activity, 2);
         #ifdef STATS_NEEDED
         uip_use_var += std::pow(uip_use_mean-cl.stats.used_for_uip_creation, 2);
         #endif
