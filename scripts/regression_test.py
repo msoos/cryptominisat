@@ -403,7 +403,7 @@ class Tester:
         self.check_for_unsat = False
         self.ignoreNoSolution = False
         self.extra_options_if_supported = self.list_options_if_supported(
-            ["--xor", "--sql"])
+            ["xor", "sql"])
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -421,7 +421,8 @@ class Tester:
         consoleOutput, err = p.communicate()
 
         for l in consoleOutput.split("\n"):
-            if option_name in l:
+            tmp_option_name = "--" + option_name
+            if tmp_option_name in l:
                 return True
 
         return False
