@@ -13,7 +13,7 @@ from common_aws import *
 import logging
 
 
-class SpotRequester:
+class RequestSpotClient:
     def __init__(self):
         self.conf = ConfigParser.ConfigParser()
         self.conf.read('ec2-spot-instance.cfg')

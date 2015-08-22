@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import spotrequester
+import RequestSpotClient
 
 #create spot instance requests
-spot_create = spotrequester.SpotRequester()
+spot_create = RequestSpotClient.RequestSpotClient()
 spot_create.create_spots()

@@ -21,7 +21,7 @@ import string
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
-import spotrequester
+import RequestSpotClient
 
 
 last_termination_sent = None
@@ -407,7 +407,7 @@ class SpotManager (threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.spot_creator = spotrequester.SpotRequester()
+        self.spot_creator = RequestSpotClient.RequestSpotClient()
 
     def run(self):
         while True:
