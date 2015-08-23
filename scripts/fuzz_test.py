@@ -60,18 +60,7 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
             return ""
 
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
-desc = """Example usages:
-* check already computed SAT solutions (UNSAT cannot be checked):
-   ./regression_test.py --checkdir ../../clusters/cluster93/ --cnfdir ../../satcomp09/
-
-* check already computed SAT solutions (UNSAT cannot be checked):
-   ./regression_test.py -c myfile.cnf -s sol.txt
-
-* fuzz the solver with fuzz-generator
-   ./regression_test.py -f
-
-* go through regression listdir
-   ./regression_test.py --regtest --checkdir ../tests/cnfs/
+desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
 """
 
 parser = optparse.OptionParser(usage=usage, description=desc,
@@ -924,7 +913,7 @@ if rnd_seed is None:
     rnd_seed = random.randint(0, 1000*1000*100)
 
 while True:
-    toexec = "./regression_test.py --fuzzlim 1 --seed %d" % rnd_seed
+    toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
     print "To re-create fuzz-test below: %s" % toexec
 
     random.seed(rnd_seed)
