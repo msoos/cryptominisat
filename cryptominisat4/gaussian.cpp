@@ -28,10 +28,7 @@
 #include <iterator>
 #include <limits>
 
-#include "clausecleaner.h"
-#include "varreplacer.h"
 #include "solver.h"
-//#include "cmsat/DataSync.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
