@@ -202,6 +202,7 @@ uint32_t Gaussian::select_columnorder(
     vector<uint16_t>& var_to_col
     , matrixset& origMat
 ) {
+    var_to_col.clear();
     var_to_col.resize(solver->nVars(), unassigned_col);
 
     uint32_t num_xorclauses  = 0;
@@ -210,16 +211,17 @@ uint32_t Gaussian::select_columnorder(
         if (c.getRemoved()) continue;
         num_xorclauses++;
 
-        for (uint32_t i2 = 0; i2 < c.size(); i2++) {
-            assert(solver->value(c[i2].var()) == l_Undef);
-            var_to_col[c[i2].var()] = unassigned_col - 1;
+        for (Var v: c.vars) {
+            assert(solver->value(v) == l_Undef);
+            var_to_col[v] = unassigned_col - 1;
         }
     }
 
     uint32_t largest_used_var = 0;
-    for (uint32_t i = 0; i < var_to_col.size(); i++)
+    for (uint32_t i = 0; i < var_to_col.size(); i++) {
         if (var_to_col[i] != unassigned_col)
             largest_used_var = i;
+    }
     var_to_col.resize(largest_used_var + 1);
 
     var_is_in.resize(var_to_col.size(), 0);
@@ -240,15 +242,14 @@ uint32_t Gaussian::select_columnorder(
         || (!config.orderCols && iterReduceIt < vars.size())
     ) {
         Var v;
-        if (config.orderCols) v = order_heap.remove_min();
-        else v = vars[iterReduceIt++];
-        if (var_to_col[v] == 1) {
-            #ifdef DEBUG_GAUSS
-            vector<uint32_t>::iterator it =
-                std::find(origMat.col_to_var.begin(), origMat.col_to_var.end(), v);
-            assert(it == origMat.col_to_var.end());
-            #endif
+        if (config.orderCols) {
+            v = order_heap.remove_min();
+        } else {
+            v = vars[iterReduceIt++];
+        }
 
+        //It's needed in the matrix
+        if (var_to_col[v] == (unassigned_col - 1)) {
             origMat.col_to_var.push_back(v);
             var_to_col[v] = origMat.col_to_var.size()-1;
             var_is_in.setBit(v);
@@ -258,9 +259,10 @@ uint32_t Gaussian::select_columnorder(
     //for the ones that were not in the order_heap, but are marked in var_to_col
     for (uint32_t v = 0; v != var_to_col.size(); v++) {
         if (var_to_col[v] == unassigned_col - 1) {
-            origMat.col_to_var.push_back(v);
+            assert(false && "order_heap MUST be complete!");
+            /*origMat.col_to_var.push_back(v);
             var_to_col[v] = origMat.col_to_var.size() -1;
-            var_is_in.setBit(v);
+            var_is_in.setBit(v);*/
         }
     }
 
