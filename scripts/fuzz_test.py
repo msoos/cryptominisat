@@ -894,7 +894,7 @@ class Tester:
             os.unlink(name)
         if fnameDrup is not None:
             os.unlink(fnameDrup)
-        for i in glob.glob(u'fuzz*'):
+        for i in glob.glob(u'fuzzTest*'):
             os.unlink(i)
 
     def delete_debuglibpart_files(self):
