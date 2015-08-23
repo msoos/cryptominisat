@@ -225,8 +225,8 @@ bool DataSync::syncBinFromOthers(
     finished = bins.size();
 
     end:
-    for (const Lit lit: toClear) {
-        seen[lit.toInt()] = false;
+    for (const Lit l: toClear) {
+        seen[l.toInt()] = false;
     }
     toClear.clear();
 

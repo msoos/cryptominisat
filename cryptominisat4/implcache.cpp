@@ -176,9 +176,11 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
 
         //Update to replaced vars, remove vars already set or eliminated
         Lit vertLit = Lit::toLit(wsLit);
-        vector<LitExtra>::iterator it = trans->lits.begin();
-        vector<LitExtra>::iterator it2 = it;
-        for (vector<LitExtra>::iterator end = trans->lits.end(); it != end; ++it) {
+        for (vector<LitExtra>::iterator end = trans->lits.end(),
+            it=trans->lits.begin(), it2 = trans->lits.begin()
+            ; it != end
+            ; ++it
+        ) {
             Lit lit = it->getLit();
             assert(lit.var() != vertLit.var());
 
