@@ -76,42 +76,56 @@ desc = """Example usages:
 
 parser = optparse.OptionParser(usage=usage, description=desc,
                                formatter=PlainHelpFormatter())
-parser.add_option("--exec", metavar="SOLVER", dest="solver", default="../build/cryptominisat", help="SAT solver executable. Default: %default"
-                  )
+parser.add_option("--exec", metavar="SOLVER", dest="solver",
+                  default="../build/cryptominisat",
+                  help="SAT solver executable. Default: %default")
 
-parser.add_option("--extraopts", "-e", metavar="OPTS", dest="extra_options", default="", help="Extra options to give to SAT solver"
-                  )
+parser.add_option("--extraopts", "-e", metavar="OPTS",
+                  dest="extra_options", default="",
+                  help="Extra options to give to SAT solver")
 
-parser.add_option("--verbose", "-v", action="store_true", default=False, dest="verbose", help="Print more output"
-                  )
+parser.add_option("--verbose", "-v", action="store_true", default=False,
+                  dest="verbose", help="Print more output")
 
 # for fuzz-testing
-parser.add_option("-f", "--fuzz", dest="fuzz_test", default=False, action="store_true", help="Fuzz-test"
+parser.add_option("-f", "--fuzz", dest="fuzz_test",
+                  default=False, action="store_true", help="Fuzz-test"
                   )
-parser.add_option("--seed", dest="fuzz_seed_start", help="Fuzz test start seed",type=int
-                  )
-parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int, help="Number of fuzz tests to run"
+parser.add_option("--seed", dest="fuzz_seed_start",
+                  help="Fuzz test start seed", type=int)
+parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
+                  help="Number of fuzz tests to run"
                   )
 
 # for regression testing
-parser.add_option("--regtest", dest="regression_test", default=False, action="store_true", help="Regression test"
+parser.add_option("--regtest", dest="regression_test", default=False,
+                  action="store_true", help="Regression test"
                   )
-parser.add_option("--testdir", dest="testDir", default="../tests/cnfs/", help="Directory where the tests are"
+parser.add_option("--testdir", dest="testDir", default="../tests/cnfs/",
+                  help="Directory where the tests are"
                   )
 
 # check dir stuff
-parser.add_option("--checksol", dest="checkSol", default=False, action="store_true", help="Check solution at specified dir against problems at specified dir"
+parser.add_option("--checksol", dest="checkSol", default=False,
+                  action="store_true",
+                  help="Check solution at specified dir against problems at specified dir"
                   )
 
-parser.add_option("--soldir", dest="check_dir_cnfs_solutions",  help="Check solutions found here"
+parser.add_option("--soldir", dest="check_dir_cnfs_solutions",
+                  help="Check solutions found here"
                   )
-parser.add_option("--probdir", dest="check_dir_cnfs_problems", default="/home/soos/media/sat/examples/satcomp09/", help="Directory of CNF files checked against"
+parser.add_option("--probdir", dest="check_dir_cnfs_problems",
+                  default="/home/soos/media/sat/examples/satcomp09/",
+                  help="Directory of CNF files checked against"
                   )
-parser.add_option("-c", "--check", dest="checkFile", default=None, help="Check this file"
+parser.add_option("-c", "--check", dest="checkFile", default=None,
+                  help="Check this file"
                   )
-parser.add_option("-s", "--sol", dest="solutionFile", default=None, help="Against this solution"
+parser.add_option("-s", "--sol", dest="solutionFile", default=None,
+                  help="Against this solution"
                   )
-parser.add_option("--novalgrind", dest="novalgrind", default=False, action="store_true", help="No valgrind installed")
+parser.add_option("--novalgrind", dest="novalgrind", default=False,
+                  action="store_true", help="No valgrind installed")
 
 (options, args) = parser.parse_args()
 
