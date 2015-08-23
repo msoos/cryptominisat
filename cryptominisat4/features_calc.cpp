@@ -261,6 +261,10 @@ void FeaturesCalc::calculate_cl_distributions(
     const vector<ClOffset>& clauses
     , struct Features::Distrib& distrib_data
 ) {
+    if (clauses.empty()) {
+        return;
+    }
+
     double glue_mean = 0;
     double glue_var = 0;
 

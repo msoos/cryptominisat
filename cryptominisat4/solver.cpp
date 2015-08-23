@@ -3386,11 +3386,16 @@ Features Solver::calculate_features() const
     feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
     feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
-    feat.props_per_confl = (double)sumStats.conflStats.numConflicts / (double)sumPropStats.propagations;
-    feat.confl_per_restart = (double)sumStats.conflStats.numConflicts / (double)sumStats.numRestarts;
-    feat.decisions_per_conflict = (double)sumStats.decisions / (double)sumStats.conflStats.numConflicts;
-    feat.learnt_bins_per_confl = (double)sumStats.learntBins / (double)sumStats.conflStats.numConflicts;
-    feat.learnt_tris_per_confl = (double)sumStats.learntTris / (double)sumStats.conflStats.numConflicts;
+    if (sumPropStats.propagations != 0
+        && sumStats.conflStats.numConflicts != 0
+        && sumStats.numRestarts != 0
+    ) {
+        feat.props_per_confl = (double)sumStats.conflStats.numConflicts / (double)sumPropStats.propagations;
+        feat.confl_per_restart = (double)sumStats.conflStats.numConflicts / (double)sumStats.numRestarts;
+        feat.decisions_per_conflict = (double)sumStats.decisions / (double)sumStats.conflStats.numConflicts;
+        feat.learnt_bins_per_confl = (double)sumStats.learntBins / (double)sumStats.conflStats.numConflicts;
+        feat.learnt_tris_per_confl = (double)sumStats.learntTris / (double)sumStats.conflStats.numConflicts;
+    }
 
     feat.num_gates_found_last = sumStats.num_gates_found_last;
     feat.num_xors_found_last = sumStats.num_xors_found_last;
