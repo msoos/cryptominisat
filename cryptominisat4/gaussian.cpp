@@ -286,11 +286,11 @@ void Gaussian::fill_matrix(matrixset& origMat)
     origMat.num_rows = select_columnorder(var_to_col, origMat);
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
-    changed_rows.resize(origMat.num_rows);
-    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
+    changed_rows.clear();
+    changed_rows.resize(origMat.num_rows, 0);
 
-    origMat.last_one_in_col.resize(origMat.num_cols);
-    std::fill(origMat.last_one_in_col.begin(), origMat.last_one_in_col.end(), origMat.num_rows);
+    origMat.last_one_in_col.clear();
+    origMat.last_one_in_col.resize(origMat.num_cols, origMat.num_rows);
     origMat.first_one_in_row.resize(origMat.num_rows);
 
     origMat.removeable_cols = 0;
@@ -302,8 +302,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     #endif
 
     uint32_t matrix_row = 0;
-    for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        const Xor& c = *xorclauses[i];
+    for (const Xor& c: xorclauses) {
         if (c.getRemoved()) continue;
 
         origMat.matrix.getVarsetAt(matrix_row).set(c, var_to_col, origMat.num_cols);

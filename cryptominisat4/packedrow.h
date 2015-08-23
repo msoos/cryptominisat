@@ -189,9 +189,9 @@ public:
     }
 
     template<class T>
-    void set(const T& v, const vector<uint16_t>& var_to_col, const uint32_t matrix_size)
+    void set(const T& v, const vector<uint16_t>& var_to_col, const uint32_t num_cols)
     {
-        assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
+        assert(size == (num_cols/64) + ((bool)(num_cols % 64)));
         //mp = new uint64_t[size];
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
