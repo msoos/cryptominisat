@@ -88,44 +88,14 @@ parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Print more output")
 
 # for fuzz-testing
-parser.add_option("-f", "--fuzz", dest="fuzz_test",
-                  default=False, action="store_true", help="Fuzz-test"
-                  )
 parser.add_option("--seed", dest="fuzz_seed_start",
                   help="Fuzz test start seed", type=int)
 parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                   help="Number of fuzz tests to run"
                   )
-
-# for regression testing
-parser.add_option("--regtest", dest="regression_test", default=False,
-                  action="store_true", help="Regression test"
-                  )
-parser.add_option("--testdir", dest="testDir", default="../tests/cnfs/",
-                  help="Directory where the tests are"
-                  )
-
-# check dir stuff
-parser.add_option("--checksol", dest="checkSol", default=False,
-                  action="store_true",
-                  help="Check solution at specified dir against problems at specified dir"
-                  )
-
-parser.add_option("--soldir", dest="check_dir_cnfs_solutions",
-                  help="Check solutions found here"
-                  )
-parser.add_option("--probdir", dest="check_dir_cnfs_problems",
-                  default="/home/soos/media/sat/examples/satcomp09/",
-                  help="Directory of CNF files checked against"
-                  )
-parser.add_option("-c", "--check", dest="checkFile", default=None,
-                  help="Check this file"
-                  )
-parser.add_option("-s", "--sol", dest="solutionFile", default=None,
-                  help="Against this solution"
-                  )
 parser.add_option("--novalgrind", dest="novalgrind", default=False,
                   action="store_true", help="No valgrind installed")
+
 
 (options, args) = parser.parse_args()
 
@@ -555,7 +525,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, newVar=False, needToLimitTime=False,
+    def execute(self, fname,
                 fnameDrup=None, extraOptions=""):
 
         if os.path.isfile(options.solver) is not True:
@@ -574,8 +544,6 @@ class Tester:
             command += "--debuglib "
         if options.verbose is False:
             command += "--verb 0 "
-        if newVar:
-            command += "--debugnewvar "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += extraOptions
@@ -590,12 +558,8 @@ class Tester:
 
         # if need time limit, then limit
         err_file = open("err_log.txt", "w")
-        if (needToLimitTime):
-            p = subprocess.Popen(
-                command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
-        else:
-            p = subprocess.Popen(
-                command.rsplit(), stderr=err_file, stdout=subprocess.PIPE)
+        p = subprocess.Popen(
+            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
 
         # print time limit after child startup
         if options.verbose:
@@ -633,8 +597,9 @@ class Tester:
         print "Solving with other solver.."
         currTime = calendar.timegm(time.gmtime())
         try:
-            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE,
-                             preexec_fn=setlimits)
+            p = subprocess.Popen(toexec.rsplit(),
+                                 stdout=subprocess.PIPE,
+                                 preexec_fn=setlimits)
         except OSError:
             print "ERROR: Probably you don't have lingeling installed!"
             raise
@@ -810,37 +775,28 @@ class Tester:
                 # delete temporary file
                 os.unlink(tmpfname)
 
-    def check(self, fname, fnameSolution=None, fnameDrup=None, newVar=False,
-              needSolve=True, needToLimitTime=False, checkAgainst=None, extraOptions=""):
+    def check(self, fname, fnameDrup=None,
+              checkAgainst=None,
+              extraOptions=""):
 
         consoleOutput = ""
-        if checkAgainst == None:
+        if checkAgainst is None:
             checkAgainst = fname
         currTime = calendar.timegm(time.gmtime())
 
         # Do we need to solve the problem, or is it already solved?
-        if needSolve:
-            consoleOutput, return_code = self.execute(
-                fname, newVar, needToLimitTime, fnameDrup=fnameDrup, extraOptions=extraOptions)
-        else:
-            if not os.path.isfile(fnameSolution):
-                print "ERROR! Solution file '%s' is not a file!" % fnameSolution
-                exit(-1)
-            f = open(fnameSolution, "r")
-            consoleOutput = f.read()
-            return_code = 0
-            f.close()
-            print "Read solution from file ", fnameSolution
+        consoleOutput, return_code = self.execute(
+            fname, fnameDrup=fnameDrup,
+            extraOptions=extraOptions)
 
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
-        if needToLimitTime:
-            diffTime = calendar.timegm(time.gmtime()) - currTime
-            if diffTime > (maxTime - maxTimeDiff) / self.num_threads:
-                print "Too much time to solve, aborted!"
-                return
-            else:
-                print "Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime)
+        diffTime = calendar.timegm(time.gmtime()) - currTime
+        if diffTime > (maxTime - maxTimeDiff) / self.num_threads:
+            print "Too much time to solve, aborted!"
+            return
+        else:
+            print "Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime)
 
         print "filename: %s" % fname
 
@@ -941,7 +897,7 @@ class Tester:
             self.needDebugLib = False
             file_name2 = file_name
 
-        self.check(fname=file_name2, fnameDrup=fnameDrup, needToLimitTime=True)
+        self.check(fname=file_name2, fnameDrup=fnameDrup)
 
         # remove temporary filenames
         os.unlink(file_name2)
@@ -958,63 +914,22 @@ class Tester:
             if fnmatch.fnmatch(fname, 'debugLibPart*'):
                 os.unlink(fname)
 
-    def check_dir_cnffuzz_tests(self):
-        self.ignoreNoSolution = True
-        print "Checking already solved solutions"
-
-        # check if options.check_dir_cnfs_solutions has bee set
-        if options.check_dir_cnfs_solutions == "":
-            print "When checking, you must give test dir"
-            exit()
-
-        print "You gave testdir (where solutions are):", options.check_dir_cnfs_solutions
-        print "You gave CNF dir (where problems are) :", options.check_dir_cnfs_problems
-
-        for fname in os.listdir(options.check_dir_cnfs_solutions):
-
-            if fnmatch.fnmatch(fname, '*.cnf.gz.out'):
-                # add dir, remove trailing .out
-                fname = fname[:len(fname) - 4]
-                fnameSol = options.check_dir_cnfs_solutions + "/" + fname
-
-                # check now
-                self.check(fname=options.check_dir_cnfs_problems + "/" + fname,
-                           fnameSolution=fnameSol, needSolve=False)
-
-    def regression_test(self):
-        for fname in os.listdir(options.testDir):
-            if fnmatch.fnmatch(fname, '*.cnf.gz'):
-                self.check(fname=options.testDir + fname, newVar=False)
-
 print_version()
 tester = Tester()
+tester.needDebugLib = False
+tester.check_for_unsat = True
+num = 0
+rnd_seed = options.fuzz_seed_start
+if rnd_seed is None:
+    rnd_seed = random.randint(0, 1000*1000*100)
 
-if options.checkFile:
-    tester.check_for_unsat = True
-    tester.needDebugLib = False
-    tester.check(options.checkFile, options.solutionFile, needSolve=False)
+while True:
+    toexec = "./regression_test.py --fuzzlim 1 --seed %d" % rnd_seed
+    print "To re-create fuzz-test below: %s" % toexec
 
-if options.fuzz_test:
-    tester.needDebugLib = False
-    tester.check_for_unsat = True
-    num = 0
-    rnd_seed = options.fuzz_seed_start
-    if rnd_seed is None:
-        rnd_seed = random.randint(0, 1000*1000*100)
-
-    while True:
-        toexec = "./regression_test.py -f --fuzzlim 1 --seed %d" % rnd_seed
-        print "To re-create fuzz-test below: %s" % toexec
-
-        random.seed(rnd_seed)
-        tester.fuzz_test_one()
-        rnd_seed += 1
-        num += 1
-        if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
-            exit(0)
-
-if options.checkSol:
-    tester.check_dir_cnfs()
-
-if options.regression_test:
-    tester.regression_test()
+    random.seed(rnd_seed)
+    tester.fuzz_test_one()
+    rnd_seed += 1
+    num += 1
+    if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
+        exit(0)
