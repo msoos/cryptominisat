@@ -66,7 +66,7 @@ desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
 parser = optparse.OptionParser(usage=usage, description=desc,
                                formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar="SOLVER", dest="solver",
-                  default="../build/cryptominisat",
+                  default="../build/cryptominisat4",
                   help="SAT solver executable. Default: %default")
 
 parser.add_option("--extraopts", "-e", metavar="OPTS",

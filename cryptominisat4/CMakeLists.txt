@@ -188,7 +188,7 @@ endif()
 
 
 if (NOT ONLY_SIMPLE)
-    add_executable(cryptominisat
+    add_executable(cryptominisat4
         dimacsparser.cpp
         main.cpp
     )
@@ -200,8 +200,8 @@ add_executable(cryptominisat_simple
 
 if (STATICCOMPILE)
     if (NOT ONLY_SIMPLE)
-        set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(cryptominisat PROPERTIES LINK_SEARCH_START_STATIC 0)
+        set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_START_STATIC 0)
     endif()
     set_target_properties(cryptominisat_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(cryptominisat_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
@@ -217,21 +217,21 @@ IF (ZLIB_FOUND)
 ENDIF()
 
 if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-    set_target_properties(cryptominisat PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set_target_properties(cryptominisat4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+    set_target_properties(cryptominisat4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 set_target_properties(cryptominisat_simple PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set_target_properties(cryptominisat_simple PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (NOT ONLY_SIMPLE)
-    target_link_libraries(cryptominisat
+    target_link_libraries(cryptominisat4
         ${cryptoms_exec_link_libs}
     )
-    install(TARGETS cryptominisat
+    install(TARGETS cryptominisat4
         EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
         RUNTIME DESTINATION bin
     )
-    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat")
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4")
 endif()
 
 target_link_libraries(cryptominisat_simple

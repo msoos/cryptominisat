@@ -1,4 +1,4 @@
-get_target_property(cryptominisat4_EXECUTABLE_PATH cryptominisat LOCATION)
+get_target_property(cryptominisat4_EXECUTABLE_PATH cryptominisat4 LOCATION)
 
 # Create llvm-lit configuration file
 configure_file(lit.site.cfg.in lit.site.cfg @ONLY)
