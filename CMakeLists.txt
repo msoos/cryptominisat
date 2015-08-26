@@ -388,7 +388,7 @@ set(CRYPTOMINISAT4_STATIC_DEPS
 )
 
 # Export targets
-set(MY_TARGETS libcryptominisat4 cryptominisat_simple)
+set(MY_TARGETS libcryptominisat4 cryptominisat4_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat4)
 endif()
