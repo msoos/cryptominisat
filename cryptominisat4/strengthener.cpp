@@ -435,6 +435,8 @@ uint64_t Strengthener::calc_time_available(
         maxCountTime *= 2;
     }
     if (stats->numCalled > 2
+        && stats->triedCls > 0 //avoid division by zero
+        && stats->totalLits > 0 //avoid division by zero
         && (double)stats->numClSubsumed/(double)stats->triedCls < 0.05
         && (double)stats->numLitsRem/(double)stats->totalLits < 0.05
     ) {
