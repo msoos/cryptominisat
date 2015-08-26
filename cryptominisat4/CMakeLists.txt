@@ -6,7 +6,10 @@ if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h" @ONLY)
 
 
 add_custom_command(
@@ -94,8 +97,16 @@ add_library(temp_lib_ipasir OBJECT
     ipasir.cpp
 )
 
-add_dependencies(temp_lib_norm tablestruct)
-add_dependencies(temp_lib_ipasir tablestruct)
+add_dependencies(temp_lib_norm
+    tablestruct
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
+)
+add_dependencies(temp_lib_ipasir
+    tablestruct
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
+)
 
 list(APPEND cms_lib_objects_norm $<TARGET_OBJECTS:temp_lib_norm>)
 list(APPEND cms_lib_objects_ipasir $<TARGET_OBJECTS:temp_lib_ipasir>)
@@ -146,8 +157,8 @@ set_target_properties(libcryptominisat4ipasir PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-cmsat_add_public_header(libcryptominisat4 cryptominisat.h )
-cmsat_add_public_header(libcryptominisat4 solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h )
+cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
