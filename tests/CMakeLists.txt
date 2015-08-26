@@ -74,6 +74,10 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
 include_directories(
     ${PROJECT_SOURCE_DIR}
 )
+include_directories(
+    ${PROJECT_BINARY_DIR}/cmsat4-src
+)
+
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

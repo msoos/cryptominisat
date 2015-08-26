@@ -3,7 +3,7 @@
 
 #include "cryptominisat4/cryptominisat.h"
 
-#include "cryptominisat4/heap.h"
+#include "src/heap.h"
 
 BOOST_AUTO_TEST_SUITE( heap_minim )
 

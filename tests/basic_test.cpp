@@ -2,8 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 
-#include "cryptominisat4/cryptominisat.h"
-#include "cryptominisat4/solverconf.h"
+#include "src/cryptominisat.h"
+#include "src/solverconf.h"
 using namespace CMSat;
 #include <vector>
 using std::vector;

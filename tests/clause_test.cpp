@@ -23,7 +23,7 @@ THE SOFTWARE.
 #define BOOST_TEST_MODULE assumptions
 #include <boost/test/unit_test.hpp>
 
-#include "cryptominisat4/clause.h"
+#include "src/clause.h"
 #include <sstream>
 #include <stdlib.h>
 

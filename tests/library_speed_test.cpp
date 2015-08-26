@@ -21,7 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include <cryptominisat4/cryptominisat.h>
-#include "cryptominisat4/time_mem.h"
+#include "src/time_mem.h"
 #include <assert.h>
 #include <vector>
 #include <iostream>
