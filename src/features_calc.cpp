@@ -157,6 +157,9 @@ void FeaturesCalc::calculate_clause_stats()
 
 void FeaturesCalc::calculate_variable_stats()
 {
+    if (feat.numVars == 0)
+        return;
+
     for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
         if ( myVars[vv].size == 0 ) {
             continue;
@@ -224,6 +227,9 @@ void FeaturesCalc::calculate_extra_clause_stats()
 
 void FeaturesCalc::calculate_extra_var_stats()
 {
+    if (feat.numVars == 0)
+        return;
+
     for ( int vv = 0; vv < (int)myVars.size(); vv++ ) {
         if ( myVars[vv].size == 0 ) {
             continue;
@@ -244,13 +250,17 @@ void FeaturesCalc::calculate_extra_var_stats()
         feat.vcg_var_std = 0;
     }
 
-    if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps ) {
+    if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps
+        && feat.pnr_var_mean != 0
+    ) {
         feat.pnr_var_std = sqrt(feat.pnr_var_std / (double)feat.numVars) / feat.pnr_var_mean;
     } else {
         feat.pnr_var_std = 0;
     }
 
-    if ( feat.horn_std / (double)feat.numVars > feat.eps && feat.horn_mean > feat.eps ) {
+    if ( feat.horn_std / (double)feat.numVars > feat.eps && feat.horn_mean > feat.eps
+        && feat.horn_mean != 0
+    ) {
         feat.horn_std = sqrt(feat.horn_std / (double)feat.numVars) / feat.horn_mean;
     } else {
         feat.horn_std = 0;
