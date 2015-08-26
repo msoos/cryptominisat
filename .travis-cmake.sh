@@ -192,7 +192,7 @@ case $CMS_CONFIG in
 esac
 
 #do fuzz testing
-if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "PYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ]; then
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "PYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ]; then
     cd ../scripts/
     ./fuzz_test.py --novalgrind --fuzzlim 30
 fi
