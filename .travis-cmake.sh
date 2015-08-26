@@ -9,8 +9,8 @@
 # export CC="gcc-4.7"
 # export CXX="g++-4.7"
 
-SOURCE_DIR="$1"
-THIS_DIR="$2"
+SOURCE_DIR="../"
+THIS_DIR="build"
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 set -e
 
@@ -109,6 +109,15 @@ case $CMS_CONFIG in
     NOPYTHON)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove python2.7-dev python-dev
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                   ${SOURCE_DIR}
+    ;;
+
+    INTREE_BUILD)
+        cd ..
+        SOURCE_DIR="."
+        THIS_DIR="."
+        sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
     ;;
