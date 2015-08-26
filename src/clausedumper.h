@@ -25,7 +25,7 @@
 #include <ostream>
 #include <vector>
 #include <limits>
-#include "solvertypesmini.h"
+#include "cryptominisat4/solvertypesmini.h"
 #include "cloffset.h"
 
 using std::vector;

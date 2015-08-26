@@ -9,7 +9,8 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h" @ONLY)
 
 
 add_custom_command(
@@ -99,12 +100,14 @@ add_library(temp_lib_ipasir OBJECT
 
 add_dependencies(temp_lib_norm
     tablestruct
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 add_dependencies(temp_lib_ipasir
     tablestruct
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
@@ -157,8 +160,8 @@ set_target_properties(libcryptominisat4ipasir PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h )
-cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h )
+cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.

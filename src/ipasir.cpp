@@ -3,7 +3,7 @@
  * solving library.
  */
 
-#include "cryptominisat.h"
+#include "cryptominisat4/cryptominisat.h"
 #include <vector>
 #include <complex>
 #include <assert.h>

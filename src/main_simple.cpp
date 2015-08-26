@@ -36,7 +36,7 @@ using std::endl;
 #include "main_common.h"
 
 #include "solverconf.h"
-#include "cryptominisat.h"
+#include "cryptominisat4/cryptominisat.h"
 #include "dimacsparser.h"
 using namespace CMSat;
 std::ostream* drupf;

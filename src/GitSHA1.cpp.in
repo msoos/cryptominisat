@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "cryptominisat4/GitSHA1.h"
+#include "src/GitSHA1.h"
 const char* get_version_sha1()
 {
     static const char myversion_sha1[] = "@GIT_SHA1@";

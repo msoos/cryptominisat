@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 #include <string>
 #include "streambuffer.h"
-#include "cryptominisat.h"
+#include "cryptominisat4/cryptominisat.h"
 
 #ifdef USE_ZLIB
 #include <zlib.h>

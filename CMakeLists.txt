@@ -325,7 +325,7 @@ endif()
 # -----------------------------------------------------------------------------
 set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
 
-add_subdirectory(cryptominisat4 cmsat4-src)
+add_subdirectory(src cmsat4-src)
 
 # -----------------------------------------------------------------------------
 # Look for python

@@ -22,7 +22,7 @@
 #ifndef SHARED_DATA_H
 #define SHARED_DATA_H
 
-#include "solvertypesmini.h"
+#include "cryptominisat4/solvertypesmini.h"
 
 #include <vector>
 #include <mutex>

@@ -30,7 +30,7 @@
 #include <iostream>
 #include <assert.h>
 #include <iomanip>
-#include "cryptominisat.h"
+#include "cryptominisat4/cryptominisat.h"
 #include "sqlstats.h"
 
 using namespace CMSat;

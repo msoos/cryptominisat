@@ -23,7 +23,7 @@
 #define __SUBSUMESTRENGTHEN_H__
 
 #include "cloffset.h"
-#include "solvertypesmini.h"
+#include "cryptominisat4/solvertypesmini.h"
 #include "clabstraction.h"
 #include "clause.h"
 #include <vector>

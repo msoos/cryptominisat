@@ -22,7 +22,7 @@
 #include "clausecleaner.h"
 #include "clauseallocator.h"
 #include "solver.h"
-#include "solvertypesmini.h"
+#include "cryptominisat4/solvertypesmini.h"
 
 using namespace CMSat;
 

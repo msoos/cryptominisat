@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef __MAIN_COMMON_H__
 #define __MAIN_COMMON_H__
 
-#include "cryptominisat.h"
+#include "cryptominisat4/cryptominisat.h"
 #include <iostream>
 #include <cmath>
 
