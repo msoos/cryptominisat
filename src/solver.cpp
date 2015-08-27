@@ -3557,6 +3557,11 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 14: {
+            conf.shortTermHistorySize = 600;
+            break;
+        }
+
         default: {
             cout << "ERROR: You must give a value for reconfigure that is lower" << endl;
             exit(-1);
