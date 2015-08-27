@@ -23,18 +23,18 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <errno.h>
 #include <stdlib.h>
+#include <new>
 
 namespace CMSat {
 
 //=================================================================================================
 // Simple layer on top of malloc/realloc to catch out-of-memory situtaions and provide some typing:
 
-class OutOfMemoryException{};
 static inline void* xrealloc(void *ptr, size_t size)
 {
     void* mem = realloc(ptr, size);
     if (mem == NULL && errno == ENOMEM){
-        throw OutOfMemoryException();
+        throw std::bad_alloc();
     }else
         return mem;
 }

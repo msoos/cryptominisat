@@ -76,7 +76,7 @@ public:
     {
         T* _data2 = (T*)malloc(sz*sizeof(T));
         if (!_data2) {
-            throw OutOfMemoryException();
+            throw std::bad_alloc();
         }
         memcpy(_data2, _data, sz*sizeof(T));
         free(_data);
@@ -147,7 +147,7 @@ void vec<T,_Size>::capacity(Size min_cap) {
     const Size size_max = std::numeric_limits<Size>::max();
     if ( ((size_max <= std::numeric_limits<int>::max()) && (add > size_max - cap))
     ||   (((_data = (T*)::realloc(_data, (cap += add) * sizeof(T))) == NULL) && errno == ENOMEM) )
-        throw OutOfMemoryException();
+        throw std::bad_alloc();
  }
 
 
