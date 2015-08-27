@@ -129,11 +129,11 @@ int main(int argc, char** argv)
     drupf = NULL;
 
     int i, j;
-    int num_threads = 1;
+    long int num_threads = 1;
     const char* value;
     for (i = j = 0; i < argc; i++){
         if ((value = hasPrefix(argv[i], "--drup="))){
-            int drup = (int)strtol(value, NULL, 10);
+            long int drup = (int)strtol(value, NULL, 10);
             if (drup == 0 && errno == EINVAL){
                 printf("ERROR! illegal drup level %s\n", value);
                 exit(0);
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
                 drup_stuff(conf);
             }
         }else if ((value = hasPrefix(argv[i], "--verb="))){
-            int verbosity = (int)strtol(value, NULL, 10);
+            long int verbosity = (int)strtol(value, NULL, 10);
             if (verbosity == 0 && errno == EINVAL){
                 printf("ERROR! illegal verbosity level %s\n", value);
                 exit(0);
