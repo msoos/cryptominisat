@@ -232,6 +232,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
+            break;
         }
         case 15: {
             conf.inc_max_temp_red_cls = 1.001;
