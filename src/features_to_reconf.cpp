@@ -29,7 +29,7 @@ using std::endl;
 
 namespace CMSat {
 
-int get_reconf_from_features(const Features& feat, const int verb)
+int get_reconf_from_features(const Features& /*feat*/, const int /*verb*/)
 {
     return 0;
 }
