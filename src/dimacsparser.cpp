@@ -165,13 +165,13 @@ bool DimacsParser::match(StreamBuffer& in, const char* str)
 void DimacsParser::printHeader(StreamBuffer& in)
 {
     if (match(in, "p cnf")) {
-        int vars    = parseInt(in);
+        int num_vars    = parseInt(in);
         int clauses = parseInt(in);
         if (verbosity >= 1) {
-            cout << "c -- header says num vars:   " << std::setw(12) << vars << endl;
+            cout << "c -- header says num vars:   " << std::setw(12) << num_vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
-        if (vars < 0) {
+        if (num_vars < 0) {
             std::cerr << "ERROR: Number of variables in header cannot be less than 0" << endl;
             exit(-1);
         }
