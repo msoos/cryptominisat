@@ -296,7 +296,7 @@ Lit Prober::update_lit_for_dominator(
         if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
             const Lit betterlit = solver->litReachable[lit.toInt()].lit;
             if (solver->value(betterlit.var()) == l_Undef
-                && solver->varData[betterlit.var()].is_decision
+                && solver->varData[betterlit.var()].removed == Removed::none
             ) {
                 //Update lit
                 lit = betterlit;
@@ -370,7 +370,7 @@ bool Prober::probe()
 
         //Check if var is set already
         if (solver->value(lit.var()) != l_Undef
-            || !solver->varData[lit.var()].is_decision
+            || solver->varData[lit.var()].removed != Removed::none
             || visitedAlready[lit.toInt()]
         ) {
             continue;

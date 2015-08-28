@@ -156,7 +156,6 @@ class Solver : public Searcher
         void check_wrong_attach() const;
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
-        void unset_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
         bool fully_enqueue_this(const Lit lit);
         void update_assumptions_after_varreplace();
@@ -274,7 +273,6 @@ class Solver : public Searcher
         }
         void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> outside_assumptions;
-        void checkDecisionVarCorrectness() const;
 
         //Stats printing
         void print_min_stats() const;
@@ -354,17 +352,7 @@ class Solver : public Searcher
 
 inline void Solver::set_decision_var(const uint32_t var)
 {
-    if (!varData[var].is_decision) {
-        varData[var].is_decision = true;
-        insertVarOrder(var);
-    }
-}
-
-inline void Solver::unset_decision_var(const uint32_t var)
-{
-    if (varData[var].is_decision) {
-        varData[var].is_decision = false;
-    }
+    insertVarOrder(var);
 }
 
 inline uint64_t Solver::getNumLongClauses() const

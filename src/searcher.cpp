@@ -1659,10 +1659,9 @@ void Searcher::restore_order_heap()
 {
     order_heap.clear();
     for(size_t var = 0; var < nVars(); var++) {
-        if (solver->varData[var].is_decision
+        if (solver->varData[var].removed == Removed::none
             && value(var) == l_Undef
         ) {
-            assert(varData[var].removed == Removed::none);
             insertVarOrder(var);
         }
     }
@@ -2039,7 +2038,7 @@ Lit Searcher::pickBranchLit()
             const Var next_var = order_heap.random_element(mtrand);
 
             if (value(next_var) == l_Undef
-                && solver->varData[next_var].is_decision
+                && solver->varData[next_var].removed == Removed::none
             ) {
                 stats.decisionsRand++;
                 next = Lit(next_var, !pickPolarity(next_var));
@@ -2052,7 +2051,7 @@ Lit Searcher::pickBranchLit()
         Var next_var = var_Undef;
         while (next_var == var_Undef
           || value(next_var) != l_Undef
-          || !solver->varData[next_var].is_decision
+          || solver->varData[next_var].removed != Removed::none
         ) {
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap.empty()) {
@@ -2090,7 +2089,7 @@ Lit Searcher::pickBranchLit()
         //Update
         if (lit2 != lit_Undef
             && value(lit2.var()) == l_Undef
-            && solver->varData[lit2.var()].is_decision
+            && solver->varData[lit2.var()].removed == Removed::none
         ) {
             //Dominator may not actually dominate this variabe
             //So just to be sure, re-insert it
@@ -2111,7 +2110,6 @@ Lit Searcher::pickBranchLit()
 
     //No vars in heap: solution found
     if (next != lit_Undef) {
-        assert(solver->varData[next.var()].is_decision);
         assert(solver->varData[next.var()].removed == Removed::none);
     }
     return next;
@@ -2268,7 +2266,7 @@ void Searcher::stamp_based_more_minim(vector<Lit>& cl)
 
 bool Searcher::VarFilter::operator()(uint32_t var) const
 {
-    return (cc->value(var) == l_Undef && solver->varData[var].is_decision);
+    return (cc->value(var) == l_Undef && solver->varData[var].removed == Removed::none);
 }
 
 uint64_t Searcher::sumConflicts() const

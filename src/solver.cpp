@@ -1540,24 +1540,11 @@ void Solver::handle_found_solution(const lbool status)
         }
         update_assump_conflict_to_orig_outside(conflict);
     }
-    checkDecisionVarCorrectness();
 
     //Too slow when running lots of small queries
     #ifdef DEBUG_IMPLICIT_STATS
     check_implicit_stats();
     #endif
-}
-
-void Solver::checkDecisionVarCorrectness() const
-{
-    //Check for var deicisonness
-    for(size_t var = 0; var < nVarsOuter(); var++) {
-        if (varData[var].removed != Removed::none) {
-            assert(!varData[var].is_decision);
-        } else {
-            assert(varData[var].is_decision);
-        }
-    }
 }
 
 bool Solver::execute_inprocess_strategy(
@@ -2997,7 +2984,6 @@ void Solver::calculate_reachability()
         //Check if it's a good idea to look at the variable as a dominator
         if (value(lit) != l_Undef
             || varData[lit.var()].removed != Removed::none
-            || !varData[lit.var()].is_decision
         ) {
             continue;
         }
@@ -3321,7 +3307,7 @@ Var Solver::num_active_vars() const
             case Removed::none:
                 break;
         }
-        if (!varData[var].is_decision) {
+        if (varData[var].removed != Removed::none) {
             removed_non_decision++;
         }
         numActive++;

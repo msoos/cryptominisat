@@ -84,7 +84,7 @@ void ImplCache::print_statsSort(const Solver* solver) const
     for(size_t i = 0; i < implCache.size(); i++) {
         Lit lit = Lit::toLit(i);
 
-        if (solver->varData[lit.var()].is_decision) {
+        if (solver->varData[lit.var()].removed == Removed::none) {
             activeLits++;
             totalElems += implCache[i].lits.size();
             numHasElems += !implCache[i].lits.empty();

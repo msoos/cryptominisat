@@ -2019,8 +2019,6 @@ void OccSimplifier::set_var_as_eliminated(const Var var, const Lit lit)
     solver->varData[var].removed = Removed::elimed;
 
     runStats.numVarsElimed++;
-
-    solver->unset_decision_var(var);
 }
 
 void OccSimplifier::create_dummy_blocked_clause(const Lit lit)

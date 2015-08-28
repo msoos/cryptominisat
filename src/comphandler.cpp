@@ -311,7 +311,6 @@ void CompHandler::check_local_vardata_sanity()
     for (Var outerVar = 0; outerVar < solver->nVarsOuter(); ++outerVar) {
         const Var interVar = solver->map_outer_to_inter(outerVar);
         if (savedState[outerVar] != l_Undef) {
-            assert(!solver->varData[interVar].is_decision);
             assert(solver->varData[interVar].removed == Removed::decomposed);
             assert(solver->value(interVar) == l_Undef || solver->varData[interVar].level == 0);
             num_vars_removed_check++;
@@ -420,9 +419,7 @@ void CompHandler::moveVariablesBetweenSolvers(
         assert(compFinder->getVarComp(var) == comp);
         assert(solver->value(var) == l_Undef);
 
-        assert(solver->varData[var].is_decision);
         assert(solver->varData[var].removed == Removed::none);
-        solver->unset_decision_var(var);
         solver->varData[var].removed = Removed::decomposed;
         num_vars_removed++;
     }
@@ -744,7 +741,6 @@ void CompHandler::addSavedState(vector<lbool>& solution)
         if (savedState[var] != l_Undef) {
             const Var interVar = solver->map_outer_to_inter(var);
             assert(solver->varData[interVar].removed == Removed::decomposed);
-            assert(!solver->varData[interVar].is_decision);
 
             const lbool val = savedState[var];
             assert(solution[var] == l_Undef);

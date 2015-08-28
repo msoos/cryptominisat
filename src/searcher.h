@@ -617,7 +617,7 @@ inline void Searcher::insertVarOrder(const Var x)
     ) {
         #ifdef SLOW_DEUG
         //All active varibles are decision variables
-        assert(varData[x].is_decision);
+        assert(varData[x].removed == Removed::none);
         #endif
 
         order_heap.insert(x);
