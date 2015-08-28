@@ -39,7 +39,6 @@ struct ClauseUsageStats
     uint64_t num = 0;
     uint64_t sumProp = 0;
     uint64_t sumConfl = 0;
-    uint64_t sumLitVisited = 0;
     uint64_t sumLookedAt = 0;
     uint64_t sumUsedUIP = 0;
 
@@ -48,7 +47,6 @@ struct ClauseUsageStats
         num += other.num;
         sumProp += other.sumProp;
         sumConfl += other.sumConfl;
-        sumLitVisited += other.sumLitVisited;
         sumLookedAt += other.sumLookedAt;
         sumUsedUIP += other.sumUsedUIP;
 
@@ -64,7 +62,6 @@ struct ClauseUsageStats
         #ifdef STATS_NEEDED
         sumConfl += cl.stats.conflicts_made;
         sumProp += cl.stats.propagations_made;
-        sumLitVisited += cl.stats.visited_literals;
         sumLookedAt += cl.stats.clause_looked_at;
         sumUsedUIP += cl.stats.used_for_uip_creation;
         #endif

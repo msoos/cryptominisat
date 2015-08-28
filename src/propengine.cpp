@@ -282,7 +282,6 @@ PropResult PropEngine::prop_normal_helper(
 ) {
     #ifdef STATS_NEEDED
     c.stats.clause_looked_at++;
-    c.stats.visited_literals++;
     #endif
 
     // Make sure the false literal is data[1]:
@@ -300,33 +299,18 @@ PropResult PropEngine::prop_normal_helper(
     }
 
     // Look for new watch:
-    #ifdef STATS_NEEDED
-    uint32_t numLitVisited = 0;
-    #endif
-
     for (Lit *k = c.begin() + 2, *end2 = c.end()
         ; k != end2
         ; k++
-        #ifdef STATS_NEEDED
-        , numLitVisited++
-        #endif
     ) {
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
-            #ifdef STATS_NEEDED
-            //propStats.bogoProps += numLitVisited/10;
-            c.stats.visited_literals+= numLitVisited;
-            #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
             return PROP_NOTHING;
         }
     }
-    #ifdef STATS_NEEDED
-    //propStats.bogoProps += numLitVisited/10;
-    c.stats.visited_literals+= numLitVisited;
-    #endif
 
     return PROP_TODO;
 }
@@ -429,7 +413,6 @@ bool PropEngine::prop_long_cl_any_order(
 
     #ifdef STATS_NEEDED
     c.stats.clause_looked_at++;
-    c.stats.visited_literals++;
     #endif
 
     // Make sure the false literal is data[1]:
@@ -448,32 +431,18 @@ bool PropEngine::prop_long_cl_any_order(
     }
 
     // Look for new watch:
-    #ifdef STATS_NEEDED
-    uint numLitVisited = 2;
-    #endif
     for (Lit *k = c.begin() + 2, *end2 = c.end()
         ; k != end2
         ; k++
-        #ifdef STATS_NEEDED
-        , numLitVisited++
-        #endif
     ) {
         //Literal is either unset or satisfied, attach to other watchlist
         if (value(*k) != l_False) {
             c[1] = *k;
-            //propStats.bogoProps += numLitVisited/10;
-            #ifdef STATS_NEEDED
-            c.stats.visited_literals+= numLitVisited;
-            #endif
             *k = ~p;
             watches[c[1].toInt()].push(Watched(offset, c[0]));
             return true;
         }
     }
-    #ifdef STATS_NEEDED
-    //propStats.bogoProps += numLitVisited/10;
-    c.stats.visited_literals+= numLitVisited;
-    #endif
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;

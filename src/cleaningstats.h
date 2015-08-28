@@ -53,7 +53,6 @@ struct CleaningStats
             #ifdef STATS_NEEDED
             numProp += other.numProp;
             numLookedAt += other.numLookedAt;
-            numLitVisited += other.numLitVisited;
             #endif
 
             return *this;
@@ -71,7 +70,6 @@ struct CleaningStats
 
         #ifdef STATS_NEEDED
         uint64_t numProp = 0;
-        uint64_t numLitVisited = 0;
         uint64_t numLookedAt = 0;
         #endif
 
@@ -87,7 +85,6 @@ struct CleaningStats
             #ifdef STATS_NEEDED
             act += cl->stats.activity;
             numConfl += cl->stats.conflicts_made;
-            numLitVisited += cl->stats.visited_literals;
             numLookedAt += cl->stats.clause_looked_at;
             numProp += cl->stats.propagations_made;
             age += sumConfl - cl->stats.introduced_at_conflict;

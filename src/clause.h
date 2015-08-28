@@ -96,7 +96,6 @@ struct ClauseStats
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
     uint32_t propagations_made = 0; ///<Number of times caused propagation
-    uint64_t visited_literals = 0; ///<Number of literals visited
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
     #endif
@@ -116,7 +115,6 @@ struct ClauseStats
         conflicts_made = 0;
         sum_of_branch_depth_conflict = 0;
         propagations_made = 0;;
-        visited_literals = 0;
         clause_looked_at = 0;
         used_for_uip_creation = 0;
         #endif
@@ -135,7 +133,6 @@ struct ClauseStats
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
         ret.propagations_made = first.propagations_made + second.propagations_made;
-        ret.visited_literals = first.visited_literals + second.visited_literals;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
         #endif
@@ -153,7 +150,6 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
     os << "numConfl " << stats.conflicts_made<< " ";
     os << "numProp " << stats.propagations_made<< " ";
-    os << "numLitVisit " << stats.visited_literals<< " ";
     os << "numLook " << stats.clause_looked_at<< " ";
     os << "used_for_uip_creation" << stats.used_for_uip_creation << " ";
     #endif
@@ -393,7 +389,6 @@ public:
         cout
         << " Confls: " << std::setw(10) << stats.conflicts_made
         << " Props: " << std::setw(10) << stats.propagations_made
-        << " Lit visited: " << std::setw(10)<< stats.visited_literals
         << " Looked at: " << std::setw(10)<< stats.clause_looked_at
         << " UIP used: " << std::setw(10)<< stats.used_for_uip_creation;
         #endif

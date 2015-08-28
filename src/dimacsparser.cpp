@@ -180,8 +180,8 @@ void DimacsParser::printHeader(StreamBuffer& in)
             exit(-1);
         }
 
-        if (solver->nVars() <= (size_t)vars) {
-            solver->new_vars(vars-solver->nVars());
+        if (solver->nVars() <= (size_t)num_vars) {
+            solver->new_vars(num_vars-solver->nVars());
         }
     } else {
         std::cerr

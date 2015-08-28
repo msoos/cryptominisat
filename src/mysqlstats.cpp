@@ -676,20 +676,20 @@ void MySQLStats::initReduceDBSTMT()
     << ", `reduceDBs`"
 
     //Actual data
-    << ", `irredClsVisited`, `irredLitsVisited`"
-    << ", `redClsVisited`, `redLitsVisited`"
+    << ", `irredClsVisited`"
+    << ", `redClsVisited`"
 
     //Clean data
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
     << ", removedAge, removedAct"
-    << ", removedLitVisited, removedProp, removedConfl"
+    << ", removedProp, removedConfl"
     << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBin, remainResolTri, remainResolLIrred, remainResolLRed"
     << ", remainAge, remainAct"
-    << ", remainLitVisited, remainProp, remainConfl"
+    << ", remainProp, remainConfl"
     << ", remainLookedAt, remainUsedUIP"
     << ") values ";
     writeQuestionMarks(
@@ -741,11 +741,9 @@ void MySQLStats::initReduceDBSTMT()
 
     //Clause stats -- irred
     bindTo(stmtReduceDB, stmtReduceDB.irredClsVisited);
-    bindTo(stmtReduceDB, stmtReduceDB.irredLitsVisited);
 
     //Clause stats -- red
     bindTo(stmtReduceDB, stmtReduceDB.redClsVisited);
-    bindTo(stmtReduceDB, stmtReduceDB.redLitsVisited);
 
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.num);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.lits);
@@ -756,7 +754,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.act);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLitVisited);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLookedAt);
@@ -771,7 +768,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.act);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLitVisited);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLookedAt);
@@ -803,11 +799,9 @@ void MySQLStats::reduceDB(
 
     //Clause data for IRRED
     stmtReduceDB.irredClsVisited    = irredStats.sumLookedAt;
-    stmtReduceDB.irredLitsVisited   = irredStats.sumLitVisited;
 
     //Clause data for RED
     stmtReduceDB.redClsVisited      = redStats.sumLookedAt;
-    stmtReduceDB.redLitsVisited     = redStats.sumLitVisited;
 
     //Clean data
     stmtReduceDB.clean              = clean;

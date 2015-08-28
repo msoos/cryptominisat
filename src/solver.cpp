@@ -1825,23 +1825,6 @@ void Solver::print_prop_confl_stats(
             << ((double)stats[i].sumPropAndConfl()/(double)stats[i].sumLookedAt);
         }
 
-        cout
-        << " Avg. lits visited: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << ((double)stats[i].sumLitVisited/(double)stats[i].num);
-
-        if (stats[i].sumLookedAt > 0) {
-            cout
-            << " Lits visited/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
-            << ((double)stats[i].sumLitVisited/(double)stats[i].sumLookedAt);
-        }
-
-        if (stats[i].sumLitVisited > 0) {
-            cout
-            << " Props&confls/Litsvisited*10: "
-            << std::setw(6) << std::fixed << std::setprecision(4)
-            << (10.0*(double)stats[i].sumPropAndConfl()/(double)stats[i].sumLitVisited);
-        }
-
         cout << endl;
     }
 }

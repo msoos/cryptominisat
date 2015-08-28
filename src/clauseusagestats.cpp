@@ -33,10 +33,6 @@ void ClauseUsageStats::print() const
 {
     cout
     #ifdef STATS_NEEDED
-    << " lits visit: "
-    << std::setw(8) << sumLitVisited/1000UL
-    << "K"
-
     << " cls visit: "
     << std::setw(7) << sumLookedAt/1000UL
     << "K"
