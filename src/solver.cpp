@@ -3358,7 +3358,7 @@ Features Solver::calculate_features() const
     feat.avg_branch_depth = hist.branchDepthHist.avg();
     feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    feat.confl_size_min = hist.conflSizeHistLT.getMax();
+    feat.confl_size_min = hist.conflSizeHistLT.getMin();
     feat.confl_size_max = hist.conflSizeHistLT.getMax();
     feat.confl_glue_min = hist.glueHistLT.getMin();
     feat.confl_glue_max = hist.glueHistLT.getMax();
