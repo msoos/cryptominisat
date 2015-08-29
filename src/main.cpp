@@ -199,8 +199,9 @@ void Main::parseInAllFiles()
         readInAFile(it->c_str());
     }
 
-    if (!fileNamePresent)
+    if (!fileNamePresent && conf.preprocess != 2) {
         readInStandardInput();
+    }
 
     if (conf.verbosity >= 1) {
         cout
