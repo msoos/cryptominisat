@@ -900,6 +900,7 @@ class Tester:
             os.unlink(i)
 
     def fuzz_test_preproc(self):
+        tester.needDebugLib = False
         fuzzer = random.choice(fuzzers)
         self.num_threads = 1
         file_name = create_fuzz.unique_fuzz_file("fuzzTest")
