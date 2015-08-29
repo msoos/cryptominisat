@@ -203,10 +203,10 @@ class SolverConf
         int       whichSQL;
         bool      dump_individual_search_time;
         std::string sqlite_filename;
-        std::string    sqlServer;
-        std::string    sqlUser;
-        std::string    sqlPass;
-        std::string    sqlDatabase;
+        std::string sqlServer;
+        std::string sqlUser;
+        std::string sqlPass;
+        std::string sqlDatabase;
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
