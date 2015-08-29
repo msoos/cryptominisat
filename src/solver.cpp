@@ -1352,7 +1352,6 @@ lbool Solver::solve()
             dumper.open_file_and_dump_irred_clauses_preprocessor("simplified.cnf");
         }
         cout << "DUMPED to files" << endl;
-        return status;
     }
 
     return status;
