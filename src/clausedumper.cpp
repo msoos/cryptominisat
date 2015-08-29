@@ -172,12 +172,6 @@ void ClauseDumper::dumpTriClauses(
     , const bool alsoIrred
     , const bool backnumber
 ) {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr
-        << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     uint32_t wsLit = 0;
     for (watch_array::const_iterator
         it = solver->watches.begin(), end = solver->watches.end()
@@ -223,11 +217,6 @@ void ClauseDumper::dumpTriClauses(
 
 void ClauseDumper::dumpEquivalentLits()
 {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     *outfile
     << "c " << endl
     << "c ---------------------------------------" << endl
@@ -239,11 +228,6 @@ void ClauseDumper::dumpEquivalentLits()
 
 void ClauseDumper::dumpUnitaryClauses()
 {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     *outfile
     << "c " << endl
     << "c ---------" << endl
@@ -303,11 +287,6 @@ void ClauseDumper::dump_clauses(
     , size_t max_size
     , const bool backnumber
 ) {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     for(vector<ClOffset>::const_iterator
         it = cls.begin(), end = cls.end()
         ; it != end
@@ -326,11 +305,6 @@ void ClauseDumper::dump_clauses(
 
 void ClauseDumper::dump_blocked_clauses()
 {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     if (solver->conf.perform_occur_based_simp) {
         solver->simplifier->dump_blocked_clauses(outfile);
     }
@@ -338,11 +312,6 @@ void ClauseDumper::dump_blocked_clauses()
 
 void ClauseDumper::dump_component_clauses()
 {
-    if (solver->get_num_bva_vars() > 0) {
-        std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
-        exit(-1);
-    }
-
     if (solver->compHandler) {
         solver->compHandler->dump_removed_clauses(outfile);
     }
