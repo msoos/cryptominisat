@@ -28,6 +28,7 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 #endif
 #include <stdio.h>
 #include <iostream>
+#include <limits>
 #include <string>
 
 //A = gzFile, FILE
@@ -91,7 +92,7 @@ public:
         }
     }
 
-    int32_t parseInt(size_t lineNum)
+    int32_t parseInt(size_t lineNum, bool allow_eol = false)
     {
         int32_t val = 0;
         int32_t mult = 1;
@@ -104,6 +105,8 @@ public:
         }
 
         char c = value();
+        if (allow_eol && c == '\n')
+            return std::numeric_limits<int32_t>::max();
         if (c < '0' || c > '9') {
             std::cout
             << "PARSE ERROR! Unexpected char (dec: '" << c << ")"

@@ -3608,6 +3608,12 @@ lbool Solver::load_solution_from_file(const string& fname)
     lbool status = l_Undef;
     model = assigns;
     FILE* input_stream = fopen(fname.c_str(), "r");
+    if (input_stream == NULL) {
+        std::cerr << "ERROR: could not open solution file "
+        << fname
+        << endl;
+        std::exit(-1);
+    }
     StreamBuffer<FILE*, fread_op_norm, fread> in(input_stream);
 
     unsigned lineNum = 0;
@@ -3635,6 +3641,9 @@ lbool Solver::load_solution_from_file(const string& fname)
                     std::exit(-1);
                 }
                 status = l_True;
+                in.skipLine();
+                lineNum++;
+                break;
             }
             case 'v': {
                 ++in;
@@ -3669,7 +3678,10 @@ void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
-        parsed_lit = in->parseInt(lineNum);
+        parsed_lit = in->parseInt(lineNum, true);
+        if (parsed_lit == std::numeric_limits<int32_t>::max()) {
+            break;
+        }
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (var >= nVars()) {
