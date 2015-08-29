@@ -927,6 +927,11 @@ void Main::manually_parse_some_options()
             std::cerr << "ERROR: dumping clauses with preprocessing makes no sense. Exiting" << endl;
             std::exit(-1);
         }
+
+        if (max_nr_of_solutions > 1) {
+            std::cerr << "ERROR: multi-solutions make no sense with preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
     }
 
     if (vm.count("dumpresult")) {
