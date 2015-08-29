@@ -927,8 +927,10 @@ class Tester:
         for i in glob.glob(u'fuzzTest*'):
             os.unlink(i)
 
-        os.unlink("solution.txt")
-        os.unlink("savedstate.dat")
+        for i in glob.glob(u'solution.txt'):
+            os.unlink(i)
+        for i in glob.glob(u'savedstate.dat'):
+            os.unlink(i)
 
     def delete_debuglibpart_files(self):
         dirList = os.listdir(".")
