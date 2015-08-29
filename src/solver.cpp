@@ -1331,7 +1331,6 @@ lbool Solver::solve()
     if (status == l_Undef) {
         status = iterate_until_solved();
     }
-    handle_found_solution(status);
 
     end:
     if (sqlStats) {
@@ -1354,6 +1353,7 @@ lbool Solver::solve()
         cout << "DUMPED to files" << endl;
     }
 
+    handle_found_solution(status);
     return status;
 }
 
