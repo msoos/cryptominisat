@@ -279,11 +279,9 @@ void Main::add_supported_options()
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
         , "Reconfigure after some time to this solver conf")
     ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
-        , "Reconfigure after this many simplifications"
-    )
+        , "Reconfigure after this many simplifications")
     ("preproc", po::value(&conf.preprocess)->default_value(conf.preprocess)
-        , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution"
-    )
+        , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
