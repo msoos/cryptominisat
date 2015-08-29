@@ -27,14 +27,27 @@
 
 using namespace CMSat;
 
+void ClauseDumper::write_unsat_file()
+{
+    *outfile
+    << "p cnf 0 1\n"
+    << "0\n";
+}
+
+void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
+{
+    open_dump_file(fname);
+    *outfile
+    << "p cnf 0 1\n"
+    << "0\n";
+}
+
 void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
 {
     open_dump_file(redDumpFname);
     try {
         if (!solver->okay()) {
-            *outfile
-            << "p cnf 0 1\n"
-            << "0\n";
+            write_unsat_file();
         } else {
             dumpRedClauses(solver->conf.maxDumpRedsSize);
         }
@@ -52,9 +65,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname
 
     try {
         if (!solver->okay()) {
-            *outfile
-            << "p cnf 0 1\n"
-            << "0\n";
+            write_unsat_file();
         } else {
             dumpIrredClauses();
         }
@@ -72,10 +83,16 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
 
     try {
         if (!solver->okay()) {
-            *outfile
-            << "p cnf 0 1\n"
-            << "0\n";
+            write_unsat_file();
         } else {
+            size_t num_cls = 0;
+            num_cls += solver->longIrredCls.size();
+            num_cls += solver->binTri.irredBins;
+            num_cls += solver->binTri.irredTris;
+
+            *outfile
+            << "p cnf " << solver->nVars() << " " << num_cls << "\n";
+
             dump_irred_cls_for_preprocessor(false);
         }
     } catch (std::ifstream::failure& e) {

@@ -22,7 +22,7 @@
 #ifndef __CLAUSEDUMPER_H__
 #define __CLAUSEDUMPER_H__
 
-#include <ostream>
+#include <fstream>
 #include <vector>
 #include <limits>
 #include "cryptominisat4/solvertypesmini.h"
@@ -41,6 +41,13 @@ public:
         solver(_solver)
     {}
 
+    ~ClauseDumper() {
+        if (outfile) {
+            outfile->close();
+        }
+    }
+
+    void open_file_and_write_unsat(const std::string& fname);
     void open_file_and_dump_red_clauses(const std::string& redDumpFname);
     void open_file_and_dump_irred_clauses(const std::string& irredDumpFname);
     void open_file_and_dump_irred_clauses_preprocessor(const std::string& irredDumpFname);
@@ -48,8 +55,9 @@ public:
 
 private:
     const Solver* solver;
-    std::ostream* outfile = NULL;
+    std::ofstream* outfile = NULL;
 
+    void write_unsat_file();
     void dump_irred_cls_for_preprocessor(bool backnumber);
     void open_dump_file(const std::string& filename);
     void dumpBinClauses(
