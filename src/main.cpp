@@ -905,6 +905,30 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
+    if (conf.preprocess != 0) {
+        if (conf.doCompHandler) {
+            conf.doCompHandler = false;
+            cout << "c Cannot handle components when for preprocessing. Turning it off." << endl;
+        }
+
+        if (num_threads > 1) {
+            num_threads = 1;
+            cout << "c Cannot handle multiple threads for preprocessing. Setting to 1." << endl;
+        }
+
+        if (vm.count("drup")) {
+            std::cerr << "ERROR: DRUP makes no sense with preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
+
+        if (!redDumpFname.empty()
+            || !irredDumpFname.empty()
+        ) {
+            std::cerr << "ERROR: dumping clauses with preprocessing makes no sense. Exiting" << endl;
+            std::exit(-1);
+        }
+    }
+
     if (vm.count("dumpresult")) {
         needResultFile = true;
     }
@@ -947,18 +971,6 @@ void Main::manually_parse_some_options()
         conf.varElimRatioPerIter = 1.0;
         conf.simplify_at_startup = true;
         conf.probe_bogoprops_time_limitM *= 2;
-    }
-
-    if (conf.preprocess != 0) {
-        if (conf.doCompHandler) {
-            conf.doCompHandler = false;
-            cout << "c Cannot handle components when for preprocessing. Turning it off." << endl;
-        }
-
-        if (num_threads > 1) {
-            num_threads = 1;
-            cout << "c Cannot handle multiple threads for preprocessing. Setting to 1." << endl;
-        }
     }
 }
 
