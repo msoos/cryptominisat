@@ -66,8 +66,7 @@ public:
         uint64_t redLits = 0;
     };
 
-    CNF(const SolverConf *_conf, bool* _needToInterrupt) :
-        minNumVars(0)
+    CNF(const SolverConf *_conf, bool* _needToInterrupt)
     {
         if (_conf != NULL) {
             conf = *_conf;
@@ -93,7 +92,7 @@ public:
     #endif
     Stamp stamp;
     ImplCache implCache;
-    uint32_t minNumVars;
+    uint32_t minNumVars = 0;
     vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
     int64_t num_red_cls_reducedb = 0;
     bool red_long_cls_is_reducedb(const Clause& cl) const;
