@@ -30,6 +30,13 @@ THE SOFTWARE.
 
 #ifdef USE_ZLIB
 #include <zlib.h>
+static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
+{
+    return gzread(f, buf, num*count);
+}
+typedef StreamBuffer<gzFile, fread_op_zip, gz_read> StreamBufferDimacs;
+#else
+typedef StreamBuffer<FILE, fread_op_norm, fread> StreamBufferDimacs;
 #endif
 
 using namespace CMSat;
@@ -43,19 +50,15 @@ class DimacsParser
         template <class T> void parse_DIMACS(T input_stream);
 
     private:
-        void parse_DIMACS_main(StreamBuffer& in);
-        void skipWhitespace(StreamBuffer& in);
-        void skipLine(StreamBuffer& in);
-        int32_t parseInt(StreamBuffer& in);
-        void parseString(StreamBuffer& in, std::string& str);
-        void readClause(StreamBuffer& in);
-        void parse_and_add_clause(StreamBuffer& in);
-        void parse_and_add_xor_clause(StreamBuffer& in);
-        bool match(StreamBuffer& in, const char* str);
-        void printHeader(StreamBuffer& in);
-        void parseComments(StreamBuffer& in, const std::string& str);
+        void parse_DIMACS_main(StreamBufferDimacs& in);
+        void readClause(StreamBufferDimacs& in);
+        void parse_and_add_clause(StreamBufferDimacs& in);
+        void parse_and_add_xor_clause(StreamBufferDimacs& in);
+        bool match(StreamBufferDimacs& in, const char* str);
+        void printHeader(StreamBufferDimacs& in);
+        void parseComments(StreamBufferDimacs& in, const std::string& str);
         std::string stringify(uint32_t x) const;
-        void parseSolveComment(StreamBuffer& in);
+        void parseSolveComment(StreamBufferDimacs& in);
         void write_solution_to_debuglib_file(const lbool ret) const;
 
 

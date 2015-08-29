@@ -24,50 +24,43 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #ifdef USE_ZLIB
 #include <zlib.h>
+typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 #endif
 #include <stdio.h>
+#include <iostream>
+#include <string>
 
+//A = gzFile, FILE
+//B = fread, gz_read
+typedef size_t(*fread_op_norm)(void*, size_t, size_t, FILE*);
+
+template<typename A, typename B, B C>
 class StreamBuffer
 {
-    #ifdef USE_ZLIB
-    gzFile  in;
+    A  in;
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            #ifdef VERBOSE_DEBUG
-            printf("buf = %08X\n", buf);
-            printf("sizeof(buf) = %u\n", sizeof(buf));
-            #endif //VERBOSE_DEBUG
-            size = gzread(in, buf, sizeof(buf));
+            size = C(buf, 1, sizeof(buf), in);
         }
     }
-    #else
-    FILE *  in;
-    void assureLookahead() {
-        if (pos >= size) {
-            pos  = 0;
-            #ifdef VERBOSE_DEBUG
-            printf("buf = %08X\n", buf);
-            printf("sizeof(buf) = %u\n", sizeof(buf));
-            #endif //VERBOSE_DEBUG
-            size = fread(buf, 1, sizeof(buf), in);
-        }
-    }
-    #endif
     char    buf[CHUNK_LIMIT];
     int     pos;
     int     size;
 
+    void advance()
+    {
+        operator++();
+    }
+    int value()
+    {
+        return operator*();
+    }
+
 public:
-    #ifdef USE_ZLIB
-    StreamBuffer(gzFile i) : in(i), pos(0), size(0) {
+    StreamBuffer(A i) : in(i), pos(0), size(0) {
         assureLookahead();
     }
-    #else
-    StreamBuffer(FILE * i) : in(i), pos(0), size(0) {
-        assureLookahead();
-    }
-    #endif
 
     int  operator *  () {
         return (pos >= size) ? EOF : buf[pos];
@@ -75,6 +68,67 @@ public:
     void operator ++ () {
         pos++;
         assureLookahead();
+    }
+
+    void skipWhitespace()
+    {
+        char c = value();
+        while ((c >= 9 && c <= 13 && c != 10) || c == 32) {
+            advance();
+            c = value();
+        }
+    }
+
+    void skipLine()
+    {
+        for (;;) {
+            if (value() == EOF || value() == '\0') return;
+            if (value() == '\n') {
+                advance();
+                return;
+            }
+            advance();
+        }
+    }
+
+    int32_t parseInt(size_t lineNum)
+    {
+        int32_t val = 0;
+        int32_t mult = 1;
+        skipWhitespace();
+        if (value() == '-') {
+            mult = -1;
+            advance();
+        } else if (value() == '+') {
+            advance();
+        }
+
+        char c = value();
+        if (c < '0' || c > '9') {
+            std::cout
+            << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
+            << " At line " << lineNum
+            << " we expected a number"
+            << std::endl;
+            std::exit(3);
+        }
+
+        while (c >= '0' && c <= '9') {
+            val = val*10 + (c - '0');
+            advance();
+            c = value();
+        }
+        return mult*val;
+    }
+
+    void parseString(std::string& str)
+    {
+        str.clear();
+        skipWhitespace();
+        while (value() != ' ' && value() != '\n' && value() != EOF) {
+            str.push_back(value());
+            advance();
+        }
     }
 };
 

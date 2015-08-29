@@ -336,6 +336,7 @@ class SolverConf
         double clean_after_perc_zero_depth_assigns;
         unsigned reconfigure_val;
         unsigned reconfigure_at;
+        unsigned preprocess;
 };
 
 } //end namespace

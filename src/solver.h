@@ -34,6 +34,7 @@
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
 #include "features.h"
+#include "streambuffer.h"
 
 namespace CMSat {
 
@@ -60,6 +61,8 @@ class DataSync;
 class SharedData;
 class ReduceDB;
 class InTree;
+/*typedef size_t (*ReadFun)(void*, size_t, size_t, FILE*);
+template<typename A, ReadFun B> class StreamBuffer;*/
 
 class LitReachData {
     public:
@@ -163,6 +166,9 @@ class Solver : public Searcher
         //State load/unload
         void save_state(const string& fname) const;
         void load_state(const string& fname);
+        template<typename A, typename B, B C>
+        void parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum);
+        lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);

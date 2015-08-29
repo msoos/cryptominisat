@@ -247,6 +247,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clean_after_perc_zero_depth_assigns(0.015)
         , reconfigure_val(0)
         , reconfigure_at(2)
+        , preprocess(0)
 {
 
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

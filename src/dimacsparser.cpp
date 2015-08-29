@@ -45,58 +45,6 @@ DimacsParser::DimacsParser(
     , lineNum(0)
 {}
 
-void DimacsParser::skipWhitespace(StreamBuffer& in)
-{
-    char c = *in;
-    while ((c >= 9 && c <= 13 && c != 10) || c == 32) {
-        ++in;
-        c = *in;
-    }
-}
-
-void DimacsParser::skipLine(StreamBuffer& in)
-{
-    lineNum++;
-    for (;;) {
-        if (*in == EOF || *in == '\0') return;
-        if (*in == '\n') {
-            ++in;
-            return;
-        }
-        ++in;
-    }
-}
-
-int32_t DimacsParser::parseInt(StreamBuffer& in)
-{
-    int32_t val = 0;
-    int32_t mult = 1;
-    skipWhitespace(in);
-    if (*in == '-') {
-        mult = -1;
-        ++in;
-    } else if (*in == '+') {
-        ++in;
-    }
-
-    char c = *in;
-    if (c < '0' || c > '9') {
-        cout
-        << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
-        << " At line " << lineNum
-        << " we expected a number"
-        << endl;
-        std::exit(3);
-    }
-
-    while (c >= '0' && c <= '9') {
-        val = val*10 + (c - '0');
-        ++in;
-        c = *in;
-    }
-    return mult*val;
-}
-
 std::string DimacsParser::stringify(uint32_t x) const
 {
     std::ostringstream o;
@@ -104,27 +52,12 @@ std::string DimacsParser::stringify(uint32_t x) const
     return o.str();
 }
 
-/**
-@brief Parse a continious set of characters from "in" to "str".
-
-\todo EOF is not checked for!!
-*/
-void DimacsParser::parseString(StreamBuffer& in, std::string& str)
-{
-    str.clear();
-    skipWhitespace(in);
-    while (*in != ' ' && *in != '\n' && *in != EOF) {
-        str.push_back(*in);
-        ++in;
-    }
-}
-
-void DimacsParser::readClause(StreamBuffer& in)
+void DimacsParser::readClause(StreamBufferDimacs& in)
 {
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
-        parsed_lit = parseInt(in);
+        parsed_lit = in.parseInt(lineNum);
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
         if (var >= (1ULL<<28)) {
@@ -154,7 +87,7 @@ void DimacsParser::readClause(StreamBuffer& in)
 /**
 @brief Matches parameter "str" to content in "in"
 */
-bool DimacsParser::match(StreamBuffer& in, const char* str)
+bool DimacsParser::match(StreamBufferDimacs& in, const char* str)
 {
     for (; *str != 0; ++str, ++in)
         if (*str != *in)
@@ -162,11 +95,11 @@ bool DimacsParser::match(StreamBuffer& in, const char* str)
     return true;
 }
 
-void DimacsParser::printHeader(StreamBuffer& in)
+void DimacsParser::printHeader(StreamBufferDimacs& in)
 {
     if (match(in, "p cnf")) {
-        int num_vars    = parseInt(in);
-        int clauses = parseInt(in);
+        int num_vars    = in.parseInt(lineNum);
+        int clauses = in.parseInt(lineNum);
         if (verbosity >= 1) {
             cout << "c -- header says num vars:   " << std::setw(12) << num_vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
@@ -192,14 +125,14 @@ void DimacsParser::printHeader(StreamBuffer& in)
     }
 }
 
-void DimacsParser::parseSolveComment(StreamBuffer& in)
+void DimacsParser::parseSolveComment(StreamBufferDimacs& in)
 {
     vector<Lit> assumps;
-    skipWhitespace(in);
+    in.skipWhitespace();
     while(*in != ')') {
-        int lit = parseInt(in);
+        int lit = in.parseInt(lineNum);
         assumps.push_back(Lit(std::abs(lit)-1, lit < 0));
-        skipWhitespace(in);
+        in.skipWhitespace();
     }
 
     if (verbosity >= 2) {
@@ -262,7 +195,7 @@ void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
     partFile.close();
 }
 
-void DimacsParser::parseComments(StreamBuffer& in, const std::string& str)
+void DimacsParser::parseComments(StreamBufferDimacs& in, const std::string& str)
 {
     if (debugLib && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
@@ -273,8 +206,8 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string& str)
             cout << "c Parsed Solver::new_var()" << endl;
         }
     } else if (debugLib && str == "Solver::new_vars(") {
-        skipWhitespace(in);
-        int n = parseInt(in);
+        in.skipWhitespace();
+        int n = in.parseInt(lineNum);
         solver->new_vars(n);
 
         if (verbosity >= 6) {
@@ -288,23 +221,26 @@ void DimacsParser::parseComments(StreamBuffer& in, const std::string& str)
             << endl;
         }
     }
-    skipLine(in);
+    in.skipLine();
+    lineNum++;
 }
 
-void DimacsParser::parse_and_add_clause(StreamBuffer& in)
+void DimacsParser::parse_and_add_clause(StreamBufferDimacs& in)
 {
     lits.clear();
     readClause(in);
-    skipLine(in);
+    in.skipLine();
+    lineNum++;
     solver->add_clause(lits);
     norm_clauses_added++;
 }
 
-void DimacsParser::parse_and_add_xor_clause(StreamBuffer& in)
+void DimacsParser::parse_and_add_xor_clause(StreamBufferDimacs& in)
 {
     lits.clear();
     readClause(in);
-    skipLine(in);
+    in.skipLine();
+    lineNum++;
     if (lits.empty())
         return;
 
@@ -320,22 +256,23 @@ void DimacsParser::parse_and_add_xor_clause(StreamBuffer& in)
     xor_clauses_added++;
 }
 
-void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
+void DimacsParser::parse_DIMACS_main(StreamBufferDimacs& in)
 {
     std::string str;
 
     for (;;) {
-        skipWhitespace(in);
+        in.skipWhitespace();
         switch (*in) {
         case EOF:
             return;
         case 'p':
             printHeader(in);
-            skipLine(in);
+            in.skipLine();
+            lineNum++;
             break;
         case 'c':
             ++in;
-            parseString(in, str);
+            in.parseString(str);
             parseComments(in, str);
             break;
         case 'x':
@@ -347,7 +284,8 @@ void DimacsParser::parse_DIMACS_main(StreamBuffer& in)
             << "c WARNING: Empty line at line number " << lineNum+1
             << " -- this is not part of the DIMACS specifications. Ignoring."
             << endl;
-            skipLine(in);
+            in.skipLine();
+            lineNum++;
             break;
         default:
             parse_and_add_clause(in);
@@ -361,7 +299,7 @@ template <class T> void DimacsParser::parse_DIMACS(T input_stream)
     debugLibPart = 1;
     const uint32_t origNumVars = solver->nVars();
 
-    StreamBuffer in(input_stream);
+    StreamBufferDimacs in(input_stream);
     parse_DIMACS_main(in);
 
     if (verbosity >= 1) {

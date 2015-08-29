@@ -43,19 +43,24 @@ public:
 
     void open_file_and_dump_red_clauses(const std::string& redDumpFname);
     void open_file_and_dump_irred_clauses(const std::string& irredDumpFname);
+    void open_file_and_dump_irred_clauses_preprocessor(const std::string& irredDumpFname);
+
 
 private:
     const Solver* solver;
     std::ostream* outfile = NULL;
 
+    void dump_irred_cls_for_preprocessor(bool backnumber);
     void open_dump_file(const std::string& filename);
     void dumpBinClauses(
         const bool dumpRed
         , const bool dumpIrred
+        , const bool backnumber
     );
     void dumpTriClauses(
         const bool alsoRed
         , const bool alsoIrred
+        , const bool backnumber
     );
 
     void dumpEquivalentLits();
@@ -63,7 +68,8 @@ private:
     void dumpRedClauses(const uint32_t maxSize);
     void dump_clauses(
         const vector<ClOffset>& cls
-        , size_t max_size = std::numeric_limits<size_t>::max()
+        , size_t max_size
+        , const bool backnumber
     );
 
     void dump_blocked_clauses();

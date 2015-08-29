@@ -60,6 +60,7 @@
 #include "GitSHA1.h"
 #include "features_to_reconf.h"
 #include "trim.h"
+#include "streambuffer.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1310,6 +1311,13 @@ lbool Solver::solve()
     datasync->rebuild_bva_map();
     set_assumptions();
 
+    if (conf.preprocess == 2) {
+        load_state("savedstate.dat");
+        if (status == l_Undef) {
+            status = load_solution_from_file("solution.txt");
+        }
+    }
+
     //If still unknown, simplify
     if (status == l_Undef
         && conf.simplify_at_startup
@@ -1320,8 +1328,6 @@ lbool Solver::solve()
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
-    save_state("savedstate");
-
     if (status == l_Undef) {
         status = iterate_until_solved();
     }
@@ -1330,6 +1336,17 @@ lbool Solver::solve()
     end:
     if (sqlStats) {
         sqlStats->finishup(status);
+    }
+
+    if (conf.preprocess == 1) {
+        //So no set variables end up in the clauses
+        solver->clauseCleaner->remove_and_clean_all();
+
+        save_state("savedstate.dat");
+        ClauseDumper dumper(this);
+        dumper.open_file_and_dump_irred_clauses_preprocessor("preprocessed.cnf");
+        cout << "DUMPED to files" << endl;
+        return status;
     }
 
     return status;
@@ -3581,5 +3598,92 @@ void Solver::load_state(const string& fname)
     varReplacer->load_state(f);
     if (simplifier) {
         simplifier->load_state(f);
+    }
+}
+
+lbool Solver::load_solution_from_file(const string& fname)
+{
+    //At this point, model is set up, we just need to fill the l_Undef in
+    //from assigns
+    lbool status = l_Undef;
+    model = assigns;
+    FILE* input_stream = fopen(fname.c_str(), "r");
+    StreamBuffer<FILE*, fread_op_norm, fread> in(input_stream);
+
+    unsigned lineNum = 0;
+    std::string str;
+    for (;;) {
+        in.skipWhitespace();
+        switch (*in) {
+            case EOF:
+                goto end;
+            case 's': {
+                ++in;
+                in.skipWhitespace();
+                in.parseString(str);
+                if (str == "SATISFIABLE") {
+                    status = l_True;
+                } else if (str == "UNSATISFIABLE") {
+                    status = l_False;
+                    goto end;
+                } else if (str == "INDETERMINATE") {
+                    status = l_Undef;
+                    goto end;
+                } else {
+                    std::cerr << "ERROR: Cannot parse solution line startig with 's'"
+                    << endl;
+                    std::exit(-1);
+                }
+                status = l_True;
+            }
+            case 'v': {
+                ++in;
+                parse_v_line(&in, lineNum);
+                in.skipLine();
+                lineNum++;
+                break;
+            }
+            case '\n':
+                std::cerr
+                << "c WARNING: Empty line at line number " << lineNum+1
+                << " -- this is not part of the DIMACS specifications. Ignoring."
+                << endl;
+                in.skipLine();
+                lineNum++;
+                break;
+            default:
+                in.skipLine();
+                lineNum++;
+                break;
+        }
+    }
+
+    end:
+    fclose(input_stream);
+    return status;
+}
+
+template<typename A, typename B, B C>
+void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
+{
+    int32_t parsed_lit;
+    uint32_t var;
+    for (;;) {
+        parsed_lit = in->parseInt(lineNum);
+        if (parsed_lit == 0) break;
+        var = abs(parsed_lit)-1;
+        if (var >= nVars()) {
+            std::cerr
+            << "ERROR! "
+            << "Variable in solution is too large: " << var << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            std::exit(-1);
+        }
+
+        //Don't overwrite previously computed values
+        if (model[var] == l_Undef) {
+            model[var] = parsed_lit < 0 ? l_False : l_True;
+        }
     }
 }
