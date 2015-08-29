@@ -44,6 +44,7 @@ public:
     ~ClauseDumper() {
         if (outfile) {
             outfile->close();
+            delete outfile;
         }
     }
 
