@@ -3700,7 +3700,9 @@ void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
         }
 
         //Don't overwrite previously computed values
-        if (model[var] == l_Undef) {
+        if (model[var] == l_Undef
+            && varData[var].removed == Removed::none
+        ) {
             model[var] = parsed_lit < 0 ? l_False : l_True;
         }
     }
