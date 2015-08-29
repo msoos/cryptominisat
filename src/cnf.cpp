@@ -424,7 +424,6 @@ void CNF::save_state(SimpleOutFile& f) const
     f.put_vector(varData);
     f.put_uint32_t(minNumVars);
     f.put_uint32_t(num_bva_vars);
-    f.put_struct(conf);
     f.put_uint32_t(ok);
 }
 
@@ -442,7 +441,6 @@ void CNF::load_state(SimpleInFile& f)
     f.get_vector(varData);
     minNumVars = f.get_uint32_t();
     num_bva_vars = f.get_uint32_t();
-    f.get_struct(conf);
     ok = f.get_uint32_t();
 
     watches.resize(nVars()*2);
