@@ -32,29 +32,21 @@ using namespace CMSat;
 
 struct VarData
 {
-    VarData() :
-        level(0)
-        , reason(PropBy())
-        , removed(Removed::none)
-        , polarity(false)
-        , is_bva(false)
-    {}
-
     ///contains the decision level at which the assignment was made.
-    uint32_t level;
+    uint32_t level = 0;
 
     //Used during hyper-bin and trans-reduction for speed
     uint32_t depth = 0;
 
     //Reason this got propagated. NULL means decision/toplevel
-    PropBy reason;
+    PropBy reason = PropBy();
 
     ///Whether var has been eliminated (var-elim, different component, etc.)
-    Removed removed;
+    Removed removed = Removed::none;
 
     ///The preferred polarity of each variable.
-    bool polarity;
-    bool is_bva;
+    bool polarity = false;
+    bool is_bva = false;
 };
 
 }

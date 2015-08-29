@@ -3579,9 +3579,10 @@ void Solver::save_state(const string& fname) const
     f.start(fname);
 
     Searcher::save_state(f);
-    f.put_struct(sumStats);
-    f.put_struct(sumPropStats);
-    f.put_vector(outside_assumptions);
+    //f.put_struct(sumStats);
+    //f.put_struct(sumPropStats);
+    //f.put_vector(outside_assumptions);
+    //f.put_vector(litReachable);
 
     varReplacer->save_state(f);
     if (simplifier) {
@@ -3595,9 +3596,9 @@ void Solver::load_state(const string& fname)
     f.start(fname);
 
     Searcher::load_state(f);
-    f.get_struct(sumStats);
-    f.get_struct(sumPropStats);
-    f.get_vector(outside_assumptions);
+    //f.get_struct(sumStats);
+    //f.get_struct(sumPropStats);
+    //f.get_vector(outside_assumptions);
     //f.get_vector(litReachable);
 
     varReplacer->load_state(f);

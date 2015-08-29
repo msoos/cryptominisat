@@ -93,10 +93,10 @@ struct BlockedClause {
         dummy = f.get_uint32_t();
     }
 
-    Lit blockedOn;
-    bool toRemove;
+    Lit blockedOn = lit_Undef;
+    bool toRemove = false;
     vector<Lit> lits;
-    bool dummy;
+    bool dummy = false;
 };
 
 /**

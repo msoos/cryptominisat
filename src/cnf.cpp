@@ -412,13 +412,12 @@ size_t CNF::mem_used() const
 
 void CNF::save_state(SimpleOutFile& f) const
 {
-    assert(!seen.empty());
+    /*assert(!seen.empty());
     assert(!varData.empty());
-    assert(watches.size() != 0);
+    assert(watches.size() != 0);*/
 
     f.put_vector(interToOuterMain);
     f.put_vector(outerToInterMain);
-    f.put_vector(outer_to_with_bva_map);
 
     f.put_vector(assigns);
     f.put_vector(varData);
@@ -435,7 +434,7 @@ void CNF::load_state(SimpleInFile& f)
 
     f.get_vector(interToOuterMain);
     f.get_vector(outerToInterMain);
-    f.get_vector(outer_to_with_bva_map);
+    build_outer_to_without_bva_map();
 
     f.get_vector(assigns);
     f.get_vector(varData);
