@@ -44,7 +44,7 @@ struct VarData
     uint32_t level;
 
     //Used during hyper-bin and trans-reduction for speed
-    uint32_t depth;
+    uint32_t depth = 0;
 
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason;
