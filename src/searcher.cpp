@@ -3275,6 +3275,12 @@ void Searcher::read_long_cls(
         }
         cl->stats = stats;
         attachClause(*cl);
+        const ClOffset offs = cl_alloc.get_offset(cl);
+        if (red) {
+            longRedCls.push_back(offs);
+        } else {
+            longIrredCls.push_back(offs);
+        }
     }
 }
 
