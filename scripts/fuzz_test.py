@@ -513,8 +513,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, fnameDrup=None, fixed_options=""):
-
+    def execute(self, fname, fnameDrup=None, fixed_opts="", rnd_opts=None):
         if os.path.isfile(options.solver) is not True:
             print "Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" % \
                 options.solver
@@ -526,15 +525,18 @@ class Tester:
         if not options.novalgrind and random.randint(0, 10) == 0:
             command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
-        command += self.random_options()
+        if rnd_opts is None:
+            rnd_opts = self.random_options()
+        command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib "
         if options.verbose is False:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
-        command += fixed_options + " "
-        command += fname
+        command += fixed_opts + " "
+        if fname is not None:
+            command += fname
         if fnameDrup:
             command += " --drupexistscheck 0 " + fnameDrup
         print "Executing: %s " % command
@@ -764,7 +766,8 @@ class Tester:
 
     def check(self, fname, fnameDrup=None,
               checkAgainst=None,
-              fixed_options="", dump_output_fname=None):
+              fixed_opts="", dump_output_fname=None,
+              rnd_opts=None):
 
         consoleOutput = ""
         if checkAgainst is None:
@@ -774,7 +777,7 @@ class Tester:
         # Do we need to solve the problem, or is it already solved?
         consoleOutput, retcode = self.execute(
             fname, fnameDrup=fnameDrup,
-            fixed_options=fixed_options)
+            fixed_opts=fixed_opts, rnd_opts=rnd_opts)
 
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
@@ -800,7 +803,7 @@ class Tester:
             consoleOutput.split("\n"), self.ignoreNoSolution)
 
         if dump_output_fname is not None:
-            f = open(dump_output_fname, "r")
+            f = open(dump_output_fname, "w")
             f.write(consoleOutput)
             f.close()
 
@@ -908,17 +911,21 @@ class Tester:
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
-        console, retcode = self.execute(file_name, fixed_options="--preproc 1")
+        console, retcode = self.execute(file_name, fixed_opts="--preproc 1 --maxconfl 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
 
         file_name2 = "simplified.cnf"
-        ret = self.check(fname=file_name2, checkAgainst=file_name2, dump_output_fname="solution.txt")
+        rnd_opts = self.random_options()
+        ret = self.check(fname=file_name2, checkAgainst=file_name2,
+                         dump_output_fname="solution.txt",
+                         rnd_opts=rnd_opts)
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
-            self.check(fname=file_name, checkAgainst=file_name2,
-                       fixed_options="--preproc 2")
+            self.check(fname=None, checkAgainst=file_name2,
+                       fixed_opts="--preproc 2",
+                       rnd_opts=rnd_opts)
 
         # remove temporary filenames
         os.unlink(file_name)
