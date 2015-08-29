@@ -81,11 +81,9 @@ template<class T>
 Clause* ClauseAllocator::Clause_new(
     const T& ps
     , const uint32_t conflictNum
-    , const bool reconstruct
 )
 {
-    assert(reconstruct || ps.size() > 3);
-    void* mem = allocEnough(ps.size(), reconstruct);
+    void* mem = allocEnough(ps.size());
     Clause* real= new (mem) Clause(ps, conflictNum);
 
     return real;
@@ -94,7 +92,6 @@ Clause* ClauseAllocator::Clause_new(
 template Clause* ClauseAllocator::Clause_new(
     const vector<Lit>& ps
     , uint32_t conflictNum
-    , bool reconstruct
 );
 
 /**
@@ -103,7 +100,7 @@ template Clause* ClauseAllocator::Clause_new(
 Clause* ClauseAllocator::Clause_new(Clause& c)
 {
     assert(c.size() > 3);
-    void* mem = allocEnough(c.size(), false);
+    void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
 
     return (Clause*)mem;
@@ -111,14 +108,7 @@ Clause* ClauseAllocator::Clause_new(Clause& c)
 
 void* ClauseAllocator::allocEnough(
     uint32_t clauseSize
-    , bool reconstruct //Are we reconstructing a solution?
 ) {
-    assert(reconstruct
-        || (clauseSize > 3
-            && "Clause size cannot be 3 or less, those are stored implicitly"
-        )
-    );
-
     //Try to quickly find a place at the end of a dataStart
     uint32_t neededbytes = (sizeof(Clause) + sizeof(Lit)*clauseSize);
     uint32_t needed

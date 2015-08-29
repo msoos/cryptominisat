@@ -59,7 +59,6 @@ class ClauseAllocator {
         template<class T> Clause* Clause_new(
             const T& ps
             , uint32_t conflictNum
-            , bool recostruct = false
         );
         Clause* Clause_new(Clause& c);
 
@@ -112,7 +111,7 @@ class ClauseAllocator {
         */
         size_t currentlyUsedSize;
 
-        void* allocEnough(const uint32_t size, const bool reconstruct);
+        void* allocEnough(const uint32_t size);
 };
 
 } //end namespace
