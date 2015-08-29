@@ -3364,7 +3364,7 @@ void Searcher::read_tri_cls(
     }
 }
 
-void Searcher::save_state(SimpleOutFile& f) const
+void Searcher::save_state(SimpleOutFile& f, const lbool status) const
 {
     assert(decisionLevel() == 0);
     PropEngine::save_state(f);
@@ -3374,15 +3374,17 @@ void Searcher::save_state(SimpleOutFile& f) const
     f.put_vector(conflict);
 
     //Clauses
-    write_binary_cls(f, false);
-    write_binary_cls(f, true);
-    write_tri_cls(f, false);
-    write_tri_cls(f, true);
-    write_long_cls(longIrredCls, f, false);
-    write_long_cls(longRedCls, f, true);
+    if (status == l_Undef) {
+        write_binary_cls(f, false);
+        write_binary_cls(f, true);
+        write_tri_cls(f, false);
+        write_tri_cls(f, true);
+        write_long_cls(longIrredCls, f, false);
+        write_long_cls(longRedCls, f, true);
+    }
 }
 
-void Searcher::load_state(SimpleInFile& f)
+void Searcher::load_state(SimpleInFile& f, const lbool status)
 {
     assert(decisionLevel() == 0);
     PropEngine::load_state(f);
@@ -3399,11 +3401,13 @@ void Searcher::load_state(SimpleInFile& f)
     f.get_vector(conflict);
 
     //Clauses
-    read_binary_cls(f, false);
-    read_binary_cls(f, true);
-    read_tri_cls(f, false);
-    read_tri_cls(f, true);
-    read_long_cls(f, false);
-    read_long_cls(f, true);
+    if (status == l_Undef) {
+        read_binary_cls(f, false);
+        read_binary_cls(f, true);
+        read_tri_cls(f, false);
+        read_tri_cls(f, true);
+        read_long_cls(f, false);
+        read_long_cls(f, true);
+    }
     num_red_cls_reducedb = count_num_red_cls_reducedb();
 }

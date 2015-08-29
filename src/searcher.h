@@ -308,8 +308,8 @@ class Searcher : public HyperEngine
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
         );
-        void save_state(SimpleOutFile& f) const;
-        void load_state(SimpleInFile& f);
+        void save_state(SimpleOutFile& f, const lbool status) const;
+        void load_state(SimpleInFile& f, const lbool status);
         void write_long_cls(
             const vector<ClOffset>& clauses
             , SimpleOutFile& f

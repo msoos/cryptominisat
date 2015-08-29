@@ -1312,7 +1312,7 @@ lbool Solver::solve()
     set_assumptions();
 
     if (conf.preprocess == 2) {
-        load_state("savedstate.dat");
+        status = load_state("savedstate.dat");
         if (status == l_Undef) {
             status = load_solution_from_file("solution.txt");
         }
@@ -1344,7 +1344,7 @@ lbool Solver::solve()
             solver->clauseCleaner->remove_and_clean_all();
         }
 
-        save_state("savedstate.dat");
+        save_state("savedstate.dat", status);
         ClauseDumper dumper(this);
         if (status == l_False) {
             dumper.open_file_and_write_unsat("simplified.cnf");
@@ -3573,12 +3573,13 @@ void Solver::reconfigure(int val)
     */
 }
 
-void Solver::save_state(const string& fname) const
+void Solver::save_state(const string& fname, const lbool status) const
 {
     SimpleOutFile f;
     f.start(fname);
 
-    Searcher::save_state(f);
+    f.put_lbool(status);
+    Searcher::save_state(f, status);
     //f.put_struct(sumStats);
     //f.put_struct(sumPropStats);
     //f.put_vector(outside_assumptions);
@@ -3590,12 +3591,13 @@ void Solver::save_state(const string& fname) const
     }
 }
 
-void Solver::load_state(const string& fname)
+lbool Solver::load_state(const string& fname)
 {
     SimpleInFile f;
     f.start(fname);
 
-    Searcher::load_state(f);
+    const lbool status = f.get_lbool();
+    Searcher::load_state(f, status);
     //f.get_struct(sumStats);
     //f.get_struct(sumPropStats);
     //f.get_vector(outside_assumptions);
@@ -3605,6 +3607,8 @@ void Solver::load_state(const string& fname)
     if (simplifier) {
         simplifier->load_state(f);
     }
+
+    return status;
 }
 
 lbool Solver::load_solution_from_file(const string& fname)
