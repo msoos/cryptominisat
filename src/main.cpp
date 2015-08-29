@@ -199,7 +199,7 @@ void Main::parseInAllFiles()
         readInAFile(it->c_str());
     }
 
-    if (!fileNamePresent && conf.preprocess != 2) {
+    if (!fileNamePresent) {
         readInStandardInput();
     }
 
@@ -1071,7 +1071,9 @@ int Main::solve()
 
     //Parse in DIMACS (maybe gzipped) files
     //solver->log_to_file("mydump.cnf");
-    parseInAllFiles();
+    if (conf.preprocess != 2) {
+        parseInAllFiles();
+    }
 
     //Multi-solutions
     unsigned long current_nr_of_solutions = 0;
