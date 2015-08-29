@@ -30,6 +30,7 @@
 #include "solvertypes.h"
 #include "clause.h"
 #include "watcharray.h"
+#include "simplefile.h"
 
 namespace CMSat {
 
@@ -98,6 +99,9 @@ class VarReplacer
         const Stats& get_stats() const;
         size_t mem_used() const;
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
+
+        void save_state(SimpleOutFile& f) const;
+        void load_state(SimpleInFile& f);
 
     private:
         Solver* solver;

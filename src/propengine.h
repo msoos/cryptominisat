@@ -109,6 +109,10 @@ protected:
     template<class T> uint32_t calc_glue_using_seen2(const T& ps);
     template<class T> uint32_t calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps);
 
+    //For state saving
+    void save_state(SimpleOutFile& f) const;
+    void load_state(SimpleInFile& f);
+
     //Stats for conflicts
     ConflCausedBy lastConflictCausedBy;
 

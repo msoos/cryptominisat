@@ -20,6 +20,7 @@
 */
 
 #include "cnf.h"
+
 #include "vardata.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
@@ -407,4 +408,42 @@ size_t CNF::mem_used() const
     mem += toClear.capacity()*sizeof(Lit);
 
     return mem;
+}
+
+void CNF::save_state(SimpleOutFile& f) const
+{
+    assert(!seen.empty());
+    assert(!varData.empty());
+    assert(watches.size() != 0);
+
+    f.put_vector(interToOuterMain);
+    f.put_vector(outerToInterMain);
+    f.put_vector(outer_to_with_bva_map);
+
+    f.put_vector(assigns);
+    f.put_vector(varData);
+    f.put_uint32_t(minNumVars);
+    f.put_uint32_t(num_bva_vars);
+    f.put_struct(conf);
+    f.put_uint32_t(ok);
+}
+
+void CNF::load_state(SimpleInFile& f)
+{
+    assert(seen.empty());
+    assert(varData.empty());
+    assert(watches.size() == 0);
+
+    f.get_vector(interToOuterMain);
+    f.get_vector(outerToInterMain);
+    f.get_vector(outer_to_with_bva_map);
+
+    f.get_vector(assigns);
+    f.get_vector(varData);
+    minNumVars = f.get_uint32_t();
+    num_bva_vars = f.get_uint32_t();
+    f.get_struct(conf);
+    ok = f.get_uint32_t();
+
+    watches.resize(nVars()*2);
 }

@@ -3226,3 +3226,184 @@ void Searcher::update_var_decay()
 {
     var_decay = conf.var_decay_max;
 }
+
+void Searcher::write_long_cls(
+    const vector<ClOffset>& clauses
+    , SimpleOutFile& f
+    , const bool red
+) const {
+    f.put_uint64_t(clauses.size());
+    for(ClOffset c: clauses)
+    {
+        Clause& cl = *cl_alloc.ptr(c);
+        f.put_uint32_t(cl.size());
+        for(const Lit l: cl)
+        {
+            f.put_lit(l);
+        }
+        if (red) {
+            assert(cl.red());
+            f.put_struct(cl.stats);
+        }
+    }
+}
+
+void Searcher::read_long_cls(
+    SimpleInFile& f
+    , const bool red
+) {
+    uint64_t num_cls = f.get_uint64_t();
+
+    vector<Lit> tmp_cl;
+    for(size_t i = 0; i < num_cls; i++)
+    {
+        tmp_cl.clear();
+
+        uint32_t sz = f.get_uint32_t();
+        for(size_t i = 0; i < sz; i++)
+        {
+            tmp_cl.push_back(f.get_lit());
+        }
+        ClauseStats stats;
+        if (red) {
+            f.get_struct(stats);
+        }
+
+        Clause* cl = cl_alloc.Clause_new(tmp_cl, 0);
+        if (red) {
+            cl->makeRed(stats.glue);
+        }
+        cl->stats = stats;
+        attachClause(*cl);
+    }
+}
+
+void Searcher::write_binary_cls(
+    SimpleOutFile& f
+    , bool red
+) const {
+    if (red) {
+        f.put_uint64_t(binTri.redBins);
+    } else {
+        f.put_uint64_t(binTri.irredBins);
+    }
+
+    size_t at = 0;
+    for(watch_subarray_const ws: watches)
+    {
+        Lit lit1 = Lit::toLit(at);
+        at++;
+        for(Watched w: ws)
+        {
+            if (w.isBinary() && w.red() == red) {
+                assert(lit1 != w.lit2());
+                if (lit1 < w.lit2()) {
+                    f.put_lit(lit1);
+                    f.put_lit(w.lit2());
+                }
+            }
+        }
+    }
+}
+
+void Searcher::write_tri_cls(
+    SimpleOutFile& f
+    , bool red
+) const {
+    if (red) {
+        f.put_uint64_t(binTri.redTris);
+    } else {
+        f.put_uint64_t(binTri.irredTris);
+    }
+
+    size_t at = 0;
+    for(watch_subarray_const ws: watches)
+    {
+        Lit lit1 = Lit::toLit(at);
+        at++;
+        for(Watched w: ws)
+        {
+            if (w.isTri() && w.red() == red) {
+                if (lit1 < w.lit2()
+                    && w.lit2() < w.lit3()
+                ) {
+                    f.put_lit(lit1);
+                    f.put_lit(w.lit2());
+                    f.put_lit(w.lit3());
+                }
+            }
+        }
+    }
+}
+
+
+void Searcher::read_binary_cls(
+    SimpleInFile& f
+    , bool red
+) {
+    uint64_t num = f.get_uint64_t();
+    for(uint64_t i = 0; i < num; i++)
+    {
+        const Lit lit1 = f.get_lit();
+        const Lit lit2 = f.get_lit();
+        attach_bin_clause(lit1, lit2, red);
+    }
+}
+
+void Searcher::read_tri_cls(
+    SimpleInFile& f
+    , bool red
+) {
+    uint64_t num = f.get_uint64_t();
+    for(uint64_t i = 0; i < num; i++)
+    {
+        const Lit lit1 = f.get_lit();
+        const Lit lit2 = f.get_lit();
+        const Lit lit3 = f.get_lit();
+        attach_tri_clause(lit1, lit2, lit3, red);
+    }
+}
+
+void Searcher::save_state(SimpleOutFile& f) const
+{
+    assert(decisionLevel() == 0);
+    PropEngine::save_state(f);
+
+    f.put_vector(activities);
+    f.put_vector(model);
+    f.put_vector(conflict);
+
+    //Clauses
+    write_binary_cls(f, false);
+    write_binary_cls(f, true);
+    write_tri_cls(f, false);
+    write_tri_cls(f, true);
+    write_long_cls(longIrredCls, f, false);
+    write_long_cls(longRedCls, f, true);
+}
+
+void Searcher::load_state(SimpleInFile& f)
+{
+    assert(decisionLevel() == 0);
+    PropEngine::load_state(f);
+
+    f.get_vector(activities);
+    for(size_t i = 0; i < nVars(); i++) {
+        if (varData[i].removed == Removed::none
+            && value(i) == l_Undef
+        ) {
+            insertVarOrder(i);
+        }
+    }
+    f.get_vector(model);
+    f.get_vector(conflict);
+
+    //Clauses
+    read_binary_cls(f, false);
+    read_binary_cls(f, true);
+    read_tri_cls(f, false);
+    read_tri_cls(f, true);
+    read_long_cls(f, false);
+    read_long_cls(f, true);
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
+}

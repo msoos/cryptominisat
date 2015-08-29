@@ -1320,6 +1320,8 @@ lbool Solver::solve()
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
+    save_state("savedstate");
+
     if (status == l_Undef) {
         status = iterate_until_solved();
     }
@@ -3547,4 +3549,37 @@ void Solver::reconfigure(int val)
      * numCleanBetweenSimplify 2->4
      * bva: 1->0
     */
+}
+
+void Solver::save_state(const string& fname) const
+{
+    SimpleOutFile f;
+    f.start(fname);
+
+    Searcher::save_state(f);
+    f.put_struct(sumStats);
+    f.put_struct(sumPropStats);
+    f.put_vector(outside_assumptions);
+
+    varReplacer->save_state(f);
+    if (simplifier) {
+        simplifier->save_state(f);
+    }
+}
+
+void Solver::load_state(const string& fname)
+{
+    SimpleInFile f;
+    f.start(fname);
+
+    Searcher::load_state(f);
+    f.get_struct(sumStats);
+    f.get_struct(sumPropStats);
+    f.get_vector(outside_assumptions);
+    //f.get_vector(litReachable);
+
+    varReplacer->load_state(f);
+    if (simplifier) {
+        simplifier->load_state(f);
+    }
 }

@@ -39,6 +39,7 @@
 #include "varupdatehelper.h"
 #include "watched.h"
 #include "watcharray.h"
+#include "simplefile.h"
 
 namespace CMSat {
 
@@ -74,6 +75,22 @@ struct BlockedClause {
         , lits(_lits)
         , dummy(false)
     {
+    }
+
+    void save_to_file(SimpleOutFile& f) const
+    {
+        f.put_lit(blockedOn);
+        f.put_uint32_t(toRemove);
+        f.put_vector(lits);
+        f.put_uint32_t(dummy);
+    }
+
+    void load_from_file(SimpleInFile& f)
+    {
+        blockedOn = f.get_lit();
+        toRemove = f.get_uint32_t();
+        f.get_vector(lits);
+        dummy = f.get_uint32_t();
     }
 
     Lit blockedOn;
@@ -162,6 +179,8 @@ public:
     void check_elimed_vars_are_unassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
+    void save_state(SimpleOutFile& f) const;
+    void load_state(SimpleInFile& f);
 
 private:
     friend class SubsumeStrengthen;

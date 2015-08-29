@@ -1191,3 +1191,19 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     std::cerr << "s " << v << " " << p.sign() << endl;
     #endif
 }
+
+void PropEngine::save_state(SimpleOutFile& f) const
+{
+    f.put_vector(trail);
+    f.put_uint32_t(qhead);
+
+    CNF::save_state(f);
+}
+
+void PropEngine::load_state(SimpleInFile& f)
+{
+    f.get_vector(trail);
+    qhead = f.get_uint32_t();
+
+    CNF::load_state(f);
+}

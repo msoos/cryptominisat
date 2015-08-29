@@ -2991,3 +2991,31 @@ void OccSimplifier::Stats::print(const size_t nVars) const
 
     cout << "c -------- OccSimplifier STATS END ----------" << endl;
 }
+
+void OccSimplifier::save_state(SimpleOutFile& f) const
+{
+    f.put_uint64_t(blockedClauses.size());
+    for(const BlockedClause& c: blockedClauses) {
+        c.save_to_file(f);
+    }
+    f.put_struct(globalStats);
+    f.put_uint32_t(startup);
+    f.put_uint32_t(anythingHasBeenBlocked);
+
+
+}
+void OccSimplifier::load_state(SimpleInFile& f)
+{
+    const uint64_t sz = f.get_uint64_t();
+    for(uint64_t i = 0; i < sz; i++) {
+        BlockedClause b;
+        b.load_from_file(f);
+        blockedClauses.push_back(b);
+    }
+    f.get_struct(globalStats);
+    startup = f.get_uint32_t();
+    anythingHasBeenBlocked = f.get_uint32_t();
+
+    blockedMapBuilt = false;
+    buildBlockedMap();
+}

@@ -33,6 +33,7 @@
 #include "drup.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
+#include "simplefile.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -246,6 +247,9 @@ protected:
 
     vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
     vector<lbool> assigns;
+
+    void save_state(SimpleOutFile& f) const;
+    void load_state(SimpleInFile& f);
 
 private:
     bool *needToInterrupt; ///<Interrupt cleanly ASAP if true

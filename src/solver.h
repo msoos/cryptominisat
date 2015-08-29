@@ -160,6 +160,10 @@ class Solver : public Searcher
         bool fully_enqueue_this(const Lit lit);
         void update_assumptions_after_varreplace();
 
+        //State load/unload
+        void save_state(const string& fname) const;
+        void load_state(const string& fname);
+
         uint64_t getNumLongClauses() const;
         bool addClause(const vector<Lit>& ps);
         bool add_xor_clause_inter(
@@ -289,7 +293,7 @@ class Solver : public Searcher
         // Objects that help us accomplish the task
         Prober              *prober = NULL;
         InTree              *intree = NULL;
-        OccSimplifier          *simplifier = NULL;
+        OccSimplifier       *simplifier = NULL;
         Distiller           *distiller = NULL;
         Strengthener        *strengthener = NULL;
         CompHandler         *compHandler = NULL;

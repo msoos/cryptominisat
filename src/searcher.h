@@ -30,6 +30,7 @@
 #include "hyperengine.h"
 #include "MersenneTwister.h"
 #include "minisat_rnd.h"
+#include "simplefile.h"
 
 namespace CMSat {
 
@@ -306,6 +307,33 @@ class Searcher : public HyperEngine
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
+        );
+        void save_state(SimpleOutFile& f) const;
+        void load_state(SimpleInFile& f);
+        void write_long_cls(
+            const vector<ClOffset>& clauses
+            , SimpleOutFile& f
+            , const bool red
+        ) const;
+        void read_long_cls(
+            SimpleInFile& f
+            , const bool red
+        );
+        void read_binary_cls(
+            SimpleInFile& f
+            , bool red
+        );
+        void write_binary_cls(
+            SimpleOutFile& f
+            , bool red
+        ) const;
+        void write_tri_cls(
+            SimpleOutFile& f
+            , bool red
+        ) const;
+        void read_tri_cls(
+            SimpleInFile& f
+            , bool red
         );
 
         struct AssumptionPair {
