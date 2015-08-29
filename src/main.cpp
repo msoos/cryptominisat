@@ -948,6 +948,18 @@ void Main::manually_parse_some_options()
         conf.simplify_at_startup = true;
         conf.probe_bogoprops_time_limitM *= 2;
     }
+
+    if (conf.preprocess != 0) {
+        if (conf.doCompHandler) {
+            conf.doCompHandler = false;
+            cout << "c Cannot handle components when for preprocessing. Turning it off." << endl;
+        }
+
+        if (num_threads > 1) {
+            num_threads = 1;
+            cout << "c Cannot handle multiple threads for preprocessing. Setting to 1." << endl;
+        }
+    }
 }
 
 void Main::parseCommandLine()
