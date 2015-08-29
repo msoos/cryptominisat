@@ -932,6 +932,11 @@ void Main::manually_parse_some_options()
             std::cerr << "ERROR: multi-solutions make no sense with preprocessing. Exiting." << endl;
             std::exit(-1);
         }
+
+        if (!filesToRead.empty()) {
+            std::cerr << "ERROR: reading in CNF file(s) make no sense with preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
     }
 
     if (vm.count("dumpresult")) {
