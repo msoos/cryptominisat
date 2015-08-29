@@ -912,16 +912,16 @@ class Tester:
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
-        console, retcode = self.execute(file_name, fixed_opts="--preproc 1 --maxconfl 1")
+        rnd_opts = self.random_options()
+        console, retcode = self.execute(file_name, rnd_opts=rnd_opts,
+                                        fixed_opts="--preproc 1 --maxconfl 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
 
         file_name2 = "simplified.cnf"
-        rnd_opts = self.random_options()
         ret = self.check(fname=file_name2, checkAgainst=file_name2,
-                         dump_output_fname="solution.txt",
-                         rnd_opts=rnd_opts)
+                         dump_output_fname="solution.txt")
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
             self.check(fname=None, checkAgainst=file_name2,
