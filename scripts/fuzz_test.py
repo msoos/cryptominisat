@@ -373,7 +373,6 @@ fuzzers = [
 class Tester:
 
     def __init__(self):
-        self.check_for_unsat = False
         self.ignoreNoSolution = False
         self.extra_options_if_supported = self.list_options_if_supported(
             ["xor", "sql"])
@@ -514,8 +513,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname,
-                fnameDrup=None, extraOptions=""):
+    def execute(self, fname, fnameDrup=None, fixed_options=""):
 
         if os.path.isfile(options.solver) is not True:
             print "Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" % \
@@ -535,7 +533,7 @@ class Tester:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
-        command += extraOptions
+        command += fixed_options + " "
         command += fname
         if fnameDrup:
             command += " --drupexistscheck 0 " + fnameDrup
@@ -557,7 +555,7 @@ class Tester:
 
         # Get solver output
         consoleOutput, err = p.communicate()
-        return_code = p.returncode
+        retcode = p.returncode
         err_file.close()
         with open("err_log.txt", "r") as err_file:
             found_something = False
@@ -575,7 +573,7 @@ class Tester:
             print "CPU limit of parent (pid %d) after child finished executing" % \
                 os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
-        return consoleOutput, return_code
+        return consoleOutput, retcode
 
     def check_unsat(self, fname):
         a = XorToCNF()
@@ -766,7 +764,7 @@ class Tester:
 
     def check(self, fname, fnameDrup=None,
               checkAgainst=None,
-              extraOptions=""):
+              fixed_options="", dump_output_fname=None):
 
         consoleOutput = ""
         if checkAgainst is None:
@@ -774,16 +772,16 @@ class Tester:
         currTime = calendar.timegm(time.gmtime())
 
         # Do we need to solve the problem, or is it already solved?
-        consoleOutput, return_code = self.execute(
+        consoleOutput, retcode = self.execute(
             fname, fnameDrup=fnameDrup,
-            extraOptions=extraOptions)
+            fixed_options=fixed_options)
 
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
         diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > (maxTime - maxTimeDiff) / self.num_threads:
             print "Too much time to solve, aborted!"
-            return
+            return None
         else:
             print "Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime)
 
@@ -793,23 +791,22 @@ class Tester:
         if (self.needDebugLib):
             self.check_debug_lib(checkAgainst)
 
-        print "Checking console output..."
-        if return_code != 0:
+        if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
 
+        print "Checking console output..."
         unsat, solution, _ = solution_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
-        otherSolverUNSAT = True
+
+        if dump_output_fname is not None:
+            f = open(dump_output_fname, "r")
+            f.write(consoleOutput)
+            f.close()
 
         if not unsat:
             solution_parser.test_found_solution(solution, checkAgainst)
-            return
-
-        # it's UNSAT and we should not check, so exit
-        if self.check_for_unsat is False:
-            print "Cannot check -- output is UNSAT"
-            return
+            return True
 
         # it's UNSAT, let's check with DRUP
         if fnameDrup:
@@ -849,6 +846,8 @@ class Tester:
         else:
             print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
             exit()
+
+        return False
 
     def remove_debug_lib_parts(self):
         dirList = os.listdir(".")
@@ -897,6 +896,40 @@ class Tester:
         for i in glob.glob(u'fuzzTest*'):
             os.unlink(i)
 
+    def fuzz_test_preproc(self):
+        fuzzer = random.choice(fuzzers)
+        self.num_threads = 1
+        file_name = create_fuzz.unique_fuzz_file("fuzzTest")
+        self.drup = False
+
+        # create the fuzz file
+        cf = create_fuzz()
+        call, todel = cf.create_fuzz_file(fuzzer, file_name)
+        print "calling ", fuzzer, " : ", call
+        out = commands.getstatusoutput(call)
+
+        console, retcode = self.execute(file_name, fixed_options="--preproc 1")
+        if retcode != 0:
+            print "Return code is not 0, error!"
+            exit(-1)
+
+        file_name2 = "simplified.cnf"
+        ret = self.check(fname=file_name2, checkAgainst=file_name2, dump_output_fname="solution.txt")
+        if ret is not None:
+            #didn't time out, so let's reconstruct the solution
+            self.check(fname=file_name, checkAgainst=file_name2,
+                       fixed_options="--preproc 2")
+
+        # remove temporary filenames
+        os.unlink(file_name)
+        for name in todel:
+            os.unlink(name)
+        for i in glob.glob(u'fuzzTest*'):
+            os.unlink(i)
+
+        os.unlink("solution.txt")
+        os.unlink("savedstate.dat")
+
     def delete_debuglibpart_files(self):
         dirList = os.listdir(".")
         for fname in dirList:
@@ -906,7 +939,6 @@ class Tester:
 print_version()
 tester = Tester()
 tester.needDebugLib = False
-tester.check_for_unsat = True
 num = 0
 rnd_seed = options.fuzz_seed_start
 if rnd_seed is None:
@@ -917,7 +949,10 @@ while True:
     print "To re-create fuzz-test below: %s" % toexec
 
     random.seed(rnd_seed)
-    tester.fuzz_test_one()
+    if random.choice([True, False]):
+        tester.fuzz_test_preproc()
+    else:
+        tester.fuzz_test_one()
     rnd_seed += 1
     num += 1
     if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
