@@ -1339,12 +1339,18 @@ lbool Solver::solve()
     }
 
     if (conf.preprocess == 1) {
-        //So no set variables end up in the clauses
-        solver->clauseCleaner->remove_and_clean_all();
+        if (status == l_Undef) {
+            //So no set variables end up in the clauses
+            solver->clauseCleaner->remove_and_clean_all();
+        }
 
         save_state("savedstate.dat");
         ClauseDumper dumper(this);
-        dumper.open_file_and_dump_irred_clauses_preprocessor("preprocessed.cnf");
+        if (status == l_False) {
+            dumper.open_file_and_write_unsat("simplified.cnf");
+        } else {
+            dumper.open_file_and_dump_irred_clauses_preprocessor("simplified.cnf");
+        }
         cout << "DUMPED to files" << endl;
         return status;
     }
