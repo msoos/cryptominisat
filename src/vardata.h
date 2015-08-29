@@ -37,7 +37,6 @@ struct VarData
         , reason(PropBy())
         , removed(Removed::none)
         , polarity(false)
-        , is_decision(true)
         , is_bva(false)
     {}
 
@@ -55,7 +54,6 @@ struct VarData
 
     ///The preferred polarity of each variable.
     bool polarity;
-    bool is_decision;
     bool is_bva;
 };
 
