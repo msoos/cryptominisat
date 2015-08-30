@@ -635,8 +635,6 @@ void Main::add_supported_options()
 
     po::options_description componentOptions("Component options");
     componentOptions.add_options()
-    ("findcomp", po::value(&conf.doFindComps)->default_value(conf.doFindComps)
-        , "Find components, but do not treat them")
     ("comps", po::value(&conf.doCompHandler)->default_value(conf.doCompHandler)
         , "Perform component-finding and separate handling")
     ("compsfrom", po::value(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)

@@ -301,7 +301,6 @@ class SolverConf
         int       doSaveMem;
 
         //Component handling
-        int       doFindComps;
         int       doCompHandler;
         unsigned  handlerFromSimpNum;
         size_t    compVarLimit;

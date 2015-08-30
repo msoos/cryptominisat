@@ -213,7 +213,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doSaveMem        (true)
 
         //Component finding
-        , doFindComps     (false)
         , doCompHandler    (true)
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
