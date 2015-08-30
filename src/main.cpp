@@ -932,6 +932,11 @@ void Main::manually_parse_some_options()
             std::exit(-1);
         }
 
+        if (debugLib) {
+            std::cerr << "ERROR: debugLib makes no sense with preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
+
         conf.maxConfl = 1;
     }
 
