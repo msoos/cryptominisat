@@ -82,27 +82,25 @@ struct ResolutionTypes
 
 struct ClauseStats
 {
-    ClauseStats() :
-        glue(0x1fffffff)
-        , locked(false)
-        , marked_clause(false)
-        , ttl(0)
-    {}
+    ClauseStats()
+    {
+        memset(this, 0, sizeof(ClauseStats));
+    }
 
     //Stored data
+    uint32_t glue:29;
+    uint32_t locked:1;
+    uint32_t marked_clause:1;
+    uint32_t ttl:1;
     double   activity = 0.0;
     #ifdef STATS_NEEDED
-    uint64_t introduced_at_conflict = std::numeric_limits<uint32_t>::max(); ///<At what conflict number the clause  was introduced
+    uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
     uint32_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
     #endif
-    uint32_t glue:29;
-    uint32_t locked:1;
-    uint32_t marked_clause:1;
-    uint32_t ttl:1;
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
