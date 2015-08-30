@@ -34,6 +34,13 @@ void ClauseDumper::write_unsat_file()
     << "0\n";
 }
 
+void ClauseDumper::open_file_and_write_sat(const std::string& fname)
+{
+    open_dump_file(fname);
+    *outfile
+    << "p cnf 0 0\n";
+}
+
 void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
 {
     open_dump_file(fname);

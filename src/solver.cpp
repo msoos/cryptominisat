@@ -1347,6 +1347,8 @@ lbool Solver::solve()
         ClauseDumper dumper(this);
         if (status == l_False) {
             dumper.open_file_and_write_unsat("simplified.cnf");
+        } else if (status == l_True) {
+            dumper.open_file_and_write_sat("simplified.cnf");
         } else {
             dumper.open_file_and_dump_irred_clauses_preprocessor("simplified.cnf");
         }
