@@ -402,14 +402,14 @@ void Main::add_supported_options()
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
         , "Never stop the search() process in class Solver")
 
-    ("schedule", po::value(&conf.simplify_nonstartup_sequence)->default_value(conf.simplify_nonstartup_sequence, string())
+    ("schedule", po::value(&conf.simplify_schedule_nonstartup)
         , "Schedule for simplification during run")
-    ("preschedule", po::value(&conf.simplify_at_startup_sequence)->default_value(conf.simplify_at_startup_sequence, string())
+    ("preschedule", po::value(&conf.simplify_schedule_startup)
         , "Schedule for simplification at startup")
 
-    ("occschedule", po::value(&conf.occsimp_schedule_nonstartup)->default_value(conf.occsimp_schedule_nonstartup, string())
+    ("occschedule", po::value(&conf.occsimp_schedule_nonstartup)
         , "Schedule for simplification during run")
-    ("occpreschedule", po::value(&conf.occsimp_schedule_startup)->default_value(conf.occsimp_schedule_startup, string())
+    ("preoccschedule", po::value(&conf.occsimp_schedule_startup)
         , "Schedule for simplification at startup")
 
 
@@ -689,11 +689,17 @@ void Main::check_options_correctness()
             << " DIMACS." << endl;
 
             cout << cmdline_options << endl;
-            cout << "Default schedule for simplifier: " << conf.simplify_nonstartup_sequence << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_at_startup_sequence << endl;
-
+            cout << "NORMAL RUN SCHEDULES" << endl;
+            cout << "--------------------" << endl;
+            cout << "Default schedule for simplifier: " << conf.simplify_schedule_nonstartup << endl;
+            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
             cout << "Default schedule for occur simplifier: " << conf.occsimp_schedule_nonstartup<< endl;
             cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_startup << endl;
+
+            cout << "PREPROC RUN SCHEDULES" << endl;
+            cout << "--------------------" << endl;
+            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
+            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
             std::exit(0);
         }
 
@@ -933,6 +939,27 @@ void Main::manually_parse_some_options()
         if (debugLib) {
             std::cerr << "ERROR: debugLib makes no sense with preprocessing. Exiting." << endl;
             std::exit(-1);
+        }
+
+        if (vm.count("schedule")) {
+            std::cerr << "ERROR: Pleaase adjust the --preschedule not the --schedule when preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
+
+        if (vm.count("occschedule")) {
+            std::cerr << "ERROR: Pleaase adjust the --preoccschedule not the --occschedule when preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
+
+        if (!vm.count("preschedule")) {
+            conf.simplify_schedule_startup = conf.simplify_schedule_nonstartup;
+        } else {
+            cout << "Given preschedule!" << endl;
+            exit(-1);
+        }
+
+        if (!vm.count("preoccschedule")) {
+            conf.occsimp_schedule_startup = conf.occsimp_schedule_nonstartup;
         }
     }
 

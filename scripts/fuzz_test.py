@@ -487,7 +487,7 @@ class Tester:
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
         sched_opts += "sub-impl, intree-probe, probe,"
-        sched_opts += "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
+        sched_opts += "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
         sched_opts += "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
         sched_opts += "check-cache-size, renumber"
 
@@ -513,7 +513,7 @@ class Tester:
 
         sched = ",".join(create_random_schedule(sched_opts))
         if sched != "":
-            cmd += "--occpreschedule %s " % sched
+            cmd += "--preoccschedule %s " % sched
 
         return cmd
 

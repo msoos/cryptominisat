@@ -1648,7 +1648,7 @@ bool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 distiller->distill(true);
             }
-        }  else if (token == "simplify") {
+        }  else if (token == "occsimp") {
             //Var-elim, gates, subsumption, strengthening
             if (conf.perform_occur_based_simp
                 && simplifier
@@ -1730,12 +1730,12 @@ lbool Solver::simplify_problem(const bool startup)
 
     if (startup) {
         execute_inprocess_strategy(
-            conf.simplify_at_startup_sequence
+            conf.simplify_schedule_startup
             , startup
         );
     } else {
         execute_inprocess_strategy(
-            conf.simplify_nonstartup_sequence
+            conf.simplify_schedule_nonstartup
             , startup
         );
     }

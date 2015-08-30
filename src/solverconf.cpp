@@ -177,11 +177,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , never_stop_search(false)
         , num_conflicts_of_search(50ULL*1000ULL)
         , num_conflicts_of_search_inc(1.4)
-        , simplify_at_startup_sequence("sub-impl, simplify, scc-vrepl")
-        , simplify_nonstartup_sequence("handle-comps,"
+        , simplify_schedule_startup("sub-impl, occsimp, scc-vrepl")
+        , simplify_schedule_nonstartup("handle-comps,"
         "scc-vrepl, cache-clean, cache-tryboth,"
         "sub-impl, intree-probe, probe,"
-        "str-cls, distill-cls, scc-vrepl, sub-impl, simplify,"
+        "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
         "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
         "check-cache-size, renumber"
         )
