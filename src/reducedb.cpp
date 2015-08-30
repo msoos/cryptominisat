@@ -103,31 +103,6 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
     }
 }
 
-void ReduceDB::print_best_red_clauses_if_required() const
-{
-    if (solver->longRedCls.empty()
-        || solver->conf.doPrintBestRedClauses == 0
-    ) {
-        return;
-    }
-
-    size_t at = 0;
-    for(long i = ((long)solver->longRedCls.size())-1
-        ; i > ((long)solver->longRedCls.size())-1-solver->conf.doPrintBestRedClauses && i >= 0
-        ; i--
-    ) {
-        ClOffset offset = solver->longRedCls[i];
-        const Clause* cl = solver->cl_alloc.ptr(offset);
-        cout
-        << "c [best-red-cl] Red " << nbReduceDB
-        << " No. " << at << " > "
-        << solver->clauseBackNumbered(*cl)
-        << endl;
-
-        at++;
-    }
-}
-
 CleaningStats ReduceDB::reduceDB()
 {
     const double myTime = cpuTime();
@@ -148,7 +123,6 @@ CleaningStats ReduceDB::reduceDB()
             continue;
         }
         sort_red_cls(static_cast<ClauseClean>(keep_type));
-        print_best_red_clauses_if_required();
         mark_top_N_clauses(keep_num);
     }
     move_from_never_cleaned();
