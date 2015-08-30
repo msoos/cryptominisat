@@ -288,7 +288,7 @@ class create_fuzz:
                 fuzzer[0], fuzzer[1], seed, file_name)
         elif len(fuzzer) == 3:
             seed = struct.unpack("<L", os.urandom(4))[0]
-            hashbits = (random.getrandbits(20) % 79) + 1
+            hashbits = (random.getrandbits(20) % 80) + 1
             call = "%s %s %d %s %d > %s" % (
                 fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
         else:
@@ -358,8 +358,12 @@ def print_version():
     print "Version values:", consoleOutput.strip()
 
 fuzzers = [
-    ["../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"],
-    ["../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 18 --cnf", "--hash-bits", "--seed"],
+    ["../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
+     "--hash-bits", "--seed"],
+    ["../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
+     "--hash-bits", "--seed"],
+    ["../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
+     "--seed"],
     # ["build/cnf-fuzz-nossum"],
     # ["build/largefuzzer"],
     ["../build/tests/cnf-utils/cnf-fuzz-biere"],
