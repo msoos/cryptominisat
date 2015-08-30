@@ -36,7 +36,7 @@ static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
 }
 typedef StreamBuffer<gzFile, fread_op_zip, gz_read> StreamBufferDimacs;
 #else
-typedef StreamBuffer<FILE, fread_op_norm, fread> StreamBufferDimacs;
+typedef StreamBuffer<FILE*, fread_op_norm, fread> StreamBufferDimacs;
 #endif
 
 using namespace CMSat;
