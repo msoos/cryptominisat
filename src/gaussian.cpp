@@ -90,6 +90,7 @@ bool Gaussian::clean_one_xor(Xor& x)
         }
     }
     x.vars.resize(x.vars.size()-(i-j));
+    x.rhs = rhs;
 
     switch(x.vars.size()) {
         case 0:
