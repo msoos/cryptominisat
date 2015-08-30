@@ -1143,7 +1143,7 @@ int Main::solve()
         << "c Not finished running -- signal caught or some maximum reached"
         << endl;
     }
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity >= 1 && conf.preprocess == 0) {
         solver->print_stats();
     }
 
