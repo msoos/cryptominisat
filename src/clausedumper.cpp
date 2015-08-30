@@ -156,8 +156,8 @@ void ClauseDumper::dumpBinClauses(
 
                 if (toDump) {
                     tmpCl.clear();
-                    tmpCl.push_back(solver->map_inter_to_outer(lit));
-                    tmpCl.push_back(solver->map_inter_to_outer(it2->lit2()));
+                    tmpCl.push_back(lit);
+                    tmpCl.push_back(it2->lit2());
                     if (backnumber) {
                         tmpCl[0] = solver->map_inter_to_outer(tmpCl[0]);
                         tmpCl[1] = solver->map_inter_to_outer(tmpCl[1]);
