@@ -3692,6 +3692,8 @@ lbool Solver::load_solution_from_file(const string& fname)
 template<typename A, typename B, B C>
 void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
 {
+    model.resize(nVarsOuter(), l_Undef);
+
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
