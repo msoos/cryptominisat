@@ -924,7 +924,7 @@ class Tester:
                          dump_output_fname="solution.txt")
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
-            self.check(fname=None, checkAgainst=file_name2,
+            self.check(fname=None, checkAgainst=file_name,
                        fixed_opts="--preproc 2",
                        rnd_opts=rnd_opts)
 
