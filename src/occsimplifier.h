@@ -188,7 +188,7 @@ private:
     friend class BVA;
     BVA* bva;
     bool startup = false;
-    bool backward_subsume();
+    bool backward_sub_str();
     bool execute_simplifier_sched(const string& strategy);
 
     //debug

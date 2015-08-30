@@ -504,9 +504,9 @@ class Tester:
     def add_occ_schedule_options(self, create_random_schedule):
         cmd = ""
 
-        sched_opts = "backw-subsume, xor, prop,"
-        sched_opts += "clean-implicit, bve, prop,"
-        sched_opts += "bva, gates, backw-subsume"
+        sched_opts = "backw-sub-str, xor,"
+        sched_opts += "clean-implicit, bve,"
+        sched_opts += "bva, gates, backw-sub-str"
         sched = ",".join(create_random_schedule(sched_opts))
         if sched != "":
             cmd += "--occschedule %s " % sched

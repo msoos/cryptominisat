@@ -195,12 +195,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(4.0)
-        , occsimp_schedule_nonstartup("backw-subsume, xor, prop,"
-        "clean-implicit, bve, prop,"
-        "bva, gates, backw-subsume")
-        , occsimp_schedule_startup("backw-subsume, prop,"
-        "clean-implicit, bve, prop,"
-        "backw-subsume")
+        , occsimp_schedule_nonstartup("backw-sub-str, xor, "
+        "clean-implicit, bve, "
+        "bva, gates, backw-sub-str")
+        , occsimp_schedule_startup("backw-sub-str, "
+        "clean-implicit, bve, "
+        "backw-sub-str")
 
         //Distillation
         , do_distill_clauses(true)

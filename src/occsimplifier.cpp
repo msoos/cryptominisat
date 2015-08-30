@@ -857,13 +857,15 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
             return solver->ok;
         }
 
+        solver->propagate_occur();
+
         trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (solver->conf.verbosity >= 2) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
         }
-        if (token == "backw-subsume") {
-            backward_subsume();
+        if (token == "backw-sub-str") {
+            backward_sub_str();
         } else if (token == "xor") {
             #ifdef USE_M4RI
             if (solver->conf.doFindXors
@@ -872,8 +874,6 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
                 xorFinder->do_all_with_xors();
             }
             #endif
-        } else if (token == "prop") {
-            solver->propagate_occur();
         } else if (token == "clean-implicit") {
             solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "bve") {
@@ -962,7 +962,7 @@ end:
     return solver->ok;
 }
 
-bool OccSimplifier::backward_subsume()
+bool OccSimplifier::backward_sub_str()
 {
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
