@@ -1072,8 +1072,11 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
-    assumptionsSet.resize(nVars());
-    assumptionsSet.shrink_to_fit();
+    if (!outside_assumptions.empty()) {
+        assert(assumptionsSet.size() >= nVars());
+        assumptionsSet.resize(nVars());
+        assumptionsSet.shrink_to_fit();
+    }
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
