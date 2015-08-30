@@ -58,7 +58,6 @@ do
         #--presimp $(bool) \
         ../build/cryptominisat4 \
 		--random $RANDOM \
-		--clbtwsimp $(int 0 3) \
 		--restart $(choice geom agility glue glueagility) \
 		--agilviollim $(int 0 40) \
 		--gluehist $(int 1 100) \
