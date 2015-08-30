@@ -467,7 +467,7 @@ class Tester:
                     print "available schedule options:", opts
 
                 sched = []
-                for i in range(int(random.gammavariate(8, 1))):
+                for i in range(int(random.gammavariate(12, 0.7))):
                     sched.append(random.choice(opts))
 
                 return sched
