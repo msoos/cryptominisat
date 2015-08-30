@@ -953,9 +953,6 @@ void Main::manually_parse_some_options()
 
         if (!vm.count("preschedule")) {
             conf.simplify_schedule_startup = conf.simplify_schedule_nonstartup;
-        } else {
-            cout << "Given preschedule!" << endl;
-            exit(-1);
         }
 
         if (!vm.count("preoccschedule")) {
