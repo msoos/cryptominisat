@@ -1331,7 +1331,9 @@ lbool Solver::solve()
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
-    if (status == l_Undef) {
+    if (status == l_Undef
+        && conf.preprocess == 0
+    ) {
         status = iterate_until_solved();
     }
 
