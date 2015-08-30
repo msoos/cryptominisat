@@ -403,7 +403,7 @@ class Tester:
 
         return False
 
-    def random_options(self):
+    def random_options(self, preproc=False):
         cmd = " --zero-exit-status "
 
         if random.choice([True, False]):
@@ -463,7 +463,7 @@ class Tester:
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
 
-            def create_random_schedule(string_list):
+            def create_rnd_sched(string_list):
                 opts = string_list.split(",")
                 opts = [a.strip(" ") for a in opts]
                 opts = list(set(opts))
@@ -476,12 +476,12 @@ class Tester:
 
                 return sched
 
-            cmd += self.add_schedule_options(create_random_schedule)
-            cmd += self.add_occ_schedule_options(create_random_schedule)
+            cmd += self.add_schedule_options(create_rnd_sched, preproc)
+            cmd += self.add_occ_schedule_options(create_rnd_sched, preproc)
 
         return cmd
 
-    def add_schedule_options(self, create_random_schedule):
+    def add_schedule_options(self, create_rnd_sched, preproc):
         cmd = ""
 
         sched_opts = "handle-comps,"
@@ -491,27 +491,28 @@ class Tester:
         sched_opts += "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
         sched_opts += "check-cache-size, renumber"
 
-        sched = ",".join(create_random_schedule(sched_opts))
-        if sched != "":
+        sched = ",".join(create_rnd_sched(sched_opts))
+        if sched != "" and not preproc:
             cmd += "--schedule %s " % sched
 
-        sched = ",".join(create_random_schedule(sched_opts))
+        sched = ",".join(create_rnd_sched(sched_opts))
         if sched != "":
             cmd += "--preschedule %s " % sched
 
         return cmd
 
-    def add_occ_schedule_options(self, create_random_schedule):
+    def add_occ_schedule_options(self, create_rnd_sched, preproc):
         cmd = ""
 
         sched_opts = "backw-sub-str, xor,"
         sched_opts += "clean-implicit, bve,"
         sched_opts += "bva, gates, backw-sub-str"
-        sched = ",".join(create_random_schedule(sched_opts))
-        if sched != "":
+        sched = ",".join(create_rnd_sched(sched_opts))
+
+        if sched != "" and not preproc:
             cmd += "--occschedule %s " % sched
 
-        sched = ",".join(create_random_schedule(sched_opts))
+        sched = ",".join(create_rnd_sched(sched_opts))
         if sched != "":
             cmd += "--preoccschedule %s " % sched
 
@@ -916,9 +917,9 @@ class Tester:
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
-        rnd_opts = self.random_options()
+        rnd_opts = self.random_options(preproc=True)
         console, retcode = self.execute(file_name, rnd_opts=rnd_opts,
-                                        fixed_opts="--preproc 1 --maxconfl 1")
+                                        fixed_opts="--preproc 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
