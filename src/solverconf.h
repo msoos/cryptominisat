@@ -335,6 +335,8 @@ class SolverConf
         unsigned reconfigure_val;
         unsigned reconfigure_at;
         unsigned preprocess;
+        std::string simplified_cnf;
+        std::string solution_file;
 };
 
 } //end namespace

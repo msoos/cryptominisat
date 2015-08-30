@@ -1317,7 +1317,7 @@ lbool Solver::solve()
     if (conf.preprocess == 2) {
         status = load_state("savedstate.dat");
         if (status == l_Undef) {
-            status = load_solution_from_file("solution.txt");
+            status = load_solution_from_file(conf.solution_file);
         }
     }
 
@@ -1351,11 +1351,11 @@ lbool Solver::solve()
         save_state("savedstate.dat", status);
         ClauseDumper dumper(this);
         if (status == l_False) {
-            dumper.open_file_and_write_unsat("simplified.cnf");
+            dumper.open_file_and_write_unsat(conf.simplified_cnf);
         } else if (status == l_True) {
-            dumper.open_file_and_write_sat("simplified.cnf");
+            dumper.open_file_and_write_sat(conf.simplified_cnf);
         } else {
-            dumper.open_file_and_dump_irred_clauses_preprocessor("simplified.cnf");
+            dumper.open_file_and_dump_irred_clauses_preprocessor(conf.simplified_cnf);
         }
         cout << "DUMPED to files" << endl;
     }

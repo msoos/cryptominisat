@@ -679,7 +679,10 @@ void Main::check_options_correctness()
         if (vm.count("help"))
         {
             cout
-            << "USAGE: " << argv[0] << " [options] <input-files>" << endl
+            << "USAGE 1: " << argv[0] << " [options] inputfile [drat-trim-file]" << endl
+            << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
+            << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
+
             << " where input is "
             #ifndef USE_ZLIB
             << "plain"
@@ -749,9 +752,11 @@ void Main::check_options_correctness()
         boost::exception_detail::error_info_injector<po::too_many_positional_options_error> > what
     ) {
         cerr
-        << "ERROR: You gave too many files. Only 2 files can be given:" << endl
-        << "       the 1st the CNF file input, the 2nd the DRUP file output"
-        << endl;
+        << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
+        << "       the 1st the CNF file input, and optinally, the 2nd the DRUP file output" << endl
+        << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl
+        << "    OR (post-processing) 1st for the solution file" << endl
+        ;
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
@@ -914,10 +919,6 @@ void Main::manually_parse_some_options()
             cout << "c Cannot handle multiple threads for preprocessing. Setting to 1." << endl;
         }
 
-        if (vm.count("drup")) {
-            std::cerr << "ERROR: DRUP makes no sense with preprocessing. Exiting." << endl;
-            std::exit(-1);
-        }
 
         if (!redDumpFname.empty()
             || !irredDumpFname.empty()
@@ -978,7 +979,21 @@ void Main::manually_parse_some_options()
     parse_restart_type();
     parse_var_elim_strategy();
 
-    if (vm.count("input")) {
+    if (conf.preprocess == 2) {
+        if (vm.count("input") == 0) {
+            cout << "ERROR: When post-processing you must give the solution as the positional argument"
+            << endl;
+            std::exit(-1);
+        }
+
+        vector<string> solution = vm["input"].as<vector<string> >();
+        if (solution.size() > 1) {
+            cout << "ERROR: When post-processing you must give only the solution as the positional argument"
+            << endl;
+            std::exit(-1);
+        }
+        conf.solution_file = solution[0];
+    } else if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
         if (!vm.count("sqlitedb")) {
             conf.sqlite_filename = filesToRead[0] + ".sqlite";
@@ -990,7 +1005,26 @@ void Main::manually_parse_some_options()
         fileNamePresent = false;
     }
 
-    if (vm.count("drup")) {
+    if (conf.preprocess == 1) {
+        if (!vm.count("drup")) {
+            cout << "ERROR: When preprocessing, you must give the simplified file name as 2nd argument" << endl;
+            std::exit(-1);
+        }
+        conf.simplified_cnf = vm["drup"].as<string>();
+        if (fileExists(conf.simplified_cnf)) {
+            cout << "ERROR: The file you gave to put the simplified CNF into already exists. Exiting." << endl;
+            std::exit(-1);
+        }
+    }
+
+    if (conf.preprocess == 2) {
+        if (vm.count("drup")) {
+            cout << "ERROR: When postprocessing, you must NOT give a 2nd argument" << endl;
+            std::exit(-1);
+        }
+    }
+
+    if (conf.preprocess == 0 && vm.count("drup")) {
         handle_drup_option();
     }
 
