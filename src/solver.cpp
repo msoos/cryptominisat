@@ -50,7 +50,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
-#include "strengthener.h"
+#include "sub_str_with_bin_ext.h"
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
@@ -93,7 +93,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
         simplifier = new OccSimplifier(this);
     }
     distiller = new Distiller(this);
-    strengthener = new Strengthener(this);
+    strengthener = new SubStrWithBinExt(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -1642,9 +1642,9 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "probe") {
             if (conf.doProbe)
                 prober->probe();
-        } else if (token == "str-cls") {
+        } else if (token == "sub-str-cls-with-bin") {
             if (conf.do_distill_clauses) {
-                strengthener->strengthen(true);
+                strengthener->sub_str_with_bin_ext(true);
             }
         } else if (token == "distill-cls") {
             if (conf.do_distill_clauses) {

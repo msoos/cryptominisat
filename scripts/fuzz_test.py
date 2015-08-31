@@ -487,8 +487,8 @@ class Tester:
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
         sched_opts += "sub-impl, intree-probe, probe,"
-        sched_opts += "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
-        sched_opts += "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
+        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "check-cache-size, renumber"
 
         sched = ",".join(create_rnd_sched(sched_opts))

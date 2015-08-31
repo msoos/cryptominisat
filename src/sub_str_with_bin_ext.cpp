@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "strengthener.h"
+#include "sub_str_with_bin_ext.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -40,14 +40,14 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-Strengthener::Strengthener(Solver* _solver) :
+SubStrWithBinExt::SubStrWithBinExt(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
     , seen_subs(solver->seen2)
     , numCalls(0)
 {}
 
-bool Strengthener::strengthen(const bool alsoStrengthen)
+bool SubStrWithBinExt::sub_str_with_bin_ext(const bool alsoStrengthen)
 {
     assert(solver->ok);
     numCalls++;
@@ -63,12 +63,15 @@ bool Strengthener::strengthen(const bool alsoStrengthen)
     if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, false))
         goto end;
 
+    solver->clauseCleaner->remove_and_clean_all();
     if (alsoStrengthen) {
         if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, true))
             goto end;
 
         if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, true))
             goto end;
+
+        solver->clauseCleaner->remove_and_clean_all();
     }
 
 end:
@@ -84,7 +87,7 @@ end:
     return solver->ok;
 }
 
-void Strengthener::strengthen_clause_with_watch(
+void SubStrWithBinExt::strengthen_clause_with_watch(
     const Lit lit
     , const Watched* wit
 ) {
@@ -116,7 +119,7 @@ void Strengthener::strengthen_clause_with_watch(
     }
 }
 
-bool Strengthener::subsume_clause_with_watch(
+bool SubStrWithBinExt::subsume_clause_with_watch(
     const Lit lit
     , Watched* wit
     , const Clause& cl
@@ -197,7 +200,7 @@ bool Strengthener::subsume_clause_with_watch(
     return false;
 }
 
-bool Strengthener::str_and_sub_clause_with_cache(const Lit lit)
+bool SubStrWithBinExt::str_and_sub_clause_with_cache(const Lit lit)
 {
     if (solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
@@ -224,7 +227,7 @@ bool Strengthener::str_and_sub_clause_with_cache(const Lit lit)
      return false;
 }
 
-void Strengthener::str_and_sub_using_watch(
+void SubStrWithBinExt::str_and_sub_using_watch(
     Clause& cl
     , const Lit lit
     , const bool alsoStrengthen
@@ -253,7 +256,7 @@ void Strengthener::str_and_sub_using_watch(
     }
 }
 
-void Strengthener::try_subsuming_by_stamping(const bool red)
+void SubStrWithBinExt::try_subsuming_by_stamping(const bool red)
 {
     if (solver->conf.doStamp
         && solver->conf.otfHyperbin
@@ -268,7 +271,7 @@ void Strengthener::try_subsuming_by_stamping(const bool red)
     }
 }
 
-void Strengthener::remove_lits_through_stamping_red()
+void SubStrWithBinExt::remove_lits_through_stamping_red()
 {
     if (lits.size() > 1) {
         timeAvailable -= (long)lits.size()*3 + 10;
@@ -278,7 +281,7 @@ void Strengthener::remove_lits_through_stamping_red()
     }
 }
 
-void Strengthener::remove_lits_through_stamping_irred()
+void SubStrWithBinExt::remove_lits_through_stamping_irred()
 {
     if (lits.size() > 1) {
         timeAvailable -= (long)lits.size()*3 + 10;
@@ -288,7 +291,7 @@ void Strengthener::remove_lits_through_stamping_irred()
     }
 }
 
-void Strengthener::str_and_sub_cl_with_cache_for_all_lits(
+void SubStrWithBinExt::str_and_sub_cl_with_cache_for_all_lits(
     bool alsoStrengthen
     , Clause& cl
 ) {
@@ -315,7 +318,7 @@ void Strengthener::str_and_sub_cl_with_cache_for_all_lits(
     assert(lits2.size() > 1);
 }
 
-bool Strengthener::shorten_clause_with_cache_watch_stamp(
+bool SubStrWithBinExt::sub_str_cl_with_cache_watch_stamp(
     ClOffset& offset
     , bool red
     , const bool alsoStrengthen
@@ -381,7 +384,7 @@ bool Strengthener::shorten_clause_with_cache_watch_stamp(
     return remove_or_shrink_clause(cl, offset);
 }
 
-bool Strengthener::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
+bool SubStrWithBinExt::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
 {
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
@@ -401,7 +404,7 @@ bool Strengthener::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
     return true;
 }
 
-void Strengthener::randomise_order_of_clauses(
+void SubStrWithBinExt::randomise_order_of_clauses(
     vector<ClOffset>& clauses
 ) {
     if (clauses.empty())
@@ -416,7 +419,7 @@ void Strengthener::randomise_order_of_clauses(
     }
 }
 
-uint64_t Strengthener::calc_time_available(
+uint64_t SubStrWithBinExt::calc_time_available(
     const bool alsoStrengthen
     , const bool red
 ) const {
@@ -446,7 +449,7 @@ uint64_t Strengthener::calc_time_available(
     return maxCountTime;
 }
 
-bool Strengthener::shorten_all_cl_with_cache_watch_stamp(
+bool SubStrWithBinExt::shorten_all_cl_with_cache_watch_stamp(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -487,7 +490,7 @@ bool Strengthener::shorten_all_cl_with_cache_watch_stamp(
         }
 
         ClOffset offset = clauses[i];
-        const bool remove = shorten_clause_with_cache_watch_stamp(offset, red, alsoStrengthen);
+        const bool remove = sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen);
         if (remove) {
             solver->detachClause(offset);
             solver->cl_alloc.clauseFree(offset);
@@ -509,7 +512,7 @@ bool Strengthener::shorten_all_cl_with_cache_watch_stamp(
     return solver->ok;
 }
 
-void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
+void SubStrWithBinExt::dump_stats_for_shorten_all_cl_with_cache_stamp(
     bool red
     , bool alsoStrengthen
     , double myTime
@@ -554,24 +557,24 @@ void Strengthener::dump_stats_for_shorten_all_cl_with_cache_stamp(
     }
 }
 
-void Strengthener::CacheBasedData::clear()
+void SubStrWithBinExt::CacheBasedData::clear()
 {
     CacheBasedData tmp;
     *this = tmp;
 }
 
-size_t Strengthener::CacheBasedData::get_cl_subsumed() const
+size_t SubStrWithBinExt::CacheBasedData::get_cl_subsumed() const
 {
     return subBinTri + subsumedStamp + subCache;
 }
 
-size_t Strengthener::CacheBasedData::get_lits_rem() const
+size_t SubStrWithBinExt::CacheBasedData::get_lits_rem() const
 {
     return remLitBinTri + remLitCache
         + remLitTimeStampTotal + remLitTimeStampTotalInv;
 }
 
-void Strengthener::CacheBasedData::print() const
+void SubStrWithBinExt::CacheBasedData::print() const
 {
     cout
     << "c [cl-str] stamp-based"
@@ -593,7 +596,7 @@ void Strengthener::CacheBasedData::print() const
     << endl;
 }
 
-void Strengthener::strengthen_bin_with_bin(
+void SubStrWithBinExt::strengthen_bin_with_bin(
     const Lit lit
     , Watched*& i
     , Watched*& j
@@ -654,7 +657,7 @@ void Strengthener::strengthen_bin_with_bin(
     *j++ = *i;
 }
 
-void Strengthener::strengthen_tri_with_bin_tri_stamp(
+void SubStrWithBinExt::strengthen_tri_with_bin_tri_stamp(
     const Lit lit
     , Watched*& i
     , Watched*& j
@@ -753,7 +756,7 @@ void Strengthener::strengthen_tri_with_bin_tri_stamp(
     *j++ = *i;
 }
 
-void Strengthener::strengthen_implicit_lit(const Lit lit)
+void SubStrWithBinExt::strengthen_implicit_lit(const Lit lit)
 {
     watch_subarray ws = solver->watches[lit.toInt()];
 
@@ -792,7 +795,7 @@ void Strengthener::strengthen_implicit_lit(const Lit lit)
     ws.shrink(i-j);
 }
 
-bool Strengthener::strengthen_implicit()
+bool SubStrWithBinExt::strengthen_implicit()
 {
     str_impl_data.clear();
 
@@ -852,7 +855,7 @@ end:
     return solver->okay();
 }
 
-void Strengthener::StrImplicitData::print(
+void SubStrWithBinExt::StrImplicitData::print(
     const size_t trail_diff
     , const double time_used
     , const int64_t timeAvailable
@@ -884,20 +887,20 @@ void Strengthener::StrImplicitData::print(
     }
 }
 
-Strengthener::Stats& Strengthener::Stats::operator+=(const Stats& other)
+SubStrWithBinExt::Stats& SubStrWithBinExt::Stats::operator+=(const Stats& other)
 {
     irredCacheBased += other.irredCacheBased;
     redCacheBased += other.redCacheBased;
     return *this;
 }
 
-void Strengthener::Stats::print_short(const Solver* solver) const
+void SubStrWithBinExt::Stats::print_short(const Solver* solver) const
 {
     irredCacheBased.print_short("irred", solver);
     redCacheBased.print_short("red", solver);
 }
 
-void Strengthener::Stats::print() const
+void SubStrWithBinExt::Stats::print() const
 {
     cout << "c -------- STRENGTHEN STATS --------" << endl;
     cout << "c --> cache-based on irred cls" << endl;
@@ -909,7 +912,7 @@ void Strengthener::Stats::print() const
 }
 
 
-void Strengthener::Stats::CacheBased::print_short(const string type, const Solver* solver) const
+void SubStrWithBinExt::Stats::CacheBased::print_short(const string type, const Solver* solver) const
 {
     cout << "c [distill] cache-based "
     << std::setw(5) << type
@@ -922,7 +925,7 @@ void Strengthener::Stats::CacheBased::print_short(const string type, const Solve
     << endl;
 }
 
-void Strengthener::Stats::CacheBased::print() const
+void SubStrWithBinExt::Stats::CacheBased::print() const
 {
     print_stats_line("c time"
         , cpu_time

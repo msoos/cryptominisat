@@ -36,10 +36,10 @@ using std::vector;
 class Solver;
 class Clause;
 
-class Strengthener {
+class SubStrWithBinExt {
     public:
-        Strengthener(Solver* solver);
-        bool strengthen(bool alsoStrengthen);
+        SubStrWithBinExt(Solver* solver);
+        bool sub_str_with_bin_ext(bool alsoStrengthen);
         bool strengthen_implicit();
 
         struct Stats
@@ -194,7 +194,7 @@ class Strengthener {
         void remove_lits_through_stamping_irred();
         Stats::CacheBased tmpStats;
         //bool needToFinish;
-        bool shorten_clause_with_cache_watch_stamp(
+        bool sub_str_cl_with_cache_watch_stamp(
             ClOffset& offset
             , bool red
             , const bool alsoStrengthen
@@ -226,7 +226,7 @@ class Strengthener {
 
 };
 
-inline const Strengthener::Stats& Strengthener::get_stats() const
+inline const SubStrWithBinExt::Stats& SubStrWithBinExt::get_stats() const
 {
     return globalStats;
 }

@@ -181,16 +181,17 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_nonstartup("handle-comps,"
         "scc-vrepl, cache-clean, cache-tryboth,"
         "sub-impl, intree-probe, probe,"
-        "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
-        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
+        "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+        "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         "check-cache-size, renumber"
         )
         , simplify_schedule_preproc("handle-comps,"
         "scc-vrepl, cache-clean, cache-tryboth,"
         "sub-impl, intree-probe, probe,"
-        "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
-        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
-        "check-cache-size, occsimp, occsimp, renumber"
+        "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+        "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        "check-cache-size, sub-str-cls-with-bin, occsimp,"
+        "renumber"
         )
 
         //Occur based simplification
@@ -200,7 +201,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
-        , subsume_gothrough_multip(4.0)
+        , subsume_gothrough_multip(10.0)
         , occsimp_schedule_nonstartup("backw-sub-str, xor, "
         "clean-implicit, bve, "
         "bva, gates, backw-sub-str")
