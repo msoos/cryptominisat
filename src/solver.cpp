@@ -1871,14 +1871,84 @@ void Solver::print_stats() const
         , "% time"
     );
 
-    if (conf.verbStats >= 1) {
+    if (conf.verbStats >= 2) {
         print_all_stats();
+    } else if (conf.verbStats == 1) {
+        print_norm_stats();
     } else {
         print_min_stats();
     }
 }
 
+
 void Solver::print_min_stats() const
+{
+    const double cpu_time = cpuTime();
+    sumStats.print_short();
+    print_stats_line("c props/decision"
+        , (double)propStats.propagations/(double)sumStats.decisions
+    );
+    print_stats_line("c props/conflict"
+        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+    );
+
+    print_stats_line("c 0-depth assigns", trail.size()
+        , stats_line_percent(trail.size(), nVars())
+        , "% vars"
+    );
+
+    //Failed lit stats
+    if (conf.doProbe) {
+        print_stats_line("c probing time"
+            , prober->get_stats().cpu_time
+            , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
+            , "% time"
+        );
+    }
+    //OccSimplifier stats
+    if (conf.perform_occur_based_simp) {
+        print_stats_line("c OccSimplifier time"
+            , simplifier->get_stats().total_time()
+            , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
+            , "% time"
+        );
+    }
+    print_stats_line("c SCC time"
+        , varReplacer->get_scc_finder()->get_stats().cpu_time
+        , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
+        , "% time"
+    );
+    varReplacer->get_scc_finder()->get_stats().print_short(NULL);
+
+    //varReplacer->get_stats().print_short(nVars());
+    print_stats_line("c distill time"
+                    , distiller->get_stats().time_used
+                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
+                    , "% time"
+    );
+    print_stats_line("c strength cache-irred time"
+                    , strengthener->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , "% time"
+    );
+    print_stats_line("c strength cache-red time"
+                    , strengthener->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , "% time"
+    );
+    print_stats_line("c Conflicts in UIP"
+        , sumStats.conflStats.numConflicts
+        , (double)sumStats.conflStats.numConflicts/cpu_time
+        , "confl/TOTAL_TIME_SEC"
+    );
+    print_stats_line("c Total time", cpu_time);
+    print_stats_line("c Mem used"
+        , mem_used()/(1024UL*1024UL)
+        , "MB"
+    );
+}
+
+void Solver::print_norm_stats() const
 {
     const double cpu_time = cpuTime();
     sumStats.print_short();

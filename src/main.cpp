@@ -253,31 +253,23 @@ void Main::add_supported_options()
     // Declare the supported options.
     po::options_description generalOptions("Most important options");
     generalOptions.add_options()
-    ("help,h", "Prints this help")
-    ("version,v", "Print version number")
-    ("input", po::value< vector<string> >(), "file(s) to read")
+    ("help,h", "Print simple help")
+    ("hhelp", "Print extensive help")
+    ("version,v", "Print version info")
+    ("verb", po::value(&conf.verbosity)->default_value(conf.verbosity)
+        , "[0-10] Verbosity of solver. 0 = only solution")
     ("random,r", po::value(&conf.origSeed)->default_value(conf.origSeed)
-        , "[0..] Sets random seed")
+        , "[0..] Random seed")
     ("threads,t", po::value(&num_threads)->default_value(1)
         ,"Number of threads")
     ("sync", po::value(&conf.sync_every_confl)->default_value(conf.sync_every_confl)
         , "Sync threads every N conflicts")
     ("maxtime", po::value(&conf.maxTime)->default_value(conf.maxTime, "MAX")
-        , "Stop solving after this much time, print stats and exit")
+        , "Stop solving after this much time (s)")
     ("maxconfl", po::value(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
-        , "Stop solving after this many conflicts, print stats and exit")
-    ("occsimp", po::value(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
-        , "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)")
-    ("drup,d", po::value(&drupfilname)
-        , "Put DRUP verification information into this file")
-    ("drupexistscheck", po::value(&drupExistsCheck)->default_value(drupExistsCheck)
-        , "Check if the drup file provided already exists")
-    ("drupdebug", po::bool_switch(&drupDebug)
-        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
+        , "Stop solving after this many conflicts")
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver conf")
-    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
-        , "Reconfigure after this many simplifications")
+        , "Reconfigure after some time to this solver configuration [0..13]")
     ("preproc", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -407,6 +399,8 @@ void Main::add_supported_options()
     ("preschedule", po::value(&conf.simplify_schedule_startup)
         , "Schedule for simplification at startup")
 
+    ("occsimp", po::value(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
+        , "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)")
     ("occschedule", po::value(&conf.occsimp_schedule_nonstartup)
         , "Schedule for simplification during run")
     ("preoccschedule", po::value(&conf.occsimp_schedule_startup)
@@ -586,21 +580,28 @@ void Main::add_supported_options()
 
     po::options_description printOptions("Printing options");
     printOptions.add_options()
-    ("verb", po::value(&conf.verbosity)->default_value(conf.verbosity)
-        , "[0-10] Verbosity of solver. 0 = only solution")
     ("verbstat", po::value(&conf.verbStats)->default_value(conf.verbStats)
-        , "Turns off verbose stats if needed")
+        , "Change verbosity of statistics at the end of the solving [0..2]")
     ("printfull", po::value(&conf.print_all_stats)->default_value(conf.print_all_stats)
         , "Print more thorough, but different stats")
     ("printsol,s", po::value(&printResult)->default_value(printResult)
         , "Print assignment if solution is SAT")
-    ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
-        , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
     ("restartprint", po::value(&conf.print_restart_line_every_n_confl)->default_value(conf.print_restart_line_every_n_confl)
         , "Print restart status lines at least every N conflicts")
     ;
 
-    po::options_description miscOptions("Misc options");
+    po::options_description componentOptions("Component options");
+    componentOptions.add_options()
+    ("comps", po::value(&conf.doCompHandler)->default_value(conf.doCompHandler)
+        , "Perform component-finding and separate handling")
+    ("compsfrom", po::value(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
+        , "Component finding only after this many simplification rounds")
+    ("compsvar", po::value(&conf.compVarLimit)->default_value(conf.compVarLimit)
+        , "Only use components in case the number of variables is below this limit")
+    ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
+        , "Limit how much time is spent in component-finding");
+
+    po::options_description miscOptions("Simplification options");
     miscOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
@@ -625,22 +626,28 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit strengthening")
     ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
         , "Number of conflicts to do in burst search")
+    ;
+
+    po::options_description hiddenOptions("Debug options for fuzzing, weird options not exposed");
+    hiddenOptions.add_options()
+    ("drupexistscheck", po::value(&drupExistsCheck)->default_value(drupExistsCheck)
+        , "Check if the drup file provided already exists")
+    ("drupdebug", po::bool_switch(&drupDebug)
+        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
+    ("simpexistscheck", po::value(&simpExistsCheck)->default_value(simpExistsCheck)
+        , "Check if the simplified CNF file provided already exists")
     ("clearinter", po::value(&clear_interrupt)->default_value(0)
         , "Interrupt threads cleanly, all the time")
     ("zero-exit-status", po::bool_switch(&zero_exit_status)
         , "Exit with status zero in case the solving has finished without an issue")
+    ("input", po::value< vector<string> >(), "file(s) to read")
+    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
+        , "Reconfigure after this many simplifications")
+    ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
+        , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
+    ("drup,d", po::value(&drupfilname)
+        , "Put DRUP verification information into this file")
     ;
-
-    po::options_description componentOptions("Component options");
-    componentOptions.add_options()
-    ("comps", po::value(&conf.doCompHandler)->default_value(conf.doCompHandler)
-        , "Perform component-finding and separate handling")
-    ("compsfrom", po::value(&conf.handlerFromSimpNum)->default_value(conf.handlerFromSimpNum)
-        , "Component finding only after this many simplification rounds")
-    ("compsvar", po::value(&conf.compVarLimit)->default_value(conf.compVarLimit)
-        , "Only use components in case the number of variables is below this limit")
-    ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
-        , "Limit how much time is spent in component-finding");
 
     p.add("input", 1);
     p.add("drup", 1);
@@ -668,6 +675,36 @@ void Main::add_supported_options()
     #endif
     .add(gateOptions)
     .add(miscOptions)
+    .add(hiddenOptions)
+    ;
+
+    help_options_complicated
+    .add(generalOptions)
+    #if defined(USE_MYSQL) or defined(USE_SQLITE3)
+    .add(sqlOptions)
+    #endif
+    .add(restartOptions)
+    .add(printOptions)
+    .add(propOptions)
+    .add(reduceDBOptions)
+    .add(varPickOptions)
+    .add(polar_options)
+    .add(conflOptions)
+    .add(iterativeOptions)
+    .add(probeOptions)
+    .add(stampOptions)
+    .add(simplificationOptions)
+    .add(eqLitOpts)
+    .add(componentOptions)
+    #ifdef USE_M4RI
+    .add(xorOptions)
+    #endif
+    .add(gateOptions)
+    .add(miscOptions)
+    ;
+
+    help_options_simple
+    .add(generalOptions)
     ;
 }
 
@@ -675,7 +712,36 @@ void Main::check_options_correctness()
 {
     try {
         po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
-        //po::store(po::parse_command_line(argc, argv, desc), vm);
+        if (vm.count("hhelp"))
+        {
+            cout
+            << "USAGE 1: " << argv[0] << " [options] inputfile [drat-trim-file]" << endl
+            << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
+            << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
+
+            << " where input is "
+            #ifndef USE_ZLIB
+            << "plain"
+            #else
+            << "plain or gzipped"
+            #endif
+            << " DIMACS." << endl;
+
+            cout << help_options_complicated << endl;
+            cout << "NORMAL RUN SCHEDULES" << endl;
+            cout << "--------------------" << endl;
+            cout << "Default schedule for simplifier: " << conf.simplify_schedule_nonstartup << endl;
+            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
+            cout << "Default schedule for occur simplifier: " << conf.occsimp_schedule_nonstartup<< endl;
+            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_startup << endl;
+
+            cout << "PREPROC RUN SCHEDULES" << endl;
+            cout << "--------------------" << endl;
+            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
+            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
+            std::exit(0);
+        }
+
         if (vm.count("help"))
         {
             cout
@@ -691,18 +757,7 @@ void Main::check_options_correctness()
             #endif
             << " DIMACS." << endl;
 
-            cout << cmdline_options << endl;
-            cout << "NORMAL RUN SCHEDULES" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier: " << conf.simplify_schedule_nonstartup << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
-            cout << "Default schedule for occur simplifier: " << conf.occsimp_schedule_nonstartup<< endl;
-            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_startup << endl;
-
-            cout << "PREPROC RUN SCHEDULES" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
-            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
+            cout << help_options_simple << endl;
             std::exit(0);
         }
 
@@ -1011,7 +1066,7 @@ void Main::manually_parse_some_options()
             std::exit(-1);
         }
         conf.simplified_cnf = vm["drup"].as<string>();
-        if (fileExists(conf.simplified_cnf)) {
+        if (simpExistsCheck && fileExists(conf.simplified_cnf)) {
             cout << "ERROR: The file you gave to put the simplified CNF into already exists. Exiting." << endl;
             std::exit(-1);
         }

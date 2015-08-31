@@ -50,6 +50,7 @@ class Main
         string var_elim_strategy;
         string drupfilname;
         int drupExistsCheck = 1;
+        int simpExistsCheck = 1;
         void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();
@@ -63,6 +64,8 @@ class Main
         po::positional_options_description p;
         po::variables_map vm;
         po::options_description cmdline_options;
+        po::options_description help_options_simple;
+        po::options_description help_options_complicated;
 
         SATSolver* solver = NULL;
 

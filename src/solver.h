@@ -285,6 +285,7 @@ class Solver : public Searcher
         vector<Lit> outside_assumptions;
 
         //Stats printing
+        void print_norm_stats() const;
         void print_min_stats() const;
         void print_all_stats() const;
 
