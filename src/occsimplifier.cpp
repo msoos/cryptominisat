@@ -858,6 +858,7 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
         }
 
         solver->propagate_occur();
+        set_limits();
 
         trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
