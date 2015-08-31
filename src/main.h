@@ -49,8 +49,6 @@ class Main
         string typeclean;
         string var_elim_strategy;
         string drupfilname;
-        int drupExistsCheck = 1;
-        int simpExistsCheck = 1;
         void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();

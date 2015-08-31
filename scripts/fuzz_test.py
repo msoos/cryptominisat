@@ -543,10 +543,7 @@ class Tester:
         if fname is not None:
             command += fname
         if fname2:
-            if "preproc" in fixed_opts:
-                command += " --simpexistscheck 0 " + fname2
-            else:
-                command += " --drupexistscheck 0 " + fname2
+            command += " " + fname2
 
         print "Executing: %s " % command
 

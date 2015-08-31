@@ -630,12 +630,8 @@ void Main::add_supported_options()
 
     po::options_description hiddenOptions("Debug options for fuzzing, weird options not exposed");
     hiddenOptions.add_options()
-    ("drupexistscheck", po::value(&drupExistsCheck)->default_value(drupExistsCheck)
-        , "Check if the drup file provided already exists")
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
-    ("simpexistscheck", po::value(&simpExistsCheck)->default_value(simpExistsCheck)
-        , "Check if the simplified CNF file provided already exists")
     ("clearinter", po::value(&clear_interrupt)->default_value(0)
         , "Interrupt threads cleanly, all the time")
     ("zero-exit-status", po::bool_switch(&zero_exit_status)
@@ -848,16 +844,6 @@ void Main::handle_drup_option()
     if (drupDebug) {
         drupf = &std::cout;
     } else {
-        if (drupExistsCheck && fileExists(drupfilname)) {
-            std::cerr
-            << "ERROR! File selected for DRUP output, '"
-            << drupfilname
-            << "' already exists. Please delete the file or pick another"
-            << endl
-            << "DRUP filename"
-            << endl;
-            std::exit(-1);
-        }
         std::ofstream* drupfTmp = new std::ofstream;
         drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
         if (!*drupfTmp) {
@@ -1066,10 +1052,6 @@ void Main::manually_parse_some_options()
             std::exit(-1);
         }
         conf.simplified_cnf = vm["drup"].as<string>();
-        if (simpExistsCheck && fileExists(conf.simplified_cnf)) {
-            cout << "ERROR: The file you gave to put the simplified CNF into already exists. Exiting." << endl;
-            std::exit(-1);
-        }
     }
 
     if (conf.preprocess == 2) {
