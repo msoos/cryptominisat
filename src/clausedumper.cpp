@@ -343,7 +343,7 @@ void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
     *outfile
     << "c " << endl
     << "c ---------------" << endl
-    << "c normal clauses" << endl
+    << "c long clauses" << endl
     << "c ---------------" << endl;
     dump_clauses(solver->longIrredCls, std::numeric_limits<size_t>::max(), backnumber);
 }
