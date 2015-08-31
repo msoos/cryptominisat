@@ -338,6 +338,7 @@ class SolverConf
         unsigned preprocess;
         std::string simplified_cnf;
         std::string solution_file;
+        std::string saved_state_file;
 };
 
 } //end namespace

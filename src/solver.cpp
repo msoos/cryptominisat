@@ -1315,7 +1315,7 @@ lbool Solver::solve()
     set_assumptions();
 
     if (conf.preprocess == 2) {
-        status = load_state("savedstate.dat");
+        status = load_state(conf.saved_state_file);
         if (status == l_Undef) {
             status = load_solution_from_file(conf.solution_file);
         }
@@ -1348,7 +1348,7 @@ lbool Solver::solve()
             solver->clauseCleaner->remove_and_clean_all();
         }
 
-        save_state("savedstate.dat", status);
+        save_state(conf.saved_state_file, status);
         ClauseDumper dumper(this);
         if (status == l_False) {
             dumper.open_file_and_write_unsat(conf.simplified_cnf);
@@ -1357,7 +1357,9 @@ lbool Solver::solve()
         } else {
             dumper.open_file_and_dump_irred_clauses_preprocessor(conf.simplified_cnf);
         }
-        cout << "DUMPED to files" << endl;
+        cout << "Wrote solver state to file " << conf.saved_state_file
+        << " and simplified CNF to file " << conf.simplified_cnf
+        << endl;
     }
 
     handle_found_solution(status);
