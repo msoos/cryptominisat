@@ -1238,7 +1238,7 @@ int Main::solve()
 
     dumpIfNeeded();
 
-    if (conf.preprocess == 0) {
+    if (conf.preprocess != 1) {
         if (ret == l_Undef && conf.verbosity >= 1) {
             cout
             << "c Not finished running -- signal caught or some maximum reached"
