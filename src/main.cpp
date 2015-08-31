@@ -268,8 +268,6 @@ void Main::add_supported_options()
         , "Stop solving after this much time (s)")
     ("maxconfl", po::value(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
         , "Stop solving after this many conflicts")
-    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver configuration [0..13]")
     ("preproc", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -643,6 +641,8 @@ void Main::add_supported_options()
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
     ("drup,d", po::value(&drupfilname)
         , "Put DRUP verification information into this file")
+    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
+        , "Reconfigure after some time to this solver configuration [0..13]")
     ;
 
     p.add("input", 1);
