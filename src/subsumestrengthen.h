@@ -111,6 +111,7 @@ private:
     OccSimplifier* simplifier;
     Solver* solver;
 
+    void randomise_clauses_order();
     void remove_literal(ClOffset c, const Lit toRemoveLit);
 
     template<class T>

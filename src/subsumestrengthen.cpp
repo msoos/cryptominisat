@@ -181,6 +181,20 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     return ret;
 }
 
+void SubsumeStrengthen::randomise_clauses_order()
+{
+    const size_t sz = simplifier->clauses.size();
+    for (size_t i = 0
+        ; i + 1 < sz
+        ; i++
+    ) {
+        std::swap(
+            simplifier->clauses[i]
+            , simplifier->clauses[i+solver->mtrand.randInt(simplifier->clauses.size()-1-i)]
+        );
+    }
+}
+
 void SubsumeStrengthen::backward_subsumption_long_with_long()
 {
     //If clauses are empty, the system below segfaults
@@ -192,6 +206,8 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
     size_t subsumed = 0;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
     simplifier->limit_to_decrease = &simplifier->subsumption_time_limit;
+
+    randomise_clauses_order();
     while (*simplifier->limit_to_decrease > 0
         && (double)wenThrough < solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size()
     ) {
@@ -205,7 +221,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
             cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
         }
 
-        const size_t at = solver->mtrand.randInt(simplifier->clauses.size()-1);
+        const size_t at = wenThrough % simplifier->clauses.size();
         const ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
@@ -255,6 +271,8 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
     const int64_t orig_limit = simplifier->strengthening_time_limit;
     simplifier->limit_to_decrease = &simplifier->strengthening_time_limit;
     Sub1Ret ret;
+
+    randomise_clauses_order();
     while(*simplifier->limit_to_decrease > 0
         && wenThrough < 1.5*(double)2*simplifier->clauses.size()
         && solver->okay()
@@ -269,8 +287,8 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
             cout << "toDecrease: " << *simplifier->limit_to_decrease << endl;
         }
 
-        size_t num = solver->mtrand.randInt(simplifier->clauses.size()-1);
-        ClOffset offset = simplifier->clauses[num];
+        const size_t at = wenThrough % simplifier->clauses.size();
+        ClOffset offset = simplifier->clauses[at];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         //Has already been removed
