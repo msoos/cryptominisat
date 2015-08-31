@@ -381,7 +381,7 @@ void Main::add_supported_options()
     ;
 
     std::ostringstream ssERatio;
-    ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
+    ssERatio << std::setprecision(4) << "norm: " << conf.varElimRatioPerIter << " preproc: " << 1.0;
 
     po::options_description simplificationOptions("Simplification options");
     simplificationOptions.add_options()
@@ -999,6 +999,10 @@ void Main::manually_parse_some_options()
 
         if (!vm.count("preoccschedule")) {
             conf.occsimp_schedule_startup = conf.occsimp_schedule_nonstartup;
+        }
+
+        if (!vm.count("eratio")) {
+            conf.varElimRatioPerIter = 1.0;
         }
     }
 
