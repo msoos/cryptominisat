@@ -968,6 +968,7 @@ bool OccSimplifier::backward_sub_str()
     assert(solver->watches.get_smudged_list().empty());
     bool ret = true;
 
+    subsumeStrengthen->backward_subsume_with_tris();
     subsumeStrengthen->backward_subsumption_long_with_long();
     if (!subsumeStrengthen->backward_strengthen_long_with_long()
         || solver->must_interrupt_asap()

@@ -760,119 +760,122 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
     return *this;
 }
 
-// struct WatchTriFirst
-// {
-//     bool operator()(const Watched& a, const Watched& b)
-//     {
-//         WatchType aType = a.getType();
-//         WatchType bType = b.getType();
-//
-//         //Equal? Undecidable
-//         if (aType == bType)
-//             return false;
-//
-//         //One is binary, but the other isn't? Return that
-//         if (aType == watch_binary_t)
-//             return true;
-//         if (bType == watch_binary_t)
-//             return false;
-//
-//         //At this point neither is binary, and they are unequal
-//
-//         //One is tri, but the other isn't? Return that
-//         if (aType == watch_tertiary_t)
-//             return true;
-//         if (bType == watch_tertiary_t)
-//             return false;
-//
-//         //At this point, both must be clause, but that's impossible
-//         assert(false);
-//     }
-// };
+bool SubsumeStrengthen::backward_subsume_with_tris()
+{
+    vector<Lit> lits;
+    size_t strSucceed = 0;
 
-// bool OccSimplifier::subsumeWithTris()
-// {
-//     vector<Lit> lits;
-//     size_t strSucceed = 0;
-//
-//     //Stats
-//     toDecrease = &numMaxTriSub;
-//     const size_t origTrailSize = solver->trail_size();
-//     double myTime = cpuTime();
-//     size_t subsumed = 0;
-//
-//     //Randomize start in the watchlist
-//     size_t upI;
-//     upI = solver->mtrand.randInt(solver->watches.size()-1);
-//
-//     size_t tried = 0;
-//     size_t numDone = 0;
-//     for (; numDone < solver->watches.size() && *simplifier->toDecrease > 0
-//         ; upI = (upI +1) % solver->watches.size(), numDone++
-//
-//     ) {
-//         Lit lit = Lit::toLit(upI);
-//         watch_subarray ws = solver->watches[upI];
-//
-//         //Must re-order so that TRI-s are first
-//         //Otherwise we might re-order list while looking through.. very messy
-//         WatchTriFirst sorter;
-//         std::sort(ws.begin(), ws.end(), sorter);
-//
-//         for (size_t i = 0
-//             ; i < ws.size() && *simplifier->toDecrease > 0
-//             ; i++
-//         ) {
-//             //Each TRI only once
-//             if (ws[i].isTri()
-//                 && lit < ws[i].lit2()
-//                 && ws[i].lit2() < ws[i].lit3()
-//             ) {
-//                 tried++;
-//                 lits.resize(3);
-//                 lits[0] = lit;
-//                 lits[1] = ws[i].lit2();
-//                 lits[2] = ws[i].lit3();
-//                 cl_abst_type abstr = calcAbstraction(lits);
-//
-//                 Sub0Ret ret = subsumeFinal(
-//                     CL_OFFSET_MAX
-//                     , lits
-//                     , abstr
-//                 );
-//
-//                 subsumed += ret.numSubsumed;
-//
-//                 if (ws[i].red()
-//                     && ret.subsumedIrred
-//                 ) {
-//                     ws[i].setRed(false);
-//                     solver->binTri.redTris--;
-//                     solver->binTri.irredTris++;
-//                     findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
-//                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
-//                 }
-//             }
-//         }
-//
-//         if (!solver->okay())
-//             break;
-//     }
-//
-//     if (solver->conf.verbosity >= 2) {
-//         cout
-//         << "c [subs] tri"
-//         << " subs: " << subsumed
-//         << " tried: " << tried
-//         << " str: " << strSucceed
-//         << " toDecrease: " << *simplifier->toDecrease
-//         << " 0-depth ass: " << solver->trail_size() - origTrailSize
-//         << " time: " << cpuTime() - myTime
-//         << endl;
-//     }
-//
-//     //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
-//
-//     return solver->ok;
-// }
+    //Stats
+    numMaxTriSub = 900ULL*1000ULL*1000ULL;
+    simplifier->limit_to_decrease = &numMaxTriSub;
+
+    const size_t origTrailSize = solver->trail_size();
+    double myTime = cpuTime();
+    size_t subsumedBin = 0;
+    size_t subsumedTri = 0;
+
+    //Randomize start in the watchlist
+    size_t upI;
+    upI = solver->mtrand.randInt(solver->watches.size()-1);
+
+    size_t tried = 0;
+    size_t numDone = 0;
+    for (; numDone < solver->watches.size() && *simplifier->limit_to_decrease > 0
+        ; upI = (upI +1) % solver->watches.size(), numDone++
+
+    ) {
+        Lit lit = Lit::toLit(upI);
+        watch_subarray ws = solver->watches[upI];
+
+        //Must re-order so that TRI-s are first
+        //Otherwise we might re-order list while looking through.. very messy
+        WatchSorterBinTriLong sorter;
+        std::sort(ws.begin(), ws.end(), sorter);
+
+        for (size_t i = 0
+            ; i < ws.size() && *simplifier->limit_to_decrease > 0
+            ; i++
+        ) {
+            //Each BIN only once
+            if (ws[i].isBinary()
+                && lit < ws[i].lit2()
+            ) {
+                tried++;
+                lits.resize(2);
+                lits[0] = lit;
+                lits[1] = ws[i].lit2();
+                cl_abst_type abstr = calcAbstraction(lits);
+
+                Sub0Ret ret = subsume_and_unlink(
+                    CL_OFFSET_MAX
+                    , lits
+                    , abstr
+                );
+
+                subsumedBin += ret.numSubsumed;
+
+                if (ws[i].red()
+                    && ret.subsumedIrred
+                ) {
+                    ws[i].setRed(false);
+                    solver->binTri.redBins--;
+                    solver->binTri.irredBins++;
+                    findWatchedOfBin(solver->watches, ws[i].lit2(), lit, true).setRed(false);
+                }
+            }
+
+            //Each TRI only once
+            if (ws[i].isTri()
+                && lit < ws[i].lit2()
+                && ws[i].lit2() < ws[i].lit3()
+            ) {
+                tried++;
+                lits.resize(3);
+                lits[0] = lit;
+                lits[1] = ws[i].lit2();
+                lits[2] = ws[i].lit3();
+                cl_abst_type abstr = calcAbstraction(lits);
+
+                Sub0Ret ret = subsume_and_unlink(
+                    CL_OFFSET_MAX
+                    , lits
+                    , abstr
+                );
+
+                subsumedTri += ret.numSubsumed;
+
+                if (ws[i].red()
+                    && ret.subsumedIrred
+                ) {
+                    ws[i].setRed(false);
+                    solver->binTri.redTris--;
+                    solver->binTri.irredTris++;
+                    findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
+                    findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
+                }
+            }
+        }
+
+        if (!solver->okay())
+            break;
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [sub] tri"
+        << " upI: " << upI
+        << " subs: " << subsumedBin
+        << " subs: " << subsumedTri
+        << " tried: " << tried
+        << " str: " << strSucceed
+        << " toDecrease: " << *simplifier->limit_to_decrease
+        << " 0-depth ass: " << solver->trail_size() - origTrailSize
+        << " time: " << cpuTime() - myTime
+        << endl;
+    }
+
+    //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
+
+    return solver->ok;
+}
 

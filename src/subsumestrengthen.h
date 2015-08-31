@@ -43,6 +43,7 @@ public:
 
     void backward_subsumption_long_with_long();
     bool backward_strengthen_long_with_long();
+    bool backward_subsume_with_tris();
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
@@ -110,6 +111,7 @@ private:
 
     OccSimplifier* simplifier;
     Solver* solver;
+    int64_t numMaxTriSub;
 
     void randomise_clauses_order();
     void remove_literal(ClOffset c, const Lit toRemoveLit);
