@@ -97,7 +97,7 @@ class Watched {
         }
 
         /**
-        @brief Constructor for an OR gate
+        @brief Constructor for an Index value
         */
         Watched(const uint32_t or_gate_idx) :
             data1(or_gate_idx)
