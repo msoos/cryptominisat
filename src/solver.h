@@ -48,7 +48,7 @@ class Prober;
 class OccSimplifier;
 class SCCFinder;
 class Distiller;
-class SubStrWithBinExt;
+class DistillerWithBin;
 class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
@@ -302,7 +302,7 @@ class Solver : public Searcher
         InTree              *intree = NULL;
         OccSimplifier       *simplifier = NULL;
         Distiller           *distiller = NULL;
-        SubStrWithBinExt        *strengthener = NULL;
+        DistillerWithBin    *distillerwithbin = NULL;
         CompHandler         *compHandler = NULL;
 
         /////////////////////////////

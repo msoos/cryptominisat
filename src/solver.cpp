@@ -50,7 +50,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
-#include "sub_str_with_bin_ext.h"
+#include "distillerwithbin.h"
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
@@ -93,7 +93,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
         simplifier = new OccSimplifier(this);
     }
     distiller = new Distiller(this);
-    strengthener = new SubStrWithBinExt(this);
+    distillerwithbin = new DistillerWithBin(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -115,7 +115,7 @@ Solver::~Solver()
     delete intree;
     delete simplifier;
     delete distiller;
-    delete strengthener;
+    delete distillerwithbin;
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
@@ -1644,7 +1644,7 @@ bool Solver::execute_inprocess_strategy(
                 prober->probe();
         } else if (token == "sub-str-cls-with-bin") {
             if (conf.do_distill_clauses) {
-                strengthener->sub_str_with_bin_ext(true);
+                distillerwithbin->distill_with_bin(true);
             }
         } else if (token == "distill-cls") {
             if (conf.do_distill_clauses) {
@@ -1659,7 +1659,7 @@ bool Solver::execute_inprocess_strategy(
             }
         } else if (token == "str-impl") {
             if (conf.doStrSubImplicit) {
-                strengthener->strengthen_implicit();
+                distillerwithbin->strengthen_implicit();
             }
         } else if (token == "check-cache-size") {
             //Delete and disable cache if too large
@@ -1929,13 +1929,13 @@ void Solver::print_min_stats() const
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , strengthener->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , strengthener->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
@@ -2010,13 +2010,13 @@ void Solver::print_norm_stats() const
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , strengthener->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , strengthener->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
@@ -2130,14 +2130,14 @@ void Solver::print_all_stats() const
     distiller->get_stats().print(nVars());
 
     print_stats_line("c strength cache-irred time"
-                    , strengthener->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time");
     print_stats_line("c strength cache-red time"
-                    , strengthener->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(strengthener->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , distillerwithbin->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(distillerwithbin->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
-    strengthener->get_stats().print();
+    distillerwithbin->get_stats().print();
 
     if (conf.doStrSubImplicit) {
         subsumeImplicit->get_stats().print();

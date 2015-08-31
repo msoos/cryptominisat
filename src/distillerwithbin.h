@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef __STRENGTHENER_H__
-#define __STRENGTHENER_H__
+#ifndef __DISTILLERWITHBIN_H__
+#define __DISTILLERWITHBIN_H__
 
 #include <vector>
 #include "clause.h"
@@ -36,10 +36,10 @@ using std::vector;
 class Solver;
 class Clause;
 
-class SubStrWithBinExt {
+class DistillerWithBin {
     public:
-        SubStrWithBinExt(Solver* solver);
-        bool sub_str_with_bin_ext(bool alsoStrengthen);
+        DistillerWithBin(Solver* solver);
+        bool distill_with_bin(bool alsoStrengthen);
         bool strengthen_implicit();
 
         struct Stats
@@ -226,11 +226,11 @@ class SubStrWithBinExt {
 
 };
 
-inline const SubStrWithBinExt::Stats& SubStrWithBinExt::get_stats() const
+inline const DistillerWithBin::Stats& DistillerWithBin::get_stats() const
 {
     return globalStats;
 }
 
 } //end namespace
 
-#endif //CLAUSEDistiller_H
+#endif //__DISTILLERWITHBIN_H__
