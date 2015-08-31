@@ -931,7 +931,7 @@ class Tester:
         self.delete_file_no_matter_what(fname2)
         console, retcode = self.execute(fname, fname2=fname2,
                                         rnd_opts=rnd_opts,
-                                        fixed_opts="-p 1")
+                                        fixed_opts="--preproc 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
@@ -940,7 +940,7 @@ class Tester:
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
             self.check(fname="solution.txt", checkAgainst=fname,
-                       fixed_opts="--p 2",
+                       fixed_opts="--preproc 2",
                        rnd_opts=rnd_opts)
 
         # remove temporary filenames
