@@ -185,6 +185,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
         "check-cache-size, renumber"
         )
+        , simplify_schedule_preproc("handle-comps,"
+        "scc-vrepl, cache-clean, cache-tryboth,"
+        "sub-impl, intree-probe, probe,"
+        "str-cls, distill-cls, scc-vrepl, sub-impl, occsimp,"
+        "str-impl, cache-clean, str-cls, distill-cls, scc-vrepl,"
+        "check-cache-size, occsimp, occsimp, renumber"
+        )
 
         //Occur based simplification
         , perform_occur_based_simp(true)

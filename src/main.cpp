@@ -735,7 +735,7 @@ void Main::check_options_correctness()
 
             cout << "PREPROC RUN SCHEDULES" << endl;
             cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
+            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_preproc<< endl;
             cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
             std::exit(0);
         }
@@ -996,7 +996,7 @@ void Main::manually_parse_some_options()
         }
 
         if (!vm.count("preschedule")) {
-            conf.simplify_schedule_startup = conf.simplify_schedule_nonstartup;
+            conf.simplify_schedule_startup = conf.simplify_schedule_preproc;
         }
 
         if (!vm.count("preoccschedule")) {

@@ -277,6 +277,7 @@ class SolverConf
         double   num_conflicts_of_search_inc;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
+        string   simplify_schedule_preproc;
 
         //Simplification
         int      perform_occur_based_simp;
