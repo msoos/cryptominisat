@@ -74,48 +74,6 @@ private:
     Stats runStats;
     Stats globalStats;
 
-    struct WatchSorter {
-        bool operator()(const Watched& a, const Watched& b)
-        {
-            //Anything but clause!
-            if (a.isClause()) {
-                //A is definitely not better than B
-                return false;
-            }
-            if (b.isClause()) {
-                //B is clause, A is NOT a clause. So A is better than B.
-                return true;
-            }
-            //Now nothing is clause
-
-            if (a.lit2() != b.lit2()) {
-                return a.lit2() < b.lit2();
-            }
-            if (a.isBinary() && b.isTri()) return true;
-            if (a.isTri() && b.isBinary()) return false;
-            //At this point either both are BIN or both are TRI
-
-            //Both are BIN
-            if (a.isBinary()) {
-                assert(b.isBinary());
-                if (a.red() != b.red()) {
-                    return !a.red();
-                }
-                return false;
-            }
-
-            //Both are Tri
-            assert(a.isTri() && b.isTri());
-            if (a.lit3() != b.lit3()) {
-                return a.lit3() < b.lit3();
-            }
-            if (a.red() != b.red()) {
-                return !a.red();
-            }
-            return false;
-        }
-    };
-
     void clear()
     {
         lastLit2 = lit_Undef;
