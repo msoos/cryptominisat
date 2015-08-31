@@ -694,7 +694,7 @@ void CompHandler::moveClausesImplicit(
             ; ++i
         ) {
             //At least one variable inside comp
-            if (i->isBinary()
+            if (i->isBin()
                 && (compFinder->getVarComp(lit.var()) == comp
                     || compFinder->getVarComp(i->lit2().var()) == comp
                 )

@@ -450,7 +450,7 @@ void ImplCache::tryVar(
         ; it != end
         ; ++it
     ) {
-        if (!it->isBinary())
+        if (!it->isBin())
             continue;
 
         const Lit otherLit = it->lit2();
@@ -490,7 +490,7 @@ void ImplCache::tryVar(
     //Try to see if we propagate the same or opposite from the other end
     //Using binary clauses
     for (watch_subarray::const_iterator it = ws2.begin(), end = ws2.end(); it != end; ++it) {
-        if (!it->isBinary())
+        if (!it->isBin())
             continue;
 
         assert(it->lit2().var() != var);
@@ -511,7 +511,7 @@ void ImplCache::tryVar(
     }
 
     for (watch_subarray::const_iterator it = ws1.begin(), end = ws1.end(); it != end; ++it) {
-        if (!it->isBinary())
+        if (!it->isBin())
             continue;
 
         seen[it->lit2().var()] = false;

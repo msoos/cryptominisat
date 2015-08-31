@@ -238,7 +238,7 @@ uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 
 bool CNF::redundant(const Watched& ws) const
 {
-    return (   (ws.isBinary() && ws.red())
+    return (   (ws.isBin() && ws.red())
             || (ws.isTri()   && ws.red())
             || (ws.isClause()
                 && cl_alloc.ptr(ws.get_offset())->red()
@@ -248,7 +248,7 @@ bool CNF::redundant(const Watched& ws) const
 
 bool CNF::redundant_or_removed(const Watched& ws) const
 {
-    if (ws.isBinary() || ws.isTri()) {
+    if (ws.isBin() || ws.isTri()) {
         return ws.red();
     }
 

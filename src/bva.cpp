@@ -782,7 +782,7 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
     size_t num = 0;
     watch_subarray_const ws = solver->watches[lit.toInt()];
     for(const Watched w: ws) {
-        if (w.isBinary() || w.isTri()) {
+        if (w.isBin() || w.isTri()) {
             num += !w.red();
             continue;
         }

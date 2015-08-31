@@ -307,7 +307,7 @@ bool SolutionExtender::propagate()
             ; it != end
             ; ++it
         ) {
-            if (it->isBinary() && !it->red()) {
+            if (it->isBin() && !it->red()) {
                 bool thisret = prop_bin_cl(it, p);
                 ret &= thisret;
                 if (!thisret) {

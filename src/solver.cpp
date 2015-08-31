@@ -2439,7 +2439,7 @@ void Solver::print_all_clauses() const
             ; it2 != end2
             ; it2++
         ) {
-            if (it2->isBinary()) {
+            if (it2->isBin()) {
                 cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
             } else if (it2->isClause()) {
                 cout << "Normal clause offs " << it2->get_offset() << endl;
@@ -2465,7 +2465,7 @@ bool Solver::verify_implicit_clauses() const
         watch_subarray_const ws = *it;
 
         for (Watched w: ws) {
-            if (w.isBinary()
+            if (w.isBin()
                 && model_value(lit) != l_True
                 && model_value(w.lit2()) != l_True
             ) {
@@ -2795,7 +2795,7 @@ void Solver::check_implicit_stats() const
             ; it2 != end2
             ; it2++
         ) {
-            if (it2->isBinary()) {
+            if (it2->isBin()) {
                 if (it2->red())
                     thisNumRedBins++;
                 else
@@ -2964,7 +2964,7 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
             << "Clause: " << *cl_alloc.ptr(it->get_offset());
         }
 
-        if (it->isBinary()) {
+        if (it->isBin()) {
             cout
             << "BIN: " << lit << ", " << it->lit2()
             << " (l: " << it->red() << ")";
@@ -3008,7 +3008,7 @@ void Solver::check_implicit_propagated() const
             const lbool val2 = value(it2->lit2());
 
             //Handle binary
-            if (it2->isBinary()) {
+            if (it2->isBin()) {
                 if (val1 == l_False) {
                     if (val2 != l_True) {
                         cout << "not prop BIN: "

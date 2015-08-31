@@ -92,7 +92,7 @@ void DistillerWithBin::strengthen_clause_with_watch(
     , const Watched* wit
 ) {
     //Strengthening w/ bin
-    if (wit->isBinary()
+    if (wit->isBin()
         && seen[lit.toInt()] //We haven't yet removed it
     ) {
         if (seen[(~wit->lit2()).toInt()]) {
@@ -125,7 +125,7 @@ bool DistillerWithBin::subsume_clause_with_watch(
     , const Clause& cl
 ) {
     //Subsumption w/ bin
-    if (wit->isBinary() &&
+    if (wit->isBin() &&
         seen_subs[wit->lit2().toInt()]
     ) {
         //If subsuming irred with redundant, make the redundant into irred
@@ -142,7 +142,7 @@ bool DistillerWithBin::subsume_clause_with_watch(
     }
 
     //Extension w/ bin
-    if (wit->isBinary()
+    if (wit->isBin()
         && !wit->red()
         && !seen_subs[(~(wit->lit2())).toInt()]
     ) {
@@ -635,12 +635,12 @@ void DistillerWithBin::strengthen_bin_with_bin(
     bool rem = false;
     watch_subarray::const_iterator i2 = i;
     while(i2 != end
-        && (i2->isBinary() || i2->isTri())
+        && (i2->isBin() || i2->isTri())
         && i->lit2().var() == i2->lit2().var()
     ) {
         timeAvailable -= 2;
         //Yay, we have found what we needed!
-        if (i2->isBinary() && i2->lit2() == ~i->lit2()) {
+        if (i2->isBin() && i2->lit2() == ~i->lit2()) {
             rem = true;
             break;
         }
@@ -672,7 +672,7 @@ void DistillerWithBin::strengthen_tri_with_bin_tri_stamp(
         ; it2 != end2 && timeAvailable > 0
         ; it2++
     ) {
-        if (it2->isBinary()
+        if (it2->isBin()
             && (it2->lit2() == lit1 || it2->lit2() == lit2)
         ) {
             rem = true;

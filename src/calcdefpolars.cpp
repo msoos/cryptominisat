@@ -82,7 +82,7 @@ void CalcDefPolars::tally_implicit_votes(const watch_array& watches)
         ) {
 
             //Only count bins once
-            if (it2->isBinary()
+            if (it2->isBin()
                 && lit < it2->lit2()
                 && !it2->red()
             ) {

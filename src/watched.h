@@ -126,7 +126,7 @@ class Watched {
 
         WatchType getType() const
         {
-            if (isBinary())
+            if (isBin())
                 return watch_binary_t;
             else if (isTri())
                 return watch_tertiary_t;
@@ -134,7 +134,7 @@ class Watched {
                 return watch_clause_t;
         }
 
-        bool isBinary() const
+        bool isBin() const
         {
             return (type == watch_binary_t);
         }
@@ -168,7 +168,7 @@ class Watched {
         Lit lit2() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTri());
+            assert(isBin() || isTri());
             #endif
             return Lit::toLit(data1);
         }
@@ -179,7 +179,7 @@ class Watched {
         void setLit2(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTri());
+            assert(isBin() || isTri());
             #endif
             data1 = lit.toInt();
         }
@@ -187,7 +187,7 @@ class Watched {
         bool red() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTri());
+            assert(isBin() || isTri());
             #endif
             return data2 & 1;
         }
@@ -195,7 +195,7 @@ class Watched {
         void setRed(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary() || isTri());
+            assert(isBin() || isTri());
             assert(red());
             #endif
             assert(toSet == false);
@@ -224,7 +224,7 @@ class Watched {
         void mark_bin_cl()
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary());
+            assert(isBin());
             #endif
             data2 |= 2;
         }
@@ -232,7 +232,7 @@ class Watched {
         void unmark_bin_cl()
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary());
+            assert(isBin());
             #endif
             data2 &= 1;
         }
@@ -240,7 +240,7 @@ class Watched {
         bool bin_cl_marked() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBinary());
+            assert(isBin());
             #endif
             return data2&2;
         }
@@ -352,7 +352,7 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
         os << "Clause offset " << ws.get_offset();
     }
 
-    if (ws.isBinary()) {
+    if (ws.isBin()) {
         os << "Bin lit " << ws.lit2() << " (red: " << ws.red() << " )";
     }
 
@@ -404,13 +404,13 @@ struct WatchSorterBinTriLong {
             if (a.lit2() != b.lit2()) {
                 return a.lit2() < b.lit2();
             }
-            if (a.isBinary() && b.isTri()) return true;
-            if (a.isTri() && b.isBinary()) return false;
+            if (a.isBin() && b.isTri()) return true;
+            if (a.isTri() && b.isBin()) return false;
             //At this point either both are BIN or both are TRI
 
             //Both are BIN
-            if (a.isBinary()) {
-                assert(b.isBinary());
+            if (a.isBin()) {
+                assert(b.isBin());
                 if (a.red() != b.red()) {
                     return !a.red();
                 }

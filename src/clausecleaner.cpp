@@ -36,7 +36,7 @@ ClauseCleaner::ClauseCleaner(Solver* _solver) :
 
 bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 {
-    assert(watched.isBinary());
+    assert(watched.isBin());
     if (solver->value(lit) == l_True) return true;
     if (solver->value(watched.lit2()) == l_True) return true;
     return false;
@@ -150,7 +150,7 @@ void ClauseCleaner::clean_implicit_watchlist(
         }
         assert(!solver->drup->something_delayed());
 
-        if (i->isBinary()) {
+        if (i->isBin()) {
             clean_binary_implicit(*i, j, lit);
             continue;
         }

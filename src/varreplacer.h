@@ -183,7 +183,7 @@ class VarReplacer
                     } else {
                         removedIrredTri++;
                     }
-                } else if (ws.isBinary()) {
+                } else if (ws.isBin()) {
                     if (ws.red()) {
                         removedRedBin++;
                     } else {

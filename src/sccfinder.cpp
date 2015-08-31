@@ -118,7 +118,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             ; ++it
         ) {
             //Only binary clauses matter
-            if (!it->isBinary())
+            if (!it->isBin())
                 continue;
 
             const Lit lit = it->lit2();

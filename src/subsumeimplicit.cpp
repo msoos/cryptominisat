@@ -57,7 +57,7 @@ void SubsumeImplicit::try_subsume_tri(
         && lastLit3 == lit_Undef
     ) {
         if (lastRed && !i->red()) {
-            assert(lastBin->isBinary());
+            assert(lastBin->isBin());
             assert(lastBin->red());
             assert(lastBin->lit2() == lastLit2);
 

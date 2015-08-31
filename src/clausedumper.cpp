@@ -149,7 +149,7 @@ void ClauseDumper::dumpBinClauses(
             ; it2++
         ) {
             //Only dump binaries
-            if (it2->isBinary() && lit < it2->lit2()) {
+            if (it2->isBin() && lit < it2->lit2()) {
                 bool toDump = false;
                 if (it2->red() && dumpRed) toDump = true;
                 if (!it2->red() && dumpIrred) toDump = true;

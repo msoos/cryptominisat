@@ -477,7 +477,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
     for(const watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.isIdx());
-            if (w.isBinary() || w.isTri()) {
+            if (w.isBin() || w.isTri()) {
                 continue;
             }
             assert(w.isClause());

@@ -662,7 +662,7 @@ PropBy PropEngine::propagate_any_order()
         }
 
         for (; i != end; i++) {
-            if (i->isBinary()) {
+            if (i->isBin()) {
                 *j++ = *i;
                 if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
                     i++;
@@ -724,7 +724,7 @@ void PropEngine::sortWatched()
         #ifdef VERBOSE_DEBUG
         cout << "Before sorting: ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBinary()) cout << "Binary,";
+            if (ws[i2].isBin()) cout << "Binary,";
             if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
@@ -736,7 +736,7 @@ void PropEngine::sortWatched()
         #ifdef VERBOSE_DEBUG
         cout << "After sorting : ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBinary()) cout << "Binary,";
+            if (ws[i2].isBin()) cout << "Binary,";
             if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
@@ -760,7 +760,7 @@ void PropEngine::printWatchList(const Lit lit) const
         ; it2 != end2
         ; it2++
     ) {
-        if (it2->isBinary()) {
+        if (it2->isBin()) {
             cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
         } else if (it2->isTri()) {
             cout << "tri: " << lit << " , " << it2->lit2() << " , " <<  (it2->lit3()) << endl;
@@ -811,7 +811,7 @@ inline void PropEngine::updateWatch(
         ; it != end
         ; ++it
     ) {
-        if (it->isBinary()) {
+        if (it->isBin()) {
             it->setLit2(
                 getUpdatedLit(it->lit2(), outerToInter)
             );
@@ -870,7 +870,7 @@ PropBy PropEngine::propagate_strict_order(
         for (; i != end; i++) {
 
             //Propagate binary clause
-            if (i->isBinary()) {
+            if (i->isBin()) {
                 if (!prop_bin_cl(i, p, confl)) {
                     break;
                 }
@@ -900,7 +900,7 @@ PropBy PropEngine::propagate_strict_order(
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             //Skip binary clauses
-            if (i->isBinary()) {
+            if (i->isBin()) {
                 *j++ = *i;
                 continue;
             }
@@ -962,7 +962,7 @@ PropBy PropEngine::propagateIrredBin()
         for(watch_subarray::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
             //If not binary, or is redundant, skip
-            if (!k->isBinary() || k->red())
+            if (!k->isBin() || k->red())
                 continue;
 
             //Propagate, if conflict, exit
@@ -1013,7 +1013,7 @@ bool PropEngine::propagate_occur()
                     return false;
             }
 
-            if (it->isBinary()) {
+            if (it->isBin()) {
                 if (!propagate_binary_clause_occur(*it))
                     return false;
             }

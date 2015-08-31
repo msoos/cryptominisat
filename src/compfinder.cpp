@@ -224,7 +224,7 @@ void CompFinder::addToCompImplicits()
                 ; it2 != end2
                 ; it2++
             ) {
-                if (it2->isBinary()
+                if (it2->isBin()
                     //Only irred
                     && !it2->red()
                     //Only do each binary once

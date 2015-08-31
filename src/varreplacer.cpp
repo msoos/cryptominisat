@@ -565,7 +565,7 @@ bool VarReplacer::replaceImplicit()
             if (i->isTri()) {
                 updateTri(i, j, origLit1, origLit2, lit1, lit2);
             } else {
-                assert(i->isBinary());
+                assert(i->isBin());
                 updateBin(i, j, origLit1, origLit2, lit1, lit2);
             }
         }

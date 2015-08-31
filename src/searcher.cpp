@@ -2164,7 +2164,7 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
             ; i++
         ) {
             limit--;
-            if (i->isBinary()) {
+            if (i->isBin()) {
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
@@ -3301,7 +3301,7 @@ void Searcher::write_binary_cls(
         at++;
         for(Watched w: ws)
         {
-            if (w.isBinary() && w.red() == red) {
+            if (w.isBin() && w.red() == red) {
                 assert(lit1 != w.lit2());
                 if (lit1 < w.lit2()) {
                     f.put_lit(lit1);

@@ -75,7 +75,7 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
     watch_subarray::iterator i = ws.begin();
     watch_subarray::iterator j = i;
     for (watch_subarray::iterator end = ws.end(); i != end; i++) {
-        if (i->isBinary()) {
+        if (i->isBin()) {
             if (i->red())
                 stay.redBins++;
             else

@@ -44,9 +44,9 @@ struct WatchedSorter
 
 inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
 {
-    if (y.isBinary()) return false;
+    if (y.isBin()) return false;
     //y is not binary, but x is, so x must be first
-    if (x.isBinary()) return true;
+    if (x.isBin()) return true;
 
     //from now on, none is binary.
     if (y.isTri()) return false;
@@ -207,7 +207,7 @@ inline bool findWBin(
 ) {
     watch_subarray_const::const_iterator i = wsFull[lit1.toInt()].begin();
     watch_subarray_const::const_iterator end = wsFull[lit1.toInt()].end();
-    for (; i != end && (!i->isBinary() || i->lit2() != lit2); i++);
+    for (; i != end && (!i->isBin() || i->lit2() != lit2); i++);
     return i != end;
 }
 
@@ -220,7 +220,7 @@ inline bool findWBin(
     watch_subarray_const::const_iterator i = wsFull[lit1.toInt()].begin();
     watch_subarray_const::const_iterator end = wsFull[lit1.toInt()].end();
     for (; i != end && (
-        !i->isBinary()
+        !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
     ); i++);
@@ -237,7 +237,7 @@ inline void removeWBin(
     watch_subarray ws = wsFull[lit1.toInt()];
     watch_subarray::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
-        !i->isBinary()
+        !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
     ); i++);
@@ -258,7 +258,7 @@ inline bool removeWBin_except_marked(
     watch_subarray ws = wsFull[lit1.toInt()];
     watch_subarray::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
-        !i->isBinary()
+        !i->isBin()
         || i->lit2() != lit2
         || i->red() != red
     ); i++);
@@ -284,7 +284,7 @@ inline Watched& findWatchedOfBin(
 ) {
     watch_subarray ws = wsFull[lit1.toInt()];
     for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
-        if (i->isBinary() && i->lit2() == lit2 && i->red() == red)
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
             return *i;
     }
 

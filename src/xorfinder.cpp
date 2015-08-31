@@ -608,7 +608,7 @@ void XorFinder::findXorMatchExt(
         ; ++it
     ) {
         //Deal with binary
-        if (it->isBinary()) {
+        if (it->isBin()) {
             if (seen[it->lit2().var()]) {
                 tmpClause.clear();
                 tmpClause.push_back(lit);
@@ -715,7 +715,7 @@ void XorFinder::findXorMatch(
         }
 
         //Deal with binary
-        if (it->isBinary()) {
+        if (it->isBin()) {
             if (//Only once per binary
                 lit < it->lit2()
                 //only for correct binary

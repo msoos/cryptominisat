@@ -273,7 +273,7 @@ private:
                 return true;
 
             //BIN is better than TRI
-            if (first.isBinary() && second.isTri()) return true;
+            if (first.isBin() && second.isTri()) return true;
 
             return false;
         }

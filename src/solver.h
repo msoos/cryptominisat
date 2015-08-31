@@ -491,7 +491,7 @@ inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) con
     watch_subarray_const ws = watches[a.toInt()];
     *limit -= ws.size();
     for (const Watched w: ws) {
-        if (!w.isBinary())
+        if (!w.isBin())
             continue;
 
         if (!w.red()

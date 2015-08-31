@@ -656,7 +656,7 @@ void OccSimplifier::remove_all_longs_from_watches()
             if (i->isClause()) {
                 continue;
             } else {
-                assert(i->isBinary() || i->isTri());
+                assert(i->isBin() || i->isTri());
                 *j++ = *i;
             }
         }
@@ -1206,7 +1206,7 @@ void OccSimplifier::sanityCheckElimedVars()
             ; it2 != end2
             ; it2++
         ) {
-            if (it2->isBinary()) {
+            if (it2->isBin()) {
                 if (solver->varData[lit.var()].removed == Removed::elimed
                         || solver->varData[it2->lit2().var()].removed == Removed::elimed
                 ) {
@@ -1361,7 +1361,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             unlink_clause(offset, cl.red(), true, true);
         }
 
-        if (watch.isBinary()) {
+        if (watch.isBin()) {
 
             //Update stats
             if (!watch.red()) {
@@ -1455,7 +1455,7 @@ bool OccSimplifier::find_gate(
     bool found_better = false;
     assert(toClear.empty());
     for(const Watched w: a) {
-        if (w.isBinary()
+        if (w.isBin()
             && !w.red()
         ) {
             seen[(~w.lit2()).toInt()] = 1;
@@ -1464,7 +1464,7 @@ bool OccSimplifier::find_gate(
     }
 
     for(const Watched w: b) {
-        if (w.isBinary()
+        if (w.isBin()
             || (w.isTri() && w.red())
         ) {
             continue;
@@ -1569,7 +1569,7 @@ void OccSimplifier::mark_gate_parts(
     size_t num_found = 0;
     size_t at = 0;
     for(Watched w: a) {
-        if (w.isBinary()
+        if (w.isBin()
             && !w.red()
             && seen[(~w.lit2()).toInt()]
         ) {
@@ -1717,7 +1717,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
             if (solver->conf.skip_some_bve_resolvents
                 && solver->conf.otfHyperbin
                 //Below: Always resolve binaries so that cache&stamps stay OK
-                && !(it->isBinary() && it2->isBinary())
+                && !(it->isBin() && it2->isBin())
                 //Real check
                 && skip_resolution_thanks_to_gate(at_poss, at_negs)
             ) {
@@ -1757,9 +1757,9 @@ int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
 
             //Calculate new clause stats
             ClauseStats stats;
-            if ((it->isBinary() || it->isTri()) && it2->isClause())
+            if ((it->isBin() || it->isTri()) && it2->isClause())
                 stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
-            else if ((it2->isBinary() || it2->isTri()) && it->isClause())
+            else if ((it2->isBin() || it2->isTri()) && it->isClause())
                 stats = solver->cl_alloc.ptr(it->get_offset())->stats;
             else if (it->isClause() && it2->isClause())
                 stats = ClauseStats::combineStats(
@@ -1784,7 +1784,7 @@ void OccSimplifier::printOccur(const Lit lit) const
 {
     for(size_t i = 0; i < solver->watches[lit.toInt()].size(); i++) {
         const Watched& w = solver->watches[lit.toInt()][i];
-        if (w.isBinary()) {
+        if (w.isBin()) {
             cout
             << "Bin   --> "
             << lit << ", "
@@ -1851,7 +1851,7 @@ bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(co
     for(Watched* end = solver->watches[lits[0].toInt()].end(); i != end; i++) {
         const Watched& w = *i;
 
-        if (w.isBinary()
+        if (w.isBin()
             && !w.red()
             && w.lit2() == lits[1]
         ) {
@@ -2086,13 +2086,13 @@ end:
     watch_subarray_const ws2 = solver->watches[lit.toInt()];
 
     for (watch_subarray::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
-        if (!w1->isBinary()) continue;
+        if (!w1->isBin()) continue;
         const bool numOneIsRed = w1->red();
         const Lit lit1 = w1->lit2();
         if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
 
         for (watch_subarray::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
-            if (!w2->isBinary()) continue;
+            if (!w2->isBin()) continue;
             const bool numTwoIsRed = w2->red();
             if (!numOneIsRed && !numTwoIsRed) {
                 //At least one must be redundant
@@ -2117,7 +2117,7 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
     const Watched ps
     , const Lit posLit
 ) {
-    if (ps.isBinary() || ps.isTri()) {
+    if (ps.isBin() || ps.isTri()) {
         *limit_to_decrease -= 1;
         assert(ps.lit2() != posLit);
 
@@ -2148,7 +2148,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
     const Watched qs
     , const Lit posLit
 ) {
-    if (qs.isBinary() || qs.isTri()) {
+    if (qs.isBin() || qs.isTri()) {
         *limit_to_decrease -= 2;
         assert(qs.lit2() != ~posLit);
 
@@ -2208,8 +2208,8 @@ bool OccSimplifier::reverse_distillation_of_dummy(
     }*/
 
     //Cache can only be used if none are binary
-    if (ps.isBinary()
-        || qs.isBinary()
+    if (ps.isBin()
+        || qs.isBin()
         || !solver->conf.doCache
         || (!solver->conf.otfHyperbin && solver->drup->enabled())
     ) {
@@ -2262,7 +2262,7 @@ bool OccSimplifier::subsume_dummy_through_stamping(
     //on the binary clause itself, so that would cause a circular de-
     //pendency
 
-    if (!ps.isBinary() && !qs.isBinary()) {
+    if (!ps.isBin() && !qs.isBin()) {
         aggressive_elim_time_limit -= (int64_t)toClear.size()*5;
         if (solver->stamp.stampBasedClRem(toClear)) {
             return true;
@@ -2371,7 +2371,7 @@ bool OccSimplifier::aggressiveCheck(
         }
 
         //Handle binary
-        if (it->isBinary() && !it->red()) {
+        if (it->isBin() && !it->red()) {
             const Lit otherLit = it->lit2();
             if (otherLit.var() == noPosLit.var())
                 continue;
@@ -2496,7 +2496,7 @@ int OccSimplifier::check_empty_resolvent_action(
         }
 
         //Handle binary
-        if (ws.isBinary()){
+        if (ws.isBin()){
             //Only count irred
             if (!ws.red()) {
                 *limit_to_decrease -= 4;

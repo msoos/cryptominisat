@@ -622,7 +622,7 @@ template<class T> void SubsumeStrengthen::find_subsumed(
         ; ++it
     ) {
         if (removeImplicit) {
-            if (it->isBinary()
+            if (it->isBin()
                 && ps.size() == 2
                 && ps[!smallest] == it->lit2()
                 && !it->red()
@@ -852,7 +852,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
             ; i++
         ) {
             //Each BIN only once
-            if (ws[i].isBinary()
+            if (ws[i].isBin()
                 && lit < ws[i].lit2()
             ) {
                 tried++;

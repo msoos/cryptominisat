@@ -191,7 +191,7 @@ bool DataSync::syncBinFromOthers(
 
     assert(toClear.empty());
     for (const Watched& w: ws) {
-        if (w.isBinary()) {
+        if (w.isBin()) {
             toClear.push_back(w.lit2());
             assert(seen.size() > w.lit2().toInt());
             seen[w.lit2().toInt()] = true;

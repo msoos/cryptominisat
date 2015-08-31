@@ -109,7 +109,7 @@ class PropByForGraph
             return type == 0;
         }
 
-        bool isBinary() const
+        bool isBin() const
         {
             return type == 1;
         }
@@ -147,7 +147,7 @@ inline std::ostream& operator<<(
     , const PropByForGraph& propByFull
 ) {
 
-    if (propByFull.isBinary()) {
+    if (propByFull.isBin()) {
         os << propByFull[0] << " " << propByFull[1];
     } else if (propByFull.isTri()) {
         os <<propByFull[0] << " " << propByFull[1] << " " << propByFull[2];

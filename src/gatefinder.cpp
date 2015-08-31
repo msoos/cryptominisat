@@ -332,7 +332,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     watch_subarray_const ws = solver->watches[lit.toInt()];
     *simplifier->limit_to_decrease -= ws.size();
     for(const Watched w: ws) {
-        if (w.isBinary() && !w.red()) {
+        if (w.isBin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
             toClear.push_back(~w.lit2());
         }
