@@ -387,6 +387,9 @@ struct OccurClause {
 struct WatchSorterBinTriLong {
         bool operator()(const Watched& a, const Watched& b)
         {
+            assert(!a.isIdx());
+            assert(!b.isIdx());
+
             //Anything but clause!
             if (a.isClause()) {
                 //A is definitely not better than B
