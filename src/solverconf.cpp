@@ -204,10 +204,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsume_gothrough_multip(10.0)
         , occsimp_schedule_nonstartup("backw-sub-str, xor, "
         "clean-implicit, bve, "
-        "bva, gates, backw-sub-str")
+        "bva, gates, backw-sub-str, bve, backw-sub-str, bve")
         , occsimp_schedule_startup("backw-sub-str, "
         "clean-implicit, bve, "
-        "backw-sub-str")
+        "bva, gates, backw-sub-str, bve, backw-sub-str, bve")
 
         //Distillation
         , do_distill_clauses(true)

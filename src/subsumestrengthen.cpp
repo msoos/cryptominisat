@@ -760,19 +760,74 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
     return *this;
 }
 
-bool SubsumeStrengthen::backward_subsume_with_tris()
+SubsumeStrengthen::Sub1Ret SubsumeStrengthen::sub_str_with_implicit(
+    const vector<Lit>& lits
+) {
+    subs.clear();
+    subsLits.clear();
+
+    cl_abst_type abstr = calcAbstraction(lits);
+    findStrengthened(
+        CL_OFFSET_MAX
+        , lits
+        , abstr
+        , subs
+        , subsLits
+    );
+
+    Sub1Ret ret;
+
+    for (size_t j = 0
+        ; j < subs.size() && solver->okay()
+        ; j++
+    ) {
+        ClOffset offset2 = subs[j];
+        Clause& cl2 = *solver->cl_alloc.ptr(offset2);
+        if (subsLits[j] == lit_Undef) {  //Subsume
+
+            if (solver->conf.verbosity >= 6)
+                cout << "subsumed clause " << cl2 << endl;
+
+            if (!cl2.red()) {
+                ret.subsumedIrred = true;
+            }
+
+            simplifier->unlink_clause(offset2, true, false, true);
+            ret.sub++;
+        } else { //Strengthen
+            if (solver->conf.verbosity >= 6) {
+                cout << "strenghtened clause " << cl2 << endl;
+            }
+            remove_literal(offset2, subsLits[j]);
+
+            ret.str++;
+            if (!solver->ok)
+                return ret;
+
+            //If we are waaay over time, just exit
+            if (*simplifier->limit_to_decrease < -20LL*1000LL*1000LL)
+                break;
+        }
+    }
+
+    return ret;
+}
+
+bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
 {
     vector<Lit> lits;
     size_t strSucceed = 0;
 
     //Stats
-    numMaxTriSub = 900ULL*1000ULL*1000ULL;
+    numMaxTriSub = 2LL*1000LL*1000LL*1000LL;
     simplifier->limit_to_decrease = &numMaxTriSub;
 
     const size_t origTrailSize = solver->trail_size();
     double myTime = cpuTime();
     size_t subsumedBin = 0;
     size_t subsumedTri = 0;
+    size_t strBin = 0;
+    size_t strTri = 0;
 
     //Randomize start in the watchlist
     size_t upI;
@@ -804,15 +859,13 @@ bool SubsumeStrengthen::backward_subsume_with_tris()
                 lits.resize(2);
                 lits[0] = lit;
                 lits[1] = ws[i].lit2();
-                cl_abst_type abstr = calcAbstraction(lits);
+                std::sort(lits.begin(), lits.end());
 
-                Sub0Ret ret = subsume_and_unlink(
-                    CL_OFFSET_MAX
-                    , lits
-                    , abstr
-                );
-
-                subsumedBin += ret.numSubsumed;
+                Sub1Ret ret = sub_str_with_implicit(lits);
+                subsumedBin += ret.sub;
+                strBin += ret.str;
+                if (!solver->ok)
+                    return false;
 
                 if (ws[i].red()
                     && ret.subsumedIrred
@@ -822,6 +875,7 @@ bool SubsumeStrengthen::backward_subsume_with_tris()
                     solver->binTri.irredBins++;
                     findWatchedOfBin(solver->watches, ws[i].lit2(), lit, true).setRed(false);
                 }
+                continue;
             }
 
             //Each TRI only once
@@ -834,15 +888,13 @@ bool SubsumeStrengthen::backward_subsume_with_tris()
                 lits[0] = lit;
                 lits[1] = ws[i].lit2();
                 lits[2] = ws[i].lit3();
-                cl_abst_type abstr = calcAbstraction(lits);
+                std::sort(lits.begin(), lits.end());
 
-                Sub0Ret ret = subsume_and_unlink(
-                    CL_OFFSET_MAX
-                    , lits
-                    , abstr
-                );
-
-                subsumedTri += ret.numSubsumed;
+                Sub1Ret ret = sub_str_with_implicit(lits);
+                subsumedTri += ret.sub;
+                strTri += ret.str;
+                if (!solver->ok)
+                    return false;
 
                 if (ws[i].red()
                     && ret.subsumedIrred
@@ -854,6 +906,10 @@ bool SubsumeStrengthen::backward_subsume_with_tris()
                     findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
                 }
             }
+            continue;
+
+            //Must be a longer clause, break
+            break;
         }
 
         if (!solver->okay())
@@ -864,8 +920,10 @@ bool SubsumeStrengthen::backward_subsume_with_tris()
         cout
         << "c [sub] tri"
         << " upI: " << upI
-        << " subs: " << subsumedBin
-        << " subs: " << subsumedTri
+        << " subs w tri: " << subsumedBin
+        << " str w bin: " << strBin
+        << " subs w bin: " << subsumedTri
+        << " str w tri: " << strTri
         << " tried: " << tried
         << " str: " << strSucceed
         << " toDecrease: " << *simplifier->limit_to_decrease

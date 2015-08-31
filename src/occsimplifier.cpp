@@ -969,18 +969,22 @@ bool OccSimplifier::backward_sub_str()
     assert(solver->watches.get_smudged_list().empty());
     bool ret = true;
 
-    subsumeStrengthen->backward_subsume_with_tris();
+    if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
+        goto end;
+    }
+    if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
+        goto end;
+    }
     subsumeStrengthen->backward_subsumption_long_with_long();
-    if (!subsumeStrengthen->backward_strengthen_long_with_long()
-        || solver->must_interrupt_asap()
-    ) {
-        ret = false;
+    if (!subsumeStrengthen->backward_strengthen_long_with_long()) {
+        goto end;
     }
 
+    end:
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
 
-    return ret;
+    return solver->ok;
 }
 
 bool OccSimplifier::fill_occur()

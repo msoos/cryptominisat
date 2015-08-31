@@ -43,7 +43,7 @@ public:
 
     void backward_subsumption_long_with_long();
     bool backward_strengthen_long_with_long();
-    bool backward_subsume_with_tris();
+    bool backward_sub_str_with_bins_tris();
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
@@ -67,6 +67,7 @@ public:
 
         size_t sub = 0;
         size_t str = 0;
+        bool subsumedIrred = false;
     };
 
     //Called from simplifier at resolvent-adding of var-elim
@@ -119,6 +120,8 @@ private:
     template<class T>
     size_t find_smallest_watchlist_for_clause(const T& ps) const;
 
+    Sub1Ret sub_str_with_implicit(const vector<Lit>& lits);
+
     template<class T>
     void findStrengthened(
         const ClOffset offset
@@ -148,6 +151,7 @@ private:
 
     vector<ClOffset> subs;
     vector<Lit> subsLits;
+    vector<Lit> tmpLits;
 };
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const
