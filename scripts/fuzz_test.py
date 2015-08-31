@@ -264,49 +264,49 @@ class solution_parser:
 class create_fuzz:
 
     @staticmethod
-    def unique_fuzz_file(file_name_begin):
+    def unique_fuzz_file(fname_begin):
         counter = 1
         while 1:
-            file_name = file_name_begin + '_' + str(counter) + ".cnf"
+            fname = fname_begin + '_' + str(counter) + ".cnf"
             try:
                 fd = os.open(
-                    file_name, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
+                    fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
                 os.fdopen(fd).close()
-                return file_name
+                return fname
             except OSError:
                 pass
 
             counter += 1
 
-    def call_from_fuzzer(self, fuzzer, file_name):
+    def call_from_fuzzer(self, fuzzer, fname):
         if len(fuzzer) == 1:
             seed = struct.unpack("<L", os.urandom(4))[0]
-            call = "{0} {1} > {2}".format(fuzzer[0], seed, file_name)
+            call = "{0} {1} > {2}".format(fuzzer[0], seed, fname)
         elif len(fuzzer) == 2:
             seed = struct.unpack("<L", os.urandom(4))[0]
             call = "{0} {1} {2} > {3}".format(
-                fuzzer[0], fuzzer[1], seed, file_name)
+                fuzzer[0], fuzzer[1], seed, fname)
         elif len(fuzzer) == 3:
             seed = struct.unpack("<L", os.urandom(4))[0]
             hashbits = (random.getrandbits(20) % 80) + 1
             call = "%s %s %d %s %d > %s" % (
-                fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, file_name)
+                fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, fname)
         else:
             assert False, "Fuzzer must have at most 2 arguments"
 
         return call
 
-    def create_fuzz_file(self, fuzzer, file_name):
+    def create_fuzz_file(self, fuzzer, fname):
         # handle special fuzzer
-        file_names_multi = []
+        fnames_multi = []
         if len(fuzzer) == 2 and fuzzer[1] == "special":
 
             # sometimes just fuzz with all SAT problems
             fixed = random.getrandbits(1) == 1
 
             for i in range(random.randrange(2, 4)):
-                file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
-                file_names_multi.append(file_name2)
+                fname2 = create_fuzz.unique_fuzz_file("fuzzTest")
+                fnames_multi.append(fname2)
 
                 # chose a ranom fuzzer, not multipart
                 fuzzer2 = ["multipart.py", "special"]
@@ -318,7 +318,7 @@ class create_fuzz:
                     fuzzer2 = fuzzers[0]
 
                 print "fuzzer2 used: ", fuzzer2
-                call = self.call_from_fuzzer(fuzzer2, file_name2)
+                call = self.call_from_fuzzer(fuzzer2, fname2)
                 print "calling sub-fuzzer:", call
                 out = commands.getstatusoutput(call)
 
@@ -326,15 +326,15 @@ class create_fuzz:
             call = ""
             call += fuzzer[0]
             call += " "
-            for name in file_names_multi:
+            for name in fnames_multi:
                 call += " " + name
-            call += " > " + file_name
+            call += " > " + fname
 
-            return call, file_names_multi
+            return call, fnames_multi
 
         # handle normal fuzzer
         else:
-            return self.call_from_fuzzer(fuzzer, file_name), []
+            return self.call_from_fuzzer(fuzzer, fname), []
 
 
 def setlimits():
@@ -518,7 +518,7 @@ class Tester:
 
         return cmd
 
-    def execute(self, fname, fnameDrup=None, fixed_opts="", rnd_opts=None):
+    def execute(self, fname, fname2=None, fixed_opts="", rnd_opts=None):
         if os.path.isfile(options.solver) is not True:
             print "Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" % \
                 options.solver
@@ -542,8 +542,12 @@ class Tester:
         command += fixed_opts + " "
         if fname is not None:
             command += fname
-        if fnameDrup:
-            command += " --drupexistscheck 0 " + fnameDrup
+        if fname2:
+            if "preproc" in fixed_opts:
+                command += " --simpexistscheck 0 " + fname2
+            else:
+                command += " --drupexistscheck 0 " + fname2
+
         print "Executing: %s " % command
 
         # print time limit
@@ -769,7 +773,7 @@ class Tester:
                 # delete temporary file
                 os.unlink(tmpfname)
 
-    def check(self, fname, fnameDrup=None,
+    def check(self, fname, fname2=None,
               checkAgainst=None,
               fixed_opts="", dump_output_fname=None,
               rnd_opts=None):
@@ -781,7 +785,7 @@ class Tester:
 
         # Do we need to solve the problem, or is it already solved?
         consoleOutput, retcode = self.execute(
-            fname, fnameDrup=fnameDrup,
+            fname, fname2=fname2,
             fixed_opts=fixed_opts, rnd_opts=rnd_opts)
 
         # if time was limited, we need to know if we were over the time limit
@@ -807,18 +811,20 @@ class Tester:
         unsat, solution, _ = solution_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
 
+        #preprocessing
         if dump_output_fname is not None:
             f = open(dump_output_fname, "w")
             f.write(consoleOutput)
             f.close()
+            return True
 
         if not unsat:
             solution_parser.test_found_solution(solution, checkAgainst)
-            return True
+            return
 
         # it's UNSAT, let's check with DRUP
-        if fnameDrup:
-            toexec = "drat-trim %s %s" % (fname, fnameDrup)
+        if fname2:
+            toexec = "drat-trim %s %s" % (fname, fname2)
             print "Checking DRUP...: ", toexec
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
@@ -855,8 +861,6 @@ class Tester:
             print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
             exit()
 
-        return False
-
     def remove_debug_lib_parts(self):
         dirList = os.listdir(".")
         for fname_unlink in dirList:
@@ -867,74 +871,83 @@ class Tester:
     def fuzz_test_one(self):
         fuzzer = random.choice(fuzzers)
         self.num_threads = random.choice([1, 2, 4])
-        file_name = create_fuzz.unique_fuzz_file("fuzzTest")
+        fname = create_fuzz.unique_fuzz_file("fuzzTest")
         self.drup = self.num_threads == 1 and random.choice([True, False])
-        fnameDrup = None
+        fname2 = None
         if self.drup:
-            fnameDrup = create_fuzz.unique_fuzz_file("fuzzTest")
+            fname2 = create_fuzz.unique_fuzz_file("fuzzTest")
 
         # create the fuzz file
         cf = create_fuzz()
-        call, todel = cf.create_fuzz_file(fuzzer, file_name)
+        call, todel = cf.create_fuzz_file(fuzzer, fname)
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
         if not self.drup:
             self.needDebugLib = True
             self.delete_debuglibpart_files()
-            file_name2 = create_fuzz.unique_fuzz_file("fuzzTest")
+            interspersed_fname = create_fuzz.unique_fuzz_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
-            intersperse(file_name, file_name2, seed_for_inters)
-            print "Interspersed: ./intersperse.py %s %s %d" % (file_name,
-                                                               file_name2,
+            intersperse(fname, interspersed_fname, seed_for_inters)
+            print "Interspersed: ./intersperse.py %s %s %d" % (fname,
+                                                               interspersed_fname,
                                                                seed_for_inters)
-            os.unlink(file_name)
+            os.unlink(fname)
         else:
             self.needDebugLib = False
-            file_name2 = file_name
+            interspersed_fname = fname
 
-        self.check(fname=file_name2, fnameDrup=fnameDrup)
+        self.check(fname=interspersed_fname, fname2=fname2)
 
         # remove temporary filenames
-        os.unlink(file_name2)
+        os.unlink(interspersed_fname)
         for name in todel:
             os.unlink(name)
-        if fnameDrup is not None:
-            os.unlink(fnameDrup)
+        if fname2 is not None:
+            os.unlink(fname2)
         for i in glob.glob(u'fuzzTest*'):
             os.unlink(i)
+
+    def delete_file_no_matter_what(self, fname):
+        try:
+            os.unlink(fname)
+        except:
+            pass
 
     def fuzz_test_preproc(self):
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers)
         self.num_threads = 1
-        file_name = create_fuzz.unique_fuzz_file("fuzzTest")
+        fname = create_fuzz.unique_fuzz_file("fuzzTest")
         self.drup = False
 
         # create the fuzz file
         cf = create_fuzz()
-        call, todel = cf.create_fuzz_file(fuzzer, file_name)
+        call, todel = cf.create_fuzz_file(fuzzer, fname)
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
         rnd_opts = self.random_options(preproc=True)
-        console, retcode = self.execute(file_name, rnd_opts=rnd_opts,
+
+        #preprocess
+        fname2 = "simplified.cnf"
+        self.delete_file_no_matter_what(fname2)
+        console, retcode = self.execute(fname, fname2=fname2,
+                                        rnd_opts=rnd_opts,
                                         fixed_opts="--preproc 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
 
-        file_name2 = "simplified.cnf"
-        ret = self.check(fname=file_name2, checkAgainst=file_name2,
-                         dump_output_fname="solution.txt")
+        ret = self.check(fname=fname2, dump_output_fname="solution.txt")
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
-            self.check(fname=None, checkAgainst=file_name,
+            self.check(fname="solution.txt", checkAgainst=fname,
                        fixed_opts="--preproc 2",
                        rnd_opts=rnd_opts)
 
         # remove temporary filenames
-        os.unlink(file_name)
+        os.unlink(fname)
         for name in todel:
             os.unlink(name)
         for i in glob.glob(u'fuzzTest*'):
