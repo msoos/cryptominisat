@@ -1238,19 +1238,21 @@ int Main::solve()
 
     dumpIfNeeded();
 
-    if (ret == l_Undef && conf.verbosity >= 1) {
-        cout
-        << "c Not finished running -- signal caught or some maximum reached"
-        << endl;
-    }
-    if (conf.verbosity >= 1 && conf.preprocess == 0) {
-        solver->print_stats();
-    }
+    if (conf.preprocess == 0) {
+        if (ret == l_Undef && conf.verbosity >= 1) {
+            cout
+            << "c Not finished running -- signal caught or some maximum reached"
+            << endl;
+        }
+        if (conf.verbosity >= 1) {
+            solver->print_stats();
+        }
 
-    //Final print of solution
-    printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-    if (needResultFile) {
-        printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+        //Final print of solution
+        printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+        if (needResultFile) {
+            printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+        }
     }
 
     //Delete solver
