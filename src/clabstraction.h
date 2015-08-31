@@ -34,7 +34,7 @@ template <class T>
 cl_abst_type calcAbstraction(const T& ps)
 {
     cl_abst_type abstraction = 0;
-    if (ps.size() > 100) {
+    if (ps.size() > 50) {
         return ~((cl_abst_type)(0ULL));
     }
 
