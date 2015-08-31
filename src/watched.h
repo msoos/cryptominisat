@@ -47,7 +47,7 @@ This class contains two 32-bit datapieces. They are either used as:
 \li One literal, in the case of binary clauses
 \li Two literals, in the case of tertiary clauses
 \li One blocking literal (i.e. an example literal from the clause) and a clause
-offset (as per ClauseAllocator ), in the case of normal clauses
+offset (as per ClauseAllocator ), in the case of long clauses
 */
 class Watched {
     public:
