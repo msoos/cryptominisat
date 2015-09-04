@@ -1598,7 +1598,7 @@ bool Solver::execute_inprocess_strategy(
             return ok;
         }
 
-        trim(token);
+        token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (conf.verbosity >= 2) {
             cout << "c --> Executing strategy token: " << token << '\n';
@@ -1696,7 +1696,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "") {
             //Nothing, just an empty comma, ignore
         } else {
-            cout << "ERROR: strategy " << token << " not recognised!" << endl;
+            cout << "ERROR: strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
 

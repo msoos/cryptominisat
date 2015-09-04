@@ -860,7 +860,7 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
         solver->propagate_occur();
         set_limits();
 
-        trim(token);
+        token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
         if (solver->conf.verbosity >= 2) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
@@ -895,7 +895,7 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
         else if (token == "") {
             //nothing, ignore empty token
         } else {
-             cout << "ERROR: occur strategy " << token << " not recognised!" << endl;
+             cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
     }
