@@ -198,6 +198,13 @@ if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_C
 fi
 
 cd ..
+#we are now in the main dir, ./src dir is here
+
+
+#license check -- first print and then fail in case of problems
+./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK
+./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | read && return -1 || return 0
+
 
 case $CMS_CONFIG in
     WEB)
