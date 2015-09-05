@@ -39,9 +39,9 @@ class GaussConf
         , noMatrixFind(false)
         , orderCols(true)
         , iterativeReduce(true)
-        , maxMatrixRows(1000)
+        , max_matrix_rows(1000)
         , minMatrixRows(20)
-        , maxNumMatrixes(3)
+        , max_num_matrixes(3)
     {
     }
 
@@ -52,9 +52,9 @@ class GaussConf
     bool noMatrixFind; //Put all xor-s into one matrix, don't find matrixes
     bool orderCols; //Order columns according to activity
     bool iterativeReduce; //Don't minimise matrix work
-    uint32_t maxMatrixRows; //The maximum matrix size -- no. of rows
+    uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t minMatrixRows; //The minimum matrix size -- no. of rows
-    uint32_t maxNumMatrixes; //Maximum number of matrixes
+    uint32_t max_num_matrixes; //Maximum number of matrixes
 };
 
 }
