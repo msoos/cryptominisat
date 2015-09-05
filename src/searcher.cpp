@@ -958,7 +958,7 @@ lbool Searcher::search()
     ) {
         if (!confl.isNULL()) {
             //TODO below is expensive
-            if (((stats.conflStats.numConflicts % 5000) == 0)
+            if (((stats.conflStats.numConflicts & 0xfff) == 0xfff)
                 && var_decay < conf.var_decay_max
                 && update_polarity_and_activity
             ) {
