@@ -43,12 +43,11 @@ static const Var unassigned_var = std::numeric_limits<Var>::max();
 
 Gaussian::Gaussian(
     Solver* _solver
-    , const GaussConf& _config
     , const uint32_t _matrix_no
-    , const vector<Xor*>& _xorclauses
+    , const vector<Xor>& _xorclauses
 ) :
     solver(_solver)
-    , config(_config)
+    , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
     , xorclauses(_xorclauses)
     , messed_matrix_vars_since_reversal(true)
@@ -58,9 +57,11 @@ Gaussian::Gaussian(
 
 Gaussian::~Gaussian()
 {
-    for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
+    //TODO
+    /*for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
         solver->cl_alloc.clauseFree(clauses_toclear[i].first);
     }
+    */
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -976,12 +977,43 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
             assert(solver->value(cla[0]) == l_Undef);
 
+            //TODO
             //clauses_toclear.push_back(ClauseToClear(&cla, solver->trail.size()-1));
             solver->enqueue(cla[0], PropBy(new_xorclauses.size()-1), true);
             return propagation;
     }
 
     return propagation;
+}
+
+void Gaussian::canceling(const uint32_t sublevel)
+{
+    if (disabled)
+        return;
+
+    uint32_t a = 0;
+
+    //
+    /*for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
+        solver.cl_alloc.clauseFree(clauses_toclear[i].first);
+        a++;
+    }
+    clauses_toclear.resize(clauses_toclear.size()-a);
+    */
+
+    if (messed_matrix_vars_since_reversal)
+        return;
+
+    int c = std::min((int)gauss_last_level, (int)(solver->trail.size())-1);
+    for (; c >= (int)sublevel; c--) {
+        Var var  = solver.trail[c].var();
+        if (var < var_is_in.getSize()
+            && var_is_in[var]
+            && cur_matrixset.var_is_set[var]) {
+        messed_matrix_vars_since_reversal = true;
+        return;
+        }
+    }
 }
 
 void Gaussian::disable_if_necessary()
@@ -994,7 +1026,7 @@ void Gaussian::disable_if_necessary()
             disabled = true;
 }
 
-llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
+llbool Gaussian::find_truths()
 {
     PropBy confl;
 
@@ -1009,7 +1041,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
     switch (g) {
         case conflict: {
             useful_confl++;
-            llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
+            llbool ret = solver->handle_conflict(confl);
             if (confl.isClause()) {
                 solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
             }
@@ -1231,20 +1263,22 @@ void Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset
             const Var var = col_to_var_original[col];
             assert(var < solver->nVars());
 
-            if (solver->assigns[var] == l_True) {
+            if (solver->value(var) == l_True) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
                 assert(m.var_is_set[var]);
                 final = !final;
-            } else if (solver->assigns[var] == l_False) {
+            } else if (solver->value(var) == l_False) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
                 assert(m.var_is_set[var]);
-            } else if (solver->assigns[var] == l_Undef) {
+            } else if (solver->value(var) == l_Undef) {
                 assert(m.col_to_var[col] != unassigned_var);
                 assert(!m.var_is_set[var]);
                 assert(mat_row[col]);
-            } else assert(false);
+            } else {
+                assert(false);
+            }
 
             col++;
         }

@@ -88,6 +88,8 @@ macro(add_cxx_flag_if_supported flagname)
   endif()
 endmacro()
 
+add_definitions(-DUSE_GAUSS)
+
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
 if (ENABLE_ASSERTIONS)
     # NDEBUG was already removed.

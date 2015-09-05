@@ -61,6 +61,7 @@ set(cryptoms_lib_files
     features.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
+    gaussian.cpp
 )
 
 set(cryptoms_lib_link_libs "")
