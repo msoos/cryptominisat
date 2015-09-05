@@ -22,7 +22,6 @@
 #ifndef GAUSSIANCONFIG_H
 #define GAUSSIANCONFIG_H
 
-#include "packedrow.h"
 #include "constants.h"
 
 namespace CMSat

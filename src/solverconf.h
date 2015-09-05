@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <string>
 #include <cstdlib>
 #include <assert.h>
+#include "gaussianconfig.h"
 
 using std::string;
 
@@ -324,6 +325,9 @@ class SolverConf
         long long gatefinder_time_limitM;
         long long shorten_with_gates_time_limitM;
         long long remove_cl_with_gates_time_limitM;
+
+        //Gauss
+        GaussConf gaussconf;
 
         //interrupting & dumping
         double orig_global_timeout_multiplier;

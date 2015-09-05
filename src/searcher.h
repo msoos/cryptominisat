@@ -37,6 +37,7 @@ namespace CMSat {
 class Solver;
 class SQLStats;
 class VarReplacer;
+class Gaussian;
 
 using std::string;
 using std::cout;
@@ -335,6 +336,7 @@ class Searcher : public HyperEngine
             SimpleInFile& f
             , bool red
         );
+        vector<Gaussian*> gauss_matrix;
 
         struct AssumptionPair {
             AssumptionPair(const Lit _inter, const Lit _outer):

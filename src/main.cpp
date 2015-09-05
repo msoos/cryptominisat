@@ -647,6 +647,27 @@ void Main::add_supported_options()
         , "Reconfigure after some time to this solver configuration [0..13]")
     ;
 
+    po::options_description gaussOptions("Gauss options");
+    gaussOptions.add_options()
+    ("nomatrixfind"
+        , "Don't find distinct matrixes. Put all xors into one big matrix")
+    ("noordercol"
+        , "Don't order variables in the columns of Gaussian elimination."
+        "Effectively disables iterative reduction of the matrix")
+    ("noiterreduce"
+        , "Don't reduce iteratively the matrix that is updated")
+    ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
+        , "Set maximum no. of rows for gaussian matrix. Too large matrixes"
+        "should bee discarded for reasons of efficiency")
+    ("minmatrixrows"
+        , "Set minimum no. of rows for gaussian matrix. Normally, too small"
+        "matrixes are discarded for reasons of efficiency.")
+    ("savematrix", po::value(&conf.gaussconf.only_nth_gauss_save)->default_value(conf.gaussconf.only_nth_gauss_save)
+        , "Save matrix every Nth decision level.")
+    ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
+        , "Maximum number of matrixes to treat.")
+    ;
+
     p.add("input", 1);
     p.add("drup", 1);
 
@@ -699,6 +720,9 @@ void Main::add_supported_options()
     #endif
     .add(gateOptions)
     .add(miscOptions)
+    #ifdef USE_GAUSS
+    .add(gaussOptions)
+    #endif
     ;
 
     help_options_simple

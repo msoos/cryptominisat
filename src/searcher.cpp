@@ -950,6 +950,14 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
 
+    #ifdef USE_GAUSS
+    for (Gaussian* g : gauss_matrixes) {
+        if (!g->full_init()) {
+            return l_False;
+        }
+    }
+    #endif
+
     while (
         (!params.needToStopSearch
             && !must_interrupt_asap()
@@ -964,6 +972,22 @@ lbool Searcher::search()
             ) {
                 var_decay += 0.01;
             }
+
+            #ifdef USE_GAUSS
+            bool at_least_one_continue = false;
+            for (Gaussian* g: gauss_matrixes) {
+                ret = g->find_truths(learnt_clause, conflictC);
+                if (ret == l_Continue) {
+                    at_least_one_continue = true;
+                } else if (ret != l_Nothing) {
+                    return ret;
+                }
+            }
+            if (at_least_one_continue) {
+                continue;
+            }
+            assert(ok);
+            #endif //USE_GAUSS
 
             stats.conflStats.update(lastConflictCausedBy);
             print_restart_stat();
@@ -1040,6 +1064,20 @@ lbool Searcher::new_decision()
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
+            //To store matrix in case it needs to be stored. No new information
+            //is meant to be available at this point.
+            #ifdef USE_GAUSS
+            //These are not supposed to be changed *at all* by the funciton
+            //since it has already been called before
+            vec<Lit> learnt_clause;
+            uint64_t conflictC;
+
+            for (Gaussian* g: gauss_matrixes) {
+                llbool ret = g->find_truths(learnt_clause, conflictC);
+                assert(ret == l_Nothing);
+            }
+            #endif //USE_GAUSS
+
         } else if (value(p) == l_False) {
             analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;
@@ -1840,6 +1878,12 @@ lbool Searcher::solve(
         calculate_and_set_polars();
     }
 
+    #ifdef USE_GAUSS
+    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
+        if (!(*gauss)->full_init()) return false;
+    }
+    #endif //USE_GAUSS
+
     setup_restart_print();
     max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
@@ -1849,6 +1893,10 @@ lbool Searcher::solve(
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
+        #ifdef USE_GAUSS
+        clearGaussMatrixes();
+        #endif //USE_GAUSS
+
         #ifdef SLOW_DEBUG
         assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
         assert(order_heap.heap_property());
