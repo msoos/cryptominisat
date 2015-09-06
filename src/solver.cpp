@@ -1076,7 +1076,9 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
-    if (!outside_assumptions.empty()) {
+    if (outside_assumptions.empty()) {
+        assert(assumptionsSet.empty());
+    } else {
         assert(assumptionsSet.size() >= nVars());
         assumptionsSet.resize(nVars());
         assumptionsSet.shrink_to_fit();
