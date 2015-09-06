@@ -58,6 +58,7 @@ class SQLStats;
 
 class Solver;
 class ClauseAllocator;
+class Gaussian;
 
 enum PropResult {
     PROP_FAIL = 0
@@ -122,6 +123,8 @@ protected:
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
+
+    friend class Gaussian;
 
     template<bool update_bogoprops>
     PropBy propagate_any_order();

@@ -54,6 +54,7 @@ class PropBy
             , data2(0)
         {}
 
+        //Normal clause prop
         explicit PropBy(const ClOffset offset) :
             red_step(0)
             , data1(offset)
@@ -66,6 +67,7 @@ class PropBy
             #endif
         }
 
+        //Binary prop
         PropBy(const Lit lit, const bool redStep) :
             red_step(redStep)
             , data1(lit.toInt())
@@ -74,6 +76,7 @@ class PropBy
         {
         }
 
+        //XOR prop
         PropBy(size_t xor_num, bool) :
             red_step(0)
             , data1(xor_num)
@@ -106,6 +109,7 @@ class PropBy
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
 
+        //Tertiary prop
         PropBy(const Lit lit1, const Lit lit2, const bool redStep) :
             red_step(redStep)
             , data1(lit1.toInt())

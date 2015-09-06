@@ -514,6 +514,7 @@ class Searcher : public HyperEngine
             {}
             bool operator()(uint32_t var) const;
         };
+        friend class Gaussian;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
