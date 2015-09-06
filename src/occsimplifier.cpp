@@ -717,6 +717,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
 
 bool OccSimplifier::can_eliminate_var(const Var var) const
 {
+    assert(var <= solver->nVars());
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
         ||  solver->var_inside_assumptions(var)
