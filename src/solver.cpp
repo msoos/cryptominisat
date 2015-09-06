@@ -1050,6 +1050,10 @@ void Solver::new_var(const bool bva, const Var orig_outer)
         datasync->new_var(bva);
     }
 
+    if (bva && !assumptionsSet.empty()) {
+        assumptionsSet.push_back(false);
+    }
+
     //Too expensive
     //test_reflectivity_of_renumbering();
 }
