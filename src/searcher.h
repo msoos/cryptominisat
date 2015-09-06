@@ -292,8 +292,7 @@ class Searcher : public HyperEngine
                 return false;
             }
 
-            assert(var < assumptionsSet.size());
-            return assumptionsSet[var];
+            return assumptionsSet.at(var);
         }
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
