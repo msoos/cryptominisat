@@ -979,7 +979,9 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
-    solver->subsumeImplicit->subsume_implicit();
+    if (solver->subsumeImplicit) {
+        solver->subsumeImplicit->subsume_implicit();
+    }
 
     end:
     free_clauses_to_free();
