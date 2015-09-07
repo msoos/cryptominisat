@@ -53,6 +53,7 @@
 #include "datasync.h"
 #include "bva.h"
 #include "trim.h"
+#include "subsumeimplicit.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -977,6 +978,8 @@ bool OccSimplifier::backward_sub_str()
     if (!subsumeStrengthen->backward_strengthen_long_with_long()) {
         goto end;
     }
+
+    solver->subsumeImplicit->subsume_implicit();
 
     end:
     free_clauses_to_free();
