@@ -87,7 +87,7 @@ install:
   - git submodule init
   - git submodule update
 #bulid dir
-  - mkdir build && cd build
+  - mkdir build
 
 script:
   - if [ "$COVERITY_SCAN" != "1" ]; then ../.travis-cmake.sh ; fi

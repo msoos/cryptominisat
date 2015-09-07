@@ -12,8 +12,6 @@
 set -x
 set -e
 
-SOURCE_DIR="../"
-THIS_DIR="build"
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
 #license check -- first print and then fail in case of problems
@@ -21,6 +19,9 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 grep UNK licenses
 grep UNK licenses | read && return -1 || return 0
 
+cd build
+SOURCE_DIR="../"
+THIS_DIR="build"
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
