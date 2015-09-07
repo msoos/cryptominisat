@@ -973,9 +973,6 @@ bool OccSimplifier::backward_sub_str()
     if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
         goto end;
     }
-    if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
-        goto end;
-    }
     subsumeStrengthen->backward_subsumption_long_with_long();
     if (!subsumeStrengthen->backward_strengthen_long_with_long()) {
         goto end;
