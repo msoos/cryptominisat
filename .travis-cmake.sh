@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
 #
@@ -9,10 +9,13 @@
 # export CC="gcc-4.7"
 # export CXX="g++-4.7"
 
+set -x
+set -e
+
 SOURCE_DIR="../"
 THIS_DIR="build"
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
-set -e
+
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
@@ -198,12 +201,14 @@ if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_C
 fi
 
 cd ..
+pwd
 #we are now in the main dir, ./src dir is here
 
 
 #license check -- first print and then fail in case of problems
-./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK
-./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | read && return -1 || return 0
+./utils/licensecheck/licensecheck.pl -m  ./src > licenses
+grep UNK licenses
+grep UNK licenses | read && return -1 || return 0
 
 
 case $CMS_CONFIG in
