@@ -9,7 +9,6 @@
 # export CC="gcc-4.7"
 # export CXX="g++-4.7"
 
-set -x
 set -e
 
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
@@ -18,6 +17,8 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 ./utils/licensecheck/licensecheck.pl -m  ./src > licenses
 grep UNK licenses
 grep UNK licenses | read && return -1 || return 0
+
+set -x
 
 cd build
 SOURCE_DIR="../"
