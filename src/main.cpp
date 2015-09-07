@@ -759,8 +759,8 @@ void Main::check_options_correctness()
 
             cout << "PREPROC RUN SCHEDULES" << endl;
             cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_preproc<< endl;
-            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
+            cout << "Default schedule for simplifier: " << conf.simplify_schedule_preproc<< endl;
+            cout << "Default schedule for occur simplifier : " << conf.occsimp_schedule_preproc << endl;
             std::exit(0);
         }
 
@@ -1024,7 +1024,7 @@ void Main::manually_parse_some_options()
         }
 
         if (!vm.count("preoccschedule")) {
-            conf.occsimp_schedule_startup = conf.occsimp_schedule_nonstartup;
+            conf.occsimp_schedule_startup = conf.occsimp_schedule_preproc;
         }
 
         if (!vm.count("eratio")) {

@@ -290,6 +290,7 @@ class SolverConf
         double   subsume_gothrough_multip;
         string   occsimp_schedule_startup;
         string   occsimp_schedule_nonstartup;
+        string   occsimp_schedule_preproc;
 
         //Distillation
         int      do_distill_clauses;
