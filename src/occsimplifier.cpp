@@ -980,7 +980,7 @@ bool OccSimplifier::backward_sub_str()
     }
 
     if (solver->subsumeImplicit) {
-        solver->subsumeImplicit->subsume_implicit();
+        solver->subsumeImplicit->subsume_implicit(false);
     }
 
     end:
