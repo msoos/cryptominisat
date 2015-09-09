@@ -53,7 +53,8 @@ const char* get_compilation_env()
     "PYTHON_EXECUTABLE = @PYTHON_EXECUTABLE@ | "
     "PYTHON_LIBRARY = @PYTHON_LIBRARY@ | "
     "PYTHON_INCLUDE_DIRS = @PYTHON_INCLUDE_DIRS@ | "
-    "MY_TARGETS = @MY_TARGETS@"
+    "MY_TARGETS = @MY_TARGETS@ | "
+    "compilation date time = " __DATE__ " " __TIME__
     ""
     ;
     return compilation_env;
