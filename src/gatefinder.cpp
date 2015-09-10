@@ -401,7 +401,7 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
 
     //Find clauses that potentially could be shortened
     subs.clear();
-    simplifier->subsumeStrengthen->find_subsumed(
+    simplifier->sub_str->find_subsumed(
         std::numeric_limits< uint32_t >::max()
         , gate.getLits()
         , calcAbstraction(gate.getLits())

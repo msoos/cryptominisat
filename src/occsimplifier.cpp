@@ -53,7 +53,6 @@
 #include "datasync.h"
 #include "bva.h"
 #include "trim.h"
-#include "subsumeimplicit.h"
 
 #ifdef USE_M4RI
 #include "xorfinder.h"
@@ -102,7 +101,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
         xorFinder = new XorFinder(this, solver);
     }
     #endif
-    subsumeStrengthen = new SubsumeStrengthen(this, solver);
+    sub_str = new SubsumeStrengthen(this, solver);
 
     if (solver->conf.doGateFind) {
         gateFinder = new GateFinder(this, solver);
@@ -113,7 +112,7 @@ OccSimplifier::~OccSimplifier()
 {
     delete bva;
     delete xorFinder;
-    delete subsumeStrengthen;
+    delete sub_str;
     delete gateFinder;
 }
 
@@ -942,7 +941,7 @@ bool OccSimplifier::simplify(const bool _startup)
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
 
-    //subsumeStrengthen->subsumeWithTris();
+    //sub_str->subsumeWithTris();
     if (startup) {
         execute_simplifier_sched(solver->conf.occsimp_schedule_startup);
     } else {
@@ -971,11 +970,11 @@ bool OccSimplifier::backward_sub_str()
     assert(solver->watches.get_smudged_list().empty());
     bool ret = true;
 
-    if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
+    if (!sub_str->backward_sub_str_with_bins_tris()) {
         goto end;
     }
-    subsumeStrengthen->backward_subsumption_long_with_long();
-    if (!subsumeStrengthen->backward_strengthen_long_with_long()) {
+    sub_str->backward_subsumption_long_with_long();
+    if (!sub_str->backward_strengthen_long_with_long()) {
         goto end;
     }
 
@@ -1154,7 +1153,7 @@ void OccSimplifier::finishUp(
         );
     }
     globalStats += runStats;
-    subsumeStrengthen->finishedRun();
+    sub_str->finishedRun();
 
     //Sanity checks
     if (solver->ok && somethingSet) {
@@ -1932,7 +1931,7 @@ bool OccSimplifier::add_varelim_resolvent(
         linkInClause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
-        runStats.subsumedByVE += subsumeStrengthen->subsume_and_unlink_and_markirred(offset);
+        runStats.subsumedByVE += sub_str->subsume_and_unlink_and_markirred(offset);
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
         if (*limit_to_decrease > 10LL*1000LL) {
             subsume:
@@ -1950,7 +1949,7 @@ bool OccSimplifier::add_varelim_resolvent(
 
 void OccSimplifier::try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits)
 {
-    SubsumeStrengthen::Sub0Ret ret = subsumeStrengthen->subsume_and_unlink(
+    SubsumeStrengthen::Sub0Ret ret = sub_str->subsume_and_unlink(
         std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
         , lits //Literals in this binary clause
         , calcAbstraction(lits) //Abstraction of literals
@@ -2761,7 +2760,7 @@ size_t OccSimplifier::mem_used() const
     b += negs_gate_parts.capacity()*sizeof(char);
     b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
     b += dummy.capacity()*sizeof(char);
-    b += subsumeStrengthen->mem_used();
+    b += sub_str->mem_used();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end

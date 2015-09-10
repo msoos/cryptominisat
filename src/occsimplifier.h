@@ -184,7 +184,7 @@ public:
 
 private:
     friend class SubsumeStrengthen;
-    SubsumeStrengthen* subsumeStrengthen;
+    SubsumeStrengthen* sub_str;
     friend class BVA;
     BVA* bva;
     bool startup = false;
@@ -472,7 +472,7 @@ inline bool OccSimplifier::subsetReverse(const Clause& B) const
 
 inline const SubsumeStrengthen* OccSimplifier::getSubsumeStrengthen() const
 {
-    return subsumeStrengthen;
+    return sub_str;
 }
 
 } //end namespace
