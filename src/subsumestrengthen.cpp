@@ -230,7 +230,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
             continue;
 
 
-        *simplifier->limit_to_decrease -= 20;
+        *simplifier->limit_to_decrease -= 10;
         subsumed += subsume_and_unlink_and_markirred(offset);
     }
 
@@ -277,7 +277,7 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
         && wenThrough < 1.5*(double)2*simplifier->clauses.size()
         && solver->okay()
     ) {
-        *simplifier->limit_to_decrease -= 20;
+        *simplifier->limit_to_decrease -= 10;
         wenThrough++;
 
         //Print status
@@ -348,7 +348,7 @@ void inline SubsumeStrengthen::fillSubs(
 ) {
     Lit litSub;
     watch_subarray_const cs = solver->watches[lit.toInt()];
-    *simplifier->limit_to_decrease -= (long)cs.size()*15 + 40;
+    *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
     for (watch_subarray_const::const_iterator
         it = cs.begin(), end = cs.end()
         ; it != end
@@ -371,7 +371,7 @@ void inline SubsumeStrengthen::fillSubs(
             continue;
         }
 
-        *simplifier->limit_to_decrease -= (long)cl.size() + (long)cl2.size();
+        *simplifier->limit_to_decrease -= (long)((cl.size() + cl2.size())/4);
         litSub = subset1(cl, cl2);
         if (litSub != lit_Error) {
             out_subsumed.push_back(it->get_offset());
@@ -813,9 +813,89 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::sub_str_with_implicit(
     return ret;
 }
 
+bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
+    const Lit lit
+    , const bool redundant_too
+) {
+    watch_subarray ws = solver->watches[lit.toInt()];
+
+    //Must re-order so that TRI-s are first
+    //Otherwise we might re-order list while looking through.. very messy
+    //WatchedSorterNoClSize sorter;
+    //std::sort(ws.begin(), ws.end(), sorter);
+
+    for (size_t i = 0
+        ; i < ws.size() && *simplifier->limit_to_decrease > 0
+        ; i++
+    ) {
+        //Each BIN only once
+        if (ws[i].isBin()
+            && (redundant_too || lit < ws[i].lit2())
+        ) {
+            tried_bin_tri++;
+            tmpLits.resize(2);
+            tmpLits[0] = lit;
+            tmpLits[1] = ws[i].lit2();
+            std::sort(tmpLits.begin(), tmpLits.end());
+
+            Sub1Ret ret = sub_str_with_implicit(tmpLits);
+            subsumedBin += ret.sub;
+            strBin += ret.str;
+            if (!solver->ok)
+                return false;
+
+            if (ws[i].red()
+                && ret.subsumedIrred
+            ) {
+                ws[i].setRed(false);
+                solver->binTri.redBins--;
+                solver->binTri.irredBins++;
+                findWatchedOfBin(solver->watches, ws[i].lit2(), lit, true).setRed(false);
+            }
+            continue;
+        }
+
+        //Each TRI only once
+        if (ws[i].isTri()
+            && (redundant_too ||
+             (lit < ws[i].lit2() && ws[i].lit2() < ws[i].lit3())
+            )
+        ) {
+            tried_bin_tri++;
+            tmpLits.resize(3);
+            tmpLits[0] = lit;
+            tmpLits[1] = ws[i].lit2();
+            tmpLits[2] = ws[i].lit3();
+            std::sort(tmpLits.begin(), tmpLits.end());
+
+            Sub1Ret ret = sub_str_with_implicit(tmpLits);
+            subsumedTri += ret.sub;
+            strTri += ret.str;
+            if (!solver->ok)
+                return false;
+
+            if (ws[i].red()
+                && ret.subsumedIrred
+            ) {
+                ws[i].setRed(false);
+                solver->binTri.redTris--;
+                solver->binTri.irredTris++;
+                findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
+                findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
+            }
+            continue;
+        }
+
+        //Must be a longer clause, break
+        //assert(ws[i].isClause());
+        //break;
+    }
+
+    return true;
+}
+
 bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
 {
-    vector<Lit> lits;
     size_t strSucceed = 0;
 
     //Stats
@@ -824,96 +904,24 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
 
     const size_t origTrailSize = solver->trail_size();
     double myTime = cpuTime();
-    size_t subsumedBin = 0;
-    size_t subsumedTri = 0;
-    size_t strBin = 0;
-    size_t strTri = 0;
+    subsumedBin = 0;
+    subsumedTri = 0;
+    strBin = 0;
+    strTri = 0;
 
     //Randomize start in the watchlist
     size_t upI;
     upI = solver->mtrand.randInt(solver->watches.size()-1);
 
-    size_t tried = 0;
     size_t numDone = 0;
     for (; numDone < solver->watches.size() && *simplifier->limit_to_decrease > 0
         ; upI = (upI +1) % solver->watches.size(), numDone++
 
     ) {
         Lit lit = Lit::toLit(upI);
-        watch_subarray ws = solver->watches[upI];
-
-        //Must re-order so that TRI-s are first
-        //Otherwise we might re-order list while looking through.. very messy
-        WatchSorterBinTriLong sorter;
-        std::sort(ws.begin(), ws.end(), sorter);
-
-        for (size_t i = 0
-            ; i < ws.size() && *simplifier->limit_to_decrease > 0
-            ; i++
-        ) {
-            //Each BIN only once
-            if (ws[i].isBin()
-                && lit < ws[i].lit2()
-            ) {
-                tried++;
-                lits.resize(2);
-                lits[0] = lit;
-                lits[1] = ws[i].lit2();
-                std::sort(lits.begin(), lits.end());
-
-                Sub1Ret ret = sub_str_with_implicit(lits);
-                subsumedBin += ret.sub;
-                strBin += ret.str;
-                if (!solver->ok)
-                    return false;
-
-                if (ws[i].red()
-                    && ret.subsumedIrred
-                ) {
-                    ws[i].setRed(false);
-                    solver->binTri.redBins--;
-                    solver->binTri.irredBins++;
-                    findWatchedOfBin(solver->watches, ws[i].lit2(), lit, true).setRed(false);
-                }
-                continue;
-            }
-
-            //Each TRI only once
-            if (ws[i].isTri()
-                && lit < ws[i].lit2()
-                && ws[i].lit2() < ws[i].lit3()
-            ) {
-                tried++;
-                lits.resize(3);
-                lits[0] = lit;
-                lits[1] = ws[i].lit2();
-                lits[2] = ws[i].lit3();
-                std::sort(lits.begin(), lits.end());
-
-                Sub1Ret ret = sub_str_with_implicit(lits);
-                subsumedTri += ret.sub;
-                strTri += ret.str;
-                if (!solver->ok)
-                    return false;
-
-                if (ws[i].red()
-                    && ret.subsumedIrred
-                ) {
-                    ws[i].setRed(false);
-                    solver->binTri.redTris--;
-                    solver->binTri.irredTris++;
-                    findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
-                    findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
-                }
-            }
-            continue;
-
-            //Must be a longer clause, break
+        if (!backw_sub_str_with_bin_tris_watch(lit)) {
             break;
         }
-
-        if (!solver->okay())
-            break;
     }
 
     if (solver->conf.verbosity >= 2) {
@@ -924,7 +932,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
         << " str w bin: " << strBin
         << " subs w bin: " << subsumedTri
         << " str w tri: " << strTri
-        << " tried: " << tried
+        << " tried: " << tried_bin_tri
         << " str: " << strSucceed
         << " toDecrease: " << *simplifier->limit_to_decrease
         << " 0-depth ass: " << solver->trail_size() - origTrailSize

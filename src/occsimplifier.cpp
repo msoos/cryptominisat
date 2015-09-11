@@ -1225,9 +1225,9 @@ void OccSimplifier::sanityCheckElimedVars()
 
 void OccSimplifier::set_limits()
 {
-    subsumption_time_limit     = 850LL*1000LL*solver->conf.subsumption_time_limitM
+    subsumption_time_limit     = 450LL*1000LL*solver->conf.subsumption_time_limitM
         *solver->conf.global_timeout_multiplier;
-    strengthening_time_limit   = 400LL*1000LL*solver->conf.strengthening_time_limitM
+    strengthening_time_limit   = 200LL*1000LL*solver->conf.strengthening_time_limitM
         *solver->conf.global_timeout_multiplier;
     norm_varelim_time_limit    = 4ULL*1000LL*1000LL*solver->conf.varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
@@ -1931,11 +1931,20 @@ bool OccSimplifier::add_varelim_resolvent(
         linkInClause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
-        runStats.subsumedByVE += sub_str->subsume_and_unlink_and_markirred(offset);
+        SubsumeStrengthen::Sub1Ret ret = sub_str->strengthen_subsume_and_unlink_and_markirred(offset);
+        runStats.subsumedByVE += ret.sub;
+
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-        if (*limit_to_decrease > 10LL*1000LL) {
-            subsume:
-            try_to_subsume_with_new_bin_or_tri(finalLits);
+        subsume:
+        SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
+        runStats.subsumedByVE += ret.sub;
+        //TODO strengthened by ?
+        if (!solver->ok) {
+            return false;
+        }
+
+        for(const Lit lit: finalLits) {
+            implicit_lits_to_subsume.insert(lit);
         }
     }
 
@@ -1945,22 +1954,6 @@ bool OccSimplifier::add_varelim_resolvent(
         touched.touch(lit);
 
     return true;
-}
-
-void OccSimplifier::try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits)
-{
-    SubsumeStrengthen::Sub0Ret ret = sub_str->subsume_and_unlink(
-        std::numeric_limits<uint32_t>::max() //Index of this implicit clause (non-existent)
-        , lits //Literals in this binary clause
-        , calcAbstraction(lits) //Abstraction of literals
-        , true //subsume implicit ones
-    );
-    runStats.subsumedByVE += ret.numSubsumed;
-    if (ret.numSubsumed > 0) {
-        if (solver->conf.verbosity >= 5) {
-            cout << "Subsumed: " << ret.numSubsumed << endl;
-        }
-    }
 }
 
 void OccSimplifier::update_varelim_complexity_heap(const Var var)
@@ -2046,7 +2039,7 @@ bool OccSimplifier::maybe_eliminate(const Var var)
     if (test_elim_and_fill_resolvents(var) == std::numeric_limits<int>::max()
         || *limit_to_decrease < 0
     ) {
-        return false;
+        return false;  //didn't eliminate :(
     }
     runStats.triedToElimVars++;
 
@@ -2064,10 +2057,17 @@ bool OccSimplifier::maybe_eliminate(const Var var)
     std::sort(resolvents.begin(), resolvents.end());
 
     //Add resolvents
+    implicit_lits_to_subsume.clear();
     for(Resolvent& resolvent: resolvents) {
-        bool ok = add_varelim_resolvent(resolvent.lits, resolvent.stats);
-        if (!ok)
+        if (!add_varelim_resolvent(resolvent.lits, resolvent.stats)) {
             goto end;
+        }
+    }
+
+    for(const Lit lit: implicit_lits_to_subsume) {
+        if (!sub_str->backw_sub_str_with_bin_tris_watch(lit, true)) {
+            goto end;
+        }
     }
 
     if (*limit_to_decrease > 0) {
@@ -2075,9 +2075,10 @@ bool OccSimplifier::maybe_eliminate(const Var var)
     }
 
 end:
+    implicit_lits_to_subsume.clear();
     set_var_as_eliminated(var, lit);
 
-    return true;
+    return true; //elininated!
 }
 
 /*void OccSimplifier::addRedBinaries(const Var var)

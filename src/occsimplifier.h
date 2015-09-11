@@ -28,7 +28,7 @@
 #include <list>
 #include <set>
 #include <queue>
-#include <set>
+#include <map>
 #include <iomanip>
 #include <fstream>
 
@@ -45,6 +45,7 @@ namespace CMSat {
 
 using std::vector;
 using std::map;
+using std::set;
 using std::pair;
 using std::priority_queue;
 
@@ -315,7 +316,6 @@ private:
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const Var x);
     void        free_clauses_to_free();
-    void        try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits);
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(Var var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -330,6 +330,7 @@ private:
     bool        skip_resolution_thanks_to_gate(const size_t at_poss, const size_t at_negs) const;
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
+    set<Lit> implicit_lits_to_subsume;
     bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const Var var);
     void        print_var_elim_complexity_stats(const Var var) const;
