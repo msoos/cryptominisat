@@ -30,7 +30,7 @@ namespace CMSat {
 using namespace CMSat;
 
 /**
-@brief Orders the watchlists such that the order is binary, tertiary, normal
+@brief Orders the watchlists such that the order is binary, tertiary, normal and size matters in NORMAL
 */
 struct WatchedSorter
 {
@@ -44,8 +44,10 @@ struct WatchedSorter
 
 inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
 {
+    //y is binary, x cannot be better than y
     if (y.isBin()) return false;
-    //y is not binary, but x is, so x must be first
+
+    //x is binary, but y is not.
     if (x.isBin()) return true;
 
     //from now on, none is binary.
