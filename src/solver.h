@@ -321,8 +321,8 @@ class Solver : public Searcher
         /////////////////////////////
         // SAT solution verification
         bool verify_model() const;
-        bool verify_implicit_clauses() const;
-        bool verify_long_clauses(const vector<ClOffset>& cs) const;
+        bool verify_model_implicit_clauses() const;
+        bool verify_model_long_clauses(const vector<ClOffset>& cs) const;
 
 
         /////////////////////

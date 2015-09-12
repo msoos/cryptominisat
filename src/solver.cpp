@@ -2416,7 +2416,7 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     return lits;
 }
 
-bool Solver::verify_implicit_clauses() const
+bool Solver::verify_model_implicit_clauses() const
 {
     uint32_t wsLit = 0;
     for (watch_array::const_iterator
@@ -2474,7 +2474,7 @@ bool Solver::verify_implicit_clauses() const
     return true;
 }
 
-bool Solver::verify_long_clauses(const vector<ClOffset>& cs) const
+bool Solver::verify_model_long_clauses(const vector<ClOffset>& cs) const
 {
     #ifdef VERBOSE_DEBUG
     cout << "Checking clauses whether they have been properly satisfied." << endl;
@@ -2504,9 +2504,9 @@ bool Solver::verify_long_clauses(const vector<ClOffset>& cs) const
 bool Solver::verify_model() const
 {
     bool verificationOK = true;
-    verificationOK &= verify_long_clauses(longIrredCls);
-    verificationOK &= verify_long_clauses(longRedCls);
-    verificationOK &= verify_implicit_clauses();
+    verificationOK &= verify_model_long_clauses(longIrredCls);
+    verificationOK &= verify_model_long_clauses(longRedCls);
+    verificationOK &= verify_model_implicit_clauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
         cout
