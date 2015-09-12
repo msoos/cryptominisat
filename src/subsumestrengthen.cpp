@@ -43,6 +43,9 @@ SubsumeStrengthen::SubsumeStrengthen(
 uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(const ClOffset offset)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    assert(!cl.getRemoved());
+    assert(!cl.freed());
+
     #ifdef VERBOSE_DEBUG
     cout << "subsume-ing with clause: " << cl << endl;
     #endif
@@ -122,6 +125,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     Sub1Ret ret;
     Clause& cl = *solver->cl_alloc.ptr(offset);
     assert(!cl.getRemoved());
+    assert(!cl.freed());
 
     if (solver->conf.verbosity >= 6)
         cout << "strengthen_subsume_and_unlink_and_markirred-ing with clause:" << cl << endl;
