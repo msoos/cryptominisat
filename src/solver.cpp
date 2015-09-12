@@ -398,14 +398,14 @@ Clause* Solver::add_clause_int(
     const vector<Lit>& lits
     , const bool red
     , ClauseStats stats
-    , const bool attach
+    , const bool attach_long
     , vector<Lit>* finalLits
     , bool addDrup
     , const Lit drup_first
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
-    assert(!attach || qhead == trail.size());
+    assert(!attach_long || qhead == trail.size());
     #ifdef VERBOSE_DEBUG
     cout << "add_clause_int clause " << lits << endl;
     #endif //VERBOSE_DEBUG
@@ -464,7 +464,7 @@ Clause* Solver::add_clause_int(
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
             #endif
-            if (attach) {
+            if (attach_long) {
                 ok = (propagate<true>().isNULL());
             }
 
@@ -484,7 +484,7 @@ Clause* Solver::add_clause_int(
             c->stats = stats;
 
             //In class 'OccSimplifier' we don't need to attach normall
-            if (attach) {
+            if (attach_long) {
                 attachClause(*c);
             } else {
                 if (red)
