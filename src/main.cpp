@@ -976,6 +976,7 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess != 0) {
+        conf.varelim_time_limitM *= 2;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
             cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
