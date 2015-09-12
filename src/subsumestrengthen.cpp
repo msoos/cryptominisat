@@ -770,11 +770,10 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::sub_str_with_implicit(
     subs.clear();
     subsLits.clear();
 
-    cl_abst_type abstr = calcAbstraction(lits);
     findStrengthened(
         CL_OFFSET_MAX
         , lits
-        , abstr
+        , calcAbstraction(lits)
         , subs
         , subsLits
     );
