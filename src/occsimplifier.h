@@ -305,7 +305,6 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    //void        addRedBinaries(const Var var);
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const Var var, const Lit lit);

@@ -2057,64 +2057,22 @@ bool OccSimplifier::maybe_eliminate(const Var var)
     std::sort(resolvents.begin(), resolvents.end());
 
     //Add resolvents
-    implicit_lits_to_subsume.clear();
     for(Resolvent& resolvent: resolvents) {
         if (!add_varelim_resolvent(resolvent.lits, resolvent.stats)) {
             goto end;
         }
     }
-
-    for(const Lit lit: implicit_lits_to_subsume) {
-        if (!sub_str->backw_sub_str_with_bin_tris_watch(lit, true)) {
-            goto end;
-        }
-    }
+    limit_to_decrease = &norm_varelim_time_limit;
 
     if (*limit_to_decrease > 0) {
         update_varelim_complexity_heap(var);
     }
 
 end:
-    implicit_lits_to_subsume.clear();
     set_var_as_eliminated(var, lit);
 
     return true; //elininated!
 }
-
-/*void OccSimplifier::addRedBinaries(const Var var)
-{
-    vector<Lit> tmp(2);
-    Lit lit = Lit(var, false);
-    watch_subarray_const ws = solver->watches[(~lit).toInt()];
-    watch_subarray_const ws2 = solver->watches[lit.toInt()];
-
-    for (watch_subarray::const_iterator w1 = ws.begin(), end1 = ws.end(); w1 != end1; w1++) {
-        if (!w1->isBin()) continue;
-        const bool numOneIsRed = w1->red();
-        const Lit lit1 = w1->lit2();
-        if (solver->value(lit1) != l_Undef || var_elimed[lit1.var()]) continue;
-
-        for (watch_subarray::const_iterator w2 = ws2.begin(), end2 = ws2.end(); w2 != end2; w2++) {
-            if (!w2->isBin()) continue;
-            const bool numTwoIsRed = w2->red();
-            if (!numOneIsRed && !numTwoIsRed) {
-                //At least one must be redundant
-                continue;
-            }
-
-            const Lit lit2 = w2->lit2();
-            if (solver->value(lit2) != l_Undef || var_elimed[lit2.var()]) continue;
-
-            tmp[0] = lit1;
-            tmp[1] = lit2;
-            Clause* tmpOK = solver->add_clause_int(tmp, true);
-            runStats.numRedBinVarRemAdded++;
-            release_assert(tmpOK == NULL);
-            release_assert(solver->ok);
-        }
-    }
-    assert(solver->value(lit) == l_Undef);
-}*/
 
 void OccSimplifier::add_pos_lits_to_dummy_and_seen(
     const Watched ps
