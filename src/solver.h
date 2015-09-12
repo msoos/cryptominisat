@@ -126,7 +126,7 @@ class Solver : public Searcher
         unsigned long get_sql_id() const;
         const SolveStats& get_solve_stats() const;
         void add_in_partial_solving_stats();
-        void check_implicit_stats() const;
+        void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
 
 

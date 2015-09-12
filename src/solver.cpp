@@ -78,7 +78,7 @@ using std::endl;
 
 //#define DEBUG_RENUMBER
 
-//#define DEBUG_TRI_SORTED_SANITY
+//#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
 Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     Searcher(_conf, this, _needToInterrupt)
@@ -3443,7 +3443,7 @@ void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
 }
 
 
-void Solver::check_implicit_stats() const
+void Solver::check_implicit_stats(const bool onlypairs) const
 {
     //Don't check if in crazy mode
     #ifdef NDEBUG
@@ -3463,10 +3463,6 @@ void Solver::check_implicit_stats() const
         ; it != end
         ; ++it, wsLit++
     ) {
-        #ifdef DEBUG_TRI_SORTED_SANITY
-        const Lit lit = Lit::toLit(wsLit);
-        #endif //DEBUG_TRI_SORTED_SANITY
-
         watch_subarray_const ws = *it;
         for(watch_subarray_const::const_iterator
             it2 = ws.begin(), end2 = ws.end()
@@ -3474,6 +3470,15 @@ void Solver::check_implicit_stats() const
             ; it2++
         ) {
             if (it2->isBin()) {
+                #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
+                Lit lits[2];
+                lits[0] = Lit::toLit(wsLit);
+                lits[1] = it2->lit2();
+                std::sort(lits, lits + 2);
+                findWatchedOfBin(watches, lits[0], lits[1], it2->red());
+                findWatchedOfBin(watches, lits[1], lits[0], it2->red());
+                #endif
+
                 if (it2->red())
                     thisNumRedBins++;
                 else
@@ -3486,16 +3491,16 @@ void Solver::check_implicit_stats() const
                 assert(it2->lit2() < it2->lit3());
                 assert(it2->lit2().var() != it2->lit3().var());
 
-                #ifdef DEBUG_TRI_SORTED_SANITY
+                #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
                 Lit lits[3];
-                lits[0] = lit;
+                lits[0] = Lit::toLit(wsLit);
                 lits[1] = it2->lit2();
                 lits[2] = it2->lit3();
                 std::sort(lits, lits + 3);
                 findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
                 findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
                 findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());
-                #endif //DEBUG_TRI_SORTED_SANITY
+                #endif //DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
                 if (it2->red())
                     thisNumRedTris++;
@@ -3505,6 +3510,10 @@ void Solver::check_implicit_stats() const
                 continue;
             }
         }
+    }
+
+    if (onlypairs) {
+        goto end;
     }
 
     if (thisNumIrredBins/2 != binTri.irredBins) {
@@ -3547,6 +3556,8 @@ void Solver::check_implicit_stats() const
     }
     assert(thisNumRedTris % 3 == 0);
     assert(thisNumRedTris/3 == binTri.redTris);
+
+    end:
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
