@@ -2416,49 +2416,6 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     return lits;
 }
 
-void Solver::print_all_clauses() const
-{
-    for(vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause* cl = cl_alloc.ptr(*it);
-        cout
-        << "Normal clause offs " << *it
-        << " cl: " << *cl
-        << endl;
-    }
-
-
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
-        cout << "watches[" << lit << "]" << endl;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
-                cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
-            } else if (it2->isClause()) {
-                cout << "Normal clause offs " << it2->get_offset() << endl;
-            } else if (it2->isTri()) {
-                cout << "Tri clause:"
-                << lit << " , "
-                << it2->lit2() << " , "
-                << it2->lit3() << endl;
-            }
-        }
-    }
-}
-
 bool Solver::verify_implicit_clauses() const
 {
     uint32_t wsLit = 0;
@@ -2574,148 +2531,6 @@ lbool Solver::model_value (const Var p) const
     return model[p];
 }
 
-void Solver::test_all_clause_attached() const
-{
-#ifndef DEBUG_ATTACH_MORE
-    return;
-#endif
-
-    for (vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        assert(normClauseIsAttached(*it));
-    }
-}
-
-bool Solver::normClauseIsAttached(const ClOffset offset) const
-{
-    bool attached = true;
-    const Clause& cl = *cl_alloc.ptr(offset);
-    assert(cl.size() > 3);
-
-    attached &= findWCl(watches[cl[0].toInt()], offset);
-    attached &= findWCl(watches[cl[1].toInt()], offset);
-
-    return attached;
-}
-
-void Solver::find_all_attach() const
-{
-
-    #ifndef SLOW_DEBUG
-    return;
-    #endif
-
-    for (size_t i = 0; i < watches.size(); i++) {
-        const Lit lit = Lit::toLit(i);
-        for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
-            const Watched& w = watches[i][i2];
-            if (!w.isClause())
-                continue;
-
-            //Get clause
-            Clause* cl = cl_alloc.ptr(w.get_offset());
-            assert(!cl->freed());
-
-            //Assert watch correctness
-            if ((*cl)[0] != lit
-                && (*cl)[1] != lit
-            ) {
-                std::cerr
-                << "ERROR! Clause " << (*cl)
-                << " not attached?"
-                << endl;
-
-                assert(false);
-                std::exit(-1);
-            }
-
-            //Clause in one of the lists
-            if (!find_clause(w.get_offset())) {
-                std::cerr
-                << "ERROR! did not find clause " << *cl
-                << endl;
-
-                assert(false);
-                std::exit(1);
-            }
-        }
-    }
-
-    find_all_attach(longIrredCls);
-    find_all_attach(longRedCls);
-}
-
-void Solver::find_all_attach(const vector<ClOffset>& cs) const
-{
-    for(vector<ClOffset>::const_iterator
-        it = cs.begin(), end = cs.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause& cl = *cl_alloc.ptr(*it);
-        bool ret = findWCl(watches[cl[0].toInt()], *it);
-        if (!ret) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red() << ")"
-            << " doesn't have its 1st watch attached!"
-            << endl;
-
-            assert(false);
-            std::exit(-1);
-        }
-
-        ret = findWCl(watches[cl[1].toInt()], *it);
-        if (!ret) {
-            cout
-            << "Clause " << cl
-            << " (red: " << cl.red() << ")"
-            << " doesn't have its 2nd watch attached!"
-            << endl;
-
-            assert(false);
-            std::exit(-1);
-        }
-    }
-}
-
-
-bool Solver::find_clause(const ClOffset offset) const
-{
-    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
-        if (longIrredCls[i] == offset)
-            return true;
-    }
-    for (uint32_t i = 0; i < longRedCls.size(); i++) {
-        if (longRedCls[i] == offset)
-            return true;
-    }
-
-    return false;
-}
-
-void Solver::check_wrong_attach() const
-{
-    #ifndef SLOW_DEBUG
-    return;
-    #endif
-
-    for (vector<ClOffset>::const_iterator
-        it = longRedCls.begin(), end = longRedCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause& cl = *cl_alloc.ptr(*it);
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (i > 0)
-                assert(cl[i-1].var() != cl[i].var());
-        }
-    }
-}
-
 size_t Solver::get_num_nonfree_vars() const
 {
     size_t nonfree = 0;
@@ -2769,178 +2584,6 @@ void Solver::print_clause_stats() const
     << ratio_for_stat(litStats.redLits + binTri.redTris*3 + binTri.redBins*2
     , longRedCls.size() + binTri.redTris + binTri.redBins)
     ;
-}
-
-void Solver::check_implicit_stats() const
-{
-    //Don't check if in crazy mode
-    #ifdef NDEBUG
-    return;
-    #endif
-    const double myTime = cpuTime();
-
-    //Check number of red & irred binary clauses
-    uint64_t thisNumRedBins = 0;
-    uint64_t thisNumIrredBins = 0;
-    uint64_t thisNumRedTris = 0;
-    uint64_t thisNumIrredTris = 0;
-
-    size_t wsLit = 0;
-    for(watch_array::const_iterator
-        it = watches.begin(), end = watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        #ifdef DEBUG_TRI_SORTED_SANITY
-        const Lit lit = Lit::toLit(wsLit);
-        #endif //DEBUG_TRI_SORTED_SANITY
-
-        watch_subarray_const ws = *it;
-        for(watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            if (it2->isBin()) {
-                if (it2->red())
-                    thisNumRedBins++;
-                else
-                    thisNumIrredBins++;
-
-                continue;
-            }
-
-            if (it2->isTri()) {
-                assert(it2->lit2() < it2->lit3());
-                assert(it2->lit2().var() != it2->lit3().var());
-
-                #ifdef DEBUG_TRI_SORTED_SANITY
-                Lit lits[3];
-                lits[0] = lit;
-                lits[1] = it2->lit2();
-                lits[2] = it2->lit3();
-                std::sort(lits, lits + 3);
-                findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
-                findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
-                findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());
-                #endif //DEBUG_TRI_SORTED_SANITY
-
-                if (it2->red())
-                    thisNumRedTris++;
-                else
-                    thisNumIrredTris++;
-
-                continue;
-            }
-        }
-    }
-
-    if (thisNumIrredBins/2 != binTri.irredBins) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumIrredBins/2: " << thisNumIrredBins/2
-        << " binTri.irredBins: " << binTri.irredBins
-        << "thisNumIrredBins: " << thisNumIrredBins
-        << "thisNumRedBins: " << thisNumRedBins << endl;
-    }
-    assert(thisNumIrredBins % 2 == 0);
-    assert(thisNumIrredBins/2 == binTri.irredBins);
-
-    if (thisNumRedBins/2 != binTri.redBins) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumRedBins/2: " << thisNumRedBins/2
-        << " binTri.redBins: " << binTri.redBins
-        << endl;
-    }
-    assert(thisNumRedBins % 2 == 0);
-    assert(thisNumRedBins/2 == binTri.redBins);
-
-    if (thisNumIrredTris/3 != binTri.irredTris) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumIrredTris/3: " << thisNumIrredTris/3
-        << " binTri.irredTris: " << binTri.irredTris
-        << endl;
-    }
-    assert(thisNumIrredTris % 3 == 0);
-    assert(thisNumIrredTris/3 == binTri.irredTris);
-
-    if (thisNumRedTris/3 != binTri.redTris) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumRedTris/3: " << thisNumRedTris/3
-        << " binTri.redTris: " << binTri.redTris
-        << endl;
-    }
-    assert(thisNumRedTris % 3 == 0);
-    assert(thisNumRedTris/3 == binTri.redTris);
-
-    const double time_used = cpuTime() - myTime;
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            this
-            , "check implicit stats"
-            , time_used
-        );
-    }
-}
-
-uint64_t Solver::count_lits(
-    const vector<ClOffset>& clause_array
-    , bool allowFreed
-) const {
-    uint64_t lits = 0;
-    for(vector<ClOffset>::const_iterator
-        it = clause_array.begin(), end = clause_array.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause& cl = *cl_alloc.ptr(*it);
-        if (cl.freed()) {
-            assert(allowFreed);
-        } else {
-            lits += cl.size();
-        }
-    }
-
-    return lits;
-}
-
-void Solver::check_stats(const bool allowFreed) const
-{
-    //If in crazy mode, don't check
-    #ifdef NDEBUG
-    return;
-    #endif
-
-    check_implicit_stats();
-
-    const double myTime = cpuTime();
-    uint64_t numLitsIrred = count_lits(longIrredCls, allowFreed);
-    if (numLitsIrred != litStats.irredLits) {
-        std::cerr << "ERROR: " << endl
-        << "->numLitsIrred: " << numLitsIrred << endl
-        << "->litStats.irredLits: " << litStats.irredLits << endl;
-    }
-    assert(numLitsIrred == litStats.irredLits);
-
-    uint64_t numLitsRed = count_lits(longRedCls, allowFreed);
-    if (numLitsRed != litStats.redLits) {
-        std::cerr << "ERROR: " << endl
-        << "->numLitsRed: " << numLitsRed << endl
-        << "->litStats.redLits: " << litStats.redLits << endl;
-    }
-    assert(numLitsRed == litStats.redLits);
-
-    const double time_used = cpuTime() - myTime;
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            this
-            , "check literal stats"
-            , time_used
-        );
-    }
 }
 
 const char* Solver::get_version_sha1()
@@ -3796,5 +3439,157 @@ void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
         ) {
             model[var] = parsed_lit < 0 ? l_False : l_True;
         }
+    }
+}
+
+
+void Solver::check_implicit_stats() const
+{
+    //Don't check if in crazy mode
+    #ifdef NDEBUG
+    return;
+    #endif
+    const double myTime = cpuTime();
+
+    //Check number of red & irred binary clauses
+    uint64_t thisNumRedBins = 0;
+    uint64_t thisNumIrredBins = 0;
+    uint64_t thisNumRedTris = 0;
+    uint64_t thisNumIrredTris = 0;
+
+    size_t wsLit = 0;
+    for(watch_array::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; ++it, wsLit++
+    ) {
+        #ifdef DEBUG_TRI_SORTED_SANITY
+        const Lit lit = Lit::toLit(wsLit);
+        #endif //DEBUG_TRI_SORTED_SANITY
+
+        watch_subarray_const ws = *it;
+        for(watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            if (it2->isBin()) {
+                if (it2->red())
+                    thisNumRedBins++;
+                else
+                    thisNumIrredBins++;
+
+                continue;
+            }
+
+            if (it2->isTri()) {
+                assert(it2->lit2() < it2->lit3());
+                assert(it2->lit2().var() != it2->lit3().var());
+
+                #ifdef DEBUG_TRI_SORTED_SANITY
+                Lit lits[3];
+                lits[0] = lit;
+                lits[1] = it2->lit2();
+                lits[2] = it2->lit3();
+                std::sort(lits, lits + 3);
+                findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
+                findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
+                findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());
+                #endif //DEBUG_TRI_SORTED_SANITY
+
+                if (it2->red())
+                    thisNumRedTris++;
+                else
+                    thisNumIrredTris++;
+
+                continue;
+            }
+        }
+    }
+
+    if (thisNumIrredBins/2 != binTri.irredBins) {
+        std::cerr
+        << "ERROR:"
+        << " thisNumIrredBins/2: " << thisNumIrredBins/2
+        << " binTri.irredBins: " << binTri.irredBins
+        << "thisNumIrredBins: " << thisNumIrredBins
+        << "thisNumRedBins: " << thisNumRedBins << endl;
+    }
+    assert(thisNumIrredBins % 2 == 0);
+    assert(thisNumIrredBins/2 == binTri.irredBins);
+
+    if (thisNumRedBins/2 != binTri.redBins) {
+        std::cerr
+        << "ERROR:"
+        << " thisNumRedBins/2: " << thisNumRedBins/2
+        << " binTri.redBins: " << binTri.redBins
+        << endl;
+    }
+    assert(thisNumRedBins % 2 == 0);
+    assert(thisNumRedBins/2 == binTri.redBins);
+
+    if (thisNumIrredTris/3 != binTri.irredTris) {
+        std::cerr
+        << "ERROR:"
+        << " thisNumIrredTris/3: " << thisNumIrredTris/3
+        << " binTri.irredTris: " << binTri.irredTris
+        << endl;
+    }
+    assert(thisNumIrredTris % 3 == 0);
+    assert(thisNumIrredTris/3 == binTri.irredTris);
+
+    if (thisNumRedTris/3 != binTri.redTris) {
+        std::cerr
+        << "ERROR:"
+        << " thisNumRedTris/3: " << thisNumRedTris/3
+        << " binTri.redTris: " << binTri.redTris
+        << endl;
+    }
+    assert(thisNumRedTris % 3 == 0);
+    assert(thisNumRedTris/3 == binTri.redTris);
+
+    const double time_used = cpuTime() - myTime;
+    if (sqlStats) {
+        sqlStats->time_passed_min(
+            this
+            , "check implicit stats"
+            , time_used
+        );
+    }
+}
+
+void Solver::check_stats(const bool allowFreed) const
+{
+    //If in crazy mode, don't check
+    #ifdef NDEBUG
+    return;
+    #endif
+
+    check_implicit_stats();
+
+    const double myTime = cpuTime();
+    uint64_t numLitsIrred = count_lits(longIrredCls, allowFreed);
+    if (numLitsIrred != litStats.irredLits) {
+        std::cerr << "ERROR: " << endl
+        << "->numLitsIrred: " << numLitsIrred << endl
+        << "->litStats.irredLits: " << litStats.irredLits << endl;
+    }
+    assert(numLitsIrred == litStats.irredLits);
+
+    uint64_t numLitsRed = count_lits(longRedCls, allowFreed);
+    if (numLitsRed != litStats.redLits) {
+        std::cerr << "ERROR: " << endl
+        << "->numLitsRed: " << numLitsRed << endl
+        << "->litStats.redLits: " << litStats.redLits << endl;
+    }
+    assert(numLitsRed == litStats.redLits);
+
+    const double time_used = cpuTime() - myTime;
+    if (sqlStats) {
+        sqlStats->time_passed_min(
+            this
+            , "check literal stats"
+            , time_used
+        );
     }
 }

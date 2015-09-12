@@ -26,6 +26,7 @@
 #include "clauseallocator.h"
 #include "watchalgos.h"
 #include "varupdatehelper.h"
+#include "time_mem.h"
 
 using namespace CMSat;
 
@@ -443,4 +444,210 @@ void CNF::load_state(SimpleInFile& f)
     ok = f.get_uint32_t();
 
     watches.resize(nVars()*2);
+}
+
+
+void CNF::test_all_clause_attached() const
+{
+#ifndef DEBUG_ATTACH_MORE
+    return;
+#endif
+
+    for (vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; ++it
+    ) {
+        assert(normClauseIsAttached(*it));
+    }
+}
+
+bool CNF::normClauseIsAttached(const ClOffset offset) const
+{
+    bool attached = true;
+    const Clause& cl = *cl_alloc.ptr(offset);
+    assert(cl.size() > 3);
+
+    attached &= findWCl(watches[cl[0].toInt()], offset);
+    attached &= findWCl(watches[cl[1].toInt()], offset);
+
+    return attached;
+}
+
+void CNF::find_all_attach() const
+{
+    #ifndef SLOW_DEBUG
+    return;
+    #endif
+
+    for (size_t i = 0; i < watches.size(); i++) {
+        const Lit lit = Lit::toLit(i);
+        for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
+            const Watched& w = watches[i][i2];
+            if (!w.isClause())
+                continue;
+
+            //Get clause
+            Clause* cl = cl_alloc.ptr(w.get_offset());
+            assert(!cl->freed());
+
+            //Assert watch correctness
+            if ((*cl)[0] != lit
+                && (*cl)[1] != lit
+            ) {
+                std::cerr
+                << "ERROR! Clause " << (*cl)
+                << " not attached?"
+                << endl;
+
+                assert(false);
+                std::exit(-1);
+            }
+
+            //Clause in one of the lists
+            if (!find_clause(w.get_offset())) {
+                std::cerr
+                << "ERROR! did not find clause " << *cl
+                << endl;
+
+                assert(false);
+                std::exit(1);
+            }
+        }
+    }
+
+    find_all_attach(longIrredCls);
+    find_all_attach(longRedCls);
+}
+
+void CNF::find_all_attach(const vector<ClOffset>& cs) const
+{
+    for(vector<ClOffset>::const_iterator
+        it = cs.begin(), end = cs.end()
+        ; it != end
+        ; ++it
+    ) {
+        Clause& cl = *cl_alloc.ptr(*it);
+        bool ret = findWCl(watches[cl[0].toInt()], *it);
+        if (!ret) {
+            cout
+            << "Clause " << cl
+            << " (red: " << cl.red() << ")"
+            << " doesn't have its 1st watch attached!"
+            << endl;
+
+            assert(false);
+            std::exit(-1);
+        }
+
+        ret = findWCl(watches[cl[1].toInt()], *it);
+        if (!ret) {
+            cout
+            << "Clause " << cl
+            << " (red: " << cl.red() << ")"
+            << " doesn't have its 2nd watch attached!"
+            << endl;
+
+            assert(false);
+            std::exit(-1);
+        }
+    }
+}
+
+
+bool CNF::find_clause(const ClOffset offset) const
+{
+    for (uint32_t i = 0; i < longIrredCls.size(); i++) {
+        if (longIrredCls[i] == offset)
+            return true;
+    }
+    for (uint32_t i = 0; i < longRedCls.size(); i++) {
+        if (longRedCls[i] == offset)
+            return true;
+    }
+
+    return false;
+}
+
+void CNF::check_wrong_attach() const
+{
+    #ifndef SLOW_DEBUG
+    return;
+    #endif
+
+    for (vector<ClOffset>::const_iterator
+        it = longRedCls.begin(), end = longRedCls.end()
+        ; it != end
+        ; ++it
+    ) {
+        const Clause& cl = *cl_alloc.ptr(*it);
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            if (i > 0)
+                assert(cl[i-1].var() != cl[i].var());
+        }
+    }
+}
+
+uint64_t CNF::count_lits(
+    const vector<ClOffset>& clause_array
+    , bool allowFreed
+) const {
+    uint64_t lits = 0;
+    for(vector<ClOffset>::const_iterator
+        it = clause_array.begin(), end = clause_array.end()
+        ; it != end
+        ; ++it
+    ) {
+        const Clause& cl = *cl_alloc.ptr(*it);
+        if (cl.freed()) {
+            assert(allowFreed);
+        } else {
+            lits += cl.size();
+        }
+    }
+
+    return lits;
+}
+
+void CNF::print_all_clauses() const
+{
+    for(vector<ClOffset>::const_iterator
+        it = longIrredCls.begin(), end = longIrredCls.end()
+        ; it != end
+        ; ++it
+    ) {
+        Clause* cl = cl_alloc.ptr(*it);
+        cout
+        << "Normal clause offs " << *it
+        << " cl: " << *cl
+        << endl;
+    }
+
+
+    uint32_t wsLit = 0;
+    for (watch_array::const_iterator
+        it = watches.begin(), end = watches.end()
+        ; it != end
+        ; ++it, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = *it;
+        cout << "watches[" << lit << "]" << endl;
+        for (watch_subarray_const::const_iterator
+            it2 = ws.begin(), end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            if (it2->isBin()) {
+                cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
+            } else if (it2->isClause()) {
+                cout << "Normal clause offs " << it2->get_offset() << endl;
+            } else if (it2->isTri()) {
+                cout << "Tri clause:"
+                << lit << " , "
+                << it2->lit2() << " , "
+                << it2->lit3() << endl;
+            }
+        }
+    }
 }

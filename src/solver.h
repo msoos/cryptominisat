@@ -126,6 +126,8 @@ class Solver : public Searcher
         unsigned long get_sql_id() const;
         const SolveStats& get_solve_stats() const;
         void add_in_partial_solving_stats();
+        void check_implicit_stats() const;
+        void check_stats(const bool allowFreed = false) const;
 
 
         ///Return number of variables waiting to be replaced
@@ -134,12 +136,6 @@ class Solver : public Searcher
 
         //Checks
         void check_implicit_propagated() const;
-        void check_stats(const bool allowFreed = false) const;
-        uint64_t count_lits(
-            const vector<ClOffset>& clause_array
-            , bool allowFreed
-        ) const;
-        void check_implicit_stats() const;
         bool find_with_stamp_a_or_b(Lit a, Lit b) const;
         bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
@@ -155,8 +151,6 @@ class Solver : public Searcher
         Stats sumStats;
         PropStats sumPropStats;
 
-        void test_all_clause_attached() const;
-        void check_wrong_attach() const;
         bool prop_at_head() const;
         void set_decision_var(const uint32_t var);
         bool fully_enqueue_these(const vector<Lit>& toEnqueue);
@@ -343,15 +337,10 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
-        void print_all_clauses() const;
 
         /////////////////
         // Debug
 
-        bool normClauseIsAttached(const ClOffset offset) const;
-        void find_all_attach() const;
-        void find_all_attach(const vector<ClOffset>& cs) const;
-        bool find_clause(const ClOffset offset) const;
         void print_watch_list(watch_subarray_const ws, const Lit lit) const;
         void print_clause_size_distrib();
         void print_prop_confl_stats(
