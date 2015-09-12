@@ -931,9 +931,9 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
         cout
         << "c [sub] tri"
         << " upI: " << upI
-        << " subs w tri: " << subsumedBin
+        << " subs w bin: " << subsumedBin
         << " str w bin: " << strBin
-        << " subs w bin: " << subsumedTri
+        << " subs w tri: " << subsumedTri
         << " str w tri: " << strTri
         << " tried: " << tried_bin_tri
         << " str: " << strSucceed
