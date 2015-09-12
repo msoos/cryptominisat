@@ -443,7 +443,6 @@ void BVA::remove_matching_clause(
     switch(to_remove.size()) {
         case 2: {
             *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            //bool red = !findWBin(solver->watches, to_remove[0], to_remove[1], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
             solver->detach_bin_clause(to_remove[0], to_remove[1], red);
@@ -453,7 +452,6 @@ void BVA::remove_matching_clause(
         case 3: {
             std::sort(to_remove.begin(), to_remove.end());
             *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
-            //bool red = !findWTri(solver->watches, to_remove[0], to_remove[1], to_remove[2], false);
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
             solver->detach_tri_clause(to_remove[0], to_remove[1], to_remove[2], red);
