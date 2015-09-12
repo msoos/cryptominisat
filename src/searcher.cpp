@@ -372,6 +372,11 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
             assert(false);
             break;
         }
+        case xor_t: {
+            // ???
+            assert(false);
+            break;
+        }
     }
 }
 

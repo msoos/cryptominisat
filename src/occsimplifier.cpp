@@ -947,8 +947,6 @@ bool OccSimplifier::simplify(const bool _startup)
         execute_simplifier_sched(solver->conf.occsimp_schedule_nonstartup);
     }
 
-end:
-
     remove_by_drup_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
 
@@ -967,7 +965,6 @@ bool OccSimplifier::backward_sub_str()
 {
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
-    bool ret = true;
 
     if (!subsumeStrengthen->backward_sub_str_with_bins_tris()) {
         goto end;

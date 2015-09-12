@@ -85,6 +85,11 @@ void FeaturesCalc::for_one_clause(
             }
             break;
         }
+
+      case CMSat::watch_idx_t: {
+          // do nothing (?)
+          break;
+      }
     }
 }
 

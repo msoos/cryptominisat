@@ -849,6 +849,11 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
         case null_clause_t:
             assert(false);
             break;
+
+        case xor_t:
+            // ???
+            assert(false);
+            break;
     }
 
     Lit foundLit = deepest_common_ancestor();
