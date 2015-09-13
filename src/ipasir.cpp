@@ -219,7 +219,7 @@ DLL_PUBLIC int ipasir_failed (void * solver, int lit)
  * Required state: INPUT or SAT or UNSAT
  * State after: INPUT or SAT or UNSAT
  */
-DLL_PUBLIC void ipasir_set_terminate (void * solver, void * state, int (*terminate)(void * state))
+DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (*terminate)(void * state))
 {
     //this is complicated.
 }
