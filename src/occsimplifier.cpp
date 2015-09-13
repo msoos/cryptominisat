@@ -1954,7 +1954,7 @@ bool OccSimplifier::add_varelim_resolvent(
     return true;
 }
 
-void OccSimplifier::update_varelim_complexity_heap(const Var var)
+void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
 {
     //Update var elim complexity heap
     if (!solver->conf.updateVarElimComplexityOTF)
@@ -1979,19 +1979,19 @@ void OccSimplifier::update_varelim_complexity_heap(const Var var)
 
     int64_t limit_before = *limit_to_decrease;
     num_otf_update_until_now++;
-    for(Var touchVar: touched.getTouchedList()) {
+    for(Var var: touched.getTouchedList()) {
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
-        if (touchVar == var
-            || !velim_order.in_heap(touchVar)
-            || solver->value(touchVar) != l_Undef
-            || solver->varData[touchVar].removed != Removed::none
-        ) {
+        if (var == elimed_var || !can_eliminate_var(var)) {
             continue;
         }
 
-        varElimComplexity[touchVar] = strategyCalcVarElimScore(touchVar);
-        velim_order.update_if_inside(touchVar);
+        varElimComplexity[var] = strategyCalcVarElimScore(var);
+        if (!velim_order.in_heap(var)) {
+            velim_order.insert(var);
+        } else {
+            velim_order.update_if_inside(var);
+        }
     }
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
