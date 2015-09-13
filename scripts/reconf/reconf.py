@@ -22,6 +22,7 @@ import sys
 import gzip
 import re
 import ntpath
+import os
 
 from optparse import OptionParser
 parser = OptionParser()
@@ -60,25 +61,32 @@ if options.ignore:
         r = int(r)
         ignore[r] = True
 
-order = ["numVars", "numClauses", "var_cl_ratio", "vcg_var_mean",
-         "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread",
-         "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max",
-         "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min",
-         "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std",
-         "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread",
-         "unary", "binary", "trinary", "horn_mean", "horn_std", "horn_min",
-         "horn_max", "horn_spread", "horn", "avg_confl_size",
-         "avg_confl_glue", "avg_num_resolutions", "avg_trail_depth_delta",
-         "avg_branch_depth", "avg_branch_depth_delta",
-         "confl_size_min", "confl_size_max", "confl_glue_min",
-         "confl_glue_max", "branch_depth_min",
-         "branch_depth_max", "trail_depth_delta_min",
-         "trail_depth_delta_max", "num_resolutions_min",
-         "num_resolutions_max", "props_per_confl",
-         "confl_per_restart", "decisions", "blocked_restart",
-         "learntBins", "learntTris"]
+order = ["numVars", "numClauses", "var_cl_ratio", "binary", "trinary", "horn",
+         "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
+         "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max",
+         "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min",
+         "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std",
+         "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean",
+         "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread",
+         "avg_confl_size", "confl_size_min", "confl_size_max",
+         "avg_confl_glue", "confl_glue_min", "confl_glue_max",
+         "avg_num_resolutions", "num_resolutions_min",
+         "num_resolutions_max", "learnt_bins_per_confl",
+         "learnt_tris_per_confl", "avg_branch_depth", "branch_depth_min",
+         "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min",
+         "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl",
+         "confl_per_restart", "decisions_per_conflict",
+         "irred-glue_distr_mean", "irred-glue_distr_var",
+         "irred-size_distr_mean", "irred-size_distr_var",
+         "irred-uip_use_distr_mean", "irred-uip_use_distr_var",
+         "irred-activity_distr_mean", "irred-activity_distr_var",
+         "red-glue_distr_mean", "red-glue_distr_var", "red-size_distr_mean",
+         "red-size_distr_var", "red-uip_use_distr_mean",
+         "red-uip_use_distr_var", "red-activity_distr_mean",
+         "red-activity_distr_var", "num_gates_found_last",
+         "num_xors_found_last"]
 
-f = open("reconf.names", "w")
+f = open("outs/reconf.names", "w")
 f.write("reconf.                     | the target attribute\n\n")
 f.write("name:                     label.\n")
 for o in order:
@@ -94,7 +102,6 @@ if options.num is None:
 def parse_features_line(line):
     line = re.sub("c.*features. ", "", line)
     line = line.strip().split(" ")
-    # print line
     dat = {}
 
     name = ""
@@ -104,15 +111,8 @@ def parse_features_line(line):
             name = elem
             continue
 
-        if name == "(numVars/(1.0*numClauses)":
-            name = "var_cl_ratio"
         dat[name] = elem
-        # print name, " -- ", elem
         name = ""
-
-#    for name, val in dat.items():
-#        print "%s:\t\tcontinious" % name
-
     return dat
 
 
@@ -146,7 +146,8 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print "%s All above score" % (fname)
         return -2, False
 
-    print "Printing features for %s" % fname
+    print "Calculating +/- for %s" % fname
+
     #calculate final array
     final_array = [0.0]*options.num
     val = 1.0
@@ -164,15 +165,10 @@ def print_features_and_scores(fname, features, reconfs_scores):
         if conf_score[1] > 0:
             final_array[conf_score[0]] = val
 
-    #print final string
+    #assemble final string
     string = ""
-
-    #for name, val in features.items():
     string += "%s," % fname
     for name in order:
-        if name not in features:
-            sys.stderr.write("Yeah, reconf doesn't work as before, oops %s\n" %  fname)
-            return best_reconf, False
         string += "%s," % features[name]
 
     #print to console
@@ -187,6 +183,10 @@ def print_features_and_scores(fname, features, reconfs_scores):
     #print to files
     origstring = str(string)
     for i in range(options.num):
+        #skip files we don't need to write to
+        if i in ignore:
+            continue
+
         string = str(origstring)
         if final_array[i] >= options.cutoff:
             string += "+"
@@ -242,8 +242,9 @@ def parse_file(fname):
 all_files = set()
 all_files_scores = {}
 all_files_features = {}
+max_num_features = 0
 for x in args:
-    # print "# parsing infile:", x
+    print "# parsing infile:", x
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
@@ -252,7 +253,12 @@ for x in args:
             print "new: ", features
             print "Keeping the longer one!"
 
-        if features is not None and len(all_files_features[fname]) < len(features):
+        if all_files_features[fname] is None:
+            num_features = 0
+        else:
+            num_features = len(all_files_features[fname])
+
+        if features is not None and num_features < len(features):
             all_files_features[fname] = features
     else:
         all_files.add(fname)
@@ -270,12 +276,29 @@ print "all files:", all_files
 print ""
 outf = []
 for i in range(options.num):
-    outf.append(open(options.outfname + str(i) + ".data", "w"))
+    fname = options.outfname + str(i) + ".data"
+    try:
+        os.unlink(fname)
+    except:
+        pass
+
+    if i not in ignore:
+        outf.append(open(fname, "w"))
+    else:
+        outf.append(None)
 
 best_reconf = {}
 only_this = {}
 for fname in all_files:
-    #print "fname:", fname
+    print "calculating final DATs for CNF ", fname
+    if all_files_features[fname] is None:
+        print "solved too early, no features, skipping"
+        continue
+
+    if "avg_confl_size" not in all_files_features[fname]:
+        print "WARNING This is weird, probably not solved by one (different features than everything else), skipping"
+        continue
+
     if all_files_features[fname] is not None:
         best, only_this_could_solve_it = print_features_and_scores(fname, all_files_features[fname], all_files_scores[fname])
 
@@ -296,4 +319,5 @@ print "best reconfs: ", best_reconf
 print "uniquely solved by: ", only_this
 
 for i in range(options.num):
-    outf[i].close()
+    if outf[i] is not None:
+        outf[i].close()
