@@ -289,6 +289,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             || solver->value(*i) == l_False
         ) {
             removeWCl(solver->watches[i->toInt()], offset);
+            touched.touch(*i);
         }
     }
     cl.shrink(i-j);
