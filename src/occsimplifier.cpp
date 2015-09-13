@@ -1348,6 +1348,9 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
                 add_clause_to_blck(lit, lits);
+                for(Lit lit: lits) {
+                    touched.touch(lit);
+                }
             } else {
                 red = true;
                 runStats.longRedClRemThroughElim++;
