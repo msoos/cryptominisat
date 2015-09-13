@@ -401,7 +401,7 @@ void BVA::fill_m_cls_lits_and_red()
     vector<Lit> tmp;
     for(OccurClause& cl: m_cls) {
         tmp.clear();
-        bool red = false;
+        bool red;
         switch(cl.ws.getType()) {
             case CMSat::watch_binary_t: {
                 tmp.push_back(cl.ws.lit2());
