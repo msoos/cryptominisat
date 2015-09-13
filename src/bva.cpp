@@ -174,6 +174,10 @@ void BVA::remove_duplicates_from_m_cls()
                     }
                     return false;
                 }
+                case CMSat::watch_idx_t: {
+                    // entry for upcoming feature to suppress compiler warning.
+                    break;
+                }
             }
 
             assert(false);
@@ -223,6 +227,11 @@ void BVA::remove_duplicates_from_m_cls()
                         break;
                     }
                 }
+                break;
+            }
+
+            case CMSat::watch_idx_t: {
+                // entry for upcoming feature to suppress compiler warning.
                 break;
             }
         }
@@ -392,20 +401,20 @@ void BVA::fill_m_cls_lits_and_red()
     vector<Lit> tmp;
     for(OccurClause& cl: m_cls) {
         tmp.clear();
-        bool red;
+        bool red = false;
         switch(cl.ws.getType()) {
-            case CMSat::watch_binary_t:
+            case CMSat::watch_binary_t: {
                 tmp.push_back(cl.ws.lit2());
                 red = cl.ws.red();
                 break;
-
-            case CMSat::watch_tertiary_t:
+            }
+            case CMSat::watch_tertiary_t: {
                 tmp.push_back(cl.ws.lit2());
                 tmp.push_back(cl.ws.lit3());
                 red = cl.ws.red();
                 break;
-
-            case CMSat::watch_clause_t:
+            }
+            case CMSat::watch_clause_t: {
                 const Clause* cl_orig = solver->cl_alloc.ptr(cl.ws.get_offset());
                 for(const Lit lit: *cl_orig) {
                     if (cl.lit != lit) {
@@ -414,6 +423,11 @@ void BVA::fill_m_cls_lits_and_red()
                 }
                 red = cl_orig->red();
                 break;
+            }
+            case CMSat::watch_idx_t: {
+                // entry for upcoming feature to suppress compiler warning.
+                break;
+            }
         }
         m_cls_lits.push_back(m_cls_lits_and_red(tmp, red));
     }
@@ -542,6 +556,11 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                 ClOffset offset = solver->cl_alloc.get_offset(newCl);
                 simplifier->clauses.push_back(offset);
             }
+            break;
+        }
+
+        case CMSat::watch_idx_t: {
+            // entry for upcoming feature to suppress compiler warning.
             break;
         }
     }
