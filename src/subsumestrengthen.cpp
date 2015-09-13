@@ -835,6 +835,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
         if (ws[i].isBin()
             && (redundant_too || lit < ws[i].lit2())
         ) {
+            const bool red = ws[i].red();
             tried_bin_tri++;
             tmpLits.resize(2);
             tmpLits[0] = lit;
@@ -847,13 +848,13 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
             if (!solver->ok)
                 return false;
 
-            if (ws[i].red()
+            if (red
                 && ret.subsumedIrred
             ) {
-                ws[i].setRed(false);
                 solver->binTri.redBins--;
                 solver->binTri.irredBins++;
-                findWatchedOfBin(solver->watches, ws[i].lit2(), lit, true).setRed(false);
+                findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
+                findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
             }
             continue;
         }
@@ -864,6 +865,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
              (lit < ws[i].lit2() && ws[i].lit2() < ws[i].lit3())
             )
         ) {
+            const bool red = ws[i].red();
             tried_bin_tri++;
             tmpLits.resize(3);
             tmpLits[0] = lit;
@@ -877,14 +879,15 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
             if (!solver->ok)
                 return false;
 
-            if (ws[i].red()
+            if (red
                 && ret.subsumedIrred
             ) {
-                ws[i].setRed(false);
+                //ws[i].setRed(false);
                 solver->binTri.redTris--;
                 solver->binTri.irredTris++;
-                findWatchedOfTri(solver->watches, ws[i].lit2(), lit, ws[i].lit3(), true).setRed(false);
-                findWatchedOfTri(solver->watches, ws[i].lit3(), lit, ws[i].lit2(), true).setRed(false);
+                findWatchedOfTri(solver->watches, tmpLits[0], tmpLits[1], tmpLits[2], true).setRed(false);
+                findWatchedOfTri(solver->watches, tmpLits[1], tmpLits[0], tmpLits[2], true).setRed(false);
+                findWatchedOfTri(solver->watches, tmpLits[2], tmpLits[0], tmpLits[1], true).setRed(false);
             }
             continue;
         }
