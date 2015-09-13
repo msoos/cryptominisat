@@ -191,9 +191,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
-            /*"str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-            "check-cache-size, renumber"*/
-            "renumber"
+            "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+            "check-cache-size, renumber"
         )
 
         //Occur based simplification
@@ -211,7 +210,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "backw-sub-str, xor, clean-implicit, bve, bva, gates"
         )
         , occsimp_schedule_preproc(
-            "backw-sub-str, bve"
+            "backw-sub-str, xor, clean-implicit, bve, bva, gates"
         )
 
         //Distillation
