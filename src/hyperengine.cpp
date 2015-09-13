@@ -243,7 +243,7 @@ Lit HyperEngine::prop_red_bin_dfs(
 Lit HyperEngine::prop_irred_bin_dfs(
     StampType stampType
     , PropBy& confl
-    , const Lit root
+    , const Lit //root
     , bool& restart
 ) {
     const Lit p = toPropBin.top();
