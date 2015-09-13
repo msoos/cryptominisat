@@ -1254,19 +1254,10 @@ void OccSimplifier::set_limits()
     cout << "c clause_lits_added: " << clause_lits_added << endl;
     #endif
 
-    //if (clause_lits_added < 10ULL*1000ULL*1000ULL) {
-        norm_varelim_time_limit *= 2;
-        empty_varelim_time_limit *= 2;
-        subsumption_time_limit *= 2;
-        strengthening_time_limit *= 2;
-    //}
-
-    //if (clause_lits_added < 3ULL*1000ULL*1000ULL) {
-        norm_varelim_time_limit *= 2;
-        empty_varelim_time_limit *= 2;
-        subsumption_time_limit *= 2;
-        strengthening_time_limit *= 2;
-    //}
+    norm_varelim_time_limit *= 4;
+    empty_varelim_time_limit *= 4;
+    subsumption_time_limit *= 4;
+    strengthening_time_limit *= 4;
 
     varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
     if (globalStats.numCalls > 0) {
