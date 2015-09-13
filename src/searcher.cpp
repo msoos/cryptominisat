@@ -368,6 +368,13 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
             break;
         }
 
+        case xor_t: {
+            //in the future, we'll have XOR clauses. Not yet.
+            assert(false);
+            exit(-1);
+            break;
+        }
+
         case null_clause_t: {
             assert(false);
             break;
