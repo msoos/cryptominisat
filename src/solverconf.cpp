@@ -204,11 +204,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(10.0)
-        , occsimp_schedule_nonstartup(
-            "backw-sub-str, xor, clean-implicit, bve, bva, gates"
-        )
         , occsimp_schedule_startup(
             "backw-sub-str, clean-implicit, bve"
+        )
+        , occsimp_schedule_nonstartup(
+            "backw-sub-str, xor, clean-implicit, bve, bva, gates"
         )
         , occsimp_schedule_preproc(
             "backw-sub-str, bve"
