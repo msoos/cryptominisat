@@ -486,7 +486,6 @@ class Tester:
                 return sched
 
             cmd += self.add_schedule_options(create_rnd_sched, preproc)
-            cmd += self.add_occ_schedule_options(create_rnd_sched, preproc)
 
         return cmd
 
@@ -496,8 +495,9 @@ class Tester:
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
         sched_opts += "sub-impl, intree-probe, probe,"
-        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,"
         sched_opts += "check-cache-size, renumber"
 
         sched = ",".join(create_rnd_sched(sched_opts))
@@ -507,23 +507,6 @@ class Tester:
         sched = ",".join(create_rnd_sched(sched_opts))
         if sched != "":
             cmd += "--preschedule %s " % sched
-
-        return cmd
-
-    def add_occ_schedule_options(self, create_rnd_sched, preproc):
-        cmd = ""
-
-        sched_opts = "backw-sub-str, xor,"
-        sched_opts += "clean-implicit, bve,"
-        sched_opts += "bva, gates, backw-sub-str"
-        sched = ",".join(create_rnd_sched(sched_opts))
-
-        if sched != "" and not preproc:
-            cmd += "--occschedule %s " % sched
-
-        sched = ",".join(create_rnd_sched(sched_opts))
-        if sched != "":
-            cmd += "--preoccschedule %s " % sched
 
         return cmd
 

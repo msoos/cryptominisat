@@ -1587,12 +1587,13 @@ void Solver::handle_found_solution(const lbool status)
 }
 
 bool Solver::execute_inprocess_strategy(
-    const string& strategy
-    , const bool startup
+    const bool startup
+    , const string& strategy
 ) {
     //std::string input = "abc,def,ghi";
     std::istringstream ss(strategy);
     std::string token;
+    std::string occ_strategy_tokens;
 
     while(std::getline(ss, token, ',')) {
         if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1606,9 +1607,27 @@ bool Solver::execute_inprocess_strategy(
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity >= 2 && token.substr(0,3) != "occ") {
             cout << "c --> Executing strategy token: " << token << '\n';
         }
+
+        if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
+            if (conf.perform_occur_based_simp
+                && simplifier
+            ) {
+                simplifier->simplify(startup, occ_strategy_tokens);
+            }
+            occ_strategy_tokens.clear();
+            if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+                || cpuTime() > conf.maxTime
+                || must_interrupt_asap()
+                || nVars() == 0
+                || !ok
+            ) {
+                return ok;
+            }
+        }
+
         if (token == "find-comps") {
             if (get_num_free_vars() < conf.compVarLimit) {
                 CompFinder findParts(this);
@@ -1656,13 +1675,6 @@ bool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 distiller->distill(true);
             }
-        }  else if (token == "occsimp") {
-            //Var-elim, gates, subsumption, strengthening
-            if (conf.perform_occur_based_simp
-                && simplifier
-            ) {
-                simplifier->simplify(startup);
-            }
         } else if (token == "str-impl") {
             if (conf.doStrSubImplicit) {
                 distillerwithbin->strengthen_implicit();
@@ -1701,6 +1713,9 @@ bool Solver::execute_inprocess_strategy(
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore
+        } else if (token.substr(0,3) == "occ") {
+            occ_strategy_tokens += token + ", ";
+            //cout << "occ_strategy_tokens now: " << occ_strategy_tokens  << endl;
         } else {
             cout << "ERROR: strategy '" << token << "' not recognised!" << endl;
             exit(-1);
@@ -1709,6 +1724,15 @@ bool Solver::execute_inprocess_strategy(
         if (!ok) {
             return ok;
         }
+    }
+
+    if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
+        if (conf.perform_occur_based_simp
+            && simplifier
+        ) {
+            simplifier->simplify(startup, occ_strategy_tokens);
+        }
+        occ_strategy_tokens.clear();
     }
 
     return ok;
@@ -1737,15 +1761,9 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     if (startup) {
-        execute_inprocess_strategy(
-            conf.simplify_schedule_startup
-            , startup
-        );
+        execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
     } else {
-        execute_inprocess_strategy(
-            conf.simplify_schedule_nonstartup
-            , startup
-        );
+        execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
     }
 
     //Free unused watch memory

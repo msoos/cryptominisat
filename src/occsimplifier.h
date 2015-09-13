@@ -112,7 +112,7 @@ public:
     ~OccSimplifier();
 
     //Called from main
-    bool simplify(const bool startup);
+    bool simplify(const bool _startup, const std::string schedule);
     void new_var(const Var orig_outer);
     void new_vars(const size_t n);
     void save_on_var_memory();

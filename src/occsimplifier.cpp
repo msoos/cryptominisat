@@ -914,9 +914,9 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
         if (solver->conf.verbosity >= 2) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
         }
-        if (token == "backw-sub-str") {
+        if (token == "occ-backw-sub-str") {
             backward_sub_str();
-        } else if (token == "xor") {
+        } else if (token == "occ-xor") {
             #ifdef USE_M4RI
             if (solver->conf.doFindXors
                 && xorFinder != NULL
@@ -924,17 +924,17 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
                 xorFinder->do_all_with_xors();
             }
             #endif
-        } else if (token == "clean-implicit") {
+        } else if (token == "occ-clean-implicit") {
             solver->clauseCleaner->clean_implicit_clauses();
-        } else if (token == "bve") {
+        } else if (token == "occ-bve") {
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
                 eliminate_empty_resolvent_vars();
                 eliminate_vars();
             }
         }
-        else if (token == "bva") {
+        else if (token == "occ-bva") {
             bva->bounded_var_addition();
-        } else if (token == "gates") {
+        } else if (token == "occ-gates") {
             if (solver->conf.doCache
                 && solver->conf.doGateFind
             ) {
@@ -953,7 +953,7 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
 }
 
 
-bool OccSimplifier::simplify(const bool _startup)
+bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 {
     startup = _startup;
     assert(solver->okay());
@@ -990,11 +990,7 @@ bool OccSimplifier::simplify(const bool _startup)
     const size_t origTrailSize = solver->trail_size();
 
     //sub_str->subsumeWithTris();
-    if (startup) {
-        execute_simplifier_sched(solver->conf.occsimp_schedule_startup);
-    } else {
-        execute_simplifier_sched(solver->conf.occsimp_schedule_nonstartup);
-    }
+    execute_simplifier_sched(schedule);
 
     remove_by_drup_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
@@ -3004,7 +3000,6 @@ void OccSimplifier::save_state(SimpleOutFile& f) const
         c.save_to_file(f);
     }
     f.put_struct(globalStats);
-    f.put_uint32_t(startup);
     f.put_uint32_t(anythingHasBeenBlocked);
 
 
@@ -3018,7 +3013,6 @@ void OccSimplifier::load_state(SimpleInFile& f)
         blockedClauses.push_back(b);
     }
     f.get_struct(globalStats);
-    startup = f.get_uint32_t();
     anythingHasBeenBlocked = f.get_uint32_t();
 
     blockedMapBuilt = false;

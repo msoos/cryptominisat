@@ -401,10 +401,6 @@ void Main::add_supported_options()
 
     ("occsimp", po::value(&conf.perform_occur_based_simp)->default_value(conf.perform_occur_based_simp)
         , "Perform occurrence-list-based optimisations (variable elimination, subsumption, bounded variable addition...)")
-    ("occschedule", po::value(&conf.occsimp_schedule_nonstartup)
-        , "Schedule for simplification during run")
-    ("preoccschedule", po::value(&conf.occsimp_schedule_startup)
-        , "Schedule for simplification at startup")
 
 
     ("confbtwsimp", po::value(&conf.num_conflicts_of_search)->default_value(conf.num_conflicts_of_search)
@@ -752,15 +748,12 @@ void Main::check_options_correctness()
             cout << help_options_complicated << endl;
             cout << "NORMAL RUN SCHEDULES" << endl;
             cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier: " << conf.simplify_schedule_nonstartup << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_startup << endl;
-            cout << "Default schedule for occur simplifier: " << conf.occsimp_schedule_nonstartup<< endl;
-            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_startup << endl;
+            cout << "Default schedule: " << conf.simplify_schedule_nonstartup << endl;
+            cout << "Default schedule at startup: " << conf.simplify_schedule_startup << endl;
 
             cout << "PREPROC RUN SCHEDULES" << endl;
             cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier: " << conf.simplify_schedule_preproc<< endl;
-            cout << "Default schedule for occur simplifier : " << conf.occsimp_schedule_preproc << endl;
+            cout << "Default schedule: " << conf.simplify_schedule_preproc<< endl;
             std::exit(0);
         }
 
@@ -1023,10 +1016,6 @@ void Main::manually_parse_some_options()
 
         if (!vm.count("preschedule")) {
             conf.simplify_schedule_startup = conf.simplify_schedule_preproc;
-        }
-
-        if (!vm.count("preoccschedule")) {
-            conf.occsimp_schedule_startup = conf.occsimp_schedule_preproc;
         }
 
         if (!vm.count("eratio")) {
