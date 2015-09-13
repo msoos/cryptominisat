@@ -165,7 +165,10 @@ void Prober::clean_clauses_before_probe()
 uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numPropsTodo)
 {
      //If failed var searching is going good, do successively more and more of it
-    double percentEffectLast = (double)lastTimeZeroDepthAssings/(double)runStats.origNumFreeVars * 100.0;
+    const double percentEffectLast =
+        calc_percentage(lastTimeZeroDepthAssings, runStats.origNumFreeVars)
+        * 100.0;
+
     if (percentEffectLast > 20.0) {
         //It's doing VERY well
         numPropsMultiplier = std::min(numPropsMultiplier*2, 5.0);
@@ -262,7 +265,7 @@ void Prober::check_if_must_disable_cache_update()
         , solver->propStats.bogoProps
             + solver->propStats.otfHyperTime
             + extraTime + extraTimeCache
-    ) * 100.0;
+    ) ;
 
 
     //More than 50% of the time is spent updating the cache... that's a lot
