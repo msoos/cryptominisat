@@ -108,7 +108,9 @@ void FeaturesCalc::for_one_clause(
         }
 
         case CMSat::watch_idx_t: {
-            // entry for upcoming feature to suppress compiler warning.
+             // This should never be here
+            assert(false);
+            exit(-1);
             break;
         }
     }
