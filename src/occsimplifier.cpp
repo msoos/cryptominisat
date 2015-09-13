@@ -2093,7 +2093,7 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
 
     if (ps.isClause()) {
         Clause& cl = *solver->cl_alloc.ptr(ps.get_offset());
-        *limit_to_decrease -= (long)cl.size();
+        *limit_to_decrease -= (long)cl.size()/2;
         for (const Lit lit : cl){
             if (lit != posLit) {
                 seen[lit.toInt()] = 1;
@@ -2108,7 +2108,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
     , const Lit posLit
 ) {
     if (qs.isBin() || qs.isTri()) {
-        *limit_to_decrease -= 2;
+        *limit_to_decrease -= 1;
         assert(qs.lit2() != ~posLit);
 
         if (seen[(~qs.lit2()).toInt()]) {
@@ -2134,7 +2134,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
 
     if (qs.isClause()) {
         Clause& cl = *solver->cl_alloc.ptr(qs.get_offset());
-        *limit_to_decrease -= (long)cl.size();
+        *limit_to_decrease -= (long)cl.size()/2;
         for (const Lit lit: cl) {
             if (lit == ~posLit)
                 continue;
