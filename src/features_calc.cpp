@@ -106,6 +106,11 @@ void FeaturesCalc::for_one_clause(
             }
             break;
         }
+
+        case CMSat::watch_idx_t: {
+            // entry for upcoming feature to suppress compiler warning.
+            break;
+        }
     }
 }
 
