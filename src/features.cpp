@@ -39,6 +39,7 @@ void Features::print_stats() const
     //Clause distribution
     cout << "binary " << binary << ", ";
     cout << "trinary " << trinary << ", ";
+
     cout << "horn " << horn << ", ";
     cout << "horn_mean " << horn_mean << ", ";
     cout << "horn_std " << horn_std << ", ";

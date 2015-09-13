@@ -37,6 +37,7 @@ struct Features
 
     int numVars;
     int numClauses;
+    double var_cl_ratio;
 
     //Clause distribution
     double binary = 0;
@@ -47,7 +48,6 @@ struct Features
     double horn_min = std::numeric_limits<double>::max();
     double horn_max = std::numeric_limits<double>::min();
     double horn_spread;
-    double var_cl_ratio;
 
     double vcg_var_mean = 0;
     double vcg_var_std = 0;
@@ -111,8 +111,8 @@ struct Features
 
         void print(const std::string& pre_print) const;
     };
-    Distrib red_cl_distrib;
     Distrib irred_cl_distrib;
+    Distrib red_cl_distrib;
 
     //High-level features
     uint64_t num_gates_found_last;
