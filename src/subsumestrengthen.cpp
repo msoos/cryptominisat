@@ -937,7 +937,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
 
     //Stats
     int64_t time_limit = 2LL*1000LL*1000LL*1000LL;
-    uint64_t orig_time_limit = orig_time_limit;
+    uint64_t orig_time_limit = time_limit;
     simplifier->limit_to_decrease = &time_limit;
 
     const size_t origTrailSize = solver->trail_size();
