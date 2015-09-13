@@ -175,7 +175,9 @@ void BVA::remove_duplicates_from_m_cls()
                     return false;
                 }
                 case CMSat::watch_idx_t: {
-                    // entry for upcoming feature to suppress compiler warning.
+                    // This should never be here
+                    assert(false);
+                    exit(-1);
                     break;
                 }
             }
@@ -231,8 +233,9 @@ void BVA::remove_duplicates_from_m_cls()
             }
 
             case CMSat::watch_idx_t: {
-                // entry for upcoming feature to suppress compiler warning.
-                break;
+                // This should never be here
+                assert(false);
+                exit(-1);
             }
         }
 
@@ -425,7 +428,9 @@ void BVA::fill_m_cls_lits_and_red()
                 break;
             }
             case CMSat::watch_idx_t: {
-                // entry for upcoming feature to suppress compiler warning.
+                // This should never be here
+                assert(false);
+                exit(-1);
                 break;
             }
         }
@@ -560,7 +565,9 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
         }
 
         case CMSat::watch_idx_t: {
-            // entry for upcoming feature to suppress compiler warning.
+            // This should never be here
+            assert(false);
+            exit(-1);
             break;
         }
     }
