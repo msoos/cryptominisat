@@ -51,6 +51,7 @@ public:
         const Lit lit
         , const bool redundant_too = false
     );
+    bool handle_sub_str_with();
 
     //bool subsumeWithTris();
 

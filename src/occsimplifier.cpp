@@ -348,6 +348,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
         default:
             cl.setStrenghtened();
             cl.recalc_abst_if_needed();
+            sub_str_with.push_back(offset);
             return l_Undef;
     }
 }
@@ -741,39 +742,82 @@ bool OccSimplifier::eliminate_vars()
     limit_to_decrease = &norm_varelim_time_limit;
     cl_to_free_later.clear();
     assert(solver->watches.get_smudged_list().empty());
-
     order_vars_for_elim();
 
     //Go through the ordered list of variables to eliminate
-    while(!velim_order.empty()
-        && *limit_to_decrease > 0
+    int64_t last_elimed = 1;
+    while(last_elimed > 0
         && varelim_num_limit > 0
-        && !solver->must_interrupt_asap()
+        && *limit_to_decrease > 0
     ) {
-        assert(limit_to_decrease == &norm_varelim_time_limit);
-        Var var = velim_order.remove_min();
-
-        //Stats
-        *limit_to_decrease -= 20;
-        wenThrough++;
-
-        //Print status
-        if (solver->conf.verbosity >= 5
-            && wenThrough % 200 == 0
+        last_elimed = 0;
+        while(!velim_order.empty()
+            && *limit_to_decrease > 0
+            && varelim_num_limit > 0
+            && !solver->must_interrupt_asap()
         ) {
-            cout << "toDecrease: " << *limit_to_decrease << endl;
-        }
+            assert(limit_to_decrease == &norm_varelim_time_limit);
+            Var var = velim_order.remove_min();
 
-        if (!can_eliminate_var(var))
-            continue;
+            //Stats
+            *limit_to_decrease -= 20;
+            wenThrough++;
 
-        //Try to eliminate
-        if (maybe_eliminate(var)) {
-            vars_elimed++;
-            varelim_num_limit--;
+            //Print status
+            if (solver->conf.verbosity >= 5
+                && wenThrough % 200 == 0
+            ) {
+                cout << "toDecrease: " << *limit_to_decrease << endl;
+            }
+
+            if (!can_eliminate_var(var))
+                continue;
+
+            //Try to eliminate
+            if (maybe_eliminate(var)) {
+                vars_elimed++;
+                varelim_num_limit--;
+                last_elimed++;
+            }
+            if (!solver->ok)
+                goto end;
         }
-        if (!solver->ok)
+        double after_sub_time = cpuTime();
+        if (!sub_str->handle_sub_str_with()) {
             goto end;
+        }
+
+        for(uint32_t l: impl_sub_lits.getTouchedList()) {
+            Lit lit = Lit::toLit(l);
+            if (!sub_str->backw_sub_str_with_bin_tris_watch(lit, true)) {
+                goto end;
+            }
+            if (*limit_to_decrease <= 0)
+                break;
+        }
+
+        for(uint32_t l: impl_sub_lits.getTouchedList()) {
+            if (*limit_to_decrease <= 0)
+                break;
+
+            Lit lit = Lit::toLit(l);
+            if (!velim_order.in_heap(lit.var())
+                && can_eliminate_var(lit.var())
+            ) {
+                varElimComplexity[lit.var()] = strategyCalcVarElimScore(lit.var());
+                velim_order.insert(lit.var());
+            }
+        }
+
+        impl_sub_lits.clear();
+        if (solver->conf.verbosity >= 2) {
+            double time_used = cpuTime() - after_sub_time;
+            cout << "c impls_sub_lits "
+            << solver->conf.print_times(time_used)
+            << endl;
+
+            cout << "c iter v-elim " << last_elimed << endl;
+        }
     }
 
 end:
@@ -982,8 +1026,8 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
-    if (solver->subsumeImplicit) {
-        solver->subsumeImplicit->subsume_implicit(false);
+    if (!sub_str->handle_sub_str_with()) {
+        goto end;
     }
 
     end:
@@ -1934,16 +1978,15 @@ bool OccSimplifier::add_varelim_resolvent(
 
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
         subsume:
+        std::sort(finalLits.begin(), finalLits.end());
         SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
         runStats.subsumedByVE += ret.sub;
-        //TODO strengthened by ?
         if (!solver->ok) {
             return false;
         }
-
-        for(const Lit lit: finalLits) {
-            implicit_lits_to_subsume.insert(lit);
-        }
+    }
+    for(const Lit lit: finalLits) {
+        impl_sub_lits.touch(lit);
     }
 
     //Touch every var of the new clause, so we re-estimate

@@ -211,7 +211,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "backw-sub-str, clean-implicit, bve"
         )
         , occsimp_schedule_preproc(
-            "backw-sub-str, clean-implicit, bve, clean-implicit, backw-sub-str, bve"
+            "backw-sub-str, bve"
         )
 
         //Distillation

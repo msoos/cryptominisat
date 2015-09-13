@@ -438,6 +438,36 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
+bool SubsumeStrengthen::handle_sub_str_with()
+{
+    double orig_time = cpuTime();
+    Sub1Ret stat;
+    for(size_t i = 0; i < simplifier->sub_str_with.size(); i++) {
+        const ClOffset offs = simplifier->sub_str_with[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->freed() || cl->getRemoved())
+            continue;
+
+        auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
+        stat += ret;
+        if (!solver->ok) {
+            goto end;
+        }
+    }
+    simplifier->sub_str_with.clear();
+
+    end:
+    if (solver->conf.verbosity >= 2) {
+        double time_used = cpuTime() - orig_time;
+        cout << "c sub_str_with sub: "
+        << stat.sub << " str: " << stat.str
+        << solver->conf.print_times(time_used)
+        << endl;
+    }
+
+    return solver->ok;
+}
+
 void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 {
     Clause& cl = *solver->cl_alloc.ptr(offset);

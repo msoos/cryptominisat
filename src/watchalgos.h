@@ -225,6 +225,22 @@ inline bool removeWBin_except_marked(
     return true;
 }
 
+inline const Watched& findWatchedOfBin(
+    const watch_array& wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const bool red
+) {
+    watch_subarray_const ws = wsFull[lit1.toInt()];
+    for (watch_subarray::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+        if (i->isBin() && i->lit2() == lit2 && i->red() == red)
+            return *i;
+    }
+
+    assert(false);
+    return *ws.begin();
+}
+
 inline Watched& findWatchedOfBin(
     watch_array& wsFull
     , const Lit lit1
