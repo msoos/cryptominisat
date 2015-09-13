@@ -859,6 +859,9 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
             return solver->ok;
         }
 
+        #ifdef SLOW_DEBUG
+        solver->check_implicit_stats(true);
+        #endif
         solver->propagate_occur();
         set_limits();
 
