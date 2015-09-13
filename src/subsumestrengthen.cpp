@@ -906,8 +906,9 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
     size_t strSucceed = 0;
 
     //Stats
-    numMaxTriSub = 2LL*1000LL*1000LL*1000LL;
-    simplifier->limit_to_decrease = &numMaxTriSub;
+    int64_t time_limit = 2LL*1000LL*1000LL*1000LL;
+    uint64_t orig_time_limit = orig_time_limit;
+    simplifier->limit_to_decrease = &time_limit;
 
     const size_t origTrailSize = solver->trail_size();
     double myTime = cpuTime();
@@ -932,6 +933,9 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
     }
 
     if (solver->conf.verbosity >= 2) {
+        const double time_used = cpuTime() - myTime;
+        const bool time_out = *simplifier->limit_to_decrease <= 0;
+        const double time_remain = calc_percentage(*simplifier->limit_to_decrease, orig_time_limit);
         cout
         << "c [sub] tri"
         << " upI: " << upI
@@ -943,7 +947,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
         << " str: " << strSucceed
         << " toDecrease: " << *simplifier->limit_to_decrease
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << " time: " << cpuTime() - myTime
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
 
