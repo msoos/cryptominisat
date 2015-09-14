@@ -14,7 +14,7 @@ find_program(LIT_TOOL
 )
 
 if(NOT LIT_TOOL)
-    message(FATAL_ERROR "Could not find lit tool. Try setting LIT_TOOL to the full path for lit")
+    message(FATAL_ERROR "Could not find 'lit' tool. You need to install it by e.g. 'pip install lit' If it's already installed, set LIT_TOOL to the full path for lit")
 endif()
 
 # Checking absolute path because if(EXISTS ...) behaviour only well
@@ -43,6 +43,7 @@ set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")
 # repository seems like the easiest thing to do. This also has the added benefit that
 # everyone uses the same version of GTest.
 set(GTEST_PREFIX ${PROJECT_SOURCE_DIR}/utils/gtest)
++message(STATUS "NOTE: if adding the 'gtest' subdirectory fails, you need to issue 'git submodule init' and 'git submodule update'")
 add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
