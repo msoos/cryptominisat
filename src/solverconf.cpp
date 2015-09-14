@@ -178,20 +178,22 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search(50ULL*1000ULL)
         , num_conflicts_of_search_inc(1.4)
         , simplify_schedule_startup("sub-impl, occsimp, scc-vrepl")
-        , simplify_schedule_nonstartup("handle-comps,"
-        "scc-vrepl, cache-clean, cache-tryboth,"
-        "sub-impl, intree-probe, probe,"
-        "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
-        "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        "check-cache-size, renumber"
+        , simplify_schedule_nonstartup(
+            "handle-comps,"
+            "scc-vrepl, cache-clean, cache-tryboth,"
+            "sub-impl, intree-probe, probe,"
+            "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+            "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+            "check-cache-size, renumber"
         )
-        , simplify_schedule_preproc("handle-comps,"
-        "scc-vrepl, cache-clean, cache-tryboth,"
-        "sub-impl, intree-probe, probe,"
-        "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
-        "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        "check-cache-size, sub-str-cls-with-bin, occsimp,"
-        "renumber"
+        , simplify_schedule_preproc(
+            "handle-comps,"
+            "scc-vrepl, cache-clean, cache-tryboth,"
+            "sub-impl, intree-probe, probe,"
+            "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl, occsimp,"
+            /*"str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+            "check-cache-size, renumber"*/
+            "renumber"
         )
 
         //Occur based simplification
@@ -202,12 +204,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(10.0)
-        , occsimp_schedule_nonstartup("backw-sub-str, xor, "
-        "clean-implicit, bve, "
-        "bva, gates, backw-sub-str, bve, backw-sub-str, bve")
-        , occsimp_schedule_startup("backw-sub-str, "
-        "clean-implicit, bve, "
-        "bva, gates, backw-sub-str, bve, backw-sub-str, bve")
+        , occsimp_schedule_startup(
+            "backw-sub-str, clean-implicit, bve"
+        )
+        , occsimp_schedule_nonstartup(
+            "backw-sub-str, xor, clean-implicit, bve, bva, gates"
+        )
+        , occsimp_schedule_preproc(
+            "backw-sub-str, bve"
+        )
 
         //Distillation
         , do_distill_clauses(true)

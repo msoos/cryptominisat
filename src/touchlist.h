@@ -101,6 +101,82 @@ private:
     vector<char> touchedBitset;
 };
 
+
+class TouchListLit
+{
+public:
+    void touch(const Lit lit)
+    {
+        touch(lit.toInt());
+    }
+
+    template<typename T, typename... Targs>
+    void touch(T value, Targs... Fargs) // recursive variadic function
+    {
+        touch(value);
+        touch(Fargs...);
+    }
+
+    void touch(const vector<Lit>& lits)
+    {
+        for(const Lit lit: lits)
+            touch(lit);
+    }
+
+    void touch(const uint32_t var)
+    {
+        if (touchedBitset.size() <= var)
+            touchedBitset.resize(var+1, 0);
+
+        if (touchedBitset[var] == 0) {
+            touched.push_back(var);
+            touchedBitset[var] = 1;
+        }
+    }
+
+    const vector<uint32_t>& getTouchedList() const
+    {
+        return touched;
+    }
+
+    void clear()
+    {
+        //Clear touchedBitset
+        for(vector<uint32_t>::const_iterator
+            it = touched.begin(), end = touched.end()
+            ; it != end
+            ; ++it
+        ) {
+            touchedBitset[*it] = 0;
+        }
+
+        //Clear touched
+        touched.clear();
+    }
+
+    size_t mem_used() const
+    {
+        uint64_t mem = 0;
+        mem += touched.capacity()*sizeof(uint32_t);
+        mem += touchedBitset.capacity()*sizeof(char);
+
+        return mem;
+    }
+
+    void shrink_to_fit()
+    {
+        touched.clear();
+        touched.shrink_to_fit();
+        touchedBitset.clear();
+        touchedBitset.shrink_to_fit();
+    }
+
+private:
+    vector<uint32_t> touched;
+    vector<char> touchedBitset;
+};
+
+
 } //end namespace
 
 #endif //__TOUCHLIST_H__

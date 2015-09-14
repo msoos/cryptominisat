@@ -47,6 +47,11 @@ public:
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
+    bool backw_sub_str_with_bin_tris_watch(
+        const Lit lit
+        , const bool redundant_too = false
+    );
+    bool handle_sub_str_with();
 
     //bool subsumeWithTris();
 
@@ -70,14 +75,8 @@ public:
         bool subsumedIrred = false;
     };
 
-    //Called from simplifier at resolvent-adding of var-elim
-    template<class T>
-    Sub0Ret subsume_and_unlink(
-        const ClOffset offset
-        , const T& ps
-        , const cl_abst_type abs
-        , const bool removeImplicit = false
-    );
+    Sub1Ret sub_str_with_implicit(const vector<Lit>& lits);
+    Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     struct Stats
     {
@@ -114,13 +113,20 @@ private:
     Solver* solver;
     int64_t numMaxTriSub;
 
+    //Called from simplifier at resolvent-adding of var-elim
+    template<class T>
+    Sub0Ret subsume_and_unlink(
+        const ClOffset offset
+        , const T& ps
+        , const cl_abst_type abs
+        , const bool removeImplicit = false
+    );
+
     void randomise_clauses_order();
     void remove_literal(ClOffset c, const Lit toRemoveLit);
 
     template<class T>
     size_t find_smallest_watchlist_for_clause(const T& ps) const;
-
-    Sub1Ret sub_str_with_implicit(const vector<Lit>& lits);
 
     template<class T>
     void findStrengthened(
@@ -147,11 +153,15 @@ private:
     template<class T1, class T2>
     Lit subset1(const T1& A, const T2& B);
     bool subsetAbst(const cl_abst_type A, const cl_abst_type B);
-    Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     vector<ClOffset> subs;
     vector<Lit> subsLits;
     vector<Lit> tmpLits;
+    size_t tried_bin_tri = 0;
+    uint64_t subsumedBin = 0;
+    uint64_t strBin = 0;
+    uint64_t subsumedTri = 0;
+    uint64_t strTri = 0;
 };
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const

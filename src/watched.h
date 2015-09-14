@@ -73,6 +73,7 @@ class Watched {
 
         Watched() :
             data1 (std::numeric_limits<uint32_t>::max())
+            , type(watch_clause_t) // initialize type with most generic type of clause
             , data2(std::numeric_limits<uint32_t>::max() >> 2)
         {}
 
@@ -126,12 +127,8 @@ class Watched {
 
         WatchType getType() const
         {
-            if (isBin())
-                return watch_binary_t;
-            else if (isTri())
-                return watch_tertiary_t;
-            else
-                return watch_clause_t;
+            // we rely that WatchType enum is in [0-3] range and fits into type field two bits
+            return static_cast<WatchType>(type);
         }
 
         bool isBin() const
@@ -340,7 +337,9 @@ class Watched {
 
     private:
         uint32_t data1;
-        //binary, tertiary or long, as per WatchType
+        // binary, tertiary or long, as per WatchType
+        // currently WatchType is enum with range [0..3] and fits in type
+        // in case if WatchType extended type size won't be enough.
         uint32_t type:2;
         uint32_t data2:30;
 };

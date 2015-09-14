@@ -232,6 +232,17 @@ public:
     void clear_one_occur_from_removed_clauses(watch_subarray w);
     bool no_marked_clauses() const;
     void check_no_removed_or_freed_cl_in_watch() const;
+    bool normClauseIsAttached(const ClOffset offset) const;
+    void find_all_attach() const;
+    void find_all_attach(const vector<ClOffset>& cs) const;
+    bool find_clause(const ClOffset offset) const;
+    void test_all_clause_attached() const;
+    void check_wrong_attach() const;
+    void print_all_clauses() const;
+    uint64_t count_lits(
+        const vector<ClOffset>& clause_array
+        , bool allowFreed
+    ) const;
 
 protected:
     virtual void new_var(const bool bva, const Var orig_outer);

@@ -28,7 +28,7 @@
 #include <list>
 #include <set>
 #include <queue>
-#include <set>
+#include <map>
 #include <iomanip>
 #include <fstream>
 
@@ -45,6 +45,7 @@ namespace CMSat {
 
 using std::vector;
 using std::map;
+using std::set;
 using std::pair;
 using std::priority_queue;
 
@@ -181,10 +182,12 @@ public:
     void freeXorMem();
     void save_state(SimpleOutFile& f) const;
     void load_state(SimpleInFile& f);
+    vector<ClOffset> sub_str_with;
+    TouchListLit impl_sub_lits;
 
 private:
     friend class SubsumeStrengthen;
-    SubsumeStrengthen* subsumeStrengthen;
+    SubsumeStrengthen* sub_str;
     friend class BVA;
     BVA* bva;
     bool startup = false;
@@ -304,7 +307,6 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    //void        addRedBinaries(const Var var);
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const Var var, const Lit lit);
@@ -315,7 +317,6 @@ private:
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const Var x);
     void        free_clauses_to_free();
-    void        try_to_subsume_with_new_bin_or_tri(const vector<Lit>& lits);
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(Var var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
@@ -472,7 +473,7 @@ inline bool OccSimplifier::subsetReverse(const Clause& B) const
 
 inline const SubsumeStrengthen* OccSimplifier::getSubsumeStrengthen() const
 {
-    return subsumeStrengthen;
+    return sub_str;
 }
 
 } //end namespace

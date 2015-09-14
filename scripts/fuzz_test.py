@@ -367,10 +367,19 @@ fuzzers = [
     # ["build/cnf-fuzz-nossum"],
     # ["build/largefuzzer"],
     ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
     ["../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
     ["../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
     ["../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
+    ["../utils/cnf-utils/xortester.py", "--seed"],
     ["../utils/cnf-utils/multipart.py", "special"]
 ]
 

@@ -24,13 +24,14 @@
 
 //#define DEBUG_ROW
 
-#include <vector>
 #include "constants.h"
 #include "solvertypes.h"
 #include <string.h>
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <vector>
+using std::vector;
 
 namespace CMSat {
 

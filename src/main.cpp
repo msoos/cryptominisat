@@ -647,6 +647,27 @@ void Main::add_supported_options()
         , "Reconfigure after some time to this solver configuration [0..13]")
     ;
 
+    po::options_description gaussOptions("Gauss options");
+    gaussOptions.add_options()
+    ("nomatrixfind"
+        , "Don't find distinct matrixes. Put all xors into one big matrix")
+    ("noordercol"
+        , "Don't order variables in the columns of Gaussian elimination."
+        "Effectively disables iterative reduction of the matrix")
+    ("noiterreduce"
+        , "Don't reduce iteratively the matrix that is updated")
+    ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
+        , "Set maximum no. of rows for gaussian matrix. Too large matrixes"
+        "should bee discarded for reasons of efficiency")
+    ("minmatrixrows"
+        , "Set minimum no. of rows for gaussian matrix. Normally, too small"
+        "matrixes are discarded for reasons of efficiency.")
+    ("savematrix", po::value(&conf.gaussconf.only_nth_gauss_save)->default_value(conf.gaussconf.only_nth_gauss_save)
+        , "Save matrix every Nth decision level.")
+    ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
+        , "Maximum number of matrixes to treat.")
+    ;
+
     p.add("input", 1);
     p.add("drup", 1);
 
@@ -699,6 +720,9 @@ void Main::add_supported_options()
     #endif
     .add(gateOptions)
     .add(miscOptions)
+    #ifdef USE_GAUSS
+    .add(gaussOptions)
+    #endif
     ;
 
     help_options_simple
@@ -735,8 +759,8 @@ void Main::check_options_correctness()
 
             cout << "PREPROC RUN SCHEDULES" << endl;
             cout << "--------------------" << endl;
-            cout << "Default schedule for simplifier at startup: " << conf.simplify_schedule_preproc<< endl;
-            cout << "Default schedule for occur simplifier at startup: " << conf.occsimp_schedule_nonstartup << endl;
+            cout << "Default schedule for simplifier: " << conf.simplify_schedule_preproc<< endl;
+            cout << "Default schedule for occur simplifier : " << conf.occsimp_schedule_preproc << endl;
             std::exit(0);
         }
 
@@ -952,6 +976,8 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess != 0) {
+        conf.varelim_time_limitM *= 3;
+        conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
             cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
@@ -1000,7 +1026,7 @@ void Main::manually_parse_some_options()
         }
 
         if (!vm.count("preoccschedule")) {
-            conf.occsimp_schedule_startup = conf.occsimp_schedule_nonstartup;
+            conf.occsimp_schedule_startup = conf.occsimp_schedule_preproc;
         }
 
         if (!vm.count("eratio")) {
