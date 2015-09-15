@@ -29,6 +29,8 @@
 #include "solvertypes.h"
 #include <array>
 
+//#define VERBOSE_DEBUG
+
 using namespace CMSat;
 
 SubsumeStrengthen::SubsumeStrengthen(
