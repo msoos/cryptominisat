@@ -454,9 +454,9 @@ bool SubsumeStrengthen::handle_sub_str_with()
             goto end;
         }
     }
-    simplifier->sub_str_with.clear();
 
     end:
+    simplifier->sub_str_with.clear();
     if (solver->conf.verbosity >= 2) {
         double time_used = cpuTime() - orig_time;
         cout << "c sub_str_with sub: "
