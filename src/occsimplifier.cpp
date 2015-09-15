@@ -2754,6 +2754,7 @@ size_t OccSimplifier::mem_used() const
     b += negs_gate_parts.capacity()*sizeof(char);
     b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
     b += dummy.capacity()*sizeof(char);
+    b += sub_str_with.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
     for(map<Var, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
