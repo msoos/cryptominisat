@@ -958,6 +958,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     startup = _startup;
     assert(solver->okay());
     assert(toClear.empty());
+    sub_str_with.clear();
 
     //Test & debug
     solver->test_all_clause_attached();
