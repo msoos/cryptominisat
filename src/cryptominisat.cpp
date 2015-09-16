@@ -524,7 +524,6 @@ struct OneThreadSolve
             data_for_thread.solvers[0]->set_must_interrupt_asap();
             data_for_thread.update_mutex->unlock();
         }
-        data_for_thread.solvers[tid]->unset_must_interrupt_asap();
     }
 
     DataForThread& data_for_thread;
@@ -562,6 +561,10 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         thread.join();
     }
     lbool real_ret = *data_for_thread.ret;
+
+    for(size_t i = 0; i < data->solvers.size(); i++) {
+        data_for_thread.solvers[i]->unset_must_interrupt_asap();
+    }
 
     //clear what has been added
     data->cls_lits.clear();
