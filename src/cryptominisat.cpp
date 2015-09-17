@@ -556,7 +556,7 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
     DataForThread data_for_thread(data, assumptions);
     std::vector<std::thread> thds;
     for(size_t i = 0
-        ; i < data->solvers.size() && !data->solvers[0]->must_interrupt_asap()
+        ; i < data->solvers.size()
         ; i++
     ) {
         thds.push_back(thread(OneThreadSolve(data_for_thread, i)));
