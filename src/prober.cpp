@@ -249,7 +249,7 @@ void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numProps
         , numPropsTodo);
     if (solver->conf.otfHyperbin
         //Visited less than half
-        && (double)runStats.numVisited/(double)(runStats.origNumFreeVars*2) < 0.4
+        && calc_percentage(runStats.numVisited, runStats.origNumFreeVars) < 0.8
         //And we used up most of the time
         && ratioUsedTime > 0.8
     ) {
