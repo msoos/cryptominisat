@@ -43,7 +43,9 @@ def _init_posix(init):
         # FIXME raises hardening-no-fortify-functions lintian warning.
         else:
             # Non-Sun needs linkage with g++
-            config_vars['LDSHARED'] = 'g++ -shared -g -W -Wall -Wno-deprecated'
+            config_vars['CC'] = '${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}'
+            config_vars['CXX'] = '${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS}'
+            config_vars['LDSHARED'] = '${CMAKE_CXX_COMPILER} -shared -g -W -Wall -Wno-deprecated'
 
         config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated'
         config_vars['OPT'] = '-g -W -Wall -Wno-deprecated'
@@ -60,7 +62,7 @@ ext_kwds = dict(
     extra_compile_args = ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat4-src'],
     language = "c++",
     library_dirs=['.', '/usr/local/lib', '${PROJECT_BINARY_DIR}/lib'],
-    libraries = ['cryptominisat4']
+    libraries = ['cryptominisat4', 'python']
 )
 
 setup(
