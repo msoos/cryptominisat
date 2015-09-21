@@ -185,7 +185,6 @@ private:
         const OrGate& gate
         , const bool reallyRemove
         , const bool only_irred
-        , uint32_t& reduction
     );
 
     cl_abst_type  calc_sorted_occ_and_set_seen2(
@@ -244,7 +243,6 @@ private:
        const OrGate& gate
         , const bool really_remove
         , const bool only_irred
-        , uint32_t& reduction
     );
     void set_seen2_tri(
        const OrGate& gate

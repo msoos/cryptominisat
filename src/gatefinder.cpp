@@ -188,9 +188,6 @@ bool GateFinder::remove_clauses_with_all_or_gates()
     simplifier->limit_to_decrease = &numMaxClRemWithGates;
     const double myTime = cpuTime();
 
-    //Do clause removal
-    uint32_t foundPotential;
-
     //Go through each gate, see if we can do something with it
     for (const OrGate& gate: orGates) {
         if (numMaxClRemWithGates < 0
@@ -199,10 +196,10 @@ bool GateFinder::remove_clauses_with_all_or_gates()
             break;
         }
 
-        if (!remove_clauses_using_and_gate(gate, true, false, foundPotential))
+        if (!remove_clauses_using_and_gate(gate, true, false))
             break;
 
-        if (!remove_clauses_using_and_gate_tri(gate, true, false, foundPotential))
+        if (!remove_clauses_using_and_gate_tri(gate, true, false))
             break;
     }
     const double time_used = cpuTime() - myTime;
@@ -723,7 +720,6 @@ bool GateFinder::remove_clauses_using_and_gate(
     const OrGate& gate
     , const bool really_remove
     , const bool only_irred
-    , uint32_t& reduction
 ) {
     assert(clToUnlink.empty());
     if (solver->watches[(~(gate.lit1)).toInt()].empty()
@@ -758,7 +754,6 @@ bool GateFinder::remove_clauses_using_and_gate(
             clToUnlink.insert(this_cl_offs);
             treatAndGateClause(other_cl_offs, gate, this_cl_offs);
         }
-        reduction += (other_cl_offs != CL_OFFSET_MAX);
 
         if (!solver->ok)
             return false;
@@ -784,7 +779,6 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
     const OrGate& gate
     , const bool really_remove
     , const bool only_irred
-    , uint32_t& reduction
 ) {
     if (solver->watches[(~(gate.lit1)).toInt()].empty()
         || solver->watches[(~(gate.lit2)).toInt()].empty()
@@ -821,7 +815,6 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
             if (!solver->ok)
                 return false;
         }
-        reduction += found_pair;
     }
 
     //Clear from seen2 bits that have been set
