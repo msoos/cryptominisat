@@ -36,7 +36,7 @@ using std::mutex;
 
 using namespace CMSat;
 
-static const bool print_thread_start_and_finish = false;
+static bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
@@ -111,6 +111,9 @@ DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
         data = new CMSatPrivateData(interrupt_asap);
     }
 
+    if (((SolverConf*) config)->verbosity >= 2) {
+        print_thread_start_and_finish = true;
+    }
     data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
 }
 
@@ -500,8 +503,9 @@ struct OneThreadSolve
     void operator()()
     {
         if (print_thread_start_and_finish) {
+            start_time = cpuTime();
             data_for_thread.update_mutex->lock();
-            cout << "Starting thread " << tid << endl;
+            //cout << "c Starting thread " << tid << endl;
             data_for_thread.update_mutex->unlock();
         }
 
@@ -510,8 +514,12 @@ struct OneThreadSolve
         lbool ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions);
 
         if (print_thread_start_and_finish) {
+            double end_time = cpuTime();
             data_for_thread.update_mutex->lock();
-            cout << "Finished thread " << tid << " with result: " << ret << endl;
+            cout << "c Finished thread " << tid << " with result: " << ret
+            << " T-diff: " << std::fixed << std::setprecision(2)
+            << (end_time-start_time)
+            << endl;
             data_for_thread.update_mutex->unlock();
         }
 
@@ -528,6 +536,7 @@ struct OneThreadSolve
 
     DataForThread& data_for_thread;
     const size_t tid;
+    double start_time;
 };
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
