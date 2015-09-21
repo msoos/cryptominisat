@@ -111,7 +111,7 @@ DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
         data = new CMSatPrivateData(interrupt_asap);
     }
 
-    if (((SolverConf*) config)->verbosity >= 2) {
+    if (config && ((SolverConf*) config)->verbosity >= 2) {
         print_thread_start_and_finish = true;
     }
     data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
