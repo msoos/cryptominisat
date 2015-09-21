@@ -501,7 +501,7 @@ struct OneThreadSolve
     {
         if (print_thread_start_and_finish) {
             data_for_thread.update_mutex->lock();
-            cout << "Starting thread" << tid << endl;
+            cout << "Starting thread " << tid << endl;
             data_for_thread.update_mutex->unlock();
         }
 
