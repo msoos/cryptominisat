@@ -183,7 +183,8 @@ class solverThread (threading.Thread):
         resource.setrlimit(resource.RLIMIT_CPU, (
             self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
         resource.setrlimit(resource.RLIMIT_DATA, (
-            self.indata["mem_limit_in_mb"] * 1024 * 1024, self.indata["mem_limit_in_mb"] * 1024 * 1024))
+            self.indata["mem_limit_in_mb"] * 1024 * 1024,
+            self.indata["mem_limit_in_mb"] * 1024 * 1024))
 
     def get_output_fname(self):
         return "%s/%s" % (
@@ -213,9 +214,9 @@ class solverThread (threading.Thread):
         # os.system("touch %s" % self.get_perf_fname())
         # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
         toexec = "%s %s %s/%s" % (self.indata["solver"],
-            extra_opts,
-            self.temp_space,
-            self.indata["cnf_filename"])
+                                  extra_opts,
+                                  self.temp_space,
+                                  self.indata["cnf_filename"])
 
         return toexec
 
