@@ -440,11 +440,19 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
-bool SubsumeStrengthen::handle_sub_str_with()
+bool SubsumeStrengthen::handle_sub_str_with(const size_t orig_limit)
 {
-    double orig_time = cpuTime();
+    int64_t* orig_limit_ptr = simplifier->limit_to_decrease;
+    size_t origTrailSize = solver->trail_size();
+    int64_t limit_to_handle_sub_str_with = orig_limit;
+    simplifier->limit_to_decrease = &limit_to_handle_sub_str_with;
+    const double start_time = cpuTime();
     Sub1Ret stat;
-    for(size_t i = 0; i < simplifier->sub_str_with.size(); i++) {
+    for(size_t i = 0
+        ; i <= simplifier->sub_str_with.size()
+        && *simplifier->limit_to_decrease > 0
+        ; i++
+    ) {
         const ClOffset offs = simplifier->sub_str_with[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->freed() || cl->getRemoved())
@@ -459,14 +467,30 @@ bool SubsumeStrengthen::handle_sub_str_with()
 
     end:
     simplifier->sub_str_with.clear();
+
+    const bool time_out =  limit_to_handle_sub_str_with <= 0;
+    const double time_used = cpuTime() - start_time;
+    const double time_remain = calc_percentage(limit_to_handle_sub_str_with, orig_limit);
     if (solver->conf.verbosity >= 2) {
-        double time_used = cpuTime() - orig_time;
-        cout << "c sub_str_with sub: "
-        << stat.sub << " str: " << stat.str
-        << solver->conf.print_times(time_used)
+        cout
+        << "c [occ-substr] sub_str_with"
+        << " sub: " << stat.sub
+        << " str: " << stat.str
+        << " 0-depth ass: " << solver->trail_size() - origTrailSize
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed(
+            solver
+            , "sub_str_with"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
 
+    simplifier->limit_to_decrease =  orig_limit_ptr;
     return solver->ok;
 }
 

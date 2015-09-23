@@ -783,7 +783,7 @@ bool OccSimplifier::eliminate_vars()
                 goto end;
         }
         double after_sub_time = cpuTime();
-        if (!sub_str->handle_sub_str_with()) {
+        if (!sub_str->handle_sub_str_with(20ULL*1000ULL*1000ULL)) {
             goto end;
         }
 

@@ -51,7 +51,7 @@ public:
         const Lit lit
         , const bool redundant_too = false
     );
-    bool handle_sub_str_with();
+    bool handle_sub_str_with(const size_t orig_limit = 400ULL*1000ULL*1000ULL);
 
     //bool subsumeWithTris();
 
