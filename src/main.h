@@ -89,7 +89,7 @@ class Main
         bool satcomp = false;
         std::string resultFilename;
 
-        std::string debugLib = false;
+        std::string debugLib;
         int printResult = true;
         string commandLine;
         unsigned num_threads = 1;

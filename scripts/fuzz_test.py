@@ -526,7 +526,7 @@ class Tester:
             rnd_opts = self.random_options()
         command += rnd_opts
         if self.needDebugLib:
-            command += "--debuglib %s" % fname
+            command += "--debuglib %s " % fname
         if options.verbose is False:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
@@ -535,7 +535,7 @@ class Tester:
         if fname is not None:
             command += fname
         if fname2:
-            command += " " + fname2
+            command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
 
         print "Executing: %s " % command
 
@@ -717,7 +717,7 @@ class Tester:
         for fname_debug in dirList2:
             if fnmatch.fnmatch(fname_debug, "%s-debugLibPart*.output" % fname):
                 debugLibPart = int(
-                    fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
+                    fname_debug[len(fname) + 13:fname_debug.rindex(".output")])
                 largestPart = max(largestPart, debugLibPart)
 
         return largestPart
@@ -726,7 +726,7 @@ class Tester:
         largestPart = self.find_largest_part(fname)
         for debugLibPart in range(1, largestPart + 1):
             fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
-            print "Checking debug lib part ", debugLibPart
+            print "Checking debug lib part %s -- %s " % (debugLibPart, fname_debug)
 
             if (os.path.isfile(fname_debug) is False):
                 print "Error: Filename to be read '%s' is not a file!" % fname_debug
@@ -877,7 +877,6 @@ class Tester:
                                                                interspersed_fname,
                                                                seed_for_inters)
             os.unlink(fname)
-            self.remove_debuglib_parts(fname)
         else:
             self.needDebugLib = False
             interspersed_fname = fname
@@ -913,31 +912,30 @@ class Tester:
         rnd_opts = self.random_options(preproc=True)
 
         #preprocess
-        fname2 = "simplified.cnf"
-        self.delete_file_no_matter_what(fname2)
-        console, retcode = self.execute(fname, fname2=fname2,
+        simp = "%s-simplified.cnf" % fname
+        self.delete_file_no_matter_what(simp)
+        console, retcode = self.execute(fname, fname2=simp,
                                         rnd_opts=rnd_opts,
                                         fixed_opts="--preproc 1")
         if retcode != 0:
             print "Return code is not 0, error!"
             exit(-1)
 
-        ret = self.check(fname=fname2, dump_output_fname="solution.txt")
+        solution = "%s-solution.txt" % fname
+        ret = self.check(fname=simp, dump_output_fname=solution)
         if ret is not None:
             #didn't time out, so let's reconstruct the solution
-            self.check(fname="solution.txt", checkAgainst=fname,
-                       fixed_opts="--preproc 2",
+            savedstate = "%s-savedstate.dat" % simp
+            self.check(fname=solution, checkAgainst=fname,
+                       fixed_opts="--preproc 2 --savedstate %s" % savedstate,
                        rnd_opts=rnd_opts)
+            os.unlink(savedstate)
 
         # remove temporary filenames
         os.unlink(fname)
+        os.unlink(solution)
         for name in todel:
             os.unlink(name)
-
-        for i in glob.glob(u'solution.txt'):
-            os.unlink(i)
-        for i in glob.glob(u'savedstate.dat'):
-            os.unlink(i)
 
 print_version()
 tester = Tester()

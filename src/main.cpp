@@ -360,7 +360,7 @@ void Main::add_supported_options()
         , "Maximum length of redundant clause dumped")
     ("dumpirred", po::value(&irredDumpFname)
         , "If stopped, dump irred original problem here")
-    ("debuglib", po::value(&debugLib)
+    ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
         , "Write result(s) to this file")
@@ -641,6 +641,8 @@ void Main::add_supported_options()
         , "Put DRUP verification information into this file")
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
         , "Reconfigure after some time to this solver configuration [0..13]")
+    ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
+        , "The file to save the saved state of the solver")
     ;
 
     po::options_description gaussOptions("Gauss options");
