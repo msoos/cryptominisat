@@ -2584,9 +2584,9 @@ void Solver::print_clause_stats() const
     print_value_kilo_mega(binTri.irredTris);
     print_value_kilo_mega(binTri.irredBins);
     cout
-    << " " << std::setw(5) << std::fixed << std::setprecision(2)
+    << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.irredLits, longIrredCls.size())
-    << " " << std::setw(5) << std::fixed << std::setprecision(2)
+    << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.irredLits + binTri.irredTris*3 + binTri.irredBins*2
     , longIrredCls.size() + binTri.irredTris + binTri.irredBins)
     ;
@@ -2596,9 +2596,9 @@ void Solver::print_clause_stats() const
     print_value_kilo_mega(binTri.redTris);
     print_value_kilo_mega(binTri.redBins);
     cout
-    << " " << std::setw(5) << std::fixed << std::setprecision(2)
+    << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.redLits, longRedCls.size())
-    << " " << std::setw(5) << std::fixed << std::setprecision(2)
+    << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.redLits + binTri.redTris*3 + binTri.redBins*2
     , longRedCls.size() + binTri.redTris + binTri.redBins)
     ;

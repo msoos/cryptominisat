@@ -1565,15 +1565,17 @@ void Searcher::print_restart_header() const
     << "c"
     << " " << std::setw(5) << "rest"
     << " " << std::setw(5) << "conf"
-    << " " << std::setw(7) << "freevar"
+    << " " << std::setw(5) << "freevar"
     << " " << std::setw(5) << "IrrL"
     << " " << std::setw(5) << "IrrT"
     << " " << std::setw(5) << "IrrB"
-    << " " << std::setw(5) << "l/c"
+    << " " << std::setw(7) << "l/longC"
+    << " " << std::setw(7) << "l/allC"
     << " " << std::setw(5) << "RedL"
     << " " << std::setw(5) << "RedT"
     << " " << std::setw(5) << "RedB"
-    << " " << std::setw(5) << "l/c"
+    << " " << std::setw(7) << "l/longC"
+    << " " << std::setw(7) << "l/allC"
     << endl;
 }
 
