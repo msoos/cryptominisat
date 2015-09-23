@@ -440,8 +440,9 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
-bool SubsumeStrengthen::handle_sub_str_with(const size_t orig_limit)
+bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
 {
+    orig_limit *= solver->conf.global_timeout_multiplier;
     int64_t* orig_limit_ptr = simplifier->limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
     int64_t limit_to_handle_sub_str_with = orig_limit;
