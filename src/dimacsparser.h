@@ -45,7 +45,7 @@ using std::vector;
 class DimacsParser
 {
     public:
-        DimacsParser(SATSolver* solver, const bool debugLib, unsigned _verbosity);
+        DimacsParser(SATSolver* solver, const std::string& debugLib, unsigned _verbosity);
 
         template <class T> void parse_DIMACS(T input_stream);
 
@@ -63,7 +63,7 @@ class DimacsParser
 
 
         SATSolver* solver;
-        const bool debugLib;
+        const std::string debugLib;
         unsigned verbosity;
 
         //Stat

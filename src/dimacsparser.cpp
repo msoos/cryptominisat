@@ -36,7 +36,7 @@ using std::endl;
 
 DimacsParser::DimacsParser(
     SATSolver* _solver
-    , const bool _debugLib
+    , const std::string& _debugLib
     , unsigned _verbosity
 ):
     solver(_solver)
@@ -160,7 +160,7 @@ void DimacsParser::parseSolveComment(StreamBufferDimacs& in)
 void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
 {
     //Open file for writing
-    std::string s = "debugLibPart" + stringify(debugLibPart) +".output";
+    std::string s = debugLib + "-debugLibPart" + stringify(debugLibPart) +".output";
     std::ofstream partFile;
     partFile.open(s.c_str());
     if (!partFile) {
@@ -197,15 +197,15 @@ void DimacsParser::write_solution_to_debuglib_file(const lbool ret) const
 
 void DimacsParser::parseComments(StreamBufferDimacs& in, const std::string& str)
 {
-    if (debugLib && str.substr(0, 13) == "Solver::solve") {
+    if (!debugLib.empty() && str.substr(0, 13) == "Solver::solve") {
         parseSolveComment(in);
-    } else if (debugLib && str == "Solver::new_var()") {
+    } else if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_var()" << endl;
         }
-    } else if (debugLib && str == "Solver::new_vars(") {
+    } else if (!debugLib.empty() && str == "Solver::new_vars(") {
         in.skipWhitespace();
         int n = in.parseInt(lineNum);
         solver->new_vars(n);

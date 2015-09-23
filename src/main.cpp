@@ -184,9 +184,9 @@ void Main::parseInAllFiles()
     const double myTime = cpuTime();
 
     //First read normal extra files
-    if (debugLib && filesToRead.size() > 1) {
+    if (!debugLib.empty() && filesToRead.size() > 1) {
         cout
-        << "debugNewVar and debugLib must both be OFF"
+        << "debugLib must be OFF"
         << "to parse in more than one file"
         << endl;
 
@@ -360,7 +360,7 @@ void Main::add_supported_options()
         , "Maximum length of redundant clause dumped")
     ("dumpirred", po::value(&irredDumpFname)
         , "If stopped, dump irred original problem here")
-    ("debuglib", po::bool_switch(&debugLib)
+    ("debuglib", po::value(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
         , "Write result(s) to this file")
@@ -999,7 +999,7 @@ void Main::manually_parse_some_options()
             std::exit(-1);
         }
 
-        if (debugLib) {
+        if (!debugLib.empty()) {
             std::cerr << "ERROR: debugLib makes no sense with preprocessing. Exiting." << endl;
             std::exit(-1);
         }

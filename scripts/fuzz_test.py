@@ -526,7 +526,7 @@ class Tester:
             rnd_opts = self.random_options()
         command += rnd_opts
         if self.needDebugLib:
-            command += "--debuglib "
+            command += "--debuglib %s" % fname
         if options.verbose is False:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
@@ -581,7 +581,7 @@ class Tester:
         a.convert(fname, tmpfname)
         # execute with the other solver
         toexec = "lingeling -f %s" % tmpfname
-        print "Solving with other solver.."
+        print "Solving with other solver: %s" % toexec
         currTime = calendar.timegm(time.gmtime())
         try:
             p = subprocess.Popen(toexec.rsplit(),
@@ -711,23 +711,26 @@ class Tester:
 
         print "OK, all assumptions inside solution"
 
-    def check_debug_lib(self, fname):
+    def find_largest_part(self, fname):
         largestPart = -1
         dirList2 = os.listdir(".")
         for fname_debug in dirList2:
-            if fnmatch.fnmatch(fname_debug, "debugLibPart*.output"):
+            if fnmatch.fnmatch(fname_debug, "%s-debugLibPart*.output" % fname):
                 debugLibPart = int(
                     fname_debug[fname_debug.index("t") + 1:fname_debug.rindex(".output")])
                 largestPart = max(largestPart, debugLibPart)
 
+        return largestPart
+
+    def check_debug_lib(self, fname):
+        largestPart = self.find_largest_part(fname)
         for debugLibPart in range(1, largestPart + 1):
-            fname_debug = "debugLibPart%d.output" % debugLibPart
+            fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
             print "Checking debug lib part ", debugLibPart
 
             if (os.path.isfile(fname_debug) is False):
                 print "Error: Filename to be read '%s' is not a file!" % fname_debug
-                print "Error code 400"
-                exit(400)
+                exit(-1)
 
             # take file into mem
             f = open(fname_debug, "r")
@@ -746,7 +749,7 @@ class Tester:
                 print "debugLib is UNSAT"
                 assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
                 self.check_assumps_inside_conflict(assumps, conflict)
-                tmpfname = create_fuzz.unique_fuzz_file("tempfile_for_extract_libpart")
+                tmpfname = create_fuzz.unique_fuzz_file("tmp_for_extract_libpart")
                 self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
                 # check with other solver
@@ -757,10 +760,10 @@ class Tester:
                     print "UNSAT verified by other solver"
                 else:
                     print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
-                    exit()
-
-                # delete temporary file
+                    exit(-1)
                 os.unlink(tmpfname)
+
+            os.unlink(fname_debug)
 
     def check(self, fname, fname2=None,
               checkAgainst=None,
@@ -850,13 +853,6 @@ class Tester:
             print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
             exit()
 
-    def remove_debug_lib_parts(self):
-        dirList = os.listdir(".")
-        for fname_unlink in dirList:
-            if fnmatch.fnmatch(fname_unlink, 'debugLibPart*'):
-                os.unlink(fname_unlink)
-                None
-
     def fuzz_test_one(self):
         fuzzer = random.choice(fuzzers)
         self.num_threads = random.choice([1, 2, 4])
@@ -874,7 +870,6 @@ class Tester:
 
         if not self.drup:
             self.needDebugLib = True
-            self.delete_debuglibpart_files()
             interspersed_fname = create_fuzz.unique_fuzz_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
             intersperse(fname, interspersed_fname, seed_for_inters)
@@ -882,6 +877,7 @@ class Tester:
                                                                interspersed_fname,
                                                                seed_for_inters)
             os.unlink(fname)
+            self.remove_debuglib_parts(fname)
         else:
             self.needDebugLib = False
             interspersed_fname = fname
@@ -894,8 +890,6 @@ class Tester:
             os.unlink(name)
         if fname2 is not None:
             os.unlink(fname2)
-        for i in glob.glob(u'fuzzTest*'):
-            os.unlink(i)
 
     def delete_file_no_matter_what(self, fname):
         try:
@@ -939,19 +933,11 @@ class Tester:
         os.unlink(fname)
         for name in todel:
             os.unlink(name)
-        for i in glob.glob(u'fuzzTest*'):
-            os.unlink(i)
 
         for i in glob.glob(u'solution.txt'):
             os.unlink(i)
         for i in glob.glob(u'savedstate.dat'):
             os.unlink(i)
-
-    def delete_debuglibpart_files(self):
-        dirList = os.listdir(".")
-        for fname in dirList:
-            if fnmatch.fnmatch(fname, 'debugLibPart*'):
-                os.unlink(fname)
 
 print_version()
 tester = Tester()
