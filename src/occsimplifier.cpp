@@ -1015,10 +1015,18 @@ bool OccSimplifier::backward_sub_str()
     if (!sub_str->backward_sub_str_with_bins_tris()) {
         goto end;
     }
+    if (solver->must_interrupt_asap())
+        goto end;
+
     sub_str->backward_subsumption_long_with_long();
+    if (solver->must_interrupt_asap())
+        goto end;
+
     if (!sub_str->backward_strengthen_long_with_long()) {
         goto end;
     }
+    if (solver->must_interrupt_asap())
+        goto end;
 
     if (!sub_str->handle_sub_str_with()) {
         goto end;
