@@ -930,10 +930,10 @@ class Tester:
                        fixed_opts="--preproc 2 --savedstate %s" % savedstate,
                        rnd_opts=rnd_opts)
             os.unlink(savedstate)
+            os.unlink(solution)
 
         # remove temporary filenames
         os.unlink(fname)
-        os.unlink(solution)
         for name in todel:
             os.unlink(name)
 
