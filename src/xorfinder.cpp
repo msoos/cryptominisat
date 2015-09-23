@@ -830,20 +830,20 @@ size_t XorFinder::mem_used() const
 void XorFinder::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c [xor] found " << std::setw(6) << foundXors
+    << "c [occ-xor] found " << std::setw(6) << foundXors
     << " avg sz " << std::setw(4) << std::fixed << std::setprecision(1)
     << ((double)sumSizeXors/(double)foundXors)
     << solver->conf.print_times(findTime, time_outs)
     << endl;
 
     cout
-    << "c [xor] cut into blocks " << numBlocks
+    << "c [occ-xor] cut into blocks " << numBlocks
     << " vars in blcks " << numVarsInBlocks
     << solver->conf.print_times(blockCutTime)
     << endl;
 
     cout
-    << "c [xor] extr info "
+    << "c [occ-xor] extr info "
     << " unit " << newUnits
     << " bin " << newBins
     << " 0-depth-ass: " << zeroDepthAssigns

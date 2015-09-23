@@ -112,7 +112,7 @@ void GateFinder::find_or_gates_and_update_stats()
     }
 
     if (solver->conf.verbosity >= 2) {
-        cout << "c [gate] found"
+        cout << "c [occ-gates] found"
         << " irred:" << runStats.numIrred
         << " avg-s: " << std::fixed << std::setprecision(1)
         << ((double)runStats.irredGatesSize/(double)runStats.numIrred)
@@ -168,7 +168,7 @@ bool GateFinder::shorten_with_all_or_gates()
     }
 
     if (solver->conf.verbosity >= 2) {
-        cout << "c [gate] shorten"
+        cout << "c [occ-gates] shorten"
         << " cl: " << std::setw(5) << runStats.orGateUseful
         << " l-rem: " << std::setw(6) << runStats.litsRem
         << solver->conf.print_times(time_used, time_out, time_remain)
@@ -218,7 +218,7 @@ bool GateFinder::remove_clauses_with_all_or_gates()
     }
 
     if (solver->conf.verbosity >= 2) {
-        cout << "c [gate] rem"
+        cout << "c [occ-gates] rem"
         << " cl: " << runStats.andGateUseful
         << " avg s: " << std::setprecision(1)
         << (double)runStats.clauseSizeRem/(double)runStats.andGateUseful
@@ -263,7 +263,7 @@ bool GateFinder::all_simplifications_with_gates()
         }
 
         if (solver->conf.verbosity >= 2) {
-            cout << "c [gate] eqlit"
+            cout << "c [occ-gates] eqlit"
             << " v-rep: " << std::setw(3) << runStats.varReplaced
             << solver->conf.print_times(time_used)
             << endl;

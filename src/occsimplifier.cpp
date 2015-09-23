@@ -2014,7 +2014,7 @@ void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
             solver->conf.updateVarElimComplexityOTF = false;
             if (solver->conf.verbosity >= 2) {
                 cout
-                << "c [v-elim] Turning off OTF complexity update, it's too expensive"
+                << "c [occ-bve] Turning off OTF complexity update, it's too expensive"
                 << endl;
             }
             return;
@@ -2888,7 +2888,7 @@ void OccSimplifier::Stats::print_short(const Solver* solver, const bool print_va
     //About elimination
     if (print_var_elim) {
         cout
-        << "c [v-elim]"
+        << "c [occ-bve]"
         << " elimed: " << numVarsElimed
         << " / " << origNumMaxElimVars
         << " / " << origNumFreeVars
@@ -2897,7 +2897,7 @@ void OccSimplifier::Stats::print_short(const Solver* solver, const bool print_va
         << endl;
 
         cout
-        << "c [v-elim]"
+        << "c [occ-bve]"
         << " cl-new: " << newClauses
         << " tried: " << triedToElimVars
         << " tested: " << testedToElimVars
@@ -2907,7 +2907,7 @@ void OccSimplifier::Stats::print_short(const Solver* solver, const bool print_va
         << endl;
 
         cout
-        << "c [v-elim]"
+        << "c [occ-bve]"
         << " subs: "  << subsumedByVE
         << " red-bin rem: " << binRedClRemThroughElim
         << " red-tri rem: " << triRedClRemThroughElim
