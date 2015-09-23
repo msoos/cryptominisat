@@ -450,8 +450,8 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
     const double start_time = cpuTime();
     Sub1Ret stat;
     for(size_t i = 0
-        ; i <= simplifier->sub_str_with.size()
-        && *simplifier->limit_to_decrease > 0
+        ; i < simplifier->sub_str_with.size()
+        && *simplifier->limit_to_decrease >= 0
         ; i++
     ) {
         const ClOffset offs = simplifier->sub_str_with[i];
