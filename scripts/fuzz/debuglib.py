@@ -93,7 +93,7 @@ class debuglib:
 
         # approx number of solve()-s to add
         if random.randint(0, 1) == 1:
-            num_solves_to_add = random.randint(0, 3)
+            num_solves_to_add = random.randint(0, 10)
         else:
             num_solves_to_add = 0
 

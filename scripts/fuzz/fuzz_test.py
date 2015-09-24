@@ -66,7 +66,7 @@ desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
 parser = optparse.OptionParser(usage=usage, description=desc,
                                formatter=PlainHelpFormatter())
 parser.add_option("--exec", metavar="SOLVER", dest="solver",
-                  default="../build/cryptominisat4",
+                  default="../../build/cryptominisat4",
                   help="SAT solver executable. Default: %default")
 
 parser.add_option("--extraopts", "-e", metavar="OPTS",
@@ -84,6 +84,9 @@ parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                   )
 parser.add_option("--novalgrind", dest="novalgrind", default=False,
                   action="store_true", help="No valgrind installed")
+
+parser.add_option("--small", dest="small", default=False,
+                  action="store_true", help="Don't run 'large' fuzzer (may mem-out on smaller systems)")
 
 
 (options, args) = parser.parse_args()
@@ -264,7 +267,7 @@ class solution_parser:
 class create_fuzz:
 
     @staticmethod
-    def unique_fuzz_file(fname_begin):
+    def unique_file(fname_begin):
         counter = 1
         while 1:
             fname = fname_begin + '_' + str(counter) + ".cnf"
@@ -305,7 +308,7 @@ class create_fuzz:
             fixed = random.getrandbits(1) == 1
 
             for i in range(random.randrange(2, 4)):
-                fname2 = create_fuzz.unique_fuzz_file("fuzzTest")
+                fname2 = create_fuzz.unique_file("fuzzTest")
                 fnames_multi.append(fname2)
 
                 # chose a ranom fuzzer, not multipart
@@ -358,30 +361,32 @@ def print_version():
     print "Version values:", consoleOutput.strip()
 
 fuzzers = [
-    ["../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
+    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
-    ["../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
+    ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
-    ["../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
+    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
     # ["build/cnf-fuzz-nossum"],
-    # ["build/largefuzzer"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
-    ["../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
-    ["../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
-    ["../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
-    ["../utils/cnf-utils/xortester.py", "--seed"],
-    ["../utils/cnf-utils/multipart.py", "special"]
+    ["../../build/tests/cnf-utils/largefuzzer"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
+    ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
+    ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
+    ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/multipart.py", "special"]
 ]
+global fuzzers
+
 
 class Tester:
 
@@ -577,7 +582,7 @@ class Tester:
 
     def check_unsat(self, fname):
         a = XorToCNF()
-        tmpfname = create_fuzz.unique_fuzz_file("tmp_for_xor_to_cnf_convert")
+        tmpfname = create_fuzz.unique_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname)
         # execute with the other solver
         toexec = "lingeling -f %s" % tmpfname
@@ -749,7 +754,7 @@ class Tester:
                 print "debugLib is UNSAT"
                 assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
                 self.check_assumps_inside_conflict(assumps, conflict)
-                tmpfname = create_fuzz.unique_fuzz_file("tmp_for_extract_libpart")
+                tmpfname = create_fuzz.unique_file("tmp_for_extract_libpart")
                 self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
                 # check with other solver
@@ -856,21 +861,24 @@ class Tester:
     def fuzz_test_one(self):
         fuzzer = random.choice(fuzzers)
         self.num_threads = random.choice([1, 2, 4])
-        fname = create_fuzz.unique_fuzz_file("fuzzTest")
+        fname = create_fuzz.unique_file("fuzzTest")
         self.drup = self.num_threads == 1 and random.choice([True, False])
-        fname2 = None
+        fname_drup = None
         if self.drup:
-            fname2 = create_fuzz.unique_fuzz_file("fuzzTest")
+            fname_drup = "%s-drup" % fname
 
         # create the fuzz file
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fname)
         print "calling ", fuzzer, " : ", call
-        out = commands.getstatusoutput(call)
+        status, _ = commands.getstatusoutput(call)
+        if status != 0:
+            print "Status of command non-zero!"
+            exit(-1)
 
         if not self.drup:
             self.needDebugLib = True
-            interspersed_fname = create_fuzz.unique_fuzz_file("fuzzTest")
+            interspersed_fname = create_fuzz.unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
             intersperse(fname, interspersed_fname, seed_for_inters)
             print "Interspersed: ./intersperse.py %s %s %d" % (fname,
@@ -881,14 +889,14 @@ class Tester:
             self.needDebugLib = False
             interspersed_fname = fname
 
-        self.check(fname=interspersed_fname, fname2=fname2)
+        self.check(fname=interspersed_fname, fname2=fname_drup)
 
         # remove temporary filenames
         os.unlink(interspersed_fname)
         for name in todel:
             os.unlink(name)
-        if fname2 is not None:
-            os.unlink(fname2)
+        if fname_drup:
+            os.unlink(fname_drup)
 
     def delete_file_no_matter_what(self, fname):
         try:
@@ -900,7 +908,7 @@ class Tester:
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers)
         self.num_threads = 1
-        fname = create_fuzz.unique_fuzz_file("fuzzTest")
+        fname = create_fuzz.unique_file("fuzzTest")
         self.drup = False
 
         # create the fuzz file
@@ -937,6 +945,23 @@ class Tester:
         for name in todel:
             os.unlink(name)
 
+
+def filter_large_fuzzer():
+    global fuzzers
+    f = []
+    for x in fuzzers:
+        okay = True
+        for y in x:
+            if "large" in y:
+                okay = False
+
+        if okay:
+            f.append(x)
+
+    fuzzers = f
+
+if options.small:
+    filter_large_fuzzer()
 print_version()
 tester = Tester()
 tester.needDebugLib = False
