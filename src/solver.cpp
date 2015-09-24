@@ -1964,7 +1964,7 @@ void Solver::print_min_stats() const
     );
     print_stats_line("c Conflicts in UIP"
         , sumStats.conflStats.numConflicts
-        , (double)sumStats.conflStats.numConflicts/cpu_time
+        , float_div(sumStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2045,7 +2045,7 @@ void Solver::print_norm_stats() const
     );
     print_stats_line("c Conflicts in UIP"
         , sumStats.conflStats.numConflicts
-        , (double)sumStats.conflStats.numConflicts/cpu_time
+        , float_div(sumStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2174,7 +2174,7 @@ void Solver::print_all_stats() const
     //Other stats
     print_stats_line("c Conflicts in UIP"
         , sumStats.conflStats.numConflicts
-        , (double)sumStats.conflStats.numConflicts/cpu_time
+        , float_div(sumStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
