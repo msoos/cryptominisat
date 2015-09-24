@@ -645,7 +645,13 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
 
 DLL_PUBLIC void SATSolver::print_stats() const
 {
-    data->solvers[data->which_solved]->print_stats();
+    double cpu_time;
+    if (data->solvers.size() > 1) {
+        cpu_time = cpuTimeTotal();
+    } else {
+        cpu_time = cpuTime();
+    }
+    data->solvers[data->which_solved]->print_stats(cpu_time);
 }
 
 DLL_PUBLIC void SATSolver::set_drup(std::ostream* os)

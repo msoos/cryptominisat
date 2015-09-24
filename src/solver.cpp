@@ -1887,9 +1887,8 @@ void Solver::consolidate_mem()
     }
 }
 
-void Solver::print_stats() const
+void Solver::print_stats(const double cpu_time) const
 {
-    const double cpu_time = cpuTime();
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     print_stats_line("c UIP search time"
         , sumStats.cpu_time
@@ -1898,18 +1897,17 @@ void Solver::print_stats() const
     );
 
     if (conf.verbStats >= 2) {
-        print_all_stats();
+        print_all_stats(cpu_time);
     } else if (conf.verbStats == 1) {
-        print_norm_stats();
+        print_norm_stats(cpu_time);
     } else {
-        print_min_stats();
+        print_min_stats(cpu_time);
     }
 }
 
 
-void Solver::print_min_stats() const
+void Solver::print_min_stats(const double cpu_time) const
 {
-    const double cpu_time = cpuTime();
     sumStats.print_short();
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumStats.decisions)
@@ -1974,9 +1972,8 @@ void Solver::print_min_stats() const
     );
 }
 
-void Solver::print_norm_stats() const
+void Solver::print_norm_stats(const double cpu_time) const
 {
-    const double cpu_time = cpuTime();
     sumStats.print_short();
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumStats.decisions)
@@ -2058,10 +2055,8 @@ void Solver::print_norm_stats() const
     }
 }
 
-void Solver::print_all_stats() const
+void Solver::print_all_stats(const double cpu_time) const
 {
-    const double cpu_time = cpuTime();
-
     sumStats.print();
     sumPropStats.print(sumStats.cpu_time);
     print_stats_line("c props/decision"
