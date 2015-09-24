@@ -98,7 +98,7 @@ void GateFinder::find_or_gates_and_update_stats()
     }
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxGateFinder <= 0);
-    const double time_remain = calc_percentage(numMaxGateFinder, orig_numMaxGateFinder);
+    const double time_remain = float_div(numMaxGateFinder, orig_numMaxGateFinder);
     runStats.findGateTime = time_used;
     runStats.find_gate_timeout = time_out;
     if (solver->sqlStats) {
@@ -115,10 +115,10 @@ void GateFinder::find_or_gates_and_update_stats()
         cout << "c [occ-gates] found"
         << " irred:" << runStats.numIrred
         << " avg-s: " << std::fixed << std::setprecision(1)
-        << ((double)runStats.irredGatesSize/(double)runStats.numIrred)
+        << float_div(runStats.irredGatesSize, runStats.numIrred)
         << " red: " << runStats.numRed
         /*<< " avg-s: " << std::fixed << std::setprecision(1)
-        << ((double)learntGatesSize/(double)numRed)*/
+        << float_div(learntGatesSize, numRed)*/
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -154,7 +154,7 @@ bool GateFinder::shorten_with_all_or_gates()
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxShortenWithGates <= 0);
-    const double time_remain = calc_percentage(numMaxShortenWithGates, orig_numMaxShortenWithGates);
+    const double time_remain = float_div(numMaxShortenWithGates, orig_numMaxShortenWithGates);
     runStats.orBasedTime = time_used;
     runStats.or_based_timeout = time_out;
     if (solver->sqlStats) {
@@ -204,7 +204,7 @@ bool GateFinder::remove_clauses_with_all_or_gates()
     }
     const double time_used = cpuTime() - myTime;
     const bool time_out = (numMaxClRemWithGates <= 0);
-    const double time_remain = (double)numMaxClRemWithGates/(double)orig_numMaxClRemWithGates;
+    const double time_remain = float_div(numMaxClRemWithGates, orig_numMaxClRemWithGates);
     runStats.andBasedTime = time_used;
     runStats.and_based_timeout = time_out;
     if (solver->sqlStats) {
@@ -221,7 +221,7 @@ bool GateFinder::remove_clauses_with_all_or_gates()
         cout << "c [occ-gates] rem"
         << " cl: " << runStats.andGateUseful
         << " avg s: " << std::setprecision(1)
-        << (double)runStats.clauseSizeRem/(double)runStats.andGateUseful
+        << float_div(runStats.clauseSizeRem, runStats.andGateUseful)
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }

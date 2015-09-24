@@ -144,11 +144,6 @@ class Prober {
                     , "% of available lits"
                 );
 
-//                 print_stats_line("c probe failed"
-//                     , numFailed
-//                     , (double)numFailed/(double)nVars*100.0
-//                     , "% vars");
-
                 print_stats_line("c bin add"
                     , addedBin
                     , stats_line_percent(addedBin, origNumBins)

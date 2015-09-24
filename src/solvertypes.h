@@ -599,7 +599,7 @@ inline vector<Lit> vars_to_lits(const vector<Var>& vars)
     return ret;
 }
 
-inline double calc_percentage(const double a, const double b)
+inline double float_div(const double a, const double b)
 {
     if (b != 0)
         return a/b;

@@ -92,11 +92,11 @@ void CleaningStats::print_short(const Solver* solver) const
 
     cout
     << " avgGlue " << std::fixed << std::setprecision(2)
-    << ((double)removed.glue/(double)removed.num)
+    << float_div(removed.glue, removed.num)
 
     << " avgSize "
     << std::fixed << std::setprecision(2)
-    << ((double)removed.lits/(double)removed.num)
+    << float_div(removed.lits, removed.num)
     << endl;
 
     cout
@@ -105,10 +105,10 @@ void CleaningStats::print_short(const Solver* solver) const
 
     cout
     << " avgGlue " << std::fixed << std::setprecision(2)
-    << ((double)remain.glue/(double)remain.num)
+    << float_div(remain.glue, remain.num)
 
     << " avgSize " << std::fixed << std::setprecision(2)
-    << ((double)remain.lits/(double)remain.num)
+    << float_div(remain.lits, remain.num)
 
     << solver->conf.print_times(cpu_time)
     << endl;

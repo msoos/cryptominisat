@@ -440,8 +440,8 @@ uint64_t DistillerWithBin::calc_time_available(
     if (stats->numCalled > 2
         && stats->triedCls > 0 //avoid division by zero
         && stats->totalLits > 0 //avoid division by zero
-        && (double)stats->numClSubsumed/(double)stats->triedCls < 0.05
-        && (double)stats->numLitsRem/(double)stats->totalLits < 0.05
+        && float_div(stats->numClSubsumed, stats->triedCls) < 0.05
+        && float_div(stats->numLitsRem, stats->totalLits) < 0.05
     ) {
         maxCountTime *= 0.5;
     }
@@ -521,7 +521,7 @@ void DistillerWithBin::dump_stats_for_shorten_all_cl_with_cache_stamp(
     //Set stats
     const double time_used = cpuTime() - myTime;
     const bool time_out = timeAvailable < 0;
-    const double time_remain = calc_percentage(timeAvailable, orig_time_available);
+    const double time_remain = float_div(timeAvailable, orig_time_available);
     tmpStats.numClSubsumed += cache_based_data.get_cl_subsumed();
     tmpStats.numLitsRem += cache_based_data.get_lits_rem();
     tmpStats.cpu_time = time_used;
@@ -863,7 +863,7 @@ void DistillerWithBin::StrImplicitData::print(
     , Solver* solver
 ) const {
     bool time_out = timeAvailable <= 0;
-    const double time_remain = calc_percentage(timeAvailable, orig_time);
+    const double time_remain = float_div(timeAvailable, orig_time);
 
     cout
     << "c [implicit] str"

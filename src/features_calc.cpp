@@ -176,8 +176,8 @@ void FeaturesCalc::calculate_clause_stats()
     feat.vcg_cls_mean /= (double)feat.numClauses;
     feat.pnr_cls_mean /= (double)feat.numClauses;
     feat.horn /= (double)feat.numClauses;
-    feat.binary = (double)solver->binTri.irredBins/(double)feat.numClauses;
-    feat.trinary = (double)solver->binTri.irredTris/(double)feat.numClauses;
+    feat.binary = float_div(solver->binTri.irredBins, feat.numClauses);
+    feat.trinary = float_div(solver->binTri.irredTris, feat.numClauses);
 
     feat.vcg_cls_spread = feat.vcg_cls_max - feat.vcg_cls_min;
     feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;

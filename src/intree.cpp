@@ -173,7 +173,7 @@ bool InTree::intree_probe()
     unmark_all_bins();
 
     const double time_used = cpuTime() - myTime;
-    const double time_remain = (double)bogoprops_remain/(double)bogoprops_to_use;
+    const double time_remain = float_div(bogoprops_remain, bogoprops_to_use);
     const bool time_out = (bogoprops_remain < 0);
 
     if (solver->conf.verbosity >= 2) {

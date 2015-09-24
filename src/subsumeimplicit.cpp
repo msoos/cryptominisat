@@ -249,7 +249,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
 
     const double time_used = cpuTime() - myTime;
     const bool time_out = (timeAvailable <= 0);
-    const double time_remain = calc_percentage(timeAvailable, orig_timeAvailable);
+    const double time_remain = float_div(timeAvailable, orig_timeAvailable);
     runStats.numCalled++;
     runStats.time_used += time_used;
     runStats.time_out += time_out;
@@ -306,7 +306,7 @@ void SubsumeImplicit::Stats::print() const
     cout << "c -------- IMPLICIT SUB STATS --------" << endl;
     print_stats_line("c time"
         , time_used
-        , time_used/(double)numCalled
+        , float_div(time_used, numCalled)
         , "per call"
     );
 

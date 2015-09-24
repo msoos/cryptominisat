@@ -68,13 +68,13 @@ class SCCFinder {
                 cout << "c ----- SCC STATS --------" << endl;
                 print_stats_line("c time"
                     , cpu_time
-                    , cpu_time/(double)numCalls
+                    , float_div(cpu_time, numCalls)
                     , "per call"
                 );
 
                 print_stats_line("c called"
                     , numCalls
-                    , (double)foundXorsNew/(double)numCalls
+                    , float_div(foundXorsNew, numCalls)
                     , "new found per call"
                 );
 

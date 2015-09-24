@@ -59,8 +59,8 @@ uint64_t Prober::limit_used() const
 
 void Prober::checkOTFRatio()
 {
-    double ratio = (double)solver->propStats.bogoProps
-    /(double)(solver->propStats.otfHyperTime + solver->propStats.bogoProps);
+    double ratio = float_div(solver->propStats.bogoProps,
+        solver->propStats.otfHyperTime + solver->propStats.bogoProps);
 
     /*static int val = 0;
     if (val  % 10 == 0) {
@@ -166,7 +166,7 @@ uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numProps
 {
      //If failed var searching is going good, do successively more and more of it
     const double percentEffectLast =
-        calc_percentage(lastTimeZeroDepthAssings, runStats.origNumFreeVars)
+        float_div(lastTimeZeroDepthAssings, runStats.origNumFreeVars)
         * 100.0;
 
     if (percentEffectLast > 20.0) {
@@ -244,12 +244,12 @@ void Prober::clean_clauses_after_probe()
 
 void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo)
 {
-    const double ratioUsedTime = calc_percentage(
+    const double ratioUsedTime = float_div(
         solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime
         , numPropsTodo);
     if (solver->conf.otfHyperbin
         //Visited less than half
-        && calc_percentage(runStats.numVisited, runStats.origNumFreeVars) < 0.8
+        && float_div(runStats.numVisited, runStats.origNumFreeVars) < 0.8
         //And we used up most of the time
         && ratioUsedTime > 0.8
     ) {
@@ -261,7 +261,7 @@ void Prober::check_if_must_disable_cache_update()
 {
     //If time wasted on cache updating (extraTime) is large, stop cache
     //updation
-    double timeOnCache = calc_percentage(extraTimeCache
+    double timeOnCache = float_div(extraTimeCache
         , solver->propStats.bogoProps
             + solver->propStats.otfHyperTime
             + extraTime + extraTimeCache
@@ -423,7 +423,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     const double time_used = cpuTime() - myTime;
     const bool time_out = (limit_used() > numPropsTodo);
-    const double time_remain = calc_percentage((int64_t)numPropsTodo-(int64_t)limit_used(), numPropsTodo);
+    const double time_remain = float_div((int64_t)numPropsTodo-(int64_t)limit_used(), numPropsTodo);
     runStats.cpu_time = time_used;
     runStats.propStats = solver->propStats;
     runStats.timeAllocated += numPropsTodo;

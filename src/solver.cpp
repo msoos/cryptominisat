@@ -1154,9 +1154,9 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
         && stats.recMinLitRem + stats.litsRedNonMin > 100000
     ) {
         double remPercent =
-            (double)stats.recMinLitRem/(double)stats.litsRedNonMin*100.0;
+            float_div(stats.recMinLitRem, stats.litsRedNonMin)*100.0;
 
-        double costPerGained = (double)stats.recMinimCost/remPercent;
+        double costPerGained = float_div(stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
             if (conf.verbosity >= 2) {
@@ -1856,17 +1856,17 @@ void Solver::print_prop_confl_stats(
         cout
         << name << " : " << std::setw(4) << i
         << " Avg. props: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << ((double)stats[i].sumProp/(double)stats[i].num);
+        << float_div(stats[i].sumProp, stats[i].num);
 
         cout
         << name << " : " << std::setw(4) << i
         << " Avg. confls: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << ((double)stats[i].sumConfl/(double)stats[i].num);
+        << float_div(stats[i].sumConfl, stats[i].num);
 
         if (stats[i].sumLookedAt > 0) {
             cout
             << " Props&confls/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
-            << ((double)stats[i].sumPropAndConfl()/(double)stats[i].sumLookedAt);
+            << float_div(stats[i].sumPropAndConfl(), stats[i].sumLookedAt);
         }
 
         cout << endl;
@@ -1912,10 +1912,10 @@ void Solver::print_min_stats() const
     const double cpu_time = cpuTime();
     sumStats.print_short();
     print_stats_line("c props/decision"
-        , (double)propStats.propagations/(double)sumStats.decisions
+        , float_div(propStats.propagations, sumStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
@@ -1979,10 +1979,10 @@ void Solver::print_norm_stats() const
     const double cpu_time = cpuTime();
     sumStats.print_short();
     print_stats_line("c props/decision"
-        , (double)propStats.propagations/(double)sumStats.decisions
+        , float_div(propStats.propagations, sumStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
@@ -2065,10 +2065,10 @@ void Solver::print_all_stats() const
     sumStats.print();
     sumPropStats.print(sumStats.cpu_time);
     print_stats_line("c props/decision"
-        , (double)propStats.propagations/(double)sumStats.decisions
+        , float_div(propStats.propagations, sumStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , (double)propStats.propagations/(double)sumStats.conflStats.numConflicts
+        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
     );
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
     reduceDB->get_cleaning_stats().print(cpu_time);

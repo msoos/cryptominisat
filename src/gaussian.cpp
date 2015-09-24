@@ -507,8 +507,8 @@ Gaussian::gaussian_ret Gaussian::gaussian(PropBy& confl)
         cout << "(" << matrix_no << ")Useless. ";
     else
         cout << "(" << matrix_no << ")Useful. ";
-    cout << "(" << matrix_no << ")Useful prop in " << ((double)useful_prop/(double)called)*100.0 << "%" << endl;
-    cout << "(" << matrix_no << ")Useful confl in " << ((double)useful_confl/(double)called)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ")Useful prop in " << float_div(useful_prop, called)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ")Useful confl in " << float_div(useful_confl, called)*100.0 << "%" << endl;
     #endif
 
     //cout << "<<----G" << endl;
@@ -1116,9 +1116,9 @@ void Gaussian::print_stats() const
         cout.setf(std::ios::fixed);
         cout << " Gauss(" << matrix_no << ") useful";
         cout << " prop: " << std::setprecision(2) << std::setw(5)
-        << ((double)useful_prop/(double)called)*100.0 << "% ";
+        << float_div(useful_prop, called)*100.0 << "% ";
         cout << " confl: " << std::setprecision(2) << std::setw(5)
-        << ((double)useful_confl/(double)called)*100.0 << "% ";
+        << float_div(useful_confl, called)*100.0 << "% ";
         if (disabled) cout << "disabled";
     } else
         cout << " Gauss(" << matrix_no << ") not called.";

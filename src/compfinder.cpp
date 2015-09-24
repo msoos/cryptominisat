@@ -146,7 +146,7 @@ bool CompFinder::find_components()
 void CompFinder::print_and_add_to_sql_result(const double myTime) const
 {
     const double time_used = cpuTime() - myTime;
-    const double time_remain = calc_percentage(bogoprops_remain, orig_bogoprops);
+    const double time_remain = float_div(bogoprops_remain, orig_bogoprops);
 
     if (timedout) {
         time_out_print(myTime);

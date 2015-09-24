@@ -1190,6 +1190,7 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
 
 int Main::solve()
 {
+
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (drupf) {

@@ -223,9 +223,7 @@ void ClauseAllocator::consolidate(
     //1) There is too much memory allocated. Re-allocation will save space
     //   Avoiding segfault (max is 16 outerOffsets, more than 10 is near)
     //2) There is too much empty, unused space (>30%)
-    if (!force
-        && ((double)currentlyUsedSize/(double)size > 0.7)
-    ) {
+    if (!force && float_div(currentlyUsedSize, size) > 0.7) {
         if (solver->conf.verbosity >= 3) {
             cout << "c Not consolidating memory." << endl;
         }

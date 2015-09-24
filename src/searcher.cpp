@@ -2049,10 +2049,10 @@ void Searcher::print_iteration_solving_stats()
         stats.print();
         propStats.print(stats.cpu_time);
         print_stats_line("c props/decision"
-            , (double)propStats.propagations/(double)stats.decisions
+            , float_div(propStats.propagations, stats.decisions)
         );
         print_stats_line("c props/conflict"
-            , (double)propStats.propagations/(double)stats.conflStats.numConflicts
+            , float_div(propStats.propagations, stats.conflStats.numConflicts)
         );
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
     }
@@ -3099,13 +3099,13 @@ void Searcher::Stats::printCommon() const
 {
     print_stats_line("c restarts"
         , numRestarts
-        , (double)conflStats.numConflicts/(double)numRestarts
+        , float_div(conflStats.numConflicts, numRestarts)
         , "confls per restart"
 
     );
     print_stats_line("c blocked restarts"
         , blocked_restart
-        , (double)blocked_restart/(double)numRestarts
+        , float_div(blocked_restart, numRestarts)
         , "per normal restart"
 
     );
@@ -3116,7 +3116,7 @@ void Searcher::Stats::printCommon() const
     );
 
     print_stats_line("c decisions/conflicts"
-        , (double)decisions/(double)conflStats.numConflicts
+        , float_div(decisions, conflStats.numConflicts)
     );
 }
 
@@ -3128,12 +3128,12 @@ void Searcher::Stats::print_short() const
 
     print_stats_line("c conf lits non-minim"
         , litsRedNonMin
-        , (double)litsRedNonMin/(double)conflStats.numConflicts
+        , float_div(litsRedNonMin, conflStats.numConflicts)
         , "lit/confl"
     );
 
     print_stats_line("c conf lits final"
-        , (double)litsRedFinal/(double)conflStats.numConflicts
+        , float_div(litsRedFinal, conflStats.numConflicts)
     );
 }
 

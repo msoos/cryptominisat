@@ -138,7 +138,7 @@ void XorFinder::find_xors()
     solver->clean_occur_from_idx_types_only_smudged();
 
     const bool time_out = (xor_find_time_limit < 0);
-    const double time_remain = calc_percentage(xor_find_time_limit, orig_xor_find_time_limit);
+    const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
@@ -855,12 +855,12 @@ void XorFinder::Stats::print(const size_t numCalls) const
 {
     cout << "c --------- XOR STATS ----------" << endl;
     print_stats_line("c num XOR found on avg"
-        , (double)foundXors/(double)numCalls
+        , float_div(foundXors, numCalls)
         , "avg size"
     );
 
     print_stats_line("c XOR avg size"
-        , (double)sumSizeXors/(double)foundXors
+        , float_div(sumSizeXors, foundXors)
     );
 
     print_stats_line("c XOR 0-depth assings"
@@ -877,7 +877,7 @@ void XorFinder::Stats::print(const size_t numCalls) const
 
     print_stats_line("c XOR finding time"
         , findTime
-        , (double)time_outs/(double)numCalls*100.0
+        , float_div(time_outs, numCalls)*100.0
         , "time-out"
     );
     cout << "c --------- XOR STATS END ----------" << endl;

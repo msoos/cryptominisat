@@ -1128,7 +1128,7 @@ void VarReplacer::print_some_stats(const double global_cpu_time) const
 
     print_stats_line("c vrep trees' crown"
         , get_num_replaced_vars()
-        , (double)get_num_replaced_vars()/(double)getNumTrees()
+        , float_div(get_num_replaced_vars(), getNumTrees())
         , "leafs/tree"
     );
 }
@@ -1138,7 +1138,7 @@ void VarReplacer::Stats::print(const size_t nVars) const
         cout << "c --------- VAR REPLACE STATS ----------" << endl;
         print_stats_line("c time"
             , cpu_time
-            , cpu_time/(double)numCalls
+            , float_div(cpu_time, numCalls)
             , "per call"
         );
 
