@@ -20,6 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#if defined(__GNUC__) && defined(__linux__)
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <fenv.h>
+#endif
+
 #include <ctime>
 #include <cstring>
 #include <errno.h>
@@ -1312,6 +1321,13 @@ int Main::correctReturnValue(const lbool ret) const
 
 int main(int argc, char** argv)
 {
+    #if defined(__GNUC__) && defined(__linux__)
+    feenableexcept(FE_INVALID   |
+                   FE_DIVBYZERO |
+                   FE_OVERFLOW
+    );
+    #endif
+
     Main main(argc, argv);
     main.parseCommandLine();
 
