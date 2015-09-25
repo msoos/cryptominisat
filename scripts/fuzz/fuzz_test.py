@@ -549,7 +549,8 @@ class Tester:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         # if need time limit, then limit
-        err_file = open("err_log.txt", "w")
+        err_fname = create_fuzz.unique_file("err_out")
+        err_file = open(err_fname, "w")
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
 
@@ -562,7 +563,7 @@ class Tester:
         consoleOutput, err = p.communicate()
         retcode = p.returncode
         err_file.close()
-        with open("err_log.txt", "r") as err_file:
+        with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
                 print "Error line while executing: ", line.strip()
@@ -573,6 +574,8 @@ class Tester:
 
             if found_something:
                 exit(-1)
+
+        os.unlink(err_fname)
 
         if options.verbose:
             print "CPU limit of parent (pid %d) after child finished executing" % \
