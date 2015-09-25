@@ -532,6 +532,8 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
+            for f in glob.glob("%s-debugLibPart*.output"):
+                os.unlink(f)
         if options.verbose is False:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
