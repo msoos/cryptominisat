@@ -464,6 +464,12 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
         if (!solver->ok) {
             goto end;
         }
+
+        if (i&0xff == 0xff
+            && solver->must_interrupt_asap()
+        ) {
+            goto end;
+        }
     }
 
     end:
