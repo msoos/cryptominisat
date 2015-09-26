@@ -722,19 +722,17 @@ class Tester:
 
         print "OK, all assumptions inside solution"
 
-    def find_largest_part(self, fname):
-        largestPart = -1
+    def find_largest_debuglib_part(self, fname):
+        largestPart = 0
         dirList2 = os.listdir(".")
         for fname_debug in dirList2:
             if fnmatch.fnmatch(fname_debug, "%s-debugLibPart*.output" % fname):
-                debugLibPart = int(
-                    fname_debug[len(fname) + 13:fname_debug.rindex(".output")])
-                largestPart = max(largestPart, debugLibPart)
+                largestPart += 1
 
         return largestPart
 
     def check_debug_lib(self, fname):
-        largestPart = self.find_largest_part(fname)
+        largestPart = self.find_largest_debuglib_part(fname)
         for debugLibPart in range(1, largestPart + 1):
             fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
             print "Checking debug lib part %s -- %s " % (debugLibPart, fname_debug)
