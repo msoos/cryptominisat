@@ -990,6 +990,11 @@ if rnd_seed is None:
 
 while True:
     toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
+    if options.novalgrind:
+        toexec += " --novalgrind"
+    if options.small:
+        toexec += " --small"
+
     print "To re-create fuzz-test below: %s" % toexec
 
     random.seed(rnd_seed)
