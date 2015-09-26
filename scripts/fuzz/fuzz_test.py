@@ -522,6 +522,9 @@ class Tester:
             print "Error code 300"
             exit(300)
 
+        for f in glob.glob("%s-debugLibPart*.output"):
+            os.unlink(f)
+
         # construct command
         command = ""
         if not options.novalgrind and random.randint(0, 10) == 0:
@@ -532,8 +535,6 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
-            for f in glob.glob("%s-debugLibPart*.output"):
-                os.unlink(f)
         if options.verbose is False:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
