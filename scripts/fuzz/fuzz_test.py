@@ -299,7 +299,7 @@ class create_fuzz:
 
         return call
 
-    def create_fuzz_file(self, fuzzer, fname):
+    def create_fuzz_file(self, fuzzer, fuzzers, fname):
         # handle special fuzzer
         fnames_multi = []
         if len(fuzzer) == 2 and fuzzer[1] == "special":
@@ -360,10 +360,8 @@ def print_version():
     consoleOutput, err = p.communicate()
     print "Version values:", consoleOutput.strip()
 
-fuzzers = [
+fuzzers_noxor = [
     ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
-     "--hash-bits", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
     ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
@@ -382,11 +380,13 @@ fuzzers = [
     ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
-global fuzzers
-
+fuzzers_xor = [
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
+     "--hash-bits", "--seed"],
+]
 
 class Tester:
 
@@ -865,17 +865,23 @@ class Tester:
             exit()
 
     def fuzz_test_one(self):
-        fuzzer = random.choice(fuzzers)
+        print "\n--- NORMAL TESTING ---"
         self.num_threads = random.choice([1, 2, 4])
-        fname = create_fuzz.unique_file("fuzzTest")
         self.drup = self.num_threads == 1 and random.choice([True, False])
+        if self.drup:
+            fuzzers = fuzzers_drup
+        else:
+            fuzzers = fuzzers_nodrup
+        fuzzer = random.choice(fuzzers)
+
+        fname = create_fuzz.unique_file("fuzzTest")
         fname_drup = None
         if self.drup:
             fname_drup = "%s-drup" % fname
 
         # create the fuzz file
         cf = create_fuzz()
-        call, todel = cf.create_fuzz_file(fuzzer, fname)
+        call, todel = cf.create_fuzz_file(fuzzer, fuzzers, fname)
         print "calling ", fuzzer, " : ", call
         status, _ = commands.getstatusoutput(call)
         if status != 0:
@@ -911,15 +917,16 @@ class Tester:
             pass
 
     def fuzz_test_preproc(self):
+        print "\n--- PREPROC TESTING ---"
         tester.needDebugLib = False
-        fuzzer = random.choice(fuzzers)
+        fuzzer = random.choice(fuzzers_drup)
         self.num_threads = 1
         fname = create_fuzz.unique_file("fuzzTest")
         self.drup = False
 
         # create the fuzz file
         cf = create_fuzz()
-        call, todel = cf.create_fuzz_file(fuzzer, fname)
+        call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrup, fname)
         print "calling ", fuzzer, " : ", call
         out = commands.getstatusoutput(call)
 
@@ -952,10 +959,9 @@ class Tester:
             os.unlink(name)
 
 
-def filter_large_fuzzer():
-    global fuzzers
+def filter_large_fuzzer(dat):
     f = []
-    for x in fuzzers:
+    for x in dat:
         okay = True
         for y in x:
             if "large" in y:
@@ -964,10 +970,16 @@ def filter_large_fuzzer():
         if okay:
             f.append(x)
 
-    fuzzers = f
+    return f
 
+global fuzzers_drup
+global fuzzers_nodrup
+fuzzers_drup = fuzzers_noxor
+fuzzers_nodrup = fuzzers_noxor + fuzzers_xor
 if options.small:
-    filter_large_fuzzer()
+    fuzzers_drup = filter_large_fuzzer(fuzzers_drup)
+    fuzzers_nodrup = filter_large_fuzzer(fuzzers_nodrup)
+
 print_version()
 tester = Tester()
 tester.needDebugLib = False
