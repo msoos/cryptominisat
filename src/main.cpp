@@ -1333,7 +1333,6 @@ int main(int argc, char** argv)
     main.parseCommandLine();
 
     signal(SIGINT, SIGINT_handler);
-    //signal(SIGHUP,SIGINT_handler);
 
     return main.solve();
 }
