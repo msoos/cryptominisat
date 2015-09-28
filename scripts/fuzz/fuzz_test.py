@@ -522,7 +522,7 @@ class Tester:
             print "Error code 300"
             exit(300)
 
-        for f in glob.glob("%s-debugLibPart*.output"):
+        for f in glob.glob("%s-debugLibPart*.output" % fname):
             os.unlink(f)
 
         # construct command
