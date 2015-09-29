@@ -687,10 +687,10 @@ Clause* Searcher::analyze_conflict(
     Clause* last_resolved_long_cl = create_learnt_clause(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
+    glue = calc_glue_using_seen2(learnt_clause);
     mimimize_learnt_clause_more_maybe();
     print_fully_minimized_learnt_clause();
 
-    glue = calc_glue_using_seen2(learnt_clause);
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (update_polarity_and_activity
