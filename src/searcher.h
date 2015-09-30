@@ -28,7 +28,6 @@
 #include "time_mem.h"
 #include "avgcalc.h"
 #include "hyperengine.h"
-#include "MersenneTwister.h"
 #include "minisat_rnd.h"
 #include "simplefile.h"
 
