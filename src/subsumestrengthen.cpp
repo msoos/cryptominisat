@@ -465,7 +465,7 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
             goto end;
         }
 
-        if (i&0xff == 0xff
+        if ((i&0xff) == 0xff
             && solver->must_interrupt_asap()
         ) {
             goto end;
