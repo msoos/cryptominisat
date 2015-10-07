@@ -35,6 +35,14 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 //B = fread, gz_read
 typedef size_t(*fread_op_norm)(void*, size_t, size_t, FILE*);
 
+struct MyText {
+    const unsigned char* txt = 0;
+    size_t size = 0;
+    size_t at = 0;
+};
+
+typedef size_t(*fread_op_text)(void*, size_t, size_t, MyText&);
+
 template<typename A, typename B, B C>
 class StreamBuffer
 {
@@ -92,7 +100,7 @@ public:
         }
     }
 
-    int32_t parseInt(size_t lineNum, bool allow_eol = false)
+    bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
     {
         int32_t val = 0;
         int32_t mult = 1;
@@ -105,23 +113,32 @@ public:
         }
 
         char c = value();
-        if (allow_eol && c == '\n')
-            return std::numeric_limits<int32_t>::max();
+        if (allow_eol && c == '\n') {
+            ret = std::numeric_limits<int32_t>::max();
+            return true;
+        }
         if (c < '0' || c > '9') {
             std::cout
             << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
             << " At line " << lineNum
             << " we expected a number"
             << std::endl;
-            std::exit(3);
+            return false;
         }
 
         while (c >= '0' && c <= '9') {
-            val = val*10 + (c - '0');
+            int32_t val2 = val*10 + (c - '0');
+            if (val2 < val) {
+                std::cout << "PARSE ERROR! At line " << lineNum
+                << " the variable number is to high"
+                << std::endl;
+                return false;
+            }
             advance();
             c = value();
         }
-        return mult*val;
+        ret = mult*val;
+        return true;
     }
 
     void parseString(std::string& str)

@@ -137,9 +137,11 @@ void Main::readInAFile(const string& filename)
         cout << "c Reading file '" << filename << "'" << endl;
     }
     #ifndef USE_ZLIB
-        FILE * in = fopen(filename.c_str(), "rb");
+    FILE * in = fopen(filename.c_str(), "rb");
+    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, debugLib, conf.verbosity);
     #else
-        gzFile in = gzopen(filename.c_str(), "rb");
+    gzFile in = gzopen(filename.c_str(), "rb");
+    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -151,8 +153,9 @@ void Main::readInAFile(const string& filename)
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib, conf.verbosity);
-    parser.parse_DIMACS(in);
+    if (!parser.parse_DIMACS(in)) {
+        exit(-1);
+    }
 
     #ifndef USE_ZLIB
         fclose(in);
@@ -170,9 +173,9 @@ void Main::readInStandardInput()
     }
 
     #ifndef USE_ZLIB
-        FILE * in = stdin;
+    FILE * in = stdin;
     #else
-        gzFile in = gzdopen(fileno(stdin), "rb");
+    gzFile in = gzdopen(fileno(stdin), "rb");
     #endif
 
     if (in == NULL) {
@@ -180,8 +183,15 @@ void Main::readInStandardInput()
         std::exit(1);
     }
 
-    DimacsParser parser(solver, debugLib, conf.verbosity);
-    parser.parse_DIMACS(in);
+    #ifndef USE_ZLIB
+    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, debugLib, conf.verbosity);
+    #else
+    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, debugLib, conf.verbosity);
+    #endif
+
+    if (!parser.parse_DIMACS(in)) {
+        exit(-1);
+    }
 
     #ifdef USE_ZLIB
         gzclose(in);

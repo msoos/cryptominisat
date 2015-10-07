@@ -3431,7 +3431,9 @@ void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
     int32_t parsed_lit;
     uint32_t var;
     for (;;) {
-        parsed_lit = in->parseInt(lineNum, true);
+        if (!in->parseInt(parsed_lit, lineNum, true)) {
+            exit(-1);
+        }
         if (parsed_lit == std::numeric_limits<int32_t>::max()) {
             break;
         }

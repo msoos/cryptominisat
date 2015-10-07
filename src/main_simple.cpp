@@ -193,12 +193,15 @@ int main(int argc, char** argv)
         printf("Reading from standard input... Use '-h' or '--help' for help.\n");
         #ifndef USE_ZLIB
         FILE* in = stdin;
+        DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
         #else
         gzFile in = gzdopen(fileno(stdin), "rb");
+        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
         #endif
 
-        DimacsParser parser(solver, "", conf.verbosity);
-        parser.parse_DIMACS(in);
+        if (!parser.parse_DIMACS(in)) {
+            exit(-1);
+        }
 
         #ifndef USE_ZLIB
         fclose(in);
@@ -216,8 +219,16 @@ int main(int argc, char** argv)
             printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
             std::exit(1);
         }
-        DimacsParser parser(solver, "", conf.verbosity);
-        parser.parse_DIMACS(in);
+
+        #ifndef USE_ZLIB
+        DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
+        #else
+        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
+        #endif
+
+        if (!parser.parse_DIMACS(in)) {
+            exit(-1);
+        }
 
         #ifndef USE_ZLIB
         fclose(in);
