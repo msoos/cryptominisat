@@ -71,7 +71,6 @@ private:
     };
 
     vector<VARIABLE> myVars;
-    int clause_id = 0;
     Features feat;
 };
 
