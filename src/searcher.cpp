@@ -747,7 +747,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             default:
                 release_assert(false);
                 std::exit(-1);
-                size = 0;
                 break;
         }
 

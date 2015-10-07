@@ -111,7 +111,6 @@ private:
 
     OccSimplifier* simplifier;
     Solver* solver;
-    int64_t numMaxTriSub;
 
     //Called from simplifier at resolvent-adding of var-elim
     template<class T>
