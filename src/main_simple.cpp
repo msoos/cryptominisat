@@ -197,7 +197,7 @@ int main(int argc, char** argv)
         gzFile in = gzdopen(fileno(stdin), "rb");
         #endif
 
-        DimacsParser parser(solver, false, conf.verbosity);
+        DimacsParser parser(solver, "", conf.verbosity);
         parser.parse_DIMACS(in);
 
         #ifndef USE_ZLIB
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
             printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
             std::exit(1);
         }
-        DimacsParser parser(solver, false, conf.verbosity);
+        DimacsParser parser(solver, "", conf.verbosity);
         parser.parse_DIMACS(in);
 
         #ifndef USE_ZLIB
