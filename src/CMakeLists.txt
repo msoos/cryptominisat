@@ -203,12 +203,10 @@ endif()
 
 if (NOT ONLY_SIMPLE)
     add_executable(cryptominisat4
-        dimacsparser.cpp
         main.cpp
     )
 endif()
 add_executable(cryptominisat4_simple
-    dimacsparser.cpp
     main_simple.cpp
 )
 
