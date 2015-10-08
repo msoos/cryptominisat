@@ -1,3 +1,5 @@
+execute_process(COMMAND python-config --cflags OUTPUT_VARIABLE PY_C_CONFIG)
+execute_process(COMMAND python-config --ldflags OUTPUT_VARIABLE PY_LD_CONFIG)
 set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
 set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build")
