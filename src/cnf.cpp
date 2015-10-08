@@ -449,10 +449,7 @@ void CNF::load_state(SimpleInFile& f)
 
 void CNF::test_all_clause_attached() const
 {
-#ifndef DEBUG_ATTACH_MORE
-    return;
-#endif
-
+#ifdef DEBUG_ATTACH_MORE
     for (vector<ClOffset>::const_iterator
         it = longIrredCls.begin(), end = longIrredCls.end()
         ; it != end
@@ -460,6 +457,7 @@ void CNF::test_all_clause_attached() const
     ) {
         assert(normClauseIsAttached(*it));
     }
+#endif
 }
 
 bool CNF::normClauseIsAttached(const ClOffset offset) const
@@ -476,10 +474,7 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
 
 void CNF::find_all_attach() const
 {
-    #ifndef SLOW_DEBUG
-    return;
-    #endif
-
+#ifdef SLOW_DEBUG
     for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
@@ -518,6 +513,7 @@ void CNF::find_all_attach() const
 
     find_all_attach(longIrredCls);
     find_all_attach(longRedCls);
+#endif
 }
 
 void CNF::find_all_attach(const vector<ClOffset>& cs) const
@@ -571,10 +567,7 @@ bool CNF::find_clause(const ClOffset offset) const
 
 void CNF::check_wrong_attach() const
 {
-    #ifndef SLOW_DEBUG
-    return;
-    #endif
-
+#ifdef SLOW_DEBUG
     for (vector<ClOffset>::const_iterator
         it = longRedCls.begin(), end = longRedCls.end()
         ; it != end
@@ -586,6 +579,7 @@ void CNF::check_wrong_attach() const
                 assert(cl[i-1].var() != cl[i].var());
         }
     }
+#endif
 }
 
 uint64_t CNF::count_lits(

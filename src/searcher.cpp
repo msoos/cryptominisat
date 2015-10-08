@@ -348,10 +348,10 @@ void Searcher::normalClMinim()
 
 void Searcher::debug_print_resolving_clause(const PropBy confl) const
 {
-    #ifndef DEBUG_RESOLV
-    return;
-    #endif
-
+#ifndef DEBUG_RESOLV
+    //Avoid unused parameter warning
+    (void) confl;
+#else
     switch(confl.getType()) {
         case tertiary_t: {
             cout << "resolv (tri): " << confl.lit2() << ", " << confl.lit3() << endl;
@@ -381,6 +381,7 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
             break;
         }
     }
+#endif
 }
 
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
@@ -659,14 +660,15 @@ Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl
 
 void Searcher::print_debug_resolution_data(const PropBy confl)
 {
-    #ifndef DEBUG_RESOLV
-    return;
-    #endif
-
+#ifndef DEBUG_RESOLV
+    //Avoid unused parameter warning
+    (void) confl;
+#else
     cout << "Before resolution, trail is: " << endl;
     print_trail();
     cout << "Conflicting clause: " << confl << endl;
     cout << "Fail bin lit: " << failBinLit << endl;
+#endif
 }
 
 Clause* Searcher::analyze_conflict(
