@@ -82,7 +82,7 @@ public:
     void skipWhitespace()
     {
         char c = value();
-        while ((c >= 9 && c <= 13 && c != 10) || c == 32) {
+        while ((c >= 9 && c <= 13 && c != 10 && c != 11 && c != 12) || c == 32) {
             advance();
             c = value();
         }
@@ -98,6 +98,22 @@ public:
             }
             advance();
         }
+    }
+
+    bool skipEOL()
+    {
+        for (;;) {
+            if (value() == EOF || value() == '\0') return true;
+            if (value() == '\n') {
+                advance();
+                return true;
+            }
+            if (value() != '\r') {
+                return false;
+            }
+            advance();
+        }
+        return true;
     }
 
     bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)

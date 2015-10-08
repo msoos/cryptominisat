@@ -327,7 +327,9 @@ bool DimacsParser<C>::parse_and_add_clause(C& in)
     if (!readClause(in)) {
         return false;
     }
-    in.skipLine();
+    if (!in.skipEOL()) {
+        return false;
+    }
     lineNum++;
     solver->add_clause(lits);
     norm_clauses_added++;
@@ -341,7 +343,9 @@ bool DimacsParser<C>::parse_and_add_xor_clause(C& in)
     if (!readClause(in)) {
         return false;
     }
-    in.skipLine();
+    if (!in.skipEOL()) {
+        return false;
+    }
     lineNum++;
     if (lits.empty())
         return true;
