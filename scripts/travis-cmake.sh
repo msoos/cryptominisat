@@ -244,5 +244,9 @@ if [ "$CMS_CONFIG" = "COVERAGE" ]; then
 
   # debug before upload
   lcov --list coverage.info
-  coveralls-lcov --repo-token $COVERTOKEN coverage.info # uploads to coveralls
+
+  # only attempt upload if $COVERTOKEN is set
+  if [ -n "$COVERTOKEN" ]; then
+    coveralls-lcov --repo-token $COVERTOKEN coverage.info # uploads to coveralls
+  fi
 fi
