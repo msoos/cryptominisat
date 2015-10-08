@@ -47,6 +47,13 @@ macro(add_cxx_flag flagname)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
 endmacro()
 
+option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
+if (FEEDBACKFUZZ)
+    SET (CMAKE_CXX_COMPILER "clang++")
+    add_cxx_flag("-fsanitize=address")
+    add_cxx_flag("-fsanitize-coverage=edge,indirect-calls,8bit-counters")
+endif()
+
 option(SANITIZE "Use Clang sanitizers. This will force using clang++ as the compiler" OFF)
 if (SANITIZE)
     SET (CMAKE_CXX_COMPILER "clang++")
