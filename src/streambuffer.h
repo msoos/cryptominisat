@@ -134,6 +134,7 @@ public:
                 << std::endl;
                 return false;
             }
+            val = val2;
             advance();
             c = value();
         }
