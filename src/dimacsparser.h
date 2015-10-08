@@ -43,6 +43,7 @@ class DimacsParser
         DimacsParser(SATSolver* solver, const std::string& debugLib, unsigned _verbosity);
 
         template <class T> bool parse_DIMACS(T input_stream);
+        uint64_t max_var = std::numeric_limits<uint64_t>::max();
 
     private:
         bool parse_DIMACS_main(C& in);
@@ -116,8 +117,22 @@ bool DimacsParser<C>::readClause(C& in)
         if (!in.parseInt(parsed_lit, lineNum)) {
             return false;
         }
-        if (parsed_lit == 0) break;
+        if (parsed_lit == 0) {
+            break;
+        }
+
         var = abs(parsed_lit)-1;
+
+        if (var > max_var) {
+            std::cerr
+            << "ERROR! "
+            << "Variable requested is too large for DIMACS parser parameter: "
+            << var << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            return false;
+        }
+
         if (var >= (1ULL<<28)) {
             std::cerr
             << "ERROR! "
