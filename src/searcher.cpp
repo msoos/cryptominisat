@@ -30,6 +30,7 @@
 #include "propbyforgraph.h"
 #include <algorithm>
 #include <cstddef>
+#include <math.h>
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
