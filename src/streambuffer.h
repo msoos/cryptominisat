@@ -118,7 +118,7 @@ public:
             return true;
         }
         if (c < '0' || c > '9') {
-            std::cout
+            std::cerr
             << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
             << " At line " << lineNum
             << " we expected a number"
@@ -129,7 +129,7 @@ public:
         while (c >= '0' && c <= '9') {
             int32_t val2 = val*10 + (c - '0');
             if (val2 < val) {
-                std::cout << "PARSE ERROR! At line " << lineNum
+                std::cerr << "PARSE ERROR! At line " << lineNum
                 << " the variable number is to high"
                 << std::endl;
                 return false;
