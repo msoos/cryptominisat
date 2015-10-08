@@ -30,27 +30,7 @@ THE SOFTWARE.
 
 #ifdef USE_ZLIB
 #include <zlib.h>
-static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
-{
-    return gzread(f, buf, num*count);
-}
 #endif
-
-static size_t text_read(void* buf, size_t num, size_t count, MyText& f)
-{
-    if (f.size == f.at) {
-        return EOF;
-    }
-
-    size_t toread = num*count;
-    if (toread > f.size-f.at) {
-        toread = f.size-f.at;
-    }
-    memcpy(buf, f.txt + f.at, toread);
-    printf("read in %d\n", toread);
-    f.at += toread;
-    return toread;
-}
 
 
 using namespace CMSat;

@@ -50,6 +50,13 @@ THE SOFTWARE.
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
 
+#ifdef USE_ZLIB
+static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
+{
+    return gzread(f, buf, num*count);
+}
+#endif
+
 
 #include <boost/lexical_cast.hpp>
 using namespace CMSat;

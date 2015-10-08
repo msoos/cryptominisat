@@ -38,8 +38,16 @@ using std::endl;
 #include "solverconf.h"
 #include "cryptominisat4/cryptominisat.h"
 #include "dimacsparser.h"
+
 using namespace CMSat;
 std::ostream* drupf;
+
+#ifdef USE_ZLIB
+static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
+{
+    return gzread(f, buf, num*count);
+}
+#endif
 
 SATSolver* solver;
 bool zero_exit_status = false;
