@@ -26,6 +26,25 @@ import sys
 from distutils.core import setup, Extension
 from distutils import sysconfig
 
+cconf = """${PY_C_CONFIG}""".split(" ")
+ldconf = """${PY_LD_CONFIG}""".split(" ")
+
+def cleanup(dat):
+    ret = []
+    for elem in dat:
+        elem = elem.strip()
+        if elem != "":
+            ret.append(elem)
+
+    return ret
+    # return []
+
+cconf = cleanup(cconf)
+ldconf = cleanup(ldconf)
+print "Extra C flags from python-config:", cconf
+print "Extra libraries from python-config:", ldconf
+
+
 def _init_posix(init):
     """
     Forces g++ instead of gcc on most systems
@@ -57,8 +76,8 @@ ext_kwds = dict(
     name = "pycryptosat",
     sources = ["${CMAKE_CURRENT_SOURCE_DIR}/pycryptosat.cpp"],
     define_macros = [],
-    extra_compile_args = """${PY_C_CONFIG}""".rstrip().split(" ") + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat4-src'],
-    extra_link_args = """${PY_LD_CONFIG}""".rstrip().split(" "),
+    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat4-src'],
+    extra_link_args = ldconf,
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
     libraries = ['cryptominisat4']
