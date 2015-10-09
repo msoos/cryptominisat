@@ -92,6 +92,12 @@ parser.add_option("--small", dest="small", default=False,
 (options, args) = parser.parse_args()
 
 
+def fuzzer_call_failed():
+    print "OOps, fuzzer executable call failed!"
+    print "Did you build with TESTING_ENABLED? Did you do git submodules init & update?"
+    exit(-1)
+
+
 class solution_parser:
     def __init__(self):
         pass
@@ -323,7 +329,9 @@ class create_fuzz:
                 print "fuzzer2 used: ", fuzzer2
                 call = self.call_from_fuzzer(fuzzer2, fname2)
                 print "calling sub-fuzzer:", call
-                out = commands.getstatusoutput(call)
+                status, _ = commands.getstatusoutput(call)
+                if status != 0:
+                    fuzzer_call_failed()
 
             # construct multi-fuzzer call
             call = ""
@@ -884,8 +892,7 @@ class Tester:
         print "calling ", fuzzer, " : ", call
         status, _ = commands.getstatusoutput(call)
         if status != 0:
-            print "Status of command non-zero!"
-            exit(-1)
+            fuzzer_call_failed()
 
         if not self.drup:
             self.needDebugLib = True
@@ -927,7 +934,9 @@ class Tester:
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrup, fname)
         print "calling ", fuzzer, " : ", call
-        out = commands.getstatusoutput(call)
+        status, _ = commands.getstatusoutput(call)
+        if status != 0:
+            fuzzer_call_failed()
 
         rnd_opts = self.random_options(preproc=True)
 
