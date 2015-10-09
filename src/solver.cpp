@@ -3423,8 +3423,8 @@ lbool Solver::load_solution_from_file(const string& fname)
     return status;
 }
 
-template<typename A, typename B, B C>
-void Solver::parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum)
+template<typename A>
+void Solver::parse_v_line(A* in, const size_t lineNum)
 {
     model.resize(nVarsOuter(), l_Undef);
 

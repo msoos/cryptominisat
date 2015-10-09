@@ -34,7 +34,6 @@
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
 #include "features.h"
-#include "streambuffer.h"
 
 namespace CMSat {
 
@@ -160,8 +159,8 @@ class Solver : public Searcher
         //State load/unload
         void save_state(const string& fname, const lbool status) const;
         lbool load_state(const string& fname);
-        template<typename A, typename B, B C>
-        void parse_v_line(StreamBuffer<A, B, C>* in, const size_t lineNum);
+        template<typename A>
+        void parse_v_line(A* in, const size_t lineNum);
         lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
