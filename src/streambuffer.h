@@ -82,7 +82,7 @@ public:
     void skipWhitespace()
     {
         char c = value();
-        while (c == '\n' || c == '\r' || c == ' ') {
+        while (c == '\t' || c == '\r' || c == ' ') {
             advance();
             c = value();
         }
