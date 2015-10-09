@@ -38,6 +38,11 @@ static inline double cpuTime(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
 }
+static inline double cpuTimeTotal(void)
+{
+    return (double)clock() / CLOCKS_PER_SEC;
+}
+
 #else //_MSC_VER
 #include <sys/time.h>
 #include <sys/resource.h>
