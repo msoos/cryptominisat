@@ -9,6 +9,10 @@ if (CMAKE_MAJOR_VERSION GREATER 2)
     if(POLICY CMP0046)
         cmake_policy(SET CMP0046 OLD)
     endif()
+
+    if(POLICY CMP0026)
+        cmake_policy(SET CMP0026 OLD)
+    endif()
 endif()
 
 # -----------------------------------------------------------------------------
