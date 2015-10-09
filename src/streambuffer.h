@@ -82,7 +82,7 @@ public:
     void skipWhitespace()
     {
         char c = value();
-        while ((c >= 9 && c <= 13 && c != 10 && c != 11 && c != 12) || c == 32) {
+        while (c == '\n' || c == '\r' || c == ' ') {
             advance();
             c = value();
         }
