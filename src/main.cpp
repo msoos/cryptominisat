@@ -50,22 +50,31 @@ THE SOFTWARE.
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
 
-#ifdef USE_ZLIB
-static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
-{
-    return gzread(f, buf, num*count);
-}
+//  Kemper 10 2015
+#if USE_BOOST_PO
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+#else
+	namespace boost = po;   //  this is rather bluntly assuming no boost usage at all
+	                        //  it might be better/clearer to replace the boost:: occurrences by po:: using the editor search&replace
+	//  quick hack for cryptominisat
+	//  assumes that we always convert a double to a string
+	template <typename T>
+	const T lexical_cast(double x)
+	{
+		std::ostringstream strs;
+		strs << x;
+		std::string str = strs.str();
+
+		return str;
+	}
 #endif
 
-
-#include <boost/lexical_cast.hpp>
 using namespace CMSat;
-using boost::lexical_cast;
 
 using std::cout;
 using std::cerr;
 using std::endl;
-using boost::lexical_cast;
 
 struct WrongParam
 {

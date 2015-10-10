@@ -27,14 +27,21 @@
 #include <memory>
 #include <fstream>
 
+//  Kemper 10 2015
+#if USE_BOOST_PO
+	#include <boost/program_options.hpp>
+	namespace po = boost::program_options;
+#else
+	#include "ak_program_options/program_options.h"
+	namespace po = ak_program_options;
+#endif
+
 #include "solverconf.h"
 #include "cryptominisat4/cryptominisat.h"
 
 using std::string;
 using std::vector;
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
 using namespace CMSat;
 
 class Main
