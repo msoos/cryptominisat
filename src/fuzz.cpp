@@ -63,12 +63,10 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
     t.at = 0;
     t.size = size;
     t.txt = data;
-    //t.txt = (const unsigned char*)strdup("10 2 0\n3 4 0\n4 5 2 0\n");
-    //t.size = strlen((const char*)t.txt);
     if (!parser.parse_DIMACS(t)) {
         return 0;
     }
-    lbool ret = S.solve();
+    S.solve();
     //cout << "Ret is sat: " << (ret == l_True) << endl;
     return 0;
 }
