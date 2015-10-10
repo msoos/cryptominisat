@@ -173,7 +173,6 @@ endif()
 option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    SET(Boost_USE_STATIC_LIBS ON)
     set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 
     set(NOMYSQL ON)
