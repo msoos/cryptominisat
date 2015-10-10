@@ -319,7 +319,7 @@ class create_fuzz:
 
                 # chose a ranom fuzzer, not multipart
                 fuzzer2 = ["multipart.py", "special"]
-                while (fuzzer2[0] == "multipart.py"):
+                while os.path.basename(fuzzer2[0]) == "multipart.py":
                     fuzzer2 = choice(fuzzers)
 
                 # sometimes fuzz with SAT problems only
