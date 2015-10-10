@@ -50,6 +50,13 @@ THE SOFTWARE.
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
 
+#ifdef USE_ZLIB
+static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
+{
+    return gzread(f, buf, num*count);
+}
+#endif
+
 //  Kemper 10 2015
 #if USE_BOOST_PO
 #include <boost/lexical_cast.hpp>
@@ -395,7 +402,7 @@ void Main::add_supported_options()
         , "Maximum length of redundant clause dumped")
     ("dumpirred", po::value(&irredDumpFname)
         , "If stopped, dump irred original problem here")
-    ("debuglib", po::value<string>(&debugLib)
+    ("debuglib", po::value(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
         , "Write result(s) to this file")
@@ -832,9 +839,7 @@ void Main::check_options_correctness()
         boost::exception_detail::error_info_injector<po::invalid_option_value> > what
     ) {
         cerr
-        << "ERROR: Invalid value '" << what.what() << "'" << endl
-        << "       given to option '" << what.get_option_name() << "'"
-        << endl;
+        << "ERROR: Invalid value '" << what.what() << "'" << endl;
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
@@ -842,15 +847,6 @@ void Main::check_options_correctness()
     ) {
         cerr
         << "ERROR: " << what.what() << " of option '"
-        << what.get_option_name() << "'"
-        << endl;
-
-        std::exit(-1);
-    } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::required_option> > what
-    ) {
-        cerr
-        << "ERROR: You forgot to give a required option '"
         << what.get_option_name() << "'"
         << endl;
 

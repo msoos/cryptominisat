@@ -1,3 +1,5 @@
+add_subdirectory(ak_program_options)
+
 include_directories(
     ${PROJECT_SOURCE_DIR}
 )
@@ -238,6 +240,7 @@ set_target_properties(cryptominisat4_simple PROPERTIES INSTALL_RPATH_USE_LINK_PA
 if (NOT ONLY_SIMPLE)
     target_link_libraries(cryptominisat4
         ${cryptoms_exec_link_libs}
+        ak_program_options
     )
     install(TARGETS cryptominisat4
         EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
