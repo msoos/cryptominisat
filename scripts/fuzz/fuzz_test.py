@@ -413,7 +413,7 @@ class Tester:
 
     def option_supported(self, option_name):
         command = options.solver
-        command += " --help"
+        command += " --hhelp"
         p = subprocess.Popen(
             command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         consoleOutput, err = p.communicate()
