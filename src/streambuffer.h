@@ -35,14 +35,6 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 //B = fread, gz_read
 typedef size_t(*fread_op_norm)(void*, size_t, size_t, FILE*);
 
-struct MyText {
-    const unsigned char* txt = 0;
-    size_t size = 0;
-    size_t at = 0;
-};
-
-typedef size_t(*fread_op_text)(void*, size_t, size_t, MyText&);
-
 template<typename A, typename B, B C>
 class StreamBuffer
 {

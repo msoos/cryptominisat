@@ -25,6 +25,13 @@ THE SOFTWARE.
 #include "cryptominisat4/cryptominisat.h"
 #include "dimacsparser.h"
 
+struct MyText {
+    const unsigned char* txt = 0;
+    size_t size = 0;
+    size_t at = 0;
+};
+
+typedef size_t(*fread_op_text)(void*, size_t, size_t, MyText&);
 
 using namespace CMSat;
 
