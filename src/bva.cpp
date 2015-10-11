@@ -427,7 +427,9 @@ void BVA::fill_m_cls_lits_and_red()
                 red = cl_orig->red();
                 break;
             }
-            case CMSat::watch_idx_t: {
+            case CMSat::watch_idx_t:
+            default:
+            {
                 // This should never be here
                 assert(false);
                 exit(-1);
