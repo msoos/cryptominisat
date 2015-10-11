@@ -673,6 +673,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     const int64_t orig_empty_varelim_time_limit = empty_varelim_time_limit;
     limit_to_decrease = &empty_varelim_time_limit;
     assert(cl_to_free_later.empty());
+    assert(solver->watches.get_smudged_list().empty());
 
     size_t num = 0;
     for(size_t var = solver->mtrand.randInt(solver->nVars())

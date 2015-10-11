@@ -240,9 +240,9 @@ bool VarReplacer::perform_replace()
     if (!replaceImplicit()) {
         goto end;
     }
-    solver->watches.clear_smudged();
 
     //Replace longs
+    assert(solver->watches.get_smudged_list().empty());
     assert(delayed_attach_or_free.empty());
     if (!replace_set(solver->longIrredCls)) {
         goto end;
@@ -515,6 +515,7 @@ bool VarReplacer::replaceImplicit()
     impl_tmp_stats.clear();
     delayedEnqueue.clear();
     delayed_attach_bin.clear();
+    assert(solver->watches.get_smudged_list().empty());
 
     for(size_t i = 0; i < solver->nVars()*2; i++) {
         const Lit lit = Lit::toLit(i);
@@ -583,6 +584,7 @@ bool VarReplacer::replaceImplicit()
     #endif
 
     updateStatsFromImplStats();
+    solver->watches.clear_smudged();
 
     return solver->ok;
 }

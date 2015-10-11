@@ -118,6 +118,7 @@ void XorFinder::find_xors_based_on_short_clauses()
 
 void XorFinder::find_xors()
 {
+    assert(solver->watches.get_smudged_list().empty());
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM

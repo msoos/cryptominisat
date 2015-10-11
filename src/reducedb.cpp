@@ -106,6 +106,7 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
 CleaningStats ReduceDB::reduceDB()
 {
     const double myTime = cpuTime();
+    assert(solver->watches.get_smudged_list().empty());
     nbReduceDB++;
     CleaningStats tmpStats;
     tmpStats.origNumClauses = solver->longRedCls.size();
@@ -143,7 +144,6 @@ CleaningStats ReduceDB::reduceDB()
     }
 
     solver->clean_occur_from_removed_clauses_only_smudged();
-    solver->watches.clear_smudged();
     for(ClOffset offset: delayed_clause_free) {
         solver->cl_alloc.clauseFree(offset);
         solver->num_red_cls_reducedb--;

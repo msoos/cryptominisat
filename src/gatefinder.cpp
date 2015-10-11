@@ -49,7 +49,7 @@ bool GateFinder::doAll()
     runStats.clear();
     orGates.clear();
 
-    solver->watches.clear_smudged();
+    assert(solver->watches.get_smudged_list().empty());
     find_or_gates_and_update_stats();
     if (!all_simplifications_with_gates())
         goto end;
