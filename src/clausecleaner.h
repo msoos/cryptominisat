@@ -79,8 +79,13 @@ class ClauseCleaner
             , const Lit lit
         );
 
+        void clean_clauses_pre();
+        void clean_clauses_post();
+        void clean_clauses_inter(vector<ClOffset>& cs);
+
         bool satisfied(const Watched& watched, Lit lit);
         bool clean_clause(Clause& c);
+        vector<ClOffset> delayed_free;
 
         Solver* solver;
 };

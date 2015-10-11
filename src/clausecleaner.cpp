@@ -194,6 +194,13 @@ void ClauseCleaner::clean_implicit_clauses()
 
 void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 {
+    clean_clauses_pre();
+    clean_clauses_inter(cs);
+    clean_clauses_post();
+}
+
+void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
+{
     assert(!solver->drup->something_delayed());
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
@@ -210,9 +217,24 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
             __builtin_prefetch(pre_cl);
         }
 
-        Clause& cl = *solver->cl_alloc.ptr(*s);
+        const ClOffset off = *s;
+        Clause& cl = *solver->cl_alloc.ptr(off);
+
+        const Lit origLit1 = cl[0];
+        const Lit origLit2 = cl[1];
+        const auto origSize = cl.size();
+        const bool red = cl.red();
+
         if (clean_clause(cl)) {
-            solver->cl_alloc.clauseFree(*s);
+            solver->watches.smudge(origLit1);
+            solver->watches.smudge(origLit2);
+            cl.setRemoved();
+            if (red) {
+                solver->litStats.redLits -= origSize;
+            } else {
+                solver->litStats.irredLits -= origSize;
+            }
+            delayed_free.push_back(off);
         } else {
             *ss++ = *s;
         }
@@ -224,11 +246,8 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
     assert(!solver->drup->something_delayed());
     assert(cl.size() > 3);
-    const uint32_t origSize = cl.size();
-
     (*solver->drup) << deldelay << cl << fin;
-    const Lit origLit1 = cl[0];
-    const Lit origLit2 = cl[1];
+
 
     Lit *i, *j, *end;
     uint32_t num = 0;
@@ -240,7 +259,6 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
         }
 
         if (val == l_True) {
-            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
             (*solver->drup) << findelay;
             return true;
         }
@@ -255,11 +273,9 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
     assert(cl.size() > 1);
     if (i != j) {
         if (cl.size() == 2) {
-            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
             return true;
         } else if (cl.size() == 3) {
-            solver->detach_modified_clause(origLit1, origLit2, origSize, &cl);
             solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return true;
         } else {
@@ -302,12 +318,32 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
     solver->binTri.redTris -= remLTri/3;
 }
 
+void ClauseCleaner::clean_clauses_pre()
+{
+    assert(solver->watches.get_smudged_list().empty());
+    assert(delayed_free.empty());
+}
+
+void ClauseCleaner::clean_clauses_post()
+{
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    for(ClOffset off: delayed_free) {
+        solver->cl_alloc.clauseFree(off);
+    }
+    delayed_free.clear();
+}
+
 void ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
+
     clean_implicit_clauses();
-    clean_clauses(solver->longIrredCls);
-    clean_clauses(solver->longRedCls);
+
+    clean_clauses_pre();
+    clean_clauses_inter(solver->longIrredCls);
+    clean_clauses_inter(solver->longRedCls);
+    clean_clauses_post();
+
 
     #ifndef NDEBUG
     //Once we have cleaned the watchlists
