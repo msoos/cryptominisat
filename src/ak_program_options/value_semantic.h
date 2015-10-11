@@ -37,7 +37,7 @@ namespace ak_program_options {
 		virtual void apply_implicit() {};
 		virtual bool composing() const { return false; };
 		virtual void notify() const {};
-		virtual void set_value(const char *v) {};
+		virtual void set_value(const char *v) {(void)v;};
 		virtual int *get_value() const { return nullptr; };
 
 		/** If stored value if of type T, returns that value. Otherwise,
@@ -58,6 +58,9 @@ namespace ak_program_options {
 
 		/// Return true if a value argument is required
 		virtual bool required() const { return false; };
+		
+		/// Return true iff it is a bool_switch
+		virtual bool is_bool_switch() const { return false; };		
 	};
 
 #define NO_VALUE ((value_semantic *)0)
@@ -82,6 +85,7 @@ namespace ak_program_options {
 		Value *implicit_value(const T &v) {
 			m_implicit = v; 
 			m_implicited = true;
+			m_required = false;
 			return this;
 		};
 		void apply_implicit() {
@@ -100,6 +104,8 @@ namespace ak_program_options {
 		bool implicited() const { return m_implicited; };
 		bool empty() const { return m_empty; }
 		bool required() const { return m_required; }
+		bool is_bool_switch() const { return m_is_bool_switch; }
+		void set_as_bool_switch() { m_is_bool_switch = true; }
 		const std::string &textual() const { return m_textual; };
 
 	private:
@@ -112,6 +118,7 @@ namespace ak_program_options {
 		bool m_required = false;
 		bool m_defaulted = false;
 		bool m_implicited = false;
+		bool m_is_bool_switch = false;
 		std::string m_textual = "";
 	};
 

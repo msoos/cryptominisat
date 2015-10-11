@@ -297,6 +297,7 @@ void Main::add_supported_options()
     generalOptions.add_options()
     ("help,h", "Print simple help")
     ("hhelp", "Print extensive help")
+    ("hhhelp", "Print hidden help")
     ("version,v", "Print version info")
     ("verb", po::value(&conf.verbosity)->default_value(conf.verbosity)
         , "[0-10] Verbosity of solver. 0 = only solution")
@@ -819,7 +820,7 @@ void Main::check_options_correctness()
             cout << help_options_simple << endl;
             std::exit(0);
         }
-
+        
         po::notify(vm);
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::unknown_option> >& c

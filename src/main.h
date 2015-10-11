@@ -71,7 +71,7 @@ class Main
         po::options_description cmdline_options;
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
-
+        
         SATSolver* solver = NULL;
 
         //File reading

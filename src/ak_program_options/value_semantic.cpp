@@ -37,9 +37,15 @@
 
 namespace ak_program_options {
 	std::string arg("arg");
+	
+	std::string optional_arg("[arg]");
+
+	std::string no_arg("");
 
 	std::string value_semantic::name() const {
-		return arg;
+		return required() ? arg : 
+		       is_bool_switch() ? no_arg :
+		       optional_arg;
 	}
 
 	template<>
@@ -82,6 +88,7 @@ namespace ak_program_options {
 	Value<bool>::Value() {
 		m_default = false;
 		m_required = true;
+		m_is_bool_switch = true;
 	}
 
 	template<>
@@ -111,6 +118,7 @@ namespace ak_program_options {
 	Value<bool> *bool_switch(bool *v) {
 		Value<bool> *val = new Value<bool>(v);
 		val->implicit_value(true);
+		val->set_as_bool_switch();
 		return val;
 	}
 
@@ -261,3 +269,4 @@ namespace ak_program_options {
 		m_empty = false;
 	}
 }
+
