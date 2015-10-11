@@ -1604,6 +1604,7 @@ bool Solver::execute_inprocess_strategy(
         ) {
             return ok;
         }
+        assert(solver->watches.get_smudged_list().empty());
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
