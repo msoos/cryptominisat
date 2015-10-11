@@ -52,7 +52,7 @@ const option_description *basic_parsed_options::findByName(std::string name) con
 }
 
 //  return string of short option commandline flags
-const char *basic_parsed_options::short_options() const {
+const std::string basic_parsed_options::short_options() const {
 	std::vector<option_description *> opts = m_desc.options();
 	std::string s("");
 
@@ -60,9 +60,9 @@ const char *basic_parsed_options::short_options() const {
 		s.append(opt->short_option());
 	}
 
-	std::string *ret = new std::string(s);
+	std::string ret = std::string(s);
 
-	return ret->c_str();
+	return ret;
 }
 
 //  return array of long option structs

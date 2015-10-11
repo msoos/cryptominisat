@@ -58,6 +58,10 @@ namespace ak_program_options {
 
 	public:
 		options_description() {};
+		//  FIXME:
+		//  not really sure if the m_options vector
+		//  has to be cleaned up at destruction time
+		~options_description() {}; 
 		options_description(const std::string& caption) { m_caption = caption;	};
 
 		void add(option_description *desc);
@@ -65,8 +69,6 @@ namespace ak_program_options {
 		options_description_easy_init add_options();
 
 		unsigned get_option_column_width() const;
-
-		// const std::vector<option_description *>& options() const;
 
 		/** Produces a human readable output of 'desc', listing options,
 		their descriptions and allowed parameters. Other options_description

@@ -61,17 +61,13 @@ namespace ak_program_options {
 
 	std::string option_description::short_option() const {
 		if (!m_short_name.empty()) {
+		        // assert(m_short_name.size() == 2);
+			// assert(m_short_name.substr(0, 1) == std::string("-"));
 			if (m_value_semantic == NO_VALUE) {
-				assert(m_short_name.size() == 2);
-				assert(m_short_name[0] == '-');
 				return m_short_name.substr(1);
 			}
 			else {
-				std::string s(m_short_name.substr(1));
-
-				s.append(":");
-
-				return std::string(s);
+				return m_short_name.substr(1).append(":");
 			}
 		}
 		else {
@@ -149,18 +145,18 @@ namespace ak_program_options {
 		std::string::size_type n = name.find(',');
 		if (n != std::string::npos) {
 			assert(n == name.size() - 2);
-			m_long_name = name.substr(0, n);
-			m_short_name = '-' + name.substr(n + 1, 1);
+			m_long_name = std::string(name.substr(0, n));
+			m_short_name = std::string("-").append(name.substr(n + 1, 1));
 			m_id = (int)m_short_name[1];
 		}
 		else if (name.size() < 2) {
 			//  no long name supplied, only a short name
-			m_long_name = "";
-			m_short_name = '-' + name;
+			m_long_name = std::string("");
+			m_short_name = std::string("-").append(name);
 		}
 		else {
-			m_long_name = name;
-			m_short_name = "";
+			m_long_name = std::string(name);
+			m_short_name = std::string("");
 		}
 
 		m_id = (int)((size_t)this);

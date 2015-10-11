@@ -52,7 +52,7 @@ namespace ak_program_options {
 		const positional_options_description *get_positional_description() const { return m_positional_desc; };
 
 		///  return string of short option commandline flags
-		const char *short_options() const;
+		const std::string short_options() const;
 
 		///  return array of long option structs
 		option *long_options() const;

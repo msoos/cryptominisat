@@ -33,12 +33,13 @@ namespace ak_program_options {
 
 	class value_semantic {	
 	public:
-		std::string name() const;
+		virtual ~value_semantic() {};
 		virtual void apply_implicit() {};
 		virtual bool composing() const { return false; };
 		virtual void notify() const {};
 		virtual void set_value(const char *v) {(void)v;};
 		virtual int *get_value() const { return nullptr; };
+		std::string name() const;
 
 		/** If stored value if of type T, returns that value. Otherwise,
 		throws exception. */
@@ -70,7 +71,8 @@ namespace ak_program_options {
 	public:
 		Value();
 		Value(T *v);
-
+                ~Value() {};
+                
 		Value *default_value(const T &v) { 
 			m_default = v; 
 			m_defaulted = true;

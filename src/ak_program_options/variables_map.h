@@ -38,6 +38,7 @@ namespace ak_program_options {
 	class variables_map : public std::map<std::string, value_semantic *> {
 	public:
 		variables_map() {};
+		~variables_map();
 
 		/** Obtains the value of variable 'name', from *this.
 
@@ -53,16 +54,21 @@ namespace ak_program_options {
 		void clear();
 
 		void notify();
+		
+		void remember_options(const basic_parsed_options *options) { m_options = options; };
 
 	private:
 		/** Returns value of variable 'name' stored in *this, or
 		empty value otherwise. */
 		const value_semantic *get(const std::string& name) const;
+		/** remember options for deconstruction */
+		const basic_parsed_options *m_options;
 	};
 
 	/** Stores in 'vm' all options that are defined in 'options'.
 	If 'vm' already has a non-defaulted value of an option, that value
 	is not changed, even if 'options' specify some value.
+	'options' are deconstructed during deconstruction of 'vm'
 	*/
 	void store(const basic_parsed_options *options, variables_map &vm);
 

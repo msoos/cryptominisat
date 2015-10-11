@@ -50,11 +50,14 @@ is not changed, even if 'options' specify some value.
 */
 void store(const basic_parsed_options *options, variables_map &vm)
 {
-	char *short_options = (char *)options->short_options();
+	char *short_options = (char *)options->short_options().c_str();
 	option *long_options = options->long_options();
 	const positional_options_description *positional_options = options->get_positional_description();
 	int index;
 	unsigned pos_option_index = 0;
+	
+	//  remember options for deconstruction
+	vm.remember_options(options);
 
 	//  start with argv[1] as first parameter token
 	optind = 1;
@@ -133,6 +136,8 @@ void store(const basic_parsed_options *options, variables_map &vm)
 		}
 	}
 
+	delete [] long_options;
+
 	//  add options which have defaults and are not contained yet
 	for (option_description *opt : options->descriptions().options()) {
 		std::string name(opt->name());
@@ -145,12 +150,20 @@ void store(const basic_parsed_options *options, variables_map &vm)
 				vm.insert(std::pair<std::string, value_semantic *>(name, sem));
 			}
 		}
-	}
+	}	
 }
 
 void notify(variables_map& vm)
 {
 	vm.notify();
+}
+
+variables_map::~variables_map()
+{
+	std::cout << "destruct variables_map" << std::endl;
+	assert(m_options != nullptr);
+	delete m_options;
+	std::cout << "destruct variables_map complete" << std::endl;
 }
 
 const value_semantic
@@ -180,6 +193,7 @@ const value_semantic
 void
 variables_map::notify()
 {
+	std::cout << "variables_map notify started" << std::endl;
 	// Not implemented: checks if all required options occur
 
 
@@ -189,6 +203,8 @@ variables_map::notify()
 			kv.second->notify();
 		}
 	}
+	
+	std::cout << "variables_map notify complete" << std::endl;
 }
 
 }

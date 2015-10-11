@@ -29,8 +29,10 @@
 #ifndef OPTION_DESCRIPTION_H_INCLUDED
 #define OPTION_DESCRIPTION_H_INCLUDED
 
+#include <assert.h>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "errors.h"
 #include "akpo_getopt.h"
@@ -42,9 +44,9 @@ namespace ak_program_options {
 	private:
 		option_description& set_name(const char* name);
 
-		std::string m_short_name;
-		std::string m_long_name;
-		std::string m_description;
+		std::string m_short_name = "";
+		std::string m_long_name = "";
+		std::string m_description = "";
 		int m_id;
 
 		const value_semantic *m_value_semantic;
@@ -54,6 +56,12 @@ namespace ak_program_options {
 			m_value_semantic = NO_VALUE;
 			m_id = (int)((size_t)this);
 		};
+		
+		~option_description() {
+                        if (m_value_semantic) {
+				delete m_value_semantic;
+			}
+		}
 
 		int id() const { 
 			if (m_short_name.size() == 2) {
