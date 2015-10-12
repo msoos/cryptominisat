@@ -35,45 +35,45 @@
 
 namespace ak_program_options {
 
-	class variables_map : public std::map<std::string, value_semantic *> {
-	public:
-		variables_map() {};
-		~variables_map();
+    class variables_map : public std::map<std::string, value_semantic *> {
+    public:
+        variables_map() {};
+        ~variables_map();
 
-		/** Obtains the value of variable 'name', from *this.
+        /** Obtains the value of variable 'name', from *this.
 
-		- if there's no value in *this returns empty value.
+        - if there's no value in *this returns empty value.
 
-		- if there's defaulted value
-		- otherwise, return value from *this
+        - if there's defaulted value
+        - otherwise, return value from *this
 
-		- if there's a non-defaulted value, returns it.
-		*/
-		const value_semantic & operator[](const std::string& name) const;
+        - if there's a non-defaulted value, returns it.
+        */
+        const value_semantic & operator[](const std::string& name) const;
 
-		void clear();
+        void clear();
 
-		void notify();
-		
-		void remember_options(const basic_parsed_options *options) { m_options = options; };
+        void notify();
+        
+        void remember_options(const basic_parsed_options *options) { m_options = options; };
 
-	private:
-		/** Returns value of variable 'name' stored in *this, or
-		empty value otherwise. */
-		const value_semantic *get(const std::string& name) const;
-		/** remember options for deconstruction */
-		const basic_parsed_options *m_options;
-	};
+    private:
+        /** Returns value of variable 'name' stored in *this, or
+        empty value otherwise. */
+        const value_semantic *get(const std::string& name) const;
+        /** remember options for deconstruction */
+        const basic_parsed_options *m_options;
+    };
 
-	/** Stores in 'vm' all options that are defined in 'options'.
-	If 'vm' already has a non-defaulted value of an option, that value
-	is not changed, even if 'options' specify some value.
-	'options' are deconstructed during deconstruction of 'vm'
-	*/
-	void store(const basic_parsed_options *options, variables_map &vm);
+    /** Stores in 'vm' all options that are defined in 'options'.
+    If 'vm' already has a non-defaulted value of an option, that value
+    is not changed, even if 'options' specify some value.
+    'options' are deconstructed during deconstruction of 'vm'
+    */
+    void store(const basic_parsed_options *options, variables_map &vm);
 
-	/** Runs all 'notify' function for options in 'vm'. */
-	void notify(variables_map &vm);
+    /** Runs all 'notify' function for options in 'vm'. */
+    void notify(variables_map &vm);
 }
 
 #endif

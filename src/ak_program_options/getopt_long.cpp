@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1987, 1993, 1994, 1996
- *	The Regents of the University of California.  All rights reserved.
+ *  The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,8 +12,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *  This product includes software developed by the University of
+ *  California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -54,185 +54,185 @@
 static const char *
 __progname(const char *nargv0)
 {
-	const char * tmp;
+    const char * tmp;
 
-	_DIAGASSERT(nargv0 != NULL);
+    _DIAGASSERT(nargv0 != NULL);
 
-	tmp = strrchr(nargv0, '/');
-	if (tmp)
-		tmp++;
-	else
-		tmp = nargv0;
-	return(tmp);
+    tmp = strrchr(nargv0, '/');
+    if (tmp)
+        tmp++;
+    else
+        tmp = nargv0;
+    return(tmp);
 }
 
-#define	BADCH	(int)'?'
-#define	BADARG	(int)':'
-#define	EMSG	""
+#define BADCH   (int)'?'
+#define BADARG  (int)':'
+#define EMSG    ""
 
 /*
  * getopt --
- *	Parse argc/argv argument vector.
+ *  Parse argc/argv argument vector.
  */
 int
 getopt_internal(int nargc, char **nargv, const char *ostr)
 {
-	static const char *place = EMSG;  /* option letter processing */
-	const char *oli;				          /* option letter list index */
+    static const char *place = EMSG;  /* option letter processing */
+    const char *oli;                          /* option letter list index */
 
-	_DIAGASSERT(nargv != NULL);
-	_DIAGASSERT(ostr != NULL);
+    _DIAGASSERT(nargv != NULL);
+    _DIAGASSERT(ostr != NULL);
 
-	if (optreset || !*place) {		/* update scanning pointer */
-		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') {
-			place = EMSG;
-			return (-1);
-		}
-		if (place[1] && *++place == '-') {	/* found "--" */
-			/* ++optind; */
-			place = EMSG;
-			return (-2);
-		}
-	}					/* option letter okay? */
-	if ((optopt = (int)*place++) == (int)':' ||
-	    !(oli = strchr(ostr, optopt))) {
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
-		 */
-		if (optopt == (int)'-')
-			return (-1);
-		if (!*place)
-			++optind;
-		if (opterr && *ostr != ':')
-			(void)fprintf(stderr,
-			    "%s: illegal option -- %c\n", __progname(nargv[0]), optopt);
-		return (BADCH);
-	}
-	if (*++oli != ':') {			/* don't need argument */
-		optarg = NULL;
-		if (!*place)
-			++optind;
-	} else {				/* need an argument */
-		if (*place)			/* no white space */
-			optarg = (char *)place;
-		else if (nargc <= ++optind) {	/* no arg */
-			place = EMSG;
-			if ((opterr) && (*ostr != ':'))
-				(void)fprintf(stderr,
-				    "%s: option requires an argument -- %c\n",
-				    __progname(nargv[0]), optopt);
-			return (BADARG);
-		} else				/* white space */
-			optarg = nargv[optind];
-		place = EMSG;
-		++optind;
-	}
-	return (optopt);			/* dump back option letter */
+    if (optreset || !*place) {      /* update scanning pointer */
+        optreset = 0;
+        if (optind >= nargc || *(place = nargv[optind]) != '-') {
+            place = EMSG;
+            return (-1);
+        }
+        if (place[1] && *++place == '-') {  /* found "--" */
+            /* ++optind; */
+            place = EMSG;
+            return (-2);
+        }
+    }                   /* option letter okay? */
+    if ((optopt = (int)*place++) == (int)':' ||
+        !(oli = strchr(ostr, optopt))) {
+        /*
+         * if the user didn't specify '-' as an option,
+         * assume it means -1.
+         */
+        if (optopt == (int)'-')
+            return (-1);
+        if (!*place)
+            ++optind;
+        if (opterr && *ostr != ':')
+            (void)fprintf(stderr,
+                "%s: illegal option -- %c\n", __progname(nargv[0]), optopt);
+        return (BADCH);
+    }
+    if (*++oli != ':') {            /* don't need argument */
+        optarg = NULL;
+        if (!*place)
+            ++optind;
+    } else {                /* need an argument */
+        if (*place)         /* no white space */
+            optarg = (char *)place;
+        else if (nargc <= ++optind) {   /* no arg */
+            place = EMSG;
+            if ((opterr) && (*ostr != ':'))
+                (void)fprintf(stderr,
+                    "%s: option requires an argument -- %c\n",
+                    __progname(nargv[0]), optopt);
+            return (BADARG);
+        } else              /* white space */
+            optarg = nargv[optind];
+        place = EMSG;
+        ++optind;
+    }
+    return (optopt);            /* dump back option letter */
 }
 
 #if 0
 /*
  * getopt --
- *	Parse argc/argv argument vector.
+ *  Parse argc/argv argument vector.
  */
 int
 getopt2(nargc, nargv, ostr)
-	int nargc;
-	char * const *nargv;
-	const char *ostr;
+    int nargc;
+    char * const *nargv;
+    const char *ostr;
 {
-	int retval;
+    int retval;
 
-	if ((retval = getopt_internal(nargc, nargv, ostr)) == -2) {
-		retval = -1;
-		++optind; 
-	}
-	return(retval);
+    if ((retval = getopt_internal(nargc, nargv, ostr)) == -2) {
+        retval = -1;
+        ++optind; 
+    }
+    return(retval);
 }
 #endif
 
 /*
  * getopt_long --
- *	Parse argc/argv argument vector.
+ *  Parse argc/argv argument vector.
  */
 int
 getopt_long(int nargc, char **nargv, const char *options, struct option *long_options, int *index)
 {
-	int retval;
+    int retval;
 
-	_DIAGASSERT(nargv != NULL);
-	_DIAGASSERT(options != NULL);
-	_DIAGASSERT(long_options != NULL);
-	/* index may be NULL */
+    _DIAGASSERT(nargv != NULL);
+    _DIAGASSERT(options != NULL);
+    _DIAGASSERT(long_options != NULL);
+    /* index may be NULL */
 
-	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
-		char *current_argv = nargv[optind++] + 2, *has_equal;
-		int i, current_argv_len, match = -1;
+    if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
+        char *current_argv = nargv[optind++] + 2, *has_equal;
+        int i, current_argv_len, match = -1;
 
-		if (*current_argv == '\0') {
-			return(-1);
-		}
-		if ((has_equal = strchr(current_argv, '=')) != NULL) {
-			current_argv_len = has_equal - current_argv;
-			has_equal++;
-		} else
-			current_argv_len = strlen(current_argv);
+        if (*current_argv == '\0') {
+            return(-1);
+        }
+        if ((has_equal = strchr(current_argv, '=')) != NULL) {
+            current_argv_len = has_equal - current_argv;
+            has_equal++;
+        } else
+            current_argv_len = strlen(current_argv);
 
-		for (i = 0; long_options[i].name; i++) { 
-			if (strncmp(current_argv, long_options[i].name, current_argv_len))
-				continue;
+        for (i = 0; long_options[i].name; i++) { 
+            if (strncmp(current_argv, long_options[i].name, current_argv_len))
+                continue;
 
-			if (strlen(long_options[i].name) == (unsigned)current_argv_len) { 
-				match = i;
-				break;
-			}
-			if (match == -1)
-				match = i;
-		}
-		if (match != -1) {
-			if (long_options[match].has_arg == required_argument ||
-			    long_options[match].has_arg == optional_argument) {
-				if (has_equal)
-					optarg = has_equal;
-				else
-					optarg = nargv[optind++];
+            if (strlen(long_options[i].name) == (unsigned)current_argv_len) { 
+                match = i;
+                break;
+            }
+            if (match == -1)
+                match = i;
+        }
+        if (match != -1) {
+            if (long_options[match].has_arg == required_argument ||
+                long_options[match].has_arg == optional_argument) {
+                if (has_equal)
+                    optarg = has_equal;
+                else
+                    optarg = nargv[optind++];
 
-				//  quick fix to handle optional argument which are not present
-				//  Axel Kemper 25-Sep-2015
-				if (optarg && (*optarg == '-'))
-					if (long_options[match].has_arg == optional_argument) {
-						optind--;
-						optarg = NULL;
-					}
+                //  quick fix to handle optional argument which are not present
+                //  Axel Kemper 25-Sep-2015
+                if (optarg && (*optarg == '-'))
+                    if (long_options[match].has_arg == optional_argument) {
+                        optind--;
+                        optarg = NULL;
+                    }
 
-			}
-			if ((long_options[match].has_arg == required_argument)
-			    && (optarg == NULL)) {
-				/*
-				 * Missing argument, leading :
-				 * indicates no error should be generated
-				 */
-				if ((opterr) && (*options != ':'))
-					(void)fprintf(stderr,
-				      "%s: option requires an argument -- %s\n",
-				      __progname(nargv[0]), current_argv);
-				return (BADARG);
-			}
-		} else { /* No matching argument */
-			if ((opterr) && (*options != ':'))
-				(void)fprintf(stderr,
-				    "%s: illegal option -- %s\n", __progname(nargv[0]), current_argv);
-			return (BADCH);
-		}
-		if (long_options[match].flag) {
-			*long_options[match].flag = long_options[match].val;
-			retval = 0;
-		} else 
-			retval = long_options[match].val;
-		if (index)
-			*index = match;
-	}
-	return(retval);
+            }
+            if ((long_options[match].has_arg == required_argument)
+                && (optarg == NULL)) {
+                /*
+                 * Missing argument, leading :
+                 * indicates no error should be generated
+                 */
+                if ((opterr) && (*options != ':'))
+                    (void)fprintf(stderr,
+                      "%s: option requires an argument -- %s\n",
+                      __progname(nargv[0]), current_argv);
+                return (BADARG);
+            }
+        } else { /* No matching argument */
+            if ((opterr) && (*options != ':'))
+                (void)fprintf(stderr,
+                    "%s: illegal option -- %s\n", __progname(nargv[0]), current_argv);
+            return (BADCH);
+        }
+        if (long_options[match].flag) {
+            *long_options[match].flag = long_options[match].val;
+            retval = 0;
+        } else 
+            retval = long_options[match].val;
+        if (index)
+            *index = match;
+    }
+    return(retval);
 }

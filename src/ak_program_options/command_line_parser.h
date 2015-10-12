@@ -37,37 +37,37 @@
 
 namespace ak_program_options {
 
-	class basic_command_line_parser {
-	private:
-		unsigned m_argc;
-		char **m_argv;
-		const options_description *m_desc = nullptr;
-		const positional_options_description *m_positional_desc = nullptr;
+    class basic_command_line_parser {
+    private:
+        unsigned m_argc;
+        char **m_argv;
+        const options_description *m_desc = nullptr;
+        const positional_options_description *m_positional_desc = nullptr;
 
-	public:
-		basic_command_line_parser(unsigned argc, char **argv) : m_argc(argc), m_argv(argv) {};
+    public:
+        basic_command_line_parser(unsigned argc, char **argv) : m_argc(argc), m_argv(argv) {};
 
-		basic_command_line_parser &options(const options_description& desc)
-		{
-			m_desc = &desc;
-			return *this;
-		};
+        basic_command_line_parser &options(const options_description& desc)
+        {
+            m_desc = &desc;
+            return *this;
+        };
 
-		basic_command_line_parser &positional(
-				const positional_options_description& desc)	{
-			m_positional_desc = &desc;
-			return *this;
-		};
+        basic_command_line_parser &positional(
+                const positional_options_description& desc) {
+            m_positional_desc = &desc;
+            return *this;
+        };
 
-		const basic_parsed_options *run() {
-			basic_parsed_options *bpo = new basic_parsed_options(m_argc, m_argv, *m_desc);
-			bpo->set_positional_description(m_positional_desc);
+        const basic_parsed_options *run() {
+            basic_parsed_options *bpo = new basic_parsed_options(m_argc, m_argv, *m_desc);
+            bpo->set_positional_description(m_positional_desc);
 
-			return bpo;
-		}
-	};
+            return bpo;
+        }
+    };
 
-	basic_command_line_parser command_line_parser(unsigned argc, char **argv);
+    basic_command_line_parser command_line_parser(unsigned argc, char **argv);
 }
 
 #endif
