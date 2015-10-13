@@ -28,6 +28,7 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 #endif
 #include <stdio.h>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <string>
 
@@ -92,7 +93,7 @@ public:
         }
     }
 
-    bool skipEOL()
+    bool skipEOL(const size_t lineNum)
     {
         for (;;) {
             if (value() == EOF || value() == '\0') return true;
@@ -101,11 +102,22 @@ public:
                 return true;
             }
             if (value() != '\r') {
+                std::cerr
+                << "PARSE ERROR! Unexpected char (hex: " << std::hex
+                << std::setw(2)
+                << std::setfill('0')
+                << "0x" << value()
+                << std::setfill(' ')
+                << std::dec
+                << ")"
+                << " At line " << lineNum+1
+                << " we expected an end of line character (\\n or \\r + \\n)"
+                << std::endl;
                 return false;
             }
             advance();
         }
-        return true;
+        exit(-1);
     }
 
     bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)

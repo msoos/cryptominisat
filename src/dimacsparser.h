@@ -327,7 +327,7 @@ bool DimacsParser<C>::parse_and_add_clause(C& in)
     if (!readClause(in)) {
         return false;
     }
-    if (!in.skipEOL()) {
+    if (!in.skipEOL(lineNum)) {
         return false;
     }
     lineNum++;
@@ -343,7 +343,7 @@ bool DimacsParser<C>::parse_and_add_xor_clause(C& in)
     if (!readClause(in)) {
         return false;
     }
-    if (!in.skipEOL()) {
+    if (!in.skipEOL(lineNum)) {
         return false;
     }
     lineNum++;
