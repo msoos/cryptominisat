@@ -61,7 +61,7 @@ namespace ak_program_options {
 
     std::string option_description::short_option() const {
         if (!m_short_name.empty()) {
-                // assert(m_short_name.size() == 2);
+            // assert(m_short_name.size() == 2);
             // assert(m_short_name.substr(0, 1) == std::string("-"));
             if (m_value_semantic == NO_VALUE) {
                 return m_short_name.substr(1);
@@ -164,3 +164,4 @@ namespace ak_program_options {
         return *this;
     }
 }
+

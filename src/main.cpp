@@ -685,6 +685,7 @@ void Main::add_supported_options()
         , "Reconfigure after some time to this solver configuration [0..13]")
     ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
         , "The file to save the saved state of the solver")
+    ("vhelp", "show variables_map after parsing the commandline")
     ;
 
     po::options_description gaussOptions("Gauss options");
@@ -821,6 +822,12 @@ void Main::check_options_correctness()
         }
         
         po::notify(vm);
+        
+        if (vm.count("vhelp"))
+        {
+            vm.show_options();
+        }
+        
     } catch (boost::exception_detail::clone_impl<
         boost::exception_detail::error_info_injector<po::unknown_option> >& c
     ) {

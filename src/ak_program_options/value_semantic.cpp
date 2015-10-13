@@ -27,13 +27,16 @@
  */
 
 #include <stdlib.h> 
-#include <string>
 #include <string.h>
-#include <vector>
-#include "errors.h"
-#include <iostream>
 
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "errors.h"
 #include "value_semantic.h"
+
+#define BASE10 10
 
 namespace ak_program_options {
     std::string arg("arg");
@@ -122,6 +125,78 @@ namespace ak_program_options {
         return val;
     }
 
+    /// FIXME: there should be a more compact way for the following
+        
+    template<>
+    std::string Value<int>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<long>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<long long>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<unsigned int>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<unsigned long>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<unsigned long long>::to_string() const {
+        return int_to_string();
+    }
+
+    template<>
+    std::string Value<bool>::to_string() const {
+        return std::string((empty() ? m_default : m_value) ? "true" : "false");
+    }
+
+    template<>
+    std::string Value<double>::to_string() const {
+        return std::to_string(empty() ? m_default : m_value);
+    }
+
+    template<>
+    std::string Value<std::string>::to_string() const {
+        return empty() ? m_default : m_value;
+    }
+
+    template<>
+    std::string Value<std::vector<std::string>>::to_string() const {
+        std::string s("[");
+        std::vector<std::string> v(empty() ? m_default : m_value);        
+        int i = 0;
+        
+        for (std::string si : v)
+        {
+            if (i++ > 0)
+            {
+                s += ",";
+            }
+            s += si;
+        }
+        s += "]";
+        
+        return std::string(s);
+    }
+
+    template<typename T>
+    std::string Value<T>::int_to_string() const {
+        return std::to_string(empty() ? m_default : m_value);
+    }
+    
+    
     /// FIXME: the following value() functions should be possible as template
 
     Value<int> *value(int *v) {
@@ -172,7 +247,7 @@ namespace ak_program_options {
     template<>
     void Value<int>::set_value(const char *v) {
         char* x;
-        m_value = strtol(v, &x, 10);
+        m_value = (int)strtol(v, &x, BASE10);
         if (x != v + strlen(v)) {
             throw_exception<invalid_option_value>(invalid_option_value(v, ""));
         }
@@ -182,7 +257,7 @@ namespace ak_program_options {
     template<>
     void Value<long>::set_value(const char *v) {
         char *x;
-        m_value = strtol(v, &x, 10);
+        m_value = strtol(v, &x, BASE10);
         if (x != v + strlen(v)) {
             throw_exception<invalid_option_value>(invalid_option_value("", v));
         }
@@ -192,7 +267,7 @@ namespace ak_program_options {
     template<>
     void Value<long long>::set_value(const char *v) {
         char *x;
-        m_value = strtol(v, &x, 10);
+        m_value = strtol(v, &x, BASE10);
         if (x != v + strlen(v)) {
             throw_exception<invalid_option_value>(invalid_option_value("", v));
         }
@@ -202,13 +277,13 @@ namespace ak_program_options {
     template<>
     void Value<unsigned int>::set_value(const char *v) {
         char *x;
-        long int orig = strtol(v, &x, 10);
-        if (x != v + strlen(v)
-            || orig < 0
+        long int orig = strtol(v, &x, BASE10);
+        if ((x != v + strlen(v))
+            || (orig < 0)
         ) {
             throw_exception<invalid_option_value>(invalid_option_value("", v));
         }
-        m_value = orig;
+        m_value = (unsigned int)orig;
         m_empty = false;
     }
 
@@ -216,12 +291,12 @@ namespace ak_program_options {
     void Value<unsigned long>::set_value(const char *v) {
         char *x;
         long int orig = strtol(v, &x, 10);
-        if (x != v + strlen(v)
-            || orig < 0
+        if ((x != v + strlen(v))
+            || (orig < 0)
         ) {
             throw_exception<invalid_option_value>(invalid_option_value("", v));
         }
-        m_value = orig;
+        m_value = (unsigned long)orig;
         m_empty = false;
     }
 
@@ -229,12 +304,12 @@ namespace ak_program_options {
     void Value<unsigned long long>::set_value(const char *v) {
         char *x;
         long int orig = strtol(v, &x, 10);
-        if (x != v + strlen(v)
-            || orig < 0
+        if ((x != v + strlen(v))
+            || (orig < 0)
         ) {
             throw_exception<invalid_option_value>(invalid_option_value("", v));
         }
-        m_value = orig;
+        m_value = (unsigned long long)orig;
         m_empty = false;
     }
 
@@ -257,7 +332,7 @@ namespace ak_program_options {
     template<>
     void Value<std::string>::set_value(const char *v) {
         m_value = std::string(v);
-        if (m_value.size() >= 2 && m_value.substr(0, 2) == "--") {
+        if ((m_value.size() >= 2) && m_value.substr(0, 2) == "--") {
             throw_exception<invalid_option_value>(invalid_option_value("", m_value));
         }
         m_empty = false;

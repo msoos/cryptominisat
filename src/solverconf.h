@@ -185,8 +185,8 @@ class SolverConf
         int print_restart_line_every_n_confl;
 
         //Limits
-        double   maxTime;
-        long maxConfl;
+        double    maxTime;
+        long      maxConfl;
 
         //Glues
         int       update_glues_on_prop;

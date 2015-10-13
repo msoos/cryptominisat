@@ -29,6 +29,8 @@
 #ifndef VALUE_SEMANTIC_H_INCLUDED
 #define VALUE_SEMANTIC_H_INCLUDED
 
+#include <iostream>
+
 namespace ak_program_options {
 
     class value_semantic {  
@@ -39,6 +41,7 @@ namespace ak_program_options {
         virtual void notify() const {};
         virtual void set_value(const char *v) {(void)v;};
         virtual int *get_value() const { return nullptr; };
+        virtual std::string to_string() const { return std::string("???"); };
         std::string name() const;
 
         /** If stored value if of type T, returns that value. Otherwise,
@@ -71,7 +74,7 @@ namespace ak_program_options {
     public:
         Value();
         Value(T *v);
-                ~Value() {};
+        ~Value() {};
                 
         Value *default_value(const T &v) { 
             m_default = v; 
@@ -96,11 +99,12 @@ namespace ak_program_options {
         };
         void notify() const {
             if (m_destination != nullptr) {
-                *m_destination = *(T *)get_value();
+                *m_destination = (empty() && defaulted()) ? m_default 
+                                                          : m_value;
             }
         }
         void set_value(const char *v);
-        int *get_value() const { return (int *)(m_empty ? &m_default : &m_value); };
+        int *get_value() const { return (int *)(empty() ? &m_default : &m_value); };
         bool composing() const { return m_composing; }
         bool defaulted() const { return m_defaulted; };
         bool implicited() const { return m_implicited; };
@@ -108,8 +112,12 @@ namespace ak_program_options {
         bool required() const { return m_required; }
         bool is_bool_switch() const { return m_is_bool_switch; }
         void set_as_bool_switch() { m_is_bool_switch = true; }
+        std::string to_string() const;
         const std::string &textual() const { return m_textual; };
 
+    private:
+        std::string int_to_string() const;
+    
     private:
         T *m_destination = nullptr;
         T m_default;

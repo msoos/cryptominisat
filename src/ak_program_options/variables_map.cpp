@@ -160,10 +160,8 @@ void notify(variables_map& vm)
 
 variables_map::~variables_map()
 {
-    std::cout << "destruct variables_map" << std::endl;
     assert(m_options != nullptr);
     delete m_options;
-    std::cout << "destruct variables_map complete" << std::endl;
 }
 
 const value_semantic
@@ -182,20 +180,16 @@ void variables_map::clear()
 const value_semantic
 *variables_map::get(const std::string& name) const
 {
-    static value_semantic empty;
-    const_iterator i = this->find(name);
-    if (i == this->end())
-        return &empty;
-    else
-        return i->second;
+    static value_semantic empty;    
+    const_iterator i = find(name);
+    
+    return (i == end()) ? &empty 
+                        : i->second;
 }
 
-void
-variables_map::notify()
+void variables_map::notify()
 {
-    std::cout << "variables_map notify started" << std::endl;
     // Not implemented: checks if all required options occur
-
 
     // Lastly, run notify actions.
     for (auto& kv : *this) {
@@ -203,8 +197,25 @@ variables_map::notify()
             kv.second->notify();
         }
     }
+}
+
+void variables_map::show_options()
+{
+    std::cout << "Entries in variables_map: " << this->size() << std::endl;
     
-    std::cout << "variables_map notify complete" << std::endl;
+    for (auto& kv : *this) {
+        std::cout << kv.first << ": ";
+                
+        if (kv.second != nullptr) {
+            std::cout << kv.second->to_string();
+        }
+        else {
+            std::cout << " <null>";
+        }
+        std::cout << std::endl;
+    }
+    
+    std::cout << std::endl;
 }
 
 }

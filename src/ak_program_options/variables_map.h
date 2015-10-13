@@ -56,6 +56,9 @@ namespace ak_program_options {
         void notify();
         
         void remember_options(const basic_parsed_options *options) { m_options = options; };
+   
+        /**  display a list of options and their values  */     
+        void show_options();
 
     private:
         /** Returns value of variable 'name' stored in *this, or
