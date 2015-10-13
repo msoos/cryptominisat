@@ -416,6 +416,13 @@ static PyMemberDef Solver_members[] = {
     {NULL}  /* Sentinel */
 };
 
+static const char solver_create_docstring[] = "Create Solver object.\n"
+"Supported arguments: verbose, clause_limit, threads.\n"
+"   'verbose' -- integer. 0: nothing printed. 15: very verbose. Default: 0\n"
+"   'confl_limit' -- integer. Abort after this many conflicts. Default: never abort.\n"
+"   'threads' -- integer. Number of threads to use. Default: 1"
+;
+
 static PyTypeObject pycryptosat_SolverType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
@@ -438,7 +445,7 @@ static PyTypeObject pycryptosat_SolverType = {
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "Solver objects",           /* tp_doc */
+    solver_create_docstring,           /* tp_doc */
     0,                     /* tp_traverse */
     0,                     /* tp_clear */
     0,                     /* tp_richcompare */
