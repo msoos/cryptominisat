@@ -264,13 +264,6 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
     (*solver->drup) << deldelay << cl << fin;
-    #ifdef VERBOSE_DEBUG
-    cout << "Clause to clean: " << cl << endl;
-    for(size_t i = 0; i < cl.size(); i++) {
-        cout << cl[i] << " : "  << solver->value(cl[i]) << " , ";
-    }
-    cout << endl;
-    #endif
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -303,9 +296,6 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     }
 
     if (satisfied) {
-        #ifdef VERBOSE_DEBUG
-        cout << "Clause cleaning -- satisfied, removing" << endl;
-        #endif
         (*solver->drup) << findelay;
         unlink_clause(offset, false);
         return l_True;
