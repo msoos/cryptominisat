@@ -39,76 +39,78 @@
 
 namespace ak_program_options {
 
-	class options_description_easy_init;
+    class options_description_easy_init;
 
-	class options_description {
-	private:
-		std::string m_caption;
+    class options_description {
+    private:
+        std::string m_caption;
 
-		// Data organization is chosen because:
-		// - there could be two names for one option
-		// - option_add_proxy needs to know the last added option
-		std::vector<option_description *> m_options;
+        // Data organization is chosen because:
+        // - there could be two names for one option
+        // - option_add_proxy needs to know the last added option
+        std::vector<option_description *> m_options;
 
-		std::vector<options_description *> m_groups;
-		std::vector<bool> m_belong_to_group;
+        std::vector<options_description *> m_groups;
+        std::vector<bool> m_belong_to_group;
 
-		unsigned m_line_length = 80;
-		unsigned m_min_description_length = 20;
+        unsigned m_line_length = 80;
+        unsigned m_min_description_length = 20;
 
-	public:
-		options_description() {};
-		options_description(const std::string& caption) { m_caption = caption;	};
+    public:
+        options_description() {};
+        //  FIXME:
+        //  not really sure if the m_options vector
+        //  has to be cleaned up at destruction time
+        ~options_description() {}; 
+        options_description(const std::string& caption) { m_caption = caption;  };
 
-		void add(option_description *desc);
-		options_description &add(const options_description& desc);
-		options_description_easy_init add_options();
+        void add(option_description *desc);
+        options_description &add(const options_description& desc);
+        options_description_easy_init add_options();
 
-		unsigned get_option_column_width() const;
+        unsigned get_option_column_width() const;
 
-		// const std::vector<option_description *>& options() const;
+        /** Produces a human readable output of 'desc', listing options,
+        their descriptions and allowed parameters. Other options_description
+        instances previously passed to add will be output separately. */
+        friend std::ostream& operator<<(std::ostream& os,
+            const options_description& desc);
 
-		/** Produces a human readable output of 'desc', listing options,
-		their descriptions and allowed parameters. Other options_description
-		instances previously passed to add will be output separately. */
-		friend std::ostream& operator<<(std::ostream& os,
-			const options_description& desc);
+        /** Outputs 'desc' to the specified stream, calling 'f' to output each
+        option_description element. */
+        void print(std::ostream& os, unsigned width = 0) const;
 
-		/** Outputs 'desc' to the specified stream, calling 'f' to output each
-		option_description element. */
-		void print(std::ostream& os, unsigned width = 0) const;
+        /** return all option_descriptions as vector */
+        std::vector<option_description *> options() const;
 
-		/** return all option_descriptions as vector */
-		std::vector<option_description *> options() const;
+        const option_description *findById(int id) const;
+        const option_description *findByName(std::string name) const;
+    };
 
-		const option_description *findById(int id) const;
-		const option_description *findByName(std::string name) const;
-	};
+    /** Class which provides convenient creation syntax to option_description.
+    */
+    class options_description_easy_init {
+    public:
+        options_description_easy_init(options_description* owner) {
+            m_owner = owner;
+        };
 
-	/** Class which provides convenient creation syntax to option_description.
-	*/
-	class options_description_easy_init {
-	public:
-		options_description_easy_init(options_description* owner) {
-			m_owner = owner;
-		};
+        options_description_easy_init&
+            operator()(const char *name,
+                const char *description);
 
-		options_description_easy_init&
-			operator()(const char *name,
-				const char *description);
+        options_description_easy_init&
+            operator()(const char *name,
+                const value_semantic *s);
 
-		options_description_easy_init&
-			operator()(const char *name,
-				const value_semantic *s);
+        options_description_easy_init&
+            operator()(const char* name,
+                const value_semantic *s,
+                const char *description);
 
-		options_description_easy_init&
-			operator()(const char* name,
-				const value_semantic *s,
-				const char *description);
-
-	private:
-		options_description* m_owner;
-	};
+    private:
+        options_description* m_owner;
+    };
 
 }
 
