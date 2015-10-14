@@ -45,6 +45,8 @@ typedef struct {
     SATSolver* cmsat;
 } Solver;
 
+static PyObject *outofconflerr = NULL;
+
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
@@ -349,10 +351,8 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         Py_INCREF(Py_None);
         PyTuple_SetItem(result, 1, Py_None);
     } else if (res == l_Undef) {
-        Py_INCREF(Py_None);
-        PyTuple_SetItem(result, 0, Py_None);
-        Py_INCREF(Py_None);
-        PyTuple_SetItem(result, 1, Py_None);
+        Py_DECREF(result);
+        return PyErr_SetFromErrno(outofconflerr);
     }
 
     return result;
@@ -483,4 +483,8 @@ initpycryptosat(void)
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
+
+    outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
+    Py_INCREF(outofconflerr);
+    PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
 }
