@@ -132,7 +132,7 @@ class DistillerWithBin {
         StrImplicitData str_impl_data;
 
         bool remove_or_shrink_clause(Clause& cl, ClOffset& offset);
-        void str_and_sub_cl_with_cache_for_all_lits(
+        void strsub_with_cache_and_watch(
             bool alsoStrengthen
             , Clause& cl
         );

@@ -291,7 +291,7 @@ void DistillerWithBin::remove_lits_through_stamping_irred()
     }
 }
 
-void DistillerWithBin::str_and_sub_cl_with_cache_for_all_lits(
+void DistillerWithBin::strsub_with_cache_and_watch(
     bool alsoStrengthen
     , Clause& cl
 ) {
@@ -345,7 +345,7 @@ bool DistillerWithBin::sub_str_cl_with_cache_watch_stamp(
         lits2.push_back(lit);
     }
 
-    str_and_sub_cl_with_cache_for_all_lits(alsoStrengthen, cl);
+    strsub_with_cache_and_watch(alsoStrengthen, cl);
     try_subsuming_by_stamping(red);
 
     //Clear 'seen_subs'
