@@ -353,6 +353,69 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     }
 }
 
+
+bool OccSimplifier::complete_clean_clause(Clause& cl)
+{
+    assert(!solver->drup->something_delayed());
+    assert(cl.size() > 3);
+    (*solver->drup) << deldelay << cl << fin;
+
+    //Remove all lits from stats
+    //we will re-attach the clause either way
+    if (cl.red()) {
+        solver->litStats.redLits -= cl.size();
+    } else {
+        solver->litStats.irredLits -= cl.size();
+    }
+
+    Lit *i = cl.begin();
+    Lit *j = i;
+    for (Lit *end = cl.end(); i != end; i++) {
+        if (solver->value(*i) == l_True) {
+
+            (*solver->drup) << findelay;
+            return false;
+        }
+
+        if (solver->value(*i) == l_Undef) {
+            *j++ = *i;
+        }
+    }
+    cl.shrink(i-j);
+    cl.recalc_abst_if_needed();
+
+    //Drup
+    if (i - j > 0) {
+        (*solver->drup) << cl << fin << findelay;
+    } else {
+        solver->drup->forget_delay();
+    }
+
+    switch (cl.size()) {
+        case 0:
+            solver->ok = false;
+            return false;
+
+        case 1:
+            solver->enqueue(cl[0]);
+            #ifdef STATS_NEEDED
+            solver->propStats.propsUnit++;
+            #endif
+            return false;
+
+        case 2:
+            solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            return false;
+
+        case 3:
+            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
 {
      uint64_t memUsage = 0;
@@ -578,68 +641,6 @@ void OccSimplifier::add_back_to_solver()
         } else {
             solver->cl_alloc.clauseFree(cl);
         }
-    }
-}
-
-bool OccSimplifier::complete_clean_clause(Clause& cl)
-{
-    assert(!solver->drup->something_delayed());
-    assert(cl.size() > 3);
-    (*solver->drup) << deldelay << cl << fin;
-
-    //Remove all lits from stats
-    //we will re-attach the clause either way
-    if (cl.red()) {
-        solver->litStats.redLits -= cl.size();
-    } else {
-        solver->litStats.irredLits -= cl.size();
-    }
-
-    Lit *i = cl.begin();
-    Lit *j = i;
-    for (Lit *end = cl.end(); i != end; i++) {
-        if (solver->value(*i) == l_True) {
-
-            (*solver->drup) << findelay;
-            return false;
-        }
-
-        if (solver->value(*i) == l_Undef) {
-            *j++ = *i;
-        }
-    }
-    cl.shrink(i-j);
-    cl.recalc_abst_if_needed();
-
-    //Drup
-    if (i - j > 0) {
-        (*solver->drup) << cl << fin << findelay;
-    } else {
-        solver->drup->forget_delay();
-    }
-
-    switch (cl.size()) {
-        case 0:
-            solver->ok = false;
-            return false;
-
-        case 1:
-            solver->enqueue(cl[0]);
-            #ifdef STATS_NEEDED
-            solver->propStats.propsUnit++;
-            #endif
-            return false;
-
-        case 2:
-            solver->attach_bin_clause(cl[0], cl[1], cl.red());
-            return false;
-
-        case 3:
-            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
-            return false;
-
-        default:
-            return true;
     }
 }
 
