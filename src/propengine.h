@@ -213,12 +213,39 @@ private:
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
 
+    typedef bool (PropEngine::*prop_clause_func_t)(
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
+        , const Lit p
+        , PropBy& confl
+        );
+
+    std::vector<prop_clause_func_t> m_prop_clause_func_table;
+
+    template<bool update_bogoprops>
+    prop_clause_func_t get_prop_clause_func(WatchType type) const;
+
     template<bool update_bogoprops = true>
     bool prop_bin_cl(
         watch_subarray_const::const_iterator i
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
+
+    template<bool update_bogoprops = true>
+    bool prop_bin_cl(
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator& j
+        , const Lit p
+        , PropBy& confl
+    ); ///<Propagate 2-long clause
+
+    bool nop(
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator& j
+        , const Lit p
+        , PropBy& confl
+    ); /// no-op
 
     ///Propagate 3-long clause
     PropResult propTriHelperSimple(
@@ -244,6 +271,7 @@ private:
     template<bool update_bogoprops = true>
     bool prop_tri_cl_any_order(
         watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
         , const Lit lit1
         , PropBy& confl
     );

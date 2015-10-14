@@ -51,6 +51,16 @@ PropEngine::PropEngine(
 ) :
         CNF(_conf, _needToInterrupt)
         , qhead(0)
+        , m_prop_clause_func_table{
+              &PropEngine::prop_long_cl_any_order<false>,
+              &PropEngine::prop_long_cl_any_order<true>,
+              &PropEngine::prop_bin_cl<false>,
+              &PropEngine::prop_bin_cl<true>,
+              &PropEngine::prop_tri_cl_any_order<false>,
+              &PropEngine::prop_tri_cl_any_order<true>,
+              &PropEngine::nop, // watch_idx_t
+              &PropEngine::nop  // watch_idx_t
+          }
 {
 }
 
@@ -223,6 +233,28 @@ Need to be somewhat tricky if the clause indicates that current assignement
 is incorrect (i.e. both literals evaluate to FALSE). If conflict if found,
 sets failBinLit
 */
+
+bool PropEngine::nop(
+    watch_subarray_const::const_iterator
+    , watch_subarray::iterator&
+    , const Lit
+    , PropBy&
+    )
+{
+    return true;
+}
+
+template<bool update_bogoprops>
+inline bool PropEngine::prop_bin_cl(
+    watch_subarray_const::const_iterator i
+    , watch_subarray::iterator &j
+    , const Lit p
+    , PropBy& confl
+) {
+    *j++ = *i;
+    return prop_bin_cl<update_bogoprops>(i, p, confl);
+}
+
 template<bool update_bogoprops>
 inline bool PropEngine::prop_bin_cl(
     watch_subarray_const::const_iterator i
@@ -548,9 +580,11 @@ inline PropResult PropEngine::prop_tri_cl_strict_order(
 template<bool update_bogoprops>
 inline bool PropEngine::prop_tri_cl_any_order(
     watch_subarray_const::const_iterator i
+    , watch_subarray::iterator &j
     , const Lit lit1
     , PropBy& confl
 ) {
+    *j++ = *i;
     const Lit lit2 = i->lit2();
     lbool val2 = value(lit2);
 
@@ -643,6 +677,11 @@ inline void PropEngine::propTriHelperAnyOrder(
 }
 
 template<bool update_bogoprops>
+PropEngine::prop_clause_func_t PropEngine::get_prop_clause_func(WatchType type) const {
+    return m_prop_clause_func_table[static_cast<size_t>(type) * 2 + static_cast<size_t>(update_bogoprops)];
+}
+
+template<bool update_bogoprops>
 PropBy PropEngine::propagate_any_order()
 {
     PropBy confl;
@@ -662,6 +701,13 @@ PropBy PropEngine::propagate_any_order()
         }
 
         for (; i != end; i++) {
+            const auto clause_type = i->getType();
+            auto prop_clause_func = get_prop_clause_func<update_bogoprops>(clause_type);
+            if(!(this->*prop_clause_func)(i, j, p, confl)) {
+                i++;
+                break;
+            }
+            /*
             if (i->isBin()) {
                 *j++ = *i;
                 if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
@@ -687,6 +733,7 @@ PropBy PropEngine::propagate_any_order()
                 break;
             }
             continue;
+            */
         }
         while (i != end) {
             *j++ = *i++;
