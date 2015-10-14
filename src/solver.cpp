@@ -1658,6 +1658,7 @@ bool Solver::execute_inprocess_strategy(
                 implCache.tryBoth(this);
             }
         } else if (token == "sub-impl") {
+            //Susbsume TRI with BIN+TRI+stamp, subsume BIN with BIN
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
             }
@@ -1669,14 +1670,17 @@ bool Solver::execute_inprocess_strategy(
             if (conf.doProbe)
                 prober->probe();
         } else if (token == "sub-str-cls-with-bin") {
+            //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
                 distillerwithbin->distill_with_bin(true);
             }
         } else if (token == "distill-cls") {
+            //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
                 distiller->distill(true);
             }
         } else if (token == "str-impl") {
+            //Strengthens BIN&TRI with BIN&TRI
             if (conf.doStrSubImplicit) {
                 distillerwithbin->strengthen_implicit();
             }
