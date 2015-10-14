@@ -866,7 +866,7 @@ void DistillerWithBin::StrImplicitData::print(
     const double time_remain = float_div(timeAvailable, orig_time);
 
     cout
-    << "c [implicit] str"
+    << "c [impl str]"
     << " lit bin: " << remLitFromBin
     << " lit tri: " << remLitFromTri
     << " (by tri: " << remLitFromTriByTri << ")"
