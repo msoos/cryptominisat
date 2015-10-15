@@ -33,7 +33,7 @@
 #include <sstream>
 
 #include "errors.h"
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "options_description.h"
 
 namespace ak_program_options {

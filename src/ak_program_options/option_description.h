@@ -35,7 +35,7 @@
 #include <iostream>
 
 #include "errors.h"
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "value_semantic.h"
 
 namespace ak_program_options {
@@ -106,7 +106,7 @@ namespace ak_program_options {
         std::string short_option() const;
 
         /** return long option struct for getopt_log() */
-        option *long_option() const;
+        long_option_struct *long_option() const;
 
     };
 }

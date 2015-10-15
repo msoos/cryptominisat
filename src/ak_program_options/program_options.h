@@ -29,7 +29,7 @@
 #ifndef AK_PROGRAM_OPTIONS_H_INCLUDED
 #define AK_PROGRAM_OPTIONS_H_INCLUDED
 
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "options_description.h"
 #include "positional_options.h"
 #include "parsers.h"

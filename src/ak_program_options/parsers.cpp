@@ -33,7 +33,7 @@
 
 namespace ak_program_options {
     
-basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const options_description &desc) {
+basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const options_description *desc) {
     basic_parsed_options *bpo = new basic_parsed_options(argc, argv, desc);
 
     return bpo;
@@ -42,61 +42,13 @@ basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const opti
 // Returns the option_description which has either the flag with code id
 // or the pointer id. nullptr iff not found 
 const option_description *basic_parsed_options::findById(int id) const {
-    return m_desc.findById(id);
+    return m_desc->findById(id);
 }
 
 // Returns the option_description which has the name.
 // nullptr iff not found 
 const option_description *basic_parsed_options::findByName(std::string name) const {
-    return m_desc.findByName(name);
-}
-
-//  return string of short option commandline flags
-const std::string basic_parsed_options::short_options() const {
-    std::vector<option_description *> opts = m_desc.options();
-    std::string s;
-
-    for (const option_description *opt : opts) {
-        std::string so = opt->short_option();
-        
-        if (!so.empty()) {
-            //  no duplicate short options allowed
-            assert(s.find(so) == std::string::npos);
-            s.append(so);
-        }
-    }
-
-    return s;
-}
-
-//  return array of long option structs
-option *basic_parsed_options::long_options() const {
-    std::vector<option_description *> opts = m_desc.options();
-    option *long_opts = new option[opts.size() + 1];
-    option *long_opt;
-    int pos = 0;
-
-    //  collect all options which have a long name
-    for (const option_description *opt : opts) {
-        long_opt = opt->long_option();
-
-        if (long_opt != nullptr) {
-            *(long_opts + pos++) = *long_opt;
-            delete long_opt;
-        }
-    }
-
-    //  create final entry in table
-    long_opt = (struct option *)malloc(sizeof(struct option));
-    long_opt->name = 0;
-    long_opt->has_arg = false;
-    long_opt->flag = 0;
-    long_opt->val = 0;
-    
-    *(long_opts + pos) = *long_opt;
-    free(long_opt);
-
-    return long_opts;
+    return m_desc->findByName(name);
 }
 
 basic_command_line_parser command_line_parser(unsigned argc, char **argv) {

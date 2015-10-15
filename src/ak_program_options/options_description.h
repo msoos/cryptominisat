@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "errors.h"
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "option_description.h"
 #include "value_semantic.h"
 

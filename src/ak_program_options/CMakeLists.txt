@@ -5,6 +5,7 @@ add_library(ak_program_options
     options_description.cpp
     parsers.cpp
     positional_options.cpp
+    scan_arguments.cpp
     value_semantic.cpp
     variables_map.cpp
 )

@@ -33,18 +33,13 @@
 #include <string>
 
 #include "command_line_parser.h"
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "positional_options.h"
 #include "variables_map.h"
 
-//  global variables for getopt_long()
-int   opterr;   /* if error message should be printed */
-int   optind;   /* index into parent argv vector */
-int   optopt;   /* character checked for validity */
-int   optreset; /* reset getopt */
-char *optarg;   /* argument associated with option */
-
 namespace ak_program_options {
+
+OptionParserControl optionParserControl;
 
 /** Stores in 'vm' all options that are defined in 'options'.
 If 'vm' already has a non-defaulted value of an option, that value
@@ -52,33 +47,25 @@ is not changed, even if 'options' specify some value.
 */
 void store(const basic_parsed_options *options, variables_map &vm)
 {
-    std::string so = options->short_options();
-    char *short_options = new char[so.length() + 1];
-    std::strcpy(short_options, so.c_str());
-    
-    option *long_options = options->long_options();
+    const options_description *optionsDescriptions = options->descriptions();
     const positional_options_description *positional_options = options->get_positional_description();
-    int index;
     unsigned pos_option_index = 0;
+    OptionParserControl *opc = &optionParserControl;
     
-    //  remember options for deconstruction
-    vm.remember_options(options);
-
     //  start with argv[1] as first parameter token
-    optind = 1;
+    opc->idx = 1;
 
     while (true)
     {
-        index = 0;
-        const int opt = getopt_long(options->argc, options->argv, short_options, long_options, &index);
+        int opt = ak_getopt_long(options->argc, options->argv, optionsDescriptions);
         if ((char)opt == ':') {
-            throw_exception<invalid_option_value>(invalid_option_value(options->argv[optind-2], ""));
+            throw_exception<invalid_option_value>(invalid_option_value(options->argv[opc->idx - 2], ""));
         }
 
         if (-1 == opt) {
             //  no named parameter found
             //  might be a positional parameter
-            if (optind >= (int)options->argc) {
+            if (opc->idx >= (int)options->argc) {
                 //  end of command line reached
                 break;
             }
@@ -88,7 +75,7 @@ void store(const basic_parsed_options *options, variables_map &vm)
                 const option_description *desc = options->findByName(name);
                 //  use defined value iff avalaible or create a new string value if not
                 value_semantic *sem = (desc == nullptr) ? value<std::string>() : desc->semantic();
-                sem->set_value(options->argv[optind++]);
+                sem->set_value(options->argv[opc->idx++]);
 
                 //  entry must not be present yet
                 assert(vm.find(name) == vm.end());
@@ -109,8 +96,8 @@ void store(const basic_parsed_options *options, variables_map &vm)
         const option_description *desc = options->findById(opt);
 
         if (desc == nullptr) {
-            optind-=1;
-            std::string name(options->argv[optind]);
+            opc->idx--;
+            std::string name(options->argv[opc->idx]);
             unknown_option e(name);
 
             throw_exception<unknown_option>(e);
@@ -128,8 +115,8 @@ void store(const basic_parsed_options *options, variables_map &vm)
         }
         else {
             if (sem != nullptr) {
-                if (optarg) {
-                    sem->set_value(optarg);
+                if (opc->arg) {
+                    sem->set_value(opc->arg);
                 }
                 else if (sem->implicited()) {
                     sem->apply_implicit();
@@ -141,11 +128,8 @@ void store(const basic_parsed_options *options, variables_map &vm)
         }
     }
 
-    delete [] long_options;
-    delete [] short_options;
-
     //  add options which have defaults and are not contained yet
-    for (option_description *opt : options->descriptions().options()) {
+    for (option_description *opt : optionsDescriptions->options()) {
         std::string name(opt->name());
         value_semantic *sem = opt->semantic();
 
@@ -162,12 +146,6 @@ void store(const basic_parsed_options *options, variables_map &vm)
 void notify(variables_map& vm)
 {
     vm.notify();
-}
-
-variables_map::~variables_map()
-{
-    assert(m_options != nullptr);
-    delete m_options;
 }
 
 const value_semantic
@@ -224,4 +202,4 @@ void variables_map::show_options()
     std::cout << std::endl;
 }
 
-}
+}   //  end of namespace

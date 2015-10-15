@@ -30,7 +30,7 @@
 #include <cassert>
 
 #include "errors.h"
-#include "akpo_getopt.h"
+#include "scan_arguments.h"
 #include "option_description.h"
 
 namespace ak_program_options {
@@ -76,18 +76,18 @@ namespace ak_program_options {
         return ret;
     }
 
-    option *option_description::long_option() const {
-        option *opt = nullptr;
+    long_option_struct *option_description::long_option() const {
+        long_option_struct *opt = nullptr;
 
         if (!m_long_name.empty()) {
             const value_semantic *sem = m_value_semantic;
-            opt = new option;
+            opt = new long_option_struct;
 
-            opt->has_arg = ((sem == NO_VALUE) || sem->is_bool_switch()) ? no_argument :
-                            sem->implicited() ? optional_argument :
-                            required_argument;
+            opt->has_arg = ((sem == NO_VALUE) || sem->is_bool_switch()) 
+                           ? Has_Argument::No 
+                           : sem->implicited() ? Has_Argument::Optional 
+                                               : Has_Argument::Required;
             opt->name = m_long_name.c_str();
-            opt->flag = 0;
             
             //  val is either the short name char or a unique hash int beyond 256
             if (!m_short_name.empty()) {

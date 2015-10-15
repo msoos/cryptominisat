@@ -38,7 +38,7 @@ namespace ak_program_options {
     class variables_map : public std::map<std::string, value_semantic *> {
     public:
         variables_map() {};
-        ~variables_map();
+        ~variables_map() {};
 
         /** Obtains the value of variable 'name', from *this.
 
@@ -54,9 +54,7 @@ namespace ak_program_options {
         void clear();
 
         void notify();
-        
-        void remember_options(const basic_parsed_options *options) { m_options = options; };
-   
+           
         /**  display a list of options and their values  */     
         void show_options();
 
