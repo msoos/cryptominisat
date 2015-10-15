@@ -1,13 +1,24 @@
 #!/bin/bash
+
+# Copyright (C) 2014  Mate Soos
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; version 2
+# of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+
 # This file wraps CMake invocation for TravisCI
 # so we can set different configurations via environment variables.
-#
-# We could modify our CMake scripts to read environment variables directly but
-# that would create two ways of setting the same thing which doesn't seem like
-# a good idea.
-
-# export CC="gcc-4.7"
-# export CXX="g++-4.7"
 
 set -e
 
@@ -21,8 +32,8 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 set -x
 
 cd build
-SOURCE_DIR="../"
-THIS_DIR="build"
+SOURCE_DIR=`pwd`"/../"
+THIS_DIR=`pwd`"/build"
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
@@ -125,8 +136,8 @@ case $CMS_CONFIG in
 
     INTREE_BUILD)
         cd ..
-        SOURCE_DIR="."
-        THIS_DIR="."
+        SOURCE_DIR=`pwd`
+        THIS_DIR=`pwd`
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
@@ -200,6 +211,13 @@ case $CMS_CONFIG in
         echo "\"${STP_CONFIG}\" Binary no extra testing (sql, xor, etc), skipping this part"
     ;;
 esac
+
+if [ "$CMS_CONFIG" == "NORMAL"]; then
+    CMS_PATH="${THIS_DIR}/cryptominisat4"
+    cd ../tests/simp-checks/
+    ./checks.py $CMS_PATH
+    cd $THIS_DIR
+fi
 
 #do fuzz testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "PYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ]; then
