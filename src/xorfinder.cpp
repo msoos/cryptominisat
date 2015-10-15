@@ -833,7 +833,7 @@ void XorFinder::Stats::print_short(const Solver* solver) const
     cout
     << "c [occ-xor] found " << std::setw(6) << foundXors
     << " avg sz " << std::setw(4) << std::fixed << std::setprecision(1)
-    << ((double)sumSizeXors/(double)foundXors)
+    << float_div(sumSizeXors, foundXors)
     << solver->conf.print_times(findTime, time_outs)
     << endl;
 

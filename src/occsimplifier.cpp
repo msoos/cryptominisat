@@ -445,7 +445,7 @@ void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
     if (link_in_data.cl_linked + link_in_data.cl_not_linked == 0) {
         val = 0;
     } else {
-        val = (double)link_in_data.cl_not_linked/(double)(link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
+        val = float_div(link_in_data.cl_not_linked, link_in_data.cl_linked+link_in_data.cl_not_linked)*100.0;
     }
 
     cout
@@ -1283,7 +1283,7 @@ void OccSimplifier::set_limits()
 
     //If variable elimination isn't going so well
     if (globalStats.testedToElimVars > 0
-        && (double)globalStats.numVarsElimed/(double)globalStats.testedToElimVars < 0.1
+        && float_div(globalStats.numVarsElimed, globalStats.testedToElimVars) < 0.1
     ) {
         norm_varelim_time_limit /= 2;
     }
@@ -1998,7 +1998,7 @@ void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
         return;
 
     if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars) {
-        const double avg = (double)time_spent_on_calc_otf_update/(double)num_otf_update_until_now;
+        const double avg = float_div(time_spent_on_calc_otf_update, num_otf_update_until_now);
         //cout << "num_otf_update_until_now: " << num_otf_update_until_now << endl;
         //cout << "avg: " << avg << endl;
 
@@ -2930,7 +2930,7 @@ void OccSimplifier::Stats::print(const size_t nVars) const
 
     print_stats_line("c called"
         ,  numCalls
-        , (double)total_time()/(double)numCalls
+        , float_div(total_time(), numCalls)
         , "s per call"
     );
 
