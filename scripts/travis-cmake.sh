@@ -31,9 +31,10 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
 set -x
 
+SOURCE_DIR=`pwd`
 cd build
-SOURCE_DIR=`pwd`"/../"
-THIS_DIR=`pwd`"/build"
+BUILD_DIR=`pwd`
+
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
@@ -137,7 +138,7 @@ case $CMS_CONFIG in
     INTREE_BUILD)
         cd ..
         SOURCE_DIR=`pwd`
-        THIS_DIR=`pwd`
+        BUILD_DIR=`pwd`
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
                    ${SOURCE_DIR}
@@ -152,7 +153,7 @@ case $CMS_CONFIG in
         sudo apt-get install libmysqlclient-dev
         cd $SOURCE_DIR
         ./cmsat_mysql_setup.sh
-        cd $THIS_DIR
+        cd $BUILD_DIR
 
         eval cmake ${COMMON_CMAKE_ARGS} \
                     -DSTATS:BOOL=ON \
@@ -213,10 +214,10 @@ case $CMS_CONFIG in
 esac
 
 if [ "$CMS_CONFIG" == "NORMAL"]; then
-    CMS_PATH="${THIS_DIR}/cryptominisat4"
+    CMS_PATH="${BUILD_DIR}/cryptominisat4"
     cd ../tests/simp-checks/
     ./checks.py $CMS_PATH
-    cd $THIS_DIR
+    cd $BUILD_DIR
 fi
 
 #do fuzz testing
