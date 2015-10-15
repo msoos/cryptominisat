@@ -90,7 +90,7 @@ namespace ak_program_options {
     template<>
     Value<bool>::Value() {
         m_default = false;
-        m_required = true;
+        m_required = false;
         m_is_bool_switch = true;
     }
 

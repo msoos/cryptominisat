@@ -27,8 +27,10 @@
  */
 
 #include <assert.h>
+#include <cstring>
 #include <map>
 #include <iostream>
+#include <string>
 
 #include "command_line_parser.h"
 #include "akpo_getopt.h"
@@ -50,7 +52,10 @@ is not changed, even if 'options' specify some value.
 */
 void store(const basic_parsed_options *options, variables_map &vm)
 {
-    char *short_options = (char *)options->short_options().c_str();
+    std::string so = options->short_options();
+    char *short_options = new char[so.length() + 1];
+    std::strcpy(short_options, so.c_str());
+    
     option *long_options = options->long_options();
     const positional_options_description *positional_options = options->get_positional_description();
     int index;
@@ -137,6 +142,7 @@ void store(const basic_parsed_options *options, variables_map &vm)
     }
 
     delete [] long_options;
+    delete [] short_options;
 
     //  add options which have defaults and are not contained yet
     for (option_description *opt : options->descriptions().options()) {

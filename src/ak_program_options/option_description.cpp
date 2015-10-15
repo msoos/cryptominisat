@@ -60,36 +60,35 @@ namespace ak_program_options {
     }
 
     std::string option_description::short_option() const {
+        std::string ret;
+        
         if (!m_short_name.empty()) {
-            // assert(m_short_name.size() == 2);
-            // assert(m_short_name.substr(0, 1) == std::string("-"));
-            if (m_value_semantic == NO_VALUE) {
-                return m_short_name.substr(1);
+            const value_semantic *sem = m_value_semantic;
+
+            if ((sem == NO_VALUE) || sem->is_bool_switch()) {
+                ret = m_short_name.substr(1);
             }
             else {
-                return m_short_name.substr(1).append(":");
+                ret = m_short_name.substr(1) + ":";
             }
         }
-        else {
-            return std::string("");
-        }
+
+        return ret;
     }
 
     option *option_description::long_option() const {
-        option *opt;
+        option *opt = nullptr;
 
-        if (m_long_name.empty()) {
-            opt = nullptr;
-        }
-        else {
+        if (!m_long_name.empty()) {
             const value_semantic *sem = m_value_semantic;
             opt = new option;
-            //  option 
-            opt->has_arg = (sem == NO_VALUE) ? no_argument :
+
+            opt->has_arg = ((sem == NO_VALUE) || sem->is_bool_switch()) ? no_argument :
                             sem->implicited() ? optional_argument :
                             required_argument;
             opt->name = m_long_name.c_str();
             opt->flag = 0;
+            
             //  val is either the short name char or a unique hash int beyond 256
             if (!m_short_name.empty()) {
                 assert(m_short_name.size() == 2);
