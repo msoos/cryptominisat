@@ -195,7 +195,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-            "str-impl, sub-impl, sub-str-cls-with-bin, occ-backw-sub-str, occ-bve"
+            "str-impl, sub-impl, sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,"
             "check-cache-size, renumber"
         )
 
