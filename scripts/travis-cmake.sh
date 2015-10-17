@@ -213,10 +213,11 @@ case $CMS_CONFIG in
     ;;
 esac
 
-if [ "$CMS_CONFIG" == "NORMAL"]; then
+if [ "$CMS_CONFIG" -eq "NORMAL"]; then
     CMS_PATH="${BUILD_DIR}/cryptominisat4"
     cd ../tests/simp-checks/
-    ./checks.py $CMS_PATH
+    git clone --depth 1 https://github.com/msoos/testfiles.git
+    ./checks.py $CMS_PATH testfiles/*
     cd $BUILD_DIR
 fi
 
