@@ -10,9 +10,9 @@ that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
 provides the best of both words: ease of use and a powerful interface.
 
-[![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
+TravisCi: [![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 
-[![Build Status Jenkins](http://jenkins.msoos.org:8080/job/cryptominisat/badge/icon)](http://jenkins.msoos.org:8080/job/cryptominisat/)
+Jenkins: [![Build Status Jenkins](http://jenkins.msoos.org:8080/job/cryptominisat/badge/icon)](http://jenkins.msoos.org:8080/job/cryptominisat/)
 
 <a href="https://scan.coverity.com/projects/507">
   <img alt="Coverity Scan Build Status"
