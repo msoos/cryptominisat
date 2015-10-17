@@ -12,6 +12,8 @@ provides the best of both words: ease of use and a powerful interface.
 
 [![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 
+[![Build Status Jenkins](http://jenkins.msoos.org:8080/job/cryptominisat/badge/icon)](https://jenkins.msoos.org:8080)
+
 <a href="https://scan.coverity.com/projects/507">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/507/badge.svg"/>
