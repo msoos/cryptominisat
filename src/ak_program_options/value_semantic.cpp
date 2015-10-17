@@ -46,9 +46,9 @@ namespace ak_program_options {
     std::string no_arg("");
 
     std::string value_semantic::name() const {
-        return required() ? arg : 
-               is_bool_switch() ? no_arg :
-               optional_arg;
+        return is_bool_switch() ? no_arg :
+               implicited() ? optional_arg : 
+               arg ;
     }
 
     template<>

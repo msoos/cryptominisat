@@ -41,7 +41,8 @@ namespace ak_program_options {
         virtual void notify() const {};
         virtual void set_value(const char *v) {(void)v;};
         virtual int *get_value() const { return nullptr; };
-        virtual std::string to_string() const { return std::string("???"); };
+        virtual std::string to_string() const { return "???"; };
+        virtual std::string textual() const { return ""; };
         std::string name() const;
 
         /** If stored value if of type T, returns that value. Otherwise,
@@ -113,7 +114,7 @@ namespace ak_program_options {
         bool is_bool_switch() const { return m_is_bool_switch; }
         void set_as_bool_switch() { m_is_bool_switch = true; }
         std::string to_string() const;
-        const std::string &textual() const { return m_textual; };
+        std::string textual() const { return m_textual; };
 
     private:
         std::string int_to_string() const;
@@ -129,7 +130,7 @@ namespace ak_program_options {
         bool m_defaulted = false;
         bool m_implicited = false;
         bool m_is_bool_switch = false;
-        std::string m_textual = "";
+        std::string m_textual;
     };
 
     template<typename T>

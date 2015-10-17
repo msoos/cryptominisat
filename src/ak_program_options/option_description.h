@@ -47,6 +47,7 @@ namespace ak_program_options {
         std::string m_short_name = "";
         std::string m_long_name = "";
         std::string m_description = "";
+        //  id is either an ASCII char or a unique index derived from a pointer
         int m_id;
 
         const value_semantic *m_value_semantic;
@@ -58,7 +59,7 @@ namespace ak_program_options {
         };
         
         ~option_description() {
-                        if (m_value_semantic) {
+            if (m_value_semantic) {
                 delete m_value_semantic;
             }
         }
@@ -68,6 +69,7 @@ namespace ak_program_options {
                 return (int)m_short_name[1];
             }
 
+            //  add 256 to avoid clashes with ASCII chars
             return m_id + 256; 
         };
 
@@ -80,8 +82,7 @@ namespace ak_program_options {
         option_description(const char* name,
             const value_semantic* s);
 
-        /** Initializes the class with the passed data.
-        */
+        /// Initializes the class with the passed data.
         option_description(const char* name,
             const value_semantic* s,
             const char* description);
@@ -98,16 +99,11 @@ namespace ak_program_options {
         /// Returns the option name, formatted suitably for usage message. 
         std::string format_name() const;
 
-        /** Returns the parameter name and properties, formatted suitably for
-        usage message. */
+        /// Returns the parameter name and properties, formatted suitably for
+        /// usage message.
         std::string format_parameter() const;
 
-        /** return short option flag for getopt() */
-        std::string short_option() const;
-
-        /** return long option struct for getopt_log() */
         long_option_struct *long_option() const;
-
     };
 }
 

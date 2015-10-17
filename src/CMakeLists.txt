@@ -5,7 +5,7 @@ include_directories(
 )
 
 if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
+   include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

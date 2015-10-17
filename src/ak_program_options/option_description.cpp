@@ -59,23 +59,6 @@ namespace ak_program_options {
         return m_description;
     }
 
-    std::string option_description::short_option() const {
-        std::string ret;
-        
-        if (!m_short_name.empty()) {
-            const value_semantic *sem = m_value_semantic;
-
-            if ((sem == NO_VALUE) || sem->is_bool_switch()) {
-                ret = m_short_name.substr(1);
-            }
-            else {
-                ret = m_short_name.substr(1) + ":";
-            }
-        }
-
-        return ret;
-    }
-
     long_option_struct *option_description::long_option() const {
         long_option_struct *opt = nullptr;
 
@@ -107,8 +90,8 @@ namespace ak_program_options {
         {
             return m_long_name.empty()
                 ? m_short_name
-                : std::string(m_short_name).append(" [ --").
-                append(m_long_name).append(" ]");
+                : std::string(m_short_name).append(" [--").
+                append(m_long_name).append("]");
         }
         return std::string("--").append(m_long_name);
     }
@@ -116,10 +99,20 @@ namespace ak_program_options {
     std::string
         option_description::format_parameter() const
     {
-        if (m_value_semantic != NO_VALUE)
-            return m_value_semantic->name();
-        else
-            return "";
+        std::string ret;
+        const value_semantic *sem = m_value_semantic;
+                
+        if (sem != NO_VALUE) {
+            ret = sem->name();
+            
+            if (sem->defaulted()) {
+                const std::string &txt = sem->textual();                               
+           
+                ret += " (=" + (txt.empty() ? sem->to_string() : txt) + ")";
+            }
+        }
+            
+        return ret;
     }
 
     std::string option_description::name() const {
