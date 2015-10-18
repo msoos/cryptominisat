@@ -20,10 +20,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/solver.so
 
 add_custom_target(solver_swig_test ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/solver.so)
 
-
-# add_test (NAME pytest
-#           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#           COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test_pycryptosat.py"
-# )
+add_test (NAME solve_swig_test
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/test1.py"
+)
 
 message(STATUS "Will run solver test from ${CMAKE_CURRENT_BINARY_DIR} directory")
