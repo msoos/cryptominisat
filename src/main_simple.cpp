@@ -224,7 +224,13 @@ int main(int argc, char** argv)
         #endif
 
         if (in == NULL) {
-            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>: reason %s" : argv[1], strerror(errno));
+            std::cout << "ERROR! Could not open file: ";
+            if (argc == 1) {
+                std::cout << "<stdin>";
+            } else {
+                std::cout << argv[1] << " reason: " << strerror(errno);
+            }
+            std::cout << std::endl;
             std::exit(1);
         }
 
