@@ -2002,6 +2002,14 @@ void Solver::print_norm_stats(const double cpu_time) const
         , "% vars"
     );
 
+    print_stats_line("c reduceDB time"
+        , reduceDB->get_cleaning_stats().cpu_time
+        , stats_line_percent(reduceDB->get_cleaning_stats().cpu_time, cpu_time)
+        , "% time"
+    );
+
+    prober->get_stats().print_short(this, 0, 0);
+
     //Failed lit stats
     if (conf.doProbe) {
         print_stats_line("c probing time"
