@@ -395,7 +395,8 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
 
     if (new_glue + 1 < cl->stats.glue) {
         if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq
-            && red_long_cls_is_reducedb(*cl)) {
+            && red_long_cls_is_reducedb(*cl)
+        ) {
             num_red_cls_reducedb--;
         }
         cl->stats.glue = new_glue;
