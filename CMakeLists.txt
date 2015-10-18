@@ -134,6 +134,8 @@ macro(add_cxx_flag_if_supported flagname)
   endif()
 endmacro()
 
+option(ENABLE_TESTING "Enable testing" OFF)
+
 add_cxx_flag_if_supported("-Wall")
 add_cxx_flag_if_supported("-Wextra")
 add_cxx_flag_if_supported("-Wunused")
@@ -146,7 +148,9 @@ add_cxx_flag_if_supported("-Wno-deprecated")
 add_cxx_flag_if_supported("-Wstrict-aliasing")
 add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wheader-guard")
-add_cxx_flag_if_supported("-fvisibility=hidden")
+if(NOT ENABLE_TESTING)
+    add_cxx_flag_if_supported("-fvisibility=hidden")
+endif()
 add_cxx_flag_if_supported("-Wpointer-arith")
 add_cxx_flag_if_supported("-Wformat-nonliteral")
 add_cxx_flag_if_supported("-Winit-self")
@@ -185,8 +189,6 @@ option(SLOW_DEBUG "Use more debug flags" OFF)
 IF(SLOW_DEBUG)
     add_definitions(-DSLOW_DEBUG)
 endif()
-
-option(ENABLE_TESTING "Enable testing" OFF)
 
 # -----------------------------------------------------------------------------
 # Add GIT version
