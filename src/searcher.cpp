@@ -1725,27 +1725,28 @@ void Searcher::reset_temp_cl_num()
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
-    if (num_red_cls_reducedb > conf.cur_max_temp_red_cls) {
-        if (conf.verbosity >= 3) {
-            cout
-            << "c "
-            << " cleaning"
-            << " num_irred_cls_reducedb: " << num_red_cls_reducedb
-            << " numConflicts : " << stats.conflStats.numConflicts
-            << " SumConfl: " << sumConflicts()
-            << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
-            << " Trail size: " << trail.size() << endl;
-        }
-        solver->reduceDB->reduce_db_and_update_reset_stats();
-        if (conf.verbosity >= 3) {
-            watches.print_stat();
-        }
-        must_consolidate_mem = true;
-        watches.consolidate();
-        conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
+    if (num_red_cls_reducedb <= conf.cur_max_temp_red_cls)
+        return;
 
-        num_red_cls_reducedb = count_num_red_cls_reducedb();
+    if (conf.verbosity >= 3) {
+        cout
+        << "c "
+        << " cleaning"
+        << " num_irred_cls_reducedb: " << num_red_cls_reducedb
+        << " numConflicts : " << stats.conflStats.numConflicts
+        << " SumConfl: " << sumConflicts()
+        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
+        << " Trail size: " << trail.size() << endl;
     }
+    solver->reduceDB->reduce_db_and_update_reset_stats();
+    if (conf.verbosity >= 3) {
+        watches.print_stat();
+    }
+    must_consolidate_mem = true;
+    watches.consolidate();
+    conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
+
+    num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
 void Searcher::clean_clauses_if_needed()
