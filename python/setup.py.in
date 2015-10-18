@@ -68,6 +68,7 @@ def _init_posix(init):
         config_vars['OPT'] = '-g -W -Wall -Wno-deprecated'
 
     return wrapper
+
 sysconfig._init_posix = _init_posix(sysconfig._init_posix)
 
 __version__ = '@PROJECT_VERSION@'
