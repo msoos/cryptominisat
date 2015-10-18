@@ -19,3 +19,5 @@ cmsv4.aux : cmsv4.tex
 cmsv4.bib : cmsv4.tex
 	    $(TEX) cmsv4.tex
 
+clean:
+	rm -f *.aux *.bbl *.out cmsv4.pdf *.log *.blg
