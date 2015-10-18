@@ -1024,6 +1024,8 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
+    //TODO subsume tri with bin+tri, bin with bin.
+
     end:
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
