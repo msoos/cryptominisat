@@ -1,4 +1,5 @@
 *.kdev4
+*.pyc
 .directory
 scripts/fuzzTest*.cnf
 scripts2/
