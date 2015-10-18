@@ -72,7 +72,6 @@ public:
             conf = *_conf;
         }
         drup = new Drup();
-        _needToInterrupt = new bool;
         assert(_needToInterrupt != NULL);
         needToInterrupt = _needToInterrupt;
     }
