@@ -2003,8 +2003,8 @@ void Solver::print_norm_stats(const double cpu_time) const
     );
 
     print_stats_line("c reduceDB time"
-        , reduceDB->get_cleaning_stats().cpu_time
-        , stats_line_percent(reduceDB->get_cleaning_stats().cpu_time, cpu_time)
+        , reduceDB->get_stats().cpu_time
+        , stats_line_percent(reduceDB->get_stats().cpu_time, cpu_time)
         , "% time"
     );
 
@@ -2079,7 +2079,7 @@ void Solver::print_all_stats(const double cpu_time) const
         , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
     );
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
-    reduceDB->get_cleaning_stats().print(cpu_time);
+    reduceDB->get_stats().print(cpu_time);
 
     print_stats_line("c reachability time"
         , reachStats.cpu_time

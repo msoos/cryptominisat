@@ -36,7 +36,7 @@ class ReduceDB
 public:
     ReduceDB(Solver* solver);
     void reduce_db_and_update_reset_stats();
-    const CleaningStats& get_cleaning_stats() const;
+    const CleaningStats& get_stats() const;
 
     uint64_t get_nbReduceDB() const
     {
@@ -79,7 +79,7 @@ private:
     ) const;
 };
 
-inline const CleaningStats& ReduceDB::get_cleaning_stats() const
+inline const CleaningStats& ReduceDB::get_stats() const
 {
     return cleaningStats;
 }
