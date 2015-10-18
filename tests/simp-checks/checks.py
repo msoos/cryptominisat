@@ -113,6 +113,7 @@ def test_velim_one_file(fname):
         exitnum = 1
     else:
         print "PASSED file %s" % fname
+        exitnum = 0
 
     print "-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed)
     return exitnum
