@@ -22,11 +22,11 @@
 #ifndef _FEATURES_TO_RECONF_H_
 #define _FEATURES_TO_RECONF_H_
 
-#include "features.h"
+#include "solvefeatures.h"
 
 namespace CMSat {
 
-int get_reconf_from_features(const Features& feat, const int verb);
+int get_reconf_from_features(const SolveFeatures& feat, const int verb);
 
 } //end namespace
 

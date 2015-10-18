@@ -71,7 +71,7 @@ print """
 #ifndef _FEATURES_TO_RECONF_H_
 #define _FEATURES_TO_RECONF_H_
 
-#include "features.h"
+#include "solvefeatures.h"
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -81,10 +81,10 @@ namespace CMSat {
 
 for i in range(options.num):
     if i not in ignore:
-        print "double get_score%d(const Features& feat, const int verb);" %i
+        print "double get_score%d(const SolveFeatures& feat, const int verb);" %i
 
 print """
-int get_reconf_from_features(const Features& feat, const int verb)
+int get_reconf_from_features(const SolveFeatures& feat, const int verb)
 {
 \tdouble best_score = 0.0;
 \tint best_val = 0;
@@ -124,7 +124,7 @@ def read_one_reconf(reconf_num):
     string = ""
 
     print """
-double get_score%d(const Features& feat, const int verb)
+double get_score%d(const SolveFeatures& feat, const int verb)
 {""" % reconf_num
     for line in f:
         if "id=" in line:

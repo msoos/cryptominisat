@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "features.h"
+#include "solvefeatures.h"
 #include <iostream>
 using std::string;
 using std::cout;
@@ -28,7 +28,7 @@ using std::endl;
 using namespace CMSat;
 
 
-void Features::print_stats() const
+void SolveFeatures::print_stats() const
 {
     cout << "c [features] ";
     cout << "numVars " << numVars << ", ";
@@ -105,7 +105,7 @@ void Features::print_stats() const
     cout << endl;
 }
 
-void Features::Distrib::print(const string& pre_print) const
+void SolveFeatures::Distrib::print(const string& pre_print) const
 {
     cout << pre_print <<"glue_distr_mean " << glue_distr_mean << ", ";
     cout << pre_print <<"glue_distr_var " << glue_distr_var << ", ";

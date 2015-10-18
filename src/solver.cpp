@@ -1803,7 +1803,7 @@ lbool Solver::simplify_problem(const bool startup)
             )
     ) {
         if (solveStats.numSimplify == conf.reconfigure_at) {
-            Features feat = calculate_features();
+            SolveFeatures feat = calculate_features();
             if (conf.reconfigure_val == 100) {
                 conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
             }
@@ -3111,10 +3111,10 @@ uint32_t Solver::num_active_vars() const
     return numActive;
 }
 
-Features Solver::calculate_features() const
+SolveFeatures Solver::calculate_features() const
 {
-    FeaturesCalc extract(this);
-    Features feat = extract.extract();
+    SolveFeaturesCalc extract(this);
+    SolveFeatures feat = extract.extract();
     feat.avg_confl_size = hist.conflSizeHistLT.avg();
     feat.avg_confl_glue = hist.glueHistLT.avg();
     feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();

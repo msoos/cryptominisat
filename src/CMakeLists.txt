@@ -58,7 +58,7 @@ set(cryptoms_lib_files
     ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     features_calc.cpp
     features_to_reconf.cpp
-    features.cpp
+    solvefeatures.cpp
     searchstats.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp

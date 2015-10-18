@@ -25,7 +25,7 @@
 #include <vector>
 #include <limits>
 #include <utility>
-#include "features.h"
+#include "solvefeatures.h"
 #include "cloffset.h"
 using std::vector;
 using std::pair;
@@ -35,12 +35,12 @@ namespace CMSat {
 
 class Solver;
 
-struct FeaturesCalc {
+struct SolveFeaturesCalc {
 public:
-    FeaturesCalc(const Solver* _solver) :
+    SolveFeaturesCalc(const Solver* _solver) :
         solver(_solver) {
     }
-    Features extract();
+    SolveFeatures extract();
 
 private:
     void fill_vars_cls();
@@ -50,7 +50,7 @@ private:
     void calculate_extra_clause_stats();
     void calculate_cl_distributions(
         const vector<ClOffset>& clauses
-        , struct Features::Distrib& distrib_data
+        , struct SolveFeatures::Distrib& distrib_data
     );
 
 
@@ -71,7 +71,7 @@ private:
     };
 
     vector<VARIABLE> myVars;
-    Features feat;
+    SolveFeatures feat;
 };
 
 } //end namespace

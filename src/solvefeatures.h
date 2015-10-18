@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef _FEATURES_H_
-#define _FEATURES_H_
+#ifndef _SOLVE_FEATURES_H_
+#define _SOLVE_FEATURES_H_
 
 #include <limits>
 #include <cstdint>
@@ -28,7 +28,7 @@
 
 namespace CMSat {
 
-struct Features
+struct SolveFeatures
 {
     void print_stats() const;
 
@@ -121,4 +121,4 @@ struct Features
 
 }
 
-#endif //_FEATURES_H_
+#endif //_SOLVE_FEATURES_H_

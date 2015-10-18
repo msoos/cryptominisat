@@ -36,7 +36,7 @@
 #include "searcher.h"
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
-#include "features.h"
+#include "solvefeatures.h"
 #include "searchstats.h"
 
 namespace CMSat {
@@ -237,7 +237,7 @@ class Solver : public Searcher
         void parse_sql_option();
         void dump_memory_stats_to_sql();
         uint64_t mem_used_vardata() const;
-        Features calculate_features() const;
+        SolveFeatures calculate_features() const;
         void reconfigure(int val);
         void reset_reason_levels_of_vars_to_zero();
 

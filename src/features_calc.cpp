@@ -29,7 +29,7 @@ using std::vector;
 using namespace CMSat;
 
 template<class Function, class Function2>
-void FeaturesCalc::for_one_clause(
+void SolveFeaturesCalc::for_one_clause(
     const Watched& cl
     , const Lit lit
     ,  Function func_each_cl
@@ -117,7 +117,7 @@ void FeaturesCalc::for_one_clause(
 }
 
 template<class Function, class Function2>
-void FeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_each_lit) const
+void SolveFeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_each_lit) const
 {
     for (size_t i = 0; i < solver->nVars() * 2; i++) {
         Lit lit = Lit::toLit(i);
@@ -127,7 +127,7 @@ void FeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_each_li
     }
 }
 
-void FeaturesCalc::fill_vars_cls()
+void SolveFeaturesCalc::fill_vars_cls()
 {
     feat.numVars = solver->nVars();
     feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins + solver->binTri.irredTris;
@@ -153,7 +153,7 @@ void FeaturesCalc::fill_vars_cls()
     for_all_clauses(func_each_cl, func_each_lit);
 }
 
-void FeaturesCalc::calculate_clause_stats()
+void SolveFeaturesCalc::calculate_clause_stats()
 {
     auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
     auto func_each_cl = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
@@ -183,7 +183,7 @@ void FeaturesCalc::calculate_clause_stats()
     feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;
 }
 
-void FeaturesCalc::calculate_variable_stats()
+void SolveFeaturesCalc::calculate_variable_stats()
 {
     if (feat.numVars == 0)
         return;
@@ -225,7 +225,7 @@ void FeaturesCalc::calculate_variable_stats()
     feat.horn_spread = feat.horn_max - feat.horn_min;
 }
 
-void FeaturesCalc::calculate_extra_clause_stats()
+void SolveFeaturesCalc::calculate_extra_clause_stats()
 {
     auto empty_func = [](const Lit, unsigned /*size*/, unsigned /*pos_vars*/, unsigned /*neg_vars*/) -> void {};
     auto each_clause = [&](unsigned size, unsigned pos_vars, unsigned /*neg_vars*/) -> void {
@@ -253,7 +253,7 @@ void FeaturesCalc::calculate_extra_clause_stats()
     }
 }
 
-void FeaturesCalc::calculate_extra_var_stats()
+void SolveFeaturesCalc::calculate_extra_var_stats()
 {
     if (feat.numVars == 0)
         return;
@@ -295,9 +295,9 @@ void FeaturesCalc::calculate_extra_var_stats()
     }
 }
 
-void FeaturesCalc::calculate_cl_distributions(
+void SolveFeaturesCalc::calculate_cl_distributions(
     const vector<ClOffset>& clauses
-    , struct Features::Distrib& distrib_data
+    , struct SolveFeatures::Distrib& distrib_data
 ) {
     if (clauses.empty()) {
         return;
@@ -362,7 +362,7 @@ void FeaturesCalc::calculate_cl_distributions(
     distrib_data.activity_distr_var = activity_var;
 }
 
-Features FeaturesCalc::extract()
+SolveFeatures SolveFeaturesCalc::extract()
 {
     double start_time = cpuTime();
     fill_vars_cls();

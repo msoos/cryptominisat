@@ -23,22 +23,22 @@
 #ifndef _FEATURES_TO_RECONF_H_
 #define _FEATURES_TO_RECONF_H_
 
-#include "features.h"
+#include "solvefeatures.h"
 #include <iostream>
 using std::cout;
 using std::endl;
 
 namespace CMSat {
 
-double get_score1(const Features& feat, const int verb);
-double get_score3(const Features& feat, const int verb);
-double get_score6(const Features& feat, const int verb);
-double get_score7(const Features& feat, const int verb);
-double get_score12(const Features& feat, const int verb);
-double get_score13(const Features& feat, const int verb);
-double get_score14(const Features& feat, const int verb);
+double get_score1(const SolveFeatures& feat, const int verb);
+double get_score3(const SolveFeatures& feat, const int verb);
+double get_score6(const SolveFeatures& feat, const int verb);
+double get_score7(const SolveFeatures& feat, const int verb);
+double get_score12(const SolveFeatures& feat, const int verb);
+double get_score13(const SolveFeatures& feat, const int verb);
+double get_score14(const SolveFeatures& feat, const int verb);
 
-int get_reconf_from_features(const Features& feat, const int verb)
+int get_reconf_from_features(const SolveFeatures& feat, const int verb)
 {
 	double best_score = 0.0;
 	int best_val = 0;
@@ -115,7 +115,7 @@ int get_reconf_from_features(const Features& feat, const int verb)
 
 
 
-double get_score1(const Features& feat, const int verb)
+double get_score1(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -193,7 +193,7 @@ double get_score1(const Features& feat, const int verb)
 }
 
 
-double get_score3(const Features& feat, const int verb)
+double get_score3(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -265,7 +265,7 @@ double get_score3(const Features& feat, const int verb)
 }
 
 
-double get_score6(const Features& feat, const int verb)
+double get_score6(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -319,7 +319,7 @@ double get_score6(const Features& feat, const int verb)
 }
 
 
-double get_score7(const Features& feat, const int verb)
+double get_score7(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -405,7 +405,7 @@ double get_score7(const Features& feat, const int verb)
 }
 
 
-double get_score12(const Features& feat, const int verb)
+double get_score12(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -485,7 +485,7 @@ double get_score12(const Features& feat, const int verb)
 }
 
 
-double get_score13(const Features& feat, const int verb)
+double get_score13(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
@@ -583,7 +583,7 @@ double get_score13(const Features& feat, const int verb)
 }
 
 
-double get_score14(const Features& feat, const int verb)
+double get_score14(const SolveFeatures& feat, const int verb)
 {
 	double default_val = 1.00;
 
