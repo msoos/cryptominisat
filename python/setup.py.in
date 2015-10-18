@@ -41,8 +41,8 @@ def cleanup(dat):
 
 cconf = cleanup(cconf)
 ldconf = cleanup(ldconf)
-print "Extra C flags from python-config:", cconf
-print "Extra libraries from python-config:", ldconf
+# print "Extra C flags from python-config:", cconf
+# print "Extra libraries from python-config:", ldconf
 
 
 def _init_posix(init):
