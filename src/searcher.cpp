@@ -394,9 +394,6 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     const unsigned new_glue = calc_glue_using_seen2_upper_bit_no_zero_lev(*cl);
 
     if (new_glue + 1 < cl->stats.glue) {
-        //tot_lbds = tot_lbds - c.lbd() + lbd;
-        //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
-
         if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq
             && red_long_cls_is_reducedb(*cl)) {
             num_red_cls_reducedb--;
