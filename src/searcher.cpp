@@ -397,7 +397,8 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         //tot_lbds = tot_lbds - c.lbd() + lbd;
         //c.delta_lbd(c.delta_lbd() + c.lbd() - lbd);
 
-        if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq && red_long_cls_is_reducedb(*cl)) {
+        if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq
+            && red_long_cls_is_reducedb(*cl)) {
             num_red_cls_reducedb--;
         }
         cl->stats.glue = new_glue;
