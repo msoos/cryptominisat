@@ -58,6 +58,13 @@ if len(args) < 2:
     exit(-1)
 
 cms4_exe = args[0]
+if not os.path.isfile(cms4_exe):
+    print "CryptoMiniSat executable you gave, '%s' is not a file. Exiting" % cms4_exe
+    exit(-1)
+
+if not os.access(cms4_exe, os.X_OK):
+    print "CryptoMiniSat executable you gave, '%s' is not executable. Exiting." % cms4_exe
+    exit(-1)
 
 def clone_and_make_minisat():
     print "Cloning and making minisat..."
@@ -74,25 +81,27 @@ def clone_and_make_minisat():
     return minisat_exe
 
 def test_velim_one_file(fname):
-    simp_fname = "out"
+    simp_fname = "simp.out"
     try:
-        os.unlink("out")
+        os.unlink(simp_fname)
     except:
         pass
 
-    toexec = "%s --zero-exit-status -p1 %s %s" % (cms4_exe, fname,simp_fname)
+    toexec = "%s --zero-exit-status -p1 %s %s" % (cms4_exe, fname, simp_fname)
     print "Executing: %s" % toexec
 
     start = time.time()
-    with open("cms-%s.out" % os.path.split(fname)[1], "w") as f:
+    cms_out_fname = "cms-%s.out" % os.path.split(fname)[1]
+    with open(cms_out_fname, "w") as f:
         subprocess.check_call(toexec.split(), stdout=f)
     t_cms = time.time()-start
 
     start = time.time()
-    ret = os.system("%s out > data" % minisat_exe)
+    with open("minisat_elim_data.out", "w") as f:
+        subprocess.check_call([minisat_exe, simp_fname], stdout=f)
     t_msat = time.time()-start
     var_elimed = None
-    with open("data", "r") as f:
+    with open("minisat_elim_data.out", "r") as f:
         for line in f:
             line = line.strip()
             if "num-vars-eliminated" in line:
@@ -101,11 +110,12 @@ def test_velim_one_file(fname):
     assert var_elimed is not None, "Couldn't find var-elimed line"
     if var_elimed > 30:
         print "FAILED file %s" % fname
-        exitnum = -1
+        exitnum = 1
     else:
         print "PASSED file %s" % fname
 
     print "-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed)
+    return exitnum
 
 if not options.local:
     minisat_exe = clone_and_make_minisat()
@@ -114,8 +124,12 @@ else:
 
 exitnum = 0
 for fname in args[1:]:
-    test_velim_one_file(fname)
+    exitnum |= test_velim_one_file(fname)
 
 if exitnum == 0:
     print "ALL PASSED"
+    subprocess.check_call("rm *.out", shell=True)
+else:
+    print "SOME CHECKS FAILED"
+
 exit(exitnum)
