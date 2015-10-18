@@ -57,7 +57,7 @@ class Xor
             return (rhs == other.rhs && vars == other.vars);
         }
 
-        vector<Var> vars;
+        vector<uint32_t> vars;
         size_t size() const
         {
             return vars.size();
@@ -240,12 +240,12 @@ private:
     //Information extraction
     bool extractInfo();
     void cutIntoBlocks(const vector<size_t>& xorsToUse);
-    bool extractInfoFromBlock(const vector<Var>& block, const size_t blockNum);
+    bool extractInfoFromBlock(const vector<uint32_t>& block, const size_t blockNum);
     vector<uint32_t> getXorsForBlock(const size_t blockNum);
 
     //Major calculated data and indexes to this data
     vector<Xor> xors; ///<Recovered XORs
-    vector<vector<Var> > blocks; ///<Blocks of vars that are in groups of XORs
+    vector<vector<uint32_t> > blocks; ///<Blocks of vars that are in groups of XORs
     vector<uint32_t> varToBlock; ///<variable-> block index map
 
     OccSimplifier* subsumer;

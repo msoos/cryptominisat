@@ -345,7 +345,7 @@ bool BVA::bva_simplify_system()
     bva_simp_size += simp_size;
 
     solver->new_var(true);
-    const Var newvar = solver->nVars()-1;
+    const uint32_t newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
     //Binary clauses

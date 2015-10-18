@@ -58,16 +58,16 @@ VarReplacer::~VarReplacer()
     delete scc_finder;
 }
 
-void VarReplacer::new_var(const Var orig_outer)
+void VarReplacer::new_var(const uint32_t orig_outer)
 {
-    if (orig_outer == std::numeric_limits<Var>::max()) {
+    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
         table.push_back(Lit(table.size(), false));
     }
 }
 
 void VarReplacer::check_no_replaced_var_set() const
 {
-    for(Var var = 0; var < solver->nVarsOuter(); var++) {
+    for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         if (solver->value(var) != l_Undef) {
             if (solver->varData[var].removed != Removed::none)
             {
@@ -101,8 +101,8 @@ void VarReplacer::updateVars(
 
     /*updateArray(table, interToOuter);
     updateLitsMap(table, outerToInter);
-    map<Var, vector<Var> > newReverseTable;
-    for(map<Var, vector<Var> >::iterator
+    map<uint32_t, vector<uint32_t> > newReverseTable;
+    for(map<uint32_t, vector<uint32_t> >::iterator
         it = reverseTable.begin(), end = reverseTable.end()
         ; it != end
         ; ++it
@@ -126,8 +126,8 @@ void VarReplacer::printReplaceStats() const
 }
 
 void VarReplacer::update_vardata_and_activities(
-    const Var orig
-    , const Var replaced_with
+    const uint32_t orig
+    , const uint32_t replaced_with
 ) {
     //Not replaced_with, or not replaceable, so skip
     if (orig == replaced_with
@@ -193,13 +193,13 @@ void VarReplacer::attach_delayed_attach()
 
 void VarReplacer::update_all_vardata_activities()
 {
-    Var var = 0;
+    uint32_t var = 0;
     for (vector<Lit>::const_iterator
         it = table.begin(); it != table.end()
         ; ++it, var++
     ) {
-        const Var orig = solver->map_outer_to_inter(var);
-        const Var repl = solver->map_outer_to_inter(it->var());
+        const uint32_t orig = solver->map_outer_to_inter(var);
+        const uint32_t repl = solver->map_outer_to_inter(it->var());
         update_vardata_and_activities(orig, repl);
     }
 }
@@ -759,10 +759,10 @@ bool VarReplacer::handleUpdatedClause(
     return false;
 }
 
-void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_var)
+void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint32_t sub_var)
 {
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
-    const Var sub_var_inter = solver->map_outer_to_inter(sub_var);
+    const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
     assert(solver->varData[sub_var_inter].removed == Removed::replaced);
     assert(solver->model[sub_var] == l_Undef);
 
@@ -772,17 +772,17 @@ void VarReplacer::set_sub_var_during_solution_extension(Var var, const Var sub_v
     solver->model[sub_var] = to_set;
 }
 
-void VarReplacer::extend_model(const Var var)
+void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
-    map<Var, vector<Var> >::const_iterator it
+    map<uint32_t, vector<uint32_t> >::const_iterator it
         = reverseTable.find(var);
 
     if (it == reverseTable.end())
         return;
 
     assert(it->first == var);
-    for(const Var sub_var: it->second)
+    for(const uint32_t sub_var: it->second)
     {
         set_sub_var_during_solution_extension(var, sub_var);
     }
@@ -795,7 +795,7 @@ void VarReplacer::extend_model()
     }
 
     assert(solver->model.size() == solver->nVarsOuter());
-    for (map<Var, vector<Var> >::const_iterator
+    for (map<uint32_t, vector<uint32_t> >::const_iterator
         it = reverseTable.begin() , end = reverseTable.end()
         ; it != end
         ; ++it
@@ -803,14 +803,14 @@ void VarReplacer::extend_model()
         if (solver->model[it->first] == l_Undef)
             continue;
 
-        for(const Var sub_var: it->second)
+        for(const uint32_t sub_var: it->second)
         {
             set_sub_var_during_solution_extension(it->first, sub_var);
         }
     }
 }
 
-void VarReplacer::replaceChecks(const Var var1, const Var var2) const
+void VarReplacer::replaceChecks(const uint32_t var1, const uint32_t var2) const
 {
 
     assert(solver->ok);
@@ -887,8 +887,8 @@ bool VarReplacer::handleOneSet(
 @brief Replaces two two lits with one another
 */
 bool VarReplacer::replace(
-    Var var1
-    , Var var2
+    uint32_t var1
+    , uint32_t var2
     , const bool xor_is_true
 )
 {
@@ -971,11 +971,11 @@ bool VarReplacer::update_table_and_reversetable(const Lit lit1, const Lit lit2)
 /**
 @brief Changes internal graph to set everything that pointed to var to point to lit
 */
-void VarReplacer::setAllThatPointsHereTo(const Var var, const Lit lit)
+void VarReplacer::setAllThatPointsHereTo(const uint32_t var, const Lit lit)
 {
-    map<Var, vector<Var> >::iterator it = reverseTable.find(var);
+    map<uint32_t, vector<uint32_t> >::iterator it = reverseTable.find(var);
     if (it != reverseTable.end()) {
-        for(const Var var2: it->second) {
+        for(const uint32_t var2: it->second) {
             assert(table[var2].var() == var);
             if (lit.var() != var2) {
                 table[var2] = lit ^ table[var2].sign();
@@ -992,7 +992,7 @@ void VarReplacer::checkUnsetSanity()
 {
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         const Lit repLit = get_lit_replaced_with(Lit(i, false));
-        const Var repVar = get_var_replaced_with(i);
+        const uint32_t repVar = get_var_replaced_with(i);
 
         if (solver->varData[i].removed == Removed::none
             && solver->varData[repVar].removed == Removed::none
@@ -1075,7 +1075,7 @@ size_t VarReplacer::mem_used() const
     b += scc_finder->mem_used();
     b += delayedEnqueue.capacity()*sizeof(Lit);
     b += table.capacity()*sizeof(Lit);
-    for(map<Var, vector<Var> >::const_iterator
+    for(map<uint32_t, vector<uint32_t> >::const_iterator
         it = reverseTable.begin(), end = reverseTable.end()
         ; it != end
         ; ++it
@@ -1083,7 +1083,7 @@ size_t VarReplacer::mem_used() const
         b += it->second.capacity()*sizeof(Lit);
     }
     //TODO under-counting
-    b += reverseTable.size()*(sizeof(Var) + sizeof(vector<Var>));
+    b += reverseTable.size()*(sizeof(uint32_t) + sizeof(vector<uint32_t>));
 
     return b;
 }
@@ -1091,7 +1091,7 @@ size_t VarReplacer::mem_used() const
 void VarReplacer::print_equivalent_literals(std::ostream *os) const
 {
     vector<Lit> tmpCl;
-    for (Var var = 0; var < table.size(); var++) {
+    for (uint32_t var = 0; var < table.size(); var++) {
         const Lit lit = table[var];
         if (lit.var() == var)
             continue;
@@ -1216,7 +1216,7 @@ void VarReplacer::build_fast_inter_replace_lookup()
 {
     fast_inter_replace_lookup.clear();
     fast_inter_replace_lookup.reserve(solver->nVars());
-    for(Var var = 0; var < solver->nVars(); var++) {
+    for(uint32_t var = 0; var < solver->nVars(); var++) {
         fast_inter_replace_lookup.push_back(get_lit_replaced_with(Lit(var, false)));
     }
 }
@@ -1240,20 +1240,20 @@ Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
     return lit2;
 }
 
-Var VarReplacer::get_var_replaced_with(Var var) const
+uint32_t VarReplacer::get_var_replaced_with(uint32_t var) const
 {
     var = solver->map_inter_to_outer(var);
-    Var var2 = table[var].var();
+    uint32_t var2 = table[var].var();
     return solver->map_outer_to_inter(var2);
 }
 
-vector<Var> VarReplacer::get_vars_replacing(Var var) const
+vector<uint32_t> VarReplacer::get_vars_replacing(uint32_t var) const
 {
-    vector<Var> ret;
+    vector<uint32_t> ret;
     var = solver->map_inter_to_outer(var);
-    map<Var, vector<Var> >::const_iterator it = reverseTable.find(var);
+    map<uint32_t, vector<uint32_t> >::const_iterator it = reverseTable.find(var);
     if (it != reverseTable.end()) {
-        for(Var v: it->second) {
+        for(uint32_t v: it->second) {
             ret.push_back(solver->map_outer_to_inter(v));
         }
     }
@@ -1279,7 +1279,7 @@ void VarReplacer::save_state(SimpleOutFile& f) const
     f.put_uint32_t(replacedVars);
 
     f.put_uint32_t(reverseTable.size());
-    for(const std::pair<Var, vector<Var> >& elem: reverseTable)
+    for(const std::pair<uint32_t, vector<uint32_t> >& elem: reverseTable)
     {
         f.put_uint32_t(elem.first);
         f.put_vector(elem.second);
@@ -1293,8 +1293,8 @@ void VarReplacer::load_state(SimpleInFile& f)
     uint32_t num = f.get_uint32_t();
     for(uint32_t i = 0; i < num; i++)
     {
-        Var v = f.get_uint32_t();
-        vector<Var> point_to;
+        uint32_t v = f.get_uint32_t();
+        vector<uint32_t> point_to;
         f.get_vector(point_to);
         reverseTable[v] = point_to;
     }

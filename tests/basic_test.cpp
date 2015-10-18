@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_solution)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U}, true);
-    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values)
 {
     SATSolver s;
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U}, true);
-    s.add_xor_clause(vector<Var>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
@@ -226,8 +226,8 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U}, true);
-    s.add_xor_clause(vector<Var>{1U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{1U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values3)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 0U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 0U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
 }
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values4)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 0U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 0U}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL( s.nVars(), 2);
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values5)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U}, true);
     vector<Lit> assump = {Lit(0, false)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values6)
     SATSolver s;
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U}, false);
     vector<Lit> assump = {Lit(0, true)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values7)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     vector<Lit> assump = {Lit(0, false), Lit(1, false)};
     lbool ret = s.solve(&assump);
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -312,9 +312,9 @@ BOOST_AUTO_TEST_CASE(xor_3_long)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
-    s.add_xor_clause(vector<Var>{0}, true);
-    s.add_xor_clause(vector<Var>{1}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
+    s.add_xor_clause(vector<uint32_t>{0}, true);
+    s.add_xor_clause(vector<uint32_t>{1}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
@@ -329,9 +329,9 @@ BOOST_AUTO_TEST_CASE(xor_3_long2)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
-    s.add_xor_clause(vector<Var>{0U}, true);
-    s.add_xor_clause(vector<Var>{1U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U}, true);
+    s.add_xor_clause(vector<uint32_t>{1U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
@@ -347,10 +347,10 @@ BOOST_AUTO_TEST_CASE(xor_4_long)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U, 3U}, false);
-    s.add_xor_clause(vector<Var>{0U}, false);
-    s.add_xor_clause(vector<Var>{1U}, false);
-    s.add_xor_clause(vector<Var>{2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U, 3U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U}, false);
+    s.add_xor_clause(vector<uint32_t>{1U}, false);
+    s.add_xor_clause(vector<uint32_t>{2U}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
@@ -367,10 +367,10 @@ BOOST_AUTO_TEST_CASE(xor_4_long2)
     s.new_var();
     s.new_var();
     s.new_var();
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U, 3U}, true);
-    s.add_xor_clause(vector<Var>{0U}, false);
-    s.add_xor_clause(vector<Var>{1U}, false);
-    s.add_xor_clause(vector<Var>{2U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U, 3U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U}, false);
+    s.add_xor_clause(vector<uint32_t>{1U}, false);
+    s.add_xor_clause(vector<uint32_t>{2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
@@ -383,14 +383,14 @@ BOOST_AUTO_TEST_CASE(xor_4_long2)
 BOOST_AUTO_TEST_CASE(xor_very_long)
 {
     SATSolver s;
-    vector<Var> vars;
+    vector<uint32_t> vars;
     for(unsigned i = 0; i < 30; i++) {
         s.new_var();
         vars.push_back(i);
     }
     s.add_xor_clause(vars, false);
     for(unsigned i = 0; i < 29; i++) {
-        s.add_xor_clause(vector<Var>{i}, false);
+        s.add_xor_clause(vector<uint32_t>{i}, false);
     }
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
@@ -404,14 +404,14 @@ BOOST_AUTO_TEST_CASE(xor_very_long2)
 {
     for(size_t num = 3; num < 30; num++) {
         SATSolver s;
-        vector<Var> vars;
+        vector<uint32_t> vars;
         for(unsigned i = 0; i < num; i++) {
             s.new_var();
             vars.push_back(i);
         }
         s.add_xor_clause(vars, true);
         for(unsigned i = 0; i < num-1; i++) {
-            s.add_xor_clause(vector<Var>{i}, false);
+            s.add_xor_clause(vector<uint32_t>{i}, false);
         }
         lbool ret = s.solve();
         BOOST_CHECK_EQUAL( ret, l_True);
@@ -427,8 +427,8 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat)
 {
     SATSolver s;
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     BOOST_CHECK_EQUAL( s.nVars(), 3);
@@ -439,8 +439,8 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_thread)
     SATSolver s;
     s.set_num_threads(3);
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     BOOST_CHECK_EQUAL( s.okay(), false);
@@ -452,13 +452,13 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
     SATSolver s;
     s.set_num_threads(3);
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0U, 1U}, false);
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, true);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL( s.nVars(), 3);
 
-    s.add_xor_clause(vector<Var>{0U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U}, false);
     ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     BOOST_CHECK_EQUAL( s.get_model()[0], l_False);
@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
     BOOST_CHECK_EQUAL( s.get_model()[2], l_True);
     BOOST_CHECK_EQUAL( s.nVars(), 3);
 
-    s.add_xor_clause(vector<Var>{1U}, true);
+    s.add_xor_clause(vector<uint32_t>{1U}, true);
     ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_False);
     BOOST_CHECK_EQUAL( s.nVars(), 3);
@@ -478,7 +478,7 @@ BOOST_AUTO_TEST_CASE(xor_norm_mix_unsat_multi_thread)
     //s.set_num_threads(3);
     s.new_vars(3);
     s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_xor_clause(vector<Var>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     s.add_clause(vector<Lit>{Lit(1, false)});
     s.add_clause(vector<Lit>{Lit(2, false)});
     lbool ret = s.solve();
@@ -548,7 +548,7 @@ BOOST_AUTO_TEST_CASE(xor1)
     SATSolver s(&conf);
 
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0, 1}, false);
+    s.add_xor_clause(vector<uint32_t>{0, 1}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 
@@ -564,8 +564,8 @@ BOOST_AUTO_TEST_CASE(xor2)
     SATSolver s(&conf);
 
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0, 1}, false);
-    s.add_xor_clause(vector<Var>{1, 2}, false);
+    s.add_xor_clause(vector<uint32_t>{0, 1}, false);
+    s.add_xor_clause(vector<uint32_t>{1, 2}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 
@@ -601,14 +601,14 @@ BOOST_AUTO_TEST_CASE(xor3)
     SATSolver s(&conf);
 
     s.new_vars(3);
-    s.add_xor_clause(vector<Var>{0, 1}, false);
+    s.add_xor_clause(vector<uint32_t>{0, 1}, false);
     lbool ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
     BOOST_CHECK_EQUAL( pairs.size(), 1);
 
-    s.add_xor_clause(vector<Var>{1, 2}, false);
+    s.add_xor_clause(vector<uint32_t>{1, 2}, false);
     ret = s.solve();
     BOOST_CHECK_EQUAL( ret, l_True);
     pairs = s.get_all_binary_xors();

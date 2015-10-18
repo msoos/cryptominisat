@@ -485,12 +485,12 @@ void SQLiteStats::initRestartSTMT()
 
 void SQLiteStats::restart(
     const PropStats& thisPropStats
-    , const Searcher::Stats& thisStats
+    , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
 ) {
     const Searcher::Hist& searchHist = search->getHistory();
-    const Solver::BinTriStats& binTri = solver->getBinTriStats();
+    const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
     sqlite3_bind_int64(stmtRst, bindAt++, runID);

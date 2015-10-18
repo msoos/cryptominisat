@@ -26,7 +26,7 @@
 
 namespace CMSat {
 
-Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper);
+uint32_t getUpdatedVar(uint32_t toUpdate, const vector< uint32_t >& mapper);
 Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper);
 
 template<typename T>
@@ -75,7 +75,7 @@ inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
     return Lit(getUpdatedVar(toUpdate.var(), mapper), toUpdate.sign());
 }
 
-inline Var getUpdatedVar(Var toUpdate, const vector< uint32_t >& mapper)
+inline uint32_t getUpdatedVar(uint32_t toUpdate, const vector< uint32_t >& mapper)
 {
     return mapper.at(toUpdate);
 }

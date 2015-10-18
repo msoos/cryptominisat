@@ -57,7 +57,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 
     for (uint32_t vertex = 0; vertex < solver->nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
-        const Var v = vertex>>1;
+        const uint32_t v = vertex>>1;
         if (solver->value(v) != l_Undef) {
             continue;
         }
@@ -95,7 +95,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
     stack.push(vertex); // Push v on the stack
     stackIndicator[vertex] = true;
 
-    Var vertexVar = Lit::toLit(vertex).var();
+    uint32_t vertexVar = Lit::toLit(vertex).var();
     if (solver->varData[vertexVar].removed == Removed::none) {
         Lit vertLit = Lit::toLit(vertex);
 

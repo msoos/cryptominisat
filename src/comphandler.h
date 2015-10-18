@@ -59,7 +59,7 @@ class CompHandler
 
         bool handle();
         const vector<lbool>& getSavedState();
-        void new_var(const Var orig_outer);
+        void new_var(const uint32_t orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
         void addSavedState(vector<lbool>& solution);
@@ -78,30 +78,30 @@ class CompHandler
                 return left.second < right.second;
             }
         };
-        bool assumpsInsideComponent(const vector<Var>& vars);
+        bool assumpsInsideComponent(const vector<uint32_t>& vars);
         void move_decision_level_zero_vars_here(
             const SATSolver* newSolver
         );
         void save_solution_to_savedstate(
             const SATSolver* newSolver
-            , const vector<Var>& vars
+            , const vector<uint32_t>& vars
             , const uint32_t comp
         );
         void check_solution_is_unassigned_in_main_solver(
             const SATSolver* newSolver
-            , const vector<Var>& vars
+            , const vector<uint32_t>& vars
         );
         void check_local_vardata_sanity();
         bool try_to_solve_component(
             const uint32_t comp_at
             , const uint32_t comp
-            , const vector<Var>& vars
+            , const vector<uint32_t>& vars
             , const size_t num_comps
         );
         bool solve_component(
             const uint32_t comp_at
             , const uint32_t comp
-            , const vector<Var>& vars_orig
+            , const vector<uint32_t>& vars_orig
             , const size_t num_comps
         );
         vector<pair<uint32_t, uint32_t> > get_component_sizes() const;
@@ -112,7 +112,7 @@ class CompHandler
 
         void moveVariablesBetweenSolvers(
             SATSolver* newSolver
-            , const vector<Var>& vars
+            , const vector<uint32_t>& vars
             , const uint32_t comp
         );
 
@@ -120,7 +120,7 @@ class CompHandler
         void moveClausesImplicit(
             SATSolver* newSolver
             , const uint32_t comp
-            , const vector<Var>& vars
+            , const vector<uint32_t>& vars
         );
         void moveClausesLong(
             vector<ClOffset>& cs
@@ -153,17 +153,17 @@ class CompHandler
         vector<lbool> savedState;
 
         //Re-numbering
-        void createRenumbering(const vector<Var>& vars);
-        vector<Var> useless; //temporary
-        vector<Var> smallsolver_to_bigsolver;
-        vector<Var> bigsolver_to_smallsolver;
+        void createRenumbering(const vector<uint32_t>& vars);
+        vector<uint32_t> useless; //temporary
+        vector<uint32_t> smallsolver_to_bigsolver;
+        vector<uint32_t> bigsolver_to_smallsolver;
 
         Lit upd_bigsolver_to_smallsolver(const Lit lit) const
         {
             return Lit(upd_bigsolver_to_smallsolver(lit.var()), lit.sign());
         }
 
-        Var upd_bigsolver_to_smallsolver(const Var var) const
+        uint32_t upd_bigsolver_to_smallsolver(const uint32_t var) const
         {
             return bigsolver_to_smallsolver[var];
         }

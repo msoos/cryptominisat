@@ -310,9 +310,9 @@ Lit Prober::update_lit_for_dominator(
     return lit;
 }
 
-vector<Var> Prober::randomize_possible_choices()
+vector<uint32_t> Prober::randomize_possible_choices()
 {
-    vector<Var> poss_choice;
+    vector<uint32_t> poss_choice;
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
             && solver->varData[i].removed == Removed::none
@@ -349,7 +349,7 @@ bool Prober::probe()
     const size_t origTrailSize = solver->trail_size();
     numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
 
-    vector<Var> poss_choice = randomize_possible_choices();
+    vector<uint32_t> poss_choice = randomize_possible_choices();
 
     assert(solver->propStats.bogoProps == 0);
     assert(solver->propStats.otfHyperTime == 0);
@@ -362,10 +362,10 @@ bool Prober::probe()
     ) {
         extraTime += 20;
         runStats.numLoopIters++;
-        const Var var = poss_choice[i];
+        const uint32_t var = poss_choice[i];
 
         //Check if already blacklisted
-        if (var == std::numeric_limits<Var>::max())
+        if (var == std::numeric_limits<uint32_t>::max())
             continue;
 
         //Probe 'false' first --> this is not critical
@@ -501,7 +501,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
     }
 }
 
-void Prober::check_and_set_both_prop(Var var, bool first)
+void Prober::check_and_set_both_prop(uint32_t var, bool first)
 {
     //If this is the first, set what is propagated
     if (first) {
@@ -700,7 +700,7 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
     ) {
         extraTime += 2;
         const Lit thisLit = solver->trail[c];
-        const Var var = thisLit.var();
+        const uint32_t var = thisLit.var();
 
         check_and_set_both_prop(var, first);
         visitedAlready[thisLit.toInt()] = 1;
@@ -741,11 +741,11 @@ size_t Prober::mem_used() const
     return mem;
 }
 
-// void Prober::fillToTry(vector<Var>& toTry)
+// void Prober::fillToTry(vector<uint32_t>& toTry)
 // {
 //     uint32_t max = std::min(solver->negPosDist.size()-1, (size_t)300);
 //     while(true) {
-//         Var var = solver->negPosDist[solver->mtrand.randInt(max)].var;
+//         uint32_t var = solver->negPosDist[solver->mtrand.randInt(max)].var;
 //         if (solver->value(var) != l_Undef
 //             || (solver->varData[var].removed != Removed::none)
 //         ) continue;
@@ -783,7 +783,7 @@ size_t Prober::mem_used() const
 //     assert(propagated.isZero());
 //     assert(propagated2.isZero());
 //
-//     vector<Var> toTry;
+//     vector<uint32_t> toTry;
 //     while(solver->bogoProps < oldBogoProps + 300*1000*1000) {
 //         toTry.clear();
 //         for (uint32_t i = 0; i < 3; i++) {
@@ -809,7 +809,7 @@ size_t Prober::mem_used() const
 //     return solver->ok;
 // }
 //
-// const bool Prober::tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
+// const bool Prober::tryMultiLevel(const vector<uint32_t>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
 // {
 //     assert(solver->ok);
 //
@@ -834,7 +834,7 @@ size_t Prober::mem_used() const
 //         }
 //
 //         for (int sublevel = solver->trail_size()-1; sublevel > (int)solver->trail_lim[0]; sublevel--) {
-//             Var x = solver->trail[sublevel].var();
+//             uint32_t x = solver->trail[sublevel].var();
 //             if (first) {
 //                 propagated.setBit(x);
 //                 if (solver->assigns[x].getBool()) propValue.setBit(x);

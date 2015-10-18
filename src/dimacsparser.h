@@ -70,7 +70,7 @@ class DimacsParser
 
         //Reduce temp overhead
         vector<Lit> lits;
-        vector<Var> vars;
+        vector<uint32_t> vars;
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;

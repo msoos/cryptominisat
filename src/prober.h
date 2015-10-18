@@ -220,7 +220,7 @@ class Prober {
         void clean_clauses_after_probe();
         void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo);
         void check_if_must_disable_cache_update();
-        vector<Var> randomize_possible_choices();
+        vector<uint32_t> randomize_possible_choices();
         Lit update_lit_for_dominator(Lit lit);
         void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);
         bool check_timeout_due_to_hyperbin();
@@ -234,7 +234,7 @@ class Prober {
         void clear_up_before_first_set();
 
         void update_cache(Lit thisLit, Lit lit, size_t numElemsSet);
-        void check_and_set_both_prop(Var var, bool first);
+        void check_and_set_both_prop(uint32_t var, bool first);
         void add_rest_of_lits_to_cache(Lit lit);
         void handle_failed_lit(Lit lit, Lit failed);
 
@@ -242,15 +242,15 @@ class Prober {
         #ifdef DEBUG_REMOVE_USELESS_BIN
         void testBinRemoval(const Lit origLit);
         void fillTestUselessBinRemoval(const Lit lit);
-        vector<Var> origNLBEnqueuedVars;
-        vector<Var> origEnqueuedVars;
+        vector<uint32_t> origNLBEnqueuedVars;
+        vector<uint32_t> origEnqueuedVars;
         #endif
 
         //Multi-level
         void calcNegPosDist();
-        bool tryMultiLevel(const vector<Var>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
+        bool tryMultiLevel(const vector<uint32_t>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed);
         bool tryMultiLevelAll();
-        void fillToTry(vector<Var>& toTry);
+        void fillToTry(vector<uint32_t>& toTry);
 
         //Used to count extra time, must be cleared at every startup
         uint64_t extraTime;

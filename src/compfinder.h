@@ -44,10 +44,10 @@ class CompFinder {
         bool find_components();
         bool getTimedOut() const;
 
-        const map<uint32_t, vector<Var> >& getReverseTable() const; // comp->var
-        uint32_t getVarComp(const Var var) const;
+        const map<uint32_t, vector<uint32_t> >& getReverseTable() const; // comp->var
+        uint32_t getVarComp(const uint32_t var) const;
         const vector<uint32_t>& getTable() const; //var -> comp
-        const vector<Var>& getCompVars(const uint32_t comp);
+        const vector<uint32_t>& getCompVars(const uint32_t comp);
 
     private:
         void addToCompImplicits();
@@ -76,7 +76,7 @@ class CompFinder {
         };
 
         //comp -> vars
-        map<uint32_t, vector<Var> > reverseTable;
+        map<uint32_t, vector<uint32_t> > reverseTable;
 
         //var -> comp
         vector<uint32_t> table;
@@ -86,7 +86,7 @@ class CompFinder {
         uint32_t used_comp_no;
 
         //Temporary
-        vector<Var> newSet;
+        vector<uint32_t> newSet;
         vector<uint32_t> tomerge;
 
         //Keep track of time
@@ -98,25 +98,25 @@ class CompFinder {
         Solver* solver;
 };
 
-inline const map<uint32_t, vector<Var> >& CompFinder::getReverseTable() const
+inline const map<uint32_t, vector<uint32_t> >& CompFinder::getReverseTable() const
 {
     assert(!timedout);
     return reverseTable;
 }
 
-inline const vector<Var>& CompFinder::getTable() const
+inline const vector<uint32_t>& CompFinder::getTable() const
 {
     assert(!timedout);
     return table;
 }
 
-inline uint32_t CompFinder::getVarComp(const Var var) const
+inline uint32_t CompFinder::getVarComp(const uint32_t var) const
 {
     assert(!timedout);
     return table[var];
 }
 
-inline const vector<Var>& CompFinder::getCompVars(const uint32_t comp)
+inline const vector<uint32_t>& CompFinder::getCompVars(const uint32_t comp)
 {
     assert(!timedout);
     return reverseTable[comp];

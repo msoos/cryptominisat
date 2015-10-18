@@ -74,7 +74,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     << endl;
     #endif
 
-    const Var blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
+    const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
 
     //Oher blocked clauses set its value already
@@ -92,7 +92,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
-    const Var blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
+    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
     if (satisfied(lits))

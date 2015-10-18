@@ -39,7 +39,7 @@ using std::cout;
 using std::endl;
 
 static const uint16_t unassigned_col = std::numeric_limits<uint16_t>::max();
-static const Var unassigned_var = std::numeric_limits<Var>::max();
+static const uint32_t unassigned_var = std::numeric_limits<uint32_t>::max();
 
 Gaussian::Gaussian(
     Solver* _solver
@@ -80,7 +80,7 @@ bool Gaussian::clean_one_xor(Xor& x)
     size_t i = 0;
     size_t j = 0;
     for(size_t size = x.vars.size(); i < size; i++) {
-        Var var = x.vars[i];
+        uint32_t var = x.vars[i];
         if (solver->value(i) != l_Undef) {
             if (solver->value(i) == l_True) {
                 rhs ^= true;
@@ -212,7 +212,7 @@ uint32_t Gaussian::select_columnorder(
         if (c.getRemoved()) continue;
         num_xorclauses++;
 
-        for (Var v: c.vars) {
+        for (uint32_t v: c.vars) {
             assert(solver->value(v) == l_Undef);
             var_to_col[v] = unassigned_col - 1;
         }
@@ -229,7 +229,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    vector<Var> vars(solver->nVars());
+    vector<uint32_t> vars(solver->nVars());
     if (!config.orderCols) {
         for (uint32_t i = 0; i < solver->nVars(); i++) {
             vars.push_back(i);
@@ -242,7 +242,7 @@ uint32_t Gaussian::select_columnorder(
     while ((config.orderCols && !order_heap.empty())
         || (!config.orderCols && iterReduceIt < vars.size())
     ) {
-        Var v;
+        uint32_t v;
         if (config.orderCols) {
             v = order_heap.remove_min();
         } else {
@@ -313,7 +313,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     assert(origMat.num_rows == matrix_row);
 }
 
-void Gaussian::update_matrix_col(matrixset& m, const Var var, const uint32_t col)
+void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_t col)
 {
     #ifdef VERBOSE_DEBUG_MORE
     cout << "(" << matrix_no << ")Updating matrix var " << var+1
@@ -388,7 +388,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
 
     uint32_t last = 0;
     uint32_t col = 0;
-    for (const Var *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
+    for (const uint32_t *it = &m.col_to_var[0], *end = it + m.num_cols; it != end; col++, it++) {
         if (*it != unassigned_var && solver->value(*it) != l_Undef) {
             update_matrix_col(m, *it, col);
             last++;
@@ -810,13 +810,13 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
     return ret;
 }
 
-uint32_t Gaussian::find_sublevel(const Var v) const
+uint32_t Gaussian::find_sublevel(const uint32_t v) const
 {
     for (int i = solver->trail.size()-1; i >= 0; i --)
         if (solver->trail[i].var() == v) return i;
 
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Oooops! Var " << v+1 << " does not have a sublevel!!"
+    cout << "(" << matrix_no << ")Oooops! uint32_t " << v+1 << " does not have a sublevel!!"
     << "(so it must be undefined)" << endl;
     #endif
 
@@ -844,7 +844,7 @@ void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
         ; sublevel >= (int64_t)until_sublevel
         ; sublevel--
     ) {
-        const Var var  = solver->trail[sublevel].var();
+        const uint32_t var  = solver->trail[sublevel].var();
         #ifdef VERBOSE_DEBUG
         cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
         #endif
@@ -889,7 +889,7 @@ void Gaussian::analyse_confl(
         var = m.matrix.getVarsetAt(row).scan(var);
         if (var == ULONG_MAX) break;
 
-        const Var real_var = col_to_var_original[var];
+        const uint32_t real_var = col_to_var_original[var];
         assert(real_var < solver->nVars());
 
         if (solver->varData[real_var].level > this_maxlevel)
@@ -1087,7 +1087,7 @@ void Gaussian::print_matrix_row_with_assigns(const T& row) const
         if (col == ULONG_MAX) break;
 
         else {
-            Var var = col_to_var_original[col];
+            uint32_t var = col_to_var_original[col];
             cout << var+1 << "(" << lbool_to_string(solver->assigns[var]) << ")";
             cout << ", ";
         }
@@ -1228,7 +1228,7 @@ void Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset
             col = var_row.scan(col);
             if (col == ULONG_MAX) break;
 
-            const Var var = col_to_var_original[col];
+            const uint32_t var = col_to_var_original[col];
             assert(var < solver->nVars());
 
             if (solver->assigns[var] == l_True) {

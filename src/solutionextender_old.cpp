@@ -37,7 +37,7 @@ SolutionExtender::SolutionExtender(
     , assigns(_solution)
 {
     solver->model.resize(nVarsOuter(), l_Undef);
-    for (Var var = 0; var < nVarsOuter(); var++) {
+    for (uint32_t var = 0; var < nVarsOuter(); var++) {
         solver->model[var] = value(var);
     }
     release_assert(solver->verify_model());
@@ -82,7 +82,7 @@ void SolutionExtender::extend()
     }
 
     //Pick branches as long as we can
-    for (Var var = 0; var < nVarsOuter(); var++) {
+    for (uint32_t var = 0; var < nVarsOuter(); var++) {
         if (value(var) == l_Undef
             //Don't pick replaced variables
             && solver->varData[var].removed != Removed::replaced
@@ -115,7 +115,7 @@ void SolutionExtender::extend()
 
     //Copy&check model
     solver->model.resize(nVarsOuter(), l_Undef);
-    for (Var var = 0; var < nVarsOuter(); var++) {
+    for (uint32_t var = 0; var < nVarsOuter(); var++) {
         solver->model[var] = value(var);
     }
 
@@ -442,9 +442,9 @@ void SolutionExtender::replaceSet(Lit toSet)
 void SolutionExtender::replaceBackwardSet(const Lit toSet)
 {
     //set backward equiv
-    map<Var, vector<Var> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(toSet.var());
+    map<uint32_t, vector<uint32_t> >::const_iterator revTable = solver->varReplacer->getReverseTable().find(toSet.var());
     if (revTable != solver->varReplacer->getReverseTable().end()) {
-        const vector<Var>& toGoThrough = revTable->second;
+        const vector<uint32_t>& toGoThrough = revTable->second;
         for (size_t i = 0; i < toGoThrough.size(); i++) {
             //Get sign of replacement
             const Lit lit = Lit(toGoThrough[i], false);

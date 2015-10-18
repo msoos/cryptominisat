@@ -901,12 +901,12 @@ void MySQLStats::mem_used(
 
 void MySQLStats::restart(
     const PropStats& thisPropStats
-    , const Searcher::Stats& thisStats
+    , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
 ) {
     const Searcher::Hist& searchHist = search->getHistory();
-    const Solver::BinTriStats& binTri = solver->getBinTriStats();
+    const BinTriStats& binTri = solver->getBinTriStats();
 
     //Position of solving
     stmtRst.numSimplify     = solver->get_solve_stats().numSimplify;

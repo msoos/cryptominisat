@@ -58,7 +58,7 @@ PropEngine::~PropEngine()
 {
 }
 
-void PropEngine::new_var(const bool bva, Var orig_outer)
+void PropEngine::new_var(const bool bva, uint32_t orig_outer)
 {
     CNF::new_var(bva, orig_outer);
     //TODO
@@ -1153,7 +1153,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     //assert(decisionLevel() == 0 || varData[p.var()].removed == Removed::none);
     #endif
 
-    const Var v = p.var();
+    const uint32_t v = p.var();
     assert(value(v) == l_Undef);
     if (!watches[(~p).toInt()].empty()) {
         watches.prefetch((~p).toInt());

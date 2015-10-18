@@ -90,7 +90,7 @@ public:
     //Get state
     uint32_t    decisionLevel() const;      ///<Returns current decision level
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
-    bool        getStoredPolarity(const Var var);
+    bool        getStoredPolarity(const uint32_t var);
     size_t trail_size() const {
         return trail.size();
     }
@@ -103,7 +103,7 @@ public:
 
 protected:
     virtual Lit find_good_blocked_lit(const Clause& c) const  = 0;
-    void new_var(const bool bva, const Var orig_outer) override;
+    void new_var(const bool bva, const uint32_t orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
     template<class T> uint32_t calc_glue_using_seen2(const T& ps);
@@ -342,7 +342,7 @@ uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
 }
 
 
-inline bool PropEngine::getStoredPolarity(const Var var)
+inline bool PropEngine::getStoredPolarity(const uint32_t var)
 {
     return varData[var].polarity;
 }

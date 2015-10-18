@@ -40,31 +40,31 @@ using namespace CMSat;
 
 class ClauseAllocator;
 
+struct BinTriStats
+{
+    uint64_t irredBins = 0;
+    uint64_t redBins = 0;
+    uint64_t irredTris = 0;
+    uint64_t redTris = 0;
+    uint64_t numNewBinsSinceSCC = 0;
+};
+
+struct LitStats
+{
+    uint64_t irredLits = 0;
+    uint64_t redLits = 0;
+};
+
 class CNF
 {
 public:
     void save_on_var_memory();
     void updateVars(
-        const vector<Var>& outerToInter
-        , const vector<Var>& interToOuter
+        const vector<uint32_t>& outerToInter
+        , const vector<uint32_t>& interToOuter
     );
     size_t mem_used_renumberer() const;
     size_t mem_used() const;
-
-    struct BinTriStats
-    {
-        uint64_t irredBins = 0;
-        uint64_t redBins = 0;
-        uint64_t irredTris = 0;
-        uint64_t redTris = 0;
-        uint64_t numNewBinsSinceSCC = 0;
-    };
-
-    struct LitStats
-    {
-        uint64_t irredLits = 0;
-        uint64_t redLits = 0;
-    };
 
     CNF(const SolverConf *_conf, bool* _needToInterrupt)
     {
@@ -72,6 +72,7 @@ public:
             conf = *_conf;
         }
         drup = new Drup();
+        _needToInterrupt = new bool;
         assert(_needToInterrupt != NULL);
         needToInterrupt = _needToInterrupt;
     }
@@ -113,7 +114,7 @@ public:
         return ok;
     }
 
-    lbool value (const Var x) const
+    lbool value (const uint32_t x) const
     {
         return assigns[x];
     }
@@ -174,7 +175,7 @@ public:
         , const bool red
         , int64_t& timeAvailable
     );
-    Var map_inter_to_outer(const Var inter) const
+    uint32_t map_inter_to_outer(const uint32_t inter) const
     {
         return interToOuterMain[inter];
     }
@@ -182,7 +183,7 @@ public:
     {
         return Lit(interToOuterMain[lit.var()], lit.sign());
     }
-    Var map_outer_to_inter(const Var outer) const
+    uint32_t map_outer_to_inter(const uint32_t outer) const
     {
         return outerToInterMain[outer];
     }
@@ -225,7 +226,7 @@ public:
         return num_bva_vars;
     }
 
-    vector<Var> build_outer_to_without_bva_map() const;
+    vector<uint32_t> build_outer_to_without_bva_map() const;
     void clean_occur_from_removed_clauses();
     void clean_occur_from_removed_clauses_only_smudged();
     void clean_occur_from_idx_types_only_smudged();
@@ -245,7 +246,7 @@ public:
     ) const;
 
 protected:
-    virtual void new_var(const bool bva, const Var orig_outer);
+    virtual void new_var(const bool bva, const uint32_t orig_outer);
     virtual void new_vars(const size_t n);
     void test_reflectivity_of_renumbering() const;
     vector<lbool> back_number_solution_from_inter_to_outer(const vector<lbool>& solution) const
@@ -265,12 +266,12 @@ private:
     bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
     void enlarge_minimal_datastructs(size_t n = 1);
     void enlarge_nonminimial_datastructs(size_t n = 1);
-    void swapVars(const Var which, const int off_by = 0);
+    void swapVars(const uint32_t which, const int off_by = 0);
 
-    vector<Var> outerToInterMain;
-    vector<Var> interToOuterMain;
+    vector<uint32_t> outerToInterMain;
+    vector<uint32_t> interToOuterMain;
     size_t num_bva_vars = 0;
-    vector<Var> outer_to_with_bva_map;
+    vector<uint32_t> outer_to_with_bva_map;
 };
 
 template<class Function>

@@ -116,7 +116,7 @@ OccSimplifier::~OccSimplifier()
     delete gateFinder;
 }
 
-void OccSimplifier::new_var(const Var /*orig_outer*/)
+void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
 }
 
@@ -183,7 +183,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 {
     //Either a variable is not eliminated, or its value is undef
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
-        const Var outer = solver->map_inter_to_outer(i);
+        const uint32_t outer = solver->map_inter_to_outer(i);
         assert(solver->varData[i].removed != Removed::elimed
             || (solver->value(i) == l_Undef && solver->model[outer] == l_Undef)
         );
@@ -709,7 +709,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     }
 }
 
-bool OccSimplifier::can_eliminate_var(const Var var) const
+bool OccSimplifier::can_eliminate_var(const uint32_t var) const
 {
     assert(var <= solver->nVars());
     if (solver->value(var) != l_Undef
@@ -749,7 +749,7 @@ bool OccSimplifier::eliminate_vars()
             && !solver->must_interrupt_asap()
         ) {
             assert(limit_to_decrease == &norm_varelim_time_limit);
-            Var var = velim_order.remove_min();
+            uint32_t var = velim_order.remove_min();
 
             //Stats
             *limit_to_decrease -= 20;
@@ -1062,7 +1062,7 @@ bool OccSimplifier::fill_occur()
 
 //This must NEVER be called during solve. Only JUST BEFORE Solver::solve() is called
 //otherwise, uneliminated_vars_since_last_solve will be wrong and stamp dominators will not be cleared
-bool OccSimplifier::uneliminate(Var var)
+bool OccSimplifier::uneliminate(uint32_t var)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
@@ -1085,7 +1085,7 @@ bool OccSimplifier::uneliminate(Var var)
 
     //Find if variable is really needed to be eliminated
     var = solver->map_inter_to_outer(var);
-    map<Var, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
+    map<uint32_t, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
     if (it == blk_var_to_cl.end())
         return solver->okay();
 
@@ -1156,7 +1156,7 @@ void OccSimplifier::buildBlockedMap()
     blk_var_to_cl.clear();
     for(size_t i = 0; i < blockedClauses.size(); i++) {
         const BlockedClause& blocked = blockedClauses[i];
-        map<Var, vector<size_t> >::iterator it
+        map<uint32_t, vector<size_t> >::iterator it
             = blk_var_to_cl.find(blocked.blockedOn.var());
 
         if (it == blk_var_to_cl.end()) {
@@ -1332,7 +1332,7 @@ void OccSimplifier::cleanBlockedClauses()
         ; i != end
         ; i++
     ) {
-        const Var blockedOn = solver->map_outer_to_inter(i->blockedOn.var());
+        const uint32_t blockedOn = solver->map_outer_to_inter(i->blockedOn.var());
         if (solver->varData[blockedOn].removed == Removed::elimed
             && solver->value(blockedOn) != l_Undef
         ) {
@@ -1681,7 +1681,7 @@ bool OccSimplifier::skip_resolution_thanks_to_gate(
     return poss_gate_parts[at_poss] == negs_gate_parts[at_negs];
 }
 
-int OccSimplifier::test_elim_and_fill_resolvents(const Var var)
+int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 {
     assert(solver->ok);
     assert(solver->varData[var].removed == Removed::none);
@@ -1993,7 +1993,7 @@ bool OccSimplifier::add_varelim_resolvent(
     return true;
 }
 
-void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
+void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
 {
     //Update var elim complexity heap
     if (!solver->conf.updateVarElimComplexityOTF)
@@ -2018,7 +2018,7 @@ void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
 
     int64_t limit_before = *limit_to_decrease;
     num_otf_update_until_now++;
-    for(Var var: touched.getTouchedList()) {
+    for(uint32_t var: touched.getTouchedList()) {
         //No point in updating the score of this var
         //it's eliminated already, or not to be eliminated at all
         if (var == elimed_var || !can_eliminate_var(var)) {
@@ -2035,7 +2035,7 @@ void OccSimplifier::update_varelim_complexity_heap(const Var elimed_var)
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
 
-void OccSimplifier::print_var_elim_complexity_stats(const Var var) const
+void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const
 {
     if (solver->conf.verbosity < 5)
         return;
@@ -2046,7 +2046,7 @@ void OccSimplifier::print_var_elim_complexity_stats(const Var var) const
     << endl;
 }
 
-void OccSimplifier::set_var_as_eliminated(const Var var, const Lit lit)
+void OccSimplifier::set_var_as_eliminated(const uint32_t var, const Lit lit)
 {
     if (solver->conf.verbosity >= 5) {
         cout << "Elimination of var "
@@ -2066,7 +2066,7 @@ void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
     );
 }
 
-bool OccSimplifier::maybe_eliminate(const Var var)
+bool OccSimplifier::maybe_eliminate(const uint32_t var)
 {
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
@@ -2617,7 +2617,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
 
 
-pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const Var var)
+pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 {
     const Lit lit(var, false);
     const HeuristicData pos = calc_data_for_heuristic(lit);
@@ -2704,7 +2704,7 @@ void OccSimplifier::order_vars_for_elim()
     #endif
 }
 
-std::pair<int, int> OccSimplifier::strategyCalcVarElimScore(const Var var)
+std::pair<int, int> OccSimplifier::strategyCalcVarElimScore(const uint32_t var)
 {
     std::pair<int, int> cost;
     if (solver->conf.var_elim_strategy == ElimStrategy::heuristic) {
@@ -2758,7 +2758,7 @@ size_t OccSimplifier::mem_used() const
     b += dummy.capacity()*sizeof(char);
     b += sub_str_with.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
-    for(map<Var, vector<size_t> >::const_iterator
+    for(map<uint32_t, vector<size_t> >::const_iterator
         it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
         ; it != end
         ; ++it
@@ -2773,7 +2773,7 @@ size_t OccSimplifier::mem_used() const
     ) {
         b += it->lits.capacity()*sizeof(Lit);
     }
-    b += blk_var_to_cl.size()*(sizeof(Var)+sizeof(vector<size_t>)); //TODO under-counting
+    b += blk_var_to_cl.size()*(sizeof(uint32_t)+sizeof(vector<size_t>)); //TODO under-counting
     b += velim_order.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += touched.mem_used();

@@ -59,6 +59,7 @@ set(cryptoms_lib_files
     features_calc.cpp
     features_to_reconf.cpp
     features.cpp
+    searchstats.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )

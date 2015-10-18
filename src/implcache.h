@@ -88,14 +88,14 @@ public:
         const vector<LitExtra>& otherLits
         , const Lit extraLit
         , const bool red
-        , const Var leaveOut
+        , const uint32_t leaveOut
         , vector<uint16_t>& seen
     );
     bool merge(
         const vector<Lit>& otherLits //Lits to add
         , const Lit extraLit //Add this, too to the list of lits
         , const bool red //The step was a redundant-dependent step?
-        , const Var leaveOut //Leave this literal out
+        , const uint32_t leaveOut //Leave this literal out
         , vector<uint16_t>& seen
     );
     void makeAllRed();
@@ -239,11 +239,11 @@ public:
     }
 
 private:
-    void tryVar(Solver* solver, Var var);
+    void tryVar(Solver* solver, uint32_t var);
 
     void handleNewData(
         vector<uint16_t>& val
-        , Var var
+        , uint32_t var
         , Lit lit
     );
 

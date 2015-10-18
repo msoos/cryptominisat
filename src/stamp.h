@@ -62,8 +62,8 @@ public:
         , StampType stampType
     ) const;
     void updateVars(
-        const vector<Var>& outerToInter
-        , const vector<Var>& interToOuter2
+        const vector<uint32_t>& outerToInter
+        , const vector<uint32_t>& interToOuter2
         , vector<uint16_t>& seen
     );
     void clearStamps();

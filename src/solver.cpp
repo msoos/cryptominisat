@@ -300,7 +300,7 @@ void Solver::add_every_combination_xor(
         //New lit to connect to next cut
         if (at != lits.size()) {
             new_var(true);
-            const Var newvar = nVars()-1;
+            const uint32_t newvar = nVars()-1;
             const Lit toadd = Lit(newvar, false);
             xorlits.push_back(toadd);
             lastlit_added = toadd;
@@ -836,7 +836,7 @@ void Solver::test_renumbering() const
     assert(!problem && "We renumbered the variables in the wrong order!");
 }
 
-void Solver::renumber_clauses(const vector<Var>& outerToInter)
+void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
 {
     //Clauses' abstractions have to be re-calculated
     for(size_t i = 0; i < longIrredCls.size(); i++) {
@@ -853,11 +853,11 @@ void Solver::renumber_clauses(const vector<Var>& outerToInter)
 }
 
 size_t Solver::calculate_interToOuter_and_outerToInter(
-    vector<Var>& outerToInter
-    , vector<Var>& interToOuter
+    vector<uint32_t>& outerToInter
+    , vector<uint32_t>& interToOuter
 ) {
     size_t at = 0;
-    vector<Var> useless;
+    vector<uint32_t> useless;
     size_t numEffectiveVars = 0;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef
@@ -876,7 +876,7 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     }
 
     //Fill the rest with variables that have been removed/eliminated/set
-    for(vector<Var>::const_iterator
+    for(vector<uint32_t>::const_iterator
         it = useless.begin(), end = useless.end()
         ; it != end
         ; ++it
@@ -903,8 +903,8 @@ void Solver::renumber_variables()
     clauseCleaner->remove_and_clean_all();
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
-    vector<Var> outerToInter(nVarsOuter());
-    vector<Var> interToOuter(nVarsOuter());
+    vector<uint32_t> outerToInter(nVarsOuter());
+    vector<uint32_t> interToOuter(nVarsOuter());
     size_t numEffectiveVars =
         calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
 
@@ -1028,7 +1028,7 @@ void Solver::new_vars(size_t n)
     datasync->new_vars(n);
 }
 
-void Solver::new_var(const bool bva, const Var orig_outer)
+void Solver::new_var(const bool bva, const uint32_t orig_outer)
 {
     check_switchoff_limits_newvar();
     Searcher::new_var(bva, orig_outer);
@@ -1046,7 +1046,7 @@ void Solver::new_var(const bool bva, const Var orig_outer)
     if (compHandler) {
         compHandler->new_var(orig_outer);
     }
-    if (orig_outer == std::numeric_limits<Var>::max()) {
+    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
         datasync->new_var(bva);
     }
 
@@ -1148,7 +1148,7 @@ void Solver::check_model_for_assumptions() const
 
 void Solver::check_recursive_minimization_effectiveness(const lbool status)
 {
-    const Searcher::Stats& stats = Searcher::get_stats();
+    const SearchStats& stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doRecursiveMinim
         && stats.recMinLitRem + stats.litsRedNonMin > 100000
@@ -1180,7 +1180,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
 
 void Solver::check_minimization_effectiveness(const lbool status)
 {
-    const Searcher::Stats& search_stats = Searcher::get_stats();
+    const SearchStats& search_stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doMinimRedMore
         && search_stats.moreMinimLitsStart > 100000
@@ -2408,8 +2408,8 @@ vector<Lit> Solver::get_zero_assigned_lits() const
             }
 
             //Everything it repaces has also been set
-            const vector<Var> vars = varReplacer->get_vars_replacing(lit.var());
-            for(const Var var: vars) {
+            const vector<uint32_t> vars = varReplacer->get_vars_replacing(lit.var());
+            for(const uint32_t var: vars) {
                 if (varData[var].is_bva)
                     continue;
 
@@ -2433,7 +2433,7 @@ vector<Lit> Solver::get_zero_assigned_lits() const
     lits.resize( std::distance(lits.begin(),it) );
 
     //Update to outer without BVA
-    vector<Var> my_map = build_outer_to_without_bva_map();
+    vector<uint32_t> my_map = build_outer_to_without_bva_map();
     updateLitsMap(lits, my_map);
     for(const Lit lit: lits) {
         assert(lit.var() < nVarsOutside());
@@ -2552,7 +2552,7 @@ lbool Solver::model_value (const Lit p) const
     return model[p.var()] ^ p.sign();
 }
 
-lbool Solver::model_value (const Var p) const
+lbool Solver::model_value (const uint32_t p) const
 {
     return model[p];
 }
@@ -2887,7 +2887,7 @@ bool Solver::add_clause_outer(const vector<Lit>& lits)
     return addClause(back_number_from_outside_to_outer_tmp);
 }
 
-bool Solver::add_xor_clause_outer(const vector<Var>& vars, bool rhs)
+bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
 {
     if (!ok) {
         return false;
@@ -2953,7 +2953,7 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
 
     //Update to outer without BVA
     vector<pair<Lit, Lit> > ret;
-    const vector<Var> my_map = build_outer_to_without_bva_map();
+    const vector<uint32_t> my_map = build_outer_to_without_bva_map();
     for(std::pair<Lit, Lit> p: bin_xors) {
         if (p.first.var() < my_map.size()
             && p.second.var() < my_map.size()
@@ -3048,15 +3048,15 @@ void Solver::update_assumptions_after_varreplace()
 
 //TODO later, this can be removed, get_num_free_vars() is MUCH cheaper to
 //compute but may have some bugs here-and-there
-Var Solver::num_active_vars() const
+uint32_t Solver::num_active_vars() const
 {
-    Var numActive = 0;
+    uint32_t numActive = 0;
     uint32_t removed_decomposed = 0;
     uint32_t removed_replaced = 0;
     uint32_t removed_set = 0;
     uint32_t removed_elimed = 0;
     uint32_t removed_non_decision = 0;
-    for(Var var = 0; var < solver->nVarsOuter(); var++) {
+    for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
             if (varData[var].removed != Removed::none)
             {

@@ -304,7 +304,7 @@ struct OneThreadAddCls
         solver.new_external_vars(data_for_thread.vars_to_add);
 
         vector<Lit> lits;
-        vector<Var> vars;
+        vector<uint32_t> vars;
         bool ret = true;
         size_t at = 0;
         const vector<Lit>& orig_lits = (*data_for_thread.lits_to_add);
@@ -479,7 +479,7 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
 
         data->cls_lits.push_back(lit_Error);
         data->cls_lits.push_back(Lit(0, rhs));
-        for(Var var: vars) {
+        for(uint32_t var: vars) {
             data->cls_lits.push_back(Lit(var, false));
         }
     } else {

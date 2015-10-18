@@ -53,9 +53,9 @@ CompHandler::~CompHandler()
     }
 }
 
-void CompHandler::new_var(const Var orig_outer)
+void CompHandler::new_var(const uint32_t orig_outer)
 {
-    if (orig_outer == std::numeric_limits<Var>::max()) {
+    if (orig_outer == std::numeric_limits<uint32_t>::max()) {
         savedState.push_back(l_Undef);
     }
     assert(savedState.size() == solver->nVarsOuter());
@@ -75,14 +75,14 @@ size_t CompHandler::mem_used() const
 {
     size_t mem = 0;
     mem += savedState.capacity()*sizeof(lbool);
-    mem += useless.capacity()*sizeof(Var);
-    mem += smallsolver_to_bigsolver.capacity()*sizeof(Var);
-    mem += bigsolver_to_smallsolver.capacity()*sizeof(Var);
+    mem += useless.capacity()*sizeof(uint32_t);
+    mem += smallsolver_to_bigsolver.capacity()*sizeof(uint32_t);
+    mem += bigsolver_to_smallsolver.capacity()*sizeof(uint32_t);
 
     return mem;
 }
 
-void CompHandler::createRenumbering(const vector<Var>& vars)
+void CompHandler::createRenumbering(const vector<uint32_t>& vars)
 {
     smallsolver_to_bigsolver.resize(vars.size());
     bigsolver_to_smallsolver.resize(solver->nVars());
@@ -96,9 +96,9 @@ void CompHandler::createRenumbering(const vector<Var>& vars)
     }
 }
 
-bool CompHandler::assumpsInsideComponent(const vector<Var>& vars)
+bool CompHandler::assumpsInsideComponent(const vector<uint32_t>& vars)
 {
-    for(Var var: vars) {
+    for(uint32_t var: vars) {
         if (solver->var_inside_assumptions(var)) {
             return true;
         }
@@ -110,9 +110,9 @@ bool CompHandler::assumpsInsideComponent(const vector<Var>& vars)
 vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
 {
     vector<pair<uint32_t, uint32_t> > sizes;
-    map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
+    map<uint32_t, vector<uint32_t> > reverseTable = compFinder->getReverseTable();
 
-    for (map<uint32_t, vector<Var> >::iterator
+    for (map<uint32_t, vector<uint32_t> >::iterator
         it = reverseTable.begin()
         ; it != reverseTable.end()
         ; ++it
@@ -163,7 +163,7 @@ bool CompHandler::handle()
         return solver->ok;
     }
 
-    map<uint32_t, vector<Var> > reverseTable = compFinder->getReverseTable();
+    map<uint32_t, vector<uint32_t> > reverseTable = compFinder->getReverseTable();
     assert(num_comps == compFinder->getReverseTable().size());
     vector<pair<uint32_t, uint32_t> > sizes = get_component_sizes();
 
@@ -171,7 +171,7 @@ bool CompHandler::handle()
     size_t vars_solved = 0;
     for (uint32_t it = 0; it < sizes.size()-1; ++it) {
         const uint32_t comp = sizes[it].first;
-        vector<Var>& vars = reverseTable[comp];
+        vector<uint32_t>& vars = reverseTable[comp];
         const bool cont = try_to_solve_component(it, comp, vars, num_comps);
         if (!cont) {
             break;
@@ -215,10 +215,10 @@ bool CompHandler::handle()
 bool CompHandler::try_to_solve_component(
     const uint32_t comp_at
     , const uint32_t comp
-    , const vector<Var>& vars_orig
+    , const vector<uint32_t>& vars_orig
     , const size_t num_comps
 ) {
-    for(const Var var: vars_orig) {
+    for(const uint32_t var: vars_orig) {
         assert(solver->value(var) == l_Undef);
     }
 
@@ -239,11 +239,11 @@ bool CompHandler::try_to_solve_component(
 bool CompHandler::solve_component(
     const uint32_t comp_at
     , const uint32_t comp
-    , const vector<Var>& vars_orig
+    , const vector<uint32_t>& vars_orig
     , const size_t num_comps
 ) {
     assert(!solver->drup->enabled());
-    vector<Var> vars(vars_orig);
+    vector<uint32_t> vars(vars_orig);
 
     //Sort and renumber
     std::sort(vars.begin(), vars.end());
@@ -308,8 +308,8 @@ void CompHandler::check_local_vardata_sanity()
     //correct 'removed' flags, and none have been assigned
 
     size_t num_vars_removed_check = 0;
-    for (Var outerVar = 0; outerVar < solver->nVarsOuter(); ++outerVar) {
-        const Var interVar = solver->map_outer_to_inter(outerVar);
+    for (uint32_t outerVar = 0; outerVar < solver->nVarsOuter(); ++outerVar) {
+        const uint32_t interVar = solver->map_outer_to_inter(outerVar);
         if (savedState[outerVar] != l_Undef) {
             assert(solver->varData[interVar].removed == Removed::decomposed);
             assert(solver->value(interVar) == l_Undef || solver->varData[interVar].level == 0);
@@ -322,10 +322,10 @@ void CompHandler::check_local_vardata_sanity()
 
 void CompHandler::check_solution_is_unassigned_in_main_solver(
     const SATSolver* newSolver
-    , const vector<Var>& vars
+    , const vector<uint32_t>& vars
 ) {
     for (size_t i = 0; i < vars.size(); ++i) {
-        Var var = vars[i];
+        uint32_t var = vars[i];
         if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
             assert(solver->value(var) == l_Undef);
         }
@@ -334,13 +334,13 @@ void CompHandler::check_solution_is_unassigned_in_main_solver(
 
 void CompHandler::save_solution_to_savedstate(
     const SATSolver* newSolver
-    , const vector<Var>& vars
+    , const vector<uint32_t>& vars
     , const uint32_t comp
 ) {
     assert(savedState.size() == solver->nVarsOuter());
     for (size_t i = 0; i < vars.size(); ++i) {
-        Var var = vars[i];
-        Var outerVar = solver->map_inter_to_outer(var);
+        uint32_t var = vars[i];
+        uint32_t outerVar = solver->map_inter_to_outer(var);
         if (newSolver->get_model()[upd_bigsolver_to_smallsolver(var)] != l_Undef) {
             assert(savedState[outerVar] == l_Undef);
             assert(compFinder->getVarComp(var) == comp);
@@ -365,7 +365,7 @@ void CompHandler::move_decision_level_zero_vars_here(
         solver->set_decision_var(lit.var());
         num_vars_removed--;
 
-        const Var outer = solver->map_inter_to_outer(lit.var());
+        const uint32_t outer = solver->map_inter_to_outer(lit.var());
         savedState[outer] = l_Undef;
         solver->enqueue(lit);
 
@@ -411,10 +411,10 @@ and making it non-decision in the old solver.
 */
 void CompHandler::moveVariablesBetweenSolvers(
     SATSolver* newSolver
-    , const vector<Var>& vars
+    , const vector<uint32_t>& vars
     , const uint32_t comp
 ) {
-    for(const Var var: vars) {
+    for(const uint32_t var: vars) {
         newSolver->new_var();
         assert(compFinder->getVarComp(var) == comp);
         assert(solver->value(var) == l_Undef);
@@ -670,14 +670,14 @@ void CompHandler::move_tri_clause(
 void CompHandler::moveClausesImplicit(
     SATSolver* newSolver
     , const uint32_t comp
-    , const vector<Var>& vars
+    , const vector<uint32_t>& vars
 ) {
     numRemovedHalfIrred = 0;
     numRemovedHalfRed = 0;
     numRemovedThirdIrred = 0;
     numRemovedThirdRed = 0;
 
-    for(const Var var: vars) {
+    for(const uint32_t var: vars) {
     for(unsigned sign = 0; sign < 2; ++sign) {
         const Lit lit = Lit(var, sign);
         watch_subarray ws = solver->watches[lit.toInt()];
@@ -739,7 +739,7 @@ void CompHandler::addSavedState(vector<lbool>& solution)
     assert(solution.size() == solver->nVarsOuter());
     for (size_t var = 0; var < savedState.size(); ++var) {
         if (savedState[var] != l_Undef) {
-            const Var interVar = solver->map_outer_to_inter(var);
+            const uint32_t interVar = solver->map_outer_to_inter(var);
             assert(solver->varData[interVar].removed == Removed::decomposed);
 
             const lbool val = savedState[var];
@@ -772,7 +772,7 @@ void CompHandler::readdRemovedClauses()
 
     //Avoid recursion, clear 'removed' status
     for(size_t outer = 0; outer < solver->nVarsOuter(); ++outer) {
-        const Var inter = solver->map_outer_to_inter(outer);
+        const uint32_t inter = solver->map_outer_to_inter(outer);
         VarData& dat = solver->varData[inter];
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;

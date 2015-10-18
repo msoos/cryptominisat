@@ -40,7 +40,7 @@ public:
 
     void restart(
         const PropStats& thisPropStats
-        , const Searcher::Stats& thisStats
+        , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
     ) override;

@@ -49,7 +49,7 @@ class VarReplacer
     public:
         VarReplacer(Solver* solver);
         ~VarReplacer();
-        void new_var(const Var orig_outer);
+        void new_var(const uint32_t orig_outer);
         void new_vars(const size_t n);
         void save_on_var_memory();
         bool replace_if_enough_is_found(const size_t limit = 0, uint64_t* bogoprops = NULL);
@@ -58,14 +58,14 @@ class VarReplacer
         const SCCFinder* get_scc_finder() const;
 
         void extend_model();
-        void extend_model(const Var var);
+        void extend_model(const uint32_t var);
 
-        Var get_var_replaced_with(const Var var) const;
-        Var get_var_replaced_with(const Lit lit) const;
+        uint32_t get_var_replaced_with(const uint32_t var) const;
+        uint32_t get_var_replaced_with(const Lit lit) const;
         Lit get_lit_replaced_with(Lit lit) const;
         Lit get_lit_replaced_with_outer(Lit lit) const;
 
-        vector<Var> get_vars_replacing(Var var) const;
+        vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
             const vector<uint32_t>& outerToInter
             , const vector<uint32_t>& interToOuter
@@ -115,7 +115,7 @@ class VarReplacer
         Lit get_lit_replaced_with_fast(const Lit lit) const {
             return fast_inter_replace_lookup[lit.var()] ^ lit.sign();
         }
-        Var get_var_replaced_with_fast(const Var var) const {
+        uint32_t get_var_replaced_with_fast(const uint32_t var) const {
             return fast_inter_replace_lookup[var].var();
         }
 
@@ -123,31 +123,31 @@ class VarReplacer
         bool perform_replace();
         bool add_xor_as_bins(const BinaryXor& bin_xor);
         bool replace(
-            Var lit1
-            , Var lit2
+            uint32_t lit1
+            , uint32_t lit2
             , bool xor_is_true
         );
 
-        bool isReplaced(const Var var) const;
+        bool isReplaced(const uint32_t var) const;
         bool isReplaced(const Lit lit) const;
-        bool isReplaced_fast(const Var var) const;
+        bool isReplaced_fast(const uint32_t var) const;
         bool isReplaced_fast(const Lit lit) const;
 
         size_t getNumTrees() const;
-        void set_sub_var_during_solution_extension(Var var, Var sub_var);
+        void set_sub_var_during_solution_extension(uint32_t var, uint32_t sub_var);
         void checkUnsetSanity();
 
         bool replace_set(vector<ClOffset>& cs);
         void attach_delayed_attach();
         void update_all_vardata_activities();
         void update_vardata_and_activities(
-            const Var orig
-            , const Var replaced
+            const uint32_t orig
+            , const uint32_t replaced
         );
         bool enqueueDelayedEnqueue();
 
         //Helpers for replace()
-        void replaceChecks(const Var var1, const Var var2) const;
+        void replaceChecks(const uint32_t var1, const uint32_t var2) const;
         bool handleAlreadyReplaced(const Lit lit1, const Lit lit2);
         bool replace_vars_already_set(
             const Lit lit1
@@ -236,11 +236,11 @@ class VarReplacer
          //While replacing the implicit clauses we cannot enqeue
         vector<Lit> delayedEnqueue;
         bool update_table_and_reversetable(const Lit lit1, const Lit lit2);
-        void setAllThatPointsHereTo(const Var var, const Lit lit);
+        void setAllThatPointsHereTo(const uint32_t var, const Lit lit);
 
         //Mapping tables
         vector<Lit> table; ///<Stores which variables have been replaced by which literals. Index by: table[VAR]
-        map<Var, vector<Var> > reverseTable; ///<mapping of variable to set of variables it replaces
+        map<uint32_t, vector<uint32_t> > reverseTable; ///<mapping of variable to set of variables it replaces
 
         //Stats
         void printReplaceStats() const;
@@ -255,17 +255,17 @@ inline size_t VarReplacer::get_num_replaced_vars() const
     return replacedVars;
 }
 
-inline bool VarReplacer::isReplaced(const Var var) const
+inline bool VarReplacer::isReplaced(const uint32_t var) const
 {
     return get_var_replaced_with(var) != var;
 }
 
-inline bool VarReplacer::isReplaced_fast(const Var var) const
+inline bool VarReplacer::isReplaced_fast(const uint32_t var) const
 {
     return get_var_replaced_with_fast(var) != var;
 }
 
-inline Var VarReplacer::get_var_replaced_with(const Lit lit) const
+inline uint32_t VarReplacer::get_var_replaced_with(const Lit lit) const
 {
     return get_var_replaced_with(lit.var());
 }

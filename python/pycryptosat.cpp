@@ -149,7 +149,7 @@ static int parse_clause(
 static int parse_xor_clause(
     Solver *self
     , PyObject *clause
-    , std::vector<Var>& vars
+    , std::vector<uint32_t>& vars
 ) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
@@ -221,7 +221,7 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
     bool real_rhs = PyObject_IsTrue(rhs);
 
-    std::vector<Var> vars;
+    std::vector<uint32_t> vars;
     if (!parse_xor_clause(self, clause, vars)) {
         return 0;
     }

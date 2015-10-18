@@ -106,7 +106,7 @@ protected:
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(PropBy& confl);
 
-    vector<Var> col_to_var_original; //Matches columns to variables
+    vector<uint32_t> col_to_var_original; //Matches columns to variables
     BitArray var_is_in; //variable is part of the the matrix. var_is_in's size is _minimal_ so you should check whether var_is_in.getSize() < var before issuing var_is_in[var]
     uint32_t badlevel;
 
@@ -115,7 +115,7 @@ protected:
     public:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
         BitArray var_is_set;
-        vector<Var> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
+        vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
         uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
@@ -163,7 +163,7 @@ protected:
     uint32_t eliminate(matrixset& matrix); //does the actual gaussian elimination
 
     //matrix update functions
-    void update_matrix_col(matrixset& matrix, const Var x, const uint32_t col); // Update one matrix column
+    void update_matrix_col(matrixset& matrix, const uint32_t x, const uint32_t col); // Update one matrix column
     void update_matrix_by_col_all(matrixset& m); // Update all columns, column-by-column (and not row-by-row)
     void set_matrixset_to_cur(); // Save the current matrixset, the cur_matrixset to matrix_sets
     //void update_matrix_by_row(matrixset& matrix) const;
@@ -178,7 +178,7 @@ protected:
 
     //propagation&conflict handling
     void cancel_until_sublevel(const uint32_t until_sublevel); // cancels until sublevel 'until_sublevel'. The var 'until_sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
-    uint32_t find_sublevel(const Var v) const; // find the sublevel (i.e. trail[X]) of a given variable
+    uint32_t find_sublevel(const uint32_t v) const; // find the sublevel (i.e. trail[X]) of a given variable
 
     //helper functions
     bool at_first_init() const;
@@ -233,7 +233,7 @@ inline void Gaussian::canceling(const uint32_t sublevel)
         return;
     int c = std::min((int)gauss_last_level, (int)(solver.trail.size())-1);
     for (; c >= (int)sublevel; c--) {
-        Var var  = solver.trail[c].var();
+        uint32_t var  = solver.trail[c].var();
         if (var < var_is_in.getSize()
             && var_is_in[var]
             && cur_matrixset.var_is_set[var]) {

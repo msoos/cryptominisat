@@ -53,12 +53,12 @@ public:
 
     struct ResetReason
     {
-        ResetReason(Var _var_reason_changed, PropBy _orig_propby) :
+        ResetReason(uint32_t _var_reason_changed, PropBy _orig_propby) :
             var_reason_changed(_var_reason_changed)
             , orig_propby(_orig_propby)
         {}
 
-        Var var_reason_changed;
+        uint32_t var_reason_changed;
         PropBy orig_propby;
     };
 

@@ -408,10 +408,10 @@ inline std::ostream& operator<<(std::ostream& os, const Clause& cl)
 
 struct BinaryXor
 {
-    Var vars[2];
+    uint32_t vars[2];
     bool rhs;
 
-    BinaryXor(Var var1, Var var2, const bool _rhs) {
+    BinaryXor(uint32_t var1, uint32_t var2, const bool _rhs) {
         if (var1 > var2) {
             std::swap(var1, var2);
         }

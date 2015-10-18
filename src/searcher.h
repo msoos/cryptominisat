@@ -30,6 +30,7 @@
 #include "hyperengine.h"
 #include "minisat_rnd.h"
 #include "simplefile.h"
+#include "searchstats.h"
 
 namespace CMSat {
 
@@ -210,82 +211,9 @@ class Searcher : public HyperEngine
         uint64_t sumRestarts() const;
         const Hist& getHistory() const;
 
-        struct Stats
-        {
-            void clear()
-            {
-                Stats tmp;
-                *this = tmp;
-            }
-
-            Stats& operator+=(const Stats& other);
-            Stats& operator-=(const Stats& other);
-            Stats operator-(const Stats& other) const;
-            void printCommon() const;
-            void print_short() const;
-            void print() const;
-
-            //Restart stats
-            uint64_t blocked_restart = 0;
-            uint64_t blocked_restart_same = 0;
-            uint64_t numRestarts = 0;
-
-            //Decisions
-            uint64_t  decisions = 0;
-            uint64_t  decisionsAssump = 0;
-            uint64_t  decisionsRand = 0;
-            uint64_t  decisionFlippedPolar = 0;
-
-            //Clause shrinking
-            uint64_t litsRedNonMin = 0;
-            uint64_t litsRedFinal = 0;
-            uint64_t recMinCl = 0;
-            uint64_t recMinLitRem = 0;
-            uint64_t furtherShrinkAttempt = 0;
-            uint64_t binTriShrinkedClause = 0;
-            uint64_t cacheShrinkedClause = 0;
-            uint64_t furtherShrinkedSuccess = 0;
-            uint64_t stampShrinkAttempt = 0;
-            uint64_t stampShrinkCl = 0;
-            uint64_t stampShrinkLit = 0;
-            uint64_t moreMinimLitsStart = 0;
-            uint64_t moreMinimLitsEnd = 0;
-            uint64_t recMinimCost = 0;
-
-            //Learnt clause stats
-            uint64_t learntUnits = 0;
-            uint64_t learntBins = 0;
-            uint64_t learntTris = 0;
-            uint64_t learntLongs = 0;
-            uint64_t otfSubsumed = 0;
-            uint64_t otfSubsumedImplicit = 0;
-            uint64_t otfSubsumedLong = 0;
-            uint64_t otfSubsumedRed = 0;
-            uint64_t otfSubsumedLitsGained = 0;
-
-            //Hyper-bin & transitive reduction
-            uint64_t advancedPropCalled = 0;
-            uint64_t hyperBinAdded = 0;
-            uint64_t transReduRemIrred = 0;
-            uint64_t transReduRemRed = 0;
-
-            //Features
-            uint64_t num_xors_found_last = 0;
-            uint64_t num_gates_found_last = 0;
-
-            //Resolution Stats
-            ResolutionTypes<uint64_t> resolvs;
-
-            //Stat structs
-            ConflStats conflStats;
-
-            //Time
-            double cpu_time = 0.0;
-        };
-
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
-        bool var_inside_assumptions(const Var var) const
+        bool var_inside_assumptions(const uint32_t var) const
         {
             if (assumptionsSet.empty()) {
                 return false;
@@ -295,11 +223,11 @@ class Searcher : public HyperEngine
         }
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        void move_activity_from_to(const Var from, const Var to);
+        void move_activity_from_to(const uint32_t from, const uint32_t to);
         bool check_order_heap_sanity() const;
 
     protected:
-        void new_var(const bool bva, const Var orig_outer) override;
+        void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
         void save_on_var_memory();
         void reset_temp_cl_num();
@@ -353,7 +281,7 @@ class Searcher : public HyperEngine
             }
         };
         void update_var_decay();
-        void renumber_assumptions(const vector<Var>& outerToInter);
+        void renumber_assumptions(const vector<uint32_t>& outerToInter);
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
         vector<char> assumptionsSet; //Needed so checking is fast -- we cannot eliminate / component-handle such vars
@@ -449,12 +377,12 @@ class Searcher : public HyperEngine
         // Variable activity
         vector<double> activities;
         double var_inc;
-        void              insertVarOrder(const Var x);  ///< Insert a variable in heap
+        void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
 
 
         uint64_t more_red_minim_limit_binary_actual;
         uint64_t more_red_minim_limit_cache_actual;
-        const Stats& get_stats() const;
+        const SearchStats& get_stats() const;
         size_t mem_used() const;
         void restore_order_heap();
 
@@ -465,7 +393,7 @@ class Searcher : public HyperEngine
         void recursiveConfClauseMin();
         void normalClMinim();
         MyStack<Lit> analyze_stack;
-        uint32_t        abstractLevel(const Var x) const;
+        uint32_t        abstractLevel(const uint32_t x) const;
 
         //OTF subsumption during learning
         vector<ClOffset> otf_subsuming_long_cls;
@@ -516,10 +444,10 @@ class Searcher : public HyperEngine
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
-        void     bump_var_activitiy  (Var v);
+        void     bump_var_activitiy  (uint32_t v);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<double>&  activities;
-            bool operator () (const Var x, const Var y) const
+            bool operator () (const uint32_t x, const uint32_t y) const
             {
                 return activities[x] > activities[y];
             }
@@ -554,7 +482,7 @@ class Searcher : public HyperEngine
         void print_solution_type(const lbool status) const;
 
         //Picking polarity when doing decision
-        bool     pickPolarity(const Var var);
+        bool     pickPolarity(const uint32_t var);
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
@@ -564,16 +492,16 @@ class Searcher : public HyperEngine
         bool subset(const vector<Lit>& A, const Clause& B);
 
         double   startTime; ///<When solve() was started
-        Stats    stats;
+        SearchStats stats;
         double   var_decay;
 };
 
-inline uint32_t Searcher::abstractLevel(const Var x) const
+inline uint32_t Searcher::abstractLevel(const uint32_t x) const
 {
     return ((uint32_t)1) << (varData[x].level & 31);
 }
 
-inline const Searcher::Stats& Searcher::get_stats() const
+inline const SearchStats& Searcher::get_stats() const
 {
     return stats;
 }
@@ -619,7 +547,7 @@ inline void Searcher::cancelUntil(uint32_t level)
             std:cerr << "u " << var << endl;
             #endif
 
-            const Var var = trail[sublevel].var();
+            const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
             assigns[var] = l_Undef;
             if (also_insert_varorder) {
@@ -639,7 +567,7 @@ inline void Searcher::cancelUntil(uint32_t level)
     #endif
 }
 
-inline void Searcher::insertVarOrder(const Var x)
+inline void Searcher::insertVarOrder(const uint32_t x)
 {
     if (!order_heap.in_heap(x)
     ) {
@@ -675,7 +603,7 @@ inline void Searcher::decayClauseAct()
     clauseActivityIncrease *= conf.clauseDecayActivity;
 }
 
-inline void Searcher::move_activity_from_to(const Var from, const Var to)
+inline void Searcher::move_activity_from_to(const uint32_t from, const uint32_t to)
 {
     activities[to] += activities[from];
     order_heap.update_if_inside(to);

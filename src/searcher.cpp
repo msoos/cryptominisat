@@ -77,7 +77,7 @@ Searcher::~Searcher()
 {
 }
 
-void Searcher::new_var(const bool bva, const Var orig_outer)
+void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
@@ -112,7 +112,7 @@ void Searcher::updateVars(
     renumber_assumptions(outerToInter);
 }
 
-void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
+void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 {
     solver->unfill_assumptions_set_from(assumptions);
     for(AssumptionPair& lit_pair: assumptions) {
@@ -125,7 +125,7 @@ void Searcher::renumber_assumptions(const vector<Var>& outerToInter)
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    const Var var = lit.var();
+    const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
     //If var is at level 0, don't do anything with it, just skip
@@ -846,7 +846,7 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
 
     assert(!trail_lim.empty());
     for (int64_t i = (int64_t)trail.size() - 1; i >= (int64_t)trail_lim[0]; i--) {
-        const Var x = trail[i].var();
+        const uint32_t x = trail[i].var();
         if (seen[x]) {
             const PropBy reason = varData[x].reason;
             if (reason.isNULL()) {
@@ -1950,6 +1950,7 @@ lbool Searcher::solve(
             goto end;
         }
 
+        /*
         clean_clauses_if_needed();
         if (!conf.never_stop_search) {
             status = perform_scc_and_varreplace_if_needed();
@@ -1957,6 +1958,7 @@ lbool Searcher::solve(
                 goto end;
             }
         }
+        */
 
         save_search_loop_stats();
         if (must_consolidate_mem) {
@@ -2060,7 +2062,7 @@ void Searcher::print_iteration_solving_stats()
     }
 }
 
-bool Searcher::pickPolarity(const Var var)
+bool Searcher::pickPolarity(const uint32_t var)
 {
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:
@@ -2094,7 +2096,7 @@ Lit Searcher::pickBranchLit()
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
         if (rand < frq && !order_heap.empty()) {
-            const Var next_var = order_heap.random_element(mtrand);
+            const uint32_t next_var = order_heap.random_element(mtrand);
 
             if (value(next_var) == l_Undef
                 && solver->varData[next_var].removed == Removed::none
@@ -2107,7 +2109,7 @@ Lit Searcher::pickBranchLit()
 
     // Activity based decision:
     if (next == lit_Undef) {
-        Var next_var = var_Undef;
+        uint32_t next_var = var_Undef;
         while (next_var == var_Undef
           || value(next_var) != l_Undef
           || solver->varData[next_var].removed != Removed::none
@@ -2460,7 +2462,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
 
         for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
             Lit q = confl[j];
-            const Var my_var = q.var();
+            const uint32_t my_var = q.var();
 
             if (!seen[my_var] //if already handled, don't care
                 && varData[my_var].level > 0 //if it's assigned at level 0, it's assigned FALSE, so leave it out
@@ -2874,7 +2876,7 @@ inline void Searcher::varDecayActivity()
     var_inc *= (1.0 / var_decay);
 }
 
-inline void Searcher::bump_var_activitiy(Var var)
+inline void Searcher::bump_var_activitiy(uint32_t var)
 {
     if (!update_polarity_and_activity) {
         return;
@@ -2973,312 +2975,6 @@ inline Lit Searcher::find_good_blocked_lit(const Clause& c) const
         lit = c[c.size()/2];
     }
     return lit;
-}
-
-Searcher::Stats& Searcher::Stats::operator+=(const Stats& other)
-{
-    numRestarts += other.numRestarts;
-    blocked_restart += other.blocked_restart;
-    blocked_restart_same += other.blocked_restart_same;
-
-    //Decisions
-    decisions += other.decisions;
-    decisionsAssump += other.decisionsAssump;
-    decisionsRand += other.decisionsRand;
-    decisionFlippedPolar += other.decisionFlippedPolar;
-
-    //Conflict minimisation stats
-    litsRedNonMin += other.litsRedNonMin;
-    litsRedFinal += other.litsRedFinal;
-    recMinCl += other.recMinCl;
-    recMinLitRem += other.recMinLitRem;
-
-    furtherShrinkAttempt  += other.furtherShrinkAttempt;
-    binTriShrinkedClause += other.binTriShrinkedClause;
-    cacheShrinkedClause += other.cacheShrinkedClause;
-    furtherShrinkedSuccess += other.furtherShrinkedSuccess;
-
-
-    stampShrinkAttempt += other.stampShrinkAttempt;
-    stampShrinkCl += other.stampShrinkCl;
-    stampShrinkLit += other.stampShrinkLit;
-    moreMinimLitsStart += other.moreMinimLitsStart;
-    moreMinimLitsEnd += other.moreMinimLitsEnd;
-    recMinimCost += other.recMinimCost;
-
-    //Red stats
-    learntUnits += other.learntUnits;
-    learntBins += other.learntBins;
-    learntTris += other.learntTris;
-    learntLongs += other.learntLongs;
-    otfSubsumed += other.otfSubsumed;
-    otfSubsumedImplicit += other.otfSubsumedImplicit;
-    otfSubsumedLong += other.otfSubsumedLong;
-    otfSubsumedRed += other.otfSubsumedRed;
-    otfSubsumedLitsGained += other.otfSubsumedLitsGained;
-
-    //Hyper-bin & transitive reduction
-    advancedPropCalled += other.advancedPropCalled;
-    hyperBinAdded += other.hyperBinAdded;
-    transReduRemIrred += other.transReduRemIrred;
-    transReduRemRed += other.transReduRemRed;
-
-    //Stat structs
-    resolvs += other.resolvs;
-    conflStats += other.conflStats;
-
-    //Time
-    cpu_time += other.cpu_time;
-
-    return *this;
-}
-
-Searcher::Stats& Searcher::Stats::operator-=(const Stats& other)
-{
-    numRestarts -= other.numRestarts;
-    blocked_restart -= other.blocked_restart;
-    blocked_restart_same -= other.blocked_restart_same;
-
-    //Decisions
-    decisions -= other.decisions;
-    decisionsAssump -= other.decisionsAssump;
-    decisionsRand -= other.decisionsRand;
-    decisionFlippedPolar -= other.decisionFlippedPolar;
-
-    //Conflict minimisation stats
-    litsRedNonMin -= other.litsRedNonMin;
-    litsRedFinal -= other.litsRedFinal;
-    recMinCl -= other.recMinCl;
-    recMinLitRem -= other.recMinLitRem;
-
-    furtherShrinkAttempt  -= other.furtherShrinkAttempt;
-    binTriShrinkedClause -= other.binTriShrinkedClause;
-    cacheShrinkedClause -= other.cacheShrinkedClause;
-    furtherShrinkedSuccess -= other.furtherShrinkedSuccess;
-
-    stampShrinkAttempt -= other.stampShrinkAttempt;
-    stampShrinkCl -= other.stampShrinkCl;
-    stampShrinkLit -= other.stampShrinkLit;
-    moreMinimLitsStart -= other.moreMinimLitsStart;
-    moreMinimLitsEnd -= other.moreMinimLitsEnd;
-    recMinimCost -= other.recMinimCost;
-
-    //Red stats
-    learntUnits -= other.learntUnits;
-    learntBins -= other.learntBins;
-    learntTris -= other.learntTris;
-    learntLongs -= other.learntLongs;
-    otfSubsumed -= other.otfSubsumed;
-    otfSubsumedImplicit -= other.otfSubsumedImplicit;
-    otfSubsumedLong -= other.otfSubsumedLong;
-    otfSubsumedRed -= other.otfSubsumedRed;
-    otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
-
-    //Hyper-bin & transitive reduction
-    advancedPropCalled -= other.advancedPropCalled;
-    hyperBinAdded -= other.hyperBinAdded;
-    transReduRemIrred -= other.transReduRemIrred;
-    transReduRemRed -= other.transReduRemRed;
-
-    //Stat structs
-    resolvs -= other.resolvs;
-    conflStats -= other.conflStats;
-
-    //Time
-    cpu_time -= other.cpu_time;
-
-    return *this;
-}
-
-Searcher::Stats Searcher::Stats::operator-(const Stats& other) const
-{
-    Stats result = *this;
-    result -= other;
-    return result;
-}
-
-void Searcher::Stats::printCommon() const
-{
-    print_stats_line("c restarts"
-        , numRestarts
-        , float_div(conflStats.numConflicts, numRestarts)
-        , "confls per restart"
-
-    );
-    print_stats_line("c blocked restarts"
-        , blocked_restart
-        , float_div(blocked_restart, numRestarts)
-        , "per normal restart"
-
-    );
-    print_stats_line("c time", cpu_time);
-    print_stats_line("c decisions", decisions
-        , stats_line_percent(decisionsRand, decisions)
-        , "% random"
-    );
-
-    print_stats_line("c decisions/conflicts"
-        , float_div(decisions, conflStats.numConflicts)
-    );
-}
-
-void Searcher::Stats::print_short() const
-{
-    //Restarts stats
-    printCommon();
-    conflStats.print_short(cpu_time);
-
-    print_stats_line("c conf lits non-minim"
-        , litsRedNonMin
-        , float_div(litsRedNonMin, conflStats.numConflicts)
-        , "lit/confl"
-    );
-
-    print_stats_line("c conf lits final"
-        , float_div(litsRedFinal, conflStats.numConflicts)
-    );
-}
-
-void Searcher::Stats::print() const
-{
-    printCommon();
-    conflStats.print(cpu_time);
-
-    /*assert(numConflicts
-        == conflsBin + conflsTri + conflsLongIrred + conflsLongRed);*/
-
-    cout << "c LEARNT stats" << endl;
-    print_stats_line("c units learnt"
-        , learntUnits
-        , stats_line_percent(learntUnits, conflStats.numConflicts)
-        , "% of conflicts");
-
-    print_stats_line("c bins learnt"
-        , learntBins
-        , stats_line_percent(learntBins, conflStats.numConflicts)
-        , "% of conflicts");
-
-    print_stats_line("c tris learnt"
-        , learntTris
-        , stats_line_percent(learntTris, conflStats.numConflicts)
-        , "% of conflicts");
-
-    print_stats_line("c long learnt"
-        , learntLongs
-        , stats_line_percent(learntLongs, conflStats.numConflicts)
-        , "% of conflicts"
-    );
-
-    print_stats_line("c otf-subs"
-        , otfSubsumed
-        , ratio_for_stat(otfSubsumed, conflStats.numConflicts)
-        , "/conflict"
-    );
-
-    print_stats_line("c otf-subs implicit"
-        , otfSubsumedImplicit
-        , stats_line_percent(otfSubsumedImplicit, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs long"
-        , otfSubsumedLong
-        , stats_line_percent(otfSubsumedLong, otfSubsumed)
-        , "%"
-    );
-
-    print_stats_line("c otf-subs learnt"
-        , otfSubsumedRed
-        , stats_line_percent(otfSubsumedRed, otfSubsumed)
-        , "% otf subsumptions"
-    );
-
-    print_stats_line("c otf-subs lits gained"
-        , otfSubsumedLitsGained
-        , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
-        , "lits/otf subsume"
-    );
-
-    cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;
-    print_stats_line("c advProp called"
-        , advancedPropCalled
-    );
-    print_stats_line("c hyper-bin add bin"
-        , hyperBinAdded
-        , ratio_for_stat(hyperBinAdded, advancedPropCalled)
-        , "bin/call"
-    );
-    print_stats_line("c trans-red rem irred bin"
-        , transReduRemIrred
-        , ratio_for_stat(transReduRemIrred, advancedPropCalled)
-        , "bin/call"
-    );
-    print_stats_line("c trans-red rem red bin"
-        , transReduRemRed
-        , ratio_for_stat(transReduRemRed, advancedPropCalled)
-        , "bin/call"
-    );
-
-    cout << "c CONFL LITS stats" << endl;
-    print_stats_line("c orig "
-        , litsRedNonMin
-        , ratio_for_stat(litsRedNonMin, conflStats.numConflicts)
-        , "lit/confl"
-    );
-
-    print_stats_line("c rec-min effective"
-        , recMinCl
-        , stats_line_percent(recMinCl, conflStats.numConflicts)
-        , "% attempt successful"
-    );
-
-    print_stats_line("c rec-min lits"
-        , recMinLitRem
-        , stats_line_percent(recMinLitRem, litsRedNonMin)
-        , "% less overall"
-    );
-
-    print_stats_line("c further-min call%"
-        , stats_line_percent(furtherShrinkAttempt, conflStats.numConflicts)
-        , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
-        , "% attempt successful"
-    );
-
-    print_stats_line("c bintri-min lits"
-        , binTriShrinkedClause
-        , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
-        , "% less overall"
-    );
-
-    print_stats_line("c cache-min lits"
-        , cacheShrinkedClause
-        , stats_line_percent(cacheShrinkedClause, litsRedNonMin)
-        , "% less overall"
-    );
-
-    print_stats_line("c stamp-min call%"
-        , stats_line_percent(stampShrinkAttempt, conflStats.numConflicts)
-        , stats_line_percent(stampShrinkCl, stampShrinkAttempt)
-        , "% attempt successful"
-    );
-
-    print_stats_line("c stamp-min lits"
-        , stampShrinkLit
-        , stats_line_percent(stampShrinkLit, litsRedNonMin)
-        , "% less overall"
-    );
-
-    print_stats_line("c final avg"
-        , ratio_for_stat(litsRedFinal, conflStats.numConflicts)
-    );
-
-    //General stats
-    //print_stats_line("c Memory used", (double)mem_used / 1048576.0, " MB");
-    #if !defined(_MSC_VER) && defined(RUSAGE_THREAD)
-    print_stats_line("c single-thread CPU time", cpu_time, " s");
-    #else
-    print_stats_line("c all-threads sum CPU time", cpu_time, " s");
-    #endif
 }
 
 void Searcher::update_var_decay()

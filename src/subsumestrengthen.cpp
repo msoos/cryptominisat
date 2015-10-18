@@ -421,7 +421,7 @@ void SubsumeStrengthen::findStrengthened(
     cout << "findStrengthened: " << cl << endl;
     #endif
 
-    Var minVar = var_Undef;
+    uint32_t minVar = var_Undef;
     uint32_t bestSize = std::numeric_limits<uint32_t>::max();
     for (uint32_t i = 0; i < cl.size(); i++){
         uint32_t newSize =

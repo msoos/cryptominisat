@@ -71,8 +71,8 @@ bool Stamp::stampBasedClRem(
 }
 
 void Stamp::updateVars(
-    const vector<Var>& /*outerToInter*/
-    , const vector<Var>& interToOuter2
+    const vector<uint32_t>& /*outerToInter*/
+    , const vector<uint32_t>& interToOuter2
     , vector<uint16_t>& seen
 ) {
     //Update the stamp. Stamp can be very large, so update by swapping

@@ -194,7 +194,7 @@ bool XorFinder::extractInfo()
 
     vector<uint32_t> varsIn(solver->nVars(), 0);
     for(const Xor& x: xors) {
-        for(const Var v: x.vars) {
+        for(const uint32_t v: x.vars) {
             varsIn[v]++;
         }
     }
@@ -210,7 +210,7 @@ bool XorFinder::extractInfo()
     ) {
         const Xor& thisXor = *it;
         bool makeItIn = false;
-        for(Var v: thisXor.vars) {
+        for(uint32_t v: thisXor.vars) {
             if (varsIn[v] > 1) {
                 makeItIn = true;
                 break;
@@ -237,7 +237,7 @@ bool XorFinder::extractInfo()
 
     //Go through all blocks, and extract info
     i = 0;
-    for(vector<vector<Var> >::const_iterator
+    for(vector<vector<uint32_t> >::const_iterator
         it = blocks.begin(), end = blocks.end()
         ; it != end
         ; ++it, i++
@@ -272,7 +272,7 @@ end:
 }
 
 bool XorFinder::extractInfoFromBlock(
-    const vector<Var>& block
+    const vector<uint32_t>& block
     , const size_t blockNum
 ) {
     assert(solver->okay());
@@ -282,7 +282,7 @@ bool XorFinder::extractInfoFromBlock(
 
     //Outer-inner var mapping is needed because not all vars are in the matrix
     size_t num = 0;
-    for(vector<Var>::const_iterator
+    for(vector<uint32_t>::const_iterator
         it2 = block.begin(), end2 = block.end()
         ; it2 != end2
         ; it2++, num++
@@ -318,12 +318,12 @@ bool XorFinder::extractInfoFromBlock(
         const Xor& thisXor = xors[*it];
         assert(thisXor.vars.size() > 2 && "All XORs must be larger than 2-long");
         //Put XOR into the matrix
-        for(vector<Var>::const_iterator
+        for(vector<uint32_t>::const_iterator
             it2 = thisXor.vars.begin(), end3 = thisXor.vars.end()
             ; it2 != end3
             ; it2++
         ) {
-            const Var var = outerToInterVarMap[*it2];
+            const uint32_t var = outerToInterVarMap[*it2];
             assert(var < numCols-1);
             mzd_write_bit(mat, row, var, 1);
         }
@@ -403,7 +403,7 @@ vector<uint32_t> XorFinder::getXorsForBlock(const size_t blockNum)
         if (varToBlock[thisXor.vars[0]] == blockNum) {
             xorsInThisBlock.push_back(i);
 
-            for(vector<Var>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; ++it) {
+            for(vector<uint32_t>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; ++it) {
                 assert(varToBlock[*it] == blockNum && "if any vars are in this block, ALL block are in this block");
             }
         }
@@ -427,7 +427,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
 
         //Calc blocks for this XOR
         set<size_t> blocksBelongTo;
-        for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+        for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
             if (varToBlock[*it2] != std::numeric_limits<uint32_t>::max())
                 blocksBelongTo.insert(varToBlock[*it2]);
         }
@@ -435,8 +435,8 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
         switch(blocksBelongTo.size()) {
             case 0: {
                 //Create new block
-                vector<Var> block;
-                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                vector<uint32_t> block;
+                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
                     varToBlock[*it2] = blocks.size();
                     block.push_back(*it2);
                 }
@@ -449,8 +449,8 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
             case 1: {
                 //Add to existing block
                 const size_t blockNum = *blocksBelongTo.begin();
-                vector<Var>& block = blocks[blockNum];
-                for(vector<Var>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                vector<uint32_t>& block = blocks[blockNum];
+                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
                     if (varToBlock[*it2] == std::numeric_limits<uint32_t>::max()) {
                         block.push_back(*it2);
                         varToBlock[*it2] = blockNum;
@@ -463,10 +463,10 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 //Merge blocks into first block
                 const size_t blockNum = *blocksBelongTo.begin();
                 set<size_t>::const_iterator it2 = blocksBelongTo.begin();
-                vector<Var>& finalBlock = blocks[blockNum];
+                vector<uint32_t>& finalBlock = blocks[blockNum];
                 it2++; //don't merge the first into the first
                 for(set<size_t>::const_iterator end2 = blocksBelongTo.end(); it2 != end2; it2++) {
-                    for(vector<Var>::const_iterator
+                    for(vector<uint32_t>::const_iterator
                         it3 = blocks[*it2].begin(), end3 = blocks[*it2].end()
                         ; it3 != end3
                         ; it3++
@@ -479,7 +479,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 }
 
                 //add remaining vars
-                for(vector<Var>::const_iterator
+                for(vector<uint32_t>::const_iterator
                     it3 = thisXor.vars.begin(), end3 = thisXor.vars.end()
                     ; it3 != end3
                     ; it3++
@@ -494,7 +494,7 @@ void XorFinder::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 
     //caclulate stats
-    for(vector<vector<Var> >::const_iterator
+    for(vector<vector<uint32_t> >::const_iterator
         it = blocks.begin(), end = blocks.end()
         ; it != end
         ; ++it
@@ -811,9 +811,9 @@ size_t XorFinder::mem_used() const
 {
     size_t mem = 0;
     mem += xors.capacity()*sizeof(Xor);
-    mem += blocks.capacity()*sizeof(vector<Var>);
+    mem += blocks.capacity()*sizeof(vector<uint32_t>);
     for(size_t i = 0; i< blocks.size(); i++) {
-        mem += blocks[i].capacity()*sizeof(Var);
+        mem += blocks[i].capacity()*sizeof(uint32_t);
     }
     mem += varToBlock.capacity()*sizeof(size_t);
 

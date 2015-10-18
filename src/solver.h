@@ -25,6 +25,9 @@
 #include "constants.h"
 #include <vector>
 #include <fstream>
+#include <iostream>
+#include <utility>
+#include <string>
 
 #include "constants.h"
 #include "solvertypes.h"
@@ -34,6 +37,7 @@
 #include "cleaningstats.h"
 #include "clauseusagestats.h"
 #include "features.h"
+#include "searchstats.h"
 
 namespace CMSat {
 
@@ -85,12 +89,12 @@ class Solver : public Searcher
         void new_external_var();
         void new_external_vars(size_t n);
         bool add_clause_outer(const vector<Lit>& lits);
-        bool add_xor_clause_outer(const vector<Var>& vars, bool rhs);
+        bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data);
         lbool model_value (const Lit p) const;  ///<Found model value for lit
-        lbool model_value (const Var p) const;  ///<Found model value for var
+        lbool model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
         void open_file_and_dump_irred_clauses(string fname) const;
@@ -113,13 +117,12 @@ class Solver : public Searcher
         size_t get_num_nonfree_vars() const;
         const SolverConf& getConf() const;
         void setConf(const SolverConf& conf);
-        const vector<std::pair<string, string> >& get_tags() const;
         const BinTriStats& getBinTriStats() const;
         size_t   get_num_long_irred_cls() const;
         size_t   get_num_long_red_cls() const;
         size_t get_num_vars_elimed() const;
         size_t get_num_vars_replaced() const;
-        Var num_active_vars() const;
+        uint32_t num_active_vars() const;
         void print_mem_stats() const;
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
@@ -130,7 +133,7 @@ class Solver : public Searcher
 
 
         ///Return number of variables waiting to be replaced
-        const Stats& get_stats() const;
+        const SearchStats& get_stats() const;
 
 
         //Checks
@@ -147,7 +150,7 @@ class Solver : public Searcher
         ReduceDB* reduceDB = NULL;
         vector<LitReachData> litReachable;
 
-        Stats sumStats;
+        SearchStats sumStats;
         PropStats sumPropStats;
 
         bool prop_at_head() const;
@@ -171,7 +174,7 @@ class Solver : public Searcher
             , bool attach
             , bool addDrup = true
         );
-        void new_var(const bool bva = false, const Var orig_outer = std::numeric_limits<Var>::max()) override;
+        void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
         void bva_changed();
 
@@ -309,10 +312,10 @@ class Solver : public Searcher
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
         size_t calculate_interToOuter_and_outerToInter(
-            vector<Var>& outerToInter
-            , vector<Var>& interToOuter
+            vector<uint32_t>& outerToInter
+            , vector<uint32_t>& interToOuter
         );
-        void renumber_clauses(const vector<Var>& outerToInter);
+        void renumber_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
 
 
@@ -359,7 +362,7 @@ inline uint64_t Solver::getNumLongClauses() const
     return longIrredCls.size() + longRedCls.size();
 }
 
-inline const Searcher::Stats& Solver::get_stats() const
+inline const SearchStats& Solver::get_stats() const
 {
     return sumStats;
 }
@@ -394,7 +397,7 @@ inline const vector<std::pair<string, string> >& Solver::get_sql_tags() const
     return sql_tags;
 }
 
-inline const Solver::BinTriStats& Solver::getBinTriStats() const
+inline const BinTriStats& Solver::getBinTriStats() const
 {
     return binTri;
 }

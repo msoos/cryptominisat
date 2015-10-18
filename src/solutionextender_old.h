@@ -47,7 +47,7 @@ class SolutionExtender
             return assigns[lit.var()] ^ lit.sign();
         }
 
-        lbool value(const Var var) const
+        lbool value(const uint32_t var) const
         {
             return assigns[var];
         }
