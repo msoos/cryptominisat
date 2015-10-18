@@ -1,4 +1,4 @@
-%module swigdemo
+%module solver
 
 %{
 #include "solver.h"

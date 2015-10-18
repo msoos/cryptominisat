@@ -29,15 +29,15 @@ def _init_posix(init):
 sysconfig._init_posix = _init_posix(sysconfig._init_posix)
 
 ext_kwds = dict(
-    name = "_swigdemo",
-    sources = ["_swigdemo_module.cc"],
+    name = "solver",
+    sources = ["solver.cc"],
     library_dirs=["/home/soos/development/sat_solvers/cryptominisat/build/lib"],
     libraries=["cryptominisat4"],
-    extra_compile_args = ['-I/usr/include/python2.7 -I/usr/include/x86_64-linux-gnu/python2.7  -fno-strict-aliasing -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes', '-std=c++11', '-I../build/cmsat4-src'],
+    extra_compile_args = ['-I/usr/include/python2.7 -I/usr/include/x86_64-linux-gnu/python2.7  -fno-strict-aliasing -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes', '-std=c++11', '-I/home/soos/development/sat_solvers/cryptominisat/src/', '-I../build/cmsat4-src'],
     extra_link_args = ["-L/usr/lib/python2.7/config-x86_64-linux-gnu -L/usr/lib -lpython2.7 -lpthread -ldl  -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions"],
     runtime_library_dirs = ["/home/soos/development/sat_solvers/cryptominisat/build/lib"]
 )
 
 extension_mod = Extension(**ext_kwds)
 
-setup(name = "swigdemo", ext_modules=[extension_mod])
+setup(name = "solver", ext_modules=[extension_mod])
