@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <errno.h>
 #include <iostream>
 #include <stdlib.h>
-#include <errno.h>
+#include <string.h>
 
 using std::cout;
 using std::endl;
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
         #endif
 
         if (in == NULL) {
-            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]);
+            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>: reason %s" : argv[1], strerror(errno));
             std::exit(1);
         }
 

@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include <sys/stat.h>
 #include <unistd.h>
 #include <thread>
+#include <string.h>
 
 #include "main.h"
 #include "main_common.h"
@@ -155,7 +156,7 @@ void Main::readInAFile(const string& filename)
         std::cerr
         << "ERROR! Could not open file '"
         << filename
-        << "' for reading" << endl;
+        << "' for reading: " << strerror(errno) << endl;
 
         std::exit(1);
     }
