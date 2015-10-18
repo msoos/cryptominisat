@@ -12,7 +12,7 @@ add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    DEPENDS libcryptominisat4
 )
 
-add_custom_target(pytarget ALL DEPENDS ${OUTPUT}/timestamp)
+add_custom_target(python_interface ALL DEPENDS ${OUTPUT}/timestamp)
 
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)")
 
