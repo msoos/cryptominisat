@@ -231,7 +231,5 @@ def run():
     runner = unittest.TextTestRunner(verbosity=2)
     return runner.run(suite)
 
-run()
-
-# if __name__ == '__main__':
-    # unittest.main()
+if __name__ == '__main__':
+    run()

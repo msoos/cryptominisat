@@ -103,7 +103,7 @@ setup(
         "Topic :: Utilities",
     ],
     ext_modules = [Extension(**ext_kwds)],
-    py_modules = ['test_pycryptosat'],
+    py_modules = ['pycryptosat'],
     description = "bindings to CryptoMiniSat (a SAT solver)",
     long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
 )
