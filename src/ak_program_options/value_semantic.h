@@ -33,24 +33,40 @@
 
 namespace ak_program_options {
 
+    //  forward
+    template<class T> class Value;
+    
     class value_semantic {  
     public:
-        virtual ~value_semantic() {};
-        virtual void apply_implicit() {};
-        virtual bool composing() const { return false; };
-        virtual void notify() const {};
-        virtual void set_value(const char *v) {(void)v;};
-        virtual int *get_value() const { return nullptr; };
-        virtual std::string to_string() const { return "???"; };
-        virtual std::string textual() const { return ""; };
+        virtual ~value_semantic() {}
+        virtual void apply_implicit() {}
+        virtual bool composing() const { return false; }
+        virtual void notify() const {}
+        virtual void set_value(const char *v) {(void)v;}
+        virtual std::string to_string() const { return "???"; }
+        virtual std::string textual() const { return ""; }
+        virtual const std::vector<std::string> get_string_vector_value() const { std::vector<std::string> sv;  return sv; }
         std::string name() const;
 
-        /** If stored value if of type T, returns that value. Otherwise,
-        throws exception. */
+        /// If stored value if of type T, returns that value. 
+        /// Otherwise, throws exception. 
         template<typename T>
         const T as() const {
-            return *((T *)get_value());
+            return (static_cast<const Value<T> *>(this))->get_value();
         }
+
+//  specializations required by VC++ but not accepted by g++
+#if _MSC_VER
+        template<>
+        const std::string as<std::string>() const {
+            return to_string();
+        }
+
+        template<>
+        const std::vector<std::string> as<std::vector<std::string>>() const {
+            return get_string_vector_value();
+        }
+#endif
 
         /// Returns true if a default value is defined
         virtual bool defaulted() const { return false; };
@@ -68,7 +84,7 @@ namespace ak_program_options {
         virtual bool is_bool_switch() const { return false; };      
     };
 
-#define NO_VALUE ((value_semantic *)0)
+#define NO_VALUE (nullptr)
 
     template<class T> class Value : public value_semantic
     {
@@ -81,43 +97,42 @@ namespace ak_program_options {
             m_default = v; 
             m_defaulted = true;
             return this; 
-        };
+        }
         Value *default_value(const T &v, const std::string &s) { 
             m_default = v; 
             m_defaulted = true;
             m_textual = s;
             return this; 
-        };
+        }
         Value *implicit_value(const T &v) {
             m_implicit = v; 
             m_implicited = true;
             m_required = false;
             return this;
-        };
+        }
         void apply_implicit() {
             m_value = m_implicit;
             m_empty = false;
-        };
+        }
         void notify() const {
             if (m_destination != nullptr) {
-                *m_destination = (empty() && defaulted()) ? m_default 
-                                                          : m_value;
+                *m_destination = get_value();
             }
         }
         void set_value(const char *v);
-        int *get_value() const { return (int *)(empty() ? &m_default : &m_value); };
         bool composing() const { return m_composing; }
-        bool defaulted() const { return m_defaulted; };
-        bool implicited() const { return m_implicited; };
+        bool defaulted() const { return m_defaulted; }
+        bool implicited() const { return m_implicited; }
         bool empty() const { return m_empty; }
         bool required() const { return m_required; }
         bool is_bool_switch() const { return m_is_bool_switch; }
         void set_as_bool_switch() { m_is_bool_switch = true; }
         std::string to_string() const;
-        std::string textual() const { return m_textual; };
+        std::string textual() const { return m_textual; }
 
-    private:
         std::string int_to_string() const;
+        const T get_value() const { return empty() ? m_default : m_value; }
+        const std::vector<std::string> get_string_vector_value() const;
     
     private:
         T *m_destination = nullptr;
@@ -136,6 +151,14 @@ namespace ak_program_options {
     template<typename T>
     Value<T> *value() { return new Value<T>(); }
 
+    ///  the following template does not work
+    ///  results in linking errors
+    ///  FIXME:  type to make template work!
+    /*
+    template<typename T>
+    Value<T> *value(T *v) { return new Value<T>(v); }
+    */
+    
     Value<int> *value(int *v);
     Value<long> *value(long *v);
     Value<long long> *value(long long *v);
@@ -145,7 +168,7 @@ namespace ak_program_options {
     Value<double> *value(double *v);
     Value<std::string> *value(std::string *v);
     Value<std::vector<std::string>> *value(std::vector<std::string> *v);
-
+    
     Value<bool> *bool_switch(bool *v);
     
 }  //  namespace ak_program_options

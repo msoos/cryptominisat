@@ -62,7 +62,6 @@ namespace ak_program_options {
         const basic_parsed_options *run() {
             basic_parsed_options *bpo = new basic_parsed_options(m_argc, m_argv, m_desc);
             bpo->set_positional_description(m_positional_desc);
-
             return bpo;
         }
     };

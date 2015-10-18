@@ -250,31 +250,53 @@ namespace {
     }
 }
 
-options_description& options_description::add(const options_description& desc)
-{
-    options_description *d(new options_description(desc));
 
-    m_groups.push_back(d);
+#if USE_OS_DEBUGGING
+//  check validity of whole object hierarchy
 
-    for (option_description *opt : desc.m_options) {
-        add(opt);
-        m_belong_to_group.back() = true;
+bool options_description::valid() const 
+{ 
+    assert(!strcmp(hd, OPTIONS_DESCRIPTION_HEADER)); 
+    
+    for (std::shared_ptr<option_description> opt : m_options)
+    {
+        opt->valid();
     }
 
+    for (std::shared_ptr<options_description> group : m_groups)
+    {
+        group->valid();
+    }
+
+    return true;
+}
+#else
+bool options_description::valid() const
+{
+    return true;
+}
+#endif
+
+options_description& options_description::add(const options_description& desc)
+{
+    o("adding group " + desc.m_caption);
+    desc.valid();
+    std::shared_ptr<options_description> d(new options_description(desc));
+    
+    m_groups.push_back(d);
+
+    for (size_t i = 0; i < desc.m_options.size(); ++i) {
+        add(desc.m_options[i]);
+        m_belong_to_group.back() = true;
+    }
+    
     return *this;
 }
 
-const option_description *options_description::findById(int id) const {
-    for (const option_description *opt : m_options) {
+std::shared_ptr<const option_description> options_description::findById(int id) const {
+    for (std::shared_ptr<option_description> opt : m_options) {
+        opt->valid();
         if (opt->id() == id) {
-            return opt;
-        }
-    }
-
-    for (const options_description *group : m_groups) {
-        const option_description *opt = group->findById(id);
-
-        if (opt != nullptr) {
             return opt;
         }
     }
@@ -282,17 +304,10 @@ const option_description *options_description::findById(int id) const {
     return nullptr;
 }
 
-const option_description *options_description::findByName(std::string name) const {
-    for (const option_description *opt : m_options) {
+std::shared_ptr<const option_description> options_description::findByName(std::string name) const {
+    for (std::shared_ptr<option_description> opt : m_options) {
+        opt->valid();
         if (opt->name() == name) {
-            return opt;
-        }
-    }
-
-    for (const options_description *group : m_groups) {
-        const option_description *opt = group->findByName(name);
-
-        if (opt != nullptr) {
             return opt;
         }
     }
@@ -306,7 +321,7 @@ options_description::get_option_column_width() const
     /* Find the maximum width of the option column */
     unsigned width(23);
     
-    for (const option_description *opt : m_options)
+    for (std::shared_ptr<const option_description> opt : m_options)
     {
         std::stringstream ss;
         ss << "  " << opt->format_name() << ' ' << opt->format_parameter();
@@ -314,8 +329,10 @@ options_description::get_option_column_width() const
     }
 
     /* Get width of groups as well*/
-    for (const options_description *group : m_groups)
+    for (std::shared_ptr<const options_description> group : m_groups)
+    {
         width = std::max(width, group->get_option_column_width());
+    }
 
     /* this is the column were description should start, if first
     column is longer, we go to a new line */
@@ -338,39 +355,23 @@ void options_description::print(std::ostream& os, unsigned width) const {
 
     /* The options formatting style is stolen from Subversion. */
     int i = 0;
-    for (const option_description *opt : m_options)
+    for (std::shared_ptr<const option_description> opt : m_options)
     {
         if (m_belong_to_group[i++])
+        {
             continue;
+        }
 
         format_one(os, *opt, width, m_line_length);
 
         os << "\n";
     }
 
-    for (options_description *group : m_groups) {
+    for (std::shared_ptr<const options_description>group : m_groups) 
+    {
         os << "\n";
         group->print(os, width);
     }
-}
-
-std::vector<option_description *> options_description::options() const {
-    std::vector<option_description *> v;
-    int i = 0;
-
-    for (option_description *opt : m_options) {
-        if (!m_belong_to_group[i++]) {
-            v.push_back(opt);
-        }
-    }
-
-    for (const options_description *group : m_groups) {
-        std::vector<option_description *> vGroup = group->options();
-
-        v.insert(v.end(), vGroup.begin(), vGroup.end());
-    }
-
-    return v;
 }
 
 options_description_easy_init
@@ -387,36 +388,43 @@ operator()(const char* name,
     // Create untypes semantic which accepts zero tokens: i.e. 
     // no value can be specified on command line.
     // FIXME: does not look exception-safe
-    option_description *d = new option_description(name, NO_VALUE, description);
+    std::shared_ptr<option_description> d(new option_description(name, NO_VALUE, description));
 
     m_owner->add(d);
+
     return *this;
 }
 
 options_description_easy_init&
 options_description_easy_init::
 operator()(const char* name,
-    const value_semantic* s)
+    value_semantic* s)
 {
-    option_description *d = new option_description(name, s);
+    std::shared_ptr<option_description> d(new option_description(name, s));
+
     m_owner->add(d);
+
     return *this;
 }
 
 options_description_easy_init&
 options_description_easy_init::
 operator()(const char* name,
-    const value_semantic* s,
+    value_semantic* s,
     const char* description)
 {
-    option_description *d = new option_description(name, s, description);
+    std::shared_ptr<option_description> d(new option_description(name, s, description));
 
     m_owner->add(d);
+
     return *this;
 }
 
-void options_description::add(option_description *desc) {
+void options_description::add(std::shared_ptr<option_description> desc) {
+    desc->valid();
+
     m_options.push_back(desc);
+
     m_belong_to_group.push_back(false);
 }
 

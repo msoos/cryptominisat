@@ -33,6 +33,14 @@
 
 namespace ak_program_options {
 
+#if USE_O_FOR_DEBUGGING
+    void o(const char *s);
+    void o();
+    void o(std::string str);
+#else
+    #define o(...)
+#endif
+    
     namespace exception_detail {
         template <class T>
         class clone_impl : public T
@@ -103,7 +111,7 @@ namespace ak_program_options {
     class multiple_occurrences : public error_with_option_name {
     public:
         multiple_occurrences(const std::string &option_name)
-            : error_with_option_name("option '%canonical_option%' cannot be specified more than once", option_name) {}
+            : error_with_option_name("option '%canonical_option%' must not be specified more than once", option_name) {}
     };
 
     /** Class thrown when option name is not recognized. */

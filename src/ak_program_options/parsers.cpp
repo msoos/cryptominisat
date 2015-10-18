@@ -41,13 +41,13 @@ basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const opti
 
 // Returns the option_description which has either the flag with code id
 // or the pointer id. nullptr iff not found 
-const option_description *basic_parsed_options::findById(int id) const {
+std::shared_ptr<const option_description> basic_parsed_options::findById(int id) const {
     return m_desc->findById(id);
 }
 
 // Returns the option_description which has the name.
 // nullptr iff not found 
-const option_description *basic_parsed_options::findByName(std::string name) const {
+std::shared_ptr<const option_description> basic_parsed_options::findByName(std::string name) const {
     return m_desc->findByName(name);
 }
 

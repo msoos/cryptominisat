@@ -39,7 +39,6 @@ namespace ak_program_options {
         assert(max_count != -1 || m_trailing.empty());
 
         //  limited to single values for the time being
-        //  Axel Kemper 25-Sep-2015
         assert(max_count == 1);
 
         if (max_count == -1)
@@ -67,5 +66,5 @@ namespace ak_program_options {
         else
             return m_trailing;
     }
-
 }
+

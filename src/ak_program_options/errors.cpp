@@ -29,11 +29,31 @@
 #include <exception>
 #include <string>
 #include <iostream>
+#include <stdio.h>
 
 #include "errors.h"
 
 namespace ak_program_options {
 
+#if USE_O_FOR_DEBUGGING
+    void o(const char *s) {
+        fprintf(stderr, "%s\n", s);
+        fflush(stderr);
+        //  std::cout << std::string(s) << std::endl;
+    }
+    
+    void o() {
+        fprintf(stderr, "\n");
+        fflush(stderr);
+//        std::cout << std::endl;
+    }
+    
+    void o(std::string s) {
+        fprintf(stderr, "%s\n", s.c_str());
+        fflush(stderr);
+        // std::cout << s << std::endl;
+    }
+#endif   //  USE_O_FOR_DEBUGGING
 
     const std::string error::what() const {
         return m_msg;

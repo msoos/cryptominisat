@@ -51,42 +51,17 @@ namespace ak_program_options {
                arg ;
     }
 
-    template<>
-    Value<int>::Value() {
+    ///  Constructors without argument
+    
+    ///  general case for integer types
+    template<typename T>
+    Value<T>::Value() {
         m_default = 0;
         m_required = true;
     }
-
-    template<>
-    Value<long>::Value() {
-        m_default = 0;
-        m_required = true;
-    }
-
-    template<>
-    Value<long long>::Value() {
-        m_default = 0;
-        m_required = true;
-    }
-
-    template<>
-    Value<unsigned int>::Value() {
-        m_default = 0;
-        m_required = true;
-    }
-
-    template<>
-    Value<unsigned long>::Value() {
-        m_default = 0;
-        m_required = true;
-    }
-
-    template<>
-    Value<unsigned long long>::Value() {
-        m_default = 0;
-        m_required = true;
-    }
-
+    
+    ///  specializations for non-integer types
+        
     template<>
     Value<bool>::Value() {
         m_default = false;
@@ -112,12 +87,14 @@ namespace ak_program_options {
         m_required = true;
     }
 
+    ///  constructors with value destination argument
+    
     template <typename T>
     Value<T>::Value(T *v) {
         m_destination = v;
         m_composing = std::is_same<T, std::vector<std::string>>::value;
     }
-
+        
     Value<bool> *bool_switch(bool *v) {
         Value<bool> *val = new Value<bool>(v);
         val->implicit_value(true);
@@ -125,38 +102,30 @@ namespace ak_program_options {
         return val;
     }
 
-    /// FIXME: there should be a more compact way for the following
-        
-    template<>
-    std::string Value<int>::to_string() const {
-        return int_to_string();
+    ///  only string vector Values return a string vector
+
+    template<typename T>
+    const std::vector<std::string> Value<T>::get_string_vector_value() const {
+        std::vector<std::string> x;
+
+        return x;
     }
 
     template<>
-    std::string Value<long>::to_string() const {
-        return int_to_string();
+    const std::vector<std::string> Value<std::vector<std::string>>::get_string_vector_value() const {
+        return get_value();
     }
 
-    template<>
-    std::string Value<long long>::to_string() const {
+
+    ///  general case for integer types
+
+    template<typename T>
+    std::string Value<T>::to_string() const {
         return int_to_string();
     }
-
-    template<>
-    std::string Value<unsigned int>::to_string() const {
-        return int_to_string();
-    }
-
-    template<>
-    std::string Value<unsigned long>::to_string() const {
-        return int_to_string();
-    }
-
-    template<>
-    std::string Value<unsigned long long>::to_string() const {
-        return int_to_string();
-    }
-
+            
+    ///  specializations for non-integer types    
+    
     template<>
     std::string Value<bool>::to_string() const {
         return std::string((empty() ? m_default : m_value) ? "true" : "false");
@@ -188,7 +157,7 @@ namespace ak_program_options {
         }
         s += "]";
         
-        return std::string(s);
+        return s;
     }
 
     template<typename T>
@@ -198,7 +167,8 @@ namespace ak_program_options {
     
     
     /// FIXME: the following value() functions should be possible as template
-
+    /// attempts to use template resulted in linking errors
+    
     Value<int> *value(int *v) {
         Value<int> *val = new Value<int>(v);
         return val;
@@ -244,75 +214,20 @@ namespace ak_program_options {
         return val;
     }
 
-    template<>
-    void Value<int>::set_value(const char *v) {
+    ///  general case
+    
+    template<typename T>
+    void Value<T>::set_value(const char *v) {
         char* x;
-        m_value = (int)strtol(v, &x, BASE10);
+        m_value = (T)strtol(v, &x, BASE10);
         if (x != v + strlen(v)) {
             throw_exception<invalid_option_value>(invalid_option_value(v, ""));
         }
         m_empty = false;
     }
-
-    template<>
-    void Value<long>::set_value(const char *v) {
-        char *x;
-        m_value = strtol(v, &x, BASE10);
-        if (x != v + strlen(v)) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
-        }
-        m_empty = false;
-    }
-
-    template<>
-    void Value<long long>::set_value(const char *v) {
-        char *x;
-        m_value = strtol(v, &x, BASE10);
-        if (x != v + strlen(v)) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
-        }
-        m_empty = false;
-    }
-
-    template<>
-    void Value<unsigned int>::set_value(const char *v) {
-        char *x;
-        long int orig = strtol(v, &x, BASE10);
-        if ((x != v + strlen(v))
-            || (orig < 0)
-        ) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
-        }
-        m_value = (unsigned int)orig;
-        m_empty = false;
-    }
-
-    template<>
-    void Value<unsigned long>::set_value(const char *v) {
-        char *x;
-        long int orig = strtol(v, &x, 10);
-        if ((x != v + strlen(v))
-            || (orig < 0)
-        ) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
-        }
-        m_value = (unsigned long)orig;
-        m_empty = false;
-    }
-
-    template<>
-    void Value<unsigned long long>::set_value(const char *v) {
-        char *x;
-        long int orig = strtol(v, &x, 10);
-        if ((x != v + strlen(v))
-            || (orig < 0)
-        ) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
-        }
-        m_value = (unsigned long long)orig;
-        m_empty = false;
-    }
-
+    
+    ///  the integer specializations are covered by the general case and thus omitted
+    
     template<>
     void Value<bool>::set_value(const char *v) {
         m_value = (strstr("0~false~FALSE~no~NO", v) != NULL);

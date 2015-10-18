@@ -46,20 +46,20 @@ namespace ak_program_options {
 
         basic_parsed_options(unsigned _argc, char *_argv[], const options_description *_desc) :
             m_desc(_desc), m_positional_desc(0), argc(_argc), argv(_argv)
-            {}
+            {  }
+            
+        ~basic_parsed_options() { }
+        
+        void set_positional_description(const positional_options_description *desc) { m_positional_desc = desc; }
+        const positional_options_description *get_positional_description() const { return m_positional_desc; }
 
-        void set_positional_description(const positional_options_description *desc) { m_positional_desc = desc; };
-        const positional_options_description *get_positional_description() const { return m_positional_desc; };
-
-        const option_description *findById(int id) const;
-        const option_description *findByName(std::string name) const;
+        std::shared_ptr<const option_description> findById(int id) const;
+        std::shared_ptr<const option_description> findByName(std::string name) const;
 
         ///  return options
         const options_description *descriptions() const { return m_desc; }
         const positional_options_description *positional_descriptions() const { return m_positional_desc; }
     };
-
-    basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const options_description &desc);
 }
 
 #endif

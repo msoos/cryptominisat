@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+#include "errors.h"
+
 namespace ak_program_options {
     /** Describes positional options.
 
@@ -50,7 +52,7 @@ namespace ak_program_options {
     */
     class positional_options_description {
     public:
-        positional_options_description() {};
+        positional_options_description() { o("construct positional_options_description"); };
 
         /** Species that up to 'max_count' next positional options
         should be given the 'name'. The value of '-1' means 'unlimited'.

@@ -36,21 +36,31 @@
 namespace ak_program_options {
 
     option_description::
-        option_description(const char *name,
-            const value_semantic *s)
+        option_description()
     {
-        m_value_semantic = s;
+        m_id = (int)((size_t)this);
+    }
+
+    option_description::
+        option_description(const char *name,
+                           value_semantic *s)
+        : m_value_semantic(s)
+    {
         set_name(name);
     }
 
     option_description::
         option_description(const char* name,
-            const value_semantic *s,
+            value_semantic *s,
             const char* description)
+        : m_description(description), m_value_semantic(s)
     {
-        m_description = description;
-        m_value_semantic = s;
         set_name(name);
+    }
+
+    option_description::
+        ~option_description()
+    {
     }
 
     const std::string&
@@ -63,7 +73,7 @@ namespace ak_program_options {
         long_option_struct *opt = nullptr;
 
         if (!m_long_name.empty()) {
-            const value_semantic *sem = m_value_semantic;
+            std::shared_ptr<const value_semantic> sem = m_value_semantic;
             opt = new long_option_struct;
 
             opt->has_arg = ((sem == NO_VALUE) || sem->is_bool_switch()) 
@@ -100,7 +110,7 @@ namespace ak_program_options {
         option_description::format_parameter() const
     {
         std::string ret;
-        const value_semantic *sem = m_value_semantic;
+        std::shared_ptr<const value_semantic> sem = m_value_semantic;
                 
         if (sem != NO_VALUE) {
             ret = sem->name();
@@ -126,8 +136,8 @@ namespace ak_program_options {
         }
     }
 
-    value_semantic *option_description::semantic() const {
-        return (value_semantic *)m_value_semantic;
+    std::shared_ptr<value_semantic> option_description::semantic() const {
+        return m_value_semantic;
     }
 
     option_description&

@@ -29,6 +29,7 @@
 #ifndef OPTIONS_DESCRIPTION_H_INCLUDED
 #define OPTIONS_DESCRIPTION_H_INCLUDED
 
+#include <assert.h>
 #include <string>
 #include <vector>
 
@@ -39,18 +40,24 @@
 
 namespace ak_program_options {
 
+//  for validity checking
+#define OPTIONS_DESCRIPTION_HEADER "OS"
+
     class options_description_easy_init;
 
     class options_description {
     private:
+#if USE_OS_DEBUGGING
+        char *hd = OPTIONS_DESCRIPTION_HEADER;
+#endif
         std::string m_caption;
 
         // Data organization is chosen because:
         // - there could be two names for one option
         // - option_add_proxy needs to know the last added option
-        std::vector<option_description *> m_options;
+        std::vector<std::shared_ptr<option_description>> m_options;
 
-        std::vector<options_description *> m_groups;
+        std::vector<std::shared_ptr<options_description>> m_groups;
         std::vector<bool> m_belong_to_group;
 
         unsigned m_line_length = 80;
@@ -58,13 +65,10 @@ namespace ak_program_options {
 
     public:
         options_description() {};
-        //  FIXME:
-        //  not really sure if the m_options vector
-        //  has to be cleaned up at destruction time
-        ~options_description() {}; 
         options_description(const std::string& caption) { m_caption = caption;  };
 
-        void add(option_description *desc);
+        bool valid() const;
+        void add(std::shared_ptr<option_description> desc);
         options_description &add(const options_description& desc);
         options_description_easy_init add_options();
 
@@ -81,10 +85,10 @@ namespace ak_program_options {
         void print(std::ostream& os, unsigned width = 0) const;
 
         /** return all option_descriptions as vector */
-        std::vector<option_description *> options() const;
+        const std::vector<std::shared_ptr<option_description>> &options() const { return m_options; };
 
-        const option_description *findById(int id) const;
-        const option_description *findByName(std::string name) const;
+        std::shared_ptr<const option_description> findById(int id) const;
+        std::shared_ptr<const option_description> findByName(std::string name) const;
     };
 
     /** Class which provides convenient creation syntax to option_description.
@@ -101,11 +105,11 @@ namespace ak_program_options {
 
         options_description_easy_init&
             operator()(const char *name,
-                const value_semantic *s);
+                value_semantic *s);
 
         options_description_easy_init&
             operator()(const char* name,
-                const value_semantic *s,
+                value_semantic *s,
                 const char *description);
 
     private:

@@ -35,10 +35,10 @@
 
 namespace ak_program_options {
 
-    class variables_map : public std::map<std::string, value_semantic *> {
+    class variables_map : public std::map<std::string, std::shared_ptr<value_semantic>> {
     public:
         variables_map() {};
-        ~variables_map() {};
+        ~variables_map() { };
 
         /** Obtains the value of variable 'name', from *this.
 
@@ -55,14 +55,17 @@ namespace ak_program_options {
 
         void notify();
            
-        /**  display a list of options and their values  */     
+        ///  remember options for final deconstruction
+        void register_options(const basic_parsed_options *options) { m_options = options; };
+        
+        ///  display a list of options and their values
         void show_options();
 
     private:
-        /** Returns value of variable 'name' stored in *this, or
-        empty value otherwise. */
-        const value_semantic *get(const std::string& name) const;
-        /** remember options for deconstruction */
+        /// Returns value of variable 'name' stored in *this, or
+        /// empty value otherwise.
+        std::shared_ptr<const value_semantic> get(const std::string& name) const;
+        /// remember options for deconstruction 
         const basic_parsed_options *m_options;
     };
 
@@ -73,7 +76,7 @@ namespace ak_program_options {
     */
     void store(const basic_parsed_options *options, variables_map &vm);
 
-    /** Runs all 'notify' function for options in 'vm'. */
+    /// Runs all 'notify' function for options in 'vm'. 
     void notify(variables_map &vm);
 }
 
