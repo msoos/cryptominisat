@@ -474,7 +474,7 @@ class Searcher : public HyperEngine
         #ifdef STATS_NEEDED
         void dump_restart_sql();
         PropStats lastSQLPropStats;
-        Stats lastSQLGlobalStats;
+        SearchStats lastSQLGlobalStats;
         #endif
 
 

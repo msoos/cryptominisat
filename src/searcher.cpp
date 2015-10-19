@@ -1643,7 +1643,7 @@ void Searcher::dump_restart_sql()
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
-    Stats thisStats = stats - lastSQLGlobalStats;
+    SearchStats thisStats = stats - lastSQLGlobalStats;
 
     solver->sqlStats->restart(
         thisPropStats
