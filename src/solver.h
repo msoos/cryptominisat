@@ -64,8 +64,6 @@ class DataSync;
 class SharedData;
 class ReduceDB;
 class InTree;
-/*typedef size_t (*ReadFun)(void*, size_t, size_t, FILE*);
-template<typename A, ReadFun B> class StreamBuffer;*/
 
 class LitReachData {
     public:
