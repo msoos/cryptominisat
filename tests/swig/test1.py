@@ -23,22 +23,26 @@ import copy
 import random
 from os.path import basename
 import unittest
-import _solver as solver
+import os
+import glob
+
+print "our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*"))
+sys.path.append(os.getcwd())
+print "our sys.path is", sys.path
+
+import solver
 
 class TestSimple(unittest.TestCase):
 
     def setUp(self):
-        self.a = solver.new_Solver()
-
-    def tearDown(self):
-        solver.delete_Solver(self.a)
+        self.s = solver.Solver()
 
     def test_free_vars(self):
         num = 100
         for _ in range(num):
-            solver.Solver_new_external_var(self.a)
+            self.s.new_external_var()
 
-        self.assertEqual(solver.Solver_get_num_free_vars(self.a), num)
+        self.assertEqual(self.s.get_num_free_vars(), num)
 
 
 def run():
