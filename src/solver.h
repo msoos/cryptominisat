@@ -125,13 +125,10 @@ class Solver : public Searcher
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
         unsigned long get_sql_id() const;
         const SolveStats& get_solve_stats() const;
+        const SearchStats& get_stats() const;
         void add_in_partial_solving_stats();
         void check_implicit_stats(const bool onlypairs = false) const;
         void check_stats(const bool allowFreed = false) const;
-
-
-        ///Return number of variables waiting to be replaced
-        const SearchStats& get_stats() const;
 
 
         //Checks
