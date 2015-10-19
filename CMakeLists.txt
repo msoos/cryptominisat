@@ -296,7 +296,9 @@ else()
     message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
 endif()
 
-#M4RI
+# -----------------------------------------------------------------------------
+# Look for M4RI (for Gauss)
+# -----------------------------------------------------------------------------
 option(NOM4RI "Don't use m4ri" OFF)
 if (NOT NOM4RI)
     find_package(M4RI)
@@ -384,6 +386,9 @@ add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
 )
 
+# -----------------------------------------------------------------------------
+# Testing
+# -----------------------------------------------------------------------------
 if (ENABLE_TESTING)
     add_test (NAME basic_test COMMAND tests/basic_test --log_level=test_suite)
     add_test (NAME assump_test COMMAND tests/assump_test --log_level=test_suite)
