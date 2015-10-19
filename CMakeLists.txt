@@ -357,12 +357,15 @@ if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK)
     add_subdirectory(python pycryptosat)
 endif()
 
+#command-line parsing executable needs boost program-options
+if(NOT Boost_FOUND)
+    set(ONLY_SIMPLE ON)
+    message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
+endif()
 
 # testing needs both Boost and Python
-if(NOT Boost_FOUND OR NOT PYTHON_OK)
-    set(ONLY_SIMPLE ON)
+if (NOT Boost_FOUND OR NOT PYTHON_OK)
     set(ENABLE_TESTING OFF)
-    message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
 endif()
 
 # -----------------------------------------------------------------------------
