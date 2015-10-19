@@ -77,6 +77,11 @@ class LitReachData {
         uint32_t numInCache;
 };
 
+struct SolveStats
+{
+    uint64_t numSimplify = 0;
+    uint32_t num_solve_calls = 0;
+};
 
 class Solver : public Searcher
 {
@@ -101,11 +106,6 @@ class Solver : public Searcher
         void open_file_and_dump_red_clauses(string fname) const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
 
-        struct SolveStats
-        {
-            uint64_t numSimplify = 0;
-            uint32_t num_solve_calls = 0;
-        };
         static const char* get_version_tag();
         static const char* get_version_sha1();
         static const char* get_compilation_env();
@@ -367,7 +367,7 @@ inline const SearchStats& Solver::get_stats() const
     return sumStats;
 }
 
-inline const Solver::SolveStats& Solver::get_solve_stats() const
+inline const SolveStats& Solver::get_solve_stats() const
 {
     return solveStats;
 }
