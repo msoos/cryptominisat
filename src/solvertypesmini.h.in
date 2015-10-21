@@ -34,8 +34,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-typedef uint32_t Var;
-static const Var var_Undef(0xffffffffU >> 4);
+#define var_Undef (0xffffffffU >> 4)
 
 class Lit
 {
@@ -43,7 +42,7 @@ class Lit
     explicit Lit(uint32_t i) : x(i) { }
 public:
     Lit() : x(var_Undef<<1) {}   // (lit_Undef)
-    explicit Lit(Var var, bool is_inverted) :
+    explicit Lit(uint32_t var, bool is_inverted) :
         x((var<<1) | (uint32_t)is_inverted)
     {}
 
@@ -63,7 +62,7 @@ public:
     bool sign() const {
         return x & 1;
     }
-    Var  var() const {
+    uint32_t  var() const {
         return x >> 1;
     }
     Lit  unsign() const {
