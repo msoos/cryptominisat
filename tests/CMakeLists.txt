@@ -74,7 +74,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
 
 
 if (PYTHON_OK AND NOT STATS)
-    add_subdirectory(swig)
+    # add_subdirectory(swig)
 endif()
 
 

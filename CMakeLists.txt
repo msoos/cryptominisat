@@ -361,10 +361,6 @@ endif()
 if(NOT Boost_FOUND)
     set(ONLY_SIMPLE ON)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
-endif()
-
-# testing needs both Boost and Python
-if (NOT Boost_FOUND OR NOT PYTHON_OK)
     set(ENABLE_TESTING OFF)
 endif()
 
