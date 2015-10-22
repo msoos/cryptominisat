@@ -1,5 +1,5 @@
-#define BOOST_TEST_MODULE basic_interface
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
+
 #include <fstream>
 
 #include "cryptominisat4/cryptominisat.h"
@@ -8,54 +8,53 @@ using namespace CMSat;
 #include <vector>
 using std::vector;
 
-BOOST_AUTO_TEST_SUITE( normal_interface )
 
-BOOST_AUTO_TEST_CASE(start)
+TEST(normal_interface, start)
 {
     SATSolver s;
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
 }
 
-BOOST_AUTO_TEST_CASE(onelit)
-{
-    SATSolver s;
-    s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false)});
-    lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
-}
-
-BOOST_AUTO_TEST_CASE(twolit)
+TEST(normal_interface, onelit)
 {
     SATSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), false);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
 }
 
-BOOST_AUTO_TEST_CASE(multi_solve_unsat)
+TEST(normal_interface, twolit)
 {
     SATSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), false);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), false);
+}
+
+TEST(normal_interface, multi_solve_unsat)
+{
+    SATSolver s;
+    s.new_var();
+    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(vector<Lit>{Lit(0, true)});
+    lbool ret = s.solve();
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_False);
-        BOOST_CHECK_EQUAL( s.okay(), false);
+        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( s.okay(), false);
     }
 }
 
-BOOST_AUTO_TEST_CASE(multi_solve_unsat_multi_thread)
+TEST(normal_interface, multi_solve_unsat_multi_thread)
 {
     SATSolver s;
     s.set_num_threads(2);
@@ -63,52 +62,52 @@ BOOST_AUTO_TEST_CASE(multi_solve_unsat_multi_thread)
     s.add_clause(vector<Lit>{Lit(0, false)});
     s.add_clause(vector<Lit>{Lit(0, true)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), false);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_False);
-        BOOST_CHECK_EQUAL( s.okay(), false);
+        EXPECT_EQ( ret, l_False);
+        EXPECT_EQ( s.okay(), false);
     }
 }
 
-BOOST_AUTO_TEST_CASE(solve_multi_thread)
+TEST(normal_interface, solve_multi_thread)
 {
     SATSolver s;
     s.set_num_threads(2);
     s.new_vars(2);
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     s.add_clause(vector<Lit>{Lit(0, true)});
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_False);
+    EXPECT_EQ(s.get_model()[1], l_True);
 }
 
-BOOST_AUTO_TEST_CASE(logfile)
+TEST(normal_interface, logfile)
 {
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
     s->new_vars(2);
     s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
     lbool ret = s->solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     delete s;
 
     std::ifstream infile("testfile");
     std::string line;
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    EXPECT_EQ(line, "c Solver::new_vars( 2 )");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "1 2 0");
+    EXPECT_EQ(line, "1 2 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+    EXPECT_EQ(line, "c Solver::solve(  )");
 }
 
-BOOST_AUTO_TEST_CASE(logfile2)
+TEST(normal_interface, logfile2)
 {
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
@@ -123,20 +122,20 @@ BOOST_AUTO_TEST_CASE(logfile2)
     std::ifstream infile("testfile");
     std::string line;
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    EXPECT_EQ(line, "c Solver::new_vars( 2 )");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "1 0");
+    EXPECT_EQ(line, "1 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "1 2 0");
+    EXPECT_EQ(line, "1 2 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+    EXPECT_EQ(line, "c Solver::solve(  )");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "2 0");
+    EXPECT_EQ(line, "2 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::solve(  )");
+    EXPECT_EQ(line, "c Solver::solve(  )");
 }
 
-BOOST_AUTO_TEST_CASE(logfile2_assumps)
+TEST(normal_interface, logfile2_assumps)
 {
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
@@ -154,74 +153,69 @@ BOOST_AUTO_TEST_CASE(logfile2_assumps)
     std::ifstream infile("testfile");
     std::string line;
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::new_vars( 2 )");
+    EXPECT_EQ(line, "c Solver::new_vars( 2 )");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "1 0");
+    EXPECT_EQ(line, "1 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "1 2 0");
+    EXPECT_EQ(line, "1 2 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::solve( 1 -2 )");
+    EXPECT_EQ(line, "c Solver::solve( 1 -2 )");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "2 0");
+    EXPECT_EQ(line, "2 0");
     std::getline(infile, line);
-    BOOST_CHECK_EQUAL(line, "c Solver::solve( -2 )");
+    EXPECT_EQ(line, "c Solver::solve( -2 )");
 }
 
-
-BOOST_AUTO_TEST_SUITE_END()
-
-
-BOOST_AUTO_TEST_SUITE( xor_interface )
 bool is_critical(const std::range_error&) { return true; }
 
-BOOST_AUTO_TEST_CASE(xor_check_sat_solution)
+TEST(xor_interface, xor_check_sat_solution)
 {
     SATSolver s;
     s.new_var();
     s.add_xor_clause(vector<unsigned>{0U}, false);
     s.add_xor_clause(vector<unsigned>{0U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
+    EXPECT_EQ( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_False);
+        EXPECT_EQ( ret, l_False);
     }
-    BOOST_CHECK_EQUAL( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_unsat_solution)
+TEST(xor_interface, xor_check_unsat_solution)
 {
     SATSolver s;
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_True);
-        BOOST_CHECK_EQUAL( s.okay(), true);
+        EXPECT_EQ( ret, l_True);
+        EXPECT_EQ( s.okay(), true);
     }
-    BOOST_CHECK_EQUAL( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values)
+TEST(xor_interface, xor_check_solution_values)
 {
     SATSolver s;
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_True);
-        BOOST_CHECK_EQUAL( s.okay(), true);
+        EXPECT_EQ( ret, l_True);
+        EXPECT_EQ( s.okay(), true);
     }
-    BOOST_CHECK_EQUAL( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
+TEST(xor_interface, xor_check_solution_values2)
 {
     SATSolver s;
     s.new_var();
@@ -229,39 +223,39 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values2)
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     s.add_xor_clause(vector<uint32_t>{1U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_True);
-        BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
-        BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
+        EXPECT_EQ( ret, l_True);
+        EXPECT_EQ(s.get_model()[0], l_True);
+        EXPECT_EQ(s.get_model()[1], l_True);
     }
-    BOOST_CHECK_EQUAL( s.nVars(), 2);
+    EXPECT_EQ( s.nVars(), 2);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values3)
+TEST(xor_interface, xor_check_solution_values3)
 {
     SATSolver s;
     s.new_var();
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U, 0U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
+    EXPECT_EQ( ret, l_False);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values4)
+TEST(xor_interface, xor_check_solution_values4)
 {
     SATSolver s;
     s.new_var();
     s.new_var();
     s.add_xor_clause(vector<uint32_t>{0U, 0U}, false);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.nVars(), 2);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.nVars(), 2);
 }
 
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values5)
+TEST(xor_interface, xor_check_solution_values5)
 {
     SATSolver s;
     s.new_var();
@@ -269,14 +263,14 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values5)
     s.add_xor_clause(vector<uint32_t>{0U, 1U}, true);
     vector<Lit> assump = {Lit(0, false)};
     lbool ret = s.solve(&assump);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 2);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
+    EXPECT_EQ(s.get_model()[0], l_True);
+    EXPECT_EQ(s.get_model()[1], l_False);
+    EXPECT_EQ( s.nVars(), 2);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values6)
+TEST(xor_interface, xor_check_solution_values6)
 {
     SATSolver s;
     s.new_var();
@@ -284,13 +278,13 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values6)
     s.add_xor_clause(vector<uint32_t>{0U, 1U}, false);
     vector<Lit> assump = {Lit(0, true)};
     lbool ret = s.solve(&assump);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 2);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_False);
+    EXPECT_EQ(s.get_model()[1], l_False);
+    EXPECT_EQ( s.nVars(), 2);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_solution_values7)
+TEST(xor_interface, xor_check_solution_values7)
 {
     SATSolver s;
     s.new_var();
@@ -299,14 +293,14 @@ BOOST_AUTO_TEST_CASE(xor_check_solution_values7)
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     vector<Lit> assump = {Lit(0, false), Lit(1, false)};
     lbool ret = s.solve(&assump);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_True);
+    EXPECT_EQ(s.get_model()[1], l_True);
+    EXPECT_EQ(s.get_model()[2], l_False);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_3_long)
+TEST(xor_interface, xor_3_long)
 {
     SATSolver s;
     s.new_var();
@@ -316,14 +310,14 @@ BOOST_AUTO_TEST_CASE(xor_3_long)
     s.add_xor_clause(vector<uint32_t>{0}, true);
     s.add_xor_clause(vector<uint32_t>{1}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[2], l_True);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_True);
+    EXPECT_EQ(s.get_model()[1], l_True);
+    EXPECT_EQ(s.get_model()[2], l_True);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_3_long2)
+TEST(xor_interface, xor_3_long2)
 {
     SATSolver s;
     s.new_var();
@@ -333,14 +327,14 @@ BOOST_AUTO_TEST_CASE(xor_3_long2)
     s.add_xor_clause(vector<uint32_t>{0U}, true);
     s.add_xor_clause(vector<uint32_t>{1U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_True);
+    EXPECT_EQ(s.get_model()[1], l_True);
+    EXPECT_EQ(s.get_model()[2], l_False);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_4_long)
+TEST(xor_interface, xor_4_long)
 {
     SATSolver s;
     s.new_var();
@@ -352,15 +346,15 @@ BOOST_AUTO_TEST_CASE(xor_4_long)
     s.add_xor_clause(vector<uint32_t>{1U}, false);
     s.add_xor_clause(vector<uint32_t>{2U}, false);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[2], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[3], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 4);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_False);
+    EXPECT_EQ(s.get_model()[1], l_False);
+    EXPECT_EQ(s.get_model()[2], l_False);
+    EXPECT_EQ(s.get_model()[3], l_False);
+    EXPECT_EQ( s.nVars(), 4);
 }
 
-BOOST_AUTO_TEST_CASE(xor_4_long2)
+TEST(xor_interface, xor_4_long2)
 {
     SATSolver s;
     s.new_var();
@@ -372,15 +366,15 @@ BOOST_AUTO_TEST_CASE(xor_4_long2)
     s.add_xor_clause(vector<uint32_t>{1U}, false);
     s.add_xor_clause(vector<uint32_t>{2U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[0], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[1], l_False);
-    BOOST_CHECK_EQUAL(s.get_model()[2], l_True);
-    BOOST_CHECK_EQUAL(s.get_model()[3], l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 4);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_False);
+    EXPECT_EQ(s.get_model()[1], l_False);
+    EXPECT_EQ(s.get_model()[2], l_True);
+    EXPECT_EQ(s.get_model()[3], l_False);
+    EXPECT_EQ( s.nVars(), 4);
 }
 
-BOOST_AUTO_TEST_CASE(xor_very_long)
+TEST(xor_interface, xor_very_long)
 {
     SATSolver s;
     vector<uint32_t> vars;
@@ -393,14 +387,14 @@ BOOST_AUTO_TEST_CASE(xor_very_long)
         s.add_xor_clause(vector<uint32_t>{i}, false);
     }
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     for(unsigned i = 0; i < 30; i++) {
-        BOOST_CHECK_EQUAL(s.get_model()[i], l_False);
+        EXPECT_EQ(s.get_model()[i], l_False);
     }
-    BOOST_CHECK_EQUAL( s.nVars(), 30);
+    EXPECT_EQ( s.nVars(), 30);
 }
 
-BOOST_AUTO_TEST_CASE(xor_very_long2)
+TEST(xor_interface, xor_very_long2)
 {
     for(size_t num = 3; num < 30; num++) {
         SATSolver s;
@@ -414,27 +408,27 @@ BOOST_AUTO_TEST_CASE(xor_very_long2)
             s.add_xor_clause(vector<uint32_t>{i}, false);
         }
         lbool ret = s.solve();
-        BOOST_CHECK_EQUAL( ret, l_True);
+        EXPECT_EQ( ret, l_True);
         for(unsigned i = 0; i < num-1; i++) {
-            BOOST_CHECK_EQUAL(s.get_model()[i], l_False);
+            EXPECT_EQ(s.get_model()[i], l_False);
         }
-        BOOST_CHECK_EQUAL(s.get_model()[num-1], l_True);
-        BOOST_CHECK_EQUAL( s.nVars(), num);
+        EXPECT_EQ(s.get_model()[num-1], l_True);
+        EXPECT_EQ( s.nVars(), num);
     }
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_unsat)
+TEST(xor_interface, xor_check_unsat)
 {
     SATSolver s;
     s.new_vars(3);
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_thread)
+TEST(xor_interface, xor_check_unsat_multi_thread)
 {
     SATSolver s;
     s.set_num_threads(3);
@@ -442,12 +436,12 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_thread)
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), false);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), false);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
+TEST(xor_interface, xor_check_unsat_multi_solve_multi_thread)
 {
     SATSolver s;
     s.set_num_threads(3);
@@ -455,24 +449,24 @@ BOOST_AUTO_TEST_CASE(xor_check_unsat_multi_solve_multi_thread)
     s.add_xor_clause(vector<uint32_t>{0U, 1U}, false);
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.nVars(), 3);
 
     s.add_xor_clause(vector<uint32_t>{0U}, false);
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.get_model()[0], l_False);
-    BOOST_CHECK_EQUAL( s.get_model()[1], l_False);
-    BOOST_CHECK_EQUAL( s.get_model()[2], l_True);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.get_model()[0], l_False);
+    EXPECT_EQ( s.get_model()[1], l_False);
+    EXPECT_EQ( s.get_model()[2], l_True);
+    EXPECT_EQ( s.nVars(), 3);
 
     s.add_xor_clause(vector<uint32_t>{1U}, true);
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_CASE(xor_norm_mix_unsat_multi_thread)
+TEST(xor_interface, xor_norm_mix_unsat_multi_thread)
 {
     SATSolver s;
     //s.set_num_threads(3);
@@ -482,65 +476,61 @@ BOOST_AUTO_TEST_CASE(xor_norm_mix_unsat_multi_thread)
     s.add_clause(vector<Lit>{Lit(1, false)});
     s.add_clause(vector<Lit>{Lit(2, false)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.nVars(), 3);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.nVars(), 3);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE( learnt_interface )
-
-BOOST_AUTO_TEST_CASE(unit)
+TEST(xor_interface, unit)
 {
     SATSolver s;
     s.new_vars(3);
     s.add_clause(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    BOOST_CHECK_EQUAL( units.size(), 1);
-    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+    EXPECT_EQ( units.size(), 1);
+    EXPECT_EQ( units[0], Lit(0, false));
 }
 
-BOOST_AUTO_TEST_CASE(unit2)
+TEST(xor_interface, unit2)
 {
     SATSolver s;
     s.new_vars(3);
     s.add_clause(vector<Lit>{Lit(0, false)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    BOOST_CHECK_EQUAL( units.size(), 1);
-    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
+    EXPECT_EQ( units.size(), 1);
+    EXPECT_EQ( units[0], Lit(0, false));
 
     s.add_clause(vector<Lit>{Lit(1, true)});
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     units = s.get_zero_assigned_lits();
-    BOOST_CHECK_EQUAL( units.size(), 2);
-    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
-    BOOST_CHECK_EQUAL( units[1], Lit(1, true));
+    EXPECT_EQ( units.size(), 2);
+    EXPECT_EQ( units[0], Lit(0, false));
+    EXPECT_EQ( units[1], Lit(1, true));
 }
 
-BOOST_AUTO_TEST_CASE(unit3)
+TEST(xor_interface, unit3)
 {
     SATSolver s;
     s.new_vars(3);
     s.add_clause(vector<Lit>{Lit(0, false)});
     s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    BOOST_CHECK_EQUAL( units.size(), 2);
-    BOOST_CHECK_EQUAL( units[0], Lit(0, false));
-    BOOST_CHECK_EQUAL( units[1], Lit(1, true));
+    EXPECT_EQ( units.size(), 2);
+    EXPECT_EQ( units[0], Lit(0, false));
+    EXPECT_EQ( units[1], Lit(1, true));
 }
 
-BOOST_AUTO_TEST_CASE(xor1)
+TEST(xor_interface, xor1)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
@@ -550,13 +540,13 @@ BOOST_AUTO_TEST_CASE(xor1)
     s.new_vars(3);
     s.add_xor_clause(vector<uint32_t>{0, 1}, false);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    BOOST_CHECK_EQUAL( pairs.size(), 1);
+    EXPECT_EQ( pairs.size(), 1);
 }
 
-BOOST_AUTO_TEST_CASE(xor2)
+TEST(xor_interface, xor2)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
@@ -567,13 +557,13 @@ BOOST_AUTO_TEST_CASE(xor2)
     s.add_xor_clause(vector<uint32_t>{0, 1}, false);
     s.add_xor_clause(vector<uint32_t>{1, 2}, false);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    BOOST_CHECK_EQUAL( pairs.size(), 2);
+    EXPECT_EQ( pairs.size(), 2);
 }
 
-BOOST_AUTO_TEST_CASE(abort_early)
+TEST(xor_interface, abort_early)
 {
     SATSolver s;
     s.set_no_simplify();
@@ -589,10 +579,10 @@ BOOST_AUTO_TEST_CASE(abort_early)
     s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
 
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_Undef);
+    EXPECT_EQ( ret, l_Undef);
 }
 
-BOOST_AUTO_TEST_CASE(xor3)
+TEST(xor_interface, xor3)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
@@ -603,35 +593,20 @@ BOOST_AUTO_TEST_CASE(xor3)
     s.new_vars(3);
     s.add_xor_clause(vector<uint32_t>{0, 1}, false);
     lbool ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    BOOST_CHECK_EQUAL( pairs.size(), 1);
+    EXPECT_EQ( pairs.size(), 1);
 
     s.add_xor_clause(vector<uint32_t>{1, 2}, false);
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
+    EXPECT_EQ( ret, l_True);
     pairs = s.get_all_binary_xors();
-    BOOST_CHECK_EQUAL( pairs.size(), 2);
+    EXPECT_EQ( pairs.size(), 2);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
-/*struct F {
-    F() : i( 1 ) { BOOST_TEST_MESSAGE( "setup fixture" ); }
-    ~F()         { BOOST_TEST_MESSAGE( "teardown fixture" ); }
-
-    int i;
-};
-
-BOOST_FIXTURE_TEST_CASE( test_fix, F)
-{
-    BOOST_CHECK( i == 1 );
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
-
-BOOST_FIXTURE_TEST_CASE( test_fix2, F)
-{
-    BOOST_CHECK_EQUAL( i, 1 );
-}*/
-
-

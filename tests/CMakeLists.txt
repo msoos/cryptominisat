@@ -85,11 +85,6 @@ include_directories(
     ${PROJECT_BINARY_DIR}/cmsat4-src
 )
 
-
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-endif()
-
 add_executable(basic_test
     basic_test.cpp
 )
@@ -100,7 +95,7 @@ if (STATICCOMPILE)
 endif (STATICCOMPILE)
 
 target_link_libraries(basic_test
-    ${Boost_LIBRARIES}
+    ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
 
@@ -114,7 +109,7 @@ if (STATICCOMPILE)
 endif (STATICCOMPILE)
 
 target_link_libraries(assump_test
-    ${Boost_LIBRARIES}
+    ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
 
@@ -136,7 +131,7 @@ if (STATICCOMPILE)
 endif (STATICCOMPILE)
 
 target_link_libraries(heap_test
-    ${Boost_LIBRARIES}
+    ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
 
@@ -150,7 +145,7 @@ if (STATICCOMPILE)
 endif (STATICCOMPILE)
 
 target_link_libraries(clause_test
-    ${Boost_LIBRARIES}
+    ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
 

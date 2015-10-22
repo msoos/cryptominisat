@@ -1,11 +1,8 @@
-#define BOOST_TEST_MODULE basic_interface
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include "cryptominisat4/cryptominisat.h"
 
 #include "src/heap.h"
-
-BOOST_AUTO_TEST_SUITE( heap_minim )
 
 struct Comp
 {
@@ -15,77 +12,80 @@ struct Comp
     }
 };
 
-BOOST_AUTO_TEST_CASE(simple)
+TEST(heap_minim, simple)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     heap.insert(1);
     heap.insert(2);
     heap.insert(3);
-    BOOST_CHECK_EQUAL( heap.heap_property(), true);
+    EXPECT_EQ( heap.heap_property(), true);
 }
 
-BOOST_AUTO_TEST_CASE(empty)
+TEST(heap_minim, empty)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     heap.insert(1);
     heap.insert(2);
-    BOOST_CHECK_EQUAL(heap.remove_min(), 1);
-    BOOST_CHECK_EQUAL(heap.remove_min(), 2);
-    BOOST_CHECK_EQUAL( heap.heap_property(), true);
+    EXPECT_EQ(heap.remove_min(), 1);
+    EXPECT_EQ(heap.remove_min(), 2);
+    EXPECT_EQ( heap.heap_property(), true);
 }
 
-BOOST_AUTO_TEST_CASE(empty2)
+TEST(heap_minim, empty2)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     heap.insert(1);
     heap.insert(2);
     heap.insert(3);
-    BOOST_CHECK_EQUAL(heap.remove_min(), 1);
-    BOOST_CHECK_EQUAL(heap.remove_min(), 2);
-    BOOST_CHECK_EQUAL(heap.remove_min(), 3);
-    BOOST_CHECK_EQUAL( heap.heap_property(), true);
+    EXPECT_EQ(heap.remove_min(), 1);
+    EXPECT_EQ(heap.remove_min(), 2);
+    EXPECT_EQ(heap.remove_min(), 3);
+    EXPECT_EQ( heap.heap_property(), true);
 }
 
-BOOST_AUTO_TEST_CASE(empty_lots)
+TEST(heap_minim, empty_lots)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     for(size_t i = 0; i < 100; i++) {
         heap.insert(99-i);
-        BOOST_CHECK_EQUAL( heap.heap_property(), true);
+        EXPECT_EQ( heap.heap_property(), true);
     }
     for(size_t i = 0; i < 100; i++) {
-        BOOST_CHECK_EQUAL(heap.remove_min(), i);
-        BOOST_CHECK_EQUAL(heap.heap_property(), true);
+        EXPECT_EQ(heap.remove_min(), i);
+        EXPECT_EQ(heap.heap_property(), true);
     }
 }
 
-BOOST_AUTO_TEST_CASE(copy_heap)
+TEST(heap_minim, copy_heap)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     for(size_t i = 0; i < 100; i++) {
         heap.insert(99-i);
-        BOOST_CHECK_EQUAL( heap.heap_property(), true);
+        EXPECT_EQ( heap.heap_property(), true);
     }
     Heap<Comp> mycopy(heap);
     for(size_t i = 0; i < 100; i++) {
-        BOOST_CHECK_EQUAL(mycopy.remove_min(), i);
-        BOOST_CHECK_EQUAL(mycopy.heap_property(), true);
+        EXPECT_EQ(mycopy.remove_min(), i);
+        EXPECT_EQ(mycopy.heap_property(), true);
     }
 }
 
-BOOST_AUTO_TEST_CASE(inserted_inside)
+TEST(heap_minim, inserted_inside)
 {
     Comp cmp;
     Heap<Comp> heap(cmp);
     heap.insert(10);
     heap.insert(20);
-    BOOST_CHECK_EQUAL(heap.in_heap(10), true);
-    BOOST_CHECK_EQUAL(heap.in_heap(20), true);
+    EXPECT_EQ(heap.in_heap(10), true);
+    EXPECT_EQ(heap.in_heap(20), true);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

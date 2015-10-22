@@ -20,8 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#define BOOST_TEST_MODULE assumptions
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include "src/clause.h"
 #include <sstream>
@@ -29,7 +28,7 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-struct F {
+struct F : public ::testing::Test {
     F() {
     }
 
@@ -48,9 +47,7 @@ struct F {
     }
 };
 
-BOOST_FIXTURE_TEST_SUITE( clause_test, F )
-
-BOOST_AUTO_TEST_CASE(convert_to_string)
+TEST_F(F, convert_to_string)
 {
     Clause& cl = *allocate_space_for(3);
     cl[0] = Lit(0, false);
@@ -59,10 +56,10 @@ BOOST_AUTO_TEST_CASE(convert_to_string)
 
     std::stringstream ss;
     ss << cl;
-    BOOST_CHECK_EQUAL( ss.str(), "1 2 3");
+    EXPECT_EQ( ss.str(), "1 2 3");
 }
 
-BOOST_AUTO_TEST_CASE(convert_to_string2)
+TEST_F(F, convert_to_string2)
 {
     Clause& cl = *allocate_space_for(3);
     cl[0] = Lit(0, false);
@@ -71,7 +68,10 @@ BOOST_AUTO_TEST_CASE(convert_to_string2)
 
     std::stringstream ss;
     ss << cl;
-    BOOST_CHECK_EQUAL( ss.str(), "1 -2 3");
+    EXPECT_EQ( ss.str(), "1 -2 3");
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

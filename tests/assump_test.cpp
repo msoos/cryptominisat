@@ -1,25 +1,22 @@
-#define BOOST_TEST_MODULE assumptions
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include "cryptominisat4/cryptominisat.h"
 #include <vector>
 using std::vector;
 using namespace CMSat;
 
-BOOST_AUTO_TEST_SUITE( assumptions_interface )
-
-BOOST_AUTO_TEST_CASE(empty)
+TEST(assumptions_interface, empty)
 {
     SATSolver s;
     s.new_var();
     s.add_clause(vector<Lit>{Lit(0, false)});
     vector<Lit> assumps;
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
 }
 
-BOOST_AUTO_TEST_CASE(single_true)
+TEST(assumptions_interface, single_true)
 {
     SATSolver s;
     s.new_var();
@@ -27,11 +24,11 @@ BOOST_AUTO_TEST_CASE(single_true)
     vector<Lit> assumps;
     assumps.push_back(Lit(0, false));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
 }
 
-BOOST_AUTO_TEST_CASE(single_false)
+TEST(assumptions_interface, single_false)
 {
     SATSolver s;
     s.new_var();
@@ -39,13 +36,13 @@ BOOST_AUTO_TEST_CASE(single_false)
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.get_conflict().size(), 1);
-    BOOST_CHECK_EQUAL( s.get_conflict()[0], Lit(0, false));
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.get_conflict().size(), 1);
+    EXPECT_EQ( s.get_conflict()[0], Lit(0, false));
 }
 
 
-BOOST_AUTO_TEST_CASE(single_false_then_true)
+TEST(assumptions_interface, single_false_then_true)
 {
     SATSolver s;
     s.new_var();
@@ -53,16 +50,16 @@ BOOST_AUTO_TEST_CASE(single_false_then_true)
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), true);
 
     ret = s.solve();
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.okay(), true);
 
 }
 
-BOOST_AUTO_TEST_CASE(binclause_true)
+TEST(assumptions_interface, binclause_true)
 {
     SATSolver s;
     s.new_var();
@@ -71,12 +68,12 @@ BOOST_AUTO_TEST_CASE(binclause_true)
     vector<Lit> assumps;
     assumps.push_back(Lit(0, true));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_True );
-    BOOST_CHECK_EQUAL( s.get_model()[0], l_False );
-    BOOST_CHECK_EQUAL( s.get_model()[1], l_True );
+    EXPECT_EQ( ret, l_True );
+    EXPECT_EQ( s.get_model()[0], l_False );
+    EXPECT_EQ( s.get_model()[1], l_True );
 }
 
-BOOST_AUTO_TEST_CASE(binclause_false)
+TEST(assumptions_interface, binclause_false)
 {
     SATSolver s;
     s.new_var();
@@ -86,16 +83,16 @@ BOOST_AUTO_TEST_CASE(binclause_false)
     assumps.push_back(Lit(0, true));
     assumps.push_back(Lit(1, true));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.get_conflict().size(), 2);
 
     vector<Lit> tmp = s.get_conflict();
     std::sort(tmp.begin(), tmp.end());
-    BOOST_CHECK_EQUAL( tmp[0], Lit(0, false) );
-    BOOST_CHECK_EQUAL( tmp[1], Lit(1, false) );
+    EXPECT_EQ( tmp[0], Lit(0, false) );
+    EXPECT_EQ( tmp[1], Lit(1, false) );
 }
 
-BOOST_AUTO_TEST_CASE(replace_true)
+TEST(assumptions_interface, replace_true)
 {
     SATSolver s;
     s.new_var();
@@ -106,12 +103,12 @@ BOOST_AUTO_TEST_CASE(replace_true)
     assumps.push_back(Lit(0, true));
     assumps.push_back(Lit(1, true));
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_True);
-    BOOST_CHECK_EQUAL( s.get_model()[0], l_False );
-    BOOST_CHECK_EQUAL( s.get_model()[1], l_False );
+    EXPECT_EQ( ret, l_True);
+    EXPECT_EQ( s.get_model()[0], l_False );
+    EXPECT_EQ( s.get_model()[1], l_False );
 }
 
-BOOST_AUTO_TEST_CASE(replace_false)
+TEST(assumptions_interface, replace_false)
 {
     SATSolver s;
     s.new_var();
@@ -126,18 +123,18 @@ BOOST_AUTO_TEST_CASE(replace_false)
     //a = 1, b = 0
 
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK( ret == l_False);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), true);
 
-    BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+    EXPECT_EQ( s.get_conflict().size(), 2);
 
     vector<Lit> tmp = s.get_conflict();
     std::sort(tmp.begin(), tmp.end());
-    BOOST_CHECK( tmp[0] == Lit(0, true) );
-    BOOST_CHECK( tmp[1] == Lit(1, false) );
+    EXPECT_EQ( tmp[0], Lit(0, true) );
+    EXPECT_EQ( tmp[1], Lit(1, false) );
 }
 
-BOOST_AUTO_TEST_CASE(set_var_by_prop)
+TEST(assumptions_interface, set_var_by_prop)
 {
     SATSolver s;
     s.new_var();
@@ -151,16 +148,16 @@ BOOST_AUTO_TEST_CASE(set_var_by_prop)
     //b = 0
 
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK( ret == l_False);
-    BOOST_CHECK_EQUAL( s.okay(), true);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), true);
 
-    BOOST_CHECK_EQUAL( s.get_conflict().size(), 1);
+    EXPECT_EQ( s.get_conflict().size(), 1);
 
     vector<Lit> tmp = s.get_conflict();
-    BOOST_CHECK_EQUAL( tmp[0], Lit(1, false) );
+    EXPECT_EQ( tmp[0], Lit(1, false) );
 }
 
-BOOST_AUTO_TEST_CASE(only_assump)
+TEST(assumptions_interface, only_assump)
 {
     SATSolver s;
     s.new_var();
@@ -171,21 +168,24 @@ BOOST_AUTO_TEST_CASE(only_assump)
     assumps.push_back(Lit(1, false));
 
     lbool ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_False);
-    BOOST_CHECK_EQUAL( s.okay(), true);
-    BOOST_CHECK_EQUAL( s.get_conflict().size(), 2);
+    EXPECT_EQ( ret, l_False);
+    EXPECT_EQ( s.okay(), true);
+    EXPECT_EQ( s.get_conflict().size(), 2);
 
     vector<Lit> tmp = s.get_conflict();
     std::sort(tmp.begin(), tmp.end());
-    BOOST_CHECK_EQUAL( tmp[0] , Lit(1, false) );
-    BOOST_CHECK_EQUAL( tmp[1], Lit(1, true) );
+    EXPECT_EQ( tmp[0] , Lit(1, false) );
+    EXPECT_EQ( tmp[1], Lit(1, true) );
 
     ret = s.solve(NULL);
-    BOOST_CHECK_EQUAL( ret, l_True );
+    EXPECT_EQ( ret, l_True );
 
     ret = s.solve(&assumps);
-    BOOST_CHECK_EQUAL( ret, l_False);
+    EXPECT_EQ( ret, l_False);
 }
 
 
-BOOST_AUTO_TEST_SUITE_END()
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
