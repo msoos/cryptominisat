@@ -1311,7 +1311,7 @@ lbool Solver::solve()
         conflict.clear();
         status = l_False;
         if (conf.verbosity >= 6) {
-            cout << "c Solver status l_Fase on startup of solve()" << endl;
+            cout << "c Solver status " << status << " on startup of solve()" << endl;
         }
         goto end;
     }
