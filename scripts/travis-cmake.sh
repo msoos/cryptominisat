@@ -214,12 +214,24 @@ case $CMS_CONFIG in
 esac
 
 if [ "$CMS_CONFIG" == "NORMAL" ]; then
+    #elimination checks
     CMS_PATH="${BUILD_DIR}/cryptominisat4"
     cd ../tests/simp-checks/
     git clone --depth 1 https://github.com/msoos/testfiles.git
     ./checks.py $CMS_PATH testfiles/*
-    cd $BUILD_DIR
+    cd ${BUILD_DIR}
+
+    #STP build check
+    git clone --depth 1 https://github.com/stp/stp.git
+    cd stp
+    mkdir -p build
+    cd build
+    cmake ..
+    make -j2
+    sudo make install
+    cd ${BUILD_DIR}
 fi
+
 
 #do fuzz testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ]; then
