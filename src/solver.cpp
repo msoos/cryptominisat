@@ -1299,7 +1299,7 @@ lbool Solver::solve()
     }
 
     if (conf.verbosity >= 6) {
-        cout << "c Solver::solve() called" << endl;
+        cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
     }
     conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
 
@@ -1761,7 +1761,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     if (conf.verbosity >= 6) {
         cout
-        << "c Solver::simplify_problem() called"
+        << "c " <<  __PRETTY_FUNCTION__ << " called"
         << endl;
     }
 
@@ -1782,8 +1782,8 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     update_polarity_and_activity = true;
-    if (conf.verbosity >= 3) {
-        cout << "c Searcher::simplify_problem() finished" << endl;
+    if (conf.verbosity >= 6) {
+        cout << "c " << __PRETTY_FUNCTION__ << " finished" << endl;
     }
     test_all_clause_attached();
     check_wrong_attach();

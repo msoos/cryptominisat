@@ -710,7 +710,7 @@ Clause* Searcher::analyze_conflict(
 bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 {
     #ifdef DEBUG_LITREDUNDANT
-    cout << "Litredundant called" << endl;
+    cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
     #endif
 
     analyze_stack.clear();
