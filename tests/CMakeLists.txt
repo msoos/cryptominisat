@@ -149,6 +149,21 @@ target_link_libraries(clause_test
     libcryptominisat4
 )
 
+add_executable(stp_test
+    stp_test.cpp
+)
+
+if (STATICCOMPILE)
+    set_target_properties(stp_tests PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(stp_tests PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
+
+target_link_libraries(stp_test
+    ${GTEST_BOTH_LIBRARIES}
+    libcryptominisat4
+)
+add_test (NAME stp_test COMMAND stp_test --log_level=test_suite)
+
 # This test is not stable enough, depends on CPU speed
 # if (NOT SLOW_DEBUG)
 #     add_executable(library_speed_test
