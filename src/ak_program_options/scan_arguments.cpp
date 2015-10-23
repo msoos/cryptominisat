@@ -155,7 +155,8 @@ namespace ak_program_options
             if (opt_descr) {
                 long_opt = opt_descr->long_option();
                 assert(long_opt);
-                
+                opc->arg = NULL;
+
                 if (long_opt->has_arg != Has_Argument::No) {
                     opc->arg = contains_eq ? contains_eq : argv[opc->idx++];
 
