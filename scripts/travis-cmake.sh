@@ -26,6 +26,7 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
+./utils/licensecheck/licensecheck.pl -m  ./tests
 # grep UNK licenses
 # grep UNK licenses | read && return -1 || return 0
 
