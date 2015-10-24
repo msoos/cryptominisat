@@ -46,6 +46,9 @@ TEST(scc_test, find_1)
     repl.new_vars(20);
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    EXPECT_EQ(s.get_num_long_irred_cls(), 2);
+    std::string exp = "-2, 3, 4, 5;  2, 3, 4, 5";
+    EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
 int main(int argc, char **argv) {
