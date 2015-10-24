@@ -91,7 +91,11 @@ add_executable(readme_test
 target_link_libraries(readme_test
     libcryptominisat4
 )
-add_test (NAME readme_test COMMAND tests/readme_test)
+add_test (
+    NAME readme_test
+    COMMAND readme_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(basic_test
     basic_test.cpp
@@ -105,7 +109,11 @@ target_link_libraries(basic_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME basic_test COMMAND tests/basic_test)
+add_test (
+    NAME basic_test
+    COMMAND basic_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(assump_test
     assump_test.cpp
@@ -118,7 +126,11 @@ target_link_libraries(assump_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME assump_test COMMAND tests/assump_test)
+add_test (
+    NAME assump_test
+    COMMAND assump_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(heap_test
     heap_test.cpp
@@ -131,7 +143,11 @@ target_link_libraries(heap_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME heap_test COMMAND tests/heap_test)
+add_test (
+    NAME heap_test
+    COMMAND heap_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(clause_test
     clause_test.cpp
@@ -144,7 +160,11 @@ target_link_libraries(clause_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME clause_test COMMAND tests/clause_test)
+add_test (
+    NAME clause_test
+    COMMAND clause_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(stp_test
     stp_test.cpp
@@ -157,7 +177,10 @@ target_link_libraries(stp_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME stp_test COMMAND stp_test)
+add_test (NAME stp_test
+    COMMAND stp_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 add_executable(scc_test
     scc_test.cpp
@@ -170,7 +193,27 @@ target_link_libraries(scc_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME scc_test COMMAND scc_test)
+add_test (NAME scc_test
+    COMMAND scc_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+add_executable(vrepl_test
+    vrepl_test.cpp
+)
+if (STATICCOMPILE)
+    set_target_properties(vrepl_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(vrepl_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
+target_link_libraries(vrepl_test
+    ${GTEST_BOTH_LIBRARIES}
+    libcryptominisat4
+)
+add_test (
+    NAME vrepl_test
+    COMMAND vrepl_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 
 # This test is not stable enough, depends on CPU speed
