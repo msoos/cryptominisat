@@ -33,17 +33,16 @@ TEST(vrepl_test, find_one_1)
 {
     SolverConf conf;
     conf.doCache = false;
-
     Solver s(&conf, new bool);
     s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
 
     s.add_clause_outer(str_to_cl("1, 3, 4, 5"));
     s.add_clause_outer(str_to_cl("2, 3, 4, 5"));
 
-    VarReplacer repl(&s);
-    repl.new_vars(20);
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     EXPECT_EQ(s.get_num_long_irred_cls(), 2);
@@ -55,17 +54,16 @@ TEST(vrepl_test, find_one_2)
 {
     SolverConf conf;
     conf.doCache = false;
-
     Solver s(&conf, new bool);
     s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
     s.add_clause_outer(str_to_cl("1, -3"));
     s.add_clause_outer(str_to_cl("-1, 3"));
 
     s.add_clause_outer(str_to_cl("1, 4, 5"));
     s.add_clause_outer(str_to_cl("2, 3, 4, 5"));
 
-    VarReplacer repl(&s);
-    repl.new_vars(20);
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "3, 4, 5;  2, 3, 4, 5";
@@ -76,16 +74,15 @@ TEST(vrepl_test, remove_lit)
 {
     SolverConf conf;
     conf.doCache = false;
-
     Solver s(&conf, new bool);
     s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("-1, 2"));
 
     s.add_clause_outer(str_to_cl("1, 2, 5"));
 
-    VarReplacer repl(&s);
-    repl.new_vars(20);
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "2, 5";
@@ -96,16 +93,15 @@ TEST(vrepl_test, remove_cl)
 {
     SolverConf conf;
     conf.doCache = false;
-
     Solver s(&conf, new bool);
     s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("-1, 2"));
 
     s.add_clause_outer(str_to_cl("1, -2, 5"));
 
-    VarReplacer repl(&s);
-    repl.new_vars(20);
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "";
