@@ -29,7 +29,7 @@
 using namespace CMSat;
 #include "test_helper.h"
 
-TEST(scc_test, find_one_1)
+TEST(vrepl_test, find_one_1)
 {
     SolverConf conf;
     conf.doCache = false;
@@ -51,7 +51,7 @@ TEST(scc_test, find_one_1)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
-TEST(scc_test, find_one_2)
+TEST(vrepl_test, find_one_2)
 {
     SolverConf conf;
     conf.doCache = false;
@@ -72,7 +72,7 @@ TEST(scc_test, find_one_2)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
-TEST(scc_test, remove_lit)
+TEST(vrepl_test, remove_lit)
 {
     SolverConf conf;
     conf.doCache = false;
@@ -92,7 +92,7 @@ TEST(scc_test, remove_lit)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
-TEST(scc_test, remove_cl)
+TEST(vrepl_test, remove_cl)
 {
     SolverConf conf;
     conf.doCache = false;
