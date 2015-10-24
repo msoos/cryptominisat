@@ -108,6 +108,64 @@ TEST(vrepl_test, remove_cl)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
+TEST(vrepl_test, replace_twice)
+{
+    SolverConf conf;
+    conf.doCache = false;
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+
+    s.add_clause_outer(str_to_cl("3, -2"));
+    s.add_clause_outer(str_to_cl("-3, 2"));
+
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
+
+    s.add_clause_outer(str_to_cl("1, -2, 3"));
+    s.add_clause_outer(str_to_cl("1, 2, 3, 5"));
+    std::string exp = "2, 5";
+    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+}
+
+TEST(vrepl_test, replace_thrice)
+{
+    SolverConf conf;
+    conf.doCache = false;
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+
+    s.add_clause_outer(str_to_cl("3, -2"));
+    s.add_clause_outer(str_to_cl("-3, 2"));
+
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
+
+    s.add_clause_outer(str_to_cl("4, -2"));
+    s.add_clause_outer(str_to_cl("-4, 2"));
+
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 3);
+
+    s.add_clause_outer(str_to_cl("1, -2, 3"));
+    s.add_clause_outer(str_to_cl("1, 2, 4, 5"));
+    std::string exp = "2, 5";
+    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

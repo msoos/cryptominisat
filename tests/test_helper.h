@@ -194,10 +194,11 @@ string print(const vector<vector<Lit> >& cls)
 
 bool check_irred_cls_eq(const Solver& s, const string& data)
 {
-    vector<vector<Lit> > cls = get_irred_cls(s);
-    //cout << "irred:" << print(cls);
     vector<vector<Lit> > cls_given = str_to_vecs(data);
-    //cout << "given:" << print(cls_given);
+    //cout << "Expected irred:" << print(cls_given);
+
+    vector<vector<Lit> > cls = get_irred_cls(s);
+    //cout << "Got irred:" << print(cls);
     return fuzzy_equal(cls, cls_given);
 }
 
