@@ -108,7 +108,7 @@ void store(const basic_parsed_options *options, variables_map &vm)
         std::shared_ptr<const option_description> desc = options->findById(opt);
 
         if (desc == nullptr) {
-            // opc->idx--;
+            opc->idx--;
             std::string name(options->argv[opc->idx]);
             unknown_option e(name);
 

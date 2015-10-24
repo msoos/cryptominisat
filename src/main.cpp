@@ -833,7 +833,7 @@ void Main::check_options_correctness()
     ) {
         cerr
         << "ERROR: Some option you gave was wrong. Please give '--help' to get help" << endl
-        << "       Unkown option: " << c.what() << endl;
+        << "       Unknown option: " << c.what() << endl;
         std::exit(-1);
     } catch (boost::bad_any_cast &e) {
         std::cerr
