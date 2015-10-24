@@ -85,10 +85,17 @@ include_directories(
     ${PROJECT_BINARY_DIR}/cmsat4-src
 )
 
+add_executable(readme_test
+    readme_test.cpp
+)
+target_link_libraries(readme_test
+    libcryptominisat4
+)
+add_test (NAME readme_test COMMAND tests/readme_test)
+
 add_executable(basic_test
     basic_test.cpp
 )
-
 if (STATICCOMPILE)
     set_target_properties(basic_test PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(basic_test PROPERTIES LINK_SEARCH_START_STATIC 0)
@@ -98,71 +105,59 @@ target_link_libraries(basic_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
+add_test (NAME basic_test COMMAND tests/basic_test)
 
 add_executable(assump_test
     assump_test.cpp
 )
-
 if (STATICCOMPILE)
     set_target_properties(assump_test PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(assump_test PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
-
 target_link_libraries(assump_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-
-add_executable(readme_test
-    readme_test.cpp
-)
-
-target_link_libraries(readme_test
-    libcryptominisat4
-)
+add_test (NAME assump_test COMMAND tests/assump_test)
 
 add_executable(heap_test
     heap_test.cpp
 )
-
 if (STATICCOMPILE)
     set_target_properties(heap_test PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(heap_test PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
-
 target_link_libraries(heap_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
+add_test (NAME heap_test COMMAND tests/heap_test)
 
 add_executable(clause_test
     clause_test.cpp
 )
-
 if (STATICCOMPILE)
     set_target_properties(clause_test PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(clause_test PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
-
 target_link_libraries(clause_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
+add_test (NAME clause_test COMMAND tests/clause_test)
 
 add_executable(stp_test
     stp_test.cpp
 )
-
 if (STATICCOMPILE)
     set_target_properties(stp_tests PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(stp_tests PROPERTIES LINK_SEARCH_START_STATIC 0)
 endif (STATICCOMPILE)
-
 target_link_libraries(stp_test
     ${GTEST_BOTH_LIBRARIES}
     libcryptominisat4
 )
-add_test (NAME stp_test COMMAND stp_test --log_level=test_suite)
+add_test (NAME stp_test COMMAND stp_test)
 
 # This test is not stable enough, depends on CPU speed
 # if (NOT SLOW_DEBUG)
