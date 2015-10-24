@@ -72,6 +72,47 @@ TEST(scc_test, find_one_2)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
+TEST(scc_test, remove_lit)
+{
+    SolverConf conf;
+    conf.doCache = false;
+
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    s.add_clause_outer(str_to_cl("1, 2, 5"));
+
+    VarReplacer repl(&s);
+    repl.new_vars(20);
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    std::string exp = "2, 5";
+    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+}
+
+TEST(scc_test, remove_cl)
+{
+    SolverConf conf;
+    conf.doCache = false;
+
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    s.add_clause_outer(str_to_cl("1, -2, 5"));
+
+    VarReplacer repl(&s);
+    repl.new_vars(20);
+    repl.replace_if_enough_is_found();
+    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    std::string exp = "";
+    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+}
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
