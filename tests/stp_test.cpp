@@ -88,7 +88,7 @@ TEST(stp_test, set_num_threads_false)
     s.add_clause(str_to_cl("1,2"));
     s.add_clause(str_to_cl("1,-2"));
     s.add_clause(str_to_cl("-1,2"));
-    s.add_clause(str_to_cl("1,-2"));
+    s.add_clause(str_to_cl("-1,-2"));
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_False);
 }
