@@ -29,7 +29,7 @@
 using namespace CMSat;
 #include "test_helper.h"
 
-TEST(scc_test, find_1)
+TEST(scc_test, find_one_1)
 {
     SolverConf conf;
     conf.doCache = false;
