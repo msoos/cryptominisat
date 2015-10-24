@@ -2741,11 +2741,6 @@ size_t Solver::get_num_vars_elimed() const
     }
 }
 
-size_t Solver::get_num_vars_replaced() const
-{
-    return varReplacer->get_num_replaced_vars();
-}
-
 void Solver::calculate_reachability()
 {
     double myTime = cpuTime();

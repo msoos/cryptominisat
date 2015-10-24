@@ -119,7 +119,6 @@ class Solver : public Searcher
         size_t   get_num_long_irred_cls() const;
         size_t   get_num_long_red_cls() const;
         size_t get_num_vars_elimed() const;
-        size_t get_num_vars_replaced() const;
         uint32_t num_active_vars() const;
         void print_mem_stats() const;
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
