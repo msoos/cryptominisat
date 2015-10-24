@@ -215,6 +215,23 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+add_executable(clause_cleaner_test
+    clause_cleaner_test.cpp
+)
+if (STATICCOMPILE)
+    set_target_properties(clause_cleaner_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+    set_target_properties(clause_cleaner_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+endif (STATICCOMPILE)
+target_link_libraries(clause_cleaner_test
+    ${GTEST_BOTH_LIBRARIES}
+    libcryptominisat4
+)
+add_test (
+    NAME clause_cleaner_test
+    COMMAND clause_cleaner_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 
 # This test is not stable enough, depends on CPU speed
 # if (NOT SLOW_DEBUG)
