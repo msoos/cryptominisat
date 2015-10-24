@@ -115,6 +115,7 @@ void add_impl_cls(
         Lit lit = Lit::toLit(i);
         for(const Watched& ws: s.watches[lit.toInt()]) {
             if (ws.isBin()
+                && lit < ws.lit2()
                 && ((add_irred && !ws.red()) || (add_red && ws.red()))
             ) {
                 vector<Lit> cl;
@@ -124,6 +125,8 @@ void add_impl_cls(
             }
 
             if (ws.isTri()
+                && lit < ws.lit2()
+                && lit < ws.lit3()
                 && ((add_irred && !ws.red()) || (add_red && ws.red()))
             ) {
                 vector<Lit> cl;
