@@ -166,6 +166,42 @@ TEST(vrepl_test, replace_thrice)
     EXPECT_TRUE(check_irred_cls_eq(s, exp));
 }
 
+TEST(vrepl_test, replace_limit_check_below)
+{
+    SolverConf conf;
+    conf.doCache = false;
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    s.add_clause_outer(str_to_cl("3, -2"));
+    s.add_clause_outer(str_to_cl("-3, 2"));
+
+    repl.replace_if_enough_is_found(3);
+    EXPECT_EQ(repl.get_num_replaced_vars(), 0);
+}
+
+TEST(vrepl_test, replace_limit_check_above)
+{
+    SolverConf conf;
+    conf.doCache = false;
+    Solver s(&conf, new bool);
+    s.new_vars(20);
+    VarReplacer& repl = *s.varReplacer;
+
+    s.add_clause_outer(str_to_cl("1, -2"));
+    s.add_clause_outer(str_to_cl("-1, 2"));
+
+    s.add_clause_outer(str_to_cl("3, -2"));
+    s.add_clause_outer(str_to_cl("-3, 2"));
+
+    repl.replace_if_enough_is_found(2);
+    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
