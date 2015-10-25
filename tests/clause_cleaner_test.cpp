@@ -33,7 +33,7 @@ TEST(clause_clean_test, no_clean)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -51,7 +51,7 @@ TEST(clause_clean_test, clean_bin_pos)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -68,7 +68,7 @@ TEST(clause_clean_test, clean_bin_neg)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -84,7 +84,7 @@ TEST(clause_clean_test, clean_tri_pos)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -100,7 +100,7 @@ TEST(clause_clean_test, clean_tri_neg)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -118,7 +118,7 @@ TEST(clause_clean_test, clean_long_pos)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -134,7 +134,7 @@ TEST(clause_clean_test, clean_long_neg)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 
@@ -150,7 +150,7 @@ TEST(clause_clean_test, clean_mix)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     ClauseCleaner& cc = *s.clauseCleaner;
 

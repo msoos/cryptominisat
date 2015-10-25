@@ -34,7 +34,7 @@ TEST(scc_test, find_1)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(2);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -49,7 +49,7 @@ TEST(scc_test, find_2)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -67,7 +67,7 @@ TEST(scc_test, find_circle_3)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("2, -3"));
@@ -83,7 +83,7 @@ TEST(scc_test, find_two_circle2_3)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(6);
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("2, -3"));
@@ -103,7 +103,7 @@ TEST(scc_test, find_1_diff)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(2);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -119,7 +119,7 @@ TEST(scc_test, find_0)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("1, -2"));

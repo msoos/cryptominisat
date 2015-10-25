@@ -33,7 +33,7 @@ TEST(vrepl_test, find_one_1)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -54,7 +54,7 @@ TEST(vrepl_test, find_one_2)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -74,7 +74,7 @@ TEST(vrepl_test, remove_lit)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -93,7 +93,7 @@ TEST(vrepl_test, remove_cl)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -112,7 +112,7 @@ TEST(vrepl_test, replace_twice)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -138,7 +138,7 @@ TEST(vrepl_test, replace_thrice)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -170,7 +170,7 @@ TEST(vrepl_test, replace_limit_check_below)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
@@ -188,7 +188,7 @@ TEST(vrepl_test, replace_limit_check_above)
 {
     SolverConf conf;
     conf.doCache = false;
-    Solver s(&conf, new bool);
+    Solver s(&conf, new bool(false));
     s.new_vars(20);
     VarReplacer& repl = *s.varReplacer;
 
