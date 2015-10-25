@@ -4,7 +4,7 @@ set -e
 
 rm -rf cm* CM* lib* cryptomini* Testing* tests* pycryptosat include
 rm -rf tests
-cmake -DENABLE_TESTING=ON ..
+cmake -DSTATS=ON -DENABLE_TESTING=ON ..
 make -j4
 make test
 cd ../tests/simp-checks/
