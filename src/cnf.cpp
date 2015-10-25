@@ -477,8 +477,8 @@ void CNF::find_all_attach() const
 #ifdef SLOW_DEBUG
     for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
-        for (uint32_t i2 = 0; i2 < watches[i].size(); i2++) {
-            const Watched& w = watches[i][i2];
+        for (uint32_t i2 = 0; i2 < watches[lit].size(); i2++) {
+            const Watched& w = watches[lit][i2];
             if (!w.isClause())
                 continue;
 
