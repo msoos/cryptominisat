@@ -102,6 +102,7 @@ void add_cls(vector<vector<Lit> >& ret,
         for(Lit l: cl) {
             lits.push_back(l);
         }
+        std::sort(lits.begin(), lits.end());
         ret.push_back(lits);
     }
 }
@@ -213,6 +214,14 @@ void check_irred_cls_contains(const Solver* s, const string& data)
             break;
         }
 
+    }
+    if (!found_cl) {
+        cout << "Expected to find: " << looking_for << endl;
+        cout << "But only found  : ";
+        for(auto cl: cls) {
+            cout << cl << ", ";
+        }
+        cout << endl;
     }
     EXPECT_TRUE(found_cl);
 }
