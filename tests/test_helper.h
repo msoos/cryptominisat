@@ -201,6 +201,22 @@ void check_irred_cls_eq(const Solver* s, const string& data)
     check_fuzzy_equal(cls_expected, cls);
 }
 
+void check_irred_cls_contains(const Solver* s, const string& data)
+{
+    vector<Lit> looking_for = str_to_cl(data);
+    vector<vector<Lit> > cls = get_irred_cls(s);
+
+    bool found_cl = false;
+    for(auto cl: cls) {
+        if (cl == looking_for) {
+            found_cl = true;
+            break;
+        }
+
+    }
+    EXPECT_TRUE(found_cl);
+}
+
 void print_model(const SATSolver&s)
 {
     assert(s.okay());

@@ -49,15 +49,82 @@ struct distill_test : public ::testing::Test {
     bool must_inter;
 };
 
-TEST_F(distill_test, distill_long)
+//BY-BY 1
+
+TEST_F(distill_test, distill_long_by1)
 {
     s->new_vars(4);
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
     distiller->distill(1);
-    check_irred_cls_eq(s, "1, -2; 1, 3, 4");
+    check_irred_cls_contains(s, "1, 3, 4");
 }
+
+TEST_F(distill_test, distill_long_by1_2)
+{
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("2, -3"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+
+    distiller->distill(1);
+    check_irred_cls_contains(s, "1, 2, 4");
+}
+
+TEST_F(distill_test, distill_long_by1_3)
+{
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("1, 2, -3"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+
+    distiller->distill(1);
+    check_irred_cls_contains(s, "1, 2, 4");
+}
+
+TEST_F(distill_test, distill_long_by1_nodistill
+)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("3, -1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+
+    distiller->distill(1);
+    check_irred_cls_contains(s, "1, 2, 3");
+}
+
+//BY-BY 2
+
+TEST_F(distill_test, distill_long_by2)
+{
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("1, 2, -3"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+
+    distiller->distill(2);
+    check_irred_cls_contains(s, "1, 2, 4");
+}
+
+TEST_F(distill_test, distill_long_by2_2)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("2, 3, 4, -5"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
+
+    distiller->distill(2);
+    check_irred_cls_contains(s, "1, 2, 3, 4");
+}
+
+TEST_F(distill_test, distill_long_by2_nodistill
+)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+
+    distiller->distill(2);
+    check_irred_cls_contains(s, "1, 2, 3");
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
