@@ -209,6 +209,16 @@ void print_model(const SATSolver&s)
     }
 }
 
+void check_set_lits(const Solver* s, const std::string& data)
+{
+    vector<Lit> lits = str_to_cl(data);
+    std::sort(lits.begin(), lits.end());
+
+    vector<Lit> set_lits = s->get_zero_assigned_lits();
+    std::sort(set_lits.begin(), set_lits.end());
+    EXPECT_EQ(lits, set_lits);
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {
