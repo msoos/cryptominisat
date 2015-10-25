@@ -368,10 +368,14 @@ bool Prober::probe()
     for(size_t i = 0
         ; i < poss_choice.size()
         && limit_used() < numPropsTodo
-        && cpuTime() <= solver->conf.maxTime
         && !solver->must_interrupt_asap()
         ; i++
     ) {
+        if ((i & 0xff) == 0xff
+            && cpuTime() >= solver->conf.maxTime
+        ) {
+            break;
+        }
         extraTime += 20;
         runStats.numLoopIters++;
         const uint32_t var = poss_choice[i];
