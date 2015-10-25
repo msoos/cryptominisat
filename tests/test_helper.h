@@ -275,6 +275,14 @@ void check_impl_cache_contains(const Solver* s, const std::string& data)
     EXPECT_TRUE(inside);
 }
 
+// void add_to_cache_irred(Solver* s, const string& data)
+// {
+//     vector<Lit> lits = str_to_cl(data);
+//     assert(lits.size() == 2);
+//     assert(s->implCache.size() > lits[0].toInt());
+//     s->implCache[lits[0]].lits.push_back(LitExtra(lits[1], true));
+// }
+
 
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
