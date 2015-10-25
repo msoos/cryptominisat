@@ -125,7 +125,7 @@ TEST_F(distill_test, distill_long_by2_nodistill
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
-//BY-BY 1, tri
+//Tri -- always 2-by-2
 
 TEST_F(distill_test, distill_tri)
 {
