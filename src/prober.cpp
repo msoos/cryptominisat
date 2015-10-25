@@ -54,7 +54,10 @@ Prober::Prober(Solver* _solver):
 
 uint64_t Prober::limit_used() const
 {
-    return solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime + extraTimeCache;
+    return solver->propStats.bogoProps
+        + solver->propStats.otfHyperTime
+        + extraTime
+        + extraTimeCache;
 }
 
 void Prober::checkOTFRatio()
