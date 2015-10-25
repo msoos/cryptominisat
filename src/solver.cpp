@@ -1676,7 +1676,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distiller->distill();
+                distiller->distill(solver->conf.distill_queue_by);
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
@@ -3150,6 +3150,8 @@ SolveFeatures Solver::calculate_features() const
 
 void Solver::reconfigure(int val)
 {
+    //TODO adjust distill_queue_by !!
+
     assert(val > 0);
     switch (val) {
         case 1: {

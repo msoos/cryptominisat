@@ -44,14 +44,14 @@ Distiller::Distiller(Solver* _solver) :
     solver(_solver)
 {}
 
-bool Distiller::distill()
+bool Distiller::distill(uint32_t queueByBy)
 {
     assert(solver->ok);
     numCalls++;
 
     solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
-    if (!distill_long_irred_cls()) {
+    if (!distill_long_irred_cls(queueByBy)) {
         goto end;
     }
 
@@ -193,7 +193,7 @@ struct ClauseSizeSorter
     }
 };
 
-bool Distiller::distill_long_irred_cls()
+bool Distiller::distill_long_irred_cls(uint32_t queueByBy)
 {
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
@@ -218,11 +218,14 @@ bool Distiller::distill_long_irred_cls()
     runStats.potentialClauses = solver->longIrredCls.size();
     runStats.numCalled = 1;
 
-    std::sort(solver->longIrredCls.begin(), solver->longIrredCls.end(), ClauseSizeSorter(solver->cl_alloc));
+    std::sort(solver->longIrredCls.begin()
+        , solver->longIrredCls.end()
+        , ClauseSizeSorter(solver->cl_alloc)
+    );
     uint64_t origLitRem = runStats.numLitsRem;
     uint64_t origClShorten = runStats.numClShorten;
 
-    uint32_t queueByBy = 2;
+    //Make queueByBy = 1 in case we are late in the search
     if (numCalls > 8
         && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
         && (solver->longIrredCls.size() < 50000)

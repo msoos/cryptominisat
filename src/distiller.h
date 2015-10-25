@@ -39,7 +39,7 @@ class Clause;
 class Distiller {
     public:
         Distiller(Solver* solver);
-        bool distill();
+        bool distill(uint32_t queueByBy = 2);
 
         struct Stats
         {
@@ -74,7 +74,7 @@ class Distiller {
         );
 
         //Actual algorithms used
-        bool distill_long_irred_cls();
+        bool distill_long_irred_cls(uint32_t queueByBy);
         bool distill_tri_irred_cls();
         Solver* solver;
 
