@@ -344,12 +344,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
 ) {
     #ifdef DRUP_DEBUG
     if (solver->conf.verbosity >= 6) {
-        cout
-        << "Trying to distill clause:";
-        for(size_t i = 0; i < lits.size(); i++) {
-            cout << lits[i] << " ";
-        }
-        cout << endl;
+        cout << "Trying to distill clause:" << lits << endl;
     }
     #endif
 
