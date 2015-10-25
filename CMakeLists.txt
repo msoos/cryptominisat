@@ -386,6 +386,17 @@ add_custom_target(uninstall
 # -----------------------------------------------------------------------------
 if (ENABLE_TESTING)
     enable_testing()
+
+
+    #use valgrind
+    find_program(MEMORYCHECK_COMMAND valgrind)
+    if(MEMORYCHECK_COMMAND-NOTFOUND)
+      message(WARNING "Valgrind not found. Test will be run without valgrind.")
+    else()
+      message(STATUS "Valgrind found: ${MEMORYCHECK_COMMAND}. Running test using it.")
+      set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
+    endif()
+
     # too unstable to add (depends on CPU)
     #if (NOT STATS AND NOT SLOW_DEBUG)
         #add_test (NAME library_speed_test COMMAND tests/library_speed_test)
