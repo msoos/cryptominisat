@@ -354,8 +354,17 @@ bool Prober::probe()
 
     vector<uint32_t> poss_choice = randomize_possible_choices();
 
+    if (solver->conf.verbosity >= 10) {
+        cout << "Order of probe:";
+        for(auto x: poss_choice) {
+            cout << x+1 << ", ";
+        }
+        cout << endl;
+    }
+
     assert(solver->propStats.bogoProps == 0);
     assert(solver->propStats.otfHyperTime == 0);
+
     for(size_t i = 0
         ; i < poss_choice.size()
         && limit_used() < numPropsTodo
@@ -397,6 +406,14 @@ bool Prober::probe()
     }
 
 end:
+
+    if (solver->conf.verbosity >= 10) {
+        cout << "c main loop for " << __PRETTY_FUNCTION__
+        << " finished: "
+        << " must_interrupt? " << solver->must_interrupt_asap()
+        << " limit_used? " << (limit_used() >= numPropsTodo)
+        << endl;
+    }
 
     //Delete any remaining binaries to add or remove
     //next time, variables will be renumbered/etc. so it will be wrong
