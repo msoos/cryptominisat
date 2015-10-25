@@ -1,6 +1,5 @@
 add_library(ak_program_options
     errors.cpp
-    getopt_long.cpp
     option_description.cpp
     options_description.cpp
     parsers.cpp
