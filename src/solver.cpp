@@ -1676,7 +1676,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distiller->distill(true);
+                distiller->distill();
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI

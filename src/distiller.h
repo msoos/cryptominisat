@@ -39,7 +39,7 @@ class Clause;
 class Distiller {
     public:
         Distiller(Solver* solver);
-        bool distill(bool alsoStrengthen);
+        bool distill();
 
         struct Stats
         {

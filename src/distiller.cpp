@@ -44,22 +44,18 @@ Distiller::Distiller(Solver* _solver) :
     solver(_solver)
 {}
 
-bool Distiller::distill(const bool alsoStrengthen)
+bool Distiller::distill()
 {
     assert(solver->ok);
     numCalls++;
 
     solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
-    if (alsoStrengthen
-        && !distill_long_irred_cls()
-    ) {
+    if (!distill_long_irred_cls()) {
         goto end;
     }
 
-    if (alsoStrengthen
-        && !distill_tri_irred_cls()
-    ) {
+    if (!distill_tri_irred_cls()) {
         goto end;
     }
 
