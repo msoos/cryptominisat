@@ -97,7 +97,6 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-
 set (MY_TESTS
     basic_test
     assump_test
