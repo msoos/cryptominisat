@@ -31,9 +31,11 @@
 
 #include <iostream>
 
+#include "option_description.h"
+
 namespace ak_program_options {
 
-    //  forward
+    class option_description;
     template<class T> class Value;
     
     class value_semantic {  
@@ -42,7 +44,7 @@ namespace ak_program_options {
         virtual void apply_implicit() {}
         virtual bool composing() const { return false; }
         virtual void notify() const {}
-        virtual void set_value(const char *v) {(void)v;}
+        virtual void set_value(const char *v, std::shared_ptr<const option_description> opt) { (void)v; (void)opt; }
         virtual std::string to_string() const { return "???"; }
         virtual std::string textual() const { return ""; }
         virtual const std::vector<std::string> get_string_vector_value() const { std::vector<std::string> sv;  return sv; }
@@ -119,7 +121,7 @@ namespace ak_program_options {
                 *m_destination = get_value();
             }
         }
-        void set_value(const char *v);
+        void set_value(const char *v, std::shared_ptr<const option_description> opt);
         bool composing() const { return m_composing; }
         bool defaulted() const { return m_defaulted; }
         bool implicited() const { return m_implicited; }

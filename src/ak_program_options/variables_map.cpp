@@ -38,6 +38,11 @@
 #include "variables_map.h"
 
 namespace ak_program_options {
+    using std::cout;
+    using std::endl;
+    using std::pair;
+    using std::shared_ptr;
+    using std::string;
 
 OptionParserControl optionParserControl;
 
@@ -45,14 +50,14 @@ OptionParserControl optionParserControl;
 If 'vm' already has a non-defaulted value of an option, that value
 is not changed, even if 'options' specify some value.
 */
-void store(const basic_parsed_options *options, variables_map &vm)
+void store(const basic_parsed_options *options, variables_map &var_map)
 {
     o("store started");
     const options_description *optionsDescriptions = options->descriptions();
     const positional_options_description *positional_options = options->get_positional_description();
     unsigned pos_option_index = 0;
     OptionParserControl *opc = &optionParserControl;
-    std::shared_ptr<value_semantic> sem;
+    shared_ptr<value_semantic> sem;
 
     //  start with argv[1] as first parameter token
     opc->idx = 1;
@@ -73,26 +78,26 @@ void store(const basic_parsed_options *options, variables_map &vm)
             }
             if (pos_option_index < positional_options->max_total_count()) {
                 //  create an entry for positional parameter in variables map
-                const std::string name = positional_options->name_for_position(pos_option_index++);
-                std::shared_ptr<const option_description> desc = options->findByName(name);
+                const string name = positional_options->name_for_position(pos_option_index++);
+                shared_ptr<const option_description> desc = options->findByName(name);
                 //  use defined value iff avalaible or create a new string value if not
                 
                 if (desc == nullptr)
                 {
-                    sem = std::shared_ptr<value_semantic>(value<std::string>());
-                    sem->set_value(options->argv[opc->idx++]);
+                    sem = shared_ptr<value_semantic>(value<string>());
+                    sem->set_value(options->argv[opc->idx++], desc);
                 }
                 else
                 {
                     value_semantic *v = (value_semantic *)(desc->semantic().get());
-                    v->set_value(options->argv[opc->idx++]);
-                    sem = std::shared_ptr<value_semantic>(v);
+                    v->set_value(options->argv[opc->idx++], desc);
+                    sem = shared_ptr<value_semantic>(v);
                 }
 
                 //  entry must not be present yet
-                assert(vm.find(name) == vm.end());
+                assert(var_map.find(name) == var_map.end());
 
-                vm.insert(std::pair<std::string, std::shared_ptr<value_semantic>>(name, sem));
+                var_map.insert(pair<string, shared_ptr<value_semantic>>(name, sem));
 
                 continue;
             }
@@ -105,22 +110,22 @@ void store(const basic_parsed_options *options, variables_map &vm)
             break;
         }
 
-        std::shared_ptr<const option_description> desc = options->findById(opt);
+        shared_ptr<const option_description> desc = options->findById(opt);
 
         if (desc == nullptr) {
             opc->idx--;
-            std::string name(options->argv[opc->idx]);
+            string name(options->argv[opc->idx]);
             unknown_option e(name);
 
             throw_exception<unknown_option>(e);
         }
 
-        std::string name(desc->name());
+        string name(desc->name());
         value_semantic *vs = (value_semantic *)(desc->semantic().get());
-        bool bInsertNeeded = (vm.find(name) == vm.end());
+        bool bInsertNeeded = (var_map.find(name) == var_map.end());
 
         if (!(bInsertNeeded || vs->composing())) {
-            std::string name(desc->format_name());
+            string name(desc->format_name());
             multiple_occurrences e(name);
 
             throw_exception<multiple_occurrences>(e);
@@ -128,7 +133,7 @@ void store(const basic_parsed_options *options, variables_map &vm)
         else {
             if (vs != NO_VALUE) {
                 if (opc->arg) {
-                    vs->set_value(opc->arg);
+                    vs->set_value(opc->arg, desc);
                 }
                 else if (vs->implicited()) {
                     vs->apply_implicit();
@@ -136,56 +141,54 @@ void store(const basic_parsed_options *options, variables_map &vm)
             }
             if (bInsertNeeded) {
                 sem = desc->semantic();
-                vm.insert(std::pair<std::string, std::shared_ptr<value_semantic>>(name, sem));
+                var_map.insert(pair<string, shared_ptr<value_semantic>>(name, sem));
             }
         }        
     }
 
     //  add options which have defaults and are not contained yet
-    std::vector<std::shared_ptr<option_description>> opts = optionsDescriptions->options();
-    for (std::shared_ptr<option_description> opt : opts) {
-        std::string name(opt->name());
+    std::vector<shared_ptr<option_description>> opts = optionsDescriptions->options();
+    for (shared_ptr<option_description> opt : opts) {
+        string name(opt->name());
         sem = opt->semantic();
 
         if (sem != nullptr) {
-            bool bInsertNeeded = (vm.find(name) == vm.end()) && sem->defaulted();
+            bool bInsertNeeded = (var_map.find(name) == var_map.end()) && sem->defaulted();
 
             if (bInsertNeeded) {
-                vm.insert(std::pair<std::string, std::shared_ptr<value_semantic>>(name, sem));
+                var_map.insert(pair<string, shared_ptr<value_semantic>>(name, sem));
             }
         }
     }   
     
     //  remember options for deconstrcution
-    //  vm.register_options(options);
-    delete options;
+    var_map.register_options(options);
     
     o("store completed");
-    
 }
 
-void notify(variables_map& vm)
+void notify(variables_map& var_map)
 {
-    vm.notify();
+    var_map.notify();
 }
 
 const value_semantic
-&variables_map::operator[](const std::string& name) const
+&variables_map::operator[](const string& name) const
 {
-    std::shared_ptr<const value_semantic> v = get(name);
+    shared_ptr<const value_semantic> v = get(name);
 
     return *(v.get());
 }
 
 void variables_map::clear()
 {
-    std::map<std::string, std::shared_ptr<value_semantic>>::clear();
+    std::map<string, shared_ptr<value_semantic>>::clear();
 }
 
-std::shared_ptr<const value_semantic>
-variables_map::get(const std::string& name) const
+shared_ptr<const value_semantic>
+variables_map::get(const string& name) const
 {
-    static std::shared_ptr<const value_semantic> empty;    
+    static shared_ptr<const value_semantic> empty;    
     const_iterator i = find(name);
     
     return (i == end()) ? empty 
@@ -206,21 +209,21 @@ void variables_map::notify()
 
 void variables_map::show_options()
 {
-    std::cout << "Entries in variables_map: " << this->size() << std::endl;
+    cout << "Entries in variables_map: " << this->size() << std::endl;
     
     for (auto& kv : *this) {
-        std::cout << kv.first << ": ";
+        cout << kv.first << ": ";
                 
         if (kv.second != nullptr) {
-            std::cout << kv.second->to_string();
+            cout << kv.second->to_string();
         }
         else {
-            std::cout << " <null>";
+            cout << " <null>";
         }
-        std::cout << std::endl;
+        cout << endl;
     }
     
-    std::cout << std::endl;
+    cout << endl;
 }
 
 }   //  end of namespace

@@ -34,37 +34,27 @@
 #include "option_description.h"
 
 namespace ak_program_options {
+    using std::shared_ptr;
+    using std::string;
 
-    option_description::
-        option_description()
+    option_description::option_description()
     {
         m_id = (int)((size_t)this);
     }
 
-    option_description::
-        option_description(const char *name,
-                           value_semantic *s)
+    option_description::option_description(const char *name, value_semantic *s)
         : m_value_semantic(s)
     {
         set_name(name);
     }
 
-    option_description::
-        option_description(const char* name,
-            value_semantic *s,
-            const char* description)
+    option_description::option_description(const char* name, value_semantic *s, const char* description)
         : m_description(description), m_value_semantic(s)
     {
         set_name(name);
     }
 
-    option_description::
-        ~option_description()
-    {
-    }
-
-    const std::string&
-        option_description::description() const
+    const string& option_description::description() const
     {
         return m_description;
     }
@@ -73,7 +63,7 @@ namespace ak_program_options {
         long_option_struct *opt = nullptr;
 
         if (!m_long_name.empty()) {
-            std::shared_ptr<const value_semantic> sem = m_value_semantic;
+            shared_ptr<const value_semantic> sem = m_value_semantic;
             opt = new long_option_struct;
 
             opt->has_arg = ((sem == NO_VALUE) || sem->is_bool_switch()) 
@@ -93,30 +83,28 @@ namespace ak_program_options {
         return opt;
     }
 
-    std::string
-        option_description::format_name() const
+    string option_description::format_name() const
     {
         if (!m_short_name.empty())
         {
             return m_long_name.empty()
                 ? m_short_name
-                : std::string(m_short_name).append(" [--").
+                : string(m_short_name).append(" [--").
                 append(m_long_name).append("]");
         }
-        return std::string("--").append(m_long_name);
+        return string("--").append(m_long_name);
     }
 
-    std::string
-        option_description::format_parameter() const
+    string option_description::format_parameter() const
     {
-        std::string ret;
-        std::shared_ptr<const value_semantic> sem = m_value_semantic;
+        string ret;
+        shared_ptr<const value_semantic> sem = m_value_semantic;
                 
         if (sem != NO_VALUE) {
             ret = sem->name();
             
             if (sem->defaulted()) {
-                const std::string &txt = sem->textual();                               
+                const string &txt = sem->textual();                               
            
                 ret += " (=" + (txt.empty() ? sem->to_string() : txt) + ")";
             }
@@ -125,7 +113,7 @@ namespace ak_program_options {
         return ret;
     }
 
-    std::string option_description::name() const {
+    string option_description::name() const {
         if (m_long_name.empty()) {
             assert(m_short_name.size() == 2);
             assert(m_short_name[0] == '-');
@@ -136,29 +124,28 @@ namespace ak_program_options {
         }
     }
 
-    std::shared_ptr<value_semantic> option_description::semantic() const {
+    shared_ptr<value_semantic> option_description::semantic() const {
         return m_value_semantic;
     }
 
-    option_description&
-        option_description::set_name(const char* _name)
+    option_description&  option_description::set_name(const char* _name)
     {
-        std::string name(_name);
-        std::string::size_type n = name.find(',');
-        if (n != std::string::npos) {
+        string name(_name);
+        string::size_type n = name.find(',');
+        if (n != string::npos) {
             assert(n == name.size() - 2);
-            m_long_name = std::string(name.substr(0, n));
-            m_short_name = std::string("-").append(name.substr(n + 1, 1));
+            m_long_name = name.substr(0, n);
+            m_short_name = '-' + name.substr(n + 1, 1);
             m_id = (int)m_short_name[1];
         }
         else if (name.size() < 2) {
             //  no long name supplied, only a short name
-            m_long_name = std::string("");
-            m_short_name = std::string("-").append(name);
+            m_long_name = "";
+            m_short_name = '-' + name;
         }
         else {
-            m_long_name = std::string(name);
-            m_short_name = std::string("");
+            m_long_name = name;
+            m_short_name = "";
         }
 
         m_id = (int)((size_t)this);

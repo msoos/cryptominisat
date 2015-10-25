@@ -37,6 +37,8 @@
 #include "options_description.h"
 
 namespace ak_program_options {
+    using std::shared_ptr;
+    using std::string;
 
 namespace {
 
@@ -50,7 +52,7 @@ namespace {
 
     */
     void format_paragraph(std::ostream& os,
-        std::string par,
+        string par,
         unsigned indent,
         unsigned line_length)
     {
@@ -63,9 +65,9 @@ namespace {
         // index of tab (if present) is used as additional indent relative
         // to first_column_width if paragrapth is spanned over multiple
         // lines if tab is not on first line it is ignored
-        std::string::size_type par_indent = par.find('\t');
+        string::size_type par_indent = par.find('\t');
 
-        if (par_indent == std::string::npos)
+        if (par_indent == string::npos)
         {
             par_indent = 0;
         }
@@ -98,8 +100,8 @@ namespace {
         }
         else
         {
-            std::string::const_iterator       line_begin = par.begin();
-            const std::string::const_iterator par_end = par.end();
+            string::const_iterator       line_begin = par.begin();
+            const string::const_iterator par_end = par.end();
 
             bool first_line = true; // of current paragraph!        
 
@@ -123,7 +125,7 @@ namespace {
                 // the end, since MSVC 8.0 (brokenly), assumes that
                 // doing that, even if no access happens, is a bug.
                 unsigned remaining = static_cast<unsigned>(std::distance(line_begin, par_end));
-                std::string::const_iterator line_end = line_begin +
+                string::const_iterator line_end = line_begin +
                     ((remaining < line_length) ? remaining : line_length);
 
                 // prevent chopped words
@@ -132,9 +134,9 @@ namespace {
                     ((line_end < par_end) && (*line_end != ' ')))
                 {
                     // find last ' ' in the second half of the current paragraph line
-                    std::string::const_iterator last_space =
-                        std::find(std::reverse_iterator<std::string::const_iterator>(line_end),
-                            std::reverse_iterator<std::string::const_iterator>(line_begin),
+                    string::const_iterator last_space =
+                        std::find(std::reverse_iterator<string::const_iterator>(line_end),
+                            std::reverse_iterator<string::const_iterator>(line_begin),
                             ' ')
                         .base();
 
@@ -178,7 +180,7 @@ namespace {
     }
 
     void format_description(std::ostream& os,
-        const std::string& desc,
+        const string& desc,
         unsigned first_column_width,
         unsigned line_length)
     {
@@ -198,7 +200,7 @@ namespace {
 
         while (!ss.eof())  // paragraphs
         {
-            std::string par;
+            string par;
 
             getline(ss, par, '\n');
 
@@ -281,20 +283,20 @@ options_description& options_description::add(const options_description& desc)
 {
     o("adding group " + desc.m_caption);
     desc.valid();
-    std::shared_ptr<options_description> d(new options_description(desc));
+    shared_ptr<options_description> d(new options_description(desc));
     
     m_groups.push_back(d);
 
-    for (size_t i = 0; i < desc.m_options.size(); ++i) {
-        add(desc.m_options[i]);
+    for (auto opt : desc.m_options) {
+        add(opt);
         m_belong_to_group.back() = true;
     }
     
     return *this;
 }
 
-std::shared_ptr<const option_description> options_description::findById(int id) const {
-    for (std::shared_ptr<option_description> opt : m_options) {
+shared_ptr<const option_description> options_description::findById(int id) const {
+    for (auto opt : m_options) {
         opt->valid();
         if (opt->id() == id) {
             return opt;
@@ -304,8 +306,8 @@ std::shared_ptr<const option_description> options_description::findById(int id) 
     return nullptr;
 }
 
-std::shared_ptr<const option_description> options_description::findByName(std::string name) const {
-    for (std::shared_ptr<option_description> opt : m_options) {
+shared_ptr<const option_description> options_description::findByName(string name) const {
+    for (auto opt : m_options) {
         opt->valid();
         if (opt->name() == name) {
             return opt;
@@ -315,13 +317,12 @@ std::shared_ptr<const option_description> options_description::findByName(std::s
     return nullptr;
 }
 
-unsigned
-options_description::get_option_column_width() const
+unsigned options_description::get_option_column_width() const
 {
     /* Find the maximum width of the option column */
     unsigned width(23);
     
-    for (std::shared_ptr<const option_description> opt : m_options)
+    for (auto opt : m_options)
     {
         std::stringstream ss;
         ss << "  " << opt->format_name() << ' ' << opt->format_parameter();
@@ -329,7 +330,7 @@ options_description::get_option_column_width() const
     }
 
     /* Get width of groups as well*/
-    for (std::shared_ptr<const options_description> group : m_groups)
+    for (auto group : m_groups)
     {
         width = std::max(width, group->get_option_column_width());
     }
@@ -355,19 +356,17 @@ void options_description::print(std::ostream& os, unsigned width) const {
 
     /* The options formatting style is stolen from Subversion. */
     int i = 0;
-    for (std::shared_ptr<const option_description> opt : m_options)
+    for (auto opt : m_options)
     {
-        if (m_belong_to_group[i++])
+        if (!m_belong_to_group[i++])
         {
-            continue;
+            format_one(os, *opt, width, m_line_length);
+
+            os << "\n";
         }
-
-        format_one(os, *opt, width, m_line_length);
-
-        os << "\n";
     }
 
-    for (std::shared_ptr<const options_description>group : m_groups) 
+    for (auto group : m_groups) 
     {
         os << "\n";
         group->print(os, width);
@@ -381,14 +380,12 @@ options_description::add_options()
 }
 
 options_description_easy_init&
-options_description_easy_init::
-operator()(const char* name,
-    const char* description)
+options_description_easy_init::operator()(const char* name,  const char* description)
 {
     // Create untypes semantic which accepts zero tokens: i.e. 
     // no value can be specified on command line.
     // FIXME: does not look exception-safe
-    std::shared_ptr<option_description> d(new option_description(name, NO_VALUE, description));
+    shared_ptr<option_description> d(new option_description(name, NO_VALUE, description));
 
     m_owner->add(d);
 
@@ -396,11 +393,9 @@ operator()(const char* name,
 }
 
 options_description_easy_init&
-options_description_easy_init::
-operator()(const char* name,
-    value_semantic* s)
+options_description_easy_init::operator()(const char* name, value_semantic* s)
 {
-    std::shared_ptr<option_description> d(new option_description(name, s));
+    shared_ptr<option_description> d(new option_description(name, s));
 
     m_owner->add(d);
 
@@ -408,12 +403,10 @@ operator()(const char* name,
 }
 
 options_description_easy_init&
-options_description_easy_init::
-operator()(const char* name,
-    value_semantic* s,
+options_description_easy_init::operator()(const char* name, value_semantic* s,
     const char* description)
 {
-    std::shared_ptr<option_description> d(new option_description(name, s, description));
+    shared_ptr<option_description> d(new option_description(name, s, description));
 
     m_owner->add(d);
 

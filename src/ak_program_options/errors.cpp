@@ -34,55 +34,53 @@
 #include "errors.h"
 
 namespace ak_program_options {
-
+    using std::string;
+    
 #if USE_O_FOR_DEBUGGING
     void o(const char *s) {
         fprintf(stderr, "%s\n", s);
         fflush(stderr);
-        //  std::cout << std::string(s) << std::endl;
     }
     
     void o() {
         fprintf(stderr, "\n");
         fflush(stderr);
-//        std::cout << std::endl;
     }
     
-    void o(std::string s) {
+    void o(string s) {
         fprintf(stderr, "%s\n", s.c_str());
         fflush(stderr);
-        // std::cout << s << std::endl;
     }
 #endif   //  USE_O_FOR_DEBUGGING
 
-    const std::string error::what() const {
+    const string error::what() const {
         return m_msg;
     }
 
-    const std::string error_with_no_option_name::what() const {
-        std::string patt("%canonical_option%");
+    const string error_with_no_option_name::what() const {
+        string patt("%canonical_option%");
         size_t f = m_msg.find(patt);
 
-        if (f != std::string::npos) {
-            std::string *s = new std::string(m_msg);
+        if (f != string::npos) {
+            string s(m_msg);
 
-            s->replace(f, std::string(patt).length(), m_token);
+            s.replace(f, patt.length(), m_token);
 
-            return *s;
+            return s;
         }
 
         return m_msg;
     }
 
-    const std::string error_with_option_name::what() const {
-        std::string patt("%canonical_option%");
+    const string error_with_option_name::what() const {
+        string patt("%canonical_option%");
         size_t f = m_msg.find(patt);
 
-        if (f != std::string::npos) {
-            std::string *s = new std::string(m_msg);
-            s->replace(f, std::string(patt).length(), m_option_name);
+        if (f != string::npos) {
+            string s(m_msg);
+            s.replace(f, patt.length(), m_option_name);
 
-            return *s;
+            return s;
         }
 
         return m_msg;

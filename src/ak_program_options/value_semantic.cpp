@@ -26,10 +26,12 @@
  * (See http://www.boost.org/LICENSE_1_0.txt)
  */
 
+#include <ctype.h>
 #include <stdlib.h> 
 #include <string.h>
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,13 +41,17 @@
 #define BASE10 10
 
 namespace ak_program_options {
-    std::string arg("arg");
+    using std::shared_ptr;
+    using std::string;
+    using std::vector;
+
+    string arg("arg");
     
-    std::string optional_arg("[arg]");
+    string optional_arg("[arg]");
 
-    std::string no_arg("");
+    string no_arg("");
 
-    std::string value_semantic::name() const {
+    string value_semantic::name() const {
         return is_bool_switch() ? no_arg :
                implicited() ? optional_arg : 
                arg ;
@@ -76,13 +82,13 @@ namespace ak_program_options {
     }
 
     template<>
-    Value<std::string>::Value() {
+    Value<string>::Value() {
         m_default = "";
         m_required = true;
     }
 
     template<>
-    Value<std::vector<std::string>>::Value() : Value(nullptr) {
+    Value<vector<string>>::Value() : Value(nullptr) {
         m_composing = true;
         m_required = true;
     }
@@ -92,7 +98,15 @@ namespace ak_program_options {
     template <typename T>
     Value<T>::Value(T *v) {
         m_destination = v;
-        m_composing = std::is_same<T, std::vector<std::string>>::value;
+        /*  the following has unclear side-effects
+            taken out for the time being
+        if (v != nullptr) {
+            //  use destination value as natural default
+            m_defaulted = true;
+            m_default = *v;
+        }
+        */
+        m_composing = std::is_same<T, vector<string>>::value;
     }
         
     Value<bool> *bool_switch(bool *v) {
@@ -105,14 +119,14 @@ namespace ak_program_options {
     ///  only string vector Values return a string vector
 
     template<typename T>
-    const std::vector<std::string> Value<T>::get_string_vector_value() const {
-        std::vector<std::string> x;
+    const vector<string> Value<T>::get_string_vector_value() const {
+        vector<string> x;
 
         return x;
     }
 
     template<>
-    const std::vector<std::string> Value<std::vector<std::string>>::get_string_vector_value() const {
+    const vector<string> Value<vector<string>>::get_string_vector_value() const {
         return get_value();
     }
 
@@ -120,34 +134,34 @@ namespace ak_program_options {
     ///  general case for integer types
 
     template<typename T>
-    std::string Value<T>::to_string() const {
+    string Value<T>::to_string() const {
         return int_to_string();
     }
             
     ///  specializations for non-integer types    
     
     template<>
-    std::string Value<bool>::to_string() const {
-        return std::string((empty() ? m_default : m_value) ? "true" : "false");
+    string Value<bool>::to_string() const {
+        return string((empty() ? m_default : m_value) ? "true" : "false");
     }
 
     template<>
-    std::string Value<double>::to_string() const {
+    string Value<double>::to_string() const {
         return std::to_string(empty() ? m_default : m_value);
     }
 
     template<>
-    std::string Value<std::string>::to_string() const {
+    string Value<string>::to_string() const {
         return empty() ? m_default : m_value;
     }
 
     template<>
-    std::string Value<std::vector<std::string>>::to_string() const {
-        std::string s("[");
-        std::vector<std::string> v(empty() ? m_default : m_value);        
+    string Value<vector<string>>::to_string() const {
+        string s("[");
+        vector<string> v(empty() ? m_default : m_value);        
         int i = 0;
         
-        for (std::string si : v)
+        for (string si : v)
         {
             if (i++ > 0)
             {
@@ -161,7 +175,7 @@ namespace ak_program_options {
     }
 
     template<typename T>
-    std::string Value<T>::int_to_string() const {
+    string Value<T>::int_to_string() const {
         return std::to_string(empty() ? m_default : m_value);
     }
     
@@ -204,24 +218,24 @@ namespace ak_program_options {
         return val;
     }
 
-    Value<std::string> *value(std::string *v) {
-        Value<std::string> *val = new Value<std::string>(v);
+    Value<string> *value(string *v) {
+        Value<string> *val = new Value<string>(v);
         return val;
     }
 
-    Value<std::vector<std::string>> *value(std::vector<std::string> *v) {
-        Value<std::vector<std::string>> *val = new Value<std::vector<std::string>>(v);
+    Value<vector<string>> *value(vector<string> *v) {
+        Value<vector<string>> *val = new Value<vector<string>>(v);
         return val;
     }
 
     ///  general case
     
     template<typename T>
-    void Value<T>::set_value(const char *v) {
+    void Value<T>::set_value(const char *v, shared_ptr<const option_description> opt) {
         char* x;
         m_value = (T)strtol(v, &x, BASE10);
         if (x != v + strlen(v)) {
-            throw_exception<invalid_option_value>(invalid_option_value(v, ""));
+            throw_exception<invalid_option_value>(invalid_option_value(opt ? opt->name() : "", v));
         }
         m_empty = false;
     }
@@ -229,33 +243,48 @@ namespace ak_program_options {
     ///  the integer specializations are covered by the general case and thus omitted
     
     template<>
-    void Value<bool>::set_value(const char *v) {
-        m_value = (strstr("0~false~FALSE~no~NO", v) != NULL);
+    void Value<bool>::set_value(const char *v, shared_ptr<const option_description> opt) {
+        //  avoid strcasestr()/stristr() as it is not available everywhere
+        string pattern(v);
+        for (char &c : pattern)
+        {
+            c = tolower(c);
+        }
+        bool f = !!strstr("0~false~no~off", pattern.c_str());
+        bool t = !!strstr("1~true~yes~on", pattern.c_str());
+
+        if (f == t)
+        {
+            throw_exception<invalid_option_value>(invalid_option_value(opt ? opt->name() : "", v));
+        }
+
+        m_value = !f;
         m_empty = false;
     }
 
     template<>
-    void Value<double>::set_value(const char *v) {
+    void Value<double>::set_value(const char *v, shared_ptr<const option_description> opt) {
         char *x;
         m_value = strtod(v, &x);
         if (x != v + strlen(v)) {
-            throw_exception<invalid_option_value>(invalid_option_value("", v));
+            throw_exception<invalid_option_value>(invalid_option_value(opt ? opt->name() : "", v));
         }
         m_empty = false;
     }
 
     template<>
-    void Value<std::string>::set_value(const char *v) {
-        m_value = std::string(v);
+    void Value<string>::set_value(const char *v, shared_ptr<const option_description> opt) {
+        m_value = string(v);
         if ((m_value.size() >= 2) && m_value.substr(0, 2) == "--") {
-            throw_exception<invalid_option_value>(invalid_option_value("", m_value));
+            throw_exception<invalid_option_value>(invalid_option_value(opt ? opt->name() : "", m_value));
         }
         m_empty = false;
     }
 
     template<>
-    void Value<std::vector<std::string>>::set_value(const char *v) {
-        m_value.push_back(std::string(v));
+    void Value<vector<string>>::set_value(const char *v, shared_ptr<const option_description> opt) {
+        (void)opt;
+        m_value.push_back(string(v));
         m_empty = false;
     }
 }

@@ -60,6 +60,8 @@ namespace ak_program_options {
         const options_description *descriptions() const { return m_desc; }
         const positional_options_description *positional_descriptions() const { return m_positional_desc; }
     };
+
+    //  FIXME  basic_parsed_options *parse_command_line(unsigned argc, char *argv[], const options_description &desc);
 }
 
 #endif

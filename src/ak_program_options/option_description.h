@@ -42,6 +42,7 @@
 namespace ak_program_options {
 
 #define OPTION_DESCRIPTION_HEADER "OD"
+    class value_semantic;
 
     class option_description {
     private:
@@ -60,9 +61,8 @@ namespace ak_program_options {
         std::shared_ptr<value_semantic> m_value_semantic;
 
     public:
-        option_description();
-                
-        virtual ~option_description();
+        option_description();                
+        virtual ~option_description() {};
 
         int id() const { 
             valid();

@@ -126,13 +126,13 @@ namespace ak_program_options
      */
     int scan_arguments(int argc, char **argv, const options_description *optionsDescription)
     {
-        OptionParserControl *opc = &optionParserControl;
+        OptionParserControl &opc = optionParserControl;
         assert(argv);
 
         int retval = scan_arguments_short(argc, argv, optionsDescription);
 
         if (retval == FOUND_DOUBLE_DASH) {
-            char *current_argv = argv[opc->idx++] + 2;
+            char *current_argv = argv[opc.idx++] + 2;
             char *contains_eq;
             std::shared_ptr<const option_description> opt_descr;
 
@@ -155,20 +155,24 @@ namespace ak_program_options
             if (opt_descr) {
                 long_opt = opt_descr->long_option();
                 assert(long_opt);
-                opc->arg = NULL;
+                opc.arg = NULL;
 
                 if (long_opt->has_arg != Has_Argument::No) {
-                    opc->arg = contains_eq ? contains_eq : argv[opc->idx++];
+                    opc.arg = contains_eq ? contains_eq : argv[opc.idx++];
 
                     //  quick fix to handle optional argument which is not present
-                    if ((opc->arg) && (*(opc->arg) == '-')) {
+                    if ((opc.arg) && (*(opc.arg) == '-')) {
                         if (long_opt->has_arg == Has_Argument::Optional) {
-                            opc->idx--;
-                            opc->arg = NULL;
+                            opc.idx--;
+                            opc.arg = NULL;
                         }
                     }
                 }
-                if ((long_opt->has_arg == Has_Argument::Required) && !opc->arg) {
+                else if (contains_eq) {
+                    //  an argument was specified, although no arg is expected
+                    opc.arg = contains_eq;
+                }
+                if ((long_opt->has_arg == Has_Argument::Required) && !opc.arg) {
                     delete long_opt;
                     return (MISSING_ARGUMENT);
                 }

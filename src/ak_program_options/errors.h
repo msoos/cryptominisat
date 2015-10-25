@@ -38,7 +38,9 @@ namespace ak_program_options {
     void o();
     void o(std::string str);
 #else
-    #define o(...)
+    #ifndef o
+        #define o(...)
+    #endif
 #endif
     
     namespace exception_detail {
