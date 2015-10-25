@@ -85,7 +85,7 @@ TEST_F(distill_test, distill_long_by1_nodistill
 )
 {
     s->new_vars(5);
-    s->add_clause_outer(str_to_cl("3, -1"));
+    s->add_clause_outer(str_to_cl("-1, 3"));
     s->add_clause_outer(str_to_cl("1, 2, 3"));
 
     distiller->distill(1);
