@@ -97,140 +97,35 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_executable(basic_test
-    basic_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(basic_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(basic_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
 
-target_link_libraries(basic_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
+set (MY_TESTS
+    basic_test
+    assump_test
+    heap_test
+    clause_test
+    stp_test
+    scc_test
+    vrepl_test
+    clause_cleaner_test
 )
-add_test (
-    NAME basic_test
-    COMMAND basic_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(assump_test
-    assump_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(assump_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(assump_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(assump_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (
-    NAME assump_test
-    COMMAND assump_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(heap_test
-    heap_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(heap_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(heap_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(heap_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (
-    NAME heap_test
-    COMMAND heap_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(clause_test
-    clause_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(clause_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(clause_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(clause_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (
-    NAME clause_test
-    COMMAND clause_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(stp_test
-    stp_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(stp_tests PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(stp_tests PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(stp_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (NAME stp_test
-    COMMAND stp_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(scc_test
-    scc_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(scc_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(scc_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(scc_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (NAME scc_test
-    COMMAND scc_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(vrepl_test
-    vrepl_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(vrepl_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(vrepl_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(vrepl_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (
-    NAME vrepl_test
-    COMMAND vrepl_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-add_executable(clause_cleaner_test
-    clause_cleaner_test.cpp
-)
-if (STATICCOMPILE)
-    set_target_properties(clause_cleaner_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(clause_cleaner_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
-target_link_libraries(clause_cleaner_test
-    ${GTEST_BOTH_LIBRARIES}
-    libcryptominisat4
-)
-add_test (
-    NAME clause_cleaner_test
-    COMMAND clause_cleaner_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+foreach(F ${MY_TESTS})
+    add_executable(${F}
+        ${F}.cpp
+    )
+    if (STATICCOMPILE)
+        set_target_properties(${F} PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(${F} PROPERTIES LINK_SEARCH_START_STATIC 0)
+    endif (STATICCOMPILE)
+    target_link_libraries(${F}
+        ${GTEST_BOTH_LIBRARIES}
+        libcryptominisat4
+    )
+    add_test (
+        NAME ${F}
+        COMMAND ${F}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+endforeach()
 
 
 # This test is not stable enough, depends on CPU speed
