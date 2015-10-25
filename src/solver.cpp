@@ -105,6 +105,8 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     datasync = new DataSync(this, NULL);
     Searcher::solver = this;
     reduceDB = new ReduceDB(this);
+
+    set_up_sql_writer();
 }
 
 Solver::~Solver()
@@ -1253,8 +1255,7 @@ void Solver::extend_solution()
 
 void Solver::set_up_sql_writer()
 {
-    if (!sqlStats || solveStats.num_solve_calls > 1) {
-        //Either it's already initialized, or it's not needed
+    if (!sqlStats) {
         return;
     }
 
@@ -1302,8 +1303,6 @@ lbool Solver::solve()
         cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
     }
     conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
-
-    set_up_sql_writer();
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
