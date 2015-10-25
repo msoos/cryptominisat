@@ -167,21 +167,21 @@ struct VecVecSorter
 };
 
 void check_fuzzy_equal(
-    vector<vector<Lit> >& cls,
-    vector<vector<Lit> >& cls_given)
+    vector<vector<Lit> >& cls_expected,
+    vector<vector<Lit> >& cls_actual)
 {
-    for(vector<Lit>& x: cls) {
+    for(vector<Lit>& x: cls_actual) {
         std::sort(x.begin(), x.end());
     }
-    for(vector<Lit>& x: cls_given) {
+    for(vector<Lit>& x: cls_expected) {
         std::sort(x.begin(), x.end());
     }
 
     VecVecSorter sorter;
-    std::sort(cls.begin(), cls.end(), sorter);
-    std::sort(cls_given.begin(), cls_given.end(), sorter);
+    std::sort(cls_actual.begin(), cls_actual.end(), sorter);
+    std::sort(cls_expected.begin(), cls_expected.end(), sorter);
 
-    EXPECT_EQ(cls, cls_given);
+    EXPECT_EQ(cls_expected, cls_actual);
 }
 
 string print(const vector<vector<Lit> >& cls)
@@ -195,10 +195,10 @@ string print(const vector<vector<Lit> >& cls)
 
 void check_irred_cls_eq(const Solver* s, const string& data)
 {
-    vector<vector<Lit> > cls_given = str_to_vecs(data);
+    vector<vector<Lit> > cls_expected = str_to_vecs(data);
     vector<vector<Lit> > cls = get_irred_cls(s);
 
-    check_fuzzy_equal(cls, cls_given);
+    check_fuzzy_equal(cls_expected, cls);
 }
 
 void print_model(const SATSolver&s)
