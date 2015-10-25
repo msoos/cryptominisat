@@ -136,12 +136,20 @@ class Solver : public Searcher
         bool find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const;
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
-        SQLStats* sqlStats = NULL;
-        ClauseCleaner *clauseCleaner = NULL;
-        VarReplacer *varReplacer = NULL;
-        SubsumeImplicit *subsumeImplicit = NULL;
-        DataSync *datasync = NULL;
-        ReduceDB* reduceDB = NULL;
+        //Systems that are used to accompilsh the tasks
+        SQLStats*            sqlStats = NULL;
+        ClauseCleaner*       clauseCleaner = NULL;
+        VarReplacer*         varReplacer = NULL;
+        SubsumeImplicit*     subsumeImplicit = NULL;
+        DataSync*            datasync = NULL;
+        ReduceDB*            reduceDB = NULL;
+        Prober*              prober = NULL;
+        InTree*              intree = NULL;
+        OccSimplifier*       simplifier = NULL;
+        Distiller*           distiller = NULL;
+        DistillerWithBin*    distillerwithbin = NULL;
+        CompHandler*         compHandler = NULL;
+
         vector<LitReachData> litReachable;
 
         SearchStats sumStats;
@@ -285,15 +293,6 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution();
-
-        /////////////////////
-        // Objects that help us accomplish the task
-        Prober              *prober = NULL;
-        InTree              *intree = NULL;
-        OccSimplifier       *simplifier = NULL;
-        Distiller           *distiller = NULL;
-        DistillerWithBin    *distillerwithbin = NULL;
-        CompHandler         *compHandler = NULL;
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
