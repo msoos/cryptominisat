@@ -380,10 +380,6 @@ bool Prober::probe()
         runStats.numLoopIters++;
         const uint32_t var = poss_choice[i];
 
-        //Check if already blacklisted
-        if (var == std::numeric_limits<uint32_t>::max())
-            continue;
-
         //Probe 'false' first --> this is not critical
         Lit lit = Lit(var, false);
 
