@@ -29,177 +29,147 @@
 using namespace CMSat;
 #include "test_helper.h"
 
-TEST(vrepl_test, find_one_1)
+struct vrepl_test : public ::testing::Test {
+    vrepl_test()
+    {
+        SolverConf conf;
+        conf.doCache = false;
+        s = new Solver(&conf, &must_inter);
+        s->new_vars(20);
+        repl = s->varReplacer;
+    }
+    ~vrepl_test()
+    {
+        delete s;
+    }
+    Solver* s = NULL;
+    VarReplacer* repl = NULL;
+    bool must_inter = false;
+};
+
+TEST_F(vrepl_test, find_one_1)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-1, -2"));
 
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outer(str_to_cl("1, 3, 4, 5"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5"));
 
-    s.add_clause_outer(str_to_cl("1, 3, 4, 5"));
-    s.add_clause_outer(str_to_cl("2, 3, 4, 5"));
-
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
-    EXPECT_EQ(s.get_num_long_irred_cls(), 2);
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
+    EXPECT_EQ(s->get_num_long_irred_cls(), 2);
     std::string exp = "-2, 3, 4, 5;  2, 3, 4, 5";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, find_one_2)
+TEST_F(vrepl_test, find_one_2)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -3"));
+    s->add_clause_outer(str_to_cl("-1, 3"));
 
-    s.add_clause_outer(str_to_cl("1, -3"));
-    s.add_clause_outer(str_to_cl("-1, 3"));
+    s->add_clause_outer(str_to_cl("1, 4, 5"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5"));
 
-    s.add_clause_outer(str_to_cl("1, 4, 5"));
-    s.add_clause_outer(str_to_cl("2, 3, 4, 5"));
-
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
     std::string exp = "3, 4, 5;  2, 3, 4, 5";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, remove_lit)
+TEST_F(vrepl_test, remove_lit)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outer(str_to_cl("1, 2, 5"));
 
-    s.add_clause_outer(str_to_cl("1, 2, 5"));
-
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
     std::string exp = "2, 5";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, remove_cl)
+TEST_F(vrepl_test, remove_cl)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outer(str_to_cl("1, -2, 5"));
 
-    s.add_clause_outer(str_to_cl("1, -2, 5"));
-
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
     std::string exp = "";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, replace_twice)
+TEST_F(vrepl_test, replace_twice)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
 
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    s->add_clause_outer(str_to_cl("3, -2"));
+    s->add_clause_outer(str_to_cl("-3, 2"));
 
-    s.add_clause_outer(str_to_cl("3, -2"));
-    s.add_clause_outer(str_to_cl("-3, 2"));
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 2);
 
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
-
-    s.add_clause_outer(str_to_cl("1, -2, 3"));
-    s.add_clause_outer(str_to_cl("1, 2, 3, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 5"));
     std::string exp = "2, 5";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, replace_thrice)
+TEST_F(vrepl_test, replace_thrice)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 1);
 
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 1);
+    s->add_clause_outer(str_to_cl("3, -2"));
+    s->add_clause_outer(str_to_cl("-3, 2"));
 
-    s.add_clause_outer(str_to_cl("3, -2"));
-    s.add_clause_outer(str_to_cl("-3, 2"));
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 2);
 
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
+    s->add_clause_outer(str_to_cl("4, -2"));
+    s->add_clause_outer(str_to_cl("-4, 2"));
 
-    s.add_clause_outer(str_to_cl("4, -2"));
-    s.add_clause_outer(str_to_cl("-4, 2"));
+    repl->replace_if_enough_is_found();
+    EXPECT_EQ(repl->get_num_replaced_vars(), 3);
 
-    repl.replace_if_enough_is_found();
-    EXPECT_EQ(repl.get_num_replaced_vars(), 3);
-
-    s.add_clause_outer(str_to_cl("1, -2, 3"));
-    s.add_clause_outer(str_to_cl("1, 2, 4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3"));
+    s->add_clause_outer(str_to_cl("1, 2, 4, 5"));
     std::string exp = "2, 5";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(vrepl_test, replace_limit_check_below)
+TEST_F(vrepl_test, replace_limit_check_below)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outer(str_to_cl("3, -2"));
+    s->add_clause_outer(str_to_cl("-3, 2"));
 
-    s.add_clause_outer(str_to_cl("3, -2"));
-    s.add_clause_outer(str_to_cl("-3, 2"));
-
-    repl.replace_if_enough_is_found(3);
-    EXPECT_EQ(repl.get_num_replaced_vars(), 0);
+    repl->replace_if_enough_is_found(3);
+    EXPECT_EQ(repl->get_num_replaced_vars(), 0);
 }
 
-TEST(vrepl_test, replace_limit_check_above)
+TEST_F(vrepl_test, replace_limit_check_above)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    VarReplacer& repl = *s.varReplacer;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, -2"));
-    s.add_clause_outer(str_to_cl("-1, 2"));
+    s->add_clause_outer(str_to_cl("3, -2"));
+    s->add_clause_outer(str_to_cl("-3, 2"));
 
-    s.add_clause_outer(str_to_cl("3, -2"));
-    s.add_clause_outer(str_to_cl("-3, 2"));
-
-    repl.replace_if_enough_is_found(2);
-    EXPECT_EQ(repl.get_num_replaced_vars(), 2);
+    repl->replace_if_enough_is_found(2);
+    EXPECT_EQ(repl->get_num_replaced_vars(), 2);
 }
 
 

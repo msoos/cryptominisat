@@ -93,11 +93,11 @@ vector<vector<Lit> > str_to_vecs(const string& data)
 }
 
 void add_cls(vector<vector<Lit> >& ret,
-             const Solver& s,
+             const Solver* s,
              const vector<ClOffset>& offsets)
 {
     for(auto off: offsets) {
-        Clause& cl = *s.cl_alloc.ptr(off);
+        Clause& cl = *s->cl_alloc.ptr(off);
         vector<Lit> lits;
         for(Lit l: cl) {
             lits.push_back(l);
@@ -108,13 +108,13 @@ void add_cls(vector<vector<Lit> >& ret,
 
 void add_impl_cls(
     vector<vector<Lit> >& ret,
-    const Solver& s,
+    const Solver* s,
     const bool add_irred,
     const bool add_red)
 {
-    for(size_t i = 0; i < s.nVars()*2; i++) {
+    for(size_t i = 0; i < s->nVars()*2; i++) {
         Lit lit = Lit::toLit(i);
-        for(const Watched& ws: s.watches[lit]) {
+        for(const Watched& ws: s->watches[lit]) {
             if (ws.isBin()
                 && lit < ws.lit2()
                 && ((add_irred && !ws.red()) || (add_red && ws.red()))
@@ -140,10 +140,10 @@ void add_impl_cls(
     }
 }
 
-vector<vector<Lit> > get_irred_cls(const Solver& s)
+vector<vector<Lit> > get_irred_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
-    add_cls(ret, s, s.longIrredCls);
+    add_cls(ret, s, s->longIrredCls);
     add_impl_cls(ret, s, true, false);
 
     return ret;
@@ -193,7 +193,7 @@ string print(const vector<vector<Lit> >& cls)
     return ss.str();
 }
 
-void check_irred_cls_eq(const Solver& s, const string& data)
+void check_irred_cls_eq(const Solver* s, const string& data)
 {
     vector<vector<Lit> > cls_given = str_to_vecs(data);
     vector<vector<Lit> > cls = get_irred_cls(s);

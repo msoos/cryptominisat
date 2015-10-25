@@ -29,138 +29,108 @@
 using namespace CMSat;
 #include "test_helper.h"
 
-TEST(clause_clean_test, no_clean)
+struct clause_clean_test : public ::testing::Test {
+    clause_clean_test()
+    {
+        SolverConf conf;
+        conf.doCache = false;
+        s = new Solver(&conf, &must_inter);
+        s->new_vars(20);
+        cc = s->clauseCleaner;
+    }
+    ~clause_clean_test()
+    {
+        delete s;
+    }
+    Solver* s = NULL;
+    ClauseCleaner* cc = NULL;
+    bool must_inter = false;
+};
+
+TEST_F(clause_clean_test, no_clean)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outer(str_to_cl("1, 2"));
 
-    s.add_clause_outer(str_to_cl("1, 2, 3"));
-    s.add_clause_outer(str_to_cl("1, 2"));
-
-    cc.remove_and_clean_all();
-    EXPECT_EQ(s.binTri.irredBins, 1);
-    EXPECT_EQ(s.binTri.irredTris, 1);
+    cc->remove_and_clean_all();
+    EXPECT_EQ(s->binTri.irredBins, 1);
+    EXPECT_EQ(s->binTri.irredTris, 1);
     std::string exp = "1, 2;  1, 2, 3";
     check_irred_cls_eq(s, exp);
 }
 
-TEST(clause_clean_test, clean_bin_pos)
+TEST_F(clause_clean_test, clean_bin_pos)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("1"));
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2");
 
-    cc.remove_and_clean_all();
-    EXPECT_EQ(s.binTri.irredBins, 0);
-    EXPECT_EQ(s.binTri.irredTris, 0);
+    cc->remove_and_clean_all();
+    EXPECT_EQ(s->binTri.irredBins, 0);
+    EXPECT_EQ(s->binTri.irredTris, 0);
 }
 
-TEST(clause_clean_test, clean_bin_neg)
+TEST_F(clause_clean_test, clean_bin_neg)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2"));
-    s.add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2");
 
-    cc.remove_and_clean_all();
+    cc->remove_and_clean_all();
     check_irred_cls_eq(s, "");
 }
 
-TEST(clause_clean_test, clean_tri_pos)
+TEST_F(clause_clean_test, clean_tri_pos)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2, 3"));
-    s.add_clause_outer(str_to_cl("1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outer(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2, 3");
 
-    cc.remove_and_clean_all();
+    cc->remove_and_clean_all();
     check_irred_cls_eq(s, "");
 }
 
-TEST(clause_clean_test, clean_tri_neg)
+TEST_F(clause_clean_test, clean_tri_neg)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2, 3"));
-    s.add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outer(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3");
 
-    cc.remove_and_clean_all();
-    EXPECT_EQ(s.binTri.irredBins, 1);
-    EXPECT_EQ(s.binTri.irredTris, 0);
+    cc->remove_and_clean_all();
+    EXPECT_EQ(s->binTri.irredBins, 1);
+    EXPECT_EQ(s->binTri.irredTris, 0);
     check_irred_cls_eq(s, "2, 3");
 }
 
-TEST(clause_clean_test, clean_long_pos)
+TEST_F(clause_clean_test, clean_long_pos)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s.add_clause_outer(str_to_cl("1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1"));
     check_irred_cls_eq(s, "1, 2, 3, 4");
 
-    cc.remove_and_clean_all();
+    cc->remove_and_clean_all();
     check_irred_cls_eq(s, "");
 }
 
-TEST(clause_clean_test, clean_long_neg)
+TEST_F(clause_clean_test, clean_long_neg)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s.add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outer(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3, 4");
 
-    cc.remove_and_clean_all();
+    cc->remove_and_clean_all();
     check_irred_cls_eq(s, "2, 3, 4");
 }
 
-TEST(clause_clean_test, clean_mix)
+TEST_F(clause_clean_test, clean_mix)
 {
-    SolverConf conf;
-    conf.doCache = false;
-    Solver s(&conf, new bool(false));
-    s.new_vars(20);
-    ClauseCleaner& cc = *s.clauseCleaner;
-
-    s.add_clause_outer(str_to_cl("1, 2, 3, 4"));
-    s.add_clause_outer(str_to_cl("1, 2, 3"));
-    s.add_clause_outer(str_to_cl("1, 9"));
-    s.add_clause_outer(str_to_cl("-1"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    s->add_clause_outer(str_to_cl("1, 9"));
+    s->add_clause_outer(str_to_cl("-1"));
     check_irred_cls_eq(s, "1, 2, 3, 4; 1, 2, 3; 1, 9");
 
-    cc.remove_and_clean_all();
+    cc->remove_and_clean_all();
     check_irred_cls_eq(s, "2, 3, 4; 2, 3");
 }
 
