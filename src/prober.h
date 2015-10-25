@@ -42,8 +42,7 @@ class Solver;
 class Prober {
     public:
         Prober(Solver* _solver);
-
-        bool probe();
+        bool probe(vector<uint32_t>* probe_order = NULL);
 
         struct Stats
         {
@@ -208,6 +207,7 @@ class Prober {
 
     private:
         //Main
+        vector<uint32_t> vars_to_probe;
         bool try_this(const Lit lit, const bool first, const uint64_t orig_num_props_to_do);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with

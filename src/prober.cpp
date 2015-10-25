@@ -315,30 +315,30 @@ Lit Prober::update_lit_for_dominator(
 
 vector<uint32_t> Prober::randomize_possible_choices()
 {
-    vector<uint32_t> poss_choice;
+    vars_to_probe.clear();
     for(size_t i = 0; i < solver->nVars(); i++) {
         if (solver->value(i) == l_Undef
             && solver->varData[i].removed == Removed::none
         ) {
-            poss_choice.push_back(i);
+            vars_to_probe.push_back(i);
         }
     }
 
     //Random swap
     for (size_t i = 0
-        ; i + 1< poss_choice.size()
+        ; i + 1< vars_to_probe.size()
         ; i++
     ) {
         std::swap(
-            poss_choice[i]
-            , poss_choice[i+solver->mtrand.randInt(poss_choice.size()-1-i)]
+            vars_to_probe[i]
+            , vars_to_probe[i+solver->mtrand.randInt(vars_to_probe.size()-1-i)]
         );
     }
 
-    return poss_choice;
+    return vars_to_probe;
 }
 
-bool Prober::probe()
+bool Prober::probe(vector<uint32_t>* probe_order)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
@@ -352,11 +352,15 @@ bool Prober::probe()
     const size_t origTrailSize = solver->trail_size();
     numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
 
-    vector<uint32_t> poss_choice = randomize_possible_choices();
+    if (probe_order == NULL) {
+        randomize_possible_choices();
+    } else {
+        vars_to_probe = *probe_order;
+    }
 
     if (solver->conf.verbosity >= 10) {
         cout << "Order of probe:";
-        for(auto x: poss_choice) {
+        for(auto x: vars_to_probe) {
             cout << x+1 << ", ";
         }
         cout << endl;
@@ -366,7 +370,7 @@ bool Prober::probe()
     assert(solver->propStats.otfHyperTime == 0);
 
     for(size_t i = 0
-        ; i < poss_choice.size()
+        ; i < vars_to_probe.size()
         && limit_used() < numPropsTodo
         && !solver->must_interrupt_asap()
         ; i++
@@ -378,7 +382,7 @@ bool Prober::probe()
         }
         extraTime += 20;
         runStats.numLoopIters++;
-        const uint32_t var = poss_choice[i];
+        const uint32_t var = vars_to_probe[i];
 
         //Probe 'false' first --> this is not critical
         Lit lit = Lit(var, false);
