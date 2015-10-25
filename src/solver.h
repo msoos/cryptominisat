@@ -474,11 +474,11 @@ inline bool Solver::find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const
 
 inline bool Solver::find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const
 {
-    if (watches[a.toInt()].size() > watches[b.toInt()].size()) {
+    if (watches[a].size() > watches[b].size()) {
         std::swap(a,b);
     }
 
-    watch_subarray_const ws = watches[a.toInt()];
+    watch_subarray_const ws = watches[a];
     *limit -= ws.size();
     for (const Watched w: ws) {
         if (!w.isBin())

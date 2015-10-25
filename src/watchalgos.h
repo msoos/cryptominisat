@@ -93,7 +93,7 @@ static inline Watched& findWatchedOfTri(
     , const Lit lit3
     , const bool red
 ) {
-    watch_subarray ws = wsFull[lit1.toInt()];
+    watch_subarray ws = wsFull[lit1];
     for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isTri()
             && i->lit2() == lit2
@@ -115,7 +115,7 @@ static inline const Watched& findWatchedOfTri(
     , const Lit lit3
     , const bool red
 ) {
-    watch_subarray_const ws = wsFull[lit1.toInt()];
+    watch_subarray_const ws = wsFull[lit1];
     for (watch_subarray_const::const_iterator
         it = ws.begin(), end = ws.end()
         ; it != end
@@ -143,7 +143,7 @@ static inline void removeWTri(
 ) {
     assert(lit2 < lit3);
 
-    watch_subarray ws = wsFull[lit1.toInt()];
+    watch_subarray ws = wsFull[lit1];
     watch_subarray::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isTri()
@@ -183,7 +183,7 @@ inline void removeWBin(
     , const Lit lit2
     , const bool red
 ) {
-    watch_subarray ws = wsFull[lit1.toInt()];
+    watch_subarray ws = wsFull[lit1];
     watch_subarray::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isBin()
@@ -204,7 +204,7 @@ inline bool removeWBin_except_marked(
     , const Lit lit2
     , const bool red
 ) {
-    watch_subarray ws = wsFull[lit1.toInt()];
+    watch_subarray ws = wsFull[lit1];
     watch_subarray::iterator i = ws.begin(), end = ws.end();
     for (; i != end && (
         !i->isBin()
@@ -231,7 +231,7 @@ inline const Watched& findWatchedOfBin(
     , const Lit lit2
     , const bool red
 ) {
-    watch_subarray_const ws = wsFull[lit1.toInt()];
+    watch_subarray_const ws = wsFull[lit1];
     for (watch_subarray::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isBin() && i->lit2() == lit2 && i->red() == red)
             return *i;
@@ -247,7 +247,7 @@ inline Watched& findWatchedOfBin(
     , const Lit lit2
     , const bool red
 ) {
-    watch_subarray ws = wsFull[lit1.toInt()];
+    watch_subarray ws = wsFull[lit1];
     for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
         if (i->isBin() && i->lit2() == lit2 && i->red() == red)
             return *i;

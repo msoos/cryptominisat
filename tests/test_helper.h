@@ -114,7 +114,7 @@ void add_impl_cls(
 {
     for(size_t i = 0; i < s.nVars()*2; i++) {
         Lit lit = Lit::toLit(i);
-        for(const Watched& ws: s.watches[lit.toInt()]) {
+        for(const Watched& ws: s.watches[lit]) {
             if (ws.isBin()
                 && lit < ws.lit2()
                 && ((add_irred && !ws.red()) || (add_red && ws.red()))

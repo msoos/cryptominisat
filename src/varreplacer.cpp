@@ -427,7 +427,7 @@ void VarReplacer::updateTri(
     }
 
     if (lit1 != origLit1) {
-        solver->watches[lit1.toInt()].push(*i);
+        solver->watches[lit1].push(*i);
     } else {
         *j++ = *i;
     }
@@ -480,7 +480,7 @@ void VarReplacer::updateBin(
     }
 
     if (lit1 != origLit1) {
-        solver->watches[lit1.toInt()].push(*i);
+        solver->watches[lit1].push(*i);
     } else {
         *j++ = *i;
     }
@@ -527,7 +527,7 @@ bool VarReplacer::replaceImplicit()
     for(size_t at = 0; at < solver->watches.get_smudged_list().size(); at++) {
         const Lit origLit1 = solver->watches.get_smudged_list()[at];
         //const Lit origLit1 = Lit::toLit(at);
-        watch_subarray ws = solver->watches[origLit1.toInt()];
+        watch_subarray ws = solver->watches[origLit1];
 
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = i;

@@ -63,7 +63,7 @@ void SubsumeImplicit::try_subsume_tri(
 
             lastBin->setRed(false);
             timeAvailable -= 20;
-            timeAvailable -= solver->watches[lastLit2.toInt()].size();
+            timeAvailable -= solver->watches[lastLit2].size();
             findWatchedOfBin(solver->watches, lastLit2, lit, true).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
@@ -159,7 +159,7 @@ void SubsumeImplicit::try_subsume_bin(
         runStats.remBins++;
         assert(i->lit2().var() != lit.var());
         timeAvailable -= 30;
-        timeAvailable -= solver->watches[i->lit2().toInt()].size();
+        timeAvailable -= solver->watches[i->lit2()].size();
         removeWBin(solver->watches, i->lit2(), lit, i->red());
         if (i->red()) {
             solver->binTri.redBins--;
@@ -203,7 +203,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         const size_t at = (rnd_start + numDone)  % solver->watches.size();
         runStats.numWatchesLooked++;
         const Lit lit = Lit::toLit(at);
-        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray ws = solver->watches[lit];
 
         //We can't do much when there is nothing, or only one
         if (ws.size() < 2)

@@ -167,7 +167,7 @@ bool DataSync::syncBinFromOthers()
         }
 
         vector<Lit>& bins = *sharedData->bins[wsLit].data;
-        watch_subarray ws = solver->watches[lit1.toInt()];
+        watch_subarray ws = solver->watches[lit1];
 
         assert(syncFinish.size() > wsLit);
         if (bins.size() > syncFinish[wsLit]

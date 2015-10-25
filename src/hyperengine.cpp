@@ -69,7 +69,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     //Propagate binary irred
     while (nlBinQHead < trail.size()) {
         const Lit p = trail[nlBinQHead++];
-        watch_subarray_const ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[~p];
         propStats.bogoProps += 1;
         for(watch_subarray_const::const_iterator
             k = ws.begin(), end = ws.end()
@@ -93,7 +93,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     ret = PROP_NOTHING;
     while (lBinQHead < trail.size()) {
         const Lit p = trail[lBinQHead];
-        watch_subarray_const ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[~p];
         propStats.bogoProps += 1;
         size_t done = 0;
 
@@ -120,7 +120,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
     ret = PROP_NOTHING;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead];
-        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[~p];
         propStats.bogoProps += 1;
 
         watch_subarray::iterator i = ws.begin();
@@ -183,7 +183,7 @@ Lit HyperEngine::prop_red_bin_dfs(
     propStats.bogoProps += 1;
 
     const Lit p = toPropRedBin.top();
-    watch_subarray_const ws = watches[(~p).toInt()];
+    watch_subarray_const ws = watches[~p];
     size_t done = 0;
     for(watch_subarray::const_iterator
         k = ws.begin(), end = ws.end()
@@ -247,7 +247,7 @@ Lit HyperEngine::prop_irred_bin_dfs(
     , bool& restart
 ) {
     const Lit p = toPropBin.top();
-    watch_subarray_const ws = watches[(~p).toInt()];
+    watch_subarray_const ws = watches[~p];
     size_t done = 0;
     for(watch_subarray::const_iterator
         k = ws.begin(), end = ws.end()
@@ -331,7 +331,7 @@ Lit HyperEngine::prop_larger_than_bin_cl_dfs(
 ) {
     PropResult ret = PROP_NOTHING;
     const Lit p = toPropNorm.top();
-    watch_subarray ws = watches[(~p).toInt()];
+    watch_subarray ws = watches[~p];
     propStats.bogoProps += 1;
 
     watch_subarray::iterator i = ws.begin();

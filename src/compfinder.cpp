@@ -212,7 +212,7 @@ void CompFinder::addToCompImplicits()
         lits.push_back(lit);
         for(int sign = 0; sign < 2; sign++) {
             lit = Lit(var, sign);
-            watch_subarray ws = solver->watches[lit.toInt()];
+            watch_subarray ws = solver->watches[lit];
 
             //If empty, skip
             if (ws.empty())

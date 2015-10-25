@@ -231,9 +231,9 @@ void OccSimplifier::unlink_clause(
 
     if (!only_set_is_removed) {
         for (const Lit lit: cl) {
-            if (!(allow_empty_watch && solver->watches[lit.toInt()].empty())) {
-                *limit_to_decrease -= 2*(long)solver->watches[lit.toInt()].size();
-                removeWCl(solver->watches[lit.toInt()], offset);
+            if (!(allow_empty_watch && solver->watches[lit].empty())) {
+                *limit_to_decrease -= 2*(long)solver->watches[lit].size();
+                removeWCl(solver->watches[lit], offset);
             }
         }
     } else {
@@ -281,7 +281,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
         if (solver->value(*i) == l_True
             || solver->value(*i) == l_False
         ) {
-            removeWCl(solver->watches[i->toInt()], offset);
+            removeWCl(solver->watches[*i], offset);
             touched.touch(*i);
         }
     }
@@ -681,8 +681,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
             continue;
 
         create_dummy_blocked_clause(lit);
-        rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
-        rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
+        rem_cls_from_watch_due_to_varelim(solver->watches[lit], lit);
+        rem_cls_from_watch_due_to_varelim(solver->watches[~lit], ~lit);
         set_var_as_eliminated(var, lit);
         var_elimed++;
     }
@@ -1368,7 +1368,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
         todo_copy.push_back(tmp);
     }
 
-    solver->watches[lit.toInt()].clear();
+    solver->watches[lit].clear();
     for (const Watched watch :todo_copy) {
         lits.clear();
         bool red = false;
@@ -1430,8 +1430,8 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
-            *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[0]].size();
+            *limit_to_decrease -= (long)solver->watches[lits[1]].size();
             solver->detach_bin_clause(lits[0], lits[1], red, true);
         }
 
@@ -1462,9 +1462,9 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= (long)solver->watches[lits[0].toInt()].size();
-            *limit_to_decrease -= (long)solver->watches[lits[1].toInt()].size();
-            *limit_to_decrease -= (long)solver->watches[lits[2].toInt()].size();
+            *limit_to_decrease -= (long)solver->watches[lits[0]].size();
+            *limit_to_decrease -= (long)solver->watches[lits[1]].size();
+            *limit_to_decrease -= (long)solver->watches[lits[2]].size();
             solver->detach_tri_clause(lits[0], lits[1], lits[2], watch.red(), true);
         }
 
@@ -1702,8 +1702,8 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     //set-up
     const Lit lit = Lit(var, false);
-    watch_subarray poss = solver->watches[lit.toInt()];
-    watch_subarray negs = solver->watches[(~lit).toInt()];
+    watch_subarray poss = solver->watches[lit];
+    watch_subarray negs = solver->watches[~lit];
     std::sort(poss.begin(), poss.end(), watch_sort_smallest_first());
     std::sort(negs.begin(), negs.end(), watch_sort_smallest_first());
     resolvents.clear();
@@ -1822,8 +1822,8 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
 void OccSimplifier::printOccur(const Lit lit) const
 {
-    for(size_t i = 0; i < solver->watches[lit.toInt()].size(); i++) {
-        const Watched& w = solver->watches[lit.toInt()][i];
+    for(size_t i = 0; i < solver->watches[lit].size(); i++) {
+        const Watched& w = solver->watches[lit][i];
         if (w.isBin()) {
             cout
             << "Bin   --> "
@@ -1864,8 +1864,8 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
     cout
     << "Eliminating var " << lit
     << " with occur sizes "
-    << solver->watches[lit.toInt()].size() << " , "
-    << solver->watches[(~lit).toInt()].size()
+    << solver->watches[lit].size() << " , "
+    << solver->watches[~lit].size()
     << endl;
 
     cout << "POS: " << endl;
@@ -1880,15 +1880,15 @@ bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(co
     Lit lits[2];
     lits[0] = lits_orig[0];
     lits[1] = lits_orig[1];
-    if (solver->watches[lits[0].toInt()].size() > solver->watches[lits[1].toInt()].size()) {
+    if (solver->watches[lits[0]].size() > solver->watches[lits[1]].size()) {
         std::swap(lits[0], lits[1]);
     }
 
     bool already_inside = false;
-    *limit_to_decrease -= solver->watches[lits[0].toInt()].size()/2;
-    Watched* i = solver->watches[lits[0].toInt()].begin();
+    *limit_to_decrease -= solver->watches[lits[0]].size()/2;
+    Watched* i = solver->watches[lits[0]].begin();
     Watched* j = i;
-    for(Watched* end = solver->watches[lits[0].toInt()].end(); i != end; i++) {
+    for(Watched* end = solver->watches[lits[0]].end(); i != end; i++) {
         const Watched& w = *i;
 
         if (w.isBin()
@@ -1927,7 +1927,7 @@ bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(co
             *j++ = *i;
         }
     }
-    solver->watches[lits[0].toInt()].shrink(i-j);
+    solver->watches[lits[0]].shrink(i-j);
 
     return already_inside;
 }
@@ -2086,8 +2086,8 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     //Remove clauses
     touched.clear();
     create_dummy_blocked_clause(lit);
-    rem_cls_from_watch_due_to_varelim(solver->watches[lit.toInt()], lit);
-    rem_cls_from_watch_due_to_varelim(solver->watches[(~lit).toInt()], ~lit);
+    rem_cls_from_watch_due_to_varelim(solver->watches[lit], lit);
+    rem_cls_from_watch_due_to_varelim(solver->watches[~lit], ~lit);
 
     //It's best to add resolvents with largest first. Then later, the smaller ones
     //can subsume the larger ones. While adding, we do subsumption check.
@@ -2319,7 +2319,7 @@ bool OccSimplifier::aggressiveCheck(
     , const Lit noPosLit
     , bool& retval
 ) {
-    watch_subarray_const ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit];
     aggressive_elim_time_limit -= (int64_t)ws.size()/3 + 2;
     for(watch_subarray::const_iterator it =
         ws.begin(), end = ws.end()
@@ -2396,7 +2396,7 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
 {
     HeuristicData ret;
 
-    watch_subarray_const ws_list = solver->watches[lit.toInt()];
+    watch_subarray_const ws_list = solver->watches[lit];
     *limit_to_decrease -= (long)ws_list.size()*3 + 100;
     for (const Watched ws: ws_list) {
         //Skip redundant clauses
@@ -2435,7 +2435,7 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
 bool OccSimplifier::check_empty_resolvent(Lit lit)
 {
     //Take the smaller of the two
-    if (solver->watches[(~lit).toInt()].size() < solver->watches[lit.toInt()].size())
+    if (solver->watches[~lit].size() < solver->watches[lit].size())
         lit = ~lit;
 
     int num_bits_set = check_empty_resolvent_action(
@@ -2477,7 +2477,7 @@ int OccSimplifier::check_empty_resolvent_action(
     int count = 0;
     size_t numCls = 0;
 
-    watch_subarray_const watch_list = solver->watches[lit.toInt()];
+    watch_subarray_const watch_list = solver->watches[lit];
     *limit_to_decrease -= (long)watch_list.size()*2;
     for (const Watched& ws: watch_list) {
         if (numCls >= 16
@@ -2804,7 +2804,7 @@ void OccSimplifier::linkInClause(Clause& cl)
 
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
-        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray ws = solver->watches[lit];
         *limit_to_decrease -= (long)ws.size();
 
         ws.push(Watched(offset, cl.abst));

@@ -361,7 +361,7 @@ inline void CNF::clean_occur_from_removed_clauses()
 inline void CNF::clean_occur_from_removed_clauses_only_smudged()
 {
     for(const Lit l: watches.get_smudged_list()) {
-        clear_one_occur_from_removed_clauses(watches[l.toInt()]);
+        clear_one_occur_from_removed_clauses(watches[l]);
     }
     watches.clear_smudged();
 }
@@ -388,7 +388,7 @@ inline bool CNF::no_marked_clauses() const
 inline void CNF::clean_occur_from_idx_types_only_smudged()
 {
     for(const Lit lit: watches.get_smudged_list()) {
-        watch_subarray ws = watches[lit.toInt()];
+        watch_subarray ws = watches[lit];
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = ws.begin();
         for(watch_subarray::const_iterator end = ws.end(); i < end; i++) {

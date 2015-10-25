@@ -265,8 +265,8 @@ bool BVA::try_bva_on_lit(const Lit lit)
     m_cls.clear();
     m_lits.clear();
     m_lits.push_back(lit);
-    *simplifier->limit_to_decrease -= solver->watches[lit.toInt()].size();
-    for(const Watched w: solver->watches[lit.toInt()]) {
+    *simplifier->limit_to_decrease -= solver->watches[lit].size();
+    for(const Watched w: solver->watches[lit]) {
         if (!solver->redundant(w)) {
             m_cls.push_back(OccurClause(lit, w));
             if (solver->conf.verbosity >= 6 || bva_verbosity) {
@@ -463,7 +463,7 @@ void BVA::remove_matching_clause(
 
     switch(to_remove.size()) {
         case 2: {
-            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0]].size();
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
             solver->detach_bin_clause(to_remove[0], to_remove[1], red);
@@ -472,7 +472,7 @@ void BVA::remove_matching_clause(
 
         case 3: {
             std::sort(to_remove.begin(), to_remove.end());
-            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0].toInt()].size();
+            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0]].size();
             bool red = false;
             *(solver->drup) << del << to_remove << fin;
             solver->detach_tri_clause(to_remove[0], to_remove[1], to_remove[2], red);
@@ -494,7 +494,7 @@ Clause* BVA::find_cl_for_bva(
     for(const Lit lit: torem) {
         seen[lit.toInt()] = 1;
     }
-    for(Watched w: solver->watches[torem[0].toInt()]) {
+    for(Watched w: solver->watches[torem[0]]) {
         if (!w.isClause())
             continue;
 
@@ -619,8 +619,8 @@ void BVA::fill_potential(const Lit lit)
             << endl;
         }
 
-        *simplifier->limit_to_decrease -= (long)solver->watches[l_min.toInt()].size()*3;
-        for(const Watched& d_ws: solver->watches[l_min.toInt()]) {
+        *simplifier->limit_to_decrease -= (long)solver->watches[l_min].size()*3;
+        for(const Watched& d_ws: solver->watches[l_min]) {
             if (*simplifier->limit_to_decrease < 0)
                 goto end;
 
@@ -775,7 +775,7 @@ Lit BVA::least_occurring_except(const OccurClause& c)
         if (seen[lit.toInt()] != 0)
             return;
 
-        const size_t watch_size = solver->watches[lit.toInt()].size();
+        const size_t watch_size = solver->watches[lit].size();
         if (watch_size < smallest_val) {
             smallest = lit;
             smallest_val = watch_size;
@@ -806,7 +806,7 @@ void BVA::calc_watch_irred_sizes()
 size_t BVA::calc_watch_irred_size(const Lit lit) const
 {
     size_t num = 0;
-    watch_subarray_const ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit];
     for(const Watched w: ws) {
         if (w.isBin() || w.isTri()) {
             num += !w.red();

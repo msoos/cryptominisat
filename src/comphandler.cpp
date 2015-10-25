@@ -680,7 +680,7 @@ void CompHandler::moveClausesImplicit(
     for(const uint32_t var: vars) {
     for(unsigned sign = 0; sign < 2; ++sign) {
         const Lit lit = Lit(var, sign);
-        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray ws = solver->watches[lit];
 
         //If empty, nothing to to, skip
         if (ws.empty()) {

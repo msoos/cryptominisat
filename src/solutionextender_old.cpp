@@ -301,7 +301,7 @@ bool SolutionExtender::propagate()
     bool ret = true;
     while(qhead < trail.size()) {
         const Lit p = trail[qhead++];
-        watch_subarray_const ws = solver->watches[(~p).toInt()];
+        watch_subarray_const ws = solver->watches[~p];
         for(watch_subarray::const_iterator
             it = ws.begin(), end = ws.end()
             ; it != end

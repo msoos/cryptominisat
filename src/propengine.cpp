@@ -97,9 +97,9 @@ void PropEngine::attach_tri_clause(
     orderLits(lit1, lit2, lit3);
 
     //And now they are attached, ordered
-    watches[lit1.toInt()].push(Watched(lit2, lit3, red));
-    watches[lit2.toInt()].push(Watched(lit1, lit3, red));
-    watches[lit3.toInt()].push(Watched(lit1, lit2, red));
+    watches[lit1].push(Watched(lit2, lit3, red));
+    watches[lit2].push(Watched(lit1, lit3, red));
+    watches[lit3].push(Watched(lit1, lit2, red));
 }
 
 void PropEngine::detach_tri_clause(
@@ -114,13 +114,13 @@ void PropEngine::detach_tri_clause(
     lits[1] = lit2;
     lits[2] = lit3;
     orderLits(lits[0], lits[1], lits[2]);
-    if (!(allow_empty_watch && watches[lits[0].toInt()].empty())) {
+    if (!(allow_empty_watch && watches[lits[0]].empty())) {
         removeWTri(watches, lits[0], lits[1], lits[2], red);
     }
-    if (!(allow_empty_watch && watches[lits[1].toInt()].empty())) {
+    if (!(allow_empty_watch && watches[lits[1]].empty())) {
         removeWTri(watches, lits[1], lits[0], lits[2], red);
     }
-    if (!(allow_empty_watch && watches[lits[2].toInt()].empty())) {
+    if (!(allow_empty_watch && watches[lits[2]].empty())) {
         removeWTri(watches, lits[2], lits[0], lits[1], red);
     }
 }
@@ -131,10 +131,10 @@ void PropEngine::detach_bin_clause(
     , const bool red
     , const bool allow_empty_watch
 ) {
-    if (!(allow_empty_watch && watches[lit1.toInt()].empty())) {
+    if (!(allow_empty_watch && watches[lit1].empty())) {
         removeWBin(watches, lit1, lit2, red);
     }
-    if (!(allow_empty_watch && watches[lit2.toInt()].empty())) {
+    if (!(allow_empty_watch && watches[lit2].empty())) {
         removeWBin(watches, lit2, lit1, red);
     }
 }
@@ -156,8 +156,8 @@ void PropEngine::attach_bin_clause(
     assert(varData[lit2.var()].removed == Removed::none);
     #endif //DEBUG_ATTACH
 
-    watches[lit1.toInt()].push(Watched(lit2, red));
-    watches[lit2.toInt()].push(Watched(lit1, red));
+    watches[lit1].push(Watched(lit2, red));
+    watches[lit2].push(Watched(lit1, red));
 }
 
 /**
@@ -189,8 +189,8 @@ void PropEngine::attachClause(
     const ClOffset offset = cl_alloc.get_offset(&c);
 
     const Lit blocked_lit = find_good_blocked_lit(c);
-    watches[c[0].toInt()].push(Watched(offset, blocked_lit));
-    watches[c[1].toInt()].push(Watched(offset, blocked_lit));
+    watches[c[0]].push(Watched(offset, blocked_lit));
+    watches[c[1]].push(Watched(offset, blocked_lit));
 }
 
 /**
@@ -212,8 +212,8 @@ void PropEngine::detach_modified_clause(
     }
 
     ClOffset offset = cl_alloc.get_offset(address);
-    removeWCl(watches[lit1.toInt()], offset);
-    removeWCl(watches[lit2.toInt()], offset);
+    removeWCl(watches[lit1], offset);
+    removeWCl(watches[lit2], offset);
 }
 
 /**
@@ -307,7 +307,7 @@ PropResult PropEngine::prop_normal_helper(
         if (value(*k) != l_False) {
             c[1] = *k;
             *k = ~p;
-            watches[c[1].toInt()].push(Watched(offset, c[0]));
+            watches[c[1]].push(Watched(offset, c[0]));
             return PROP_NOTHING;
         }
     }
@@ -439,7 +439,7 @@ bool PropEngine::prop_long_cl_any_order(
         if (value(*k) != l_False) {
             c[1] = *k;
             *k = ~p;
-            watches[c[1].toInt()].push(Watched(offset, c[0]));
+            watches[c[1]].push(Watched(offset, c[0]));
             return true;
         }
     }
@@ -653,7 +653,7 @@ PropBy PropEngine::propagate_any_order()
 
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
-        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[~p];
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = i;
         watch_subarray_const::const_iterator end = ws.end();
@@ -754,7 +754,7 @@ void PropEngine::sortWatched()
 
 void PropEngine::printWatchList(const Lit lit) const
 {
-    watch_subarray_const ws = watches[lit.toInt()];
+    watch_subarray_const ws = watches[lit];
     for (watch_subarray_const::const_iterator
         it2 = ws.begin(), end2 = ws.end()
         ; it2 != end2
@@ -790,15 +790,9 @@ void PropEngine::updateVars(
     }
     updateBySwap(watches, seen, interToOuter2);
 
-    for(size_t i = 0; i < watches.size(); i++) {
-        /*
-        //TODO
-        if (i+10 < watches.size())
-            __builtin_prefetch(watches[i+10].begin());
-        */
-
-        if (!watches[i].empty())
-            updateWatch(watches[i], outerToInter);
+    for(watch_subarray w: watches) {
+        if (!w.empty())
+            updateWatch(w, outerToInter);
     }
 }
 
@@ -858,7 +852,7 @@ PropBy PropEngine::propagate_strict_order(
     //Propagate binary clauses first
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        watch_subarray_const ws = watches[(~p).toInt()];
+        watch_subarray_const ws = watches[~p];
         #ifdef STATS_NEEDED
         if (watchListSizeTraversed)
             watchListSizeTraversed->push(ws.size());
@@ -893,7 +887,7 @@ PropBy PropEngine::propagate_strict_order(
     PropResult ret = PROP_NOTHING;
     while (qheadlong < qhead && confl.isNULL()) {
         const Lit p = trail[qheadlong];     // 'p' is enqueued fact to propagate.
-        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[~p];
         watch_subarray::iterator i = ws.begin();
         watch_subarray::iterator j = ws.begin();
         watch_subarray_const::const_iterator end = ws.end();
@@ -958,7 +952,7 @@ PropBy PropEngine::propagateIrredBin()
     PropBy confl;
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
-        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[~p];
         for(watch_subarray::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
 
             //If not binary, or is redundant, skip
@@ -995,7 +989,7 @@ bool PropEngine::propagate_occur()
     while (qhead < trail_size()) {
         const Lit p = trail[qhead];
         qhead++;
-        watch_subarray ws = watches[(~p).toInt()];
+        watch_subarray ws = watches[~p];
 
         //Go through each occur
         for (watch_subarray::const_iterator
@@ -1155,7 +1149,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    if (!watches[(~p).toInt()].empty()) {
+    if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
     }
 

@@ -2217,7 +2217,7 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
             continue;
 
         //Watchlist-based minimisation
-        watch_subarray_const ws = watches[lit.toInt()];
+        watch_subarray_const ws = watches[lit];
         for (watch_subarray_const::const_iterator
             i = ws.begin()
             , end = ws.end()
@@ -2396,8 +2396,8 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
             if (solver->conf.verbosity >= 10) {
                 cout << "Removing binary clause: " << *it << endl;
             }
-            propStats.otfHyperTime += solver->watches[it->getLit1().toInt()].size()/2;
-            propStats.otfHyperTime += solver->watches[it->getLit2().toInt()].size()/2;
+            propStats.otfHyperTime += solver->watches[it->getLit1()].size()/2;
+            propStats.otfHyperTime += solver->watches[it->getLit2()].size()/2;
             bool removed;
             if (except_marked) {
                 bool rem1 = removeWBin_except_marked(solver->watches, it->getLit1(), it->getLit2(), it->isRed());

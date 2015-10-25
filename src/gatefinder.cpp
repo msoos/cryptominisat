@@ -326,7 +326,7 @@ void GateFinder::find_or_gates()
 void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
 {
     assert(toClear.empty());
-    watch_subarray_const ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit];
     *simplifier->limit_to_decrease -= ws.size();
     for(const Watched w: ws) {
         if (w.isBin() && !w.red()) {
@@ -346,7 +346,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
         }
     }
 
-    watch_subarray_const ws2 = solver->watches[(~lit).toInt()];
+    watch_subarray_const ws2 = solver->watches[~lit];
     *simplifier->limit_to_decrease -= ws2.size();
     for(const Watched w: ws2) {
         if (w.isTri()
@@ -374,7 +374,7 @@ void GateFinder::add_gate_if_not_already_inside(
     , const Lit lit2
 ) {
     OrGate gate(rhs, lit1, lit2, false);
-    for (Watched ws: solver->watches[gate.rhs.toInt()]) {
+    for (Watched ws: solver->watches[gate.rhs]) {
         if (ws.isIdx()
             && orGates[ws.get_idx()] == gate
         ) {
@@ -388,7 +388,7 @@ void GateFinder::link_in_gate(const OrGate& gate)
 {
     const size_t at = orGates.size();
     orGates.push_back(gate);
-    solver->watches[gate.rhs.toInt()].push(Watched(at));
+    solver->watches[gate.rhs].push(Watched(at));
     solver->watches.smudge(gate.rhs);
 }
 
@@ -512,7 +512,7 @@ cl_abst_type GateFinder::calc_sorted_occ_and_set_seen2(
     for (vector<ClOffset>& certain_size_occ: sizeSortedOcc)
         certain_size_occ.clear();
 
-    watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
+    watch_subarray_const csOther = solver->watches[~(gate.lit2)];
     *simplifier->limit_to_decrease -= csOther.size();
     for (const Watched ws: csOther) {
         if (!ws.isClause())
@@ -546,7 +546,7 @@ void GateFinder::set_seen2_tri(
     , const bool only_irred
 ) {
     assert(seen2Set.empty());
-    watch_subarray_const csOther = solver->watches[(~(gate.lit2)).toInt()];
+    watch_subarray_const csOther = solver->watches[~(gate.lit2)];
     *simplifier->limit_to_decrease -= csOther.size();
     for (const Watched ws: csOther) {
         if (!ws.isTri())
@@ -704,7 +704,7 @@ bool GateFinder::find_pair_for_and_gate_reduction_tri(
     seen[ws.lit2().toInt()] = 1;
     seen[ws.lit3().toInt()] = 1;
     const bool ret = findAndGateOtherCl_tri(
-        solver->watches[(~(gate.lit2)).toInt()]
+        solver->watches[~(gate.lit2)]
         , gate.red
         , only_irred
         , found_pair
@@ -722,8 +722,8 @@ bool GateFinder::remove_clauses_using_and_gate(
     , const bool only_irred
 ) {
     assert(clToUnlink.empty());
-    if (solver->watches[(~(gate.lit1)).toInt()].empty()
-        || solver->watches[(~(gate.lit2)).toInt()].empty()
+    if (solver->watches[~(gate.lit1)].empty()
+        || solver->watches[~(gate.lit2)].empty()
     ) {
         return solver->okay();
     }
@@ -735,7 +735,7 @@ bool GateFinder::remove_clauses_using_and_gate(
     if (maxSize == 0)
         return solver->okay();
 
-    watch_subarray cs = solver->watches[(~(gate.lit1)).toInt()];
+    watch_subarray cs = solver->watches[~(gate.lit1)];
     *simplifier->limit_to_decrease -= cs.size();
     for (const Watched ws: cs) {
         if (*simplifier->limit_to_decrease < 0)
@@ -780,15 +780,15 @@ bool GateFinder::remove_clauses_using_and_gate_tri(
     , const bool really_remove
     , const bool only_irred
 ) {
-    if (solver->watches[(~(gate.lit1)).toInt()].empty()
-        || solver->watches[(~(gate.lit2)).toInt()].empty()
+    if (solver->watches[~(gate.lit1)].empty()
+        || solver->watches[~(gate.lit2)].empty()
     ) {
         return solver->okay();
     }
     tri_to_unlink.clear();
 
     set_seen2_tri(gate, only_irred);
-    watch_subarray_const cs = solver->watches[(~(gate.lit1)).toInt()];
+    watch_subarray_const cs = solver->watches[~(gate.lit1)];
     *simplifier->limit_to_decrease -= cs.size();
     for (const Watched ws: cs) {
         if (*simplifier->limit_to_decrease < 0)
@@ -962,7 +962,7 @@ void GateFinder::print_graphviz_dot2()
     for (const OrGate orGate: orGates) {
         index++;
         for (const Lit lit: orGate.getLits()) {
-            for (Watched ws: solver->watches[lit.toInt()]) {
+            for (Watched ws: solver->watches[lit]) {
                 if (!ws.isIdx()) {
                     continue;
                 }

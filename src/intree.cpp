@@ -67,7 +67,7 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
 
 bool InTree::watches_only_contains_nonbin(const Lit lit) const
 {
-    watch_subarray_const ws = solver->watches[lit.toInt()];
+    watch_subarray_const ws = solver->watches[lit];
     for(const Watched w: ws) {
         if (w.isBin()) {
             return false;
@@ -402,7 +402,7 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
     seen[lit.toInt()] = 1;
     assert(solver->value(lit) == l_Undef);
 
-    watch_subarray ws = solver->watches[lit.toInt()];
+    watch_subarray ws = solver->watches[lit];
     for(Watched& w: ws) {
         if (w.isBin()
             && seen[(~w.lit2()).toInt()] == 0

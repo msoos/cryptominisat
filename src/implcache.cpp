@@ -423,9 +423,9 @@ void ImplCache::tryVar(
 
     const vector<LitExtra>& cache1 = implCache[lit.toInt()].lits;
     assert(solver->watches.size() > (lit.toInt()));
-    watch_subarray_const ws1 = solver->watches[lit.toInt()];
+    watch_subarray_const ws1 = solver->watches[lit];
     const vector<LitExtra>& cache2 = implCache[(~lit).toInt()].lits;
-    watch_subarray_const ws2 = solver->watches[(~lit).toInt()];
+    watch_subarray_const ws2 = solver->watches[~lit];
 
     //Fill 'seen' and 'val' from cache
     for (vector<LitExtra>::const_iterator

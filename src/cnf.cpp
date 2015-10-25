@@ -346,9 +346,9 @@ void CNF::remove_tri_but_lit1(
     lits[1] = lit2;
     lits[2] = lit3;
     std::sort(lits, lits+3);
-    timeAvailable -= watches[lits[0].toInt()].size();
-    timeAvailable -= watches[lits[1].toInt()].size();
-    timeAvailable -= watches[lits[2].toInt()].size();
+    timeAvailable -= watches[lits[0]].size();
+    timeAvailable -= watches[lits[1]].size();
+    timeAvailable -= watches[lits[2]].size();
     removeTriAllButOne(watches, lit1, lits, red);
 
     //Update stats for tri
@@ -466,8 +466,8 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(cl.size() > 3);
 
-    attached &= findWCl(watches[cl[0].toInt()], offset);
-    attached &= findWCl(watches[cl[1].toInt()], offset);
+    attached &= findWCl(watches[cl[0]], offset);
+    attached &= findWCl(watches[cl[1]], offset);
 
     return attached;
 }
@@ -524,7 +524,7 @@ void CNF::find_all_attach(const vector<ClOffset>& cs) const
         ; ++it
     ) {
         Clause& cl = *cl_alloc.ptr(*it);
-        bool ret = findWCl(watches[cl[0].toInt()], *it);
+        bool ret = findWCl(watches[cl[0]], *it);
         if (!ret) {
             cout
             << "Clause " << cl
@@ -536,7 +536,7 @@ void CNF::find_all_attach(const vector<ClOffset>& cs) const
             std::exit(-1);
         }
 
-        ret = findWCl(watches[cl[1].toInt()], *it);
+        ret = findWCl(watches[cl[1]], *it);
         if (!ret) {
             cout
             << "Clause " << cl

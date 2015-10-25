@@ -173,13 +173,13 @@ void ClauseCleaner::clean_implicit_clauses()
         ; wsLit++, wsLit2++
     ) {
         if (wsLit2 < end
-            && !solver->watches[Lit::toLit(wsLit2).toInt()].empty()
+            && !solver->watches[Lit::toLit(wsLit2)].empty()
         ) {
             solver->watches.prefetch(Lit::toLit(wsLit2).toInt());
         }
 
         const Lit lit = Lit::toLit(wsLit);
-        watch_subarray ws = solver->watches[lit.toInt()];
+        watch_subarray ws = solver->watches[lit];
         if (ws.empty())
             continue;
 

@@ -112,13 +112,13 @@ bool Distiller::distill_tri_irred_cls()
             break;
         }
 
-        Lit lit = Lit::toLit(upI);
-        for (size_t i = 0; i < solver->watches[upI].size(); i++) {
+        const Lit lit = Lit::toLit(upI);
+        for (size_t i = 0; i < solver->watches[lit].size(); i++) {
             if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
                 break;
             }
 
-            Watched ws = solver->watches[upI][i];
+            Watched ws = solver->watches[lit][i];
 
             //Only irred TRI and each TRI only once
             if (ws.isTri()

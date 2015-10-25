@@ -131,7 +131,7 @@ bool DistillerWithBin::subsume_clause_with_watch(
         //If subsuming irred with redundant, make the redundant into irred
         if (wit->red() && !cl.red()) {
             wit->setRed(false);
-            timeAvailable -= (long)solver->watches[wit->lit2().toInt()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
             findWatchedOfBin(solver->watches, wit->lit2(), lit, true).setRed(false);
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
@@ -163,8 +163,8 @@ bool DistillerWithBin::subsume_clause_with_watch(
         //If subsuming irred with redundant, make the redundant into irred
         if (!cl.red() && wit->red()) {
             wit->setRed(false);
-            timeAvailable -= (long)solver->watches[wit->lit2().toInt()].size()*3;
-            timeAvailable -= (long)solver->watches[wit->lit3().toInt()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
+            timeAvailable -= (long)solver->watches[wit->lit3()].size()*3;
             findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
             findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
             solver->binTri.redTris--;
@@ -233,7 +233,7 @@ void DistillerWithBin::str_and_sub_using_watch(
     , const bool alsoStrengthen
 ) {
     //Go through the watchlist
-    watch_subarray thisW = solver->watches[lit.toInt()];
+    watch_subarray thisW = solver->watches[lit];
     timeAvailable -= (long)thisW.size()*2 + 5;
     for(watch_subarray::iterator
         wit = thisW.begin(), wend = thisW.end()
@@ -666,9 +666,9 @@ void DistillerWithBin::strengthen_tri_with_bin_tri_stamp(
     const Lit lit2 = i->lit3();
     bool rem = false;
 
-    timeAvailable -= (long)solver->watches[(~lit).toInt()].size();
+    timeAvailable -= (long)solver->watches[~lit].size();
     for(watch_subarray::const_iterator
-        it2 = solver->watches[(~lit).toInt()].begin(), end2 = solver->watches[(~lit).toInt()].end()
+        it2 = solver->watches[~lit].begin(), end2 = solver->watches[~lit].end()
         ; it2 != end2 && timeAvailable > 0
         ; it2++
     ) {
@@ -758,7 +758,7 @@ void DistillerWithBin::strengthen_tri_with_bin_tri_stamp(
 
 void DistillerWithBin::strengthen_implicit_lit(const Lit lit)
 {
-    watch_subarray ws = solver->watches[lit.toInt()];
+    watch_subarray ws = solver->watches[lit];
 
     Watched* i = ws.begin();
     Watched* j = i;

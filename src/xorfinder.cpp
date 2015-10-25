@@ -84,12 +84,12 @@ void XorFinder::find_xors_based_on_short_clauses()
     for (size_t wsLit = 0, end = 2*solver->nVars(); wsLit < end; wsLit++) {
         const Lit lit = Lit::toLit(wsLit);
         assert(solver->watches.size() > wsLit);
-        watch_subarray_const ws = solver->watches[lit.toInt()];
+        watch_subarray_const ws = solver->watches[lit];
 
         xor_find_time_limit -= (int64_t)ws.size()*3;
 
         //cannot use iterators because findXor may update the watchlist
-        for (size_t i = 0, size = solver->watches[lit.toInt()].size()
+        for (size_t i = 0, size = solver->watches[lit].size()
             ; i < size
             ; i++
         ) {
@@ -520,8 +520,8 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 
     //Try to match on all literals
     for (const Lit lit: lits) {
-        findXorMatch(solver->watches[(lit).toInt()], lit, foundCls);
-        findXorMatch(solver->watches[(~lit).toInt()], ~lit, foundCls);
+        findXorMatch(solver->watches[lit], lit, foundCls);
+        findXorMatch(solver->watches[~lit], ~lit, foundCls);
 
         //More expensive
         //findXorMatchExt(solver->watches[(*l).toInt()], *l, foundCls);
@@ -545,7 +545,7 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
 
         //Have we found this XOR clause already?
         bool already_inside = false;
-        for (const Watched ws: solver->watches[lits[0].unsign().toInt()]) {
+        for (const Watched ws: solver->watches[lits[0].unsign()]) {
             if (ws.isIdx()
                 && xors[ws.get_idx()] == found_xor
             ) {
@@ -574,7 +574,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     runStats.sumSizeXors += found_xor.vars.size();
     uint32_t thisXorIndex = xors.size()-1;
     Lit attach_point = Lit(found_xor.vars[0], false);
-    solver->watches[attach_point.toInt()].push(Watched(thisXorIndex));
+    solver->watches[attach_point].push(Watched(thisXorIndex));
     solver->watches.smudge(attach_point);
 }
 

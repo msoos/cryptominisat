@@ -121,7 +121,7 @@ void SolveFeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_ea
 {
     for (size_t i = 0; i < solver->nVars() * 2; i++) {
         Lit lit = Lit::toLit(i);
-        for (const Watched & w : solver->watches[lit.toInt()]) {
+        for (const Watched & w : solver->watches[lit]) {
             for_one_clause(w, lit, func_each_cl, func_each_lit);
         }
     }
