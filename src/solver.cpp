@@ -2760,7 +2760,7 @@ void Solver::calculate_reachability()
             continue;
         }
 
-        const vector<LitExtra>& cache = implCache[lit.toInt()].lits;
+        const vector<LitExtra>& cache = implCache[lit].lits;
         uint32_t cacheSize = cache.size();
         for (const LitExtra litex: cache) {
             assert(litex.getLit() != lit);

@@ -447,7 +447,7 @@ inline bool Solver::find_with_stamp_a_or_b(Lit a, const Lit b) const
 
 inline bool Solver::find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const
 {
-    const vector<LitExtra>& cache = solver->implCache[a.toInt()].lits;
+    const vector<LitExtra>& cache = solver->implCache[a].lits;
     *limit -= cache.size();
     for (LitExtra cacheLit: cache) {
         if (cacheLit.getOnlyIrredBin()
@@ -459,7 +459,7 @@ inline bool Solver::find_with_cache_a_or_b(Lit a, Lit b, int64_t* limit) const
 
     std::swap(a,b);
 
-    const vector<LitExtra>& cache2 = solver->implCache[a.toInt()].lits;
+    const vector<LitExtra>& cache2 = solver->implCache[a].lits;
     *limit -= cache2.size();
     for (LitExtra cacheLit: cache) {
         if (cacheLit.getOnlyIrredBin()

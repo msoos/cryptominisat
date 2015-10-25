@@ -205,8 +205,8 @@ bool DistillerWithBin::str_and_sub_clause_with_cache(const Lit lit)
     if (solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
-        timeAvailable -= 2*(long)solver->implCache[lit.toInt()].lits.size();
-        for (const LitExtra elit: solver->implCache[lit.toInt()].lits) {
+        timeAvailable -= 2*(long)solver->implCache[lit].lits.size();
+        for (const LitExtra elit: solver->implCache[lit].lits) {
              if (seen[(~(elit.getLit())).toInt()]) {
                 seen[(~(elit.getLit())).toInt()] = 0;
                 thisRemLitCache++;

@@ -2193,7 +2193,7 @@ void Searcher::cache_based_more_minim(vector<Lit>& cl)
             continue;
 
         assert(solver->implCache.size() > lit.toInt());
-        const TransCache& cache1 = solver->implCache[lit.toInt()];
+        const TransCache& cache1 = solver->implCache[lit];
         limit -= (int64_t)cache1.lits.size()/2;
         for (const LitExtra litExtra: cache1.lits) {
             assert(seen.size() > litExtra.getLit().toInt());

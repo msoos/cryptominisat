@@ -2223,7 +2223,7 @@ bool OccSimplifier::reverse_distillation_of_dummy(
         assert(lit.var() != posLit.var());
 
         //Use cache
-        const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+        const vector<LitExtra>& cache = solver->implCache[lit].lits;
         aggressive_elim_time_limit -= (int64_t)cache.size()/3;
         for(const LitExtra litextra: cache) {
             //If redundant, that doesn't help

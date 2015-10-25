@@ -336,7 +336,7 @@ void GateFinder::find_or_gates_in_sweep_mode(const Lit lit)
     }
 
     if (solver->conf.doCache && solver->conf.otfHyperbin) {
-        const vector<LitExtra>& cache = solver->implCache[lit.toInt()].lits;
+        const vector<LitExtra>& cache = solver->implCache[lit].lits;
         *simplifier->limit_to_decrease -= cache.size();
         for(const LitExtra l: cache) {
              if (l.getOnlyIrredBin()) {

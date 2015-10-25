@@ -159,9 +159,9 @@ public:
         return implCache.end();
     }
 
-    const TransCache& operator[](const size_t at) const
+    const TransCache& operator[](const Lit at) const
     {
-        return implCache[at];
+        return implCache[at.toInt()];
     }
 
     TransCache& operator[](const Lit at)

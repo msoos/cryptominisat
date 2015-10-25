@@ -488,7 +488,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
         //Update stats/markings
         //cacheUpdated[(~ancestor).toInt()]++;
         extraTime += 1;
-        extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
+        extraTimeCache += solver->implCache[~ancestor].lits.size()/30;
         extraTimeCache += solver->implCache[~thisLit].lits.size()/30;
 
         const bool redStep = solver->varData[thisLit.var()].reason.isRedStep();
