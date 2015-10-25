@@ -489,14 +489,14 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
         //cacheUpdated[(~ancestor).toInt()]++;
         extraTime += 1;
         extraTimeCache += solver->implCache[(~ancestor).toInt()].lits.size()/30;
-        extraTimeCache += solver->implCache[(~thisLit).toInt()].lits.size()/30;
+        extraTimeCache += solver->implCache[~thisLit].lits.size()/30;
 
         const bool redStep = solver->varData[thisLit.var()].reason.isRedStep();
 
         //Update the cache now
         assert(ancestor != lit_Undef);
-        bool taut = solver->implCache[(~ancestor).toInt()].merge(
-            solver->implCache[(~thisLit).toInt()].lits
+        bool taut = solver->implCache[~ancestor].merge(
+            solver->implCache[~thisLit].lits
             , thisLit
             , redStep
             , ancestor.var()
@@ -562,7 +562,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
         tmp_lits.push_back(thisLit);
     }
 
-    bool taut = solver->implCache[(~lit).toInt()].merge(
+    bool taut = solver->implCache[~lit].merge(
         tmp_lits
         , lit_Undef
         , true //Red step -- we don't know, so we assume

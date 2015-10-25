@@ -164,9 +164,9 @@ public:
         return implCache[at];
     }
 
-    TransCache& operator[](const size_t at)
+    TransCache& operator[](const Lit at)
     {
-        return implCache[at];
+        return implCache[at.toInt()];
     }
 
     void new_var()

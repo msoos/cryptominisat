@@ -105,7 +105,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
             && solver->conf.doExtendedSCC
             && (!solver->drup->enabled() || solver->conf.otfHyperbin)
         ) {
-            transCache = &(solver->implCache[(~vertLit).toInt()].lits);
+            transCache = &(solver->implCache[~vertLit].lits);
             __builtin_prefetch(transCache->data());
         }
 
