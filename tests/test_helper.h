@@ -219,6 +219,38 @@ void check_set_lits(const Solver* s, const std::string& data)
     EXPECT_EQ(lits, set_lits);
 }
 
+string print_cache(const vector<LitExtra>& c)
+{
+    std::stringstream ss;
+    for(LitExtra a: c) {
+        ss << a.getLit() << "(irred: " << a.getOnlyIrredBin() << " ), ";
+    }
+    return ss.str();
+}
+
+void check_impl_cache_contains(const Solver* s, const std::string& data)
+{
+    vector<Lit> lits = str_to_cl(data);
+    assert(lits.size() == 2);
+
+    const vector<LitExtra>& cache_lits = s->implCache[lits[0]].lits;
+    /*cout << "cache[0]: " << print_cache(s->implCache[Lit(0, false)].lits) << endl;
+    cout << "cache[1]: " << print_cache(s->implCache[Lit(1, false)].lits) << endl;
+    cout << "cache[2]: " << print_cache(s->implCache[Lit(2, false)].lits) << endl;
+
+    cout << "cache[~0]: " << print_cache(s->implCache[Lit(0, true)].lits) << endl;
+    cout << "cache[~1]: " << print_cache(s->implCache[Lit(1, true)].lits) << endl;
+    cout << "cache[~2]: " << print_cache(s->implCache[Lit(2, true)].lits) << endl;
+    */
+    bool inside = false;
+    for(LitExtra l: cache_lits) {
+        if (l.getLit() == lits[1])
+            inside = true;
+    }
+    EXPECT_TRUE(inside);
+}
+
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {

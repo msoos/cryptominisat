@@ -35,7 +35,7 @@ struct probe_test : public ::testing::Test {
     {
         must_inter = false;
         SolverConf conf;
-        conf.doCache = false;
+        //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         probe = s->prober;
     }
@@ -49,7 +49,7 @@ struct probe_test : public ::testing::Test {
     bool must_inter;
 };
 
-TEST_F(probe_test, probe_one)
+TEST_F(probe_test, probe_fail_one)
 {
     s->new_vars(2);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -60,7 +60,7 @@ TEST_F(probe_test, probe_one)
     EXPECT_EQ(s->get_num_free_vars(), 1);
 }
 
-TEST_F(probe_test, probe_two)
+TEST_F(probe_test, probe_fail_two)
 {
     s->new_vars(4);
     //s->conf.verbosity = 20;
@@ -75,7 +75,7 @@ TEST_F(probe_test, probe_two)
     EXPECT_EQ(s->get_num_free_vars(), 2);
 }
 
-TEST_F(probe_test, probe_fail)
+TEST_F(probe_test, probe_unsat)
 {
     s->new_vars(4);
     //s->conf.verbosity = 20;
@@ -90,7 +90,7 @@ TEST_F(probe_test, probe_fail)
     EXPECT_EQ(s->okay(), false);
 }
 
-TEST_F(probe_test, probe_both)
+TEST_F(probe_test, probe_bothprop)
 {
     s->new_vars(6);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -103,6 +103,41 @@ TEST_F(probe_test, probe_both)
     probe->probe();
     EXPECT_EQ(s->get_num_free_vars(), 5);
     check_set_lits(s, "3");
+}
+
+TEST_F(probe_test, imp_cache)
+{
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-2, 3"));
+
+    std::vector<uint32_t> vars{0, 1, 2};
+    probe->probe(&vars);
+    check_impl_cache_contains(s, "1, 3");
+}
+
+TEST_F(probe_test, imp_cache_2)
+{
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-2, 3"));
+
+    std::vector<uint32_t> vars{2, 1, 0};
+    probe->probe(&vars);
+    check_impl_cache_contains(s, "3, 1");
+}
+
+TEST_F(probe_test, imp_cache_longer)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-2, 3"));
+    s->add_clause_outer(str_to_cl("-3, 4"));
+    s->add_clause_outer(str_to_cl("-4, 5"));
+
+    std::vector<uint32_t> vars{4, 3, 2, 1, 0};
+    probe->probe(&vars);
+    check_impl_cache_contains(s, "5, 1");
 }
 
 
