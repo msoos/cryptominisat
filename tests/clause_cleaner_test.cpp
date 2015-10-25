@@ -44,7 +44,7 @@ TEST(clause_clean_test, no_clean)
     EXPECT_EQ(s.binTri.irredBins, 1);
     EXPECT_EQ(s.binTri.irredTris, 1);
     std::string exp = "1, 2;  1, 2, 3";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(clause_clean_test, clean_bin_pos)
@@ -57,7 +57,7 @@ TEST(clause_clean_test, clean_bin_pos)
 
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2"));
+    check_irred_cls_eq(s, "1, 2");
 
     cc.remove_and_clean_all();
     EXPECT_EQ(s.binTri.irredBins, 0);
@@ -74,10 +74,10 @@ TEST(clause_clean_test, clean_bin_neg)
 
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2"));
+    check_irred_cls_eq(s, "1, 2");
 
     cc.remove_and_clean_all();
-    EXPECT_TRUE(check_irred_cls_eq(s, ""));
+    check_irred_cls_eq(s, "");
 }
 
 TEST(clause_clean_test, clean_tri_pos)
@@ -90,10 +90,10 @@ TEST(clause_clean_test, clean_tri_pos)
 
     s.add_clause_outer(str_to_cl("1, 2, 3"));
     s.add_clause_outer(str_to_cl("1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2, 3"));
+    check_irred_cls_eq(s, "1, 2, 3");
 
     cc.remove_and_clean_all();
-    EXPECT_TRUE(check_irred_cls_eq(s, ""));
+    check_irred_cls_eq(s, "");
 }
 
 TEST(clause_clean_test, clean_tri_neg)
@@ -106,12 +106,12 @@ TEST(clause_clean_test, clean_tri_neg)
 
     s.add_clause_outer(str_to_cl("1, 2, 3"));
     s.add_clause_outer(str_to_cl("-1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2, 3"));
+    check_irred_cls_eq(s, "1, 2, 3");
 
     cc.remove_and_clean_all();
     EXPECT_EQ(s.binTri.irredBins, 1);
     EXPECT_EQ(s.binTri.irredTris, 0);
-    EXPECT_TRUE(check_irred_cls_eq(s, "2, 3"));
+    check_irred_cls_eq(s, "2, 3");
 }
 
 TEST(clause_clean_test, clean_long_pos)
@@ -124,10 +124,10 @@ TEST(clause_clean_test, clean_long_pos)
 
     s.add_clause_outer(str_to_cl("1, 2, 3, 4"));
     s.add_clause_outer(str_to_cl("1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2, 3, 4"));
+    check_irred_cls_eq(s, "1, 2, 3, 4");
 
     cc.remove_and_clean_all();
-    EXPECT_TRUE(check_irred_cls_eq(s, ""));
+    check_irred_cls_eq(s, "");
 }
 
 TEST(clause_clean_test, clean_long_neg)
@@ -140,10 +140,10 @@ TEST(clause_clean_test, clean_long_neg)
 
     s.add_clause_outer(str_to_cl("1, 2, 3, 4"));
     s.add_clause_outer(str_to_cl("-1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2, 3, 4"));
+    check_irred_cls_eq(s, "1, 2, 3, 4");
 
     cc.remove_and_clean_all();
-    EXPECT_TRUE(check_irred_cls_eq(s, "2, 3, 4"));
+    check_irred_cls_eq(s, "2, 3, 4");
 }
 
 TEST(clause_clean_test, clean_mix)
@@ -158,10 +158,10 @@ TEST(clause_clean_test, clean_mix)
     s.add_clause_outer(str_to_cl("1, 2, 3"));
     s.add_clause_outer(str_to_cl("1, 9"));
     s.add_clause_outer(str_to_cl("-1"));
-    EXPECT_TRUE(check_irred_cls_eq(s, "1, 2, 3, 4; 1, 2, 3; 1, 9"));
+    check_irred_cls_eq(s, "1, 2, 3, 4; 1, 2, 3; 1, 9");
 
     cc.remove_and_clean_all();
-    EXPECT_TRUE(check_irred_cls_eq(s, "2, 3, 4; 2, 3"));
+    check_irred_cls_eq(s, "2, 3, 4; 2, 3");
 }
 
 int main(int argc, char **argv) {

@@ -19,6 +19,7 @@
  * MA 02110-1301  USA
 */
 
+#include "gtest/gtest.h"
 #include "cryptominisat4/solvertypesmini.h"
 #include <vector>
 #include <ostream>
@@ -165,22 +166,22 @@ struct VecVecSorter
     }
 };
 
-bool fuzzy_equal(
-    vector<vector<Lit> >& a,
-    vector<vector<Lit> >& b)
+void check_fuzzy_equal(
+    vector<vector<Lit> >& cls,
+    vector<vector<Lit> >& cls_given)
 {
-    for(vector<Lit>& x: a) {
+    for(vector<Lit>& x: cls) {
         std::sort(x.begin(), x.end());
     }
-    for(vector<Lit>& x: b) {
+    for(vector<Lit>& x: cls_given) {
         std::sort(x.begin(), x.end());
     }
 
     VecVecSorter sorter;
-    std::sort(a.begin(), a.end(), sorter);
-    std::sort(b.begin(), b.end(), sorter);
+    std::sort(cls.begin(), cls.end(), sorter);
+    std::sort(cls_given.begin(), cls_given.end(), sorter);
 
-    return a == b;
+    EXPECT_EQ(cls, cls_given);
 }
 
 string print(const vector<vector<Lit> >& cls)
@@ -192,17 +193,12 @@ string print(const vector<vector<Lit> >& cls)
     return ss.str();
 }
 
-bool check_irred_cls_eq(const Solver& s, const string& data)
+void check_irred_cls_eq(const Solver& s, const string& data)
 {
     vector<vector<Lit> > cls_given = str_to_vecs(data);
     vector<vector<Lit> > cls = get_irred_cls(s);
 
-    if (!fuzzy_equal(cls, cls_given)) {
-        cout << "Expected irred:" << print(cls_given);
-        cout << "Got irred     :" << print(cls);
-        return false;
-    }
-    return true;
+    check_fuzzy_equal(cls, cls_given);
 }
 
 void print_model(const SATSolver&s)

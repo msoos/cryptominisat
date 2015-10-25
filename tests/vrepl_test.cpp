@@ -47,7 +47,7 @@ TEST(vrepl_test, find_one_1)
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     EXPECT_EQ(s.get_num_long_irred_cls(), 2);
     std::string exp = "-2, 3, 4, 5;  2, 3, 4, 5";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, find_one_2)
@@ -67,7 +67,7 @@ TEST(vrepl_test, find_one_2)
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "3, 4, 5;  2, 3, 4, 5";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, remove_lit)
@@ -86,7 +86,7 @@ TEST(vrepl_test, remove_lit)
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "2, 5";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, remove_cl)
@@ -105,7 +105,7 @@ TEST(vrepl_test, remove_cl)
     repl.replace_if_enough_is_found();
     EXPECT_EQ(repl.get_num_replaced_vars(), 1);
     std::string exp = "";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, replace_twice)
@@ -131,7 +131,7 @@ TEST(vrepl_test, replace_twice)
     s.add_clause_outer(str_to_cl("1, -2, 3"));
     s.add_clause_outer(str_to_cl("1, 2, 3, 5"));
     std::string exp = "2, 5";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, replace_thrice)
@@ -163,7 +163,7 @@ TEST(vrepl_test, replace_thrice)
     s.add_clause_outer(str_to_cl("1, -2, 3"));
     s.add_clause_outer(str_to_cl("1, 2, 4, 5"));
     std::string exp = "2, 5";
-    EXPECT_TRUE(check_irred_cls_eq(s, exp));
+    check_irred_cls_eq(s, exp);
 }
 
 TEST(vrepl_test, replace_limit_check_below)
