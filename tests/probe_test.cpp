@@ -49,7 +49,7 @@ struct probe_test : public ::testing::Test {
     bool must_inter;
 };
 
-TEST_F(probe_test, probe_fail_one)
+TEST_F(probe_test, fail_one)
 {
     s->new_vars(2);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -60,7 +60,7 @@ TEST_F(probe_test, probe_fail_one)
     EXPECT_EQ(s->get_num_free_vars(), 1);
 }
 
-TEST_F(probe_test, probe_fail_two)
+TEST_F(probe_test, fail_two)
 {
     s->new_vars(4);
     //s->conf.verbosity = 20;
@@ -75,7 +75,7 @@ TEST_F(probe_test, probe_fail_two)
     EXPECT_EQ(s->get_num_free_vars(), 2);
 }
 
-TEST_F(probe_test, probe_unsat)
+TEST_F(probe_test, unsat)
 {
     s->new_vars(4);
     //s->conf.verbosity = 20;
@@ -90,7 +90,7 @@ TEST_F(probe_test, probe_unsat)
     EXPECT_EQ(s->okay(), false);
 }
 
-TEST_F(probe_test, probe_bothprop)
+TEST_F(probe_test, bothprop)
 {
     s->new_vars(6);
     s->add_clause_outer(str_to_cl("1, 2"));
