@@ -108,6 +108,7 @@ set (MY_TESTS
     clause_cleaner_test
     probe_test
     distiller_test
+    distill_with_bin_test
 )
 foreach(F ${MY_TESTS})
     add_executable(${F}
