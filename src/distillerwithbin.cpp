@@ -200,14 +200,16 @@ bool DistillerWithBin::subsume_clause_with_watch(
     return false;
 }
 
-bool DistillerWithBin::str_and_sub_clause_with_cache(const Lit lit)
+bool DistillerWithBin::str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen)
 {
     if (solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
      ) {
-        timeAvailable -= 2*(long)solver->implCache[lit].lits.size();
+        timeAvailable -= (1+(int)alsoStrengthen)*(long)solver->implCache[lit].lits.size();
         for (const LitExtra elit: solver->implCache[lit].lits) {
-             if (seen[(~(elit.getLit())).toInt()]) {
+             if (alsoStrengthen
+                && seen[(~(elit.getLit())).toInt()]
+            ) {
                 seen[(~(elit.getLit())).toInt()] = 0;
                 thisRemLitCache++;
              }
@@ -307,11 +309,9 @@ void DistillerWithBin::strsub_with_cache_and_watch(
             solver->watches.prefetch(lit2->toInt());
         }
 
-        if (alsoStrengthen) {
-            bool subsumed = str_and_sub_clause_with_cache(*lit);
-            if (subsumed)
-                break;
-        }
+        bool subsumed = str_and_sub_clause_with_cache(*lit, alsoStrengthen);
+        if (subsumed)
+            break;
 
         str_and_sub_using_watch(cl, *lit, alsoStrengthen);
     }

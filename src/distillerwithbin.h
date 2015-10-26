@@ -188,7 +188,7 @@ class DistillerWithBin {
             , Watched* wit
             , const Clause& cl
         );
-        bool str_and_sub_clause_with_cache(const Lit lit);
+        bool str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen);
         void try_subsuming_by_stamping(const bool red);
         void remove_lits_through_stamping_red();
         void remove_lits_through_stamping_irred();
