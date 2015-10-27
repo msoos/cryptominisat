@@ -51,7 +51,7 @@ class Prober;
 class OccSimplifier;
 class SCCFinder;
 class Distiller;
-class DistillWithImplicit;
+class DistillerLongWithImpl;
 class DistillerImplWithImpl;
 class CalcDefPolars;
 class SolutionExtender;
@@ -148,8 +148,8 @@ class Solver : public Searcher
         InTree*              intree = NULL;
         OccSimplifier*       simplifier = NULL;
         Distiller*           distiller = NULL;
-        DistillWithImplicit* distillerwithimplicit = NULL;
-        DistillerImplWithImpl* distillimplwithimpl = NULL;
+        DistillerLongWithImpl* dist_long_with_impl = NULL;
+        DistillerImplWithImpl* dist_impl_with_impl = NULL;
         CompHandler*         compHandler = NULL;
 
         vector<LitReachData> litReachable;

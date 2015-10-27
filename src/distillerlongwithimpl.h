@@ -36,9 +36,9 @@ using std::vector;
 class Solver;
 class Clause;
 
-class DistillWithImplicit {
+class DistillerLongWithImpl {
     public:
-        DistillWithImplicit(Solver* solver);
+        DistillerLongWithImpl(Solver* solver);
         bool distill_long_with_implicit(bool alsoStrengthen);
 
         struct Stats
@@ -181,7 +181,7 @@ class DistillWithImplicit {
 
 };
 
-inline const DistillWithImplicit::Stats& DistillWithImplicit::get_stats() const
+inline const DistillerLongWithImpl::Stats& DistillerLongWithImpl::get_stats() const
 {
     return globalStats;
 }

@@ -50,7 +50,7 @@
 #include "watchalgos.h"
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
-#include "distillerwithimplicit.h"
+#include "distillerlongwithimpl.h"
 #include "distillerimplwithimpl.h"
 #include "datasync.h"
 #include "reducedb.h"
@@ -94,8 +94,8 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
         simplifier = new OccSimplifier(this);
     }
     distiller = new Distiller(this);
-    distillerwithimplicit = new DistillWithImplicit(this);
-    distillimplwithimpl = new DistillerImplWithImpl(this);
+    dist_long_with_impl = new DistillerLongWithImpl(this);
+    dist_impl_with_impl = new DistillerImplWithImpl(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -119,8 +119,8 @@ Solver::~Solver()
     delete intree;
     delete simplifier;
     delete distiller;
-    delete distillerwithimplicit;
-    delete distillimplwithimpl;
+    delete dist_long_with_impl;
+    delete dist_impl_with_impl;
     delete clauseCleaner;
     delete varReplacer;
     delete subsumeImplicit;
@@ -1674,7 +1674,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "sub-str-cls-with-bin") {
             //Subsumes and strengthens long clauses with binary clauses
             if (conf.do_distill_clauses) {
-                distillerwithimplicit->distill_long_with_implicit(true);
+                dist_long_with_impl->distill_long_with_implicit(true);
             }
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
@@ -1684,7 +1684,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
             if (conf.doStrSubImplicit) {
-                distillimplwithimpl->distill_implicit_with_implicit();
+                dist_impl_with_impl->distill_implicit_with_implicit();
             }
         } else if (token == "check-cache-size") {
             //Delete and disable cache if too large
@@ -1958,13 +1958,13 @@ void Solver::print_min_stats(const double cpu_time) const
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , distillerwithimplicit->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , distillerwithimplicit->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
@@ -2046,13 +2046,13 @@ void Solver::print_norm_stats(const double cpu_time) const
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
-                    , distillerwithimplicit->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-red time"
-                    , distillerwithimplicit->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
@@ -2164,14 +2164,14 @@ void Solver::print_all_stats(const double cpu_time) const
     distiller->get_stats().print(nVars());
 
     print_stats_line("c strength cache-irred time"
-                    , distillerwithimplicit->get_stats().irredCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().irredCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time");
     print_stats_line("c strength cache-red time"
-                    , distillerwithimplicit->get_stats().redCacheBased.cpu_time
-                    , stats_line_percent(distillerwithimplicit->get_stats().redCacheBased.cpu_time, cpu_time)
+                    , dist_long_with_impl->get_stats().redCacheBased.cpu_time
+                    , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time");
-    distillerwithimplicit->get_stats().print();
+    dist_long_with_impl->get_stats().print();
 
     if (conf.doStrSubImplicit) {
         subsumeImplicit->get_stats().print();

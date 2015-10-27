@@ -25,7 +25,7 @@
 using std::set;
 
 #include "src/solver.h"
-#include "src/distillerwithimplicit.h"
+#include "src/distillerlongwithimpl.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"
@@ -37,7 +37,7 @@ struct distill_long_with_implicittri_test : public ::testing::Test {
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
-        distillwbin = s->distillerwithimplicit;
+        distillwbin = s->dist_long_with_impl;
     }
     ~distill_long_with_implicittri_test()
     {
@@ -45,7 +45,7 @@ struct distill_long_with_implicittri_test : public ::testing::Test {
     }
 
     Solver* s;
-    DistillWithImplicit* distillwbin;
+    DistillerLongWithImpl* distillwbin;
     bool must_inter;
 };
 
