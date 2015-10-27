@@ -30,8 +30,8 @@ using std::set;
 using namespace CMSat;
 #include "test_helper.h"
 
-struct distill_long_with_implicittri_test : public ::testing::Test {
-    distill_long_with_implicittri_test()
+struct distill_long_with_impl : public ::testing::Test {
+    distill_long_with_impl()
     {
         must_inter = false;
         SolverConf conf;
@@ -39,7 +39,7 @@ struct distill_long_with_implicittri_test : public ::testing::Test {
         s = new Solver(&conf, &must_inter);
         distillwbin = s->dist_long_with_impl;
     }
-    ~distill_long_with_implicittri_test()
+    ~distill_long_with_impl()
     {
         delete s;
     }
@@ -51,7 +51,7 @@ struct distill_long_with_implicittri_test : public ::testing::Test {
 
 //Subsume long with bin
 
-TEST_F(distill_long_with_implicittri_test, subsume_w_bin)
+TEST_F(distill_long_with_impl, subsume_w_bin)
 {
     s->new_vars(4);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -61,7 +61,7 @@ TEST_F(distill_long_with_implicittri_test, subsume_w_bin)
     check_irred_cls_eq(s, "1, 2");
 }
 
-TEST_F(distill_long_with_implicittri_test, subsume_w_bin2)
+TEST_F(distill_long_with_impl, subsume_w_bin2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -72,7 +72,7 @@ TEST_F(distill_long_with_implicittri_test, subsume_w_bin2)
     check_irred_cls_eq(s, "1, 2");
 }
 
-TEST_F(distill_long_with_implicittri_test, subsume_w_bin3)
+TEST_F(distill_long_with_impl, subsume_w_bin3)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("2, 3"));
@@ -86,7 +86,7 @@ TEST_F(distill_long_with_implicittri_test, subsume_w_bin3)
 
 //Subsume long with tri
 
-TEST_F(distill_long_with_implicittri_test, subsume_w_tri)
+TEST_F(distill_long_with_impl, subsume_w_tri)
 {
     s->new_vars(4);
     s->add_clause_outer(str_to_cl("1, -2, -3"));
@@ -96,7 +96,7 @@ TEST_F(distill_long_with_implicittri_test, subsume_w_tri)
     check_irred_cls_eq(s, "1, -2, -3");
 }
 
-TEST_F(distill_long_with_implicittri_test, subsume2_w_tri2)
+TEST_F(distill_long_with_impl, subsume2_w_tri2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, -2, 4"));
@@ -109,7 +109,7 @@ TEST_F(distill_long_with_implicittri_test, subsume2_w_tri2)
 
 //No subsumption
 
-TEST_F(distill_long_with_implicittri_test, no_subsume)
+TEST_F(distill_long_with_impl, no_subsume)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -119,7 +119,7 @@ TEST_F(distill_long_with_implicittri_test, no_subsume)
     check_irred_cls_eq(s, "1, 2; 2, 3, 4, 5");
 }
 
-TEST_F(distill_long_with_implicittri_test, no_subsume_tri)
+TEST_F(distill_long_with_impl, no_subsume_tri)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, 2"));
@@ -131,7 +131,7 @@ TEST_F(distill_long_with_implicittri_test, no_subsume_tri)
 
 //Strengthening long with bin
 
-TEST_F(distill_long_with_implicittri_test, str_w_bin)
+TEST_F(distill_long_with_impl, str_w_bin)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, -2"));
@@ -141,7 +141,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_bin)
     check_irred_cls_contains(s, "1, 3, 4");
 }
 
-TEST_F(distill_long_with_implicittri_test, str_w_bin2)
+TEST_F(distill_long_with_impl, str_w_bin2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, -2"));
@@ -151,7 +151,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_bin2)
     check_irred_cls_contains(s, "-1, 3, 4");
 }
 
-TEST_F(distill_long_with_implicittri_test, str_w_bin3)
+TEST_F(distill_long_with_impl, str_w_bin3)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-2, -3"));
@@ -166,7 +166,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_bin3)
 
 //Strengthening long with tri
 
-TEST_F(distill_long_with_implicittri_test, str_w_tri)
+TEST_F(distill_long_with_impl, str_w_tri)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, -2, 3"));
@@ -176,7 +176,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_tri)
     check_irred_cls_contains(s, "-1, 3, 4");
 }
 
-TEST_F(distill_long_with_implicittri_test, str_w_tri2)
+TEST_F(distill_long_with_impl, str_w_tri2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, -2, -5"));
@@ -186,7 +186,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_tri2)
     check_irred_cls_contains(s, "-1, 3, -5");
 }
 
-TEST_F(distill_long_with_implicittri_test, str_w_tri3)
+TEST_F(distill_long_with_impl, str_w_tri3)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-2, -3, 5"));
@@ -200,7 +200,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_tri3)
 
 //Subsume with cache
 
-TEST_F(distill_long_with_implicittri_test, sub_w_cache)
+TEST_F(distill_long_with_impl, sub_w_cache)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
@@ -210,7 +210,7 @@ TEST_F(distill_long_with_implicittri_test, sub_w_cache)
     check_irred_cls_eq(s, "");
 }
 
-TEST_F(distill_long_with_implicittri_test, sub_w_cache2)
+TEST_F(distill_long_with_impl, sub_w_cache2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
@@ -222,7 +222,7 @@ TEST_F(distill_long_with_implicittri_test, sub_w_cache2)
 
 //STR with cache
 
-TEST_F(distill_long_with_implicittri_test, str_w_cache)
+TEST_F(distill_long_with_impl, str_w_cache)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
@@ -232,7 +232,7 @@ TEST_F(distill_long_with_implicittri_test, str_w_cache)
     check_irred_cls_eq(s, "-1, -3, 4");
 }
 
-TEST_F(distill_long_with_implicittri_test, str_w_cache2)
+TEST_F(distill_long_with_impl, str_w_cache2)
 {
     s->new_vars(5);
     s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
