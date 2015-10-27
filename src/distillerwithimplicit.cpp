@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "distillerwithbin.h"
+#include "distillerwithimplicit.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -40,14 +40,14 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-DistillerWithBin::DistillerWithBin(Solver* _solver) :
+DistillWithImplicit::DistillWithImplicit(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
     , seen_subs(solver->seen2)
     , numCalls(0)
 {}
 
-bool DistillerWithBin::distill_with_bin(const bool alsoStrengthen)
+bool DistillWithImplicit::distill_long_with_implicit(const bool alsoStrengthen)
 {
     assert(solver->ok);
     numCalls++;
@@ -87,7 +87,7 @@ end:
     return solver->ok;
 }
 
-void DistillerWithBin::strengthen_clause_with_watch(
+void DistillWithImplicit::strengthen_clause_with_watch(
     const Lit lit
     , const Watched* wit
 ) {
@@ -119,7 +119,7 @@ void DistillerWithBin::strengthen_clause_with_watch(
     }
 }
 
-bool DistillerWithBin::subsume_clause_with_watch(
+bool DistillWithImplicit::subsume_clause_with_watch(
     const Lit lit
     , Watched* wit
     , const Clause& cl
@@ -200,7 +200,7 @@ bool DistillerWithBin::subsume_clause_with_watch(
     return false;
 }
 
-bool DistillerWithBin::str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen)
+bool DistillWithImplicit::str_and_sub_clause_with_cache(const Lit lit, const bool alsoStrengthen)
 {
     if (solver->conf.doCache
         && seen[lit.toInt()] //We haven't yet removed this literal from the clause
@@ -229,7 +229,7 @@ bool DistillerWithBin::str_and_sub_clause_with_cache(const Lit lit, const bool a
      return false;
 }
 
-void DistillerWithBin::str_and_sub_using_watch(
+void DistillWithImplicit::str_and_sub_using_watch(
     Clause& cl
     , const Lit lit
     , const bool alsoStrengthen
@@ -258,7 +258,7 @@ void DistillerWithBin::str_and_sub_using_watch(
     }
 }
 
-void DistillerWithBin::try_subsuming_by_stamping(const bool red)
+void DistillWithImplicit::try_subsuming_by_stamping(const bool red)
 {
     if (solver->conf.doStamp
         && solver->conf.otfHyperbin
@@ -273,7 +273,7 @@ void DistillerWithBin::try_subsuming_by_stamping(const bool red)
     }
 }
 
-void DistillerWithBin::remove_lits_through_stamping_red()
+void DistillWithImplicit::remove_lits_through_stamping_red()
 {
     if (lits.size() > 1) {
         timeAvailable -= (long)lits.size()*3 + 10;
@@ -283,7 +283,7 @@ void DistillerWithBin::remove_lits_through_stamping_red()
     }
 }
 
-void DistillerWithBin::remove_lits_through_stamping_irred()
+void DistillWithImplicit::remove_lits_through_stamping_irred()
 {
     if (lits.size() > 1) {
         timeAvailable -= (long)lits.size()*3 + 10;
@@ -293,7 +293,7 @@ void DistillerWithBin::remove_lits_through_stamping_irred()
     }
 }
 
-void DistillerWithBin::strsub_with_cache_and_watch(
+void DistillWithImplicit::strsub_with_cache_and_watch(
     bool alsoStrengthen
     , Clause& cl
 ) {
@@ -318,7 +318,7 @@ void DistillerWithBin::strsub_with_cache_and_watch(
     assert(lits2.size() > 1);
 }
 
-bool DistillerWithBin::sub_str_cl_with_cache_watch_stamp(
+bool DistillWithImplicit::sub_str_cl_with_cache_watch_stamp(
     ClOffset& offset
     , bool red
     , const bool alsoStrengthen
@@ -384,7 +384,7 @@ bool DistillerWithBin::sub_str_cl_with_cache_watch_stamp(
     return remove_or_shrink_clause(cl, offset);
 }
 
-bool DistillerWithBin::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
+bool DistillWithImplicit::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
 {
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
@@ -404,7 +404,7 @@ bool DistillerWithBin::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
     return true;
 }
 
-void DistillerWithBin::randomise_order_of_clauses(
+void DistillWithImplicit::randomise_order_of_clauses(
     vector<ClOffset>& clauses
 ) {
     if (clauses.empty())
@@ -419,7 +419,7 @@ void DistillerWithBin::randomise_order_of_clauses(
     }
 }
 
-uint64_t DistillerWithBin::calc_time_available(
+uint64_t DistillWithImplicit::calc_time_available(
     const bool alsoStrengthen
     , const bool red
 ) const {
@@ -449,7 +449,7 @@ uint64_t DistillerWithBin::calc_time_available(
     return maxCountTime;
 }
 
-bool DistillerWithBin::shorten_all_cl_with_cache_watch_stamp(
+bool DistillWithImplicit::shorten_all_cl_with_cache_watch_stamp(
     vector<ClOffset>& clauses
     , bool red
     , bool alsoStrengthen
@@ -512,7 +512,7 @@ bool DistillerWithBin::shorten_all_cl_with_cache_watch_stamp(
     return solver->ok;
 }
 
-void DistillerWithBin::dump_stats_for_shorten_all_cl_with_cache_stamp(
+void DistillWithImplicit::dump_stats_for_shorten_all_cl_with_cache_stamp(
     bool red
     , bool alsoStrengthen
     , double myTime
@@ -557,24 +557,24 @@ void DistillerWithBin::dump_stats_for_shorten_all_cl_with_cache_stamp(
     }
 }
 
-void DistillerWithBin::CacheBasedData::clear()
+void DistillWithImplicit::CacheBasedData::clear()
 {
     CacheBasedData tmp;
     *this = tmp;
 }
 
-size_t DistillerWithBin::CacheBasedData::get_cl_subsumed() const
+size_t DistillWithImplicit::CacheBasedData::get_cl_subsumed() const
 {
     return subBinTri + subsumedStamp + subCache;
 }
 
-size_t DistillerWithBin::CacheBasedData::get_lits_rem() const
+size_t DistillWithImplicit::CacheBasedData::get_lits_rem() const
 {
     return remLitBinTri + remLitCache
         + remLitTimeStampTotal + remLitTimeStampTotalInv;
 }
 
-void DistillerWithBin::CacheBasedData::print() const
+void DistillWithImplicit::CacheBasedData::print() const
 {
     cout
     << "c [distill-with-bin-ext] stamp-based"
@@ -596,311 +596,20 @@ void DistillerWithBin::CacheBasedData::print() const
     << endl;
 }
 
-void DistillerWithBin::strengthen_bin_with_bin(
-    const Lit lit
-    , Watched*& i
-    , Watched*& j
-    , const Watched* end
-) {
-    lits.clear();
-    lits.push_back(lit);
-    lits.push_back(i->lit2());
-    if (solver->conf.doStamp) {
-        timeAvailable -= 10;
-        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-        str_impl_data.stampRem += tmp.first;
-        str_impl_data.stampRem += tmp.second;
-        assert(!lits.empty());
-        if (lits.size() == 1) {
-            str_impl_data.toEnqueue.push_back(lits[0]);
-            (*solver->drup) << lits[0] << fin;
-
-            str_impl_data.remLitFromBin++;
-            str_impl_data.stampRem++;
-            *j++ = *i;
-            return;
-        }
-    }
-
-    //If inverted, then the inverse will never be found, because
-    //watches are sorted
-    if (i->lit2().sign()) {
-        *j++ = *i;
-        return;
-    }
-
-    //Try to look for a binary in this same watchlist
-    //that has ~i->lit2() inside. Everything is sorted, so we are
-    //lucky, this is speedy
-    bool rem = false;
-    watch_subarray::const_iterator i2 = i;
-    while(i2 != end
-        && (i2->isBin() || i2->isTri())
-        && i->lit2().var() == i2->lit2().var()
-    ) {
-        timeAvailable -= 2;
-        //Yay, we have found what we needed!
-        if (i2->isBin() && i2->lit2() == ~i->lit2()) {
-            rem = true;
-            break;
-        }
-
-        i2++;
-    }
-
-    //Enqeue literal
-    if (rem) {
-        str_impl_data.remLitFromBin++;
-        str_impl_data.toEnqueue.push_back(lit);
-        (*solver->drup) << lit << fin;
-    }
-    *j++ = *i;
-}
-
-void DistillerWithBin::strengthen_tri_with_bin_tri_stamp(
-    const Lit lit
-    , Watched*& i
-    , Watched*& j
-) {
-    const Lit lit1 = i->lit2();
-    const Lit lit2 = i->lit3();
-    bool rem = false;
-
-    timeAvailable -= (long)solver->watches[~lit].size();
-    for(watch_subarray::const_iterator
-        it2 = solver->watches[~lit].begin(), end2 = solver->watches[~lit].end()
-        ; it2 != end2 && timeAvailable > 0
-        ; it2++
-    ) {
-        if (it2->isBin()
-            && (it2->lit2() == lit1 || it2->lit2() == lit2)
-        ) {
-            rem = true;
-            str_impl_data.remLitFromTriByBin++;
-            break;
-        }
-
-        if (it2->isTri()
-            && (
-                (it2->lit2() == lit1 && it2->lit3() == lit2)
-                ||
-                (it2->lit2() == lit2 && it2->lit3() == lit1)
-            )
-
-        ) {
-            rem = true;
-            str_impl_data.remLitFromTriByTri++;
-            break;
-        }
-
-        //watches are sorted, so early-abort
-        if (it2->isClause())
-            break;
-    }
-
-    if (rem) {
-        solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-        str_impl_data.remLitFromTri++;
-        str_impl_data.binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
-
-        (*solver->drup)
-        << i->lit2()  << i->lit3() << fin
-        << del << lit << i->lit2() << i->lit3() << fin;
-        return;
-    }
-
-    if (solver->conf.doStamp) {
-        //Strengthen TRI using stamps
-        lits.clear();
-        lits.push_back(lit);
-        lits.push_back(i->lit2());
-        lits.push_back(i->lit3());
-
-        //Try both stamp types to reduce size
-        timeAvailable -= 15;
-        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-        str_impl_data.stampRem += tmp.first;
-        str_impl_data.stampRem += tmp.second;
-        if (lits.size() > 1) {
-            timeAvailable -= 15;
-            std::pair<size_t, size_t> tmp2 = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            str_impl_data.stampRem += tmp2.first;
-            str_impl_data.stampRem += tmp2.second;
-        }
-
-        if (lits.size() == 2) {
-            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-            str_impl_data.remLitFromTri++;
-            str_impl_data.binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
-
-            //Drup
-            (*solver->drup)
-            << lits[0] << lits[1] << fin
-            << del << lit << i->lit2() << i->lit3() << fin;
-
-            return;
-        } else if (lits.size() == 1) {
-            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-            str_impl_data.remLitFromTri+=2;
-            str_impl_data.toEnqueue.push_back(lits[0]);
-            (*solver->drup)
-            << lits[0] << fin
-            << del << lit << i->lit2() << i->lit3() << fin;
-
-            return;
-        }
-    }
-
-
-    //Nothing to do, copy
-    *j++ = *i;
-}
-
-void DistillerWithBin::strengthen_implicit_lit(const Lit lit)
-{
-    watch_subarray ws = solver->watches[lit];
-
-    Watched* i = ws.begin();
-    Watched* j = i;
-    for (const Watched* end = ws.end()
-        ; i != end
-        ; i++
-    ) {
-        timeAvailable -= 2;
-        if (timeAvailable < 0) {
-            *j++ = *i;
-            continue;
-        }
-
-        switch(i->getType()) {
-            case CMSat::watch_clause_t:
-                *j++ = *i;
-                break;
-
-            case CMSat::watch_binary_t:
-                timeAvailable -= 20;
-                strengthen_bin_with_bin(lit, i, j, end);
-                break;
-
-            case CMSat::watch_tertiary_t:
-                timeAvailable -= 20;
-                strengthen_tri_with_bin_tri_stamp(lit, i, j);
-                break;
-
-            default:
-                assert(false);
-                break;
-        }
-    }
-    ws.shrink(i-j);
-}
-
-bool DistillerWithBin::strengthen_implicit()
-{
-    str_impl_data.clear();
-
-    const size_t origTrailSize = solver->trail_size();
-    timeAvailable =
-        solver->conf.strengthen_implicit_time_limitM*1000LL*1000LL
-        *solver->conf.global_timeout_multiplier;
-    const int64_t orig_time = timeAvailable;
-    double myTime = cpuTime();
-
-    //Cannot handle empty
-    if (solver->watches.size() == 0)
-        return solver->okay();
-
-    //Randomize starting point
-    size_t upI = solver->mtrand.randInt(solver->watches.size()-1);
-    size_t numDone = 0;
-    for (; numDone < solver->watches.size() && timeAvailable > 0
-        ; upI = (upI +1) % solver->watches.size(), numDone++
-
-    ) {
-        str_impl_data.numWatchesLooked++;
-        const Lit lit = Lit::toLit(upI);
-        strengthen_implicit_lit(lit);
-    }
-
-    //Enqueue delayed values
-    if (!solver->fully_enqueue_these(str_impl_data.toEnqueue))
-        goto end;
-
-    //Add delayed binary clauses
-    for(const BinaryClause& bin: str_impl_data.binsToAdd) {
-        lits.clear();
-        lits.push_back(bin.getLit1());
-        lits.push_back(bin.getLit2());
-        timeAvailable -= 5;
-        solver->add_clause_int(lits, bin.isRed());
-        if (!solver->okay())
-            goto end;
-    }
-
-end:
-
-    if (solver->conf.verbosity >= 1) {
-        str_impl_data.print(
-            solver->trail_size() - origTrailSize
-            , cpuTime() - myTime
-            , timeAvailable
-            , orig_time
-            , solver
-        );
-    }
-    #ifdef DEBUG_IMPLICIT_STATS
-    solver->check_stats();
-    #endif
-
-    return solver->okay();
-}
-
-void DistillerWithBin::StrImplicitData::print(
-    const size_t trail_diff
-    , const double time_used
-    , const int64_t timeAvailable
-    , const int64_t orig_time
-    , Solver* solver
-) const {
-    bool time_out = timeAvailable <= 0;
-    const double time_remain = float_div(timeAvailable, orig_time);
-
-    cout
-    << "c [impl str]"
-    << " lit bin: " << remLitFromBin
-    << " lit tri: " << remLitFromTri
-    << " (by tri: " << remLitFromTriByTri << ")"
-    << " (by stamp: " << stampRem << ")"
-    << " set-var: " << trail_diff
-    << solver->conf.print_times(time_used, time_out, time_remain)
-    << " w-visit: " << numWatchesLooked
-    << endl;
-
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
-            solver
-            , "implicit str"
-            , time_used
-            , time_out
-            , time_remain
-        );
-    }
-}
-
-DistillerWithBin::Stats& DistillerWithBin::Stats::operator+=(const Stats& other)
+DistillWithImplicit::Stats& DistillWithImplicit::Stats::operator+=(const Stats& other)
 {
     irredCacheBased += other.irredCacheBased;
     redCacheBased += other.redCacheBased;
     return *this;
 }
 
-void DistillerWithBin::Stats::print_short(const Solver* solver) const
+void DistillWithImplicit::Stats::print_short(const Solver* solver) const
 {
     irredCacheBased.print_short("irred", solver);
     redCacheBased.print_short("red", solver);
 }
 
-void DistillerWithBin::Stats::print() const
+void DistillWithImplicit::Stats::print() const
 {
     cout << "c -------- STRENGTHEN STATS --------" << endl;
     cout << "c --> cache-based on irred cls" << endl;
@@ -912,7 +621,7 @@ void DistillerWithBin::Stats::print() const
 }
 
 
-void DistillerWithBin::Stats::CacheBased::print_short(const string type, const Solver* solver) const
+void DistillWithImplicit::Stats::CacheBased::print_short(const string type, const Solver* solver) const
 {
     cout << "c [distill] cache-based "
     << std::setw(5) << type
@@ -925,7 +634,7 @@ void DistillerWithBin::Stats::CacheBased::print_short(const string type, const S
     << endl;
 }
 
-void DistillerWithBin::Stats::CacheBased::print() const
+void DistillWithImplicit::Stats::CacheBased::print() const
 {
     print_stats_line("c time"
         , cpu_time

@@ -230,7 +230,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doSortWatched    (true)
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(30LL)
-        , strengthen_implicit_time_limitM(200LL)
+        , distill_implicit_with_implicit_time_limitM(200LL)
         , doCalcReach      (true)
 
         //Gates

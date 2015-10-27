@@ -35,7 +35,8 @@ set(cryptoms_lib_files
     sccfinder.cpp
     solverconf.cpp
     distiller.cpp
-    distillerwithbin.cpp
+    distillerwithimplicit.cpp
+    distillerimplwithimpl.cpp
     calcdefpolars.cpp
     solutionextender.cpp
     completedetachreattacher.cpp

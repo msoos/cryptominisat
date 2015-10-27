@@ -36,11 +36,10 @@ using std::vector;
 class Solver;
 class Clause;
 
-class DistillerWithBin {
+class DistillWithImplicit {
     public:
-        DistillerWithBin(Solver* solver);
-        bool distill_with_bin(bool alsoStrengthen);
-        bool strengthen_implicit();
+        DistillWithImplicit(Solver* solver);
+        bool distill_long_with_implicit(bool alsoStrengthen);
 
         struct Stats
         {
@@ -99,38 +98,6 @@ class DistillerWithBin {
 
     private:
 
-        //Vars for strengthen implicit
-        struct StrImplicitData
-        {
-            uint64_t remLitFromBin = 0;
-            uint64_t remLitFromTri = 0;
-            uint64_t remLitFromTriByBin = 0;
-            uint64_t remLitFromTriByTri = 0;
-            uint64_t stampRem = 0;
-
-            uint64_t numWatchesLooked = 0;
-
-            //For delayed enqueue and binary adding
-            //Used for strengthening
-            vector<Lit> toEnqueue;
-            vector<BinaryClause> binsToAdd;
-
-            void clear()
-            {
-                StrImplicitData tmp;
-                *this = tmp;
-            }
-
-            void print(
-                const size_t trail_diff
-                , const double time_used
-                , const int64_t timeAvailable
-                , const int64_t orig_time
-                , Solver* solver
-            ) const;
-        };
-        StrImplicitData str_impl_data;
-
         bool remove_or_shrink_clause(Clause& cl, ClOffset& offset);
         void strsub_with_cache_and_watch(
             bool alsoStrengthen
@@ -142,18 +109,6 @@ class DistillerWithBin {
             , double myTime
             , double orig_time_available
         );
-        void strengthen_bin_with_bin(
-            const Lit lit
-            , Watched*& i
-            , Watched*& j
-            , const Watched* end
-        );
-        void strengthen_tri_with_bin_tri_stamp(
-           const Lit lit
-            , Watched*& i
-            , Watched*& j
-        );
-        void strengthen_implicit_lit(const Lit lit);
 
         //Cache-based data
         struct CacheBasedData
@@ -226,7 +181,7 @@ class DistillerWithBin {
 
 };
 
-inline const DistillerWithBin::Stats& DistillerWithBin::get_stats() const
+inline const DistillWithImplicit::Stats& DistillWithImplicit::get_stats() const
 {
     return globalStats;
 }
