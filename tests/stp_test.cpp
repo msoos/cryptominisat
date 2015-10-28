@@ -53,7 +53,7 @@ TEST(stp_test, no_simp_at_startup)
 
     s.solve();
     auto eq_xors = s.get_all_binary_xors();
-    EXPECT_EQ(eq_xors.size(), 0);
+    EXPECT_EQ(eq_xors.size(), 0U);
 }
 
 TEST(stp_test, simp_at_startup)
@@ -63,7 +63,7 @@ TEST(stp_test, simp_at_startup)
 
     s.solve();
     auto eq_xors = s.get_all_binary_xors();
-    EXPECT_EQ(eq_xors.size(), 1);
+    EXPECT_EQ(eq_xors.size(), 1U);
 }
 
 TEST(stp_test, set_num_threads_true)
