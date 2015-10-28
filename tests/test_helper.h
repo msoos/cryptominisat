@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 #include "src/solver.h"
+#include "src/stamp.h"
 #include "cryptominisat4/cryptominisat.h"
 
 using std::cout;
@@ -284,6 +285,17 @@ void add_to_cache_irred(Solver* s, const string& data)
     s->implCache[lits[1]].lits.push_back(LitExtra(lits[0], true));
 }
 
+void add_to_stamp_irred(Solver* s, const string& data)
+{
+    vector<Lit> lits = str_to_cl(data);
+    assert(lits.size() == 2);
+    assert(s->stamp.tstamp.size() > lits[0].toInt());
+    assert(s->stamp.tstamp.size() > lits[1].toInt());
+    s->stamp.tstamp[(~lits[0]).toInt()].start[STAMP_IRRED] = ++ s->stamp.stampingTime;
+    s->stamp.tstamp[(lits[1]).toInt()].start[STAMP_IRRED] = ++ s->stamp.stampingTime;
+    s->stamp.tstamp[(lits[1]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
+    s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
+}
 
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;

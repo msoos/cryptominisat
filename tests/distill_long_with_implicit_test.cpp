@@ -242,6 +242,82 @@ TEST_F(distill_long_with_impl, str_w_cache2)
     check_irred_cls_eq(s, "2, -3, 4");
 }
 
+TEST_F(distill_long_with_impl, str_w_cache_no)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
+    add_to_cache_irred(s, "4, -1");
+
+    distillwbin->distill_long_with_implicit(true);
+    check_irred_cls_eq(s, "2, -3, 4, 5");
+}
+
+//SUB with stamp
+
+TEST_F(distill_long_with_impl, sub_w_stamp)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
+    add_to_stamp_irred(s, "-1, 2");
+
+    distillwbin->distill_long_with_implicit(false);
+    check_irred_cls_eq(s, "");
+}
+
+TEST_F(distill_long_with_impl, sub_w_stamp2)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("-1, 3, 4, 5"));
+    add_to_stamp_irred(s, "3, -1");
+
+    distillwbin->distill_long_with_implicit(false);
+    check_irred_cls_eq(s, "");
+}
+
+TEST_F(distill_long_with_impl, sub_w_stamp_no)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("-1, 2, -3, 4"));
+    add_to_stamp_irred(s, "-2, -1");
+
+    distillwbin->distill_long_with_implicit(false);
+    check_irred_cls_eq(s, "-1, 2, -3, 4");
+}
+
+// //STR with stamp
+
+TEST_F(distill_long_with_impl, str_w_stamp)
+{
+    s->new_vars(5);
+    s->add_clause_outer(str_to_cl("2, -3, 4, 5"));
+    add_to_stamp_irred(s, "2, 3");
+
+    distillwbin->distill_long_with_implicit(true);
+    check_irred_cls_eq(s, "2, 4, 5");
+}
+
+TEST_F(distill_long_with_impl, str_w_stamp2)
+{
+    s->new_vars(10);
+    s->add_clause_outer(str_to_cl("-1, 7, 8, -9"));
+    add_to_stamp_irred(s, "1, 7");
+
+    distillwbin->distill_long_with_implicit(true);
+    check_irred_cls_eq(s, "7, 8, -9");
+}
+
+TEST_F(distill_long_with_impl, str_w_stamp_no)
+{
+    s->new_vars(10);
+    s->add_clause_outer(str_to_cl("-3, 6, 7, -9"));
+    add_to_stamp_irred(s, "3, -6");
+
+    distillwbin->distill_long_with_implicit(true);
+    check_irred_cls_eq(s, "-3, 6, 7, -9");
+}
+
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
