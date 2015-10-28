@@ -69,6 +69,7 @@ public:
     void clearStamps();
     void save_on_var_memory(const uint32_t newNumVars);
 
+    uint64_t stampingTime = 0;
     vector<Timestamp>   tstamp;
     void new_var()
     {

@@ -26,7 +26,6 @@ using namespace CMSat;
 
 HyperEngine::HyperEngine(const SolverConf *_conf, bool* _needToInterrupt) :
     PropEngine(_conf, _needToInterrupt)
-    , stampingTime(0)
 {
 }
 
@@ -204,8 +203,8 @@ Lit HyperEngine::prop_red_bin_dfs(
 
             case PROP_SOMETHING:
                 propStats.bogoProps += 8;
-                stampingTime++;
-                stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+                stamp.stampingTime++;
+                stamp.tstamp[trail.back().toInt()].start[stampType] = stamp.stampingTime;
 
                 //Root for literals propagated afterwards will be this literal
                 root = trail.back();
@@ -213,7 +212,7 @@ Lit HyperEngine::prop_red_bin_dfs(
                 #ifdef DEBUG_STAMPING
                 cout
                 << "From " << p << " enqueued " << trail.back()
-                << " for stampingTime " << stampingTime
+                << " for stamp.stampingTime " << stamp.stampingTime
                 << endl;
                 #endif
 
@@ -284,12 +283,12 @@ Lit HyperEngine::prop_irred_bin_dfs(
 
             case PROP_SOMETHING:
                 propStats.bogoProps += 8;
-                stampingTime++;
-                stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+                stamp.stampingTime++;
+                stamp.tstamp[trail.back().toInt()].start[stampType] = stamp.stampingTime;
                 #ifdef DEBUG_STAMPING
                 cout
                 << "From " << p << " enqueued " << trail.back()
-                << " for stampingTime " << stampingTime
+                << " for stamp.stampingTime " << stamp.stampingTime
                 << endl;
                 #endif
 
@@ -311,12 +310,12 @@ Lit HyperEngine::prop_irred_bin_dfs(
     //Finished with this literal
     propStats.bogoProps += ws.size()*4;
     toPropBin.pop();
-    stampingTime++;
-    stamp.tstamp[p.toInt()].end[stampType] = stampingTime;
+    stamp.stampingTime++;
+    stamp.tstamp[p.toInt()].end[stampType] = stamp.stampingTime;
     #ifdef DEBUG_STAMPING
     cout
     << "End time for " << p
-    << " is " << stampingTime
+    << " is " << stamp.stampingTime
     << endl;
     #endif
 
@@ -378,14 +377,14 @@ Lit HyperEngine::prop_larger_than_bin_cl_dfs(
 
         case PROP_SOMETHING:
             propStats.bogoProps += 8;
-            stampingTime++;
+            stamp.stampingTime++;
             #ifdef DEBUG_STAMPING
             cout
             << "From (long-reduced) " << p << " enqueued << " << trail.back()
-            << " for stampingTime " << stampingTime
+            << " for stamp.stampingTime " << stamp.stampingTime
             << endl;
             #endif
-            stamp.tstamp[trail.back().toInt()].start[stampType] = stampingTime;
+            stamp.tstamp[trail.back().toInt()].start[stampType] = stamp.stampingTime;
             if (stampType == STAMP_IRRED) {
                 //Root for literals propagated afterwards will be this literal
                 root = trail.back();
@@ -464,13 +463,13 @@ Lit HyperEngine::propagate_dfs(
 
     //Setup
     needToAddBinClause.clear();
-    stampingTime++;
-    stamp.tstamp[root.toInt()].start[stampType] = stampingTime;
+    stamp.stampingTime++;
+    stamp.tstamp[root.toInt()].start[stampType] = stamp.stampingTime;
 
     #ifdef DEBUG_STAMPING
     cout
     << "Top-enqueued << " << trail.back()
-    << " for stampingTime " << stampingTime
+    << " for stamp.stampingTime " << stamp.stampingTime
     << endl;
     #endif
 
@@ -527,12 +526,12 @@ void HyperEngine::close_all_timestamps(const StampType stampType)
 {
     while(!toPropBin.empty())
     {
-        stampingTime++;
-        stamp.tstamp[toPropBin.top().toInt()].end[stampType] = stampingTime;
+        stamp.stampingTime++;
+        stamp.tstamp[toPropBin.top().toInt()].end[stampType] = stamp.stampingTime;
         #ifdef DEBUG_STAMPING
         cout
         << "End time for " << toPropBin.top()
-        << " is " << stampingTime
+        << " is " << stamp.stampingTime
         << " (due to failure, closing all nodes)"
         << endl;
         #endif
