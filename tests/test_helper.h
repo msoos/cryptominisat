@@ -281,6 +281,7 @@ void add_to_cache_irred(Solver* s, const string& data)
     vector<Lit> lits = str_to_cl(data);
     assert(lits.size() == 2);
     assert(s->implCache.size() > lits[0].toInt());
+    assert(s->implCache.size() > lits[1].toInt());
     s->implCache[lits[0]].lits.push_back(LitExtra(lits[1], true));
     s->implCache[lits[1]].lits.push_back(LitExtra(lits[0], true));
 }
