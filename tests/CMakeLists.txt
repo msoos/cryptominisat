@@ -107,7 +107,7 @@ set (MY_TESTS
     vrepl_test
     clause_cleaner_test
     probe_test
-    distiller_test
+    distiller_all_with_all_test
     distill_long_with_implicit_test
 )
 foreach(F ${MY_TESTS})
