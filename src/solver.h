@@ -138,19 +138,19 @@ class Solver : public Searcher
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         //Systems that are used to accompilsh the tasks
-        SQLStats*            sqlStats = NULL;
-        ClauseCleaner*       clauseCleaner = NULL;
-        VarReplacer*         varReplacer = NULL;
-        SubsumeImplicit*     subsumeImplicit = NULL;
-        DataSync*            datasync = NULL;
-        ReduceDB*            reduceDB = NULL;
-        Prober*              prober = NULL;
-        InTree*              intree = NULL;
-        OccSimplifier*       simplifier = NULL;
-        DistillerAllWithAll*           distill_all_with_all = NULL;
+        SQLStats*              sqlStats = NULL;
+        ClauseCleaner*         clauseCleaner = NULL;
+        VarReplacer*           varReplacer = NULL;
+        SubsumeImplicit*       subsumeImplicit = NULL;
+        DataSync*              datasync = NULL;
+        ReduceDB*              reduceDB = NULL;
+        Prober*                prober = NULL;
+        InTree*                intree = NULL;
+        OccSimplifier*         simplifier = NULL;
+        DistillerAllWithAll*   distill_all_with_all = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         DistillerImplWithImpl* dist_impl_with_impl = NULL;
-        CompHandler*         compHandler = NULL;
+        CompHandler*           compHandler = NULL;
 
         vector<LitReachData> litReachable;
 
