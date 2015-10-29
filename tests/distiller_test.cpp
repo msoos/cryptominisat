@@ -25,7 +25,7 @@
 using std::set;
 
 #include "src/solver.h"
-#include "src/distiller.h"
+#include "src/distillerallwithall.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"
@@ -37,7 +37,7 @@ struct distill_test : public ::testing::Test {
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
-        distiller = s->distiller;
+        distill_all_with_all = s->distill_all_with_all;
     }
     ~distill_test()
     {
@@ -45,7 +45,7 @@ struct distill_test : public ::testing::Test {
     }
 
     Solver* s;
-    Distiller* distiller;
+    DistillerAllWithAll* distill_all_with_all;
     bool must_inter;
 };
 
@@ -57,7 +57,7 @@ TEST_F(distill_test, long_by1)
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 3, 4");
 }
 
@@ -68,7 +68,7 @@ TEST_F(distill_test, long_by1_transitive)
     s->add_clause_outer(str_to_cl("5, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 3, 4");
 }
 
@@ -78,7 +78,7 @@ TEST_F(distill_test, long_by1_2)
     s->add_clause_outer(str_to_cl("2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 2, 4");
 }
 
@@ -88,7 +88,7 @@ TEST_F(distill_test, long_by1_3)
     s->add_clause_outer(str_to_cl("1, 2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 2, 4");
 }
 
@@ -99,7 +99,7 @@ TEST_F(distill_test, long_by1_nodistill
     s->add_clause_outer(str_to_cl("-1, 3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
@@ -110,7 +110,7 @@ TEST_F(distill_test, long_by1_nodistill2
     s->add_clause_outer(str_to_cl("-1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(1);
+    distill_all_with_all->distill(1);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
@@ -122,7 +122,7 @@ TEST_F(distill_test, long_by2)
     s->add_clause_outer(str_to_cl("1, 2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(2);
+    distill_all_with_all->distill(2);
     check_irred_cls_contains(s, "1, 2, 4");
 }
 
@@ -133,7 +133,7 @@ TEST_F(distill_test, long_by2_transitive)
     s->add_clause_outer(str_to_cl("5, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(2);
+    distill_all_with_all->distill(2);
     check_irred_cls_contains(s, "1, 2, 4");
 }
 
@@ -143,7 +143,7 @@ TEST_F(distill_test, long_by2_2)
     s->add_clause_outer(str_to_cl("2, 3, 4, -5"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
 
-    distiller->distill(2);
+    distill_all_with_all->distill(2);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
@@ -154,7 +154,7 @@ TEST_F(distill_test, long_by2_nodistill
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distiller->distill(2);
+    distill_all_with_all->distill(2);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
@@ -166,7 +166,7 @@ TEST_F(distill_test, tri)
     s->add_clause_outer(str_to_cl("1, 2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3"));
 
-    distiller->distill();
+    distill_all_with_all->distill();
     check_irred_cls_contains(s, "1, 2");
 }
 
@@ -177,7 +177,7 @@ TEST_F(distill_test, tri_transitive)
     s->add_clause_outer(str_to_cl("-4, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3"));
 
-    distiller->distill();
+    distill_all_with_all->distill();
     check_irred_cls_contains(s, "1, 2");
 }
 

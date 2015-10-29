@@ -50,7 +50,7 @@ class ClauseCleaner;
 class Prober;
 class OccSimplifier;
 class SCCFinder;
-class Distiller;
+class DistillerAllWithAll;
 class DistillerLongWithImpl;
 class DistillerImplWithImpl;
 class CalcDefPolars;
@@ -147,7 +147,7 @@ class Solver : public Searcher
         Prober*              prober = NULL;
         InTree*              intree = NULL;
         OccSimplifier*       simplifier = NULL;
-        Distiller*           distiller = NULL;
+        DistillerAllWithAll*           distill_all_with_all = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         DistillerImplWithImpl* dist_impl_with_impl = NULL;
         CompHandler*         compHandler = NULL;

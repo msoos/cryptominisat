@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "distiller.h"
+#include "distillerallwithall.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -40,11 +40,11 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-Distiller::Distiller(Solver* _solver) :
+DistillerAllWithAll::DistillerAllWithAll(Solver* _solver) :
     solver(_solver)
 {}
 
-bool Distiller::distill(uint32_t queueByBy)
+bool DistillerAllWithAll::distill(uint32_t queueByBy)
 {
     assert(solver->ok);
     numCalls++;
@@ -72,7 +72,7 @@ end:
     return solver->ok;
 }
 
-bool Distiller::distill_tri_irred_cls()
+bool DistillerAllWithAll::distill_tri_irred_cls()
 {
     if (solver->conf.verbosity >= 6) {
         cout
@@ -193,7 +193,7 @@ struct ClauseSizeSorter
     }
 };
 
-bool Distiller::distill_long_irred_cls(uint32_t queueByBy)
+bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 {
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
@@ -337,7 +337,7 @@ bool Distiller::distill_long_irred_cls(uint32_t queueByBy)
     return solver->ok;
 }
 
-ClOffset Distiller::try_distill_clause_and_return_new(
+ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
     , const uint32_t queueByBy
@@ -429,7 +429,7 @@ ClOffset Distiller::try_distill_clause_and_return_new(
     }
 }
 
-Distiller::Stats& Distiller::Stats::operator+=(const Stats& other)
+DistillerAllWithAll::Stats& DistillerAllWithAll::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
@@ -443,7 +443,7 @@ Distiller::Stats& Distiller::Stats::operator+=(const Stats& other)
     return *this;
 }
 
-void Distiller::Stats::print_short(const Solver* solver) const
+void DistillerAllWithAll::Stats::print_short(const Solver* solver) const
 {
     cout
     << "c [distill] tri+long"
@@ -455,7 +455,7 @@ void Distiller::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void Distiller::Stats::print(const size_t nVars) const
+void DistillerAllWithAll::Stats::print(const size_t nVars) const
 {
     cout << "c -------- DISTILL STATS --------" << endl;
     print_stats_line("c time"

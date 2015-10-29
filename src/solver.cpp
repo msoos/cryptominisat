@@ -37,7 +37,7 @@
 #include "searcher.h"
 #include "occsimplifier.h"
 #include "prober.h"
-#include "distiller.h"
+#include "distillerallwithall.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
@@ -93,7 +93,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     if (conf.perform_occur_based_simp) {
         simplifier = new OccSimplifier(this);
     }
-    distiller = new Distiller(this);
+    distill_all_with_all = new DistillerAllWithAll(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
     dist_impl_with_impl = new DistillerImplWithImpl(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -118,7 +118,7 @@ Solver::~Solver()
     delete prober;
     delete intree;
     delete simplifier;
-    delete distiller;
+    delete distill_all_with_all;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
     delete clauseCleaner;
@@ -1679,7 +1679,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distiller->distill(solver->conf.distill_queue_by);
+                distill_all_with_all->distill(solver->conf.distill_queue_by);
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
@@ -1953,8 +1953,8 @@ void Solver::print_min_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distiller->get_stats().time_used
-                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
+                    , distill_all_with_all->get_stats().time_used
+                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2041,8 +2041,8 @@ void Solver::print_norm_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distiller->get_stats().time_used
-                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
+                    , distill_all_with_all->get_stats().time_used
+                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2156,12 +2156,12 @@ void Solver::print_all_stats(const double cpu_time) const
     varReplacer->get_stats().print(nVars());
     varReplacer->print_some_stats(cpu_time);
 
-    //Distiller stats
+    //DistillerAllWithAll stats
     print_stats_line("c distill time"
-                    , distiller->get_stats().time_used
-                    , stats_line_percent(distiller->get_stats().time_used, cpu_time)
+                    , distill_all_with_all->get_stats().time_used
+                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
                     , "% time");
-    distiller->get_stats().print(nVars());
+    distill_all_with_all->get_stats().print(nVars());
 
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time

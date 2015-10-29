@@ -19,8 +19,8 @@
  * MA 02110-1301  USA
 */
 
-#ifndef __DISTILLER_H__
-#define __DISTILLER_H__
+#ifndef __DISTILLERALL_WITH_ALL_H__
+#define __DISTILLERALL_WITH_ALL_H__
 
 #include <vector>
 #include "clause.h"
@@ -36,9 +36,9 @@ using std::vector;
 class Solver;
 class Clause;
 
-class Distiller {
+class DistillerAllWithAll {
     public:
-        Distiller(Solver* solver);
+        DistillerAllWithAll(Solver* solver);
         bool distill(uint32_t queueByBy = 2);
 
         struct Stats
@@ -90,11 +90,11 @@ class Distiller {
 
 };
 
-inline const Distiller::Stats& Distiller::get_stats() const
+inline const DistillerAllWithAll::Stats& DistillerAllWithAll::get_stats() const
 {
     return globalStats;
 }
 
 } //end namespace
 
-#endif //__DISTILLER_H__
+#endif //__DISTILLERALL_WITH_ALL_H__
