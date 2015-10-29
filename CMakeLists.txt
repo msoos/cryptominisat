@@ -278,13 +278,14 @@ if (NOT NOZLIB)
     ENDIF (ZLIB_FOUND)
 endif()
 
+option(NOVALGRIND "Don't use valgrind" OFF)
 find_package(Valgrind)
-if (VALGRIND_FOUND)
+if (VALGRIND_FOUND AND NOT NOVALGRIND)
     message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
     add_definitions(-DUSE_VALGRIND)
     include_directories(${VALGRIND_INCLUDE_DIR})
 else()
-    message(STATUS "Cannot find valgrind, we will not be able to mark memory pool objects as undefined")
+    message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
 endif()
 
 # -----------------------------------------------------------------------------

@@ -19,7 +19,14 @@
  * MA 02110-1301  USA
 */
 
+#ifdef KLEE
+#include <klee/klee.h>
+#define EXPECT_EQ(a, b) klee_assume((a) == (b))
+#define EXPECT_TRUE(a) klee_assume((a) == true)
+#else
 #include "gtest/gtest.h"
+#endif
+
 #include "cryptominisat4/solvertypesmini.h"
 #include <vector>
 #include <ostream>
