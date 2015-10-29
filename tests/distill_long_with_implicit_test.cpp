@@ -316,8 +316,6 @@ TEST_F(distill_long_with_impl, str_w_stamp_no)
     check_irred_cls_eq(s, "-3, 6, 7, -9");
 }
 
-
-
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
