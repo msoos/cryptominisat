@@ -19,7 +19,7 @@
  * MA 02110-1301  USA
 */
 
-#include "distillerimplwithimpl.h"
+#include "str_impl_w_impl_stamp.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"
@@ -29,7 +29,7 @@
 
 using namespace CMSat;
 
-bool DistillerImplWithImpl::distill_implicit_with_implicit()
+bool StrImplWImplStamp::str_impl_w_impl_stamp()
 {
     str_impl_data.clear();
 
@@ -89,7 +89,7 @@ end:
     return solver->okay();
 }
 
-void DistillerImplWithImpl::distill_implicit_with_implicit_lit(const Lit lit)
+void StrImplWImplStamp::distill_implicit_with_implicit_lit(const Lit lit)
 {
     watch_subarray ws = solver->watches[lit];
 
@@ -128,7 +128,7 @@ void DistillerImplWithImpl::distill_implicit_with_implicit_lit(const Lit lit)
     ws.shrink(i-j);
 }
 
-void DistillerImplWithImpl::strengthen_tri_with_bin_tri_stamp(
+void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
     const Lit lit
     , Watched*& i
     , Watched*& j
@@ -227,7 +227,7 @@ void DistillerImplWithImpl::strengthen_tri_with_bin_tri_stamp(
     *j++ = *i;
 }
 
-void DistillerImplWithImpl::strengthen_bin_with_bin(
+void StrImplWImplStamp::strengthen_bin_with_bin(
     const Lit lit
     , Watched*& i
     , Watched*& j
@@ -288,7 +288,7 @@ void DistillerImplWithImpl::strengthen_bin_with_bin(
     *j++ = *i;
 }
 
-void DistillerImplWithImpl::StrImplicitData::print(
+void StrImplWImplStamp::StrImplicitData::print(
     const size_t trail_diff
     , const double time_used
     , const int64_t timeAvailable

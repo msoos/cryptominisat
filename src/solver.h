@@ -52,7 +52,7 @@ class OccSimplifier;
 class SCCFinder;
 class DistillerAllWithAll;
 class DistillerLongWithImpl;
-class DistillerImplWithImpl;
+class StrImplWImplStamp;
 class CalcDefPolars;
 class SolutionExtender;
 class SQLStats;
@@ -149,7 +149,7 @@ class Solver : public Searcher
         OccSimplifier*         simplifier = NULL;
         DistillerAllWithAll*   distill_all_with_all = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
-        DistillerImplWithImpl* dist_impl_with_impl = NULL;
+        StrImplWImplStamp* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
 
         vector<LitReachData> litReachable;

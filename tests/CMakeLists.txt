@@ -108,6 +108,7 @@ set (MY_TESTS
     clause_cleaner_test
     probe_test
     distiller_all_with_all_test
+    str_impl_w_impl_stamp
     distill_long_with_implicit_test
 )
 foreach(F ${MY_TESTS})

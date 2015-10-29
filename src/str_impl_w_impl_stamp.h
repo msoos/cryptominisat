@@ -35,13 +35,13 @@ namespace CMSat {
 class Solver;
 class Clause;
 
-class DistillerImplWithImpl {
+class StrImplWImplStamp {
 public:
-    DistillerImplWithImpl(Solver* _solver) :
+    StrImplWImplStamp(Solver* _solver) :
         solver(_solver)
     {}
 
-    bool distill_implicit_with_implicit();
+    bool str_impl_w_impl_stamp();
 private:
     Solver* solver;
     void distill_implicit_with_implicit_lit(const Lit lit);

@@ -51,7 +51,7 @@
 #include "clauseallocator.h"
 #include "subsumeimplicit.h"
 #include "distillerlongwithimpl.h"
-#include "distillerimplwithimpl.h"
+#include "str_impl_w_impl_stamp.h"
 #include "datasync.h"
 #include "reducedb.h"
 #include "clausedumper.h"
@@ -95,7 +95,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     }
     distill_all_with_all = new DistillerAllWithAll(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
-    dist_impl_with_impl = new DistillerImplWithImpl(this);
+    dist_impl_with_impl = new StrImplWImplStamp(this);
     clauseCleaner = new ClauseCleaner(this);
     varReplacer = new VarReplacer(this);
     if (conf.doCompHandler) {
@@ -1684,7 +1684,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
             if (conf.doStrSubImplicit) {
-                dist_impl_with_impl->distill_implicit_with_implicit();
+                dist_impl_with_impl->str_impl_w_impl_stamp();
             }
         } else if (token == "check-cache-size") {
             //Delete and disable cache if too large
