@@ -124,12 +124,6 @@ bool CompFinder::find_components()
 
     solver->clauseCleaner->remove_and_clean_all();
 
-    if (solver->conf.doFindAndReplaceEqLits
-        && !solver->varReplacer->replace_if_enough_is_found()
-    ) {
-        return false;
-    }
-
     //Add the clauses to the sets
     bogoprops_remain =
         solver->conf.comp_find_time_limitM*1000ULL*1000ULL
