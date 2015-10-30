@@ -1610,7 +1610,7 @@ bool Solver::execute_inprocess_strategy(
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (conf.verbosity >= 2 && token.substr(0,3) != "occ") {
+        if (conf.verbosity >= 2 && token.substr(0,3) != "occ" && token != "") {
             cout << "c --> Executing strategy token: " << token << '\n';
         }
 
