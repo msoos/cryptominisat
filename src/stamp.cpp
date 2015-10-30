@@ -43,6 +43,26 @@ bool Stamp::stampBasedClRem(
     std::sort(stampNorm.begin(), stampNorm.end(), sortNorm);
     std::sort(stampInv.begin(), stampInv.end(), sortInv);
 
+    #ifdef DEBUG_STAMPING
+    cout << "NORM sorted clause: " << stampNorm << endl;
+    cout << "Timestamps: ";
+    for(Lit l: stampNorm) {
+        cout
+        << " " << tstamp[l.toInt()].start[STAMP_IRRED]
+        << "," << tstamp[l.toInt()].end[STAMP_IRRED];
+    }
+    cout << endl;
+
+    cout << "INV sorted clause: " << stampInv << endl;
+    cout << "Timestamps: ";
+    for(Lit l: stampInv) {
+        cout
+        << " " << tstamp[l.toInt()].start[STAMP_IRRED]
+        << "," << tstamp[l.toInt()].end[STAMP_IRRED];
+    }
+    cout << endl;
+    #endif
+
     assert(lits.size() > 0);
     vector<Lit>::const_iterator lpos = stampNorm.begin();
     vector<Lit>::const_iterator lneg = stampInv.begin();
