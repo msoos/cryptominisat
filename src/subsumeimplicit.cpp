@@ -205,10 +205,6 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         const Lit lit = Lit::toLit(at);
         watch_subarray ws = solver->watches[lit];
 
-        //We can't do much when there is nothing, or only one
-        if (ws.size() < 2)
-            continue;
-
         if (ws.size() > 1) {
             timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
             std::sort(ws.begin(), ws.end(), WatchSorterBinTriLong());
