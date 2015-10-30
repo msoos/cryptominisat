@@ -41,7 +41,7 @@ class CompFinder {
 
     public:
         CompFinder(Solver* solver);
-        bool find_components();
+        void find_components();
         bool getTimedOut() const;
 
         const map<uint32_t, vector<uint32_t> >& getReverseTable() const; // comp->var

@@ -112,8 +112,9 @@ bool CompFinder::reverse_table_is_correct() const
     return true;
 }
 
-bool CompFinder::find_components()
+void CompFinder::find_components()
 {
+    assert(solver->okay());
     const double myTime = cpuTime();
 
     table.clear();
@@ -134,7 +135,7 @@ bool CompFinder::find_components()
     addToCompImplicits();
     print_and_add_to_sql_result(myTime);
 
-    return solver->okay();
+    assert(solver->okay());
 }
 
 void CompFinder::print_and_add_to_sql_result(const double myTime) const

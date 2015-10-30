@@ -137,11 +137,7 @@ bool CompHandler::handle()
 
     delete compFinder;
     compFinder = new CompFinder(solver);
-    if (!compFinder->find_components()) {
-        delete compFinder;
-        compFinder = NULL;
-        return false;
-    }
+    compFinder->find_components();
     if (compFinder->getTimedOut()) {
         delete compFinder;
         compFinder = NULL;
