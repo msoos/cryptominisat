@@ -29,8 +29,8 @@
 using namespace CMSat;
 #include "test_helper.h"
 
-struct vrepl_test : public ::testing::Test {
-    vrepl_test()
+struct varreplace : public ::testing::Test {
+    varreplace()
     {
         SolverConf conf;
         conf.doCache = false;
@@ -38,7 +38,7 @@ struct vrepl_test : public ::testing::Test {
         s->new_vars(20);
         repl = s->varReplacer;
     }
-    ~vrepl_test()
+    ~varreplace()
     {
         delete s;
     }
@@ -47,7 +47,7 @@ struct vrepl_test : public ::testing::Test {
     bool must_inter = false;
 };
 
-TEST_F(vrepl_test, find_one_1)
+TEST_F(varreplace, find_one_1)
 {
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-1, -2"));
@@ -62,7 +62,7 @@ TEST_F(vrepl_test, find_one_1)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, find_one_2)
+TEST_F(varreplace, find_one_2)
 {
     s->add_clause_outer(str_to_cl("1, -3"));
     s->add_clause_outer(str_to_cl("-1, 3"));
@@ -76,7 +76,7 @@ TEST_F(vrepl_test, find_one_2)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, remove_lit)
+TEST_F(varreplace, remove_lit)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -89,7 +89,7 @@ TEST_F(vrepl_test, remove_lit)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, remove_cl)
+TEST_F(varreplace, remove_cl)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -102,7 +102,7 @@ TEST_F(vrepl_test, remove_cl)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, replace_twice)
+TEST_F(varreplace, replace_twice)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -122,7 +122,7 @@ TEST_F(vrepl_test, replace_twice)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, replace_thrice)
+TEST_F(varreplace, replace_thrice)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -148,7 +148,7 @@ TEST_F(vrepl_test, replace_thrice)
     check_irred_cls_eq(s, exp);
 }
 
-TEST_F(vrepl_test, replace_limit_check_below)
+TEST_F(varreplace, replace_limit_check_below)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -160,7 +160,7 @@ TEST_F(vrepl_test, replace_limit_check_below)
     EXPECT_EQ(repl->get_num_replaced_vars(), 0);
 }
 
-TEST_F(vrepl_test, replace_limit_check_above)
+TEST_F(varreplace, replace_limit_check_above)
 {
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
