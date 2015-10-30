@@ -903,7 +903,7 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (solver->conf.verbosity >= 2) {
+        if (token != "" && solver->conf.verbosity >= 2) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
         }
         if (token == "occ-backw-sub-str") {
