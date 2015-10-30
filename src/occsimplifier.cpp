@@ -804,11 +804,11 @@ bool OccSimplifier::eliminate_vars()
         impl_sub_lits.clear();
         if (solver->conf.verbosity >= 2) {
             double time_used = cpuTime() - after_sub_time;
-            cout << "c [bve] process impls_sub_lits "
+            cout << "c [occ-bve] process impls_sub_lits "
             << solver->conf.print_times(time_used)
             << endl;
 
-            cout << "c [bve] iter v-elim " << last_elimed << endl;
+            cout << "c [occ-bve] iter v-elim " << last_elimed << endl;
         }
     }
 
