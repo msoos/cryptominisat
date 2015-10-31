@@ -48,6 +48,7 @@ class CompFinder {
         uint32_t getVarComp(const uint32_t var) const;
         const vector<uint32_t>& getTable() const; //var -> comp
         const vector<uint32_t>& getCompVars(const uint32_t comp);
+        uint32_t getNumComps() const;
 
     private:
         void addToCompImplicits();
@@ -97,6 +98,11 @@ class CompFinder {
         vector<uint16_t>& seen;
         Solver* solver;
 };
+
+inline uint32_t CompFinder::getNumComps() const
+{
+    return reverseTable.size();
+}
 
 inline const map<uint32_t, vector<uint32_t> >& CompFinder::getReverseTable() const
 {

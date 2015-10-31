@@ -144,7 +144,7 @@ bool CompHandler::handle()
         return solver->okay();
     }
 
-    const uint32_t num_comps = compFinder->getReverseTable().size();
+    const uint32_t num_comps = compFinder->getNumComps();
 
     //If there is only one big comp, we can't do anything
     if (num_comps <= 1) {
