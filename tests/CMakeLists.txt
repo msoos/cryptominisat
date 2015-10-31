@@ -111,6 +111,7 @@ set (MY_TESTS
     str_impl_w_impl_stamp
     distill_long_with_implicit_test
     subsume_impl_test
+    comp_find_test
 )
 foreach(F ${MY_TESTS})
     add_executable(${F}
