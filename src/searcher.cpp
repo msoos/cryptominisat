@@ -30,7 +30,7 @@
 #include "propbyforgraph.h"
 #include <algorithm>
 #include <cstddef>
-#include <math.h>
+#include <cmath>
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
@@ -1131,7 +1131,7 @@ double Searcher::luby(double y, int x)
         x = x % size;
     }
 
-    return pow(y, seq);
+    return std::pow(y, seq);
 }
 
 void Searcher::check_need_restart()
