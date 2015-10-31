@@ -242,12 +242,12 @@ void SolveFeaturesCalc::calculate_extra_clause_stats()
     for_all_clauses(each_clause, empty_func);
 
     if ( feat.vcg_cls_std > feat.eps && feat.vcg_cls_mean > feat.eps ) {
-        feat.vcg_cls_std = sqrt(feat.vcg_cls_std / (double)feat.numClauses) / feat.vcg_cls_mean;
+        feat.vcg_cls_std = std::sqrt(feat.vcg_cls_std / (double)feat.numClauses) / feat.vcg_cls_mean;
     } else {
         feat.vcg_cls_std = 0;
     }
     if ( feat.pnr_cls_std > feat.eps && feat.pnr_cls_mean > feat.eps ) {
-        feat.pnr_cls_std = sqrt(feat.pnr_cls_std / (double)feat.numClauses) / feat.pnr_cls_mean;
+        feat.pnr_cls_std = std::sqrt(feat.pnr_cls_std / (double)feat.numClauses) / feat.pnr_cls_mean;
     } else {
         feat.pnr_cls_std = 0;
     }
@@ -273,7 +273,7 @@ void SolveFeaturesCalc::calculate_extra_var_stats()
         feat.horn_std += (feat.horn_mean - _horn) * (feat.horn_mean - _horn);
     }
     if ( feat.vcg_var_std > feat.eps && feat.vcg_var_mean > feat.eps ) {
-        feat.vcg_var_std = sqrt(feat.vcg_var_std / (double)feat.numVars) / feat.vcg_var_mean;
+        feat.vcg_var_std = std::sqrt(feat.vcg_var_std / (double)feat.numVars) / feat.vcg_var_mean;
     } else {
         feat.vcg_var_std = 0;
     }
@@ -281,7 +281,7 @@ void SolveFeaturesCalc::calculate_extra_var_stats()
     if ( feat.pnr_var_std > feat.eps && feat.pnr_var_mean > feat.eps
         && feat.pnr_var_mean != 0
     ) {
-        feat.pnr_var_std = sqrt(feat.pnr_var_std / (double)feat.numVars) / feat.pnr_var_mean;
+        feat.pnr_var_std = std::sqrt(feat.pnr_var_std / (double)feat.numVars) / feat.pnr_var_mean;
     } else {
         feat.pnr_var_std = 0;
     }
@@ -289,7 +289,7 @@ void SolveFeaturesCalc::calculate_extra_var_stats()
     if ( feat.horn_std / (double)feat.numVars > feat.eps && feat.horn_mean > feat.eps
         && feat.horn_mean != 0
     ) {
-        feat.horn_std = sqrt(feat.horn_std / (double)feat.numVars) / feat.horn_mean;
+        feat.horn_std = std::sqrt(feat.horn_std / (double)feat.numVars) / feat.horn_mean;
     } else {
         feat.horn_std = 0;
     }

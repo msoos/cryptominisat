@@ -27,6 +27,7 @@
 #include "varreplacer.h"
 #include "occsimplifier.h"
 #include <string>
+#include <cmath>
 #include <time.h>
 #include "constants.h"
 #include "reducedb.h"
@@ -926,19 +927,19 @@ void MySQLStats::restart(
 
     //Conflict stats
     stmtRst.glueHist        = searchHist.glueHist.getLongtTerm().avg();
-    stmtRst.glueHistSD      = sqrt(searchHist.glueHist.getLongtTerm().var());
+    stmtRst.glueHistSD      = std::sqrt(searchHist.glueHist.getLongtTerm().var());
     stmtRst.glueHistMin      = searchHist.glueHist.getLongtTerm().getMin();
     stmtRst.glueHistMax      = searchHist.glueHist.getLongtTerm().getMax();
 
     stmtRst.conflSizeHist   = searchHist.conflSizeHist.avg();
-    stmtRst.conflSizeHistSD = sqrt(searchHist.conflSizeHist.var());
+    stmtRst.conflSizeHistSD = std::sqrt(searchHist.conflSizeHist.var());
     stmtRst.conflSizeHistMin = searchHist.conflSizeHist.getMin();
     stmtRst.conflSizeHistMax = searchHist.conflSizeHist.getMax();
 
     stmtRst.numResolutionsHist =
         searchHist.numResolutionsHist.avg();
     stmtRst.numResolutionsHistSD =
-        sqrt(searchHist.numResolutionsHist.var());
+        std::sqrt(searchHist.numResolutionsHist.var());
     stmtRst.numResolutionsHistMin =
         searchHist.numResolutionsHist.getMin();
     stmtRst.numResolutionsHistMax =
@@ -949,23 +950,23 @@ void MySQLStats::restart(
 
     //Search stats
     stmtRst.branchDepthHist         = searchHist.branchDepthHist.avg();
-    stmtRst.branchDepthHistSD       = sqrt(searchHist.branchDepthHist.var());
+    stmtRst.branchDepthHistSD       = std::sqrt(searchHist.branchDepthHist.var());
     stmtRst.branchDepthHistMin      = searchHist.branchDepthHist.getMin();
     stmtRst.branchDepthHistMax      = searchHist.branchDepthHist.getMax();
 
 
     stmtRst.branchDepthDeltaHist    = searchHist.branchDepthDeltaHist.avg();
-    stmtRst.branchDepthDeltaHistSD  = sqrt(searchHist.branchDepthDeltaHist.var());
+    stmtRst.branchDepthDeltaHistSD  = std::sqrt(searchHist.branchDepthDeltaHist.var());
     stmtRst.branchDepthDeltaHistMin  = searchHist.branchDepthDeltaHist.getMin();
     stmtRst.branchDepthDeltaHistMax  = searchHist.branchDepthDeltaHist.getMax();
 
     stmtRst.trailDepthHist          = searchHist.trailDepthHist.getLongtTerm().avg();
-    stmtRst.trailDepthHistSD        = sqrt(searchHist.trailDepthHist.getLongtTerm().var());
+    stmtRst.trailDepthHistSD        = std::sqrt(searchHist.trailDepthHist.getLongtTerm().var());
     stmtRst.trailDepthHistMin       = searchHist.trailDepthHist.getLongtTerm().getMin();
     stmtRst.trailDepthHistMax       = searchHist.trailDepthHist.getLongtTerm().getMax();
 
     stmtRst.trailDepthDeltaHist     = searchHist.trailDepthDeltaHist.avg();
-    stmtRst.trailDepthDeltaHistSD   = sqrt(searchHist.trailDepthDeltaHist.var());
+    stmtRst.trailDepthDeltaHistSD   = std::sqrt(searchHist.trailDepthDeltaHist.var());
     stmtRst.trailDepthDeltaHistMin  = searchHist.trailDepthDeltaHist.getMin();
     stmtRst.trailDepthDeltaHistMax  = searchHist.trailDepthDeltaHist.getMax();
 
