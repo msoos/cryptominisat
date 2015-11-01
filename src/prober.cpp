@@ -727,17 +727,19 @@ bool Prober::propagate(Lit& failed)
 
         //DFS is expensive, actually. So do BFS 50% of the time
         if (solver->conf.doStamp &&
-            (force_stamp == 1 || (solver->mtrand.randInt(1) == 0 && force_stamp == -1))
+            (force_stamp >= 1 || (solver->mtrand.randInt(1) == 0 && force_stamp == -1))
         ) {
-            const StampType stampType = solver->mtrand.randInt(1) ? StampType::STAMP_IRRED : StampType::STAMP_RED;
-            failed = solver->propagate_dfs(
-                stampType
-                , timeout //early-abort timeout
-            );
+            StampType stampType;
+            if (force_stamp == 2) {
+                stampType = StampType::STAMP_IRRED;
+            } else if (force_stamp == 1) {
+                stampType = StampType::STAMP_RED;
+            } else {
+                stampType = solver->mtrand.randInt(1) ? StampType::STAMP_IRRED : StampType::STAMP_RED;
+            }
+            failed = solver->propagate_dfs(stampType, timeout);
         } else {
-            failed = solver->propagate_bfs(
-                timeout //early-abort timeout
-            );
+            failed = solver->propagate_bfs(timeout);
         }
 
         if (check_timeout_due_to_hyperbin()) {

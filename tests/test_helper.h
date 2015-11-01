@@ -315,12 +315,12 @@ void check_stamp_contains(Solver* s, const string& data)
     uint64_t end1 = s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED];
     uint64_t start2 = s->stamp.tstamp[lits[1].toInt()].start[STAMP_IRRED];
     uint64_t end2 = s->stamp.tstamp[lits[1].toInt()].end[STAMP_IRRED];
-    cout
+    /*cout
     << "start1: " << start1
     << "end1: " << end1
     << "start2: " << start2
     << "end2: " << end2
-    << endl;
+    << endl;*/
 
     EXPECT_TRUE(start1 < start2);
     EXPECT_TRUE(end1 > end2);
