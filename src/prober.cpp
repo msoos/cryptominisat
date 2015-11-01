@@ -727,7 +727,9 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
         const Lit thisLit = solver->trail[c];
         const uint32_t var = thisLit.var();
 
-        check_and_set_both_prop(var, first);
+        if (solver->conf.doBothProp) {
+            check_and_set_both_prop(var, first);
+        }
         visitedAlready[thisLit.toInt()] = 1;
         if (!solver->conf.otfHyperbin)
             continue;
