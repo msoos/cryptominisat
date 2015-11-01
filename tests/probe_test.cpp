@@ -141,21 +141,20 @@ TEST_F(probe, fail_bfs)
 TEST_F(probe, stamp)
 {
     s->new_vars(30);
-    //s->conf.verbosity = 10;
+    //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("1, -3"));
-    s->add_clause_outer(str_to_cl("1, -4"));
-    s->add_clause_outer(str_to_cl("1, -5"));
 
     s->conf.doBothProp = false;
     s->conf.doStamp = true;
     s->conf.otfHyperbin = true;
-    p->force_stamp = 0;
+    p->force_stamp = 2;
     std::vector<uint32_t> vars{0};
     p->probe(&vars);
 
     check_stamp_contains(s, "1, -2");
 }
+
+//Implication cache
 
 TEST_F(probe, imp_cache)
 {
