@@ -305,6 +305,26 @@ void add_to_stamp_irred(Solver* s, const string& data)
     s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
 }
 
+void check_stamp_contains(Solver* s, const string& data)
+{
+    vector<Lit> lits = str_to_cl(data);
+    assert(lits.size() == 2);
+    assert(s->stamp.tstamp.size() > lits[0].toInt());
+    assert(s->stamp.tstamp.size() > lits[1].toInt());
+    uint64_t start1 = s->stamp.tstamp[(~lits[0]).toInt()].start[STAMP_IRRED];
+    uint64_t end1 = s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED];
+    uint64_t start2 = s->stamp.tstamp[lits[1].toInt()].start[STAMP_IRRED];
+    uint64_t end2 = s->stamp.tstamp[lits[1].toInt()].end[STAMP_IRRED];
+    cout
+    << "start1: " << start1
+    << "end1: " << end1
+    << "start2: " << start2
+    << "end2: " << end2
+    << endl;
+
+    EXPECT_TRUE(start1 < start2);
+    EXPECT_TRUE(end1 > end2);
+}
 
 void check_zero_assigned_lits_eq(Solver* s, const string& data)
 {

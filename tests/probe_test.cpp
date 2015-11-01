@@ -49,23 +49,72 @@ struct probe : public ::testing::Test {
     bool must_inter;
 };
 
-TEST_F(probe, fail_one)
+//Regular, 1UIP fails
+
+TEST_F(probe, uip_fail_1)
 {
     s->new_vars(30);
-    //s->conf.verbosity = 10;
+    //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl(" 1,  2"));
     s->add_clause_outer(str_to_cl("-2,  3"));
     s->add_clause_outer(str_to_cl("-2, -3"));
 
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
+    s->conf.otfHyperbin = false;
     std::vector<uint32_t> vars{0};
     p->probe(&vars);
-    p->force_dfs = 0;
+
+    //1UIP is -2
     check_zero_assigned_lits_contains(s, "-2");
 }
 
-TEST_F(probe, fail_one_2)
+TEST_F(probe, uip_fail_2)
+{
+    s->new_vars(30);
+    //s->conf.verbosity = 20;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("1, -3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("1, -5"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5, 6"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5, -6"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = false;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    //First UIP is 1
+    check_zero_assigned_lits_eq(s, "1");
+}
+
+//BFS, DFS fails
+
+TEST_F(probe, fail_dfs)
+{
+    s->new_vars(30);
+    //s->conf.verbosity = 20;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("1, -3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("1, -5"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5, 6"));
+    s->add_clause_outer(str_to_cl("2, 3, 4, 5, -6"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 1;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    //deepest common ancestor
+    check_zero_assigned_lits_eq(s, "1");
+}
+
+TEST_F(probe, fail_bfs)
 {
     s->new_vars(30);
     //s->conf.verbosity = 10;
@@ -78,10 +127,34 @@ TEST_F(probe, fail_one_2)
 
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 0;
     std::vector<uint32_t> vars{0};
     p->probe(&vars);
-    p->force_dfs = 0;
+
+    //deepest common ancestor
     check_zero_assigned_lits_eq(s, "1");
+}
+
+//Stamp correctness
+
+TEST_F(probe, stamp)
+{
+    s->new_vars(30);
+    //s->conf.verbosity = 10;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("1, -3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("1, -5"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = true;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 0;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    check_stamp_contains(s, "1, -2");
 }
 
 TEST_F(probe, imp_cache)
