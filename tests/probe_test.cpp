@@ -47,6 +47,7 @@ struct probe : public ::testing::Test {
 
     Solver* s;
     Prober* p;
+    std::vector<uint32_t> vars;
     bool must_inter;
 };
 
@@ -62,7 +63,7 @@ TEST_F(probe, uip_fail_1)
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = false;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     //1UIP is -2
@@ -82,7 +83,7 @@ TEST_F(probe, uip_fail_2)
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = false;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     //First UIP is 1
@@ -105,7 +106,7 @@ TEST_F(probe, fail_dfs)
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
     p->force_stamp = 1;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     //deepest common ancestor
@@ -126,7 +127,7 @@ TEST_F(probe, fail_bfs)
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
     p->force_stamp = 0;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     //deepest common ancestor
@@ -144,7 +145,7 @@ TEST_F(probe, stamp)
     s->conf.doStamp = true;
     s->conf.otfHyperbin = true;
     p->force_stamp = 2;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     check_stamp_contains(s, "1, -2", STAMP_IRRED);
@@ -160,7 +161,7 @@ TEST_F(probe, stamp_2)
     s->conf.doStamp = true;
     s->conf.otfHyperbin = true;
     p->force_stamp = 2;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     check_stamp_contains(s, "1, 3", STAMP_IRRED);
@@ -176,7 +177,7 @@ TEST_F(probe, stamp_3)
     s->conf.doStamp = true;
     s->conf.otfHyperbin = true;
     p->force_stamp = 1;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     check_stamp_contains(s, "1, 3", STAMP_RED);
@@ -200,7 +201,7 @@ TEST_F(probe, stamp_4)
     s->conf.doStamp = true;
     s->conf.otfHyperbin = true;
     p->force_stamp = 2;
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     p->probe(&vars);
 
     check_stamp_contains(s, "1, 7", STAMP_IRRED);
@@ -216,7 +217,7 @@ TEST_F(probe, trans_red1)
     s->add_clause_outer(str_to_cl("-3, 4"));
     s->add_clause_outer(str_to_cl("1, 4"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -233,7 +234,7 @@ TEST_F(probe, trans_red2)
     s->add_clause_outer(str_to_cl("-3, 5"));
     s->add_clause_outer(str_to_cl("1, 5"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -250,7 +251,7 @@ TEST_F(probe, hyper_bin)
     s->add_clause_outer(str_to_cl("1, 3"));
     s->add_clause_outer(str_to_cl("-2, -3, 4"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -265,7 +266,7 @@ TEST_F(probe, hyper_bin2)
     s->add_clause_outer(str_to_cl("1, -4"));
     s->add_clause_outer(str_to_cl("-2, -3, 4, 5"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -284,7 +285,7 @@ TEST_F(probe, hyper_bin3)
     s->add_clause_outer(str_to_cl("-5, 8"));
     s->add_clause_outer(str_to_cl("-6, -7, -8, 9"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -308,7 +309,7 @@ TEST_F(probe, hyper_bin_and_trans_red1)
     s->add_clause_outer(str_to_cl("-5, 8"));
     s->add_clause_outer(str_to_cl("-6, -7, -8, 9"));
 
-    std::vector<uint32_t> vars{0};
+    vars = tovars("1");
     s->conf.doBothProp = false;
     s->conf.doStamp = false;
     s->conf.otfHyperbin = true;
@@ -326,7 +327,7 @@ TEST_F(probe, imp_cache)
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-2, 3"));
 
-    std::vector<uint32_t> vars{0, 1, 2};
+    vars = tovars("1, 2, 3");
     p->probe(&vars);
     check_impl_cache_contains(s, "1, 3");
 }
@@ -336,7 +337,7 @@ TEST_F(probe, imp_cache_2)
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-2, 3"));
 
-    std::vector<uint32_t> vars{2, 1, 0};
+    vars = tovars("3, 2, 1");
     p->probe(&vars);
     check_impl_cache_contains(s, "3, 1");
 }
@@ -348,7 +349,7 @@ TEST_F(probe, imp_cache_longer)
     s->add_clause_outer(str_to_cl("-3, 4"));
     s->add_clause_outer(str_to_cl("-4, 5"));
 
-    std::vector<uint32_t> vars{4, 3, 2, 1, 0};
+    vars = tovars("5, 4, 3, 2, 1");
     p->probe(&vars);
     check_impl_cache_contains(s, "5, 1");
 }
