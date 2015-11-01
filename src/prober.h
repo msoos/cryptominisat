@@ -43,6 +43,7 @@ class Prober {
     public:
         Prober(Solver* _solver);
         bool probe(vector<uint32_t>* probe_order = NULL);
+        int force_dfs = -1; // For testing. 1 = DFS, 0 = BFS, -1 = DONTCARE
 
         struct Stats
         {

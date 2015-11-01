@@ -305,6 +305,32 @@ void add_to_stamp_irred(Solver* s, const string& data)
     s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
 }
 
+
+void check_zero_assigned_lits_eq(Solver* s, const string& data)
+{
+    vector<Lit> lits_exp = str_to_cl(data);
+    vector<Lit> lits_act = s->get_zero_assigned_lits();
+    EXPECT_EQ(lits_act, lits_exp);
+}
+
+void check_zero_assigned_lits_contains(Solver* s, const string& data)
+{
+    vector<Lit> lits_exp = str_to_cl(data);
+    vector<Lit> lits_act = s->get_zero_assigned_lits();
+    for (Lit e: lits_exp) {
+        bool found_lit = false;
+        for(Lit a: lits_act) {
+            if (e == a) {
+                found_lit = true;
+            }
+        }
+        if (!found_lit) {
+            cout << "Literal " << e << " was not assigned" << endl;
+            EXPECT_TRUE(found_lit);
+        }
+    }
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {
