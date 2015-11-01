@@ -92,7 +92,7 @@ class Solver : public Searcher
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);
-        bool add_clause_outer(const vector<Lit>& lits);
+        bool add_clause_outer(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
@@ -171,7 +171,7 @@ class Solver : public Searcher
         lbool load_solution_from_file(const string& fname);
 
         uint64_t getNumLongClauses() const;
-        bool addClause(const vector<Lit>& ps);
+        bool addClause(const vector<Lit>& ps, const bool red = false);
         bool add_xor_clause_inter(
             const vector< Lit >& lits
             , bool rhs

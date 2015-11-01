@@ -730,7 +730,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     return true;
 }
 
-bool Solver::addClause(const vector<Lit>& lits)
+bool Solver::addClause(const vector<Lit>& lits, bool red)
 {
     if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
         std::cerr
@@ -755,11 +755,11 @@ bool Solver::addClause(const vector<Lit>& lits)
     std::sort(ps.begin(), ps.end());
     Clause* cl = add_clause_int(
         ps
-        , false //irred
+        , red
         , ClauseStats() //default stats
         , true //yes, attach
         , &finalCl_tmp
-        , false
+        , false //add drup?
     );
 
     //Drup -- We manipulated the clause, delete
@@ -780,32 +780,17 @@ bool Solver::addClause(const vector<Lit>& lits)
 
     if (cl != NULL) {
         ClOffset offset = cl_alloc.get_offset(cl);
-        longIrredCls.push_back(offset);
+        if (!red) {
+            longIrredCls.push_back(offset);
+        } else {
+            longRedCls.push_back(offset);
+        }
     }
 
     zeroLevAssignsByCNF += trail.size() - origTrailSize;
 
     return ok;
 }
-
-/*bool Solver::addRedClause(
-    const vector<Lit>& lits
-    , const ClauseStats& stats
-) {
-    vector<Lit> ps(lits.size());
-    std::copy(lits.begin(), lits.end(), ps.begin());
-
-    if (!addClauseHelper(ps))
-        return false;
-
-    Clause* cl = add_clause_int(ps, true, stats);
-    if (cl != NULL) {
-        ClOffset offset = cl_alloc.get_offset(cl);
-        longRedCls.push_back(offset);
-    }
-
-    return ok;
-}*/
 
 void Solver::test_renumbering() const
 {
@@ -2874,14 +2859,14 @@ unsigned long Solver::get_sql_id() const
     return sqlStats->get_runID();
 }
 
-bool Solver::add_clause_outer(const vector<Lit>& lits)
+bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
 {
     if (!ok) {
         return false;
     }
     check_too_large_variable_number(lits);
     back_number_from_outside_to_outer(lits);
-    return addClause(back_number_from_outside_to_outer_tmp);
+    return addClause(back_number_from_outside_to_outer_tmp, red);
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)

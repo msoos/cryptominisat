@@ -37,6 +37,7 @@ struct probe : public ::testing::Test {
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
+        s->new_vars(30);
         p = s->prober;
     }
     ~probe()
@@ -53,7 +54,6 @@ struct probe : public ::testing::Test {
 
 TEST_F(probe, uip_fail_1)
 {
-    s->new_vars(30);
     //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl(" 1,  2"));
     s->add_clause_outer(str_to_cl("-2,  3"));
@@ -71,7 +71,6 @@ TEST_F(probe, uip_fail_1)
 
 TEST_F(probe, uip_fail_2)
 {
-    s->new_vars(30);
     //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, -3"));
@@ -94,7 +93,6 @@ TEST_F(probe, uip_fail_2)
 
 TEST_F(probe, fail_dfs)
 {
-    s->new_vars(30);
     //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, -3"));
@@ -116,7 +114,6 @@ TEST_F(probe, fail_dfs)
 
 TEST_F(probe, fail_bfs)
 {
-    s->new_vars(30);
     //s->conf.verbosity = 10;
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, -3"));
@@ -140,7 +137,6 @@ TEST_F(probe, fail_bfs)
 
 TEST_F(probe, stamp)
 {
-    s->new_vars(30);
     //s->conf.verbosity = 20;
     s->add_clause_outer(str_to_cl("1, -2"));
 
@@ -151,14 +147,182 @@ TEST_F(probe, stamp)
     std::vector<uint32_t> vars{0};
     p->probe(&vars);
 
-    check_stamp_contains(s, "1, -2");
+    check_stamp_contains(s, "1, -2", STAMP_IRRED);
 }
+
+TEST_F(probe, stamp_2)
+{
+    //s->conf.verbosity = 20;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("2, 3"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = true;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 2;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    check_stamp_contains(s, "1, 3", STAMP_IRRED);
+}
+
+TEST_F(probe, stamp_3)
+{
+    //s->conf.verbosity = 20;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("2, 3"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = true;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 1;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    check_stamp_contains(s, "1, 3", STAMP_RED);
+}
+
+
+TEST_F(probe, stamp_4)
+{
+    //s->conf.verbosity = 20;
+    s->add_clause_outer(str_to_cl("1, -2"));
+    s->add_clause_outer(str_to_cl("2, 3"));
+    s->add_clause_outer(str_to_cl("2, 4"));
+
+    s->add_clause_outer(str_to_cl("-3, 5"));
+    s->add_clause_outer(str_to_cl("-4, 6"));
+
+    s->add_clause_outer(str_to_cl("-5, 7"));
+    s->add_clause_outer(str_to_cl("-6, 7"));
+
+    s->conf.doBothProp = false;
+    s->conf.doStamp = true;
+    s->conf.otfHyperbin = true;
+    p->force_stamp = 2;
+    std::vector<uint32_t> vars{0};
+    p->probe(&vars);
+
+    check_stamp_contains(s, "1, 7", STAMP_IRRED);
+    check_stamp_contains(s, "2, 7", STAMP_IRRED);
+}
+
+//transitive reduction
+
+TEST_F(probe, trans_red1)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-2, 3"));
+    s->add_clause_outer(str_to_cl("-3, 4"));
+    s->add_clause_outer(str_to_cl("1, 4"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_irred_cls_doesnt_contain(s, "1, 4");
+}
+
+TEST_F(probe, trans_red2)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-2, 3"));
+    s->add_clause_outer(str_to_cl("-3, 4"));
+    s->add_clause_outer(str_to_cl("-4, 5"));
+    s->add_clause_outer(str_to_cl("-3, 5"));
+    s->add_clause_outer(str_to_cl("1, 5"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_irred_cls_doesnt_contain(s, "-3, 5");
+    check_irred_cls_doesnt_contain(s, "1, 5");
+}
+
+//Hyper-binary resolution
+
+TEST_F(probe, hyper_bin)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1, 3"));
+    s->add_clause_outer(str_to_cl("-2, -3, 4"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_red_cls_contains(s, "1, 4");
+}
+
+TEST_F(probe, hyper_bin2)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1, 3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3, 4, 5"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_red_cls_contains(s, "1, 5");
+}
+
+TEST_F(probe, hyper_bin3)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1, 3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-5, 6"));
+    s->add_clause_outer(str_to_cl("-5, 7"));
+    s->add_clause_outer(str_to_cl("-5, 8"));
+    s->add_clause_outer(str_to_cl("-6, -7, -8, 9"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_red_cls_contains(s, "1, 5");
+    check_red_cls_contains(s, "-5, 9");
+}
+
+
+//hyper-binary resolution and transitive reduction
+
+TEST_F(probe, hyper_bin_and_trans_red1)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1, 3"));
+    s->add_clause_outer(str_to_cl("1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-5, 6"));
+    s->add_clause_outer(str_to_cl("1, 6"), true);
+    s->add_clause_outer(str_to_cl("-5, 7"));
+    s->add_clause_outer(str_to_cl("-5, 8"));
+    s->add_clause_outer(str_to_cl("-6, -7, -8, 9"));
+
+    std::vector<uint32_t> vars{0};
+    s->conf.doBothProp = false;
+    s->conf.doStamp = false;
+    s->conf.otfHyperbin = true;
+    p->probe(&vars);
+    check_red_cls_contains(s, "1, 5");
+    check_red_cls_contains(s, "-5, 9");
+    check_red_cls_doesnt_contain(s, "1, 6");
+}
+
 
 //Implication cache
 
 TEST_F(probe, imp_cache)
 {
-    s->new_vars(3);
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-2, 3"));
 
@@ -169,7 +333,6 @@ TEST_F(probe, imp_cache)
 
 TEST_F(probe, imp_cache_2)
 {
-    s->new_vars(3);
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-2, 3"));
 
@@ -180,7 +343,6 @@ TEST_F(probe, imp_cache_2)
 
 TEST_F(probe, imp_cache_longer)
 {
-    s->new_vars(5);
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-2, 3"));
     s->add_clause_outer(str_to_cl("-3, 4"));

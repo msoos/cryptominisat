@@ -158,6 +158,16 @@ vector<vector<Lit> > get_irred_cls(const Solver* s)
     return ret;
 }
 
+
+vector<vector<Lit> > get_red_cls(const Solver* s)
+{
+    vector<vector<Lit> > ret;
+    add_cls(ret, s, s->longRedCls);
+    add_impl_cls(ret, s, false, true);
+
+    return ret;
+}
+
 struct VecVecSorter
 {
     bool operator()(const vector<Lit>&a, const vector<Lit>& b) const
@@ -234,6 +244,70 @@ void check_irred_cls_contains(const Solver* s, const string& data)
     EXPECT_TRUE(found_cl);
 }
 
+
+void check_red_cls_contains(const Solver* s, const string& data)
+{
+    vector<Lit> looking_for = str_to_cl(data);
+    vector<vector<Lit> > cls = get_red_cls(s);
+
+    bool found_cl = false;
+    for(auto cl: cls) {
+        if (cl == looking_for) {
+            found_cl = true;
+            break;
+        }
+
+    }
+    if (!found_cl) {
+        cout << "Expected to find: " << looking_for << endl;
+        cout << "But only found  : ";
+        for(auto cl: cls) {
+            cout << cl << ", ";
+        }
+        cout << endl;
+    }
+    EXPECT_TRUE(found_cl);
+}
+
+
+void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
+{
+    vector<Lit> not_inside = str_to_cl(data);
+    vector<vector<Lit> > cls = get_irred_cls(s);
+
+    bool not_found_cl = true;
+    for(auto cl: cls) {
+        //cout << "irred cl inside: "  << cl << endl;
+        if (cl == not_inside) {
+            cout << "Expected not to find irred: " << not_inside << endl;
+            cout << "But found it";
+            not_found_cl = false;
+            break;
+        }
+
+    }
+    EXPECT_TRUE(not_found_cl);
+}
+
+void check_red_cls_doesnt_contain(const Solver* s, const string& data)
+{
+    vector<Lit> not_inside = str_to_cl(data);
+    vector<vector<Lit> > cls = get_red_cls(s);
+
+    bool not_found_cl = true;
+    for(auto cl: cls) {
+        //cout << "red cl inside: "  << cl << endl;
+        if (cl == not_inside) {
+            cout << "Expected not to find red: " << not_inside << endl;
+            cout << "But found it";
+            not_found_cl = false;
+            break;
+        }
+
+    }
+    EXPECT_TRUE(not_found_cl);
+}
+
 void print_model(const SATSolver&s)
 {
     assert(s.okay());
@@ -305,16 +379,16 @@ void add_to_stamp_irred(Solver* s, const string& data)
     s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED] = ++ s->stamp.stampingTime;
 }
 
-void check_stamp_contains(Solver* s, const string& data)
+void check_stamp_contains(Solver* s, const string& data, const StampType t)
 {
     vector<Lit> lits = str_to_cl(data);
     assert(lits.size() == 2);
     assert(s->stamp.tstamp.size() > lits[0].toInt());
     assert(s->stamp.tstamp.size() > lits[1].toInt());
-    uint64_t start1 = s->stamp.tstamp[(~lits[0]).toInt()].start[STAMP_IRRED];
-    uint64_t end1 = s->stamp.tstamp[(~lits[0]).toInt()].end[STAMP_IRRED];
-    uint64_t start2 = s->stamp.tstamp[lits[1].toInt()].start[STAMP_IRRED];
-    uint64_t end2 = s->stamp.tstamp[lits[1].toInt()].end[STAMP_IRRED];
+    uint64_t start1 = s->stamp.tstamp[(~lits[0]).toInt()].start[t];
+    uint64_t end1 = s->stamp.tstamp[(~lits[0]).toInt()].end[t];
+    uint64_t start2 = s->stamp.tstamp[lits[1].toInt()].start[t];
+    uint64_t end2 = s->stamp.tstamp[lits[1].toInt()].end[t];
     /*cout
     << "start1: " << start1
     << "end1: " << end1
