@@ -586,7 +586,8 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
 void Prober::handle_failed_lit(Lit lit, Lit failed)
 {
     if (solver->conf.verbosity >= 6) {
-        cout << "c Failed on lit " << lit << endl;
+        cout << "c Failed while enq + prop " << lit
+        << " Lit that got propagated to both values: " << failed << endl;
     }
     solver->cancelUntil<false>(0);
 
