@@ -733,9 +733,9 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
             check_and_set_both_prop(var, first);
         }
         visitedAlready[thisLit.toInt()] = 1;
-        if (!solver->conf.otfHyperbin)
-            continue;
-        update_cache(thisLit, lit, numElemsSet);
+        if (solver->conf.otfHyperbin) {
+            update_cache(thisLit, lit, numElemsSet);
+        }
     }
 
     if (!solver->conf.otfHyperbin
