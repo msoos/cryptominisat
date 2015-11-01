@@ -583,7 +583,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
     }
 }
 
-void Prober::handle_failed_lit(Lit lit, Lit failed)
+void Prober::handle_failed_lit(const Lit lit, const Lit failed)
 {
     if (solver->conf.verbosity >= 6) {
         cout << "c Failed while enq + prop " << lit
