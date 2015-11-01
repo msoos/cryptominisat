@@ -112,7 +112,7 @@ set (MY_TESTS
     distill_long_with_implicit_test
     subsume_impl_test
     comp_find_test
-    inprobe_test
+    intree_test
 )
 foreach(F ${MY_TESTS})
     add_executable(${F}
