@@ -43,7 +43,7 @@ class Prober {
     public:
         Prober(Solver* _solver);
         bool probe(vector<uint32_t>* probe_order = NULL);
-        int force_dfs = -1; // For testing. 1 = DFS, 0 = BFS, -1 = DONTCARE
+        int force_stamp = -1; // For testing. 1 = DFS, 0 = BFS, -1 = DONTCARE
 
         struct Stats
         {
@@ -209,7 +209,8 @@ class Prober {
     private:
         //Main
         vector<uint32_t> vars_to_probe;
-        bool try_this(const Lit lit, const bool first, const uint64_t orig_num_props_to_do);
+        bool try_this(const Lit lit, const bool first);
+        bool propagate(Lit& failed);
         vector<char> visitedAlready;
         Solver* solver; ///<The solver we are updating&working with
         void checkOTFRatio();
@@ -265,6 +266,8 @@ class Prober {
         double numPropsMultiplier;
         ///How successful were we last time?
         uint32_t lastTimeZeroDepthAssings;
+
+        uint64_t single_prop_tout;
 
 };
 

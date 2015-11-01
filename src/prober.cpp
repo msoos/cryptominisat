@@ -368,6 +368,7 @@ bool Prober::probe(vector<uint32_t>* probe_order)
 
     assert(solver->propStats.bogoProps == 0);
     assert(solver->propStats.otfHyperTime == 0);
+    single_prop_tout = (double)numPropsTodo *solver->conf.single_probe_time_limit_perc;
 
     for(size_t i = 0
         ; i < vars_to_probe.size()
@@ -399,11 +400,11 @@ bool Prober::probe(vector<uint32_t>* probe_order)
         runStats.numVarProbed++;
         extraTime += 20;
 
-        if (!try_this(lit, true, numPropsTodo))
+        if (!try_this(lit, true))
             goto end;
 
         if (solver->value(lit) == l_Undef
-            && !try_this((~lit), false, numPropsTodo)
+            && !try_this(~lit, false)
         ) {
             goto end;
         }
@@ -643,7 +644,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     return false;
 }
 
-bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_props_to_do)
+bool Prober::try_this(const Lit lit, const bool first)
 {
     //Clean state if this is the 1st of two
     if (first) {
@@ -661,53 +662,8 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
     }
 
     Lit failed = lit_Undef;
-    if (solver->conf.otfHyperbin) {
-        //Set timeout for ONE enqueue. This used so that in case ONE enqueue
-        //takes too long (usually because of hyper-bin), we exit early
-        uint64_t timeout = std::numeric_limits<uint64_t>::max();
-        if (!solver->drup->enabled()) {
-            timeout = solver->propStats.otfHyperTime
-            + solver->propStats.bogoProps
-            + (double)orig_num_props_to_do*solver->conf.single_probe_time_limit_perc;
-        }
-
-        //DFS is expensive, actually. So do BFS 50% of the time
-        if (force_dfs == 1
-            || (solver->conf.doStamp && solver->mtrand.randInt(1) == 0 && force_dfs == -1)
-        ) {
-            const StampType stampType = solver->mtrand.randInt(1) ? StampType::STAMP_IRRED : StampType::STAMP_RED;
-            failed = solver->propagate_dfs(
-                stampType
-                , timeout //early-abort timeout
-            );
-        } else {
-            failed = solver->propagate_bfs(
-                timeout //early-abort timeout
-            );
-        }
-
-        if (check_timeout_due_to_hyperbin()) {
-            return solver->okay();
-        }
-    } else {
-        //No hyper-bin so we use regular propagate and regular analyze
-
-        PropBy confl = solver->propagate<true>();
-        if (!confl.isNULL()) {
-            uint32_t  glue;
-            uint32_t  backtrack_level;
-            solver->analyze_conflict(
-                confl
-                , backtrack_level  //return backtrack level here
-                , glue             //return glue here
-            );
-            if (solver->learnt_clause.empty()) {
-                solver->ok = false;
-                return false;
-            }
-            assert(solver->learnt_clause.size() == 1);
-            failed = ~(solver->learnt_clause[0]);
-        }
+    if (!propagate(failed)) {
+        return solver->okay();
     }
 
     if (failed != lit_Undef) {
@@ -755,6 +711,60 @@ bool Prober::try_this(const Lit lit, const bool first, const uint64_t orig_num_p
     runStats.bothSameAdded += toEnqueue.size();
     extraTime += 3*toEnqueue.size();
     return solver->fully_enqueue_these(toEnqueue);
+}
+
+bool Prober::propagate(Lit& failed)
+{
+    if (solver->conf.otfHyperbin) {
+        //Set timeout for ONE enqueue. This used so that in case ONE enqueue
+        //takes too long (usually because of hyper-bin), we exit early
+        uint64_t timeout = std::numeric_limits<uint64_t>::max();
+        if (!solver->drup->enabled()) {
+            timeout = solver->propStats.otfHyperTime
+            + solver->propStats.bogoProps
+            + single_prop_tout;
+        }
+
+        //DFS is expensive, actually. So do BFS 50% of the time
+        if (solver->conf.doStamp &&
+            (force_stamp == 1 || (solver->mtrand.randInt(1) == 0 && force_stamp == -1))
+        ) {
+            const StampType stampType = solver->mtrand.randInt(1) ? StampType::STAMP_IRRED : StampType::STAMP_RED;
+            failed = solver->propagate_dfs(
+                stampType
+                , timeout //early-abort timeout
+            );
+        } else {
+            failed = solver->propagate_bfs(
+                timeout //early-abort timeout
+            );
+        }
+
+        if (check_timeout_due_to_hyperbin()) {
+            return false;
+        }
+    } else {
+        //No hyper-bin so we use regular propagate and regular analyze
+
+        PropBy confl = solver->propagate<true>();
+        if (!confl.isNULL()) {
+            uint32_t  glue;
+            uint32_t  backtrack_level;
+            solver->analyze_conflict(
+                confl
+                , backtrack_level  //return backtrack level here
+                , glue             //return glue here
+            );
+            if (solver->learnt_clause.empty()) {
+                solver->ok = false;
+                return false;
+            }
+            assert(solver->learnt_clause.size() == 1);
+            failed = ~(solver->learnt_clause[0]);
+        }
+    }
+
+    return true;
 }
 
 size_t Prober::mem_used() const
