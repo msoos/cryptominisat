@@ -586,25 +586,16 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
 
 void Prober::handle_failed_lit(const Lit lit, const Lit failed)
 {
-    if (solver->conf.verbosity >= 6) {
-        cout << "c Failed while enq + prop " << lit
-        << " Lit that got propagated to both values: " << failed << endl;
-    }
+
     solver->cancelUntil<false>(0);
 
     //Update conflict stats
-    runStats.numFailed++;
-    runStats.conflStats.update(solver->lastConflictCausedBy);
-    runStats.conflStats.numConflicts++;
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
     runStats.removedRedBin += tmp.second;
 
-    vector<Lit> lits;
-    lits.push_back(~failed);
-    solver->add_clause_int(lits, true);
-    clear_up_before_first_set();
+
 }
 
 bool Prober::check_timeout_due_to_hyperbin()
@@ -666,51 +657,65 @@ bool Prober::try_this(const Lit lit, const bool first)
         return solver->okay();
     }
 
-    if (failed != lit_Undef) {
-        handle_failed_lit(lit, failed);
-        return solver->ok;
-    } else {
+    if (failed == lit_Undef) {
         if (solver->conf.verbosity >= 6)
             cout << "c Did not fail on lit " << lit << endl;
-    }
 
-    //Fill bothprop, cache
-    assert(solver->decisionLevel() > 0);
-    size_t numElemsSet = solver->trail_size() - solver->trail_lim[0];
-    for (int64_t c = solver->trail_size()-1
-        ; c != (int64_t)solver->trail_lim[0] - 1
-        ; c--
-    ) {
-        extraTime += 2;
-        const Lit thisLit = solver->trail[c];
-        const uint32_t var = thisLit.var();
+        //Fill bothprop, cache
+        assert(solver->decisionLevel() > 0);
+        size_t numElemsSet = solver->trail_size() - solver->trail_lim[0];
+        for (int64_t c = solver->trail_size()-1
+            ; c != (int64_t)solver->trail_lim[0] - 1
+            ; c--
+        ) {
+            extraTime += 2;
+            const Lit thisLit = solver->trail[c];
+            const uint32_t var = thisLit.var();
 
-        if (solver->conf.doBothProp) {
-            check_and_set_both_prop(var, first);
+            if (solver->conf.doBothProp) {
+                check_and_set_both_prop(var, first);
+            }
+            visitedAlready[thisLit.toInt()] = 1;
+            if (solver->conf.otfHyperbin) {
+                update_cache(thisLit, lit, numElemsSet);
+            }
         }
-        visitedAlready[thisLit.toInt()] = 1;
-        if (solver->conf.otfHyperbin) {
-            update_cache(thisLit, lit, numElemsSet);
-        }
-    }
 
-    if (!solver->conf.otfHyperbin
-        && solver->conf.doCache
-    ) {
-        add_rest_of_lits_to_cache(lit);
+        if (!solver->conf.otfHyperbin
+            && solver->conf.doCache
+        ) {
+            add_rest_of_lits_to_cache(lit);
+        }
     }
 
     solver->cancelUntil<false>(0);
+    solver->add_otf_subsume_long_clauses();
+    solver->add_otf_subsume_implicit_clause();
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
     runStats.removedRedBin += tmp.second;
 
-    //Add toEnqueue
-    assert(solver->ok);
-    runStats.bothSameAdded += toEnqueue.size();
-    extraTime += 3*toEnqueue.size();
-    return solver->fully_enqueue_these(toEnqueue);
+    if (failed != lit_Undef) {
+        if (solver->conf.verbosity >= 6) {
+            cout << "c Failed while enq + prop " << lit
+            << " Lit that got propagated to both values: " << failed << endl;
+        }
+        runStats.numFailed++;
+        runStats.conflStats.update(solver->lastConflictCausedBy);
+        runStats.conflStats.numConflicts++;
+
+        vector<Lit> lits;
+        lits.push_back(~failed);
+        solver->add_clause_int(lits, true);
+        clear_up_before_first_set();
+        return solver->ok;
+    } else {
+        assert(solver->ok);
+        runStats.bothSameAdded += toEnqueue.size();
+        extraTime += 3*toEnqueue.size();
+        return solver->fully_enqueue_these(toEnqueue);
+    }
 }
 
 bool Prober::propagate(Lit& failed)
