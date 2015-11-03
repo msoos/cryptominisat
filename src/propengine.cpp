@@ -1143,8 +1143,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     #endif //DEBUG_ENQUEUE_LEVEL0
 
     #ifdef ENQUEUE_DEBUG
-    //assert(trail.size() <= nVarsOuter());
-    //assert(decisionLevel() == 0 || varData[p.var()].removed == Removed::none);
+    assert(trail.size() <= nVarsOuter());
+    assert(varData[p.var()].removed == Removed::none);
     #endif
 
     const uint32_t v = p.var();

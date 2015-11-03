@@ -76,7 +76,6 @@
 #endif
 
 #ifdef FAST_DEBUG
-#define ENQUEUE_DEBUG
 #define DEBUG_VARELIM
 #define DEBUG_WATCHED
 #define DEBUG_ATTACH
