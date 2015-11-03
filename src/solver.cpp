@@ -1310,6 +1310,7 @@ lbool Solver::solve()
     if (conf.preprocess == 2) {
         status = load_state(conf.saved_state_file);
         if (status == l_Undef) {
+            model = assigns;
             status = load_solution_from_file(conf.solution_file);
         }
     }
@@ -3354,7 +3355,6 @@ lbool Solver::load_solution_from_file(const string& fname)
     //At this point, model is set up, we just need to fill the l_Undef in
     //from assigns
     lbool status = l_Undef;
-    model = assigns;
     FILE* input_stream = fopen(fname.c_str(), "r");
     if (input_stream == NULL) {
         std::cerr << "ERROR: could not open solution file "
