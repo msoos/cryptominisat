@@ -29,7 +29,6 @@
 #include <set>
 #include "xor.h"
 #include "cset.h"
-#include "xorfinderabst.h"
 #include "watcharray.h"
 
 using std::vector;

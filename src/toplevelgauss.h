@@ -23,6 +23,7 @@
 #define _TOPLEVELGAUSS_H_
 
 #include "xor.h"
+#include "toplevelgaussabst.h"
 #include <vector>
 #include <set>
 using std::vector;
@@ -33,7 +34,7 @@ namespace CMSat {
 class Solver;
 class OccSimplifier;
 
-class TopLevelGauss
+class TopLevelGauss: public TopLevelGaussAbst
 {
 public:
     TopLevelGauss(OccSimplifier* _occsimplifier, Solver* _solver);

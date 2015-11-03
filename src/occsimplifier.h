@@ -53,7 +53,7 @@ class ClauseCleaner;
 class SolutionExtender;
 class Solver;
 class GateFinder;
-class TopLevelGauss;
+class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
 
@@ -416,9 +416,9 @@ private:
 
     /////////////////////
     //Helpers
-    friend class TopLevelGauss;
+    friend class TopLevelGaussAbst;
     friend class GateFinder;
-    TopLevelGauss *topLevelGauss;
+    TopLevelGaussAbst *topLevelGauss;
     GateFinder *gateFinder;
 
     /////////////////////

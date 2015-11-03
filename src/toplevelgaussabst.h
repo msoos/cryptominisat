@@ -19,22 +19,26 @@
  * MA 02110-1301  USA
  */
 
-#ifndef __XORFINDERABST_H__
-#define __XORFINDERABST_H__
+#ifndef __TOPLEVELABST_H__
+#define __TOPLEVELABST_H__
+
+#include "xor.h"
+#include <vector>
+using std::vector;
 
 namespace CMSat {
 
 class OccSimplifier;
 class Solver;
 
-class XorFinderAbst
+class TopLevelGaussAbst
 {
     public:
-        virtual bool do_all_with_xors()
+        virtual bool toplevelgauss(const vector<Xor>& _xors)
         {
             return true;
         }
-        virtual ~XorFinderAbst()
+        virtual ~TopLevelGaussAbst()
         {}
         virtual size_t mem_used() const
         {
@@ -44,4 +48,4 @@ class XorFinderAbst
 
 }
 
-#endif //__XORFINDERABST_H__
+#endif //__TOPLEVELABST_H__

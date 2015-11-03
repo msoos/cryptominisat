@@ -47,13 +47,17 @@
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
-#include "toplevelgauss.h"
+#include "toplevelgaussabst.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
 #include "xorfinder.h"
 #include "bva.h"
 #include "trim.h"
+
+#ifdef USE_M4RI
+#include "toplevelgauss.h"
+#endif
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -91,7 +95,9 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , blockedMapBuilt(false)
 {
     bva = new BVA(solver, this);
+    topLevelGauss = new TopLevelGaussAbst;
     #ifdef USE_M4RI
+    delete topLevelGauss;
     topLevelGauss = new TopLevelGauss(this , solver);
     #endif
     sub_str = new SubsumeStrengthen(this, solver);
