@@ -3450,6 +3450,9 @@ void Solver::parse_v_line(A* in, const size_t lineNum)
             && varData[var].removed == Removed::none
         ) {
             model[var] = parsed_lit < 0 ? l_False : l_True;
+            if (conf.verbosity >= 10) {
+                cout << "Read V line: model for var " << (var+1) << " set to " << model[var] << endl;
+            }
         }
     }
 }

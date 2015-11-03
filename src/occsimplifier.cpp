@@ -3021,4 +3021,12 @@ void OccSimplifier::load_state(SimpleInFile& f)
 
     blockedMapBuilt = false;
     buildBlockedMap();
+
+    //Sanity check
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        if (solver->varData[i].removed == Removed::elimed) {
+            assert(solver->value(i) == l_Undef);
+            assert(solver->model_value(i) == l_Undef);
+        }
+    }
 }

@@ -109,8 +109,18 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     cout << "blocked on: " <<  blockedOn << endl;
     #endif
 
+    if (solver->model_value(blockedOn) != l_Undef) {
+        cout << "ERROR: Model value for var " << blockedOn.unsign() << " is "
+        << solver->model_value(blockedOn) << " but that doesn't satisfy a v-elim clause on the stack!"
+        << endl;
+    }
     assert(solver->model_value(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
+    if (solver->conf.verbosity >= 10) {
+        cout << "Extending VELIM cls. -- setting model for var "
+        << blockedOn.unsign() << " to " << solver->model[blockedOn.var()] << endl;
+    }
+
     assert(satisfied(lits));
 
     solver->varReplacer->extend_model(blockedOn.var());
