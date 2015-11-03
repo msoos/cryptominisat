@@ -32,19 +32,19 @@
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3, xor_t = 4};
+enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
 
 class PropBy
 {
     private:
         uint32_t red_step:1;
         uint32_t data1:31;
-        uint32_t type:3;
+        uint32_t type:2;
         //0: clause, NULL
         //1: clause, non-null
         //2: binary
         //3: tertiary
-        uint32_t data2:29;
+        uint32_t data2:30;
 
     public:
         PropBy() :
@@ -70,14 +70,6 @@ class PropBy
             red_step(redStep)
             , data1(lit.toInt())
             , type(binary_t)
-            , data2(0)
-        {
-        }
-
-        PropBy(size_t xor_num, bool) :
-            red_step(0)
-            , data1(xor_num)
-            , type(xor_t)
             , data2(0)
         {
         }
@@ -154,11 +146,6 @@ class PropBy
             return type == clause_t;
         }
 
-        bool isXor() const
-        {
-            return type == xor_t;
-        }
-
         PropByType getType() const
         {
             return (PropByType)type;
@@ -184,14 +171,6 @@ class PropBy
         {
             #ifdef DEBUG_PROPAGATEFROM
             assert(isClause());
-            #endif
-            return data1;
-        }
-
-        size_t get_xor_num() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(isXor());
             #endif
             return data1;
         }
