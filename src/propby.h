@@ -61,9 +61,9 @@ class PropBy
             , data2(0)
         {
             //No roll-over
-            #ifdef DEBUG_PROPAGATEFROM
+            /*#ifdef DEBUG_PROPAGATEFROM
             assert(offset == get_offset());
-            #endif
+            #endif*/
         }
 
         PropBy(const Lit lit, const bool redStep) :
