@@ -47,16 +47,13 @@
 #include "subsumestrengthen.h"
 #include "watchalgos.h"
 #include "clauseallocator.h"
-#include "xorfinderabst.h"
+#include "toplevelgauss.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
 #include "datasync.h"
+#include "xorfinder.h"
 #include "bva.h"
 #include "trim.h"
-
-#ifdef USE_M4RI
-#include "xorfinder.h"
-#endif
 
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
@@ -88,18 +85,14 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , seen2(solver->seen2)
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
-    , xorFinder(NULL)
+    , topLevelGauss(NULL)
     , gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
     bva = new BVA(solver, this);
-    xorFinder = new XorFinderAbst();
     #ifdef USE_M4RI
-    if (solver->conf.doFindXors) {
-        delete xorFinder;
-        xorFinder = new XorFinder(this, solver);
-    }
+    topLevelGauss = new TopLevelGauss(this , solver);
     #endif
     sub_str = new SubsumeStrengthen(this, solver);
 
@@ -111,7 +104,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
 OccSimplifier::~OccSimplifier()
 {
     delete bva;
-    delete xorFinder;
+    delete topLevelGauss;
     delete sub_str;
     delete gateFinder;
 }
@@ -877,9 +870,11 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
         } else if (token == "occ-xor") {
             #ifdef USE_M4RI
             if (solver->conf.doFindXors
-                && xorFinder != NULL
+                && topLevelGauss != NULL
             ) {
-                xorFinder->do_all_with_xors();
+                XorFinder finder(this, solver);
+                finder.find_xors();
+                topLevelGauss->toplevelgauss(finder.xors);
             }
             #endif
         } else if (token == "occ-clean-implicit") {
@@ -2768,16 +2763,16 @@ size_t OccSimplifier::mem_used() const
 
 size_t OccSimplifier::mem_used_xor() const
 {
-    if (xorFinder)
-        return xorFinder->mem_used();
+    if (topLevelGauss)
+        return topLevelGauss->mem_used();
     else
         return 0;
 }
 
 void OccSimplifier::freeXorMem()
 {
-    delete xorFinder;
-    xorFinder = NULL;
+    delete topLevelGauss;
+    topLevelGauss = NULL;
 }
 
 void OccSimplifier::linkInClause(Clause& cl)

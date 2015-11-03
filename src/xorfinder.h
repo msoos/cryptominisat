@@ -27,64 +27,20 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include "xor.h"
 #include "cset.h"
 #include "xorfinderabst.h"
 #include "watcharray.h"
 
-namespace CMSat {
-
 using std::vector;
 using std::set;
+
+namespace CMSat {
 
 //#define VERBOSE_DEBUG_XOR_FINDER
 
 class Solver;
 class OccSimplifier;
-
-class Xor
-{
-    public:
-        Xor(const vector<Lit>& cl, const bool _rhs) :
-            rhs(_rhs)
-        {
-            for (uint32_t i = 0; i < cl.size(); i++) {
-                vars.push_back(cl[i].var());
-            }
-        }
-
-        bool operator==(const Xor& other) const
-        {
-            return (rhs == other.rhs && vars == other.vars);
-        }
-
-        vector<uint32_t> vars;
-        size_t size() const
-        {
-            return vars.size();
-        }
-        bool rhs;
-        bool getRemoved() const
-        {
-            return removed;
-        }
-
-
-    private:
-        bool removed;
-};
-
-inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
-{
-    for (uint32_t i = 0; i < thisXor.vars.size(); i++) {
-        os << Lit(thisXor.vars[i], false);
-
-        if (i+1 < thisXor.vars.size())
-            os << " + ";
-    }
-    os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;
-
-    return os;
-}
 
 class FoundXors
 {
@@ -157,12 +113,11 @@ class FoundXors
         bool rhs;
 };
 
-class XorFinder: public XorFinderAbst
+class XorFinder
 {
 public:
-    XorFinder(OccSimplifier* subsumer, Solver* solver);
-    virtual ~XorFinder() {}
-    virtual bool do_all_with_xors();
+    XorFinder(OccSimplifier* occsimplifier, Solver* solver);
+    void find_xors();
 
     struct Stats
     {
@@ -172,43 +127,29 @@ public:
             *this = tmp;
         }
 
-        double total_time() const
-        {
-            return findTime + extractTime + blockCutTime;
-        }
-
         Stats& operator+=(const Stats& other);
         void print_short(const Solver* solver) const;
-        void print(const size_t numCalls) const;
+        void print() const;
 
         //Time
+        uint32_t numCalls = 0;
         double findTime = 0.0;
-        double extractTime = 0.0;
-        double blockCutTime = 0.0;
+        uint32_t time_outs = 0;
 
         //XOR stats
         uint64_t foundXors = 0;
         uint64_t sumSizeXors = 0;
-        uint64_t numVarsInBlocks = 0;
-        uint64_t numBlocks = 0;
-
-        //Usefulness stats
-        uint64_t time_outs = 0;
-        uint64_t newUnits = 0;
-        uint64_t newBins = 0;
-
-        size_t zeroDepthAssigns = 0;
     };
 
     const Stats& get_stats() const;
-    size_t getNumCalls() const;
     virtual size_t mem_used() const;
+    vector<Xor> xors; ///<Recovered XORs
 
 private:
     void add_found_xor(const Xor& found_xor);
-    void find_xors();
     void find_xors_based_on_short_clauses();
     void find_xors_based_on_long_clauses();
+    void print_found_xors();
 
     int64_t xor_find_time_limit;
 
@@ -237,32 +178,16 @@ private:
         , FoundXors& foundCls
     ) const;*/
 
-    //Information extraction
-    bool extractInfo();
-    void cutIntoBlocks(const vector<size_t>& xorsToUse);
-    bool extractInfoFromBlock(const vector<uint32_t>& block, const size_t blockNum);
-    vector<uint32_t> getXorsForBlock(const size_t blockNum);
-
-    //Major calculated data and indexes to this data
-    vector<Xor> xors; ///<Recovered XORs
-    vector<vector<uint32_t> > blocks; ///<Blocks of vars that are in groups of XORs
-    vector<uint32_t> varToBlock; ///<variable-> block index map
-
-    OccSimplifier* subsumer;
+    OccSimplifier* occsimplifier;
     Solver *solver;
 
     //Stats
     Stats runStats;
     Stats globalStats;
-    size_t numCalls;
 
     //Temporary
     vector<Lit> tmpClause;
     vector<uint32_t> varsMissing;
-
-    //Temporaries for putting xors into matrix, and extracting info from matrix
-    vector<uint32_t> outerToInterVarMap;
-    vector<uint32_t> interToOUterVarMap;
 
     //Other temporaries
     vector<uint16_t>& seen;
@@ -400,11 +325,6 @@ inline bool FoundXors::bit(const uint32_t a, const uint32_t b) const
 inline const XorFinder::Stats& XorFinder::get_stats() const
 {
     return globalStats;
-}
-
-inline size_t XorFinder::getNumCalls() const
-{
-    return numCalls;
 }
 
 } //end namespace

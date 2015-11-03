@@ -54,6 +54,7 @@ set(cryptoms_lib_files
     datasync.cpp
     reducedb.cpp
     clausedumper.cpp
+    toplevelgauss.cpp
     bva.cpp
     intree.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
