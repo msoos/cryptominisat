@@ -425,13 +425,12 @@ uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) c
     return memUsage;
 }
 
-void OccSimplifier::print_mem_usage_of_occur(bool irred, uint64_t memUsage) const
+void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 {
     if (solver->conf.verbosity >= 2) {
         cout
-        << "c [simp] mem usage for occur of "
-        << (irred ?  "irred" : "red  ")
-        << " " << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
+        << "c [simp] mem usage for occur "
+        << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
         << endl;
     }
 }
@@ -462,41 +461,35 @@ void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
 
 OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
     const vector<ClOffset>& toAdd
-    , bool irred
     , bool alsoOccur
+    , uint32_t max_size
+    , int64_t link_in_lit_limit
 ) {
     LinkInData link_in_data;
-    uint64_t linkedInLits = 0;
     for (const ClOffset offs: toAdd) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-
-        //Sanity check that the value given as irred is correct
-        assert(
-            (irred && !cl->red())
-            || (!irred && cl->red())
-        );
         cl->recalc_abst_if_needed();
         assert(cl->abst == calcAbstraction(*cl));
 
         if (alsoOccur
-            //If irreduntant or (small enough AND link in limit not reached)
-            && (irred
-                || (cl->size() < solver->conf.maxRedLinkInSize
-                    && linkedInLits < (solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL))
-            )
+            && cl->size() < max_size
+            && link_in_lit_limit > 0
         ) {
             linkInClause(*cl);
             link_in_data.cl_linked++;
-            linkedInLits += cl->size();
+            link_in_lit_limit -= cl->size();
+            clause_lits_added += cl->size();
         } else {
-            assert(cl->red());
+            /*cout << "alsoOccur: " << alsoOccur
+            << " cl->size() < max_size: " << (cl->size() < max_size)
+            << " link_in_lit_limit: " << link_in_lit_limit << endl;*/
+            //assert(cl->red());
             cl->set_occur_linked(false);
             link_in_data.cl_not_linked++;
         }
 
         clauses.push_back(offs);
     }
-    clause_lits_added += linkedInLits;
 
     return link_in_data;
 }
@@ -527,33 +520,6 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 
         return false;
     }
-
-    return true;
-}
-
-bool OccSimplifier::add_from_solver(
-    vector<ClOffset>& toAdd
-    , bool alsoOccur
-    , bool irred
-) {
-    //solver->print_watch_mem_used();
-
-    if (alsoOccur) {
-        uint64_t memUsage = calc_mem_usage_of_occur(toAdd);
-        print_mem_usage_of_occur(irred, memUsage);
-        alsoOccur = decide_occur_limit(irred, memUsage);
-        if (irred && !alsoOccur)
-            return false;
-    }
-
-    if (!irred && alsoOccur) {
-        std::sort(toAdd.begin(), toAdd.end(), ClauseSizeSorter(solver->cl_alloc));
-    }
-
-    LinkInData link_in_data = link_in_clauses(toAdd, irred, alsoOccur);
-    toAdd.clear();
-    if (!irred)
-        print_linkin_data(link_in_data);
 
     return true;
 }
@@ -1035,27 +1001,45 @@ bool OccSimplifier::backward_sub_str()
 
 bool OccSimplifier::fill_occur()
 {
-    //Try to add irreducible to occur
+    //Add irredundant to occur
     runStats.origNumIrredLongClauses = solver->longIrredCls.size();
-    bool ret = add_from_solver(solver->longIrredCls
-        , true //try to add to occur list
-        , true //it is irred
-    );
-
-    //Memory limit reached, irreduntant clauses cannot
-    //be added to occur --> exit
-    if (!ret) {
+    uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
+    print_mem_usage_of_occur(memUsage);
+    if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL) {
         CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
         return false;
     }
 
+    LinkInData link_in_data = link_in_clauses(
+        solver->longIrredCls
+        , true //add to occur list
+        , std::numeric_limits<uint32_t>::max()
+        , std::numeric_limits<int64_t>::max()
+    );
+    solver->longIrredCls.clear();
+    print_linkin_data(link_in_data);
+
     //Add redundant to occur
     runStats.origNumRedLongClauses = solver->longRedCls.size();
-    add_from_solver(solver->longRedCls
-        , true //try to add to occur list
-        , false //irreduntant?
+    memUsage = calc_mem_usage_of_occur(solver->longRedCls);
+    print_mem_usage_of_occur(memUsage);
+    bool linkin = true;
+    if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL) {
+        linkin = false;
+    }
+    //Sort, so we get the shortest ones in at least
+    std::sort(solver->longRedCls.begin(), solver->longRedCls.end()
+        , ClauseSizeSorter(solver->cl_alloc));
+
+    link_in_data = link_in_clauses(
+        solver->longRedCls
+        , linkin
+        , solver->conf.maxRedLinkInSize
+        , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL
     );
+    solver->longRedCls.clear();
+    print_linkin_data(link_in_data);
 
     return true;
 }
