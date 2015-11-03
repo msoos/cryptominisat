@@ -13,5 +13,6 @@ desc/satcomp14/cmsv4.log
 desc/satcomp14/cmsv4.out
 desc/satcomp14/cmsv4.pdf
 scripts/reconf/outs
+tests/cnf-files/*.sqlite
 
 web/jquery-1.11.3.min.js
