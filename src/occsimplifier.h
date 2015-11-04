@@ -350,7 +350,11 @@ private:
 
     //Clause update
     lbool       clean_clause(ClOffset c);
-    void        unlink_clause(ClOffset cc, bool drup = true, bool allow_empty_watch = false, bool only_set_is_removed = false);
+    void        unlink_clause(ClOffset cc
+        , bool drup = true
+        , bool allow_empty_watch = false
+        , bool only_set_is_removed = false
+    );
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
