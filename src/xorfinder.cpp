@@ -44,8 +44,8 @@ void XorFinder::find_xors_based_on_long_clauses()
 {
     vector<Lit> lits;
     for (vector<ClOffset>::iterator
-        it = solver->longIrredCls.begin()
-        , end = solver->longIrredCls.end()
+        it = occsimplifier->clauses.begin()
+        , end = occsimplifier->clauses.end()
         ; it != end && xor_find_time_limit > 0
         ; ++it
     ) {
