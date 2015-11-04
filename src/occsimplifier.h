@@ -276,6 +276,7 @@ public:
     void load_state(SimpleInFile& f);
     vector<ClOffset> sub_str_with;
     TouchListLit impl_sub_lits;
+    vector<ClOffset> clauses;
 
 private:
     friend class SubsumeStrengthen;
@@ -293,7 +294,6 @@ private:
     bool fill_occur();
     bool fill_occur_and_print_stats();
     void finishUp(size_t origTrailSize);
-    vector<ClOffset> clauses;
 
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to

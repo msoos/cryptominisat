@@ -34,6 +34,7 @@
 #include <sstream>
 #include "src/solver.h"
 #include "src/stamp.h"
+#include "src/xor.h"
 #include "cryptominisat4/cryptominisat.h"
 
 using std::cout;
@@ -61,6 +62,18 @@ static inline std::string &trim(std::string &s) {
         return ltrim(rtrim(s));
 }
 
+long int str_to_long_int(string& token)
+{
+    string trimmed = trim(token);
+    size_t endptr;
+    long i = std::stol(trimmed, &endptr);
+    if (endptr != trimmed.size()) {
+        cout << "Error, input token: '" << token << "' wasn't completely used up, wrong token!" << endl;
+        exit(-1);
+    }
+    return i;
+}
+
 vector<Lit> str_to_cl(const string& data)
 {
     vector<string> tokens;
@@ -73,13 +86,7 @@ vector<Lit> str_to_cl(const string& data)
 
     vector<Lit> ret;
     for(string& token: tokens) {
-        string trimmed = trim(token);
-        size_t endptr;
-        long i = std::stol(trimmed, &endptr);
-        if (endptr != trimmed.size()) {
-            cout << "Error, input token: '" << token << "' wasn't completely used up, wrong token!" << endl;
-            exit(-1);
-        }
+        long int i = str_to_long_int(token);
         Lit lit(abs(i)-1, i < 0);
         ret.push_back(lit);
     }
@@ -96,6 +103,39 @@ vector<uint32_t> str_to_vars(const string& data)
         vars.push_back(lit.var());
     }
     return vars;
+}
+
+vector<Xor> str_to_xors(const string& data)
+{
+    vector<Xor> ret;
+    stringstream ss(data);
+    string token;
+    while (getline(ss,token, ';'))
+    {
+        stringstream ss2(token);
+        string token2;
+        int at = 0;
+        bool rhs = false;
+        vector<uint32_t> vars;
+        while (getline(ss2,token2, '='))
+        {
+            //cout << "Token is: " << token2 << endl;
+            if (at == 0) {
+                vars = str_to_vars(token2);
+            }
+            if (at == 1) {
+                long r = str_to_long_int(token2);
+                assert(r >= 0 && r <= 1);
+                rhs = r;
+            }
+            assert(at < 2);
+            at++;
+        }
+        assert(at == 2 && "You forgot the =0/1 from the XOR");
+        ret.push_back(Xor(vars, rhs));
+    }
+
+    return ret;
 }
 
 vector<vector<Lit> > str_to_vecs(const string& data)
@@ -335,6 +375,46 @@ void check_set_lits(const Solver* s, const std::string& data)
     vector<Lit> set_lits = s->get_zero_assigned_lits();
     std::sort(set_lits.begin(), set_lits.end());
     EXPECT_EQ(lits, set_lits);
+}
+
+struct XorSorter
+{
+    bool operator()(const Xor& a, const Xor& b) const
+    {
+        if (a.vars.size() != b.vars.size())
+            return a.vars.size() < b.vars.size();
+
+        if (a.rhs != b.rhs) {
+            return a.rhs < b.rhs;
+        }
+
+        for(size_t i = 0; i < a.vars.size(); i++) {
+            if (a.vars[i] != b.vars[i]) {
+                return a.vars[i] < b.vars[i];
+            }
+        }
+
+        return false;
+    }
+};
+
+void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
+{
+    XorSorter xorsort;
+
+    vector<Xor> expected_sorted = str_to_xors(expected);
+    for(auto t: expected_sorted) {
+        std::sort(t.vars.begin(), t.vars.end());
+    }
+    std::sort(expected_sorted.begin(), expected_sorted.end(), xorsort);
+
+    vector<Xor> got_data_sorted = got_data;
+    for(auto t: got_data_sorted) {
+        std::sort(t.vars.begin(), t.vars.end());
+    }
+
+    std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);
+    EXPECT_EQ(expected_sorted, got_data_sorted);
 }
 
 string print_cache(const vector<LitExtra>& c)

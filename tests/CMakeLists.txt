@@ -113,6 +113,7 @@ set (MY_TESTS
     subsume_impl_test
     comp_find_test
     intree_test
+    xor_finder_test
 )
 foreach(F ${MY_TESTS})
     add_executable(${F}
