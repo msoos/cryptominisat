@@ -584,20 +584,6 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
     }
 }
 
-void Prober::handle_failed_lit(const Lit lit, const Lit failed)
-{
-
-    solver->cancelUntil<false>(0);
-
-    //Update conflict stats
-    runStats.addedBin += solver->hyper_bin_res_all();
-    std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
-    runStats.removedIrredBin += tmp.first;
-    runStats.removedRedBin += tmp.second;
-
-
-}
-
 bool Prober::check_timeout_due_to_hyperbin()
 {
     //If we timed out on ONE call, turn otf hyper-bin off

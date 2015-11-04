@@ -238,7 +238,6 @@ class Prober {
         void update_cache(Lit thisLit, Lit lit, size_t numElemsSet);
         void check_and_set_both_prop(uint32_t var, bool first);
         void add_rest_of_lits_to_cache(Lit lit);
-        void handle_failed_lit(const Lit lit, const Lit failed);
 
         //For hyper-bin resolution
         #ifdef DEBUG_REMOVE_USELESS_BIN
