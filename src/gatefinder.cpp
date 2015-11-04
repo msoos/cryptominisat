@@ -133,9 +133,6 @@ bool GateFinder::shorten_with_all_or_gates()
 
     numMaxShortenWithGates = orig_numMaxShortenWithGates;
     simplifier->limit_to_decrease = &numMaxShortenWithGates;
-    runStats.numLongCls = simplifier->runStats.origNumIrredLongClauses +
-        simplifier->runStats.origNumRedLongClauses;
-    runStats.numLongClsLits = solver->litStats.irredLits + solver->litStats.redLits;
 
     //Go through each gate, see if we can do something with it
     simplifier->cl_to_free_later.clear();

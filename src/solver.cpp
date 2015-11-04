@@ -2015,7 +2015,7 @@ void Solver::print_norm_stats(const double cpu_time) const
             , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
-        simplifier->get_stats().print_short(this, nVars());
+        simplifier->get_stats().print_short(this);
     }
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time

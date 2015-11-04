@@ -700,6 +700,8 @@ bool OccSimplifier::eliminate_vars()
     cl_to_free_later.clear();
     assert(solver->watches.get_smudged_list().empty());
     order_vars_for_elim();
+    bvestats.clear();
+    bvestats.numCalls = 1;
 
     //Go through the ordered list of variables to eliminate
     int64_t last_elimed = 1;
@@ -792,6 +794,12 @@ end:
         << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
         << "c  #T: " << time_used << endl;
     }
+    if (solver->conf.verbosity >= 1) {
+        if (solver->conf.verbosity >= 3)
+            runStats.print(solver->nVars());
+        else
+            runStats.print_short(solver);
+    }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
@@ -803,9 +811,9 @@ end:
     }
 
     assert(limit_to_decrease == &norm_varelim_time_limit);
-
-    runStats.varElimTimeOut += (*limit_to_decrease <= 0);
-    runStats.varElimTime += cpuTime() - myTime;
+    bvestats.varElimTimeOut += time_out;
+    bvestats.timeUsed = cpuTime() - myTime;
+    bvestats_global += bvestats;
 
     return solver->ok;
 }
@@ -911,10 +919,8 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
     return solver->ok;
 }
 
-
-bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
+bool OccSimplifier::setup()
 {
-    startup = _startup;
     assert(solver->okay());
     assert(toClear.empty());
     sub_str_with.clear();
@@ -930,7 +936,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     if (solver->getNumLongClauses() > 10ULL*1000ULL*1000ULL
         || solver->litStats.irredLits > 50ULL*1000ULL*1000ULL
     ) {
-        return solver->okay();
+        return false;
     }
 
     //Setup
@@ -941,27 +947,25 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     set_limits(); //to calculate strengthening_time_limit
     limit_to_decrease = &strengthening_time_limit;
     if (!fill_occur_and_print_stats()) {
-        return solver->okay();
+        return false;
     }
 
     set_limits();
-    runStats.origNumFreeVars = solver->get_num_free_vars();
+}
+
+bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
+{
+    startup = _startup;
+    if (!setup()) {
+        return solver->ok;
+    }
+
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
-
-    //sub_str->subsumeWithTris();
     execute_simplifier_sched(schedule);
 
     remove_by_drup_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
-
-    //Print stats
-    if (solver->conf.verbosity >= 1) {
-        if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
-        else
-            runStats.print_short(solver, solver->conf.doVarElim);
-    }
 
     return solver->ok;
 }
@@ -1003,7 +1007,6 @@ bool OccSimplifier::backward_sub_str()
 bool OccSimplifier::fill_occur()
 {
     //Add irredundant to occur
-    runStats.origNumIrredLongClauses = solver->longIrredCls.size();
     uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
     print_mem_usage_of_occur(memUsage);
     if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL) {
@@ -1022,7 +1025,6 @@ bool OccSimplifier::fill_occur()
     print_linkin_data(link_in_data);
 
     //Add redundant to occur
-    runStats.origNumRedLongClauses = solver->longRedCls.size();
     memUsage = calc_mem_usage_of_occur(solver->longRedCls);
     print_mem_usage_of_occur(memUsage);
     bool linkin = true;
@@ -1064,7 +1066,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
     }
 
     //Uneliminate it in theory
-    globalStats.numVarsElimed--;
+    bvestats_global.numVarsElimed--;
     solver->varData[var].removed = Removed::none;
     solver->set_decision_var(var);
 
@@ -1269,8 +1271,8 @@ void OccSimplifier::set_limits()
     //numMaxElim = std::numeric_limits<int64_t>::max();
 
     //If variable elimination isn't going so well
-    if (globalStats.testedToElimVars > 0
-        && float_div(globalStats.numVarsElimed, globalStats.testedToElimVars) < 0.1
+    if (bvestats_global.testedToElimVars > 0
+        && float_div(bvestats_global.numVarsElimed, bvestats_global.testedToElimVars) < 0.1
     ) {
         norm_varelim_time_limit /= 2;
     }
@@ -1288,7 +1290,6 @@ void OccSimplifier::set_limits()
     if (globalStats.numCalls > 0) {
         varelim_num_limit = (double)varelim_num_limit * (globalStats.numCalls+0.5);
     }
-    runStats.origNumMaxElimVars = varelim_num_limit;
 
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
@@ -1367,8 +1368,8 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
             //Update stats
             if (!cl.red()) {
-                runStats.clauses_elimed_long++;
-                runStats.clauses_elimed_sumsize += cl.size();
+                bvestats.clauses_elimed_long++;
+                bvestats.clauses_elimed_sumsize += cl.size();
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
@@ -1378,7 +1379,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 }
             } else {
                 red = true;
-                runStats.longRedClRemThroughElim++;
+                bvestats.longRedClRemThroughElim++;
             }
 
             //Remove -- only DRUP the ones that are redundant
@@ -1390,11 +1391,11 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
             //Update stats
             if (!watch.red()) {
-                runStats.clauses_elimed_bin++;
-                runStats.clauses_elimed_sumsize += 2;
+                bvestats.clauses_elimed_bin++;
+                bvestats.clauses_elimed_sumsize += 2;
             } else {
                 red = true;
-                runStats.binRedClRemThroughElim++;
+                bvestats.binRedClRemThroughElim++;
             }
 
             //Put clause into blocked status
@@ -1424,11 +1425,11 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
             //Update stats
             if (!watch.red()) {
-                runStats.clauses_elimed_tri++;
-                runStats.clauses_elimed_sumsize += 3;
+                bvestats.clauses_elimed_tri++;
+                bvestats.clauses_elimed_sumsize += 3;
             } else {
                 red = true;
-                runStats.triRedClRemThroughElim++;
+                bvestats.triRedClRemThroughElim++;
             }
 
             //Put clause into blocked status
@@ -1683,7 +1684,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     //Check if we should do aggressive check or not
     const bool aggressive = (aggressive_elim_time_limit > 0 && !startup);
-    runStats.usedAggressiveCheckToELim += aggressive;
+    bvestats.usedAggressiveCheckToELim += aggressive;
 
     //set-up
     const Lit lit = Lit(var, false);
@@ -1906,7 +1907,7 @@ bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(co
                 << ", " << w.lit3()
                 << endl;
             }
-            runStats.subsumedByVE++;
+            bvestats.subsumedByVE++;
             solver->remove_tri_but_lit1(lits[0],w.lit2(), w.lit3(), w.red(), *limit_to_decrease);
         } else {
             *j++ = *i;
@@ -1921,7 +1922,7 @@ bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
 ) {
-    runStats.newClauses++;
+    bvestats.newClauses++;
     Clause* newCl = NULL;
 
     //Check if a new 2-long would subsume a 3-long if we have time
@@ -1955,13 +1956,13 @@ bool OccSimplifier::add_varelim_resolvent(
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
         SubsumeStrengthen::Sub1Ret ret = sub_str->strengthen_subsume_and_unlink_and_markirred(offset);
-        runStats.subsumedByVE += ret.sub;
+        bvestats.subsumedByVE += ret.sub;
 
     } else if (finalLits.size() == 3 || finalLits.size() == 2) {
         subsume:
         std::sort(finalLits.begin(), finalLits.end());
         SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
-        runStats.subsumedByVE += ret.sub;
+        bvestats.subsumedByVE += ret.sub;
         if (!solver->ok) {
             return false;
         }
@@ -2041,7 +2042,7 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var, const Lit lit)
     assert(solver->varData[var].removed == Removed::none);
     solver->varData[var].removed = Removed::elimed;
 
-    runStats.numVarsElimed++;
+    bvestats.numVarsElimed++;
 }
 
 void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
@@ -2055,7 +2056,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 {
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
-    runStats.testedToElimVars++;
+    bvestats.testedToElimVars++;
 
     //Heuristic says no, or we ran out of time
     if (test_elim_and_fill_resolvents(var) == std::numeric_limits<int>::max()
@@ -2063,7 +2064,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     ) {
         return false;  //didn't eliminate :(
     }
-    runStats.triedToElimVars++;
+    bvestats.triedToElimVars++;
 
     const Lit lit = Lit(var, false);
     print_var_eliminate_stat(lit);
@@ -2723,10 +2724,10 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
             assert(solver->value(i) == l_Undef);
         }
     }
-    if (globalStats.numVarsElimed != checkNumElimed) {
+    if (bvestats_global.numVarsElimed != checkNumElimed) {
         std::cerr
         << "ERROR: globalStats.numVarsElimed is "<<
-        globalStats.numVarsElimed
+        bvestats_global.numVarsElimed
         << " but checkNumElimed is: " << checkNumElimed
         << endl;
 
@@ -2826,17 +2827,13 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
     blockTime += other.blockTime;
     varElimTime += other.varElimTime;
     finalCleanupTime += other.finalCleanupTime;
+    zeroDepthAssings += other.zeroDepthAssings;
 
-    //Startup stats
-    origNumFreeVars += other.origNumFreeVars;
-    origNumMaxElimVars += other.origNumMaxElimVars;
-    origNumIrredLongClauses += other.origNumIrredLongClauses;
-    origNumRedLongClauses += other.origNumRedLongClauses;
+    return *this;
+}
 
-    //Each algo
-    subsumedByVE  += other.subsumedByVE;
-
-    //Elim
+BVEStats& BVEStats::operator+=(const BVEStats& other)
+{
     numVarsElimed += other.numVarsElimed;
     varElimTimeOut += other.varElimTimeOut;
     clauses_elimed_long += other.clauses_elimed_long;
@@ -2851,52 +2848,20 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
     triedToElimVars += other.triedToElimVars;
     usedAggressiveCheckToELim += other.usedAggressiveCheckToELim;
     newClauses += other.newClauses;
-
-    zeroDepthAssings += other.zeroDepthAssings;
+    subsumedByVE  += other.subsumedByVE;
 
     return *this;
 }
 
-void OccSimplifier::Stats::print_short(const Solver* solver, const bool print_var_elim) const
+void OccSimplifier::Stats::print_short(const Solver* solver) const
 {
 
     cout
     << "c [occur] " << linkInTime+finalCleanupTime << " is overhead"
     << endl;
 
-    //About elimination
-    if (print_var_elim) {
-        cout
-        << "c [occ-bve]"
-        << " elimed: " << numVarsElimed
-        << " / " << origNumMaxElimVars
-        << " / " << origNumFreeVars
-        //<< " cl-elim: " << (clauses_elimed_long+clauses_elimed_bin)
-        << solver->conf.print_times(varElimTime, varElimTimeOut)
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " cl-new: " << newClauses
-        << " tried: " << triedToElimVars
-        << " tested: " << testedToElimVars
-        << " ("
-        << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
-        << " % aggressive)"
-        << endl;
-
-        cout
-        << "c [occ-bve]"
-        << " subs: "  << subsumedByVE
-        << " red-bin rem: " << binRedClRemThroughElim
-        << " red-tri rem: " << triRedClRemThroughElim
-        << " red-long rem: " << longRedClRemThroughElim
-        << " v-fix: " << std::setw(4) << zeroDepthAssings
-        << endl;
-    }
-
     cout
-    << "c [simp] link-in T: " << linkInTime
+    << "c [occur] link-in T: " << linkInTime
     << " cleanup T: " << finalCleanupTime
     << endl;
 }
@@ -2910,73 +2875,19 @@ void OccSimplifier::Stats::print(const size_t nVars) const
         , "% var-elim"
     );
 
-    print_stats_line("c timeouted"
-        , stats_line_percent(varElimTimeOut, numCalls)
-        , "% called"
-    );
-
     print_stats_line("c called"
         ,  numCalls
         , float_div(total_time(), numCalls)
         , "s per call"
     );
 
-    print_stats_line("c v-elimed"
-        , numVarsElimed
-        , stats_line_percent(numVarsElimed, nVars)
-        , "% vars"
-    );
 
-    cout << "c"
-    << " v-elimed: " << numVarsElimed
-    << " / " << origNumMaxElimVars
-    << " / " << origNumFreeVars
-    << endl;
+
 
     print_stats_line("c 0-depth assigns"
         , zeroDepthAssings
         , stats_line_percent(zeroDepthAssings, nVars)
         , "% vars"
-    );
-
-    print_stats_line("c cl-new"
-        , newClauses
-    );
-
-    print_stats_line("c tried to elim"
-        , triedToElimVars
-        , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
-        , "% aggressively"
-    );
-
-    print_stats_line("c elim-bin-lt-cl"
-        , binRedClRemThroughElim);
-
-    print_stats_line("c elim-tri-lt-cl"
-        , triRedClRemThroughElim);
-
-    print_stats_line("c elim-long-lt-cl"
-        , longRedClRemThroughElim);
-
-    print_stats_line("c lt-bin added due to v-elim"
-        , numRedBinVarRemAdded);
-
-    print_stats_line("c cl-elim-bin"
-        , clauses_elimed_bin);
-
-    print_stats_line("c cl-elim-tri"
-        , clauses_elimed_tri);
-
-    print_stats_line("c cl-elim-long"
-        , clauses_elimed_long);
-
-    print_stats_line("c cl-elim-avg-s",
-        ((double)clauses_elimed_sumsize
-        /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
-    );
-
-    print_stats_line("c v-elim-sub"
-        , subsumedByVE
     );
 
     cout << "c -------- OccSimplifier STATS END ----------" << endl;

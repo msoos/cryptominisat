@@ -100,6 +100,119 @@ struct BlockedClause {
     bool dummy = false;
 };
 
+struct BVEStats
+{
+    uint64_t numCalls = 0;
+    double timeUsed = 0.0;
+
+    int64_t numVarsElimed = 0;
+    uint64_t varElimTimeOut = 0;
+    uint64_t clauses_elimed_long = 0;
+    uint64_t clauses_elimed_tri = 0;
+    uint64_t clauses_elimed_bin = 0;
+    uint64_t clauses_elimed_sumsize = 0;
+    uint64_t longRedClRemThroughElim = 0;
+    uint64_t triRedClRemThroughElim = 0;
+    uint64_t binRedClRemThroughElim = 0;
+    uint64_t numRedBinVarRemAdded = 0;
+    uint64_t testedToElimVars = 0;
+    uint64_t triedToElimVars = 0;
+    uint64_t usedAggressiveCheckToELim = 0;
+    uint64_t newClauses = 0;
+    uint64_t subsumedByVE = 0;
+
+    BVEStats& operator+=(const BVEStats& other);
+
+    void print() const
+    {
+        //About elimination
+        cout
+        << "c [occ-bve]"
+        << " elimed: " << numVarsElimed
+        << endl;
+
+        cout
+        << "c [occ-bve]"
+        << " cl-new: " << newClauses
+        << " tried: " << triedToElimVars
+        << " tested: " << testedToElimVars
+        << " ("
+        << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
+        << " % aggressive)"
+        << endl;
+
+        cout
+        << "c [occ-bve]"
+        << " subs: "  << subsumedByVE
+        << " red-bin rem: " << binRedClRemThroughElim
+        << " red-tri rem: " << triRedClRemThroughElim
+        << " red-long rem: " << longRedClRemThroughElim
+        << endl;
+    }
+
+    void print()
+    {
+        print_stats_line("c timeouted"
+            , stats_line_percent(varElimTimeOut, numCalls)
+            , "% called"
+        );
+        print_stats_line("c v-elimed"
+            , numVarsElimed
+            , "% vars"
+        );
+
+        /*cout << "c"
+        << " v-elimed: " << numVarsElimed
+        << " / " << origNumMaxElimVars
+        << " / " << origNumFreeVars
+        << endl;*/
+
+        print_stats_line("c cl-new"
+            , newClauses
+        );
+
+        print_stats_line("c tried to elim"
+            , triedToElimVars
+            , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
+            , "% aggressively"
+        );
+
+        print_stats_line("c elim-bin-lt-cl"
+            , binRedClRemThroughElim);
+
+        print_stats_line("c elim-tri-lt-cl"
+            , triRedClRemThroughElim);
+
+        print_stats_line("c elim-long-lt-cl"
+            , longRedClRemThroughElim);
+
+        print_stats_line("c lt-bin added due to v-elim"
+            , numRedBinVarRemAdded);
+
+        print_stats_line("c cl-elim-bin"
+            , clauses_elimed_bin);
+
+        print_stats_line("c cl-elim-tri"
+            , clauses_elimed_tri);
+
+        print_stats_line("c cl-elim-long"
+            , clauses_elimed_long);
+
+        print_stats_line("c cl-elim-avg-s",
+            ((double)clauses_elimed_sumsize
+            /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
+        );
+
+        print_stats_line("c v-elim-sub"
+            , subsumedByVE
+        );
+    }
+    void clear() {
+        BVEStats tmp;
+        *this = tmp;
+    }
+};
+
 /**
 @brief Handles subsumption, self-subsuming resolution, variable elimination, and related algorithms
 */
@@ -112,6 +225,7 @@ public:
     ~OccSimplifier();
 
     //Called from main
+    bool setup();
     bool simplify(const bool _startup, const std::string schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
@@ -127,13 +241,13 @@ public:
     void extend_model(SolutionExtender* extender);
     uint32_t get_num_elimed_vars() const
     {
-        return globalStats.numVarsElimed;
+        return bvestats_global.numVarsElimed;
     }
 
     struct Stats
     {
         void print(const size_t nVars) const;
-        void print_short(const Solver* solver, const bool print_var_elim = true) const;
+        void print_short(const Solver* solver) const;
         Stats& operator+=(const Stats& other);
         void clear();
         double total_time() const;
@@ -146,34 +260,12 @@ public:
         double varElimTime = 0;
         double finalCleanupTime = 0;
 
-        //Startup stats
-        uint64_t origNumFreeVars = 0;
-        uint64_t origNumMaxElimVars = 0;
-        uint64_t origNumIrredLongClauses = 0;
-        uint64_t origNumRedLongClauses = 0;
-
-        //Each algorithm
-        uint64_t subsumedByVE = 0;
-
-        //Stats for var-elim
-        int64_t numVarsElimed = 0;
-        uint64_t varElimTimeOut = 0;
-        uint64_t clauses_elimed_long = 0;
-        uint64_t clauses_elimed_tri = 0;
-        uint64_t clauses_elimed_bin = 0;
-        uint64_t clauses_elimed_sumsize = 0;
-        uint64_t longRedClRemThroughElim = 0;
-        uint64_t triRedClRemThroughElim = 0;
-        uint64_t binRedClRemThroughElim = 0;
-        uint64_t numRedBinVarRemAdded = 0;
-        uint64_t testedToElimVars = 0;
-        uint64_t triedToElimVars = 0;
-        uint64_t usedAggressiveCheckToELim = 0;
-        uint64_t newClauses = 0;
-
         //General stat
         uint64_t zeroDepthAssings = 0;
     };
+
+    BVEStats bvestats;
+    BVEStats bvestats_global;
 
     const Stats& get_stats() const;
     const SubsumeStrengthen* getSubsumeStrengthen() const;
