@@ -55,14 +55,6 @@ class Xor
             return vars.size();
         }
         bool rhs;
-        bool getRemoved() const
-        {
-            return removed;
-        }
-
-
-    private:
-        bool removed;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
