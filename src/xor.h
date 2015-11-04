@@ -44,6 +44,12 @@ class Xor
             }
         }
 
+        Xor(const vector<uint32_t>& _vars, const bool _rhs) :
+            vars(_vars)
+            , rhs(_rhs)
+        {
+        }
+
         bool operator==(const Xor& other) const
         {
             return (rhs == other.rhs && vars == other.vars);
