@@ -91,7 +91,7 @@ Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
     }
     intree = new InTree(this);
     if (conf.perform_occur_based_simp) {
-        simplifier = new OccSimplifier(this);
+        occsimplifier = new OccSimplifier(this);
     }
     distill_all_with_all = new DistillerAllWithAll(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
@@ -117,7 +117,7 @@ Solver::~Solver()
     delete sqlStats;
     delete prober;
     delete intree;
-    delete simplifier;
+    delete occsimplifier;
     delete distill_all_with_all;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
@@ -714,7 +714,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             #ifdef VERBOSE_DEBUG_RECONSTRUCT
             cout << "Uneliminating var " << lit.var() + 1 << endl;
             #endif
-            if (!simplifier->uneliminate(lit.var()))
+            if (!occsimplifier->uneliminate(lit.var()))
                 return false;
         }
     }
@@ -732,7 +732,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::addClause(const vector<Lit>& lits, bool red)
 {
-    if (conf.perform_occur_based_simp && simplifier->getAnythingHasBeenBlocked()) {
+    if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
         std::cerr
         << "ERROR: Cannot add new clauses to the system if blocking was"
         << " enabled. Turn it off from conf.doBlockClauses"
@@ -984,7 +984,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
         && nVars() + n > 3ULL*1000ULL*1000ULL
     ) {
         conf.doFindXors = false;
-        simplifier->freeXorMem();
+        occsimplifier->freeXorMem();
 
         if (conf.verbosity >= 2) {
             cout
@@ -1009,7 +1009,7 @@ void Solver::new_vars(size_t n)
     varReplacer->new_vars(n);
 
     if (conf.perform_occur_based_simp) {
-        simplifier->new_vars(n);
+        occsimplifier->new_vars(n);
     }
 
     if (compHandler) {
@@ -1030,7 +1030,7 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
     varReplacer->new_var(orig_outer);
 
     if (conf.perform_occur_based_simp) {
-        simplifier->new_var(orig_outer);
+        occsimplifier->new_var(orig_outer);
     }
 
     if (compHandler) {
@@ -1059,8 +1059,8 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     litReachable.resize(nVars()*2);
     litReachable.shrink_to_fit();
     varReplacer->save_on_var_memory();
-    if (simplifier) {
-        simplifier->save_on_var_memory();
+    if (occsimplifier) {
+        occsimplifier->save_on_var_memory();
     }
     if (compHandler) {
         compHandler->save_on_var_memory();
@@ -1227,7 +1227,7 @@ void Solver::extend_solution()
         compHandler->addSavedState(model);
     }
 
-    SolutionExtender extender(this, simplifier);
+    SolutionExtender extender(this, occsimplifier);
     extender.extend();
 
     model = map_back_to_without_bva(model);
@@ -1434,19 +1434,19 @@ void Solver::dump_memory_stats_to_sql()
         );
     }
 
-    if (simplifier) {
+    if (occsimplifier) {
         sqlStats->mem_used(
             this
-            , "simplifier"
+            , "occsimplifier"
             , my_time
-            , simplifier->mem_used()/(1024*1024)
+            , occsimplifier->mem_used()/(1024*1024)
         );
 
         sqlStats->mem_used(
             this
             , "xor"
             , my_time
-            , simplifier->mem_used_xor()/(1024*1024)
+            , occsimplifier->mem_used_xor()/(1024*1024)
         );
     }
 
@@ -1602,9 +1602,9 @@ bool Solver::execute_inprocess_strategy(
 
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
             if (conf.perform_occur_based_simp
-                && simplifier
+                && occsimplifier
             ) {
-                simplifier->simplify(startup, occ_strategy_tokens);
+                occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
             if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1721,9 +1721,9 @@ bool Solver::execute_inprocess_strategy(
 
     if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
         if (conf.perform_occur_based_simp
-            && simplifier
+            && occsimplifier
         ) {
-            simplifier->simplify(startup, occ_strategy_tokens);
+            occsimplifier->simplify(startup, occ_strategy_tokens);
         }
         occ_strategy_tokens.clear();
     }
@@ -1925,8 +1925,8 @@ void Solver::print_min_stats(const double cpu_time) const
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c OccSimplifier time"
-            , simplifier->get_stats().total_time()
-            , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
+            , occsimplifier->get_stats().total_time()
+            , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
     }
@@ -2011,11 +2011,11 @@ void Solver::print_norm_stats(const double cpu_time) const
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c OccSimplifier time"
-            , simplifier->get_stats().total_time()
-            , stats_line_percent(simplifier->get_stats().total_time() ,cpu_time)
+            , occsimplifier->get_stats().total_time()
+            , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
-        simplifier->get_stats().print_short(this);
+        occsimplifier->get_stats().print_short(this);
     }
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
@@ -2105,16 +2105,16 @@ void Solver::print_all_stats(const double cpu_time) const
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
         print_stats_line("c OccSimplifier time"
-            , simplifier->get_stats().total_time()
-            , stats_line_percent(simplifier->get_stats().total_time(), cpu_time)
+            , occsimplifier->get_stats().total_time()
+            , stats_line_percent(occsimplifier->get_stats().total_time(), cpu_time)
             , "% time"
         );
 
-        simplifier->get_stats().print(nVars());
+        occsimplifier->get_stats().print(nVars());
     }
 
-    if (simplifier && conf.doGateFind) {
-        simplifier->print_gatefinder_stats();
+    if (occsimplifier && conf.doGateFind) {
+        occsimplifier->print_gatefinder_stats();
     }
 
     //GateFinder stats
@@ -2291,9 +2291,9 @@ void Solver::print_mem_stats() const
         account += mem;
     }
 
-    if (simplifier) {
-        mem = simplifier->mem_used();
-        print_stats_line("c Mem for simplifier"
+    if (occsimplifier) {
+        mem = occsimplifier->mem_used();
+        print_stats_line("c Mem for occsimplifier"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem_used)
@@ -2301,7 +2301,7 @@ void Solver::print_mem_stats() const
         );
         account += mem;
 
-        mem = simplifier->mem_used_xor();
+        mem = occsimplifier->mem_used_xor();
         print_stats_line("c Mem for xor-finder"
             , mem/(1024UL*1024UL)
             , "MB"
@@ -2554,9 +2554,9 @@ size_t Solver::get_num_nonfree_vars() const
         nonfree += trail_lim[0];
     }
 
-    if (simplifier) {
+    if (occsimplifier) {
         if (conf.perform_occur_based_simp) {
-            nonfree += simplifier->get_num_elimed_vars();
+            nonfree += occsimplifier->get_num_elimed_vars();
         }
     }
     nonfree += varReplacer->get_num_replaced_vars();
@@ -2723,7 +2723,7 @@ void Solver::check_implicit_propagated() const
 size_t Solver::get_num_vars_elimed() const
 {
     if (conf.perform_occur_based_simp) {
-        return simplifier->get_num_elimed_vars();
+        return occsimplifier->get_num_elimed_vars();
     } else {
         return 0;
     }
@@ -3074,8 +3074,8 @@ uint32_t Solver::num_active_vars() const
         numActive++;
     }
     assert(removed_non_decision == 0);
-    if (simplifier) {
-        assert(removed_elimed == simplifier->get_num_elimed_vars());
+    if (occsimplifier) {
+        assert(removed_elimed == occsimplifier->get_num_elimed_vars());
     } else {
         assert(removed_elimed == 0);
     }
@@ -3325,8 +3325,8 @@ void Solver::save_state(const string& fname, const lbool status) const
     //f.put_vector(litReachable);
 
     varReplacer->save_state(f);
-    if (simplifier) {
-        simplifier->save_state(f);
+    if (occsimplifier) {
+        occsimplifier->save_state(f);
     }
 }
 
@@ -3343,8 +3343,8 @@ lbool Solver::load_state(const string& fname)
     //f.get_vector(litReachable);
 
     varReplacer->load_state(f);
-    if (simplifier) {
-        simplifier->load_state(f);
+    if (occsimplifier) {
+        occsimplifier->load_state(f);
     }
 
     return status;

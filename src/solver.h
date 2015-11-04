@@ -146,7 +146,7 @@ class Solver : public Searcher
         ReduceDB*              reduceDB = NULL;
         Prober*                prober = NULL;
         InTree*                intree = NULL;
-        OccSimplifier*         simplifier = NULL;
+        OccSimplifier*         occsimplifier = NULL;
         DistillerAllWithAll*   distill_all_with_all = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImplStamp* dist_impl_with_impl = NULL;

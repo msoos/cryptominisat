@@ -313,7 +313,7 @@ void ClauseDumper::dump_clauses(
 void ClauseDumper::dump_blocked_clauses()
 {
     if (solver->conf.perform_occur_based_simp) {
-        solver->simplifier->dump_blocked_clauses(outfile);
+        solver->occsimplifier->dump_blocked_clauses(outfile);
     }
 }
 

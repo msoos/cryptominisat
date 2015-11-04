@@ -67,8 +67,8 @@ void SolutionExtender::extend()
     solver->watches.resize(nVarsOuter()*2);
 
     //Sanity check
-    if (solver->simplifier) {
-        solver->simplifier->check_elimed_vars_are_unassignedAndStats();
+    if (solver->occsimplifier) {
+        solver->occsimplifier->check_elimed_vars_are_unassignedAndStats();
     }
 
     //Adding binary clauses representing equivalent literals
@@ -109,8 +109,8 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 3) {
         cout << "c Adding blocked clauses" << endl;
     }
-    if (solver->simplifier) {
-        solver->simplifier->extend_model(this);
+    if (solver->occsimplifier) {
+        solver->occsimplifier->extend_model(this);
     }
 
     //Copy&check model
