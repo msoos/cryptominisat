@@ -54,12 +54,14 @@ void XorFinder::find_xors_based_on_long_clauses()
         xor_find_time_limit -= 3;
 
         //Already freed
-        if (cl->freed())
+        if (cl->freed()) {
             continue;
+        }
 
         //Too large -> too expensive
-        if ((long)cl->size() > solver->conf.maxXorToFind)
+        if (cl->size() > solver->conf.maxXorToFind) {
             continue;
+        }
 
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause) {
@@ -182,14 +184,16 @@ void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
     //fill 'seen' with variables
     FoundXors foundCls(lits, abst, seen);
 
+    //cout << __PRETTY_FUNCTION__ << " called with " << lits << endl;
+
     //Try to match on all literals
     for (const Lit lit: lits) {
         findXorMatch(solver->watches[lit], lit, foundCls);
         findXorMatch(solver->watches[~lit], ~lit, foundCls);
 
         //More expensive
-        //findXorMatchExt(solver->watches[(*l).toInt()], *l, foundCls);
-        //findXorMatchExt(solver->watches[(~(*l)).toInt()], ~(*l), foundCls);
+        //findXorMatchExt(solver->watches[lit], lit, foundCls);
+        //findXorMatchExt(solver->watches[~lit], ~lit, foundCls);
 
         //TODO stamping
         /*if (solver->conf.useCacheWhenFindingXors) {
@@ -311,16 +315,19 @@ void XorFinder::findXorMatchExt(
             if (!seen[l->var()]) {
                 bool found = false;
                 //TODO stamping
-                /*const vector<LitExtra>& cache = solver->implCache[Lit(l->var(), true).toInt()].lits;
-                for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end(); it2 != end2 && !found; it2++) {
+                const vector<LitExtra>& cache = solver->implCache[~lit].lits;
+                for(vector<LitExtra>::const_iterator it2 = cache.begin(), end2 = cache.end()
+                    ; it2 != end2 && !found
+                    ; it2++
+                ) {
                     if (seen[l->var()] && !seen2[l->var()]) {
                         found = true;
                         seen2[l->var()] = true;
-                        rhs ^= it2->getLit().sign();
+                        rhs ^= l->sign();
                         tmpClause.push_back(it2->getLit());
                         //cout << "Added trans lit: " << tmpClause.back() << endl;
                     }
-                }*/
+                }
 
                 //Didn't find replacement
                 if (!found)
@@ -438,11 +445,11 @@ void XorFinder::findXorMatch(
         if (cl.size() > foundCls.getSize())
             continue;
 
-        //Doesn't contain literals not in the original clause
+        //Doesn't contain variables not in the original clause
         if ((cl.abst | foundCls.getAbst()) != foundCls.getAbst())
             continue;
 
-        //Check RHS
+        //Check RHS, vars inside
         bool rhs = true;
         for (const Lit cl_lit :cl) {
             //early-abort, contains literals not in original clause
