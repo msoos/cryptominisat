@@ -253,7 +253,7 @@ class SolverConf
 
         //XORs
         int      doFindXors;
-        int      maxXorToFind;
+        unsigned maxXorToFind;
         int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
         unsigned long long  maxXORMatrix;
