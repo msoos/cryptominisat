@@ -87,7 +87,7 @@ vector<Lit> str_to_cl(const string& data)
     return ret;
 }
 
-vector<uint32_t> tovars(const string& data)
+vector<uint32_t> str_to_vars(const string& data)
 {
     vector<Lit> lits = str_to_cl(data);
     vector<uint32_t> vars;
