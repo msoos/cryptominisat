@@ -79,8 +79,8 @@ public:
     size_t mem_used() const;
 
 private:
-    Solver* solver;
     OccSimplifier* occsimplifier;
+    Solver* solver;
 
     bool extractInfo();
     void cutIntoBlocks(const vector<size_t>& xorsToUse);
