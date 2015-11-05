@@ -307,7 +307,10 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
             case 0: {
                 //Create new block
                 vector<uint32_t> block;
-                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
+                    ; it2 != end2
+                    ; it2++
+                ) {
                     varToBlock[*it2] = blocks.size();
                     block.push_back(*it2);
                 }
@@ -321,7 +324,10 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 //Add to existing block
                 const size_t blockNum = *blocksBelongTo.begin();
                 vector<uint32_t>& block = blocks[blockNum];
-                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
+                    ; it2 != end2
+                    ; it2++
+                ) {
                     if (varToBlock[*it2] == std::numeric_limits<uint32_t>::max()) {
                         block.push_back(*it2);
                         varToBlock[*it2] = blockNum;
