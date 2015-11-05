@@ -136,8 +136,10 @@ void XorFinder::find_xors()
     find_xors_based_on_short_clauses();
 
     //Cleanup
-    solver->unmark_all_irred_clauses();
-    solver->unmark_all_red_clauses();
+    for(ClOffset offset: occsimplifier->clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        cl->stats.marked_clause = false;
+    }
     solver->clean_occur_from_idx_types_only_smudged();
 
     const bool time_out = (xor_find_time_limit < 0);
