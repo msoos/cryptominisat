@@ -47,7 +47,6 @@ bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors)
     runStats.numCalls = 1;
     xors = _xors;
 
-    double myTime = cpuTime();
     size_t origTrailSize = solver->trail_size();
     extractInfo();
 
