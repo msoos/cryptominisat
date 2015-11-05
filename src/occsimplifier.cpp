@@ -798,7 +798,7 @@ end:
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
-            runStats.print_short(solver);
+            runStats.print_short();
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -2853,7 +2853,7 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     return *this;
 }
 
-void OccSimplifier::Stats::print_short(const Solver* solver) const
+void OccSimplifier::Stats::print_short() const
 {
 
     cout

@@ -247,7 +247,7 @@ public:
     struct Stats
     {
         void print(const size_t nVars) const;
-        void print_short(const Solver* solver) const;
+        void print_short() const;
         Stats& operator+=(const Stats& other);
         void clear();
         double total_time() const;

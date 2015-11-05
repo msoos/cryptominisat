@@ -55,7 +55,7 @@ public:
 
         Stats& operator+=(const Stats& other);
         void print_short(const Solver* solver) const;
-        void print(const size_t numCalls) const;
+        void print() const;
 
         //Time
         uint32_t numCalls = 0;

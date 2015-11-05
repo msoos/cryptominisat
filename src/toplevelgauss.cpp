@@ -414,7 +414,7 @@ void TopLevelGauss::Stats::print_short(const Solver* solver) const
     << endl;
 }
 
-void TopLevelGauss::Stats::print(const size_t numCalls) const
+void TopLevelGauss::Stats::print() const
 {
     cout << "c --------- XOR STATS ----------" << endl;
 
