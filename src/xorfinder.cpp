@@ -142,6 +142,7 @@ void XorFinder::find_xors()
     }
     solver->clean_occur_from_idx_types_only_smudged();
 
+    //Print stats
     const bool time_out = (xor_find_time_limit < 0);
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
