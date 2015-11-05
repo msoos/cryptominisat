@@ -294,7 +294,11 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
 
         //Calc blocks for this XOR
         set<size_t> blocksBelongTo;
-        for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end(); it2 != end2; it2++) {
+        for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            assert(solver->varData[*it2].removed == Removed::none);
             if (varToBlock[*it2] != std::numeric_limits<uint32_t>::max())
                 blocksBelongTo.insert(varToBlock[*it2]);
         }
