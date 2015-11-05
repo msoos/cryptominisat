@@ -409,15 +409,15 @@ size_t TopLevelGauss::mem_used() const
 void TopLevelGauss::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c [occ-xor] cut into blocks " << numBlocks
-    << " vars in blcks " << numVarsInBlocks
+    << "c [occ-xor] cut into " << numBlocks << " blcks. "
+    << " Vars in blcks: " << numVarsInBlocks
     << solver->conf.print_times(blockCutTime)
     << endl;
 
     cout
-    << "c [occ-xor] extr info "
-    << " unit " << newUnits
-    << " bin " << newBins
+    << "c [occ-xor] extr info. "
+    << " unit: " << newUnits
+    << " bin: " << newBins
     << " 0-depth-ass: " << zeroDepthAssigns
     << solver->conf.print_times(extractTime)
     << endl;
@@ -426,6 +426,10 @@ void TopLevelGauss::Stats::print_short(const Solver* solver) const
 void TopLevelGauss::Stats::print() const
 {
     cout << "c --------- XOR STATS ----------" << endl;
+
+    print_stats_line("c XOR Num calls"
+        , numCalls
+    );
 
     print_stats_line("c XOR 0-depth assings"
         , zeroDepthAssigns
