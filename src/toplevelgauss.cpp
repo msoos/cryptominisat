@@ -460,4 +460,5 @@ TopLevelGauss::Stats& TopLevelGauss::Stats::operator+=(const TopLevelGauss::Stat
     newBins += other.numCalls;
 
     zeroDepthAssigns += other.zeroDepthAssigns;
+    return *this;
 }
