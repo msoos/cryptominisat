@@ -54,7 +54,7 @@ void XorFinder::find_xors_based_on_long_clauses()
         xor_find_time_limit -= 3;
 
         //Already freed
-        if (cl->freed()) {
+        if (cl->freed() || cl->getRemoved()) {
             continue;
         }
 
@@ -299,7 +299,7 @@ void XorFinder::findXorMatchExt(
         //Deal with clause
         const ClOffset offset = it->get_offset();
         Clause& cl = *solver->cl_alloc.ptr(offset);
-        if (cl.freed())
+        if (cl.freed() || cl.getRemoved())
             continue;
 
         //Must not be larger than the original clauses
@@ -441,7 +441,7 @@ void XorFinder::findXorMatch(
         //Deal with clause
         const ClOffset offset = it->get_offset();
         Clause& cl = *solver->cl_alloc.ptr(offset);
-        if (cl.freed())
+        if (cl.freed() || cl.getRemoved())
             continue;
 
         //Must not be larger than the original clause
