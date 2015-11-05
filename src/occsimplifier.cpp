@@ -2042,7 +2042,7 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var, const Lit lit)
     assert(solver->varData[var].removed == Removed::none);
     solver->varData[var].removed = Removed::elimed;
 
-    bvestats.numVarsElimed++;
+    bvestats_global.numVarsElimed++;
 }
 
 void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
