@@ -277,6 +277,7 @@ public:
     vector<ClOffset> sub_str_with;
     TouchListLit impl_sub_lits;
     vector<ClOffset> clauses;
+    void check_elimed_vars_are_unassignedAndStats() const;
 
 private:
     friend class SubsumeStrengthen;
@@ -288,7 +289,6 @@ private:
     bool execute_simplifier_sched(const string& strategy);
 
     //debug
-    void check_elimed_vars_are_unassignedAndStats() const;
     bool subsetReverse(const Clause& B) const;
 
     bool fill_occur();
