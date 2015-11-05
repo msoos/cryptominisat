@@ -34,7 +34,7 @@ class Solver;
 class TopLevelGaussAbst
 {
     public:
-        virtual bool toplevelgauss(const vector<Xor>& _xors)
+        virtual bool toplevelgauss(const vector<Xor>& /*_xors*/)
         {
             return true;
         }
