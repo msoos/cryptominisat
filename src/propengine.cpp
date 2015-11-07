@@ -411,66 +411,16 @@ bool PropEngine::prop_long_cl_any_order(
     assert(!c.freed());
     #endif
 
-    #ifdef STATS_NEEDED
-    c.stats.clause_looked_at++;
-    #endif
-
-    // Make sure the false literal is data[1]:
-    if (c[0] == ~p) {
-        std::swap(c[0], c[1]);
-    }
-
-    assert(c[1] == ~p);
-
-    // If 0th watch is true, then clause is already satisfied.
-    const Lit first = c[0];
-    if (first != blocker && value(first) == l_True) {
-        *j = Watched(offset, first);
-        j++;
+    if (prop_normal_helper() == PROP_NOTHING) {
         return true;
-    }
-
-    // Look for new watch:
-    for (Lit *k = c.begin() + 2, *end2 = c.end()
-        ; k != end2
-        ; k++
-    ) {
-        //Literal is either unset or satisfied, attach to other watchlist
-        if (value(*k) != l_False) {
-            c[1] = *k;
-            *k = ~p;
-            watches[c[1]].push(Watched(offset, c[0]));
-            return true;
-        }
     }
 
     // Did not find watch -- clause is unit under assignment:
     *j++ = *i;
-    if (value(first) == l_False) {
-        confl = PropBy(offset);
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Conflict from ";
-        for(size_t i = 0; i < c.size(); i++) {
-            cout  << c[i] << " , ";
-        }
-        cout << endl;
-        #endif //VERBOSE_DEBUG_FULLPROP
-
-        //Update stats
-        #ifdef STATS_NEEDED
-        c.stats.conflicts_made++;
-        c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
-        #endif
-        if (c.red())
-            lastConflictCausedBy = ConflCausedBy::longred;
-        else
-            lastConflictCausedBy = ConflCausedBy::longirred;
-
-        qhead = trail.size();
+    if (value(c[0]) == l_False) {
+        handle_normal_prop_fail(c, offset, confl);
         return false;
     } else {
-
-        //Update stats
         #ifdef STATS_NEEDED
         c.stats.propagations_made++;
         if (c.red())
@@ -478,6 +428,7 @@ bool PropEngine::prop_long_cl_any_order(
         else
             propStats.propsLongIrred++;
         #endif
+
         enqueue<update_bogoprops>(c[0], PropBy(offset));
         if (!update_bogoprops) {
             update_glue(c);
