@@ -273,10 +273,10 @@ class solution_parser:
 class create_fuzz:
 
     @staticmethod
-    def unique_file(fname_begin):
+    def unique_file(fname_begin, fname_end = ".cnf"):
         counter = 1
         while 1:
-            fname = fname_begin + '_' + str(counter) + ".cnf"
+            fname = fname_begin + '_' + str(counter) + fname_end
             try:
                 fd = os.open(
                     fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
@@ -561,7 +561,7 @@ class Tester:
             print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
 
         # if need time limit, then limit
-        err_fname = create_fuzz.unique_file("err_out")
+        err_fname = create_fuzz.unique_file("%s_err" % fname, ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)

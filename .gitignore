@@ -14,5 +14,6 @@ desc/satcomp14/cmsv4.out
 desc/satcomp14/cmsv4.pdf
 scripts/reconf/outs
 tests/cnf-files/*.sqlite
+scripts/fuzz/fuzzTest_*
 
 web/jquery-1.11.3.min.js
