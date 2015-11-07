@@ -178,6 +178,15 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
+    GAUSS)
+        sudo apt-get install libboost-program-options-dev
+        sudo apt-get install libsqlite3-dev
+
+        eval cmake ${COMMON_CMAKE_ARGS} \
+                    -DUSE_GAUSS=ON \
+                   ${SOURCE_DIR}
+    ;;
+
     M4RI)
         sudo apt-get install libboost-program-options-dev
         wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
@@ -200,6 +209,10 @@ esac
 
 if [ "$CMS_CONFIG" != "AWS" ]; then
     make
+    if [ "$CMS_CONFIG" == "GAUSS" ]; then
+        echo "Currently, Gauss is only being *built*. Not tried for correctness"
+        exit 0
+    fi
     ctest -V
     sudo make install
 fi
