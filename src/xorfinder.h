@@ -41,17 +41,21 @@ namespace CMSat {
 class Solver;
 class OccSimplifier;
 
-class FoundXors
+class PossibleXor
 {
     public:
-        FoundXors(
+        PossibleXor()
+        {
+        }
+
+        void setup(
             const vector<Lit>& cl
+            , const ClOffset offset
             , cl_abst_type _abst
             , vector<uint16_t>& seen
-        ) :
-            abst(_abst)
-            , size(cl.size())
-        {
+        ) {
+            abst = _abst;
+            size = cl.size();
             #ifdef VERBOSE_DEBUG_XOR_FINDER
             cout << "Trying to create XOR from clause: " << cl << endl;
             #endif
@@ -62,8 +66,10 @@ class FoundXors
                 if (i > 0)
                     assert(cl[i-1] < cl[i]);
             }
-
-            calcClauseData(seen);
+            setup_seen_rhs_foundcomb(seen);
+            if (offset != std::numeric_limits<ClOffset>::max()) {
+                offsets.push_back(offset);
+            }
         }
 
         //GET-type functions
@@ -73,10 +79,11 @@ class FoundXors
         bool              foundAll() const;
 
         //Add
-        template<class T> void add(const T& cl, vector<uint32_t>& varsMissing);
+        template<class T>
+        void add(const T& cl, const ClOffset offset, vector<uint32_t>& varsMissing);
 
     private:
-        void calcClauseData(vector<uint16_t>& seen)
+        void setup_seen_rhs_foundcomb(vector<uint16_t>& seen)
         {
             //Calculate parameters of base clause.
             //Also set 'seen' for easy check in 'findXorMatch()'
@@ -88,6 +95,7 @@ class FoundXors
                 seen[origCl[i].var()] = 1;
             }
 
+            foundComb.clear();
             foundComb.resize(1UL<<size, false);
             foundComb[whichOne] = true;
         }
@@ -107,9 +115,10 @@ class FoundXors
         // 0 0 1
         vector<bool> foundComb;
         Lit origCl[5];
-        const cl_abst_type abst;
+        cl_abst_type abst;
         uint32_t size;
         bool rhs;
+        vector<ClOffset> offsets;
 };
 
 class XorFinder
@@ -145,36 +154,32 @@ public:
     vector<Xor> xors; ///<Recovered XORs
 
 private:
+    PossibleXor poss_xor;
     void add_found_xor(const Xor& found_xor);
     void find_xors_based_on_short_clauses();
     void find_xors_based_on_long_clauses();
     void print_found_xors();
+    bool xor_clause_already_inside(const Xor& xor_c);
 
     int64_t xor_find_time_limit;
 
     //Find XORs
-    void findXor(vector<Lit>& lits, cl_abst_type abst);
+    void findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst);
 
     ///Normal finding of matching clause for XOR
-    void findXorMatch(
-        watch_subarray_const occ
-        , FoundXors& foundCls
-    );
+    void findXorMatch(watch_subarray_const occ);
     void findXorMatch(
         watch_subarray_const occ
         , const Lit lit
-        , FoundXors& foundCls
     );
     void findXorMatchExt(
         watch_subarray_const occ
         , const Lit lit
-        , FoundXors& foundCls
     );
     //TODO stamping finXorMatch with stamp
     /*void findXorMatch(
         const vector<LitExtra>& lits
         , const Lit lit
-        , FoundXors& foundCls
     ) const;*/
 
     OccSimplifier* occsimplifier;
@@ -194,23 +199,24 @@ private:
 };
 
 
-inline cl_abst_type FoundXors::getAbst() const
+inline cl_abst_type PossibleXor::getAbst() const
 {
     return abst;
 }
 
-inline uint32_t FoundXors::getSize() const
+inline uint32_t PossibleXor::getSize() const
 {
     return size;
 }
 
-inline bool FoundXors::getRHS() const
+inline bool PossibleXor::getRHS() const
 {
     return rhs;
 }
 
-template<class T> void FoundXors::add(
+template<class T> void PossibleXor::add(
     const T& cl
+    , const ClOffset offset
     , vector<uint32_t>& varsMissing
 ) {
     #ifdef VERBOSE_DEBUG_XOR_FINDER
@@ -272,6 +278,9 @@ template<class T> void FoundXors::add(
         }
         foundComb[thisWhichOne] = true;
     }
+    if (offset != std::numeric_limits<ClOffset>::max()) {
+        offsets.push_back(offset);
+    }
 
     #ifdef VERBOSE_DEBUG_XOR_FINDER
     cout << "whichOne was:" << whichOne << endl;
@@ -283,7 +292,7 @@ template<class T> void FoundXors::add(
     #endif
 }
 
-inline bool FoundXors::foundAll() const
+inline bool PossibleXor::foundAll() const
 {
     bool OK = true;
     for (uint32_t i = 0; i < foundComb.size(); i++) {
@@ -308,7 +317,7 @@ inline bool FoundXors::foundAll() const
     return OK;
 }
 
-inline uint32_t FoundXors::NumberOfSetBits(uint32_t i) const
+inline uint32_t PossibleXor::NumberOfSetBits(uint32_t i) const
 {
     //Magic is coming! (copied from some book.... never trust code like this!)
     i = i - ((i >> 1) & 0x55555555);
@@ -316,7 +325,7 @@ inline uint32_t FoundXors::NumberOfSetBits(uint32_t i) const
     return (((i + (i >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24;
 }
 
-inline bool FoundXors::bit(const uint32_t a, const uint32_t b) const
+inline bool PossibleXor::bit(const uint32_t a, const uint32_t b) const
 {
     return (((a)>>(b))&1);
 }

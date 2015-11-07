@@ -54,7 +54,6 @@ set(cryptoms_lib_files
     datasync.cpp
     reducedb.cpp
     clausedumper.cpp
-    toplevelgauss.cpp
     bva.cpp
     intree.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
@@ -62,6 +61,7 @@ set(cryptoms_lib_files
     features_to_reconf.cpp
     solvefeatures.cpp
     searchstats.cpp
+    xorfinder.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -71,7 +71,7 @@ set(cryptoms_lib_link_libs "")
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 
-    SET(cryptoms_lib_files ${cryptoms_lib_files} xorfinder.cpp)
+    SET(cryptoms_lib_files ${cryptoms_lib_files} toplevelgauss.cpp)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${M4RI_LIBRARIES})
 endif (M4RI_FOUND)
 

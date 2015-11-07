@@ -69,7 +69,7 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             lits.resize(cl->size());
             std::copy(cl->begin(), cl->end(), lits.begin());
-            findXor(lits, cl->abst);
+            findXor(lits, offset, cl->abst);
         }
     }
 }
@@ -109,7 +109,7 @@ void XorFinder::find_xors_based_on_short_clauses()
             lits[1] = w.lit2();
             lits[2] = w.lit3();
 
-            findXor(lits, calcAbstraction(lits));
+            findXor(lits, CL_OFFSET_MAX, calcAbstraction(lits));
         }
     }
 }
@@ -181,52 +181,46 @@ void XorFinder::print_found_xors()
     }
 }
 
-void XorFinder::findXor(vector<Lit>& lits, cl_abst_type abst)
+bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
 {
-    //Set this clause as the base for the FoundXors
-    //fill 'seen' with variables
-    FoundXors foundCls(lits, abst, seen);
+    xor_find_time_limit -= 30;
+    bool already_inside = false;
+    for (const Watched ws: solver->watches.at(xor_c.vars[0])) {
+        if (ws.isIdx()
+            && xors[ws.get_idx()] == xor_c
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
 
-    //cout << __PRETTY_FUNCTION__ << " called with " << lits << endl;
+void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst)
+{
+    //Set this clause as the base for the XOR, fill 'seen'
+    poss_xor.setup(lits, offset, abst, seen);
 
-    //Try to match on all literals
+    bool found_all = false;
     for (const Lit lit: lits) {
-        findXorMatch(solver->watches[lit], lit, foundCls);
-        findXorMatch(solver->watches[~lit], ~lit, foundCls);
+        findXorMatch(solver->watches[lit], lit);
+        findXorMatch(solver->watches[~lit], ~lit);
 
         //More expensive
-        //findXorMatchExt(solver->watches[lit], lit, foundCls);
-        //findXorMatchExt(solver->watches[~lit], ~lit, foundCls);
-
-        //TODO stamping
-        /*if (solver->conf.useCacheWhenFindingXors) {
-            findXorMatch(solver->implCache[(*l).toInt()].lits, *l, foundCls);
-            findXorMatch(solver->implCache[(~*l).toInt()].lits, ~(*l), foundCls);
-        }*/
+        //findXorMatchExt(solver->watches[lit], lit);
+        //findXorMatchExt(solver->watches[~lit], ~lit);
 
         xor_find_time_limit -= 5;
-        if (foundCls.foundAll())
+        if (poss_xor.foundAll()) {
+            found_all = true;
             break;
+        }
     }
 
-    xor_find_time_limit -= 5;
-    if (foundCls.foundAll()) {
+    if (found_all) {
         std::sort(lits.begin(), lits.end());
-        Xor found_xor(lits, foundCls.getRHS());
+        Xor found_xor(lits, poss_xor.getRHS());
 
-        //Have we found this XOR clause already?
-        bool already_inside = false;
-        for (const Watched ws: solver->watches[lits[0].unsign()]) {
-            if (ws.isIdx()
-                && xors[ws.get_idx()] == found_xor
-            ) {
-                already_inside = true;
-                break;
-            }
-        }
-
-        //If XOR clause is new, add it
-        if (!already_inside) {
+        if (!xor_clause_already_inside(found_xor)) {
             add_found_xor(found_xor);
         }
     }
@@ -249,28 +243,9 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     solver->watches.smudge(attach_point);
 }
 
-//TODO stamping
-/*void XorFinder::findXorMatch(
-    const vector<LitExtra>& lits
-    , const Lit lit
-    , FoundXors& foundCls
-) const {
-
-    for (vector<LitExtra>::const_iterator
-        it = lits.begin(), end = lits.end()
-        ; it != end
-        ; ++it
-    )  {
-        if (seen[it->getLit().var()]) {
-            foundCls.add(lit, it->getLit());
-        }
-    }
-}*/
-
 void XorFinder::findXorMatchExt(
     watch_subarray_const occ
     , Lit lit
-    , FoundXors& foundCls
 ) {
     //seen2 is clear
 
@@ -288,7 +263,7 @@ void XorFinder::findXorMatchExt(
                 if (tmpClause[0] > tmpClause[1])
                     std::swap(tmpClause[0], tmpClause[1]);
 
-                foundCls.add(tmpClause, varsMissing);
+                poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
             }
 
             continue;
@@ -303,11 +278,11 @@ void XorFinder::findXorMatchExt(
             continue;
 
         //Must not be larger than the original clauses
-        if (cl.size() > foundCls.getSize())
+        if (cl.size() > poss_xor.getSize())
             continue;
 
         tmpClause.clear();
-        //cout << "Orig clause: " << foundCls.getOrigCl() << endl;
+        //cout << "Orig clause: " << poss_xor.getOrigCl() << endl;
 
         bool rhs = true;
         uint32_t i = 0;
@@ -351,18 +326,19 @@ void XorFinder::findXorMatchExt(
         }
 
         //either the invertedness has to match, or the size must be smaller
-        if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize())
+        if (rhs != poss_xor.getRHS() && cl.size() == poss_xor.getSize())
             goto end;
 
         //If the size of this clause is the same of the base clause, then
         //there is no point in using this clause as a base for another XOR
         //because exactly the same things will be found.
-        if (cl.size() == foundCls.getSize()) {
+        if (cl.size() == poss_xor.getSize()) {
             cl.stats.marked_clause = true;
         }
 
         std::sort(tmpClause.begin(), tmpClause.end());
-        foundCls.add(tmpClause, varsMissing);
+        //Note: cannot add this offset, because XOR won't cover all of the clause
+        poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
 
         end:;
         //cout << "Not OK" << endl;
@@ -377,7 +353,6 @@ void XorFinder::findXorMatchExt(
 void XorFinder::findXorMatch(
     watch_subarray_const occ
     , const Lit lit
-    , FoundXors& foundCls
 ) {
     xor_find_time_limit -= (int64_t)occ.size();
     for (watch_subarray::const_iterator
@@ -400,9 +375,9 @@ void XorFinder::findXorMatch(
                 tmpClause.push_back(lit);
                 tmpClause.push_back(it->lit2());
 
-                foundCls.add(tmpClause, varsMissing);
+                poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
                 xor_find_time_limit-=5;
-                if (foundCls.foundAll())
+                if (poss_xor.foundAll())
                     break;
             }
 
@@ -422,15 +397,15 @@ void XorFinder::findXorMatch(
                 rhs ^= it->lit2().sign();
                 rhs ^= it->lit3().sign();
 
-                if (rhs == foundCls.getRHS() || foundCls.getSize() > 3) {
+                if (rhs == poss_xor.getRHS() || poss_xor.getSize() > 3) {
                     tmpClause.clear();
                     tmpClause.push_back(lit);
                     tmpClause.push_back(it->lit2());
                     tmpClause.push_back(it->lit3());
 
-                    foundCls.add(tmpClause, varsMissing);
+                    poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
                     xor_find_time_limit-=5;
-                    if (foundCls.foundAll())
+                    if (poss_xor.foundAll())
                         break;
                 }
 
@@ -445,11 +420,11 @@ void XorFinder::findXorMatch(
             continue;
 
         //Must not be larger than the original clause
-        if (cl.size() > foundCls.getSize())
+        if (cl.size() > poss_xor.getSize())
             continue;
 
         //Doesn't contain variables not in the original clause
-        if ((cl.abst | foundCls.getAbst()) != foundCls.getAbst())
+        if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
             continue;
 
         //Check RHS, vars inside
@@ -462,19 +437,19 @@ void XorFinder::findXorMatch(
             rhs ^= cl_lit.sign();
         }
         //either the invertedness has to match, or the size must be smaller
-        if (rhs != foundCls.getRHS() && cl.size() == foundCls.getSize())
+        if (rhs != poss_xor.getRHS() && cl.size() == poss_xor.getSize())
             continue;
 
         //If the size of this clause is the same of the base clause, then
         //there is no point in using this clause as a base for another XOR
         //because exactly the same things will be found.
-        if (cl.size() == foundCls.getSize()) {
+        if (cl.size() == poss_xor.getSize()) {
             cl.stats.marked_clause = true;;
         }
 
-        foundCls.add(cl, varsMissing);
+        poss_xor.add(cl, offset, varsMissing);
         xor_find_time_limit-=5;
-        if (foundCls.foundAll())
+        if (poss_xor.foundAll())
             break;
 
         end:;
