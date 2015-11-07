@@ -1593,6 +1593,9 @@ bool Solver::execute_inprocess_strategy(
             return ok;
         }
         assert(solver->watches.get_smudged_list().empty());
+        #ifdef SLOW_DEBUG
+        solver->check_stats();
+        #endif
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
