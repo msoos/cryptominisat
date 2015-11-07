@@ -56,6 +56,7 @@ class PossibleXor
         ) {
             abst = _abst;
             size = cl.size();
+            offsets.clear();
             #ifdef VERBOSE_DEBUG_XOR_FINDER
             cout << "Trying to create XOR from clause: " << cl << endl;
             #endif
