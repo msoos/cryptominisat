@@ -228,6 +228,95 @@ TEST_F(xor_finder, find_4_5)
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
 }
 
+TEST_F(xor_finder, find_4_6)
+{
+    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
+    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
+    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+
+    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+
+    s->add_clause_outer(str_to_cl("-3, -4"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
+    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
+    s->add_clause_outer(str_to_cl("-1, -3, 4"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
+}
+
+TEST_F(xor_finder, find_5_1)
+{
+    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-1, 2, 3, -4, 5"));
+    s->add_clause_outer(str_to_cl("-1, 2, 3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
+
+    //
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
+}
+
+TEST_F(xor_finder, find_5_2)
+{
+    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
+
+    //
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
