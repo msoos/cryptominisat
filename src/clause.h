@@ -174,6 +174,8 @@ protected:
     uint16_t is_distilled:1;
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
+    uint16_t _is_xor:1;
+    uint16_t _rhs:1;
 
 
     Lit* getData()
@@ -219,9 +221,29 @@ public:
     typedef Lit* iterator;
     typedef const Lit* const_iterator;
 
+    bool rhs() const
+    {
+        return _rhs;
+    }
+
+    void set_rhs(bool new_rhs)
+    {
+        _rhs = new_rhs;
+    }
+
     uint32_t size() const
     {
         return mySize;
+    }
+
+    bool is_xor() const
+    {
+        return _is_xor;
+    }
+
+    void set_xor()
+    {
+        _is_xor = true;
     }
 
     void shrink(const uint32_t i)

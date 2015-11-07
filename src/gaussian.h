@@ -131,13 +131,14 @@ protected:
     int gauss_last_level;
     struct ClauseToClear
     {
-        ClauseToClear(Clause* _ptr, uint32_t _level) :
-            ptr(_ptr)
-            , level(_level)
+        ClauseToClear() {}
+        ClauseToClear(ClOffset _offs, uint32_t _sublevel) :
+            offs(_offs)
+            , sublevel(_sublevel)
         {}
 
-        Clause* ptr;
-        uint32_t level;
+        ClOffset offs;
+        uint32_t sublevel;
     };
     vector<ClauseToClear> clauses_toclear; //TODO
     bool disabled = false; // Gauss is disabled
@@ -188,7 +189,7 @@ protected:
 
 private:
     bool clean_xor_clauses();
-    bool clean_one_xor(Xor& x);
+    bool clean_one_xor(Clause& x);
 
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?

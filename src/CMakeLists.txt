@@ -69,7 +69,10 @@ set(cryptoms_lib_files
 set(cryptoms_lib_link_libs "")
 
 if (USE_GAUSS)
-    SET(cryptoms_lib_files ${cryptoms_lib_files} gaussian.cpp)
+    SET(cryptoms_lib_files ${cryptoms_lib_files}
+        gaussian.cpp
+        packedrow.cpp
+    )
 endif()
 
 if (M4RI_FOUND)

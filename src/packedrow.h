@@ -67,7 +67,7 @@ public:
             *(mp + i) ^= *(b.mp + i);
         }
 
-        is_true_internal ^= b.is_true_internal;
+        rhs_internal ^= b.rhs_internal;
         return *this;
     }
 
@@ -83,7 +83,7 @@ public:
             *(mp + i) ^= *(b.mp + i);
         }
 
-        is_true_internal ^= b.is_true_internal;
+        rhs_internal ^= b.rhs_internal;
     }
 
 
@@ -126,9 +126,9 @@ public:
         return true;
     }
 
-    inline const uint64_t& is_true() const
+    inline const uint64_t& rhs() const
     {
-        return is_true_internal;
+        return rhs_internal;
     }
 
     bool isZero() const
@@ -151,7 +151,7 @@ public:
 
     void invert_is_true(const bool b = true)
     {
-        is_true_internal ^= (uint64_t)b;
+        rhs_internal ^= (uint64_t)b;
     }
 
     void setBit(const uint32_t i)
@@ -202,7 +202,7 @@ public:
             setBit(toset_var);
         }
 
-        is_true_internal = !v.xorEqualFalse();
+        rhs_internal = v.rhs();
     }
 
     bool fill(vector<Lit>& tmp_clause, const vector<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
@@ -230,12 +230,12 @@ private:
     friend class PackedMatrix;
     PackedRow(const uint32_t _size, uint64_t*  const _mp) :
         mp(_mp+1)
-        , is_true_internal(*_mp)
+        , rhs_internal(*_mp)
         , size(_size)
     {}
 
     uint64_t* __restrict const mp;
-    uint64_t& is_true_internal;
+    uint64_t& rhs_internal;
     const uint32_t size;
 };
 

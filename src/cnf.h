@@ -465,6 +465,16 @@ inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
     }
 }
 
+template<typename T>
+inline vector<Lit> unsign_lits(const T& lits)
+{
+    vector<Lit> ret(lits.size());
+    for(size_t i = 0; i < lits.size(); i++) {
+        ret[i] = lits[i].unsign();
+    }
+    return ret;
+}
+
 inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
 {
     assert(cl.red());
