@@ -76,6 +76,9 @@ void XorFinder::find_xors_based_on_long_clauses()
 
 void XorFinder::add_found_xors()
 {
+    assert(solver->cls_of_xorclauses.empty());
+    assert(solver->xorclauses.empty());
+
     //assert all is clean
     for(const Xor& x: xors) {
         for(uint32_t v: x.vars) {
@@ -99,6 +102,33 @@ void XorFinder::add_found_xors()
             solver->watches.at(x.vars[1]).push(w);
         }
     }
+    if (!cls_of_xors.empty()) {
+        delete_cls_of_xors();
+    }
+}
+
+void XorFinder::delete_cls_of_xors()
+{
+    std::sort(cls_of_xors.begin(), cls_of_xors.end());
+    std::sort(occsimplifier->clauses.begin(), occsimplifier->clauses.end());
+    size_t j = 0;
+    size_t at_cls_off = 0;
+    ClOffset tolook = cls_of_xors[at_cls_off];
+    for(size_t i = 0; i < occsimplifier->clauses.size(); i++) {
+        ClOffset offs = occsimplifier->clauses[i];
+        if (offs!= tolook) {
+            occsimplifier->clauses[j++] = offs;
+        } else {
+            solver->cls_of_xorclauses.push_back(offs);
+            at_cls_off++;
+            if (cls_of_xors.size() > at_cls_off) {
+                tolook = cls_of_xors[at_cls_off];
+            } else {
+                tolook = CL_OFFSET_MAX;
+            }
+        }
+    }
+    occsimplifier->clauses.resize(j);
 }
 
 void XorFinder::find_xors_based_on_short_clauses()

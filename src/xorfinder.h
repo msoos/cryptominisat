@@ -167,6 +167,7 @@ private:
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_clause_already_inside(const Xor& xor_c);
+    void delete_cls_of_xors();
 
     int64_t xor_find_time_limit;
 

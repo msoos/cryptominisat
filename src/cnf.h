@@ -92,16 +92,18 @@ public:
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
-    vector<ClOffset> longIrredCls;          ///< List of problem clauses that are larger than 2
     int64_t num_red_cls_reducedb = 0;
     bool red_long_cls_is_reducedb(const Clause& cl) const;
     int64_t count_num_red_cls_reducedb() const;
+    Drup* drup;
 
-    vector<ClOffset> longRedCls;          ///< List of redundant clauses.
+    //Clauses
+    vector<ClOffset> longIrredCls;
+    vector<ClOffset> longRedCls;
     vector<ClOffset> xorclauses;
+    vector<ClOffset> cls_of_xorclauses;
     BinTriStats binTri;
     LitStats litStats;
-    Drup* drup;
 
     //Temporaries
     vector<uint16_t> seen;
