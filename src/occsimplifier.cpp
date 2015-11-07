@@ -891,6 +891,13 @@ bool OccSimplifier::execute_simplifier_sched(const string& strategy)
                 topLevelGauss->toplevelgauss(finder.xors);
             }
             #endif
+        } else if (token == "occ-xoradd") {
+            if (solver->conf.doFindXors
+            ) {
+                XorFinder finder(this, solver);
+                finder.find_xors();
+                finder.add_found_xors();
+            }
         } else if (token == "occ-clean-implicit") {
             solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {

@@ -74,6 +74,33 @@ void XorFinder::find_xors_based_on_long_clauses()
     }
 }
 
+void XorFinder::add_found_xors()
+{
+    //assert all is clean
+    for(const Xor& x: xors) {
+        for(uint32_t v: x.vars) {
+            assert(solver->value(v) == l_Undef);
+        }
+    }
+
+    for(const Xor& x: xors) {
+        if (x.size() > 3) {
+            vector<Lit> lits;
+            for(uint32_t v: x.vars) {
+                lits.push_back(Lit(v, false));
+            }
+            Clause* cl = solver->cl_alloc.Clause_new(lits, 0);
+            cl->set_xor();
+            cl->set_rhs(x.rhs);
+            ClOffset offs = solver->cl_alloc.get_offset(cl);
+            solver->xorclauses.push_back(offs);
+            Watched w(offs, lit_Undef);
+            solver->watches.at(x.vars[0]).push(w);
+            solver->watches.at(x.vars[1]).push(w);
+        }
+    }
+}
+
 void XorFinder::find_xors_based_on_short_clauses()
 {
     assert(solver->ok);
@@ -119,6 +146,7 @@ void XorFinder::find_xors()
     runStats.clear();
     runStats.numCalls = 1;
 
+    cls_of_xors.clear();
     xors.clear();
     assert(solver->watches.get_smudged_list().empty());
     double myTime = cpuTime();
@@ -221,6 +249,9 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
         if (!xor_clause_already_inside(found_xor)) {
             add_found_xor(found_xor);
+        }
+        for(ClOffset off: poss_xor.get_offsets()) {
+            cls_of_xors.push_back(off);
         }
     }
 

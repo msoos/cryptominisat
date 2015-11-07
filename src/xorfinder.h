@@ -82,6 +82,11 @@ class PossibleXor
         template<class T>
         void add(const T& cl, const ClOffset offset, vector<uint32_t>& varsMissing);
 
+        const vector<ClOffset>& get_offsets() const
+        {
+            return offsets;
+        }
+
     private:
         void setup_seen_rhs_foundcomb(vector<uint16_t>& seen)
         {
@@ -151,7 +156,9 @@ public:
 
     const Stats& get_stats() const;
     virtual size_t mem_used() const;
-    vector<Xor> xors; ///<Recovered XORs
+    void add_found_xors();
+    vector<Xor> xors;
+    vector<ClOffset> cls_of_xors;
 
 private:
     PossibleXor poss_xor;
