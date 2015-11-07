@@ -1607,6 +1607,10 @@ bool Solver::execute_inprocess_strategy(
             if (conf.perform_occur_based_simp
                 && occsimplifier
             ) {
+                if (conf.verbosity >= 2) {
+                    cout << "c --> Executing OCC strategy token(s): "
+                    << occ_strategy_tokens << '\n';
+                }
                 occsimplifier->simplify(startup, occ_strategy_tokens);
             }
             occ_strategy_tokens.clear();
