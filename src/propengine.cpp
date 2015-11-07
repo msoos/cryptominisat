@@ -350,7 +350,7 @@ inline PropResult PropEngine::prop_long_cl_strict_order(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    Lit blocked = i->getBlockedLit();
+    const Lit blocked = i->getBlockedLit();
     if (value(blocked) == l_True) {
         *j++ = *i;
         return PROP_NOTHING;
@@ -396,8 +396,8 @@ bool PropEngine::prop_long_cl_any_order(
     , PropBy& confl
 ) {
     //Blocked literal is satisfied, so clause is satisfied
-    const Lit blocker = i->getBlockedLit();
-    if (value(blocker) == l_True) {
+    const Lit blocked = i->getBlockedLit();
+    if (value(blocked) == l_True) {
         *j++ = *i;
         return true;
     }
