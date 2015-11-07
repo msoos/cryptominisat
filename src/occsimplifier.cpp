@@ -951,6 +951,7 @@ bool OccSimplifier::setup()
     }
 
     set_limits();
+    return solver->ok;
 }
 
 bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
