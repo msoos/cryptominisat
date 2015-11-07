@@ -22,7 +22,6 @@
 #include "reducedb.h"
 #include "solver.h"
 #include "sqlstats.h"
-#include "clausecleaner.h"
 #include <functional>
 
 using namespace CMSat;

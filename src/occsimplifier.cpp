@@ -1170,9 +1170,6 @@ void OccSimplifier::finishUp(
     remove_all_longs_from_watches();
     add_back_to_solver();
     solver->propagate_occur();
-    if (solver->ok) {
-        solver->clauseCleaner->remove_and_clean_all();
-    }
 
     //Update global stats
     const double time_used = cpuTime() - myTime;
