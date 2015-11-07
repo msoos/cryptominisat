@@ -447,7 +447,7 @@ void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
     }
 
     cout
-    << "c [simp] Not linked in red "
+    << "c [simp] Not linked in "
     << link_in_data.cl_not_linked << "/"
     << (link_in_data.cl_linked + link_in_data.cl_not_linked)
     << " ("
