@@ -52,7 +52,7 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     assert(solver->ok);
     numCalls++;
 
-    solver->clauseCleaner->clean_clauses(solver->longIrredCls);
+    solver->clauseCleaner->remove_and_clean_all();
 
     runStats.redCacheBased.clear();
     runStats.irredCacheBased.clear();
@@ -63,15 +63,12 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, false))
         goto end;
 
-    solver->clauseCleaner->remove_and_clean_all();
     if (alsoStrengthen) {
         if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, true))
             goto end;
 
         if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls, true, true))
             goto end;
-
-        solver->clauseCleaner->remove_and_clean_all();
     }
 
 end:
