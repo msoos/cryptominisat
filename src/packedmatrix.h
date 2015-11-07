@@ -151,7 +151,7 @@ public:
             return ret;
         }
 
-        const uint32_t operator-(const iterator& b) const
+        uint32_t operator-(const iterator& b) const
         {
             return (mp - b.mp)/(2*(numCols+1));
         }
@@ -161,12 +161,12 @@ public:
             mp += 2*(numCols+1)*num;
         }
 
-        const bool operator!=(const iterator& it) const
+        bool operator!=(const iterator& it) const
         {
             return mp != it.mp;
         }
 
-        const bool operator==(const iterator& it) const
+        bool operator==(const iterator& it) const
         {
             return mp == it.mp;
         }
@@ -203,7 +203,7 @@ public:
         return iterator(mp+(numCols+1)+numRows*2*(numCols+1), numCols);
     }
 
-    inline const uint32_t getSize() const
+    inline uint32_t getSize() const
     {
         return numRows;
     }

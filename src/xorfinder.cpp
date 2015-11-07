@@ -184,7 +184,6 @@ void XorFinder::print_found_xors()
 bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
 {
     xor_find_time_limit -= 30;
-    bool already_inside = false;
     for (const Watched ws: solver->watches.at(xor_c.vars[0])) {
         if (ws.isIdx()
             && xors[ws.get_idx()] == xor_c
