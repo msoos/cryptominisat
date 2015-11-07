@@ -98,6 +98,7 @@ public:
     int64_t count_num_red_cls_reducedb() const;
 
     vector<ClOffset> longRedCls;          ///< List of redundant clauses.
+    vector<ClOffset> xorclauses;
     BinTriStats binTri;
     LitStats litStats;
     Drup* drup;

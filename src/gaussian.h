@@ -54,9 +54,9 @@ class llbool
 
 public:
     llbool(): value(0) {};
-    llbool(lbool v) :
+    explicit llbool(lbool v) :
             value(v.value) {};
-    llbool(char a) :
+    explicit llbool(char a) :
             value(a) {}
 
     inline bool operator!=(const llbool& v) const {
@@ -69,17 +69,17 @@ public:
 
     friend class lbool;
 };
-const llbool l_Nothing  = toLbool(2);
-const llbool l_Continue = toLbool(3);
+const llbool l_Nothing  = llbool(2);
+const llbool l_Continue = llbool(3);
 
 class Gaussian
 {
 public:
-    Gaussian(Solver* solver, const GaussConf& config, const uint32_t matrix_no, const vector<Xor*>& xorclauses);
+    Gaussian(Solver* solver, const uint32_t matrix_no);
     ~Gaussian();
 
     bool init_until_fixedpoint();
-    llbool find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC);
+    llbool find_truths();
 
     //statistics
     void print_stats() const;
@@ -100,8 +100,6 @@ protected:
     //Gauss high-level configuration
     const GaussConf& config;
     const uint32_t matrix_no;
-    vector<Xor> xorclauses;
-    vector<Xor> new_xorclauses;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
     gaussian_ret gaussian(PropBy& confl);
@@ -141,7 +139,7 @@ protected:
         Clause* ptr;
         uint32_t level;
     };
-    vector<ClauseToClear> clauses_toclear;
+    vector<ClauseToClear> clauses_toclear; //TODO
     bool disabled = false; // Gauss is disabled
 
     //State of current elimnation
@@ -215,32 +213,6 @@ inline bool Gaussian::should_check_gauss(const uint32_t decisionlevel) const
 {
     return (!disabled
             && decisionlevel < config.decision_until);
-}
-
-inline void Gaussian::canceling(const uint32_t sublevel)
-{
-    if (disabled)
-        return;
-
-    uint32_t a = 0;
-    for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        solver.cl_alloc.clauseFree(clauses_toclear[i].first);
-        a++;
-    }
-    clauses_toclear.resize(clauses_toclear.size()-a);
-
-    if (messed_matrix_vars_since_reversal)
-        return;
-    int c = std::min((int)gauss_last_level, (int)(solver.trail.size())-1);
-    for (; c >= (int)sublevel; c--) {
-        uint32_t var  = solver.trail[c].var();
-        if (var < var_is_in.getSize()
-            && var_is_in[var]
-            && cur_matrixset.var_is_set[var]) {
-        messed_matrix_vars_since_reversal = true;
-        return;
-        }
-    }
 }
 
 inline uint32_t Gaussian::get_unit_truths() const

@@ -107,6 +107,12 @@ macro(add_cxx_flag_if_supported flagname)
   endif()
 endmacro()
 
+option(USE_GAUSS "Build with every-level GAUSS enabled" OFF)
+if (USE_GAUSS)
+    add_definitions(-DUSE_GAUSS)
+    message(STATUS "Building with GAUSS enabled at every level")
+endif()
+
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
 if (ENABLE_ASSERTIONS)
     # NDEBUG was already removed.

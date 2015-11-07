@@ -43,14 +43,11 @@ static const uint32_t unassigned_var = std::numeric_limits<uint32_t>::max();
 
 Gaussian::Gaussian(
     Solver* _solver
-    , const GaussConf& _config
     , const uint32_t _matrix_no
-    , const vector<Xor*>& _xorclauses
 ) :
     solver(_solver)
-    , config(_config)
+    , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
-    , xorclauses(_xorclauses)
     , messed_matrix_vars_since_reversal(true)
     , gauss_last_level(0)
 {
@@ -58,9 +55,11 @@ Gaussian::Gaussian(
 
 Gaussian::~Gaussian()
 {
-    for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
+    //TODO
+    /*for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
         solver->cl_alloc.clauseFree(clauses_toclear[i].first);
     }
+    */
 }
 
 inline void Gaussian::set_matrixset_to_cur()
@@ -102,7 +101,7 @@ bool Gaussian::clean_one_xor(Xor& x)
             return false;
         }
         case 2: {
-            solver->add_xor_clause_inter(vars_to_lits(x.vars), x.rhs);
+            solver->add_xor_clause_inter(vars_to_lits(x.vars), x.rhs, true);
             return false;
         }
         default: {
@@ -166,7 +165,7 @@ bool Gaussian::init_until_fixedpoint()
         case propagation:
             unit_truths += last_trail_size - solver->trail.size();
             do_again_gauss = true;
-            solver->ok = (solver->propagate().isNULL());
+            solver->ok = (solver->propagate<false>().isNULL());
             if (!solver->ok) return false;
             break;
         case nothing:
@@ -208,7 +207,7 @@ uint32_t Gaussian::select_columnorder(
 
     uint32_t num_xorclauses  = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        Xor& c = *xorclauses[i];
+        Xor& c = xorclauses[i];
         if (c.getRemoved()) continue;
         num_xorclauses++;
 
@@ -237,7 +236,7 @@ uint32_t Gaussian::select_columnorder(
         std::random_shuffle(vars.begin(), vars.end());
     }
 
-    Heap<Solver::VarOrderLt> order_heap(solver->order_heap);
+    auto order_heap(solver->order_heap);
     uint32_t iterReduceIt = 0;
     while ((config.orderCols && !order_heap.empty())
         || (!config.orderCols && iterReduceIt < vars.size())
@@ -330,7 +329,8 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
     PackedMatrix::iterator this_row = m.matrix.beginMatrix();
     uint32_t row_num = 0;
 
-    if (solver->value(var)) {
+    assert(solver->value(var) != l_Undef && "Not sure about this one.. :S");
+    if (solver->value(var) == l_True) {
         for (uint32_t end = m.last_one_in_col[col]
             ; row_num != end
             ; ++this_row, row_num++
@@ -556,7 +556,7 @@ uint32_t Gaussian::eliminate(matrixset& m)
         if (j-1 > m.first_one_in_row[m.num_rows-1])
             until = m.num_rows;
         for (;i != until; i++, ++rowIt) if (changed_rows[i] && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
-            propagatable_rows.push(i);
+            propagatable_rows.push_back(i);
     }
 
     #ifdef VERBOSE_DEBUG
@@ -611,7 +611,7 @@ uint32_t Gaussian::eliminate(matrixset& m)
             #endif
 
             if ((*rowIt).popcnt_is_one(j))
-                propagatable_rows.push(i);
+                propagatable_rows.push_back(i);
 
             //Now A[i,j] will contain the old value of A[maxi,j];
             ++this_matrix_row;
@@ -694,8 +694,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
     #endif
 
     if (tmp_clause.size() <= 1) {
-        if (!tmp_clause.empty()) {
-            confl = PropBy(tmp_clause[0]);
+        if (tmp_clause.size() == 1) {
+            confl = PropBy(tmp_clause[0], false);
         } else {
             confl = PropBy();
             solver->ok = false;
@@ -724,11 +724,11 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
             maxsublevel = sublevel2;
         }
 
-        confl = PropBy(lit1);
+        confl = PropBy(lit1, false);
         solver->failBinLit = lit2;
     } else {
         Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause, 0);
-        confl = PropBy(solver->cl_alloc.get_offset(*cl));
+        confl = PropBy(solver->cl_alloc.get_offset(cl));
 
         uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
         for (uint32_t i = 0, size = cl->size(); i != size; i++)  {
@@ -788,13 +788,9 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
     gaussian_ret ret = nothing;
 
     uint32_t num_props = 0;
-    for (const uint32_t*
-        prop_row = propagatable_rows.getData(), *end = prop_row + propagatable_rows.size()
-        ; prop_row != end
-        ; prop_row++
-    ) {
+    for (uint32_t prop_row : propagatable_rows) {
         //this is a "000..1..0000000X" row. I.e. it indicates a propagation
-        ret = handle_matrix_prop(m, *prop_row);
+        ret = handle_matrix_prop(m, prop_row);
         num_props++;
         if (ret == unit_propagation) {
             #ifdef VERBOSE_DEBUG
@@ -852,7 +848,7 @@ void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
         solver->assigns[var] = l_Undef;
         solver->insertVarOrder(var);
     }
-    solver->trail.shrink(solver->trail.size() - until_sublevel);
+    solver->trail.resize(until_sublevel);
 
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ")Canceling sublevel finished." << endl;
@@ -962,8 +958,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             tmp_clause[0] = tmp_clause[0].unsign();
             tmp_clause[1] = tmp_clause[1].unsign();
             Xor* cl = solver->addXorInt(tmp_clause, xorEqualFalse);
-            release_assert(cl == NULL);
-            release_assert(solver->ok);
+            assert(cl == NULL);
+            assert(solver->ok);
             return unit_propagation;
         }
         default:
@@ -973,15 +969,44 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             }
             new_xorclauses.push_back(Xor(tmp_clause, xorEqualFalse));
             Xor &cla = new_xorclauses.back();
-            assert(m.matrix.getMatrixAt(row).is_true() == !cla[0].sign());
-            assert(solver->value(cla[0]) == l_Undef);
+            assert(m.matrix.getMatrixAt(row).is_true() == !tmp_clause[0].sign());
+            assert(solver->value(tmp_clause[0]) == l_Undef);
 
+            //TODO
             //clauses_toclear.push_back(ClauseToClear(&cla, solver->trail.size()-1));
-            solver->enqueue(cla[0], PropBy(new_xorclauses.size()-1), true);
+            solver->enqueue(tmp_clause[0], PropBy(new_xorclauses.size()-1));
             return propagation;
     }
 
     return propagation;
+}
+
+void Gaussian::canceling(const uint32_t sublevel)
+{
+    if (disabled)
+        return;
+
+    uint32_t a = 0;
+
+    for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
+        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
+        a++;
+    }
+    clauses_toclear.resize(clauses_toclear.size()-a);
+
+    if (messed_matrix_vars_since_reversal)
+        return;
+
+    int c = std::min((int)gauss_last_level, (int)(solver->trail.size())-1);
+    for (; c >= (int)sublevel; c--) {
+        Var var  = solver->trail[c].var();
+        if (var < var_is_in.getSize()
+            && var_is_in[var]
+            && cur_matrixset.var_is_set[var]) {
+        messed_matrix_vars_since_reversal = true;
+        return;
+        }
+    }
 }
 
 void Gaussian::disable_if_necessary()
@@ -994,7 +1019,7 @@ void Gaussian::disable_if_necessary()
             disabled = true;
 }
 
-llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
+llbool Gaussian::find_truths()
 {
     PropBy confl;
 
@@ -1009,12 +1034,15 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
     switch (g) {
         case conflict: {
             useful_confl++;
-            llbool ret = solver->handle_conflict(learnt_clause, confl, conflictC, true);
+            bool ret = solver->handle_conflict(confl);
             if (confl.isClause()) {
                 solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
             }
 
-            if (ret != l_Nothing) return ret;
+            if (!ret) {
+                solver->ok = false;
+                return llbool(l_False);
+            }
             return l_Continue;
         }
 
@@ -1033,7 +1061,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
                 cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return l_False;
+                return llbool(l_False);
             }
 
             Lit lit = confl.lit2();
@@ -1048,7 +1076,7 @@ llbool Gaussian::find_truths(vector<Lit>& learnt_clause, uint64_t& conflictC)
                 cout << "(" << matrix_no << ") -> UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return l_False;
+                return llbool(l_False);
             }
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ") -> setting to correct value" << endl;
@@ -1189,7 +1217,7 @@ bool Gaussian::nothing_to_propagate(matrixset& m) const
         ; r != end
         ; ++r
     ) {
-        if (r->isZero() && r->is_true()) {
+        if ((*r).isZero() && (*r).is_true()) {
             #ifdef VERBOSE_DEBUG
             cout << "row " << (*r) << " is a conflict, but we didn't catch it" << endl;
             #endif
@@ -1231,20 +1259,22 @@ void Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset
             const uint32_t var = col_to_var_original[col];
             assert(var < solver->nVars());
 
-            if (solver->assigns[var] == l_True) {
+            if (solver->value(var) == l_True) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
                 assert(m.var_is_set[var]);
                 final = !final;
-            } else if (solver->assigns[var] == l_False) {
+            } else if (solver->value(var) == l_False) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
                 assert(m.var_is_set[var]);
-            } else if (solver->assigns[var] == l_Undef) {
+            } else if (solver->value(var) == l_Undef) {
                 assert(m.col_to_var[col] != unassigned_var);
                 assert(!m.var_is_set[var]);
                 assert(mat_row[col]);
-            } else assert(false);
+            } else {
+                assert(false);
+            }
 
             col++;
         }

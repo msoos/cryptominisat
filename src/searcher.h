@@ -262,7 +262,7 @@ class Searcher : public HyperEngine
             SimpleInFile& f
             , bool red
         );
-        vector<Gaussian*> gauss_matrix;
+        vector<Gaussian*> gauss_matrixes;
 
         struct AssumptionPair {
             AssumptionPair(const Lit _inter, const Lit _outer):
@@ -440,6 +440,7 @@ class Searcher : public HyperEngine
             {}
             bool operator()(uint32_t var) const;
         };
+        friend class Gaussian;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
@@ -480,6 +481,7 @@ class Searcher : public HyperEngine
 
         //Other
         void print_solution_type(const lbool status) const;
+        void clearGaussMatrixes();
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);

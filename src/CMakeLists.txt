@@ -68,6 +68,10 @@ set(cryptoms_lib_files
 
 set(cryptoms_lib_link_libs "")
 
+if (USE_GAUSS)
+    SET(cryptoms_lib_files ${cryptoms_lib_files} gaussian.cpp)
+endif()
+
 if (M4RI_FOUND)
     include_directories(${M4RI_INCLUDE_DIRS})
 

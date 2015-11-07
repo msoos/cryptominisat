@@ -34,6 +34,7 @@
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
+#include "gaussian.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -960,7 +961,7 @@ lbool Searcher::search()
 
     #ifdef USE_GAUSS
     for (Gaussian* g : gauss_matrixes) {
-        if (!g->full_init()) {
+        if (!g->init_until_fixedpoint()) {
             return l_False;
         }
     }
@@ -984,11 +985,16 @@ lbool Searcher::search()
             #ifdef USE_GAUSS
             bool at_least_one_continue = false;
             for (Gaussian* g: gauss_matrixes) {
-                ret = g->find_truths(learnt_clause, conflictC);
+                llbool ret = g->find_truths();
                 if (ret == l_Continue) {
                     at_least_one_continue = true;
                 } else if (ret != l_Nothing) {
-                    return ret;
+                    if (ret == llbool(l_False)) {
+                        return l_False;
+                    } else if (ret == llbool(l_True)) {
+                        return l_True;
+                    }
+                    assert(false);
                 }
             }
             if (at_least_one_continue) {
@@ -1077,11 +1083,8 @@ lbool Searcher::new_decision()
             #ifdef USE_GAUSS
             //These are not supposed to be changed *at all* by the funciton
             //since it has already been called before
-            vec<Lit> learnt_clause;
-            uint64_t conflictC;
-
             for (Gaussian* g: gauss_matrixes) {
-                llbool ret = g->find_truths(learnt_clause, conflictC);
+                llbool ret = g->find_truths();
                 assert(ret == l_Nothing);
             }
             #endif //USE_GAUSS
@@ -1890,8 +1893,11 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
-    for (vector<Gaussian*>::iterator gauss = gauss_matrixes.begin(), end = gauss_matrixes.end(); gauss != end; gauss++) {
-        if (!(*gauss)->full_init()) return false;
+    for (Gaussian* g: gauss_matrixes) {
+        if (!g->init_until_fixedpoint()) {
+            assert(!solver->ok);
+            return l_False;
+        }
     }
     #endif //USE_GAUSS
 
@@ -3172,3 +3178,19 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     }
     num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
+
+#ifdef USE_GAUSS
+void Searcher::clearGaussMatrixes()
+{
+    assert(decisionLevel() == 0);
+    for (uint32_t i = 0; i < gauss_matrixes.size(); i++)
+        delete gauss_matrixes[i];
+    gauss_matrixes.clear();
+
+    /*
+    for (uint32_t i = 0; i != freeLater.size(); i++)
+        clauseAllocator.clauseFree(freeLater[i]);
+    freeLater.clear();
+    */
+}
+#endif

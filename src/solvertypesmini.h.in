@@ -154,6 +154,7 @@ public:
 
     friend int   toInt  (lbool l);
     friend lbool toLbool(int   v);
+    friend class llbool;
 };
 
 inline lbool boolToLBool(const bool b)
