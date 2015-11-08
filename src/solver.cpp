@@ -1726,7 +1726,7 @@ bool Solver::execute_inprocess_strategy(
         }
     }
 
-    if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
+    if (!occ_strategy_tokens.empty()) {
         if (conf.perform_occur_based_simp
             && occsimplifier
         ) {
