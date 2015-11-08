@@ -58,8 +58,7 @@ TEST_F(varreplace, find_one_1)
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
     EXPECT_EQ(s->get_num_long_irred_cls(), 2);
-    std::string exp = "-2, 3, 4, 5;  2, 3, 4, 5";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "-2, 3, 4, 5;  2, 3, 4, 5");
 }
 
 TEST_F(varreplace, find_one_2)
@@ -72,8 +71,7 @@ TEST_F(varreplace, find_one_2)
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
-    std::string exp = "3, 4, 5;  2, 3, 4, 5";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "3, 4, 5;  2, 3, 4, 5");
 }
 
 TEST_F(varreplace, remove_lit)
@@ -85,8 +83,7 @@ TEST_F(varreplace, remove_lit)
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
-    std::string exp = "2, 5";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "2, 5");
 }
 
 TEST_F(varreplace, remove_cl)
@@ -98,8 +95,7 @@ TEST_F(varreplace, remove_cl)
 
     repl->replace_if_enough_is_found();
     EXPECT_EQ(repl->get_num_replaced_vars(), 1);
-    std::string exp = "";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "");
 }
 
 TEST_F(varreplace, replace_twice)
@@ -118,8 +114,7 @@ TEST_F(varreplace, replace_twice)
 
     s->add_clause_outer(str_to_cl("1, -2, 3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 5"));
-    std::string exp = "2, 5";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "2, 5");
 }
 
 TEST_F(varreplace, replace_thrice)
@@ -144,8 +139,7 @@ TEST_F(varreplace, replace_thrice)
 
     s->add_clause_outer(str_to_cl("1, -2, 3"));
     s->add_clause_outer(str_to_cl("1, 2, 4, 5"));
-    std::string exp = "2, 5";
-    check_irred_cls_eq(s, exp);
+    check_irred_cls_eq(s, "2, 5");
 }
 
 TEST_F(varreplace, replace_limit_check_below)
