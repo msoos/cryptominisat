@@ -286,7 +286,7 @@ private:
     BVA* bva;
     bool startup = false;
     bool backward_sub_str();
-    bool execute_simplifier_sched(const string& strategy);
+    bool execute_simplifier_strategy(const string& strategy);
 
     //debug
     bool subsetReverse(const Clause& B) const;

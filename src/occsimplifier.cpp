@@ -854,7 +854,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
     return true;
 }
 
-bool OccSimplifier::execute_simplifier_sched(const string& strategy)
+bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 {
     std::istringstream ss(strategy);
     std::string token;
@@ -970,7 +970,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
-    execute_simplifier_sched(schedule);
+    execute_simplifier_strategy(schedule);
 
     remove_by_drup_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
