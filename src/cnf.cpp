@@ -584,7 +584,8 @@ void CNF::check_wrong_attach() const
 
 uint64_t CNF::count_lits(
     const vector<ClOffset>& clause_array
-    , bool allowFreed
+    , const bool red
+    , const bool allowFreed
 ) const {
     uint64_t lits = 0;
     for(vector<ClOffset>::const_iterator
@@ -596,7 +597,9 @@ uint64_t CNF::count_lits(
         if (cl.freed()) {
             assert(allowFreed);
         } else {
-            lits += cl.size();
+            if ((cl.red() ^ red) == false) {
+                lits += cl.size();
+            }
         }
     }
 

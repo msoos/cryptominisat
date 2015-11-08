@@ -3601,7 +3601,8 @@ void Solver::check_stats(const bool allowFreed) const
     check_implicit_stats();
 
     const double myTime = cpuTime();
-    uint64_t numLitsIrred = count_lits(longIrredCls, allowFreed);
+    uint64_t numLitsIrred = count_lits(longIrredCls, false, allowFreed);
+    numLitsIrred += count_lits(cls_of_xorclauses, false, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         std::cerr << "ERROR: " << endl
         << "->numLitsIrred: " << numLitsIrred << endl
@@ -3609,7 +3610,8 @@ void Solver::check_stats(const bool allowFreed) const
     }
     assert(numLitsIrred == litStats.irredLits);
 
-    uint64_t numLitsRed = count_lits(longRedCls, allowFreed);
+    uint64_t numLitsRed = count_lits(longRedCls, true, allowFreed);
+    numLitsRed += count_lits(cls_of_xorclauses, true, allowFreed);
     if (numLitsRed != litStats.redLits) {
         std::cerr << "ERROR: " << endl
         << "->numLitsRed: " << numLitsRed << endl

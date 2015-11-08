@@ -243,7 +243,8 @@ public:
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
-        , bool allowFreed
+        , const bool red
+        , const bool allowFreed
     ) const;
 
 protected:
