@@ -56,7 +56,7 @@ TEST_F(xor_finder, find_none)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    EXPECT_EQ(finder.xors.size(), 0);
+    EXPECT_EQ(finder.xors.size(), 0U);
 }
 
 TEST_F(xor_finder, find_tri_1)
