@@ -123,9 +123,14 @@ void XorFinder::delete_cls_of_xors()
                 tolook = CL_OFFSET_MAX;
             }
 
-            occsimplifier->unlink_clause(offs, false, false, true);
+            //occsimplifier->unlink_clause(offs, false, false, true);
             Clause* cl = solver->cl_alloc.ptr(offs);
             cl->set_represented_by_xor(true);
+            if (cl->red()) {
+                solver->litStats.redLits-=cl->size();
+            } else {
+                solver->litStats.irredLits-=cl->size();
+            }
             //cout << *cl << " unlinked" <<  endl;
         }
     }

@@ -1745,20 +1745,23 @@ void Solver::remove_xors()
     if (xorclauses.empty()) {
         return;
     }
-    for(watch_subarray w: solver->watches) {
-        size_t j = 0;
-        for(size_t i = 0; i < w.size(); i++) {
-            if (!w[i].isClause()) {
-                w[j++] = w[i];
+
+    for(watch_subarray ws: solver->watches) {
+        watch_subarray::iterator i = ws.begin();
+        watch_subarray::iterator j = i;
+        for (watch_subarray::iterator end = ws.end(); i != end; i++) {
+            if (!i->isClause()) {
+                *j++ = *i;
                 continue;
             }
-            Clause& cl = *cl_alloc.ptr(w[i].get_offset());
+            Clause& cl = *cl_alloc.ptr(i->get_offset());
             if (!cl.is_xor()) {
-                w[j++] = w[i];
+                *j++ = *i;
             }
         }
-        w.resize(j);
+        ws.shrink_(i-j);
     }
+
     for(ClOffset offs: xorclauses) {
         Clause* cl = cl_alloc.ptr(offs);
         assert(cl->is_xor());
@@ -1768,9 +1771,16 @@ void Solver::remove_xors()
 
     for(ClOffset offs: cls_of_xorclauses) {
         Clause* cl = cl_alloc.ptr(offs);
-        attachClause(*cl);
+        attachClause(*cl, false);
         cl->set_represented_by_xor(false);
+        assert(!cl->freed());
+        if (cl->red()) {
+            longRedCls.push_back(offs);
+        } else {
+            longIrredCls.push_back(offs);
+        }
     }
+    assert(false && "above is wrong, we need to clean the clause");
     cls_of_xorclauses.clear();
 }
 

@@ -570,8 +570,7 @@ void OccSimplifier::add_back_to_solver()
         //All clauses are larger than 2-long
         assert(cl->size() > 3);
 
-        bool notLinkedNeedFree = check_varelim_when_adding_back_cl(cl);
-        if (notLinkedNeedFree) {
+        if (check_varelim_when_adding_back_cl(cl)) {
             //The clause wasn't linked in but needs removal now
             if (cl->red()) {
                 solver->litStats.redLits -= cl->size();
