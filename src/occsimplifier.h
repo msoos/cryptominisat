@@ -278,6 +278,12 @@ public:
     TouchListLit impl_sub_lits;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
+    void unlink_clause(ClOffset cc
+        , bool drup = true
+        , bool allow_empty_watch = false
+        , bool only_set_is_removed = false
+    );
+    void free_clauses_to_free();
 
 private:
     friend class SubsumeStrengthen;
@@ -350,11 +356,6 @@ private:
 
     //Clause update
     lbool       clean_clause(ClOffset c);
-    void        unlink_clause(ClOffset cc
-        , bool drup = true
-        , bool allow_empty_watch = false
-        , bool only_set_is_removed = false
-    );
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
 
@@ -408,7 +409,6 @@ private:
     TouchList   touched;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
-    void        free_clauses_to_free();
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);

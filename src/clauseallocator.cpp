@@ -305,8 +305,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     assert(solver->decisionLevel() == 0);
 
     //We are at decision level 0, so we can reset all PropBy-s
-    for (auto& vdata: solver->varData) {
+    for (VarData& vdata: solver->varData) {
         vdata.reason = PropBy();
+        //vdata.level = 0;
     }
 
     //Detach long clauses
@@ -315,7 +316,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Make sure all non-freed clauses were accessible from solver
     const size_t origNumClauses =
-        solver->longIrredCls.size() + solver->longRedCls.size();
+        solver->longIrredCls.size() + solver->longRedCls.size()
+        + solver->xorclauses.size() + solver->cls_of_xorclauses.size();
     if (origNumClauses != offsets.size()) {
         std::cerr
         << "ERROR: Not all non-freed clauses are accessible from Solver"
@@ -334,6 +336,8 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     //Clear clauses
     solver->longIrredCls.clear();
     solver->longRedCls.clear();
+    solver->xorclauses.clear();
+    solver->cls_of_xorclauses.clear();
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
@@ -341,7 +345,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(!cl->freed());
 
         //Put it in the right bucket
-        if (cl->red()) {
+        if (cl->is_xor()) {
+            solver->xorclauses.push_back(offset);
+        } else if (cl->get_represented_by_xor()) {
+            solver->cls_of_xorclauses.push_back(offset);
+        } else if (cl->red()) {
             solver->longRedCls.push_back(offset);
         } else {
             solver->longIrredCls.push_back(offset);
@@ -349,7 +357,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     }
 
     //Finally, reattach long clauses
-    detachReattach.reattachLongs();
+    detachReattach.reattachLongsNoClean();
 }
 
 size_t ClauseAllocator::mem_used() const

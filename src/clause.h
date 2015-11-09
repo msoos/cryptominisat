@@ -176,6 +176,7 @@ protected:
     uint16_t must_recalc_abst:1;
     uint16_t _is_xor:1;
     uint16_t _rhs:1;
+    uint16_t _represented_by_xor:1;
 
 
     Lit* getData()
@@ -211,6 +212,8 @@ public:
         isRed = false;
         isRemoved = false;
         is_distilled = false;
+        _is_xor = false;
+        _represented_by_xor = false;
         must_recalc_abst = true;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
@@ -229,6 +232,16 @@ public:
     void set_rhs(bool new_rhs)
     {
         _rhs = new_rhs;
+    }
+
+    void set_represented_by_xor(const bool val)
+    {
+        _represented_by_xor = val;
+    }
+
+    bool get_represented_by_xor()
+    {
+        return _represented_by_xor;
     }
 
     uint32_t size() const

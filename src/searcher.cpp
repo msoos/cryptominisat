@@ -1927,7 +1927,6 @@ lbool Searcher::solve(
             && conf.doSortWatched
         ) {
             sortWatched();
-            rearrange_clauses_watches();
         }
 
         assert(watches.get_smudged_list().empty());
@@ -1955,16 +1954,6 @@ lbool Searcher::solve(
         if (must_abort(status)) {
             goto end;
         }
-
-        /*
-        clean_clauses_if_needed();
-        if (!conf.never_stop_search) {
-            status = perform_scc_and_varreplace_if_needed();
-            if (status != l_Undef) {
-                goto end;
-            }
-        }
-        */
 
         save_search_loop_stats();
         if (must_consolidate_mem) {
@@ -2922,65 +2911,6 @@ inline void Searcher::bump_var_activitiy(uint32_t var)
         assert(order_heap.heap_property());
     }
     #endif
-}
-
-void Searcher::rearrange_clauses_watches()
-{
-    assert(decisionLevel() == 0);
-    assert(ok);
-    assert(qhead == trail.size());
-
-    double myTime = cpuTime();
-    for(watch_subarray ws: watches) {
-        for(Watched& w: ws) {
-            if (!w.isClause()) {
-                continue;
-            }
-            Clause& cl = *cl_alloc.ptr(w.get_offset());
-            w.setBlockedLit(find_good_blocked_lit(cl));
-        }
-    }
-
-    const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 2) {
-        cout
-        << "c [blk-lit-opt] "
-        << conf.print_times(time_used)
-        << endl;
-    }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "blk-lit-opt"
-            , time_used
-        );
-    }
-}
-
-inline Lit Searcher::find_good_blocked_lit(const Clause& c) const
-{
-    Lit lit = lit_Undef;
-    uint32_t lowest_lev = std::numeric_limits<uint32_t>::max();
-    for(size_t i = 1; i < c.size(); i++) {
-        const Lit l = c[i];
-        if (decisionLevel() > 0) {
-            if (value(l) == l_True
-                && varData[l.var()].level > 0
-                && varData[l.var()].level < lowest_lev
-            ) {
-                lit = l;
-                lowest_lev = varData[l.var()].level;
-            }
-        } else {
-            if ((varData[l.var()].polarity ^ l.sign()) == true) {
-                lit = l;
-            }
-        }
-    }
-    if (lit == lit_Undef) {
-        lit = c[c.size()/2];
-    }
-    return lit;
 }
 
 void Searcher::update_var_decay()

@@ -104,6 +104,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
+    cleanAndAttachClauses(solver->xorclauses, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
     assert(!solver->drup->something_delayed());
 
@@ -112,6 +113,33 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     }
 
     return solver->ok;
+}
+
+
+void CompleteDetachReatacher::reattachLongsNoClean()
+{
+    attachClauses(solver->longIrredCls);
+    attachClauses(solver->longRedCls);
+    attachClauses(solver->xorclauses);
+}
+
+void CompleteDetachReatacher::attachClauses(
+    vector<ClOffset>& cs
+) {
+    for (ClOffset offs: cs) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        bool satisfied = false;
+        for(Lit lit: *cl) {
+            if (solver->value(lit) == l_True) {
+                satisfied = true;
+            }
+        }
+        if (!satisfied) {
+            assert(solver->value((*cl)[0]) == l_Undef);
+            assert(solver->value((*cl)[1]) == l_Undef);
+        }
+        solver->attachClause(*cl, false);
+    }
 }
 
 /**

@@ -560,12 +560,8 @@ bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
 
 void OccSimplifier::add_back_to_solver()
 {
-    for (vector<ClOffset>::const_iterator
-        it = clauses.begin(), end = clauses.end()
-        ; it != end
-        ; ++it
-    ) {
-        Clause* cl = solver->cl_alloc.ptr(*it);
+    for (ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->freed())
             continue;
 
@@ -589,13 +585,19 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                solver->longRedCls.push_back(*it);
+                solver->longRedCls.push_back(offs);
             } else {
-                solver->longIrredCls.push_back(*it);
+                solver->longIrredCls.push_back(offs);
             }
         } else {
             solver->cl_alloc.clauseFree(cl);
         }
+    }
+
+
+    for (ClOffset offs: solver->xorclauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        solver->attachClause(*cl);
     }
 }
 
@@ -894,6 +896,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         } else if (token == "occ-xoradd") {
             if (solver->conf.doFindXors
             ) {
+                if (!solver->propagate_occur()) {
+                    return solver->ok;
+                }
+                //TODO clean all clauses
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 finder.add_found_xors();
@@ -1176,7 +1182,6 @@ void OccSimplifier::finishUp(
     solver->propagate_occur();
     remove_all_longs_from_watches();
     add_back_to_solver();
-    solver->propagate_occur();
 
     //Update global stats
     const double time_used = cpuTime() - myTime;

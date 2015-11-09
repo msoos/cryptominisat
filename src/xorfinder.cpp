@@ -88,22 +88,18 @@ void XorFinder::add_found_xors()
 
     for(const Xor& x: xors) {
         if (x.size() > 3) {
-            vector<Lit> lits;
-            for(uint32_t v: x.vars) {
-                lits.push_back(Lit(v, false));
-            }
-            Clause* cl = solver->cl_alloc.Clause_new(lits, 0);
+            Clause* cl = solver->cl_alloc.Clause_new(vars_to_lits(x. vars), 0);
             cl->set_xor();
             cl->set_rhs(x.rhs);
             ClOffset offs = solver->cl_alloc.get_offset(cl);
             solver->xorclauses.push_back(offs);
-            Watched w(offs, lit_Undef);
-            solver->watches.at(x.vars[0]).push(w);
-            solver->watches.at(x.vars[1]).push(w);
         }
     }
     if (!cls_of_xors.empty()) {
         delete_cls_of_xors();
+    }
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [occ-xor] Added " << xors.size() << " xors" << endl;
     }
 }
 
@@ -116,19 +112,32 @@ void XorFinder::delete_cls_of_xors()
     ClOffset tolook = cls_of_xors[at_cls_off];
     for(size_t i = 0; i < occsimplifier->clauses.size(); i++) {
         ClOffset offs = occsimplifier->clauses[i];
-        if (offs!= tolook) {
+        if (offs != tolook) {
             occsimplifier->clauses[j++] = offs;
         } else {
             solver->cls_of_xorclauses.push_back(offs);
             at_cls_off++;
-            if (cls_of_xors.size() > at_cls_off) {
+            if (at_cls_off < cls_of_xors.size()) {
                 tolook = cls_of_xors[at_cls_off];
             } else {
                 tolook = CL_OFFSET_MAX;
             }
+
+            occsimplifier->unlink_clause(offs, false, false, true);
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            cl->set_represented_by_xor(true);
+            //cout << *cl << " unlinked" <<  endl;
         }
     }
+    assert(cls_of_xors.size() == at_cls_off);
     occsimplifier->clauses.resize(j);
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [occ-xor] Num long cl removed due to XOR transform: " <<
+        cls_of_xors.size() << endl;
+    }
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    occsimplifier->free_clauses_to_free();
 }
 
 void XorFinder::find_xors_based_on_short_clauses()

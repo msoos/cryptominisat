@@ -244,6 +244,7 @@ class Solver : public Searcher
         SolveFeatures calculate_features() const;
         void reconfigure(int val);
         void reset_reason_levels_of_vars_to_zero();
+        void remove_xors();
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl);

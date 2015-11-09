@@ -516,7 +516,9 @@ void Solver::attachClause(
     #endif
 
     //Update stats
-    if (cl.red())
+    if (cl.is_xor()) {
+        //TODO XOR
+    } else if (cl.red())
         litStats.redLits += cl.size();
     else
         litStats.irredLits += cl.size();
@@ -1738,6 +1740,41 @@ bool Solver::execute_inprocess_strategy(
     return ok;
 }
 
+void Solver::remove_xors()
+{
+    if (xorclauses.empty()) {
+        return;
+    }
+    for(watch_subarray w: solver->watches) {
+        size_t j = 0;
+        for(size_t i = 0; i < w.size(); i++) {
+            if (!w[i].isClause()) {
+                w[j++] = w[i];
+                continue;
+            }
+            Clause& cl = *cl_alloc.ptr(w[i].get_offset());
+            if (!cl.is_xor()) {
+                w[j++] = w[i];
+            }
+        }
+        w.resize(j);
+    }
+    for(ClOffset offs: xorclauses) {
+        Clause* cl = cl_alloc.ptr(offs);
+        assert(cl->is_xor());
+        cl_alloc.clauseFree(cl);
+    }
+    xorclauses.clear();
+
+    for(ClOffset offs: cls_of_xorclauses) {
+        Clause* cl = cl_alloc.ptr(offs);
+        attachClause(*cl);
+        cl->set_represented_by_xor(false);
+    }
+    cls_of_xorclauses.clear();
+}
+
+
 /**
 @brief The function that brings together almost all CNF-simplifications
 */
@@ -1753,6 +1790,7 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
 
     update_polarity_and_activity = false;
+    remove_xors();
 
     if (conf.verbosity >= 6) {
         cout
@@ -1791,6 +1829,7 @@ lbool Solver::simplify_problem(const bool startup)
         clear_clauses_stats();
     }
 
+    //Reconfigure
     if (nVars() > 2
         && (longIrredCls.size() > 1 ||
             (binTri.irredBins + binTri.redBins
@@ -3602,7 +3641,6 @@ void Solver::check_stats(const bool allowFreed) const
 
     const double myTime = cpuTime();
     uint64_t numLitsIrred = count_lits(longIrredCls, false, allowFreed);
-    numLitsIrred += count_lits(cls_of_xorclauses, false, allowFreed);
     if (numLitsIrred != litStats.irredLits) {
         std::cerr << "ERROR: " << endl
         << "->numLitsIrred: " << numLitsIrred << endl
@@ -3611,7 +3649,6 @@ void Solver::check_stats(const bool allowFreed) const
     assert(numLitsIrred == litStats.irredLits);
 
     uint64_t numLitsRed = count_lits(longRedCls, true, allowFreed);
-    numLitsRed += count_lits(cls_of_xorclauses, true, allowFreed);
     if (numLitsRed != litStats.redLits) {
         std::cerr << "ERROR: " << endl
         << "->numLitsRed: " << numLitsRed << endl

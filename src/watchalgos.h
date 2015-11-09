@@ -257,6 +257,20 @@ inline Watched& findWatchedOfBin(
     return *ws.begin();
 }
 
+static inline void removeWXCl(watch_array& wsFull
+    , const Lit lit
+    , const ClOffset offs
+) {
+    watch_subarray ws = wsFull[lit];
+    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    for (; i != end && (!i->isClause() || i->get_offset() != offs); i++);
+    assert(i != end);
+    watch_subarray::iterator j = i;
+    i++;
+    for (; i != end; j++, i++) *j = *i;
+    ws.shrink_(1);
+}
+
 } //end namespace
 
 

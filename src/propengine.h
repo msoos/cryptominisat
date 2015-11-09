@@ -103,7 +103,6 @@ public:
     bool update_polarity_and_activity = true;
 
 protected:
-    virtual Lit find_good_blocked_lit(const Clause& c) const  = 0;
     void new_var(const bool bva, const uint32_t orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
@@ -132,6 +131,13 @@ protected:
         #ifdef STATS_NEEDED
         AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
+    );
+    template<bool update_bogoprops>
+    bool handle_xor_cl(
+        watch_subarray_const::const_iterator i
+        , watch_subarray::iterator &j
+        , const Lit p
+        , PropBy& confl
     );
     PropBy propagateIrredBin();  ///<For debug purposes, to test binary clause removal
     PropResult prop_normal_helper(

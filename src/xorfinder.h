@@ -238,6 +238,10 @@ template<class T> void PossibleXor::add(
     cout << "----" << endl;
     #endif
 
+    //It's the base clause, skip.
+    if (!offsets.empty() && offset == offsets[0])
+        return;
+
     assert(cl.size() <= size);
 
     //If clause covers more than one combination, this is used to calculate which ones
