@@ -1770,20 +1770,34 @@ void Solver::remove_xors()
     xorclauses.clear();
 
     for(ClOffset offs: cls_of_xorclauses) {
-        Clause* cl = cl_alloc.ptr(offs);
-        attachClause(*cl, false);
-        cl->set_represented_by_xor(false);
-        assert(!cl->freed());
-        if (cl->red()) {
+        Clause& cl = *cl_alloc.ptr(offs);
+        unsigned at = 0;
+        bool rem = false;
+        for (Lit& l: cl) {
+            if (value(l) == l_True) {
+                rem = true;
+            }
+            if (value(l) == l_Undef) {
+                std::swap(cl[at], l);
+                at++;
+            }
+        }
+        if (rem) {
+            cl_alloc.clauseFree(&cl);
+            continue;
+        }
+        assert(at >= 2);
+        attachClause(cl, false);
+        cl.set_represented_by_xor(false);
+        assert(!cl.freed());
+        if (cl.red()) {
             longRedCls.push_back(offs);
         } else {
             longIrredCls.push_back(offs);
         }
     }
-    assert(false && "above is wrong, we need to clean the clause");
     cls_of_xorclauses.clear();
 }
-
 
 /**
 @brief The function that brings together almost all CNF-simplifications
