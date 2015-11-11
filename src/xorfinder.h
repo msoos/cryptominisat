@@ -157,7 +157,6 @@ public:
 
     const Stats& get_stats() const;
     virtual size_t mem_used() const;
-    void add_found_xors();
     vector<Xor> xors;
     vector<ClOffset> cls_of_xors;
 
@@ -168,7 +167,7 @@ private:
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_clause_already_inside(const Xor& xor_c);
-    void delete_cls_of_xors();
+    //void delete_cls_of_xors();
 
     int64_t xor_find_time_limit;
 

@@ -381,16 +381,16 @@ struct XorSorter
 {
     bool operator()(const Xor& a, const Xor& b) const
     {
-        if (a.vars.size() != b.vars.size())
-            return a.vars.size() < b.vars.size();
+        if (a.size() != b.size())
+            return a.size() < b.size();
 
         if (a.rhs != b.rhs) {
             return a.rhs < b.rhs;
         }
 
-        for(size_t i = 0; i < a.vars.size(); i++) {
-            if (a.vars[i] != b.vars[i]) {
-                return a.vars[i] < b.vars[i];
+        for(size_t i = 0; i < a.size(); i++) {
+            if (a[i] != b[i]) {
+                return a[i] < b[i];
             }
         }
 
@@ -404,13 +404,13 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 
     vector<Xor> expected_sorted = str_to_xors(expected);
     for(auto t: expected_sorted) {
-        std::sort(t.vars.begin(), t.vars.end());
+        std::sort(t.begin(), t.end());
     }
     std::sort(expected_sorted.begin(), expected_sorted.end(), xorsort);
 
     vector<Xor> got_data_sorted = got_data;
     for(auto t: got_data_sorted) {
-        std::sort(t.vars.begin(), t.vars.end());
+        std::sort(t.begin(), t.end());
     }
 
     std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);

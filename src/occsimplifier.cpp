@@ -592,12 +592,6 @@ void OccSimplifier::add_back_to_solver()
             solver->cl_alloc.clauseFree(cl);
         }
     }
-
-
-    for (ClOffset offs: solver->xorclauses) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        solver->attachClause(*cl);
-    }
 }
 
 void OccSimplifier::remove_all_longs_from_watches()
@@ -892,17 +886,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 topLevelGauss->toplevelgauss(finder.xors);
             }
             #endif
-        } else if (token == "occ-xoradd") {
-            if (solver->conf.doFindXors
-            ) {
-                if (!solver->propagate_occur()) {
-                    return solver->ok;
-                }
-                //TODO clean all clauses
-                XorFinder finder(this, solver);
-                finder.find_xors();
-                finder.add_found_xors();
-            }
         } else if (token == "occ-clean-implicit") {
             solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {

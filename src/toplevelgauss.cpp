@@ -71,7 +71,7 @@ bool TopLevelGauss::extractInfo()
     double myTime = cpuTime();
     vector<uint32_t> varsIn(solver->nVars(), 0);
     for(const Xor& x: xors) {
-        for(const uint32_t v: x.vars) {
+        for(const uint32_t v: x) {
             varsIn[v]++;
         }
     }
@@ -87,7 +87,7 @@ bool TopLevelGauss::extractInfo()
     ) {
         const Xor& thisXor = *it;
         bool makeItIn = false;
-        for(uint32_t v: thisXor.vars) {
+        for(uint32_t v: thisXor) {
             if (varsIn[v] > 1) {
                 makeItIn = true;
                 break;
@@ -183,14 +183,10 @@ bool TopLevelGauss::extractInfoFromBlock(
         ; ++it, row++
     ) {
         const Xor& thisXor = xors[*it];
-        assert(thisXor.vars.size() > 2 && "All XORs must be larger than 2-long");
+        assert(thisXor.size() > 2 && "All XORs must be larger than 2-long");
         //Put XOR into the matrix
-        for(vector<uint32_t>::const_iterator
-            it2 = thisXor.vars.begin(), end3 = thisXor.vars.end()
-            ; it2 != end3
-            ; it2++
-        ) {
-            const uint32_t var = outerToInterVarMap[*it2];
+        for(uint32_t v: thisXor) {
+            const uint32_t var = outerToInterVarMap[v];
             assert(var < numCols-1);
             mzd_write_bit(mat, row, var, 1);
         }
@@ -265,13 +261,14 @@ vector<uint32_t> TopLevelGauss::getXorsForBlock(const size_t blockNum)
 
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& thisXor = xors[i];
-        assert(thisXor.vars.size() > 2 && "XORs are always at least 3-long!");
+        assert(thisXor.size() > 2 && "XORs are always at least 3-long!");
 
-        if (varToBlock[thisXor.vars[0]] == blockNum) {
+        if (varToBlock[thisXor[0]] == blockNum) {
             xorsInThisBlock.push_back(i);
 
-            for(vector<uint32_t>::const_iterator it = thisXor.vars.begin(), end = thisXor.vars.end(); it != end; ++it) {
-                assert(varToBlock[*it] == blockNum && "if any vars are in this block, ALL block are in this block");
+            for(uint32_t v : thisXor) {
+                assert(varToBlock[v] == blockNum
+                    && "if any vars are in this block, ALL block are in this block");
             }
         }
     }
@@ -294,25 +291,19 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
 
         //Calc blocks for this XOR
         set<size_t> blocksBelongTo;
-        for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            assert(solver->varData[*it2].removed == Removed::none);
-            if (varToBlock[*it2] != std::numeric_limits<uint32_t>::max())
-                blocksBelongTo.insert(varToBlock[*it2]);
+        for(uint32_t v: thisXor) {
+            assert(solver->varData[v].removed == Removed::none);
+            if (varToBlock[v] != std::numeric_limits<uint32_t>::max())
+                blocksBelongTo.insert(varToBlock[v]);
         }
 
         switch(blocksBelongTo.size()) {
             case 0: {
                 //Create new block
                 vector<uint32_t> block;
-                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
-                    ; it2 != end2
-                    ; it2++
-                ) {
-                    varToBlock[*it2] = blocks.size();
-                    block.push_back(*it2);
+                for(uint32_t v: thisXor) {
+                    varToBlock[v] = blocks.size();
+                    block.push_back(v);
                 }
                 blocks.push_back(block);
                 runStats.numBlocks++;
@@ -324,13 +315,10 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 //Add to existing block
                 const size_t blockNum = *blocksBelongTo.begin();
                 vector<uint32_t>& block = blocks[blockNum];
-                for(vector<uint32_t>::const_iterator it2 = thisXor.vars.begin(), end2 = thisXor.vars.end()
-                    ; it2 != end2
-                    ; it2++
-                ) {
-                    if (varToBlock[*it2] == std::numeric_limits<uint32_t>::max()) {
-                        block.push_back(*it2);
-                        varToBlock[*it2] = blockNum;
+                for(uint32_t v :thisXor) {
+                    if (varToBlock[v] == std::numeric_limits<uint32_t>::max()) {
+                        block.push_back(v);
+                        varToBlock[v] = blockNum;
                     }
                 }
                 continue;
@@ -356,14 +344,10 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
                 }
 
                 //add remaining vars
-                for(vector<uint32_t>::const_iterator
-                    it3 = thisXor.vars.begin(), end3 = thisXor.vars.end()
-                    ; it3 != end3
-                    ; it3++
-                ) {
-                    if (varToBlock[*it3] == std::numeric_limits<uint32_t>::max()) {
-                        finalBlock.push_back(*it3);
-                        varToBlock[*it3] = blockNum;
+                for(uint32_t v: thisXor) {
+                    if (varToBlock[v] == std::numeric_limits<uint32_t>::max()) {
+                        finalBlock.push_back(v);
+                        varToBlock[v] = blockNum;
                     }
                 }
             }

@@ -73,33 +73,33 @@ inline void Gaussian::set_matrixset_to_cur()
         matrix_sets[level] = cur_matrixset;
 }
 
-bool Gaussian::clean_one_xor(Clause& x)
+bool Gaussian::clean_one_xor(Xor& x)
 {
-    bool rhs = x.rhs();
+    bool rhs = x.rhs;
     size_t i = 0;
     size_t j = 0;
     for(size_t size = x.size(); i < size; i++) {
-        uint32_t var = x[i].var();
+        uint32_t var = x[i];
         if (solver->value(i) != l_Undef) {
             rhs ^= solver->value(i) == l_True;
         } else {
-            x[j++] = Lit(var, false);
+            x[j++] = var;
         }
     }
     x.resize(x.size()-(i-j));
-    x.set_rhs(rhs);
+    x.rhs = rhs;
 
     switch(x.size()) {
         case 0:
-            solver->ok &= !x.rhs();
+            solver->ok &= !x.rhs;
             return false;
 
         case 1: {
-            solver->fully_enqueue_this(Lit(x[0].var(), !x.rhs()));
+            solver->fully_enqueue_this(Lit(x[0], !x.rhs));
             return false;
         }
         case 2: {
-            solver->add_xor_clause_inter(unsign_lits(x), x.rhs(), true);
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
             return false;
         }
         default: {
@@ -116,16 +116,14 @@ bool Gaussian::clean_xor_clauses()
     size_t i = 0;
     size_t j = 0;
     for(size_t size = solver->xorclauses.size(); i < size; i++) {
-        ClOffset offset = solver->xorclauses[i];
-        Clause& x = *solver->cl_alloc.ptr(offset);
-        assert(x.is_xor());
+        Xor x = solver->xorclauses[i];
         const bool keep = clean_one_xor(x);
         if (!solver->ok) {
             return false;
         }
 
         if (keep) {
-            solver->xorclauses[j++] = offset;
+            solver->xorclauses[j++] = x;
         }
     }
     solver->xorclauses.resize(j);
@@ -208,15 +206,12 @@ uint32_t Gaussian::select_columnorder(
 
     uint32_t num_xorclauses  = 0;
     for (uint32_t i = 0; i < solver->xorclauses.size(); i++) {
-        ClOffset offset = solver->xorclauses[i];
-        Clause& x = *solver->cl_alloc.ptr(offset);
-        assert(x.is_xor());
-        if (x.getRemoved()) continue;
+        const Xor& x = solver->xorclauses[i];
         num_xorclauses++;
 
-        for (Lit l: x) {
-            assert(solver->value(l.unsign()) == l_Undef);
-            var_to_col[l.var()] = unassigned_col - 1;
+        for (const uint32_t v: x) {
+            assert(solver->value(v) == l_Undef);
+            var_to_col[v] = unassigned_col - 1;
         }
     }
 
@@ -305,10 +300,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     #endif
 
     uint32_t matrix_row = 0;
-    for (const ClOffset off: solver->xorclauses) {
-        Clause& x = *solver->cl_alloc.ptr(off);
-        if (x.getRemoved()) continue;
-
+    for (const Xor& x: solver->xorclauses) {
         origMat.matrix.getVarsetAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         origMat.matrix.getMatrixAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         matrix_row++;
@@ -972,13 +964,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             }
             Clause* x = solver->cl_alloc.Clause_new(tmp_clause, 0);
             ClOffset offs = solver->cl_alloc.get_offset(x);
-            x->set_xor();
-            x->set_rhs(rhs);
             assert(m.matrix.getMatrixAt(row).rhs() == !tmp_clause[0].sign());
             assert(solver->value(tmp_clause[0]) == l_Undef);
 
-            //TODO
-            clauses_toclear.push_back(ClauseToClear(offs, solver->trail.size()-1));
+            solver->clauses_toclear.push_back(GaussClauseToClear(offs, solver->trail.size()-1));
             solver->enqueue(tmp_clause[0], PropBy(offs));
             return propagation;
     }
@@ -992,14 +981,14 @@ void Gaussian::canceling(const uint32_t sublevel)
         return;
 
     uint32_t rem = 0;
-    for (int i = (int)clauses_toclear.size()-1
-        ; i >= 0 && clauses_toclear[i].sublevel > sublevel
+    for (int i = (int)solver->clauses_toclear.size()-1
+        ; i >= 0 && solver->clauses_toclear[i].sublevel > sublevel
         ; i--
     ) {
-        solver->cl_alloc.clauseFree(clauses_toclear[i].offs);
+        solver->cl_alloc.clauseFree(solver->clauses_toclear[i].offs);
         rem++;
     }
-    clauses_toclear.resize(clauses_toclear.size()-rem);
+    solver->clauses_toclear.resize(solver->clauses_toclear.size()-rem);
 
     if (messed_matrix_vars_since_reversal)
         return;

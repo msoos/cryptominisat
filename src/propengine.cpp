@@ -171,13 +171,6 @@ void PropEngine::attachClause(
     , const bool checkAttach
 ) {
     const ClOffset offset = cl_alloc.get_offset(&c);
-    if (c.is_xor()) {
-        watches[c[0]].push(Watched(offset, lit_Undef));
-        watches[~c[0]].push(Watched(offset, lit_Undef));
-        watches[c[1]].push(Watched(offset, lit_Undef));
-        watches[~c[1]].push(Watched(offset, lit_Undef));
-        return;
-    }
 
     assert(c.size() > 3);
     if (checkAttach) {
@@ -358,11 +351,6 @@ inline PropResult PropEngine::prop_long_cl_strict_order(
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     const Lit blocked = i->getBlockedLit();
-    if (blocked == lit_Undef) {
-        handle_xor_cl<true>(i, j, p, confl);
-        exit(-1);
-    }
-
     if (value(blocked) == l_True) {
         *j++ = *i;
         return PROP_NOTHING;
@@ -400,69 +388,6 @@ inline PropResult PropEngine::prop_long_cl_strict_order(
 
 template<bool update_bogoprops>
 inline
-bool PropEngine::handle_xor_cl(
-    watch_subarray_const::const_iterator i
-    , watch_subarray::iterator &j
-    , const Lit p
-    , PropBy& confl
-) {
-    //cout << "XOR prop!" << endl;
-    const ClOffset offset = i->get_offset();
-    Clause& c = *cl_alloc.ptr(offset);
-
-    // Make sure the propagated literal is data[1]:
-    if (c[0].var() == p.var()) {
-        std::swap(c[0], c[1]);
-    }
-    assert(c[1].var() == p.var());
-
-    bool rhs = c.rhs();
-    for (uint32_t k = 0, size = c.size(); k != size; k++ ) {
-        const lbool& val = value(c[k].var());
-        if (k >= 2 && val == l_Undef) {
-            std::swap(c[1], c[k]);
-            removeWXCl(watches, p, offset);
-            watches[Lit(c[1].var(), false)].push(Watched(offset, lit_Undef));
-            watches[Lit(c[1].var(), true)].push(Watched(offset, lit_Undef));
-            return true;
-        }
-
-        c[k] = c[k].unsign() ^ (val == l_True);
-        rhs ^= val == l_True;
-    }
-
-    // Did not find watch -- clause is unit under assignment:
-    *j++ = *i;
-
-    if (value(c[0].var()) == l_Undef) {
-        #ifdef STATS_NEEDED
-        c.stats.propagations_made++;
-        propStats.propsXor++;
-        #endif
-
-        c[0] = c[0].unsign()^!rhs;
-        enqueue(c[0], PropBy(offset));
-    } else if (rhs) {
-        //Update stats
-        #ifdef STATS_NEEDED
-        c.stats.conflicts_made++;
-        c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
-        #endif
-        lastConflictCausedBy = ConflCausedBy::longirred; //TODO XOR
-
-        confl = PropBy(offset);
-        qhead = trail.size();
-        return false;
-    } else {
-        std::swap(c[0], c[1]);
-    }
-
-    return true;
-}
-
-
-template<bool update_bogoprops>
-inline
 bool PropEngine::prop_long_cl_any_order(
     watch_subarray_const::const_iterator i
     , watch_subarray::iterator &j
@@ -470,8 +395,6 @@ bool PropEngine::prop_long_cl_any_order(
     , PropBy& confl
 ) {
     const Lit blocked = i->getBlockedLit();
-    if (blocked == lit_Undef)
-        return handle_xor_cl<update_bogoprops>(i, j, p, confl);
 
     //Blocked literal is satisfied, so clause is satisfied
     if (value(blocked) == l_True) {

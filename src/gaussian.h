@@ -129,18 +129,6 @@ protected:
     //Varibales to keep Gauss state
     bool messed_matrix_vars_since_reversal;
     int gauss_last_level;
-    struct ClauseToClear
-    {
-        ClauseToClear() {}
-        ClauseToClear(ClOffset _offs, uint32_t _sublevel) :
-            offs(_offs)
-            , sublevel(_sublevel)
-        {}
-
-        ClOffset offs;
-        uint32_t sublevel;
-    };
-    vector<ClauseToClear> clauses_toclear; //TODO
     bool disabled = false; // Gauss is disabled
 
     //State of current elimnation
@@ -189,7 +177,7 @@ protected:
 
 private:
     bool clean_xor_clauses();
-    bool clean_one_xor(Clause& x);
+    bool clean_one_xor(Xor& x);
 
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?

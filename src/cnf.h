@@ -34,6 +34,7 @@
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "simplefile.h"
+#include "xor.h"
 
 namespace CMSat {
 using namespace CMSat;
@@ -53,6 +54,18 @@ struct LitStats
 {
     uint64_t irredLits = 0;
     uint64_t redLits = 0;
+};
+
+struct GaussClauseToClear
+{
+    GaussClauseToClear() {}
+    GaussClauseToClear(ClOffset _offs, uint32_t _sublevel) :
+        offs(_offs)
+        , sublevel(_sublevel)
+    {}
+
+    ClOffset offs;
+    uint32_t sublevel;
 };
 
 class CNF
@@ -100,8 +113,8 @@ public:
     //Clauses
     vector<ClOffset> longIrredCls;
     vector<ClOffset> longRedCls;
-    vector<ClOffset> xorclauses;
-    vector<ClOffset> cls_of_xorclauses;
+    vector<GaussClauseToClear> clauses_toclear; //TODO
+    vector<Xor> xorclauses;
     BinTriStats binTri;
     LitStats litStats;
 

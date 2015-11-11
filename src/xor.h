@@ -35,40 +35,79 @@ namespace CMSat {
 
 class Xor
 {
-    public:
-        Xor(const vector<Lit>& cl, const bool _rhs) :
-            rhs(_rhs)
-        {
-            for (uint32_t i = 0; i < cl.size(); i++) {
-                vars.push_back(cl[i].var());
-            }
+public:
+    Xor() {}
+    template<typename T>
+    Xor(const T& cl, const bool _rhs) :
+        rhs(_rhs)
+    {
+        for (uint32_t i = 0; i < cl.size(); i++) {
+            vars.push_back(cl[i].var());
         }
+    }
 
-        Xor(const vector<uint32_t>& _vars, const bool _rhs) :
-            vars(_vars)
-            , rhs(_rhs)
-        {
-        }
+    Xor(const vector<uint32_t>& _vars, const bool _rhs) :
+        rhs(_rhs)
+        , vars(_vars)
+    {
+    }
 
-        bool operator==(const Xor& other) const
-        {
-            return (rhs == other.rhs && vars == other.vars);
-        }
+    vector<uint32_t>::const_iterator begin() const
+    {
+        return vars.begin();
+    }
 
-        vector<uint32_t> vars;
-        size_t size() const
-        {
-            return vars.size();
-        }
-        bool rhs;
+    vector<uint32_t>::const_iterator end() const
+    {
+        return vars.end();
+    }
+
+    vector<uint32_t>::iterator begin()
+    {
+        return vars.begin();
+    }
+
+    vector<uint32_t>::iterator end()
+    {
+        return vars.end();
+    }
+
+    bool operator==(const Xor& other) const
+    {
+        return (rhs == other.rhs && vars == other.vars);
+    }
+
+    const uint32_t& operator[](const uint32_t at) const
+    {
+        return vars[at];
+    }
+
+    uint32_t& operator[](const uint32_t at)
+    {
+        return vars[at];
+    }
+
+    void resize(const uint32_t newsize)
+    {
+        vars.resize(newsize);
+    }
+
+    size_t size() const
+    {
+        return vars.size();
+    }
+    bool rhs;
+
+private:
+    vector<uint32_t> vars;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Xor& thisXor)
 {
-    for (uint32_t i = 0; i < thisXor.vars.size(); i++) {
-        os << Lit(thisXor.vars[i], false);
+    for (uint32_t i = 0; i < thisXor.size(); i++) {
+        os << Lit(thisXor[i], false);
 
-        if (i+1 < thisXor.vars.size())
+        if (i+1 < thisXor.size())
             os << " + ";
     }
     os << " =  " << std::boolalpha << thisXor.rhs << std::noboolalpha;

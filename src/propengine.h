@@ -132,13 +132,13 @@ protected:
         AvgCalc<size_t>* watchListSizeTraversed = NULL
         #endif
     );
-    template<bool update_bogoprops>
+    /*template<bool update_bogoprops>
     bool handle_xor_cl(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
         , const Lit p
         , PropBy& confl
-    );
+    );*/
     PropBy propagateIrredBin();  ///<For debug purposes, to test binary clause removal
     PropResult prop_normal_helper(
         Clause& c

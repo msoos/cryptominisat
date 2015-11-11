@@ -590,7 +590,8 @@ inline vector<Lit> sortLits(const vector<Lit>& lits)
     return tmp;
 }
 
-inline vector<Lit> vars_to_lits(const vector<uint32_t>& vars)
+template<typename T>
+inline vector<Lit> vars_to_lits(const T& vars)
 {
     vector<Lit> ret;
     for(uint32_t var: vars) {

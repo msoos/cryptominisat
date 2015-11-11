@@ -74,77 +74,6 @@ void XorFinder::find_xors_based_on_long_clauses()
     }
 }
 
-void XorFinder::add_found_xors()
-{
-    assert(solver->cls_of_xorclauses.empty());
-    assert(solver->xorclauses.empty());
-
-    //assert all is clean
-    for(const Xor& x: xors) {
-        for(uint32_t v: x.vars) {
-            assert(solver->value(v) == l_Undef);
-        }
-    }
-
-    for(const Xor& x: xors) {
-        if (x.size() > 3) {
-            Clause* cl = solver->cl_alloc.Clause_new(vars_to_lits(x. vars), 0);
-            cl->set_xor();
-            cl->set_rhs(x.rhs);
-            ClOffset offs = solver->cl_alloc.get_offset(cl);
-            solver->xorclauses.push_back(offs);
-        }
-    }
-    if (!cls_of_xors.empty()) {
-        delete_cls_of_xors();
-    }
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [occ-xor] Added " << xors.size() << " xors" << endl;
-    }
-}
-
-void XorFinder::delete_cls_of_xors()
-{
-    std::sort(cls_of_xors.begin(), cls_of_xors.end());
-    std::sort(occsimplifier->clauses.begin(), occsimplifier->clauses.end());
-    size_t j = 0;
-    size_t at_cls_off = 0;
-    ClOffset tolook = cls_of_xors[at_cls_off];
-    for(size_t i = 0; i < occsimplifier->clauses.size(); i++) {
-        ClOffset offs = occsimplifier->clauses[i];
-        if (offs != tolook) {
-            occsimplifier->clauses[j++] = offs;
-        } else {
-            solver->cls_of_xorclauses.push_back(offs);
-            at_cls_off++;
-            if (at_cls_off < cls_of_xors.size()) {
-                tolook = cls_of_xors[at_cls_off];
-            } else {
-                tolook = CL_OFFSET_MAX;
-            }
-
-            //occsimplifier->unlink_clause(offs, false, false, true);
-            Clause* cl = solver->cl_alloc.ptr(offs);
-            cl->set_represented_by_xor(true);
-            if (cl->red()) {
-                solver->litStats.redLits-=cl->size();
-            } else {
-                solver->litStats.irredLits-=cl->size();
-            }
-            //cout << *cl << " unlinked" <<  endl;
-        }
-    }
-    assert(cls_of_xors.size() == at_cls_off);
-    occsimplifier->clauses.resize(j);
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [occ-xor] Num long cl removed due to XOR transform: " <<
-        cls_of_xors.size() << endl;
-    }
-
-    solver->clean_occur_from_removed_clauses_only_smudged();
-    occsimplifier->free_clauses_to_free();
-}
-
 void XorFinder::find_xors_based_on_short_clauses()
 {
     assert(solver->ok);
@@ -256,7 +185,7 @@ void XorFinder::print_found_xors()
 bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
 {
     xor_find_time_limit -= 30;
-    for (const Watched ws: solver->watches.at(xor_c.vars[0])) {
+    for (const Watched ws: solver->watches.at(xor_c[0])) {
         if (ws.isIdx()
             && xors[ws.get_idx()] == xor_c
         ) {
@@ -310,9 +239,9 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     xor_find_time_limit -= 20;
     xors.push_back(found_xor);
     runStats.foundXors++;
-    runStats.sumSizeXors += found_xor.vars.size();
+    runStats.sumSizeXors += found_xor.size();
     uint32_t thisXorIndex = xors.size()-1;
-    Lit attach_point = Lit(found_xor.vars[0], false);
+    Lit attach_point = Lit(found_xor[0], false);
     solver->watches[attach_point].push(Watched(thisXorIndex));
     solver->watches.smudge(attach_point);
 }

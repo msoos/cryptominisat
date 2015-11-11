@@ -104,7 +104,6 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
 
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
-    cleanAndAttachClauses(solver->xorclauses, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
     assert(!solver->drup->something_delayed());
 
@@ -120,7 +119,6 @@ void CompleteDetachReatacher::reattachLongsNoClean()
 {
     attachClauses(solver->longIrredCls);
     attachClauses(solver->longRedCls);
-    attachClauses(solver->xorclauses);
 }
 
 void CompleteDetachReatacher::attachClauses(

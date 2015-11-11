@@ -316,8 +316,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Make sure all non-freed clauses were accessible from solver
     const size_t origNumClauses =
-        solver->longIrredCls.size() + solver->longRedCls.size()
-        + solver->xorclauses.size() + solver->cls_of_xorclauses.size();
+        solver->longIrredCls.size() + solver->longRedCls.size();
     if (origNumClauses != offsets.size()) {
         std::cerr
         << "ERROR: Not all non-freed clauses are accessible from Solver"
@@ -336,8 +335,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     //Clear clauses
     solver->longIrredCls.clear();
     solver->longRedCls.clear();
-    solver->xorclauses.clear();
-    solver->cls_of_xorclauses.clear();
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
@@ -345,11 +342,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(!cl->freed());
 
         //Put it in the right bucket
-        if (cl->is_xor()) {
-            solver->xorclauses.push_back(offset);
-        } else if (cl->get_represented_by_xor()) {
-            solver->cls_of_xorclauses.push_back(offset);
-        } else if (cl->red()) {
+        if (cl->red()) {
             solver->longRedCls.push_back(offset);
         } else {
             solver->longIrredCls.push_back(offset);

@@ -516,9 +516,7 @@ void Solver::attachClause(
     #endif
 
     //Update stats
-    if (cl.is_xor()) {
-        //TODO XOR
-    } else if (cl.red())
+    if (cl.red())
         litStats.redLits += cl.size();
     else
         litStats.irredLits += cl.size();
@@ -1740,7 +1738,7 @@ bool Solver::execute_inprocess_strategy(
     return ok;
 }
 
-void Solver::remove_xors()
+/*void Solver::remove_xors()
 {
     if (xorclauses.empty()) {
         return;
@@ -1797,7 +1795,7 @@ void Solver::remove_xors()
         }
     }
     cls_of_xorclauses.clear();
-}
+}*/
 
 /**
 @brief The function that brings together almost all CNF-simplifications
@@ -1814,7 +1812,7 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
 
     update_polarity_and_activity = false;
-    remove_xors();
+    //remove_xors();
 
     if (conf.verbosity >= 6) {
         cout
