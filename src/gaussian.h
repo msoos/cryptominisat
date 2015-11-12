@@ -102,7 +102,7 @@ protected:
     const uint32_t matrix_no;
 
     enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
-    gaussian_ret gaussian(PropBy& confl);
+    gaussian_ret perform_gauss(PropBy& confl);
 
     vector<uint32_t> col_to_var_original; //Matches columns to variables
     BitArray var_is_in; //variable is part of the the matrix. var_is_in's size is _minimal_ so you should check whether var_is_in.getSize() < var before issuing var_is_in[var]
@@ -169,7 +169,6 @@ protected:
 
     //helper functions
     bool at_first_init() const;
-    bool should_init() const;
     bool should_check_gauss(const uint32_t decisionlevel) const;
     void disable_if_necessary();
     void reset_stats();
@@ -192,11 +191,6 @@ private:
     void print_last_one_in_cols(matrixset& m) const;
     static string lbool_to_string(const lbool toprint);
 };
-
-inline bool Gaussian::should_init() const
-{
-    return (config.decision_until > 0);
-}
 
 inline bool Gaussian::should_check_gauss(const uint32_t decisionlevel) const
 {

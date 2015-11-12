@@ -157,6 +157,7 @@ public:
 
     const Stats& get_stats() const;
     virtual size_t mem_used() const;
+    void add_xors_to_gauss();
     vector<Xor> xors;
     vector<ClOffset> cls_of_xors;
 

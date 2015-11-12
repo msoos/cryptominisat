@@ -244,7 +244,7 @@ inline std::ostream& operator << (std::ostream& os, const CMSat::PackedRow& m)
     for(uint32_t i = 0; i < m.getSize()*64; i++) {
         os << m[i];
     }
-    os << " -- xor: " << m.rhs();
+    os << " -- rhs: " << m.rhs();
     return os;
 }
 

@@ -62,6 +62,7 @@
 #include "features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
+#include "gaussian.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1579,7 +1580,7 @@ bool Solver::execute_inprocess_strategy(
     , const string& strategy
 ) {
     //std::string input = "abc,def,ghi";
-    std::istringstream ss(strategy);
+    std::istringstream ss(strategy + ", ");
     std::string token;
     std::string occ_strategy_tokens;
 
@@ -1607,11 +1608,23 @@ bool Solver::execute_inprocess_strategy(
             if (conf.perform_occur_based_simp
                 && occsimplifier
             ) {
+                occ_strategy_tokens = trim(occ_strategy_tokens);
                 if (conf.verbosity >= 2) {
-                    cout << "c --> Executing OCC strategy token(s): "
-                    << occ_strategy_tokens << '\n';
+                    cout << "c --> Executing OCC strategy token(s): '"
+                    << occ_strategy_tokens << "'\n";
                 }
                 occsimplifier->simplify(startup, occ_strategy_tokens);
+                if (occ_strategy_tokens == "occ-gauss,") {
+                    #ifdef USE_GAUSS
+                    Gaussian* g = new Gaussian(this, 0);
+                    bool ret = g->init_until_fixedpoint();
+                    if (!ret) {
+                        cout << "Gauss returned false" << endl;
+                        return ok;
+                    }
+                    gauss_matrixes.push_back(g);
+                    #endif
+                }
             }
             occ_strategy_tokens.clear();
             if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
@@ -1724,15 +1737,6 @@ bool Solver::execute_inprocess_strategy(
         if (!ok) {
             return ok;
         }
-    }
-
-    if (!occ_strategy_tokens.empty()) {
-        if (conf.perform_occur_based_simp
-            && occsimplifier
-        ) {
-            occsimplifier->simplify(startup, occ_strategy_tokens);
-        }
-        occ_strategy_tokens.clear();
     }
 
     return ok;

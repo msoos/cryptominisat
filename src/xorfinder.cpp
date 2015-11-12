@@ -182,6 +182,15 @@ void XorFinder::print_found_xors()
     }
 }
 
+void XorFinder::add_xors_to_gauss()
+{
+    solver->xorclauses = xors;
+    for(ClOffset offs: cls_of_xors) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        cl->set_used_in_xor(true);
+    }
+}
+
 bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
 {
     xor_find_time_limit -= 30;

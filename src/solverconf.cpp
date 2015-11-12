@@ -177,7 +177,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , never_stop_search(false)
         , num_conflicts_of_search(50ULL*1000ULL)
         , num_conflicts_of_search_inc(1.4)
-        , simplify_schedule_startup("sub-impl, occ-backw-sub-str, occ-clean-implicit, occ-bve, scc-vrepl")
+        , simplify_schedule_startup(
+            "sub-impl, occ-backw-sub-str, occ-clean-implicit, occ-bve,"
+            "scc-vrepl,"
+            "occ-gauss"
+        )
         , simplify_schedule_nonstartup(
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"

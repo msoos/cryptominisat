@@ -174,6 +174,7 @@ protected:
     uint16_t is_distilled:1;
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
+    uint16_t _used_in_xor:1;
 
 
     Lit* getData()
@@ -210,6 +211,7 @@ public:
         isRemoved = false;
         is_distilled = false;
         must_recalc_abst = true;
+        _used_in_xor = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
@@ -222,6 +224,16 @@ public:
     uint32_t size() const
     {
         return mySize;
+    }
+
+    bool used_in_xor() const
+    {
+        return _used_in_xor;
+    }
+
+    void set_used_in_xor(const bool val)
+    {
+        _used_in_xor = val;
     }
 
     void shrink(const uint32_t i)
