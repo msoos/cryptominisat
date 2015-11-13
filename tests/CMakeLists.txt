@@ -115,6 +115,11 @@ set (MY_TESTS
     intree_test
     xor_finder_test
 )
+
+if (USE_GAUSS)
+    set (MY_TESTS ${MY_TESTS} gauss_test)
+endif()
+
 foreach(F ${MY_TESTS})
     add_executable(${F}
         ${F}.cpp

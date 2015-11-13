@@ -80,13 +80,13 @@ bool Gaussian::clean_one_xor(Xor& x)
     size_t j = 0;
     for(size_t size = x.size(); i < size; i++) {
         uint32_t var = x[i];
-        if (solver->value(i) != l_Undef) {
-            rhs ^= solver->value(i) == l_True;
+        if (solver->value(var) != l_Undef) {
+            rhs ^= solver->value(var) == l_True;
         } else {
             x[j++] = var;
         }
     }
-    x.resize(x.size()-(i-j));
+    x.resize(j);
     x.rhs = rhs;
 
     switch(x.size()) {
@@ -112,11 +112,17 @@ bool Gaussian::clean_one_xor(Xor& x)
 bool Gaussian::clean_xor_clauses()
 {
     assert(solver->ok);
+    #ifdef VERBOSE_DEBUG
+    cout << "(" << matrix_no << ") Cleaning gauss clauses" << endl;
+    for(Xor& x : solver->xorclauses) {
+        cout << "orig XOR: " << x << endl;
+    }
+    #endif
 
     size_t i = 0;
     size_t j = 0;
     for(size_t size = solver->xorclauses.size(); i < size; i++) {
-        Xor x = solver->xorclauses[i];
+        Xor& x = solver->xorclauses[i];
         const bool keep = clean_one_xor(x);
         if (!solver->ok) {
             return false;
@@ -127,6 +133,12 @@ bool Gaussian::clean_xor_clauses()
         }
     }
     solver->xorclauses.resize(j);
+
+    #ifdef VERBOSE_DEBUG
+    for(Xor& x : solver->xorclauses) {
+        cout << "cleaned XOR: " << x << endl;
+    }
+    #endif
     return solver->ok;
 }
 
