@@ -170,7 +170,7 @@ bool Gaussian::init_until_fixedpoint()
             case unit_conflict:
             case conflict:
                 #ifdef VERBOSE_DEBUG
-                cout << "(" << matrix_no << ")conflict at level 0" << endl;
+                cout << "(" << matrix_no << ") conflict at level 0" << endl;
                 #endif
                 solver->ok = false;
                 return false;
