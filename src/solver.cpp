@@ -1556,6 +1556,7 @@ lbool Solver::iterate_until_solved()
     return status;
 }
 
+#ifdef USE_GAUSS
 void Solver::clear_gauss()
 {
     xorclauses.clear();
@@ -1565,6 +1566,11 @@ void Solver::clear_gauss()
     }
     gauss_matrixes.clear();
 }
+#else
+void Solver::clear_gauss()
+{
+}
+#endif
 
 void Solver::handle_found_solution(const lbool status)
 {

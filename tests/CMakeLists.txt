@@ -114,11 +114,13 @@ set (MY_TESTS
     comp_find_test
     intree_test
     xor_finder_test
-    matrixfinder_test
 )
 
 if (USE_GAUSS)
-    set (MY_TESTS ${MY_TESTS} gauss_test)
+    set (MY_TESTS ${MY_TESTS}
+        gauss_test
+        matrixfinder_test
+    )
 endif()
 
 foreach(F ${MY_TESTS})
