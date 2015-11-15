@@ -694,6 +694,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         #endif
 
         std::swap((*cl)[maxsublevel_at], (*cl)[1]);
+        cl->set_gauss_temp_cl();
     }
 
     cancel_until_sublevel(maxsublevel+1);

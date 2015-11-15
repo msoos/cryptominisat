@@ -1408,7 +1408,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     , const size_t glue
 ) {
     //No on-the-fly subsumption
-    if (cl == NULL) {
+    if (cl == NULL
+        || cl->gauss_temp_cl()
+    ) {
         if (learnt_clause.size() > 3) {
             cl = cl_alloc.Clause_new(learnt_clause, Searcher::sumConflicts());
             cl->makeRed(glue);

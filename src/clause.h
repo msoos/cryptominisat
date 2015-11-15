@@ -175,6 +175,7 @@ protected:
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
+    uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
 
 
     Lit* getData()
@@ -212,6 +213,7 @@ public:
         is_distilled = false;
         must_recalc_abst = true;
         _used_in_xor = false;
+        _gauss_temp_cl = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
@@ -224,6 +226,16 @@ public:
     uint32_t size() const
     {
         return mySize;
+    }
+
+    bool gauss_temp_cl() const
+    {
+        return _gauss_temp_cl;
+    }
+
+    void set_gauss_temp_cl()
+    {
+        _gauss_temp_cl = true;
     }
 
     bool used_in_xor() const
