@@ -964,9 +964,11 @@ void Gaussian::disable_if_necessary()
     if (//nof_conflicts >= 0
         //&& conflictC >= nof_conflicts/8
         !config.dontDisable
-        && called > 50
+        && called > 300
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
+    {
             disabled = true;
+    }
 }
 
 llbool Gaussian::find_truths()

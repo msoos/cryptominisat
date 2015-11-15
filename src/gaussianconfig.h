@@ -33,7 +33,7 @@ class GaussConf
 
     GaussConf() :
         only_nth_gauss_save(2)
-        , decision_until(100)
+        , decision_until(10000)
         , dontDisable(false)
         , orderCols(true)
         , iterativeReduce(true)
@@ -54,7 +54,7 @@ class GaussConf
     uint32_t max_num_matrixes; //Maximum number of matrixes
 
     uint32_t min_gauss_xor_clauses = 3;
-    uint32_t max_gauss_xor_clauses = 10000;
+    uint32_t max_gauss_xor_clauses = 50000;
     bool doMatrixFind = true;
 };
 
