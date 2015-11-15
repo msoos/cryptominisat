@@ -261,11 +261,8 @@ void Searcher::create_otf_subsuming_long_clause(
     otf_subsuming_long_cls.push_back(offset);
 }
 
-void Searcher::check_otf_subsume(const PropBy confl)
+void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
 {
-    ClOffset offset = confl.get_offset();
-    Clause& cl = *cl_alloc.ptr(offset);
-
     size_t num_lits_from_cl = 0;
     for (const Lit lit: cl) {
         if (seen2[lit.toInt()]) {
@@ -555,7 +552,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
-    Clause* last_resolved_long_cl = NULL;
+    Clause* last_resolved_cl = NULL;
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
@@ -574,7 +571,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        last_resolved_long_cl = add_literals_from_confl_to_learnt(confl, p);
+        last_resolved_cl = add_literals_from_confl_to_learnt(confl, p);
 
         // Select next implication to look at
         while (!seen[trail[index--].var()]);
@@ -585,19 +582,21 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         if (update_polarity_and_activity
             && conf.doOTFSubsume
             //A long clause
-            && last_resolved_long_cl != NULL
+            && last_resolved_cl != NULL
             //Good enough clause to try to minimize
-            && last_resolved_long_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue
+            && last_resolved_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue
             //Must subsume, so must be smaller
-            && last_resolved_long_cl->size() > tmp_learnt_clause_size
+            && last_resolved_cl->size() > tmp_learnt_clause_size
+            //Must not be a temporary clause
+            && !last_resolved_cl->gauss_temp_cl()
         ) {
-            last_resolved_long_cl->recalc_abst_if_needed();
+            last_resolved_cl->recalc_abst_if_needed();
             //Everything in learnt_cl_2 seems to be also in cl
             if (
-                ((last_resolved_long_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
+                ((last_resolved_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
                 && pathC > 1
             ) {
-                check_otf_subsume(confl);
+                check_otf_subsume(confl.get_offset(), *last_resolved_cl);
             }
         }
 
@@ -617,7 +616,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         seen2[lit.toInt()] = 0;
     }
 
-    return last_resolved_long_cl;
+    return last_resolved_cl;
 }
 
 void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t glue)
@@ -630,32 +629,32 @@ void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t gl
     }
 }
 
-Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl)
+Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
 {
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
     //furthermore, we cannot subsume a clause that is marked for deletion
     //due to its high glue value
     if (!conf.doOTFSubsume
         //Last was a lont clause
-        || last_resolved_long_cl == NULL
+        || last_resolved_cl == NULL
         //Final clause will not be implicit
         || learnt_clause.size() <= 3
         //Larger or equivalent clauses cannot subsume the clause
-        || learnt_clause.size() >= last_resolved_long_cl->size()
+        || learnt_clause.size() >= last_resolved_cl->size()
     ) {
         return NULL;
     }
 
     //Does it subsume?
-    if (!subset(learnt_clause, *last_resolved_long_cl))
+    if (!subset(learnt_clause, *last_resolved_cl))
         return NULL;
 
     //on-the-fly subsumed the original clause
     stats.otfSubsumed++;
     stats.otfSubsumedLong++;
-    stats.otfSubsumedRed += last_resolved_long_cl->red();
-    stats.otfSubsumedLitsGained += last_resolved_long_cl->size() - learnt_clause.size();
-    return last_resolved_long_cl;
+    stats.otfSubsumedRed += last_resolved_cl->red();
+    stats.otfSubsumedLitsGained += last_resolved_cl->size() - learnt_clause.size();
+    return last_resolved_cl;
 }
 
 void Searcher::print_debug_resolution_data(const PropBy confl)
@@ -687,7 +686,7 @@ Clause* Searcher::analyze_conflict(
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
-    Clause* last_resolved_long_cl = create_learnt_clause(confl);
+    Clause* last_resolved_cl = create_learnt_clause(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
     glue = calc_glue_using_seen2(learnt_clause);
@@ -704,7 +703,7 @@ Clause* Searcher::analyze_conflict(
     }
     implied_by_learnts.clear();
 
-    return otf_subsume_last_resolved_clause(last_resolved_long_cl);
+    return otf_subsume_last_resolved_clause(last_resolved_cl);
 
 }
 

@@ -398,7 +398,7 @@ class Searcher : public HyperEngine
         //OTF subsumption during learning
         vector<ClOffset> otf_subsuming_long_cls;
         vector<OTFClause> otf_subsuming_short_cls;
-        void check_otf_subsume(PropBy confl);
+        void check_otf_subsume(const ClOffset offset, Clause& cl);
         void create_otf_subsuming_implicit_clause(const Clause& cl);
         void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);
         Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p);
