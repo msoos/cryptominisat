@@ -180,7 +180,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_startup(
             "sub-impl, occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "scc-vrepl,"
+            #ifdef USE_GAUSS
             "occ-gauss"
+            #endif
         )
         , simplify_schedule_nonstartup(
             "handle-comps,"
@@ -191,7 +193,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, occ-gates, occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
+            #ifdef USE_GAUSS
             "occ-gauss"
+            #endif
         )
         , simplify_schedule_preproc(
             "handle-comps,"
