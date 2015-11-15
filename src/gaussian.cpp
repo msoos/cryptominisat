@@ -967,7 +967,8 @@ void Gaussian::disable_if_necessary()
         && called > 300
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
     {
-            disabled = true;
+        canceling(0);
+        disabled = true;
     }
 }
 
