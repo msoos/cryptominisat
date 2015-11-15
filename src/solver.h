@@ -416,7 +416,8 @@ inline lbool Solver::solve_with_assumptions(
     if (_assumptions) {
         for(const Lit lit: *_assumptions) {
             if (lit.var() >= nVars()) {
-                std::cerr << "ERROR: Assumption variable is too large, you never"
+                std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
+                << " is too large, you never"
                 << " inserted that variable into the solver. Exiting."
                 << endl;
                 exit(-1);
