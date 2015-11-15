@@ -1519,11 +1519,7 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_conflicts_of_search, iteration_num);
-        xorclauses.clear();
-        for(Gaussian* g: gauss_matrixes) {
-            delete g;
-        }
-        gauss_matrixes.clear();
+        clear_gauss();
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1555,8 +1551,19 @@ lbool Solver::iterate_until_solved()
         }
     }
 
+    clear_gauss();
     conf.burst_search_len = backup_burst_len;
     return status;
+}
+
+void Solver::clear_gauss()
+{
+    xorclauses.clear();
+    for(Gaussian* g: gauss_matrixes) {
+        g->print_stats();
+        delete g;
+    }
+    gauss_matrixes.clear();
 }
 
 void Solver::handle_found_solution(const lbool status)

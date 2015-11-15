@@ -244,7 +244,6 @@ class Solver : public Searcher
         SolveFeatures calculate_features() const;
         void reconfigure(int val);
         void reset_reason_levels_of_vars_to_zero();
-        //void remove_xors();
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl);
@@ -296,6 +295,7 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution();
+        void clear_gauss();
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
