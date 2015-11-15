@@ -1092,13 +1092,16 @@ string Gaussian::lbool_to_string(const lbool toprint)
 void Gaussian::print_stats() const
 {
     if (called > 0) {
-        cout.setf(std::ios::fixed);
-        cout << " Gauss(" << matrix_no << ") useful";
-        cout << " prop: " << std::setprecision(2) << std::setw(5)
-        << float_div(useful_prop, called)*100.0 << "% ";
-        cout << " confl: " << std::setprecision(2) << std::setw(5)
-        << float_div(useful_confl, called)*100.0 << "% ";
-        if (disabled) cout << "disabled";
+        cout << std::fixed
+        << " Gauss(" << matrix_no << ") useful"
+        << " prop: "
+        << std::setprecision(2) << std::setw(5) << float_div(useful_prop, called)*100.0 << "% "
+        << " confl: "
+        << std::setprecision(2) << std::setw(5) << float_div(useful_confl, called)*100.0 << "% ";
+        if (disabled) {
+            cout << "disabled";
+        }
+        cout << endl;
     } else
         cout << " Gauss(" << matrix_no << ") not called.";
 }
