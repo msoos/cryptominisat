@@ -58,8 +58,8 @@ Gaussian::Gaussian(
 
 Gaussian::~Gaussian()
 {
-    for (uint32_t i = 0; i < solver->clauses_toclear.size(); i++) {
-        solver->cl_alloc.clauseFree(solver->clauses_toclear[i].offs);
+    for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
+        solver->cl_alloc.clauseFree(clauses_toclear[i].offs);
     }
 }
 
@@ -920,7 +920,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             assert(m.matrix.getMatrixAt(row).rhs() == !tmp_clause[0].sign());
             assert(solver->value(tmp_clause[0]) == l_Undef);
 
-            solver->clauses_toclear.push_back(GaussClauseToClear(offs, solver->trail.size()-1));
+            clauses_toclear.push_back(GaussClauseToClear(offs, solver->trail.size()-1));
             solver->enqueue(tmp_clause[0], PropBy(offs));
             return propagation;
     }
@@ -934,14 +934,14 @@ void Gaussian::canceling(const uint32_t sublevel)
         return;
 
     uint32_t rem = 0;
-    for (int i = (int)solver->clauses_toclear.size()-1
-        ; i >= 0 && solver->clauses_toclear[i].sublevel > sublevel
+    for (int i = (int)clauses_toclear.size()-1
+        ; i >= 0 && clauses_toclear[i].sublevel >= sublevel
         ; i--
     ) {
-        solver->cl_alloc.clauseFree(solver->clauses_toclear[i].offs);
+        solver->cl_alloc.clauseFree(clauses_toclear[i].offs);
         rem++;
     }
-    solver->clauses_toclear.resize(solver->clauses_toclear.size()-rem);
+    clauses_toclear.resize(clauses_toclear.size()-rem);
 
     if (messed_matrix_vars_since_reversal)
         return;

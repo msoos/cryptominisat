@@ -32,6 +32,7 @@
 #include "occsimplifier.h"
 #include "completedetachreattacher.h"
 #include "sqlstats.h"
+#include "gaussian.h"
 
 #ifdef USE_VALGRIND
 #include "valgrind/valgrind.h"
@@ -313,6 +314,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     //Detach long clauses
     CompleteDetachReatacher detachReattach(solver);
     detachReattach.detach_nonbins_nontris();
+
+    for(size_t i = 0; i < solver->gauss_matrixes.size(); i++) {
+        Gaussian* g = solver->gauss_matrixes[i];
+        g->assert_clauses_toclear_is_empty();
+    }
 
     //Make sure all non-freed clauses were accessible from solver
     const size_t origNumClauses =

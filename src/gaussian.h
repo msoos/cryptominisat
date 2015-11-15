@@ -72,6 +72,18 @@ public:
 const llbool l_Nothing  = llbool(2);
 const llbool l_Continue = llbool(3);
 
+struct GaussClauseToClear
+{
+    GaussClauseToClear() {}
+    GaussClauseToClear(ClOffset _offs, uint32_t _sublevel) :
+        offs(_offs)
+        , sublevel(_sublevel)
+    {}
+
+    ClOffset offs;
+    uint32_t sublevel;
+};
+
 class Gaussian
 {
 public:
@@ -93,6 +105,12 @@ public:
 
     //functions used throughout the Solver
     void canceling(const uint32_t sublevel);
+    void assert_clauses_toclear_is_empty() {
+        for(GaussClauseToClear& c : clauses_toclear) {
+            cout << "Sublevel: " << c.sublevel << endl;
+        }
+        assert(clauses_toclear.empty());
+    }
 
 protected:
     Solver* solver;
@@ -188,6 +206,7 @@ private:
     void print_last_one_in_cols(matrixset& m) const;
     static string lbool_to_string(const lbool toprint);
     vector<Xor> xors;
+    vector<GaussClauseToClear> clauses_toclear;
 };
 
 inline bool Gaussian::should_check_gauss(const uint32_t decisionlevel) const

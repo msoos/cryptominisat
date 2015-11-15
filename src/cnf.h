@@ -56,18 +56,6 @@ struct LitStats
     uint64_t redLits = 0;
 };
 
-struct GaussClauseToClear
-{
-    GaussClauseToClear() {}
-    GaussClauseToClear(ClOffset _offs, uint32_t _sublevel) :
-        offs(_offs)
-        , sublevel(_sublevel)
-    {}
-
-    ClOffset offs;
-    uint32_t sublevel;
-};
-
 class CNF
 {
 public:
@@ -113,7 +101,6 @@ public:
     //Clauses
     vector<ClOffset> longIrredCls;
     vector<ClOffset> longRedCls;
-    vector<GaussClauseToClear> clauses_toclear; //TODO
     vector<Xor> xorclauses;
     BinTriStats binTri;
     LitStats litStats;
