@@ -485,6 +485,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
             //assert(cl->red());
             cl->set_occur_linked(false);
             link_in_data.cl_not_linked++;
+            std::sort(cl->begin(), cl->end());
         }
 
         clauses.push_back(offs);
