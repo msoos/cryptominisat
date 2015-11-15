@@ -951,9 +951,10 @@ void Gaussian::canceling(const uint32_t sublevel)
         uint32_t var  = solver->trail[c].var();
         if (var < var_is_in.getSize()
             && var_is_in[var]
-            && cur_matrixset.var_is_set[var]) {
-        messed_matrix_vars_since_reversal = true;
-        return;
+            && cur_matrixset.var_is_set[var]
+        ) {
+            messed_matrix_vars_since_reversal = true;
+            return;
         }
     }
 }
