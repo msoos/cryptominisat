@@ -919,6 +919,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             ClOffset offs = solver->cl_alloc.get_offset(x);
             assert(m.matrix.getMatrixAt(row).rhs() == !tmp_clause[0].sign());
             assert(solver->value(tmp_clause[0]) == l_Undef);
+            x->set_gauss_temp_cl();
 
             clauses_toclear.push_back(GaussClauseToClear(offs, solver->trail.size()-1));
             solver->enqueue(tmp_clause[0], PropBy(offs));
