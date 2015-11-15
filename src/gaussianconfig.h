@@ -52,6 +52,10 @@ class GaussConf
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t minMatrixRows; //The minimum matrix size -- no. of rows
     uint32_t max_num_matrixes; //Maximum number of matrixes
+
+    uint32_t min_gauss_xor_clauses = 3;
+    uint32_t max_gauss_xor_clauses = 10000;
+    bool doMatrixFind = true;
 };
 
 }

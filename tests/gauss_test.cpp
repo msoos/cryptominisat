@@ -38,7 +38,6 @@ struct gauss : public ::testing::Test {
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         s->new_vars(30);
-        g = new Gaussian(s, 0);
     }
     ~gauss()
     {
@@ -47,19 +46,21 @@ struct gauss : public ::testing::Test {
     }
 
     Solver* s;
-    Gaussian* g;
+    Gaussian* g = NULL;
     std::vector<uint32_t> vars;
     bool must_inter;
+    vector<Xor> xs;
 };
 
 //2 XORs inside
 
 TEST_F(gauss, propagate_1)
 {
-    //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
+    s->conf.verbosity = 20;
+    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
+    xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, true);
@@ -70,9 +71,10 @@ TEST_F(gauss, propagate_1)
 TEST_F(gauss, propagate_2)
 {
     //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 2, 3"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 2, 3, 4"), 1));
+    xs.push_back(Xor(str_to_vars("1, 2, 3"), 0));
+    xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 1));
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, true);
@@ -83,9 +85,10 @@ TEST_F(gauss, propagate_2)
 TEST_F(gauss, propagate_3)
 {
     //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 5"), 1));
+    xs.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
+    xs.push_back(Xor(str_to_vars("1, 3, 5"), 1));
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, true);
@@ -96,10 +99,11 @@ TEST_F(gauss, propagate_3)
 TEST_F(gauss, propagate_4)
 {
     //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 5"), 1));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 2, 4, 7"), 1));
+    xs.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
+    xs.push_back(Xor(str_to_vars("1, 3, 5"), 1));
+    xs.push_back(Xor(str_to_vars("1, 2, 4, 7"), 1));
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, true);
@@ -112,9 +116,10 @@ TEST_F(gauss, propagate_4)
 TEST_F(gauss, unsat_4)
 {
     //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 5"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 5"), 1));
+    xs.push_back(Xor(str_to_vars("1, 3, 5"), 0));
+    xs.push_back(Xor(str_to_vars("1, 3, 5"), 1));
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, false);
@@ -126,13 +131,14 @@ TEST_F(gauss, unsat_4)
 TEST_F(gauss, propagate_unsat)
 {
     //s->conf.verbosity = 20;
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
-    s->xorclauses.push_back(Xor(str_to_vars("1, 3, 5"), 0));
+    xs.push_back(Xor(str_to_vars("1, 3, 4, 5"), 0));
+    xs.push_back(Xor(str_to_vars("1, 3, 5"), 0));
     //-> 4 = 0
-    s->xorclauses.push_back(Xor(str_to_vars("5, 6, 7"), 1));
-    s->xorclauses.push_back(Xor(str_to_vars("4, 5, 6, 7"), 0));
+    xs.push_back(Xor(str_to_vars("5, 6, 7"), 1));
+    xs.push_back(Xor(str_to_vars("4, 5, 6, 7"), 0));
     //-> unsat
 
+    g = new Gaussian(s, xs, 0);
     bool ret = g->init_until_fixedpoint();
 
     EXPECT_EQ(ret, false);

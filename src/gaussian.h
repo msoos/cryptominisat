@@ -75,7 +75,7 @@ const llbool l_Continue = llbool(3);
 class Gaussian
 {
 public:
-    Gaussian(Solver* solver, const uint32_t matrix_no);
+    Gaussian(Solver* solver, const vector<Xor>& xors, const uint32_t matrix_no);
     ~Gaussian();
 
     bool init_until_fixedpoint();
@@ -175,9 +175,6 @@ protected:
     void update_last_one_in_col(matrixset& m);
 
 private:
-    bool clean_xor_clauses();
-    bool clean_one_xor(Xor& x);
-
     //debug functions
     bool check_no_conflict(matrixset& m) const; // Are there any conflicts that the matrixset 'm' causes?
     bool nothing_to_propagate(matrixset& m) const; // Are there any conflicts of propagations that matrixset 'm' clauses?
@@ -190,6 +187,7 @@ private:
     void print_matrix(matrixset& m) const;
     void print_last_one_in_cols(matrixset& m) const;
     static string lbool_to_string(const lbool toprint);
+    vector<Xor> xors;
 };
 
 inline bool Gaussian::should_check_gauss(const uint32_t decisionlevel) const

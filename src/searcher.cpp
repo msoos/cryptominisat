@@ -959,14 +959,7 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
 
-    #ifdef USE_GAUSS
-    for (Gaussian* g : gauss_matrixes) {
-        if (!g->init_until_fixedpoint()) {
-            return l_False;
-        }
-    }
-    #endif
-
+    lbool dec_ret = l_Undef;
     while (
         (!params.needToStopSearch
             && !must_interrupt_asap()
@@ -981,27 +974,6 @@ lbool Searcher::search()
             ) {
                 var_decay += 0.01;
             }
-
-            #ifdef USE_GAUSS
-            bool at_least_one_continue = false;
-            for (Gaussian* g: gauss_matrixes) {
-                llbool ret = g->find_truths();
-                if (ret == l_Continue) {
-                    at_least_one_continue = true;
-                } else if (ret != l_Nothing) {
-                    if (ret == llbool(l_False)) {
-                        return l_False;
-                    } else if (ret == llbool(l_True)) {
-                        return l_True;
-                    }
-                    assert(false);
-                }
-            }
-            if (at_least_one_continue) {
-                continue;
-            }
-            assert(ok);
-            #endif //USE_GAUSS
 
             stats.conflStats.update(lastConflictCausedBy);
             print_restart_stat();
@@ -1022,17 +994,34 @@ lbool Searcher::search()
             }
         } else {
             assert(ok);
+            #ifdef USE_GAUSS
+            bool at_least_one_continue = false;
+            for (Gaussian* g: gauss_matrixes) {
+                llbool ret = g->find_truths();
+                if (ret == llbool(l_Continue)) {
+                    at_least_one_continue = true;
+                } else if (ret == llbool(l_False)) {
+                    return l_False;
+                }
+            }
+            if (at_least_one_continue) {
+                //cout << "** Searcher continuing" << endl;
+                goto prop;
+            }
+            assert(ok);
+            #endif //USE_GAUSS
+
             reduce_db_if_needed();
             check_need_restart();
             last_decision_ended_in_conflict = false;
-            const lbool ret = new_decision();
-            if (ret != l_Undef) {
+            dec_ret = new_decision();
+            if (dec_ret != l_Undef) {
                 dump_search_sql(myTime);
-                return ret;
+                return dec_ret;
             }
         }
 
-        //Decision level is higher than 1, so must do normal propagation
+        prop:
         confl = propagate<false>(
             #ifdef STATS_NEEDED
             &hist.watchListSizeTraversed
@@ -1873,6 +1862,16 @@ lbool Searcher::solve(
         << endl;
     }
 
+    #ifdef USE_GAUSS
+    cout << "gauss_matrixes.size(): " << gauss_matrixes.size() << endl;
+    for (Gaussian* g : gauss_matrixes) {
+        if (!g->init_until_fixedpoint()) {
+            return l_False;
+        }
+        cout << "INITED!!" << endl;
+    }
+    #endif
+
     resetStats();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0
@@ -1892,15 +1891,6 @@ lbool Searcher::solve(
         calculate_and_set_polars();
     }
 
-    #ifdef USE_GAUSS
-    for (Gaussian* g: gauss_matrixes) {
-        if (!g->init_until_fixedpoint()) {
-            assert(!solver->ok);
-            return l_False;
-        }
-    }
-    #endif //USE_GAUSS
-
     setup_restart_print();
     max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
@@ -1910,9 +1900,9 @@ lbool Searcher::solve(
           && !solver->must_interrupt_asap()
         ; loop_num ++
     ) {
-        #ifdef USE_GAUSS
-        clearGaussMatrixes();
-        #endif //USE_GAUSS
+        //#ifdef USE_GAUSS
+        //clearGaussMatrixes();
+        //#endif //USE_GAUSS
 
         #ifdef SLOW_DEBUG
         assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
@@ -3109,13 +3099,73 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
+
+template
+void Searcher::cancelUntil<true>(uint32_t level);
+template
+void Searcher::cancelUntil<false>(uint32_t level);
+
+template<bool also_insert_varorder>
+void Searcher::cancelUntil(uint32_t level)
+{
+    #ifdef VERBOSE_DEBUG
+    cout << "Canceling until level " << level;
+    if (level > 0) cout << " sublevel: " << trail_lim[level];
+    cout << endl;
+    #endif
+
+    #ifdef USE_GAUSS
+    for (Gaussian* gauss : gauss_matrixes) {
+        gauss->canceling(trail_lim[level]);
+    }
+    #endif //USE_GAUSS
+
+    if (decisionLevel() > level) {
+
+        //Go through in reverse order, unassign & insert then
+        //back to the vars to be branched upon
+        for (int sublevel = trail.size()-1
+            ; sublevel >= (int)trail_lim[level]
+            ; sublevel--
+        ) {
+            #ifdef VERBOSE_DEBUG
+            cout
+            << "Canceling lit " << trail[sublevel]
+            << " sublevel: " << sublevel
+            << endl;
+            #endif
+
+            #ifdef ANIMATE3D
+            std:cerr << "u " << var << endl;
+            #endif
+
+            const uint32_t var = trail[sublevel].var();
+            assert(value(var) != l_Undef);
+            assigns[var] = l_Undef;
+            if (also_insert_varorder) {
+                insertVarOrder(var);
+            }
+        }
+        qhead = trail_lim[level];
+        trail.resize(trail_lim[level]);
+        trail_lim.resize(level);
+    }
+
+    #ifdef VERBOSE_DEBUG
+    cout
+    << "Canceling finished. Now at level: " << decisionLevel()
+    << " sublevel: " << trail.size()-1
+    << endl;
+    #endif
+}
+
 #ifdef USE_GAUSS
 void Searcher::clearGaussMatrixes()
 {
-    assert(decisionLevel() == 0);
+    /*assert(decisionLevel() == 0);
     for (uint32_t i = 0; i < gauss_matrixes.size(); i++)
         delete gauss_matrixes[i];
-    gauss_matrixes.clear();
+    gauss_matrixes.clear();*/
 
     /*
     for (uint32_t i = 0; i != freeLater.size(); i++)

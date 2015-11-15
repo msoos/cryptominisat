@@ -372,3 +372,73 @@ void ClauseCleaner::remove_and_clean_all()
         << " s" << endl;
     }
 }
+
+
+bool ClauseCleaner::clean_one_xor(Xor& x)
+{
+    bool rhs = x.rhs;
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t size = x.size(); i < size; i++) {
+        uint32_t var = x[i];
+        if (solver->value(var) != l_Undef) {
+            rhs ^= solver->value(var) == l_True;
+        } else {
+            x[j++] = var;
+        }
+    }
+    x.resize(j);
+    x.rhs = rhs;
+
+    switch(x.size()) {
+        case 0:
+            solver->ok &= !x.rhs;
+            return false;
+
+        case 1: {
+            solver->fully_enqueue_this(Lit(x[0], !x.rhs));
+            return false;
+        }
+        case 2: {
+            solver->add_xor_clause_inter(vars_to_lits(x), x.rhs, true);
+            return false;
+        }
+        default: {
+            return true;
+            break;
+        }
+    }
+}
+
+bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
+{
+    assert(solver->ok);
+    #ifdef VERBOSE_DEBUG
+    cout << "(" << matrix_no << ") Cleaning gauss clauses" << endl;
+    for(Xor& x : xors) {
+        cout << "orig XOR: " << x << endl;
+    }
+    #endif
+
+    size_t i = 0;
+    size_t j = 0;
+    for(size_t size = xors.size(); i < size; i++) {
+        Xor& x = xors[i];
+        const bool keep = clean_one_xor(x);
+        if (!solver->ok) {
+            return false;
+        }
+
+        if (keep) {
+            xors[j++] = x;
+        }
+    }
+    xors.resize(j);
+
+    #ifdef VERBOSE_DEBUG
+    for(Xor& x : xors) {
+        cout << "cleaned XOR: " << x << endl;
+    }
+    #endif
+    return solver->ok;
+}

@@ -190,7 +190,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, occ-gates, occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
-            "scc-vrepl, check-cache-size, renumber"
+            "scc-vrepl, check-cache-size, renumber,"
+            "occ-gauss"
         )
         , simplify_schedule_preproc(
             "handle-comps,"

@@ -26,6 +26,7 @@
 #include "watched.h"
 #include "watcharray.h"
 #include "clause.h"
+#include "xor.h"
 #include <vector>
 using std::vector;
 
@@ -47,8 +48,11 @@ class ClauseCleaner
         void clean_implicit_clauses();
         void remove_and_clean_all();
         bool satisfied(const Clause& c) const;
+        bool clean_xor_clauses(vector<Xor>& xors);
 
     private:
+        bool clean_one_xor(Xor& x);
+
         //Implicit cleaning
         struct ImplicitData
         {

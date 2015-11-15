@@ -71,6 +71,7 @@ set(cryptoms_lib_link_libs "")
 if (USE_GAUSS)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         gaussian.cpp
+        matrixfinder.cpp
     )
 endif()
 

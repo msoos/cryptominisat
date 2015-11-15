@@ -140,25 +140,25 @@ public:
 
         iterator& operator++()
         {
-            mp += 2*(numCols+1);
+            mp += toadd;
             return *this;
         }
 
         iterator operator+(const uint32_t num) const
         {
             iterator ret(*this);
-            ret.mp += 2*(numCols+1)*num;
+            ret.mp += toadd*num;
             return ret;
         }
 
         uint32_t operator-(const iterator& b) const
         {
-            return (mp - b.mp)/(2*(numCols+1));
+            return (mp - b.mp)/(toadd);
         }
 
         void operator+=(const uint32_t num)
         {
-            mp += 2*(numCols+1)*num;
+            mp += toadd*num;
         }
 
         bool operator!=(const iterator& it) const
@@ -177,10 +177,12 @@ public:
         iterator(uint64_t* _mp, const uint32_t _numCols) :
             mp(_mp)
             , numCols(_numCols)
+            , toadd(2*(numCols+1))
         {}
 
         uint64_t* mp;
         const uint32_t numCols;
+        const uint32_t toadd;
     };
 
     inline iterator beginMatrix()

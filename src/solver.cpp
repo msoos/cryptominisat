@@ -63,6 +63,7 @@
 #include "trim.h"
 #include "streambuffer.h"
 #include "gaussian.h"
+#include "matrixfinder.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1518,6 +1519,11 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_conflicts_of_search, iteration_num);
+        xorclauses.clear();
+        for(Gaussian* g: gauss_matrixes) {
+            delete g;
+        }
+        gauss_matrixes.clear();
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1616,13 +1622,8 @@ bool Solver::execute_inprocess_strategy(
                 occsimplifier->simplify(startup, occ_strategy_tokens);
                 if (occ_strategy_tokens == "occ-gauss,") {
                     #ifdef USE_GAUSS
-                    Gaussian* g = new Gaussian(this, 0);
-                    bool ret = g->init_until_fixedpoint();
-                    if (!ret) {
-                        cout << "Gauss returned false" << endl;
-                        return ok;
-                    }
-                    gauss_matrixes.push_back(g);
+                    MatrixFinder finder(this, xorclauses);
+                    finder.findMatrixes();
                     #endif
                 }
             }
