@@ -186,12 +186,16 @@ uint32_t MatrixFinder::setMatrixes()
     std::sort(numXorInMatrix.begin(), numXorInMatrix.end(), mysorter());
 
     uint32_t realMatrixNum = 0;
-    for (int a = matrix_no-1; a != -1; a--) {
+    for (int a = matrix_no-1; a >= 0; a--) {
         uint32_t i = numXorInMatrix[a].first;
+        if (numXorInMatrix[a].second == 0) {
+            continue;
+        }
 
         if (numXorInMatrix[a].second < solver->conf.gaussconf.min_matrix_rows
             || numXorInMatrix[a].second > solver->conf.gaussconf.max_matrix_rows
         ) {
+            //cout << "Too small or too large:" << numXorInMatrix[a].second << endl;
             continue;
         }
 

@@ -1865,12 +1865,10 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
-    cout << "gauss_matrixes.size(): " << gauss_matrixes.size() << endl;
     for (Gaussian* g : gauss_matrixes) {
         if (!g->init_until_fixedpoint()) {
             return l_False;
         }
-        cout << "INITED!!" << endl;
     }
     #endif
 
