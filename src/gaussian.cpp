@@ -207,10 +207,10 @@ uint32_t Gaussian::select_columnorder(
     //for the ones that were not in the order_heap, but are marked in var_to_col
     for (uint32_t v = 0; v != var_to_col.size(); v++) {
         if (var_to_col[v] == unassigned_col - 1) {
-            assert(false && "order_heap MUST be complete!");
-            /*origMat.col_to_var.push_back(v);
+            //assert(false && "order_heap MUST be complete!");
+            origMat.col_to_var.push_back(v);
             var_to_col[v] = origMat.col_to_var.size() -1;
-            var_is_in.setBit(v);*/
+            var_is_in.setBit(v);
         }
     }
 
