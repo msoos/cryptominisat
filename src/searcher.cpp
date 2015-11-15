@@ -3114,13 +3114,12 @@ void Searcher::cancelUntil(uint32_t level)
     cout << endl;
     #endif
 
-    #ifdef USE_GAUSS
-    for (Gaussian* gauss : gauss_matrixes) {
-        gauss->canceling(trail_lim[level]);
-    }
-    #endif //USE_GAUSS
-
     if (decisionLevel() > level) {
+        #ifdef USE_GAUSS
+        for (Gaussian* gauss : gauss_matrixes) {
+            gauss->canceling(trail_lim[level]);
+        }
+        #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then
         //back to the vars to be branched upon

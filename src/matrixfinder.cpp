@@ -38,9 +38,8 @@ using namespace CMSat;
 using std::set;
 using std::map;
 
-MatrixFinder::MatrixFinder(Solver* _solver,  vector<Xor>& _xorclauses) :
+MatrixFinder::MatrixFinder(Solver* _solver) :
     solver(_solver)
-    , xorclauses(_xorclauses)
 {
 }
 
@@ -80,27 +79,30 @@ bool MatrixFinder::findMatrixes()
     matrix_no = 0;
     double myTime = cpuTime();
 
-    if (xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses ||
-        solver->conf.gaussconf.decision_until <= 0 ||
-        xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
-        ) {
+    if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses
+        || solver->conf.gaussconf.decision_until <= 0
+        || solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
+    ) {
         return true;
     }
 
-    bool ret = solver->clauseCleaner->clean_xor_clauses(xorclauses);
+    bool ret = solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
     if (!ret)
         return false;
 
-    if (solver->conf.gaussconf.doMatrixFind) {
-        if (solver->conf.verbosity >=1)
+    if (!solver->conf.gaussconf.doMatrixFind) {
+        if (solver->conf.verbosity >=1) {
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
-        solver->gauss_matrixes.push_back(new Gaussian(solver, xorclauses, 0));
+        }
+        solver->gauss_matrixes.push_back(new Gaussian(solver, solver->xorclauses, 0));
         return true;
     }
 
-    for (const Xor& x : xorclauses) {
-        set<uint32_t> tomerge;
-        vector<uint32_t> newSet;
+    vector<uint32_t> newSet;
+    set<uint32_t> tomerge;
+    for (const Xor& x : solver->xorclauses) {
+        tomerge.clear();
+        newSet.clear();
         for (uint32_t v : x) {
             if (table[v] != var_Undef)
                 tomerge.insert(table[v]);
@@ -117,9 +119,9 @@ bool MatrixFinder::findMatrixes()
             continue;
         }
 
-        for (set<uint32_t>::iterator it = tomerge.begin(); it != tomerge.end(); ++it) {
-            newSet.insert(newSet.end(), reverseTable[*it].begin(), reverseTable[*it].end());
-            reverseTable.erase(*it);
+        for (uint32_t v: tomerge) {
+            newSet.insert(newSet.end(), reverseTable[v].begin(), reverseTable[v].end());
+            reverseTable.erase(v);
         }
         for (uint32_t i = 0; i < newSet.size(); i++)
             table[newSet[i]] = matrix_no;
@@ -133,7 +135,7 @@ bool MatrixFinder::findMatrixes()
         ; it != end
         ; ++it
     ) {
-        cout << "-- set begin --" << endl;
+        cout << "-- set: " << endl;
         for (vector<uint32_t>::iterator it2 = it->second.begin(), end2 = it->second.end()
             ; it2 != end2
             ; it2++
@@ -169,7 +171,8 @@ uint32_t MatrixFinder::setMatrixes()
     vector<vector<uint32_t> > xorSizesInMatrix(matrix_no);
     vector<vector<Xor> > xorsInMatrix(matrix_no);
 
-    for (const Xor& x : xorclauses) {
+    for (const Xor& x : solver->xorclauses) {
+        //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
         assert(matrix < matrix_no);
 
@@ -186,8 +189,11 @@ uint32_t MatrixFinder::setMatrixes()
     for (int a = matrix_no-1; a != -1; a--) {
         uint32_t i = numXorInMatrix[a].first;
 
-        if (numXorInMatrix[a].second < 3)
+        if (numXorInMatrix[a].second < solver->conf.gaussconf.min_matrix_rows
+            || numXorInMatrix[a].second > solver->conf.gaussconf.max_matrix_rows
+        ) {
             continue;
+        }
 
         const uint32_t totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
         const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
@@ -198,9 +204,7 @@ uint32_t MatrixFinder::setMatrixes()
         variance /= (double)xorSizesInMatrix.size();
         const double stdDeviation = std::sqrt(variance);
 
-        if (numXorInMatrix[a].second >= solver->conf.gaussconf.minMatrixRows
-            && numXorInMatrix[a].second <= solver->conf.gaussconf.max_matrix_rows
-            && realMatrixNum <= solver->conf.gaussconf.max_num_matrixes)
+        if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes)
         {
             if (solver->conf.verbosity >=1) {
                 cout << "c Matrix no " << std::setw(2) << realMatrixNum;

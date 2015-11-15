@@ -38,7 +38,7 @@ class GaussConf
         , orderCols(true)
         , iterativeReduce(true)
         , max_matrix_rows(1000)
-        , minMatrixRows(20)
+        , min_matrix_rows(20)
         , max_num_matrixes(3)
     {
     }
@@ -50,7 +50,7 @@ class GaussConf
     bool orderCols; //Order columns according to activity
     bool iterativeReduce; //Don't minimise matrix work
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
-    uint32_t minMatrixRows; //The minimum matrix size -- no. of rows
+    uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
     uint32_t max_num_matrixes; //Maximum number of matrixes
 
     uint32_t min_gauss_xor_clauses = 3;
