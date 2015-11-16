@@ -34,7 +34,7 @@ class GaussConf
     GaussConf() :
         only_nth_gauss_save(2)
         , decision_until(10000)
-        , dontDisable(false)
+        , dontDisable(true)
         , orderCols(true)
         , iterativeReduce(true)
         , max_matrix_rows(1000)

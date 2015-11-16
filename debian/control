@@ -1,13 +1,16 @@
-Source: cryptominisat
-Section: math
+Source: cryptominisat4
+Section: science
 Priority: optional
 Maintainer: Mate Soos <soos.mate@gmail.com>
-Build-Depends: debhelper (>= 8.0.0), cmake (>=2.8.7), libboost-program-options-dev (>= 1.54), zlib1g-dev (>= 1.1)
-Standards-Version: 3.9.4
+Build-Depends: debhelper (>= 8.0.0), cmake (>=2.8.7), libboost-program-options-dev (>= 1.54), zlib1g-dev (>= 1.1), python
+Standards-Version: 3.9.6
 Homepage: http://msoos.org
+Vcs-Git: git://github.com/msoos/cryptominisat.git
+Vcs-Browser: git://github.com/msoos/cryptominisat.git
 
-Package: cryptominisat
+Package: cryptominisat4
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: An advanced SAT solver
- CryptoMiniSat is an award-winning SAT solver
+ CryptoMiniSat is an award-winning SAT solver with a DIMACS input
+

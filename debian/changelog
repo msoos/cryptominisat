@@ -1,29 +1,5 @@
-cryptominisat (4.2-5) trusty; urgency=medium
+cryptominisat4 (4.6.0+dfsg-1) unstable; urgency=low
 
-  * Fixing release 4.2 zlib dependency
+  * Preliminary Gaussian Elimination
 
- -- Mate Soos <soos.mate@gmail.com>  Thu, 16 Jul 2014 22:00:00 +0200
-
-cryptominisat (4.2-4) trusty; urgency=medium
-
-  * Fixing release 4.2 version display
-
- -- Mate Soos <soos.mate@gmail.com>  Thu, 16 Jul 2014 21:00:00 +0200
-
-cryptominisat (4.2-3) trusty; urgency=medium
-
-  * Release of 4.2 to the general public
- 
- -- Mate Soos <soos.mate@gmail.com>  Thu, 16 Jul 2014 20:00:00 +0200
-
-cryptominisat (4.2-2) trusty; urgency=medium
-
-  * Fixing build problem
-
- -- Mate Soos <soos.mate@gmail.com>  Sun, 06 Jul 2014 18:20:39 +0200
-
-cryptominisat (4.2-1) trusty; urgency=medium
-
-  * Initial release. (Closes: #XXXXXX)
-
- -- Mate Soos <soos.mate@gmail.com>  Sun, 06 Jul 2014 18:18:39 +0200
+ -- Mate Soos <soos.mate@gmail.com>  Mon, 16 Nov 2015 01:00:00 +0200
