@@ -107,7 +107,7 @@ TEST_F(comp_handle, check_solution)
     EXPECT_TRUE(s->okay());
     EXPECT_EQ(chandle->get_num_components_solved(), 2);
     EXPECT_EQ(chandle->get_num_vars_removed(), 4);
-    vector<lbool> solution(30, l_Undef);
+    vector<lbool> solution(s->nVarsOuter(), l_Undef);
     chandle->addSavedState(solution);
     EXPECT_EQ(solution[0], l_True);
     EXPECT_EQ(solution[1], l_True);
