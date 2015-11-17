@@ -114,6 +114,7 @@ set (MY_TESTS
     comp_find_test
     intree_test
     xor_finder_test
+    comphandler_test
 )
 
 if (USE_GAUSS)

@@ -240,6 +240,7 @@ bool CompHandler::solve_component(
 ) {
     assert(!solver->drup->enabled());
     vector<uint32_t> vars(vars_orig);
+    components_solved++;
 
     //Sort and renumber
     std::sort(vars.begin(), vars.end());
