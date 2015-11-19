@@ -88,6 +88,9 @@ parser.add_option("--novalgrind", dest="novalgrind", default=False,
 parser.add_option("--small", dest="small", default=False,
                   action="store_true", help="Don't run 'large' fuzzer (may mem-out on smaller systems)")
 
+parser.add_option("--gauss", dest="test_gauss", default=False,
+                  action="store_true", help="Test gauss too")
+
 
 (options, args) = parser.parse_args()
 
@@ -401,7 +404,7 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_options_if_supported = self.list_options_if_supported(
-            ["xor", "sql"])
+            ["xor", "sql", "autodisablegauss"])
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -496,6 +499,9 @@ class Tester:
                 sched = []
                 for i in range(int(random.gammavariate(12, 0.7))):
                     sched.append(random.choice(opts))
+
+                if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
+                    sched.append("occ-gauss")
 
                 return sched
 

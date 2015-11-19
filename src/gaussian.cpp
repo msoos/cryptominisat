@@ -962,7 +962,7 @@ void Gaussian::canceling(const uint32_t sublevel)
 
 void Gaussian::disable_if_necessary()
 {
-    if (!config.dontDisable
+    if (config.autodisable
         && called > 50
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
     {

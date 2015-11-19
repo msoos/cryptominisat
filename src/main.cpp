@@ -674,26 +674,27 @@ void Main::add_supported_options()
         , "The file to save the saved state of the solver")
     ;
 
+#ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
-    ("nomatrixfind"
-        , "Don't find distinct matrixes. Put all xors into one big matrix")
-    ("noordercol"
-        , "Don't order variables in the columns of Gaussian elimination."
-        "Effectively disables iterative reduction of the matrix")
-    ("noiterreduce"
+    ("ordercol", po::value(&conf.gaussconf.orderCols)->default_value(conf.gaussconf.orderCols)
+        , "Don't order variables in the columns of Gaussian elimination.")
+    ("iterreduce", po::value(&conf.gaussconf.iterativeReduce)->default_value(conf.gaussconf.iterativeReduce)
         , "Don't reduce iteratively the matrix that is updated")
     ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
         , "Set maximum no. of rows for gaussian matrix. Too large matrixes"
         "should bee discarded for reasons of efficiency")
-    ("minmatrixrows"
+    ("autodisablegauss", po::value(&conf.gaussconf.autodisable)->default_value(conf.gaussconf.autodisable)
+        , "Automatically disable gauss when performing badly")
+    ("minmatrixrows", po::value(&conf.gaussconf.min_matrix_rows)->default_value(conf.gaussconf.min_matrix_rows)
         , "Set minimum no. of rows for gaussian matrix. Normally, too small"
-        "matrixes are discarded for reasons of efficiency.")
+        "matrixes are discarded for reasons of efficiency")
     ("savematrix", po::value(&conf.gaussconf.only_nth_gauss_save)->default_value(conf.gaussconf.only_nth_gauss_save)
         , "Save matrix every Nth decision level.")
     ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
         , "Maximum number of matrixes to treat.")
     ;
+#endif USE_GAUSS
 
     p.add("input", 1);
     p.add("drup", 1);
@@ -722,6 +723,9 @@ void Main::add_supported_options()
     .add(gateOptions)
     .add(miscOptions)
     .add(hiddenOptions)
+    #ifdef USE_GAUSS
+    .add(gaussOptions)
+    #endif
     ;
 
     help_options_complicated
