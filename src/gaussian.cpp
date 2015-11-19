@@ -1095,7 +1095,7 @@ void Gaussian::print_stats() const
 {
     if (called > 0) {
         cout << std::fixed
-        << " Gauss(" << matrix_no << ") useful"
+        << "c Gauss(" << matrix_no << ") useful"
         << " prop: "
         << std::setprecision(2) << std::setw(5) << float_div(useful_prop, called)*100.0 << "% "
         << " confl: "
@@ -1105,7 +1105,7 @@ void Gaussian::print_stats() const
         }
         cout << endl;
     } else
-        cout << " Gauss(" << matrix_no << ") not called.";
+        cout << "c Gauss(" << matrix_no << ") not called.";
 }
 
 void Gaussian::print_matrix_stats() const

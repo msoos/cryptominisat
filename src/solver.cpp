@@ -1561,7 +1561,9 @@ void Solver::clear_gauss()
 {
     xorclauses.clear();
     for(Gaussian* g: gauss_matrixes) {
-        g->print_stats();
+        if (conf.verbosity >= 2) {
+            g->print_stats();
+        }
         delete g;
     }
     gauss_matrixes.clear();
