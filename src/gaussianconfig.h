@@ -35,7 +35,6 @@ class GaussConf
         only_nth_gauss_save(2)
         , decision_until(10000)
         , autodisable(true)
-        , orderCols(true)
         , iterativeReduce(true)
         , max_matrix_rows(1000)
         , min_matrix_rows(20)
@@ -47,7 +46,6 @@ class GaussConf
     uint32_t only_nth_gauss_save;  //save only every n-th gauss matrix
     uint32_t decision_until; //do Gauss until this level
     bool autodisable; //If activated, gauss elimination is never disabled
-    bool orderCols; //Order columns according to activity
     bool iterativeReduce; //Don't minimise matrix work
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
