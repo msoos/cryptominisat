@@ -147,12 +147,28 @@ void Gaussian::init()
     #endif
 }
 
+struct HeapSorter
+{
+    HeapSorter(vector<double>& _activities) :
+        activities(_activities)
+    {}
+
+    //higher activity first
+    bool operator()(uint32_t a, uint32_t b) {
+        return activities[a] < activities[b];
+    }
+
+    const vector<double>& activities;
+};
+
 uint32_t Gaussian::select_columnorder(
     vector<uint16_t>& var_to_col
     , matrixset& origMat
 ) {
     var_to_col.clear();
     var_to_col.resize(solver->nVars(), unassigned_col);
+    vector<uint32_t> vars_needed;
+    uint32_t largest_used_var = 0;
 
     uint32_t num_xorclauses  = 0;
     for (uint32_t i = 0; i < xors.size(); i++) {
@@ -161,47 +177,25 @@ uint32_t Gaussian::select_columnorder(
 
         for (const uint32_t v: x) {
             assert(solver->value(v) == l_Undef);
-            var_to_col[v] = unassigned_col - 1;
+            if (var_to_col[v] == unassigned_col) {
+                vars_needed.push_back(v);
+                var_to_col[v] = unassigned_col - 1;;
+                largest_used_var = std::max(largest_used_var, v);
+            }
         }
     }
-
-    uint32_t largest_used_var = 0;
-    for (uint32_t i = 0; i < var_to_col.size(); i++) {
-        if (var_to_col[i] != unassigned_col)
-            largest_used_var = i;
-    }
     var_to_col.resize(largest_used_var + 1);
-
     var_is_in.resize(var_to_col.size(), 0);
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    vector<uint32_t> vars(solver->nVars());
-    if (!config.orderCols) {
-        for (uint32_t i = 0; i < solver->nVars(); i++) {
-            vars.push_back(i);
-        }
-        std::random_shuffle(vars.begin(), vars.end());
-    }
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activities));
 
-    auto order_heap(solver->order_heap);
-    uint32_t iterReduceIt = 0;
-    while ((config.orderCols && !order_heap.empty())
-        || (!config.orderCols && iterReduceIt < vars.size())
-    ) {
-        uint32_t v;
-        if (config.orderCols) {
-            v = order_heap.remove_min();
-        } else {
-            v = vars[iterReduceIt++];
-        }
-
-        //It's needed in the matrix
-        if (var_to_col[v] == (unassigned_col - 1)) {
-            origMat.col_to_var.push_back(v);
-            var_to_col[v] = origMat.col_to_var.size()-1;
-            var_is_in.setBit(v);
-        }
+    for(uint32_t v : vars_needed) {
+        assert(var_to_col[v] == unassigned_col - 1);
+        origMat.col_to_var.push_back(v);
+        var_to_col[v] = origMat.col_to_var.size()-1;
+        var_is_in.setBit(v);
     }
 
     //for the ones that were not in the order_heap, but are marked in var_to_col
