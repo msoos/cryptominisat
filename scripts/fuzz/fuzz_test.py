@@ -895,7 +895,7 @@ class Tester:
         # create the fuzz file
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers, fname)
-        print "calling ", fuzzer, " : ", call
+        print "calling ", call
         status, _ = commands.getstatusoutput(call)
         if status != 0:
             fuzzer_call_failed()
