@@ -694,7 +694,7 @@ void Main::add_supported_options()
     ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
         , "Maximum number of matrixes to treat.")
     ;
-#endif USE_GAUSS
+#endif //USE_GAUSS
 
     p.add("input", 1);
     p.add("drup", 1);
