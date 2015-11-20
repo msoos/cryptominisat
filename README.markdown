@@ -206,3 +206,22 @@ Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
 clauses.
 
+Testing
+-----
+For testing you will need the GIT checkout and get the submodules:
+
+```
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
+git submodules init
+git submodules update
+```
+
+Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
+
+```
+mkdir build
+cmake -DENABLE_TESTING=ON ..
+make -j4
+make test
+```
