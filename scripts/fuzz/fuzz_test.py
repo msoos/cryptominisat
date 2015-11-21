@@ -291,15 +291,13 @@ class create_fuzz:
             counter += 1
 
     def call_from_fuzzer(self, fuzzer, fname):
+        seed = random.randint(0, 1000000)
         if len(fuzzer) == 1:
-            seed = random.randint(0, 1000000)
             call = "{0} {1} > {2}".format(fuzzer[0], seed, fname)
         elif len(fuzzer) == 2:
-            seed = random.randint(0, 1000000)
             call = "{0} {1} {2} > {3}".format(
                 fuzzer[0], fuzzer[1], seed, fname)
         elif len(fuzzer) == 3:
-            seed = random.randint(0, 1000000)
             hashbits = (random.getrandbits(20) % 80) + 1
             call = "%s %s %d %s %d > %s" % (
                 fuzzer[0], fuzzer[1], hashbits, fuzzer[2], seed, fname)
