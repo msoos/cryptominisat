@@ -1281,60 +1281,33 @@ bool Main::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
 {
     string randomBits;
     GenerateRandomBits(randomBits, (solver->independent_var_set.size() + 1) * numClaus, randomEngine);
-    bool xorEqualFalse = false;
+    bool rhs = true;
     uint32_t activationVar;
-    vector<Lit> lits;
+    vector<uint32_t> vars;
 
     for (uint32_t i = 0; i < numClaus; i++) {
-        lits.clear();
-        activationVar = solver->new_var();
+        vars.clear();
+        solver->new_var();
+        activationVar = solver->nVars()-1;
         assumptions.push_back(Lit(activationVar, true));
-        lits.push_back(Lit(activationVar, false));
-        xorEqualFalse = (randomBits[(solver->independent_var_set.size() + 1) * i] == 1);
+        vars.push_back(activationVar);
+        rhs = (randomBits[(solver->independent_var_set.size() + 1) * i] == 1);
 
         for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-
             if (randomBits[(solver->independent_var_set.size() + 1) * i + j] == '1') {
-                lits.push_back(Lit(solver->independent_var_set[j], true));
+                vars.push_back(solver->independent_var_set[j]);
             }
         }
-        solver->addXorClause(lits, xorEqualFalse);
+        solver->add_xor_clause(vars, rhs);
     }
     return true;
-}
-
-void Main::printResultFunc(Solver& S, vector<lbool> solutionModel, const lbool ret, FILE* res)
-{
-    if (res != NULL && printResult) {
-        if (ret == l_True) {
-            fprintf(res, "v ");
-            for (Var var = 0; var != S.nOrigVars(); var++)
-                if (solutionModel[var] != l_Undef) {
-                    fprintf(res, "%s%d ", (S.model[var] == l_True) ? "" : "-", var + 1);
-                }
-            fprintf(res, "0\n");
-            fflush(res);
-        }
-    } else {
-
-        if (ret == l_True && printResult) {
-            std::stringstream toPrint;
-            toPrint << "v ";
-            for (Var var = 0; var != S.nOrigVars(); var++)
-                if (solutionModel[var] != l_Undef) {
-                    toPrint << ((solutionModel[var] == l_True) ? "" : "-") << var + 1 << " ";
-                }
-            toPrint << "0" << endl;
-            cout << toPrint.str();
-        }
-    }
 }
 
 int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    Var activationVar = solver->new_var();
+    uint32_t activationVar = solver->new_var();
     vector<Lit> allSATAssumptions(assumptions);
     allSATAssumptions.push_back(Lit(activationVar, true));
 
@@ -1349,16 +1322,16 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
             lits.push_back(Lit(activationVar, false));
             for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
                 uint32_t var = solver->independent_var_set[j];
-                if (solver->model[var] != l_Undef) {
-                    lits.push_back(Lit(var, (solver->model[var] == l_True) ? true : false));
+                if (solver->get_model[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->get_model[var] == l_True) ? true : false));
                 }
             }
-            solver->addClause(lits);
+            solver->add_clause(lits);
         }
     }
     vector<Lit> cls_that_removes;
     cls_that_removes.push_back(Lit(activationVar, false));
-    solver->addClause(cls_that_removes);
+    solver->add_clause(cls_that_removes);
     if (ret == l_Undef) {
         solver->needToInterrupt = false;
         return -1 * current_nr_of_solutions;
@@ -1378,10 +1351,7 @@ lbool Main::BoundedSAT(
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     uint32_t activationVar = solver->new_var();
-    vector<Lit> allSATAssumptions;
-    if (!assumptions.empty()) {
-        assumptions.copyTo(allSATAssumptions);
-    }
+    vector<Lit> allSATAssumptions(assumptions);
     allSATAssumptions.push_back(Lit(activationVar, true));
 
     std::vector<vector<lbool>> modelsSet;
@@ -1394,28 +1364,22 @@ lbool Main::BoundedSAT(
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
             model.clear();
-            solver->model.copyTo(model);
+            model = solver->get_model();
             modelsSet.push_back(model);
             for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
                 Var var = solver->independent_var_set[j];
-                if (solver->model[var] != l_Undef) {
-                    lits.push_back(Lit(var, (solver->model[var] == l_True) ? true : false));
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
                 }
             }
-            solver->addClause(lits);
+            solver->add_clause(lits);
         }
     }
     *solutionCount = modelsSet.size();
-    //cout<<current_nr_of_solutions<<endl;
+    cout << "current_nr_of_solutions:" << current_nr_of_solutions << endl;
     vector<Lit> cls_that_removes;
     cls_that_removes.push_back(Lit(activationVar, false));
-    solver->addClause(cls_that_removes);
-    if (ret == l_Undef) {
-        solver->needToInterrupt = false;
-
-        return ret;
-    }
-
+    solver->add_clause(cls_that_removes);
 
     if (current_nr_of_solutions < maxSolutions && current_nr_of_solutions > minSolutions) {
         std::vector<int> modelIndices;
@@ -1466,15 +1430,15 @@ SATCount Main::ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& ran
     int repeatTry = 0;
     for (uint32_t j = 0; j < conf.tApproxMC; j++) {
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
-            double currentTime = totalTime();
+            double currentTime = cpuTimeTotal();
             elapsedTime = currentTime - startTime;
             if (elapsedTime > conf.totalTimeout - 3000) {
                 break;
             }
-            double myTime = totalTime();
+            double myTime = cpuTimeTotal();
             currentNumSolutions = BoundedSATCount(conf.pivotApproxMC + 1, solver, assumptions);
 
-            myTime = totalTime() - myTime;
+            myTime = cpuTimeTotal() - myTime;
             //printf("%f\n", myTime);
             //printf("%d %d\n",currentNumSolutions,conf.pivotApproxMC);
             if (conf.shouldLog) {
@@ -1580,7 +1544,7 @@ uint32_t Main::UniGen(
             uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
             if (conf.shouldLog) {
-                fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, totalTime() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
+                fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
                 fflush((*resLog)[threadNum]);
             }
             if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
@@ -1806,7 +1770,7 @@ int Main::UniSolve()
         std::mt19937 randomEngine {};
         SeedEngine(randomEngine);
         solCount = ApproxMC(solver, resLog, randomEngine);
-        double elapsedTime = totalTime() - startTime;
+        double elapsedTime = cpuTimeTotal() - startTime;
         printf("Completed ApproxMC at %f s", elapsedTime);
         if (elapsedTime > conf.totalTimeout - 3000) {
             printf(" (TIMED OUT)\n");
@@ -1885,7 +1849,7 @@ int Main::UniSolve()
         allThreadsSampleCount += itt->second;
     }
 
-    double timeTaken = totalTime() - threadStartTime;
+    double timeTaken = cpuTimeTotal() - threadStartTime;
     allThreadsTime += timeTaken;
     printf("Total time for UniGen2 thread %d: %f s", threadNum, timeTaken);
     if (timedOut) {
@@ -1908,9 +1872,9 @@ int Main::UniSolve()
             cout << "p cnf 0 1" << endl;
             cout << "0";
         } else if (ret == l_True && conf.origFilename == "stdout") {
-            cout << "p cnf " << solver->model.size() << " " << solver->model.size() << endl;
-            for (uint32_t i = 0; i < solver->model.size(); i++) {
-                cout << (solver->model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
+            cout << "p cnf " << solver->get_model.size() << " " << solver->get_model.size() << endl;
+            for (uint32_t i = 0; i < solver->get_model.size(); i++) {
+                cout << (solver->get_model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
             }
         } else {
             if (!solver->dumpOrigClauses(conf.origFilename)) {
