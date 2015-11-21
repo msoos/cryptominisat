@@ -19,11 +19,12 @@
  * MA 02110-1301  USA
 */
 
-#include "src/matrixfinder.h"
-#include "src/solver.h"
-#include "src/gaussian.h"
-#include "src/clausecleaner.h"
-#include "src/time_mem.h"
+#include "matrixfinder.h"
+#include "solver.h"
+#include "gaussian.h"
+#include "clausecleaner.h"
+#include "time_mem.h"
+#include "sqlstats.h"
 
 #include <set>
 #include <map>
