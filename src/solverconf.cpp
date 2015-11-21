@@ -264,6 +264,21 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , reconfigure_at(2)
         , preprocess(0)
         , saved_state_file("savedstate.dat")
+
+
+        //ApproxMC
+        , samples(1)
+        , callsPerSolver(0)
+        , startIteration(0)
+        , pivotApproxMC(60)
+        , pivotUniGen(27)
+        , samplesGen (1)
+        , tApproxMC(1)
+        , totalTimeout(72000)
+        , loopTimeout(3000)
+        , kappa(0.5)
+        , multisample(true)
+        , aggregateSolutions(true)
 {
 
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

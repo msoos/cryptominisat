@@ -56,6 +56,8 @@ class DimacsParser
         std::string stringify(uint32_t x) const;
         bool parseSolveComment(C& in);
         void write_solution_to_debuglib_file(const lbool ret) const;
+        bool parseIndependentSet(C& in);
+        vector<uint32_t> independent_vars;
 
 
         SATSolver* solver;
@@ -307,6 +309,11 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
+    } else if (str.substr == "ind") {
+        //parsing the independent variables
+        if (!parseIndependentSet(in)) {
+            return false;
+        }
     } else {
         if (verbosity >= 6) {
             cout
@@ -423,6 +430,7 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream)
     if ( !parse_DIMACS_main(in)) {
         return false;
     }
+    solver->addIndependentSet(independent_vars);
 
     if (verbosity >= 1) {
         cout
@@ -432,6 +440,23 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream)
         << endl;
     }
 
+    return true;
+}
+
+template <class C>
+bool DimacsParser<C>::parseIndependentSet(C& in)
+{
+    int32_t parsed_lit;
+    for (;;) {
+        if (!in.parseInt(parsed_lit, lineNum)) {
+            return false;
+        }
+        if (parsed_lit == 0) {
+            break;
+        }
+        uint32_t var = abs(parsed_lit) - 1;
+        independent_vars.push_back(var);
+    }
     return true;
 }
 

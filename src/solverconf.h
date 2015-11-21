@@ -342,6 +342,20 @@ class SolverConf
         std::string simplified_cnf;
         std::string solution_file;
         std::string saved_state_file;
+
+        //Approx MC
+        uint32_t samples;
+        uint32_t callsPerSolver;
+        uint32_t startIteration;
+        int32_t pivotApproxMC;
+        uint32_t pivotUniGen;
+        uint32_t samplesGen;
+        uint32_t tApproxMC;
+        int totalTimeout;
+        int loopTimeout;
+        float kappa;
+        bool multisample;
+        bool aggregateSolutions;
 };
 
 } //end namespace

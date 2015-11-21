@@ -63,9 +63,9 @@ static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
 using namespace CMSat;
 using boost::lexical_cast;
 
-using std::cout;
+using cout;
 using std::cerr;
-using std::endl;
+using endl;
 using boost::lexical_cast;
 
 struct WrongParam
@@ -894,7 +894,7 @@ void Main::check_options_correctness()
 void Main::handle_drup_option()
 {
     if (drupDebug) {
-        drupf = &std::cout;
+        drupf = &cout;
     } else {
         std::ofstream* drupfTmp = new std::ofstream;
         drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
@@ -1210,6 +1210,471 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 }
 
+
+int Main::correctReturnValue(const lbool ret) const
+{
+    int retval = -1;
+    if (ret == l_True) {
+        retval = 10;
+    } else if (ret == l_False) {
+        retval = 20;
+    } else if (ret == l_Undef) {
+        retval = 15;
+    } else {
+        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
+        exit(-1);
+    }
+
+#ifdef NDEBUG
+    // (faster than "return", which will invoke the destructor for 'Solver')
+    exit(retval);
+#endif
+    return retval;
+}
+
+std::string binary(int x, uint32_t length)
+{
+    uint32_t logSize = (x == 0 ? 1 : log2(x) + 1);
+    std::string s;
+    do {
+        s.push_back('0' + (x & 1));
+    } while (x >>= 1);
+    for (uint32_t i = logSize; i < (uint32_t) length; i++) {
+        s.push_back('0');
+    }
+    std::reverse(s.begin(), s.end());
+
+    return s;
+
+}
+
+bool Main::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine)
+{
+    std::uniform_int_distribution<int> uid {0, 2147483647};
+    uint32_t i = 0;
+    while (i < size) {
+        i += 31;
+        randomBits += binary(uid(randomEngine), 31);
+    }
+    return true;
+}
+int Main::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
+{
+    std::uniform_int_distribution<int> uid {0, maxRange};
+    return uid(randomEngine);
+}
+
+/* Number of solutions to return from one invocation of UniGen2 */
+uint32_t Main::SolutionsToReturn(
+    uint32_t maxSolutions
+    , uint32_t minSolutions
+    , unsigned long currentSolutions
+) {
+    if (conf.multisample) {
+        return minSolutions;
+    } else {
+        return 1;
+    }
+}
+bool Main::AddHash(uint32_t numClaus, Solver& solver, vec<Lit>& assumptions, std::mt19937& randomEngine)
+{
+    string randomBits;
+    GenerateRandomBits(randomBits, (solver.independentSet.size() + 1) * numClaus, randomEngine);
+    bool xorEqualFalse = false;
+    Var activationVar;
+    vec<Lit> lits;
+
+    for (uint32_t i = 0; i < numClaus; i++) {
+        lits.clear();
+        activationVar = solver.newVar();
+        assumptions.push(Lit(activationVar, true));
+        lits.push(Lit(activationVar, false));
+        xorEqualFalse = (randomBits[(solver.independentSet.size() + 1) * i] == 1);
+
+        for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
+
+            if (randomBits[(solver.independentSet.size() + 1) * i + j] == '1') {
+                lits.push(Lit(solver.independentSet[j], true));
+            }
+        }
+        solver.addXorClause(lits, xorEqualFalse);
+    }
+    return true;
+}
+
+void Main::printResultFunc(Solver& S, vec<lbool> solutionModel, const lbool ret, FILE* res)
+{
+    if (res != NULL && printResult) {
+        if (ret == l_True) {
+            fprintf(res, "v ");
+            for (Var var = 0; var != S.nOrigVars(); var++)
+                if (solutionModel[var] != l_Undef) {
+                    fprintf(res, "%s%d ", (S.model[var] == l_True) ? "" : "-", var + 1);
+                }
+            fprintf(res, "0\n");
+            fflush(res);
+        }
+    } else {
+
+        if (ret == l_True && printResult) {
+            std::stringstream toPrint;
+            toPrint << "v ";
+            for (Var var = 0; var != S.nOrigVars(); var++)
+                if (solutionModel[var] != l_Undef) {
+                    toPrint << ((solutionModel[var] == l_True) ? "" : "-") << var + 1 << " ";
+                }
+            toPrint << "0" << endl;
+            cout << toPrint.str();
+        }
+    }
+}
+
+int32_t Main::BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& assumptions)
+{
+    unsigned long current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    Var activationVar = solver.newVar();
+    vec<Lit> allSATAssumptions;
+    if (!assumptions.empty()) {
+        assumptions.copyTo(allSATAssumptions);
+    }
+    allSATAssumptions.push(Lit(activationVar, true));
+    //signal(SIGALRM, SIGALARM_handler);
+    start_timer(conf.loopTimeout);
+    while (current_nr_of_solutions < maxSolutions && ret == l_True) {
+
+        ret = solver.solve(allSATAssumptions);
+        current_nr_of_solutions++;
+        if (ret == l_True && current_nr_of_solutions < maxSolutions) {
+            vec<Lit> lits;
+            lits.push(Lit(activationVar, false));
+            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
+                Var var = solver.independentSet[j];
+                if (solver.model[var] != l_Undef) {
+                    lits.push(Lit(var, (solver.model[var] == l_True) ? true : false));
+                }
+            }
+            solver.addClause(lits);
+        }
+    }
+    vec<Lit> cls_that_removes;
+    cls_that_removes.push(Lit(activationVar, false));
+    solver.addClause(cls_that_removes);
+    if (ret == l_Undef) {
+        solver.needToInterrupt = false;
+        return -1 * current_nr_of_solutions;
+    }
+    return current_nr_of_solutions;
+}
+
+lbool Main::BoundedSAT(
+    uint32_t maxSolutions
+    , uint32_t minSolutions
+    , Solver& solver
+    , vec<Lit>& assumptions
+    , std::mt19937& randomEngine
+    , std::map<std::string, uint32_t>& solutionMap
+    , uint32_t* solutionCount
+) {
+    unsigned long current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    Var activationVar = solver.newVar();
+    vec<Lit> allSATAssumptions;
+    if (!assumptions.empty()) {
+        assumptions.copyTo(allSATAssumptions);
+    }
+    allSATAssumptions.push(Lit(activationVar, true));
+
+    std::vector<vec<lbool>> modelsSet;
+    vec<lbool> model;
+    //signal(SIGALRM, SIGALARM_handler);
+    start_timer(conf.loopTimeout);
+    while (current_nr_of_solutions < maxSolutions && ret == l_True) {
+        ret = solver.solve(allSATAssumptions);
+        current_nr_of_solutions++;
+
+        if (ret == l_True && current_nr_of_solutions < maxSolutions) {
+            vec<Lit> lits;
+            lits.push(Lit(activationVar, false));
+            model.clear();
+            solver.model.copyTo(model);
+            modelsSet.push_back(model);
+            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
+                Var var = solver.independentSet[j];
+                if (solver.model[var] != l_Undef) {
+                    lits.push(Lit(var, (solver.model[var] == l_True) ? true : false));
+                }
+            }
+            solver.addClause(lits);
+        }
+    }
+    *solutionCount = modelsSet.size();
+    //cout<<current_nr_of_solutions<<endl;
+    vec<Lit> cls_that_removes;
+    cls_that_removes.push(Lit(activationVar, false));
+    solver.addClause(cls_that_removes);
+    if (ret == l_Undef) {
+        solver.needToInterrupt = false;
+
+        return ret;
+    }
+
+
+    if (current_nr_of_solutions < maxSolutions && current_nr_of_solutions > minSolutions) {
+        std::vector<int> modelIndices;
+        for (uint32_t i = 0; i < modelsSet.size(); i++) {
+            modelIndices.push_back(i);
+        }
+        std::shuffle(modelIndices.begin(), modelIndices.end(), randomEngine);
+        Var var;
+        uint32_t numSolutionsToReturn = SolutionsToReturn(maxSolutions, minSolutions, modelsSet.size());
+        for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
+            vec<lbool> model = modelsSet.at(modelIndices.at(i));
+            string solution ("v");
+            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
+                var = solver.independentSet[j];
+                if (model[var] != l_Undef) {
+                    if (model[var] != l_True) {
+                        solution += "-";
+                    }
+                    solution += std::to_string(var + 1);
+                    solution += " ";
+                }
+            }
+            solution += "0";
+
+            map<std::string, uint32_t>::iterator it = solutionMap.find(solution);
+            if (it == solutionMap.end()) {
+                solutionMap[solution] = 0;
+            }
+            solutionMap[solution] += 1;
+        }
+        return l_True;
+
+    }
+
+    return l_False;
+}
+
+SATCount Main::ApproxMC(Solver& solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
+{
+    int32_t currentNumSolutions = 0;
+    uint32_t  hashCount;
+    std::list<int> numHashList, numCountList;
+    vec<Lit> assumptions;
+    SATCount solCount;
+    solCount.cellSolCount = 0;
+    solCount.hashCount = 0;
+    double elapsedTime = 0;
+    int repeatTry = 0;
+    for (uint32_t j = 0; j < conf.tApproxMC; j++) {
+        for (hashCount = 0; hashCount < solver.nVars(); hashCount++) {
+            double currentTime = totalTime();
+            elapsedTime = currentTime - startTime;
+            if (elapsedTime > conf.totalTimeout - 3000) {
+                break;
+            }
+            double myTime = totalTime();
+            currentNumSolutions = BoundedSATCount(conf.pivotApproxMC + 1, solver, assumptions);
+
+            myTime = totalTime() - myTime;
+            //printf("%f\n", myTime);
+            //printf("%d %d\n",currentNumSolutions,conf.pivotApproxMC);
+            if (conf.shouldLog) {
+                fprintf((*resLog)[0], "ApproxMC:%d:%d:%f:%d:%d\n", j, hashCount, myTime,
+                        (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1)), currentNumSolutions);
+                fflush((*resLog)[0]);
+            }
+            if (currentNumSolutions <= 0) {
+                assumptions.clear();
+                if (repeatTry < 2) {    /* Retry up to twice more */
+                    AddHash(hashCount, solver, assumptions, randomEngine);
+                    hashCount --;
+                    repeatTry += 1;
+                } else {
+                    AddHash(hashCount + 1, solver, assumptions, randomEngine);
+                    repeatTry = 0;
+                }
+                continue;
+            }
+            if (currentNumSolutions == conf.pivotApproxMC + 1) {
+                AddHash(1, solver, assumptions, randomEngine);
+            } else {
+                break;
+            }
+
+        }
+        assumptions.clear();
+        if (elapsedTime > conf.totalTimeout - 3000) {
+            break;
+        }
+        numHashList.push_back(hashCount);
+        numCountList.push_back(currentNumSolutions);
+    }
+    if (numHashList.size() == 0) {
+        return solCount;
+    }
+    int minHash = findMin(numHashList);
+    for (std::list<int>::iterator it1 = numHashList.begin(), it2 = numCountList.begin();
+            it1 != numHashList.end() && it2 != numCountList.end(); it1++, it2++) {
+        (*it2) *= pow(2, (*it1) - minHash);
+    }
+    int medSolCount = findMedian(numCountList);
+    solCount.cellSolCount = medSolCount;
+    solCount.hashCount = minHash;
+    return solCount;
+}
+
+uint32_t Main::UniGen(
+    uint32_t samples
+    , Solver& solver
+    , FILE* res
+    , vector<FILE* >* resLog
+    , uint32_t sampleCounter
+    , std::mt19937& randomEngine
+    , std::map<std::string, uint32_t>& solutionMap
+    , uint32_t* lastSuccessfulHashOffset
+    , double timeReference
+) {
+    lbool ret = l_False;
+    uint32_t i, solutionCount, currentHashCount, lastHashCount, currentHashOffset, hashOffsets[3];
+    int hashDelta;
+    vec<Lit> assumptions;
+    double elapsedTime = 0;
+#if defined(_OPENMP)
+    int threadNum = omp_get_thread_num();
+#else
+    int threadNum = 0;
+#endif
+    int repeatTry = 0;
+    for (i = 0; i < samples; i++) {
+        sampleCounter ++;
+        ret = l_False;
+
+        hashOffsets[0] = *lastSuccessfulHashOffset;   /* Start at last successful hash offset */
+        if (hashOffsets[0] == 0) {  /* Starting at q-2; go to q-1 then q */
+            hashOffsets[1] = 1;
+            hashOffsets[2] = 2;
+        } else if (hashOffsets[0] == 2) { /* Starting at q; go to q-1 then q-2 */
+            hashOffsets[1] = 1;
+            hashOffsets[2] = 0;
+        }
+        repeatTry = 0;
+        lastHashCount = 0;
+        for (uint32_t j = 0; j < 3; j++) {
+            currentHashOffset = hashOffsets[j];
+            currentHashCount = currentHashOffset + conf.startIteration;
+            hashDelta = currentHashCount - lastHashCount;
+
+            if (hashDelta > 0) { /* Add new hash functions */
+                AddHash(hashDelta, solver, assumptions, randomEngine);
+            } else if (hashDelta < 0) { /* Remove hash functions */
+                assumptions.clear();
+                AddHash(currentHashCount, solver, assumptions, randomEngine);
+            }
+            lastHashCount = currentHashCount;
+
+            double currentTime = cpuTimeTotal();
+            elapsedTime = currentTime - startTime;
+            if (elapsedTime > conf.totalTimeout - 3000) {
+                break;
+            }
+            uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
+            uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
+            ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
+            if (conf.shouldLog) {
+                fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, totalTime() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
+                fflush((*resLog)[threadNum]);
+            }
+            if (ret == l_Undef) {   /* Solver timed out; retry current hash count at most twice more */
+                assumptions.clear();    /* Throw out old hash functions */
+                if (repeatTry < 2) {    /* Retry current hash count with new hash functions */
+                    AddHash(currentHashCount, solver, assumptions, randomEngine);
+                    j--;
+                    repeatTry += 1;
+                } else {     /* Go on to next hash count */
+                    lastHashCount = 0;
+                    if ((j == 0) && (currentHashOffset == 1)) { /* At q-1, and need to pick next hash count */
+                        /* Somewhat arbitrarily pick q-2 first; then q */
+                        hashOffsets[1] = 0;
+                        hashOffsets[2] = 2;
+                    }
+                    repeatTry = 0;
+                }
+                continue;
+            }
+            if (ret == l_True) {    /* Number of solutions in correct range */
+                *lastSuccessfulHashOffset = currentHashOffset;
+                break;
+            } else { /* Number of solutions too small or too large */
+                if ((j == 0) && (currentHashOffset == 1)) { /* At q-1, and need to pick next hash count */
+                    if (solutionCount < minSolutions) {
+                        /* Go to q-2; next will be q */
+                        hashOffsets[1] = 0;
+                        hashOffsets[2] = 2;
+                    } else {
+                        /* Go to q; next will be q-2 */
+                        hashOffsets[1] = 2;
+                        hashOffsets[2] = 0;
+                    }
+                }
+            }
+        }
+        if (ret != l_True) {
+            i --;
+        }
+        assumptions.clear();
+        if (elapsedTime > conf.totalTimeout - 3000) {
+            break;
+        }
+    }
+    return sampleCounter;
+}
+
+int Main::singleThreadUniGenCall(
+    uint32_t samples
+    , FILE* res
+    , vector<FILE*>* resLog
+    , uint32_t sampleCounter
+    , std::map<std::string, uint32_t>& solutionMap
+    , std::mt19937& randomEngine
+    , uint32_t* lastSuccessfulHashOffset
+    , double timeReference
+) {
+    Solver solver2(conf, gaussconfig);
+    //solversToInterrupt[0] = &solver2;
+    //need_clean_exit = true;
+
+    int num;
+#if defined(_OPENMP)
+    num = omp_get_thread_num();
+#else
+    num = 0;
+#endif
+
+    #pragma omp critical (solversToInterr)
+    {
+        //printf("%d\n",num);
+        solversToInterrupt[num] = &solver2;
+    }
+    //SeedEngine(randomEngine);
+
+    setDoublePrecision(conf.verbosity);
+    parseInAllFiles(solver2);
+    sampleCounter = UniGen(samples, solver2, res, resLog, sampleCounter, randomEngine, solutionMap, lastSuccessfulHashOffset, timeReference);
+    return sampleCounter;
+}
+
+void Main::SeedEngine(std::mt19937& randomEngine)
+{
+    /* Initialize PRNG with seed from random_device */
+    std::random_device rd {};
+    std::array<int, 10> seedArray;
+    std::generate_n(seedArray.data(), seedArray.size(), std::ref(rd));
+    std::seed_seq seed(std::begin(seedArray), std::end(seedArray));
+    randomEngine.seed(seed);
+}
+
 int Main::solve()
 {
 
@@ -1313,7 +1778,7 @@ int Main::solve()
         *drupf << std::flush;
 
         //If it's not stdout, we have to delete the ofstream
-        if (drupf != &std::cout) {
+        if (drupf != &cout) {
             delete drupf;
         }
     }
@@ -1340,6 +1805,146 @@ int Main::correctReturnValue(const lbool ret) const
     }
 
     return retval;
+}
+
+int Main::UniSolve()
+{
+    if (conf.startIteration > solver.independentSet.size()) {
+        cout << "ERROR: Manually-specified startIteration"
+        "is larger than the size of the independent set.\n" << endl;
+        return -1;
+    }
+    if (conf.startIteration == 0) {
+        printf("Computing startIteration using ApproxMC\n");
+
+        SATCount solCount;
+        std::mt19937 randomEngine {};
+        SeedEngine(randomEngine);
+        solCount = ApproxMC(solver, resLog, randomEngine);
+        double elapsedTime = totalTime() - startTime;
+        printf("Completed ApproxMC at %f s", elapsedTime);
+        if (elapsedTime > conf.totalTimeout - 3000) {
+            printf(" (TIMED OUT)\n");
+            return 0;
+        }
+        printf("\n");
+        //printf("Solution count estimate is %d * 2^%d\n", solCount.cellSolCount, solCount.hashCount);
+        if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
+            printf("The input formula is unsatisfiable.");
+            return 0;
+        }
+        conf.startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
+                                    log2(1.8) - log2(conf.pivotUniGen)) - 2;
+    } else {
+        cout << "Using manually-specified startIteration" << endl;
+    }
+
+    uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
+    uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
+    uint32_t samplesPerCall = SolutionsToReturn(maxSolutions + 1, minSolutions, minSolutions);
+    uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
+    cout << "loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
+    //printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
+    uint32_t numCallsInOneLoop = 0;
+    if (conf.callsPerSolver == 0) {
+        numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded / numThreads);
+        if (numCallsInOneLoop == 0) {
+            numCallsInOneLoop = 1;
+        }
+    } else {
+        numCallsInOneLoop = conf.callsPerSolver;
+        cout << "Using manually-specified callsPerSolver" << endl;
+    }
+
+    uint32_t numCallLoops = callsNeeded / numCallsInOneLoop;
+    uint32_t remainingCalls = callsNeeded % numCallsInOneLoop;
+
+    cout << "Making " << numCallLoops << " loops."
+    << " calls per loop: " << numCallsInOneLoop
+    << " remaining: " << remainingCalls << endl;
+    bool timedOut = false;
+    uint32_t sampleCounter = 0;
+    std::map<std::string, uint32_t> threadSolutionMap;
+    double allThreadsTime = 0;
+    uint32_t allThreadsSampleCount = 0;
+    double threadStartTime = cpuTimeTotal();
+
+    std::mt19937 randomEngine {};
+    SeedEngine(randomEngine);
+
+    uint32_t lastSuccessfulHashOffset = 0;
+
+    /* Perform extra UniGen calls that don't fit into the loops */
+    if (remainingCalls > 0) {
+        sampleCounter = singleThreadUniGenCall(remainingCalls, res, resLog, sampleCounter, threadSolutionMap, randomEngine, &lastSuccessfulHashOffset, threadStartTime);
+    }
+
+    /* Perform main UniGen call loops */
+    for (uint32_t i = 0; i < numCallLoops; i++) {
+        if (!timedOut) {
+            sampleCounter = singleThreadUniGenCall(numCallsInOneLoop, res, resLog, sampleCounter, threadSolutionMap, randomEngine, &lastSuccessfulHashOffset, threadStartTime);
+            if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
+                timedOut = true;
+            }
+        }
+    }
+
+    for (map<std::string, uint32_t>::iterator itt = threadSolutionMap.begin();
+            itt != threadSolutionMap.end(); itt++) {
+        std::string solution = itt->first;
+        map<std::string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
+        if (itg == globalSolutionMap.end()) {
+            globalSolutionMap[solution] = std::vector<uint32_t>(numThreads, 0);
+        }
+        globalSolutionMap[solution][threadNum] += itt->second;
+        allThreadsSampleCount += itt->second;
+    }
+
+    double timeTaken = totalTime() - threadStartTime;
+    allThreadsTime += timeTaken;
+    printf("Total time for UniGen2 thread %d: %f s", threadNum, timeTaken);
+    if (timedOut) {
+        printf(" (TIMED OUT)");
+    }
+    printf("\n");
+
+    if (printResult) {
+        printSolutions(res);
+    }
+
+    printf("Total time for all UniGen2 calls: %f s\n", allThreadsTime);
+    printf("Samples generated: %d\n", allThreadsSampleCount);
+
+    if (conf.needToDumpOrig) {
+        if (ret != l_False) {
+            solver.addAllXorAsNorm();
+        }
+        if (ret == l_False && conf.origFilename == "stdout") {
+            cout << "p cnf 0 1" << endl;
+            cout << "0";
+        } else if (ret == l_True && conf.origFilename == "stdout") {
+            cout << "p cnf " << solver.model.size() << " " << solver.model.size() << endl;
+            for (uint32_t i = 0; i < solver.model.size(); i++) {
+                cout << (solver.model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
+            }
+        } else {
+            if (!solver.dumpOrigClauses(conf.origFilename)) {
+                cout << "Error: Cannot open file '" << conf.origFilename << "' to write learnt clauses!" << endl;
+                exit(-1);
+            }
+            if (conf.verbosity >= 1)
+                cout << "c Simplified original clauses dumped to file '"
+                          << conf.origFilename << "'" << endl;
+        }
+    }
+    if (ret == l_Undef && conf.verbosity >= 1) {
+        cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
+    }
+    if (conf.verbosity >= 1) {
+        solver.printStats();
+    }
+
+    return correctReturnValue(ret);
 }
 
 int main(int argc, char** argv)

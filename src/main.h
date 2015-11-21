@@ -37,6 +37,11 @@ using std::vector;
 namespace po = boost::program_options;
 using namespace CMSat;
 
+struct SATCount {
+    uint32_t hashCount;
+    uint32_t cellSolCount;
+};
+
 class Main
 {
     public:
@@ -107,6 +112,25 @@ class Main
         //Drup checker
         std::ostream* drupf = NULL;
         bool drupDebug = false;
+
+        //Unistuff
+        SATCount ApproxMC(Solver& solver, vector<FILE*>* resLog, std::mt19937& randomEngine);
+        uint32_t UniGen(uint32_t samples, Solver& solver
+            , FILE* res, vector<FILE*>* resLog, uint32_t sampleCounter
+            , std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap
+            , uint32_t* lastSuccessfulHashOffset, double timeReference);
+        bool AddHash(uint32_t clausNum, Solver& s, vec<Lit>& assumptions, std::mt19937& randomEngine);
+        int32_t BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& assumptions);
+        lbool BoundedSAT(uint32_t maxSolutions, uint32_t minSolutions, Solver& solver, vec<Lit>& assumptions, std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap, uint32_t* solutionCount);
+        bool GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine);
+        uint32_t SolutionsToReturn(uint32_t maxSolutions, uint32_t minSolutions, unsigned long currentSolutions);
+        int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
+        void printResultFunc(Solver& S, vec<lbool> solutionModel, const lbool ret, FILE* res);
+        bool printSolutions(FILE* res);
+        void SeedEngine(std::mt19937& randomEngine);
+
+        time_t  startTime;
+        std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
 };
 
 #endif //MAIN_H
