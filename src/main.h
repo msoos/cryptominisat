@@ -119,13 +119,10 @@ class Main
 
         //Unistuff
         SATCount ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine);
-        uint32_t UniGen(uint32_t samples, Solver* solver
-            , FILE* res, vector<FILE*>* resLog, uint32_t sampleCounter
-            , std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap
-            , uint32_t* lastSuccessfulHashOffset, double timeReference);
-        bool AddHash(uint32_t clausNum, Solver* s, vector<Lit>& assumptions, std::mt19937& randomEngine);
-        int32_t BoundedSATCount(uint32_t maxSolutions, Solver* solver, vector<Lit>& assumptions);
-        lbool BoundedSAT(uint32_t maxSolutions, uint32_t minSolutions, Solver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap, uint32_t* solutionCount);
+        uint32_t UniGen(uint32_t samples, SATSolver* solver, FILE* res, std::vector< FILE* >* resLog, uint32_t sampleCounter, std::mt19937& randomEngine, std::map< string, uint32_t >& solutionMap, uint32_t* lastSuccessfulHashOffset, double timeReference);
+        bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions, std::mt19937& randomEngine);
+        int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions);
+        lbool BoundedSAT(uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap, uint32_t* solutionCount);
         bool GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine);
         uint32_t SolutionsToReturn(uint32_t maxSolutions, uint32_t minSolutions, unsigned long currentSolutions);
         int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);

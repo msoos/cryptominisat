@@ -50,7 +50,7 @@ namespace CMSat {
         const std::vector<Lit>& get_conflict() const;
         bool okay() const;
         void log_to_file(std::string filename);
-        void add_independent_set(vector<uint32_t> vars);
+        void add_independent_set(const std::vector<uint32_t>& vars);
 
         //SQL
         void add_sql_tag(const std::string& tagname, const std::string& tag);

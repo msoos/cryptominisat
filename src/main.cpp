@@ -44,6 +44,7 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <thread>
 #include <string.h>
+#include <list>
 
 #include "main.h"
 #include "main_common.h"
@@ -107,14 +108,14 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-SATSATSolver* solverToInterrupt;
+SATSolver* solverToInterrupt;
 int clear_interrupt;
 string redDumpFname;
 string irredDumpFname;
 
 void SIGINT_handler(int)
 {
-    SATSATSolver* solver = solverToInterrupt;
+    SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
     if (!redDumpFname.empty() || !irredDumpFname.empty() || clear_interrupt) {
@@ -419,7 +420,7 @@ void Main::add_supported_options()
     ("presimp", po::value(&conf.simplify_at_startup)->default_value(conf.simplify_at_startup)
         , "Perform simplification at the very start")
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
-        , "Never stop the search() process in class Solver")
+        , "Never stop the search() process in class SATSolver")
 
     ("schedule", po::value(&conf.simplify_schedule_nonstartup)
         , "Schedule for simplification during run")
@@ -1279,25 +1280,25 @@ uint32_t Main::SolutionsToReturn(
 bool Main::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine)
 {
     string randomBits;
-    GenerateRandomBits(randomBits, (solver.independentSet.size() + 1) * numClaus, randomEngine);
+    GenerateRandomBits(randomBits, (solver->independent_var_set.size() + 1) * numClaus, randomEngine);
     bool xorEqualFalse = false;
-    Var activationVar;
+    uint32_t activationVar;
     vector<Lit> lits;
 
     for (uint32_t i = 0; i < numClaus; i++) {
         lits.clear();
-        activationVar = solver.newVar();
-        assumptions.push(Lit(activationVar, true));
-        lits.push(Lit(activationVar, false));
-        xorEqualFalse = (randomBits[(solver.independentSet.size() + 1) * i] == 1);
+        activationVar = solver->new_var();
+        assumptions.push_back(Lit(activationVar, true));
+        lits.push_back(Lit(activationVar, false));
+        xorEqualFalse = (randomBits[(solver->independent_var_set.size() + 1) * i] == 1);
 
-        for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
+        for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
 
-            if (randomBits[(solver.independentSet.size() + 1) * i + j] == '1') {
-                lits.push(Lit(solver.independentSet[j], true));
+            if (randomBits[(solver->independent_var_set.size() + 1) * i + j] == '1') {
+                lits.push_back(Lit(solver->independent_var_set[j], true));
             }
         }
-        solver.addXorClause(lits, xorEqualFalse);
+        solver->addXorClause(lits, xorEqualFalse);
     }
     return true;
 }
@@ -1333,35 +1334,33 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    Var activationVar = solver.newVar();
-    vector<Lit> allSATAssumptions;
-    if (!assumptions.empty()) {
-        assumptions.copyTo(allSATAssumptions);
-    }
-    allSATAssumptions.push(Lit(activationVar, true));
+    Var activationVar = solver->new_var();
+    vector<Lit> allSATAssumptions(assumptions);
+    allSATAssumptions.push_back(Lit(activationVar, true));
+
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(conf.loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
 
-        ret = solver.solve(allSATAssumptions);
+        ret = solver->solve(allSATAssumptions);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
-            lits.push(Lit(activationVar, false));
-            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
-                Var var = solver.independentSet[j];
-                if (solver.model[var] != l_Undef) {
-                    lits.push(Lit(var, (solver.model[var] == l_True) ? true : false));
+            lits.push_back(Lit(activationVar, false));
+            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
+                uint32_t var = solver->independent_var_set[j];
+                if (solver->model[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->model[var] == l_True) ? true : false));
                 }
             }
-            solver.addClause(lits);
+            solver->addClause(lits);
         }
     }
     vector<Lit> cls_that_removes;
-    cls_that_removes.push(Lit(activationVar, false));
-    solver.addClause(cls_that_removes);
+    cls_that_removes.push_back(Lit(activationVar, false));
+    solver->addClause(cls_that_removes);
     if (ret == l_Undef) {
-        solver.needToInterrupt = false;
+        solver->needToInterrupt = false;
         return -1 * current_nr_of_solutions;
     }
     return current_nr_of_solutions;
@@ -1378,43 +1377,41 @@ lbool Main::BoundedSAT(
 ) {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    Var activationVar = solver.newVar();
+    uint32_t activationVar = solver->new_var();
     vector<Lit> allSATAssumptions;
     if (!assumptions.empty()) {
         assumptions.copyTo(allSATAssumptions);
     }
-    allSATAssumptions.push(Lit(activationVar, true));
+    allSATAssumptions.push_back(Lit(activationVar, true));
 
     std::vector<vector<lbool>> modelsSet;
     vector<lbool> model;
-    //signal(SIGALRM, SIGALARM_handler);
-    start_timer(conf.loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
-        ret = solver.solve(allSATAssumptions);
+        ret = solver->solve(allSATAssumptions);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
-            lits.push(Lit(activationVar, false));
+            lits.push_back(Lit(activationVar, false));
             model.clear();
-            solver.model.copyTo(model);
+            solver->model.copyTo(model);
             modelsSet.push_back(model);
-            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
-                Var var = solver.independentSet[j];
-                if (solver.model[var] != l_Undef) {
-                    lits.push(Lit(var, (solver.model[var] == l_True) ? true : false));
+            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
+                Var var = solver->independent_var_set[j];
+                if (solver->model[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->model[var] == l_True) ? true : false));
                 }
             }
-            solver.addClause(lits);
+            solver->addClause(lits);
         }
     }
     *solutionCount = modelsSet.size();
     //cout<<current_nr_of_solutions<<endl;
     vector<Lit> cls_that_removes;
-    cls_that_removes.push(Lit(activationVar, false));
-    solver.addClause(cls_that_removes);
+    cls_that_removes.push_back(Lit(activationVar, false));
+    solver->addClause(cls_that_removes);
     if (ret == l_Undef) {
-        solver.needToInterrupt = false;
+        solver->needToInterrupt = false;
 
         return ret;
     }
@@ -1431,8 +1428,8 @@ lbool Main::BoundedSAT(
         for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
             vector<lbool> model = modelsSet.at(modelIndices.at(i));
             string solution ("v");
-            for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
-                var = solver.independentSet[j];
+            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
+                var = solver->independent_var_set[j];
                 if (model[var] != l_Undef) {
                     if (model[var] != l_True) {
                         solution += "-";
@@ -1456,7 +1453,7 @@ lbool Main::BoundedSAT(
     return l_False;
 }
 
-SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
+SATCount Main::ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     uint32_t  hashCount;
@@ -1468,7 +1465,7 @@ SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& 
     double elapsedTime = 0;
     int repeatTry = 0;
     for (uint32_t j = 0; j < conf.tApproxMC; j++) {
-        for (hashCount = 0; hashCount < solver.nVars(); hashCount++) {
+        for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
             double currentTime = totalTime();
             elapsedTime = currentTime - startTime;
             if (elapsedTime > conf.totalTimeout - 3000) {
@@ -1586,7 +1583,7 @@ uint32_t Main::UniGen(
                 fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, totalTime() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
                 fflush((*resLog)[threadNum]);
             }
-            if (ret == l_Undef) {   /* Solver timed out; retry current hash count at most twice more */
+            if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
                 assumptions.clear();    /* Throw out old hash functions */
                 if (repeatTry < 2) {    /* Retry current hash count with new hash functions */
                     AddHash(currentHashCount, solver, assumptions, randomEngine);
@@ -1641,25 +1638,13 @@ int Main::singleThreadUniGenCall(
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
 ) {
-    Solver solver2(conf, gaussconfig);
+    SATSolver solver2(conf, gaussconfig);
     //solversToInterrupt[0] = &solver2;
     //need_clean_exit = true;
 
     int num;
-#if defined(_OPENMP)
-    num = omp_get_thread_num();
-#else
     num = 0;
-#endif
-
-    #pragma omp critical (solversToInterr)
-    {
-        //printf("%d\n",num);
-        solversToInterrupt[num] = &solver2;
-    }
-    //SeedEngine(randomEngine);
-
-    setDoublePrecision(conf.verbosity);
+    //setDoublePrecision(conf.verbosity);
     parseInAllFiles(solver2);
     sampleCounter = UniGen(samples, solver2, res, resLog, sampleCounter, randomEngine, solutionMap, lastSuccessfulHashOffset, timeReference);
     return sampleCounter;
@@ -1809,7 +1794,7 @@ int Main::correctReturnValue(const lbool ret) const
 
 int Main::UniSolve()
 {
-    if (conf.startIteration > solver.independentSet.size()) {
+    if (conf.startIteration > solver->independent_var_set.size()) {
         cout << "ERROR: Manually-specified startIteration"
         "is larger than the size of the independent set.\n" << endl;
         return -1;
@@ -1917,18 +1902,18 @@ int Main::UniSolve()
 
     if (conf.needToDumpOrig) {
         if (ret != l_False) {
-            solver.addAllXorAsNorm();
+            solver->addAllXorAsNorm();
         }
         if (ret == l_False && conf.origFilename == "stdout") {
             cout << "p cnf 0 1" << endl;
             cout << "0";
         } else if (ret == l_True && conf.origFilename == "stdout") {
-            cout << "p cnf " << solver.model.size() << " " << solver.model.size() << endl;
-            for (uint32_t i = 0; i < solver.model.size(); i++) {
-                cout << (solver.model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
+            cout << "p cnf " << solver->model.size() << " " << solver->model.size() << endl;
+            for (uint32_t i = 0; i < solver->model.size(); i++) {
+                cout << (solver->model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
             }
         } else {
-            if (!solver.dumpOrigClauses(conf.origFilename)) {
+            if (!solver->dumpOrigClauses(conf.origFilename)) {
                 cout << "Error: Cannot open file '" << conf.origFilename << "' to write learnt clauses!" << endl;
                 exit(-1);
             }
@@ -1941,7 +1926,7 @@ int Main::UniSolve()
         cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
     }
     if (conf.verbosity >= 1) {
-        solver.printStats();
+        solver->printStats();
     }
 
     return correctReturnValue(ret);
