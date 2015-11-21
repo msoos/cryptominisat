@@ -45,12 +45,14 @@ THE SOFTWARE.
 #include <thread>
 #include <string.h>
 #include <list>
+#include <map>
 
 #include "main.h"
 #include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
+#include "src/UniFunctions.h"
 
 #ifdef USE_ZLIB
 static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
@@ -1307,23 +1309,24 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    uint32_t activationVar = solver->new_var();
+    solver->new_var;
+    uint32_t activationVar = solver->nVars()-1;
     vector<Lit> allSATAssumptions(assumptions);
     allSATAssumptions.push_back(Lit(activationVar, true));
 
     //signal(SIGALRM, SIGALARM_handler);
-    start_timer(conf.loopTimeout);
+    //start_timer(conf.loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
 
-        ret = solver->solve(allSATAssumptions);
+        ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
             for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
                 uint32_t var = solver->independent_var_set[j];
-                if (solver->get_model[var] != l_Undef) {
-                    lits.push_back(Lit(var, (solver->get_model[var] == l_True) ? true : false));
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
                 }
             }
             solver->add_clause(lits);
@@ -1333,7 +1336,6 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
     cls_that_removes.push_back(Lit(activationVar, false));
     solver->add_clause(cls_that_removes);
     if (ret == l_Undef) {
-        solver->needToInterrupt = false;
         return -1 * current_nr_of_solutions;
     }
     return current_nr_of_solutions;
@@ -1350,14 +1352,15 @@ lbool Main::BoundedSAT(
 ) {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    uint32_t activationVar = solver->new_var();
+    solver->new_var();
+    uint32_t activationVar = solver->nVars()-1;
     vector<Lit> allSATAssumptions(assumptions);
     allSATAssumptions.push_back(Lit(activationVar, true));
 
     std::vector<vector<lbool>> modelsSet;
     vector<lbool> model;
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
-        ret = solver->solve(allSATAssumptions);
+        ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
@@ -1404,7 +1407,7 @@ lbool Main::BoundedSAT(
             }
             solution += "0";
 
-            map<std::string, uint32_t>::iterator it = solutionMap.find(solution);
+            std:map<std::string, uint32_t>::iterator it = solutionMap.find(solution);
             if (it == solutionMap.end()) {
                 solutionMap[solution] = 0;
             }
@@ -1733,27 +1736,6 @@ int Main::solve()
     }
 
     return correctReturnValue(ret);
-}
-
-int Main::correctReturnValue(const lbool ret) const
-{
-    if (zero_exit_status) {
-        return 0;
-    }
-
-    int retval = -1;
-    if      (ret == l_True)  retval = 10;
-    else if (ret == l_False) retval = 20;
-    else if (ret == l_Undef) retval = 15;
-    else {
-        cerr
-        << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True"
-        << endl;
-
-        std::exit(-1);
-    }
-
-    return retval;
 }
 
 int Main::UniSolve()
