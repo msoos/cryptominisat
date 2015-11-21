@@ -13,12 +13,11 @@
 #include<vector>
 #include <sstream>
 #include<random>
-#include "cmsat/Solver.h"
-#include "cmsat/SolverTypes.h"
-#include "cmsat/constants.h"
-#include "cmsat/StreamBuffer.h"
-#include "cmsat/Vec.h"
-#include "cmsat/constants.h"
+#include "solver.h"
+#include "solvertypes.h"
+#include "constants.h"
+//#include "StreamBuffer.h"
+#include "constants.h"
 using namespace std;
 namespace CMSat {
 

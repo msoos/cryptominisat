@@ -309,7 +309,7 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
-    } else if (str.substr == "ind") {
+    } else if (str == "ind") {
         //parsing the independent variables
         if (!parseIndependentSet(in)) {
             return false;
@@ -430,7 +430,7 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream)
     if ( !parse_DIMACS_main(in)) {
         return false;
     }
-    solver->addIndependentSet(independent_vars);
+    solver->add_independent_set(independent_vars);
 
     if (verbosity >= 1) {
         cout

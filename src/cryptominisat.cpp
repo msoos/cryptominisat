@@ -728,3 +728,13 @@ DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() co
 {
     return data->solvers[0]->get_all_binary_xors();
 }
+
+void SATSolver::add_independent_set(const vector<uint32_t>& vars)
+{
+    for(size_t i = 0
+        ; i < data->solvers.size()
+        ; i++
+    ) {
+        data->solvers[i]->add_independent_set(vars);
+    }
+}

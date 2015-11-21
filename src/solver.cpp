@@ -3708,25 +3708,21 @@ void Solver::check_stats(const bool allowFreed) const
     }
 }
 
-template<class T>
-bool Solver::addIndependentSet(T& ps)
+void Solver::add_independent_set(const vector<uint32_t>& ps)
 {
     uint32_t origVars = nVars();
     if (ps.size() == 0) {
-        for (Var i = 0; i != nVars(); i++) {
+        for (uint32_t i = 0; i != nVars(); i++) {
             independentSet.push(i);
         }
-        return true;
     }
 
     vector<lbool>* independentSetTrack = new vector<lbool> (assigns.size(), l_Undef);
-    for (uint32_t i = 0; i != ps.size(); i++) {
+    for (uint32_t i = 0; i < ps.size(); i++) {
         if ((*independentSetTrack)[ps[i]] == l_Undef) {
             independentSet.push(ps[i]);
             (*independentSetTrack)[ps[i]] = l_True;
         }
     }
     delete independentSetTrack;
-    return ok;
 }
-template bool Solver::addIndependentSet(vec<Var>& ps);

@@ -234,8 +234,7 @@ class Solver : public Searcher
         void consolidate_mem();
         size_t mem_used() const;
 
-        template<class T>
-        bool addIndependentSet(T& ps);
+        void add_independent_set(const vector<uint32_t>& ps);
         vec<uint32_t> independentSet; ///< Set of independent variables
 
     private:

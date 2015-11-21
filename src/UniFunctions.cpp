@@ -11,8 +11,9 @@
 #include<bitset>
 #include<ctime>
 
-#include "cmsat/time_mem.h"
-#include "cmsat/UniFunctions.h"
+#include "time_mem.h"
+#include "UniFunctions.h"
+#include "solvertypes.h"
 
 using namespace CMSat;
 using namespace std;
@@ -41,7 +42,7 @@ double findMedian(list<int> numList)
 
 int findMin(list<int> numList)
 {
-    int min = INT_MAX;
+    int min = std::numeric_limits<int>::max();
     for (list<int>::iterator it = numList.begin(); it != numList.end(); it++) {
         if ((*it) < min) {
             min = *it;

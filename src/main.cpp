@@ -63,9 +63,9 @@ static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
 using namespace CMSat;
 using boost::lexical_cast;
 
-using cout;
+using std::cout;
 using std::cerr;
-using endl;
+using std::endl;
 using boost::lexical_cast;
 
 struct WrongParam
@@ -107,14 +107,14 @@ Main::Main(int _argc, char** _argv) :
 {
 }
 
-SATSolver* solverToInterrupt;
+SATSATSolver* solverToInterrupt;
 int clear_interrupt;
 string redDumpFname;
 string irredDumpFname;
 
 void SIGINT_handler(int)
 {
-    SATSolver* solver = solverToInterrupt;
+    SATSATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
     if (!redDumpFname.empty() || !irredDumpFname.empty() || clear_interrupt) {
@@ -1276,13 +1276,13 @@ uint32_t Main::SolutionsToReturn(
         return 1;
     }
 }
-bool Main::AddHash(uint32_t numClaus, Solver& solver, vec<Lit>& assumptions, std::mt19937& randomEngine)
+bool Main::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine)
 {
     string randomBits;
     GenerateRandomBits(randomBits, (solver.independentSet.size() + 1) * numClaus, randomEngine);
     bool xorEqualFalse = false;
     Var activationVar;
-    vec<Lit> lits;
+    vector<Lit> lits;
 
     for (uint32_t i = 0; i < numClaus; i++) {
         lits.clear();
@@ -1302,7 +1302,7 @@ bool Main::AddHash(uint32_t numClaus, Solver& solver, vec<Lit>& assumptions, std
     return true;
 }
 
-void Main::printResultFunc(Solver& S, vec<lbool> solutionModel, const lbool ret, FILE* res)
+void Main::printResultFunc(Solver& S, vector<lbool> solutionModel, const lbool ret, FILE* res)
 {
     if (res != NULL && printResult) {
         if (ret == l_True) {
@@ -1329,12 +1329,12 @@ void Main::printResultFunc(Solver& S, vec<lbool> solutionModel, const lbool ret,
     }
 }
 
-int32_t Main::BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& assumptions)
+int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     Var activationVar = solver.newVar();
-    vec<Lit> allSATAssumptions;
+    vector<Lit> allSATAssumptions;
     if (!assumptions.empty()) {
         assumptions.copyTo(allSATAssumptions);
     }
@@ -1346,7 +1346,7 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& a
         ret = solver.solve(allSATAssumptions);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
-            vec<Lit> lits;
+            vector<Lit> lits;
             lits.push(Lit(activationVar, false));
             for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
                 Var var = solver.independentSet[j];
@@ -1357,7 +1357,7 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& a
             solver.addClause(lits);
         }
     }
-    vec<Lit> cls_that_removes;
+    vector<Lit> cls_that_removes;
     cls_that_removes.push(Lit(activationVar, false));
     solver.addClause(cls_that_removes);
     if (ret == l_Undef) {
@@ -1370,8 +1370,8 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, Solver& solver, vec<Lit>& a
 lbool Main::BoundedSAT(
     uint32_t maxSolutions
     , uint32_t minSolutions
-    , Solver& solver
-    , vec<Lit>& assumptions
+    , SATSolver* solver
+    , vector<Lit>& assumptions
     , std::mt19937& randomEngine
     , std::map<std::string, uint32_t>& solutionMap
     , uint32_t* solutionCount
@@ -1379,14 +1379,14 @@ lbool Main::BoundedSAT(
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     Var activationVar = solver.newVar();
-    vec<Lit> allSATAssumptions;
+    vector<Lit> allSATAssumptions;
     if (!assumptions.empty()) {
         assumptions.copyTo(allSATAssumptions);
     }
     allSATAssumptions.push(Lit(activationVar, true));
 
-    std::vector<vec<lbool>> modelsSet;
-    vec<lbool> model;
+    std::vector<vector<lbool>> modelsSet;
+    vector<lbool> model;
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(conf.loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
@@ -1394,7 +1394,7 @@ lbool Main::BoundedSAT(
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
-            vec<Lit> lits;
+            vector<Lit> lits;
             lits.push(Lit(activationVar, false));
             model.clear();
             solver.model.copyTo(model);
@@ -1410,7 +1410,7 @@ lbool Main::BoundedSAT(
     }
     *solutionCount = modelsSet.size();
     //cout<<current_nr_of_solutions<<endl;
-    vec<Lit> cls_that_removes;
+    vector<Lit> cls_that_removes;
     cls_that_removes.push(Lit(activationVar, false));
     solver.addClause(cls_that_removes);
     if (ret == l_Undef) {
@@ -1429,7 +1429,7 @@ lbool Main::BoundedSAT(
         Var var;
         uint32_t numSolutionsToReturn = SolutionsToReturn(maxSolutions, minSolutions, modelsSet.size());
         for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
-            vec<lbool> model = modelsSet.at(modelIndices.at(i));
+            vector<lbool> model = modelsSet.at(modelIndices.at(i));
             string solution ("v");
             for (uint32_t j = 0; j < solver.independentSet.size(); j++) {
                 var = solver.independentSet[j];
@@ -1456,12 +1456,12 @@ lbool Main::BoundedSAT(
     return l_False;
 }
 
-SATCount Main::ApproxMC(Solver& solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
+SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     uint32_t  hashCount;
     std::list<int> numHashList, numCountList;
-    vec<Lit> assumptions;
+    vector<Lit> assumptions;
     SATCount solCount;
     solCount.cellSolCount = 0;
     solCount.hashCount = 0;
@@ -1527,7 +1527,7 @@ SATCount Main::ApproxMC(Solver& solver, vector<FILE*>* resLog, std::mt19937& ran
 
 uint32_t Main::UniGen(
     uint32_t samples
-    , Solver& solver
+    , SATSolver* solver
     , FILE* res
     , vector<FILE* >* resLog
     , uint32_t sampleCounter
@@ -1539,7 +1539,7 @@ uint32_t Main::UniGen(
     lbool ret = l_False;
     uint32_t i, solutionCount, currentHashCount, lastHashCount, currentHashOffset, hashOffsets[3];
     int hashDelta;
-    vec<Lit> assumptions;
+    vector<Lit> assumptions;
     double elapsedTime = 0;
 #if defined(_OPENMP)
     int threadNum = omp_get_thread_num();
