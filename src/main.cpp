@@ -677,8 +677,6 @@ void Main::add_supported_options()
 #ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
-    ("ordercol", po::value(&conf.gaussconf.orderCols)->default_value(conf.gaussconf.orderCols)
-        , "Don't order variables in the columns of Gaussian elimination.")
     ("iterreduce", po::value(&conf.gaussconf.iterativeReduce)->default_value(conf.gaussconf.iterativeReduce)
         , "Don't reduce iteratively the matrix that is updated")
     ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
