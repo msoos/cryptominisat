@@ -149,17 +149,28 @@ bool MatrixFinder::findMatrixes()
 
     uint32_t numMatrixes = setMatrixes();
 
-    if (solver->conf.verbosity >=1)
-        cout << "c Finding matrixes :    " << cpuTime() - myTime
-        << " s (found  " << numMatrixes << ")"
+    const bool time_out =  false;
+    const double time_used = cpuTime() - myTime;
+    if (solver->conf.verbosity >= 3) {
+        cout << "c Found matrixes: " << numMatrixes
+        << solver->conf.print_times(time_used, time_out)
         << endl;
-
-    for (Gaussian* g: solver->gauss_matrixes) {
-        if (!g->init_until_fixedpoint())
-            return false;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "matrix find"
+            , time_used
+        );
     }
 
-    return true;
+    for (Gaussian* g: solver->gauss_matrixes) {
+        if (!g->init_until_fixedpoint()) {
+            break;
+        }
+    }
+
+    return solver->ok;
 }
 
 uint32_t MatrixFinder::setMatrixes()
