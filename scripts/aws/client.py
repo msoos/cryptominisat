@@ -20,6 +20,7 @@ import fcntl
 import struct
 import logging
 import boto.utils
+from __future__ import print_function
 
 # for importing in systems where "." is not in the PATH
 import glob
@@ -91,7 +92,7 @@ if options.host is None:
         if "DATA" in line:
             options.host = line.split("=")[1].strip().strip('"')
 
-    print "HOST has beeen set to %s" % options.host
+    print("HOST has beeen set to %s" % options.host)
 
 
 def uptime():
@@ -120,7 +121,7 @@ def connect_client(threadID):
 
     # Get local machine name
     if options.host is None:
-        print "You must supply the host to connect to as a client"
+        print("You must supply the host to connect to as a client")
         exit(-1)
 
     logging.info("Getting host by name %s", options.host,
