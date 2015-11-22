@@ -10,6 +10,7 @@ import subprocess
 import socket
 import fcntl
 import struct
+from __future__ import print_function
 
 
 def get_ip_address(ifname):
@@ -45,11 +46,11 @@ def upload_log(bucket, folder, logfile_name, fname):
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
-        print "traceback for boto issue:", the_trace
+        print("traceback for boto issue: %s" % the_trace)
 
 
 def get_s3_folder(folder, rev, timeout, memout):
-    print "folder: ", folder, "rev: ", rev, " tout: ", timeout, "memout ", memout
+    print("folder: %s rev: %s tout: %s memout %s" % (folder, rev, timeout, memout))
     return folder + "-%s-tout-%d-mout-%d" \
         % (rev[:9],
            timeout,
