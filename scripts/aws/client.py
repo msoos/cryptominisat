@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import os
 import socket
 import sys
@@ -22,7 +21,7 @@ import struct
 import logging
 import boto.utils
 
-#for importing in systems where "." is not in the PATH
+# for importing in systems where "." is not in the PATH
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
