@@ -867,7 +867,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         #ifdef SLOW_DEBUG
         solver->check_implicit_stats(true);
         #endif
-        solver->propagate_occur();
+        if (!solver->propagate_occur()) {
+            return false;
+        }
         set_limits();
 
         token = trim(token);
