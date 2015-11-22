@@ -73,9 +73,9 @@ class Main
         SATSolver* solver = NULL;
 
         //File reading
-        void readInAFile(const string& filename);
-        void readInStandardInput();
-        void parseInAllFiles();
+        void readInAFile(SATSolver* solver2, const string& filename);
+        void readInStandardInput(SATSolver* solver2);
+        void parseInAllFiles(SATSolver* solver2);
 
         //Helper functions
         void printResultFunc(
@@ -115,12 +115,16 @@ class Main
 
         //Unistuff
         int UniSolve(); //old one-thread-solve
-        SATCount ApproxMC(SATSolver* solver, vector<FILE*>* resLog
+        SATCount ApproxMC(
+            SATSolver* solver
+            , FILE* resLog
             , std::mt19937& randomEngine
         );
 
-        uint32_t UniGen(uint32_t samples, SATSolver* solver
-            , FILE* res, std::vector< FILE* >* resLog, uint32_t sampleCounter
+        uint32_t UniGen(
+            uint32_t samples
+            , SATSolver* solver
+            , FILE* resLog, uint32_t sampleCounter
             , std::mt19937& randomEngine
             , std::map< string, uint32_t >& solutionMap
             , uint32_t* lastSuccessfulHashOffset, double timeReference
@@ -141,15 +145,12 @@ class Main
             , uint32_t size
             , std::mt19937& randomEngine
         );
-        uint32_t SolutionsToReturn(uint32_t maxSolutions
-            , uint32_t minSolutions
-            , unsigned long currentSolutions
-        );
+        uint32_t SolutionsToReturn(uint32_t minSolutions);
         int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
         bool printSolutions(FILE* res);
         void SeedEngine(std::mt19937& randomEngine);
-        int singleThreadUniGenCall(uint32_t samples, FILE* res
-            , vector<FILE*>* resLog, uint32_t sampleCounter
+        int singleThreadUniGenCall(uint32_t samples
+            , FILE* resLog, uint32_t sampleCounter
             , std::map<std::string, uint32_t>& solutionMap
             , std::mt19937& randomEngine
             , uint32_t* lastSuccessfulHashOffset
@@ -158,6 +159,7 @@ class Main
 
         time_t  startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
+        bool openLogFile(FILE*& res);
 };
 
 #endif //MAIN_H

@@ -92,7 +92,7 @@ struct WrongParam
     string msg;
 };
 
-bool fileExists(const std::string& filename)
+bool fileExists(const string& filename)
 {
     struct stat buf;
     if (stat(filename.c_str(), &buf) != -1)
@@ -141,18 +141,18 @@ void SIGINT_handler(int)
     }
 }
 
-void Main::readInAFile(const string& filename)
+void Main::readInAFile(SATSolver* solver2, const string& filename)
 {
-    solver->add_sql_tag("filename", filename);
+    solver2->add_sql_tag("filename", filename);
     if (conf.verbosity >= 1) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -175,7 +175,7 @@ void Main::readInAFile(const string& filename)
     #endif
 }
 
-void Main::readInStandardInput()
+void Main::readInStandardInput(SATSolver* solver2)
 {
     if (conf.verbosity) {
         cout
@@ -195,9 +195,9 @@ void Main::readInStandardInput()
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
     #else
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (!parser.parse_DIMACS(in)) {
@@ -209,7 +209,7 @@ void Main::readInStandardInput()
     #endif
 }
 
-void Main::parseInAllFiles()
+void Main::parseInAllFiles(SATSolver* solver2)
 {
     const double myTime = cpuTime();
 
@@ -223,14 +223,12 @@ void Main::parseInAllFiles()
         std::exit(-1);
     }
 
-    for (vector<string>::const_iterator
-        it = filesToRead.begin(), end = filesToRead.end(); it != end; ++it
-    ) {
-        readInAFile(it->c_str());
+    for (const string& fname: filesToRead) {
+        readInAFile(solver2, fname.c_str());
     }
 
     if (!fileNamePresent) {
-        readInStandardInput();
+        readInStandardInput(solver2);
     }
 
     if (conf.verbosity >= 1) {
@@ -1235,10 +1233,121 @@ int Main::correctReturnValue(const lbool ret) const
     return retval;
 }
 
-std::string binary(int x, uint32_t length)
+int Main::solve()
+{
+
+    solver = new SATSolver((void*)&conf);
+    solverToInterrupt = solver;
+    if (drupf) {
+        solver->set_drup(drupf);
+    }
+    check_num_threads_sanity(num_threads);
+    solver->set_num_threads(num_threads);
+
+    std::ofstream resultfile;
+    if (needResultFile) {
+        resultfile.open(resultFilename.c_str());
+        if (!resultfile) {
+            cout
+            << "ERROR: Couldn't open file '"
+            << resultFilename
+            << "' for writing!"
+            << endl;
+            std::exit(-1);
+        }
+    }
+
+    //Print command line used to execute the solver: for options and inputs
+    if (conf.verbosity >= 1) {
+        printVersionInfo();
+        cout
+        << "c Executed with command line: "
+        << commandLine
+        << endl;
+    }
+    solver->add_sql_tag("commandline", commandLine);
+
+    //Parse in DIMACS (maybe gzipped) files
+    //solver->log_to_file("mydump.cnf");
+    if (conf.preprocess != 2) {
+        parseInAllFiles(solver);
+    }
+
+    //Multi-solutions
+    unsigned long current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
+        ret = solver->solve();
+        current_nr_of_solutions++;
+
+        if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
+            //Print result
+            printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+            if (needResultFile) {
+                printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+            }
+
+            if (conf.verbosity >= 1) {
+                cout
+                << "c Number of solutions found until now: "
+                << std::setw(6) << current_nr_of_solutions
+                << endl;
+            }
+            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+            solver->print_removed_vars();
+            #endif
+
+            //Banning found solution
+            vector<Lit> lits;
+            for (uint32_t var = 0; var < solver->nVars(); var++) {
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                }
+            }
+            solver->add_clause(lits);
+        }
+    }
+
+    dumpIfNeeded();
+
+    if (conf.preprocess != 1) {
+        if (ret == l_Undef && conf.verbosity >= 1) {
+            cout
+            << "c Not finished running -- signal caught or some maximum reached"
+            << endl;
+        }
+        if (conf.verbosity >= 1) {
+            solver->print_stats();
+        }
+
+        //Final print of solution
+        printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+        if (needResultFile) {
+            printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+        }
+    }
+
+    //Delete solver
+    delete solver;
+    solver = NULL;
+
+    if (drupf) {
+        //flush DRUP
+        *drupf << std::flush;
+
+        //If it's not stdout, we have to delete the ofstream
+        if (drupf != &cout) {
+            delete drupf;
+        }
+    }
+
+    return correctReturnValue(ret);
+}
+
+string binary(int x, uint32_t length)
 {
     uint32_t logSize = (x == 0 ? 1 : log2(x) + 1);
-    std::string s;
+    string s;
     do {
         s.push_back('0' + (x & 1));
     } while (x >>= 1);
@@ -1269,9 +1378,7 @@ int Main::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
 
 /* Number of solutions to return from one invocation of UniGen2 */
 uint32_t Main::SolutionsToReturn(
-    uint32_t maxSolutions
-    , uint32_t minSolutions
-    , unsigned long currentSolutions
+    uint32_t minSolutions
 ) {
     if (conf.multisample) {
         return minSolutions;
@@ -1347,7 +1454,7 @@ lbool Main::BoundedSAT(
     , SATSolver* solver
     , vector<Lit>& assumptions
     , std::mt19937& randomEngine
-    , std::map<std::string, uint32_t>& solutionMap
+    , std::map<string, uint32_t>& solutionMap
     , uint32_t* solutionCount
 ) {
     unsigned long current_nr_of_solutions = 0;
@@ -1391,7 +1498,7 @@ lbool Main::BoundedSAT(
         }
         std::shuffle(modelIndices.begin(), modelIndices.end(), randomEngine);
         uint32_t var;
-        uint32_t numSolutionsToReturn = SolutionsToReturn(maxSolutions, minSolutions, modelsSet.size());
+        uint32_t numSolutionsToReturn = SolutionsToReturn(minSolutions);
         for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
             vector<lbool> model = modelsSet.at(modelIndices.at(i));
             string solution ("v");
@@ -1407,7 +1514,7 @@ lbool Main::BoundedSAT(
             }
             solution += "0";
 
-            std:map<std::string, uint32_t>::iterator it = solutionMap.find(solution);
+            std::map<string, uint32_t>::iterator it = solutionMap.find(solution);
             if (it == solutionMap.end()) {
                 solutionMap[solution] = 0;
             }
@@ -1431,7 +1538,7 @@ inline int findMin(list<int> numList)
     return min;
 }
 
-SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
+SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     uint32_t  hashCount;
@@ -1456,9 +1563,9 @@ SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& 
             //printf("%f\n", myTime);
             //printf("%d %d\n",currentNumSolutions,conf.pivotApproxMC);
             if (conf.verbosity >= 2) {
-                fprintf((*resLog)[0], "ApproxMC:%d:%d:%f:%d:%d\n", j, hashCount, myTime,
+                fprintf(resLog, "ApproxMC:%d:%d:%f:%d:%d\n", j, hashCount, myTime,
                         (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1)), currentNumSolutions);
-                fflush((*resLog)[0]);
+                fflush(resLog);
             }
             if (currentNumSolutions <= 0) {
                 assumptions.clear();
@@ -1503,11 +1610,10 @@ SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& 
 uint32_t Main::UniGen(
     uint32_t samples
     , SATSolver* solver
-    , FILE* res
-    , vector<FILE* >* resLog
+    , FILE* resLog
     , uint32_t sampleCounter
     , std::mt19937& randomEngine
-    , std::map<std::string, uint32_t>& solutionMap
+    , std::map<string, uint32_t>& solutionMap
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
 ) {
@@ -1516,11 +1622,6 @@ uint32_t Main::UniGen(
     int hashDelta;
     vector<Lit> assumptions;
     double elapsedTime = 0;
-#if defined(_OPENMP)
-    int threadNum = omp_get_thread_num();
-#else
-    int threadNum = 0;
-#endif
     int repeatTry = 0;
     for (i = 0; i < samples; i++) {
         sampleCounter ++;
@@ -1558,8 +1659,8 @@ uint32_t Main::UniGen(
             uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
             if (conf.verbosity >= 2) {
-                fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
-                fflush((*resLog)[threadNum]);
+                fprintf(resLog, "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
+                fflush(resLog);
             }
             if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
                 assumptions.clear();    /* Throw out old hash functions */
@@ -1608,26 +1709,22 @@ uint32_t Main::UniGen(
 
 int Main::singleThreadUniGenCall(
     uint32_t samples
-    , FILE* res
-    , vector<FILE*>* resLog
+    , FILE* resLog
     , uint32_t sampleCounter
-    , std::map<std::string, uint32_t>& solutionMap
+    , std::map<string, uint32_t>& solutionMap
     , std::mt19937& randomEngine
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
 ) {
     SATSolver solver2(&conf);
-    //solversToInterrupt[0] = &solver2;
-    //need_clean_exit = true;
 
     int num;
     num = 0;
     //setDoublePrecision(conf.verbosity);
-    parseInAllFiles(solver2);
+    parseInAllFiles(&solver2);
     sampleCounter = UniGen(
         samples
-        , solver2
-        , res
+        , &solver2
         , resLog
         , sampleCounter
         , randomEngine
@@ -1648,119 +1745,33 @@ void Main::SeedEngine(std::mt19937& randomEngine)
     randomEngine.seed(seed);
 }
 
-int Main::solve()
+bool Main::openLogFile(FILE*& res)
 {
-
-    solver = new SATSolver((void*)&conf);
-    solverToInterrupt = solver;
-    if (drupf) {
-        solver->set_drup(drupf);
+    if (false) {
+        return false;
     }
-    check_num_threads_sanity(num_threads);
-    solver->set_num_threads(num_threads);
 
-    std::ofstream resultfile;
-    if (needResultFile) {
-        resultfile.open(resultFilename.c_str());
-        if (!resultfile) {
-            cout
-            << "ERROR: Couldn't open file '"
-            << resultFilename
-            << "' for writing!"
-            << endl;
-            std::exit(-1);
+    string suffix, logFileName;
+    for (int i = 0; i < 1; i++) {
+        suffix = "_";
+        suffix.append(std::to_string(i).append(".txt"));
+        logFileName = "mylog";
+        res = fopen(logFileName.append(suffix).c_str(), "wb");
+        if (res == NULL) {
+            int backup_errno = errno;
+            printf("Cannot open %s for writing. Problem: %s\n", logFileName.append(suffix).c_str(), strerror(backup_errno));
+            exit(1);
         }
     }
-
-    //Print command line used to execute the solver: for options and inputs
-    if (conf.verbosity >= 1) {
-        printVersionInfo();
-        cout
-        << "c Executed with command line: "
-        << commandLine
-        << endl;
-    }
-    solver->add_sql_tag("commandline", commandLine);
-
-    //Parse in DIMACS (maybe gzipped) files
-    //solver->log_to_file("mydump.cnf");
-    if (conf.preprocess != 2) {
-        parseInAllFiles();
-    }
-
-    //Multi-solutions
-    unsigned long current_nr_of_solutions = 0;
-    lbool ret = l_True;
-    while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve();
-        current_nr_of_solutions++;
-
-        if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            //Print result
-            printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-            if (needResultFile) {
-                printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
-            }
-
-            if (conf.verbosity >= 1) {
-                cout
-                << "c Number of solutions found until now: "
-                << std::setw(6) << current_nr_of_solutions
-                << endl;
-            }
-            #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            solver->print_removed_vars();
-            #endif
-
-            //Banning found solution
-            vector<Lit> lits;
-            for (uint32_t var = 0; var < solver->nVars(); var++) {
-                if (solver->get_model()[var] != l_Undef) {
-                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
-                }
-            }
-            solver->add_clause(lits);
-        }
-    }
-
-    dumpIfNeeded();
-
-    if (conf.preprocess != 1) {
-        if (ret == l_Undef && conf.verbosity >= 1) {
-            cout
-            << "c Not finished running -- signal caught or some maximum reached"
-            << endl;
-        }
-        if (conf.verbosity >= 1) {
-            solver->print_stats();
-        }
-
-        //Final print of solution
-        printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-        if (needResultFile) {
-            printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
-        }
-    }
-
-    //Delete solver
-    delete solver;
-    solver = NULL;
-
-    if (drupf) {
-        //flush DRUP
-        *drupf << std::flush;
-
-        //If it's not stdout, we have to delete the ofstream
-        if (drupf != &cout) {
-            delete drupf;
-        }
-    }
-
-    return correctReturnValue(ret);
+    return true;
 }
 
+//My stuff from OneThreadSolve
 int Main::UniSolve()
 {
+    FILE* resLog;
+    openLogFile(resLog);
+
     if (conf.startIteration > solver->independent_var_set.size()) {
         cout << "ERROR: Manually-specified startIteration"
         "is larger than the size of the independent set.\n" << endl;
@@ -1793,13 +1804,13 @@ int Main::UniSolve()
 
     uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
     uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
-    uint32_t samplesPerCall = SolutionsToReturn(maxSolutions + 1, minSolutions, minSolutions);
+    uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
     uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
-    cout << "loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
-    //printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
+    printf("loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
+    printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
     uint32_t numCallsInOneLoop = 0;
     if (conf.callsPerSolver == 0) {
-        numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded / numThreads);
+        numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded);
         if (numCallsInOneLoop == 0) {
             numCallsInOneLoop = 1;
         }
@@ -1816,7 +1827,7 @@ int Main::UniSolve()
     << " remaining: " << remainingCalls << endl;
     bool timedOut = false;
     uint32_t sampleCounter = 0;
-    std::map<std::string, uint32_t> threadSolutionMap;
+    std::map<string, uint32_t> threadSolutionMap;
     double allThreadsTime = 0;
     uint32_t allThreadsSampleCount = 0;
     double threadStartTime = cpuTimeTotal();
@@ -1825,75 +1836,56 @@ int Main::UniSolve()
     SeedEngine(randomEngine);
 
     uint32_t lastSuccessfulHashOffset = 0;
+    lbool ret = l_True;
 
     /* Perform extra UniGen calls that don't fit into the loops */
     if (remainingCalls > 0) {
-        sampleCounter = singleThreadUniGenCall(remainingCalls, res, resLog, sampleCounter, threadSolutionMap, randomEngine, &lastSuccessfulHashOffset, threadStartTime);
+        sampleCounter = singleThreadUniGenCall(
+            remainingCalls, resLog, sampleCounter
+            , threadSolutionMap, randomEngine
+            , &lastSuccessfulHashOffset, threadStartTime);
     }
 
     /* Perform main UniGen call loops */
     for (uint32_t i = 0; i < numCallLoops; i++) {
         if (!timedOut) {
-            sampleCounter = singleThreadUniGenCall(numCallsInOneLoop, res, resLog, sampleCounter, threadSolutionMap, randomEngine, &lastSuccessfulHashOffset, threadStartTime);
+            sampleCounter = singleThreadUniGenCall(
+                numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
+                , randomEngine, &lastSuccessfulHashOffset, threadStartTime
+            );
+
             if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
                 timedOut = true;
             }
         }
     }
 
-    for (map<std::string, uint32_t>::iterator itt = threadSolutionMap.begin();
-            itt != threadSolutionMap.end(); itt++) {
-        std::string solution = itt->first;
-        map<std::string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
+    for (map<string, uint32_t>::iterator itt = threadSolutionMap.begin()
+        ; itt != threadSolutionMap.end()
+        ; itt++
+    ) {
+        string solution = itt->first;
+        map<string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
         if (itg == globalSolutionMap.end()) {
-            globalSolutionMap[solution] = std::vector<uint32_t>(numThreads, 0);
+            globalSolutionMap[solution] = std::vector<uint32_t>(1, 0);
         }
-        globalSolutionMap[solution][threadNum] += itt->second;
+        globalSolutionMap[solution][0] += itt->second;
         allThreadsSampleCount += itt->second;
     }
 
     double timeTaken = cpuTimeTotal() - threadStartTime;
     allThreadsTime += timeTaken;
-    printf("Total time for UniGen2 thread %d: %f s", threadNum, timeTaken);
+    printf("Total time for UniGen2 thread %d: %f s", 1, timeTaken);
     if (timedOut) {
         printf(" (TIMED OUT)");
     }
     printf("\n");
 
-    if (printResult) {
-        printSolutions(res);
-    }
-
     printf("Total time for all UniGen2 calls: %f s\n", allThreadsTime);
     printf("Samples generated: %d\n", allThreadsSampleCount);
 
-    if (conf.needToDumpOrig) {
-        if (ret != l_False) {
-            solver->addAllXorAsNorm();
-        }
-        if (ret == l_False && conf.origFilename == "stdout") {
-            cout << "p cnf 0 1" << endl;
-            cout << "0";
-        } else if (ret == l_True && conf.origFilename == "stdout") {
-            cout << "p cnf " << solver->get_model.size() << " " << solver->get_model.size() << endl;
-            for (uint32_t i = 0; i < solver->get_model.size(); i++) {
-                cout << (solver->get_model[i] == l_True ? "" : "-") << i + 1 << " 0" << endl;
-            }
-        } else {
-            if (!solver->dumpOrigClauses(conf.origFilename)) {
-                cout << "Error: Cannot open file '" << conf.origFilename << "' to write learnt clauses!" << endl;
-                exit(-1);
-            }
-            if (conf.verbosity >= 1)
-                cout << "c Simplified original clauses dumped to file '"
-                          << conf.origFilename << "'" << endl;
-        }
-    }
-    if (ret == l_Undef && conf.verbosity >= 1) {
-        cout << "c Not finished running -- signal caught or maximum restart reached" << endl;
-    }
     if (conf.verbosity >= 1) {
-        solver->printStats();
+        solver->print_stats();
     }
 
     return correctReturnValue(ret);
