@@ -938,6 +938,8 @@ bool PropEngine::propagate_occur()
     if (!ok)
         return false;
 
+    assert(decisionLevel() == 0);
+
     while (qhead < trail_size()) {
         const Lit p = trail[qhead];
         qhead++;
