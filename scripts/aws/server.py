@@ -16,6 +16,7 @@ import Queue
 import threading
 import logging
 import string
+from __future__ import print_function
 
 # for importing in systems where "." is not in the PATH
 import glob
@@ -235,8 +236,8 @@ class Server (threading.Thread):
         files_to_remove_from_files_running = []
         for file_num, starttime in self.files_running.iteritems():
             duration = this_time - starttime
-            # print "* death check. running:" , file_num, " duration: ",
-            # duration
+            # print("* death check. running:" , file_num, " duration: ",
+            # duration)
             if duration > options.timeout_in_secs + options.extra_time:
                 logging.warn("* dead file %s duration: %d re-inserting",
                              file_num, duration)

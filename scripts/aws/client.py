@@ -272,13 +272,15 @@ class solverThread (threading.Thread):
 
         # stdout
         os.system("gzip -f %s" % self.get_stdout_fname())
-        k.key = s3_folder_and_fname + ".stdout.gz"
+        final_stdout_fname = s3_folder_and_fname + ".stdout.gz-tmp"
+        k.key = final_stdout_fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
 
         # stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        k.key = s3_folder_and_fname + ".stderr.gz"
+        final_stderr_fname = s3_folder_and_fname + ".stderr.gz-tmp"
+        k.key = final_stderr_fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
 
@@ -293,6 +295,8 @@ class solverThread (threading.Thread):
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
         # os.unlink(self.get_perf_fname() + ".gz")
+
+        return [final_stdout_fname, final_stderr_fname]
 
     def run_loop(self):
         while not exitapp:
@@ -327,11 +331,11 @@ class solverThread (threading.Thread):
             # handle 'solve'
             assert self.indata["command"] == "solve"
             returncode, executed = self.execute()
-            self.copy_solution_to_s3()
+            files = self.copy_solution_to_s3()
 
-            self.send_back_that_we_solved(returncode)
+            self.send_back_that_we_solved(returncode, files)
 
-    def send_back_that_we_solved(self, returncode):
+    def send_back_that_we_solved(self, returncode, files):
         logging.info("Trying to send to server that we are done",
                      extra=self.logextra)
         fail_connect = 0
@@ -358,6 +362,7 @@ class solverThread (threading.Thread):
         tosend["command"] = "done"
         tosend["file_num"] = self.indata["file_num"]
         tosend["returncode"] = returncode
+        tosend["files"] = files
 
         tosend = pickle.dumps(tosend)
         tosend = struct.pack('!q', len(tosend)) + tosend
