@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import socket
 import sys
@@ -20,7 +21,6 @@ import fcntl
 import struct
 import logging
 import boto.utils
-from __future__ import print_function
 
 # for importing in systems where "." is not in the PATH
 import glob

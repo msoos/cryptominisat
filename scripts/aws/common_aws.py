@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import time
 import boto
@@ -10,7 +11,6 @@ import subprocess
 import socket
 import fcntl
 import struct
-from __future__ import print_function
 
 
 def get_ip_address(ifname):

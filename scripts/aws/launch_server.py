@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import sys
 import boto.ec2
 import os
 import subprocess
-from __future__ import print_function
 
 
 def get_answer():

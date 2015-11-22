@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import random
 import os
 import socket
@@ -16,7 +17,6 @@ import Queue
 import threading
 import logging
 import string
-from __future__ import print_function
 
 # for importing in systems where "." is not in the PATH
 import glob
