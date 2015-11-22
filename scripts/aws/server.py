@@ -17,7 +17,7 @@ import threading
 import logging
 import string
 
-#for importing in systems where "." is not in the PATH
+# for importing in systems where "." is not in the PATH
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
