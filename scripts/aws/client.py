@@ -69,10 +69,6 @@ parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
                   help="The home dir of cryptominisat"
                   " [default: %default]",
                   )
-
-parser.add_option("--noaws", default=False, dest="noaws",
-                  action="store_true", help="Use AWS"
-                  )
 parser.add_option("--net", default="eth0", dest="network_device", type=str,
                   help="The network device we will be using"
                   " [default: %default]",
@@ -330,8 +326,7 @@ class solverThread (threading.Thread):
             # handle 'solve'
             assert self.indata["command"] == "solve"
             returncode, executed = self.execute()
-            if not options.noaws:
-                self.copy_solution_to_s3()
+            self.copy_solution_to_s3()
 
             self.send_back_that_we_solved(returncode)
 
@@ -452,13 +447,12 @@ def num_cpus():
 def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
-    if not options.noaws:
-        global s3_bucket
-        global s3_folder
-        upload_log(s3_bucket,
-                   s3_folder,
-                   options.logfile_name,
-                   "cli-%s.txt" % get_ip_address("eth0"))
+    global s3_bucket
+    global s3_folder
+    upload_log(s3_bucket,
+               s3_folder,
+               options.logfile_name,
+               "cli-%s.txt" % get_ip_address("eth0"))
 
     if not options.noshutdown:
         os.system(toexec)
@@ -497,8 +491,7 @@ def start_threads():
                  extra={"threadid": -1})
 
     try:
-        if not options.noaws:
-            build_system()
+        build_system()
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
@@ -518,8 +511,8 @@ set_up_logging()
 logging.info("Client called with parameters: %s",
              pprint.pformat(options, indent=4).replace("\n", " || "),
              extra={"threadid": -1})
-if not options.noaws:
-    boto_conn = boto.connect_s3()
+
+boto_conn = boto.connect_s3()
 
 start_threads()
 
