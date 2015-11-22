@@ -42,10 +42,6 @@ struct SATCount {
     uint32_t cellSolCount;
 };
 
-namespace CMSat {
-    class Solver;
-}
-
 class Main
 {
     public:
@@ -118,17 +114,47 @@ class Main
         bool drupDebug = false;
 
         //Unistuff
-        SATCount ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine);
-        uint32_t UniGen(uint32_t samples, SATSolver* solver, FILE* res, std::vector< FILE* >* resLog, uint32_t sampleCounter, std::mt19937& randomEngine, std::map< string, uint32_t >& solutionMap, uint32_t* lastSuccessfulHashOffset, double timeReference);
-        bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions, std::mt19937& randomEngine);
-        int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions);
-        lbool BoundedSAT(uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine, std::map<std::string, uint32_t>& solutionMap, uint32_t* solutionCount);
-        bool GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine);
-        uint32_t SolutionsToReturn(uint32_t maxSolutions, uint32_t minSolutions, unsigned long currentSolutions);
+        int UniSolve(); //old one-thread-solve
+        SATCount ApproxMC(SATSolver* solver, vector<FILE*>* resLog
+            , std::mt19937& randomEngine
+        );
+
+        uint32_t UniGen(uint32_t samples, SATSolver* solver
+            , FILE* res, std::vector< FILE* >* resLog, uint32_t sampleCounter
+            , std::mt19937& randomEngine
+            , std::map< string, uint32_t >& solutionMap
+            , uint32_t* lastSuccessfulHashOffset, double timeReference
+        );
+
+        bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions
+            , std::mt19937& randomEngine);
+        int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
+            , vector<Lit>& assumptions
+        );
+        lbool BoundedSAT(
+            uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
+            , vector<Lit>& assumptions, std::mt19937& randomEngine
+            , std::map<std::string, uint32_t>& solutionMap
+            , uint32_t* solutionCount
+        );
+        bool GenerateRandomBits(string& randomBits
+            , uint32_t size
+            , std::mt19937& randomEngine
+        );
+        uint32_t SolutionsToReturn(uint32_t maxSolutions
+            , uint32_t minSolutions
+            , unsigned long currentSolutions
+        );
         int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
-        void printResultFunc(Solver* S, vector<lbool> solutionModel, const lbool ret, FILE* res);
         bool printSolutions(FILE* res);
         void SeedEngine(std::mt19937& randomEngine);
+        int singleThreadUniGenCall(uint32_t samples, FILE* res
+            , vector<FILE*>* resLog, uint32_t sampleCounter
+            , std::map<std::string, uint32_t>& solutionMap
+            , std::mt19937& randomEngine
+            , uint32_t* lastSuccessfulHashOffset
+            , double timeReference
+        );
 
         time_t  startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;

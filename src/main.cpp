@@ -1309,7 +1309,7 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
-    solver->new_var;
+    solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
     vector<Lit> allSATAssumptions(assumptions);
     allSATAssumptions.push_back(Lit(activationVar, true));
@@ -1370,7 +1370,7 @@ lbool Main::BoundedSAT(
             model = solver->get_model();
             modelsSet.push_back(model);
             for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-                Var var = solver->independent_var_set[j];
+                uint32_t var = solver->independent_var_set[j];
                 if (solver->get_model()[var] != l_Undef) {
                     lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
                 }
@@ -1390,7 +1390,7 @@ lbool Main::BoundedSAT(
             modelIndices.push_back(i);
         }
         std::shuffle(modelIndices.begin(), modelIndices.end(), randomEngine);
-        Var var;
+        uint32_t var;
         uint32_t numSolutionsToReturn = SolutionsToReturn(maxSolutions, minSolutions, modelsSet.size());
         for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
             vector<lbool> model = modelsSet.at(modelIndices.at(i));
@@ -1420,7 +1420,18 @@ lbool Main::BoundedSAT(
     return l_False;
 }
 
-SATCount Main::ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
+inline int findMin(list<int> numList)
+{
+    int min = std::numeric_limits<int>::max();
+    for (list<int>::iterator it = numList.begin(); it != numList.end(); it++) {
+        if ((*it) < min) {
+            min = *it;
+        }
+    }
+    return min;
+}
+
+SATCount Main::ApproxMC(SATSolver* solver, vector<FILE*>* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     uint32_t  hashCount;
@@ -1444,7 +1455,7 @@ SATCount Main::ApproxMC(Solver* solver, vector<FILE*>* resLog, std::mt19937& ran
             myTime = cpuTimeTotal() - myTime;
             //printf("%f\n", myTime);
             //printf("%d %d\n",currentNumSolutions,conf.pivotApproxMC);
-            if (conf.shouldLog) {
+            if (conf.verbosity >= 2) {
                 fprintf((*resLog)[0], "ApproxMC:%d:%d:%f:%d:%d\n", j, hashCount, myTime,
                         (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1)), currentNumSolutions);
                 fflush((*resLog)[0]);
@@ -1546,7 +1557,7 @@ uint32_t Main::UniGen(
             uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
             uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
-            if (conf.shouldLog) {
+            if (conf.verbosity >= 2) {
                 fprintf((*resLog)[threadNum], "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
                 fflush((*resLog)[threadNum]);
             }
@@ -1605,7 +1616,7 @@ int Main::singleThreadUniGenCall(
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
 ) {
-    SATSolver solver2(conf, gaussconfig);
+    SATSolver solver2(&conf);
     //solversToInterrupt[0] = &solver2;
     //need_clean_exit = true;
 
@@ -1613,7 +1624,17 @@ int Main::singleThreadUniGenCall(
     num = 0;
     //setDoublePrecision(conf.verbosity);
     parseInAllFiles(solver2);
-    sampleCounter = UniGen(samples, solver2, res, resLog, sampleCounter, randomEngine, solutionMap, lastSuccessfulHashOffset, timeReference);
+    sampleCounter = UniGen(
+        samples
+        , solver2
+        , res
+        , resLog
+        , sampleCounter
+        , randomEngine
+        , solutionMap
+        , lastSuccessfulHashOffset
+        , timeReference
+    );
     return sampleCounter;
 }
 
