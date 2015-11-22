@@ -221,15 +221,25 @@ class Server (threading.Thread):
     def handle_done(self, connection, cli_addr, indata):
         file_num = indata["file_num"]
 
-        logging.info("Finished with file %s (num %d)",
-                     self.files[indata["file_num"]], indata["file_num"])
+        logging.info("Finished with file %s (num %d), got files %s",
+                     self.files[indata["file_num"]], indata["file_num"],
+                     indata["files"])
         self.files_finished.append(indata["file_num"])
         if file_num in self.files_running:
             del self.files_running[file_num]
 
         logging.info("Num files_available: %d Num files_finished %d",
                      len(self.files_available), len(self.files_finished))
+
+        self.rename_files_to_final(indata["files"])
         sys.stdout.flush()
+
+    def rename_files_to_final(self, files):
+        for fname in files:
+            fname_final = fname.rstrip("-tmp")
+            logging.info("Renaming file %s to %s",
+                         fname, fname_final)
+            os.system("aws s3 mv s3://%s s3://%s --region us-west-2" % (fname, fname_final))
 
     def check_for_dead_files(self):
         this_time = time.time()
