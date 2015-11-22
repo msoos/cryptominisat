@@ -418,7 +418,7 @@ class SpotManager (threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.spot_creator = RequestSpotClient.RequestSpotClient()
+        self.spot_creator = RequestSpotClient.RequestSpotClient(options.cnf_dir == "test")
 
     def run(self):
         while True:

@@ -14,9 +14,12 @@ import logging
 
 
 class RequestSpotClient:
-    def __init__(self):
+    def __init__(self, test):
         self.conf = ConfigParser.ConfigParser()
-        self.conf.read('ec2-spot-instance.cfg')
+        if test:
+            self.conf.read('ec2-spot-instance-test.cfg')
+        else:
+            self.conf.read('ec2-spot-instance.cfg')
         self.ec2conn = self.__create_ec2conn()
         if self.ec2conn is None:
             print 'Unable to create EC2 ec2conn'
