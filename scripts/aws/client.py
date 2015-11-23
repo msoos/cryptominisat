@@ -269,18 +269,22 @@ class solverThread (threading.Thread):
 
         s3_folder_and_fname = s3_folder + "/" + self.indata[
             "cnf_filename"] + "-" + self.indata["uniq_cnt"]
+        s3_folder_and_fname_clean = s3_folder + "/" + self.indata[
+            "cnf_filename"]
 
         # stdout
         os.system("gzip -f %s" % self.get_stdout_fname())
-        final_stdout_fname = s3_folder_and_fname + ".stdout.gz-tmp"
-        k.key = final_stdout_fname
+        stdout_fname = s3_folder_and_fname + ".stdout.gz-tmp"
+        stdout_fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
+        k.key = stdout_fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
 
         # stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        final_stderr_fname = s3_folder_and_fname + ".stderr.gz-tmp"
-        k.key = final_stderr_fname
+        stderr_fname = s3_folder_and_fname + ".stderr.gz-tmp"
+        stderr_fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
+        k.key = stderr_fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
 
@@ -296,7 +300,8 @@ class solverThread (threading.Thread):
         os.unlink(self.get_stderr_fname() + ".gz")
         # os.unlink(self.get_perf_fname() + ".gz")
 
-        return [final_stdout_fname, final_stderr_fname]
+        return [[stdout_fname, stdout_fname_clean],
+                [stderr_fname, stderr_fname_clean]]
 
     def run_loop(self):
         while not exitapp:

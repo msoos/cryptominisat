@@ -235,11 +235,10 @@ class Server (threading.Thread):
         sys.stdout.flush()
 
     def rename_files_to_final(self, files):
-        for fname in files:
-            fname_final = fname.rstrip("-tmp")
+        for fnames in files:
             logging.info("Renaming file %s to %s",
-                         fname, fname_final)
-            os.system("aws s3 mv s3://%s/%s s3://%s/%s --region us-west-2" % (options.s3_bucket, fname, options.s3_bucket, fname_final))
+                         fnames[0], fnames[1])
+            os.system("aws s3 mv s3://%s/%s s3://%s/%s --region us-west-2" % (options.s3_bucket, fnames[0], options.s3_bucket, fnames[1]))
 
     def check_for_dead_files(self):
         this_time = time.time()
