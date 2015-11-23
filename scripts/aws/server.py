@@ -146,7 +146,7 @@ def rnd_id():
 
 options.logfile_name = options.base_dir + options.logfile_name
 options.s3_folder += "-" + time.strftime("%d-%B-%Y")
-options.s3_folder += "-mark-%s" % rnd_id()
+options.s3_folder += "-%s" % rnd_id()
 
 
 def get_revision():
