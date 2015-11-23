@@ -21,7 +21,7 @@ mkdir -p build
 cd build
 rm -rf C* c*
 cmake ..
-make -j$2
+make -j$2 VERBOSE=1
 echo "built CMS"
 
 exit 0
