@@ -30,8 +30,8 @@ using namespace CMSat;
 DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
-        , var_decay_start(0.8)
-        , var_decay_max(0.95)
+        , var_decay_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
+        , var_decay_max(0.95) // 1/0.95 = 1.05 -- smaller is better for hard instances
         , random_var_freq(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
         , do_calc_polarity_first_time(true)
