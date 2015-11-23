@@ -135,7 +135,7 @@ def connect_client(threadID):
 
 
 def ask_for_data_to_solve(sock, command, threadID):
-    logging.info("asking for stuff to solve...",
+    logging.info("Asking for %s", command,
                  extra={"threadid": threadID})
     tosend = {}
     tosend["uptime"] = uptime()
