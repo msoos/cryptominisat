@@ -239,7 +239,7 @@ class Server (threading.Thread):
             fname_final = fname.rstrip("-tmp")
             logging.info("Renaming file %s to %s",
                          fname, fname_final)
-            os.system("aws s3 mv s3://%s s3://%s --region us-west-2" % (fname, fname_final))
+            os.system("aws s3 mv s3://%s/%s s3://%s/%s --region us-west-2" % (options.s3_bucket, fname, options.s3_bucket, fname_final))
 
     def check_for_dead_files(self):
         this_time = time.time()
