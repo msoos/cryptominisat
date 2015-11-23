@@ -43,7 +43,7 @@ apt-get -y install linux-cloud-tools-3.13.0-53-generic linux-tools-3.13.0-53-gen
 cd /home/ubuntu/
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
-sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/features_to_reconf.cpp /home/ubuntu/cryptominisat/src/ --region=us-west-2'
+# sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/features_to_reconf.cpp /home/ubuntu/cryptominisat/src/ --region=us-west-2'
 
 # Get credentials
 cd /home/ubuntu/
