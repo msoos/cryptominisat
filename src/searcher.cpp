@@ -1945,6 +1945,11 @@ lbool Searcher::solve(
         }
 
         save_search_loop_stats();
+        #ifndef USE_GAUSS
+        if (perform_scc_and_varreplace_if_needed() == l_False) {
+            break;
+        }
+        #endif
         if (must_consolidate_mem) {
             cl_alloc.consolidate(solver);
             must_consolidate_mem = false;
