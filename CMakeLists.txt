@@ -123,6 +123,7 @@ else()
     add_definitions(-D_FORTIFY_SOURCE=0)
 endif()
 
+# Note: O3 gives slight speed increase, 1 more solved from SAT Comp'14 @ 3600s
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -g")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
