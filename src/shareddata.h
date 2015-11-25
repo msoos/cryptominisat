@@ -25,9 +25,13 @@
 #include "cryptominisat4/solvertypesmini.h"
 
 #include <vector>
+#ifdef USE_PTHREADS
 #include <mutex>
 using std::vector;
 using std::mutex;
+#else
+#include "nomutex.h"
+#endif
 
 namespace CMSat {
 
@@ -68,8 +72,8 @@ class SharedData
         };
         vector<lbool> value;
         vector<Spec> bins;
-        mutex unit_mutex;
-        mutex bin_mutex;
+        std::mutex unit_mutex;
+        std::mutex bin_mutex;
 
         uint32_t num_threads;
 

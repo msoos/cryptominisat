@@ -24,15 +24,15 @@
 #include "solver.h"
 #include "drup.h"
 #include "shareddata.h"
-#include <stdexcept>
 #include <fstream>
-#include <cstdlib>
 
 #ifdef USE_PTHREADS
 #include <thread>
+#include <mutex>
 using std::thread;
 using std::mutex;
-#include <mutex>
+#else
+#include "nomutex.h"
 #endif
 
 
@@ -86,7 +86,7 @@ struct DataForThread
         , lits_to_add(&(data->cls_lits))
         , vars_to_add(data->vars_to_add)
         , assumptions(_assumptions)
-        , update_mutex(new mutex)
+        , update_mutex(new std::mutex)
         , which_solved(&(data->which_solved))
         , ret(new lbool(l_Undef))
     {
@@ -101,7 +101,7 @@ struct DataForThread
     vector<Lit> *lits_to_add;
     uint32_t vars_to_add;
     const vector<Lit> *assumptions;
-    mutex* update_mutex;
+    std::mutex* update_mutex;
     int *which_solved;
     lbool* ret;
 };

@@ -42,7 +42,6 @@ THE SOFTWARE.
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <thread>
 #include <string.h>
 
 #include "main.h"
