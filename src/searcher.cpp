@@ -1775,7 +1775,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         lastCleanZeroDepthAssigns = trail.size();
-        if (!solver->varReplacer->replace_if_enough_is_found(floor((double)solver->get_num_free_vars()*0.001))) {
+        if (!solver->varReplacer->replace_if_enough_is_found(std::floor((double)solver->get_num_free_vars()*0.001))) {
             return l_False;
         }
         #ifdef SLOW_DEBUG

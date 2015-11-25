@@ -1671,7 +1671,7 @@ bool Solver::execute_inprocess_strategy(
         }  else if (token == "scc-vrepl") {
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found(
-                    floor((double)get_num_free_vars()*0.001));
+                    std::floor((double)get_num_free_vars()*0.001));
             }
         } else if (token == "cache-clean") {
             if (conf.doCache) {
