@@ -25,12 +25,16 @@
 #include "drup.h"
 #include "shareddata.h"
 #include <stdexcept>
-#include <thread>
-#include <mutex>
 #include <fstream>
 #include <cstdlib>
+
+#ifdef USE_PTHREADS
+#include <thread>
 using std::thread;
 using std::mutex;
+#include <mutex>
+#endif
+
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
 
@@ -348,6 +352,7 @@ struct OneThreadAddCls
     const size_t tid;
 };
 
+#ifdef USE_PTHREADS
 static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 {
     DataForThread data_for_thread(data);
@@ -366,6 +371,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
 
     return ret;
 }
+#endif
 
 DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
 {
@@ -429,6 +435,7 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
 
     bool ret = true;
     if (data->solvers.size() > 1) {
+        #ifdef USE_PTHREADS
         if (data->cls_lits.size() + lits.size() + 1 > CACHE_SIZE) {
             ret = actually_add_clauses_to_threads(data);
         }
@@ -437,6 +444,10 @@ DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
         for(Lit lit: lits) {
             data->cls_lits.push_back(lit);
         }
+        #else
+        assert(false);
+        exit(-1);
+        #endif
     } else {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
@@ -473,6 +484,7 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
 
     bool ret = true;
     if (data->solvers.size() > 1) {
+        #ifdef USE_PTHREADS
         if (data->cls_lits.size() + vars.size() + 1 > CACHE_SIZE) {
             ret = actually_add_clauses_to_threads(data);
         }
@@ -482,6 +494,10 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
         for(uint32_t var: vars) {
             data->cls_lits.push_back(Lit(var, false));
         }
+        #else
+        assert(false);
+        exit(-1);
+        #endif
     } else {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
@@ -561,6 +577,7 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         return ret;
     }
 
+    #ifdef USE_PTHREADS
     //Multi-thread from now on.
     DataForThread data_for_thread(data, assumptions);
     std::vector<std::thread> thds;
@@ -583,8 +600,12 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
     data->cls_lits.clear();
     data->vars_to_add = 0;
     data->okay = data->solvers[*data_for_thread.which_solved]->okay();
-
     return real_ret;
+    #else
+    assert(false);
+    exit(-1);
+    return l_Undef;
+    #endif
 }
 
 DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
