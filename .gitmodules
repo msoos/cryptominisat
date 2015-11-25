@@ -16,3 +16,6 @@
 [submodule "utils/licensecheck"]
 	path = utils/licensecheck
 	url = https://github.com/msoos/licensecheck.git
+[submodule "scripts/build_scripts"]
+	path = scripts/build_scripts
+	url = git@github.com:msoos/cryptominisat_build.git
