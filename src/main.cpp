@@ -44,7 +44,7 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <string.h>
 #ifdef USE_PTHREADS
-#include <threads>
+#include <thread>
 #endif
 
 #include "main.h"
