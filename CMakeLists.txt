@@ -124,8 +124,8 @@ else()
 endif()
 
 option(USE_PTHREADS ON)
-if (NOT USE_PTHREADS)
-    add_definitions(-DNO_PTHREADS)
+if (USE_PTHREADS)
+    add_definitions(-DUSE_PTHREADS)
     message(STATUS "No pthread will be used. Single-threaded only.")
 endif()
 
