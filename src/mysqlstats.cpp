@@ -45,7 +45,7 @@ MySQLStats::MySQLStats() :
 
 MySQLStats::~MySQLStats()
 {
-    if (!setup_ok) {
+    if (setup_ok) {
         //Free all the prepared statements
         my_bool ret = mysql_stmt_close(stmtRst.stmt);
         if (ret) {
