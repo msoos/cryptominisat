@@ -1634,6 +1634,9 @@ struct MyPolarData
 #ifdef STATS_NEEDED
 void Searcher::dump_restart_sql()
 {
+    if (!conf.dump_individual_restarts)
+        return;
+
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;

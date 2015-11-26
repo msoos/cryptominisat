@@ -89,6 +89,9 @@ parser.add_option("--novalgrind", dest="novalgrind", default=False,
 parser.add_option("--small", dest="small", default=False,
                   action="store_true", help="Don't run 'large' fuzzer (may mem-out on smaller systems)")
 
+parser.add_option("--sqlite", dest="sqlite", default=False,
+                  action="store_true", help="Test SQLite dumping")
+
 parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
 
@@ -405,7 +408,7 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_options_if_supported = self.list_options_if_supported(
-            ["xor", "sql", "autodisablegauss"])
+            ["xor", "autodisablegauss"])
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -476,6 +479,11 @@ class Tester:
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
             cmd += "-m %0.12f " % random.gammavariate(0.4, 2.0)
             # gammavariate gives us sometimes very low values, sometimes large
+
+            if options.sqlite:
+                cmd += "--sql 2 --wsql 3 "
+                cmd += "--sqlrestfull %d " % random.choice([0, 1])
+                cmd += "--sqlresttime %d " % random.choice([0, 1])
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):

@@ -202,6 +202,7 @@ class SolverConf
         int       doSQL;
         int       whichSQL;
         bool      dump_individual_search_time;
+        bool      dump_individual_restarts;
         std::string sqlite_filename;
         std::string sqlServer;
         std::string sqlUser;

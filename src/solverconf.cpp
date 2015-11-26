@@ -102,7 +102,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //SQL
         , doSQL          (1)
         , whichSQL       (0)
-        , dump_individual_search_time(false)
+        , dump_individual_search_time(true)
+        , dump_individual_restarts(false)
         , sqlite_filename ("cryptominisat.sqlite")
         , sqlServer ("localhost")
         , sqlUser ("cmsat_solver")
