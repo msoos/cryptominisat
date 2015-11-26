@@ -19,6 +19,7 @@
 # 02110-1301, USA.
 
 from __future__ import with_statement  # Required in 2.5
+from __future__ import print_function
 import subprocess
 import os
 import stat
@@ -40,9 +41,9 @@ import optparse
 import calendar
 import glob
 
-print "our CWD is:", os.getcwd(), "files here: ", glob.glob("*")
+print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
 sys.path.append(os.getcwd())
-print "our sys.path is", sys.path
+print("our sys.path is", sys.path)
 
 from xor_to_cnf_class import *
 from debuglib import *
@@ -96,8 +97,8 @@ parser.add_option("--gauss", dest="test_gauss", default=False,
 
 
 def fuzzer_call_failed():
-    print "OOps, fuzzer executable call failed!"
-    print "Did you build with TESTING_ENABLED? Did you do git submodules init & update?"
+    print("OOps, fuzzer executable call failed!")
+    print("Did you build with TESTING_ENABLED? Did you do git submodules init & update?")
     exit(-1)
 
 
@@ -108,9 +109,9 @@ class solution_parser:
     @staticmethod
     def parse_solution_from_output(output_lines, ignoreNoSolution):
         if len(output_lines) == 0:
-            print "Error! SAT solver output is empty!"
-            print "output lines: ", output_lines
-            print "Error code 500"
+            print("Error! SAT solver output is empty!")
+            print("output lines: %s" % output_lines)
+            print("Error code 500")
             exit(500)
 
         # solution will be put here
@@ -133,7 +134,7 @@ class solution_parser:
             # solution
             if (re.match('^s ', line)):
                 if (satunsatfound):
-                    print "ERROR: solution twice in solver output!"
+                    print("ERROR: solution twice in solver output!")
                     exit(400)
 
                 if 'UNSAT' in line:
@@ -146,7 +147,7 @@ class solution_parser:
                     satunsatfound = True
                     continue
 
-                print "ERROR: line starts with 's' but no SAT/UNSAT on line"
+                print("ERROR: line starts with 's' but no SAT/UNSAT on line")
                 exit(400)
 
             # parse in solution
@@ -161,33 +162,33 @@ class solution_parser:
                         break
                     intvar = int(var)
                     solution[abs(intvar)] = (intvar >= 0)
-        # print "Parsed values:", solution
+        # print("Parsed values:", solution)
 
         if (ignoreNoSolution is False and
                 (satunsatfound is False or (
                     unsat is False and vlinefound is False))):
-            print "Error: Cannot find line starting with 's' or 'v' in output!"
-            print output_lines
-            print "Error code 500"
+            print("Error: Cannot find line starting with 's' or 'v' in output!")
+            print(output_lines)
+            print("Error code 500")
             exit(500)
 
         if (ignoreNoSolution is True and
                 (satunsatfound is False or (
                     unsat is False and vlinefound is False))):
-            print "Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc."
-            print "Making it look like an UNSAT, so no checks!"
+            print("Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc.")
+            print("Making it look like an UNSAT, so no checks!")
             return (True, [])
 
         if (satunsatfound is False):
-            print "Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?"
-            print output_lines
-            print "Error code 500"
+            print("Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?")
+            print(output_lines)
+            print("Error code 500")
             exit(500)
 
         if (unsat is False and vlinefound is False):
-            print "Error: Solution is SAT, but no 'v' line"
-            print output_lines
-            print "Error code 500"
+            print("Error: Solution is SAT, but no 'v' line")
+            print (output_lines)
+            print("Error code 500")
             exit(500)
 
         return unsat, solution, conflict
@@ -208,8 +209,8 @@ class solution_parser:
                     if final is True:
                         break
             if final is False:
-                print "Error: clause '%s' not satisfied." % line
-                print "Error code 100"
+                print("Error: clause '%s' not satisfied." % line)
+                print("Error code 100")
                 exit(100)
 
     @staticmethod
@@ -221,21 +222,21 @@ class solution_parser:
             numlit = int(lit)
             if numlit != 0:
                 if abs(numlit) not in solution:
-                    print "Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit)
-                    print "Error code 200"
+                    print("Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit))
+                    print("Error code 200")
                     exit(200)
                 final ^= solution[abs(numlit)]
                 final ^= numlit < 0
         if final is False:
-            print "Error: xor-clause '%s' not satisfied." % line
+            print("Error: xor-clause '%s' not satisfied." % line)
             exit(-1)
 
     @staticmethod
     def test_found_solution(solution, fname, debugLibPart=None):
         if debugLibPart is None:
-            print "Verifying solution for CNF file %s" % fname
+            print("Verifying solution for CNF file %s" % fname)
         else:
-            print "Verifying solution for CNF file %s, part %d" % (fname, debugLibPart)
+            print("Verifying solution for CNF file %s, part %d" % (fname, debugLibPart))
 
         if fnmatch.fnmatch(fname, '*.gz'):
             f = gzip.open(fname, "r")
@@ -270,7 +271,7 @@ class solution_parser:
                 clauses += 1
 
         f.close()
-        print "Verified %d original xor&regular clauses" % clauses
+        print("Verified %d original xor&regular clauses" % clauses)
 
 
 class create_fuzz:
@@ -327,9 +328,9 @@ class create_fuzz:
                 if (fixed):
                     fuzzer2 = fuzzers[0]
 
-                print "fuzzer2 used: ", fuzzer2
+                print("fuzzer2 used: %s" % fuzzer2)
                 call = self.call_from_fuzzer(fuzzer2, fname2)
-                print "calling sub-fuzzer:", call
+                print("calling sub-fuzzer: %s" % call)
                 status, _ = commands.getstatusoutput(call)
                 if status != 0:
                     fuzzer_call_failed()
@@ -367,7 +368,7 @@ def print_version():
     command = options.solver + " --version"
     p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     consoleOutput, err = p.communicate()
-    print "Version values:", consoleOutput.strip()
+    print("Version values: %s" % consoleOutput.strip())
 
 fuzzers_noxor = [
     ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
@@ -492,7 +493,7 @@ class Tester:
                 opts = [a.strip(" ") for a in opts]
                 opts = list(set(opts))
                 if options.verbose:
-                    print "available schedule options:", opts
+                    print("available schedule options: %s" % opts)
 
                 sched = []
                 for i in range(int(random.gammavariate(12, 0.7))):
@@ -530,9 +531,9 @@ class Tester:
 
     def execute(self, fname, fname2=None, fixed_opts="", rnd_opts=None):
         if os.path.isfile(options.solver) is not True:
-            print "Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" % \
-                options.solver
-            print "Error code 300"
+            print("Error: Cannot find CryptoMiniSat executable.Searched in: '%s'" %
+                  options.solver)
+            print("Error code 300")
             exit(300)
 
         for f in glob.glob("%s-debugLibPart*.output" % fname):
@@ -558,11 +559,11 @@ class Tester:
         if fname2:
             command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
 
-        print "Executing: %s " % command
+        print("Executing: %s " % command)
 
         # print time limit
         if options.verbose:
-            print "CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+            print("CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU))
 
         # if need time limit, then limit
         err_fname = create_fuzz.unique_file("%s_err" % fname, ".out")
@@ -572,8 +573,8 @@ class Tester:
 
         # print time limit after child startup
         if options.verbose:
-            print "CPU limit of parent (pid %d) after startup of child" % \
-                os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+            print("CPU limit of parent (pid %d) after startup of child" %
+                  (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         # Get solver output
         consoleOutput, err = p.communicate()
@@ -582,7 +583,7 @@ class Tester:
         with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
-                print "Error line while executing: ", line.strip()
+                print("Error line while executing: %s" % line.strip())
                 if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line:
                     pass
                 else:
@@ -594,8 +595,8 @@ class Tester:
         os.unlink(err_fname)
 
         if options.verbose:
-            print "CPU limit of parent (pid %d) after child finished executing" % \
-                os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)
+            print("CPU limit of parent (pid %d) after child finished executing" %
+                  (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         return consoleOutput, retcode
 
@@ -605,14 +606,14 @@ class Tester:
         a.convert(fname, tmpfname)
         # execute with the other solver
         toexec = "lingeling -f %s" % tmpfname
-        print "Solving with other solver: %s" % toexec
+        print("Solving with other solver: %s" % toexec)
         currTime = calendar.timegm(time.gmtime())
         try:
             p = subprocess.Popen(toexec.rsplit(),
                                  stdout=subprocess.PIPE,
                                  preexec_fn=setlimits)
         except OSError:
-            print "ERROR: Probably you don't have lingeling installed!"
+            print("ERROR: Probably you don't have lingeling installed!")
             raise
 
         consoleOutput2 = p.communicate()[0]
@@ -621,11 +622,11 @@ class Tester:
         # if other solver was out of time, then we can't say anything
         diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > maxTime - maxTimeDiff:
-            print "Other solver: too much time to solve, aborted!"
+            print("Other solver: too much time to solve, aborted!")
             return None
 
         # extract output from the other solver
-        print "Checking other solver output..."
+        print("Checking other solver output...")
         otherSolverUNSAT, otherSolverSolution, _ = solution_parser.parse_solution_from_output(
             consoleOutput2.split("\n"), self.ignoreNoSolution)
 
@@ -712,17 +713,17 @@ class Tester:
         assumps = ret.group(1).strip().split()
         assumps = [int(x) for x in assumps]
 
-        print "Assumptions: ", assumps
+        print("Assumptions: ", assumps)
         return assumps
 
     def check_assumps_inside_conflict(self, assumps, conflict):
         for lit in conflict:
             if -1 * lit not in assumps:
-                print "ERROR: Final conflict contains ", conflict, " but assumps is ", assumps
-                print "ERROR: lit ", lit, " is in conflict but its inverse is not is assumps!"
+                print("ERROR: Final conflict contains %s but assumps is %s" %(conflict, assumps))
+                print("ERROR: lit ", lit, " is in conflict but its inverse is not is assumps!")
                 exit(-100)
 
-        print "OK, final conflict only contains elements from assumptions"
+        print("OK, final conflict only contains elements from assumptions")
 
     def check_assumps_inside_solution(self, assumps, solution):
         for lit in assumps:
@@ -730,10 +731,10 @@ class Tester:
             val = lit > 0
             if var in solution:
                 if solution[var] != val:
-                    print "Solution pinted has literal %s but assumptions contained the inverse: '%s'" % (-1 * lit, assumps)
+                    print("Solution pinted has literal %s but assumptions contained the inverse: '%s'" % (-1 * lit, assumps))
                     exit(-100)
 
-        print "OK, all assumptions inside solution"
+        print("OK, all assumptions inside solution")
 
     def find_largest_debuglib_part(self, fname):
         largestPart = 0
@@ -748,10 +749,10 @@ class Tester:
         largestPart = self.find_largest_debuglib_part(fname)
         for debugLibPart in range(1, largestPart + 1):
             fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
-            print "Checking debug lib part %s -- %s " % (debugLibPart, fname_debug)
+            print("Checking debug lib part %s -- %s " % (debugLibPart, fname_debug))
 
             if (os.path.isfile(fname_debug) is False):
-                print "Error: Filename to be read '%s' is not a file!" % fname_debug
+                print("Error: Filename to be read '%s' is not a file!" % fname_debug)
                 exit(-1)
 
             # take file into mem
@@ -764,11 +765,11 @@ class Tester:
                 output_lines, self.ignoreNoSolution)
             assumps = self.get_assumps(fname, debugLibPart)
             if unsat is False:
-                print "debugLib is SAT"
+                print("debugLib is SAT")
                 self.check_assumps_inside_solution(assumps, solution)
                 solution_parser.test_found_solution(solution, fname, debugLibPart)
             else:
-                print "debugLib is UNSAT"
+                print("debugLib is UNSAT")
                 assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
                 self.check_assumps_inside_conflict(assumps, conflict)
                 tmpfname = create_fuzz.unique_file("tmp_for_extract_libpart")
@@ -777,11 +778,11 @@ class Tester:
                 # check with other solver
                 ret = self.check_unsat(tmpfname)
                 if ret is None:
-                    print "Cannot check, other solver took too much time"
+                    print("Cannot check, other solver took too much time")
                 elif ret is True:
-                    print "UNSAT verified by other solver"
+                    print("UNSAT verified by other solver")
                 else:
-                    print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+                    print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
                     exit(-1)
                 os.unlink(tmpfname)
 
@@ -806,26 +807,26 @@ class Tester:
         # and that is why there is no solution
         diffTime = calendar.timegm(time.gmtime()) - currTime
         if diffTime > (maxTime - maxTimeDiff) / self.num_threads:
-            print "Too much time to solve, aborted!"
+            print("Too much time to solve, aborted!")
             return None
         else:
-            print "Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime)
+            print("Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime))
 
-        print "filename: %s" % fname
+        print("filename: %s" % fname)
 
         # if library debug is set, check it
         if (self.needDebugLib):
             self.check_debug_lib(checkAgainst)
 
         if retcode != 0:
-            print "Return code is not 0, error!"
+            print("Return code is not 0, error!")
             exit(-1)
 
-        print "Checking console output..."
+        print("Checking console output...")
         unsat, solution, _ = solution_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
 
-        #preprocessing
+        # preprocessing
         if dump_output_fname is not None:
             f = open(dump_output_fname, "w")
             f.write(consoleOutput)
@@ -839,7 +840,7 @@ class Tester:
         # it's UNSAT, let's check with DRUP
         if fname2:
             toexec = "drat-trim %s %s" % (fname, fname2)
-            print "Checking DRUP...: ", toexec
+            print("Checking DRUP...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
                                  #,preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
@@ -850,33 +851,33 @@ class Tester:
             drupLine = ""
             for line in consoleOutput2.split('\n'):
                 if len(line) > 1 and line[:2] == "s ":
-                    # print "verif: " , line
+                    # print("verif: " , line)
                     foundVerif = True
                     if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT":
-                        print "DRUP verification error, it says:", consoleOutput2
+                        print("DRUP verification error, it says: %s" % consoleOutput2)
                     assert line[2:10] == "VERIFIED" or line[
                         2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
                     drupLine = line
 
             # Check whether we have found a verification code
             if foundVerif is False:
-                print "verifier error! It says:", consoleOutput2
+                print("verifier error! It says: %s" % consoleOutput2)
                 assert foundVerif, "Cannot find DRUP verification code!"
             else:
-                print "OK, DRUP says:", drupLine
+                print("OK, DRUP says: %s" % drupLine)
 
         # check with other solver
         ret = self.check_unsat(checkAgainst)
         if ret is None:
-            print "Other solver time-outed, cannot check"
+            print("Other solver time-outed, cannot check")
         elif ret is True:
-            print "UNSAT verified by other solver"
+            print("UNSAT verified by other solver")
         else:
-            print "Grave bug: SAT-> UNSAT : Other solver found solution!!"
+            print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
             exit()
 
     def fuzz_test_one(self):
-        print "\n--- NORMAL TESTING ---"
+        print("\n--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
         self.drup = self.num_threads == 1 and random.choice([True, False])
         if self.drup:
@@ -893,7 +894,7 @@ class Tester:
         # create the fuzz file
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers, fname)
-        print "calling ", call
+        print("calling %s" % call)
         status, _ = commands.getstatusoutput(call)
         if status != 0:
             fuzzer_call_failed()
@@ -903,9 +904,9 @@ class Tester:
             interspersed_fname = create_fuzz.unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
             intersperse(fname, interspersed_fname, seed_for_inters)
-            print "Interspersed: ./intersperse.py %s %s %d" % (fname,
+            print("Interspersed: ./intersperse.py %s %s %d" % (fname,
                                                                interspersed_fname,
-                                                               seed_for_inters)
+                                                               seed_for_inters))
             os.unlink(fname)
         else:
             self.needDebugLib = False
@@ -927,7 +928,7 @@ class Tester:
             pass
 
     def fuzz_test_preproc(self):
-        print "\n--- PREPROC TESTING ---"
+        print("\n--- PREPROC TESTING ---")
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drup)
         self.num_threads = 1
@@ -937,7 +938,7 @@ class Tester:
         # create the fuzz file
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrup, fname)
-        print "calling ", fuzzer, " : ", call
+        print("calling %s : %s" % (fuzzer, call))
         status, _ = commands.getstatusoutput(call)
         if status != 0:
             fuzzer_call_failed()
@@ -951,7 +952,7 @@ class Tester:
                                         rnd_opts=rnd_opts,
                                         fixed_opts="--preproc 1")
         if retcode != 0:
-            print "Return code is not 0, error!"
+            print("Return code is not 0, error!")
             exit(-1)
 
         solution = "%s-solution.txt" % fname
@@ -1007,7 +1008,7 @@ while True:
     if options.small:
         toexec += " --small"
 
-    print "To re-create fuzz-test below: %s" % toexec
+    print("To re-create fuzz-test below: %s" % toexec)
 
     random.seed(rnd_seed)
     if random.choice([True, False]):
