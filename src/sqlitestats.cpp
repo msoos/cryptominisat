@@ -618,7 +618,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 38;
+    const size_t numElems = 36;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
@@ -634,13 +634,13 @@ void SQLiteStats::initReduceDBSTMT()
     //Clean data
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
-    << ", removedAge, removedAct"
+    << ", removedAge"
     << ", removedLitVisited, removedProp, removedConfl"
     << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBin, remainResolTri, remainResolLIrred, remainResolLRed"
-    << ", remainAge, remainAct"
+    << ", remainAge"
     << ", remainLitVisited, remainProp, remainConfl"
     << ", remainLookedAt, remainUsedUIP"
     << ") values ";
@@ -698,7 +698,6 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.redL);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.age);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.act);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, 0);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.numProp);
@@ -718,7 +717,6 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.redL);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.age);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.act);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, 0);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.numProp);

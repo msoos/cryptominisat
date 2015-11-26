@@ -683,13 +683,13 @@ void MySQLStats::initReduceDBSTMT()
     //Clean data
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
-    << ", removedAge, removedAct"
+    << ", removedAge"
     << ", removedProp, removedConfl"
     << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBin, remainResolTri, remainResolLIrred, remainResolLRed"
-    << ", remainAge, remainAct"
+    << ", remainAge"
     << ", remainProp, remainConfl"
     << ", remainLookedAt, remainUsedUIP"
     << ") values ";
@@ -754,7 +754,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.irredL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.numLookedAt);
@@ -768,7 +767,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.irredL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.resol.redL);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.act);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numProp);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numConfl);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.numLookedAt);

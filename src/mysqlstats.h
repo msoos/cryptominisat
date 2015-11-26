@@ -137,7 +137,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[8 + 13*2];
+        MYSQL_BIND  bind[8 + 12*2];
         MYSQL_STMT  *stmt = NULL;
 
         //Position
