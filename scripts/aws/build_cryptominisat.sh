@@ -20,7 +20,7 @@ rm -rf build
 mkdir -p build
 cd build
 rm -rf C* c*
-cmake ..
+cmake -DSTATS=ON ..
 make -j$2 VERBOSE=1
 echo "built CMS"
 

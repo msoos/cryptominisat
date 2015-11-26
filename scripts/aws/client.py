@@ -197,10 +197,13 @@ class solverThread (threading.Thread):
     def get_perf_fname(self):
         return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
 
+    def get_sqlite_fname(self):
+        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".sqlite"
+
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
-            extra_opts = " --printsol 0 "
+            extra_opts = " --printsol 0 --sql 2 --wsql 3 "
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
@@ -272,21 +275,25 @@ class solverThread (threading.Thread):
         s3_folder_and_fname_clean = s3_folder + "/" + self.indata[
             "cnf_filename"]
 
+        toreturn = []
+
         # stdout
         os.system("gzip -f %s" % self.get_stdout_fname())
-        stdout_fname = s3_folder_and_fname + ".stdout.gz-tmp"
-        stdout_fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
-        k.key = stdout_fname
+        fname = s3_folder_and_fname + ".stdout.gz-tmp"
+        fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
+        k.key = fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
+        toreturn.append([fname, fname_clean])
 
         # stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        stderr_fname = s3_folder_and_fname + ".stderr.gz-tmp"
-        stderr_fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
-        k.key = stderr_fname
+        fname = s3_folder_and_fname + ".stderr.gz-tmp"
+        fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
+        k.key = fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
+        toreturn.append([fname, fname_clean])
 
         # perf
         # os.system("gzip -f %s" % self.get_perf_fname())
@@ -294,14 +301,24 @@ class solverThread (threading.Thread):
         # boto_bucket.delete_key(k)
         # k.set_contents_from_filename(self.get_perf_fname() + ".gz")
 
-        logging.info("Uploaded stdout+stderr+perf files", extra=self.logextra)
+        # sqlite
+        if "cryptominisat" in self.indata["solver"]:
+            fname = self.get_sqlite_fname() + "-tmp"
+            fname_clean = self.get_sqlite_fname()
+            k.key = fname
+            boto_bucket.delete_key(k)
+            k.set_contents_from_filename(self.get_sqlite_fname())
+            toreturn.append([fname, fname_clean])
+
+        logging.info("Uploaded stdout+stderr+sqlite+perf files: %s",
+                     toreturn, extra=self.logextra)
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
+        os.unlink(self.get_sqlite_fname())
         # os.unlink(self.get_perf_fname() + ".gz")
 
-        return [[stdout_fname, stdout_fname_clean],
-                [stderr_fname, stderr_fname_clean]]
+        return toreturn
 
     def run_loop(self):
         while not exitapp:
