@@ -236,7 +236,8 @@ class solution_parser:
         if debugLibPart is None:
             print("Verifying solution for CNF file %s" % fname)
         else:
-            print("Verifying solution for CNF file %s, part %d" % (fname, debugLibPart))
+            print("Verifying solution for CNF file %s, part %d" %
+                  (fname, debugLibPart))
 
         if fnmatch.fnmatch(fname, '*.gz'):
             f = gzip.open(fname, "r")
@@ -277,7 +278,7 @@ class solution_parser:
 class create_fuzz:
 
     @staticmethod
-    def unique_file(fname_begin, fname_end = ".cnf"):
+    def unique_file(fname_begin, fname_end=".cnf"):
         counter = 1
         while 1:
             fname = fname_begin + '_' + str(counter) + fname_end
@@ -397,6 +398,7 @@ fuzzers_xor = [
     ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
 ]
+
 
 class Tester:
 
@@ -842,7 +844,6 @@ class Tester:
             toexec = "drat-trim %s %s" % (fname, fname2)
             print("Checking DRUP...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
-                                 #,preexec_fn=setlimits)
             consoleOutput2 = p.communicate()[0]
             diffTime = calendar.timegm(time.gmtime()) - currTime
 
@@ -945,7 +946,7 @@ class Tester:
 
         rnd_opts = self.random_options(preproc=True)
 
-        #preprocess
+        # preprocess
         simp = "%s-simplified.cnf" % fname
         self.delete_file_no_matter_what(simp)
         console, retcode = self.execute(fname, fname2=simp,
@@ -958,7 +959,7 @@ class Tester:
         solution = "%s-solution.txt" % fname
         ret = self.check(fname=simp, dump_output_fname=solution)
         if ret is not None:
-            #didn't time out, so let's reconstruct the solution
+            # didn't time out, so let's reconstruct the solution
             savedstate = "%s-savedstate.dat" % simp
             self.check(fname=solution, checkAgainst=fname,
                        fixed_opts="--preproc 2 --savedstate %s" % savedstate,
