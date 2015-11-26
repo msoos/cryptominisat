@@ -1755,6 +1755,8 @@ void Searcher::clean_clauses_if_needed()
     }
 }
 
+//NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
+//      to performance. Solved 2 less in 3600s of SATRace'14
 lbool Searcher::perform_scc_and_varreplace_if_needed()
 {
     if (conf.doFindAndReplaceEqLits
@@ -1945,11 +1947,6 @@ lbool Searcher::solve(
         }
 
         save_search_loop_stats();
-        #ifndef USE_GAUSS
-        if (perform_scc_and_varreplace_if_needed() == l_False) {
-            break;
-        }
-        #endif
         if (must_consolidate_mem) {
             cl_alloc.consolidate(solver);
             must_consolidate_mem = false;
