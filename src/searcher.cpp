@@ -1650,23 +1650,6 @@ void Searcher::dump_restart_sql()
 }
 #endif
 
-struct VarDumpOrder
-{
-    VarDumpOrder(size_t _var, size_t _polarSetSum) :
-        var(_var)
-        , polarSetSum(_polarSetSum)
-    {}
-
-    size_t var;
-    size_t polarSetSum;
-
-    bool operator<(const VarDumpOrder& other) const
-    {
-        //Order by largest polarSetSum first
-        return polarSetSum > other.polarSetSum;
-    }
-};
-
 void Searcher::print_restart_stat()
 {
     //Print restart stat
