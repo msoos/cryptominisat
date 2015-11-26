@@ -45,38 +45,37 @@ MySQLStats::MySQLStats() :
 
 MySQLStats::~MySQLStats()
 {
-    if (!setup_ok)
-        return;
+    if (!setup_ok) {
+        //Free all the prepared statements
+        my_bool ret = mysql_stmt_close(stmtRst.stmt);
+        if (ret) {
+            cout << "Error closing prepared statement" << endl;
+            std::exit(-1);
+        }
 
-    //Free all the prepared statements
-    my_bool ret = mysql_stmt_close(stmtRst.stmt);
-    if (ret) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
+        ret = mysql_stmt_close(stmtReduceDB.stmt);
+        if (ret) {
+            cout << "Error closing prepared statement" << endl;
+            std::exit(-1);
+        }
 
-    ret = mysql_stmt_close(stmtReduceDB.stmt);
-    if (ret) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
+        ret = mysql_stmt_close(stmtTimePassed.stmt);
+        if (ret) {
+            cout << "Error closing prepared statement" << endl;
+            std::exit(-1);
+        }
 
-    ret = mysql_stmt_close(stmtTimePassed.stmt);
-    if (ret) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
+        ret = mysql_stmt_close(stmtTimePassedMin.stmt);
+        if (ret) {
+            cout << "Error closing prepared statement" << endl;
+            std::exit(-1);
+        }
 
-    ret = mysql_stmt_close(stmtTimePassedMin.stmt);
-    if (ret) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = mysql_stmt_close(stmtMemUsed.stmt);
-    if (ret) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
+        ret = mysql_stmt_close(stmtMemUsed.stmt);
+        if (ret) {
+            cout << "Error closing prepared statement" << endl;
+            std::exit(-1);
+        }
     }
 
     //Close clonnection
