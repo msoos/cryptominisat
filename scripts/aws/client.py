@@ -303,7 +303,7 @@ class solverThread (threading.Thread):
 
         # sqlite
         if "cryptominisat" in self.indata["solver"]:
-            fname = self.get_sqlite_fname() + "-tmp"
+            fname = s3_folder_and_fname + ".sqlite-tmp"
             fname_clean = s3_folder_and_fname_clean + ".sqlite"
             k.key = fname
             boto_bucket.delete_key(k)
