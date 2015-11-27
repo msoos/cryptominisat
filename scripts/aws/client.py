@@ -198,7 +198,7 @@ class solverThread (threading.Thread):
         return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
 
     def get_sqlite_fname(self):
-        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".sqlite"
+        return self.get_output_fname() + ".sqlite"
 
     def get_toexec(self):
         extra_opts = ""
