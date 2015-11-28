@@ -225,22 +225,11 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
     }
 }
 
-#ifdef STATS_NEEDED
-bool ReduceDB::red_cl_too_young(const Clause* cl) const
-{
-    return cl->stats.introduced_at_conflict + solver->conf.min_time_in_db_before_eligible_for_cleaning
-            >= solver->sumConflicts();
-}
-#endif
-
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
     return
          !cl->stats.locked
-         #ifdef STATS_NEEDED
-         && !red_cl_too_young(cl)
-        #endif
          && !cl->used_in_xor()
          && !cl->stats.marked_clause
          && cl->stats.ttl == 0
