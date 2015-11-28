@@ -3707,3 +3707,10 @@ void Solver::check_stats(const bool allowFreed) const
         );
     }
 }
+
+void Solver::add_sql_tag(const string& tagname, const string& tag)
+{
+    if (sqlStats) {
+        sqlStats->add_tag(std::make_pair(tagname, tag));
+    }
+}

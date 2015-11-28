@@ -79,6 +79,7 @@ public:
     {
         return runID;
     }
+    virtual void add_tag(const std::pair<std::string, std::string>& tag) = 0;
 
 protected:
 

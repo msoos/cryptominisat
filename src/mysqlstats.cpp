@@ -90,7 +90,6 @@ bool MySQLStats::setup(const Solver* solver)
     }
 
     getID(solver);
-    add_tags(solver);
     addStartupData(solver);
     initRestartSTMT();
     initReduceDBSTMT();
@@ -193,27 +192,20 @@ void MySQLStats::getID(const Solver* solver)
     }
 }
 
-void MySQLStats::add_tags(const Solver* solver)
+void MySQLStats::add_tag(const std::pair<string, string>& tag)
 {
-    for(vector<std::pair<string, string> >::const_iterator
-        it = solver->get_sql_tags().begin(), end = solver->get_sql_tags().end()
-        ; it != end
-        ; ++it
-    ) {
+    std::stringstream ss;
+    ss
+    << "INSERT INTO `tags` (`runID`, `tagname`, `tag`) VALUES("
+    << runID
+    << ", '" << tag.first << "'"
+    << ", '" << tag.second << "'"
+    << ");";
 
-        std::stringstream ss;
-        ss
-        << "INSERT INTO `tags` (`runID`, `tagname`, `tag`) VALUES("
-        << runID
-        << ", '" << it->first << "'"
-        << ", '" << it->second << "'"
-        << ");";
-
-        //Inserting element into solverruns to get unique ID
-        if (mysql_query(serverConn, ss.str().c_str())) {
-            cerr << "ERROR Couldn't insert into table 'tags'" << endl;
-            std::exit(-1);
-        }
+    //Inserting element into solverruns to get unique ID
+    if (mysql_query(serverConn, ss.str().c_str())) {
+        cerr << "ERROR Couldn't insert into table 'tags'" << endl;
+        std::exit(-1);
     }
 }
 

@@ -368,11 +368,6 @@ inline const SolveStats& Solver::get_solve_stats() const
     return solveStats;
 }
 
-inline void Solver::add_sql_tag(const string& tagname, const string& tag)
-{
-    sql_tags.push_back(std::make_pair(tagname, tag));
-}
-
 inline size_t Solver::get_num_long_irred_cls() const
 {
     return longIrredCls.size();

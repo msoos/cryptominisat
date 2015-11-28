@@ -75,13 +75,13 @@ public:
 
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;
+    void add_tag(const std::pair<std::string, std::string>& tag) override;
 
 private:
 
     bool connectServer(const Solver* solver);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
-    void add_tags(const Solver* solver);
 
     void addStartupData(const Solver* solver);
     void initRestartSTMT();
