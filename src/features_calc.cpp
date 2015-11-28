@@ -309,9 +309,6 @@ void SolveFeaturesCalc::calculate_cl_distributions(
     double size_mean = 0;
     double size_var = 0;
 
-    double uip_use_mean = 0;
-    double uip_use_var = 0;
-
     double activity_mean = 0;
     double activity_var = 0;
 
@@ -322,16 +319,10 @@ void SolveFeaturesCalc::calculate_cl_distributions(
         size_mean += cl.size();
         glue_mean += cl.stats.glue;
         activity_mean += cl.stats.activity;
-        #ifdef STATS_NEEDED
-        uip_use_mean += cl.stats.used_for_uip_creation;
-        #endif
     }
     size_mean /= clauses.size();
     glue_mean /= clauses.size();
     activity_mean /= clauses.size();
-    #ifdef STATS_NEEDED
-    uip_use_mean /= clauses.size();
-    #endif
 
     //Calculate variances
     for(ClOffset off: clauses)
@@ -340,24 +331,16 @@ void SolveFeaturesCalc::calculate_cl_distributions(
         size_var += std::pow(size_mean-cl.size(), 2);
         glue_var += std::pow(glue_mean-cl.stats.glue, 2);
         activity_var += std::pow(activity_mean-cl.stats.activity, 2);
-        #ifdef STATS_NEEDED
-        uip_use_var += std::pow(uip_use_mean-cl.stats.used_for_uip_creation, 2);
-        #endif
     }
     size_var /= clauses.size();
     glue_var /= clauses.size();
     activity_var /= clauses.size();
-    #ifdef STATS_NEEDED
-    uip_use_var /= clauses.size();
-    #endif
 
     //Assign calculated values
     distrib_data.glue_distr_mean = glue_mean;
     distrib_data.glue_distr_var = glue_var;
     distrib_data.size_distr_mean = size_mean;
     distrib_data.size_distr_var = size_var;
-    distrib_data.uip_use_distr_mean = uip_use_mean;
-    distrib_data.uip_use_distr_var = uip_use_var;
     distrib_data.activity_distr_mean = activity_mean;
     distrib_data.activity_distr_var = activity_var;
 }

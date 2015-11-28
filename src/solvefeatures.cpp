@@ -111,8 +111,8 @@ void SolveFeatures::Distrib::print(const string& pre_print) const
     cout << pre_print <<"glue_distr_var " << glue_distr_var << ", ";
     cout << pre_print <<"size_distr_mean " << size_distr_mean << ", ";
     cout << pre_print <<"size_distr_var " << size_distr_var << ", ";
-    cout << pre_print <<"uip_use_distr_mean " << uip_use_distr_mean << ", ";
-    cout << pre_print <<"uip_use_distr_var " << uip_use_distr_var << ", ";
+    cout << pre_print <<"uip_use_distr_mean " << 0 << ", ";
+    cout << pre_print <<"uip_use_distr_var " << 0 << ", ";
     cout << pre_print <<"activity_distr_mean " << activity_distr_mean << ", ";
     cout << pre_print <<"activity_distr_var " << activity_distr_var << ", ";
 }
