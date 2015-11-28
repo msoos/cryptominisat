@@ -4,7 +4,6 @@ CREATE TABLE `tags` (
   `tagname` varchar(500) NOT NULL,
   `tag` varchar(500) NOT NULL
 );
-create index `idx3` on `tags` (`runID`);
 
 DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
@@ -45,7 +44,6 @@ CREATE TABLE `reduceDB` (
   `remainLookedAt` bigint(20) NOT NULL,
   `remainUsedUIP` bigint(20) NOT NULL
 );
-create index `idx4` on `reduceDB` (`runID`,`conflicts`);
 
 DROP TABLE IF EXISTS `restart`;
 CREATE TABLE `restart` (
@@ -121,8 +119,6 @@ CREATE TABLE `restart` (
   `eliminated` int(20) NOT NULL,
   `set` int(20) NOT NULL
 );
-create index `idx5` on `restart` (`runID`,`conflicts`);
-create index `idx6` on `restart` (`runID`,`simplifications`);
 
 DROP TABLE IF EXISTS `timepassed`;
 CREATE TABLE `timepassed` (
@@ -135,7 +131,6 @@ CREATE TABLE `timepassed` (
   `timeout` int(20) DEFAULT NULL,
   `percenttimeremain` float DEFAULT NULL
 );
-create index `idx7` on `timepassed` (`runID`,`conflicts`);
 
 DROP TABLE IF EXISTS `memused`;
 CREATE TABLE `memused` (
@@ -146,7 +141,6 @@ CREATE TABLE `memused` (
   `name` varchar(200) NOT NULL,
   `MB` int(20) NOT NULL
 );
-create index `idx7_2` on `memused` (`runID`,`conflicts`);
 
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
@@ -154,7 +148,6 @@ CREATE TABLE `solverRun` (
   `version` varchar(255) NOT NULL,
   `time` bigint(20) NOT NULL
 );
-create index `idx9` on `solverRun` (`runID`);
 
 DROP TABLE IF EXISTS `startup`;
 CREATE TABLE `startup` (
@@ -162,7 +155,6 @@ CREATE TABLE `startup` (
   `startTime` datetime NOT NULL,
   `verbosity` int(20) NOT NULL
 );
-create index `idx10` on `startup` (`runID`);
 
 DROP TABLE IF EXISTS `finishup`;
 CREATE TABLE `finishup` (
@@ -170,7 +162,6 @@ CREATE TABLE `finishup` (
   `endTime` datetime NOT NULL,
   `status` varchar(255) NOT NULL
 );
-create index `idx11` on `finishup` (`runID`);
 
 DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
@@ -201,4 +192,14 @@ CREATE TABLE `sum_clause_stats` (
   `avg_numLookedAt` int(20) NOT NULL,
   `num` int(20) NOT NULL
 );
-create index `idx12` on `sum_clause_stats` (`runID`,`reduceDB`);
+
+-- create index `idx5` on `restart` (`runID`,`conflicts`);
+-- create index `idx6` on `restart` (`runID`,`simplifications`);
+-- create index `idx7` on `timepassed` (`runID`,`conflicts`);
+-- create index `idx7_2` on `memused` (`runID`,`conflicts`);
+-- create index `idx9` on `solverRun` (`runID`);
+-- create index `idx10` on `startup` (`runID`);
+-- create index `idx11` on `finishup` (`runID`);
+-- create index `idx3` on `tags` (`runID`);
+-- create index `idx4` on `reduceDB` (`runID`,`conflicts`);
+-- create index `idx12` on `sum_clause_stats` (`runID`,`reduceDB`);
