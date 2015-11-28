@@ -141,19 +141,12 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 {
     std::swap(assigns[nVars()-off_by-1], assigns[which]);
     std::swap(varData[nVars()-off_by-1], varData[which]);
-
-    #ifdef STATS_NEEDED
-    std::swap(varDataLT[nVars()-off_by-1], varDataLT[which]);
-    #endif
 }
 
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.resize(assigns.size() + n, l_Undef);
     varData.resize(varData.size() + n, VarData());
-    #ifdef STATS_NEEDED
-    varDataLT.resize(varDataLT.size() + n, VarData());
-    #endif
 }
 
 void CNF::enlarge_minimal_datastructs(size_t n)

@@ -730,9 +730,6 @@ void PropEngine::updateVars(
     , const vector<uint32_t>& interToOuter2
 ) {
     updateArray(varData, interToOuter);
-    #ifdef STATS_NEEDED
-    updateArray(varDataLT, interToOuter);
-    #endif
     updateArray(assigns, interToOuter);
     assert(decisionLevel() == 0);
 

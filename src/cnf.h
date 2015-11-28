@@ -87,9 +87,6 @@ public:
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<VarData> varData;
-    #ifdef STATS_NEEDED
-    vector<VarData> varDataLT;
-    #endif
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
