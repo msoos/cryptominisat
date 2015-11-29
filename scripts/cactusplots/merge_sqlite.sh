@@ -13,8 +13,8 @@ for FILE in *sqlite*; do
 	done
 	echo "detach tomerge;" >> $FNAME
 done
-rm -f mergeddata
-sqlite3 mergeddata < $FNAME
+rm -f mergeddata.sqlite
+sqlite3 mergeddata.sqlite < $FNAME
 
 # rm -f dump
 # rm -f schema
