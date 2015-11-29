@@ -85,7 +85,7 @@ private:
     bool extractInfo();
     void cutIntoBlocks(const vector<size_t>& xorsToUse);
     bool extractInfoFromBlock(const vector<uint32_t>& block, const size_t blockNum);
-    vector<uint32_t> getXorsForBlock(const size_t blockNum);
+    void move_xors_into_blocks();
 
     //Major calculated data and indexes to this data
     vector<vector<uint32_t> > blocks; ///<Blocks of vars that are in groups of XORs
@@ -96,6 +96,7 @@ private:
     vector<uint32_t> interToOUterVarMap;
 
     vector<Xor> xors;
+    vector<vector<uint32_t> > xors_in_blocks;
 };
 
 }

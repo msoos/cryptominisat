@@ -114,6 +114,7 @@ bool TopLevelGauss::extractInfo()
 
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
+    move_xors_into_blocks();
     runStats.blockCutTime += cpuTime() -myTime;
     myTime = cpuTime();
 
@@ -174,7 +175,7 @@ bool TopLevelGauss::extractInfoFromBlock(
     }
 
     //Get corresponding XORs
-    const vector<uint32_t> thisXors = getXorsForBlock(blockNum);
+    const vector<uint32_t>& thisXors = xors_in_blocks[blockNum];
     assert(thisXors.size() > 1 && "We pre-filter the set such that *every* block contains at least 2 xors");
 
     //Set up matrix
@@ -267,25 +268,21 @@ bool TopLevelGauss::extractInfoFromBlock(
     return solver->okay();
 }
 
-vector<uint32_t> TopLevelGauss::getXorsForBlock(const size_t blockNum)
+void TopLevelGauss::move_xors_into_blocks()
 {
-    vector<uint32_t> xorsInThisBlock;
+    xors_in_blocks.clear();
+    xors_in_blocks.resize(blocks.size());
 
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& thisXor = xors[i];
         assert(thisXor.size() > 2 && "XORs are always at least 3-long!");
 
-        if (varToBlock[thisXor[0]] == blockNum) {
-            xorsInThisBlock.push_back(i);
-
-            for(uint32_t v : thisXor) {
-                assert(varToBlock[v] == blockNum
-                    && "if any vars are in this block, ALL block are in this block");
-            }
+        uint32_t block = varToBlock[thisXor[0]];
+        if (block != std::numeric_limits<uint32_t>::max()) {
+            assert(block < xors_in_blocks.size());
+            xors_in_blocks[block].push_back(i);
         }
     }
-
-    return xorsInThisBlock;
 }
 
 void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
@@ -298,8 +295,8 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
     //Go through each XOR, and either make a new block for it
     //or merge it into an existing block
     //or merge it into an existing block AND merge blocks it joins together
-    for(vector<size_t>::const_iterator it = xorsToUse.begin(), end = xorsToUse.end(); it != end; ++it) {
-        const Xor& thisXor = xors[*it];
+    for(size_t i: xorsToUse) {
+        const Xor& thisXor = xors[i];
 
         //Calc blocks for this XOR
         set<size_t> blocksBelongTo;
@@ -367,10 +364,12 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 
     //caclulate stats
+    vector<uint32_t> new_block_num;
+    uint32_t i = 0;
     for(vector<vector<uint32_t> >::const_iterator
         it = blocks.begin(), end = blocks.end()
         ; it != end
-        ; ++it
+        ; ++it, i++
     ) {
         //this set has been merged into another set. Skip
         if (it->empty())
