@@ -148,9 +148,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
 
         //Free it
         if (solver->value(var) != l_Undef
-            || solver->varData[var].removed == Removed::elimed
-            || solver->varData[var].removed == Removed::replaced
-            || solver->varData[var].removed == Removed::decomposed
+            || solver->varData[var].removed != Removed::none
         ) {
             vector<LitExtra> tmp1;
             numFreed += implCache[Lit(var, false).toInt()].lits.capacity();
