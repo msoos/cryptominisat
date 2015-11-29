@@ -66,9 +66,23 @@ bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors)
     return solver->ok;
 }
 
+struct XorSorter{
+    bool operator()(const Xor& a, const Xor& b) const
+    {
+        return a.size() > b.size();
+    }
+};
+
 bool TopLevelGauss::extractInfo()
 {
     double myTime = cpuTime();
+
+    //Order XORs so that larger are first. this way, putting them into blocks
+    //will be faster
+    std::sort(xors.begin(), xors.end(), XorSorter());
+
+    //Pre-filter XORs -- don't use any XOR which is not connected to ANY
+    //other XOR. These cannot be XOR-ed with anything anyway
     vector<uint32_t> varsIn(solver->nVars(), 0);
     for(const Xor& x: xors) {
         for(const uint32_t v: x) {
@@ -76,8 +90,6 @@ bool TopLevelGauss::extractInfo()
         }
     }
 
-    //Pre-filter XORs -- don't use any XOR which is not connected to ANY
-    //other XOR. These cannot be XOR-ed with anything anyway
     size_t i = 0;
     vector<size_t> xorsToUse;
     for(vector<Xor>::const_iterator
