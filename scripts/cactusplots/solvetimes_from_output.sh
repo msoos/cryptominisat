@@ -1,5 +1,12 @@
 #!/bin/sh
 
+zgrep -i assert *stdout* *stderr*
+zgrep -i signal *stderr* *stderr*
+zgrep -i error *stderr* *stderr*
+zgrep -i abort *stderr* *stderr*
+zgrep -i failed *stderr* *stderr*
+
+
 zgrep "Total" *stdout.gz | awk '{print $5}' > solveTimes
 zgrep "s.*SATISFIABLE" *stdout.gz | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solved
 ls *stdout* | sed 's/gz.*/gz/' > allFiles
