@@ -143,7 +143,7 @@ bool TopLevelGauss::extractInfo()
         if (!extractInfoFromBlock(*it, i))
             goto end;
 
-        if (solver->conf.velim_resolvent_too_large >= 5) {
+        if (solver->conf.verbosity >= 5) {
             cout << "Block size: " << it->size() << endl;
             cout << "New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
             cout << "New bins this round: " << (runStats.newBins - oldNewBins) << endl;
