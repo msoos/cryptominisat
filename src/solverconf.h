@@ -277,6 +277,7 @@ class SolverConf
         int      never_stop_search;
         uint64_t num_conflicts_of_search;
         double   num_conflicts_of_search_inc;
+        double   num_conflicts_of_search_inc_max;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
         string   simplify_schedule_preproc;
