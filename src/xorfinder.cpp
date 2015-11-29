@@ -91,7 +91,7 @@ void XorFinder::find_xors_based_on_short_clauses()
 
         //cannot use iterators because findXor may update the watchlist
         for (size_t i = 0, size = solver->watches[lit].size()
-            ; i < size
+            ; i < size && xor_find_time_limit > 0
             ; i++
         ) {
             const Watched& w = ws[i];
