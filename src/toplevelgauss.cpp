@@ -114,7 +114,7 @@ bool TopLevelGauss::extractInfo()
 
     //Cut above-filtered XORs into blocks
     cutIntoBlocks(xorsToUse);
-    runStats.blockCutTime += myTime - cpuTime();
+    runStats.blockCutTime += cpuTime() -myTime;
     myTime = cpuTime();
 
     //These mappings will be needed for the matrixes, which will have far less
