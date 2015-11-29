@@ -1954,20 +1954,6 @@ void Solver::print_prop_confl_stats(
     }
 }
 
-void Solver::consolidate_mem()
-{
-    const double myTime = cpuTime();
-    cl_alloc.consolidate(this, true);
-    const double time_used = cpuTime() - myTime;
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            this
-            , "consolidate mem"
-            , time_used
-        );
-    }
-}
-
 void Solver::print_stats(const double cpu_time) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
