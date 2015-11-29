@@ -79,12 +79,15 @@ void XorFinder::find_xors_based_on_short_clauses()
     assert(solver->ok);
 
     vector<Lit> lits;
-    for (size_t wsLit = 0, end = 2*solver->nVars(); wsLit < end; wsLit++) {
+    for (size_t wsLit = 0, end = 2*solver->nVars()
+        ; wsLit < end && xor_find_time_limit > 0
+        ; wsLit++
+    ) {
         const Lit lit = Lit::toLit(wsLit);
         assert(solver->watches.size() > wsLit);
         watch_subarray_const ws = solver->watches[lit];
 
-        xor_find_time_limit -= (int64_t)ws.size()*3;
+        xor_find_time_limit -= (int64_t)ws.size()*4;
 
         //cannot use iterators because findXor may update the watchlist
         for (size_t i = 0, size = solver->watches[lit].size()
@@ -133,8 +136,8 @@ void XorFinder::find_xors()
     assert(solver->no_marked_clauses());
     #endif
 
-    find_xors_based_on_long_clauses();
     find_xors_based_on_short_clauses();
+    find_xors_based_on_long_clauses();
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -207,6 +210,7 @@ bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
 void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst)
 {
     //Set this clause as the base for the XOR, fill 'seen'
+    xor_find_time_limit -= 50;
     poss_xor.setup(lits, offset, abst, seen);
 
     bool found_all = false;
@@ -218,7 +222,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         //findXorMatchExt(solver->watches[lit], lit);
         //findXorMatchExt(solver->watches[~lit], ~lit);
 
-        xor_find_time_limit -= 5;
+        xor_find_time_limit -= 20;
         if (poss_xor.foundAll()) {
             found_all = true;
             break;
@@ -387,8 +391,8 @@ void XorFinder::findXorMatch(
                 tmpClause.push_back(lit);
                 tmpClause.push_back(it->lit2());
 
+                xor_find_time_limit-=20;
                 poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
-                xor_find_time_limit-=5;
                 if (poss_xor.foundAll())
                     break;
             }
@@ -415,8 +419,8 @@ void XorFinder::findXorMatch(
                     tmpClause.push_back(it->lit2());
                     tmpClause.push_back(it->lit3());
 
+                    xor_find_time_limit-=20;
                     poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
-                    xor_find_time_limit-=5;
                     if (poss_xor.foundAll())
                         break;
                 }
@@ -459,8 +463,8 @@ void XorFinder::findXorMatch(
             cl.stats.marked_clause = true;;
         }
 
+        xor_find_time_limit-=50;
         poss_xor.add(cl, offset, varsMissing);
-        xor_find_time_limit-=5;
         if (poss_xor.foundAll())
             break;
 
