@@ -376,12 +376,12 @@ void XorFinder::findXorMatch(
         ; it != end
         ; ++it
     ) {
-        if (it->isIdx()) {
+        if (it->isIdx() || it->isBin()) {
             continue;
         }
 
         //Deal with binary
-        if (it->isBin()) {
+        /*if (it->isBin()) {
             if (//Only once per binary
                 lit < it->lit2()
                 //only for correct binary
@@ -398,7 +398,7 @@ void XorFinder::findXorMatch(
             }
 
             continue;
-        }
+        }*/
 
         //Deal with tertiary
         if (it->isTri()) {
