@@ -136,13 +136,19 @@ bool TopLevelGauss::extractInfo()
         if (it->empty())
             continue;
 
-        //const uint64_t oldNewUnits = newUnits;
-        //const uint64_t oldNewBins = newBins;
+        double t = cpuTime();
+        const uint64_t oldNewUnits = runStats.newUnits;
+        const uint64_t oldNewBins = runStats.newBins;
+
         if (!extractInfoFromBlock(*it, i))
             goto end;
 
-        //cout << "New units this round: " << (newUnits - oldNewUnits) << endl;
-        //cout << "New bins this round: " << (newBins - oldNewBins) << endl;
+        if (solver->conf.velim_resolvent_too_large >= 5) {
+            cout << "Block size: " << it->size() << endl;
+            cout << "New units this round: " << (runStats.newUnits - oldNewUnits) << endl;
+            cout << "New bins this round: " << (runStats.newBins - oldNewBins) << endl;
+            cout << "Time: " << std::setprecision(3) << std::fixed << (cpuTime() - t) << endl;
+        }
     }
 
 end:
