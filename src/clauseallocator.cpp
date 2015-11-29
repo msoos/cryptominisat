@@ -21,6 +21,7 @@
 
 #include "clauseallocator.h"
 
+#include <algorithm>
 #include <string.h>
 #include <limits>
 #include "assert.h"
@@ -192,6 +193,8 @@ void ClauseAllocator::clauseFree(Clause* cl)
     assert(!cl->freed());
 
     cl->setFreed();
+    size_t est_sz = cl->size();
+    est_sz = std::max(est_sz, (size_t)4); //we don't allow anything less than 4
     size_t bytes_freed = (sizeof(Clause) + cl->size()*sizeof(Lit));
     size_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
     currentlyUsedSize -= elems_freed;
