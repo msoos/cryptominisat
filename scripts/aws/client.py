@@ -152,6 +152,15 @@ def ask_for_data_to_solve(sock, command, threadID):
     return indata
 
 
+def signal_error_to_master():
+    sock = connect_client(100)
+    tosend = {}
+    tosend["command"] = "error"
+    tosend = pickle.dumps(tosend)
+    tosend = struct.pack('!q', len(tosend)) + tosend
+    sock.sendall(tosend)
+    sock.close()
+
 class solverThread (threading.Thread):
 
     def __init__(self, threadID):
@@ -473,6 +482,12 @@ def num_cpus():
 
 
 def shutdown(exitval=0):
+    if exitval != 0:
+        try:
+            signal_error_to_master()
+        except:
+            pass
+
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
     global s3_bucket

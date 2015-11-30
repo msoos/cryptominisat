@@ -348,6 +348,10 @@ class Server (threading.Thread):
             if data["command"] == "done":
                 self.handle_done(conn, cli_addr, data)
 
+            if data["command"] == "error":
+                something_failed = True
+                raise
+
             elif data["command"] == "need":
                 self.handle_need(conn, cli_addr, data)
 
@@ -408,7 +412,7 @@ class Listener (threading.Thread):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
             logging.error("Cannot listen on stocket! Traceback: %s", the_trace)
-            failed = True
+            something_failed = True
             exit(1)
             raise
         while True:
@@ -424,7 +428,7 @@ class SpotManager (threading.Thread):
     def run(self):
         while True:
             try:
-                if (not failed) and (not server.ready_to_shutdown()):
+                if (not something_failed) and (not server.ready_to_shutdown()):
                     self.spot_creator.create_spots_if_needed()
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -458,7 +462,7 @@ set_up_logging()
 logging.info("Server called with parameters: %s",
              pprint.pformat(options, indent=4).replace("\n", " || "))
 
-failed = False
+something_failed = False
 if not options.git_rev:
     options.git_rev = get_revision()
     logging.info("Revision not given, taking HEAD: %s", options.git_rev)
@@ -475,7 +479,7 @@ server.start()
 time.sleep(20)
 spotmanager.start()
 
-while threading.active_count() > 0 and not failed:
+while threading.active_count() > 0 and not something_failed:
     time.sleep(0.5)
     if last_termination_sent is not None and server.ready_to_shutdown():
         diff = time.time() - last_termination_sent
