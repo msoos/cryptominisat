@@ -214,6 +214,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     poss_xor.setup(lits, offset, abst, seen);
 
     bool found_all = false;
+    //To be honest, -1 would do the trick fully. Or even just "i < 1", but
+    //that might not find all possibilities when shorter ones are allowed for
     for (size_t i = 0; i < lits.size()-2; i++) {
         const Lit lit = lits[i];
         findXorMatch(solver->watches[lit], lit);
