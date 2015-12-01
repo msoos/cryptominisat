@@ -53,7 +53,7 @@ class Query:
             name = name[len(name)-1]
             if len(name) > 30:
                 name = name[:30]
-            print("file: %-32s op: %-20s Time: %.1f " % (name, operation, t))
+            print("%-32s    %-20s   %.1fs" % (name, operation, t))
 
     def calc_time_spent(self):
         query = """
@@ -92,7 +92,7 @@ class Query:
 
 
 with Query() as q:
-    # q.find_outliers()
+    q.find_outliers()
     q.calc_time_spent()
 
 
