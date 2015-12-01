@@ -214,7 +214,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     poss_xor.setup(lits, offset, abst, seen);
 
     bool found_all = false;
-    for (const Lit lit: lits) {
+    for (size_t i = 0; i < lits.size()-2; i++) {
+        const Lit lit = lits[i];
         findXorMatch(solver->watches[lit], lit);
         findXorMatch(solver->watches[~lit], ~lit);
 
@@ -430,8 +431,15 @@ void XorFinder::findXorMatch(
         }
 
         //Deal with clause
+
+        //Clause will be at least 4 long
+        if (poss_xor.getSize() <= 3) {
+            continue;
+        }
+
         const ClOffset offset = it->get_offset();
         Clause& cl = *solver->cl_alloc.ptr(offset);
+        xor_find_time_limit -= 20; //deref penalty
         if (cl.freed() || cl.getRemoved())
             continue;
 
