@@ -362,12 +362,14 @@ class solverThread (threading.Thread):
             # handle 'wait'
             if self.indata["command"] == "wait":
                 time.sleep(20)
+                continue
 
             # handle 'solve'
             if self.indata["command"] == "solve" :
                 returncode, executed = self.execute()
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
+                continue
 
             logging.error("Ooops, data unrecognised by client, exiting thread")
             return
