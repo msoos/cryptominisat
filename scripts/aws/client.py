@@ -330,7 +330,14 @@ class solverThread (threading.Thread):
         return toreturn
 
     def run_loop(self):
+        num_connect_problems = 0
         while not exitapp:
+            if (num_connect_problems >= 100):
+                logging.error("Too many connection problems, exiting.",
+                              extra=self.logextra)
+                exitapp = True
+                return
+
             time.sleep(random.randint(0, 100) / 20.0)
             try:
                 sock = connect_client(self.threadID)
@@ -342,6 +349,7 @@ class solverThread (threading.Thread):
                              " Trace: %s", the_trace,
                              extra=self.logextra)
                 time.sleep(3)
+                num_connect_problems += 1
                 continue
 
             self.indata = ask_for_data_to_solve(sock, "need", self.threadID)
