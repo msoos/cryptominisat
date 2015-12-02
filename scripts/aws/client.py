@@ -379,8 +379,12 @@ class solverThread (threading.Thread):
                 self.send_back_that_we_solved(returncode, files)
                 continue
 
-            logging.error("Ooops, data unrecognised by client, exiting thread")
+            logging.error("Data unrecognised by client: %s, exiting",
+                          self.logextra)
             return
+
+        logging.info("Exit asked for by another thread. Exiting",
+                     extra=self.logextra)
 
     def send_back_that_we_solved(self, returncode, files):
         logging.info("Trying to send to server that we are done",
