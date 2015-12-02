@@ -330,6 +330,7 @@ class solverThread (threading.Thread):
         return toreturn
 
     def run_loop(self):
+        global exitapp
         num_connect_problems = 0
         while not exitapp:
             if (num_connect_problems >= 100):
@@ -425,6 +426,7 @@ class solverThread (threading.Thread):
 
     def run(self):
         logging.info("Starting thread", extra=self.logextra)
+        global exitapp
 
         try:
             self.run_loop()
