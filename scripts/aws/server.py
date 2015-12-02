@@ -290,51 +290,67 @@ class Server (threading.Thread):
                      cli_addr)
         connection.sendall(tosend)
 
+    def send_termination(self, connection, cli_addr):
+        tosend = {}
+        tosend["noshutdown"] = options.noshutdown
+        tosend["command"] = "finish"
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('!q', len(tosend)) + tosend
+
+        logging.info("No more to solve, terminating %s", cli_addr)
+        connection.sendall(tosend)
+        global last_termination_sent
+        last_termination_sent = time.time()
+
+    def send_wait(self, connection, cli_addr):
+        tosend = {}
+        tosend["noshutdown"] = options.noshutdown
+        tosend["command"] = "wait"
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('!q', len(tosend)) + tosend
+        logging.info("Everything is in sent queue, sending wait to %s",
+                     cli_addr)
+
+    def send_one_to_solve(self, connection, cli_addr, file_num):
+        # set timer that we have sent this to be solved
+        self.files_running[file_num] = time.time()
+        filename = self.files[file_num].name
+
+        tosend = {}
+        tosend["file_num"] = file_num
+        tosend["git_rev"] = options.git_rev
+        tosend["cnf_filename"] = filename
+        tosend["solver"] = options.base_dir + options.solver
+        tosend["timeout_in_secs"] = options.timeout_in_secs
+        tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
+        tosend["s3_bucket"] = options.s3_bucket
+        tosend["s3_folder"] = options.s3_folder
+        tosend["cnf_dir"] = options.cnf_dir
+        tosend["noshutdown"] = options.noshutdown
+        tosend["extra_opts"] = options.extra_opts
+        tosend["uniq_cnt"] = str(self.uniq_cnt)
+        tosend["command"] = "solve"
+        tosend = pickle.dumps(tosend)
+        tosend = struct.pack('!q', len(tosend)) + tosend
+
+        logging.info("Sending file %s (num %d) to %s",
+                     filename, file_num, cli_addr)
+        sys.stdout.flush()
+        connection.sendall(tosend)
+        self.uniq_cnt += 1
+
     def handle_need(self, connection, cli_addr, indata):
         # TODO don't ignore 'indata' for solving CNF instances, use it to
         # opitimize for uptime
         file_num = self.find_something_to_solve()
 
-        # yay, everything finished!
         if file_num is None:
-            tosend = {}
-            tosend["noshutdown"] = options.noshutdown
-            tosend["command"] = "finish"
-            tosend = pickle.dumps(tosend)
-            tosend = struct.pack('!q', len(tosend)) + tosend
-
-            logging.info("No more to solve, sending termination to %s",
-                         cli_addr)
-            connection.sendall(tosend)
-            global last_termination_sent
-            last_termination_sent = time.time()
+            if len(self.files_running) == 0:
+                self.send_termination(connection, cli_addr)
+            else:
+                self.send_wait()
         else:
-            # set timer that we have sent this to be solved
-            self.files_running[file_num] = time.time()
-            filename = self.files[file_num].name
-
-            tosend = {}
-            tosend["file_num"] = file_num
-            tosend["git_rev"] = options.git_rev
-            tosend["cnf_filename"] = filename
-            tosend["solver"] = options.base_dir + options.solver
-            tosend["timeout_in_secs"] = options.timeout_in_secs
-            tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
-            tosend["s3_bucket"] = options.s3_bucket
-            tosend["s3_folder"] = options.s3_folder
-            tosend["cnf_dir"] = options.cnf_dir
-            tosend["noshutdown"] = options.noshutdown
-            tosend["extra_opts"] = options.extra_opts
-            tosend["uniq_cnt"] = str(self.uniq_cnt)
-            tosend["command"] = "solve"
-            tosend = pickle.dumps(tosend)
-            tosend = struct.pack('!q', len(tosend)) + tosend
-
-            logging.info("Sending file %s (num %d) to %s",
-                         filename, file_num, cli_addr)
-            sys.stdout.flush()
-            connection.sendall(tosend)
-            self.uniq_cnt += 1
+            self.send_one_to_solve(connection, cli_addr, file_num)
 
     def handle_one_client(self, conn, cli_addr):
         try:

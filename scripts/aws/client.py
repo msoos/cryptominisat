@@ -359,12 +359,18 @@ class solverThread (threading.Thread):
                              extra=self.logextra)
                 return
 
-            # handle 'solve'
-            assert self.indata["command"] == "solve"
-            returncode, executed = self.execute()
-            files = self.copy_solution_to_s3()
+            # handle 'wait'
+            if self.indata["command"] == "wait":
+                time.sleep(20)
 
-            self.send_back_that_we_solved(returncode, files)
+            # handle 'solve'
+            if self.indata["command"] == "solve" :
+                returncode, executed = self.execute()
+                files = self.copy_solution_to_s3()
+                self.send_back_that_we_solved(returncode, files)
+
+            logging.error("Ooops, data unrecognised by client, exiting thread")
+            return
 
     def send_back_that_we_solved(self, returncode, files):
         logging.info("Trying to send to server that we are done",
