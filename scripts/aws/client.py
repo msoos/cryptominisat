@@ -373,7 +373,7 @@ class solverThread (threading.Thread):
                 continue
 
             # handle 'solve'
-            if self.indata["command"] == "solve" :
+            if self.indata["command"] == "solve":
                 returncode, executed = self.execute()
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
