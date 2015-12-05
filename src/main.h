@@ -127,7 +127,6 @@ class Main
         bool drupDebug = false;
 
         //Unistuff
-        bool unisolve = false;
         SATCount ApproxMC(
             SATSolver* solver
             , FILE* resLog

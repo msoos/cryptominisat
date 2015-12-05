@@ -115,6 +115,7 @@ SATSolver* solverToInterrupt;
 int clear_interrupt;
 string redDumpFname;
 string irredDumpFname;
+bool unisolve = false;
 
 void SIGINT_handler(int)
 {
@@ -1738,6 +1739,9 @@ bool Main::openLogFile(FILE*& res)
 //My stuff from OneThreadSolve
 int Main::UniSolve()
 {
+    conf.reconfigure_at = 0;
+    conf.reconfigure_val = 7;
+
     FILE* resLog;
     openLogFile(resLog);
     startTime = cpuTimeTotal();
@@ -1884,5 +1888,9 @@ int main(int argc, char** argv)
 
     signal(SIGINT, SIGINT_handler);
 
-    return main.solve();
+    if (unisolve) {
+        return main.UniSolve();
+    } else {
+        return main.solve();
+    }
 }
