@@ -1686,16 +1686,6 @@ void Searcher::print_restart_stat()
     }
 }
 
-void Searcher::setup_restart_print()
-{
-    //Set up restart printing status
-    lastRestartPrint = stats.conflStats.numConflicts;
-    lastRestartPrintHeader = stats.conflStats.numConflicts;
-    if (conf.verbosity >= 1) {
-        print_restart_stat_line();
-    }
-}
-
 void Searcher::restore_order_heap()
 {
     order_heap.clear();
@@ -1877,7 +1867,6 @@ lbool Searcher::solve(
         && upper_level_iteration_num > 0
     ) {
         assert(solver->check_order_heap_sanity());
-        setup_restart_print();
         status = burst_search();
         if (status != l_Undef)
             goto end;
@@ -1890,7 +1879,6 @@ lbool Searcher::solve(
         calculate_and_set_polars();
     }
 
-    setup_restart_print();
     max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0

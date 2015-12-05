@@ -176,7 +176,6 @@ class Searcher : public HyperEngine
             , const unsigned upper_level_iteration_num
         );
         void finish_up_solve(lbool status);
-        void setup_restart_print();
         void reduce_db_if_needed();
         void clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed();
@@ -199,8 +198,8 @@ class Searcher : public HyperEngine
         ///////////////////////////////
         // Stats
         //Restart print status
-        uint64_t lastRestartPrint;
-        uint64_t lastRestartPrintHeader;
+        uint64_t lastRestartPrint = 0;
+        uint64_t lastRestartPrintHeader = 0;
         void     print_restart_stat();
         void     print_iteration_solving_stats();
         void     print_restart_header() const;
