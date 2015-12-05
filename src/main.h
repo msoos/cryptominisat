@@ -46,6 +46,17 @@ class Main
 {
     public:
         Main(int argc, char** argv);
+        ~Main()
+        {
+            if (drupf) {
+                *drupf << std::flush;
+                if (drupf != &std::cout) {
+                    delete drupf;
+                }
+            }
+
+            delete solver;
+        }
 
         void parseCommandLine();
         int solve();

@@ -1273,18 +1273,6 @@ int Main::solve()
         }
     }
 
-    //Delete solver
-    delete solver;
-    solver = NULL;
-
-    //Handle drup file -- flush + close
-    if (drupf) {
-        *drupf << std::flush;
-        if (drupf != &cout) {
-            delete drupf;
-        }
-    }
-
     return correctReturnValue(ret);
 }
 
