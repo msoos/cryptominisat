@@ -1059,7 +1059,16 @@ void Main::manually_parse_some_options()
     }
 
     if (vm.count("dumpresult")) {
-        needResultFile = true;
+        resultfile = new std::ofstream;
+        resultfile->open(resultFilename.c_str());
+        if (!(*resultfile)) {
+            cout
+            << "ERROR: Couldn't open file '"
+            << resultFilename
+            << "' for writing!"
+            << endl;
+            std::exit(-1);
+        }
     }
 
     parse_polarity_type();
@@ -1236,7 +1245,6 @@ int Main::correctReturnValue(const lbool ret) const
 
 int Main::solve()
 {
-
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (drupf) {
@@ -1244,19 +1252,6 @@ int Main::solve()
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
-
-    std::ofstream resultfile;
-    if (needResultFile) {
-        resultfile.open(resultFilename.c_str());
-        if (!resultfile) {
-            cout
-            << "ERROR: Couldn't open file '"
-            << resultFilename
-            << "' for writing!"
-            << endl;
-            std::exit(-1);
-        }
-    }
 
     //Print command line used to execute the solver: for options and inputs
     if (conf.verbosity >= 1) {
@@ -1274,7 +1269,37 @@ int Main::solve()
         parseInAllFiles(solver);
     }
 
-    //Multi-solutions
+    lbool ret = multi_solutions();
+    dumpIfNeeded();
+
+    if (conf.preprocess != 1) {
+        if (ret == l_Undef && conf.verbosity >= 1) {
+            cout
+            << "c Not finished running -- signal caught or some maximum reached"
+            << endl;
+        }
+        if (conf.verbosity >= 1) {
+            solver->print_stats();
+        }
+    }
+
+    //Delete solver
+    delete solver;
+    solver = NULL;
+
+    //Handle drup file -- flush + close
+    if (drupf) {
+        *drupf << std::flush;
+        if (drupf != &cout) {
+            delete drupf;
+        }
+    }
+
+    return correctReturnValue(ret);
+}
+
+lbool Main::multi_solutions()
+{
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
@@ -1282,10 +1307,9 @@ int Main::solve()
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            //Print result
             printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-            if (needResultFile) {
-                printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
+            if (resultfile) {
+                printResultFunc(resultfile, true, ret, current_nr_of_solutions == 1);
             }
 
             if (conf.verbosity >= 1) {
@@ -1308,41 +1332,6 @@ int Main::solve()
             solver->add_clause(lits);
         }
     }
-
-    dumpIfNeeded();
-
-    if (conf.preprocess != 1) {
-        if (ret == l_Undef && conf.verbosity >= 1) {
-            cout
-            << "c Not finished running -- signal caught or some maximum reached"
-            << endl;
-        }
-        if (conf.verbosity >= 1) {
-            solver->print_stats();
-        }
-
-        //Final print of solution
-        printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
-        if (needResultFile) {
-            printResultFunc(&resultfile, true, ret, current_nr_of_solutions == 1);
-        }
-    }
-
-    //Delete solver
-    delete solver;
-    solver = NULL;
-
-    if (drupf) {
-        //flush DRUP
-        *drupf << std::flush;
-
-        //If it's not stdout, we have to delete the ofstream
-        if (drupf != &cout) {
-            delete drupf;
-        }
-    }
-
-    return correctReturnValue(ret);
 }
 
 string binary(int x, uint32_t length)

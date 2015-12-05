@@ -86,10 +86,11 @@ class Main
         );
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
+        lbool multi_solutions();
+        std::ofstream* resultfile = NULL;
 
         //Config
         SolverConf conf;
-        bool needResultFile = false;
         bool zero_exit_status = false;
         std::string resultFilename;
 
