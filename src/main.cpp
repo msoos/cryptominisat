@@ -169,6 +169,11 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
     independent_vars = parser.independent_vars;
+    if (independent_vars.empty()) {
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            independent_vars.push_back(i);
+        }
+    }
 
     #ifndef USE_ZLIB
         fclose(in);
