@@ -1224,6 +1224,10 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
 
 int Main::correctReturnValue(const lbool ret) const
 {
+    if (zero_exit_status) {
+        return 0;
+    }
+
     int retval = -1;
     if (ret == l_True) {
         retval = 10;
