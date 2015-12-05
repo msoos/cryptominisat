@@ -1769,22 +1769,22 @@ int Main::UniSolve()
         return -1;
     }
     if (conf.startIteration == 0) {
-        printf("Computing startIteration using ApproxMC\n");
+        cout << "Computing startIteration using ApproxMC" << endl;
 
         SATCount solCount;
         std::mt19937 randomEngine {};
         SeedEngine(randomEngine);
         solCount = ApproxMC(solver, resLog, randomEngine);
         double elapsedTime = cpuTimeTotal() - startTime;
-        printf("Completed ApproxMC at %f s", elapsedTime);
+        cout << "Completed ApproxMC at " << elapsedTime << " s";
         if (elapsedTime > conf.totalTimeout - 3000) {
-            printf(" (TIMED OUT)\n");
+            cout << " (TIMED OUT)" << endl;
             return 0;
         }
-        printf("\n");
+        cout << endl;
         //printf("Solution count estimate is %d * 2^%d\n", solCount.cellSolCount, solCount.hashCount);
         if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
-            printf("The input formula is unsatisfiable.");
+            cout << "The input formula is unsatisfiable." << endl;
             return 0;
         }
         conf.startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
@@ -1866,14 +1866,14 @@ int Main::UniSolve()
 
     double timeTaken = cpuTimeTotal() - threadStartTime;
     allThreadsTime += timeTaken;
-    printf("Total time for UniGen2 thread %d: %f s", 1, timeTaken);
-    if (timedOut) {
-        printf(" (TIMED OUT)");
-    }
-    printf("\n");
+    cout
+    << "Total time for UniGen2 thread " << 1
+    << ": " << timeTaken << " s"
+    << (timedOut ? " (TIMED OUT)" : "")
+    << endl;
 
-    printf("Total time for all UniGen2 calls: %f s\n", allThreadsTime);
-    printf("Samples generated: %d\n", allThreadsSampleCount);
+    cout << "Total time for all UniGen2 calls: " << allThreadsTime << " s" << endl;
+    cout << "Samples generated: " << allThreadsSampleCount << endl;
 
     if (conf.verbosity >= 1) {
         solver->print_stats();
