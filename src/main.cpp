@@ -1310,6 +1310,7 @@ lbool Main::multi_solutions()
             solver->add_clause(lits);
         }
     }
+    return ret;
 }
 
 string binary(int x, uint32_t length)
