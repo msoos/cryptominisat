@@ -167,6 +167,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     if (!parser.parse_DIMACS(in)) {
         exit(-1);
     }
+    independent_vars = parser.independent_vars;
 
     #ifndef USE_ZLIB
         fclose(in);
@@ -1389,7 +1390,7 @@ uint32_t Main::SolutionsToReturn(
 bool Main::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine)
 {
     string randomBits;
-    GenerateRandomBits(randomBits, (solver->independent_var_set.size() + 1) * numClaus, randomEngine);
+    GenerateRandomBits(randomBits, (independent_vars.size() + 1) * numClaus, randomEngine);
     bool rhs = true;
     uint32_t activationVar;
     vector<uint32_t> vars;
@@ -1400,11 +1401,11 @@ bool Main::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
         activationVar = solver->nVars()-1;
         assumptions.push_back(Lit(activationVar, true));
         vars.push_back(activationVar);
-        rhs = (randomBits[(solver->independent_var_set.size() + 1) * i] == 1);
+        rhs = (randomBits[(independent_vars.size() + 1) * i] == 1);
 
-        for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-            if (randomBits[(solver->independent_var_set.size() + 1) * i + j] == '1') {
-                vars.push_back(solver->independent_var_set[j]);
+        for (uint32_t j = 0; j < independent_vars.size(); j++) {
+            if (randomBits[(independent_vars.size() + 1) * i + j] == '1') {
+                vars.push_back(independent_vars[j]);
             }
         }
         solver->add_xor_clause(vars, rhs);
@@ -1430,8 +1431,8 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
-            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-                uint32_t var = solver->independent_var_set[j];
+            for (uint32_t j = 0; j < independent_vars.size(); j++) {
+                uint32_t var = independent_vars[j];
                 if (solver->get_model()[var] != l_Undef) {
                     lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
                 }
@@ -1476,8 +1477,8 @@ lbool Main::BoundedSAT(
             model.clear();
             model = solver->get_model();
             modelsSet.push_back(model);
-            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-                uint32_t var = solver->independent_var_set[j];
+            for (uint32_t j = 0; j < independent_vars.size(); j++) {
+                uint32_t var = independent_vars[j];
                 if (solver->get_model()[var] != l_Undef) {
                     lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
                 }
@@ -1502,8 +1503,8 @@ lbool Main::BoundedSAT(
         for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
             vector<lbool> model = modelsSet.at(modelIndices.at(i));
             string solution ("v");
-            for (uint32_t j = 0; j < solver->independent_var_set.size(); j++) {
-                var = solver->independent_var_set[j];
+            for (uint32_t j = 0; j < independent_vars.size(); j++) {
+                var = independent_vars[j];
                 if (model[var] != l_Undef) {
                     if (model[var] != l_True) {
                         solution += "-";
@@ -1718,9 +1719,6 @@ int Main::singleThreadUniGenCall(
 ) {
     SATSolver solver2(&conf);
 
-    int num;
-    num = 0;
-    //setDoublePrecision(conf.verbosity);
     parseInAllFiles(&solver2);
     sampleCounter = UniGen(
         samples
@@ -1772,7 +1770,7 @@ int Main::UniSolve()
     FILE* resLog;
     openLogFile(resLog);
 
-    if (conf.startIteration > solver->independent_var_set.size()) {
+    if (conf.startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
         "is larger than the size of the independent set.\n" << endl;
         return -1;

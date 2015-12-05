@@ -160,6 +160,7 @@ class Main
         time_t  startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
         bool openLogFile(FILE*& res);
+        vector<uint32_t> independent_vars;
 };
 
 #endif //MAIN_H
