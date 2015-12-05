@@ -1331,7 +1331,7 @@ string binary(unsigned x, uint32_t length)
 
 bool Main::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine)
 {
-    std::uniform_int_distribution<int> uid {0, 2147483647};
+    std::uniform_int_distribution<unsigned> uid {0, 2147483647};
     uint32_t i = 0;
     while (i < size) {
         i += 31;
