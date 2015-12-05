@@ -103,8 +103,6 @@ add_library(temp_lib_norm OBJECT
 )
 
 add_library(temp_lib_ipasir OBJECT
-    ${cryptoms_lib_files}
-    cryptominisat.cpp
     ipasir.cpp
 )
 
@@ -139,6 +137,7 @@ if (ALSO_BUILD_STATIC_LIB)
     add_library(libcryptominisat4_ipasir_static STATIC ${cms_lib_objects_ipasir})
     target_link_libraries(libcryptominisat4_ipasir_static LINK_INTERFACE_LIBRARIES
         ${cryptoms_lib_link_libs}
+        libcryptominisat4_static
     )
     set_target_properties(libcryptominisat4_ipasir_static PROPERTIES
         OUTPUT_NAME cryptominisat4ipasir
@@ -162,6 +161,7 @@ set_target_properties(libcryptominisat4 PROPERTIES
 add_library(libcryptominisat4ipasir SHARED ${cms_lib_objects_ipasir})
 target_link_libraries(libcryptominisat4ipasir
     LINK_PUBLIC ${cryptoms_lib_link_libs}
+    libcryptominisat4
 )
 set_target_properties(libcryptominisat4ipasir PROPERTIES
     OUTPUT_NAME cryptominisat4ipasir

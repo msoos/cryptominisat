@@ -44,6 +44,7 @@ class DimacsParser
 
         template <class T> bool parse_DIMACS(T input_stream);
         uint64_t max_var = std::numeric_limits<uint64_t>::max();
+        vector<uint32_t> independent_vars;
 
     private:
         bool parse_DIMACS_main(C& in);
@@ -56,6 +57,7 @@ class DimacsParser
         std::string stringify(uint32_t x) const;
         bool parseSolveComment(C& in);
         void write_solution_to_debuglib_file(const lbool ret) const;
+        bool parseIndependentSet(C& in);
 
 
         SATSolver* solver;
@@ -307,6 +309,10 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
         if (verbosity >= 6) {
             cout << "c Parsed Solver::new_vars( " << n << " )" << endl;
         }
+    } else if (str == "ind") {
+        if (!parseIndependentSet(in)) {
+            return false;
+        }
     } else {
         if (verbosity >= 6) {
             cout
@@ -432,6 +438,23 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream)
         << endl;
     }
 
+    return true;
+}
+
+template <class C>
+bool DimacsParser<C>::parseIndependentSet(C& in)
+{
+    int32_t parsed_lit;
+    for (;;) {
+        if (!in.parseInt(parsed_lit, lineNum)) {
+            return false;
+        }
+        if (parsed_lit == 0) {
+            break;
+        }
+        uint32_t var = abs(parsed_lit) - 1;
+        independent_vars.push_back(var);
+    }
     return true;
 }
 

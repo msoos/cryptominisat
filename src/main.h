@@ -37,13 +37,30 @@ using std::vector;
 namespace po = boost::program_options;
 using namespace CMSat;
 
+struct SATCount {
+    uint32_t hashCount = 0;
+    uint32_t cellSolCount = 0;
+};
+
 class Main
 {
     public:
         Main(int argc, char** argv);
+        ~Main()
+        {
+            if (drupf) {
+                *drupf << std::flush;
+                if (drupf != &std::cout) {
+                    delete drupf;
+                }
+            }
+
+            delete solver;
+        }
 
         void parseCommandLine();
         int solve();
+        int UniSolve();
 
     private:
         string typeclean;
@@ -61,16 +78,16 @@ class Main
 
         po::positional_options_description p;
         po::variables_map vm;
-        po::options_description cmdline_options;
+        po::options_description all_options;
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
 
         SATSolver* solver = NULL;
 
         //File reading
-        void readInAFile(const string& filename);
-        void readInStandardInput();
-        void parseInAllFiles();
+        void readInAFile(SATSolver* solver2, const string& filename);
+        void readInStandardInput(SATSolver* solver2);
+        void parseInAllFiles(SATSolver* solver2);
 
         //Helper functions
         void printResultFunc(
@@ -81,10 +98,11 @@ class Main
         );
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
+        lbool multi_solutions();
+        std::ofstream* resultfile = NULL;
 
         //Config
         SolverConf conf;
-        bool needResultFile = false;
         bool zero_exit_status = false;
         std::string resultFilename;
 
@@ -107,6 +125,54 @@ class Main
         //Drup checker
         std::ostream* drupf = NULL;
         bool drupDebug = false;
+
+        //Unistuff
+        SATCount ApproxMC(
+            SATSolver* solver
+            , FILE* resLog
+            , std::mt19937& randomEngine
+        );
+
+        uint32_t UniGen(
+            uint32_t samples
+            , SATSolver* solver
+            , FILE* resLog, uint32_t sampleCounter
+            , std::mt19937& randomEngine
+            , std::map< string, uint32_t >& solutionMap
+            , uint32_t* lastSuccessfulHashOffset, double timeReference
+        );
+
+        bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions
+            , std::mt19937& randomEngine);
+        int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
+            , vector<Lit>& assumptions
+        );
+        lbool BoundedSAT(
+            uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
+            , vector<Lit>& assumptions, std::mt19937& randomEngine
+            , std::map<std::string, uint32_t>& solutionMap
+            , uint32_t* solutionCount
+        );
+        bool GenerateRandomBits(string& randomBits
+            , uint32_t size
+            , std::mt19937& randomEngine
+        );
+        uint32_t SolutionsToReturn(uint32_t minSolutions);
+        int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
+        bool printSolutions(FILE* res);
+        void SeedEngine(std::mt19937& randomEngine);
+        int singleThreadUniGenCall(uint32_t samples
+            , FILE* resLog, uint32_t sampleCounter
+            , std::map<std::string, uint32_t>& solutionMap
+            , std::mt19937& randomEngine
+            , uint32_t* lastSuccessfulHashOffset
+            , double timeReference
+        );
+
+        double startTime;
+        std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
+        bool openLogFile(FILE*& res);
+        vector<uint32_t> independent_vars;
 };
 
 #endif //MAIN_H
