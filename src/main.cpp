@@ -1737,6 +1737,15 @@ int Main::UniSolve()
     FILE* resLog;
     openLogFile(resLog);
 
+    solver = new SATSolver((void*)&conf);
+    solverToInterrupt = solver;
+    if (drupf) {
+        solver->set_drup(drupf);
+    }
+    //check_num_threads_sanity(num_threads);
+    //solver->set_num_threads(num_threads);
+    parseInAllFiles(solver);
+
     if (conf.startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
         "is larger than the size of the independent set.\n" << endl;

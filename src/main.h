@@ -60,6 +60,7 @@ class Main
 
         void parseCommandLine();
         int solve();
+        int UniSolve();
 
     private:
         string typeclean;
@@ -126,7 +127,7 @@ class Main
         bool drupDebug = false;
 
         //Unistuff
-        int UniSolve(); //old one-thread-solve
+        bool unisolve = false;
         SATCount ApproxMC(
             SATSolver* solver
             , FILE* resLog
