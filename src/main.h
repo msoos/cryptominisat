@@ -66,7 +66,7 @@ class Main
 
         po::positional_options_description p;
         po::variables_map vm;
-        po::options_description cmdline_options;
+        po::options_description all_options;
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
 

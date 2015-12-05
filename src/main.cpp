@@ -697,37 +697,22 @@ void Main::add_supported_options()
     ;
 #endif //USE_GAUSS
 
+    po::options_description approxMCOptions("ApproxMC options");
+    approxMCOptions.add_options()
+    ("samples", po::value(&conf.samples)->default_value(conf.samples), "")
+    ("callsPerSolver", po::value(&conf.callsPerSolver)->default_value(conf.callsPerSolver), "")
+    ("pivotAC", po::value(&conf.pivotApproxMC)->default_value(conf.pivotApproxMC), "")
+    ("pivotUniGen", po::value(&conf.pivotUniGen)->default_value(conf.pivotUniGen), "")
+    ("kappa", po::value(&conf.kappa)->default_value(conf.kappa), "")
+    ("tApproxMC", po::value(&conf.tApproxMC)->default_value(conf.tApproxMC), "")
+    ("startIteration", po::value(&conf.startIteration)->default_value(conf.startIteration), "")
+    ("multisample", po::value(&conf.multisample)->default_value(conf.multisample), "")
+    ("aggregation", po::value(&conf.aggregateSolutions)->default_value(conf.aggregateSolutions), "")
+    ("uni", po::bool_switch(&unisolve), "Use unisolve system")
+    ;
+
     p.add("input", 1);
     p.add("drup", 1);
-
-    cmdline_options
-    .add(generalOptions)
-    #if defined(USE_MYSQL) or defined(USE_SQLITE3)
-    .add(sqlOptions)
-    #endif
-    .add(restartOptions)
-    .add(printOptions)
-    .add(propOptions)
-    .add(reduceDBOptions)
-    .add(varPickOptions)
-    .add(polar_options)
-    .add(conflOptions)
-    .add(iterativeOptions)
-    .add(probeOptions)
-    .add(stampOptions)
-    .add(simplificationOptions)
-    .add(eqLitOpts)
-    .add(componentOptions)
-    #ifdef USE_M4RI
-    .add(xorOptions)
-    #endif
-    .add(gateOptions)
-    .add(miscOptions)
-    .add(hiddenOptions)
-    #ifdef USE_GAUSS
-    .add(gaussOptions)
-    #endif
-    ;
 
     help_options_complicated
     .add(generalOptions)
@@ -751,11 +736,15 @@ void Main::add_supported_options()
     .add(xorOptions)
     #endif
     .add(gateOptions)
-    .add(miscOptions)
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    .add(approxMCOptions)
+    .add(miscOptions)
     ;
+
+    all_options.add(help_options_complicated);
+    all_options.add(hiddenOptions);
 
     help_options_simple
     .add(generalOptions)
@@ -765,7 +754,7 @@ void Main::add_supported_options()
 void Main::check_options_correctness()
 {
     try {
-        po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(p).run(), vm);
+        po::store(po::command_line_parser(argc, argv).options(all_options).positional(p).run(), vm);
         if (vm.count("hhelp"))
         {
             cout
