@@ -56,7 +56,6 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
-#include "src/UniFunctions.h"
 
 #ifdef USE_ZLIB
 static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
@@ -74,6 +73,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using boost::lexical_cast;
+using std::list;
+using std::map;
 
 struct WrongParam
 {
@@ -1508,6 +1509,28 @@ lbool Main::BoundedSAT(
     }
 
     return l_False;
+}
+
+inline double findMean(list<int> numList)
+{
+    double sum = 0;
+    for (list<int>::iterator it = numList.begin(); it != numList.end(); it++) {
+        sum += *it;
+    }
+    return (sum * 1.0 / numList.size());
+}
+
+inline double findMedian(list<int> numList)
+{
+    numList.sort();
+    int medIndex = int((numList.size() + 1) / 2);
+    list<int>::iterator it = numList.begin();
+    if (medIndex >= (int) numList.size()) {
+        std::advance(it, numList.size() - 1);
+        return double(*it);
+    }
+    std::advance(it, medIndex);
+    return double(*it);
 }
 
 inline int findMin(list<int> numList)
