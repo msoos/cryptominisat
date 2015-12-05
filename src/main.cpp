@@ -1736,6 +1736,7 @@ int Main::UniSolve()
 {
     FILE* resLog;
     openLogFile(resLog);
+    startTime = cpuTimeTotal();
 
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;

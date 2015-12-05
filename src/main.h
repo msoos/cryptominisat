@@ -170,7 +170,7 @@ class Main
             , double timeReference
         );
 
-        time_t  startTime;
+        double startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
         bool openLogFile(FILE*& res);
         vector<uint32_t> independent_vars;
