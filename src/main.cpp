@@ -1313,7 +1313,7 @@ lbool Main::multi_solutions()
     return ret;
 }
 
-string binary(int x, uint32_t length)
+string binary(unsigned x, uint32_t length)
 {
     uint32_t logSize = (x == 0 ? 1 : log2(x) + 1);
     string s;
