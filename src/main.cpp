@@ -256,17 +256,16 @@ void Main::printResultFunc(
     std::ostream* os
     , const bool toFile
     , const lbool ret
-    , const bool firstSolution
 ) {
     if (ret == l_True) {
         if(toFile) {
-            if(firstSolution)  *os << "SAT" << endl;
+            *os << "SAT" << endl;
         }
         else if (!printResult) *os << "s SATISFIABLE" << endl;
         else                   *os << "s SATISFIABLE" << endl;
      } else if (ret == l_False) {
         if(toFile) {
-            if(firstSolution)  *os << "UNSAT" << endl;
+            *os << "UNSAT" << endl;
         }
         else if (!printResult) *os << "s UNSATISFIABLE" << endl;
         else                   *os << "s UNSATISFIABLE" << endl;
@@ -1288,6 +1287,10 @@ int Main::solve()
             solver->print_stats();
         }
     }
+    printResultFunc(&cout, false, ret);
+    if (resultfile) {
+        printResultFunc(resultfile, true, ret);
+    }
 
     return correctReturnValue(ret);
 }
@@ -1301,9 +1304,9 @@ lbool Main::multi_solutions()
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-            printResultFunc(&cout, false, ret, current_nr_of_solutions == 1);
+            printResultFunc(&cout, false, ret);
             if (resultfile) {
-                printResultFunc(resultfile, true, ret, current_nr_of_solutions == 1);
+                printResultFunc(resultfile, true, ret);
             }
 
             if (conf.verbosity >= 1) {

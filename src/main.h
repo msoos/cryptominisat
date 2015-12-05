@@ -94,7 +94,6 @@ class Main
             std::ostream* os
             , const bool toFile
             , const lbool ret
-            , const bool firstSolut
         );
         void printVersionInfo();
         int correctReturnValue(const lbool ret) const;
