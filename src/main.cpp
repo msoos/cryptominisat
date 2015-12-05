@@ -1509,15 +1509,12 @@ inline int findMin(list<int> numList)
 SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
-    uint32_t  hashCount;
     std::list<int> numHashList, numCountList;
     vector<Lit> assumptions;
-    SATCount solCount;
-    solCount.cellSolCount = 0;
-    solCount.hashCount = 0;
     double elapsedTime = 0;
     int repeatTry = 0;
     for (uint32_t j = 0; j < conf.tApproxMC; j++) {
+        uint32_t  hashCount;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
             double currentTime = cpuTimeTotal();
             elapsedTime = currentTime - startTime;
@@ -1562,7 +1559,7 @@ SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
         numCountList.push_back(currentNumSolutions);
     }
     if (numHashList.size() == 0) {
-        return solCount;
+        return SATCount();
     }
     int minHash = findMin(numHashList);
     for (std::list<int>::iterator it1 = numHashList.begin(), it2 = numCountList.begin();
@@ -1570,6 +1567,8 @@ SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
         (*it2) *= pow(2, (*it1) - minHash);
     }
     int medSolCount = findMedian(numCountList);
+
+    SATCount solCount;
     solCount.cellSolCount = medSolCount;
     solCount.hashCount = minHash;
     return solCount;

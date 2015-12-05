@@ -38,8 +38,8 @@ namespace po = boost::program_options;
 using namespace CMSat;
 
 struct SATCount {
-    uint32_t hashCount;
-    uint32_t cellSolCount;
+    uint32_t hashCount = 0;
+    uint32_t cellSolCount = 0;
 };
 
 class Main
