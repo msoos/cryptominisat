@@ -1393,7 +1393,6 @@ int32_t Main::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
     //signal(SIGALRM, SIGALARM_handler);
     //start_timer(conf.loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
-
         ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
