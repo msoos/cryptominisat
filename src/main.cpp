@@ -1523,28 +1523,30 @@ inline double findMean(T numList)
     for (const auto a: numList) {
         sum += a;
     }
-    return (sum * 1.0 / numList.size());
+    return (sum * 1.0 / (double)numList.size());
 }
 
-inline double findMedian(list<int> numList)
+template<class T>
+inline double findMedian(T numList)
 {
-    numList.sort();
-    int medIndex = int((numList.size() + 1) / 2);
-    list<int>::iterator it = numList.begin();
-    if (medIndex >= (int) numList.size()) {
-        std::advance(it, numList.size() - 1);
-        return double(*it);
+    std::sort(numList.begin(), numList.end());
+    size_t medIndex = (numList.size() + 1) / 2;
+    size_t at = 0;
+    if (medIndex >= numList.size()) {
+        at += numList.size() - 1;
+        return numList[at];
     }
-    std::advance(it, medIndex);
-    return double(*it);
+    at += medIndex;
+    return numList[at];
 }
 
-inline int findMin(list<int> numList)
+template<class T>
+inline int findMin(T numList)
 {
     int min = std::numeric_limits<int>::max();
-    for (list<int>::iterator it = numList.begin(); it != numList.end(); it++) {
-        if ((*it) < min) {
-            min = *it;
+    for (const auto a: numList) {
+        if (a < min) {
+            min = a;
         }
     }
     return min;
@@ -1553,7 +1555,8 @@ inline int findMin(list<int> numList)
 SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
-    std::list<int> numHashList, numCountList;
+    vector<int> numHashList;
+    vector<int> numCountList;
     vector<Lit> assumptions;
     double elapsedTime = 0;
     int repeatTry = 0;
@@ -1606,8 +1609,10 @@ SATCount Main::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
         return SATCount();
     }
     int minHash = findMin(numHashList);
-    for (std::list<int>::iterator it1 = numHashList.begin(), it2 = numCountList.begin();
-            it1 != numHashList.end() && it2 != numCountList.end(); it1++, it2++) {
+    for (auto it1 = numHashList.begin(), it2 = numCountList.begin()
+        ;it1 != numHashList.end() && it2 != numCountList.end()
+        ;it1++, it2++
+    ) {
         (*it2) *= pow(2, (*it1) - minHash);
     }
     int medSolCount = findMedian(numCountList);
