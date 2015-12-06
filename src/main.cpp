@@ -1514,11 +1514,14 @@ lbool Main::BoundedSAT(
     return l_False;
 }
 
-inline double findMean(list<int> numList)
+template<class T>
+inline double findMean(T numList)
 {
+    assert(!numList.empty());
+
     double sum = 0;
-    for (list<int>::iterator it = numList.begin(); it != numList.end(); it++) {
-        sum += *it;
+    for (const auto a: numList) {
+        sum += a;
     }
     return (sum * 1.0 / numList.size());
 }
