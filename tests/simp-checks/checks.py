@@ -44,9 +44,6 @@ parser = optparse.OptionParser(usage=usage, description=desc,
 parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Print more output")
 
-parser.add_option("--local", "-l", action="store_true", default=False,
-                  dest="local", help="Not doing it on a remote server")
-
 (options, args) = parser.parse_args()
 
 
@@ -66,20 +63,6 @@ if not os.path.isfile(cms4_exe):
 if not os.access(cms4_exe, os.X_OK):
     print("CryptoMiniSat executable you gave, '%s' is not executable. Exiting." % cms4_exe)
     exit(-1)
-
-def clone_and_make_minisat():
-    print("Cloning and making minisat...")
-    with open("minisat_build.out", "w") as f:
-        subprocess.check_call("git clone --depth 1 --no-single-branch https://github.com/msoos/minisat.git".split(), stdout=f, stderr=f)
-        os.chdir("minisat")
-        subprocess.check_call("git checkout remotes/origin/only_elim_and_subsume".split(), stdout=f, stderr=f)
-        subprocess.check_call("git checkout -b only_elim_and_subsume".split(), stdout=f, stderr=f)
-        subprocess.check_call("make".split(), stdout=f, stderr=f)
-        minisat_exe = os.getcwd() + "/build/release/bin/minisat"
-        os.chdir("..")
-
-    print("Done.")
-    return minisat_exe
 
 def test_velim_one_file(fname):
     simp_fname = "simp.out"
@@ -119,10 +102,7 @@ def test_velim_one_file(fname):
     print("-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed))
     return exitnum
 
-if not options.local:
-    minisat_exe = clone_and_make_minisat()
-else:
-    minisat_exe = os.getcwd() + "/minisat/build/release/bin/minisat"
+minisat_exe = os.getcwd() + "/minisat/build/release/bin/minisat"
 
 exitnum = 0
 for fname in args[1:]:

@@ -240,6 +240,14 @@ if [ "$CMS_CONFIG" == "NORMAL" ]; then
     CMS_PATH="${BUILD_DIR}/cryptominisat4"
     cd ../tests/simp-checks/
     git clone --depth 1 https://github.com/msoos/testfiles.git
+
+    echo "Cloning and making minisat..."
+    git clone --depth 1 --no-single-branch https://github.com/msoos/minisat.git
+    cd minisat
+    git checkout remotes/origin/only_elim_and_subsume
+    git checkout -b only_elim_and_subsume
+    make
+    cd ..
     ./checks.py $CMS_PATH testfiles/*
     cd ${BUILD_DIR}
 
