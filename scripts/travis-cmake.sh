@@ -242,7 +242,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ]; then
     git clone --depth 1 https://github.com/msoos/testfiles.git
 
     echo "Cloning and making minisat..."
-    git clone --depth 1 --no-single-branch https://github.com/msoos/minisat.git
+    git clone https://github.com/msoos/minisat.git
     cd minisat
     git checkout remotes/origin/only_elim_and_subsume
     git checkout -b only_elim_and_subsume
