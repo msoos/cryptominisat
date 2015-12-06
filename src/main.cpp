@@ -45,7 +45,7 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <string.h>
 #include <list>
-#include <map>
+#include <array>
 
 #ifdef USE_PTHREADS
 #include <thread>
