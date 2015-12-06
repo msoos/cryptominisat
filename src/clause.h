@@ -194,9 +194,9 @@ public:
 
     template<class V>
     Clause(const V& ps
-        , const uint32_t
         #ifdef STATS_NEEDED
-        _introduced_at_conflict
+        , const uint32_t _introduced_at_conflict
+        //, const uint32_t _ID
         #endif
         )
     {

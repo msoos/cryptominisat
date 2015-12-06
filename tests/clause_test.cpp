@@ -42,7 +42,11 @@ struct F : public ::testing::Test {
         for(size_t i = 0; i < n ; i++) {
             lits.push_back(Lit(i, false));
         }
-        Clause* c_ptr = new(tmp) Clause(lits, 0);
+        Clause* c_ptr = new(tmp) Clause(lits
+        #ifdef STATS_NEEDED
+        , 0
+        #endif
+        );
         return c_ptr;
     }
 };

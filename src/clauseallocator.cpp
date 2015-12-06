@@ -88,7 +88,11 @@ Clause* ClauseAllocator::Clause_new(
 )
 {
     void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps, conflictNum);
+    Clause* real= new (mem) Clause(ps
+    #ifdef STATS_NEEDED
+    , conflictNum
+    #endif
+    );
 
     return real;
 }
