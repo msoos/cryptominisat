@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from __future__ import print_function
 import os
 import glob
 import sys
@@ -50,24 +51,24 @@ parser.add_option("--local", "-l", action="store_true", default=False,
 
 
 if len(args) < 1:
-    print "ERROR: You must call this script with at least one argument, the cryptominisat4 binary"
+    print("ERROR: You must call this script with at least one argument, the cryptominisat4 binary")
     exit(-1)
 
 if len(args) < 2:
-    print "ERROR: You must call this script with at least one file to check"
+    print("ERROR: You must call this script with at least one file to check")
     exit(-1)
 
 cms4_exe = args[0]
 if not os.path.isfile(cms4_exe):
-    print "CryptoMiniSat executable you gave, '%s' is not a file. Exiting" % cms4_exe
+    print("CryptoMiniSat executable you gave, '%s' is not a file. Exiting" % cms4_exe)
     exit(-1)
 
 if not os.access(cms4_exe, os.X_OK):
-    print "CryptoMiniSat executable you gave, '%s' is not executable. Exiting." % cms4_exe
+    print("CryptoMiniSat executable you gave, '%s' is not executable. Exiting." % cms4_exe)
     exit(-1)
 
 def clone_and_make_minisat():
-    print "Cloning and making minisat..."
+    print("Cloning and making minisat...")
     with open("minisat_build.out", "w") as f:
         subprocess.check_call("git clone --depth 1 --no-single-branch https://github.com/msoos/minisat.git".split(), stdout=f, stderr=f)
         os.chdir("minisat")
@@ -77,7 +78,7 @@ def clone_and_make_minisat():
         minisat_exe = os.getcwd() + "/build/release/bin/minisat"
         os.chdir("..")
 
-    print "Done."
+    print("Done.")
     return minisat_exe
 
 def test_velim_one_file(fname):
@@ -88,7 +89,7 @@ def test_velim_one_file(fname):
         pass
 
     toexec = "%s --zero-exit-status -p1 %s %s" % (cms4_exe, fname, simp_fname)
-    print "Executing: %s" % toexec
+    print("Executing: %s" % toexec)
 
     start = time.time()
     cms_out_fname = "cms-%s.out" % os.path.split(fname)[1]
@@ -109,13 +110,13 @@ def test_velim_one_file(fname):
 
     assert var_elimed is not None, "Couldn't find var-elimed line"
     if var_elimed > 30:
-        print "FAILED file %s" % fname
+        print("FAILED file %s" % fname)
         exitnum = 1
     else:
-        print "PASSED file %s" % fname
+        print("PASSED file %s" % fname)
         exitnum = 0
 
-    print "-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed)
+    print("-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed))
     return exitnum
 
 if not options.local:
@@ -128,9 +129,9 @@ for fname in args[1:]:
     exitnum |= test_velim_one_file(fname)
 
 if exitnum == 0:
-    print "ALL PASSED"
+    print("ALL PASSED")
     subprocess.check_call("rm *.out", shell=True)
 else:
-    print "SOME CHECKS FAILED"
+    print("SOME CHECKS FAILED")
 
 exit(exitnum)
