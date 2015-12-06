@@ -56,14 +56,24 @@ class ClauseAllocator {
         ClauseAllocator();
         ~ClauseAllocator();
 
-        template<class T> Clause* Clause_new(
+        template<class T>
+        Clause* Clause_new(
             const T& ps
             #ifdef STATS_NEEDED
-            , uint32_t conflictNum
-            , uint64_t ID
+            , const uint32_t conflictNum
+            , const int64_t ID
             #endif
-        );
-        Clause* Clause_new(Clause& c);
+        ) {
+            void* mem = allocEnough(ps.size());
+            Clause* real= new (mem) Clause(ps
+            #ifdef STATS_NEEDED
+            , conflictNum
+            , ID
+            #endif
+            );
+
+            return real;
+        }
 
         ClOffset get_offset(const Clause* ptr) const;
 

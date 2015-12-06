@@ -45,6 +45,7 @@ struct F : public ::testing::Test {
         Clause* c_ptr = new(tmp) Clause(lits
         #ifdef STATS_NEEDED
         , 0
+        , 0
         #endif
         );
         return c_ptr;

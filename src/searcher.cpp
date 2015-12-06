@@ -1411,7 +1411,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         || cl->gauss_temp_cl()
     ) {
         if (learnt_clause.size() > 3) {
-            cl = cl_alloc.Clause_new(learnt_clause, Searcher::sumConflicts());
+            cl = cl_alloc.Clause_new(learnt_clause
+            #ifdef STATS_NEEDED
+            , Searcher::sumConflicts()
+            , -1
+            #endif
+            );
             cl->makeRed(glue);
             ClOffset offset = cl_alloc.get_offset(cl);
             solver->longRedCls.push_back(offset);
@@ -2925,7 +2930,12 @@ void Searcher::read_long_cls(
             f.get_struct(stats);
         }
 
-        Clause* cl = cl_alloc.Clause_new(tmp_cl, 0);
+        Clause* cl = cl_alloc.Clause_new(tmp_cl
+        #ifdef STATS_NEEDED
+        , stats.introduced_at_conflict
+        , stats.ID
+        #endif
+        );
         if (red) {
             cl->makeRed(stats.glue);
         }

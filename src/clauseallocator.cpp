@@ -78,41 +78,14 @@ ClauseAllocator::~ClauseAllocator()
     free(dataStart);
 }
 
-/**
-@brief Allocates space&initializes a clause
-*/
-template<class T>
-Clause* ClauseAllocator::Clause_new(
-    const T& ps
-    , const uint32_t conflictNum
-)
-{
-    void* mem = allocEnough(ps.size());
-    Clause* real= new (mem) Clause(ps
-    #ifdef STATS_NEEDED
-    , conflictNum
-    #endif
-    );
-
-    return real;
-}
-
-template Clause* ClauseAllocator::Clause_new(
-    const vector<Lit>& ps
-    , uint32_t conflictNum
-);
-
-/**
-@brief Allocates space for a new clause & copies a give clause to it
-*/
-Clause* ClauseAllocator::Clause_new(Clause& c)
+/*Clause* ClauseAllocator::Clause_new(Clause& c)
 {
     assert(c.size() > 3);
     void* mem = allocEnough(c.size());
     memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
 
     return (Clause*)mem;
-}
+}*/
 
 void* ClauseAllocator::allocEnough(
     uint32_t clauseSize

@@ -485,7 +485,12 @@ Clause* Solver::add_clause_int(
             return NULL;
 
         default:
-            Clause* c = cl_alloc.Clause_new(ps, sumStats.conflStats.numConflicts);
+            Clause* c = cl_alloc.Clause_new(ps
+            #ifdef STATS_NEEDED
+            , sumStats.conflStats.numConflicts
+            , -1
+            #endif
+            );
             if (red)
                 c->makeRed(stats.glue);
             c->stats = stats;

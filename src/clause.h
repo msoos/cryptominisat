@@ -93,6 +93,7 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:1;
     double   activity = 0.0;
+    int64_t ID;
     #ifdef STATS_NEEDED
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t conflicts_made = 0; ///<Number of times caused conflict
@@ -196,7 +197,7 @@ public:
     Clause(const V& ps
         #ifdef STATS_NEEDED
         , const uint32_t _introduced_at_conflict
-        //, const uint32_t _ID
+        , const int64_t _ID
         #endif
         )
     {
@@ -204,6 +205,8 @@ public:
 
         #ifdef STATS_NEEDED
         stats.introduced_at_conflict = _introduced_at_conflict;
+        stats.ID = _ID;
+        assert(_ID >= 0);
         #endif
         stats.glue = std::min<uint32_t>(stats.glue, ps.size());
         isFreed = false;
