@@ -1658,17 +1658,17 @@ void Searcher::print_restart_stat()
     //Print restart stat
     if (conf.verbosity >= 2
         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
-          < stats.conflStats.numConflicts)
+          < sumConflicts())
     ) {
         //Print restart output header
         if (lastRestartPrintHeader == 0
-            ||(lastRestartPrintHeader + 20000) < stats.conflStats.numConflicts
+            ||(lastRestartPrintHeader + 20000) < sumConflicts()
         ) {
             print_restart_header();
-            lastRestartPrintHeader = stats.conflStats.numConflicts;
+            lastRestartPrintHeader = sumConflicts();
         }
         print_restart_stat_line();
-        lastRestartPrint = stats.conflStats.numConflicts;
+        lastRestartPrint = sumConflicts();
     }
 }
 
