@@ -70,6 +70,7 @@ class DistillerAllWithAll {
         ClOffset try_distill_clause_and_return_new(
             ClOffset offset
             , const bool red
+            , const ClauseStats* stats
             , const uint32_t queueByBy
         );
 

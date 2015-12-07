@@ -130,6 +130,7 @@ bool DistillerAllWithAll::distill_tri_irred_cls()
                 try_distill_clause_and_return_new(
                     CL_OFFSET_MAX
                     , ws.red()
+                    , NULL
                     , 2
                 );
 
@@ -289,6 +290,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
         ClOffset offset2 = try_distill_clause_and_return_new(
             offset
             , cl.red()
+            , &cl.stats
             , queueByBy
         );
 
@@ -340,6 +342,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
+    , const ClauseStats* stats
     , const uint32_t queueByBy
 ) {
     #ifdef DRUP_DEBUG
@@ -386,7 +389,12 @@ ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
         }
 
         //Make new clause
-        Clause *cl2 = solver->add_clause_int(lits, red);
+        Clause *cl2;
+        if (stats) {
+            cl2 = solver->add_clause_int(lits, red, *stats);
+        } else {
+            cl2 = solver->add_clause_int(lits, red);
+        }
 
         //Print results
         if (solver->conf.verbosity >= 5) {
