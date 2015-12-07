@@ -491,8 +491,9 @@ Clause* Solver::add_clause_int(
             , -1
             #endif
             );
-            if (red)
+            if (red) {
                 c->makeRed(stats.glue);
+            }
             c->stats = stats;
 
             //In class 'OccSimplifier' we don't need to attach normall
