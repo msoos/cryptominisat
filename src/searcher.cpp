@@ -1406,28 +1406,23 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const size_t glue
 ) {
-    //No on-the-fly subsumption
-    if (cl == NULL
-        || cl->gauss_temp_cl()
-    ) {
-        if (learnt_clause.size() > 3) {
-            cl = cl_alloc.Clause_new(learnt_clause
-            #ifdef STATS_NEEDED
-            , Searcher::sumConflicts()
-            , -1
-            #endif
-            );
-            cl->makeRed(glue);
-            ClOffset offset = cl_alloc.get_offset(cl);
-            solver->longRedCls.push_back(offset);
-            return cl;
-        }
-        return NULL;
-    }
-
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 3)
         return NULL;
+
+    //No on-the-fly subsumption
+    if (cl == NULL || cl->gauss_temp_cl()) {
+        cl = cl_alloc.Clause_new(learnt_clause
+        #ifdef STATS_NEEDED
+        , sumConflicts()
+        , clauseID++
+        #endif
+        );
+        cl->makeRed(glue);
+        ClOffset offset = cl_alloc.get_offset(cl);
+        solver->longRedCls.push_back(offset);
+        return cl;
+    }
 
     assert(cl->size() > 3);
     if (conf.verbosity >= 6) {
