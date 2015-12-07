@@ -1407,8 +1407,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     , const size_t glue
 ) {
     //Cannot make a non-implicit into an implicit
-    if (learnt_clause.size() <= 3)
+    if (learnt_clause.size() <= 3) {
+        *drup << learnt_clause << fin;
         return NULL;
+    }
 
     //No on-the-fly subsumption
     if (cl == NULL || cl->gauss_temp_cl()) {
@@ -1421,6 +1423,8 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->makeRed(glue);
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
+        *drup << *cl << fin;
+        cout << "cl iD:" << cl->stats.ID << endl;
         return cl;
     }
 
@@ -1471,7 +1475,6 @@ bool Searcher::handle_conflict(const PropBy confl)
         , glue             //return glue here
     );
     print_learnt_clause();
-    *drup << learnt_clause << fin;
 
     if (params.update) {
         update_history_stats(backtrack_level, glue);

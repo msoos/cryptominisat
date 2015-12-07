@@ -93,6 +93,7 @@ struct DrupFile: public Drup
         todel.str(string());
         must_delete_next = false;
         delete_filled = false;
+        delete_mode = false;
     }
 
     bool enabled() override
@@ -106,6 +107,7 @@ struct DrupFile: public Drup
 
     Drup& operator<<(const Lit lit) override
     {
+        ID = 0;
         if (must_delete_next) {
             todel << lit << " ";
         } else {
@@ -122,6 +124,7 @@ struct DrupFile: public Drup
         } else {
             *file << cl;
         }
+        ID = cl.stats.ID;
 
         return *this;
     }
@@ -135,8 +138,14 @@ struct DrupFile: public Drup
                     todel << " 0\n";
                     delete_filled = true;
                 } else {
-                    *file << " 0\n";
+                    if (delete_mode) {
+                        *file << " 0\n";
+                    } else {
+                        *file << " 0 " << ID << "\n";
+                    }
                 }
+                ID = 0;
+                delete_mode = false;
                 must_delete_next = false;
                 break;
 
@@ -154,6 +163,7 @@ struct DrupFile: public Drup
                 *file << "d " << todel.str();
                 todel.str(string());
                 delete_filled = false;
+                delete_mode = false;
                 break;
 
             case DrupFlag::del:
@@ -162,6 +172,7 @@ struct DrupFile: public Drup
 
                 must_delete_next = false;
                 *file << "d ";
+                delete_mode = true;
                 break;
         }
 
@@ -170,7 +181,8 @@ struct DrupFile: public Drup
 
     Drup& operator<<(const vector<Lit>& lits) override
     {
-         if (must_delete_next) {
+        ID = 0;
+        if (must_delete_next) {
             todel << lits;
         } else {
             *file << lits;
@@ -180,6 +192,8 @@ struct DrupFile: public Drup
     }
 
     std::ostream* file = NULL;
+    int64_t ID = 0;
+    bool delete_mode = false;
 };
 
 }
