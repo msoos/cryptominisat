@@ -101,6 +101,7 @@ public:
     vector<Xor> xorclauses;
     BinTriStats binTri;
     LitStats litStats;
+    int64_t clauseID = 0;
 
     //Temporaries
     vector<uint16_t> seen;

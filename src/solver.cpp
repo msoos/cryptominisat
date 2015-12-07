@@ -488,7 +488,7 @@ Clause* Solver::add_clause_int(
             Clause* c = cl_alloc.Clause_new(ps
             #ifdef STATS_NEEDED
             , sumStats.conflStats.numConflicts
-            , -1
+            , 0
             #endif
             );
             if (red) {
