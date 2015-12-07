@@ -133,14 +133,6 @@ CleaningStats ReduceDB::reduceDB()
     cl_ttl = 0;
     cl_locked_solver = 0;
     remove_cl_from_array_and_count_stats(tmpStats, sumConfl);
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [DBclean] locked:" << cl_locked
-        << " marked: " << cl_marked
-        << " glue: " << cl_glue
-        << " ttl:" << cl_ttl
-        << " locked_solver:" << cl_locked_solver
-        << endl;
-    }
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset offset: delayed_clause_free) {
@@ -156,6 +148,14 @@ CleaningStats ReduceDB::reduceDB()
         tmpStats.print(0);
     else if (solver->conf.verbosity >= 3) {
         tmpStats.print_short(solver);
+    } else if (solver->conf.verbosity >= 2) {
+        cout << "c [DBclean] locked:" << cl_locked
+        << " marked: " << cl_marked
+        << " glue: " << cl_glue
+        << " ttl:" << cl_ttl
+        << " locked_solver:" << cl_locked_solver
+        << solver->conf.print_times(tmpStats.cpu_time)
+        << endl;
     }
     cleaningStats += tmpStats;
 
