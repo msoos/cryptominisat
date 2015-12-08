@@ -1424,7 +1424,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
         *drup << *cl << fin;
-        cout << "cl iD:" << cl->stats.ID << endl;
         return cl;
     }
 
