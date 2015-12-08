@@ -200,7 +200,6 @@ bool SolutionExtender::addClause(
     Clause* cl = solver->cl_alloc.Clause_new(
         tmpLits //the literals
         , 0 //the time it was created -- useless, ignoring
-        , true //yes, this is extender, so don't care if it's <=3 in size
     );
     ClOffset offset = solver->cl_alloc.get_offset(cl);
     clausesToFree.push_back(offset);

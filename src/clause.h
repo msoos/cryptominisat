@@ -85,6 +85,7 @@ struct ClauseStats
     ClauseStats()
     {
         memset(this, 0, sizeof(ClauseStats));
+        ID = 1;
     }
 
     //Stored data

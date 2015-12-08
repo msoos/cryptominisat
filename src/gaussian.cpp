@@ -669,7 +669,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         confl = PropBy(lit1, false);
         solver->failBinLit = lit2;
     } else {
-        Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause, 0);
+        Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause
+        #ifdef STATS_NEEDED
+        , 0
+        , 1
+        #endif
+        );
         confl = PropBy(solver->cl_alloc.get_offset(cl));
 
         uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
@@ -909,7 +914,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 solver->enqueue(tmp_clause[0]);
                 return unit_propagation;
             }
-            Clause* x = solver->cl_alloc.Clause_new(tmp_clause, 0);
+            Clause* x = solver->cl_alloc.Clause_new(tmp_clause
+            #ifdef STATS_NEEDED
+            , 0
+            , 1
+            #endif
+            );
             ClOffset offs = solver->cl_alloc.get_offset(x);
             assert(m.matrix.getMatrixAt(row).rhs() == !tmp_clause[0].sign());
             assert(solver->value(tmp_clause[0]) == l_Undef);

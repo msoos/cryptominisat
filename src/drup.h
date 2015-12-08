@@ -107,7 +107,6 @@ struct DrupFile: public Drup
 
     Drup& operator<<(const Lit lit) override
     {
-        ID = 0;
         if (must_delete_next) {
             todel << lit << " ";
         } else {
@@ -120,11 +119,12 @@ struct DrupFile: public Drup
     Drup& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
-            todel << cl;
+            todel << cl << " ";
         } else {
-            *file << cl;
+            *file << cl << " ";
         }
         ID = cl.stats.ID;
+        assert(ID != 0);
 
         return *this;
     }
@@ -135,16 +135,16 @@ struct DrupFile: public Drup
         {
             case DrupFlag::fin:
                 if (must_delete_next) {
-                    todel << " 0\n";
+                    todel << "0\n";
                     delete_filled = true;
                 } else {
                     if (delete_mode) {
-                        *file << " 0\n";
+                        *file << "0\n";
                     } else {
-                        *file << " 0 " << ID << "\n";
+                        *file << "0 " << ID << "\n";
                     }
                 }
-                ID = 0;
+                ID = 1;
                 delete_mode = false;
                 must_delete_next = false;
                 break;
@@ -181,18 +181,17 @@ struct DrupFile: public Drup
 
     Drup& operator<<(const vector<Lit>& lits) override
     {
-        ID = 0;
         if (must_delete_next) {
-            todel << lits;
+            todel << lits << " ";
         } else {
-            *file << lits;
+            *file << lits << " ";
         }
 
         return *this;
     }
 
     std::ostream* file = NULL;
-    int64_t ID = 0;
+    int64_t ID = 1;
     bool delete_mode = false;
 };
 
