@@ -78,15 +78,6 @@ ClauseAllocator::~ClauseAllocator()
     free(dataStart);
 }
 
-/*Clause* ClauseAllocator::Clause_new(Clause& c)
-{
-    assert(c.size() > 3);
-    void* mem = allocEnough(c.size());
-    memcpy(mem, &c, sizeof(Clause)+sizeof(Lit)*c.size());
-
-    return (Clause*)mem;
-}*/
-
 void* ClauseAllocator::allocEnough(
     uint32_t clauseSize
 ) {
