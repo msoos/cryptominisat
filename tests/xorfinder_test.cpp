@@ -103,46 +103,6 @@ TEST_F(xor_finder, find_tri_3)
     check_xors_eq(finder.xors, "1, 2, 3 = 0; 1, 2, 3 = 1");
 }
 
-/*
-TEST_F(xor_finder, find_tri_4)
-{
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
-
-    occsimp->setup();
-    XorFinder finder(occsimp, s);
-    finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3 = 0");
-}
-
-TEST_F(xor_finder, find_tri_5)
-{
-    s->add_clause_outer(str_to_cl("-1, 2"));
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, -2"));
-
-    occsimp->setup();
-    XorFinder finder(occsimp, s);
-    finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3 = 0");
-}
-
-TEST_F(xor_finder, find_tri_6)
-{
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
-    s->add_clause_outer(str_to_cl("1, -2, 3"));
-    s->add_clause_outer(str_to_cl("1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-2, -3"));
-
-    occsimp->setup();
-    XorFinder finder(occsimp, s);
-    finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3 = 0;");
-}*/
-
 
 TEST_F(xor_finder, find_4_1)
 {
@@ -241,35 +201,6 @@ TEST_F(xor_finder, find_4_5)
     finder.find_xors();
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
 }
-
-/*
-TEST_F(xor_finder, find_4_6)
-{
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2"));
-    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
-    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-
-    s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3"));
-
-    s->add_clause_outer(str_to_cl("-3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -3, 4"));
-
-    occsimp->setup();
-    XorFinder finder(occsimp, s);
-    finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
-}
-*/
 
 TEST_F(xor_finder, find_5_1)
 {
