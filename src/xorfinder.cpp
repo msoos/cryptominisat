@@ -383,26 +383,6 @@ void XorFinder::findXorMatch(
             continue;
         }
 
-        //Deal with binary
-        /*if (it->isBin()) {
-            if (//Only once per binary
-                lit < it->lit2()
-                //only for correct binary
-                && seen[it->lit2().var()]
-            ) {
-                tmpClause.clear();
-                tmpClause.push_back(lit);
-                tmpClause.push_back(it->lit2());
-
-                xor_find_time_limit-=20;
-                poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
-                if (poss_xor.foundAll())
-                    break;
-            }
-
-            continue;
-        }*/
-
         //Deal with tertiary
         if (it->isTri()) {
             if (//Only once per tri
