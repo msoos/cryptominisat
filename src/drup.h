@@ -93,7 +93,6 @@ struct DrupFile: public Drup
         todel.str(string());
         must_delete_next = false;
         delete_filled = false;
-        delete_mode = false;
     }
 
     bool enabled() override
@@ -135,17 +134,12 @@ struct DrupFile: public Drup
         {
             case DrupFlag::fin:
                 if (must_delete_next) {
-                    todel << "0\n";
+                    todel << "0 0\n";
                     delete_filled = true;
                 } else {
-                    if (delete_mode) {
-                        *file << "0\n";
-                    } else {
-                        *file << "0 " << ID << "\n";
-                    }
+                    *file << "0 " << ID << "\n";
                 }
                 ID = 1;
-                delete_mode = false;
                 must_delete_next = false;
                 break;
 
@@ -163,7 +157,6 @@ struct DrupFile: public Drup
                 *file << "d " << todel.str();
                 todel.str(string());
                 delete_filled = false;
-                delete_mode = false;
                 break;
 
             case DrupFlag::del:
@@ -172,7 +165,6 @@ struct DrupFile: public Drup
 
                 must_delete_next = false;
                 *file << "d ";
-                delete_mode = true;
                 break;
         }
 
@@ -192,7 +184,6 @@ struct DrupFile: public Drup
 
     std::ostream* file = NULL;
     int64_t ID = 1;
-    bool delete_mode = false;
 };
 
 }
