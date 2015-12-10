@@ -273,18 +273,8 @@ void XorFinder::findXorMatchExt(
         ; it != end
         ; ++it
     ) {
-        //Deal with binary
-        if (it->isBin()) {
-            if (seen[it->lit2().var()]) {
-                tmpClause.clear();
-                tmpClause.push_back(lit);
-                tmpClause.push_back(it->lit2());
-                if (tmpClause[0] > tmpClause[1])
-                    std::swap(tmpClause[0], tmpClause[1]);
-
-                poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
-            }
-
+        //TODO we should do the same as below for teritary
+        if (!it->isClause()) {
             continue;
         }
 
