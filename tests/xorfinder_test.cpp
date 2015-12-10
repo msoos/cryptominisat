@@ -350,6 +350,22 @@ TEST_F(xor_finder, recursive_xor_6)
     check_xors_eq(finder.xors, "2, 4 = 0; 7, 10 = 1");
 }
 
+TEST_F(xor_finder, recursive_xor_7)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2 = 0; 1, 2= 0;");
+    finder.recursively_xor_xors();
+    EXPECT_EQ(finder.xors.size(), 0);
+}
+
+TEST_F(xor_finder, recursive_xor_8)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2 = 0; 1, 2 = 1;");
+    finder.recursively_xor_xors();
+    EXPECT_EQ(finder.xors.size(), 1);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
