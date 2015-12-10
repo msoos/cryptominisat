@@ -96,7 +96,7 @@ struct watch_subarray
 
     void resize(const size_t num)
     {
-        resize(num);
+        array.resize(num);
     }
 
     void push(const Watched& watched)
