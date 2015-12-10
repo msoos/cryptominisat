@@ -77,6 +77,11 @@ public:
         return (rhs == other.rhs && vars == other.vars);
     }
 
+    bool operator!=(const Xor& other) const
+    {
+        return !operator==(other);
+    }
+
     const uint32_t& operator[](const uint32_t at) const
     {
         return vars[at];
