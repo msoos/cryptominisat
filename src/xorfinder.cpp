@@ -572,25 +572,74 @@ void XorFinder::recursively_xor_xors()
     toClear.clear();
 
     solver->clean_occur_from_idx_types_only_smudged();
-    clean_xors_form_empty();
-
-    //TODO: add unitary + binary XORs.
+    clean_xors_from_empty();
 }
 
-void XorFinder::clean_xors_form_empty()
+void XorFinder::clean_xors_from_empty()
 {
     size_t i2 = 0;
-    for(size_t i = 0; i < xors.size(); i++) {
-        if (xors[i].size() == 0
-            && xors[i].rhs == false
+    for(size_t i = 0;i < xors.size(); i++) {
+        Xor& x = xors[i];
+        if (x.size() == 0
+            && x.rhs == false
         ) {
+            //nothing, skip
+        } else {
+            xors[i2] = xors[i];
+            i2++;
+        }
+    }
+    xors.resize(i2);
+}
+
+bool XorFinder::add_new_truths_from_xors()
+{
+    assert(solver->ok);
+    size_t i2 = 0;
+    for(size_t i = 0;i < xors.size(); i++) {
+        Xor& x = xors[i];
+        if (x.size() > 2) {
+            xors[i2] = xors[i];
+            i2++;
             continue;
         }
 
-        xors[i2] = xors[i];
-        i2++;
+        switch(x.size() ) {
+            case 0: {
+                if (x.rhs == true) {
+                    solver->ok = false;
+                    return false;
+                }
+                break;
+            }
+
+            case 1: {
+                vector<Lit> lits;
+                lits.push_back(Lit(x[0], !x.rhs));
+                solver->add_clause_int(lits);
+                if (!solver->ok) {
+                    return false;
+                }
+                break;
+            }
+
+            case 2: {
+                vector<Lit> lits{Lit(x[0], false), Lit(x[1], false)};
+                solver->add_xor_clause_inter(lits, x.rhs, true);
+                if (!solver->ok) {
+                    return false;
+                }
+                break;
+            }
+
+            default: {
+                assert(false && "Not possible");
+            }
+        }
     }
     xors.resize(i2);
+
+    return true;
 }
 
 void XorFinder::clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2)

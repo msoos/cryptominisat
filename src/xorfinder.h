@@ -160,6 +160,8 @@ public:
     void add_xors_to_gauss();
     void clean_up_xors();
     void recursively_xor_xors();
+    bool add_new_truths_from_xors();
+
     vector<Xor> xors;
     vector<ClOffset> cls_of_xors;
 
@@ -174,7 +176,7 @@ private:
     void clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2);
     void clean_occur_from_idx(const Lit lit, size_t idx1);
     vector<uint32_t> xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v);
-    void clean_xors_form_empty();
+    void clean_xors_from_empty();
 
     int64_t xor_find_time_limit;
 

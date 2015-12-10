@@ -363,7 +363,39 @@ TEST_F(xor_finder, recursive_xor_8)
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2 = 0; 1, 2 = 1;");
     finder.recursively_xor_xors();
-    EXPECT_EQ(finder.xors.size(), 1);
+    bool ret = finder.add_new_truths_from_xors();
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(xor_finder, recursive_xor_unit)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
+    finder.recursively_xor_xors();
+    bool ret = finder.add_new_truths_from_xors();
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(finder.xors.size(), 0);
+}
+
+TEST_F(xor_finder, recursive_xor_unit2)
+{
+    XorFinder finder(occsimp, s);
+    s->add_clause_outer(str_to_cl("-3"));
+    finder.xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
+    finder.recursively_xor_xors();
+    bool ret = finder.add_new_truths_from_xors();
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(xor_finder, recursive_xor_binx)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 5 = 0; 1, 2, 3 = 0;");
+    finder.recursively_xor_xors();
+    bool ret = finder.add_new_truths_from_xors();
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(finder.xors.size(), 0);
+    check_irred_cls_eq(s, "5, -3; -5, 3");
 }
 
 int main(int argc, char **argv) {

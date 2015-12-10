@@ -91,6 +91,8 @@ vector<Lit> str_to_cl(const string& data)
         ret.push_back(lit);
     }
     //cout << "input is: " << data << " LITs is: " << ret << endl;
+
+    std::sort(ret.begin(), ret.end());
     return ret;
 }
 
