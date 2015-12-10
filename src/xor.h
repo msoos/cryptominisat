@@ -36,7 +36,8 @@ namespace CMSat {
 class Xor
 {
 public:
-    Xor() {}
+    Xor() : rhs(false)
+    {}
     template<typename T>
     Xor(const T& cl, const bool _rhs) :
         rhs(_rhs)
@@ -50,6 +51,11 @@ public:
         rhs(_rhs)
         , vars(_vars)
     {
+    }
+
+    void sort()
+    {
+        std::sort(vars.begin(), vars.end());
     }
 
     vector<uint32_t>::const_iterator begin() const

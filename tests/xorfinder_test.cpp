@@ -36,7 +36,7 @@ struct xor_finder : public ::testing::Test {
         SolverConf conf;
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
-        s->new_vars(20);
+        s->new_vars(30);
         occsimp = s->occsimplifier;
     }
     ~xor_finder()
@@ -263,6 +263,91 @@ TEST_F(xor_finder, find_5_2)
     XorFinder finder(occsimp, s);
     finder.find_xors();
     check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
+}
+
+TEST_F(xor_finder, clean_v1)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0;");
+    finder.clean_up_xors();
+    EXPECT_EQ(finder.xors.size(), 0);
+}
+
+TEST_F(xor_finder, clean_v2)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0");
+    finder.clean_up_xors();
+    EXPECT_EQ(finder.xors.size(), 2);
+}
+
+TEST_F(xor_finder, clean_v3)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1");
+    finder.clean_up_xors();
+    EXPECT_EQ(finder.xors.size(), 2);
+}
+
+TEST_F(xor_finder, clean_v4)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1; 10, 15, 16, 17 = 0");
+    finder.clean_up_xors();
+    EXPECT_EQ(finder.xors.size(), 4);
+}
+
+TEST_F(xor_finder, recursive_xor_1)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 1; 1, 4, 5, 6 = 0;");
+    finder.recursively_xor_xors();
+    check_xors_eq(finder.xors, "2, 3, 4, 5, 6 = 1;");
+}
+
+TEST_F(xor_finder, recursive_xor_2)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;");
+    finder.recursively_xor_xors();
+    check_xors_eq(finder.xors, "2, 3, 4, 5, 6 = 0;");
+}
+
+TEST_F(xor_finder, recursive_xor_3)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
+    finder.recursively_xor_xors();
+    check_xors_eq(finder.xors, "1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
+}
+
+TEST_F(xor_finder, recursive_xor_4)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
+        "1, 9, 10, 11 = 0;");
+    finder.recursively_xor_xors();
+    EXPECT_EQ(finder.xors.size(), 3);
+}
+
+TEST_F(xor_finder, recursive_xor_5)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
+        "1, 4, 10, 11 = 0;");
+    finder.recursively_xor_xors();
+    EXPECT_EQ(finder.xors.size(), 2);
+    check_xors_contains(finder.xors, "5, 6, 10, 11 = 0");
+}
+
+TEST_F(xor_finder, recursive_xor_6)
+{
+    XorFinder finder(occsimp, s);
+    finder.xors = str_to_xors("1, 2 = 0; 1, 4= 0;"
+        "6, 7 = 0; 6, 10 = 1");
+    finder.recursively_xor_xors();
+    EXPECT_EQ(finder.xors.size(), 2);
+    check_xors_eq(finder.xors, "2, 4 = 0; 7, 10 = 1");
 }
 
 int main(int argc, char **argv) {

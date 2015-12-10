@@ -417,6 +417,30 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
     EXPECT_EQ(expected_sorted, got_data_sorted);
 }
 
+void check_xors_contains(const vector<Xor>& got_data, const std::string& expected)
+{
+    XorSorter xorsort;
+
+    vector<Xor> expected_sorted = str_to_xors(expected);
+    assert(expected_sorted.size() == 1);
+    Xor expectedX = expected_sorted[0];
+    std::sort(expectedX.begin(), expectedX.end());
+
+    vector<Xor> got_data_sorted = got_data;
+    for(auto t: got_data_sorted) {
+        std::sort(t.begin(), t.end());
+    }
+
+    bool found = false;
+    for(const Xor& x: got_data_sorted) {
+        if (x == expectedX) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 string print_cache(const vector<LitExtra>& c)
 {
     std::stringstream ss;

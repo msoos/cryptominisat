@@ -37,6 +37,7 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     , solver(_solver)
     , seen(_solver->seen)
     , seen2(_solver->seen2)
+    , toClear(_solver->toClear)
 {
 }
 
@@ -450,6 +451,237 @@ void XorFinder::findXorMatch(
 
         end:;
     }
+}
+
+void XorFinder::clean_up_xors()
+{
+    assert(toClear.empty());
+
+    //Fill seen with vars used
+    for(const Xor& x: xors) {
+        for(uint32_t v: x) {
+            if (seen[v] == 0) {
+                toClear.push_back(Lit(v, false));
+            }
+
+            if (seen[v] < 2) {
+                seen[v]++;
+            }
+        }
+    }
+
+    vector<Xor>::iterator it = xors.begin();
+    vector<Xor>::iterator it2 = xors.begin();
+    size_t num = 0;
+    for(vector<Xor>::iterator end = xors.end()
+        ; it != end
+        ; it++
+    ) {
+        if (xor_has_interesting_var(*it)) {
+            *it2 = *it;
+            it2++;
+            num++;
+        }
+    }
+    xors.resize(num);
+
+    for(Lit l: toClear) {
+        seen[l.var()] = 0;
+    }
+    toClear.clear();
+}
+
+void XorFinder::recursively_xor_xors()
+{
+    assert(toClear.empty());
+    //count how many times a var is used
+    for(const Xor& x: xors) {
+        for(uint32_t v: x) {
+            if (seen[v] == 0) {
+                toClear.push_back(Lit(v, false));
+            }
+
+            if (seen[v] < 3) {
+                seen[v]++;
+            }
+        }
+    }
+
+    //Link in
+    for(size_t i = 0; i < xors.size(); i++) {
+        const Xor& x = xors[i];
+        for(uint32_t v: x) {
+            Lit var(v, false);
+            assert(solver->watches.size() > var.toInt());
+            solver->watches[var].push(Watched(i));
+            solver->watches.smudge(var);
+        }
+    }
+
+    //Only when a var is used exactly twice it's interesting
+    vector<uint32_t> interesting;
+    for(const Lit l: toClear) {
+        if (seen[l.var()] == 2) {
+            interesting.push_back(l.var());
+        }
+    }
+
+    while(!interesting.empty()) {
+        const uint32_t v = interesting.back();
+        interesting.resize(interesting.size()-1);
+
+        Xor x[2];
+        size_t idxes[2];
+        unsigned at = 0;
+        size_t i2 = 0;
+        assert(solver->watches.size() > Lit(v, false).toInt());
+        watch_subarray ws = solver->watches[Lit(v, false)];
+        for(size_t i = 0; i < ws.size(); i++) {
+            const Watched& w = ws[i];
+            if (!w.isIdx()) {
+                ws[i2] = ws[i];
+                i2++;
+            } else if (xors[w.get_idx()] != Xor()) {
+                assert(at < 2);
+                x[at] = xors[w.get_idx()];
+                idxes[at] = w.get_idx();
+                at++;
+            }
+        }
+        ws.resize(i2);
+        if (at < 2) {
+            //Has been removed thanks to some XOR-ing together, skip
+            continue;
+        }
+
+        vector<uint32_t> vars = xor_two(x[0], x[1], idxes[0], idxes[1], v);
+        Xor x_new(vars, x[0].rhs ^ x[1].rhs);
+        xors.push_back(x_new);
+        for(uint32_t v: x_new) {
+            Lit var(v, false);
+            solver->watches[var].push(Watched(xors.size()-1));
+            solver->watches.smudge(var);
+        }
+        xors[idxes[0]] = Xor();
+        xors[idxes[1]] = Xor();
+    }
+
+    for(const Lit l: toClear) {
+        seen[l.var()] = 0;
+    }
+    toClear.clear();
+
+    solver->clean_occur_from_idx_types_only_smudged();
+    clean_xors_form_empty();
+
+    //TODO: add unitary + binary XORs.
+}
+
+void XorFinder::clean_xors_form_empty()
+{
+    size_t i2 = 0;
+    for(size_t i = 0; i < xors.size(); i++) {
+        if (xors[i].size() == 0
+            && xors[i].rhs == false
+        ) {
+            continue;
+        }
+
+        xors[i2] = xors[i];
+        i2++;
+    }
+    xors.resize(i2);
+}
+
+void XorFinder::clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2)
+{
+    auto ws = solver->watches[lit];
+    size_t i2 = 0;
+    for(size_t i = 0; i < ws.size(); i++) {
+        if (i != idx1 && i != idx2) {
+            ws[i2] = ws[i];
+            i2++;
+        }
+    }
+    ws.resize(ws.size()-2);
+}
+
+void XorFinder::clean_occur_from_idx(const Lit lit, size_t idx1)
+{
+    auto ws = solver->watches[lit];
+    size_t i2 = 0;
+    for(size_t i = 0; i < ws.size(); i++) {
+        if (i != idx1) {
+            ws[i2] = ws[i];
+            i2++;
+        }
+    }
+    ws.resize(ws.size()-1);
+}
+
+vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v)
+{
+    x1.sort();
+    x2.sort();
+    vector<uint32_t> ret;
+    size_t x1_at = 0;
+    size_t x2_at = 0;
+    while(x1_at < x1.size() || x2_at < x2.size()) {
+        if (x1_at == x1.size()) {
+            ret.push_back(x2[x2_at]);
+            clean_occur_from_idx(Lit(x2[x2_at], false), idx2);
+            x2_at++;
+            continue;
+        }
+
+        if (x2_at == x2.size()) {
+            ret.push_back(x1[x1_at]);
+            clean_occur_from_idx(Lit(x1[x1_at], false), idx1);
+            x1_at++;
+            continue;
+        }
+
+        const uint32_t a = x1[x1_at];
+        const uint32_t b = x2[x2_at];
+        if (a == v) {
+            x1_at++;
+            x2_at++;
+            continue;
+        }
+
+        if (a == b) {
+            x1_at++;
+            x2_at++;
+            clean_occur_from_idxs(Lit(a, false), idx1, idx2);
+            //we could/should update seen[] but in case there are too many XORs
+            //we could not store the value in seen[] when counting and then
+            //everything would go haywire. So this algorithm is not perfect
+            //but is good enough
+            continue;
+        }
+
+        if (a < b) {
+            ret.push_back(a);
+            x1_at++;
+            continue;
+        } else {
+            ret.push_back(b);
+            x2_at++;
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+bool XorFinder::xor_has_interesting_var(const Xor& x)
+{
+    for(uint32_t v: x) {
+        if (seen[v] > 1) {
+            return true;
+        }
+    }
+    return false;
 }
 
 size_t XorFinder::mem_used() const

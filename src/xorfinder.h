@@ -158,6 +158,8 @@ public:
     const Stats& get_stats() const;
     virtual size_t mem_used() const;
     void add_xors_to_gauss();
+    void clean_up_xors();
+    void recursively_xor_xors();
     vector<Xor> xors;
     vector<ClOffset> cls_of_xors;
 
@@ -168,7 +170,11 @@ private:
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_clause_already_inside(const Xor& xor_c);
-    //void delete_cls_of_xors();
+    bool xor_has_interesting_var(const Xor& x);
+    void clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2);
+    void clean_occur_from_idx(const Lit lit, size_t idx1);
+    vector<uint32_t> xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v);
+    void clean_xors_form_empty();
 
     int64_t xor_find_time_limit;
 
@@ -205,6 +211,7 @@ private:
     //Other temporaries
     vector<uint16_t>& seen;
     vector<uint16_t>& seen2;
+    vector<Lit>& toClear;
 };
 
 
