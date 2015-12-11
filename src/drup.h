@@ -122,8 +122,10 @@ struct DrupFile: public Drup
         } else {
             *file << cl << " ";
         }
+        #ifdef STATS_NEEDED
         ID = cl.stats.ID;
         assert(ID != 0);
+        #endif
 
         return *this;
     }
@@ -137,9 +139,15 @@ struct DrupFile: public Drup
                     todel << "0 0\n";
                     delete_filled = true;
                 } else {
-                    *file << "0 " << ID << "\n";
+                    *file << "0 "
+                    #ifdef STATS_NEEDED
+                    << ID
+                    #endif
+                    << "\n";
                 }
+                #ifdef STATS_NEEDED
                 ID = 1;
+                #endif
                 must_delete_next = false;
                 break;
 
@@ -183,7 +191,9 @@ struct DrupFile: public Drup
     }
 
     std::ostream* file = NULL;
+    #ifdef STATS_NEEDED
     int64_t ID = 1;
+    #endif
 };
 
 }
