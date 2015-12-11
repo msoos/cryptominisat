@@ -25,11 +25,12 @@
 
 #include "constants.h"
 #include "cloffset.h"
+#include "watched.h"
+#include "clause.h"
+
 #include <stdlib.h>
 #include <map>
 #include <vector>
-
-#include "watched.h"
 
 #define BASE_DATA_TYPE uint64_t
 
