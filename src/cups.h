@@ -37,7 +37,6 @@ public:
     int solve() override;
 
 private:
-        //Unistuff
         SATCount ApproxMC(
             SATSolver* solver
             , FILE* resLog
@@ -84,7 +83,6 @@ private:
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
         bool openLogFile(FILE*& res);
         bool interrupt_asap = false;
-
 };
 
 
