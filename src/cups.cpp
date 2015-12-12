@@ -338,8 +338,7 @@ SATCount CUPS::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
     for (uint32_t j = 0; j < conf.tApproxMC; j++) {
         uint32_t  hashCount;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
-            double currentTime = cpuTimeTotal();
-            elapsedTime = currentTime - startTime;
+            elapsedTime = cpuTimeTotal() - startTime;
             if (elapsedTime > conf.totalTimeout - 3000) {
                 break;
             }
