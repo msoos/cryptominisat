@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "main.h"
 #include "signalcode.h"
 #include <signal.h>
+#include <fenv.h>
 
 int main(int argc, char** argv)
 {
