@@ -270,6 +270,7 @@ if (NOT ONLY_SIMPLE)
 
     target_link_libraries(cups4
         ${cryptoms_exec_link_libs}
+        rt
     )
     install(TARGETS cups4
         EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
