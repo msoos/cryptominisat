@@ -29,7 +29,7 @@ THE SOFTWARE.
 using namespace CMSat;
 
 SATSolver* solverToInterrupt;
-int clear_interrupt;
+int need_clean_exit;
 std::string redDumpFname;
 std::string irredDumpFname;
 
@@ -41,7 +41,7 @@ void SIGINT_handler(int)
     SATSolver* solver = solverToInterrupt;
     cout << "c " << endl;
     std::cerr << "*** INTERRUPTED ***" << endl;
-    if (!redDumpFname.empty() || !irredDumpFname.empty() || clear_interrupt) {
+    if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
         solver->interrupt_asap();
         std::cerr
         << "*** Please wait. We need to interrupt cleanly" << endl

@@ -32,7 +32,7 @@ namespace CMSat {
 using namespace CMSat;
 
 extern SATSolver* solverToInterrupt;
-extern int clear_interrupt;
+extern int need_clean_exit;
 extern std::string redDumpFname;
 extern std::string irredDumpFname;
 void SIGINT_handler(int);

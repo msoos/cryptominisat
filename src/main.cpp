@@ -641,7 +641,7 @@ void Main::add_supported_options()
     hiddenOptions.add_options()
     ("drupdebug", po::bool_switch(&drupDebug)
         , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
-    ("clearinter", po::value(&clear_interrupt)->default_value(0)
+    ("clearinter", po::value(&need_clean_exit)->default_value(0)
         , "Interrupt threads cleanly, all the time")
     ("zero-exit-status", po::bool_switch(&zero_exit_status)
         , "Exit with status zero in case the solving has finished without an issue")
@@ -1107,7 +1107,7 @@ void Main::manually_parse_some_options()
 
 void Main::parseCommandLine()
 {
-    clear_interrupt = 0;
+    need_clean_exit = 0;
     conf.verbosity = 2;
     conf.verbStats = 1;
 
