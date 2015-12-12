@@ -136,7 +136,11 @@ struct DrupFile: public Drup
         {
             case DrupFlag::fin:
                 if (must_delete_next) {
-                    todel << "0 0\n";
+                    todel << "0"
+                    #ifdef STATS_NEEDED
+                    " 0"
+                    #endif
+                    "\n";
                     delete_filled = true;
                 } else {
                     *file << "0 "
