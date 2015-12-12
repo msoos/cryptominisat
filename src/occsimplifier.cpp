@@ -894,7 +894,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #ifdef USE_GAUSS
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                finder.add_xors_to_gauss();
+                finder.recursively_xor_xors();
+                const bool ok = finder.add_new_truths_from_xors();
+                if (ok) {
+                    finder.add_xors_to_gauss();
+                }
                 #endif
             }
         } else if (token == "occ-clean-implicit") {
