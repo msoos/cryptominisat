@@ -40,7 +40,7 @@ using std::endl;
 #include "dimacsparser.h"
 
 using namespace CMSat;
-std::ostream* drupf;
+std::ostream* dratf;
 
 #ifdef USE_ZLIB
 static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
@@ -68,14 +68,14 @@ void printVersionInfo()
     #endif
 }
 
-void drup_stuff(SolverConf& conf)
+void drat_stuff(SolverConf& conf)
 {
-    drupf = &std::cout;
+    dratf = &std::cout;
 
     if (!conf.otfHyperbin) {
         if (conf.verbosity >= 2) {
             cout
-            << "c OTF hyper-bin is needed for BProp in DRUP, turning it back"
+            << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
             << endl;
         }
         conf.otfHyperbin = true;
@@ -84,7 +84,7 @@ void drup_stuff(SolverConf& conf)
     if (conf.doFindXors) {
         if (conf.verbosity >= 2) {
             cout
-            << "c XOR manipulation is not supported in DRUP, turning it off"
+            << "c XOR manipulation is not supported in DRAT, turning it off"
             << endl;
         }
         conf.doFindXors = false;
@@ -93,7 +93,7 @@ void drup_stuff(SolverConf& conf)
     if (conf.doRenumberVars) {
         if (conf.verbosity >= 2) {
             cout
-            << "c Variable renumbering is not supported during DRUP, turning it off"
+            << "c Variable renumbering is not supported during DRAT, turning it off"
             << endl;
         }
         conf.doRenumberVars = false;
@@ -102,7 +102,7 @@ void drup_stuff(SolverConf& conf)
     if (conf.doCompHandler) {
         if (conf.verbosity >= 2) {
             cout
-            << "c Component finding & solving is not supported during DRUP, turning it off"
+            << "c Component finding & solving is not supported during DRAT, turning it off"
             << endl;
         }
         conf.doCompHandler = false;
@@ -115,7 +115,7 @@ void printUsage(char** argv)
     printf("OPTIONS:\n\n");
     printf("  --verb          = [0...] Sets verbosity level. Anything higher\n");
     printf("                           than 2 will give debug log\n");
-    printf("  --drup          = {0,1}  Sets whether DRUP should be dumped to\n");
+    printf("  --drat          = {0,1}  Sets whether DRAT should be dumped to\n");
     printf("                           the console as per SAT COMPETITION'14 guidelines\n");
     printf("  --threads       = [1...] Sets number of threads\n");
     printf("\n");
@@ -134,20 +134,20 @@ int main(int argc, char** argv)
 {
     SolverConf conf;
     conf.verbosity = 2;
-    drupf = NULL;
+    dratf = NULL;
 
     int i, j;
     long int num_threads = 1;
     const char* value;
     for (i = j = 0; i < argc; i++){
-        if ((value = hasPrefix(argv[i], "--drup="))){
-            long int drup = (int)strtol(value, NULL, 10);
-            if (drup == 0 && errno == EINVAL){
-                printf("ERROR! illegal drup level %s\n", value);
+        if ((value = hasPrefix(argv[i], "--drat="))){
+            long int drat = (int)strtol(value, NULL, 10);
+            if (drat == 0 && errno == EINVAL){
+                printf("ERROR! illegal drat level %s\n", value);
                 exit(0);
             }
-            if (drup > 0) {
-                drup_stuff(conf);
+            if (drat > 0) {
+                drat_stuff(conf);
             }
         }else if ((value = hasPrefix(argv[i], "--verb="))){
             long int verbosity = (int)strtol(value, NULL, 10);
@@ -179,10 +179,10 @@ int main(int argc, char** argv)
 
     SATSolver S(&conf);
     solver = &S;
-    if (drupf) {
-        solver->set_drup(drupf);
+    if (dratf) {
+        solver->set_drat(dratf);
         if (num_threads > 1) {
-            cout << "ERROR: Cannot have DRUP and multiple threads." << endl;
+            cout << "ERROR: Cannot have DRAT and multiple threads." << endl;
             exit(-1);
         }
     }

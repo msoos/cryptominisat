@@ -86,7 +86,7 @@ void Prober::checkOTFRatio()
             > time_limit
         && ratio < solver->conf.otf_hyper_ratio_limit
         && solver->conf.otfHyperbin
-        && !solver->drup->enabled()
+        && !solver->drat->enabled()
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity >= 2) {
@@ -547,7 +547,7 @@ void Prober::check_and_set_both_prop(uint32_t var, bool first)
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);
             toEnqueue.push_back(litToEnq);
-            (*solver->drup) << litToEnq << fin;
+            (*solver->drat) << litToEnq << fin;
 
             if (solver->conf.verbosity >= 10)
                 cout << "c Bothprop indicated to enqueue " << litToEnq << endl;
@@ -580,7 +580,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
     //~lit V OTHER, and ~lit V ~OTHER are technically in
     if (taut) {
         toEnqueue.push_back(~lit);
-        (*solver->drup) << ~lit << fin;
+        (*solver->drat) << ~lit << fin;
     }
 }
 
@@ -589,7 +589,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     //If we timed out on ONE call, turn otf hyper-bin off
     //and return --> the "visitedAlready" will be wrong
     if (solver->timedOutPropagateFull
-        && !solver->drup->enabled()
+        && !solver->drat->enabled()
     ) {
         if (solver->conf.verbosity >= 2) {
             cout
@@ -710,7 +710,7 @@ bool Prober::propagate(Lit& failed)
         //Set timeout for ONE enqueue. This used so that in case ONE enqueue
         //takes too long (usually because of hyper-bin), we exit early
         uint64_t timeout = std::numeric_limits<uint64_t>::max();
-        if (!solver->drup->enabled()) {
+        if (!solver->drat->enabled()) {
             timeout = solver->propStats.otfHyperTime
             + solver->propStats.bogoProps
             + single_prop_tout;

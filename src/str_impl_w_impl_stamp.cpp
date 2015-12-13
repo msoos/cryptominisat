@@ -174,7 +174,7 @@ void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
         str_impl_data.remLitFromTri++;
         str_impl_data.binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
 
-        (*solver->drup)
+        (*solver->drat)
         << i->lit2()  << i->lit3() << fin
         << del << lit << i->lit2() << i->lit3() << fin;
         return;
@@ -204,8 +204,8 @@ void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
             str_impl_data.remLitFromTri++;
             str_impl_data.binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
 
-            //Drup
-            (*solver->drup)
+            //Drat
+            (*solver->drat)
             << lits[0] << lits[1] << fin
             << del << lit << i->lit2() << i->lit3() << fin;
 
@@ -214,7 +214,7 @@ void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
             solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
             str_impl_data.remLitFromTri+=2;
             str_impl_data.toEnqueue.push_back(lits[0]);
-            (*solver->drup)
+            (*solver->drat)
             << lits[0] << fin
             << del << lit << i->lit2() << i->lit3() << fin;
 
@@ -244,7 +244,7 @@ void StrImplWImplStamp::strengthen_bin_with_bin(
         assert(!lits.empty());
         if (lits.size() == 1) {
             str_impl_data.toEnqueue.push_back(lits[0]);
-            (*solver->drup) << lits[0] << fin;
+            (*solver->drat) << lits[0] << fin;
 
             str_impl_data.remLitFromBin++;
             str_impl_data.stampRem++;
@@ -283,7 +283,7 @@ void StrImplWImplStamp::strengthen_bin_with_bin(
     if (rem) {
         str_impl_data.remLitFromBin++;
         str_impl_data.toEnqueue.push_back(lit);
-        (*solver->drup) << lit << fin;
+        (*solver->drat) << lit << fin;
     }
     *j++ = *i;
 }

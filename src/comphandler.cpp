@@ -238,7 +238,7 @@ bool CompHandler::solve_component(
     , const vector<uint32_t>& vars_orig
     , const size_t num_comps
 ) {
-    assert(!solver->drup->enabled());
+    assert(!solver->drat->enabled());
     vector<uint32_t> vars(vars_orig);
     components_solved++;
 

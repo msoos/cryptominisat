@@ -56,7 +56,7 @@
 // Verbose Debug
 ///////////////////
 
-//#define DRUP_DEBUG
+//#define DRAT_DEBUG
 //#define VERBOSE_DEBUG
 
 #ifdef VERBOSE_DEBUG

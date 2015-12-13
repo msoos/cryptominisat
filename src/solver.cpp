@@ -77,7 +77,7 @@ using std::endl;
 #include "sqlitestats.h"
 #endif
 
-//#define DRUP_DEBUG
+//#define DRAT_DEBUG
 
 //#define DEBUG_RENUMBER
 
@@ -209,7 +209,7 @@ bool Solver::add_xor_clause_inter(
     const vector<Lit>& lits
     , bool rhs
     , const bool attach
-    , bool addDrup
+    , bool addDrat
 ) {
     assert(ok);
     assert(!attach || qhead == trail.size());
@@ -261,14 +261,14 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= rhs;
     } else {
         if (rhs) {
-            *drup << fin;
+            *drat << fin;
             ok = false;
         }
         return ok;
     }
 
     //cout << "without rhs is: " << ps << endl;
-    add_every_combination_xor(ps, attach, addDrup);
+    add_every_combination_xor(ps, attach, addDrat);
 
     return ok;
 }
@@ -276,7 +276,7 @@ bool Solver::add_xor_clause_inter(
 void Solver::add_every_combination_xor(
     const vector<Lit>& lits
     , const bool attach
-    , const bool addDrup
+    , const bool addDrat
 ) {
     //cout << "add_every_combination got: " << lits << endl;
 
@@ -313,7 +313,7 @@ void Solver::add_every_combination_xor(
             lastlit_added = toadd;
         }
 
-        add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrup);
+        add_xor_clause_inter_cleaned_cut(xorlits, attach, addDrat);
         if (!ok)
             break;
 
@@ -324,7 +324,7 @@ void Solver::add_every_combination_xor(
 void Solver::add_xor_clause_inter_cleaned_cut(
     const vector<Lit>& lits
     , const bool attach
-    , const bool addDrup
+    , const bool addDrat
 ) {
     //cout << "xor_inter_cleaned_cut got: " << lits << endl;
     vector<Lit> new_lits;
@@ -340,7 +340,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
             new_lits.push_back(lits[at] ^ xorwith);
         }
         //cout << "Added. " << new_lits << endl;
-        Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrup);
+        Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrat);
         if (cl) {
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
@@ -407,8 +407,8 @@ Clause* Solver::add_clause_int(
     , ClauseStats stats
     , const bool attach_long
     , vector<Lit>* finalLits
-    , bool addDrup
-    , const Lit drup_first
+    , bool addDrat
+    , const Lit drat_first
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -436,17 +436,17 @@ Clause* Solver::add_clause_int(
         *finalLits = ps;
     }
 
-    if (addDrup) {
+    if (addDrat) {
         size_t i = 0;
-        if (drup_first != lit_Undef) {
+        if (drat_first != lit_Undef) {
             for(i = 0; i < ps.size(); i++) {
-                if (ps[i] == drup_first) {
+                if (ps[i] == drat_first) {
                     break;
                 }
             }
         }
         std::swap(ps[0], ps[i]);
-        *drup << ps << fin;
+        *drat << ps << fin;
         std::swap(ps[0], ps[i]);
 
         if (ps.size() == 2) {
@@ -514,12 +514,12 @@ void Solver::attachClause(
     const Clause& cl
     , const bool checkAttach
 ) {
-    #if defined(DRUP_DEBUG) && defined(DRUP)
-    if (drup) {
+    #if defined(DRAT_DEBUG) && defined(DRAT)
+    if (drat) {
         for(size_t i = 0; i < cl.size(); i++) {
-            *drup << cl[i];
+            *drat << cl[i];
         }
-        *drup << fin;
+        *drat << fin;
     }
     #endif
 
@@ -539,9 +539,9 @@ void Solver::attach_tri_clause(
     , const Lit lit3
     , const bool red
 ) {
-    #if defined(DRUP_DEBUG) && defined(DRUP)
-    if (drup) {
-        *drup << lit1  << lit2  << lit3 << fin;
+    #if defined(DRAT_DEBUG) && defined(DRAT)
+    if (drat) {
+        *drat << lit1  << lit2  << lit3 << fin;
     }
     #endif
 
@@ -562,8 +562,8 @@ void Solver::attach_bin_clause(
     , const bool red
     , const bool checkUnassignedFirst
 ) {
-    #if defined(DRUP_DEBUG)
-    *drup << lit1 << lit2 << fin;
+    #if defined(DRAT_DEBUG)
+    *drat << lit1 << lit2 << fin;
     #endif
 
     //Update stats
@@ -609,20 +609,20 @@ void Solver::detach_bin_clause(
     PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch);
 }
 
-void Solver::detachClause(const Clause& cl, const bool removeDrup)
+void Solver::detachClause(const Clause& cl, const bool removeDrat)
 {
-    if (removeDrup) {
-        *drup << del << cl << fin;
+    if (removeDrat) {
+        *drat << del << cl << fin;
     }
 
     assert(cl.size() > 3);
     detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
 }
 
-void Solver::detachClause(const ClOffset offset, const bool removeDrup)
+void Solver::detachClause(const ClOffset offset, const bool removeDrat)
 {
     Clause* cl = cl_alloc.ptr(offset);
-    detachClause(*cl, removeDrup);
+    detachClause(*cl, removeDrat);
 }
 
 void Solver::detach_modified_clause(
@@ -767,23 +767,23 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
         , ClauseStats() //default stats
         , true //yes, attach
         , &finalCl_tmp
-        , false //add drup?
+        , false //add drat?
     );
 
-    //Drup -- We manipulated the clause, delete
-    if (drup->enabled()
+    //Drat -- We manipulated the clause, delete
+    if (drat->enabled()
         && ps != finalCl_tmp
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl_tmp.empty()) {
-            *drup << finalCl_tmp << fin;
+            *drat << finalCl_tmp << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!okay()) {
-            *drup << fin;
+            *drat << fin;
         }
-        *drup << del << ps << fin;
+        *drat << del << ps << fin;
     }
 
     if (cl != NULL) {

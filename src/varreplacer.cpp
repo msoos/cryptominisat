@@ -312,7 +312,7 @@ void VarReplacer::newBinClause(
         && origLit2 < origLit3
     ){
         delayed_attach_bin.push_back(BinaryClause(lit1, lit2, red));
-        (*solver->drup) << lit1 << lit2 << fin;
+        (*solver->drat) << lit1 << lit2 << fin;
     }
 }
 
@@ -354,7 +354,7 @@ void VarReplacer::updateTri(
         && lit2 == lit3
     ) {
         delayedEnqueue.push_back(lit1);
-        (*solver->drup) << lit1 << fin;
+        (*solver->drat) << lit1 << fin;
         remove = true;
     }
 
@@ -377,11 +377,11 @@ void VarReplacer::updateTri(
     if (remove) {
         impl_tmp_stats.remove(*i);
 
-        //Drup -- Only delete once
+        //Drat -- Only delete once
         if (origLit1 < origLit2
             && origLit2 < origLit3
         ) {
-            (*solver->drup)
+            (*solver->drat)
             << del
             << origLit1
             << origLit2
@@ -410,7 +410,7 @@ void VarReplacer::updateTri(
     i->setLit2(lit2);
     i->setLit3(lit3);
 
-    //Drup
+    //Drat
     if (//Changed
         (lit1 != origLit1
             || lit2 != origLit2
@@ -421,7 +421,7 @@ void VarReplacer::updateTri(
             && origLit2 < origLit3
         )
     ) {
-        (*solver->drup)
+        (*solver->drat)
         << lit1 << lit2 << lit3 << fin
         << del << origLit1 << origLit2  << origLit3 << fin;
     }
@@ -448,7 +448,7 @@ void VarReplacer::updateBin(
     //Two lits are the same in BIN
     if (lit1 == lit2) {
         delayedEnqueue.push_back(lit2);
-        (*solver->drup) << lit2 << fin;
+        (*solver->drat) << lit2 << fin;
         remove = true;
     }
 
@@ -459,22 +459,22 @@ void VarReplacer::updateBin(
     if (remove) {
         impl_tmp_stats.remove(*i);
 
-        //Drup -- Delete only once
+        //Drat -- Delete only once
         if (origLit1 < origLit2) {
-            (*solver->drup) << del << origLit1 << origLit2 << fin;
+            (*solver->drat) << del << origLit1 << origLit2 << fin;
         }
 
         return;
     }
 
-    //Drup
+    //Drat
     if (//Changed
         (lit1 != origLit1
             || lit2 != origLit2)
         //Delete&attach only once
         && (origLit1 < origLit2)
     ) {
-        (*solver->drup)
+        (*solver->drat)
         << lit1 << lit2 << fin
         << del << origLit1 << origLit2 << fin;
     }
@@ -594,19 +594,19 @@ bool VarReplacer::replaceImplicit()
 */
 bool VarReplacer::replace_set(vector<ClOffset>& cs)
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
         runStats.bogoprops += 3;
-        assert(!solver->drup->something_delayed());
+        assert(!solver->drat->something_delayed());
 
         Clause& c = *solver->cl_alloc.ptr(*i);
         assert(!c.getRemoved());
         assert(c.size() > 3);
 
         bool changed = false;
-        (*solver->drup) << deldelay << c << fin;
+        (*solver->drat) << deldelay << c << fin;
 
         const Lit origLit1 = c[0];
         const Lit origLit2 = c[1];
@@ -629,12 +629,12 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
             }
         } else {
             *j++ = *i;
-            solver->drup->forget_delay();
+            solver->drat->forget_delay();
         }
 
     }
     cs.resize(cs.size() - (i-j));
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
 
     return solver->ok;
 }
@@ -688,14 +688,14 @@ bool VarReplacer::handleUpdatedClause(
     #endif
 
     if (satisfied) {
-        (*solver->drup) << findelay;
+        (*solver->drat) << findelay;
         c.shrink(c.size()); //so we free() it
         solver->watches.smudge(origLit1);
         solver->watches.smudge(origLit2);
         c.setRemoved();
         return true;
     }
-    (*solver->drup) << c << fin << findelay;
+    (*solver->drat) << c << fin << findelay;
 
     runStats.bogoprops += 3;
     switch(c.size()) {
@@ -830,7 +830,7 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
 {
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
-        (*solver->drup)
+        (*solver->drat)
         << ~lit1 << lit2 << fin
         << lit1 << ~lit2 << fin
         << lit1 << fin
@@ -851,7 +851,7 @@ bool VarReplacer::replace_vars_already_set(
     , const lbool val2
 ) {
     if (val1 != val2) {
-        (*solver->drup)
+        (*solver->drat)
         << ~lit1 << fin
         << lit1 << fin;
 
@@ -876,7 +876,7 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue(toEnqueue);
-        (*solver->drup) << toEnqueue << fin;
+        (*solver->drat) << toEnqueue << fin;
 
         #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
@@ -905,8 +905,8 @@ bool VarReplacer::replace(
 
     replaceChecks(var1, var2);
 
-    #ifdef DRUP_DEBUG
-    (*solver->drup)
+    #ifdef DRAT_DEBUG
+    (*solver->drat)
     << Lit(var1, true)  << " " << (Lit(var2, false) ^ xor_is_true) << fin
     << Lit(var1, false) << " " << (Lit(var2, true)  ^ xor_is_true) << fin
     ;
@@ -920,7 +920,7 @@ bool VarReplacer::replace(
     if (lit1.var() == lit2.var()) {
         return handleAlreadyReplaced(lit1, lit2);
     }
-    (*solver->drup)
+    (*solver->drat)
     << ~lit1 << lit2 << fin
     << lit1 << ~lit2 << fin;
 

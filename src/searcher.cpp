@@ -220,11 +220,11 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
         cout  << endl;
     }
 
-    if (drup->enabled()) {
+    if (drat->enabled()) {
         for(unsigned  i = 0; i < newCl.size; i++) {
-            *drup << newCl.lits[i];
+            *drat << newCl.lits[i];
         }
-        *drup << fin;
+        *drat << fin;
     }
 
     stats.otfSubsumed++;
@@ -237,7 +237,7 @@ void Searcher::create_otf_subsuming_long_clause(
     Clause& cl
     , const ClOffset offset
 ) {
-    (*solver->drup) << deldelay << cl << fin;
+    (*solver->drat) << deldelay << cl << fin;
     solver->detachClause(cl, false);
     stats.otfSubsumed++;
     stats.otfSubsumedLong++;
@@ -257,7 +257,7 @@ void Searcher::create_otf_subsuming_long_clause(
         cout
         << "New smaller clause OTF:" << cl << endl;
     }
-    *drup << cl << fin << findelay;
+    *drat << cl << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
 }
 
@@ -1214,9 +1214,9 @@ void Searcher::add_otf_subsume_long_clauses()
             //If none found, we have a propagating clause_t
             enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
 
-            //Drup
+            //Drat
             if (decisionLevel() == 0) {
-                *drup << cl[0] << fin;
+                *drat << cl[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1282,9 +1282,9 @@ void Searcher::add_otf_subsume_implicit_clause()
                 , by
             );
 
-            //Drup
+            //Drat
             if (decisionLevel() == 0) {
-                *drup << it->lits[0] << fin;
+                *drat << it->lits[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1408,7 +1408,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 3) {
-        *drup << learnt_clause << fin;
+        *drat << learnt_clause << fin;
         return NULL;
     }
 
@@ -1423,7 +1423,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->makeRed(glue);
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
-        *drup << *cl << fin;
+        *drat << *cl << fin;
         return cl;
     }
 
@@ -2384,7 +2384,7 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
                 solver->binTri.irredBins--;
                 removedIrred++;
             }
-            *drup << del << it->getLit1() << it->getLit2() << fin;
+            *drat << del << it->getLit1() << it->getLit2() << fin;
 
             #ifdef VERBOSE_DEBUG_FULLPROP
             cout << "Removed bin: "
@@ -2670,10 +2670,10 @@ PropBy Searcher::propagate(
         ret = propagate_any_order<update_bogoprops>();
     }
 
-    //Drup -- If declevel 0 propagation, we have to add the unitaries
-    if (decisionLevel() == 0 && drup->enabled()) {
+    //Drat -- If declevel 0 propagation, we have to add the unitaries
+    if (decisionLevel() == 0 && drat->enabled()) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
-            #ifdef DEBUG_DRUP
+            #ifdef DEBUG_DRAT
             if (conf.verbosity >= 6) {
                 cout
                 << "c 0-level enqueue:"
@@ -2681,10 +2681,10 @@ PropBy Searcher::propagate(
                 << endl;
             }
             #endif
-            *drup << trail[i] << fin;
+            *drat << trail[i] << fin;
         }
         if (!ret.isNULL()) {
-            *drup << fin;
+            *drat << fin;
         }
     }
 

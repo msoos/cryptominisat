@@ -37,7 +37,7 @@ CompleteDetachReatacher::CompleteDetachReatacher(Solver* _solver) :
 */
 void CompleteDetachReatacher::detach_nonbins_nontris()
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     ClausesStay stay;
 
     for (watch_array::iterator
@@ -105,7 +105,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     cleanAndAttachClauses(solver->longIrredCls, removeStatsFirst);
     cleanAndAttachClauses(solver->longRedCls, removeStatsFirst);
     solver->clauseCleaner->clean_implicit_clauses();
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
 
     if (solver->ok) {
         solver->ok = (solver->propagate<true>().isNULL());
@@ -152,7 +152,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
     vector<ClOffset>::iterator i = cs.begin();
     vector<ClOffset>::iterator j = i;
     for (vector<ClOffset>::iterator end = cs.end(); i != end; i++) {
-        assert(!solver->drup->something_delayed());
+        assert(!solver->drat->something_delayed());
         Clause* cl = solver->cl_alloc.ptr(*i);
 
         //Handle stat removal if need be
@@ -180,7 +180,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
 bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
     Clause& ps = *cl;
-    (*solver->drup) << deldelay << ps << fin;
+    (*solver->drat) << deldelay << ps << fin;
     if (ps.size() <= 3) {
         cout
         << "ERROR, clause is too small, and linked in: "
@@ -193,7 +193,7 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     Lit *j = i;
     for (Lit *end = ps.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
-            (*solver->drup) << findelay;
+            (*solver->drat) << findelay;
             return false;
         }
         if (solver->value(*i) == l_Undef) {
@@ -202,11 +202,11 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
     }
     ps.shrink(i-j);
 
-    //Drup
+    //Drat
     if (i != j) {
-        (*solver->drup) << *cl << fin << findelay;
+        (*solver->drat) << *cl << fin << findelay;
     } else {
-        solver->drup->forget_delay();
+        solver->drat->forget_delay();
     }
 
     switch (ps.size()) {

@@ -79,10 +79,10 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 
 bool InTree::check_timeout_due_to_hyperbin()
 {
-    assert(!(solver->timedOutPropagateFull && solver->drup->enabled()));
+    assert(!(solver->timedOutPropagateFull && solver->drat->enabled()));
 
     if (solver->timedOutPropagateFull
-        && !solver->drup->enabled()
+        && !solver->drat->enabled()
     ) {
         if (solver->conf.verbosity >= 2) {
             cout
@@ -328,7 +328,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         bool ok;
         if (solver->conf.otfHyperbin) {
             uint64_t max_hyper_time = std::numeric_limits<uint64_t>::max();
-            if (!solver->drup->enabled()) {
+            if (!solver->drat->enabled()) {
                 max_hyper_time =
                 solver->propStats.otfHyperTime
                 + solver->propStats.bogoProps
@@ -373,14 +373,14 @@ bool InTree::empty_failed_list()
 
         if (solver->value(lit) == l_Undef) {
             solver->enqueue(lit);
-            *(solver->drup) << lit << fin;
+            *(solver->drat) << lit << fin;
             solver->ok = solver->propagate<true>().isNULL();
             if (!solver->ok) {
                 return false;
             }
         } else if (solver->value(lit) == l_False) {
-            *(solver->drup) << ~lit << fin;
-            *(solver->drup) << fin;
+            *(solver->drat) << ~lit << fin;
+            *(solver->drat) << fin;
             solver->ok = false;
             return false;
         }

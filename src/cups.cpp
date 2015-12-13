@@ -566,8 +566,8 @@ int CUPS::solve()
 
     solver = new SATSolver((void*)&conf, &interrupt_asap);
     solverToInterrupt = solver;
-    if (drupf) {
-        solver->set_drup(drupf);
+    if (dratf) {
+        solver->set_drat(dratf);
     }
     //check_num_threads_sanity(num_threads);
     //solver->set_num_threads(num_threads);

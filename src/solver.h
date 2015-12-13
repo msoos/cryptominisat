@@ -176,7 +176,7 @@ class Solver : public Searcher
             const vector< Lit >& lits
             , bool rhs
             , bool attach
-            , bool addDrup = true
+            , bool addDrat = true
         );
         void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
@@ -212,8 +212,8 @@ class Solver : public Searcher
             , bool red
             , bool allow_empty_watch = false
         ) override;
-        void detachClause(const Clause& c, const bool removeDrup = true);
-        void detachClause(const ClOffset offset, const bool removeDrup = true);
+        void detachClause(const Clause& c, const bool removeDrat = true);
+        void detachClause(const ClOffset offset, const bool removeDrat = true);
         void detach_modified_clause(
             const Lit lit1
             , const Lit lit2
@@ -226,8 +226,8 @@ class Solver : public Searcher
             , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
-            , bool addDrup = true
-            , const Lit drup_first = lit_Undef
+            , bool addDrat = true
+            , const Lit drat_first = lit_Undef
         );
         void clear_clauses_stats();
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
@@ -251,8 +251,8 @@ class Solver : public Searcher
 
         void check_config_parameters() const;
         void handle_found_solution(const lbool status);
-        void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrup);
-        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrup);
+        void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrat);
+        void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();

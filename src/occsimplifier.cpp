@@ -213,13 +213,13 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
 
 void OccSimplifier::unlink_clause(
     const ClOffset offset
-    , bool doDrup
+    , bool doDrat
     , bool allow_empty_watch
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (solver->drup->enabled() && doDrup) {
-       (*solver->drup) << del << cl << fin;
+    if (solver->drat->enabled() && doDrat) {
+       (*solver->drat) << del << cl << fin;
     }
 
     if (!cl.red()) {
@@ -257,12 +257,12 @@ void OccSimplifier::unlink_clause(
 
 lbool OccSimplifier::clean_clause(ClOffset offset)
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     assert(solver->ok);
 
     bool satisfied = false;
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    (*solver->drup) << deldelay << cl << fin;
+    (*solver->drat) << deldelay << cl << fin;
 
     Lit* i = cl.begin();
     Lit* j = cl.begin();
@@ -295,7 +295,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     }
 
     if (satisfied) {
-        (*solver->drup) << findelay;
+        (*solver->drat) << findelay;
         unlink_clause(offset, false);
         return l_True;
     }
@@ -305,9 +305,9 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     }
 
     if (i-j > 0) {
-        (*solver->drup) << cl << fin << findelay;
+        (*solver->drat) << cl << fin << findelay;
     } else {
-        solver->drup->forget_delay();
+        solver->drat->forget_delay();
     }
 
     switch(cl.size()) {
@@ -345,9 +345,9 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
 
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     assert(cl.size() > 3);
-    (*solver->drup) << deldelay << cl << fin;
+    (*solver->drat) << deldelay << cl << fin;
 
     //Remove all lits from stats
     //we will re-attach the clause either way
@@ -362,7 +362,7 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     for (Lit *end = cl.end(); i != end; i++) {
         if (solver->value(*i) == l_True) {
 
-            (*solver->drup) << findelay;
+            (*solver->drat) << findelay;
             return false;
         }
 
@@ -373,11 +373,11 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
     cl.shrink(i-j);
     cl.recalc_abst_if_needed();
 
-    //Drup
+    //Drat
     if (i - j > 0) {
-        (*solver->drup) << cl << fin << findelay;
+        (*solver->drat) << cl << fin << findelay;
     } else {
-        solver->drup->forget_delay();
+        solver->drat->forget_delay();
     }
 
     switch (cl.size()) {
@@ -975,7 +975,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     const size_t origTrailSize = solver->trail_size();
     execute_simplifier_strategy(schedule);
 
-    remove_by_drup_recently_blocked_clauses(origBlockedSize);
+    remove_by_drat_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
 
     return solver->ok;
@@ -1114,13 +1114,13 @@ bool OccSimplifier::uneliminate(uint32_t var)
     return solver->okay();
 }
 
-void OccSimplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSize)
+void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSize)
 {
-    if (!(*solver->drup).enabled())
+    if (!(*solver->drat).enabled())
         return;
 
     if (solver->conf.verbosity >= 6) {
-        cout << "c Deleting blocked clauses for DRUP" << endl;
+        cout << "c Deleting blocked clauses for DRAT" << endl;
     }
 
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
@@ -1129,7 +1129,7 @@ void OccSimplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSi
 
         //If doing stamping or caching, we cannot delete binary redundant
         //clauses, because they are stored in the stamp/cache and so
-        //will be used -- and DRUP will complain when used
+        //will be used -- and DRAT will complain when used
         if (blockedClauses[i].lits.size() <= 2
             && (solver->conf.doCache
                 || solver->conf.doStamp)
@@ -1137,15 +1137,15 @@ void OccSimplifier::remove_by_drup_recently_blocked_clauses(size_t origBlockedSi
             continue;
         }
 
-        (*solver->drup) << del;
+        (*solver->drat) << del;
         for(vector<Lit>::const_iterator
             it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
             ; it != end
             ; ++it
         ) {
-            (*solver->drup) << *it;
+            (*solver->drat) << *it;
         }
-        (*solver->drup) << fin;
+        (*solver->drat) << fin;
     }
 }
 
@@ -1389,7 +1389,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 bvestats.longRedClRemThroughElim++;
             }
 
-            //Remove -- only DRUP the ones that are redundant
+            //Remove -- only DRAT the ones that are redundant
             //The irred will be removed thanks to 'blocked' system
             unlink_clause(offset, cl.red(), true, true);
         }
@@ -1413,12 +1413,12 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 add_clause_to_blck(lit, lits);
                 touched.touch(lits[1]);
             } else {
-                //If redundant, delayed blocked-based DRUP deletion will not work
+                //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
 
-                //Drup
+                //Drat
                 if (!solver->conf.doStamp && !solver->conf.doCache) {
-                   (*solver->drup) << del << lits[0] << lits[1] << fin;
+                   (*solver->drat) << del << lits[0] << lits[1] << fin;
                 }
             }
 
@@ -1449,9 +1449,9 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
                 touched.touch(lits[1]);
                 touched.touch(lits[2]);
             } else {
-                //If redundant, delayed blocked-based DRUP deletion will not work
+                //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
-                (*solver->drup) << del << lits[0] << lits[1] << lits[2] << fin;
+                (*solver->drat) << del << lits[0] << lits[1] << lits[2] << fin;
             }
 
             //Remove
@@ -2202,7 +2202,7 @@ bool OccSimplifier::reverse_distillation_of_dummy(
     if (ps.isBin()
         || qs.isBin()
         || !solver->conf.doCache
-        || (!solver->conf.otfHyperbin && solver->drup->enabled())
+        || (!solver->conf.otfHyperbin && solver->drat->enabled())
     ) {
         return false;
     }

@@ -639,8 +639,8 @@ void Main::add_supported_options()
 
     po::options_description hiddenOptions("Debug options for fuzzing, weird options not exposed");
     hiddenOptions.add_options()
-    ("drupdebug", po::bool_switch(&drupDebug)
-        , "Output DRUP verification into the console. Helpful to see where DRUP fails -- use in conjunction with --verb 20")
+    ("dratdebug", po::bool_switch(&dratDebug)
+        , "Output DRAT verification into the console. Helpful to see where DRAT fails -- use in conjunction with --verb 20")
     ("clearinter", po::value(&need_clean_exit)->default_value(0)
         , "Interrupt threads cleanly, all the time")
     ("zero-exit-status", po::bool_switch(&zero_exit_status)
@@ -650,8 +650,8 @@ void Main::add_supported_options()
         , "Reconfigure after this many simplifications")
     ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
-    ("drup,d", po::value(&drupfilname)
-        , "Put DRUP verification information into this file")
+    ("drat,d", po::value(&dratfilname)
+        , "Put DRAT verification information into this file")
     ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
         , "Reconfigure after some time to this solver configuration [0..13]")
     ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
@@ -693,7 +693,7 @@ void Main::add_supported_options()
     ;
 
     p.add("input", 1);
-    p.add("drup", 1);
+    p.add("drat", 1);
 
     help_options_complicated
     .add(generalOptions)
@@ -829,7 +829,7 @@ void Main::check_options_correctness()
     ) {
         cerr
         << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
-        << "       the 1st the CNF file input, and optinally, the 2nd the DRUP file output" << endl
+        << "       the 1st the CNF file input, and optinally, the 2nd the DRAT file output" << endl
         << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl
         << "    OR (post-processing) 1st for the solution file" << endl
         ;
@@ -864,29 +864,29 @@ void Main::check_options_correctness()
     }
 }
 
-void Main::handle_drup_option()
+void Main::handle_drat_option()
 {
-    if (drupDebug) {
-        drupf = &cout;
+    if (dratDebug) {
+        dratf = &cout;
     } else {
-        std::ofstream* drupfTmp = new std::ofstream;
-        drupfTmp->open(drupfilname.c_str(), std::ofstream::out);
-        if (!*drupfTmp) {
+        std::ofstream* dratfTmp = new std::ofstream;
+        dratfTmp->open(dratfilname.c_str(), std::ofstream::out);
+        if (!*dratfTmp) {
             std::cerr
-            << "ERROR: Could not open DRUP file "
-            << drupfilname
+            << "ERROR: Could not open DRAT file "
+            << dratfilname
             << " for writing"
             << endl;
 
             std::exit(-1);
         }
-        drupf = drupfTmp;
+        dratf = dratfTmp;
     }
 
     if (!conf.otfHyperbin) {
         if (conf.verbosity >= 2) {
             cout
-            << "c OTF hyper-bin is needed for BProp in DRUP, turning it back"
+            << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
             << endl;
         }
         conf.otfHyperbin = true;
@@ -895,7 +895,7 @@ void Main::handle_drup_option()
     if (conf.doFindXors) {
         if (conf.verbosity >= 2) {
             cout
-            << "c XOR manipulation is not supported in DRUP, turning it off"
+            << "c XOR manipulation is not supported in DRAT, turning it off"
             << endl;
         }
         conf.doFindXors = false;
@@ -904,7 +904,7 @@ void Main::handle_drup_option()
     if (conf.doRenumberVars) {
         if (conf.verbosity >= 2) {
             cout
-            << "c Variable renumbering is not supported during DRUP, turning it off"
+            << "c Variable renumbering is not supported during DRAT, turning it off"
             << endl;
         }
         conf.doRenumberVars = false;
@@ -913,7 +913,7 @@ void Main::handle_drup_option()
     if (conf.doCompHandler) {
         if (conf.verbosity >= 2) {
             cout
-            << "c Component finding & solving is not supported during DRUP, turning it off"
+            << "c Component finding & solving is not supported during DRAT, turning it off"
             << endl;
         }
         conf.doCompHandler = false;
@@ -1083,22 +1083,22 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess == 1) {
-        if (!vm.count("drup")) {
+        if (!vm.count("drat")) {
             cout << "ERROR: When preprocessing, you must give the simplified file name as 2nd argument" << endl;
             std::exit(-1);
         }
-        conf.simplified_cnf = vm["drup"].as<string>();
+        conf.simplified_cnf = vm["drat"].as<string>();
     }
 
     if (conf.preprocess == 2) {
-        if (vm.count("drup")) {
+        if (vm.count("drat")) {
             cout << "ERROR: When postprocessing, you must NOT give a 2nd argument" << endl;
             std::exit(-1);
         }
     }
 
-    if (conf.preprocess == 0 && vm.count("drup")) {
-        handle_drup_option();
+    if (conf.preprocess == 0 && vm.count("drat")) {
+        handle_drat_option();
     }
 
     if (conf.verbosity >= 1) {
@@ -1220,8 +1220,8 @@ int Main::solve()
 {
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
-    if (drupf) {
-        solver->set_drup(drupf);
+    if (dratf) {
+        solver->set_drat(dratf);
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);

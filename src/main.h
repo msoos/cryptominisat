@@ -48,10 +48,10 @@ class Main
         Main(int argc, char** argv);
         ~Main()
         {
-            if (drupf) {
-                *drupf << std::flush;
-                if (drupf != &std::cout) {
-                    delete drupf;
+            if (dratf) {
+                *dratf << std::flush;
+                if (dratf != &std::cout) {
+                    delete dratf;
                 }
             }
 
@@ -67,12 +67,12 @@ class Main
         char** argv;
         string typeclean;
         string var_elim_strategy;
-        string drupfilname;
+        string dratfilname;
         void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();
         void parse_var_elim_strategy();
-        void handle_drup_option();
+        void handle_drat_option();
         void parse_restart_type();
         void parse_polarity_type();
         void dumpIfNeeded() const;
@@ -117,9 +117,9 @@ class Main
         bool fileNamePresent;
         vector<string> filesToRead;
 
-        //Drup checker
-        std::ostream* drupf = NULL;
-        bool drupDebug = false;
+        //Drat checker
+        std::ostream* dratf = NULL;
+        bool dratDebug = false;
 
         vector<uint32_t> independent_vars;
 };

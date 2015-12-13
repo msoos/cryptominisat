@@ -511,10 +511,10 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 
     *simplifier->limit_to_decrease -= 5;
 
-    (*solver->drup) << deldelay << cl << fin;
+    (*solver->drat) << deldelay << cl << fin;
     cl.strengthen(toRemoveLit);
     cl.recalc_abst_if_needed();
-    (*solver->drup) << cl << fin << findelay;
+    (*solver->drat) << cl << fin << findelay;
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit], offset);

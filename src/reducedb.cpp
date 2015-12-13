@@ -278,7 +278,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         tmpStats.removed.incorporate(cl, sumConfl);
         solver->litStats.redLits -= cl->size();
 
-        *solver->drup << del << *cl << fin;
+        *solver->drat << del << *cl << fin;
         delayed_clause_free.push_back(offset);
     }
     solver->longRedCls.resize(solver->longRedCls.size() - (i - j));

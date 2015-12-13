@@ -215,7 +215,7 @@ bool DataSync::syncBinFromOthers(
             lits[0] = lit;
             lits[1] = otherLit;
 
-            //Don't add DRUP: it would add to the thread data, too
+            //Don't add DRAT: it would add to the thread data, too
             solver->add_clause_int(lits, true, ClauseStats(), true, NULL, false);
             if (!solver->ok) {
                 goto end;

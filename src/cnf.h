@@ -30,7 +30,7 @@
 #include "solvertypes.h"
 #include "implcache.h"
 #include "watcharray.h"
-#include "drup.h"
+#include "drat.h"
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "simplefile.h"
@@ -72,13 +72,13 @@ public:
         if (_conf != NULL) {
             conf = *_conf;
         }
-        drup = new Drup();
+        drat = new Drat();
         needToInterrupt = _needToInterrupt;
     }
 
     virtual ~CNF()
     {
-        delete drup;
+        delete drat;
     }
 
     ClauseAllocator cl_alloc;
@@ -93,7 +93,7 @@ public:
     int64_t num_red_cls_reducedb = 0;
     bool red_long_cls_is_reducedb(const Clause& cl) const;
     int64_t count_num_red_cls_reducedb() const;
-    Drup* drup;
+    Drat* drat;
 
     //Clauses
     vector<ClOffset> longIrredCls;

@@ -22,7 +22,7 @@
 #include "constants.h"
 #include "cryptominisat4/cryptominisat.h"
 #include "solver.h"
-#include "drup.h"
+#include "drat.h"
 #include "shareddata.h"
 #include <fstream>
 
@@ -262,8 +262,8 @@ DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
         return;
     }
 
-    if (data->solvers[0]->drup->enabled()) {
-        std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
+    if (data->solvers[0]->drat->enabled()) {
+        std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
 
@@ -675,18 +675,18 @@ DLL_PUBLIC void SATSolver::print_stats() const
     data->solvers[data->which_solved]->print_stats(cpu_time);
 }
 
-DLL_PUBLIC void SATSolver::set_drup(std::ostream* os)
+DLL_PUBLIC void SATSolver::set_drat(std::ostream* os)
 {
     if (data->solvers.size() > 1) {
-        std::cerr << "ERROR: DRUP cannot be used in multi-threaded mode" << endl;
+        std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
-    DrupFile* drup = new DrupFile();
-    drup->setFile(os);
-    if (data->solvers[0]->drup)
-        delete data->solvers[0]->drup;
+    DratFile* drat = new DratFile();
+    drat->setFile(os);
+    if (data->solvers[0]->drat)
+        delete data->solvers[0]->drat;
 
-    data->solvers[0]->drup = drup;
+    data->solvers[0]->drat = drat;
 }
 
 DLL_PUBLIC void SATSolver::interrupt_asap()

@@ -460,10 +460,10 @@ bool GateFinder::shortenWithOrGate(const OrGate& gate)
         const ClauseStats stats = cl.stats;
 
         //Free the old clause and allocate new one
-        (*solver->drup) << deldelay << cl << fin;
+        (*solver->drat) << deldelay << cl << fin;
         simplifier->unlink_clause(offset, false, false, true);
         Clause* cl2 = solver->add_clause_int(lits, red, stats, false);
-        (*solver->drup) << findelay;
+        (*solver->drat) << findelay;
         if (!solver->ok)
             return false;
 

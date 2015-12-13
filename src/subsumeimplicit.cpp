@@ -92,7 +92,7 @@ void SubsumeImplicit::try_subsume_tri(
 
     //Subsumed by stamp
     if (doStamp && !remove
-        && (solver->conf.otfHyperbin || !solver->drup->enabled())
+        && (solver->conf.otfHyperbin || !solver->drat->enabled())
     ) {
         timeAvailable -= 15;
         remove = solver->stamp.stampBasedClRem(tmplits);
@@ -102,7 +102,7 @@ void SubsumeImplicit::try_subsume_tri(
     //Subsumed by cache
     if (!remove
         && solver->conf.doCache
-        && (solver->conf.otfHyperbin || !solver->drup->enabled())
+        && (solver->conf.otfHyperbin || !solver->drat->enabled())
     ) {
         for(size_t at = 0; at < tmplits.size() && !remove; at++) {
             timeAvailable -= (int64_t)solver->implCache[lit].lits.size();
@@ -130,7 +130,7 @@ void SubsumeImplicit::try_subsume_tri(
         timeAvailable -= 30;
         solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
         runStats.remTris++;
-        (*solver->drup) << del << lit  << i->lit2()  << i->lit3() << fin;
+        (*solver->drat) << del << lit  << i->lit2()  << i->lit3() << fin;
         return;
     }
 
@@ -166,7 +166,7 @@ void SubsumeImplicit::try_subsume_bin(
         } else {
             solver->binTri.irredBins--;
         }
-        (*solver->drup) << del << lit << i->lit2() << fin;
+        (*solver->drat) << del << lit << i->lit2() << fin;
 
         return;
     } else {

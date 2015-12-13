@@ -847,33 +847,33 @@ class Tester:
             solution_parser.test_found_solution(solution, checkAgainst)
             return
 
-        # it's UNSAT, let's check with DRUP
+        # it's UNSAT, let's check with DRAT
         if fname2:
             toexec = "drat-trim %s %s" % (fname, fname2)
-            print("Checking DRUP...: ", toexec)
+            print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
             consoleOutput2 = p.communicate()[0]
             diffTime = calendar.timegm(time.gmtime()) - currTime
 
             # find verification code
             foundVerif = False
-            drupLine = ""
+            dratLine = ""
             for line in consoleOutput2.split('\n'):
                 if len(line) > 1 and line[:2] == "s ":
                     # print("verif: " , line)
                     foundVerif = True
                     if line[2:10] != "VERIFIED" and line[2:] != "TRIVIAL UNSAT":
-                        print("DRUP verification error, it says: %s" % consoleOutput2)
+                        print("DRAT verification error, it says: %s" % consoleOutput2)
                     assert line[2:10] == "VERIFIED" or line[
-                        2:] == "TRIVIAL UNSAT", "DRUP didn't verify problem!"
-                    drupLine = line
+                        2:] == "TRIVIAL UNSAT", "DRAT didn't verify problem!"
+                    dratLine = line
 
             # Check whether we have found a verification code
             if foundVerif is False:
                 print("verifier error! It says: %s" % consoleOutput2)
-                assert foundVerif, "Cannot find DRUP verification code!"
+                assert foundVerif, "Cannot find DRAT verification code!"
             else:
-                print("OK, DRUP says: %s" % drupLine)
+                print("OK, DRAT says: %s" % dratLine)
 
         # check with other solver
         ret = self.check_unsat(checkAgainst)
@@ -888,17 +888,17 @@ class Tester:
     def fuzz_test_one(self):
         print("\n--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
-        self.drup = self.num_threads == 1 and random.choice([True, False])
-        if self.drup:
-            fuzzers = fuzzers_drup
+        self.drat = self.num_threads == 1 and random.choice([True, False])
+        if self.drat:
+            fuzzers = fuzzers_drat
         else:
-            fuzzers = fuzzers_nodrup
+            fuzzers = fuzzers_nodrat
         fuzzer = random.choice(fuzzers)
 
         fname = create_fuzz.unique_file("fuzzTest")
-        fname_drup = None
-        if self.drup:
-            fname_drup = "%s-drup" % fname
+        fname_drat = None
+        if self.drat:
+            fname_drat = "%s-drat" % fname
 
         # create the fuzz file
         cf = create_fuzz()
@@ -908,7 +908,7 @@ class Tester:
         if status != 0:
             fuzzer_call_failed()
 
-        if not self.drup:
+        if not self.drat:
             self.needDebugLib = True
             interspersed_fname = create_fuzz.unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
@@ -921,14 +921,14 @@ class Tester:
             self.needDebugLib = False
             interspersed_fname = fname
 
-        self.check(fname=interspersed_fname, fname2=fname_drup)
+        self.check(fname=interspersed_fname, fname2=fname_drat)
 
         # remove temporary filenames
         os.unlink(interspersed_fname)
         for name in todel:
             os.unlink(name)
-        if fname_drup:
-            os.unlink(fname_drup)
+        if fname_drat:
+            os.unlink(fname_drat)
 
     def delete_file_no_matter_what(self, fname):
         try:
@@ -939,14 +939,14 @@ class Tester:
     def fuzz_test_preproc(self):
         print("\n--- PREPROC TESTING ---")
         tester.needDebugLib = False
-        fuzzer = random.choice(fuzzers_drup)
+        fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
         fname = create_fuzz.unique_file("fuzzTest")
-        self.drup = False
+        self.drat = False
 
         # create the fuzz file
         cf = create_fuzz()
-        call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrup, fname)
+        call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrat, fname)
         print("calling %s : %s" % (fuzzer, call))
         status, _ = commands.getstatusoutput(call)
         if status != 0:
@@ -994,13 +994,13 @@ def filter_large_fuzzer(dat):
 
     return f
 
-global fuzzers_drup
-global fuzzers_nodrup
-fuzzers_drup = fuzzers_noxor
-fuzzers_nodrup = fuzzers_noxor + fuzzers_xor
+global fuzzers_drat
+global fuzzers_nodrat
+fuzzers_drat = fuzzers_noxor
+fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
 if options.small:
-    fuzzers_drup = filter_large_fuzzer(fuzzers_drup)
-    fuzzers_nodrup = filter_large_fuzzer(fuzzers_nodrup)
+    fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
+    fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
 
 print_version()
 tester = Tester()

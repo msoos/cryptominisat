@@ -345,7 +345,7 @@ ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
     , const ClauseStats* stats
     , const uint32_t queueByBy
 ) {
-    #ifdef DRUP_DEBUG
+    #ifdef DRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
         cout << "Trying to distill clause:" << lits << endl;
     }

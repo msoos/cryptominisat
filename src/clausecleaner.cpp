@@ -50,7 +50,7 @@ void ClauseCleaner::clean_binary_implicit(
     if (satisfied(ws, lit)) {
         //Only delete once
         if (lit < ws.lit2()) {
-            (*solver->drup) << del << lit << ws.lit2() << fin;
+            (*solver->drat) << del << lit << ws.lit2() << fin;
         }
 
         if (ws.red()) {
@@ -115,16 +115,16 @@ void ClauseCleaner::clean_tertiary_implicit(
     }
     if (needAttach) {
         impl_data.toAttach.push_back(BinaryClause(lits[0], lits[1], ws.red()));
-        (*solver->drup) << lits[0] << lits[1] << fin;
+        (*solver->drat) << lits[0] << lits[1] << fin;
     }
 
     if (remove) {
-        //Drup
+        //Drat
         if (//Only remove once --> exactly when adding
             lit < ws.lit2()
             && ws.lit2() < ws.lit3()
         ) {
-            (*solver->drup)
+            (*solver->drat)
             << del << lit << ws.lit2() << ws.lit3() << fin;
         }
 
@@ -148,7 +148,7 @@ void ClauseCleaner::clean_implicit_watchlist(
             *j++ = *i;
             continue;
         }
-        assert(!solver->drup->something_delayed());
+        assert(!solver->drat->something_delayed());
 
         if (i->isBin()) {
             clean_binary_implicit(*i, j, lit);
@@ -163,7 +163,7 @@ void ClauseCleaner::clean_implicit_watchlist(
 
 void ClauseCleaner::clean_implicit_clauses()
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
     size_t wsLit = 0;
@@ -201,7 +201,7 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
 
@@ -247,9 +247,9 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 
 inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
-    assert(!solver->drup->something_delayed());
+    assert(!solver->drat->something_delayed());
     assert(cl.size() > 3);
-    (*solver->drup) << deldelay << cl << fin;
+    (*solver->drat) << deldelay << cl << fin;
 
 
     Lit *i, *j, *end;
@@ -262,15 +262,15 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
         }
 
         if (val == l_True) {
-            (*solver->drup) << findelay;
+            (*solver->drat) << findelay;
             return true;
         }
     }
     if (i != j) {
         cl.shrink(i-j);
-        (*solver->drup) << cl << fin << findelay;
+        (*solver->drat) << cl << fin << findelay;
     } else {
-        solver->drup->forget_delay();
+        solver->drat->forget_delay();
     }
 
     assert(cl.size() > 1);
