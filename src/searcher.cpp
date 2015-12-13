@@ -1428,6 +1428,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     }
 
     assert(cl->size() > 3);
+    *drat << learnt_clause << fin;
     if (conf.verbosity >= 6) {
         cout
         << "Detaching OTF subsumed (LAST) clause:"
