@@ -87,13 +87,6 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-    MORE_DEBUG)
-        sudo apt-get install libboost-program-options-dev
-        eval cmake ${COMMON_CMAKE_ARGS} \
-                   -DMORE_DEBUG:BOOL=ON \
-                   ${SOURCE_DIR}
-    ;;
-
     STATS)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
