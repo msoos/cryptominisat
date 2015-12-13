@@ -421,8 +421,6 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
 
 void check_xors_contains(const vector<Xor>& got_data, const std::string& expected)
 {
-    XorSorter xorsort;
-
     vector<Xor> expected_sorted = str_to_xors(expected);
     assert(expected_sorted.size() == 1);
     Xor expectedX = expected_sorted[0];
