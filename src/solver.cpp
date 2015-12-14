@@ -1871,13 +1871,6 @@ lbool Solver::simplify_problem(const bool startup)
     check_wrong_attach();
     conf.global_timeout_multiplier *= solver->conf.global_timeout_multiplier_multiplier;
 
-    //TODO not so good....
-    //The algorithms above probably have changed the propagation&usage data
-    //so let's clear it
-    if (conf.doClearStatEveryClauseCleaning) {
-        clear_clauses_stats();
-    }
-
     //Reconfigure
     if (nVars() > 2
         && (longIrredCls.size() > 1 ||

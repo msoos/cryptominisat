@@ -110,14 +110,18 @@ struct ClauseStats
 
     void clear()
     {
+        /*
+         * We should never clear stats
+         *
         activity = 0;
         #ifdef STATS_NEEDED
         conflicts_made = 0;
         sum_of_branch_depth_conflict = 0;
-        propagations_made = 0;;
+        propagations_made = 0;
         clause_looked_at = 0;
         used_for_uip_creation = 0;
         #endif
+        */
     }
 
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)

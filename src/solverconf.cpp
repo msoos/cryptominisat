@@ -44,7 +44,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clean_prop_multiplier(1.0)
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
-        , doClearStatEveryClauseCleaning(true)
         , inc_max_temp_red_cls(1.0)
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)

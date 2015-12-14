@@ -307,10 +307,6 @@ void ReduceDB::reduce_db_and_update_reset_stats()
     if (solver->sqlStats) {
         solver->sqlStats->reduceDB(irred_cl_usage_stats, red_cl_usage_stats, iterCleanStat, solver);
     }
-
-    if (solver->conf.doClearStatEveryClauseCleaning) {
-        solver->clear_clauses_stats();
-    }
 }
 
 ClauseUsageStats ReduceDB::sumClauseData(
