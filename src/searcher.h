@@ -347,7 +347,7 @@ class Searcher : public HyperEngine
         );
         void update_clause_glue_from_analysis(Clause* cl);
         void minimize_learnt_clause();
-        void mimimize_learnt_clause_more_maybe();
+        void mimimize_learnt_clause_more_maybe(const uint32_t glue);
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         void bump_var_activities_based_on_implied_by_learnts(const uint32_t glue);

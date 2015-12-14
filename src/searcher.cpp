@@ -498,15 +498,15 @@ void Searcher::minimize_learnt_clause()
     stats.recMinLitRem += origSize - learnt_clause.size();
 }
 
-void Searcher::mimimize_learnt_clause_more_maybe()
+void Searcher::mimimize_learnt_clause_more_maybe(const uint32_t glue)
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
         && (conf.doAlwaysFMinim
-            //|| (calc_glue_using_seen2(learnt_clause) < 0.45*hist.glueHistLT.avg()
+            //|| glue < 0.45*hist.glueHistLT.avg()
             //    && learnt_clause.size() < 0.45*hist.conflSizeHistLT.avg())
             || (learnt_clause.size() <= conf.max_size_more_minim
-                && calc_glue_using_seen2(learnt_clause) <= conf.max_glue_more_minim)
+                && glue <= conf.max_glue_more_minim)
             )
     ) {
         stats.moreMinimLitsStart += learnt_clause.size();
@@ -690,7 +690,7 @@ Clause* Searcher::analyze_conflict(
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
     glue = calc_glue_using_seen2(learnt_clause);
-    mimimize_learnt_clause_more_maybe();
+    mimimize_learnt_clause_more_maybe(glue);
     print_fully_minimized_learnt_clause();
 
     stats.litsRedFinal += learnt_clause.size();
