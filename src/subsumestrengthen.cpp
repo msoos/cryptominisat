@@ -995,10 +995,10 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
         }
     }
 
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = *simplifier->limit_to_decrease <= 0;
+    const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     if (solver->conf.verbosity >= 2) {
-        const double time_used = cpuTime() - myTime;
-        const bool time_out = *simplifier->limit_to_decrease <= 0;
-        const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
         cout
         << "c [sub] tri"
         << " upI: " << upI
@@ -1008,10 +1008,20 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
         << " str w tri: " << strTri
         << " tried: " << tried_bin_tri
         << " str: " << strSucceed
-        << " toDecrease: " << *simplifier->limit_to_decrease
+        //<< " toDecrease: " << *simplifier->limit_to_decrease
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
+    }
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed(
+            solver
+            , "occ-bckw-sub-str-w-bin-tri"
+            , time_used
+            , time_out
+            , time_remain
+        );
     }
 
     //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
