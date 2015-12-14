@@ -417,8 +417,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     Clause* cl = NULL;
     switch (confl.getType()) {
         case tertiary_t : {
-            resolutions.tri++;
-            stats.resolvs.tri++;
+            if (confl.isRedStep()) {
+                resolutions.triRed++;
+                stats.resolvs.triRed++;
+            } else {
+                resolutions.triIrred++;
+                stats.resolvs.triIrred++;
+            }
             add_lit_to_learnt(confl.lit3());
 
             if (p == lit_Undef) {
@@ -430,8 +435,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case binary_t : {
-            resolutions.bin++;
-            stats.resolvs.bin++;
+            if (confl.isRedStep()) {
+                resolutions.binRed++;
+                stats.resolvs.binRed++;
+            } else {
+                resolutions.binIrred++;
+                stats.resolvs.binIrred++;
+            }
             if (p == lit_Undef) {
                 add_lit_to_learnt(failBinLit);
             }
@@ -442,11 +452,11 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
-                resolutions.redL++;
-                stats.resolvs.redL++;
+                resolutions.longRed++;
+                stats.resolvs.longRed++;
             } else {
-                resolutions.irredL++;
-                stats.resolvs.irredL++;
+                resolutions.longIrred++;
+                stats.resolvs.longRed++;
             }
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;

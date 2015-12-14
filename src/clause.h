@@ -50,34 +50,41 @@ struct ResolutionTypes
 
     uint64_t sum() const
     {
-        return bin + tri + irredL + redL;
+        return binRed + binIrred + triRed + triIrred + longIrred + longRed;
     }
 
-    template <class T2>
+    template<class T2>
     ResolutionTypes& operator+=(const ResolutionTypes<T2>& other)
     {
-        bin += other.bin;
-        tri += other.tri;
-        irredL += other.irredL;
-        redL += other.redL;
+        binRed += other.binRed;
+        binIrred += other.binIrred;
+        triRed += other.triRed;
+        triIrred += other.triIrred;
+        longIrred += other.longIrred;
+        longRed += other.longRed;
 
         return *this;
     }
 
-    ResolutionTypes& operator-=(const ResolutionTypes& other)
+    template<class T2>
+    ResolutionTypes& operator-=(const ResolutionTypes<T2>& other)
     {
-        bin -= other.bin;
-        tri -= other.tri;
-        irredL -= other.irredL;
-        redL -= other.redL;
+        binRed -= other.binRed;
+        binIrred -= other.binIrred;
+        triRed -= other.triRed;
+        triIrred -= other.triIrred;
+        longIrred -= other.longIrred;
+        longRed -= other.longRed;
 
         return *this;
     }
 
-    T bin = 0;
-    T tri = 0;
-    T irredL = 0;
-    T redL = 0;
+    T binRed = 0;
+    T binIrred = 0;
+    T triRed = 0;
+    T triIrred = 0;
+    T longIrred = 0;
+    T longRed = 0;
 };
 
 struct ClauseStats
@@ -97,11 +104,11 @@ struct ClauseStats
     int64_t ID;
     #ifdef STATS_NEEDED
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
-    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint64_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
-    uint32_t propagations_made = 0; ///<Number of times caused propagation
+    uint64_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
-    uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
+    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
     #endif
 
     ///Number of resolutions it took to make the clause when it was
