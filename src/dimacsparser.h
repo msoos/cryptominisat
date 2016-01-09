@@ -127,7 +127,7 @@ bool DimacsParser<C>::readClause(C& in)
             break;
         }
 
-        var = abs(parsed_lit)-1;
+        var = std::abs(parsed_lit)-1;
 
         if (var > max_var) {
             std::cerr
@@ -462,7 +462,7 @@ bool DimacsParser<C>::parseIndependentSet(C& in)
         if (parsed_lit == 0) {
             break;
         }
-        uint32_t var = abs(parsed_lit) - 1;
+        uint32_t var = std::abs(parsed_lit) - 1;
         independent_vars.push_back(var);
     }
     return true;
