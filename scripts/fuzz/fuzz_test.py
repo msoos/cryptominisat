@@ -447,7 +447,6 @@ class Tester:
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--clearstat %s " % random.randint(0, 1)
             cmd += "--cacheformoreminim %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--stampformoreminim %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--maxredratio %s " % random.randint(2, 20)
