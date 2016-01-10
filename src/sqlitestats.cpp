@@ -412,7 +412,7 @@ void SQLiteStats::time_passed_min(
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 71;
+    const size_t numElems = 73;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -451,7 +451,7 @@ void SQLiteStats::initRestartSTMT()
     << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
 
     //Resolutions
-    << ", `resolBin`, `resolTri`, `resolLIrred`, `resolLRed`"
+    << ", `resolBinIrred`, `resolBinRed`, `resolTriIrred`, `resolTriRed`, `resolLIrred`, `resolLRed`"
 
     //Var stats
     << ", `propagations`"
@@ -567,10 +567,12 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntLongs);
 
     //Resolv stats
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.bin);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.tri);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.irredL);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.redL);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binIrred);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binRed);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.triIrred);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.triRed);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longIrred);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longRed);
 
 
     //Var stats
@@ -610,7 +612,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 36;
+    const size_t numElems = 40;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
@@ -625,13 +627,17 @@ void SQLiteStats::initReduceDBSTMT()
 
     //Clean data
     << ", removedNum, removedLits, removedGlue"
-    << ", removedResolBin, removedResolTri, removedResolLIrred, removedResolLRed"
+    << ", removedResolBinIrred, removedResolBinRed"
+    << ", removedResolTriIrred, removedResolTriRed"
+    << ", removedResolLIrred, removedResolLRed"
     << ", removedAge"
     << ", removedLitVisited, removedProp, removedConfl"
     << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
-    << ", remainResolBin, remainResolTri, remainResolLIrred, remainResolLRed"
+    << ", remainResolBinIrred, remainResolBinRed"
+    << ", remainResolTriIrred, remainResolTriRed"
+    << ", remainResolLIrred, remainResolLRed"
     << ", remainAge"
     << ", remainLitVisited, remainProp, remainConfl"
     << ", remainLookedAt, remainUsedUIP"
@@ -684,10 +690,12 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.lits);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.glue);
 
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.bin);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.tri);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.irredL);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.redL);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.binIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.binRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.triIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.triRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.longIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.longRed);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.age);
 
@@ -703,10 +711,12 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.lits);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.glue);
 
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.bin);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.tri);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.irredL);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.redL);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.binIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.binRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.triIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.triRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.longIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.longRed);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.age);
 
