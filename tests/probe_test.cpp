@@ -33,7 +33,7 @@ using namespace CMSat;
 struct probe : public ::testing::Test {
     probe()
     {
-        must_inter = false;
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
@@ -48,7 +48,7 @@ struct probe : public ::testing::Test {
     Solver* s;
     Prober* p;
     std::vector<uint32_t> vars;
-    bool must_inter;
+    std::atomic<bool> must_inter;
 };
 
 //Regular, 1UIP fails

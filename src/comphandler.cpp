@@ -256,7 +256,12 @@ bool CompHandler::solve_component(
 
     //Set up new solver
     SolverConf conf = configureNewSolver(vars.size());
-    SATSolver newSolver((void*)&conf, solver->get_must_interrupt_asap_ptr());
+    SATSolver newSolver(
+        (void*)&conf
+        #ifdef USE_PTHREADS
+        , solver->get_must_interrupt_inter_asap_ptr()
+        #endif
+    );
     moveVariablesBetweenSolvers(&newSolver, vars, comp);
 
     //Move clauses over

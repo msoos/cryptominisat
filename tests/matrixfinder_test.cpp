@@ -33,7 +33,7 @@ using namespace CMSat;
 struct gauss : public ::testing::Test {
     gauss()
     {
-        must_inter = false;
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
@@ -51,7 +51,7 @@ struct gauss : public ::testing::Test {
     Gaussian* g = NULL;
     MatrixFinder* mf = NULL;
     std::vector<uint32_t> vars;
-    bool must_inter;
+    std::atomic<bool> must_inter;
     vector<Xor> xs;
 };
 

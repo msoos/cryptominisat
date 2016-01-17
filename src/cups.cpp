@@ -198,7 +198,7 @@ int32_t CUPS::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
     cls_that_removes.push_back(Lit(activationVar, false));
     solver->add_clause(cls_that_removes);
     if (ret == l_Undef) {
-        interrupt_asap = false;
+        must_interrupt.store(false, std::memory_order_relaxed);
         return -1 * current_nr_of_solutions;
     }
     return current_nr_of_solutions;
@@ -249,7 +249,7 @@ lbool CUPS::BoundedSAT(
     cls_that_removes.push_back(Lit(activationVar, false));
     solver->add_clause(cls_that_removes);
     if (ret == l_Undef) {
-        interrupt_asap = false;
+        must_interrupt.store(false, std::memory_order_relaxed);
         return ret;
     }
 
@@ -564,7 +564,7 @@ int CUPS::solve()
     openLogFile(resLog);
     startTime = cpuTimeTotal();
 
-    solver = new SATSolver((void*)&conf, &interrupt_asap);
+    solver = new SATSolver((void*)&conf, &must_interrupt);
     solverToInterrupt = solver;
     if (dratf) {
         solver->set_drat(dratf);

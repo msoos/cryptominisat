@@ -22,6 +22,12 @@
 #ifndef __CNF_H__
 #define __CNF_H__
 
+#ifdef USE_PTHREADS
+#include <atomic>
+#else
+#include "nomutex.h"
+#endif //USE_PTHREADS
+
 #include "constants.h"
 #include "vardata.h"
 #include "propby.h"
@@ -67,13 +73,14 @@ public:
     size_t mem_used_renumberer() const;
     size_t mem_used() const;
 
-    CNF(const SolverConf *_conf, bool* _needToInterrupt)
+    CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
     {
         if (_conf != NULL) {
             conf = *_conf;
         }
         drat = new Drat();
-        needToInterrupt = _needToInterrupt;
+        assert(_must_interrupt_inter != NULL);
+        must_interrupt_inter = _must_interrupt_inter;
     }
 
     virtual ~CNF()
@@ -125,22 +132,23 @@ public:
 
     bool must_interrupt_asap() const
     {
-        return *needToInterrupt;
+        std::atomic_thread_fence(std::memory_order_acquire);
+        return *must_interrupt_inter;
     }
 
     void set_must_interrupt_asap()
     {
-        *needToInterrupt = true;
+        must_interrupt_inter->store(true, std::memory_order_relaxed);
     }
 
     void unset_must_interrupt_asap()
     {
-        *needToInterrupt = false;
+        must_interrupt_inter->store(false, std::memory_order_relaxed);
     }
 
-    bool* get_must_interrupt_asap_ptr()
+    std::atomic<bool>* get_must_interrupt_inter_asap_ptr()
     {
-        return needToInterrupt;
+        return must_interrupt_inter;
     }
 
     bool clause_locked(const Clause& c, const ClOffset offset) const;
@@ -264,7 +272,7 @@ protected:
     void load_state(SimpleInFile& f);
 
 private:
-    bool *needToInterrupt; ///<Interrupt cleanly ASAP if true
+    std::atomic<bool> *must_interrupt_inter; ///<Interrupt cleanly ASAP if true
     void enlarge_minimal_datastructs(size_t n = 1);
     void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const uint32_t which, const int off_by = 0);

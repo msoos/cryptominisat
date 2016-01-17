@@ -33,6 +33,7 @@ using namespace CMSat;
 struct xor_finder : public ::testing::Test {
     xor_finder()
     {
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
@@ -45,7 +46,7 @@ struct xor_finder : public ::testing::Test {
     }
     Solver* s = NULL;
     OccSimplifier* occsimp = NULL;
-    bool must_inter = false;
+    std::atomic<bool> must_inter;
 };
 
 TEST_F(xor_finder, find_none)

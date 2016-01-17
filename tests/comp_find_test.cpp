@@ -32,6 +32,7 @@ using namespace CMSat;
 struct comp_finder : public ::testing::Test {
     comp_finder()
     {
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
@@ -45,7 +46,7 @@ struct comp_finder : public ::testing::Test {
     }
     CompFinder *finder;
     Solver* s = NULL;
-    bool must_inter = false;
+    std::atomic<bool> must_inter;
 };
 
 TEST_F(comp_finder, find_1_1)

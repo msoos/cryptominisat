@@ -83,8 +83,8 @@ using std::endl;
 
 //#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
-Solver::Solver(const SolverConf *_conf, bool* _needToInterrupt) :
-    Searcher(_conf, this, _needToInterrupt)
+Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
+    Searcher(_conf, this, _must_interrupt_inter)
 {
     parse_sql_option();
 

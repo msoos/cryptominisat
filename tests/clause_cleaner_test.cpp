@@ -32,6 +32,7 @@ using namespace CMSat;
 struct clause_clean_test : public ::testing::Test {
     clause_clean_test()
     {
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
@@ -44,7 +45,7 @@ struct clause_clean_test : public ::testing::Test {
     }
     Solver* s = NULL;
     ClauseCleaner* cc = NULL;
-    bool must_inter = false;
+    std::atomic<bool> must_inter;
 };
 
 TEST_F(clause_clean_test, no_clean)

@@ -30,6 +30,9 @@ THE SOFTWARE.
 #include <vector>
 #include <iostream>
 #include <utility>
+#ifdef USE_PTHREADS
+#include <atomic>
+#endif
 #include "cryptominisat4/solvertypesmini.h"
 
 namespace CMSat {
@@ -37,7 +40,11 @@ namespace CMSat {
     class SATSolver
     {
     public:
-        SATSolver(void* config = NULL, bool* interrupt_asap = NULL);
+        SATSolver(void* config = NULL
+        #ifdef USE_PTHREADS
+        , std::atomic<bool>* interrupt_asap = NULL
+        #endif
+        );
         ~SATSolver();
         void set_num_threads(unsigned n);
         unsigned nVars() const;

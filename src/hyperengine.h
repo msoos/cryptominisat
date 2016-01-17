@@ -36,7 +36,7 @@ using namespace CMSat;
 
 class HyperEngine : public PropEngine {
 public:
-    HyperEngine(const SolverConf *_conf, bool* _needToInterrupt);
+    HyperEngine(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter);
     size_t print_stamp_mem(size_t totalMem) const;
     size_t mem_used() const;
     size_t mem_used_stamp() const;

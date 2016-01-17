@@ -47,9 +47,9 @@ using std::endl;
 @brief Sets a sane default config and allocates handler classes
 */
 PropEngine::PropEngine(
-    const SolverConf* _conf, bool* _needToInterrupt
+    const SolverConf* _conf, std::atomic<bool>* _must_interrupt_inter
 ) :
-        CNF(_conf, _needToInterrupt)
+        CNF(_conf, _must_interrupt_inter)
         , qhead(0)
 {
 }

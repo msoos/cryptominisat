@@ -54,10 +54,10 @@ using std::endl;
 /**
 @brief Sets a sane default config and allocates handler classes
 */
-Searcher::Searcher(const SolverConf *_conf, Solver* _solver, bool* _needToInterrupt) :
+Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* _must_interrupt_inter) :
         HyperEngine(
             _conf
-            , _needToInterrupt
+            , _must_interrupt_inter
         )
 
         //variables
@@ -970,9 +970,7 @@ lbool Searcher::search()
 
     lbool dec_ret = l_Undef;
     while (
-        (!params.needToStopSearch
-            && !must_interrupt_asap()
-        )
+        !params.needToStopSearch
             || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
@@ -1137,15 +1135,15 @@ double Searcher::luby(double y, int x)
 
 void Searcher::check_need_restart()
 {
-    if (must_interrupt_asap())  {
-        if (conf.verbosity >= 3)
-            cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
-        params.needToStopSearch = true;
-    }
-
     if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
         //It's expensive to check time all the time
         if (cpuTime() > conf.maxTime) {
+            params.needToStopSearch = true;
+        }
+
+        if (must_interrupt_asap())  {
+            if (conf.verbosity >= 3)
+                cout << "c must_interrupt_asap() is set, restartig as soon as possible!" << endl;
             params.needToStopSearch = true;
         }
     }
@@ -1883,9 +1881,7 @@ lbool Searcher::solve(
     max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
-        ; !must_interrupt_asap()
-          && stats.conflStats.numConflicts < max_confl_per_search_solve_call
-          && !solver->must_interrupt_asap()
+        ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
         ; loop_num ++
     ) {
         //#ifdef USE_GAUSS

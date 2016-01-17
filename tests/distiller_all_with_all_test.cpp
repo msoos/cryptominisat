@@ -33,7 +33,7 @@ using namespace CMSat;
 struct distill_test : public ::testing::Test {
     distill_test()
     {
-        must_inter = false;
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
@@ -46,7 +46,7 @@ struct distill_test : public ::testing::Test {
 
     Solver* s;
     DistillerAllWithAll* distill_all_with_all;
-    bool must_inter;
+    std::atomic<bool> must_inter;
 };
 
 //BY-BY 1

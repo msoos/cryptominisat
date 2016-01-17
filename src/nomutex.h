@@ -27,6 +27,33 @@ namespace std {
         void lock() {}
         void unlock() {}
     };
+
+    static const bool memory_order_relaxed = true;
+    static const bool memory_order_acquire = true;
+
+    inline void atomic_thread_fence(bool)
+    {}
+
+    template<class T>
+    struct atomic {
+        atomic()
+        {}
+
+        atomic(bool _val) :
+        val(_val)
+        {}
+
+        void store(bool _val, bool) {
+            val = _val;
+        }
+        bool load(bool) const {
+            return val;
+        }
+        operator bool() {
+            return val;
+        }
+        T val;
+    };
 }
 
 #endif //NO_MUTEX_H

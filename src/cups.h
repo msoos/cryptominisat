@@ -33,6 +33,7 @@ public:
     CUPS(int argc, char** argv):
         Main(argc, argv)
     {
+        must_interrupt.store(false, std::memory_order_relaxed);
     }
     int solve() override;
 
@@ -82,7 +83,7 @@ private:
         double startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
         bool openLogFile(FILE*& res);
-        bool interrupt_asap = false;
+        std::atomic<bool> must_interrupt;
 };
 
 

@@ -33,7 +33,7 @@ using namespace CMSat;
 struct comp_handle : public ::testing::Test {
     comp_handle()
     {
-        must_inter = false;
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
@@ -47,7 +47,7 @@ struct comp_handle : public ::testing::Test {
 
     Solver* s;
     CompHandler* chandle = NULL;
-    bool must_inter;
+    std::atomic<bool> must_inter;
 };
 
 TEST_F(comp_handle, handle_1_comp)

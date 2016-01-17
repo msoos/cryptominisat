@@ -29,8 +29,8 @@
 #ifdef USE_PTHREADS
 #include <thread>
 #include <mutex>
+#include <atomic>
 using std::thread;
-using std::mutex;
 #else
 #include "nomutex.h"
 #endif
@@ -44,7 +44,7 @@ static bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
-        explicit CMSatPrivateData(bool* _must_interrupt) {
+        explicit CMSatPrivateData(std::atomic<bool>* _must_interrupt) {
             cls = 0;
             vars_to_add = 0;
             must_interrupt = _must_interrupt;
@@ -69,7 +69,7 @@ namespace CMSat {
         vector<Solver*> solvers;
         SharedData *shared_data;
         int which_solved;
-        bool* must_interrupt;
+        std::atomic<bool>* must_interrupt;
         bool must_interrupt_needs_free = false;
         unsigned cls;
         unsigned vars_to_add;
@@ -106,10 +106,19 @@ struct DataForThread
     lbool* ret;
 };
 
-DLL_PUBLIC SATSolver::SATSolver(void* config, bool* interrupt_asap)
+DLL_PUBLIC SATSolver::SATSolver(
+    void* config
+    #ifdef USE_PTHREADS
+    , std::atomic<bool>* interrupt_asap
+    #endif
+    )
 {
+    #ifndef USE_PTHREADS
+    std::atomic<bool>* interrupt_asap = NULL;
+    #endif
+
     if (interrupt_asap == NULL) {
-        data = new CMSatPrivateData(new bool);
+        data = new CMSatPrivateData(new std::atomic<bool>(false));
         data->must_interrupt_needs_free = true;
     } else {
         data = new CMSatPrivateData(interrupt_asap);
@@ -252,8 +261,17 @@ void update_config(SolverConf& conf, unsigned thread_num)
     }
 }
 
-DLL_PUBLIC void SATSolver::set_num_threads(const unsigned num)
+DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 {
+    #ifndef USE_PTHREADS
+    if (num > 1) {
+        std::cout
+        << "*** WARNING: pthreads not enabled during compilation (use 'cmake -DUSE_PTHREADS=ON')" << endl
+        << "*** WARNING: Number of threads is limited to be exactly one" << endl;
+        num = 1;
+    }
+    #endif
+
     if (num <= 0) {
         std::cerr << "ERROR: Number of threads must be at least 1" << endl;
         exit(-1);
@@ -558,7 +576,7 @@ struct OneThreadSolve
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
     //Reset the interrupt signal if it was set
-    *(data->must_interrupt) = false;
+    data->must_interrupt->store(false, std::memory_order_relaxed);
 
     if (data->log) {
         (*data->log) << "c Solver::solve( ";
@@ -592,9 +610,8 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
     }
     lbool real_ret = *data_for_thread.ret;
 
-    for(size_t i = 0; i < data->solvers.size(); i++) {
-        data_for_thread.solvers[i]->unset_must_interrupt_asap();
-    }
+    //This does it for all of them, there is only one must-interrupt
+    data_for_thread.solvers[0]->unset_must_interrupt_asap();
 
     //clear what has been added
     data->cls_lits.clear();
@@ -691,7 +708,7 @@ DLL_PUBLIC void SATSolver::set_drat(std::ostream* os)
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
 {
-    *(data->must_interrupt) = true;
+    data->must_interrupt->store(true, std::memory_order_relaxed);
 }
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const

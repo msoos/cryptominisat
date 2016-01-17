@@ -33,7 +33,7 @@ using namespace CMSat;
 struct sub_impl : public ::testing::Test {
     sub_impl()
     {
-        must_inter = false;
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
@@ -46,7 +46,7 @@ struct sub_impl : public ::testing::Test {
 
     Solver* s;
     SubsumeImplicit* sub;
-    bool must_inter;
+    std::atomic<bool> must_inter;
 };
 
 //SUB 2-by-2

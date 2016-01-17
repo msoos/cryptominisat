@@ -80,7 +80,7 @@ public:
     //
     PropEngine(
         const SolverConf* _conf
-        , bool* _needToInterrupt
+        , std::atomic<bool>* _must_interrupt_inter
     );
     ~PropEngine();
 

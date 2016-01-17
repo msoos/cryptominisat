@@ -32,6 +32,7 @@ using namespace CMSat;
 struct varreplace : public ::testing::Test {
     varreplace()
     {
+        must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
@@ -44,7 +45,7 @@ struct varreplace : public ::testing::Test {
     }
     Solver* s = NULL;
     VarReplacer* repl = NULL;
-    bool must_inter = false;
+    std::atomic<bool> must_inter;
 };
 
 TEST_F(varreplace, find_one_1)
