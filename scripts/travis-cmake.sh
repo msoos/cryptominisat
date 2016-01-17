@@ -63,7 +63,7 @@ case $CMS_CONFIG in
     COVERAGE)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
-                    -DCOVERAGE:BOOL=ON \
+                   -DCOVERAGE:BOOL=ON \
                    ${SOURCE_DIR}
     ;;
 
