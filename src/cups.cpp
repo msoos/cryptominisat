@@ -85,7 +85,7 @@ void SIGINT_handler_exit(int) {
   _exit(1);
 }
 
-void SIGALARM_handler(int sig, siginfo_t *si, void *uc) {
+void SIGALARM_handler(int /*sig*/, siginfo_t *si, void */*uc*/) {
     int num = si->si_value.sival_int;
     SATSolver* solver = solverToInterrupt;
     if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
