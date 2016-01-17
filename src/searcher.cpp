@@ -1136,7 +1136,7 @@ double Searcher::luby(double y, int x)
 void Searcher::check_need_restart()
 {
     if ((stats.conflStats.numConflicts & 0xff) == 0xff) {
-        //It's expensive to check time all the time
+        //It's expensive to check the time the time
         if (cpuTime() > conf.maxTime) {
             params.needToStopSearch = true;
         }
