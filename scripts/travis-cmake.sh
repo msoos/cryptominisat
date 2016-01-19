@@ -60,13 +60,6 @@ case $CMS_CONFIG in
                    ${SOURCE_DIR}
     ;;
 
-    NOPTHREAD)
-        sudo apt-get install libboost-program-options-dev
-        eval cmake ${COMMON_CMAKE_ARGS} \
-                   -DUSE_PTHREADS:BOOL=OFF \
-                   ${SOURCE_DIR}
-    ;;
-
     COVERAGE)
         sudo apt-get install libboost-program-options-dev
         eval cmake ${COMMON_CMAKE_ARGS} \
