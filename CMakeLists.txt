@@ -123,10 +123,10 @@ else()
     add_definitions(-D_FORTIFY_SOURCE=0)
 endif()
 
-option(USE_PTHREADS "Build with threads enabled" ON)
+option(USE_PTHREADS "Build with pthreads-based threads" ON)
 if (USE_PTHREADS)
     add_definitions(-DUSE_PTHREADS)
-    message(STATUS "No pthread will be used. Single-threaded only.")
+    message(STATUS "No pthread will be used")
 endif()
 
 # Note: O3 gives slight speed increase, 1 more solved from SAT Comp'14 @ 3600s

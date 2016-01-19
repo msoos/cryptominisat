@@ -25,13 +25,9 @@
 #include "cryptominisat4/solvertypesmini.h"
 
 #include <vector>
-#ifdef USE_PTHREADS
 #include <mutex>
 using std::vector;
 using std::mutex;
-#else
-#include "nomutex.h"
-#endif
 
 namespace CMSat {
 

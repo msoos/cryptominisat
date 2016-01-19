@@ -22,11 +22,7 @@
 #ifndef __CNF_H__
 #define __CNF_H__
 
-#ifdef USE_PTHREADS
 #include <atomic>
-#else
-#include "nomutex.h"
-#endif //USE_PTHREADS
 
 #include "constants.h"
 #include "vardata.h"

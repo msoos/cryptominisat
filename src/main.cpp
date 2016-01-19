@@ -45,10 +45,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <list>
 #include <array>
-
-#ifdef USE_PTHREADS
 #include <thread>
-#endif
 
 #include "main.h"
 #include "main_common.h"
@@ -1175,7 +1172,6 @@ void Main::dumpIfNeeded() const
 
 void Main::check_num_threads_sanity(const unsigned thread_num) const
 {
-    #ifdef USE_PTHREADS
     const unsigned num_cores = std::thread::hardware_concurrency();
     if (num_cores == 0) {
         //Library doesn't know much, we can't do any checks.
@@ -1189,7 +1185,6 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
         << "c WARNING: This is not a good idea in general. It's best to set the"
         << " number of threads to the number of real cores" << endl;
     }
-    #endif
 }
 
 
