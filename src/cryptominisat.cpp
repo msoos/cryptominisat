@@ -65,7 +65,6 @@ namespace CMSat {
         SharedData *shared_data;
         int which_solved;
         std::atomic<bool>* must_interrupt;
-        bool must_interrupt_needs_free = false;
         unsigned cls;
         unsigned vars_to_add;
         vector<Lit> cls_lits;
@@ -106,12 +105,7 @@ DLL_PUBLIC SATSolver::SATSolver(
     , std::atomic<bool>* interrupt_asap
     )
 {
-    if (interrupt_asap == NULL) {
-        data = new CMSatPrivateData(new std::atomic<bool>(false));
-        data->must_interrupt_needs_free = true;
-    } else {
-        data = new CMSatPrivateData(interrupt_asap);
-    }
+    data = new CMSatPrivateData(new std::atomic<bool>(false));
 
     if (config && ((SolverConf*) config)->verbosity >= 2) {
         print_thread_start_and_finish = true;
@@ -124,9 +118,7 @@ DLL_PUBLIC SATSolver::~SATSolver()
     for(Solver* this_s: data->solvers) {
         delete this_s;
     }
-    if (data->must_interrupt_needs_free) {
-        delete data->must_interrupt;
-    }
+    delete data->must_interrupt;
     delete data;
 }
 

@@ -64,8 +64,8 @@ def _init_posix(init):
             # Non-Sun needs linkage with g++
             config_vars['LDSHARED'] = 'g++ -shared -g -W -Wall -Wno-deprecated'
 
-        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated'
-        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated'
+        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated -std=c++11'
+        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated -std=c++11'
 
     return wrapper
 
