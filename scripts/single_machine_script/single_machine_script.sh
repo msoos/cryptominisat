@@ -33,13 +33,13 @@ numthreads=4
 mkdir -p $output
 
 # remove everything that has been done
-for file in `ls $output`
+for file in $output/*
 do
     echo "deleting file $output/$file"
-    rm -i $output/$file
+    rm -i "$output/$file"
     status=$?
     if [ $status -ne 0 ]; then
-        echo "error, can't delete file $ouput/$file"
+        echo "error, can't delete file $output/$file"
         exit 112
     fi
 
@@ -53,19 +53,19 @@ do
     #todo="zcat $file | shuf --random-source=myrnd | /usr/bin/time --verbose -o $output/$filename.timeout $solver $opts > $output/$filename.out 2>&1"
     todo="/usr/bin/time --verbose -o $output/$filename.timeout $solver $opts $file > $output/$filename.out 2>&1"
     #todo="$solver $file > $output/$filename.out"
-    echo $todo >> todo
+    echo "$todo" >> todo
     # $todo
 done
-numlines=`wc -l todo |  awk '{print $1}'`
+numlines=$(wc -l todo |  awk '{print $1}')
 echo "Done creating todo with $numlines of problems"
 
 # create random order
-echo -ne "Randomizing order of execution of $val files"
+echo -ne "Randomizing order of execution of files"
 shuf --random-source=myrnd todo > todo_rnd
 echo "Done."
 
 # create per-core todos
-echo "numlines:" $numlines
+echo "numlines: $numlines"
 let numper=numlines/numthreads
 remain=$((numlines-numper*numthreads))
 mystart=0
