@@ -18,8 +18,11 @@ class RequestSpotClient:
         self.conf = ConfigParser.ConfigParser()
         if test:
             self.conf.read('ec2-spot-instance-test.cfg')
+            self.limit_create = 1
         else:
             self.conf.read('ec2-spot-instance.cfg')
+            self.limit_create = 8
+
         self.ec2conn = self.__create_ec2conn()
         if self.ec2conn is None:
             print 'Unable to create EC2 ec2conn'
@@ -96,7 +99,7 @@ DATA="%s"
                 logging.info("ID %s is either waiting or running, not requesting a new one" % spot.id)
                 return
 
-        if len(self.our_ids) > 8:
+        if len(self.our_ids) >= self.limit_create:
             logging.error("Something really wrong has happened, we have reqested 4 spots aready! Not requesting more.")
             return
 
