@@ -51,7 +51,7 @@ case $CMS_CONFIG in
     SLOW_DEBUG)
         sudo apt-get install libboost-program-options-dev
         eval cmake "${COMMON_CMAKE_ARGS}" \
-                   -DSLOW_DEBUG:BOOL=ON
+                   -DSLOW_DEBUG:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
