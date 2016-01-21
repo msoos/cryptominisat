@@ -27,13 +27,13 @@ COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
-NUM=`./utils/licensecheck/licensecheck.pl -m  ./src | grep -c UNK`
+NUM=`./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l`
 if [ "$NUM" != "0" ]; then
     echo "There are some files without license information!"
     exit -1
 fi
 
-NUM=`./utils/licensecheck/licensecheck.pl -m  ./tests | grep -c UNK`
+NUM=`./utils/licensecheck/licensecheck.pl -m  ./tests | grep UNK | wc -l`
 if [ "$NUM" != "0" ]; then
     echo "There are some files without license information!"
     exit -1
