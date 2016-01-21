@@ -21,6 +21,7 @@
 # so we can set different configurations via environment variables.
 
 set -e
+set -x
 
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
 
