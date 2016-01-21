@@ -50,92 +50,92 @@ BUILD_DIR=$(pwd)
 case $CMS_CONFIG in
     SLOW_DEBUG)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
+        eval cmake "${COMMON_CMAKE_ARGS}" \
                    -DSLOW_DEBUG:BOOL=ON
-                   ${SOURCE_DIR}"
+                   "${SOURCE_DIR}"
     ;;
 
     NORMAL|AWS)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     COVERAGE)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DCOVERAGE:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DCOVERAGE:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     STATIC_BIN)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DSTATICCOMPILE:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DSTATICCOMPILE:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     ONLY_SIMPLE)
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DONLY_SIMPLE:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DONLY_SIMPLE:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     ONLY_SIMPLE_STATIC)
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DONLY_SIMPLE:BOOL=ON
-                   -DSTATICCOMPILE:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DONLY_SIMPLE:BOOL=ON \
+                   -DSTATICCOMPILE:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     STATS)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DSTATS:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DSTATS:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     NOZLIB)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DNOZLIB:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DNOZLIB:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     RELEASE)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DCMAKE_BUILD_TYPE:STRING=Release
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DCMAKE_BUILD_TYPE:STRING=Release \
+                   "${SOURCE_DIR}"
     ;;
 
     NOSQLITE)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libsqlite3-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     NOMYSQL)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libmysqlclient-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     NOMYSQLNOSQLITE)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libmysqlclient-dev
         sudo apt-get remove libsqlite3-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     NOPYTHON)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove python2.7-dev python-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     INTREE_BUILD)
@@ -143,8 +143,8 @@ case $CMS_CONFIG in
         SOURCE_DIR=$(pwd)
         BUILD_DIR=$(pwd)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   "${SOURCE_DIR}"
     ;;
 
     MYSQL|WEB)
@@ -158,27 +158,27 @@ case $CMS_CONFIG in
         ./cmsat_mysql_setup.sh
         cd "$BUILD_DIR"
 
-        eval cmake "${COMMON_CMAKE_ARGS}
-                   -DSTATS:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DSTATS:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     SQLITE)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
 
-        eval cmake "${COMMON_CMAKE_ARGS}
-                    -DSTATS:BOOL=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                   -DSTATS:BOOL=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     GAUSS)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
 
-        eval cmake "${COMMON_CMAKE_ARGS}
-                    -DUSE_GAUSS=ON
-                   ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+                    -DUSE_GAUSS=ON \
+                   "${SOURCE_DIR}"
     ;;
 
     M4RI)
@@ -191,8 +191,8 @@ case $CMS_CONFIG in
         sudo make install
         cd ..
 
-        eval cmake "${COMMON_CMAKE_ARGS}
-            ${SOURCE_DIR}"
+        eval cmake "${COMMON_CMAKE_ARGS}" \
+            "${SOURCE_DIR}"
     ;;
 
     *)
