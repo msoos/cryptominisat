@@ -7,15 +7,14 @@ import optparse
 import operator
 
 usage = "usage: %prog [options] sqlitedb"
-
 parser = optparse.OptionParser(usage=usage)
 
-# parser.add_option("--extraopts", "-e", metavar="OPTS",
-                  #dest="extra_options", default="",
-                  #help="Extra options to give to SAT solver")
+parser.add_option("--maxtime", metavar="CUTOFF",
+                  dest="maxtime", default=20, type=int,
+                  help="Max time for an operation")
 
-# parser.add_option("--verbose", "-v", action="store_true", default=False,
-                  #dest="verbose", help="Print more output")
+parser.add_option("--verbose", "-v", action="store_true", default=False,
+                  dest="verbose", help="Print more output")
 
 (options, args) = parser.parse_args()
 
@@ -41,10 +40,10 @@ class Query:
     def find_outliers(self):
         query = """
         select name,elapsed,tag from timepassed,tags
-        where name != 'search' and elapsed > 20 and
+        where name != 'search' and elapsed > %d and
         tags.tagname="filename" and tags.runID = timepassed.runID
         order by elapsed desc;
-        """
+        """ % (options.maxtime)
 
         for row in self.c.execute(query):
             operation = row[0]
