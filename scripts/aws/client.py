@@ -551,7 +551,7 @@ def set_up_logging():
 def start_threads():
     if options.num_threads is None:
         options.num_threads = num_cpus()/2
-        options.num_threads = max(options.num_threads, 1)
+        options.num_threads = max(options.num_threads, 2)
 
     logging.info("Running with %d threads", options.num_threads,
                  extra={"threadid": -1})
