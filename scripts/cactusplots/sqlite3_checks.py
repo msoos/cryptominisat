@@ -50,8 +50,7 @@ class Query:
             t = row[1]
             name = row[2].split("/")
             name = name[len(name)-1]
-            if len(name) > 30:
-                name = name[:30]
+            name = name[:30]
             print("%-32s    %-20s   %.1fs" % (name, operation, t))
 
     def calc_time_spent(self):
@@ -87,6 +86,7 @@ class Query:
         # print("Names: %s" % times)
         sorted_t = sorted(times.items(), key=operator.itemgetter(1), reverse=True)
         for (name, t) in sorted_t:
+            name = name[:40]
             print("%-40s   %3.1f%%" % (name, t/total*100))
 
 

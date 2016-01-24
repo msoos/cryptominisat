@@ -20,6 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+// How To compile on Linux:
+// 1) compile cryptominsat
+// 2) install cryptominisat: sudo make install
+// 3) run ldconfig: sudo ldconfig
+// 4) build: g++ -std=c++11 readme_test.cpp -lcryptominisat4 -o readme_test
+// 5) run: ./readme_test
+
 #include <cryptominisat4/cryptominisat.h>
 #include <assert.h>
 #include <vector>
