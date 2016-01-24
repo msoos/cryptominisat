@@ -13,6 +13,10 @@ parser.add_option("--maxtime", metavar="CUTOFF",
                   dest="maxtime", default=20, type=int,
                   help="Max time for an operation")
 
+parser.add_option("--maxmemory", metavar="CUTOFF",
+                  dest="maxmemory", default=500, type=int,
+                  help="Max memory for a subsystem")
+
 parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Print more output")
 
@@ -24,6 +28,15 @@ if len(args) != 1:
 
 dbfname = args[0]
 print("Using sqlite3db file %s" % dbfname)
+
+# for memory:
+# a = """
+# select max(mysum) from
+#     (select time, conflicts, sum(MB) as mysum
+#     from memused
+#     group by conflicts
+#     ) as a;
+# """
 
 
 class Query:
@@ -37,30 +50,152 @@ class Query:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
 
-    def find_outliers(self):
+    def find_time_outliers(self):
+        print("----------- TIME OUTLIERS --------------")
         query = """
-        select name,elapsed,tag from timepassed,tags
+        select tags.tag, name, elapsed
+        from timepassed,tags
         where name != 'search' and elapsed > %d and
         tags.tagname="filename" and tags.runID = timepassed.runID
         order by elapsed desc;
         """ % (options.maxtime)
 
         for row in self.c.execute(query):
-            operation = row[0]
+            operation = row[1]
+            t = row[2]
+            fname = self.get_fname(row[0])
+            print("%-32s    %-20s   %.1fs" % (fname, operation, t))
+
+    def check_memory(self):
+        print("----------- MEMORY OUTLIERS --------------")
+
+        query = """
+        select tags.tag, memused.name, memused.MB
+        from memused,tags
+        where  tags.tagname="filename"
+        and tags.runID = memused.runID
+        and memused.MB > %d
+        and memused.name != 'vm'
+        and memused.name != 'rss'
+        order by MB desc;
+        """ % (options.maxmemory)
+
+        for row in self.c.execute(query):
+            subsystem = row[1]
+            gigs = row[2]/1000.0
+            fname = self.get_fname(row[0])
+            print("%-32s    %-20s   %.1f GB" % (fname, subsystem, gigs))
+
+    def check_memory_rss(self):
+        print("----------- MEMORY OUTLIERS RSS --------------")
+
+        query = """
+        select tags.tag, memused.name, memused.MB
+        from memused,tags
+        where  tags.tagname="filename"
+        and tags.runID = memused.runID
+        and memused.MB > %d
+        and memused.name == 'rss'
+        order by MB desc;
+        """ % (options.maxmemory*2)
+
+        for row in self.c.execute(query):
+            subsystem = row[1]
+            gigs = row[2]/1000.0
+            fname = self.get_fname(row[0])
+            print("%-32s    %-20s   %.1f GB" % (fname, subsystem, gigs))
+
+    def find_worst_unaccounted_memory(self):
+        print("----------- Largest RSS differences --------------")
+        query = """
+        select tags.tag, a.time, abs((b.rss-a.mysum)/b.rss) as differperc,
+            a.mysum as counted, b.rss as total
+        from tags,
+
+        (select runID, time, sum(MB) as mysum
+        from memused
+        where name != 'rss'
+        and name != 'vm'
+        group by time, runID) as a,
+
+        (select runID, name, time, MB as rss
+        from memused
+        where name = 'rss') as b
+
+        where tags.runID = a.runID
+        and tags.tagname="filename"
+        and a.runID = b.runID
+        and a.time = b.time
+        and total > 600
+
+        order by differperc desc
+        """
+
+        for row,_ in zip(self.c.execute(query), range(10)):
             t = row[1]
-            name = row[2].split("/")
-            name = name[len(name)-1]
-            name = name[:30]
-            print("%-32s    %-20s   %.1fs" % (name, operation, t))
+            diff_perc = row[2]
+            counted = row[3]
+            total = row[4]
+            fname = self.get_fname(row[0])
+            print("%-32s    at: %-8.1fs   counted: %3.1f GB   total: %3.1f GB" % (fname, t, counted/1000.0, total/1000.0))
+
+    def memory_distrib(self):
+        print("----------- MEMORY DISTRIBUTION --------------")
+        print("all divided by RSS -- resident size")
+
+        query = """
+        select sum(MB)
+        from memused
+        where name != 'vm'
+        and name != 'rss';
+        """
+        for row in self.c.execute(query):
+            recorded_mem = float(row[0])
+
+        query = """
+        select sum(MB)
+        from memused
+        where name = 'rss';
+        """
+        for row in self.c.execute(query):
+            rss_mem = float(row[0])
+
+        unaccounted = rss_mem - recorded_mem;
+        print("%-20s   %.1f%%" % ("unaccounted", unaccounted/rss_mem*100.0))
+
+        query = """
+        select name, sum(MB) as memsum
+        from memused
+        where name != 'vm'
+        and name != 'rss'
+        group by name
+        order by memsum desc;
+        """
+
+        for row in self.c.execute(query):
+            subsystem = row[0]
+            mbs = float(row[1])
+            print("%-20s   %.1f%%" % (subsystem, mbs/rss_mem*100.0))
+
+    def get_fname(self, val) :
+        fname = val.split("/")
+        fname = fname[len(fname)-1]
+        fname = fname.rstrip(".cnf.gz")
+        #if len(fname) > 40:
+        #    fname = fname[:30] + "..." + fname[len(fname)-10:]
+
+        return fname
 
     def calc_time_spent(self):
+        print("----------- TIME DISTRIBUTION --------------")
+
         query = """
         select sum(elapsed)
         from timepassed
         where name='search';
         """
         for row in self.c.execute(query):
-            search = float(row[0])
+            search_time = float(row[0])
 
         query = """
         select sum(elapsed)
@@ -68,11 +203,11 @@ class Query:
         where name!='search';
         """
         for row in self.c.execute(query):
-            other = float(row[0])
+            other_time = float(row[0])
 
-        total = search + other
+        total = search_time + other_time
         print("Total: %10.1fh Search: %3.1f%%, Other: %3.1f%%" %
-              (total/3600, search/total*100, other/total*100))
+              (total/3600, search_time/total*100, other_time/total*100))
 
         query = """
         select name, sum(elapsed)
@@ -91,7 +226,11 @@ class Query:
 
 
 with Query() as q:
-    q.find_outliers()
+    q.find_worst_unaccounted_memory()
+    q.check_memory_rss()
+    q.check_memory()
+    q.memory_distrib()
+    q.find_time_outliers()
     q.calc_time_spent()
 
 
