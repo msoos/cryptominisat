@@ -68,7 +68,7 @@ parser.add_option("--tout", "-t", default=2000, dest="timeout_in_secs",
                   type=int
                   )
 
-parser.add_option("--extratime", default=7 * 60, dest="extra_time",
+parser.add_option("--extratime", default=30, dest="extra_time",
                   help="Timeout for the server to send us the results"
                   "[default: %default]",
                   type=int
@@ -500,7 +500,7 @@ while threading.active_count() > 0 and not something_failed:
     time.sleep(0.5)
     if last_termination_sent is not None and server.ready_to_shutdown():
         diff = time.time() - last_termination_sent
-        limit = 2*(options.timeout_in_secs + options.extra_time)
+        limit = options.extra_time
         if diff > limit:
             break
 

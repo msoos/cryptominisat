@@ -334,7 +334,7 @@ class solverThread (threading.Thread):
         global exitapp
         num_connect_problems = 0
         while not exitapp:
-            if (num_connect_problems >= 100):
+            if (num_connect_problems >= 20):
                 logging.error("Too many connection problems, exiting.",
                               extra=self.logextra)
                 exitapp = True
