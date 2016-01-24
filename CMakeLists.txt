@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
-if (CMAKE_MAJOR_VERSION GREATER 2)
+if(NOT (CMAKE_MAJOR_VERSION LESS 2))
     if(POLICY CMP0022)
         cmake_policy(SET CMP0022 OLD)
     endif()
