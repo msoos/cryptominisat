@@ -820,3 +820,22 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
 
     return num;
 }
+
+size_t BVA::mem_used() const
+{
+    size_t mem = 0;
+    mem += bva_tmp_lits.capacity()*sizeof(Lit);
+    mem += m_cls_lits.capacity()*sizeof(m_cls_lits_and_red);
+    for(auto m: m_cls_lits) {
+        mem += m.lits.capacity()*sizeof(Lit);
+    }
+    mem += to_remove.capacity()* sizeof(Lit);
+    mem += potential.capacity()*sizeof(PotentialClause);
+    mem += m_lits.capacity()*sizeof(lit_pair);
+    mem += m_lits_this_cl.capacity()*sizeof(lit_pair);
+    mem += m_cls.capacity()*sizeof(OccurClause);
+    mem += watch_irred_sizes.capacity()*sizeof(size_t);
+    mem += var_bva_order.mem_used();
+    mem += touched.mem_used();
+    return mem;
+}

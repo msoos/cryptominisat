@@ -2783,6 +2783,15 @@ size_t OccSimplifier::mem_used_xor() const
         return 0;
 }
 
+size_t OccSimplifier::mem_used_bva() const
+{
+    if (bva)
+        return bva->mem_used();
+    else
+        return 0;
+}
+
+
 void OccSimplifier::freeXorMem()
 {
     delete topLevelGauss;

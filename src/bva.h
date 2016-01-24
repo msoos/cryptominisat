@@ -39,6 +39,7 @@ class BVA
 public:
     BVA(Solver* _solver, OccSimplifier* _simplifier);
     bool bounded_var_addition();
+    size_t mem_used() const;
 
 private:
     Solver* solver;

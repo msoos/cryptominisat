@@ -233,6 +233,7 @@ public:
     bool uneliminate(const uint32_t var);
     size_t mem_used() const;
     size_t mem_used_xor() const;
+    size_t mem_used_bva() const;
     void print_gatefinder_stats() const;
     void dump_blocked_clauses(std::ostream* outfile) const;
 
