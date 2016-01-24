@@ -240,7 +240,7 @@ void SQLiteStats::initMemUsedSTMT()
     //Position
     << "  `runID`, `simplifications`, `conflicts`, `time`"
 
-    //Clause stats
+    //memory stats
     << ", `name`, `MB`"
     << ") values ";
     writeQuestionMarks(
@@ -270,10 +270,12 @@ void SQLiteStats::mem_used(
     , uint64_t mem_used_mb
 ) {
     int bindAt = 1;
+    //Position
     sqlite3_bind_int64(stmtMemUsed, bindAt++, runID);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts());
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
+    //memory stats
     sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, NULL);
     sqlite3_bind_int(stmtMemUsed, bindAt++, mem_used_mb);
 
