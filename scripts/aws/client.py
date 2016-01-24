@@ -312,11 +312,12 @@ class solverThread (threading.Thread):
 
         # sqlite
         if "cryptominisat" in self.indata["solver"]:
-            fname = s3_folder_and_fname + ".sqlite-tmp"
-            fname_clean = s3_folder_and_fname_clean + ".sqlite"
+            os.system("gzip -f %s" % self.get_sqlite_fname())
+            fname = s3_folder_and_fname + ".sqlite.gz-tmp"
+            fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
             k.key = fname
             boto_bucket.delete_key(k)
-            k.set_contents_from_filename(self.get_sqlite_fname())
+            k.set_contents_from_filename(self.get_sqlite_fname() + ".gz")
             toreturn.append([fname, fname_clean])
 
         logging.info("Uploaded stdout+stderr+sqlite+perf files: %s",
