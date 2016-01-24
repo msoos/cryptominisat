@@ -157,7 +157,7 @@ bool DimacsParser<C>::readClause(C& in)
         if (*in != ' ') {
             std::cerr
             << "ERROR! "
-            << "After each literal there must be an empty space!"
+            << "After last element on the line must be 0" << endl
             << "--> At line " << lineNum+1
             << please_read_dimacs
             << endl
