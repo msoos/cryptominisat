@@ -310,6 +310,7 @@ class Server (threading.Thread):
         tosend = struct.pack('!q', len(tosend)) + tosend
         logging.info("Everything is in sent queue, sending wait to %s",
                      cli_addr)
+        connection.sendall(tosend)
 
     def send_one_to_solve(self, connection, cli_addr, file_num):
         # set timer that we have sent this to be solved
@@ -348,7 +349,7 @@ class Server (threading.Thread):
             if len(self.files_running) == 0:
                 self.send_termination(connection, cli_addr)
             else:
-                self.send_wait()
+                self.send_wait(connection, cli_addr)
         else:
             self.send_one_to_solve(connection, cli_addr, file_num)
 
