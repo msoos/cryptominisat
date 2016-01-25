@@ -204,6 +204,7 @@ void Main::parseInAllFiles(SATSolver* solver2)
         readInAFile(solver2, fname.c_str());
     }
 
+    solver->add_sql_tag("stdin", fileNamePresent ? "False" : "True");
     if (!fileNamePresent) {
         readInStandardInput(solver2);
     }
@@ -1227,7 +1228,17 @@ int Main::solve()
         << commandLine
         << endl;
     }
+
     solver->add_sql_tag("commandline", commandLine);
+    solver->add_sql_tag("threads", lexical_cast<string>(num_threads));
+    solver->add_sql_tag("version", solver->get_version());
+    solver->add_sql_tag("SHA-revision", solver->get_version_sha1());
+    solver->add_sql_tag("env", solver->get_compilation_env());
+    #ifdef __GNUC__
+    solver->add_sql_tag("compiler", "gcc-" __VERSION__);
+    #else
+    solver->add_sql_tag("compiler", "non-gcc");
+    #endif
 
     //Parse in DIMACS (maybe gzipped) files
     //solver->log_to_file("mydump.cnf");
