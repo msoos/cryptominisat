@@ -456,7 +456,19 @@ class SpotManager (threading.Thread):
 
 def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
-    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+    logging.info("SHUTTING DOWN")
+
+    #send email
+    if exitval == 0: reason = "OK"
+    else: reason ="FAIL"
+    try:
+        send_email("Server shutting down %s" % reason,
+                   "Server finished.", options.logfile_name)
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+        logging.error("Cannot send email! Traceback: %s", the_trace)
+
     if not options.noaws:
         s3_folder = get_s3_folder(options.s3_folder,
                                   options.git_rev,

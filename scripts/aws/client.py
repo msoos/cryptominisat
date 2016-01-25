@@ -505,14 +505,29 @@ def num_cpus():
 
 
 def shutdown(exitval=0):
+    toexec = "sudo shutdown -h now"
+    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+
+    #signal error to master
     if exitval != 0:
         try:
             signal_error_to_master()
         except:
             pass
 
-    toexec = "sudo shutdown -h now"
-    logging.info("SHUTTING DOWN", extra={"threadid": -1})
+    #send email
+    if exitval == 0: reason = "OK"
+    else: reason ="FAIL"
+    try:
+        send_email("Client shutting down %s" % reason,
+                   "Client finished.", options.logfile_name)
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+        logging.error("Cannot send email! Traceback: %s", the_trace,
+                      extra={"threadid": -1})
+
+    #upload log
     global s3_bucket
     global s3_folder
     upload_log(s3_bucket,

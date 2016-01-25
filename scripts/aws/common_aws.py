@@ -11,7 +11,43 @@ import subprocess
 import socket
 import fcntl
 import struct
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import ConfigParser
+config = ConfigParser.ConfigParser()
+config.read("/home/ubuntu/email.conf")
 
+
+def send_email(subject, text, fname = None):
+    msg = MIMEMultipart()
+    msg['Subject'] = 'Email from solver: %s' % subject
+    msg['From'] = 'msoos@msoos.org'
+    msg['To'] = 'soos.mate@gmail.com'
+
+    # That is what you see if you have no email client:
+    msg.preamble = 'Multipart massage.\n'
+
+    # Text part
+    part = MIMEText(text)
+    msg.attach(part)
+
+    # Attachment(s)
+    if fname:
+        part = MIMEApplication(open(fname,"rb").read())
+        part.add_header('Content-Disposition', 'attachment', filename="attachment.txt")
+        msg.attach(part)
+
+    # Connect to STMP server
+    email_login = config.get("email", "login")
+    email_pass = config.get("email", "pass")
+
+    smtp = smtplib.SMTP_SSL("email-smtp.us-west-2.amazonaws.com")
+    smtp.login(email_login, email_pass)
+
+    # Send email
+    smtp.sendmail(msg['From'], msg['To'], msg.as_string())
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
