@@ -17,8 +17,13 @@ parser.add_option("--maxmemory", metavar="CUTOFF",
                   dest="maxmemory", default=500, type=int,
                   help="Max memory for a subsystem")
 
+parser.add_option("--minmemory", metavar="MINMEM",
+                  dest="minmemory", default=100, type=int,
+                  help="Minimum memory to be checked for RSS vs counted check")
+
 parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Print more output")
+
 
 (options, args) = parser.parse_args()
 
@@ -106,7 +111,7 @@ class Query:
             print("%-32s    %-20s   %.1f GB" % (fname, subsystem, gigs))
 
     def find_worst_unaccounted_memory(self):
-        print("----------- Largest RSS differences --------------")
+        print("----------- Largest RSS vs counted differences --------------")
         query = """
         select tags.tag, a.time, abs((b.rss-a.mysum)/b.rss) as differperc,
             a.mysum as counted, b.rss as total
@@ -126,10 +131,10 @@ class Query:
         and tags.tagname="filename"
         and a.runID = b.runID
         and a.time = b.time
-        and total > 600
+        and total > %d
 
         order by differperc desc
-        """
+        """ % (options.minmemory)
 
         for row,_ in zip(self.c.execute(query), range(10)):
             t = row[1]
@@ -137,7 +142,7 @@ class Query:
             counted = row[3]
             total = row[4]
             fname = self.get_fname(row[0])
-            print("%-32s    at: %-8.1fs   counted: %3.1f GB   total: %3.1f GB" % (fname, t, counted/1000.0, total/1000.0))
+            print("%-32s    at: %-8.1fs   counted: %3.2f GB   rss: %3.2f GB" % (fname, t, counted/1000.0, total/1000.0))
 
     def memory_distrib(self):
         print("----------- MEMORY DISTRIBUTION --------------")
