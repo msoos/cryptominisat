@@ -63,6 +63,7 @@ sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptom
 # Get credentials
 cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region=us-west-2'
 
 # Start server
 cd /home/ubuntu/cryptominisat
