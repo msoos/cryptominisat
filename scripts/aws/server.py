@@ -469,6 +469,7 @@ def shutdown(exitval=0):
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Cannot send email! Traceback: %s", the_trace)
 
+    #upload log
     if not options.noaws:
         s3_folder = get_s3_folder(options.s3_folder,
                                   options.git_rev,
