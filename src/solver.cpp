@@ -961,7 +961,7 @@ void Solver::renumber_variables()
 void Solver::check_switchoff_limits_newvar(size_t n)
 {
     if (conf.doStamp
-        && nVars() + n > 15ULL*1000ULL*1000ULL
+        && nVars() + n > 15ULL*1000ULL*1000ULL //~1 GB of RAM
     ) {
         conf.doStamp = false;
         stamp.freeMem();
@@ -974,7 +974,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
     }
 
     if (conf.doCache
-        && nVars() + n > 8ULL*1000ULL*1000ULL
+        && nVars() + n > 5ULL*1000ULL*1000ULL
     ) {
         conf.doCache = false;
         implCache.free();
@@ -982,21 +982,6 @@ void Solver::check_switchoff_limits_newvar(size_t n)
         if (conf.verbosity >= 2) {
             cout
             << "c Switching off caching due to excessive number of variables"
-            << " (it would take too much memory)"
-            << endl;
-        }
-    }
-
-    if (conf.perform_occur_based_simp
-        && conf.doFindXors
-        && nVars() + n > 3ULL*1000ULL*1000ULL
-    ) {
-        conf.doFindXors = false;
-        occsimplifier->freeXorMem();
-
-        if (conf.verbosity >= 2) {
-            cout
-            << "c Switching off XOR finding due to excessive number of variables"
             << " (it would take too much memory)"
             << endl;
         }
