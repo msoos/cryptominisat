@@ -55,6 +55,13 @@ namespace CMSat {
         void log_to_file(std::string filename);
 
         //SQL
+        void set_sqlite(std::string filename);
+        void set_mysql(
+            std::string sqlServer
+            , std::string sqlUser
+            , std::string sqlPass
+            , std::string sqlDatabase);
+
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         unsigned long get_sql_id() const;
 

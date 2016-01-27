@@ -212,7 +212,7 @@ class solverThread (threading.Thread):
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
-            extra_opts = " --printsol 0 --sql 2 --wsql 3 "
+            extra_opts = " --printsol 0 --sql 2"
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 

@@ -111,6 +111,12 @@ class Main
         string commandLine;
         unsigned num_threads = 1;
         uint32_t max_nr_of_solutions = 1;
+        int sql = 0;
+        string sqlite_filename;
+        string sqlServer;
+        string sqlUser;
+        string sqlPass;
+        string sqlDatabase;
 
         //Files to read & write
         bool fileNamePresent;

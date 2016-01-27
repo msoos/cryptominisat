@@ -233,12 +233,17 @@ class Solver : public Searcher
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
+        void set_sqlite(string filename);
+        void set_mysql(
+            string sqlServer
+            , string sqlUser
+            , string sqlPass
+            , string sqlDatabase);
 
     private:
         friend class Prober;
         friend class ClauseDumper;
         lbool iterate_until_solved();
-        void parse_sql_option();
         uint64_t mem_used_vardata() const;
         SolveFeatures calculate_features() const;
         void reconfigure(int val);

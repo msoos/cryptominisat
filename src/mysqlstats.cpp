@@ -38,11 +38,6 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-MySQLStats::MySQLStats() :
-    bindAt(0)
-{
-}
-
 MySQLStats::~MySQLStats()
 {
     if (setup_ok) {
@@ -114,10 +109,10 @@ bool MySQLStats::connectServer(const Solver* solver)
     //Connect to server
     if (!mysql_real_connect(
         serverConn
-        , solver->getConf().sqlServer.c_str()
-        , solver->getConf().sqlUser.c_str()
-        , solver->getConf().sqlPass.c_str()
-        , solver->getConf().sqlDatabase.c_str()
+        , sqlServer.c_str()
+        , sqlUser.c_str()
+        , sqlPass.c_str()
+        , sqlDatabase.c_str()
         , 0
         , NULL
         , 0)
@@ -173,14 +168,15 @@ void MySQLStats::getID(const Solver* solver)
         //Check if we have been in this loop for too long
         if (numTries > 10) {
             cerr
-            << "ERROR: Something is wrong while adding runID!" << endl
-            << " Exiting!"
+            << "ERROR: Something is wrong while adding runID! "
+            << "Exiting!"
             << endl;
 
             cerr
             << "Maybe you didn't create the tables in the database?" << endl
             << "You can fix this by executing: " << endl
             << "$ mysql -u root -p cmsat < cmsat_tablestructure.sql" << endl
+            << "Beware: THIS DELETES ALL PREVIOUS CryptoMiniSat DATA!" << endl;
             ;
 
             std::exit(-1);
@@ -204,7 +200,7 @@ void MySQLStats::add_tag(const std::pair<string, string>& tag)
 
     //Inserting element into solverruns to get unique ID
     if (mysql_query(serverConn, ss.str().c_str())) {
-        cerr << "ERROR Couldn't insert into table 'tags'" << endl;
+        cerr << "MySQL: ERROR Couldn't insert into table 'tags'" << endl;
         std::exit(-1);
     }
 }

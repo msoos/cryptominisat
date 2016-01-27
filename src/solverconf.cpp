@@ -99,15 +99,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , rewardShortenedClauseWithConfl(3)
 
         //SQL
-        , doSQL          (1)
-        , whichSQL       (3)
         , dump_individual_search_time(true)
         , dump_individual_restarts(false)
-        , sqlite_filename ("cryptominisat.sqlite")
-        , sqlServer ("localhost")
-        , sqlUser ("cmsat_solver")
-        , sqlPass ("")
-        , sqlDatabase("cmsat")
 
         //Var-elim
         , doVarElim        (true)

@@ -29,6 +29,10 @@ class SQLiteStats: public SQLStats
 {
 public:
     ~SQLiteStats() override;
+    SQLiteStats(std::string _filename) :
+        filename(_filename)
+    {
+    }
 
     void restart(
         const PropStats& thisPropStats
@@ -71,9 +75,7 @@ public:
 
 private:
 
-    bool connectServer(const std::string& sqlite_filename
-        , const int verbosity
-    );
+    bool connectServer(const int verbosity);
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
 
@@ -92,4 +94,5 @@ private:
 
     sqlite3 *db = NULL;
     bool setup_ok = false;
+    const string filename;
 };

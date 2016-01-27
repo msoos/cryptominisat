@@ -109,6 +109,10 @@ Main::Main(int _argc, char** _argv) :
     argc(_argc)
     , argv(_argv)
     , fileNamePresent (false)
+    , sqlServer ("localhost")
+    , sqlUser ("cmsat_solver")
+    , sqlPass ("")
+    , sqlDatabase("cmsat")
 {
 }
 
@@ -558,22 +562,17 @@ void Main::add_supported_options()
 
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
-    ("sql", po::value(&conf.doSQL)->default_value(conf.doSQL)
-        , "Write to SQL. 0 = don't attempt to writ to DB, 1 = try but continue if fails, 2 = abort if cannot write to DB")
-    ("wsql", po::value(&conf.whichSQL)->default_value(0)
-        , "0 = prefer MySQL \
-1 = prefer SQLite, \
-2 = only use MySQL, \
-3 = only use SQLite" )
-    ("sqlitedb", po::value(&conf.sqlite_filename)
+    ("sql", po::value(&sql)->default_value(0)
+        , "Write to SQL. 0 = no SQL, 1 = mysql, 2 = sqlite")
+    ("sqlitedb", po::value(&sqlite_filename)
         , "Where to put the SQLite database")
-    ("sqluser", po::value(&conf.sqlUser)->default_value(conf.sqlUser)
+    ("sqluser", po::value(&sqlUser)->default_value(sqlUser)
         , "SQL user to connect with")
-    ("sqlpass", po::value(&conf.sqlPass)->default_value(conf.sqlPass)
+    ("sqlpass", po::value(&sqlPass)->default_value(sqlPass)
         , "SQL user's pass to connect with")
-    ("sqldb", po::value(&conf.sqlDatabase)->default_value(conf.sqlDatabase)
+    ("sqldb", po::value(&sqlDatabase)->default_value(sqlDatabase)
         , "SQL database name. Default is used by PHP system, so it's highly recommended")
-    ("sqlserver", po::value(&conf.sqlServer)->default_value(conf.sqlServer)
+    ("sqlserver", po::value(&sqlServer)->default_value(sqlServer)
         , "SQL server hostname/IP")
     ("sqlrestfull", po::value(&conf.dump_individual_restarts)->default_value(conf.dump_individual_restarts)
         , "Dump individual restart statistics in FULL")
@@ -1069,9 +1068,9 @@ void Main::manually_parse_some_options()
     } else if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
         if (!vm.count("sqlitedb")) {
-            conf.sqlite_filename = filesToRead[0] + ".sqlite";
+            sqlite_filename = filesToRead[0] + ".sqlite";
         } else {
-            conf.sqlite_filename = vm["sqlitedb"].as<string>();
+            sqlite_filename = vm["sqlitedb"].as<string>();
         }
         fileNamePresent = true;
     } else {
@@ -1219,6 +1218,14 @@ int Main::solve()
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
+    if (sql == 1) {
+        solver->set_mysql(sqlServer
+        , sqlUser
+        , sqlPass
+        , sqlDatabase);
+    } else if (sql == 2) {
+        solver->set_sqlite(sqlite_filename);
+    }
 
     //Print command line used to execute the solver: for options and inputs
     if (conf.verbosity >= 1) {

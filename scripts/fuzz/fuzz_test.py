@@ -480,7 +480,7 @@ class Tester:
             # gammavariate gives us sometimes very low values, sometimes large
 
             if options.sqlite:
-                cmd += "--sql 2 --wsql 3 "
+                cmd += "--sql 2 "
                 cmd += "--sqlrestfull %d " % random.choice([0, 1])
                 cmd += "--sqlresttime %d " % random.choice([0, 1])
 

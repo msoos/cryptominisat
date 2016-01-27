@@ -40,12 +40,7 @@ static bool print_thread_start_and_finish = false;
 namespace CMSat {
     struct CMSatPrivateData {
         explicit CMSatPrivateData(std::atomic<bool>* _must_interrupt) {
-            cls = 0;
-            vars_to_add = 0;
             must_interrupt = _must_interrupt;
-            which_solved = 0;
-            shared_data = NULL;
-            okay = true;
         }
         ~CMSatPrivateData()
         {
@@ -62,14 +57,15 @@ namespace CMSat {
         }
 
         vector<Solver*> solvers;
-        SharedData *shared_data;
-        int which_solved;
+        SharedData *shared_data = NULL;
+        int which_solved = 0;
         std::atomic<bool>* must_interrupt;
-        unsigned cls;
-        unsigned vars_to_add;
+        unsigned cls = 0;
+        unsigned vars_to_add = 0;
         vector<Lit> cls_lits;
-        bool okay;
+        bool okay = true;
         std::ofstream* log = NULL;
+        int sql = 0;
     };
 }
 
@@ -265,7 +261,6 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     data->cls_lits.reserve(CACHE_SIZE);
     for(unsigned i = 1; i < num; i++) {
         SolverConf conf = data->solvers[0]->getConf();
-        conf.doSQL = 0;
         update_config(conf, i);
         data->solvers.push_back(new Solver(&conf, data->must_interrupt));
     }
@@ -276,7 +271,6 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         SolverConf conf = data->solvers[i]->getConf();
         if (i >= 1) {
             conf.verbosity = 0;
-            conf.doSQL = 0;
             conf.doFindXors = 0;
         }
         data->solvers[i]->setConf(conf);
@@ -546,6 +540,13 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         (*data->log) << " )" << endl;
     }
 
+    if (data->solvers.size() > 1 && data->sql > 0) {
+        std::cerr
+        << "Multithreaded solving and SQL cannot be specified at the same time"
+        << endl;
+        exit(-1);
+    }
+
     if (data->solvers.size() == 1) {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
@@ -719,4 +720,36 @@ DLL_PUBLIC void SATSolver::log_to_file(std::string filename)
 DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() const
 {
     return data->solvers[0]->get_all_binary_xors();
+}
+
+DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
+{
+    if (data->solvers.size() > 1) {
+        std::cerr
+        << "Multithreaded solving and SQL cannot be specified at the same time"
+        << endl;
+        exit(-1);
+    }
+    data->sql = 1;
+    data->solvers[0]->set_sqlite(filename);
+}
+
+void SATSolver::set_mysql(
+    std::string sqlServer
+    , std::string sqlUser
+    , std::string sqlPass
+    , std::string sqlDatabase)
+{
+    if (data->solvers.size() > 1) {
+        std::cerr
+        << "Multithreaded solving and SQL cannot be specified at the same time"
+        << endl;
+        exit(-1);
+    }
+    data->sql = 2;
+    data->solvers[0]->set_mysql(
+        sqlServer
+        , sqlUser
+        , sqlPass
+        , sqlDatabase);
 }

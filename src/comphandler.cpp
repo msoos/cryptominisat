@@ -390,7 +390,6 @@ SolverConf CompHandler::configureNewSolver(
         conf.otfHyperbin = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
-    conf.doSQL = false;
 
     //To small, don't clogger up the screen
     if (numVars < 20 && solver->conf.verbosity < 3) {

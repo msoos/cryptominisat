@@ -86,7 +86,7 @@ using std::endl;
 Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
     Searcher(_conf, this, _must_interrupt_inter)
 {
-    parse_sql_option();
+    sqlStats = NULL;
 
     if (conf.doProbe) {
         prober = new Prober(this);
@@ -130,73 +130,39 @@ Solver::~Solver()
     delete reduceDB;
 }
 
-void Solver::parse_sql_option()
+void Solver::set_mysql(
+        string sqlServer
+        , string sqlUser
+        , string sqlPass
+        , string sqlDatabase)
 {
-    if (conf.doSQL > 2) {
-        std::cerr << "ERROR: '--sql'  option must be given value 0..2"
-        << endl;
-        std::exit(-1);
+    #if defined(USE_MYSQL)
+    sqlStats = new MySQLStats(sqlServer, sqlUser, sqlPass, sqlDatabase);
+    sqlStats->setup(this);
+    if (conf.verbosity >= 4) {
+        cout << "c Connected to MySQL server" << endl;
     }
-    if (conf.whichSQL > 3) {
-        std::cerr << "ERROR: '--wsql'  option must be given value 0..3"
-        << endl;
-        std::exit(-1);
+    #else
+    std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
+    << endl;
+    std::exit(-1);
+    #endif
+}
+
+void Solver::set_sqlite(string filename)
+{
+
+    #if defined(USE_SQLITE3)
+    sqlStats = new SQLiteStats(filename);
+    sqlStats->setup(this);
+    if (conf.verbosity >= 4) {
+        cout << "c Connected to SQLite server" << endl;
     }
-
-    sqlStats = NULL;
-    if (conf.doSQL) {
-        if (conf.whichSQL == 2) {
-            #if defined(USE_MYSQL)
-            sqlStats = new MySQLStats();
-            #else
-            if (conf.doSQL >= 2) {
-                std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
-                << endl;
-                std::exit(-1);
-            }
-            #endif
-        }
-
-        if (conf.whichSQL == 3) {
-            #if defined(USE_SQLITE3)
-            sqlStats = new SQLiteStats();
-            #else
-            if (conf.doSQL == 2) {
-                std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
-                << endl;
-                std::exit(-1);
-            }
-            #endif
-        }
-
-        if (conf.whichSQL == 0) {
-            #if defined(USE_MYSQL)
-            sqlStats = new MySQLStats();
-            #elif defined(USE_SQLITE3)
-            sqlStats = new SQLiteStats();
-            #else
-            if (conf.doSQL == 2) {
-                std::cerr << "Neither MySQL nor SQLite support was compiled in"
-                << ", cannot use either. Exiting." << endl;
-                std::exit(-1);
-            }
-            #endif
-        }
-
-        if (conf.whichSQL == 1) {
-            #if defined(USE_SQLITE3)
-            sqlStats = new SQLiteStats();
-            #elif defined(USE_MYSQL)
-            sqlStats = new MySQLStats();
-            #else
-            if (conf.doSQL == 2) {
-                std::cerr << "Neither MySQL nor SQLite support was compiled in"
-                << ", cannot use either. Exiting." << endl;
-                std::exit(-1);
-            }
-            #endif
-        }
-    }
+    #else
+    std::cerr << "SQLite support was not compiled in, cannot use it. Exiting."
+    << endl;
+    std::exit(-1);
+    #endif
 }
 
 void Solver::set_shared_data(SharedData* shared_data)
@@ -1242,14 +1208,9 @@ void Solver::set_up_sql_writer()
 
     bool ret = sqlStats->setup(this);
     if (!ret) {
-        if (conf.doSQL == 2) {
-            std::cerr
-            << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
-            std::exit(-1);
-        }
-        delete sqlStats;
-        sqlStats = NULL;
-        conf.doSQL = false;
+        std::cerr
+        << "c ERROR: SQL was required (with option '--sql 2'), but couldn't connect to SQL server." << endl;
+        std::exit(-1);
     }
 }
 
@@ -2917,9 +2878,7 @@ void Solver::add_in_partial_solving_stats()
 
 unsigned long Solver::get_sql_id() const
 {
-    if (!conf.doSQL
-        || sqlStats == NULL)
-    {
+    if (sqlStats == NULL) {
         return 0;
     }
 

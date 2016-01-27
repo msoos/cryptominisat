@@ -35,7 +35,15 @@ using namespace CMSat;
 class MySQLStats: public SQLStats
 {
 public:
-    MySQLStats();
+    MySQLStats(std::string _sqlServer
+        , std::string _sqlUser
+        , std::string _sqlPass
+        , std::string _sqlDatabase):
+        sqlServer(_sqlServer)
+        , sqlUser(_sqlUser)
+        , sqlPass(_sqlPass)
+        , sqlDatabase(_sqlDatabase)
+    {}
     ~MySQLStats() override;
 
     void restart(
@@ -212,7 +220,7 @@ private:
     };
     StmtTimePassedMin stmtTimePassedMin;
 
-    size_t bindAt;
+    size_t bindAt = 0;
     struct StmtRst {
         StmtRst() :
             stmt(NULL)
@@ -317,4 +325,8 @@ private:
 
     MYSQL *serverConn;
     bool setup_ok = false;
+    std::string sqlServer;
+    std::string sqlUser;
+    std::string sqlPass;
+    std::string sqlDatabase;
 };

@@ -76,7 +76,7 @@ SQLiteStats::~SQLiteStats()
 
 bool SQLiteStats::setup(const Solver* solver)
 {
-    setup_ok = connectServer(solver->conf.sqlite_filename, solver->conf.verbosity);
+    setup_ok = connectServer(solver->conf.verbosity);
     if (!setup_ok) {
         return false;
     }
@@ -91,11 +91,9 @@ bool SQLiteStats::setup(const Solver* solver)
     return true;
 }
 
-bool SQLiteStats::connectServer(const std::string& sqlite_filename
-    , const int verbosity
-)
+bool SQLiteStats::connectServer(const int verbosity)
 {
-    int rc = sqlite3_open(sqlite_filename.c_str(), &db);
+    int rc = sqlite3_open(filename.c_str(), &db);
     if(rc) {
         cout << "c Cannot open sqlite database: " << sqlite3_errmsg(db) << endl;
         sqlite3_close(db);
@@ -108,7 +106,7 @@ bool SQLiteStats::connectServer(const std::string& sqlite_filename
     }
 
     if (verbosity >= 1) {
-        cout << "c writing to SQLite file: " << sqlite_filename << endl;
+        cout << "c writing to SQLite file: " << filename << endl;
     }
 
     return true;
@@ -182,7 +180,8 @@ void SQLiteStats::add_tag(const std::pair<string, string>& tag)
 
     //Inserting element into solverruns to get unique ID
     if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
-        cerr << "ERROR Couldn't insert into table 'tags'" << endl;
+        cerr << "SQLite: ERROR Couldn't insert into table 'tags'" << endl;
+        assert(false);
         std::exit(-1);
     }
 }
