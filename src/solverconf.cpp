@@ -100,7 +100,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //SQL
         , doSQL          (1)
-        , whichSQL       (0)
+        , whichSQL       (3)
         , dump_individual_search_time(true)
         , dump_individual_restarts(false)
         , sqlite_filename ("cryptominisat.sqlite")
