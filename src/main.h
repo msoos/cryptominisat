@@ -65,7 +65,6 @@ class Main
         //arguments
         int argc;
         char** argv;
-        string typeclean;
         string var_elim_strategy;
         string dratfilname;
         void add_supported_options();
