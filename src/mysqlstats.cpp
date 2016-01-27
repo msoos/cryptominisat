@@ -142,7 +142,7 @@ bool MySQLStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, version, time) values ("
+    << "INSERT INTO solverRun (runID, version, `runtime`) values ("
     << runID
     << ", \"" << Solver::get_version_sha1() << "\""
     << ", " << time(NULL)
@@ -266,7 +266,7 @@ void MySQLStats::initTimePassedSTMT()
     ss << "insert into `timepassed`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `conflicts`, `time`"
+    << "  `runID`, `simplifications`, `conflicts`, `runtime`"
 
     //Clause stats
     << ", `name`, `elapsed`, `timeout`, `percenttimeremain`"
@@ -336,7 +336,7 @@ void MySQLStats::initMemUsedSTMT()
     ss << "insert into `memused`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `conflicts`, `time`"
+    << "  `runID`, `simplifications`, `conflicts`, `runtime`"
 
     //Clause stats
     << ", `name`, `MB`"
@@ -404,7 +404,7 @@ void MySQLStats::initTimePassedMinSTMT()
     ss << "insert into `timepassed`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `conflicts`, `time`"
+    << "  `runID`, `simplifications`, `conflicts`, `runtime`"
 
     //Clause stats
     << ", `name`, `elapsed`"
@@ -472,7 +472,7 @@ void MySQLStats::initRestartSTMT()
     ss << "insert into `restart`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
 
     //Clause stats
     << ", numIrredBins, numIrredTris, numIrredLongs"
@@ -668,7 +668,7 @@ void MySQLStats::initReduceDBSTMT()
     ss << "insert into `reduceDB`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `time`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
     << ", `reduceDBs`"
 
     //Actual data

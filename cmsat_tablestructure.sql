@@ -11,7 +11,7 @@ CREATE TABLE `reduceDB` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `time` float NOT NULL,
+  `runtime` float NOT NULL,
   `reduceDBs` int(20) NOT NULL,
   `irredClsVisited` bigint(20) NOT NULL,
   `irredLitsVisited` bigint(20) NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE `restart` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `time` float NOT NULL,
+  `runtime` float NOT NULL,
   `numIrredBins` int(20) NOT NULL,
   `numIrredTris` int(20) NOT NULL,
   `numIrredLongs` int(20) NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE `timepassed` (
   `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `time` double NOT NULL,
+  `runtime` double NOT NULL,
   `name` varchar(200) NOT NULL,
   `elapsed` double NOT NULL,
   `timeout` int(20) DEFAULT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE `memused` (
   `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `time` double NOT NULL,
+  `runtime` double NOT NULL,
   `name` varchar(200) NOT NULL,
   `MB` int(20) NOT NULL
 );
@@ -152,7 +152,7 @@ DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
   `runID` bigint(20) NOT NULL,
   `version` varchar(255) NOT NULL,
-  `time` bigint(20) NOT NULL
+  `runtime` bigint(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `startup`;
