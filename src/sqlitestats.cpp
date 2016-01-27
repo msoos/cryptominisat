@@ -140,6 +140,7 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
 
 void SQLiteStats::getID(const Solver* solver)
 {
+    bool created_tablestruct = false;
     size_t numTries = 0;
     getRandomID();
     while(!tryIDInSQL(solver)) {
@@ -148,11 +149,19 @@ void SQLiteStats::getID(const Solver* solver)
 
         //Check if we have been in this loop for too long
         if (numTries > 15) {
+            if (created_tablestruct) {
+                cerr << "ERROR: Couldn't get random runID. "
+                << "Something is probably off with your sqlite database. "
+                << "Try deleting it."
+                << endl;
+                std::exit(-1);
+            }
             if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
                 cerr << "ERROR: Couln't create table structure for SQLite"
                 << endl;
                 std::exit(-1);
             }
+            created_tablestruct = true;
         }
     }
 
