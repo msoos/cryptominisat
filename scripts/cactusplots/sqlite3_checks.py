@@ -229,8 +229,48 @@ class Query:
             name = name[:40]
             print("%-40s   %3.1f%%" % (name, t/total*100))
 
+    def find_intersting_problems(self):
+        print("----------- Interesting problems --------------")
+
+        #Find CNFs that are interesting:
+        #* solved in under 500s
+        #* UNSAT
+        #* more conflicts than 60'000
+
+        #last conflict > 60000, UNSAT, solvetime under 500s
+        query = """
+        select a.runID, tags.tag from
+            (select runID, max(conflicts) as maxconfl, max(`time`) as maxtime
+            from timepassed
+            group by runID
+            ) as a,
+            (select runID
+            from finishup
+            where status = "l_False"
+            ) as b, tags
+            where a.maxconfl > 60000
+            and a.maxtime < 200
+            and a.maxtime > 50
+            and a.runID = b.runID
+            and tags.runID = a.runID
+            and tags.tagname = "filename"
+            order by maxtime desc
+        """
+
+        runIDs = []
+        for row in self.c.execute(query):
+            fname = row[1].split("/")
+            fname = fname[len(fname)-1]
+            runID = int(row[0])
+            print("runID %-10d   fname: %s" % (runID, fname))
+
+
+
+
+
 
 with Query() as q:
+    q.find_intersting_problems()
     q.find_worst_unaccounted_memory()
     q.check_memory_rss()
     q.check_memory()
