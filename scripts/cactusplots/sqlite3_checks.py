@@ -230,7 +230,7 @@ class Query:
             print("%-40s   %3.1f%%" % (name, t/total*100))
 
     def find_intersting_problems(self):
-        print("----------- Interesting problems --------------")
+        print("----------- Interesting problems for learning --------------")
 
         #Find CNFs that are interesting:
         #* solved in under 500s
@@ -239,7 +239,8 @@ class Query:
 
         #last conflict > 60000, UNSAT, solvetime under 500s
         query = """
-        select a.runID, tags.tag from
+        select a.runID, tags.tag, a.maxtime, a.maxconfl, mems.maxmem from
+
             (select runID, max(conflicts) as maxconfl, max(`time`) as maxtime
             from timepassed
             group by runID
@@ -247,13 +248,19 @@ class Query:
             (select runID
             from finishup
             where status = "l_False"
-            ) as b, tags
+            ) as b,
+            (select runID, max(MB) as maxmem
+            from memused
+            group by runID
+            ) as mems, tags
+
             where a.maxconfl > 60000
             and a.maxtime < 200
             and a.maxtime > 50
             and a.runID = b.runID
             and tags.runID = a.runID
             and tags.tagname = "filename"
+            and mems.runID = a.runID
             order by maxtime desc
         """
 
@@ -262,7 +269,11 @@ class Query:
             fname = row[1].split("/")
             fname = fname[len(fname)-1]
             runID = int(row[0])
-            print("runID %-10d   fname: %s" % (runID, fname))
+            t = row[2]
+            confl = row[3]
+            mb = row[4]
+            print("runID %-10d  t(mins): %-6.1f  confl(K): %-6.1f  mem(GB): %-6.1f  fname: %s" %
+                  (runID, t/60.0, confl/(1000.0), mb/1024.0, fname))
 
 
 
