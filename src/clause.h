@@ -109,6 +109,7 @@ struct ResolutionTypes
     uint32_t sum_size_longs = 0;
     uint32_t sum_age_long_reds = 0;
     double sum_vsids = 0;
+    double sum_vsids_of_resolving_literals = 0;
 };
 
 struct ClauseStats

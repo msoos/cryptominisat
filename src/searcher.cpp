@@ -579,6 +579,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
+            resolutions.sum_vsids_of_resolving_literals += activities[p.var()]/var_inc;
             tmp_learnt_clause_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
@@ -1437,6 +1438,8 @@ void Searcher::dump_sql_clause_data(
         , decisionLevel()
         , trail.size()
         , sum_vsids/(double)learnt_clause.size()
+        , params.conflictsDoneThisRestart
+        , resolutions.sum_vsids_of_resolving_literals/((double)resolutions.sum()-1)
     );
 }
 #endif
@@ -1470,7 +1473,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             && drat
             && learnt_clause.size() > 3
         ) {
-            dump_sql_clause_data(glue, backtrack_level);
+            dump_sql_clause_data(
+                glue
+                , backtrack_level
+            );
         }
         #endif
         clauseID++;

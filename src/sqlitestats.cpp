@@ -145,6 +145,8 @@ void SQLiteStats::dump_clause_stats(
     , size_t decision_level
     , size_t propagation_level
     , double avg_vsids_score
+    , uint64_t conflicts_this_restart
+    , double avg_vsids_of_resolving_literals
 ) {
 
     double avg_age_reds = 0;
@@ -178,7 +180,9 @@ void SQLiteStats::dump_clause_stats(
     << avg_glue_long_reds << ", "
     << (double)resoltypes.sum_size()/(double)resoltypes.sum()  << ", "
     << avg_age_reds  << ", "
-    << (double)resoltypes.sum_vsids/(double)resoltypes.sum_size()
+    << (double)resoltypes.sum_vsids/(double)resoltypes.sum_size() << ", "
+    << conflicts_this_restart << ", "
+    << avg_vsids_of_resolving_literals
     << ");"
     ;
 
