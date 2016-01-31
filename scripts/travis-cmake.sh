@@ -213,11 +213,11 @@ fi
 
 case $CMS_CONFIG in
     MYSQL|WEB)
-        echo "1 2 0" | ./cryptominisat4 --sql 2 --wsql 2 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat4 --sql 1 --zero-exit-status
     ;;
 
     SQLITE)
-        echo "1 2 0" | ./cryptominisat4 --sql 2 --wsql 3 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat4 --sql 2 --zero-exit-status
     ;;
 
     M4RI)
