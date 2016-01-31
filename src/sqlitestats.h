@@ -69,6 +69,17 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
+    void dump_clause_stats(
+        const Solver* solver
+        , uint64_t clauseID
+        , uint32_t glue
+        , uint32_t size
+        , ResolutionTypes<uint16_t> resoltypes
+        , size_t decision_level
+        , size_t propagation_level
+        , double avg_vsids_score
+    ) override;
+
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;
     void add_tag(const std::pair<std::string, std::string>& tag) override;

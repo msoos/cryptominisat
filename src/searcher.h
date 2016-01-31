@@ -473,6 +473,7 @@ class Searcher : public HyperEngine
         void dump_restart_sql();
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
+        void dump_sql_clause_data(const uint32_t glue);
         #endif
 
 

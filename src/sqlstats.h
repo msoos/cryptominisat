@@ -73,6 +73,17 @@ public:
         , const Solver* solver
     ) = 0;
 
+    virtual void dump_clause_stats(
+        const Solver* solver
+        , uint64_t clauseID
+        , uint32_t glue
+        , uint32_t size
+        , ResolutionTypes<uint16_t> resoltypes
+        , size_t decision_level
+        , size_t propagation_level
+        , double avg_vsids_score
+    ) = 0;
+
     virtual bool setup(const Solver* solver) = 0;
     virtual void finishup(lbool status) = 0;
     uint64_t get_runID() const

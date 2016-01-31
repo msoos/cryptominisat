@@ -135,6 +135,43 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
     return true;
 }
 
+void SQLiteStats::dump_clause_stats(
+    const Solver* solver
+    , uint64_t clauseID
+    , uint32_t glue
+    , uint32_t size
+    , ResolutionTypes<uint16_t> resoltypes
+    , size_t decision_level
+    , size_t propagation_level
+    , double avg_vsids_score
+) {
+    std::stringstream ss;
+    ss
+    << "INSERT INTO `clauseStats`"
+
+    << " VALUES ("
+    << runID << ", "
+    << solver->get_solve_stats().numSimplify << ", "
+    << solver->sumRestarts() << ", "
+    << solver->sumConflicts() << ", "
+
+    << clauseID << ", "
+    << size << ", "
+    << glue << ", "
+    << resoltypes.sum() << ", "
+    << decision_level << ", "
+    << propagation_level << ", "
+    << avg_vsids_score << ", "
+    << (double)resoltypes.sum_size()/(double)resoltypes.sum()
+    << ");"
+    ;
+
+    if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
+        cerr << "ERROR Couldn't insert into table 'finishup'" << endl;
+        std::exit(-1);
+    }
+}
+
 void SQLiteStats::getID(const Solver* solver)
 {
     bool created_tablestruct = false;
@@ -154,7 +191,8 @@ void SQLiteStats::getID(const Solver* solver)
                 std::exit(-1);
             }
             if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
-                cerr << "ERROR: Couln't create table structure for SQLite"
+                cerr << "ERROR: Couln't create table structure for SQLite: "
+                << sqlite3_errmsg(db)
                 << endl;
                 std::exit(-1);
             }

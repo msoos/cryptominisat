@@ -171,30 +171,19 @@ DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
-  `reduceDB` int(20) NOT NULL,
-  `learnt` int(10) NOT NULL,
-  `size` int(20) NOT NULL,
-  `glue` int(20) NOT NULL,
-  `numPropAndConfl` bigint(20) NOT NULL,
-  `numLitVisited` bigint(20) NOT NULL,
-  `numLookedAt` bigint(20) NOT NULL
-);
+  `restarts` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
 
-DROP TABLE IF EXISTS `sum_clause_stats`;
-CREATE TABLE `sum_clause_stats` (
-  `runID` bigint(20) NOT NULL,
-  `simplifications` int(20) NOT NULL,
-  `reduceDB` int(20) NOT NULL,
-  `learnt` int(10) NOT NULL,
-  `avg_size` double NOT NULL,
-  `avg_glue` double NOT NULL,
-  `avg_props` double NOT NULL,
-  `avg_confls` double NOT NULL,
-  `avg_UIP_used` double NOT NULL,
-  `avg_numPropAndConfl` int(20) NOT NULL,
-  `avg_numLitVisited` bigint(20) NOT NULL,
-  `avg_numLookedAt` int(20) NOT NULL,
-  `num` int(20) NOT NULL
+  `clauseID` bigint(20) NOT NULL,
+
+  `glue` int(20) NOT NULL,
+  `size` int(20) NOT NULL,
+  `sum_resolutions` int(20) NOT NULL,
+  `decision_level` int(20) NOT NULL,
+  `propagation_level` int(20) NOT NULL,
+  `avg_vsids_score` double NOT NULL,
+  `atedecent_avg_len` double NOT NULL
+  -- `avg_vsids_score_resolvents` int(20) NOT NULL
 );
 
 -- create index `idx5` on `restart` (`runID`,`conflicts`);

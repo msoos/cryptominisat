@@ -62,6 +62,7 @@ struct ResolutionTypes
         triIrred += other.triIrred;
         longIrred += other.longIrred;
         longRed += other.longRed;
+        sum_size_longs += other.sum_size_longs;
 
         return *this;
     }
@@ -75,8 +76,22 @@ struct ResolutionTypes
         triIrred -= other.triIrred;
         longIrred -= other.longIrred;
         longRed -= other.longRed;
+        sum_size_longs -= other.sum_size_longs;
 
         return *this;
+    }
+
+    uint32_t sum_size() const
+    {
+        uint32_t sum = 0;
+        sum += binIrred*2;
+        sum += binRed*2;
+
+        sum += triIrred*3;
+        sum += triRed*3;
+        sum += sum_size_longs;
+
+        return sum;
     }
 
     T binRed = 0;
@@ -85,6 +100,7 @@ struct ResolutionTypes
     T triIrred = 0;
     T longIrred = 0;
     T longRed = 0;
+    uint32_t sum_size_longs = 0;
 };
 
 struct ClauseStats

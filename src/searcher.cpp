@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cmath>
+#include <ratio>
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
@@ -458,6 +459,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 resolutions.longIrred++;
                 stats.resolvs.longRed++;
             }
+            resolutions.sum_size_longs += cl->size();
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
             #endif
@@ -1410,6 +1412,27 @@ void Searcher::print_learnt_clause() const
     }
 }
 
+#ifdef STATS_NEEDED
+void Searcher::dump_sql_clause_data(const uint32_t glue)
+{
+    double sum_vsids = 0;
+    for(const Lit l: learnt_clause) {
+        sum_vsids += activities[l.var()];
+    }
+
+    solver->sqlStats->dump_clause_stats(
+        solver
+        , clauseID
+        , glue
+        , learnt_clause.size()
+        , resolutions
+        , decisionLevel()
+        , trail.size()
+        , sum_vsids/(double)learnt_clause.size()
+    );
+}
+#endif
+
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const size_t glue
@@ -1432,6 +1455,16 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
         *drat << *cl << fin;
+
+        #ifdef STATS_NEEDED
+        if (solver->sqlStats
+            && drat
+            && learnt_clause.size() > 3
+        ) {
+            dump_sql_clause_data(glue);
+        }
+        #endif
+
         return cl;
     }
 
