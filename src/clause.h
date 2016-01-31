@@ -63,6 +63,9 @@ struct ResolutionTypes
         longIrred += other.longIrred;
         longRed += other.longRed;
         sum_size_longs += other.sum_size_longs;
+        sum_age_long_reds += other.sum_age_long_reds;
+        sum_vsids += other.sum_vsids;
+        sum_glue_long_reds += other.sum_glue_long_reds;
 
         return *this;
     }
@@ -77,6 +80,9 @@ struct ResolutionTypes
         longIrred -= other.longIrred;
         longRed -= other.longRed;
         sum_size_longs -= other.sum_size_longs;
+        sum_age_long_reds -= other.sum_age_long_reds;
+        sum_vsids -= other.sum_vsids;
+        sum_glue_long_reds -= other.sum_glue_long_reds;
 
         return *this;
     }
@@ -86,7 +92,6 @@ struct ResolutionTypes
         uint32_t sum = 0;
         sum += binIrred*2;
         sum += binRed*2;
-
         sum += triIrred*3;
         sum += triRed*3;
         sum += sum_size_longs;
@@ -100,7 +105,10 @@ struct ResolutionTypes
     T triIrred = 0;
     T longIrred = 0;
     T longRed = 0;
+    uint32_t sum_glue_long_reds = 0;
     uint32_t sum_size_longs = 0;
+    uint32_t sum_age_long_reds = 0;
+    double sum_vsids = 0;
 };
 
 struct ClauseStats

@@ -139,12 +139,24 @@ void SQLiteStats::dump_clause_stats(
     const Solver* solver
     , uint64_t clauseID
     , uint32_t glue
+    , uint32_t backtrack_level
     , uint32_t size
     , ResolutionTypes<uint16_t> resoltypes
     , size_t decision_level
     , size_t propagation_level
     , double avg_vsids_score
 ) {
+
+    double avg_age_reds = 0;
+    if (resoltypes.longRed > 0) {
+        avg_age_reds = (double)resoltypes.sum_age_long_reds/(double)resoltypes.longRed;
+    }
+
+    double avg_glue_long_reds = 0;
+    if (resoltypes.longRed) {
+        avg_glue_long_reds = (double)resoltypes.sum_glue_long_reds/(double)resoltypes.longRed;
+    }
+
     std::stringstream ss;
     ss
     << "INSERT INTO `clauseStats`"
@@ -156,13 +168,17 @@ void SQLiteStats::dump_clause_stats(
     << solver->sumConflicts() << ", "
 
     << clauseID << ", "
-    << size << ", "
     << glue << ", "
+    << backtrack_level << ", "
+    << size << ", "
     << resoltypes.sum() << ", "
     << decision_level << ", "
     << propagation_level << ", "
     << avg_vsids_score << ", "
-    << (double)resoltypes.sum_size()/(double)resoltypes.sum()
+    << avg_glue_long_reds << ", "
+    << (double)resoltypes.sum_size()/(double)resoltypes.sum()  << ", "
+    << avg_age_reds  << ", "
+    << (double)resoltypes.sum_vsids/(double)resoltypes.sum_size()
     << ");"
     ;
 

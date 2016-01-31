@@ -73,6 +73,7 @@ public:
         const Solver* solver
         , uint64_t clauseID
         , uint32_t glue
+        , const uint32_t backtrack_level
         , uint32_t size
         , ResolutionTypes<uint16_t> resoltypes
         , size_t decision_level

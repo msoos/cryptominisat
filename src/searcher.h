@@ -311,7 +311,11 @@ class Searcher : public HyperEngine
         void  print_learnt_clause() const;
         void  add_otf_subsume_long_clauses();
         void  add_otf_subsume_implicit_clause();
-        Clause* handle_last_confl_otf_subsumption(Clause* cl, const size_t glue);
+        Clause* handle_last_confl_otf_subsumption(
+            Clause* cl
+            , const uint32_t glue
+            , const uint32_t backtrack_level
+        );
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
         Lit   pickBranchLit();
@@ -473,7 +477,10 @@ class Searcher : public HyperEngine
         void dump_restart_sql();
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
-        void dump_sql_clause_data(const uint32_t glue);
+        void dump_sql_clause_data(
+            const uint32_t glue
+            , const uint32_t backtrack_level
+        );
         #endif
 
 

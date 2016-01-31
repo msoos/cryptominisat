@@ -127,6 +127,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
+    resolutions.sum_vsids += activities[lit.var()]/var_inc;
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -455,11 +456,14 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             if (cl->red()) {
                 resolutions.longRed++;
                 stats.resolvs.longRed++;
+                resolutions.sum_age_long_reds += sumConflicts() - cl->stats.introduced_at_conflict;
+                resolutions.sum_glue_long_reds += cl->stats.glue;
             } else {
                 resolutions.longIrred++;
                 stats.resolvs.longRed++;
             }
             resolutions.sum_size_longs += cl->size();
+
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
             #endif
@@ -1413,17 +1417,21 @@ void Searcher::print_learnt_clause() const
 }
 
 #ifdef STATS_NEEDED
-void Searcher::dump_sql_clause_data(const uint32_t glue)
-{
+void Searcher::dump_sql_clause_data(
+    const uint32_t glue
+    , const uint32_t backtrack_level
+) {
     double sum_vsids = 0;
     for(const Lit l: learnt_clause) {
         sum_vsids += activities[l.var()];
     }
+    sum_vsids /= var_inc;
 
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
         , glue
+        , backtrack_level
         , learnt_clause.size()
         , resolutions
         , decisionLevel()
@@ -1435,7 +1443,8 @@ void Searcher::dump_sql_clause_data(const uint32_t glue)
 
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
-    , const size_t glue
+    , const uint32_t glue
+    , const uint32_t backtrack_level
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 3) {
@@ -1448,7 +1457,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl = cl_alloc.Clause_new(learnt_clause
         #ifdef STATS_NEEDED
         , sumConflicts()
-        , clauseID++
+        , clauseID
         #endif
         );
         cl->makeRed(glue);
@@ -1461,9 +1470,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             && drat
             && learnt_clause.size() > 3
         ) {
-            dump_sql_clause_data(glue);
+            dump_sql_clause_data(glue, backtrack_level);
         }
         #endif
+        clauseID++;
 
         return cl;
     }
@@ -1527,7 +1537,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    cl = handle_last_confl_otf_subsumption(cl, glue);
+    cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
