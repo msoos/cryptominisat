@@ -815,4 +815,3 @@ void SQLiteStats::reduceDB(
         std::exit(-1);
     }
 }
-
