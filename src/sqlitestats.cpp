@@ -82,7 +82,7 @@ bool SQLiteStats::setup(const Solver* solver)
     }
 
     getID(solver);
-    addStartupData(solver);
+    addStartupData();
     initRestartSTMT();
     initReduceDBSTMT();
     initTimePassedSTMT();
@@ -116,9 +116,8 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, version, `runtime`) values ("
+    << "INSERT INTO solverRun (runID, `runtime`) values ("
     << runID
-    << ", \"" << Solver::get_version_sha1() << "\""
     << ", " << time(NULL)
     << ");";
 
@@ -186,14 +185,13 @@ void SQLiteStats::add_tag(const std::pair<string, string>& tag)
     }
 }
 
-void SQLiteStats::addStartupData(const Solver* solver)
+void SQLiteStats::addStartupData()
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `startup` (`runID`, `startTime`, `verbosity`) VALUES ("
+    << "INSERT INTO `startup` (`runID`, `startTime`) VALUES ("
     << runID << ","
-    << "datetime('now') , "
-    << solver->getConf().verbosity
+    << "datetime('now')"
     << ");";
 
     if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {

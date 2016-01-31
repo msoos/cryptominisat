@@ -1237,6 +1237,7 @@ int Main::solve()
     }
 
     solver->add_sql_tag("commandline", commandLine);
+    solver->add_sql_tag("verbosity", lexical_cast<string>(conf.verbosity));
     solver->add_sql_tag("threads", lexical_cast<string>(num_threads));
     solver->add_sql_tag("version", solver->get_version());
     solver->add_sql_tag("SHA-revision", solver->get_version_sha1());

@@ -85,7 +85,7 @@ bool MySQLStats::setup(const Solver* solver)
     }
 
     getID(solver);
-    addStartupData(solver);
+    addStartupData();
     initRestartSTMT();
     initReduceDBSTMT();
     initTimePassedSTMT();
@@ -137,15 +137,13 @@ bool MySQLStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, version, `runtime`) values ("
+    << "INSERT INTO solverRun (runID, `runtime`) values ("
     << runID
-    << ", \"" << Solver::get_version_sha1() << "\""
     << ", " << time(NULL)
     << ");";
 
     //Inserting element into solverruns to get unique ID
     if (mysql_query(serverConn, ss.str().c_str())) {
-
         if (solver->getConf().verbosity >= 6) {
             cerr << "c ERROR Couldn't insert into table 'solverruns'" << endl;
             cerr << "c " << mysql_error(serverConn) << endl;
@@ -205,14 +203,13 @@ void MySQLStats::add_tag(const std::pair<string, string>& tag)
     }
 }
 
-void MySQLStats::addStartupData(const Solver* solver)
+void MySQLStats::addStartupData()
 {
     std::stringstream ss;
     ss
     << "INSERT INTO `startup` (`runID`, `startTime`, `verbosity`) VALUES ("
     << runID << ","
-    << "NOW() , "
-    << solver->getConf().verbosity
+    << "NOW()"
     << ");";
 
     if (mysql_query(serverConn, ss.str().c_str())) {

@@ -151,15 +151,13 @@ CREATE TABLE `memused` (
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
   `runID` bigint(20) NOT NULL,
-  `version` varchar(255) NOT NULL,
   `runtime` bigint(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `startup`;
 CREATE TABLE `startup` (
   `runID` bigint(20) NOT NULL,
-  `startTime` datetime NOT NULL,
-  `verbosity` int(20) NOT NULL
+  `startTime` datetime NOT NULL
 );
 
 DROP TABLE IF EXISTS `finishup`;

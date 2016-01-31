@@ -91,7 +91,7 @@ private:
     void getID(const Solver* solver);
     bool tryIDInSQL(const Solver* solver);
 
-    void addStartupData(const Solver* solver);
+    void addStartupData();
     void initRestartSTMT();
     void initTimePassedSTMT();
     void initMemUsedSTMT();
