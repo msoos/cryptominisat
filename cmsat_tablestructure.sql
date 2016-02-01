@@ -183,12 +183,13 @@ CREATE TABLE `clauseStats` (
   `decision_level` int(20) NOT NULL,
   `propagation_level` int(20) NOT NULL,
   `avg_vsids_score` double NOT NULL,
-  `antecedents_avg_glue` double NOT NULL,
+  `antecedents_avg_glue_long_reds` double NOT NULL,
   `antecedents_avg_len` double NOT NULL,
   `antecedents_avg_age_reds` double NOT NULL,
   `antecedents_avg_vsids` double NOT NULL,
   `conflicts_this_restart` bigint(20) NOT NULL,
-  `avg_vsids_of_resolving_literals` double NOT NULL
+  `avg_vsids_of_resolving_literals` double NOT NULL,
+  `num_overlap_literals` int(20) NOT NULL
   -- `avg_vsids_score_resolvents` int(20) NOT NULL
 );
 

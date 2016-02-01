@@ -141,7 +141,7 @@ void SQLiteStats::dump_clause_stats(
     , uint32_t glue
     , uint32_t backtrack_level
     , uint32_t size
-    , ResolutionTypes<uint16_t> resoltypes
+    , ResolutionTypes<uint16_t> resolutions
     , size_t decision_level
     , size_t propagation_level
     , double avg_vsids_score
@@ -150,14 +150,16 @@ void SQLiteStats::dump_clause_stats(
 ) {
 
     double avg_age_reds = 0;
-    if (resoltypes.longRed > 0) {
-        avg_age_reds = (double)resoltypes.sum_age_long_reds/(double)resoltypes.longRed;
+    if (resolutions.longRed > 0) {
+        avg_age_reds = (double)resolutions.sum_age_long_reds/(double)resolutions.longRed;
     }
 
     double avg_glue_long_reds = 0;
-    if (resoltypes.longRed) {
-        avg_glue_long_reds = (double)resoltypes.sum_glue_long_reds/(double)resoltypes.longRed;
+    if (resolutions.longRed) {
+        avg_glue_long_reds = (double)resolutions.sum_glue_long_reds/(double)resolutions.longRed;
     }
+
+    uint32_t num_overlap_literals = resolutions.sum_size()-(resolutions.sum()-1)-size;
 
     std::stringstream ss;
     ss
@@ -173,16 +175,17 @@ void SQLiteStats::dump_clause_stats(
     << glue << ", "
     << backtrack_level << ", "
     << size << ", "
-    << resoltypes.sum() << ", "
+    << resolutions.sum() << ", "
     << decision_level << ", "
     << propagation_level << ", "
     << avg_vsids_score << ", "
     << avg_glue_long_reds << ", "
-    << (double)resoltypes.sum_size()/(double)resoltypes.sum()  << ", "
+    << (double)resolutions.sum_size()/(double)resolutions.sum()  << ", "
     << avg_age_reds  << ", "
-    << (double)resoltypes.sum_vsids/(double)resoltypes.sum_size() << ", "
+    << (double)resolutions.sum_vsids/(double)resolutions.sum_size() << ", "
     << conflicts_this_restart << ", "
-    << avg_vsids_of_resolving_literals
+    << avg_vsids_of_resolving_literals << ", "
+    << num_overlap_literals
     << ");"
     ;
 

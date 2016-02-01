@@ -456,7 +456,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             if (cl->red()) {
                 resolutions.longRed++;
                 stats.resolvs.longRed++;
+                #ifdef STATS_NEEDED
                 resolutions.sum_age_long_reds += sumConflicts() - cl->stats.introduced_at_conflict;
+                #endif
                 resolutions.sum_glue_long_reds += cl->stats.glue;
             } else {
                 resolutions.longIrred++;
