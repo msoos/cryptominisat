@@ -136,11 +136,7 @@ struct DratFile: public Drat
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    todel << "0"
-                    #ifdef STATS_NEEDED
-                    " 0"
-                    #endif
-                    "\n";
+                    todel << "0\n";
                     delete_filled = true;
                 } else {
                     *file << "0 "
