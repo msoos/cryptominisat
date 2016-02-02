@@ -192,8 +192,15 @@ CREATE TABLE `clauseStats` (
   `num_overlap_literals` int(20) NOT NULL
   -- `avg_vsids_score_resolvents` int(20) NOT NULL
 );
+create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
 
--- create index `idx5` on `restart` (`runID`,`conflicts`);
+DROP TABLE IF EXISTS `goodClauses`;
+create table `goodClauses` (
+    `runID` bigint(20) NOT NULL,
+    `clauseID` bigint(20) NOT NULL
+);
+create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
+
 -- create index `idx6` on `restart` (`runID`,`simplifications`);
 -- create index `idx7` on `timepassed` (`runID`,`conflicts`);
 -- create index `idx7_2` on `memused` (`runID`,`conflicts`);
