@@ -6,44 +6,6 @@ import sqlite3
 import optparse
 import operator
 
-usage = "usage: %prog [options] sqlitedb"
-parser = optparse.OptionParser(usage=usage)
-
-parser.add_option("--maxtime", metavar="CUTOFF",
-                  dest="maxtime", default=20, type=int,
-                  help="Max time for an operation")
-
-parser.add_option("--maxmemory", metavar="CUTOFF",
-                  dest="maxmemory", default=500, type=int,
-                  help="Max memory for a subsystem")
-
-parser.add_option("--minmemory", metavar="MINMEM",
-                  dest="minmemory", default=100, type=int,
-                  help="Minimum memory to be checked for RSS vs counted check")
-
-parser.add_option("--verbose", "-v", action="store_true", default=False,
-                  dest="verbose", help="Print more output")
-
-
-(options, args) = parser.parse_args()
-
-if len(args) != 1:
-    print("ERROR: You must give exactly one argument, the sqlite3 database file")
-    exit(-1)
-
-dbfname = args[0]
-print("Using sqlite3db file %s" % dbfname)
-
-# for memory:
-# a = """
-# select max(mysum) from
-#     (select time, conflicts, sum(MB) as mysum
-#     from memused
-#     group by conflicts
-#     ) as a;
-# """
-
-
 class Query:
     def __init__(self):
         self.conn = sqlite3.connect(dbfname)
@@ -255,8 +217,8 @@ class Query:
             ) as mems, tags
 
             where a.maxconfl > 60000
-            and a.maxtime < 200
-            and a.maxtime > 50
+            and a.maxtime < 50
+            and a.maxtime > 20
             and a.runID = b.runID
             and tags.runID = a.runID
             and tags.tagname = "filename"
@@ -276,18 +238,43 @@ class Query:
                   (runID, t/60.0, confl/(1000.0), mb/1024.0, fname))
 
 
+if __name__ == "__main__":
+    usage = "usage: %prog [options] sqlitedb"
+    parser = optparse.OptionParser(usage=usage)
 
+    parser.add_option("--maxtime", metavar="CUTOFF",
+                      dest="maxtime", default=20, type=int,
+                      help="Max time for an operation")
 
+    parser.add_option("--maxmemory", metavar="CUTOFF",
+                      dest="maxmemory", default=500, type=int,
+                      help="Max memory for a subsystem")
 
+    parser.add_option("--minmemory", metavar="MINMEM",
+                      dest="minmemory", default=100, type=int,
+                      help="Minimum memory to be checked for RSS vs counted check")
 
-with Query() as q:
-    q.find_intersting_problems()
-    q.find_worst_unaccounted_memory()
-    q.check_memory_rss()
-    q.check_memory()
-    q.memory_distrib()
-    q.find_time_outliers()
-    q.calc_time_spent()
+    parser.add_option("--verbose", "-v", action="store_true", default=False,
+                      dest="verbose", help="Print more output")
+
+    (options, args) = parser.parse_args()
+
+    if len(args) != 1:
+        print("ERROR: You must give exactly one argument, the sqlite3 database file")
+        exit(-1)
+
+    dbfname = args[0]
+    print("Using sqlite3db file %s" % dbfname)
+
+    #peform queries
+    with Query() as q:
+        q.find_intersting_problems()
+        q.find_worst_unaccounted_memory()
+        q.check_memory_rss()
+        q.check_memory()
+        q.memory_distrib()
+        q.find_time_outliers()
+        q.calc_time_spent()
 
 
 
