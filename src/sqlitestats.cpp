@@ -481,7 +481,7 @@ void SQLiteStats::time_passed_min(
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 73;
+    const size_t numElems = 75;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -527,6 +527,7 @@ void SQLiteStats::initRestartSTMT()
     << ", `decisions`"
     << ", `flipped`, `varSetPos`, `varSetNeg`"
     << ", `free`, `replaced`, `eliminated`, `set`"
+    << ", `clauseIDstartInclusive`, `clauseIDendExclusive`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -655,6 +656,10 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, solver->varReplacer->get_num_replaced_vars());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_vars_elimed());
     sqlite3_bind_int64(stmtRst, bindAt++, search->getTrailSize());
+
+    //ClauseID
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_start_inclusive);
+    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_end_exclusive);
 
     int rc = sqlite3_step(stmtRst);
     if (rc != SQLITE_DONE) {

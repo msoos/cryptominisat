@@ -179,7 +179,7 @@ class Searcher : public HyperEngine
         void reduce_db_if_needed();
         void clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed();
-        void save_search_loop_stats();
+        void dump_search_loop_stats();
         bool must_abort(lbool status);
         void print_search_loop_num();
         uint64_t loop_num;

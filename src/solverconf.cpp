@@ -100,7 +100,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //SQL
         , dump_individual_search_time(true)
-        , dump_individual_restarts(false)
+        , dump_individual_restarts(true)
 
         //Var-elim
         , doVarElim        (true)

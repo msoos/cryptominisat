@@ -123,7 +123,9 @@ CREATE TABLE `restart` (
   `free` int(20) NOT NULL,
   `replaced` int(20) NOT NULL,
   `eliminated` int(20) NOT NULL,
-  `set` int(20) NOT NULL
+  `set` int(20) NOT NULL,
+  `clauseIDstartInclusive` int(20) NOT NULL,
+  `clauseIDendExclusive` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `timepassed`;

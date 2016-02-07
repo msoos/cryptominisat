@@ -965,8 +965,10 @@ lbool Searcher::search()
     const double myTime = cpuTime();
 
     //Stats reset & update
-    if (params.update)
+    if (params.update) {
         stats.numRestarts++;
+        stats.clauseID_at_start_inclusive = clauseID;
+    }
     hist.clear();
     hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
@@ -1006,6 +1008,7 @@ lbool Searcher::search()
             check_blocking_restart();
             if (!handle_conflict(confl)) {
                 dump_search_sql(myTime);
+                dump_search_loop_stats();
                 return l_False;
             }
         } else {
@@ -1033,6 +1036,7 @@ lbool Searcher::search()
             dec_ret = new_decision();
             if (dec_ret != l_Undef) {
                 dump_search_sql(myTime);
+                dump_search_loop_stats();
                 return dec_ret;
             }
         }
@@ -1051,6 +1055,7 @@ lbool Searcher::search()
         return l_False;
     }
     dump_search_sql(myTime);
+    dump_search_loop_stats();
 
     return l_Undef;
 }
@@ -1694,7 +1699,7 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-void Searcher::dump_restart_sql()
+inline void Searcher::dump_restart_sql()
 {
     if (!conf.dump_individual_restarts)
         return;
@@ -1702,6 +1707,8 @@ void Searcher::dump_restart_sql()
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
+    thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
+    thisStats.clauseID_at_end_exclusive = clauseID;
 
     solver->sqlStats->restart(
         thisPropStats
@@ -1826,7 +1833,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
     return l_Undef;
 }
 
-void Searcher::save_search_loop_stats()
+inline void Searcher::dump_search_loop_stats()
 {
     #ifdef STATS_NEEDED
     if (solver->sqlStats) {
@@ -1980,7 +1987,6 @@ lbool Searcher::solve(
             goto end;
         }
 
-        save_search_loop_stats();
         if (must_consolidate_mem) {
             cl_alloc.consolidate(solver);
             must_consolidate_mem = false;
@@ -2056,12 +2062,6 @@ void Searcher::finish_up_solve(const lbool status)
         << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
         << endl;
     }
-
-    #ifdef STATS_NEEDED
-    if (solver->sqlStats) {
-        dump_restart_sql();
-    }
-    #endif
 
     print_iteration_solving_stats();
 }
