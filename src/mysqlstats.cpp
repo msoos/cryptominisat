@@ -207,7 +207,7 @@ void MySQLStats::addStartupData()
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `startup` (`runID`, `startTime`, `verbosity`) VALUES ("
+    << "INSERT INTO `startup` (`runID`, `startTime`) VALUES ("
     << runID << ","
     << "NOW()"
     << ");";

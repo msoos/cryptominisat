@@ -1,6 +1,14 @@
 #!/bin/bash
 
-SETUP_DB="create database cmsat;
+DROP_USER="DROP USER 'cmsat_solver'@'localhost';"
+DROP_USER2="DROP USER 'cmsat_presenter'@'localhost';"
+
+SETUP_DB="
+    FLUSH PRIVILEGES;
+    drop database if exists cmsat;
+    create database cmsat;
+    use cmsat;
+
     create user 'cmsat_solver'@'localhost' identified by '';
     grant insert,update on cmsat.* to 'cmsat_solver'@'localhost';
     create user 'cmsat_presenter'@'localhost' identified by '';
@@ -8,6 +16,9 @@ SETUP_DB="create database cmsat;
 
 if [ $1 ]; then
     echo "Using password '$1' for root access to mysql"
+    echo "$DROP_USER" | mysql -u root 2> /dev/null
+    echo "$DROP_USER2" | mysql -u root 2> /dev/null
+
     echo "$SETUP_DB" | mysql -u root -p "$1"
     if [ $? -ne 0 ]; then
         echo "ERROR: Cannot create database!";
@@ -20,6 +31,9 @@ if [ $1 ]; then
     fi
 else
     echo "Not using any password for root access to mysql"
+    echo "$DROP_USER" | mysql -u root 2> /dev/null
+    echo "$DROP_USER2" | mysql -u root 2> /dev/null
+
     echo "$SETUP_DB" | mysql -u root
     if [ $? -ne 0 ]; then
         echo "ERROR: Cannot create database!";
