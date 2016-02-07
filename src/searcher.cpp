@@ -1702,9 +1702,6 @@ struct MyPolarData
 #ifdef STATS_NEEDED
 inline void Searcher::dump_restart_sql()
 {
-    if (!conf.dump_individual_restarts_and_clauses)
-        return;
-
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
@@ -1837,7 +1834,9 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 inline void Searcher::dump_search_loop_stats()
 {
     #ifdef STATS_NEEDED
-    if (solver->sqlStats) {
+    if (solver->sqlStats
+        && conf.dump_individual_restarts_and_clauses
+    ) {
         dump_restart_sql();
     }
     #endif
