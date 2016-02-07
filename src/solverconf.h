@@ -199,7 +199,7 @@ class SolverConf
 
         //SQL
         bool      dump_individual_search_time;
-        bool      dump_individual_restarts;
+        bool      dump_individual_restarts_and_clauses;
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination

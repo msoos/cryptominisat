@@ -1478,6 +1478,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         #ifdef STATS_NEEDED
         if (solver->sqlStats
             && drat
+            && conf.dump_individual_restarts_and_clauses
             && learnt_clause.size() > 3
         ) {
             dump_sql_clause_data(
@@ -1701,7 +1702,7 @@ struct MyPolarData
 #ifdef STATS_NEEDED
 inline void Searcher::dump_restart_sql()
 {
-    if (!conf.dump_individual_restarts)
+    if (!conf.dump_individual_restarts_and_clauses)
         return;
 
     //Propagation stats
