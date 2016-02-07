@@ -70,15 +70,20 @@ struct Drat
         return *this;
     }
 
-     virtual Drat& operator<<(const DratFlag)
+    virtual Drat& operator<<(const DratFlag)
     {
         return *this;
     }
+
+    virtual void setFile(std::ostream*)
+    {
+    }
 };
 
+template<bool add_ID>
 struct DratFile: public Drat
 {
-    void setFile(std::ostream* _file)
+    void setFile(std::ostream* _file) override
     {
         file = _file;
     }
@@ -122,10 +127,10 @@ struct DratFile: public Drat
         } else {
             *file << cl << " ";
         }
-        #ifdef STATS_NEEDED
-        ID = cl.stats.ID;
-        assert(ID != 0);
-        #endif
+        if (add_ID) {
+            ID = cl.stats.ID;
+            assert(ID != 0);
+        }
 
         return *this;
     }
@@ -139,15 +144,17 @@ struct DratFile: public Drat
                     todel << "0\n";
                     delete_filled = true;
                 } else {
-                    *file << "0 "
-                    #ifdef STATS_NEEDED
-                    << ID
-                    #endif
-                    << "\n";
+                    if (add_ID) {
+                        *file << "0 "
+                        << ID
+                        << "\n";
+                    } else {
+                        *file << "0 \n";
+                    }
                 }
-                #ifdef STATS_NEEDED
-                ID = 1;
-                #endif
+                if (add_ID) {
+                    ID = 1;
+                }
                 must_delete_next = false;
                 break;
 
@@ -191,9 +198,7 @@ struct DratFile: public Drat
     }
 
     std::ostream* file = NULL;
-    #ifdef STATS_NEEDED
     int64_t ID = 1;
-    #endif
 };
 
 }

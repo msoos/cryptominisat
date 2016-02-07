@@ -647,13 +647,18 @@ DLL_PUBLIC void SATSolver::print_stats() const
     data->solvers[data->which_solved]->print_stats(cpu_time);
 }
 
-DLL_PUBLIC void SATSolver::set_drat(std::ostream* os)
+DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
 {
     if (data->solvers.size() > 1) {
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
-    DratFile* drat = new DratFile();
+    Drat* drat = NULL;
+    if (add_ID) {
+        drat = new DratFile<true>;
+    } else {
+        drat = new DratFile<false>;
+    }
     drat->setFile(os);
     if (data->solvers[0]->drat)
         delete data->solvers[0]->drat;

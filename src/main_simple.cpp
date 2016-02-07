@@ -180,7 +180,7 @@ int main(int argc, char** argv)
     SATSolver S(&conf);
     solver = &S;
     if (dratf) {
-        solver->set_drat(dratf);
+        solver->set_drat(dratf, false);
         if (num_threads > 1) {
             cout << "ERROR: Cannot have DRAT and multiple threads." << endl;
             exit(-1);

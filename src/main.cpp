@@ -281,6 +281,8 @@ void Main::add_supported_options()
         , "Multiplier for all simplification cutoffs")
     ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
+    ("clid", po::value(&clause_ID_needed)->default_value(clause_ID_needed)
+        , "Add clause IDs to DRAT output. 0 = no ID, 1 = add ID")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -1214,7 +1216,7 @@ int Main::solve()
     solver = new SATSolver((void*)&conf);
     solverToInterrupt = solver;
     if (dratf) {
-        solver->set_drat(dratf);
+        solver->set_drat(dratf, clause_ID_needed);
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
