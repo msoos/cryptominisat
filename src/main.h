@@ -125,7 +125,7 @@ class Main
         //Drat checker
         std::ostream* dratf = NULL;
         bool dratDebug = false;
-        int clause_ID_needed = 0;
+        bool clause_ID_needed = false;
 
         vector<uint32_t> independent_vars;
 };
