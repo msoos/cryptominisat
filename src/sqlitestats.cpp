@@ -70,6 +70,12 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmt_clause_stats);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     //Close clonnection
     sqlite3_close(db);
 }
@@ -87,6 +93,7 @@ bool SQLiteStats::setup(const Solver* solver)
     initReduceDBSTMT();
     initTimePassedSTMT();
     initMemUsedSTMT();
+    init_clause_stats_STMT();
 
     return true;
 }
@@ -133,66 +140,6 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
     }
 
     return true;
-}
-
-void SQLiteStats::dump_clause_stats(
-    const Solver* solver
-    , uint64_t clauseID
-    , uint32_t glue
-    , uint32_t backtrack_level
-    , uint32_t size
-    , ResolutionTypes<uint16_t> resolutions
-    , size_t decision_level
-    , size_t propagation_level
-    , double avg_vsids_score
-    , uint64_t conflicts_this_restart
-    , double avg_vsids_of_resolving_literals
-) {
-
-    double avg_age_reds = 0;
-    if (resolutions.longRed > 0) {
-        avg_age_reds = (double)resolutions.sum_age_long_reds/(double)resolutions.longRed;
-    }
-
-    double avg_glue_long_reds = 0;
-    if (resolutions.longRed) {
-        avg_glue_long_reds = (double)resolutions.sum_glue_long_reds/(double)resolutions.longRed;
-    }
-
-    uint32_t num_overlap_literals = resolutions.sum_size()-(resolutions.sum()-1)-size;
-
-    std::stringstream ss;
-    ss
-    << "INSERT INTO `clauseStats`"
-
-    << " VALUES ("
-    << runID << ", "
-    << solver->get_solve_stats().numSimplify << ", "
-    << solver->sumRestarts() << ", "
-    << solver->sumConflicts() << ", "
-
-    << clauseID << ", "
-    << glue << ", "
-    << backtrack_level << ", "
-    << size << ", "
-    << resolutions.sum() << ", "
-    << decision_level << ", "
-    << propagation_level << ", "
-    << avg_vsids_score << ", "
-    << avg_glue_long_reds << ", "
-    << (double)resolutions.sum_size()/(double)resolutions.sum()  << ", "
-    << avg_age_reds  << ", "
-    << (double)resolutions.sum_vsids/(double)resolutions.sum_size() << ", "
-    << conflicts_this_restart << ", "
-    << avg_vsids_of_resolving_literals << ", "
-    << num_overlap_literals
-    << ");"
-    ;
-
-    if (sqlite3_exec(db, ss.str().c_str(), NULL, NULL, NULL)) {
-        cerr << "ERROR Couldn't insert into table 'finishup'" << endl;
-        std::exit(-1);
-    }
 }
 
 void SQLiteStats::getID(const Solver* solver)
@@ -820,6 +767,126 @@ void SQLiteStats::reduceDB(
 
     if (sqlite3_clear_bindings(stmtReduceDB)) {
         cerr << "Error calling sqlite3_clear_bindings on stmtReduceDB" << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::init_clause_stats_STMT()
+{
+    const size_t numElems = 20;
+
+    std::stringstream ss;
+    ss << "insert into `clauseStats`"
+    << "("
+    << " `runID`,"
+    << " `simplifications`,"
+    << " `restarts`,"
+    << " `conflicts`,"
+    << ""
+    << " `clauseID`,"
+    << ""
+    << " `glue`,"
+    << " `backtrack_level`,"
+    << " `size`,"
+    << " `sum_resolutions`,"
+    << " `decision_level`,"
+    << " `propagation_level`,"
+    << " `avg_vsids_score`,"
+    << " `antecedents_avg_glue_long_reds`,"
+    << " `antecedents_avg_len`,"
+    << " `antecedents_avg_age_reds`,"
+    << " `antecedents_avg_vsids`,"
+    << " `conflicts_this_restart`,"
+    << " `avg_vsids_of_resolving_literals`,"
+    << " `num_overlap_literals`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    int rc = sqlite3_prepare(db, ss.str().c_str(), -1, &stmt_clause_stats, NULL);
+    if (rc) {
+        cout
+        << "Error in sqlite_prepare(), INSERT failed"
+        << endl
+        << sqlite3_errmsg(db)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::dump_clause_stats(
+    const Solver* solver
+    , uint64_t clauseID
+    , uint32_t glue
+    , uint32_t backtrack_level
+    , uint32_t size
+    , ResolutionTypes<uint16_t> resolutions
+    , size_t decision_level
+    , size_t propagation_level
+    , double avg_vsids_score
+    , uint64_t conflicts_this_restart
+    , double avg_vsids_of_resolving_literals
+) {
+
+    double avg_age_reds = 0;
+    if (resolutions.longRed > 0) {
+        avg_age_reds = (double)resolutions.sum_age_long_reds/(double)resolutions.longRed;
+    }
+
+    double avg_glue_long_reds = 0;
+    if (resolutions.longRed) {
+        avg_glue_long_reds = (double)resolutions.sum_glue_long_reds/(double)resolutions.longRed;
+    }
+
+    uint32_t num_overlap_literals = resolutions.sum_size()-(resolutions.sum()-1)-size;
+
+    int bindAt = 1;
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts());
+
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.sum());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_vsids_score);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_size()/(double)resolutions.sum() );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_vsids/(double)resolutions.sum_size());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_vsids_of_resolving_literals);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
+
+    int rc = sqlite3_step(stmt_clause_stats);
+    if (rc != SQLITE_DONE) {
+        cout
+        << "ERROR: while executing clause DB cleaning SQLite prepared statement"
+        << endl;
+
+        cout << "Error from sqlite: "
+        << sqlite3_errmsg(db)
+        << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_reset(stmt_clause_stats)) {
+        cerr << "Error calling sqlite3_reset on stmt_clause_stats" << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_clear_bindings(stmt_clause_stats)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmt_clause_stats" << endl;
         std::exit(-1);
     }
 }

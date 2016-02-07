@@ -97,6 +97,7 @@ private:
     void initRestartSTMT();
     void initTimePassedSTMT();
     void initMemUsedSTMT();
+    void init_clause_stats_STMT();
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
@@ -105,6 +106,7 @@ private:
     sqlite3_stmt *stmtMemUsed = NULL;
     sqlite3_stmt *stmtReduceDB = NULL;
     sqlite3_stmt *stmtRst = NULL;
+    sqlite3_stmt *stmt_clause_stats = NULL;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;
