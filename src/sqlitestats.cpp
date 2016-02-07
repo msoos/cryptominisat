@@ -743,7 +743,7 @@ void SQLiteStats::reduceDB(
     , const Solver* solver
 ) {
 
-     int bindAt = 1;
+    int bindAt = 1;
     sqlite3_bind_int64(stmtReduceDB, bindAt++, runID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
