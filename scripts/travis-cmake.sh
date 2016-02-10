@@ -24,6 +24,7 @@ set -e
 set -x
 
 COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
+COMMON_CMAKE_ARGS_NO_TEST="-G \"Unix Makefiles\""
 
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
@@ -55,7 +56,7 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
-    NORMAL|AWS)
+    NORMAL)
         sudo apt-get install libboost-program-options-dev
         eval cmake "${COMMON_CMAKE_ARGS}" \
                    "${SOURCE_DIR}"
@@ -172,6 +173,12 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
+    NOTEST)
+        sudo apt-get install libboost-program-options-dev
+        eval cmake "${COMMON_CMAKE_ARGS_NO_TEST}" \
+                   "${SOURCE_DIR}"
+    ;;
+
     GAUSS)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
@@ -201,15 +208,16 @@ case $CMS_CONFIG in
     ;;
 esac
 
-if [ "$CMS_CONFIG" != "AWS" ]; then
-    make
-    if [ "$CMS_CONFIG" == "GAUSS" ]; then
-        echo "Currently, Gauss is only being *built*. Not tried for correctness"
-        exit 0
-    fi
-    ctest -V
-    sudo make install
+make
+if [ "$CMS_CONFIG" == "GAUSS" ]; then
+    echo "Currently, Gauss is only being *built*. Not tried for correctness"
+    exit 0
 fi
+
+if [ "$CMS_CONFIG" != "NOTEST" ]; then
+    ctest -V
+fi
+sudo make install
 
 case $CMS_CONFIG in
     MYSQL|WEB)
@@ -267,7 +275,7 @@ fi
 
 
 #do fuzz testing
-if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "AWS" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] && [ "$CMS_CONFIG" != "MYSQL" ]; then
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] && [ "$CMS_CONFIG" != "MYSQL" ]; then
     cd ../scripts/fuzz/
     ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
@@ -284,15 +292,6 @@ case $CMS_CONFIG in
         sudo apt-get update
         sudo apt-get install -y nodejs
         ./install_web.sh
-    ;;
-
-    AWS)
-        sudo apt-get install -y python-boto
-        sudo apt-get install -y python-pip
-        sudo pip install awscli
-        cd scripts/aws
-        ./local_test.sh
-        exit 0
     ;;
 
     *)
