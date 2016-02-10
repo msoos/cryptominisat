@@ -214,9 +214,12 @@ if [ "$CMS_CONFIG" == "GAUSS" ]; then
     exit 0
 fi
 
-if [ "$CMS_CONFIG" != "NOTEST" ]; then
-    ctest -V
+if [ "$CMS_CONFIG" == "NOTEST" ]; then
+    sudo make install
+    exit 0
 fi
+
+ctest -V
 sudo make install
 
 case $CMS_CONFIG in
