@@ -739,7 +739,7 @@ DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
     data->solvers[0]->set_sqlite(filename);
 }
 
-void SATSolver::set_mysql(
+DLL_PUBLIC void SATSolver::set_mysql(
     std::string sqlServer
     , std::string sqlUser
     , std::string sqlPass
