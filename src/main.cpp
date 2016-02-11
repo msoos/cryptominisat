@@ -108,11 +108,11 @@ bool fileExists(const string& filename)
 Main::Main(int _argc, char** _argv) :
     argc(_argc)
     , argv(_argv)
-    , fileNamePresent (false)
     , sqlServer ("localhost")
     , sqlUser ("cmsat_solver")
     , sqlPass ("")
     , sqlDatabase("cmsat")
+    , fileNamePresent (false)
 {
 }
 
