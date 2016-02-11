@@ -39,11 +39,23 @@ static bool print_thread_start_and_finish = false;
 
 namespace CMSat {
     struct CMSatPrivateData {
-        explicit CMSatPrivateData(std::atomic<bool>* _must_interrupt) {
+        explicit CMSatPrivateData(std::atomic<bool>* _must_interrupt)
+        {
             must_interrupt = _must_interrupt;
+            if (must_interrupt == NULL) {
+                must_interrupt = new std::atomic<bool>(false);
+                must_interrupt_needs_delete = true;
+            }
         }
         ~CMSatPrivateData()
         {
+            for(Solver* this_s: solvers) {
+                delete this_s;
+            }
+            if (must_interrupt_needs_delete) {
+                delete must_interrupt;
+            }
+
             delete log; //this will also close the file
             delete shared_data;
         }
@@ -60,6 +72,7 @@ namespace CMSat {
         SharedData *shared_data = NULL;
         int which_solved = 0;
         std::atomic<bool>* must_interrupt;
+        bool must_interrupt_needs_delete = false;
         unsigned cls = 0;
         unsigned vars_to_add = 0;
         vector<Lit> cls_lits;
@@ -101,7 +114,7 @@ DLL_PUBLIC SATSolver::SATSolver(
     , std::atomic<bool>* interrupt_asap
     )
 {
-    data = new CMSatPrivateData(new std::atomic<bool>(false));
+    data = new CMSatPrivateData(interrupt_asap);
 
     if (config && ((SolverConf*) config)->verbosity >= 2) {
         print_thread_start_and_finish = true;
@@ -111,10 +124,6 @@ DLL_PUBLIC SATSolver::SATSolver(
 
 DLL_PUBLIC SATSolver::~SATSolver()
 {
-    for(Solver* this_s: data->solvers) {
-        delete this_s;
-    }
-    delete data->must_interrupt;
     delete data;
 }
 
