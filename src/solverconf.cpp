@@ -272,6 +272,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , loopTimeout(3000)
         , kappa(0.5)
         , multisample(true)
+        , onlyCount(true)
         , aggregateSolutions(true)
 {
 

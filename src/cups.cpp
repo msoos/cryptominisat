@@ -590,21 +590,19 @@ int CUPS::solve()
         "is larger than the size of the independent set.\n" << endl;
         return -1;
     }
+    SATCount solCount;
     if (conf.startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
 
-        SATCount solCount;
         std::mt19937 randomEngine {};
         SeedEngine(randomEngine);
         solCount = ApproxMC(solver, resLog, randomEngine);
         double elapsedTime = cpuTimeTotal() - startTime;
-        cout << "Completed ApproxMC at " << elapsedTime << " s";
+        cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
         if (elapsedTime > conf.totalTimeout - 3000) {
             cout << " (TIMED OUT)" << endl;
             return 0;
         }
-        cout << endl;
-        //printf("Solution count estimate is %d * 2^%d\n", solCount.cellSolCount, solCount.hashCount);
         if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
             cout << "The input formula is unsatisfiable." << endl;
             return 0;
@@ -614,89 +612,92 @@ int CUPS::solve()
     } else {
         cout << "Using manually-specified startIteration" << endl;
     }
+     lbool ret = l_True;
+    if (conf.onlyCount){
+        printf("Number of solutions is:%d x 2^%d\n", solCount.cellSolCount, solCount.hashCount);
 
-    uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
-    uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
-    uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
-    uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
-    printf("loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
-    printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
-    uint32_t numCallsInOneLoop = 0;
-    if (conf.callsPerSolver == 0) {
-        numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded);
-        if (numCallsInOneLoop == 0) {
-            numCallsInOneLoop = 1;
+    }else{
+     
+        uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
+        uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
+        uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
+        uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
+        printf("loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
+        printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
+        uint32_t numCallsInOneLoop = 0;
+        if (conf.callsPerSolver == 0) {
+            numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded);
+            if (numCallsInOneLoop == 0) {
+                numCallsInOneLoop = 1;
+            }
+        } else {
+            numCallsInOneLoop = conf.callsPerSolver;
+            cout << "Using manually-specified callsPerSolver" << endl;
         }
-    } else {
-        numCallsInOneLoop = conf.callsPerSolver;
-        cout << "Using manually-specified callsPerSolver" << endl;
-    }
+       
+        uint32_t numCallLoops = callsNeeded / numCallsInOneLoop;
+        uint32_t remainingCalls = callsNeeded % numCallsInOneLoop;
 
-    uint32_t numCallLoops = callsNeeded / numCallsInOneLoop;
-    uint32_t remainingCalls = callsNeeded % numCallsInOneLoop;
+        cout << "Making " << numCallLoops << " loops."
+        << " calls per loop: " << numCallsInOneLoop
+        << " remaining: " << remainingCalls << endl;
+        bool timedOut = false;
+        uint32_t sampleCounter = 0;
+        std::map<string, uint32_t> threadSolutionMap;
+        double allThreadsTime = 0;
+        uint32_t allThreadsSampleCount = 0;
+        double threadStartTime = cpuTimeTotal();
 
-    cout << "Making " << numCallLoops << " loops."
-    << " calls per loop: " << numCallsInOneLoop
-    << " remaining: " << remainingCalls << endl;
-    bool timedOut = false;
-    uint32_t sampleCounter = 0;
-    std::map<string, uint32_t> threadSolutionMap;
-    double allThreadsTime = 0;
-    uint32_t allThreadsSampleCount = 0;
-    double threadStartTime = cpuTimeTotal();
+        std::mt19937 randomEngine {};
+        SeedEngine(randomEngine);
 
-    std::mt19937 randomEngine {};
-    SeedEngine(randomEngine);
-
-    uint32_t lastSuccessfulHashOffset = 0;
-    lbool ret = l_True;
-
-    /* Perform extra UniGen calls that don't fit into the loops */
-    if (remainingCalls > 0) {
-        sampleCounter = singleThreadUniGenCall(
-            remainingCalls, resLog, sampleCounter
-            , threadSolutionMap, randomEngine
-            , &lastSuccessfulHashOffset, threadStartTime);
-    }
-
-    /* Perform main UniGen call loops */
-    for (uint32_t i = 0; i < numCallLoops; i++) {
-        if (!timedOut) {
+        uint32_t lastSuccessfulHashOffset = 0;
+            /* Perform extra UniGen calls that don't fit into the loops */
+        if (remainingCalls > 0) {
             sampleCounter = singleThreadUniGenCall(
-                numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
-                , randomEngine, &lastSuccessfulHashOffset, threadStartTime
-            );
+                remainingCalls, resLog, sampleCounter
+                , threadSolutionMap, randomEngine
+                , &lastSuccessfulHashOffset, threadStartTime);
+        }
 
-            if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
-                timedOut = true;
+        /* Perform main UniGen call loops */
+        for (uint32_t i = 0; i < numCallLoops; i++) {
+            if (!timedOut) {
+                sampleCounter = singleThreadUniGenCall(
+                    numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
+                    , randomEngine, &lastSuccessfulHashOffset, threadStartTime
+                );
+
+                if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
+                    timedOut = true;
+                }
             }
         }
-    }
 
-    for (map<string, uint32_t>::iterator itt = threadSolutionMap.begin()
-        ; itt != threadSolutionMap.end()
-        ; itt++
-    ) {
-        string solution = itt->first;
-        map<string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
-        if (itg == globalSolutionMap.end()) {
-            globalSolutionMap[solution] = std::vector<uint32_t>(1, 0);
+        for (map<string, uint32_t>::iterator itt = threadSolutionMap.begin()
+            ; itt != threadSolutionMap.end()
+            ; itt++
+        ) {
+            string solution = itt->first;
+            map<string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
+            if (itg == globalSolutionMap.end()) {
+                globalSolutionMap[solution] = std::vector<uint32_t>(1, 0);
+            }
+            globalSolutionMap[solution][0] += itt->second;
+            allThreadsSampleCount += itt->second;
         }
-        globalSolutionMap[solution][0] += itt->second;
-        allThreadsSampleCount += itt->second;
-    }
 
-    double timeTaken = cpuTimeTotal() - threadStartTime;
-    allThreadsTime += timeTaken;
-    cout
-    << "Total time for UniGen2 thread " << 1
-    << ": " << timeTaken << " s"
-    << (timedOut ? " (TIMED OUT)" : "")
-    << endl;
+        double timeTaken = cpuTimeTotal() - threadStartTime;
+        allThreadsTime += timeTaken;
+        cout
+        << "Total time for UniGen2 thread " << 1
+        << ": " << timeTaken << " s"
+        << (timedOut ? " (TIMED OUT)" : "")
+        << endl;
 
-    cout << "Total time for all UniGen2 calls: " << allThreadsTime << " s" << endl;
-    cout << "Samples generated: " << allThreadsSampleCount << endl;
-
+        cout << "Total time for all UniGen2 calls: " << allThreadsTime << " s" << endl;
+        cout << "Samples generated: " << allThreadsSampleCount << endl;
+        }
     if (conf.verbosity >= 1) {
         solver->print_stats();
     }
