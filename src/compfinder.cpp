@@ -53,20 +53,6 @@ CompFinder::CompFinder(Solver* _solver) :
 {
 }
 
-void CompFinder::time_out_print(const double myTime) const
-{
-    if (solver->conf.verbosity >= 2) {
-        cout
-        << "c [comp] Timed out finding components "
-        << "BP: "
-        << std::setprecision(2) << std::fixed
-        << (double)(orig_bogoprops-bogoprops_remain)/(1000.0*1000.0)
-        << "M"
-        << solver->conf.print_times(cpuTime() - myTime)
-        << endl;
-    }
-}
-
 void CompFinder::print_found_components() const
 {
     size_t notPrinted = 0;
@@ -133,6 +119,9 @@ void CompFinder::find_components()
     timedout = false;
     add_clauses_to_component(solver->longIrredCls);
     addToCompImplicits();
+    if (timedout) {
+        reverseTable.clear();
+    }
     print_and_add_to_sql_result(myTime);
 
     assert(solver->okay());
@@ -143,26 +132,19 @@ void CompFinder::print_and_add_to_sql_result(const double myTime) const
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(bogoprops_remain, orig_bogoprops);
 
-    if (timedout) {
-        time_out_print(myTime);
-    } else {
-        assert(reverse_table_is_correct());
+    assert(reverse_table_is_correct());
 
-        if (solver->conf.verbosity >= 2
-            || (solver->conf.verbosity >=1 && used_comp_no > 1)
-        ) {
-            cout
-            << "c [comp] Found component(s): " <<  reverseTable.size()
-            << " BP: "
-            << std::setprecision(2) << std::fixed
-            << (double)(orig_bogoprops-bogoprops_remain)/(1000.0*1000.0)<< "M"
-            << " T-r: " << time_remain*100.0 << "%"
-            << solver->conf.print_times(time_used)
-            << endl;
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [comp] Found component(s): " <<  reverseTable.size()
+        << " BP: "
+        << std::setprecision(2) << std::fixed
+        << (double)(orig_bogoprops-bogoprops_remain)/(1000.0*1000.0)<< "M"
+        << solver->conf.print_times(time_used, timedout, time_remain)
+        << endl;
 
-            if (reverseTable.size() != 1) {
-                print_found_components();
-            }
+        if (reverseTable.size() > 1) {
+            print_found_components();
         }
     }
 
