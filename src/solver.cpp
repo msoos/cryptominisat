@@ -42,7 +42,6 @@
 #include "solutionextender.h"
 #include "varupdatehelper.h"
 #include "gatefinder.h"
-#include "sqlstats.h"
 #include "completedetachreattacher.h"
 #include "compfinder.h"
 #include "comphandler.h"
@@ -64,6 +63,7 @@
 #include "streambuffer.h"
 #include "gaussian.h"
 #include "matrixfinder.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 using std::cout;
@@ -2824,7 +2824,8 @@ void Solver::free_unused_watches()
             ws.clear();
         }
     }
-    watches.consolidate();
+
+    consolidate_watches();
 }
 
 bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)

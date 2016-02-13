@@ -55,7 +55,6 @@ class DistillerLongWithImpl;
 class StrImplWImplStamp;
 class CalcDefPolars;
 class SolutionExtender;
-class SQLStats;
 class ImplCache;
 class CompFinder;
 class CompHandler;
@@ -138,7 +137,6 @@ class Solver : public Searcher
         bool find_with_watchlist_a_or_b(Lit a, Lit b, int64_t* limit) const;
 
         //Systems that are used to accompilsh the tasks
-        SQLStats*              sqlStats = NULL;
         ClauseCleaner*         clauseCleaner = NULL;
         VarReplacer*           varReplacer = NULL;
         SubsumeImplicit*       subsumeImplicit = NULL;

@@ -225,6 +225,8 @@ class Searcher : public HyperEngine
         void move_activity_from_to(const uint32_t from, const uint32_t to);
         bool check_order_heap_sanity() const;
         vector<Gaussian*> gauss_matrixes;
+        SQLStats* sqlStats = NULL;
+        void consolidate_watches();
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;

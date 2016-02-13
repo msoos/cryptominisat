@@ -36,6 +36,7 @@
 #include "datasync.h"
 #include "reducedb.h"
 #include "gaussian.h"
+#include "sqlstats.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -1779,7 +1780,7 @@ void Searcher::reduce_db_if_needed()
         watches.print_stat();
     }
     must_consolidate_mem = true;
-    watches.consolidate();
+    consolidate_watches();
     conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
 
     num_red_cls_reducedb = count_num_red_cls_reducedb();
@@ -1834,7 +1835,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 inline void Searcher::dump_search_loop_stats()
 {
     #ifdef STATS_NEEDED
-    if (solver->sqlStats
+    if (sqlStats
         && conf.dump_individual_restarts_and_clauses
     ) {
         dump_restart_sql();
@@ -2941,6 +2942,28 @@ inline void Searcher::bump_var_activitiy(uint32_t var)
 void Searcher::update_var_decay()
 {
     var_decay = conf.var_decay_max;
+}
+
+void Searcher::consolidate_watches()
+{
+    double t = cpuTime();
+    watches.consolidate();
+    double time_used = cpuTime() - t;
+
+    if (conf.verbosity >= 2) {
+        cout
+        << "c [consolidate]"
+        << conf.print_times(time_used)
+        << endl;
+    }
+
+    if (sqlStats) {
+        sqlStats->time_passed_min(
+            solver
+            , "consolidate watches"
+            , time_used
+        );
+    }
 }
 
 void Searcher::write_long_cls(
