@@ -206,6 +206,43 @@ Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
 clauses.
 
+Multiple solutions
+-----
+
+To find multiple solutions to your problem, just run the solver in a loop
+and ban the previous solution found:
+
+```
+while(true) {
+    lbool ret = solver->solve();
+    if (ret != l_True) {
+        assert(ret == l_False);
+        //All solutions found.
+        exit(0);
+    }
+
+    //Use solution here. print it, for example.
+
+    //Banning found solution
+    vector<Lit> ban_solution;
+    for (uint32_t var = 0; var < solver->nVars(); var++) {
+        if (solver->get_model()[var] != l_Undef) {
+            ban_solution.push_back(
+                Lit(var, (solver->get_model()[var] == l_True)? true : false));
+        }
+    }
+    solver->add_clause(ban_solution);
+}
+```
+
+The above loop will run as long as there are solutions. It is __highly__
+suggested to __only__ add into the new clause(`bad_solutions` above) the
+variables that are "important" or "main" to your problem. Variables that were
+only used to translate the original problem into CNF should not be added.
+This way, you will not get spurious solutions that don't differ in the main,
+important variables.
+
+
 Testing
 -----
 For testing you will need the GIT checkout and get the submodules:
