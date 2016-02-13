@@ -163,7 +163,7 @@ void CNF::save_on_var_memory()
     //never resize interToOuterMain, outerToInterMain
 
     watches.resize(nVars()*2);
-    watches.consolidate();
+    watches.consolidate(); //not using the one with SQL because it's already saved
     implCache.save_on_var_memorys(nVars());
     stamp.save_on_var_memory(nVars());
     longRedCls.shrink_to_fit();
