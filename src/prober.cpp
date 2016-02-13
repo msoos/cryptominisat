@@ -237,10 +237,10 @@ void Prober::clean_clauses_after_probe()
     if (solver->conf.verbosity  >= 1 &&
         (runStats.zeroDepthAssigns > 100 || advancedCleanup)
     ) {
+        double time_used = cpuTime() - time;
         cout
-        << "c [probe] cleaning up after T: "
-        << std::setw(8) << std::fixed << std::setprecision(2)
-        << cpuTime() - time << " s "
+        << "c [probe] cleaning up after"
+        << solver->conf.print_times(time_used)
         << endl;
     }
 }

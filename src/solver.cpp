@@ -903,9 +903,8 @@ void Solver::renumber_variables()
     const double time_used = cpuTime() - myTime;
     if (conf.verbosity >= 2) {
         cout
-        << "c [renumber] T: "
-        << std::fixed << std::setw(5) << std::setprecision(2)
-        << time_used
+        << "c [renumber]"
+        << conf.print_times(time_used)
         << endl;
     }
     if (sqlStats) {
