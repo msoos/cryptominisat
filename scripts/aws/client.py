@@ -370,7 +370,8 @@ class solverThread (threading.Thread):
                 if returncode == 20 and "cryptominisat" in self.indata["solver"]:
                     if self.run_drat_trim() != 0:
                         self.parse_lemmas()
-                os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
+                os.unlink("%s/%s" %
+                          (self.temp_space, self.indata["cnf_filename"]))
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
