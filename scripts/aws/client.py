@@ -541,6 +541,9 @@ def print_to_log_local_setup():
 
 
 class VolumeAdder():
+    def __init__(self):
+        self.conn = boto.ec2.connect_to_region(self._get_region())
+
     def _get_instance_id(self):
         instance_id = boto.utils.get_instance_metadata()['instance-id']
         return instance_id
@@ -554,18 +557,20 @@ class VolumeAdder():
         return region
 
     def add_volume(self):
-        conn = boto.ec2.connect_to_region(self._get_region())
-        vol = conn.create_volume(50, self._get_availability_zone())
-        while vol.status != 'available':
-            print('Vol state: ', vol.status)
+        self.vol = self.conn.create_volume(50, self._get_availability_zone())
+        while self.vol.status != 'available':
+            print('Vol state: ', self.vol.status)
             time.sleep(10)
-            vol.update()
+            self.vol.update()
 
-        curr_vol = conn.get_all_volumes([vol.id])[0]
+        curr_vol = self.conn.get_all_volumes([self.vol.id])[0]
         assert curr_vol.status == "avalable"
-        conn.attach_volume(vol.id, self._get_instance_id(), "xvdb")
+        self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdb")
         os.system("sudo mkfs.ext3 /dev/xvdb")
         os.system("mount /dev/xvdb /mnt")
+
+    def delete_volume(self):
+        self.conn.delete_volume(self.vol.id)
 
 
 def parse_command_line():
@@ -649,6 +654,7 @@ if __name__ == "__main__":
 
         #finish up
         logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
+        v.delete_volume()
     except:
         pass
 
