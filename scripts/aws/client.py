@@ -534,8 +534,11 @@ def start_threads():
         t.start()
 
 
-def add_volume():
-    vol = conn.create_volume(50, "us-west-2")
+def print_to_log_local_setup():
+    data = boto.utils.get_instance_metadata()
+    for a, b in data:
+        logging.info("%s -- %s" % (a, b))
+
 
 
 def parse_command_line():
@@ -605,6 +608,7 @@ if __name__ == "__main__":
     logging.info("Client called with parameters: %s",
                  pprint.pformat(options, indent=4).replace("\n", " || "),
                  extra={"threadid": -1})
+    print_to_log_local_setup()
 
     boto_conn = boto.connect_s3()
 
