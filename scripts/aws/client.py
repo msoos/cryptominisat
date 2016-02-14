@@ -242,6 +242,7 @@ class solverThread (threading.Thread):
         return p.returncode
 
     def parse_lemmas(self):
+        logging.info("Updating sqlite with DRAT info", extra=self.logextra)
         #TODO
 
         os.unlink("%s/%s" % (self.temp_space, "lemmas"))
@@ -295,8 +296,6 @@ class solverThread (threading.Thread):
         # sqlite
         if "cryptominisat" in self.indata["solver"]:
             if self.run_drat_trim() != 0:
-                logging.info("Updating sqlite with DRAT info",
-                             extra=self.logextra)
                 self.parse_lemmas()
 
             os.system("gzip -f %s" % self.get_sqlite_fname())
