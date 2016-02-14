@@ -699,6 +699,9 @@ if __name__ == "__main__":
         logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
         v.delete_volume()
     except:
-        pass
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+        logging.error("Problem in __main__"
+                      "Trace: %s", the_trace)
 
     shutdown()
