@@ -583,7 +583,7 @@ def start_threads():
 
 def print_to_log_local_setup():
     data = boto.utils.get_instance_metadata()
-    for a, b in data:
+    for a, b in data.iteritems():
         logging.info("%s -- %s" % (a, b))
 
 
