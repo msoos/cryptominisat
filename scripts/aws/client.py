@@ -363,7 +363,7 @@ class solverThread (threading.Thread):
             # handle 'solve'
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
-                if "cryptominisat" in self.indata["solver"]:
+                if returncode == 20 and "cryptominisat" in self.indata["solver"]:
                     if self.run_drat_trim() != 0:
                         self.parse_lemmas()
                 os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
