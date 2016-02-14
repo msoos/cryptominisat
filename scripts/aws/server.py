@@ -276,7 +276,7 @@ class Server (threading.Thread):
 
     def handle_build(self, connection, cli_addr, indata):
         tosend = {}
-        tosend["solver"] = options.base_dir + options.solver
+        tosend["solver"] = options.solver
         tosend["git_rev"] = options.git_rev
         tosend["s3_bucket"] = options.s3_bucket
         tosend["s3_folder"] = options.s3_folder
@@ -321,7 +321,7 @@ class Server (threading.Thread):
         tosend["file_num"] = file_num
         tosend["git_rev"] = options.git_rev
         tosend["cnf_filename"] = filename
-        tosend["solver"] = options.base_dir + options.solver
+        tosend["solver"] = options.solver
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["s3_bucket"] = options.s3_bucket

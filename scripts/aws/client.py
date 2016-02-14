@@ -169,7 +169,8 @@ class solverThread (threading.Thread):
 
         # os.system("touch %s" % self.get_perf_fname())
         # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
-        toexec = "%s %s %s/%s" % (
+        toexec = "%s/%s %s %s/%s" % (
+            options.base_dir,
             self.indata["solver"],
             extra_opts,
             self.temp_space,
@@ -217,12 +218,15 @@ class solverThread (threading.Thread):
         return p.returncode, toexec
 
     def run_drat_trim(self):
-        toexec = "drat-trim/drat-trim2 %s/%s %s/%s -l %s/lemmas" % (
+        toexec = "%s/drat-trim/drat-trim2 %s/%s %s/%s -l %s/lemmas" % (
+            options.base_dir,
             self.temp_space,
             self.indata["cnf_filename"],
             self.temp_space,
             "drat",
             self.temp_space)
+        logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
+        logging.info("Executing %s", toexec, extra=self.logextra)
 
         stdout_file = open(self.get_stdout_fname(), "w+")
         stderr_file = open(self.get_stderr_fname(), "w+")
