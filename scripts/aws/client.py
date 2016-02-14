@@ -117,13 +117,14 @@ class solverThread (threading.Thread):
         logging.info("Initializing thread", extra=self.logextra)
 
     def create_temp_space(self):
-        orig = options.temp_space
-        newdir = orig + "/thread-%s" % self.threadID
+        newdir = options.temp_space + "/thread-%s" % self.threadID
         try:
             os.mkdir(newdir)
         except:
-            logging.info("Directory %s already exists.", newdir,
-                         extra=self.logextra)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
+            logging.warning("Error creating directory: %s",
+                            the_trace, extra={"threadid": -1})
 
         return newdir
 
@@ -617,11 +618,14 @@ class VolumeAdder():
         time.sleep(20)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
-        os.system("sudo mkfs.ext3 /dev/xvdc")
-        os.system("sudo mkdir /mnt2")
-        os.system("sudo mount /dev/xvdc /mnt2")
+        os.system("mkfs.ext3 /dev/xvdc")
+        os.mkdir("/mnt2")
+        os.system("mount /dev/xvdc /mnt2")
+        time.sleep(2)
 
     def delete_volume(self):
+        os.system("sudo umount /mnt2")
+        time.sleep(2)
         self.conn.delete_volume(self.vol.id)
 
 
