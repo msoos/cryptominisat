@@ -217,7 +217,7 @@ class Query:
             ) as mems, tags
 
             where a.maxconfl > 60000
-            and a.maxtime < 50
+            and a.maxtime < 80
             and a.maxtime > 20
             and a.runID = b.runID
             and tags.runID = a.runID
