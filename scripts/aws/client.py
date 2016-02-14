@@ -204,7 +204,7 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
         logging.info(towrite.strip(), extra=self.logextra)
-        os.system("rm  %s/%s" % (self.temp_space, self.indata["cnf_filename"]))
+        os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
 
         return p.returncode, toexec
 
