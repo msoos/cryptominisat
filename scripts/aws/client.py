@@ -481,7 +481,6 @@ def shutdown(exitval=0):
 
     if not options.noshutdown:
         os.system(toexec)
-        pass
 
     exit(exitval)
 
