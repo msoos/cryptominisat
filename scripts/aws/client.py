@@ -119,7 +119,8 @@ class solverThread (threading.Thread):
     def create_temp_space(self):
         newdir = options.temp_space + "/thread-%s" % self.threadID
         try:
-            os.mkdir(newdir)
+            os.system("sudo mkdir %s" % newdir)
+            os.system("sudo chown ubuntu:ubuntu %s" % newdir)
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
