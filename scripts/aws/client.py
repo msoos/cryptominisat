@@ -156,7 +156,7 @@ class solverThread (threading.Thread):
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
-            extra_opts = " --printsol 0 --sql 2"
+            extra_opts = " --printsol 0 --sql 2 --clid"
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
@@ -165,10 +165,15 @@ class solverThread (threading.Thread):
 
         # os.system("touch %s" % self.get_perf_fname())
         # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
-        toexec = "%s %s %s/%s" % (self.indata["solver"],
-                                  extra_opts,
-                                  self.temp_space,
-                                  self.indata["cnf_filename"])
+        toexec = "%s %s %s/%s" % (
+            self.indata["solver"],
+            extra_opts,
+            self.temp_space,
+            self.indata["cnf_filename"])
+
+        #add DRAT in case of cryptominisat
+        if "cryptominisat" in self.indata["solver"]:
+            toexec += " %s/%s" % (self.temp_space, "drat")
 
         return toexec
 
@@ -207,6 +212,38 @@ class solverThread (threading.Thread):
         os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
 
         return p.returncode, toexec
+
+    def run_drat_trim(self):
+        toexec = "drat-trim/drat-trim2 %s/%s %s/%s -l %s/lemmas" % (
+            self.temp_space,
+            self.indata["cnf_filename"],
+            self.temp_space,
+            "drat",
+            self.temp_space)
+
+        stdout_file = open(self.get_stdout_fname(), "w+")
+        stderr_file = open(self.get_stderr_fname(), "w+")
+        tstart = time.time()
+        p = subprocess.Popen(
+            toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
+            preexec_fn=self.setlimits)
+        p.wait()
+        tend = time.time()
+
+        towrite = "Finished DRAT-TRIM2 in %f seconds by thread %s return code: %d\n" % (
+            tend - tstart, self.threadID, p.returncode)
+        stderr_file.write(towrite)
+        stdout_file.write(towrite)
+        stderr_file.close()
+        stdout_file.close()
+
+        ret = os.unlink("%s/%s" % (self.temp_space, "drat"))
+        assert(ret == 0)
+
+        return p.returncode
+
+    def parse_lemmas(self):
+        pass
 
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
@@ -256,6 +293,11 @@ class solverThread (threading.Thread):
 
         # sqlite
         if "cryptominisat" in self.indata["solver"]:
+            if self.run_drat_trim() != 0:
+                logging.info("Updating sqlite with DRAT info",
+                             extra=self.logextra)
+                parse_lemmas()
+
             os.system("gzip -f %s" % self.get_sqlite_fname())
             fname = s3_folder_and_fname + ".sqlite.gz-tmp"
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
