@@ -38,62 +38,6 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
         else:
             return ""
 
-global s3_bucket
-global s3_folder
-s3_bucket = "msoos-no-bucket"
-s3_folder = "no_s3_folder"
-usage = "usage: %prog"
-parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
-parser.add_option("--verbose", "-v", action="store_true", default=False,
-                  dest="verbose", help="Be more verbose"
-                  )
-
-parser.add_option("--host", dest="host",
-                  help="Host to connect to as a client"
-                  " [default: IP of eth0]",
-                  )
-parser.add_option("--port", "-p", default=10000, dest="port",
-                  type="int", help="Port to use"
-                  " [default: %default]",
-                  )
-
-parser.add_option("--temp", default="/tmp/", dest="temp_space", type=str,
-                  help="Temporary space to use"
-                  " [default: %default]",
-                  )
-
-parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
-                  action="store_true", help="Do not shut down"
-                  )
-
-parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
-                  help="The home dir of cryptominisat"
-                  " [default: %default]",
-                  )
-parser.add_option("--net", default="eth0", dest="network_device", type=str,
-                  help="The network device we will be using"
-                  " [default: %default]",
-                  )
-
-parser.add_option("--threads", dest="num_threads", type=int,
-                  help="Force using this many threads")
-
-parser.add_option("--logfile", dest="logfile_name", type=str,
-                  default="python_log.txt", help="Name of LOG file")
-
-(options, args) = parser.parse_args()
-
-
-exitapp = False
-options.logfile_name = options.base_dir + options.logfile_name
-
-if options.host is None:
-    for line in boto.utils.get_instance_userdata().split("\n"):
-        if "DATA" in line:
-            options.host = line.split("=")[1].strip().strip('"')
-
-    print("HOST has beeen set to %s" % options.host)
-
 
 def uptime():
     with open('/proc/uptime', 'r') as f:
@@ -160,6 +104,7 @@ def signal_error_to_master():
     tosend = struct.pack('!q', len(tosend)) + tosend
     sock.sendall(tosend)
     sock.close()
+
 
 class solverThread (threading.Thread):
 
@@ -590,21 +535,90 @@ def start_threads():
         t.setDaemon(True)
         t.start()
 
-set_up_logging()
-logging.info("Client called with parameters: %s",
-             pprint.pformat(options, indent=4).replace("\n", " || "),
-             extra={"threadid": -1})
 
-boto_conn = boto.connect_s3()
+def add_volume():
+    vol = conn.create_volume(50, "us-west-2")
 
-start_threads()
 
-while threading.active_count() > 1:
-    time.sleep(0.1)
+def parse_command_line():
+    usage = "usage: %prog"
+    parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
+    parser.add_option("--verbose", "-v", action="store_true", default=False,
+                      dest="verbose", help="Be more verbose"
+                      )
 
-try:
-    logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
-except:
-    pass
+    parser.add_option("--host", dest="host",
+                      help="Host to connect to as a client"
+                      " [default: IP of eth0]",
+                      )
+    parser.add_option("--port", "-p", default=10000, dest="port",
+                      type="int", help="Port to use"
+                      " [default: %default]",
+                      )
 
-shutdown()
+    parser.add_option("--temp", default="/tmp/", dest="temp_space", type=str,
+                      help="Temporary space to use"
+                      " [default: %default]",
+                      )
+
+    parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
+                      action="store_true", help="Do not shut down"
+                      )
+
+    parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
+                      help="The home dir of cryptominisat"
+                      " [default: %default]",
+                      )
+    parser.add_option("--net", default="eth0", dest="network_device", type=str,
+                      help="The network device we will be using"
+                      " [default: %default]",
+                      )
+
+    parser.add_option("--threads", dest="num_threads", type=int,
+                      help="Force using this many threads")
+
+    parser.add_option("--logfile", dest="logfile_name", type=str,
+                      default="python_log.txt", help="Name of LOG file")
+
+    (options, args) = parser.parse_args()
+
+    return options, args
+
+
+if __name__ == "__main__":
+    global s3_bucket
+    global s3_folder
+    s3_bucket = "msoos-no-bucket"
+    s3_folder = "no_s3_folder"
+    options, args = parse_command_line()
+
+    exitapp = False
+    options.logfile_name = options.base_dir + options.logfile_name
+
+    #get host
+    if options.host is None:
+        for line in boto.utils.get_instance_userdata().split("\n"):
+            if "DATA" in line:
+                options.host = line.split("=")[1].strip().strip('"')
+
+        print("HOST has beeen set to %s" % options.host)
+
+    set_up_logging()
+    logging.info("Client called with parameters: %s",
+                 pprint.pformat(options, indent=4).replace("\n", " || "),
+                 extra={"threadid": -1})
+
+    boto_conn = boto.connect_s3()
+
+    #run all threads
+    start_threads()
+    while threading.active_count() > 1:
+        time.sleep(0.1)
+
+    #finish up
+    try:
+        logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
+    except:
+        pass
+
+    shutdown()
