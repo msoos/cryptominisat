@@ -618,10 +618,10 @@ class VolumeAdder():
         time.sleep(20)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
-        os.system("mkfs.ext3 /dev/%s" % options.dev)
-        os.mkdir("/mnt2")
-        os.system("mount /dev/%s /mnt2" % options.dev)
-        time.sleep(2)
+        os.system("sudo mkfs.ext3 /dev/%s" % options.dev)
+        os.system("sudo mkdir /mnt2")
+        os.system("sudo chown ubuntu:ubuntu /mnt2")
+        os.system("sudo mount /dev/%s /mnt2" % options.dev)
 
     def delete_volume(self):
         os.system("sudo umount /mnt2")
