@@ -296,7 +296,7 @@ class solverThread (threading.Thread):
             if self.run_drat_trim() != 0:
                 logging.info("Updating sqlite with DRAT info",
                              extra=self.logextra)
-                parse_lemmas()
+                self.parse_lemmas()
 
             os.system("gzip -f %s" % self.get_sqlite_fname())
             fname = s3_folder_and_fname + ".sqlite.gz-tmp"
