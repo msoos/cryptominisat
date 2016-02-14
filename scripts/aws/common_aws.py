@@ -49,6 +49,7 @@ def send_email(subject, text, fname = None):
     # Send email
     smtp.sendmail(msg['From'], msg['To'], msg.as_string())
 
+
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(

@@ -610,9 +610,12 @@ class VolumeAdder():
             time.sleep(10)
             self.vol.update()
 
+        logging.info("Created volume, attaching...", self.vol, extra={"threadid": -1})
         curr_vol = self.conn.get_all_volumes([self.vol.id])[0]
         assert curr_vol.status == "avalable"
         self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdc")
+
+        logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
         os.system("sudo mkfs.ext3 /dev/xvdc")
         os.system("sudo mkdir /mnt2")
         os.system("sudo mount /dev/xvdc /mnt2")
@@ -707,7 +710,7 @@ if __name__ == "__main__":
         exc_type, exc_value, exc_traceback = sys.exc_info()
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Problem in __main__"
-                      "Trace: %s", the_trace)
+                      "Trace: %s", the_trace, extra={"threadid": -1})
         shutdown(-1)
 
     shutdown()
