@@ -540,6 +540,33 @@ def print_to_log_local_setup():
         logging.info("%s -- %s" % (a, b))
 
 
+class VolumeAdder():
+    def _get_instance_id(self):
+        instance_id = boto.utils.get_instance_metadata()['instance-id']
+        return instance_id
+
+    def _get_availability_zone(self):
+        dat = boto.utils.get_instance_metadata()['instance-id']
+        return dat["placement"]["availability-zone"]
+
+    def _get_region(self):
+        region = boto.utils.get_instance_metadata()['local-hostname'].split('.')[1]
+        return region
+
+    def add_volume(self):
+        conn = boto.ec2.connect_to_region(self._get_region())
+        vol = conn.create_volume(50, self._get_availability_zone())
+        while vol.status != 'available':
+            print('Vol state: ', vol.status)
+            time.sleep(10)
+            vol.update()
+
+        curr_vol = conn.get_all_volumes([vol.id])[0]
+        assert curr_vol.status == "avalable"
+        conn.attach_volume(vol.id, self._get_instance_id(), "xvdb")
+        os.system("sudo mkfs.ext3 /dev/xvdb")
+        os.system("mount /dev/xvdb /mnt")
+
 
 def parse_command_line():
     usage = "usage: %prog"
@@ -557,7 +584,7 @@ def parse_command_line():
                       " [default: %default]",
                       )
 
-    parser.add_option("--temp", default="/tmp/", dest="temp_space", type=str,
+    parser.add_option("--temp", default="/mnt/", dest="temp_space", type=str,
                       help="Temporary space to use"
                       " [default: %default]",
                       )
