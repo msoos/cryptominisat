@@ -177,7 +177,7 @@ class solverThread (threading.Thread):
 
         return toexec
 
-    def execute(self):
+    def execute_solver(self):
         toexec = self.get_toexec()
         stdout_file = open(self.get_stdout_fname(), "w+")
         stderr_file = open(self.get_stderr_fname(), "w+")
@@ -363,7 +363,7 @@ class solverThread (threading.Thread):
 
             # handle 'solve'
             if self.indata["command"] == "solve":
-                returncode, executed = self.execute()
+                returncode, executed = self.execute_solver()
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
