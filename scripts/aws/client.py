@@ -17,6 +17,7 @@ import pprint
 import traceback
 import boto
 import boto.utils
+import boto.ec2
 import socket
 import fcntl
 import struct
