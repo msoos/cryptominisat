@@ -20,7 +20,6 @@ import socket
 import fcntl
 import struct
 import logging
-import boto.utils
 
 # for importing in systems where "." is not in the PATH
 import glob
