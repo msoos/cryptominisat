@@ -611,9 +611,7 @@ class VolumeAdder():
             time.sleep(10)
             self.vol.update()
 
-        logging.info("Created volume, attaching...", self.vol, extra={"threadid": -1})
-        curr_vol = self.conn.get_all_volumes([self.vol.id])[0]
-        assert curr_vol.status == "avalable"
+        logging.info("Created volume, attaching... %s", self.vol, extra={"threadid": -1})
         self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdc")
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
