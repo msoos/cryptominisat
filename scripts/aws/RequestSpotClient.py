@@ -14,7 +14,7 @@ import logging
 
 
 class RequestSpotClient:
-    def __init__(self, test):
+    def __init__(self, test, noshutdown=False):
         self.conf = ConfigParser.ConfigParser()
         if test:
             self.conf.read('ec2-spot-instance-test.cfg')
@@ -28,10 +28,13 @@ class RequestSpotClient:
             print 'Unable to create EC2 ec2conn'
             sys.exit(0)
 
-        self.user_data = self.__get_user_data()
+        self.user_data = self.__get_user_data(noshutdown)
         self.our_ids = []
 
-    def __get_user_data(self):
+    def __get_user_data(self, noshutdown):
+        extra_args = ""
+        if noshutdown:
+            extra_args = " --noshutdown"
         user_data = """#!/bin/bash
 set -e
 
@@ -61,10 +64,10 @@ sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_drat-tri
 
 # Start client
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py > /home/ubuntu/log.txt  2>&1' &
+sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py %s > /home/ubuntu/log.txt  2>&1' &
 
 DATA="%s"
-""" % get_ip_address("eth0")
+""" % (extra_args, get_ip_address("eth0"))
 
         return user_data
 

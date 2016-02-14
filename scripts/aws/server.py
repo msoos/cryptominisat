@@ -437,9 +437,10 @@ class Listener (threading.Thread):
 
 class SpotManager (threading.Thread):
 
-    def __init__(self):
+    def __init__(self, noshutdown):
         threading.Thread.__init__(self)
-        self.spot_creator = RequestSpotClient.RequestSpotClient(options.cnf_dir == "test")
+        self.spot_creator = RequestSpotClient.RequestSpotClient(
+            options.cnf_dir == "test", noshutdown=noshutdown)
 
     def run(self):
         while True:
@@ -497,7 +498,7 @@ if not options.git_rev:
 
 server = Server()
 listener = Listener()
-spotmanager = SpotManager()
+spotmanager = SpotManager(options.noshutdown)
 listener.setDaemon(True)
 server.setDaemon(True)
 spotmanager.setDaemon(True)
