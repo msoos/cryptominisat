@@ -613,14 +613,14 @@ class VolumeAdder():
             self.vol.update()
 
         logging.info("Created volume, attaching... %s", self.vol, extra={"threadid": -1})
-        self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdc")
+        self.conn.attach_volume(self.vol.id, self._get_instance_id(), options.dev)
         logging.info("Waiting for volume to show up...", extra={"threadid": -1})
         time.sleep(20)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
-        os.system("mkfs.ext3 /dev/xvdc")
+        os.system("mkfs.ext3 /dev/%s" % options.dev)
         os.mkdir("/mnt2")
-        os.system("mount /dev/xvdc /mnt2")
+        os.system("mount /dev/%s /mnt2" % options.dev)
         time.sleep(2)
 
     def delete_volume(self):
@@ -665,6 +665,9 @@ def parse_command_line():
 
     parser.add_option("--threads", dest="num_threads", type=int,
                       help="Force using this many threads")
+
+    parser.add_option("--dev", dest="dev", type=str, default="xvdc",
+                      help="Device name")
 
     parser.add_option("--logfile", dest="logfile_name", type=str,
                       default="python_log.txt", help="Name of LOG file")
