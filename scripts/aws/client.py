@@ -550,7 +550,7 @@ def set_up_logging():
     logging.getLogger().setLevel(logging.INFO)
 
 
-def start_threads():
+def update_num_threads():
     if options.num_threads is None:
         options.num_threads = num_cpus()/2
         options.num_threads = max(options.num_threads, 1)
@@ -558,6 +558,8 @@ def start_threads():
     logging.info("Running with %d threads", options.num_threads,
                  extra={"threadid": -1})
 
+
+def build_system_full():
     try:
         build_system()
     except:
@@ -567,6 +569,8 @@ def start_threads():
                       the_trace, extra={"threadid": -1})
         shutdown(-1)
 
+
+def start_threads():
     threads = []
     options.num_threads = max(options.num_threads, 2) # for test
     for i in range(options.num_threads):
@@ -689,8 +693,8 @@ if __name__ == "__main__":
         v.add_volume()
 
         boto_conn = boto.connect_s3()
-
-        #run all threads
+        update_num_threads()
+        build_system_full()
         start_threads()
         while threading.active_count() > 1:
             time.sleep(0.1)
@@ -703,5 +707,6 @@ if __name__ == "__main__":
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Problem in __main__"
                       "Trace: %s", the_trace)
+        shutdown(-1)
 
     shutdown()
