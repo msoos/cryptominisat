@@ -608,11 +608,13 @@ class VolumeAdder():
         self.vol = self.conn.create_volume(50, self._get_availability_zone())
         while self.vol.status != 'available':
             print('Vol state: ', self.vol.status)
-            time.sleep(10)
+            time.sleep(5)
             self.vol.update()
 
         logging.info("Created volume, attaching... %s", self.vol, extra={"threadid": -1})
         self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdc")
+        logging.info("Waiting for volume to show up...", extra={"threadid": -1})
+        time.sleep(20)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
         os.system("sudo mkfs.ext3 /dev/xvdc")
