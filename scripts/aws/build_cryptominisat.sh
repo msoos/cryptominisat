@@ -15,6 +15,8 @@ cd /home/ubuntu/cryptominisat
 git fetch
 git checkout "$1"
 echo "got revision $1"
+git submodule init
+git submodule update
 
 rm -rf build
 mkdir -p build
@@ -23,5 +25,7 @@ rm -rf C* c*
 cmake -DSTATS=ON ..
 make "-j$2" VERBOSE=1
 echo "built CMS"
+
+# solver is now in cryptominisat/build/cryptominisat4
 
 exit 0
