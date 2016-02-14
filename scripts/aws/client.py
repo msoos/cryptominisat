@@ -243,7 +243,9 @@ class solverThread (threading.Thread):
         return p.returncode
 
     def parse_lemmas(self):
-        pass
+        #TODO
+
+        ret = os.unlink("%s/%s" % (self.temp_space, "lemmas"))
 
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
