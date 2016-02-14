@@ -615,7 +615,7 @@ class VolumeAdder():
         logging.info("Created volume, attaching... %s", self.vol, extra={"threadid": -1})
         self.conn.attach_volume(self.vol.id, self._get_instance_id(), options.dev)
         logging.info("Waiting for volume to show up...", extra={"threadid": -1})
-        time.sleep(20)
+        time.sleep(10)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
         os.system("sudo mkfs.ext3 /dev/%s" % options.dev)
