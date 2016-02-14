@@ -612,9 +612,10 @@ class VolumeAdder():
 
         curr_vol = self.conn.get_all_volumes([self.vol.id])[0]
         assert curr_vol.status == "avalable"
-        self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdb")
-        os.system("sudo mkfs.ext3 /dev/xvdb")
-        os.system("mount /dev/xvdb /mnt")
+        self.conn.attach_volume(self.vol.id, self._get_instance_id(), "xvdc")
+        os.system("sudo mkfs.ext3 /dev/xvdc")
+        os.system("sudo mkdir /mnt2")
+        os.system("sudo mount /dev/xvdc /mnt2")
 
     def delete_volume(self):
         self.conn.delete_volume(self.vol.id)
@@ -636,7 +637,7 @@ def parse_command_line():
                       " [default: %default]",
                       )
 
-    parser.add_option("--temp", default="/mnt/", dest="temp_space", type=str,
+    parser.add_option("--temp", default="/mnt2/", dest="temp_space", type=str,
                       help="Temporary space to use"
                       " [default: %default]",
                       )
