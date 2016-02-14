@@ -213,7 +213,6 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
         logging.info(towrite.strip(), extra=self.logextra)
-        os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
 
         return p.returncode, toexec
 
@@ -299,9 +298,6 @@ class solverThread (threading.Thread):
 
         # sqlite
         if "cryptominisat" in self.indata["solver"]:
-            if self.run_drat_trim() != 0:
-                self.parse_lemmas()
-
             os.system("gzip -f %s" % self.get_sqlite_fname())
             fname = s3_folder_and_fname + ".sqlite.gz-tmp"
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
@@ -367,6 +363,10 @@ class solverThread (threading.Thread):
             # handle 'solve'
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
+                if "cryptominisat" in self.indata["solver"]:
+                    if self.run_drat_trim() != 0:
+                        self.parse_lemmas()
+                os.unlink("%s/%s" % (self.temp_space, self.indata["cnf_filename"]))
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
