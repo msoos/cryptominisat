@@ -593,16 +593,16 @@ class VolumeAdder():
         self.conn = boto.ec2.connect_to_region(self._get_region())
 
     def _get_instance_id(self):
-        instance_id = boto.utils.get_instance_metadata()['instance-id']
-        return instance_id
+        instance_id = boto.utils.get_instance_metadata()
+        return instance_id['instance-id']
 
     def _get_availability_zone(self):
-        dat = boto.utils.get_instance_metadata()['instance-id']
+        dat = boto.utils.get_instance_metadata()
         return dat["placement"]["availability-zone"]
 
     def _get_region(self):
-        region = boto.utils.get_instance_metadata()['local-hostname'].split('.')[1]
-        return region
+        region = boto.utils.get_instance_metadata()
+        return region['local-hostname'].split('.')[1]
 
     def add_volume(self):
         self.vol = self.conn.create_volume(50, self._get_availability_zone())
