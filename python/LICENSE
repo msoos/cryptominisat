@@ -1,4 +1,4 @@
-pycryptominisat (all of the python bindings, icluding makefile, test, etc)
+pycryptominisat (all of the python bindings, including makefile, test, etc)
 License: MIT
 ===========================
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
