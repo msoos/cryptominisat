@@ -604,21 +604,23 @@ if __name__ == "__main__":
 
         print("HOST has beeen set to %s" % options.host)
 
-    set_up_logging()
-    logging.info("Client called with parameters: %s",
-                 pprint.pformat(options, indent=4).replace("\n", " || "),
-                 extra={"threadid": -1})
-    print_to_log_local_setup()
-
-    boto_conn = boto.connect_s3()
-
-    #run all threads
-    start_threads()
-    while threading.active_count() > 1:
-        time.sleep(0.1)
-
-    #finish up
     try:
+        set_up_logging()
+        logging.info("Client called with parameters: %s",
+                     pprint.pformat(options, indent=4).replace("\n", " || "),
+                     extra={"threadid": -1})
+        print_to_log_local_setup()
+        v = VolumeAdder()
+        v.add_volume()
+
+        boto_conn = boto.connect_s3()
+
+        #run all threads
+        start_threads()
+        while threading.active_count() > 1:
+            time.sleep(0.1)
+
+        #finish up
         logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
     except:
         pass
