@@ -217,10 +217,10 @@ class Query:
             group by runID
             ) as mems, tags
 
-            where a.maxconfl > 40000
+            where a.maxconfl > 20000
             and a.maxconfl < 400000
-            and a.maxtime < 200
-            and a.maxtime > 15
+            and a.maxtime < 400
+            and a.maxtime > 10
             and a.runID = b.runID
             and tags.runID = a.runID
             and tags.tagname = "filename"
