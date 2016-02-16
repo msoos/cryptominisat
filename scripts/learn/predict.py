@@ -196,6 +196,10 @@ if __name__ == "__main__":
     print("----- FINAL predictor -------\n")
     clf = Classify()
     clf.predict(X, y)
+    print("Columns used were:")
+    for i, name in zip(xrange(100), col_names):
+        print("%-3d  %s" % (i, name))
+
     clf.output_to_pdf(col_names)
 
 
