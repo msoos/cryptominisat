@@ -162,19 +162,6 @@ class Classify:
         print("Wrote final tree to %s" % outf)
 
 
-def get_db(d):
-    assert os.path.isdir(d)
-    for fname in glob.glob(d + "/*"):
-            fname = fname.strip()
-            dbfname = None
-            #print(fname)
-            if fname.endswith(".sqlite"):
-                dbfname = fname
-                break
-
-    return dbfname
-
-
 if __name__ == "__main__":
 
     usage = "usage: %prog [options] dir1 [dir2...]"
@@ -198,9 +185,8 @@ if __name__ == "__main__":
     X = []
     y = []
     col_names = None
-    for d in args:
+    for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
-        dbfname = get_db(d)
         a, b, col_names = get_one_file(dbfname)
         X.extend(a)
         y.extend(b)
