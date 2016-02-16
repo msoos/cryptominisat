@@ -10,6 +10,7 @@ import time
 import functools
 import glob
 import os
+import add_lemma_ind as myquery
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
@@ -23,79 +24,7 @@ def mypow(to, base):
     return base**to
 
 
-def parse_lemmas(lemmafname):
-    ret = []
-    with open(lemmafname, "r") as f:
-        for line in f:
-            if line[0] == "d":
-                continue
-
-            line = line.strip()
-            l = line.split(" ")
-            good_id = l[len(l)-1]
-            if options.verbose:
-                print(good_id)
-
-            good_id2 = 0
-            try:
-                good_id2 = int(good_id)
-            except:
-                print("ERROR: ID %s is not an integer!" % good_id)
-                exit(-1)
-
-            if good_id2 > 1:
-                ret.append(good_id2)
-
-    print("Parsed %d number of good lemmas" % len(ret))
-    ret = sorted(ret)
-    return ret
-
-
-class Query:
-    def __init__(self, dbfname):
-        self.conn = sqlite3.connect(dbfname)
-        self.c = self.conn.cursor()
-        self.runID = self.find_runID()
-        self.get_print_col_names()
-
-    def get_print_col_names(self):
-        self.col_names = self.get_clausestats_names()
-        self.col_names = self.col_names[5:]
-
-        if options.verbose:
-            print("column names: ")
-            for name, num in zip(self.col_names, xrange(1000)):
-                print("%-3d: %s" % (num, name))
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.close()
-
-    def find_runID(self):
-        q = """
-        SELECT runID
-        FROM startUp
-        order by startTime desc
-        limit 1
-        """
-
-        runID = None
-        for row in self.c.execute(q):
-            runID = int(row[0])
-
-        print("runID: %d" % runID)
-        return runID
-
-    def add_goods(self, ids):
-        self.c.execute('delete from goodClauses;')
-
-        id_b = [(self.runID, x) for x in ids]
-        self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`)
-            VALUES (?, ?)""", id_b)
-
+class Query2 (myquery.Query):
     def get_max_clauseID(self):
         q = """
         SELECT max(clauseID)
@@ -108,12 +37,6 @@ class Query:
             max_clID = int(row[0])
 
         return max_clID
-
-    def get_clausestats_names(self):
-        names = None
-        for row in self.c.execute("select * from clauseStats limit 1"):
-            names = list(map(lambda x: x[0], self.c.description))
-        return names
 
     def get_restarts(self):
         q = """
@@ -188,17 +111,12 @@ class Query:
         return row
 
 
-def get_one_file(lemmafname, dbfname):
+def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
-    print("Using lemma file %s" % lemmafname)
     col_names = None
 
-    with Query(dbfname) as q:
+    with Query2(dbfname) as q:
         col_names = q.col_names
-        useful_lemma_ids = parse_lemmas(lemmafname)
-        q.add_goods(useful_lemma_ids)
-        #q.get_restarts()
-
         X, y = q.get_all()
         assert len(X) == len(y)
 
@@ -244,7 +162,7 @@ class Classify:
         print("Wrote final tree to %s" % outf)
 
 
-def get_lemma_and_db(d):
+def get_db(d):
     assert os.path.isdir(d)
     for fname in glob.glob(d + "/*"):
             fname = fname.strip()
@@ -254,10 +172,7 @@ def get_lemma_and_db(d):
                 dbfname = fname
                 break
 
-    assert dbfname is not None
-    lemmafname = d + "/lemmas"
-
-    return lemmafname, dbfname
+    return dbfname
 
 
 if __name__ == "__main__":
@@ -284,14 +199,15 @@ if __name__ == "__main__":
     y = []
     col_names = None
     for d in args:
-        lemmafname, dbfname = get_lemma_and_db(d)
-        a, b, col_names = get_one_file(lemmafname, dbfname)
+        print("----- INTERMEDIATE predictor -------\n")
+        dbfname = get_db(d)
+        a, b, col_names = get_one_file(dbfname)
         X.extend(a)
         y.extend(b)
         clf = Classify()
         clf.predict(a, b)
 
-    print("FINAL!!")
+    print("----- FINAL predictor -------\n")
     clf = Classify()
     clf.predict(X, y)
     clf.output_to_pdf(col_names)
