@@ -6,6 +6,7 @@ import sqlite3
 import optparse
 import operator
 
+
 class Query:
     def __init__(self):
         self.conn = sqlite3.connect(dbfname)
