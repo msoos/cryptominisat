@@ -10,10 +10,12 @@ import time
 import functools
 import glob
 import os
-import add_lemma_ind as myquery
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
+from sklearn import linear_model
+
+#for presentation (PDF)
 import sklearn.tree
 from sklearn.externals.six import StringIO
 import pydot
@@ -29,7 +31,8 @@ class Query:
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
-        self.col_names = self.get_clausestats_names()[5:]
+        self.clstats_names = self.get_clausestats_names()[5:]
+        self.rststats_names = self.get_rststats_names()[5:]
 
     def get_clausestats_names(self):
         names = None
@@ -37,10 +40,11 @@ class Query:
             names = list(map(lambda x: x[0], self.c.description))
         return names
 
-    def print_col_names(self):
-        print("column names: ")
-        for name, num in zip(self.col_names, xrange(1000)):
-            print("%-3d: %s" % (num, name))
+    def get_rststats_names(self):
+        names = None
+        for row in self.c.execute("select * from restart limit 1"):
+            names = list(map(lambda x: x[0], self.c.description))
+        return names
 
     def __enter__(self):
         return self
@@ -65,7 +69,7 @@ class Query:
         return runID
 
 
-class Query2 (myquery.Query):
+class Query2 (Query):
     def get_max_clauseID(self):
         q = """
         SELECT max(clauseID)
@@ -79,12 +83,12 @@ class Query2 (myquery.Query):
 
         return max_clID
 
-    def get_restarts(self):
+    def get_rststats(self):
         q = """
         select
-            restart.restarts,
             numgood.cnt,
-            restart.clauseIDendExclusive-restart.clauseIDstartInclusive as total
+            restart.clauseIDendExclusive-restart.clauseIDstartInclusive as total,
+            restart.*
         from
             restart,
             (SELECT clauseStats.restarts as restarts, count(clauseStats.clauseID) as cnt
@@ -98,15 +102,24 @@ class Query2 (myquery.Query):
             and restart.restarts = numgood.restarts
         """.format(self.runID)
 
+        X = []
+        y = []
         for row in self.c.execute(q):
             r = list(row)
-            rest = r[0]
-            good = r[1]
-            total = r[2]
-            print("rest num %-6d  conflicts %-6d good %-3.2f%%" %
-                  (rest, total, float(good)/total*100.0))
+            good = r[0]
+            total = r[1]
+            perc = float(good)/float(total)
+            r = self.transform_rst_row(r[2:])
+            X.append(r)
+            y.append(perc)
+            print("---<<<")
+            print(r)
+            print(perc)
+            print("---")
 
-    def get_all(self):
+        return X, y
+
+    def get_clstats(self):
         ret = []
 
         q = """
@@ -119,7 +132,7 @@ class Query2 (myquery.Query):
         """.format(self.runID)
         for row, _ in zip(self.c.execute(q), xrange(options.limit)):
             #first 5 are not useful, such as restarts and clauseID
-            r = self.transform_row(row)
+            r = self.transform_clstat_row(row)
             ret.append([r, 1])
 
         bads = []
@@ -135,7 +148,7 @@ class Query2 (myquery.Query):
         """.format(self.runID)
         for row, _ in zip(self.c.execute(q), xrange(options.limit)):
             #first 5 are not useful, such as restarts and clauseID
-            r = self.transform_row(row)
+            r = self.transform_clstat_row(row)
             ret.append([r, 0])
 
         numpy.random.shuffle(ret)
@@ -143,7 +156,7 @@ class Query2 (myquery.Query):
         y = [x[1] for x in ret]
         return X, y
 
-    def transform_row(self, row):
+    def transform_clstat_row(self, row):
         row = list(row[5:])
         row[1] = row[1]/row[4]
         row[4] = 0
@@ -151,21 +164,48 @@ class Query2 (myquery.Query):
 
         return row
 
+    def transform_rst_row(self, row):
+        return row[5:]
+
+
+class Data:
+    def __init__(self, X=[], y=[], colnames=[]):
+        self.X = X
+        self.y = y
+        self.colnames = colnames
+
+    def add(self, other):
+        self.X.extend(other.X)
+        self.y.extend(other.y)
+        if len(self.colnames) == 0:
+            self.colnames = other.colnames
+        else:
+            assert self.colnames == other.colnames
+
 
 def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
-    col_names = None
+    clstats_names = None
 
     with Query2(dbfname) as q:
-        col_names = q.col_names
-        X, y = q.get_all()
+        clstats_names = q.clstats_names
+        X, y = q.get_clstats()
         assert len(X) == len(y)
 
-    return X, y, col_names
+    cl_data = Data(X, y, clstats_names)
+
+    with Query2(dbfname) as q:
+        rststats_names = q.rststats_names
+        X, y = q.get_rststats()
+        assert len(X) == len(y)
+
+    rst_data = Data(X, y, clstats_names)
+
+    return cl_data, rst_data
 
 
 class Classify:
-    def predict(self, X, y):
+    def learn(self, X, y):
         print("number of features:", len(X[0]))
         print("total samples: %5d   percentage of good ones %-3.2f" %
               (len(X), sum(y)/float(len(X))*100.0))
@@ -186,10 +226,10 @@ class Classify:
         score = self.clf.score(X_test, y_test)
         print("score: %s T: %-3.2f" % (score, (time.time()-t)))
 
-    def output_to_pdf(self, col_names):
+    def output_to_pdf(self, clstats_names, fname):
         dot_data = StringIO()
         sklearn.tree.export_graphviz(self.clf, out_file=dot_data,
-                                     feature_names=col_names,
+                                     feature_names=clstats_names,
                                      class_names=["BAD", "GOOD"],
                                      filled=True, rounded=True,
                                      special_characters=True,
@@ -198,9 +238,8 @@ class Classify:
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
         #Image(graph.create_png())
 
-        outf = "tree.pdf"
-        graph.write_pdf(outf)
-        print("Wrote final tree to %s" % outf)
+        graph.write_pdf(fname)
+        print("Wrote final tree to %s" % fname)
 
 
 if __name__ == "__main__":
@@ -223,25 +262,38 @@ if __name__ == "__main__":
         print("ERROR: You must give at least one directory")
         exit(-1)
 
-    X = []
-    y = []
-    col_names = None
+    cl_data = Data()
+    rst_data = Data()
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
-        a, b, col_names = get_one_file(dbfname)
-        X.extend(a)
-        y.extend(b)
+        cl, rst = get_one_file(dbfname)
+        cl_data.add(cl)
+        rst_data.add(rst)
+
         clf = Classify()
-        clf.predict(a, b)
+        clf.learn(cl.X, cl.y)
+        clf.output_to_pdf(rst_data.colnames, "tree_cl.pdf")
+
+        clf = linear_model.LinearRegression()
+        rst.X = StandardScaler().fit_transform(rst.X)
+        X_train, X_test, y_train, y_test = train_test_split(rst.X, rst.y)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        print("score: %s" % score)
+
+    if len(args) == 1:
+        exit(0)
 
     print("----- FINAL predictor -------\n")
-    clf = Classify()
-    clf.predict(X, y)
-    print("Columns used were:")
-    for i, name in zip(xrange(100), col_names):
-        print("%-3d  %s" % (i, name))
 
-    clf.output_to_pdf(col_names)
+    #clauses
+    clf = Classify()
+    clf.learn(cl_data.X, cl_data.y)
+    print("Columns used were:")
+    for i, name in zip(xrange(100), cl_data.colnames):
+        print("%-3d  %s" % (i, name))
+    clf.output_to_pdf(cl_data.colnames, "tree_cl.pdf")
+
 
 
 
