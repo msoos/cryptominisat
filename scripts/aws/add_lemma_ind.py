@@ -39,18 +39,6 @@ class Query:
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
-        self.col_names = self.get_clausestats_names()[5:]
-
-    def get_clausestats_names(self):
-        names = None
-        for row in self.c.execute("select * from clauseStats limit 1"):
-            names = list(map(lambda x: x[0], self.c.description))
-        return names
-
-    def print_col_names(self):
-            print("column names: ")
-            for name, num in zip(self.col_names, xrange(1000)):
-                print("%-3d: %s" % (num, name))
 
     def __enter__(self):
         return self

@@ -24,6 +24,47 @@ def mypow(to, base):
     return base**to
 
 
+class Query:
+    def __init__(self, dbfname):
+        self.conn = sqlite3.connect(dbfname)
+        self.c = self.conn.cursor()
+        self.runID = self.find_runID()
+        self.col_names = self.get_clausestats_names()[5:]
+
+    def get_clausestats_names(self):
+        names = None
+        for row in self.c.execute("select * from clauseStats limit 1"):
+            names = list(map(lambda x: x[0], self.c.description))
+        return names
+
+    def print_col_names(self):
+        print("column names: ")
+        for name, num in zip(self.col_names, xrange(1000)):
+            print("%-3d: %s" % (num, name))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.commit()
+        self.conn.close()
+
+    def find_runID(self):
+        q = """
+        SELECT runID
+        FROM startUp
+        order by startTime desc
+        limit 1
+        """
+
+        runID = None
+        for row in self.c.execute(q):
+            runID = int(row[0])
+
+        print("runID: %d" % runID)
+        return runID
+
+
 class Query2 (myquery.Query):
     def get_max_clauseID(self):
         q = """
