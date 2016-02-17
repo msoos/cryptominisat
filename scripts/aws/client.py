@@ -28,6 +28,7 @@ import functools
 import glob
 sys.path.append(os.getcwd())
 from common_aws import *
+import add_lemma_ind as addlemm
 
 pp = pprint.PrettyPrinter(depth=6)
 
@@ -163,6 +164,12 @@ class solverThread (threading.Thread):
     def get_sqlite_fname(self):
         return self.get_output_fname() + ".sqlite"
 
+    def get_lemmas_fname(self):
+        return "%s/lemmas" % self.temp_space
+
+    def get_drat_fname(self):
+        return "%s/drat" % self.temp_space
+
     def get_toexec(self):
         extra_opts = ""
         if "cryptominisat" in self.indata["solver"]:
@@ -184,7 +191,7 @@ class solverThread (threading.Thread):
 
         #add DRAT in case of cryptominisat
         if "cryptominisat" in self.indata["solver"]:
-            toexec += " %s/%s" % (self.temp_space, "drat")
+            toexec += " " + self.get_drat_fname()
 
         return toexec
 
@@ -227,13 +234,12 @@ class solverThread (threading.Thread):
         return p.returncode, toexec
 
     def run_drat_trim(self):
-        toexec = "%s/drat-trim/drat-trim2 %s/%s %s/%s -l %s/lemmas" % (
+        toexec = "%s/drat-trim/drat-trim2 %s/%s %s -l %s" % (
             options.base_dir,
             self.temp_space,
             self.indata["cnf_filename"],
-            self.temp_space,
-            "drat",
-            self.temp_space)
+            self.get_drat_fname(),
+            self.get_lemmas_fname())
         logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
         logging.info("Executing %s", toexec, extra=self.logextra)
 
@@ -260,9 +266,18 @@ class solverThread (threading.Thread):
 
         return p.returncode
 
-    def parse_lemmas(self):
-        logging.info("Updating sqlite with DRAT info", extra=self.logextra)
-        #TODO
+    def add_lemma_idx_to_sqlite(self, lemmafname, dbfname):
+        logging.info("Updating sqlite with DRAT info."
+                     "Using sqlite3db file %s. Using lemma file %s",
+                     dbfname, lemmafname, extra=self.logextra)
+
+        useful_lemma_ids = []
+        with addlemm.Query(dbfname) as q:
+            useful_lemma_ids = addlemm.parse_lemmas(lemmafname)
+            q.add_goods(useful_lemma_ids)
+
+        logging.info("Num good IDs: %d",
+                     len(useful_lemma_ids), extra=self.logextra)
 
         os.unlink("%s/%s" % (self.temp_space, "lemmas"))
 
@@ -381,7 +396,9 @@ class solverThread (threading.Thread):
                 returncode, executed = self.execute_solver()
                 if returncode == 20 and "cryptominisat" in self.indata["solver"]:
                     if self.run_drat_trim() != 0:
-                        self.parse_lemmas()
+                        self.add_lemma_idx_to_sqlite(
+                            self.get_lemmas_fname(),
+                            self.get_sqlite_fname())
                 os.unlink("%s/%s" %
                           (self.temp_space, self.indata["cnf_filename"]))
                 files = self.copy_solution_to_s3()
