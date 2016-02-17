@@ -22,6 +22,7 @@ import socket
 import fcntl
 import struct
 import logging
+import functools
 
 # for importing in systems where "." is not in the PATH
 import glob
@@ -107,6 +108,21 @@ def signal_error_to_master():
     sock.close()
 
 
+def setlimits(time_limit, mem_limit):
+        #logging.info(
+            #"Setting resource limit in child (pid %d). Time %d s"
+            #"Mem %d MB\n", os.getpid(), m*time_limit,
+            #m*mem_limit,
+            #extra=self.logextra)
+
+        resource.setrlimit(resource.RLIMIT_CPU, (
+            m*time_limit,
+            m*time_limit))
+
+        resource.setrlimit(resource.RLIMIT_DATA, (
+            m*mem_limit * 1024 * 1024,
+            m*mem_limit * 1024 * 1024))
+
 class solverThread (threading.Thread):
 
     def __init__(self, threadID):
@@ -128,16 +144,6 @@ class solverThread (threading.Thread):
                             the_trace, extra={"threadid": -1})
 
         return newdir
-
-    def setlimits(self):
-        # sys.stdout.write("Setting resource limit in child (pid %d). Time %d s
-        # Mem %d MB\n" % (os.getpid(), self.indata["timeout_in_secs"],
-        # self.indata["mem_limit_in_mb"]))
-        resource.setrlimit(resource.RLIMIT_CPU, (
-            self.indata["timeout_in_secs"], self.indata["timeout_in_secs"]))
-        resource.setrlimit(resource.RLIMIT_DATA, (
-            self.indata["mem_limit_in_mb"] * 1024 * 1024,
-            self.indata["mem_limit_in_mb"] * 1024 * 1024))
 
     def get_output_fname(self):
         return "%s/%s" % (
@@ -203,7 +209,10 @@ class solverThread (threading.Thread):
         tstart = time.time()
         p = subprocess.Popen(
             toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
-            preexec_fn=self.setlimits)
+            preexec_fn=functools.partial(
+                setlimits,
+                self.indata["timeout_in_secs"],
+                self.indata["mem_limit_in_mb"]))
         p.wait()
         tend = time.time()
 
@@ -233,7 +242,10 @@ class solverThread (threading.Thread):
         tstart = time.time()
         p = subprocess.Popen(
             toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
-            preexec_fn=self.setlimits)
+            preexec_fn=functools.partial(
+                setlimits,
+                5*self.indata["timeout_in_secs"],
+                2*self.indata["mem_limit_in_mb"]))
         p.wait()
         tend = time.time()
 
