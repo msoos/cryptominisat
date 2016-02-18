@@ -81,15 +81,18 @@ def connect_client(threadID):
     return sock
 
 
-def ask_for_data_to_solve(sock, command, threadID):
-    logging.info("Asking for %s", command,
-                 extra={"threadid": threadID})
-    tosend = {}
-    tosend["uptime"] = uptime()
+def send_command(sock, command, tosend={}):
     tosend["command"] = command
     tosend = pickle.dumps(tosend)
     tosend = struct.pack('!q', len(tosend)) + tosend
     sock.sendall(tosend)
+
+
+def ask_for_data(sock, command, threadID):
+    logging.info("Asking for %s", command, extra={"threadid": threadID})
+    tosend = {}
+    tosend["uptime"] = uptime()
+    send_command(sock, command, tosend)
 
     # get stuff to solve
     data = get_n_bytes_from_connection(sock, 8)
@@ -101,11 +104,7 @@ def ask_for_data_to_solve(sock, command, threadID):
 
 def signal_error_to_master():
     sock = connect_client(100)
-    tosend = {}
-    tosend["command"] = "error"
-    tosend = pickle.dumps(tosend)
-    tosend = struct.pack('!q', len(tosend)) + tosend
-    sock.sendall(tosend)
+    send_command(sock, "error")
     sock.close()
 
 
@@ -372,7 +371,7 @@ class solverThread (threading.Thread):
                 num_connect_problems += 1
                 continue
 
-            self.indata = ask_for_data_to_solve(sock, "need", self.threadID)
+            self.indata = ask_for_data(sock, "need", self.threadID)
             sock.close()
 
             logging.info("Got data from server %s",
@@ -437,16 +436,12 @@ class solverThread (threading.Thread):
                 fail_connect += 1
 
         tosend = {}
-        tosend["command"] = "done"
         tosend["file_num"] = self.indata["file_num"]
         tosend["returncode"] = returncode
         tosend["files"] = files
-
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('!q', len(tosend)) + tosend
-        sock.sendall(tosend)
-        towrite = "Sent that we finished %s with retcode %d" % (
-            self.indata["file_num"], returncode)
+        send_command(sock, "done", tosend)
+        logging.info("Sent that we finished %s with retcode %d",
+                     self.indata["file_num"], returncode, extra=self.logextra)
 
         sock.close()
 
@@ -508,7 +503,7 @@ def build_system():
             time.sleep(3)
             continue
 
-        indata = ask_for_data_to_solve(sock, "build", -1)
+        indata = ask_for_data(sock, "build", -1)
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
