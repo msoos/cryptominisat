@@ -112,17 +112,18 @@ def signal_error_to_master():
 def setlimits(time_limit, mem_limit):
         #logging.info(
             #"Setting resource limit in child (pid %d). Time %d s"
-            #"Mem %d MB\n", os.getpid(), m*time_limit,
-            #m*mem_limit,
+            #"Mem %d MB\n", os.getpid(), time_limit,
+            #mem_limit,
             #extra=self.logextra)
 
         resource.setrlimit(resource.RLIMIT_CPU, (
-            m*time_limit,
-            m*time_limit))
+            time_limit,
+            time_limit))
 
         resource.setrlimit(resource.RLIMIT_DATA, (
-            m*mem_limit * 1024 * 1024,
-            m*mem_limit * 1024 * 1024))
+            mem_limit * 1024 * 1024,
+            mem_limit * 1024 * 1024))
+
 
 class solverThread (threading.Thread):
 
