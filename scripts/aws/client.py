@@ -657,8 +657,13 @@ class VolumeAdder():
         return self.vol.id
 
     def delete_volume(self):
-        os.system("sudo umount /mnt2")
-        time.sleep(2)
+        try:
+            os.system("sudo umount /mnt2")
+            time.sleep(2)
+        except:
+            logging.error("Issue with unmounting, but ignored",
+                          extra={"threadid": -1})
+
         self.conn.detach_volume(self.vol.id)
         time.sleep(1)
         self.conn.delete_volume(self.vol.id)
