@@ -10,13 +10,15 @@ import time
 import functools
 import glob
 import os
+import copy
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
-from sklearn import linear_model
+import sklearn.linear_model
+import sklearn.tree
 
 #for presentation (PDF)
-import sklearn.tree
+
 from sklearn.externals.six import StringIO
 import pydot
 from IPython.display import Image
@@ -112,10 +114,10 @@ class Query2 (Query):
             r = self.transform_rst_row(r[2:])
             X.append(r)
             y.append(perc)
-            print("---<<<")
-            print(r)
-            print(perc)
-            print("---")
+            #print("---<<<")
+            #print(r)
+            #print(perc)
+            #print("---")
 
         return X, y
 
@@ -162,7 +164,12 @@ class Query2 (Query):
         row[4] = 0
         row[5] = 0
 
-        return row
+        ret = []
+        for x in row:
+            ret.extend([x, x*x])
+            #ret.extend([x])
+
+        return ret
 
     def transform_rst_row(self, row):
         return row[5:]
@@ -170,8 +177,8 @@ class Query2 (Query):
 
 class Data:
     def __init__(self, X=[], y=[], colnames=[]):
-        self.X = X
-        self.y = y
+        self.X = copy.deepcopy(X)
+        self.y = copy.deepcopy(y)
         self.colnames = colnames
 
     def add(self, other):
@@ -216,8 +223,8 @@ class Classify:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
         #clf = KNeighborsClassifier(5)
-        self.clf = sklearn.tree.DecisionTreeClassifier(
-            max_depth=options.max_depth)
+        self.clf = sklearn.linear_model.LogisticRegression()
+        #self.clf = sklearn.tree.DecisionTreeClassifier()
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
 
@@ -227,6 +234,8 @@ class Classify:
         print("score: %s T: %-3.2f" % (score, (time.time()-t)))
 
     def output_to_pdf(self, clstats_names, fname):
+        return
+
         dot_data = StringIO()
         sklearn.tree.export_graphviz(self.clf, out_file=dot_data,
                                      feature_names=clstats_names,
@@ -253,9 +262,6 @@ if __name__ == "__main__":
     parser.add_option("--limit", "-l", default=10**9, type=int,
                       dest="limit", help="Max number of good/bad clauses")
 
-    parser.add_option("--depth", default=6, type=int,
-                      dest="max_depth", help="Max depth")
-
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -274,12 +280,13 @@ if __name__ == "__main__":
         clf.learn(cl.X, cl.y)
         clf.output_to_pdf(rst_data.colnames, "tree_cl.pdf")
 
-        clf = linear_model.LinearRegression()
-        rst.X = StandardScaler().fit_transform(rst.X)
-        X_train, X_test, y_train, y_test = train_test_split(rst.X, rst.y)
-        clf.fit(X_train, y_train)
-        score = clf.score(X_test, y_test)
-        print("score: %s" % score)
+        if False:
+            clf = sklearn.linear_model.LinearRegression()
+            rst.X = StandardScaler().fit_transform(rst.X)
+            X_train, X_test, y_train, y_test = train_test_split(rst.X, rst.y)
+            clf.fit(X_train, y_train)
+            score = clf.score(X_test, y_test)
+            print("score: %s" % score)
 
     if len(args) == 1:
         exit(0)
