@@ -201,12 +201,14 @@ def get_one_file(dbfname):
 
     cl_data = Data(X, y, clstats_names)
 
-    with Query2(dbfname) as q:
-        rststats_names = q.rststats_names
-        X, y = q.get_rststats()
-        assert len(X) == len(y)
+    rst_data = Data()
+    if False:
+        with Query2(dbfname) as q:
+            rststats_names = q.rststats_names
+            X, y = q.get_rststats()
+            assert len(X) == len(y)
 
-    rst_data = Data(X, y, clstats_names)
+        rst_data = Data(X, y, clstats_names)
 
     return cl_data, rst_data
 
@@ -223,6 +225,7 @@ class Classify:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
         #clf = KNeighborsClassifier(5)
+        #self.clf = sklearn.linear_model.LogisticRegression()
         self.clf = sklearn.linear_model.LogisticRegression()
         #self.clf = sklearn.tree.DecisionTreeClassifier()
         self.clf.fit(X_train, y_train)
@@ -274,7 +277,7 @@ if __name__ == "__main__":
         print("----- INTERMEDIATE predictor -------\n")
         cl, rst = get_one_file(dbfname)
         cl_data.add(cl)
-        rst_data.add(rst)
+        #rst_data.add(rst)
 
         clf = Classify()
         clf.learn(cl.X, cl.y)
