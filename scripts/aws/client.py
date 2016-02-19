@@ -395,7 +395,7 @@ class solverThread (threading.Thread):
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
                 if returncode == 20 and "cryptominisat" in self.indata["solver"]:
-                    if self.run_drat_trim() != 0:
+                    if self.run_drat_trim() == 0:
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
