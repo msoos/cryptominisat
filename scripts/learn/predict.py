@@ -40,6 +40,12 @@ class Query:
         names = None
         for row in self.c.execute("select * from clauseStats limit 1"):
             names = list(map(lambda x: x[0], self.c.description))
+
+        if options.add_pow2:
+            orignames = copy.deepcopy(names)
+            for name in orignames:
+                names.append("%s**2" % name)
+
         return names
 
     def get_rststats_names(self):
@@ -122,7 +128,8 @@ class Query2 (Query):
         return X, y
 
     def get_clstats(self):
-        ret = []
+        X = []
+        y = []
 
         q = """
         SELECT clauseStats.*
@@ -135,7 +142,8 @@ class Query2 (Query):
         for row, _ in zip(self.c.execute(q), xrange(options.limit)):
             #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
-            ret.append([r, 1])
+            X.append(r)
+            y.append(1)
 
         bads = []
         q = """
@@ -151,11 +159,9 @@ class Query2 (Query):
         for row, _ in zip(self.c.execute(q), xrange(options.limit)):
             #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
-            ret.append([r, 0])
+            X.append(r)
+            y.append(0)
 
-        numpy.random.shuffle(ret)
-        X = [x[0] for x in ret]
-        y = [x[1] for x in ret]
         return X, y
 
     def transform_clstat_row(self, row):
@@ -165,11 +171,13 @@ class Query2 (Query):
         row[5] = 0
 
         ret = []
-        for x in row:
-            ret.extend([x, x*x])
-            #ret.extend([x])
+        if options.add_pow2:
+            for x in row:
+                ret.extend([x, x*x])
 
-        return ret
+            return ret
+        else:
+            return row
 
     def transform_rst_row(self, row):
         return row[5:]
@@ -201,21 +209,13 @@ def get_one_file(dbfname):
 
     cl_data = Data(X, y, clstats_names)
 
-    rst_data = Data()
-    if False:
-        with Query2(dbfname) as q:
-            rststats_names = q.rststats_names
-            X, y = q.get_rststats()
-            assert len(X) == len(y)
-
-        rst_data = Data(X, y, clstats_names)
-
-    return cl_data, rst_data
+    return cl_data
 
 
 class Classify:
     def learn(self, X, y):
         print("number of features:", len(X[0]))
+
         print("total samples: %5d   percentage of good ones %-3.2f" %
               (len(X), sum(y)/float(len(X))*100.0))
         X = StandardScaler().fit_transform(X)
@@ -226,8 +226,8 @@ class Classify:
 
         #clf = KNeighborsClassifier(5)
         #self.clf = sklearn.linear_model.LogisticRegression()
-        self.clf = sklearn.linear_model.LogisticRegression()
-        #self.clf = sklearn.tree.DecisionTreeClassifier()
+        #self.clf = sklearn.linear_model.LogisticRegression()
+        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
 
@@ -237,7 +237,8 @@ class Classify:
         print("score: %s T: %-3.2f" % (score, (time.time()-t)))
 
     def output_to_pdf(self, clstats_names, fname):
-        return
+        print("clstats_names len:", len(clstats_names))
+        print("clstats_names: %s" % clstats_names)
 
         dot_data = StringIO()
         sklearn.tree.export_graphviz(self.clf, out_file=dot_data,
@@ -248,6 +249,7 @@ class Classify:
                                      proportion=True
                                      )
         graph = pydot.graph_from_dot_data(dot_data.getvalue())
+        print("Done with DOT")
         #Image(graph.create_png())
 
         graph.write_pdf(fname)
@@ -262,6 +264,9 @@ if __name__ == "__main__":
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
+    parser.add_option("--pow2", "-p", action="store_true", default=False,
+                      dest="add_pow2", help="Add power of 2 of all data")
+
     parser.add_option("--limit", "-l", default=10**9, type=int,
                       dest="limit", help="Max number of good/bad clauses")
 
@@ -275,21 +280,13 @@ if __name__ == "__main__":
     rst_data = Data()
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
-        cl, rst = get_one_file(dbfname)
+        cl = get_one_file(dbfname)
         cl_data.add(cl)
         #rst_data.add(rst)
 
         clf = Classify()
         clf.learn(cl.X, cl.y)
-        clf.output_to_pdf(rst_data.colnames, "tree_cl.pdf")
-
-        if False:
-            clf = sklearn.linear_model.LinearRegression()
-            rst.X = StandardScaler().fit_transform(rst.X)
-            X_train, X_test, y_train, y_test = train_test_split(rst.X, rst.y)
-            clf.fit(X_train, y_train)
-            score = clf.score(X_test, y_test)
-            print("score: %s" % score)
+        clf.output_to_pdf(cl.colnames, "tree_cl.pdf")
 
     if len(args) == 1:
         exit(0)
