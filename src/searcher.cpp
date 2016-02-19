@@ -1447,7 +1447,6 @@ void Searcher::dump_sql_clause_data(
         , trail.size()
         , sum_vsids/(double)learnt_clause.size()
         , params.conflictsDoneThisRestart
-        , resolutions.sum_vsids_of_resolving_literals/((double)resolutions.sum()-1)
     );
 }
 #endif

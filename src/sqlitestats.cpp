@@ -831,7 +831,6 @@ void SQLiteStats::dump_clause_stats(
     , size_t propagation_level
     , double avg_vsids_score
     , uint64_t conflicts_this_restart
-    , double avg_vsids_of_resolving_literals
 ) {
 
     double avg_age_reds = 0;
@@ -866,7 +865,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_vsids/(double)resolutions.sum_size());
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_vsids_of_resolving_literals);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, resolutions.sum_vsids_of_resolving_literals/((double)resolutions.sum()-1));
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
 
     int rc = sqlite3_step(stmt_clause_stats);

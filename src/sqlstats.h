@@ -84,7 +84,6 @@ public:
         , size_t propagation_level
         , double avg_vsids_score
         , uint64_t conflicts_this_restart
-        , double avg_vsids_of_resolving_literals
     ) = 0;
 
     virtual bool setup(const Solver* solver) = 0;
