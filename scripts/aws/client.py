@@ -664,7 +664,7 @@ class VolumeAdder():
             logging.error("Issue with unmounting, but ignored",
                           extra={"threadid": -1})
 
-        self.conn.detach_volume(self.vol.id)
+        self.conn.detach_volume(self.vol.id, force=True)
         time.sleep(1)
         self.conn.delete_volume(self.vol.id)
 
