@@ -16,8 +16,6 @@ def parse_lemmas(lemmafname):
             line = line.strip()
             l = line.split(" ")
             good_id = l[len(l)-1]
-            if options.verbose:
-                print(good_id)
 
             good_id2 = 0
             try:
