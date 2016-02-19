@@ -199,7 +199,9 @@ create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
 DROP TABLE IF EXISTS `goodClauses`;
 create table `goodClauses` (
     `runID` bigint(20) NOT NULL,
-    `clauseID` bigint(20) NOT NULL
+    `clauseID` bigint(20) NOT NULL,
+    `numUsed` bigint(20) NOT NULL,
+    `usedUntilID` bigint(20) NOT NULL
 );
 create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
 

@@ -6,15 +6,23 @@ import sqlite3
 import optparse
 
 
+class Data:
+    def __init__(self, untilID=-1, useful=0):
+        self.useful = useful
+        self.untilID = untilID
+
+
 def parse_lemmas(lemmafname):
-    ret = []
+    ret = {}
+    last_good_id = 2
     with open(lemmafname, "r") as f:
         for line in f:
             if line[0] == "d":
-                continue
+                l = line.strip().split(" ")
+                del_id = l[len(l)-1]
+                ret[del_id] = Data(0, last_good_id)
 
-            line = line.strip()
-            l = line.split(" ")
+            l = line.strip().split(" ")
             good_id = l[len(l)-1]
 
             good_id2 = 0
@@ -25,10 +33,10 @@ def parse_lemmas(lemmafname):
                 exit(-1)
 
             if good_id2 > 1:
-                ret.append(good_id2)
+                ret[good_id2] = Data()
+            last_good_id = good_id2
 
     print("Parsed %d number of good lemmas" % len(ret))
-    ret = sorted(ret)
     return ret
 
 
@@ -63,10 +71,10 @@ class Query:
     def add_goods(self, ids):
         self.c.execute('delete from goodClauses;')
 
-        id_b = [(self.runID, x) for x in ids]
+        id_b = [(self.runID, ID, x.useful, x.untilID) for ID, x in ids.iteritems()]
         self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`)
-            VALUES (?, ?);""", id_b)
+            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`, `usedUntilID`)
+            VALUES (?, ?, ?, ?);""", id_b)
 
 
 if __name__ == "__main__":
