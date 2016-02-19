@@ -197,8 +197,8 @@ class solverThread (threading.Thread):
 
     def execute_solver(self):
         toexec = self.get_toexec()
-        stdout_file = open(self.get_stdout_fname(), "w+")
-        stderr_file = open(self.get_stderr_fname(), "w+")
+        stdout_file = open(self.get_stdout_fname(), "w")
+        stderr_file = open(self.get_stderr_fname(), "w")
 
         # limit time
         limits_printed = "Thread %d executing '%s' with timeout %d s  and memout %d MB" % (
@@ -243,8 +243,8 @@ class solverThread (threading.Thread):
         logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
         logging.info("Executing %s", toexec, extra=self.logextra)
 
-        stdout_file = open(self.get_stdout_fname(), "w+")
-        stderr_file = open(self.get_stderr_fname(), "w+")
+        stdout_file = open(self.get_stdout_fname(), "a")
+        stderr_file = open(self.get_stderr_fname(), "a")
         tstart = time.time()
         p = subprocess.Popen(
             toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
