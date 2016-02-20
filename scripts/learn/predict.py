@@ -33,20 +33,8 @@ class Query:
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
-        self.clstats_names = self.get_clausestats_names()[5:]
+        self.get_clausestats_names()
         self.rststats_names = self.get_rststats_names()[5:]
-
-    def get_clausestats_names(self):
-        names = None
-        for row in self.c.execute("select * from clauseStats limit 1"):
-            names = list(map(lambda x: x[0], self.c.description))
-
-        if options.add_pow2:
-            orignames = copy.deepcopy(names)
-            for name in orignames:
-                names.append("%s**2" % name)
-
-        return names
 
     def get_rststats_names(self):
         names = None
@@ -166,9 +154,12 @@ class Query2 (Query):
 
     def transform_clstat_row(self, row):
         row = list(row[5:])
-        row[1] = row[1]/row[10]
-        row[10] = 0
-        row[11] = 0
+        row[self.ntoc["backtrack_level"]] /= float(row[self.ntoc["decision_level"]])
+        row[self.ntoc["decision_level"]] = 0
+        row[self.ntoc["propagation_level"]] = 0
+
+        row.append(0)
+        row[self.ntoc["size_minus_glue"]] = row[self.ntoc["size"]] - row[self.ntoc["glue"]]
 
         ret = []
         if options.add_pow2:
@@ -178,6 +169,25 @@ class Query2 (Query):
             return ret
         else:
             return row
+
+    def get_clausestats_names(self):
+        names = None
+        for row in self.c.execute("select * from clauseStats limit 1"):
+            names = list(map(lambda x: x[0], self.c.description))
+
+        names = names[5:]
+        names.append("size_minus_glue")
+
+        if options.add_pow2:
+            orignames = copy.deepcopy(names)
+            for name in orignames:
+                names.append("%s**2" % name)
+
+        self.clstats_names = names
+        self.ntoc = {}
+        for n, c in zip(names, xrange(100)):
+            print(n, ":", c)
+            self.ntoc[n] = c
 
     def transform_rst_row(self, row):
         return row[5:]
