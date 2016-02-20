@@ -182,7 +182,7 @@ CREATE TABLE `clauseStats` (
   `backtrack_level` int(20) NOT NULL,
   `size` int(20) NOT NULL,
 
-  `sum_resolutions` int(20) NOT NULL,
+  `num_antecedents` int(20) NOT NULL,
   `atedecents_binIrred` int(20) NOT NULL,
   `atedecents_binRed` int(20) NOT NULL,
   `atedecents_triIrred` int(20) NOT NULL,

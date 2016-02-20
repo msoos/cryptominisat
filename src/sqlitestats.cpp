@@ -789,7 +789,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `backtrack_level`,"
     << " `size`,"
 
-    << " `sum_resolutions`,"
+    << " `num_antecedents`,"
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
     << " `atedecents_triIrred`,"
