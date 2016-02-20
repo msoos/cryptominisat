@@ -466,7 +466,7 @@ def shutdown(exitval=0):
         if exitval == 0:
             email_subject += "OK"
         else:
-            email_subject +="FAIL"
+            email_subject += "FAIL"
         text = """
         Server finished. Please download the final data:
 
