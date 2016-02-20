@@ -199,7 +199,8 @@ CREATE TABLE `clauseStats` (
   `antecedents_avg_vsids` double NOT NULL,
   `conflicts_this_restart` bigint(20) NOT NULL,
   `avg_vsids_of_resolving_literals` double NOT NULL,
-  `num_overlap_literals` int(20) NOT NULL
+  `num_overlap_literals` int(20) NOT NULL,
+  `antecedents_antecedents_avg_vsids` int(20) NOT NULL
   -- `avg_vsids_score_resolvents` int(20) NOT NULL
 );
 create index `idxclid` on `clauseStats` (`runID`,`clauseID`);

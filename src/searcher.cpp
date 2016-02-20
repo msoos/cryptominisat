@@ -128,7 +128,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    antec_data.sum_vsids += activities[lit.var()]/var_inc;
+    antec_data.avg_vsids += activities[lit.var()]/var_inc;
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -455,7 +455,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
-                antec_data.sum_avg_vsids_of_ants += cl->stats.antec_data.sum_vsids / cl->size();
+                antec_data.sum_avg_vsids_of_ants += cl->stats.antec_data.avg_vsids;
                 antec_data.longRed++;
                 stats.resolvs.longRed++;
                 #ifdef STATS_NEEDED
@@ -1475,6 +1475,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
         *drat << *cl << fin;
+        antec_data.avg_vsids /= (double)antec_data.sum_size();
 
         #ifdef STATS_NEEDED
         if (solver->sqlStats

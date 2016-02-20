@@ -64,7 +64,7 @@ struct AtecedentData
         longRed += other.longRed;
         sum_size_longs += other.sum_size_longs;
         sum_age_long_reds += other.sum_age_long_reds;
-        sum_vsids += other.sum_vsids;
+        avg_vsids += other.avg_vsids;
         sum_glue_long_reds += other.sum_glue_long_reds;
 
         return *this;
@@ -81,7 +81,7 @@ struct AtecedentData
         longRed -= other.longRed;
         sum_size_longs -= other.sum_size_longs;
         sum_age_long_reds -= other.sum_age_long_reds;
-        sum_vsids -= other.sum_vsids;
+        avg_vsids -= other.avg_vsids;
         sum_glue_long_reds -= other.sum_glue_long_reds;
 
         return *this;
@@ -108,7 +108,7 @@ struct AtecedentData
     uint32_t sum_glue_long_reds = 0;
     uint32_t sum_size_longs = 0;
     uint32_t sum_age_long_reds = 0;
-    double sum_vsids = 0;
+    double avg_vsids = 0;
     double sum_vsids_of_resolving_literals = 0;
     double sum_avg_vsids_of_ants = 0;
 };

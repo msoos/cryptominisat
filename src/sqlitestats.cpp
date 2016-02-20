@@ -773,7 +773,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 25;
+    const size_t numElems = 26;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -806,7 +806,8 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `antecedents_avg_vsids`,"
     << " `conflicts_this_restart`,"
     << " `avg_vsids_of_resolving_literals`,"
-    << " `num_overlap_literals`"
+    << " `num_overlap_literals`,"
+    << " `antecedents_antecedents_avg_vsids`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -853,6 +854,11 @@ void SQLiteStats::dump_clause_stats(
 
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
+    double antec_antec_avg_vsids = 0;
+    if (antec_data.longRed != 0) {
+        antec_antec_avg_vsids = (double)antec_data.sum_avg_vsids_of_ants/(double)antec_data.longRed;
+    }
+
     int bindAt = 1;
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
@@ -864,14 +870,14 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.num());
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.num());
 
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binRed);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.triIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.triRed);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.longIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.longRed);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binIrred);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binRed);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.triIrred);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.triRed);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longIrred);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longRed);
 
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
@@ -879,10 +885,11 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_vsids/(double)antec_data.sum_size());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.avg_vsids);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.sum_vsids_of_resolving_literals/((double)antec_data.num()-1));
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_antec_avg_vsids);
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {
