@@ -461,11 +461,27 @@ def shutdown(exitval=0):
     logging.info("SHUTTING DOWN")
 
     #send email
-    if exitval == 0: reason = "OK"
-    else: reason ="FAIL"
     try:
-        send_email("Server shutting down %s" % reason,
-                   "Server finished.", options.logfile_name)
+        email_subject = "Server shutting down "
+        if exitval == 0:
+            email_subject += "OK"
+        else:
+            email_subject +="FAIL"
+        text = """
+        Server finished. Please download the final data:
+
+mkdir {0}
+cd {0}
+aws s3 cp --recursive s3://{1}/{0}/ .
+
+Don't forget to:
+
+* check volume
+* check EC2 still running
+
+So long and thanks for all the fish!
+""".format(options.s3_folder, options.s3_bucket)
+        send_email(email_subject, text, options.logfile_name)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
