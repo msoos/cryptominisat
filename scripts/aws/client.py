@@ -250,7 +250,7 @@ class solverThread (threading.Thread):
             toexec.rsplit(), stderr=stderr_file, stdout=stdout_file,
             preexec_fn=functools.partial(
                 setlimits,
-                5*self.indata["timeout_in_secs"],
+                10*self.indata["timeout_in_secs"],
                 2*self.indata["mem_limit_in_mb"]))
         p.wait()
         tend = time.time()

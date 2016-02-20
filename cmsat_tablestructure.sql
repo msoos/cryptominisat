@@ -202,6 +202,7 @@ CREATE TABLE `clauseStats` (
   `antecedents_glue_long_reds_avg` double NOT NULL,
   `antecedents_glue_long_reds_var` double NOT NULL,
   `antecedents_glue_long_reds_min` int(20) NOT NULL,
+  `antecedents_glue_long_reds_max` int(20) NOT NULL,
 
   `antecedents_long_red_age_avg` double NOT NULL,
   `antecedents_long_red_age_var` double NOT NULL,
@@ -210,10 +211,12 @@ CREATE TABLE `clauseStats` (
 
   `vsids_of_resolving_literals_avg` double NOT NULL,
   `vsids_of_resolving_literals_var` double NOT NULL,
+  `vsids_of_resolving_literals_min` double NOT NULL,
   `vsids_of_resolving_literals_max` double NOT NULL,
 
   `vsids_of_all_incoming_lits_avg` double NOT NULL,
   `vsids_of_all_incoming_lits_var` double NOT NULL,
+  `vsids_of_all_incoming_lits_min` double NOT NULL,
   `vsids_of_all_incoming_lits_max` double NOT NULL,
 
   `antecedents_antecedents_vsids_avg` double NOT NULL

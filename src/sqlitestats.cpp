@@ -773,7 +773,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 37;
+    const size_t numElems = 40;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -809,6 +809,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `antecedents_glue_long_reds_avg`,"
     << " `antecedents_glue_long_reds_var`,"
     << " `antecedents_glue_long_reds_min`,"
+    << " `antecedents_glue_long_reds_max`,"
 
     << " `antecedents_long_red_age_avg`,"
     << " `antecedents_long_red_age_var`,"
@@ -817,10 +818,12 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `vsids_of_resolving_literals_avg`,"
     << " `vsids_of_resolving_literals_var`,"
+    << " `vsids_of_resolving_literals_min`,"
     << " `vsids_of_resolving_literals_max`,"
 
     << " `vsids_of_all_incoming_lits_avg`,"
     << " `vsids_of_all_incoming_lits_var`,"
+    << " `vsids_of_all_incoming_lits_min`,"
     << " `vsids_of_all_incoming_lits_max`,"
 
     << " `antecedents_antecedents_vsids_avg`"
@@ -885,6 +888,7 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.getMin());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.getMax());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.avg());
@@ -898,10 +902,12 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.getMin());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.getMax());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMin());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMax());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_ants.avg());

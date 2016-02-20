@@ -68,11 +68,12 @@ parser.add_option("--tout", "-t", default=2000, dest="timeout_in_secs",
                   type=int
                   )
 
-parser.add_option("--extratime", default=30, dest="extra_time",
-                  help="Timeout for the server to send us the results"
+parser.add_option("--toutmult", default=12.1, dest="tout_mult",
+                  help="Approx: 1x is solving, 10x time is DRAT time wait, 1x is parsing, 0.1x that is sending us the result."
                   "[default: %default]",
-                  type=int
+                  type=float
                   )
+
 
 parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb",
                   help="Memory limit in MB"
@@ -249,7 +250,7 @@ class Server (threading.Thread):
             duration = this_time - starttime
             # print("* death check. running:" , file_num, " duration: ",
             # duration)
-            if duration > options.timeout_in_secs + options.extra_time:
+            if duration > options.timeout_in_secs*options.tout_mult:
                 logging.warn("* dead file %s duration: %d re-inserting",
                              file_num, duration)
                 files_to_remove_from_files_running.append(file_num)
@@ -512,7 +513,7 @@ while threading.active_count() > 0:
     time.sleep(0.5)
     if last_termination_sent is not None and server.ready_to_shutdown():
         diff = time.time() - last_termination_sent
-        limit = options.extra_time
+        limit = 100
         if diff > limit:
             break
 
