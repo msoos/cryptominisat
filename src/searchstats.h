@@ -96,7 +96,7 @@ public:
     uint64_t clauseID_at_end_exclusive = 0;
 
     //Resolution Stats
-    ResolutionTypes<uint64_t> resolvs;
+    AtecedentData<uint64_t> resolvs;
 
     //Stat structs
     ConflStats conflStats;

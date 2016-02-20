@@ -361,7 +361,7 @@ class Searcher : public HyperEngine
         void print_debug_resolution_data(const PropBy confl);
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
-        ResolutionTypes<uint16_t> resolutions;
+        AtecedentData<uint16_t> antec_data;
 
         vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 

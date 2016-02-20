@@ -128,7 +128,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    resolutions.sum_vsids += activities[lit.var()]/var_inc;
+    antec_data.sum_vsids += activities[lit.var()]/var_inc;
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -421,10 +421,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     switch (confl.getType()) {
         case tertiary_t : {
             if (confl.isRedStep()) {
-                resolutions.triRed++;
+                antec_data.triRed++;
                 stats.resolvs.triRed++;
             } else {
-                resolutions.triIrred++;
+                antec_data.triIrred++;
                 stats.resolvs.triIrred++;
             }
             add_lit_to_learnt(confl.lit3());
@@ -439,10 +439,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
 
         case binary_t : {
             if (confl.isRedStep()) {
-                resolutions.binRed++;
+                antec_data.binRed++;
                 stats.resolvs.binRed++;
             } else {
-                resolutions.binIrred++;
+                antec_data.binIrred++;
                 stats.resolvs.binIrred++;
             }
             if (p == lit_Undef) {
@@ -455,17 +455,17 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
-                resolutions.longRed++;
+                antec_data.longRed++;
                 stats.resolvs.longRed++;
                 #ifdef STATS_NEEDED
-                resolutions.sum_age_long_reds += sumConflicts() - cl->stats.introduced_at_conflict;
+                antec_data.sum_age_long_reds += sumConflicts() - cl->stats.introduced_at_conflict;
                 #endif
-                resolutions.sum_glue_long_reds += cl->stats.glue;
+                antec_data.sum_glue_long_reds += cl->stats.glue;
             } else {
-                resolutions.longIrred++;
+                antec_data.longIrred++;
                 stats.resolvs.longRed++;
             }
-            resolutions.sum_size_longs += cl->size();
+            antec_data.sum_size_longs += cl->size();
 
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
@@ -582,7 +582,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            resolutions.sum_vsids_of_resolving_literals += activities[p.var()]/var_inc;
+            antec_data.sum_vsids_of_resolving_literals += activities[p.var()]/var_inc;
             tmp_learnt_clause_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
@@ -1341,8 +1341,8 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.conflSizeHist.push(learnt_clause.size());
     hist.conflSizeHistLT.push(learnt_clause.size());
 
-    hist.numResolutionsHist.push(resolutions.sum());
-    hist.numResolutionsHistLT.push(resolutions.sum());
+    hist.numResolutionsHist.push(antec_data.sum());
+    hist.numResolutionsHistLT.push(antec_data.sum());
 
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
 }
@@ -1388,7 +1388,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
 
         default:
             //Long learnt
-            cl->stats.resolutions = resolutions;
+            cl->stats.antec_data = antec_data;
             stats.learntLongs++;
             solver->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
@@ -1442,7 +1442,7 @@ void Searcher::dump_sql_clause_data(
         , glue
         , backtrack_level
         , learnt_clause.size()
-        , resolutions
+        , antec_data
         , decisionLevel()
         , trail.size()
         , sum_vsids_vars/(double)learnt_clause.size()
@@ -1525,7 +1525,7 @@ bool Searcher::handle_conflict(const PropBy confl)
 {
     uint32_t backtrack_level;
     uint32_t glue;
-    resolutions.clear();
+    antec_data.clear();
     stats.conflStats.numConflicts++;
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
@@ -2474,7 +2474,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
     do {
         assert(!confl.isNULL());          // (otherwise should be UIP)
 
-        //Update resolutions output
+        //Update antec_data output
         if (p != lit_Undef) {
             resolutions_str << " | ";
         }

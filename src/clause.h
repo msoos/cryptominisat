@@ -41,11 +41,11 @@ namespace CMSat {
 class ClauseAllocator;
 
 template <class T>
-struct ResolutionTypes
+struct AtecedentData
 {
     void clear()
     {
-        *this = ResolutionTypes<T>();
+        *this = AtecedentData<T>();
     }
 
     uint64_t sum() const
@@ -54,7 +54,7 @@ struct ResolutionTypes
     }
 
     template<class T2>
-    ResolutionTypes& operator+=(const ResolutionTypes<T2>& other)
+    AtecedentData& operator+=(const AtecedentData<T2>& other)
     {
         binRed += other.binRed;
         binIrred += other.binIrred;
@@ -71,7 +71,7 @@ struct ResolutionTypes
     }
 
     template<class T2>
-    ResolutionTypes& operator-=(const ResolutionTypes<T2>& other)
+    AtecedentData& operator-=(const AtecedentData<T2>& other)
     {
         binRed -= other.binRed;
         binIrred -= other.binIrred;
@@ -138,7 +138,7 @@ struct ClauseStats
 
     ///Number of resolutions it took to make the clause when it was
     ///originally learnt. Only makes sense for redundant clauses
-    ResolutionTypes<uint16_t> resolutions;
+    AtecedentData<uint16_t> antec_data;
 
     void clear()
     {

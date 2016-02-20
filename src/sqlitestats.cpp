@@ -711,12 +711,12 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.lits);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.glue);
 
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.binIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.binRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.triIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.triRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.longIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.resol.longRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.binIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.binRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.triIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.triRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.longIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.longRed);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.age);
 
@@ -732,12 +732,12 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.lits);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.glue);
 
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.binIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.binRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.triIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.triRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.longIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.resol.longRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.binIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.binRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.triIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.triRed);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.longIrred);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.longRed);
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.age);
 
@@ -834,7 +834,7 @@ void SQLiteStats::dump_clause_stats(
     , uint32_t glue
     , uint32_t backtrack_level
     , uint32_t size
-    , ResolutionTypes<uint16_t> resolutions
+    , AtecedentData<uint16_t> antec_data
     , size_t decision_level
     , size_t propagation_level
     , double sum_vsids_vars
@@ -842,16 +842,16 @@ void SQLiteStats::dump_clause_stats(
 ) {
 
     double avg_age_reds = 0;
-    if (resolutions.longRed > 0) {
-        avg_age_reds = (double)resolutions.sum_age_long_reds/(double)resolutions.longRed;
+    if (antec_data.longRed > 0) {
+        avg_age_reds = (double)antec_data.sum_age_long_reds/(double)antec_data.longRed;
     }
 
     double avg_glue_long_reds = 0;
-    if (resolutions.longRed) {
-        avg_glue_long_reds = (double)resolutions.sum_glue_long_reds/(double)resolutions.longRed;
+    if (antec_data.longRed) {
+        avg_glue_long_reds = (double)antec_data.sum_glue_long_reds/(double)antec_data.longRed;
     }
 
-    uint32_t num_overlap_literals = resolutions.sum_size()-(resolutions.sum()-1)-size;
+    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.sum()-1)-size;
 
     int bindAt = 1;
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
@@ -864,24 +864,24 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.sum());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.sum());
 
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.binIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.binRed);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.triIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.triRed);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.longIrred);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.longRed);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binRed);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.triIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.triRed);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.longIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.longRed);
 
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, sum_vsids_vars);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_size()/(double)resolutions.sum() );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.sum() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_vsids/(double)resolutions.sum_size());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_vsids/(double)antec_data.sum_size());
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, resolutions.sum_vsids_of_resolving_literals/((double)resolutions.sum()-1));
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.sum_vsids_of_resolving_literals/((double)antec_data.sum()-1));
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
 
     int rc = sqlite3_step(stmt_clause_stats);

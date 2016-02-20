@@ -79,7 +79,7 @@ public:
         , uint32_t glue
         , uint32_t backtrack_level
         , uint32_t size
-        , ResolutionTypes<uint16_t> resoltypes
+        , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t propagation_level
         , double sum_vsids_vars
