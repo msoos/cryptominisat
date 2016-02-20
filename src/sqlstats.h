@@ -82,7 +82,6 @@ public:
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
         , size_t propagation_level
-        , double sum_vsids_vars
         , uint64_t conflicts_this_restart
     ) = 0;
 

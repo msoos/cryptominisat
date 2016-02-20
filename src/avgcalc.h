@@ -60,6 +60,50 @@ public:
         #endif
     {}
 
+    AvgCalc<T, T2>& operator/=(const T2 val)
+    {
+        sum /= val;
+        sumSqare /= val*val;
+        min /= val;
+        max /= val;
+        #ifdef STATS_NEEDED
+        sumSqare /= val*val;
+        #endif
+
+        return *this;
+    }
+
+    AvgCalc<T, T2>& operator+=(const AvgCalc<T, T2>& other)
+    {
+        sum += other.sum;
+        num += other.num;
+        min = std::min(min, other.min);
+        max = std::min(min, other.max);
+        #ifdef STATS_NEEDED
+        sumSqare += other.sumSqare;
+        #endif
+
+        return *this;
+    }
+
+    AvgCalc<T, T2>& operator-=(const AvgCalc<T, T2>& other)
+    {
+        sum += other.sum;
+        num += other.num;
+        min = std::min(min, other.min);
+        max = std::min(min, other.max);
+        #ifdef STATS_NEEDED
+        sumSqare += other.sumSqare;
+        #endif
+
+        return *this;
+    }
+
+    T2 get_sum() const
+    {
+        return sum;
+    }
+
     void push(const T x) {
         sum += x;
         num++;

@@ -34,6 +34,7 @@
 #include "watched.h"
 #include "alg.h"
 #include "clabstraction.h"
+#include "avgcalc.h"
 #include "constants.h"
 
 namespace CMSat {
@@ -62,10 +63,11 @@ struct AtecedentData
         triIrred += other.triIrred;
         longIrred += other.longIrred;
         longRed += other.longRed;
-        sum_size_longs += other.sum_size_longs;
-        sum_age_long_reds += other.sum_age_long_reds;
-        avg_vsids += other.avg_vsids;
-        sum_glue_long_reds += other.sum_glue_long_reds;
+
+        glue_long_reds += other.glue_long_reds;
+        size_longs += other.size_longs;
+        age_long_reds += other.age_long_reds;
+        vsids_vars += other.vsids_vars;
 
         return *this;
     }
@@ -79,10 +81,11 @@ struct AtecedentData
         triIrred -= other.triIrred;
         longIrred -= other.longIrred;
         longRed -= other.longRed;
-        sum_size_longs -= other.sum_size_longs;
-        sum_age_long_reds -= other.sum_age_long_reds;
-        avg_vsids -= other.avg_vsids;
-        sum_glue_long_reds -= other.sum_glue_long_reds;
+
+        glue_long_reds -= other.glue_long_reds;
+        size_longs -= other.size_longs;
+        age_long_reds -= other.age_long_reds;
+        vsids_vars -= other.vsids_vars;
 
         return *this;
     }
@@ -94,7 +97,7 @@ struct AtecedentData
         sum += binRed*2;
         sum += triIrred*3;
         sum += triRed*3;
-        sum += sum_size_longs;
+        sum += size_longs.get_sum();
 
         return sum;
     }
@@ -105,12 +108,13 @@ struct AtecedentData
     T triIrred = 0;
     T longIrred = 0;
     T longRed = 0;
-    uint32_t sum_glue_long_reds = 0;
-    uint32_t sum_size_longs = 0;
-    uint32_t sum_age_long_reds = 0;
-    double avg_vsids = 0;
-    double sum_vsids_of_resolving_literals = 0;
-    double sum_avg_vsids_of_ants = 0;
+    AvgCalc<uint32_t> glue_long_reds;
+    AvgCalc<uint32_t> size_longs;
+    AvgCalc<uint32_t> age_long_reds;
+    AvgCalc<double, double> vsids_all_incoming_vars;
+    AvgCalc<double, double> vsids_vars;
+    AvgCalc<double, double> vsids_of_resolving_literals;
+    AvgCalc<double, double> vsids_of_ants;
 };
 
 struct ClauseStats

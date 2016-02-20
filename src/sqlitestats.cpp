@@ -773,7 +773,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 26;
+    const size_t numElems = 37;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -782,14 +782,19 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `simplifications`,"
     << " `restarts`,"
     << " `conflicts`,"
-    << ""
     << " `clauseID`,"
     << ""
     << " `glue`,"
-    << " `backtrack_level`,"
     << " `size`,"
-
+    << " `conflicts_this_restart`,"
+    << " `num_overlap_literals`,"
     << " `num_antecedents`,"
+    << " `antecedents_avg_size`,"
+
+    << " `backtrack_level`,"
+    << " `decision_level`,"
+    << " `propagation_level`,"
+
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
     << " `atedecents_triIrred`,"
@@ -797,17 +802,28 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `atedecents_longIrred`,"
     << " `atedecents_longRed`,"
 
-    << " `decision_level`,"
-    << " `propagation_level`,"
-    << " `sum_vsids_vars`,"
-    << " `antecedents_avg_glue_long_reds`,"
-    << " `antecedents_avg_len`,"
-    << " `antecedents_avg_age_reds`,"
-    << " `antecedents_avg_vsids`,"
-    << " `conflicts_this_restart`,"
-    << " `avg_vsids_of_resolving_literals`,"
-    << " `num_overlap_literals`,"
-    << " `antecedents_antecedents_avg_vsids`"
+    << " `vsids_vars_avg`,"
+    << " `vsids_vars_var`,"
+    << " `vsids_vars_max`,"
+
+    << " `antecedents_glue_long_reds_avg`,"
+    << " `antecedents_glue_long_reds_var`,"
+    << " `antecedents_glue_long_reds_min`,"
+
+    << " `antecedents_long_red_age_avg`,"
+    << " `antecedents_long_red_age_var`,"
+    << " `antecedents_long_red_age_min`,"
+    << " `antecedents_long_red_age_max`,"
+
+    << " `vsids_of_resolving_literals_avg`,"
+    << " `vsids_of_resolving_literals_var`,"
+    << " `vsids_of_resolving_literals_max`,"
+
+    << " `vsids_of_all_incoming_lits_avg`,"
+    << " `vsids_of_all_incoming_lits_var`,"
+    << " `vsids_of_all_incoming_lits_max`,"
+
+    << " `antecedents_antecedents_vsids_avg`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -838,39 +854,27 @@ void SQLiteStats::dump_clause_stats(
     , AtecedentData<uint16_t> antec_data
     , size_t decision_level
     , size_t propagation_level
-    , double sum_vsids_vars
     , uint64_t conflicts_this_restart
 ) {
-
-    double avg_age_reds = 0;
-    if (antec_data.longRed > 0) {
-        avg_age_reds = (double)antec_data.sum_age_long_reds/(double)antec_data.longRed;
-    }
-
-    double avg_glue_long_reds = 0;
-    if (antec_data.longRed) {
-        avg_glue_long_reds = (double)antec_data.sum_glue_long_reds/(double)antec_data.longRed;
-    }
-
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
-
-    double antec_antec_avg_vsids = 0;
-    if (antec_data.longRed != 0) {
-        antec_antec_avg_vsids = (double)antec_data.sum_avg_vsids_of_ants/(double)antec_data.longRed;
-    }
 
     int bindAt = 1;
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts());
-
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
-    sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.num());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
+
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binRed);
@@ -879,17 +883,28 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longRed);
 
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, sum_vsids_vars);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.avg_vsids);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.sum_vsids_of_resolving_literals/((double)antec_data.num()-1));
-    sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_antec_avg_vsids);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.getMax());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.var());
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.getMin());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.age_long_reds.avg() );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.age_long_reds.var() );
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.age_long_reds.getMin() );
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.age_long_reds.getMax() );
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.getMax());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.var());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMax());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_ants.avg());
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {

@@ -175,14 +175,19 @@ CREATE TABLE `clauseStats` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-
   `clauseID` bigint(20) NOT NULL,
 
   `glue` int(20) NOT NULL,
-  `backtrack_level` int(20) NOT NULL,
   `size` int(20) NOT NULL,
-
+  `conflicts_this_restart` bigint(20) NOT NULL,
+  `num_overlap_literals` int(20) NOT NULL,
   `num_antecedents` int(20) NOT NULL,
+  `antecedents_avg_size` int(20) NOT NULL,
+
+  `backtrack_level` int(20) NOT NULL,
+  `decision_level` int(20) NOT NULL,
+  `propagation_level` int(20) NOT NULL,
+
   `atedecents_binIrred` int(20) NOT NULL,
   `atedecents_binRed` int(20) NOT NULL,
   `atedecents_triIrred` int(20) NOT NULL,
@@ -190,18 +195,28 @@ CREATE TABLE `clauseStats` (
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
 
-  `decision_level` int(20) NOT NULL,
-  `propagation_level` int(20) NOT NULL,
-  `sum_vsids_vars` double NOT NULL,
-  `antecedents_avg_glue_long_reds` double NOT NULL,
-  `antecedents_avg_len` double NOT NULL,
-  `antecedents_avg_age_reds` double NOT NULL,
-  `antecedents_avg_vsids` double NOT NULL,
-  `conflicts_this_restart` bigint(20) NOT NULL,
-  `avg_vsids_of_resolving_literals` double NOT NULL,
-  `num_overlap_literals` int(20) NOT NULL,
-  `antecedents_antecedents_avg_vsids` int(20) NOT NULL
-  -- `avg_vsids_score_resolvents` int(20) NOT NULL
+  `vsids_vars_avg` double NOT NULL,
+  `vsids_vars_var` double NOT NULL,
+  `vsids_vars_max` double NOT NULL,
+
+  `antecedents_glue_long_reds_avg` double NOT NULL,
+  `antecedents_glue_long_reds_var` double NOT NULL,
+  `antecedents_glue_long_reds_min` int(20) NOT NULL,
+
+  `antecedents_long_red_age_avg` double NOT NULL,
+  `antecedents_long_red_age_var` double NOT NULL,
+  `antecedents_long_red_age_min` bigint(20) NOT NULL,
+  `antecedents_long_red_age_max` bigint(20) NOT NULL,
+
+  `vsids_of_resolving_literals_avg` double NOT NULL,
+  `vsids_of_resolving_literals_var` double NOT NULL,
+  `vsids_of_resolving_literals_max` double NOT NULL,
+
+  `vsids_of_all_incoming_lits_avg` double NOT NULL,
+  `vsids_of_all_incoming_lits_var` double NOT NULL,
+  `vsids_of_all_incoming_lits_max` double NOT NULL,
+
+  `antecedents_antecedents_vsids_avg` double NOT NULL
 );
 create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
 

@@ -128,7 +128,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    antec_data.avg_vsids += activities[lit.var()]/var_inc;
+    antec_data.vsids_all_incoming_vars.push(activities[lit.var()]/var_inc);
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -455,18 +455,18 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
-                antec_data.sum_avg_vsids_of_ants += cl->stats.antec_data.avg_vsids;
+                antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
                 antec_data.longRed++;
                 stats.resolvs.longRed++;
                 #ifdef STATS_NEEDED
-                antec_data.sum_age_long_reds += sumConflicts() - cl->stats.introduced_at_conflict;
+                antec_data.age_long_reds.push(sumConflicts() - cl->stats.introduced_at_conflict);
                 #endif
-                antec_data.sum_glue_long_reds += cl->stats.glue;
+                antec_data.glue_long_reds.push(cl->stats.glue);
             } else {
                 antec_data.longIrred++;
                 stats.resolvs.longRed++;
             }
-            antec_data.sum_size_longs += cl->size();
+            antec_data.size_longs.push(cl->size());
 
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
@@ -583,7 +583,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            antec_data.sum_vsids_of_resolving_literals += activities[p.var()]/var_inc;
+            antec_data.vsids_of_resolving_literals.push(activities[p.var()]/var_inc);
             tmp_learnt_clause_size--;
             assert(seen2[(~p).toInt()] == 1);
             seen2[(~p).toInt()] = 0;
@@ -723,6 +723,10 @@ Clause* Searcher::analyze_conflict(
         bump_var_activities_based_on_implied_by_learnts(glue);
     }
     implied_by_learnts.clear();
+
+    for(const Lit l: learnt_clause) {
+        antec_data.vsids_vars.push(activities[l.var()]/var_inc);
+    }
 
     return otf_subsume_last_resolved_clause(last_resolved_cl);
 
@@ -1431,12 +1435,6 @@ void Searcher::dump_sql_clause_data(
     const uint32_t glue
     , const uint32_t backtrack_level
 ) {
-    double sum_vsids_vars = 0;
-    for(const Lit l: learnt_clause) {
-        sum_vsids_vars += activities[l.var()];
-    }
-    sum_vsids_vars /= var_inc;
-
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
@@ -1446,7 +1444,6 @@ void Searcher::dump_sql_clause_data(
         , antec_data
         , decisionLevel()
         , trail.size()
-        , sum_vsids_vars/(double)learnt_clause.size()
         , params.conflictsDoneThisRestart
     );
 }
@@ -1475,7 +1472,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ClOffset offset = cl_alloc.get_offset(cl);
         solver->longRedCls.push_back(offset);
         *drat << *cl << fin;
-        antec_data.avg_vsids /= (double)antec_data.sum_size();
 
         #ifdef STATS_NEEDED
         if (solver->sqlStats
