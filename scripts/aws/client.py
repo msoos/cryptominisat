@@ -262,7 +262,7 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
 
-        os.unlink("%s/%s" % (self.temp_space, "drat"))
+        os.unlink(self.get_drat_fname())
 
         return p.returncode
 
@@ -279,7 +279,7 @@ class solverThread (threading.Thread):
         logging.info("Num good IDs: %d",
                      len(useful_lemma_ids), extra=self.logextra)
 
-        os.unlink("%s/%s" % (self.temp_space, "lemmas"))
+        os.unlink(self.get_lemmas_fname())
 
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
