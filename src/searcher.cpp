@@ -455,6 +455,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
+                antec_data.sum_avg_vsids_of_ants += cl->stats.antec_data.sum_vsids / cl->size();
                 antec_data.longRed++;
                 stats.resolvs.longRed++;
                 #ifdef STATS_NEEDED
@@ -1341,8 +1342,8 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.conflSizeHist.push(learnt_clause.size());
     hist.conflSizeHistLT.push(learnt_clause.size());
 
-    hist.numResolutionsHist.push(antec_data.sum());
-    hist.numResolutionsHistLT.push(antec_data.sum());
+    hist.numResolutionsHist.push(antec_data.num());
+    hist.numResolutionsHistLT.push(antec_data.num());
 
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
 }

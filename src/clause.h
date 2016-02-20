@@ -48,7 +48,7 @@ struct AtecedentData
         *this = AtecedentData<T>();
     }
 
-    uint64_t sum() const
+    uint64_t num() const
     {
         return binRed + binIrred + triRed + triIrred + longIrred + longRed;
     }
@@ -110,6 +110,7 @@ struct AtecedentData
     uint32_t sum_age_long_reds = 0;
     double sum_vsids = 0;
     double sum_vsids_of_resolving_literals = 0;
+    double sum_avg_vsids_of_ants = 0;
 };
 
 struct ClauseStats

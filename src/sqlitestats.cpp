@@ -851,7 +851,7 @@ void SQLiteStats::dump_clause_stats(
         avg_glue_long_reds = (double)antec_data.sum_glue_long_reds/(double)antec_data.longRed;
     }
 
-    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.sum()-1)-size;
+    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
     int bindAt = 1;
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
@@ -864,7 +864,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.sum());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.num());
 
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.binRed);
@@ -877,11 +877,11 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, sum_vsids_vars);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.sum() );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_vsids/(double)antec_data.sum_size());
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.sum_vsids_of_resolving_literals/((double)antec_data.sum()-1));
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.sum_vsids_of_resolving_literals/((double)antec_data.num()-1));
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
 
     int rc = sqlite3_step(stmt_clause_stats);

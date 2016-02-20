@@ -33,9 +33,9 @@ struct CleaningStats
 {
     struct Data
     {
-        uint64_t sumResolutions() const
+        uint64_t numResolutions() const
         {
-            return antec_data.sum();
+            return antec_data.num();
         }
 
         Data& operator+=(const Data& other)
