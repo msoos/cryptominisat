@@ -773,7 +773,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 19;
+    const size_t numElems = 25;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -788,10 +788,18 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `glue`,"
     << " `backtrack_level`,"
     << " `size`,"
+
     << " `sum_resolutions`,"
+    << " `atedecents_binIrred`,"
+    << " `atedecents_binRed`,"
+    << " `atedecents_triIrred`,"
+    << " `atedecents_triRed`,"
+    << " `atedecents_longIrred`,"
+    << " `atedecents_longRed`,"
+
     << " `decision_level`,"
     << " `propagation_level`,"
-    << " `avg_vsids_score`,"
+    << " `sum_vsids_vars`,"
     << " `antecedents_avg_glue_long_reds`,"
     << " `antecedents_avg_len`,"
     << " `antecedents_avg_age_reds`,"
@@ -829,7 +837,7 @@ void SQLiteStats::dump_clause_stats(
     , ResolutionTypes<uint16_t> resolutions
     , size_t decision_level
     , size_t propagation_level
-    , double avg_vsids_score
+    , double sum_vsids_vars
     , uint64_t conflicts_this_restart
 ) {
 
@@ -857,9 +865,17 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.sum());
+
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.binIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.binRed);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.triIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.triRed);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.longIrred);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, resolutions.longRed);
+
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_vsids_score);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, sum_vsids_vars);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_glue_long_reds);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)resolutions.sum_size()/(double)resolutions.sum() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, avg_age_reds );

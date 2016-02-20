@@ -166,9 +166,9 @@ class Query2 (Query):
 
     def transform_clstat_row(self, row):
         row = list(row[5:])
-        row[1] = row[1]/row[4]
-        row[4] = 0
-        row[5] = 0
+        row[1] = row[1]/row[10]
+        row[10] = 0
+        row[11] = 0
 
         ret = []
         if options.add_pow2:

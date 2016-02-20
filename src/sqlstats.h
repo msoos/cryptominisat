@@ -82,7 +82,7 @@ public:
         , ResolutionTypes<uint16_t> resoltypes
         , size_t decision_level
         , size_t propagation_level
-        , double avg_vsids_score
+        , double sum_vsids_vars
         , uint64_t conflicts_this_restart
     ) = 0;
 

@@ -1430,11 +1430,11 @@ void Searcher::dump_sql_clause_data(
     const uint32_t glue
     , const uint32_t backtrack_level
 ) {
-    double sum_vsids = 0;
+    double sum_vsids_vars = 0;
     for(const Lit l: learnt_clause) {
-        sum_vsids += activities[l.var()];
+        sum_vsids_vars += activities[l.var()];
     }
-    sum_vsids /= var_inc;
+    sum_vsids_vars /= var_inc;
 
     solver->sqlStats->dump_clause_stats(
         solver
@@ -1445,7 +1445,7 @@ void Searcher::dump_sql_clause_data(
         , resolutions
         , decisionLevel()
         , trail.size()
-        , sum_vsids/(double)learnt_clause.size()
+        , sum_vsids_vars/(double)learnt_clause.size()
         , params.conflictsDoneThisRestart
     );
 }
