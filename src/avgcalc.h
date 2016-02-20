@@ -63,7 +63,6 @@ public:
     AvgCalc<T, T2>& operator/=(const T2 val)
     {
         sum /= val;
-        sumSqare /= val*val;
         min /= val;
         max /= val;
         #ifdef STATS_NEEDED
