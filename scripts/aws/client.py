@@ -146,23 +146,23 @@ class solverThread (threading.Thread):
 
         return newdir
 
-    def get_output_fname(self):
+    def get_cnf_fname(self):
         return "%s/%s" % (
             self.temp_space,
             self.indata["cnf_filename"]
         )
 
     def get_stdout_fname(self):
-        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
+        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
 
     def get_stderr_fname(self):
-        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
+        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_perf_fname(self):
-        return self.get_output_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
+        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
 
     def get_sqlite_fname(self):
-        return self.get_output_fname() + ".sqlite"
+        return self.get_cnf_fname() + ".sqlite"
 
     def get_lemmas_fname(self):
         return "%s/lemmas" % self.temp_space
@@ -177,17 +177,17 @@ class solverThread (threading.Thread):
 
         extra_opts += " " + self.indata["extra_opts"] + " "
 
-        os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s/ --region us-west-2" % (
-            self.indata["cnf_dir"], self.indata["cnf_filename"], self.temp_space))
+        os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s --region us-west-2" % (
+            self.indata["cnf_dir"], self.indata["cnf_filename"],
+            self.get_cnf_fname()))
 
         # os.system("touch %s" % self.get_perf_fname())
         # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
-        toexec = "%s/%s %s %s/%s" % (
+        toexec = "%s/%s %s %s" % (
             options.base_dir,
             self.indata["solver"],
             extra_opts,
-            self.temp_space,
-            self.indata["cnf_filename"])
+            self.get_cnf_fname())
 
         #add DRAT in case of cryptominisat
         if "cryptominisat" in self.indata["solver"]:
@@ -234,10 +234,9 @@ class solverThread (threading.Thread):
         return p.returncode, toexec
 
     def run_drat_trim(self):
-        toexec = "%s/drat-trim/drat-trim2 %s/%s %s -l %s" % (
+        toexec = "%s/drat-trim/drat-trim2 %s %s -l %s" % (
             options.base_dir,
-            self.temp_space,
-            self.indata["cnf_filename"],
+            self.get_cnf_fname(),
             self.get_drat_fname(),
             self.get_lemmas_fname())
         logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
@@ -399,8 +398,7 @@ class solverThread (threading.Thread):
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
-                os.unlink("%s/%s" %
-                          (self.temp_space, self.indata["cnf_filename"]))
+                os.unlink(self.get_cnf_fname())
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
@@ -620,6 +618,16 @@ def print_to_log_local_setup():
         logging.info("%s -- %s", a, b, extra={"threadid": -1})
 
 
+class VolumeAdderMount():
+    def __init__(self):
+        os.system("sudo mkfs.ext3 /dev/xvdb")
+        os.system("sudo mkdir %s" % options.temp_space)
+        os.system("sudo mount /dev/xvdb %s" % options.temp_space)
+
+    def delete_volume(self):
+        pass
+
+
 class VolumeAdder():
     def __init__(self):
         self.conn = boto.ec2.connect_to_region(self._get_region())
@@ -643,16 +651,18 @@ class VolumeAdder():
             time.sleep(5)
             self.vol.update()
 
-        logging.info("Created volume, attaching... %s", self.vol, extra={"threadid": -1})
-        self.conn.attach_volume(self.vol.id, self._get_instance_id(), options.dev)
+        dev = "xvdc"
+        logging.info("Created volume, attaching... %s", self.vol,
+                     extra={"threadid": -1})
+        self.conn.attach_volume(self.vol.id, self._get_instance_id(), dev)
         logging.info("Waiting for volume to show up...", extra={"threadid": -1})
         time.sleep(10)
 
         logging.info("Trying to mkfs, mkdir and mount", extra={"threadid": -1})
-        os.system("sudo mkfs.ext3 /dev/%s" % options.dev)
-        os.system("sudo mkdir /mnt2")
-        os.system("sudo chown ubuntu:ubuntu /mnt2")
-        os.system("sudo mount /dev/%s /mnt2" % options.dev)
+        os.system("sudo mkfs.ext3 /dev/%s" % dev)
+        os.system("sudo mkdir %s" % options.temp_space)
+        os.system("sudo chown ubuntu:ubuntu %s" % options.temp_space)
+        os.system("sudo mount /dev/%s %s" % (dev, options.temp_space))
 
         return self.vol.id
 
@@ -685,7 +695,7 @@ def parse_command_line():
                       " [default: %default]",
                       )
 
-    parser.add_option("--temp", default="/mnt2/", dest="temp_space", type=str,
+    parser.add_option("--temp", default="/mnt2", dest="temp_space", type=str,
                       help="Temporary space to use"
                       " [default: %default]",
                       )
@@ -741,8 +751,7 @@ if __name__ == "__main__":
                      pprint.pformat(options, indent=4).replace("\n", " || "),
                      extra={"threadid": -1})
         print_to_log_local_setup()
-        v = VolumeAdder()
-        v.add_volume()
+        v = VolumeAdderMount()
 
         boto_conn = boto.connect_s3()
         update_num_threads()
