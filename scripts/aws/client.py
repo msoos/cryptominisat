@@ -261,8 +261,6 @@ class solverThread (threading.Thread):
         stderr_file.close()
         stdout_file.close()
 
-        os.unlink(self.get_drat_fname())
-
         return p.returncode
 
     def add_lemma_idx_to_sqlite(self, lemmafname, dbfname):
@@ -399,6 +397,7 @@ class solverThread (threading.Thread):
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
                 os.unlink(self.get_cnf_fname())
+                os.unlink(self.get_drat_fname())
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
