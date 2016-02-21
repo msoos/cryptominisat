@@ -39,6 +39,8 @@ void ClauseDumper::open_file_and_write_sat(const std::string& fname)
     open_dump_file(fname);
     *outfile
     << "p cnf 0 0\n";
+    delete outfile;
+    outfile = NULL;
 }
 
 void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
@@ -47,6 +49,8 @@ void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
     *outfile
     << "p cnf 0 1\n"
     << "0\n";
+    delete outfile;
+    outfile = NULL;
 }
 
 void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
@@ -64,6 +68,8 @@ void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
         << endl;
         std::exit(-1);
     }
+    delete outfile;
+    outfile = NULL;
 }
 
 void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname)
@@ -82,6 +88,8 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname
         << endl;
         std::exit(-1);
     }
+    delete outfile;
+    outfile = NULL;
 }
 
 void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& irredDumpFname)
@@ -108,10 +116,14 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
         << endl;
         std::exit(-1);
     }
+    delete outfile;
+    outfile = NULL;
 }
 
 void ClauseDumper::open_dump_file(const std::string& filename)
 {
+    delete outfile;
+    outfile = NULL;
     std::ofstream* f =  new std::ofstream;
     f->open(filename.c_str());
     if (!f->good()) {
