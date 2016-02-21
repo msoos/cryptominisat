@@ -148,6 +148,7 @@ def rnd_id():
 options.logfile_name = options.base_dir + options.logfile_name
 options.s3_folder += "-" + time.strftime("%d-%B-%Y")
 options.s3_folder += "-%s" % rnd_id()
+final_s3_folder = options.s3_folder
 
 
 def get_revision():
@@ -173,6 +174,13 @@ def get_n_bytes_from_connection(sock, MSGLEN):
         bytes_recd = bytes_recd + len(chunk)
 
     return ''.join(chunks)
+
+
+def send_command(sock, command, tosend={}):
+    tosend["command"] = command
+    tosend = pickle.dumps(tosend)
+    tosend = struct.pack('!q', len(tosend)) + tosend
+    sock.sendall(tosend)
 
 
 class ToSolve:
@@ -284,34 +292,24 @@ class Server (threading.Thread):
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('!q', len(tosend)) + tosend
-
         logging.info("Sending git revision %s to %s", options.git_rev,
                      cli_addr)
-        connection.sendall(tosend)
+        send_command(connection, "build_data", tosend)
 
     def send_termination(self, connection, cli_addr):
         tosend = {}
         tosend["noshutdown"] = options.noshutdown
-        tosend["command"] = "finish"
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('!q', len(tosend)) + tosend
+        send_command(connection, "finish", tosend)
 
         logging.info("No more to solve, terminating %s", cli_addr)
-        connection.sendall(tosend)
         global last_termination_sent
         last_termination_sent = time.time()
 
     def send_wait(self, connection, cli_addr):
         tosend = {}
         tosend["noshutdown"] = options.noshutdown
-        tosend["command"] = "wait"
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('!q', len(tosend)) + tosend
-        logging.info("Everything is in sent queue, sending wait to %s",
-                     cli_addr)
-        connection.sendall(tosend)
+        logging.info("Everything is in sent queue, sending wait to %s", cli_addr)
+        send_command(connection, "wait", tosend)
 
     def send_one_to_solve(self, connection, cli_addr, file_num):
         # set timer that we have sent this to be solved
@@ -331,15 +329,16 @@ class Server (threading.Thread):
         tosend["noshutdown"] = options.noshutdown
         tosend["extra_opts"] = options.extra_opts
         tosend["uniq_cnt"] = str(self.uniq_cnt)
-        tosend["command"] = "solve"
-        tosend = pickle.dumps(tosend)
-        tosend = struct.pack('!q', len(tosend)) + tosend
-
         logging.info("Sending file %s (num %d) to %s",
                      filename, file_num, cli_addr)
-        sys.stdout.flush()
-        connection.sendall(tosend)
+        send_command(connection, "solve", tosend)
         self.uniq_cnt += 1
+
+        global final_s3_folder
+        final_s3_folder = get_s3_folder(tosend["s3_folder"],
+                                        tosend["git_rev"],
+                                        tosend["timeout_in_secs"],
+                                        tosend["mem_limit_in_mb"])
 
     def handle_need(self, connection, cli_addr, indata):
         # TODO don't ignore 'indata' for solving CNF instances, use it to
@@ -479,7 +478,7 @@ Don't forget to:
 * check EC2 still running
 
 So long and thanks for all the fish!
-""".format(options.s3_folder, options.s3_bucket)
+""".format(final_s3_folder, options.s3_bucket)
         send_email(email_subject, text, options.logfile_name)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
