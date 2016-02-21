@@ -620,6 +620,9 @@ def print_to_log_local_setup():
 
 class VolumeAdderMount():
     def __init__(self):
+        pass
+
+    def add_volume(self):
         os.system("sudo mkfs.ext3 /dev/xvdb")
         os.system("sudo mkdir %s" % options.temp_space)
         os.system("sudo mount /dev/xvdb %s" % options.temp_space)
@@ -752,6 +755,7 @@ if __name__ == "__main__":
                      extra={"threadid": -1})
         print_to_log_local_setup()
         v = VolumeAdderMount()
+        v.add_volume()
 
         boto_conn = boto.connect_s3()
         update_num_threads()
