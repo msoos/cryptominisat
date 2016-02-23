@@ -11,11 +11,14 @@ import functools
 import glob
 import os
 import copy
+import pickle
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
 import sklearn.linear_model
 import sklearn.tree
+import sklearn.ensemble
+import sklearn.metrics
 
 #for presentation (PDF)
 
@@ -126,8 +129,9 @@ class Query2 (Query):
         and clauseStats.runID = goodClauses.runID
         and clauseStats.runID = {0}
         order by RANDOM()
-        """.format(self.runID)
-        for row, _ in zip(self.c.execute(q), xrange(options.limit)):
+        limit {1}
+        """.format(self.runID, options.limit)
+        for row in self.c.execute(q):
             #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
@@ -143,8 +147,9 @@ class Query2 (Query):
         and goodClauses.runID is NULL
         and clauseStats.runID = {0}
         order by RANDOM()
-        """.format(self.runID)
-        for row, _ in zip(self.c.execute(q), xrange(options.limit)):
+        limit {1}
+        """.format(self.runID, options.limit)
+        for row in self.c.execute(q):
             #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
@@ -186,7 +191,7 @@ class Query2 (Query):
         self.clstats_names = names
         self.ntoc = {}
         for n, c in zip(names, xrange(100)):
-            print(n, ":", c)
+            #print(n, ":", c)
             self.ntoc[n] = c
 
     def transform_rst_row(self, row):
@@ -194,14 +199,14 @@ class Query2 (Query):
 
 
 class Data:
-    def __init__(self, X=[], y=[], colnames=[]):
-        self.X = copy.deepcopy(X)
-        self.y = copy.deepcopy(y)
+    def __init__(self, X, y, colnames):
+        self.X = numpy.array(X)
+        self.y = numpy.array(y)
         self.colnames = colnames
 
     def add(self, other):
-        self.X.extend(other.X)
-        self.y.extend(other.y)
+        self.X = numpy.append(self.X, other.X, 0)
+        self.y = numpy.append(self.y, other.y, 0)
         if len(self.colnames) == 0:
             self.colnames = other.colnames
         else:
@@ -223,12 +228,12 @@ def get_one_file(dbfname):
 
 
 class Classify:
-    def learn(self, X, y):
+    def learn(self, X, y, classifiername="classifier"):
         print("number of features:", len(X[0]))
 
         print("total samples: %5d   percentage of good ones %-3.2f" %
               (len(X), sum(y)/float(len(X))*100.0))
-        X = StandardScaler().fit_transform(X)
+        #X = StandardScaler().fit_transform(X)
 
         print("Training....")
         t = time.time()
@@ -236,35 +241,60 @@ class Classify:
 
         #clf = KNeighborsClassifier(5)
         #self.clf = sklearn.linear_model.LogisticRegression()
-        #self.clf = sklearn.linear_model.LogisticRegression()
-        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
+        #self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
+        self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/10, n_estimators=8)
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
 
-        print("Calculating score....")
+        print("Calculating scores....")
+
         t = time.time()
-        score = self.clf.score(X_test, y_test)
-        print("score: %s T: %-3.2f" % (score, (time.time()-t)))
+        y_pred = self.clf.predict(X_test)
+        recall = sklearn.metrics.recall_score(y_test, y_pred)
+        prec = sklearn.metrics.precision_score(y_test, y_pred)
+        # avg_prec = self.clf.score(X, y)
+        print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
+              (prec, recall, (time.time()-t)))
+
+        with open(classifiername, "w") as f:
+            pickle.dump(self.clf, f)
 
     def output_to_pdf(self, clstats_names, fname):
         print("clstats_names len:", len(clstats_names))
         print("clstats_names: %s" % clstats_names)
 
-        dot_data = StringIO()
-        sklearn.tree.export_graphviz(self.clf, out_file=dot_data,
+        #dot_data = StringIO()
+        sklearn.tree.export_graphviz(self.clf, out_file=fname,
                                      feature_names=clstats_names,
                                      class_names=["BAD", "GOOD"],
                                      filled=True, rounded=True,
                                      special_characters=True,
                                      proportion=True
                                      )
-        graph = pydot.graph_from_dot_data(dot_data.getvalue())
-        print("Done with DOT")
+        #graph = pydot.graph_from_dot_data(dot_data.getvalue())
+        print("Done with DOT: %s" % fname)
         #Image(graph.create_png())
 
-        graph.write_pdf(fname)
-        print("Wrote final tree to %s" % fname)
+        #graph.write_pdf(fname)
+        #print("Wrote final tree to %s" % fname)
 
+
+class Check:
+    def __init__(self, classf_fname):
+        with open(classf_fname, "r") as f:
+            self.clf = pickle.load(f)
+
+    def check(self, X, y):
+        print("total samples: %5d   percentage of good ones %-3.2f" %
+              (len(X), sum(y)/float(len(X))*100.0))
+
+        t = time.time()
+        y_pred = self.clf.predict(X)
+        recall = sklearn.metrics.recall_score(y, y_pred)
+        prec = sklearn.metrics.precision_score(y, y_pred)
+        # avg_prec = self.clf.score(X, y)
+        print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
+              (prec, recall, (time.time()-t)))
 
 if __name__ == "__main__":
 
@@ -280,36 +310,51 @@ if __name__ == "__main__":
     parser.add_option("--limit", "-l", default=10**9, type=int,
                       dest="limit", help="Max number of good/bad clauses")
 
+    parser.add_option("--check", "-c", type=str,
+                      dest="check", help="Check classifier")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give at least one directory")
         exit(-1)
 
-    cl_data = Data()
-    rst_data = Data()
+    cl_data = None
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
         cl = get_one_file(dbfname)
-        cl_data.add(cl)
-        #rst_data.add(rst)
 
-        clf = Classify()
-        clf.learn(cl.X, cl.y)
-        clf.output_to_pdf(cl.colnames, "tree_cl.pdf")
+        #print("cl x:")
+        #print(cl.X)
+        #print("cl data x:")
+        #print(cl_data.X)
 
-    if len(args) == 1:
+        if options.check:
+            check = Check(options.check)
+            check.check(cl.X, cl.y)
+        else:
+            clf = Classify()
+            clf.learn(cl.X, cl.y, "classifier-%s" % dbfname.rstrip(".cnf.gz.sqlite"))
+            #clf.output_to_pdf(cl.colnames, "tree_cl-%s.dot" % dbfname.rstrip(".sqlite"))
+            if cl_data is None:
+                cl_data = cl
+            else:
+                cl_data.add(cl)
+
+    if len(args) == 1 or options.check:
         exit(0)
 
     print("----- FINAL predictor -------\n")
-
-    #clauses
-    clf = Classify()
-    clf.learn(cl_data.X, cl_data.y)
-    print("Columns used were:")
-    for i, name in zip(xrange(100), cl_data.colnames):
-        print("%-3d  %s" % (i, name))
-    clf.output_to_pdf(cl_data.colnames, "tree_cl.pdf")
+    if options.check:
+        check = Check()
+        check.check(cl.X, cl.y)
+    else:
+        clf = Classify()
+        clf.learn(cl_data.X, cl_data.y)
+        print("Columns used were:")
+        for i, name in zip(xrange(100), cl_data.colnames):
+            print("%-3d  %s" % (i, name))
+        #clf.output_to_pdf(cl_data.colnames, "tree_cl.dot")
 
 
 
