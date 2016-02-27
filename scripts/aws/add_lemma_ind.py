@@ -8,8 +8,8 @@ import optparse
 
 class Data:
     def __init__(self, untilID=-1, useful=0):
-        self.useful = useful
         self.untilID = untilID
+        self.useful = useful
 
 
 def parse_lemmas(lemmafname):
