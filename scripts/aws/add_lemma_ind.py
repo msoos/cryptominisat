@@ -20,7 +20,7 @@ def parse_lemmas(lemmafname):
             if line[0] == "d":
                 l = line.strip().split(" ")
                 del_id = l[len(l)-1]
-                ret[del_id] = Data(0, last_good_id)
+                ret[del_id] = Data(last_good_id, 0)
 
             l = line.strip().split(" ")
             good_id = l[len(l)-1]
