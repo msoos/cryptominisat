@@ -17,6 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
 import sklearn.linear_model
 import sklearn.tree
+import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
 
@@ -233,16 +234,17 @@ class Classify:
 
         print("total samples: %5d   percentage of good ones %-3.2f" %
               (len(X), sum(y)/float(len(X))*100.0))
-        #X = StandardScaler().fit_transform(X)
+        X = StandardScaler().fit_transform(X)
 
         print("Training....")
         t = time.time()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-        #clf = KNeighborsClassifier(5)
-        #self.clf = sklearn.linear_model.LogisticRegression()
+        #clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
+        #self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
         #self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
         self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/10, n_estimators=8)
+        #self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
 
