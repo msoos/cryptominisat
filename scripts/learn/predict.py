@@ -272,7 +272,8 @@ class Classify:
                                      proportion=True
                                      )
         #graph = pydot.graph_from_dot_data(dot_data.getvalue())
-        print("Done with DOT: %s" % fname)
+        print("Run dot:")
+        print("dot -Tpng %s -o tree.png" % fname)
         #Image(graph.create_png())
 
         #graph.write_pdf(fname)
