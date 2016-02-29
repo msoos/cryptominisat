@@ -70,6 +70,23 @@ class Query:
 
 
 class Query2 (Query):
+    def create_indexes(self):
+        print("Recreating indexes...")
+        t = time.time()
+        q = """
+        drop index if exists `idxclid`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+
+        create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
+        create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
+        create index `idxclid3` on `restart` (`runID`,`clauseIDstartInclusive`, `clauseIDendExclusive`);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+
+        print("indexes created %-3.2f" % (time.time()-t))
+
     def get_max_clauseID(self):
         q = """
         SELECT max(clauseID)
@@ -125,10 +142,19 @@ class Query2 (Query):
 
         q = """
         SELECT clauseStats.*
+        -- , restart.*
         FROM clauseStats, goodClauses
-        WHERE clauseStats.clauseID = goodClauses.clauseID
+        -- , restart
+        WHERE
+
+        clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
+
+        -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
+        -- and restart.clauseIDendExclusive > clauseStats.clauseID
+
         and clauseStats.runID = {0}
+        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
@@ -138,15 +164,23 @@ class Query2 (Query):
             X.append(r)
             y.append(1)
 
-        bads = []
         q = """
         SELECT clauseStats.*
+        -- , restart.*
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
-        where goodClauses.clauseID is NULL
+        -- , restart
+        where
+
+        goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
+
+        -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
+        -- and restart.clauseIDendExclusive > clauseStats.clauseID
+
         and clauseStats.runID = {0}
+        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
@@ -158,14 +192,8 @@ class Query2 (Query):
 
         return X, y
 
-    def transform_clstat_row(self, row):
+    def transform_rst_row(self, row):
         row = list(row[5:])
-        row[self.ntoc["backtrack_level"]] /= float(row[self.ntoc["decision_level"]])
-        row[self.ntoc["decision_level"]] = 0
-        row[self.ntoc["propagation_level"]] = 0
-
-        row.append(0)
-        row[self.ntoc["size_minus_glue"]] = row[self.ntoc["size"]] - row[self.ntoc["glue"]]
 
         ret = []
         if options.add_pow2:
@@ -177,12 +205,24 @@ class Query2 (Query):
             return row
 
     def get_clausestats_names(self):
+        q = """
+        select clauseStats.*
+        from clauseStats
+        limit 1
+        """
         names = None
-        for row in self.c.execute("select * from clauseStats limit 1"):
-            names = list(map(lambda x: x[0], self.c.description))
+        for row in self.c.execute(q):
+            names = list(map(lambda x: "clauseStats." + x[0], self.c.description))
 
-        names = names[5:]
-        names.append("size_minus_glue")
+        q = """
+        select restart.*
+        from restart
+        limit 1
+        """
+        for row in self.c.execute(q):
+            names.extend(list(map(lambda x: "restart." + x[0], self.c.description)))
+
+        print(names)
 
         if options.add_pow2:
             orignames = copy.deepcopy(names)
@@ -191,12 +231,36 @@ class Query2 (Query):
 
         self.clstats_names = names
         self.ntoc = {}
-        for n, c in zip(names, xrange(100)):
+        for n, c in zip(names, xrange(10000)):
             #print(n, ":", c)
             self.ntoc[n] = c
 
-    def transform_rst_row(self, row):
-        return row[5:]
+    def transform_clstat_row(self, row):
+        set_to_null = [
+            "clauseStats.runID",
+            "clauseStats.simplifications",
+            "clauseStats.restarts",
+            "clauseStats.conflicts",
+            "clauseStats.clauseID"]
+            #"restart.runID",
+            #"restart.simplifications",
+            #"restart.restarts",
+            #"restart.conflicts",
+            #"restart.runtime",
+            #"restart.clauseIDstartInclusive",
+            #"restart.clauseIDendExclusive"]
+
+        row2 = list(row)
+        for e in set_to_null:
+            row_to_reset = self.ntoc[e]
+            row2[row_to_reset] = 0
+
+        #row2[self.ntoc["clauseStats.backtrack_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
+        #row2[self.ntoc["clauseStats.decision_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
+        #row[self.ntoc["clauseStats.propagation_level"]] /= float(row[self.ntoc["restart.propagation_level"]])
+        #row[self.ntoc["num_2nd_largest_dec_vars"]] = 0
+
+        return row2
 
 
 class Data:
@@ -219,6 +283,7 @@ def get_one_file(dbfname):
     clstats_names = None
 
     with Query2(dbfname) as q:
+        q.create_indexes()
         clstats_names = q.clstats_names
         X, y = q.get_clstats()
         assert len(X) == len(y)
@@ -234,7 +299,7 @@ class Classify:
 
         print("total samples: %5d   percentage of good ones %-3.2f" %
               (len(X), sum(y)/float(len(X))*100.0))
-        X = StandardScaler().fit_transform(X)
+        #X = StandardScaler().fit_transform(X)
 
         print("Training....")
         t = time.time()
@@ -242,8 +307,8 @@ class Classify:
 
         #clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
         #self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        #self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
-        self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/10, n_estimators=8)
+        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
+        #self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         #self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
@@ -316,6 +381,9 @@ if __name__ == "__main__":
     parser.add_option("--check", "-c", type=str,
                       dest="check", help="Check classifier")
 
+    parser.add_option("--data", "-d", action="store_true", default=False,
+                      dest="data", help="Just get the dumped data")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -325,7 +393,13 @@ if __name__ == "__main__":
     cl_data = None
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
-        cl = get_one_file(dbfname)
+        t = time.time()
+        if options.data:
+            with open(dbfname, "r") as f:
+                cl = pickle.load(f)
+        else:
+            cl = get_one_file(dbfname)
+        print("Read in data in %-5.2f secs" % (time.time()-t))
 
         #print("cl x:")
         #print(cl.X)
@@ -337,12 +411,15 @@ if __name__ == "__main__":
             check.check(cl.X, cl.y)
         else:
             clf = Classify()
-            clf.learn(cl.X, cl.y, "classifier-%s" % dbfname.rstrip(".cnf.gz.sqlite"))
-            #clf.output_to_pdf(cl.colnames, "tree_cl-%s.dot" % dbfname.rstrip(".sqlite"))
+            clf.learn(cl.X, cl.y, "%s.classifier" % dbfname.rstrip(".cnf.gz.sqlite"))
+            clf.output_to_pdf(cl.colnames, "%s.tree,dot" % dbfname.rstrip(".cnf.gz.sqlite"))
             if cl_data is None:
                 cl_data = cl
             else:
                 cl_data.add(cl)
+
+            with open("%s.cldata" % dbfname.rstrip(".cnf.gz.sqlite"), "w") as f:
+                pickle.dump(cl, f)
 
     if len(args) == 1 or options.check:
         exit(0)
@@ -357,7 +434,10 @@ if __name__ == "__main__":
         print("Columns used were:")
         for i, name in zip(xrange(100), cl_data.colnames):
             print("%-3d  %s" % (i, name))
-        #clf.output_to_pdf(cl_data.colnames, "tree_cl.dot")
+        clf.output_to_pdf(cl_data.colnames, "final.dot")
+
+        with open("final.cldata", "w") as f:
+            pickle.dump(cl_data, f)
 
 
 

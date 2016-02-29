@@ -221,7 +221,6 @@ CREATE TABLE `clauseStats` (
 
   `antecedents_antecedents_vsids_avg` double NOT NULL
 );
-create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
 
 DROP TABLE IF EXISTS `goodClauses`;
 create table `goodClauses` (
@@ -230,7 +229,6 @@ create table `goodClauses` (
     `numUsed` bigint(20) NOT NULL,
     `usedUntilID` bigint(20) NOT NULL
 );
-create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
 
 -- create index `idx6` on `restart` (`runID`,`simplifications`);
 -- create index `idx7` on `timepassed` (`runID`,`conflicts`);
