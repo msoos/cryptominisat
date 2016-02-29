@@ -7,34 +7,41 @@ import optparse
 
 
 class Data:
-    def __init__(self, untilID=-1, useful=0):
-        self.untilID = untilID
-        self.useful = useful
+    def __init__(self, used_for_time=-1, num_used=0):
+        self.used_for_time = used_for_time
+        self.num_used = num_used
 
 
 def parse_lemmas(lemmafname):
     ret = {}
-    last_good_id = 2
     with open(lemmafname, "r") as f:
         for line in f:
             if line[0] == "d":
                 l = line.strip().split(" ")
-                del_id = l[len(l)-1]
-                ret[del_id] = Data(last_good_id, 0)
+                myid = int(l[len(l)-3])
+                if myid <= 1:
+                    continue
+
+                last_used = int(l[len(l)-2])
+                num_used = int(l[len(l)-1])
+                ret[myid].used_for_time = last_used - myid
+                #print(myid)
+                #print(num_used)
+                #print(ret[myid].num_used)
+                assert ret[myid].num_used == num_used
+                continue
 
             l = line.strip().split(" ")
-            good_id = l[len(l)-1]
+            if len(l) == 1:
+                #empty clause, finished
+                continue
 
-            good_id2 = 0
-            try:
-                good_id2 = int(good_id)
-            except:
-                print("ERROR: ID %s is not an integer!" % good_id)
-                exit(-1)
+            myid = int(l[len(l)-3])
+            num_used = int(l[len(l)-1])
 
-            if good_id2 > 1:
-                ret[good_id2] = Data()
-            last_good_id = good_id2
+            #used until the end.
+            used_for_time = 1000000
+            ret[myid] = Data(used_for_time, num_used)
 
     print("Parsed %d number of good lemmas" % len(ret))
     return ret
@@ -71,9 +78,9 @@ class Query:
     def add_goods(self, ids):
         self.c.execute('delete from goodClauses;')
 
-        id_b = [(self.runID, ID, x.useful, x.untilID) for ID, x in ids.iteritems()]
+        id_b = [(self.runID, ID, x.num_used, x.used_for_time) for ID, x in ids.iteritems()]
         self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`, `usedUntilID`)
+            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`, `usedForTime`)
             VALUES (?, ?, ?, ?);""", id_b)
 
 
