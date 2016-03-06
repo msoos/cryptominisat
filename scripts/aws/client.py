@@ -459,9 +459,16 @@ class solverThread (threading.Thread):
 
 
 def build_cryptominisat(indata):
-    ret = os.system('%s/cryptominisat/scripts/aws/build_cryptominisat.sh %s %s >> %s/build.log 2>&1' %
-                    (options.base_dir, indata["git_rev"],
-                     options.num_threads, options.base_dir))
+    opts = []
+    opts.append(indata["git_rev"])
+    opts.append(options.num_threads)
+    if indata["drat"]:
+        opts.append("-DSTATS=ON")
+
+    ret = os.system('%s/cryptominisat/scripts/aws/build_cryptominisat.sh %s >> %s/build.log 2>&1' %
+                    (options.base_dir,
+                     " ".join(opts),
+                     options.base_dir))
     global s3_folder
     s3_folder = get_s3_folder(indata["s3_folder"],
                               indata["git_rev"],

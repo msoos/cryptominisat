@@ -13,8 +13,8 @@ echo "built and installed M4RI"
 
 cd /home/ubuntu/cryptominisat
 git fetch
-git checkout "$1"
-echo "got revision $1"
+git checkout "${1}"
+echo "got revision ${1}"
 git submodule init
 git submodule update
 
@@ -22,8 +22,8 @@ rm -rf build
 mkdir -p build
 cd build
 rm -rf C* c*
-cmake -DSTATS=ON ..
-make "-j$2" VERBOSE=1
+cmake ${3} ..
+make "-j${2}" VERBOSE=1
 echo "built CMS"
 
 # solver is now in cryptominisat/build/cryptominisat4
