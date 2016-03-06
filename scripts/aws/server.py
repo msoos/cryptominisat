@@ -497,6 +497,8 @@ if __name__ == "__main__":
     global options
     global args
     options, args = parse_arguments()
+    if options.drat:
+        assert "cryptominisat" in options.solver
 
     global acc_queue
     acc_queue = Queue.Queue()

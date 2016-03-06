@@ -386,13 +386,14 @@ class solverThread (threading.Thread):
             # handle 'solve'
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
-                if returncode == 20 and "cryptominisat" in self.indata["solver"]:
+                if returncode == 20 and self.indata["drat"]:
                     if self.run_drat_trim() == 0:
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
                 os.unlink(self.get_cnf_fname())
-                os.unlink(self.get_drat_fname())
+                if self.indata["drat"]:
+                    os.unlink(self.get_drat_fname())
                 files = self.copy_solution_to_s3()
                 self.send_back_that_we_solved(returncode, files)
                 continue
