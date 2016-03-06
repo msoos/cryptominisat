@@ -2350,7 +2350,7 @@ bool Searcher::VarFilter::operator()(uint32_t var) const
 
 uint64_t Searcher::sumConflicts() const
 {
-    return solver->sumStats.conflStats.numConflicts + stats.conflStats.numConflicts;
+    return solver->sumSearchStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }
 
 uint64_t Searcher::sumRestarts() const

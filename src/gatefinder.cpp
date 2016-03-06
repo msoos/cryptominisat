@@ -69,7 +69,7 @@ end:
 
     orGates.clear();
     orGates.shrink_to_fit();
-    solver->sumStats.num_gates_found_last = orGates.size();
+    solver->sumSearchStats.num_gates_found_last = orGates.size();
 
     return solver->ok;
 }

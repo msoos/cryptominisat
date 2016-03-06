@@ -153,7 +153,7 @@ void XorFinder::find_xors()
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
     assert(runStats.foundXors == xors.size());
-    solver->sumStats.num_xors_found_last = xors.size();
+    solver->sumSearchStats.num_xors_found_last = xors.size();
     print_found_xors();
 
     if (solver->conf.verbosity >= 1) {

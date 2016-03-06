@@ -453,7 +453,7 @@ Clause* Solver::add_clause_int(
         default:
             Clause* c = cl_alloc.Clause_new(ps
             #ifdef STATS_NEEDED
-            , sumStats.conflStats.numConflicts
+            , sumSearchStats.conflStats.numConflicts
             , 1
             #endif
             );
@@ -1452,7 +1452,7 @@ lbool Solver::iterate_until_solved()
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
-        && sumStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
+        && sumSearchStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
         iteration_num++;
         if (conf.verbosity >= 2 && iteration_num >= 2) {
@@ -1472,7 +1472,7 @@ lbool Solver::iterate_until_solved()
         }
         num_conflicts_of_search = std::min<long>(
             num_conflicts_of_search
-            , (long)conf.maxConfl - (long)sumStats.conflStats.numConflicts
+            , (long)conf.maxConfl - (long)sumSearchStats.conflStats.numConflicts
         );
         if (num_conflicts_of_search <= 0) {
             break;
@@ -1485,7 +1485,7 @@ lbool Solver::iterate_until_solved()
         check_minimization_effectiveness(status);
 
         //Update stats
-        sumStats += Searcher::get_stats();
+        sumSearchStats += Searcher::get_stats();
         sumPropStats += propStats;
         propStats.clear();
         Searcher::resetStats();
@@ -1496,7 +1496,7 @@ lbool Solver::iterate_until_solved()
         }
 
         //If we are over the limit, exit
-        if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+        if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
@@ -1565,7 +1565,7 @@ bool Solver::execute_inprocess_strategy(
     std::string occ_strategy_tokens;
 
     while(std::getline(ss, token, ',')) {
-        if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+        if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
@@ -1602,7 +1602,7 @@ bool Solver::execute_inprocess_strategy(
                 }
             }
             occ_strategy_tokens.clear();
-            if (sumStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+            if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
                 || cpuTime() > conf.maxTime
                 || must_interrupt_asap()
                 || nVars() == 0
@@ -1910,8 +1910,8 @@ void Solver::print_stats(const double cpu_time) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     print_stats_line("c UIP search time"
-        , sumStats.cpu_time
-        , stats_line_percent(sumStats.cpu_time, cpu_time)
+        , sumSearchStats.cpu_time
+        , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
         , "% time"
     );
 
@@ -1927,12 +1927,12 @@ void Solver::print_stats(const double cpu_time) const
 
 void Solver::print_min_stats(const double cpu_time) const
 {
-    sumStats.print_short();
+    sumSearchStats.print_short();
     print_stats_line("c props/decision"
-        , float_div(propStats.propagations, sumStats.decisions)
+        , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
@@ -1980,8 +1980,8 @@ void Solver::print_min_stats(const double cpu_time) const
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
-        , sumStats.conflStats.numConflicts
-        , float_div(sumStats.conflStats.numConflicts, cpu_time)
+        , sumSearchStats.conflStats.numConflicts
+        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -1993,12 +1993,12 @@ void Solver::print_min_stats(const double cpu_time) const
 
 void Solver::print_norm_stats(const double cpu_time) const
 {
-    sumStats.print_short();
+    sumSearchStats.print_short();
     print_stats_line("c props/decision"
-        , float_div(propStats.propagations, sumStats.decisions)
+        , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
@@ -2068,8 +2068,8 @@ void Solver::print_norm_stats(const double cpu_time) const
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
-        , sumStats.conflStats.numConflicts
-        , float_div(sumStats.conflStats.numConflicts, cpu_time)
+        , sumSearchStats.conflStats.numConflicts
+        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2084,13 +2084,13 @@ void Solver::print_norm_stats(const double cpu_time) const
 
 void Solver::print_all_stats(const double cpu_time) const
 {
-    sumStats.print();
-    sumPropStats.print(sumStats.cpu_time);
+    sumSearchStats.print();
+    sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
-        , float_div(propStats.propagations, sumStats.decisions)
+        , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
     );
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
     reduceDB->get_stats().print(cpu_time);
@@ -2195,8 +2195,8 @@ void Solver::print_all_stats(const double cpu_time) const
 
     //Other stats
     print_stats_line("c Conflicts in UIP"
-        , sumStats.conflStats.numConflicts
-        , float_div(sumStats.conflStats.numConflicts, cpu_time)
+        , sumSearchStats.conflStats.numConflicts
+        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2872,7 +2872,7 @@ void Solver::new_external_vars(size_t n)
 void Solver::add_in_partial_solving_stats()
 {
     Searcher::add_in_partial_solving_stats();
-    sumStats += Searcher::get_stats();
+    sumSearchStats += Searcher::get_stats();
     sumPropStats += propStats;
 }
 
@@ -3142,18 +3142,18 @@ SolveFeatures Solver::calculate_features() const
     feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
     if (sumPropStats.propagations != 0
-        && sumStats.conflStats.numConflicts != 0
-        && sumStats.numRestarts != 0
+        && sumSearchStats.conflStats.numConflicts != 0
+        && sumSearchStats.numRestarts != 0
     ) {
-        feat.props_per_confl = (double)sumStats.conflStats.numConflicts / (double)sumPropStats.propagations;
-        feat.confl_per_restart = (double)sumStats.conflStats.numConflicts / (double)sumStats.numRestarts;
-        feat.decisions_per_conflict = (double)sumStats.decisions / (double)sumStats.conflStats.numConflicts;
-        feat.learnt_bins_per_confl = (double)sumStats.learntBins / (double)sumStats.conflStats.numConflicts;
-        feat.learnt_tris_per_confl = (double)sumStats.learntTris / (double)sumStats.conflStats.numConflicts;
+        feat.props_per_confl = (double)sumSearchStats.conflStats.numConflicts / (double)sumPropStats.propagations;
+        feat.confl_per_restart = (double)sumSearchStats.conflStats.numConflicts / (double)sumSearchStats.numRestarts;
+        feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumSearchStats.conflStats.numConflicts;
+        feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumSearchStats.conflStats.numConflicts;
+        feat.learnt_tris_per_confl = (double)sumSearchStats.learntTris / (double)sumSearchStats.conflStats.numConflicts;
     }
 
-    feat.num_gates_found_last = sumStats.num_gates_found_last;
-    feat.num_xors_found_last = sumStats.num_xors_found_last;
+    feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
+    feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
     if (conf.verbosity >= 1) {
         feat.print_stats();

@@ -152,7 +152,7 @@ class Solver : public Searcher
 
         vector<LitReachData> litReachable;
 
-        SearchStats sumStats;
+        SearchStats sumSearchStats;
         PropStats sumPropStats;
 
         bool prop_at_head() const;
@@ -362,7 +362,7 @@ inline uint64_t Solver::getNumLongClauses() const
 
 inline const SearchStats& Solver::get_stats() const
 {
-    return sumStats;
+    return sumSearchStats;
 }
 
 inline const SolveStats& Solver::get_solve_stats() const
