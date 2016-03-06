@@ -355,16 +355,15 @@ So long and thanks for all the fish!
         logging.error("Cannot send email! Traceback: %s", the_trace)
 
     #upload log
-    if not options.noaws:
-        s3_folder = get_s3_folder(options.s3_folder,
-                                  options.git_rev,
-                                  options.timeout_in_secs,
-                                  options.mem_limit_in_mb
-                                  )
-        upload_log(options.s3_bucket,
-                   s3_folder,
-                   options.logfile_name,
-                   "server-%s" % get_ip_address("eth0"))
+    s3_folder = get_s3_folder(options.s3_folder,
+                              options.git_rev,
+                              options.timeout_in_secs,
+                              options.mem_limit_in_mb
+                              )
+    upload_log(options.s3_bucket,
+               s3_folder,
+               options.logfile_name,
+               "server-%s" % get_ip_address("eth0"))
 
     if not options.noshutdown:
         os.system(toexec)
@@ -454,10 +453,6 @@ def parse_arguments():
 
     parser.add_option("--noshutdown", "-n", default=False, dest="noshutdown",
                       action="store_true", help="Do not shut down clients"
-                      )
-
-    parser.add_option("--noaws", default=False, dest="noaws",
-                      action="store_true", help="Use AWS"
                       )
 
     parser.add_option("--drat", default=False, dest="drat",
