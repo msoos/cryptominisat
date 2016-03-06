@@ -85,7 +85,6 @@ class Searcher : public HyperEngine
             #ifdef STATS_NEEDED
             bqueue<uint32_t>    trailDepthHist;
             AvgCalc<bool>       conflictAfterConflict;
-            AvgCalc<size_t>     watchListSizeTraversed;
             #endif
 
             size_t mem_used() const
@@ -115,7 +114,6 @@ class Searcher : public HyperEngine
                 #ifdef STATS_NEEDED
                 trailDepthHist.clear();
                 conflictAfterConflict.clear();
-                watchListSizeTraversed.clear();
                 #endif
             }
 
@@ -190,11 +188,7 @@ class Searcher : public HyperEngine
         vector<lbool>  model;
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         template<bool update_bogoprops>
-        PropBy propagate(
-            #ifdef STATS_NEEDED
-            AvgCalc<size_t>* watchListSizeTraversed = NULL
-            #endif
-        );
+        PropBy propagate();
 
         ///////////////////////////////
         // Stats

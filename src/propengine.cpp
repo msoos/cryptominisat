@@ -784,11 +784,8 @@ inline void PropEngine::updateWatch(
     }
 }
 
-PropBy PropEngine::propagate_strict_order(
-    #ifdef STATS_NEEDED
-    AvgCalc<size_t>* watchListSizeTraversed
-    #endif
-) {
+PropBy PropEngine::propagate_strict_order()
+{
     PropBy confl;
 
     #ifdef VERBOSE_DEBUG_PROP
@@ -802,11 +799,6 @@ PropBy PropEngine::propagate_strict_order(
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         watch_subarray_const ws = watches[~p];
-        #ifdef STATS_NEEDED
-        if (watchListSizeTraversed)
-            watchListSizeTraversed->push(ws.size());
-        #endif
-
         watch_subarray::const_iterator i = ws.begin();
         watch_subarray_const::const_iterator end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;

@@ -127,11 +127,7 @@ protected:
 
     template<bool update_bogoprops>
     PropBy propagate_any_order();
-    PropBy propagate_strict_order(
-        #ifdef STATS_NEEDED
-        AvgCalc<size_t>* watchListSizeTraversed = NULL
-        #endif
-    );
+    PropBy propagate_strict_order();
     /*template<bool update_bogoprops>
     bool handle_xor_cl(
         watch_subarray_const::const_iterator i

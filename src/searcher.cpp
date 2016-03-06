@@ -1048,11 +1048,7 @@ lbool Searcher::search()
         }
 
         prop:
-        confl = propagate<false>(
-            #ifdef STATS_NEEDED
-            &hist.watchListSizeTraversed
-            #endif
-        );
+        confl = propagate<false>();
     }
 
     cancelUntil(0);
@@ -2708,20 +2704,12 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
 }
 
 template<bool update_bogoprops>
-PropBy Searcher::propagate(
-    #ifdef STATS_NEEDED
-    AvgCalc<size_t>* watchListSizeTraversed
-    #endif
-) {
+PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
     if (conf.propBinFirst) {
-        ret = propagate_strict_order(
-            #ifdef STATS_NEEDED
-            watchListSizeTraversed
-            #endif
-        );
+        ret = propagate_strict_order();
     } else {
         ret = propagate_any_order<update_bogoprops>();
     }
@@ -2746,16 +2734,8 @@ PropBy Searcher::propagate(
 
     return ret;
 }
-template PropBy Searcher::propagate<true>(
-    #ifdef STATS_NEEDED
-    AvgCalc<size_t>* watchListSizeTraversed
-    #endif
-);
-template PropBy Searcher::propagate<false>(
-    #ifdef STATS_NEEDED
-    AvgCalc<size_t>* watchListSizeTraversed
-    #endif
-);
+template PropBy Searcher::propagate<true>();
+template PropBy Searcher::propagate<false>();
 
 size_t Searcher::mem_used() const
 {
