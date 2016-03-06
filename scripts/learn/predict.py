@@ -12,6 +12,7 @@ import glob
 import os
 import copy
 import pickle
+import re
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
@@ -406,19 +407,21 @@ if __name__ == "__main__":
         #print("cl data x:")
         #print(cl_data.X)
 
+        cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+
         if options.check:
             check = Check(options.check)
             check.check(cl.X, cl.y)
         else:
             clf = Classify()
-            clf.learn(cl.X, cl.y, "%s.classifier" % dbfname.rstrip(".cnf.gz.sqlite"))
-            clf.output_to_pdf(cl.colnames, "%s.tree,dot" % dbfname.rstrip(".cnf.gz.sqlite"))
+            clf.learn(cl.X, cl.y, "%s.classifier" % cleanname)
+            clf.output_to_pdf(cl.colnames, "%s.tree.dot" % cleanname)
             if cl_data is None:
                 cl_data = cl
             else:
                 cl_data.add(cl)
 
-            with open("%s.cldata" % dbfname.rstrip(".cnf.gz.sqlite"), "w") as f:
+            with open("%s.cldata" % cleanname, "w") as f:
                 pickle.dump(cl, f)
 
     if len(args) == 1 or options.check:
