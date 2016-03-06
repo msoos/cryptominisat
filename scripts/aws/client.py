@@ -181,12 +181,13 @@ class solverThread (threading.Thread):
         if "cryptominisat" in self.indata["solver"]:
             toexec.append("--printsol 0")
             toexec.append("--sql 2")
-            if self.indata["drat"]:
-                toexec.append("--clid")
 
         toexec.append(self.get_cnf_fname())
         if self.indata["drat"]:
             toexec.append(self.get_drat_fname())
+            toexec.append("--clid")
+        else:
+            toexec.append("--sqlfull 0")
 
         return " ".join(toexec)
 
@@ -462,8 +463,7 @@ def build_cryptominisat(indata):
     opts = []
     opts.append(indata["git_rev"])
     opts.append(str(options.num_threads))
-    if indata["drat"]:
-        opts.append("-DSTATS=ON")
+    opts.append("-DSTATS=ON")
 
     ret = os.system('%s/cryptominisat/scripts/aws/build_cryptominisat.sh %s >> %s/build.log 2>&1' %
                     (options.base_dir,
