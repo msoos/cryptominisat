@@ -514,7 +514,7 @@ def build_system():
 
         built_system = True
 
-    if tries >= 10:
+    if not built_system:
         shutdown(-1)
 
 
