@@ -171,11 +171,13 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        extra_opts = ""
+        extra_opts = []
         if "cryptominisat" in self.indata["solver"]:
-            extra_opts = " --printsol 0 --sql 2 --clid"
+            extra_opts.extend(["--printsol 0", "--sql 2"])
+            if self.indata["drat"]:
+                extra_opts.append("--clid")
 
-        extra_opts += " " + self.indata["extra_opts"] + " "
+        extra_opts.append(self.indata["extra_opts"])
 
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"],
@@ -186,7 +188,7 @@ class solverThread (threading.Thread):
         toexec = "%s/%s %s %s" % (
             options.base_dir,
             self.indata["solver"],
-            extra_opts,
+            " ".join(extra_opts),
             self.get_cnf_fname())
 
         #add DRAT in case of cryptominisat
