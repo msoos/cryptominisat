@@ -154,14 +154,7 @@ class Server (threading.Thread):
         return file_num
 
     def handle_build(self, connection, cli_addr, indata):
-        tosend = {}
-        tosend["solver"] = options.solver
-        tosend["git_rev"] = options.git_rev
-        tosend["s3_bucket"] = options.s3_bucket
-        tosend["s3_folder"] = options.s3_folder
-        tosend["timeout_in_secs"] = options.timeout_in_secs
-        tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
-        tosend["noshutdown"] = options.noshutdown
+        tosend = self.default_tosend()
         logging.info("Sending git revision %s to %s", options.git_rev,
                      cli_addr)
         send_command(connection, "build_data", tosend)
@@ -181,23 +174,29 @@ class Server (threading.Thread):
         logging.info("Everything is in sent queue, sending wait to %s", cli_addr)
         send_command(connection, "wait", tosend)
 
+    def default_tosend(self):
+        tosend = {}
+        tosend["solver"] = options.solver
+        tosend["git_rev"] = options.git_rev
+        tosend["s3_bucket"] = options.s3_bucket
+        tosend["s3_folder"] = options.s3_folder
+        tosend["timeout_in_secs"] = options.timeout_in_secs
+        tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
+        tosend["noshutdown"] = options.noshutdown
+        tosend["cnf_dir"] = options.cnf_dir
+        tosend["extra_opts"] = options.extra_opts
+        tosend["drat"] = options.drat
+
+        return tosend
+
     def send_one_to_solve(self, connection, cli_addr, file_num):
         # set timer that we have sent this to be solved
         self.files_running[file_num] = time.time()
         filename = self.files[file_num].name
 
-        tosend = {}
+        tosend = self.default_tosend()
         tosend["file_num"] = file_num
-        tosend["git_rev"] = options.git_rev
         tosend["cnf_filename"] = filename
-        tosend["solver"] = options.solver
-        tosend["timeout_in_secs"] = options.timeout_in_secs
-        tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
-        tosend["s3_bucket"] = options.s3_bucket
-        tosend["s3_folder"] = options.s3_folder
-        tosend["cnf_dir"] = options.cnf_dir
-        tosend["noshutdown"] = options.noshutdown
-        tosend["extra_opts"] = options.extra_opts
         tosend["uniq_cnt"] = str(self.uniq_cnt)
         logging.info("Sending file %s (num %d) to %s",
                      filename, file_num, cli_addr)
@@ -460,6 +459,10 @@ def parse_arguments():
 
     parser.add_option("--noaws", default=False, dest="noaws",
                       action="store_true", help="Use AWS"
+                      )
+
+    parser.add_option("--drat", default=False, dest="drat",
+                      action="store_true", help="Use DRAT"
                       )
 
     parser.add_option("--logfile", dest="logfile_name", type=str,
