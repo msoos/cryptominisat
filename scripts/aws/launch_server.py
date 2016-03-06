@@ -6,10 +6,11 @@ import sys
 import boto.ec2
 import os
 import subprocess
+import server_option_parser
 
 
 def get_answer():
-    yes = set(['yes', 'y', 'ye', ''])
+    yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
 
     choice = raw_input().lower()
@@ -29,6 +30,12 @@ def push():
         print("Oops, couldn't push, exiting before executing")
 
     print("")
+
+options, args = server_option_parser.parse_arguments()
+print("Options are:")
+for a, b in options.__dict__.iteritems():
+    print("-- %-30s : %s" % (a, b))
+assert args == []
 
 push()
 data = " ".join(sys.argv[1:])
