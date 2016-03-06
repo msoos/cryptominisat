@@ -68,11 +68,12 @@ class Searcher : public HyperEngine
             //About the search
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
             AvgCalc<uint32_t>   branchDepthDeltaHist;
-            bqueue<uint32_t>   trailDepthHistLonger;
+
+            bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
             AvgCalc<uint32_t>   trailDepthDeltaHist;
 
             //About the confl generated
-            bqueue<uint32_t>    glueHist;            ///< Set of last decision levels in (glue of) conflict clauses
+            bqueue<uint32_t>    glueHist;   ///< Set of last decision levels in (glue of) conflict clauses
             AvgCalc<uint32_t>   glueHistLT;
 
             AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history
@@ -82,7 +83,7 @@ class Searcher : public HyperEngine
             AvgCalc<uint32_t>   numResolutionsHistLT;
 
             #ifdef STATS_NEEDED
-            bqueue<uint32_t>   trailDepthHist;
+            bqueue<uint32_t>    trailDepthHist;
             AvgCalc<bool>       conflictAfterConflict;
             AvgCalc<size_t>     watchListSizeTraversed;
             #endif
