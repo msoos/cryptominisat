@@ -404,7 +404,6 @@ def parse_arguments():
                       type=float
                       )
 
-
     parser.add_option("--memlimit", "-m", default=1600, dest="mem_limit_in_mb",
                       help="Memory limit in MB"
                       "[default: %default]",
