@@ -171,31 +171,24 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        extra_opts = []
-        if "cryptominisat" in self.indata["solver"]:
-            extra_opts.extend(["--printsol 0", "--sql 2"])
-            if self.indata["drat"]:
-                extra_opts.append("--clid")
-
-        extra_opts.append(self.indata["extra_opts"])
-
         os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s --region us-west-2" % (
             self.indata["cnf_dir"], self.indata["cnf_filename"],
             self.get_cnf_fname()))
 
-        # os.system("touch %s" % self.get_perf_fname())
-        # toexec = "sudo perf record -o %s %s %s %s/%s" % (self.get_perf_fname(),
-        toexec = "%s/%s %s %s" % (
-            options.base_dir,
-            self.indata["solver"],
-            " ".join(extra_opts),
-            self.get_cnf_fname())
-
-        #add DRAT in case of cryptominisat
+        toexec = []
+        toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))
+        toexec.append(self.indata["extra_opts"])
         if "cryptominisat" in self.indata["solver"]:
-            toexec += " " + self.get_drat_fname()
+            toexec.append("--printsol 0")
+            toexec.append("--sql 2")
+            if self.indata["drat"]:
+                toexec.append("--clid")
 
-        return toexec
+        toexec.append(self.get_cnf_fname())
+        if self.indata["drat"]:
+            toexec.append(self.get_drat_fname())
+
+        return " ".join(toexec)
 
     def execute_solver(self):
         toexec = self.get_toexec()
