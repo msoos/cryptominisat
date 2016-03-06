@@ -321,6 +321,8 @@ void Main::add_supported_options()
         , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
         , "Maximum number of temporary clauses of high glue")
+    ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
+        , "Keep all clauses at or below this value")
     ;
 
     std::ostringstream s_random_var_freq;
