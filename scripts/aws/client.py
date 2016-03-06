@@ -461,7 +461,7 @@ class solverThread (threading.Thread):
 def build_cryptominisat(indata):
     opts = []
     opts.append(indata["git_rev"])
-    opts.append(options.num_threads)
+    opts.append(str(options.num_threads))
     if indata["drat"]:
         opts.append("-DSTATS=ON")
 
@@ -491,8 +491,10 @@ def build_cryptominisat(indata):
 def build_system():
     built_system = False
     logging.info("Building system", extra={"threadid": -1})
-    while not built_system:
+    tries = 0
+    while not built_system and tries < 10:
         try:
+            tries += 1
             sock = connect_client(-1)
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -511,6 +513,9 @@ def build_system():
             build_cryptominisat(indata)
 
         built_system = True
+
+    if tries >= 10:
+        shutdown(-1)
 
 
 def num_cpus():
