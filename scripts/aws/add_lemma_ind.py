@@ -15,7 +15,7 @@ class Data:
 def parse_lemmas(lemmafname):
     ret = {}
     with open(lemmafname, "r") as f:
-        for line in f:
+        for line, lineno in zip(f, xrange(1000*1000*1000)):
             if line[0] == "d":
                 l = line.strip().split(" ")
                 myid = int(l[len(l)-3])
@@ -28,7 +28,10 @@ def parse_lemmas(lemmafname):
                 #print(myid)
                 #print(num_used)
                 #print(ret[myid].num_used)
-                assert ret[myid].num_used == num_used
+                if ret[myid].num_used != num_used:
+                    print("Line no %d wrong usage value" % lineno)
+                    print("line: '%s'" % line.strip())
+                    assert ret[myid].num_used == num_used
                 continue
 
             l = line.strip().split(" ")

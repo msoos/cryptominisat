@@ -227,7 +227,7 @@ create table `goodClauses` (
     `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
     `numUsed` bigint(20) NOT NULL,
-    `usedUntilID` bigint(20) NOT NULL
+    `usedForTime` bigint(20) NOT NULL
 );
 
 -- create index `idx6` on `restart` (`runID`,`simplifications`);
