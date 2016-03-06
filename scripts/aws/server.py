@@ -201,12 +201,6 @@ class Server (threading.Thread):
         send_command(connection, "solve", tosend)
         self.uniq_cnt += 1
 
-        global final_s3_folder
-        final_s3_folder = get_s3_folder(tosend["s3_folder"],
-                                        tosend["git_rev"],
-                                        tosend["timeout_in_secs"],
-                                        tosend["mem_limit_in_mb"])
-
     def handle_need(self, connection, cli_addr, indata):
         # TODO don't ignore 'indata' for solving CNF instances, use it to
         # opitimize for uptime
@@ -333,6 +327,11 @@ def shutdown(exitval=0):
             email_subject += "OK"
         else:
             email_subject += "FAIL"
+
+        full_s3_folder = get_s3_folder(options.s3_folder,
+                                       options.git_rev,
+                                       options.timeout_in_secs,
+                                       options.mem_limit_in_mb)
         text = """Server finished. Please download the final data:
 
 mkdir {0}
@@ -345,7 +344,7 @@ Don't forget to:
 * check EC2 still running
 
 So long and thanks for all the fish!
-""".format(final_s3_folder, options.s3_bucket)
+""".format(full_s3_folder, options.s3_bucket)
         send_email(email_subject, text, options.logfile_name)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -353,13 +352,8 @@ So long and thanks for all the fish!
         logging.error("Cannot send email! Traceback: %s", the_trace)
 
     #upload log
-    s3_folder = get_s3_folder(options.s3_folder,
-                              options.git_rev,
-                              options.timeout_in_secs,
-                              options.mem_limit_in_mb
-                              )
     upload_log(options.s3_bucket,
-               s3_folder,
+               full_s3_folder,
                options.logfile_name,
                "server-%s" % get_ip_address("eth0"))
 
