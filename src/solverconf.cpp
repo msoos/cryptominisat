@@ -274,6 +274,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , multisample(true)
         , onlyCount(true)
         , aggregateSolutions(true)
+        , cuspLogFile("mylog.txt")
 {
 
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

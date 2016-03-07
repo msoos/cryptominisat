@@ -538,18 +538,12 @@ bool CUPS::openLogFile(FILE*& res)
     if (false) {
         return false;
     }
-
-    string suffix, logFileName;
-    for (int i = 0; i < 1; i++) {
-        suffix = "_";
-        suffix.append(std::to_string(i).append(".txt"));
-        logFileName = "mylog";
-        res = fopen(logFileName.append(suffix).c_str(), "wb");
-        if (res == NULL) {
-            int backup_errno = errno;
-            printf("Cannot open %s for writing. Problem: %s\n", logFileName.append(suffix).c_str(), strerror(backup_errno));
-            exit(1);
-        }
+  
+    res = fopen(conf.cuspLogFile.c_str(),"wb");    
+    if (res == NULL) {
+        int backup_errno = errno;
+        printf("Cannot open %s for writing. Problem: %s\n", conf.cuspLogFile.c_str(), strerror(backup_errno));
+        exit(1);
     }
     return true;
 }

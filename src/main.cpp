@@ -688,6 +688,7 @@ void Main::add_supported_options()
     ("onlyCount", po::value(&conf.onlyCount)->default_value(conf.onlyCount),"")
     ("aggregation", po::value(&conf.aggregateSolutions)->default_value(conf.aggregateSolutions), "")
     ("looptout", po::value(&conf.loopTimeout)->default_value(conf.loopTimeout), "")
+    ("cuspLogFile", po::value(&conf.cuspLogFile)->default_value(conf.cuspLogFile),"")
     ;
 
     p.add("input", 1);
