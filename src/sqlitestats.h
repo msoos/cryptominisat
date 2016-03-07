@@ -79,6 +79,7 @@ public:
         , size_t decision_level
         , size_t trail_depth
         , uint64_t conflicts_this_restart
+        , const Searcher::Hist& hist
     ) override;
 
     bool setup(const Solver* solver) override;

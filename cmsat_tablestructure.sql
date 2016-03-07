@@ -219,7 +219,15 @@ CREATE TABLE `clauseStats` (
   `vsids_of_all_incoming_lits_min` double NOT NULL,
   `vsids_of_all_incoming_lits_max` double NOT NULL,
 
-  `antecedents_antecedents_vsids_avg` double NOT NULL
+  `antecedents_antecedents_vsids_avg` double NOT NULL,
+
+  `decision_level_hist` double NOT NULL,
+  `backtrack_level_hist` double NOT NULL,
+  `trail_depth_hist` double NOT NULL,
+  `vsids_vars_hist` double NOT NULL,
+  `size_hist` double NOT NULL,
+  `glue_hist` double NOT NULL,
+  `num_antecedents_hist` double NOT NULL
 );
 
 DROP TABLE IF EXISTS `goodClauses`;

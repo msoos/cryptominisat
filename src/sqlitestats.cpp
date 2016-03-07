@@ -773,7 +773,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 40;
+    const size_t numElems = 47;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -793,7 +793,7 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `backtrack_level`,"
     << " `decision_level`,"
-    << " `trail_depth`,"
+    << " `trail_depth_level`,"
 
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
@@ -826,7 +826,15 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `vsids_of_all_incoming_lits_min`,"
     << " `vsids_of_all_incoming_lits_max`,"
 
-    << " `antecedents_antecedents_vsids_avg`"
+    << " `antecedents_antecedents_vsids_avg`,"
+
+    << " `decision_level_hist`,"
+    << " `backtrack_level_hist`,"
+    << " `trail_depth_hist`,"
+    << " `vsids_vars_hist`,"
+    << " `size_hist`,"
+    << " `glue_hist`,"
+    << " `num_antecedents_hist`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -858,6 +866,7 @@ void SQLiteStats::dump_clause_stats(
     , size_t decision_level
     , size_t trail_depth
     , uint64_t conflicts_this_restart
+    , const Searcher::Hist& hist
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
@@ -911,6 +920,14 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMax());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_ants.avg());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.decisionLevelHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.vsidsVarsAvgLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHistLT.avg());
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {

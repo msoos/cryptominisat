@@ -69,6 +69,11 @@ class Searcher : public HyperEngine
             AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
             AvgCalc<uint32_t>   branchDepthDeltaHist;
 
+            AvgCalc<uint32_t>   decisionLevelHistLT;
+            AvgCalc<uint32_t>   backtrackLevelHistLT;
+            AvgCalc<uint32_t>   trailDepthHistLT;
+            AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
+
             bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
             AvgCalc<uint32_t>   trailDepthDeltaHist;
 

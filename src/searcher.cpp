@@ -1333,19 +1333,24 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
     assert(decisionLevel() > 0);
 
+    //queues
+    hist.glueHist.push(glue);
+
+    //short-term averages
     hist.branchDepthHist.push(decisionLevel());
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
-
-    hist.glueHist.push(glue);
-    hist.glueHistLT.push(glue);
-
     hist.conflSizeHist.push(learnt_clause.size());
-    hist.conflSizeHistLT.push(learnt_clause.size());
-
     hist.numResolutionsHist.push(antec_data.num());
-    hist.numResolutionsHistLT.push(antec_data.num());
-
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
+
+    //long-term averages
+    hist.decisionLevelHistLT.push(decisionLevel());
+    hist.backtrackLevelHistLT.push(backtrack_level);
+    hist.trailDepthHistLT.push(trail.size());
+    hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
+    hist.numResolutionsHistLT.push(antec_data.num());
+    hist.conflSizeHistLT.push(learnt_clause.size());
+    hist.glueHistLT.push(glue);
 }
 
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
@@ -1441,6 +1446,7 @@ void Searcher::dump_sql_clause_data(
         , decisionLevel()
         , trail.size()
         , params.conflictsDoneThisRestart
+        , hist
     );
 }
 #endif
