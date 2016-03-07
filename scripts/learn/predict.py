@@ -258,7 +258,7 @@ class Query2 (Query):
 
         #row2[self.ntoc["clauseStats.backtrack_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
         #row2[self.ntoc["clauseStats.decision_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
-        #row[self.ntoc["clauseStats.propagation_level"]] /= float(row[self.ntoc["restart.propagation_level"]])
+        #row[self.ntoc["clauseStats.trail_depth"]] /= float(row[self.ntoc["restart.trail_depth"]])
         #row[self.ntoc["num_2nd_largest_dec_vars"]] = 0
 
         return row2

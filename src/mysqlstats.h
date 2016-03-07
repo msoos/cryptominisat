@@ -89,7 +89,7 @@ public:
         , uint32_t size
         , AtecedentData<uint16_t> resoltypes
         , size_t decision_level
-        , size_t propagation_level
+        , size_t trail_depth
         , uint64_t conflicts_this_restart
     ) override
     {}

@@ -793,7 +793,7 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `backtrack_level`,"
     << " `decision_level`,"
-    << " `propagation_level`,"
+    << " `trail_depth`,"
 
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
@@ -856,7 +856,7 @@ void SQLiteStats::dump_clause_stats(
     , uint32_t size
     , AtecedentData<uint16_t> antec_data
     , size_t decision_level
-    , size_t propagation_level
+    , size_t trail_depth
     , uint64_t conflicts_this_restart
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
@@ -877,7 +877,7 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, propagation_level);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, trail_depth);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binRed);
