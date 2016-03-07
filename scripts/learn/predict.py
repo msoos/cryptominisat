@@ -256,11 +256,13 @@ class Query2 (Query):
             row_to_reset = self.ntoc[e]
             row2[row_to_reset] = 0
 
-        #row2[self.ntoc["clauseStats.backtrack_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
-        #row2[self.ntoc["clauseStats.decision_level"]] /= float(row[self.ntoc["restart.branchDepth"]])
-        #row[self.ntoc["clauseStats.trail_depth"]] /= float(row[self.ntoc["restart.trail_depth"]])
-        #row[self.ntoc["num_2nd_largest_dec_vars"]] = 0
-
+        row2[self.ntoc["clauseStats.decision_level"]] /= row[self.ntoc["clauseStats.decision_level_hist"]]
+        row2[self.ntoc["clauseStats.backtrack_level"]] /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
+        row2[self.ntoc["clauseStats.trail_depth_level"]] /= row[self.ntoc["clauseStats.trail_depth_hist"]]
+        row2[self.ntoc["clauseStats.vsids_vars_avg"]] /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
+        row2[self.ntoc["clauseStats.size"]] /= row[self.ntoc["clauseStats.size_hist"]]
+        row2[self.ntoc["clauseStats.glue"]] /= row[self.ntoc["clauseStats.glue_hist"]]
+        row2[self.ntoc["clauseStats.num_antecedents"]] /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
         return row2
 
 

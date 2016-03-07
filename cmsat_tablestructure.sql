@@ -223,7 +223,7 @@ CREATE TABLE `clauseStats` (
 
   `decision_level_hist` double NOT NULL,
   `backtrack_level_hist` double NOT NULL,
-  `trail_depth_hist` double NOT NULL,
+  `trail_depth_level_hist` double NOT NULL,
   `vsids_vars_hist` double NOT NULL,
   `size_hist` double NOT NULL,
   `glue_hist` double NOT NULL,

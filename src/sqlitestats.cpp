@@ -830,7 +830,7 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `decision_level_hist`,"
     << " `backtrack_level_hist`,"
-    << " `trail_depth_hist`,"
+    << " `trail_depth_level_hist`,"
     << " `vsids_vars_hist`,"
     << " `size_hist`,"
     << " `glue_hist`,"
