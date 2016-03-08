@@ -82,16 +82,16 @@ public:
     ) override;
 
     void dump_clause_stats(
-        const Solver* solver
-        , uint64_t clauseID
-        , uint32_t glue
-        , uint32_t backtrack_level
-        , uint32_t size
-        , AtecedentData<uint16_t> resoltypes
-        , size_t decision_level
-        , size_t trail_depth
-        , uint64_t conflicts_this_restart
-        , const SearchHist& hist
+        const Solver* /*solver*/
+        , uint64_t /*clauseID*/
+        , uint32_t /*glue*/
+        , uint32_t /*backtrack_level*/
+        , uint32_t /*size*/
+        , AtecedentData<uint16_t> /*resoltypes*/
+        , size_t /*decision_level*/
+        , size_t /*trail_depth*/
+        , uint64_t /*conflicts_this_restart*/
+        , const SearchHist& /*hist*/
     ) override
     {}
 
