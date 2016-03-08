@@ -900,7 +900,7 @@ void MySQLStats::restart(
     , const Solver* solver
     , const Searcher* search
 ) {
-    const Searcher::Hist& searchHist = search->getHistory();
+    const SearchHist& searchHist = search->getHistory();
     const BinTriStats& binTri = solver->getBinTriStats();
 
     //Position of solving

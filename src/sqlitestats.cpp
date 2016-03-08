@@ -500,7 +500,7 @@ void SQLiteStats::restart(
     , const Solver* solver
     , const Searcher* search
 ) {
-    const Searcher::Hist& searchHist = search->getHistory();
+    const SearchHist& searchHist = search->getHistory();
     const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
@@ -866,7 +866,7 @@ void SQLiteStats::dump_clause_stats(
     , size_t decision_level
     , size_t trail_depth
     , uint64_t conflicts_this_restart
-    , const Searcher::Hist& hist
+    , const SearchHist& hist
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 

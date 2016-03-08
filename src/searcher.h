@@ -26,7 +26,6 @@
 #include "solvertypes.h"
 
 #include "time_mem.h"
-#include "avgcalc.h"
 #include "hyperengine.h"
 #include "minisat_rnd.h"
 #include "simplefile.h"
@@ -62,116 +61,6 @@ class Searcher : public HyperEngine
     public:
         Searcher(const SolverConf* _conf, Solver* solver, std::atomic<bool>* _must_interrupt_inter);
         virtual ~Searcher();
-
-        //History
-        struct Hist {
-            //About the search
-            AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
-            AvgCalc<uint32_t>   branchDepthDeltaHist;
-
-            AvgCalc<uint32_t>   decisionLevelHistLT;
-            AvgCalc<uint32_t>   backtrackLevelHistLT;
-            AvgCalc<uint32_t>   trailDepthHistLT;
-            AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
-
-            bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
-            AvgCalc<uint32_t>   trailDepthDeltaHist;
-
-            //About the confl generated
-            bqueue<uint32_t>    glueHist;   ///< Set of last decision levels in (glue of) conflict clauses
-            AvgCalc<uint32_t>   glueHistLT;
-
-            AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history
-            AvgCalc<uint32_t>   conflSizeHistLT;
-
-            AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
-            AvgCalc<uint32_t>   numResolutionsHistLT;
-
-            #ifdef STATS_NEEDED
-            bqueue<uint32_t>    trailDepthHist;
-            AvgCalc<bool>       conflictAfterConflict;
-            #endif
-
-            size_t mem_used() const
-            {
-                uint64_t used = sizeof(Hist);
-                used += sizeof(AvgCalc<uint32_t>)*16;
-                used += sizeof(AvgCalc<bool>)*4;
-                used += sizeof(AvgCalc<size_t>)*2;
-                used += sizeof(AvgCalc<double, double>)*2;
-                used += glueHist.usedMem();
-
-                return used;
-            }
-
-            void clear()
-            {
-                //About the search
-                branchDepthHist.clear();
-                branchDepthDeltaHist.clear();
-                trailDepthDeltaHist.clear();
-
-                //conflict generated
-                glueHist.clear();
-                conflSizeHist.clear();
-                numResolutionsHist.clear();
-
-                #ifdef STATS_NEEDED
-                trailDepthHist.clear();
-                conflictAfterConflict.clear();
-                #endif
-            }
-
-            void reset_glue_hist_size(size_t shortTermHistorySize)
-            {
-                glueHist.clearAndResize(shortTermHistorySize);
-                #ifdef STATS_NEEDED
-                trailDepthHist.clearAndResize(shortTermHistorySize);
-                #endif
-            }
-
-            void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
-            {
-                glueHist.clearAndResize(shortTermHistorySize);
-                trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
-                #ifdef STATS_NEEDED
-                trailDepthHist.clearAndResize(shortTermHistorySize);
-                #endif
-            }
-
-            void print() const
-            {
-                cout
-                << " glue"
-                << " "
-                #ifdef STATS_NEEDED
-                << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
-                #endif
-                << "/" << std::left << glueHistLT.avgPrint(1, 5)
-
-                << " confllen"
-                << " " << std::right << conflSizeHist.avgPrint(1, 5)
-                << "/" << std::left << conflSizeHistLT.avgPrint(1, 5)
-
-                << " branchd"
-                << " " << std::right << branchDepthHist.avgPrint(1, 5)
-                << " branchdd"
-
-                << " " << std::right << branchDepthDeltaHist.avgPrint(1, 4)
-
-                #ifdef STATS_NEEDED
-                << " traild"
-                << " " << std::right << trailDepthHist.getLongtTerm().avgPrint(0, 7)
-                #endif
-
-                << " traildd"
-                << " " << std::right << trailDepthDeltaHist.avgPrint(0, 5)
-                ;
-
-                cout << std::right;
-            }
-        };
-
         ///////////////////////////////
         // Solving
         //
@@ -208,7 +97,7 @@ class Searcher : public HyperEngine
         void     print_clause_stats() const;
         uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
-        const Hist& getHistory() const;
+        const SearchHist& getHistory() const;
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
@@ -294,7 +183,7 @@ class Searcher : public HyperEngine
         //For connection with Solver
         void  resetStats();
 
-        Hist hist;
+        SearchHist hist;
 
         /////////////////
         //Settings
@@ -515,7 +404,7 @@ inline const SearchStats& Searcher::get_stats() const
     return stats;
 }
 
-inline const Searcher::Hist& Searcher::getHistory() const
+inline const SearchHist& Searcher::getHistory() const
 {
     return hist;
 }
