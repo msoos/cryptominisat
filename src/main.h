@@ -67,7 +67,6 @@ class Main
         char** argv;
         string var_elim_strategy;
         string dratfilname;
-        void add_supported_options();
         void check_options_correctness();
         void manually_parse_some_options();
         void parse_var_elim_strategy();
@@ -78,12 +77,17 @@ class Main
         void check_num_threads_sanity(const unsigned thread_num) const;
 
         po::positional_options_description p;
-        po::variables_map vm;
         po::options_description all_options;
-        po::options_description help_options_simple;
-        po::options_description help_options_complicated;
+        po::variables_map vm;
 
     protected:
+        //Options
+        virtual void add_supported_options();
+        po::options_description help_options_simple;
+        po::options_description help_options_complicated;
+        po::options_description hiddenOptions;
+        po::options_description generalOptions;
+
         SATSolver* solver = NULL;
         SolverConf conf;
 

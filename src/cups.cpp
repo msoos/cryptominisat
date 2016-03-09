@@ -126,6 +126,34 @@ bool CUPS::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& r
     }
     return true;
 }
+
+void CUPS::add_approxmc_options()
+{
+    approxMCOptions.add_options()
+    ("samples", po::value(&conf.samples)->default_value(conf.samples), "")
+    ("callsPerSolver", po::value(&conf.callsPerSolver)->default_value(conf.callsPerSolver), "")
+    ("pivotAC", po::value(&conf.pivotApproxMC)->default_value(conf.pivotApproxMC), "")
+    ("pivotUniGen", po::value(&conf.pivotUniGen)->default_value(conf.pivotUniGen), "")
+    ("kappa", po::value(&conf.kappa)->default_value(conf.kappa), "")
+    ("tApproxMC", po::value(&conf.tApproxMC)->default_value(conf.tApproxMC), "")
+    ("startIteration", po::value(&conf.startIteration)->default_value(conf.startIteration), "")
+    ("multisample", po::value(&conf.multisample)->default_value(conf.multisample), "")
+    ("aggregation", po::value(&conf.aggregateSolutions)->default_value(conf.aggregateSolutions), "")
+    ("looptout", po::value(&conf.loopTimeout)->default_value(conf.loopTimeout), "")
+    ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
+    ("onlyCount", po::value(&onlyCount)->default_value(onlyCount),"")
+    ;
+
+    help_options_simple.add(approxMCOptions);
+    help_options_complicated.add(approxMCOptions);
+}
+
+void CUPS::add_supported_options()
+{
+    Main::add_supported_options();
+    add_approxmc_options();
+}
+
 int CUPS::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
 {
     std::uniform_int_distribution<int> uid {0, maxRange};
@@ -539,10 +567,10 @@ bool CUPS::openLogFile(FILE*& res)
         return false;
     }
   
-    res = fopen(conf.cuspLogFile.c_str(),"wb");    
+    res = fopen(cuspLogFile.c_str(),"wb");
     if (res == NULL) {
         int backup_errno = errno;
-        printf("Cannot open %s for writing. Problem: %s\n", conf.cuspLogFile.c_str(), strerror(backup_errno));
+        printf("Cannot open %s for writing. Problem: %s\n", cuspLogFile.c_str(), strerror(backup_errno));
         exit(1);
     }
     return true;
@@ -607,7 +635,7 @@ int CUPS::solve()
         cout << "Using manually-specified startIteration" << endl;
     }
      lbool ret = l_True;
-    if (conf.onlyCount){
+    if (onlyCount){
         printf("Number of solutions is:%d x 2^%d\n", solCount.cellSolCount, solCount.hashCount);
 
     }else{

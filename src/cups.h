@@ -32,12 +32,18 @@ class CUPS: public Main
 public:
     CUPS(int argc, char** argv):
         Main(argc, argv)
+        , approxMCOptions("ApproxMC options")
     {
         must_interrupt.store(false, std::memory_order_relaxed);
     }
     int solve() override;
+    void add_supported_options() override;
+
+    po::options_description approxMCOptions;
 
 private:
+        void add_approxmc_options();
+
         SATCount ApproxMC(
             SATSolver* solver
             , FILE* resLog
@@ -79,6 +85,10 @@ private:
             , uint32_t* lastSuccessfulHashOffset
             , double timeReference
         );
+
+        //config
+        bool onlyCount = true;
+        std::string cuspLogFile = "mylog.txt";
 
         double startTime;
         std::map< std::string, std::vector<uint32_t>> globalSolutionMap;

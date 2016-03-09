@@ -260,7 +260,6 @@ void Main::printResultFunc(
 void Main::add_supported_options()
 {
     // Declare the supported options.
-    po::options_description generalOptions("Most important options");
     generalOptions.add_options()
     ("help,h", "Print simple help")
     ("hhelp", "Print extensive help")
@@ -636,7 +635,6 @@ void Main::add_supported_options()
         , "Number of conflicts to do in burst search")
     ;
 
-    po::options_description hiddenOptions("Debug options for fuzzing, weird options not exposed");
     hiddenOptions.add_options()
     ("dratdebug", po::bool_switch(&dratDebug)
         , "Output DRAT verification into the console. Helpful to see where DRAT fails -- use in conjunction with --verb 20")
@@ -677,25 +675,6 @@ void Main::add_supported_options()
     ;
 #endif //USE_GAUSS
 
-    po::options_description approxMCOptions("ApproxMC options");
-    approxMCOptions.add_options()
-    ("samples", po::value(&conf.samples)->default_value(conf.samples), "")
-    ("callsPerSolver", po::value(&conf.callsPerSolver)->default_value(conf.callsPerSolver), "")
-    ("pivotAC", po::value(&conf.pivotApproxMC)->default_value(conf.pivotApproxMC), "")
-    ("pivotUniGen", po::value(&conf.pivotUniGen)->default_value(conf.pivotUniGen), "")
-    ("kappa", po::value(&conf.kappa)->default_value(conf.kappa), "")
-    ("tApproxMC", po::value(&conf.tApproxMC)->default_value(conf.tApproxMC), "")
-    ("startIteration", po::value(&conf.startIteration)->default_value(conf.startIteration), "")
-    ("multisample", po::value(&conf.multisample)->default_value(conf.multisample), "")
-    ("onlyCount", po::value(&conf.onlyCount)->default_value(conf.onlyCount),"")
-    ("aggregation", po::value(&conf.aggregateSolutions)->default_value(conf.aggregateSolutions), "")
-    ("looptout", po::value(&conf.loopTimeout)->default_value(conf.loopTimeout), "")
-    ("cuspLogFile", po::value(&conf.cuspLogFile)->default_value(conf.cuspLogFile),"")
-    ;
-
-    p.add("input", 1);
-    p.add("drat", 1);
-
     help_options_complicated
     .add(generalOptions)
     #if defined(USE_MYSQL) or defined(USE_SQLITE3)
@@ -721,15 +700,7 @@ void Main::add_supported_options()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
-    .add(approxMCOptions)
     .add(miscOptions)
-    ;
-
-    all_options.add(help_options_complicated);
-    all_options.add(hiddenOptions);
-
-    help_options_simple
-    .add(generalOptions)
     ;
 }
 
@@ -1122,6 +1093,15 @@ void Main::parseCommandLine()
     }
 
     add_supported_options();
+    p.add("input", 1);
+    p.add("drat", 1);
+    all_options.add(help_options_complicated);
+    all_options.add(hiddenOptions);
+
+    help_options_simple
+    .add(generalOptions)
+    ;
+
     check_options_correctness();
     if (vm.count("version")) {
         printVersionInfo();
