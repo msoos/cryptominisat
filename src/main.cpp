@@ -715,7 +715,7 @@ void Main::check_options_correctness()
             << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
             << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
 
-            << " where input is "
+            << "Where input is "
             #ifndef USE_ZLIB
             << "plain"
             #else
