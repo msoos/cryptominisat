@@ -272,7 +272,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , loopTimeout(3000)
         , kappa(0.5)
         , multisample(true)
+        , onlyCount(true)
         , aggregateSolutions(true)
+        , cuspLogFile("mylog.txt")
 {
 
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

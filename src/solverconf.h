@@ -349,7 +349,9 @@ class SolverConf
         int loopTimeout;
         float kappa;
         bool multisample;
+        bool onlyCount;
         bool aggregateSolutions;
+        std::string cuspLogFile;
 };
 
 } //end namespace
