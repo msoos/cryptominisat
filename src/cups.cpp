@@ -708,6 +708,13 @@ int main(int argc, char** argv)
     );
     #endif
 
+    #ifndef USE_GAUSS
+    std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
+    << "*** cmake -DUSE_GAUSS  ***" << endl
+    << "Refusing to run. Please reconfigure and then re-compile." << endl;
+    exit(-1);
+    #endif
+
     CUPS main(argc, argv);
     main.parseCommandLine();
 
