@@ -242,7 +242,8 @@ class Query2 (Query):
             "clauseStats.simplifications",
             "clauseStats.restarts",
             "clauseStats.conflicts",
-            "clauseStats.clauseID"]
+            "clauseStats.clauseID",
+            "clauseStats.conflicts_this_restart"]
             #"restart.runID",
             #"restart.simplifications",
             #"restart.restarts",
