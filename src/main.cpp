@@ -659,7 +659,8 @@ void Main::add_supported_options()
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
     ("iterreduce", po::value(&conf.gaussconf.iterativeReduce)->default_value(conf.gaussconf.iterativeReduce)
-        , "Don't reduce iteratively the matrix that is updated")
+        , "Reduce iteratively the matrix that is updated."
+        "We effectively are moving the start to the last column updated")
     ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
         , "Set maximum no. of rows for gaussian matrix. Too large matrixes"
         "should bee discarded for reasons of efficiency")
