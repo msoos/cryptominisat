@@ -27,8 +27,7 @@
 
 #include "main.h"
 
-class CUSP: public Main
-{
+class CUSP: public Main {
 public:
     CUSP(int argc, char** argv):
         Main(argc, argv)
@@ -42,58 +41,58 @@ public:
     po::options_description approxMCOptions;
 
 private:
-        void add_approxmc_options();
+    void add_approxmc_options();
 
-        SATCount ApproxMC(
-            SATSolver* solver
-            , FILE* resLog
-            , std::mt19937& randomEngine
-        );
+    SATCount ApproxMC(
+        SATSolver* solver
+        , FILE* resLog
+        , std::mt19937& randomEngine
+    );
 
-        uint32_t UniGen(
-            uint32_t samples
-            , SATSolver* solver
-            , FILE* resLog, uint32_t sampleCounter
-            , std::mt19937& randomEngine
-            , std::map< string, uint32_t >& solutionMap
-            , uint32_t* lastSuccessfulHashOffset, double timeReference
-        );
+    uint32_t UniGen(
+        uint32_t samples
+        , SATSolver* solver
+        , FILE* resLog, uint32_t sampleCounter
+        , std::mt19937& randomEngine
+        , std::map< string, uint32_t >& solutionMap
+        , uint32_t* lastSuccessfulHashOffset, double timeReference
+    );
 
-        bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions
-            , std::mt19937& randomEngine);
-        int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
-            , vector<Lit>& assumptions
-        );
-        lbool BoundedSAT(
-            uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
-            , vector<Lit>& assumptions, std::mt19937& randomEngine
-            , std::map<std::string, uint32_t>& solutionMap
-            , uint32_t* solutionCount
-        );
-        bool GenerateRandomBits(string& randomBits
-            , uint32_t size
-            , std::mt19937& randomEngine
-        );
-        uint32_t SolutionsToReturn(uint32_t minSolutions);
-        int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
-        bool printSolutions(FILE* res);
-        void SeedEngine(std::mt19937& randomEngine);
-        int singleThreadUniGenCall(uint32_t samples
-            , FILE* resLog, uint32_t sampleCounter
-            , std::map<std::string, uint32_t>& solutionMap
-            , std::mt19937& randomEngine
-            , uint32_t* lastSuccessfulHashOffset
-            , double timeReference
-        );
+    bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions
+                 , std::mt19937& randomEngine);
+    int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
+                            , vector<Lit>& assumptions
+                           );
+    lbool BoundedSAT(
+        uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
+        , vector<Lit>& assumptions, std::mt19937& randomEngine
+        , std::map<std::string, uint32_t>& solutionMap
+        , uint32_t* solutionCount
+    );
+    bool GenerateRandomBits(string& randomBits
+                            , uint32_t size
+                            , std::mt19937& randomEngine
+                           );
+    uint32_t SolutionsToReturn(uint32_t minSolutions);
+    int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
+    bool printSolutions(FILE* res);
+    void SeedEngine(std::mt19937& randomEngine);
+    int singleThreadUniGenCall(uint32_t samples
+                               , FILE* resLog, uint32_t sampleCounter
+                               , std::map<std::string, uint32_t>& solutionMap
+                               , std::mt19937& randomEngine
+                               , uint32_t* lastSuccessfulHashOffset
+                               , double timeReference
+                              );
 
-        //config
-        bool onlyCount = true;
-        std::string cuspLogFile = "mylog.txt";
+    //config
+    bool onlyCount = true;
+    std::string cuspLogFile = "mylog.txt";
 
-        double startTime;
-        std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
-        bool openLogFile(FILE*& res);
-        std::atomic<bool> must_interrupt;
+    double startTime;
+    std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
+    bool openLogFile(FILE*& res);
+    std::atomic<bool> must_interrupt;
 };
 
 

@@ -62,9 +62,10 @@ using boost::lexical_cast;
 using std::list;
 using std::map;
 
-timer_t *mytimer;
-bool *timerSetFirstTime;
-void start_timer(int num) {
+timer_t* mytimer;
+bool* timerSetFirstTime;
+void start_timer(int num)
+{
     struct sigevent sev;
     sev.sigev_signo = SIGUSR1;
     sev.sigev_notify = SIGEV_SIGNAL;
@@ -74,18 +75,20 @@ void start_timer(int num) {
     value.it_value.tv_nsec = 0;
     value.it_interval.tv_sec = 0; //exipire once
     value.it_interval.tv_nsec = 0;
-    if (*timerSetFirstTime){
+    if (*timerSetFirstTime) {
         timer_create(CLOCK_REALTIME, &sev, mytimer);
         //timer_delete(mytimer);
     }
     *timerSetFirstTime = false;
     timer_settime(*mytimer, 0, &value, NULL);
 }
-void SIGINT_handler_exit(int) {
-  _exit(1);
+void SIGINT_handler_exit(int)
+{
+    _exit(1);
 }
 
-void SIGALARM_handler(int /*sig*/, siginfo_t *si, void */*uc*/) {
+void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
+{
     int num = si->si_value.sival_int;
     SATSolver* solver = solverToInterrupt;
     if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
@@ -163,7 +166,8 @@ int CUSP::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
 /* Number of solutions to return from one invocation of UniGen2 */
 uint32_t CUSP::SolutionsToReturn(
     uint32_t minSolutions
-) {
+)
+{
     if (conf.multisample) {
         return minSolutions;
     } else {
@@ -240,7 +244,8 @@ lbool CUSP::BoundedSAT(
     , std::mt19937& randomEngine
     , std::map<string, uint32_t>& solutionMap
     , uint32_t* solutionCount
-) {
+)
+{
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     solver->new_var();
@@ -412,9 +417,9 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
     }
     int minHash = findMin(numHashList);
     for (auto it1 = numHashList.begin(), it2 = numCountList.begin()
-        ;it1 != numHashList.end() && it2 != numCountList.end()
-        ;it1++, it2++
-    ) {
+            ; it1 != numHashList.end() && it2 != numCountList.end()
+            ; it1++, it2++
+        ) {
         (*it2) *= pow(2, (*it1) - minHash);
     }
     int medSolCount = findMedian(numCountList);
@@ -434,7 +439,8 @@ uint32_t CUSP::UniGen(
     , std::map<string, uint32_t>& solutionMap
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
-) {
+)
+{
     lbool ret = l_False;
     uint32_t i, solutionCount, currentHashCount, lastHashCount, currentHashOffset, hashOffsets[3];
     int hashDelta;
@@ -533,21 +539,22 @@ int CUSP::singleThreadUniGenCall(
     , std::mt19937& randomEngine
     , uint32_t* lastSuccessfulHashOffset
     , double timeReference
-) {
+)
+{
     SATSolver solver2(&conf);
     solverToInterrupt = &solver2;
 
     parseInAllFiles(&solver2);
     sampleCounter = UniGen(
-        samples
-        , &solver2
-        , resLog
-        , sampleCounter
-        , randomEngine
-        , solutionMap
-        , lastSuccessfulHashOffset
-        , timeReference
-    );
+                        samples
+                        , &solver2
+                        , resLog
+                        , sampleCounter
+                        , randomEngine
+                        , solutionMap
+                        , lastSuccessfulHashOffset
+                        , timeReference
+                    );
     return sampleCounter;
 }
 
@@ -566,7 +573,7 @@ bool CUSP::openLogFile(FILE*& res)
     if (false) {
         return false;
     }
-  
+
     res = fopen(cuspLogFile.c_str(),"wb");
     if (res == NULL) {
         int backup_errno = errno;
@@ -609,7 +616,7 @@ int CUSP::solve()
 
     if (conf.startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
-        "is larger than the size of the independent set.\n" << endl;
+             "is larger than the size of the independent set.\n" << endl;
         return -1;
     }
     SATCount solCount;
@@ -634,12 +641,12 @@ int CUSP::solve()
     } else {
         cout << "Using manually-specified startIteration" << endl;
     }
-     lbool ret = l_True;
-    if (onlyCount){
+    lbool ret = l_True;
+    if (onlyCount) {
         printf("Number of solutions is:%d x 2^%d\n", solCount.cellSolCount, solCount.hashCount);
 
-    }else{
-     
+    } else {
+
         uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
         uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
         uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
@@ -656,13 +663,13 @@ int CUSP::solve()
             numCallsInOneLoop = conf.callsPerSolver;
             cout << "Using manually-specified callsPerSolver" << endl;
         }
-       
+
         uint32_t numCallLoops = callsNeeded / numCallsInOneLoop;
         uint32_t remainingCalls = callsNeeded % numCallsInOneLoop;
 
         cout << "Making " << numCallLoops << " loops."
-        << " calls per loop: " << numCallsInOneLoop
-        << " remaining: " << remainingCalls << endl;
+             << " calls per loop: " << numCallsInOneLoop
+             << " remaining: " << remainingCalls << endl;
         bool timedOut = false;
         uint32_t sampleCounter = 0;
         std::map<string, uint32_t> threadSolutionMap;
@@ -674,21 +681,21 @@ int CUSP::solve()
         SeedEngine(randomEngine);
 
         uint32_t lastSuccessfulHashOffset = 0;
-            /* Perform extra UniGen calls that don't fit into the loops */
+        /* Perform extra UniGen calls that don't fit into the loops */
         if (remainingCalls > 0) {
             sampleCounter = singleThreadUniGenCall(
-                remainingCalls, resLog, sampleCounter
-                , threadSolutionMap, randomEngine
-                , &lastSuccessfulHashOffset, threadStartTime);
+                                remainingCalls, resLog, sampleCounter
+                                , threadSolutionMap, randomEngine
+                                , &lastSuccessfulHashOffset, threadStartTime);
         }
 
         /* Perform main UniGen call loops */
         for (uint32_t i = 0; i < numCallLoops; i++) {
             if (!timedOut) {
                 sampleCounter = singleThreadUniGenCall(
-                    numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
-                    , randomEngine, &lastSuccessfulHashOffset, threadStartTime
-                );
+                                    numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
+                                    , randomEngine, &lastSuccessfulHashOffset, threadStartTime
+                                );
 
                 if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
                     timedOut = true;
@@ -697,9 +704,9 @@ int CUSP::solve()
         }
 
         for (map<string, uint32_t>::iterator itt = threadSolutionMap.begin()
-            ; itt != threadSolutionMap.end()
-            ; itt++
-        ) {
+                ; itt != threadSolutionMap.end()
+                ; itt++
+            ) {
             string solution = itt->first;
             map<string, std::vector<uint32_t>>::iterator itg = globalSolutionMap.find(solution);
             if (itg == globalSolutionMap.end()) {
@@ -712,14 +719,14 @@ int CUSP::solve()
         double timeTaken = cpuTimeTotal() - threadStartTime;
         allThreadsTime += timeTaken;
         cout
-        << "Total time for UniGen2 thread " << 1
-        << ": " << timeTaken << " s"
-        << (timedOut ? " (TIMED OUT)" : "")
-        << endl;
+                << "Total time for UniGen2 thread " << 1
+                << ": " << timeTaken << " s"
+                << (timedOut ? " (TIMED OUT)" : "")
+                << endl;
 
         cout << "Total time for all UniGen2 calls: " << allThreadsTime << " s" << endl;
         cout << "Samples generated: " << allThreadsSampleCount << endl;
-        }
+    }
     if (conf.verbosity >= 1) {
         solver->print_stats();
     }
@@ -733,13 +740,13 @@ int main(int argc, char** argv)
     feenableexcept(FE_INVALID   |
                    FE_DIVBYZERO |
                    FE_OVERFLOW
-    );
+                  );
     #endif
 
     #ifndef USE_GAUSS
     std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
-    << "*** cmake -DUSE_GAUSS  ***" << endl
-    << "Refusing to run. Please reconfigure and then re-compile." << endl;
+              << "*** cmake -DUSE_GAUSS  ***" << endl
+              << "Refusing to run. Please reconfigure and then re-compile." << endl;
     exit(-1);
     #endif
 
