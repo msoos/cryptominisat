@@ -134,16 +134,16 @@ bool CUSP::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& r
 void CUSP::add_approxmc_options()
 {
     approxMCOptions.add_options()
-    ("samples", po::value(&conf.samples)->default_value(conf.samples), "")
-    ("callsPerSolver", po::value(&conf.callsPerSolver)->default_value(conf.callsPerSolver), "")
-    ("pivotAC", po::value(&conf.pivotApproxMC)->default_value(conf.pivotApproxMC), "")
-    ("pivotUniGen", po::value(&conf.pivotUniGen)->default_value(conf.pivotUniGen), "")
-    ("kappa", po::value(&conf.kappa)->default_value(conf.kappa), "")
-    ("tApproxMC", po::value(&conf.tApproxMC)->default_value(conf.tApproxMC), "")
-    ("startIteration", po::value(&conf.startIteration)->default_value(conf.startIteration), "")
-    ("multisample", po::value(&conf.multisample)->default_value(conf.multisample), "")
-    ("aggregation", po::value(&conf.aggregateSolutions)->default_value(conf.aggregateSolutions), "")
-    ("looptout", po::value(&conf.loopTimeout)->default_value(conf.loopTimeout), "")
+    ("samples", po::value(&samples)->default_value(samples), "")
+    ("callsPerSolver", po::value(&callsPerSolver)->default_value(callsPerSolver), "")
+    ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC), "")
+    ("pivotUniGen", po::value(&pivotUniGen)->default_value(pivotUniGen), "")
+    ("kappa", po::value(&kappa)->default_value(kappa), "")
+    ("tApproxMC", po::value(&tApproxMC)->default_value(tApproxMC), "")
+    ("startIteration", po::value(&startIteration)->default_value(startIteration), "")
+    ("multisample", po::value(&multisample)->default_value(multisample), "")
+    ("aggregation", po::value(&aggregateSolutions)->default_value(aggregateSolutions), "")
+    ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
     ("onlyCount", po::value(&onlyCount)->default_value(onlyCount),"")
     ;
@@ -169,7 +169,7 @@ uint32_t CUSP::SolutionsToReturn(
     uint32_t minSolutions
 )
 {
-    if (conf.multisample) {
+    if (multisample) {
         return minSolutions;
     } else {
         return 1;
@@ -211,7 +211,7 @@ int32_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
     allSATAssumptions.push_back(Lit(activationVar, true));
 
     //signal(SIGALRM, SIGALARM_handler);
-    start_timer(conf.loopTimeout);
+    start_timer(loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
         ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
@@ -257,7 +257,7 @@ lbool CUSP::BoundedSAT(
     std::vector<vector<lbool>> modelsSet;
     vector<lbool> model;
     //signal(SIGALRM, SIGALARM_handler);
-    start_timer(conf.loopTimeout);
+    start_timer(loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
         ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
@@ -369,23 +369,23 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
     vector<Lit> assumptions;
     double elapsedTime = 0;
     int repeatTry = 0;
-    for (uint32_t j = 0; j < conf.tApproxMC; j++) {
+    for (uint32_t j = 0; j < tApproxMC; j++) {
         uint32_t  hashCount;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
             elapsedTime = cpuTimeTotal() - startTime;
-            if (elapsedTime > conf.totalTimeout - 3000) {
+            if (elapsedTime > totalTimeout - 3000) {
                 break;
             }
             double myTime = cpuTimeTotal();
-            currentNumSolutions = BoundedSATCount(conf.pivotApproxMC + 1, solver, assumptions);
+            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, solver, assumptions);
 
             myTime = cpuTimeTotal() - myTime;
             //cout << myTime << endl;
-            //cout << currentNumSolutions << ", " << conf.pivotApproxMC << endl;
+            //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             if (conf.verbosity >= 2) {
                 fprintf(resLog, "ApproxMC:%d:%d:%f:%d:%d\n"
                     , j, hashCount, myTime
-                    , (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1))
+                    , (currentNumSolutions == (int32_t)(pivotApproxMC + 1))
                     , currentNumSolutions
                 );
                 fflush(resLog);
@@ -402,7 +402,7 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
                 }
                 continue;
             }
-            if (currentNumSolutions == conf.pivotApproxMC + 1) {
+            if (currentNumSolutions == pivotApproxMC + 1) {
                 AddHash(1, solver, assumptions, randomEngine);
             } else {
                 break;
@@ -410,7 +410,7 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
 
         }
         assumptions.clear();
-        if (elapsedTime > conf.totalTimeout - 3000) {
+        if (elapsedTime > totalTimeout - 3000) {
             break;
         }
         numHashList.push_back(hashCount);
@@ -467,7 +467,7 @@ uint32_t CUSP::UniGen(
         lastHashCount = 0;
         for (uint32_t j = 0; j < 3; j++) {
             currentHashOffset = hashOffsets[j];
-            currentHashCount = currentHashOffset + conf.startIteration;
+            currentHashCount = currentHashOffset + startIteration;
             hashDelta = currentHashCount - lastHashCount;
 
             if (hashDelta > 0) { /* Add new hash functions */
@@ -480,11 +480,11 @@ uint32_t CUSP::UniGen(
 
             double currentTime = cpuTimeTotal();
             elapsedTime = currentTime - startTime;
-            if (elapsedTime > conf.totalTimeout - 3000) {
+            if (elapsedTime > totalTimeout - 3000) {
                 break;
             }
-            uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
-            uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
+            uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
+            uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
             if (conf.verbosity >= 2) {
                 fprintf(resLog, "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
@@ -528,7 +528,7 @@ uint32_t CUSP::UniGen(
             i --;
         }
         assumptions.clear();
-        if (elapsedTime > conf.totalTimeout - 3000) {
+        if (elapsedTime > totalTimeout - 3000) {
             break;
         }
     }
@@ -619,13 +619,13 @@ int CUSP::solve()
     *timerSetFirstTime = true;
     need_clean_exit = true;
 
-    if (conf.startIteration > independent_vars.size()) {
+    if (startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
              "is larger than the size of the independent set.\n" << endl;
         return -1;
     }
     SATCount solCount;
-    if (conf.startIteration == 0) {
+    if (startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
 
         std::mt19937 randomEngine {};
@@ -633,7 +633,7 @@ int CUSP::solve()
         solCount = ApproxMC(solver, resLog, randomEngine);
         double elapsedTime = cpuTimeTotal() - startTime;
         cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
-        if (elapsedTime > conf.totalTimeout - 3000) {
+        if (elapsedTime > totalTimeout - 3000) {
             cout << " (TIMED OUT)" << endl;
             return 0;
         }
@@ -641,8 +641,8 @@ int CUSP::solve()
             cout << "The input formula is unsatisfiable." << endl;
             return 0;
         }
-        conf.startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
-                                    log2(1.8) - log2(conf.pivotUniGen)) - 2;
+        startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
+                                    log2(1.8) - log2(pivotUniGen)) - 2;
     } else {
         cout << "Using manually-specified startIteration" << endl;
     }
@@ -653,23 +653,23 @@ int CUSP::solve()
 
     } else {
 
-        uint32_t maxSolutions = (uint32_t) (1.41 * (1 + conf.kappa) * conf.pivotUniGen + 2);
-        uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
+        uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
+        uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
         uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
-        uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
+        uint32_t callsNeeded = (samples + samplesPerCall - 1) / samplesPerCall;
         cout << "loThresh " << minSolutions
         << ", hiThresh " << maxSolutions
-        << ", startIteration " << conf.startIteration << endl;;
+        << ", startIteration " << startIteration << endl;;
 
         printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
         uint32_t numCallsInOneLoop = 0;
-        if (conf.callsPerSolver == 0) {
-            numCallsInOneLoop = std::min(solver->nVars() / (conf.startIteration * 14), callsNeeded);
+        if (callsPerSolver == 0) {
+            numCallsInOneLoop = std::min(solver->nVars() / (startIteration * 14), callsNeeded);
             if (numCallsInOneLoop == 0) {
                 numCallsInOneLoop = 1;
             }
         } else {
-            numCallsInOneLoop = conf.callsPerSolver;
+            numCallsInOneLoop = callsPerSolver;
             cout << "Using manually-specified callsPerSolver" << endl;
         }
 
@@ -706,7 +706,7 @@ int CUSP::solve()
                                     , randomEngine, &lastSuccessfulHashOffset, threadStartTime
                                 );
 
-                if ((cpuTimeTotal() - threadStartTime) > conf.totalTimeout - 3000) {
+                if ((cpuTimeTotal() - threadStartTime) > totalTimeout - 3000) {
                     timedOut = true;
                 }
             }

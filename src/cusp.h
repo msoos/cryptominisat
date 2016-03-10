@@ -93,6 +93,19 @@ private:
     std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
     bool openLogFile(FILE*& res);
     std::atomic<bool> must_interrupt;
+
+    uint32_t samples = 1;
+    uint32_t callsPerSolver = 0;
+    uint32_t startIteration = 0;
+    int32_t  pivotApproxMC = 60;
+    uint32_t pivotUniGen = 27;
+    uint32_t samplesGen  = 1;
+    uint32_t tApproxMC = 1;
+    int      totalTimeout = 72000;
+    int      loopTimeout = 3000;
+    double   kappa = 0.5;
+    bool     multisample = true;
+    bool     aggregateSolutions = true;
 };
 
 
