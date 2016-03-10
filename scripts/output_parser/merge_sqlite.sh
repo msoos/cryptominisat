@@ -2,6 +2,7 @@
 set -e
 set -x
 
+rm -f mergeddata.sqlite
 FNAME=todo
 rm -f $FNAME
 echo ".read /home/soos/development/sat_solvers/cryptominisat/cmsat_tablestructure.sql" >> $FNAME
@@ -13,7 +14,6 @@ for FILE in *sqlite*; do
 	done
 	echo "detach tomerge;" >> $FNAME
 done
-rm -f mergeddata.sqlite
 sqlite3 mergeddata.sqlite < $FNAME
 
 # rm -f dump
