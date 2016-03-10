@@ -31,6 +31,7 @@
 #include <fenv.h>
 #endif
 
+#include <stdio.h>
 #include <ctime>
 #include <cstring>
 #include <errno.h>
@@ -69,7 +70,7 @@ void start_timer(int num)
     struct sigevent sev;
     sev.sigev_signo = SIGUSR1;
     sev.sigev_notify = SIGEV_SIGNAL;
-    //printf("start_timer;thread:%d\n", threadNum);
+    //cout << "start_timer;thread:" << threadNum << endl;
     struct itimerspec value;
     value.it_value.tv_sec = num; //waits for n seconds before sending timer signal
     value.it_value.tv_nsec = 0;
@@ -379,11 +380,14 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
             currentNumSolutions = BoundedSATCount(conf.pivotApproxMC + 1, solver, assumptions);
 
             myTime = cpuTimeTotal() - myTime;
-            //printf("%f\n", myTime);
-            //printf("%d %d\n",currentNumSolutions,conf.pivotApproxMC);
+            //cout << myTime << endl;
+            //cout << currentNumSolutions << ", " << conf.pivotApproxMC << endl;
             if (conf.verbosity >= 2) {
-                fprintf(resLog, "ApproxMC:%d:%d:%f:%d:%d\n", j, hashCount, myTime,
-                        (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1)), currentNumSolutions);
+                fprintf(resLog, "ApproxMC:%d:%d:%f:%d:%d\n"
+                    , j, hashCount, myTime
+                    , (currentNumSolutions == (int32_t)(conf.pivotApproxMC + 1))
+                    , currentNumSolutions
+                );
                 fflush(resLog);
             }
             if (currentNumSolutions <= 0) {
@@ -452,7 +456,7 @@ uint32_t CUSP::UniGen(
         ret = l_False;
 
         hashOffsets[0] = *lastSuccessfulHashOffset;   /* Start at last successful hash offset */
-        if (hashOffsets[0] == 0) {  /* Starting at q-2; go to q-1 then q */
+        if (hashOffsets[0] == 0) { /* Starting at q-2; go to q-1 then q */
             hashOffsets[1] = 1;
             hashOffsets[2] = 2;
         } else if (hashOffsets[0] == 2) { /* Starting at q; go to q-1 then q-2 */
@@ -577,7 +581,8 @@ bool CUSP::openLogFile(FILE*& res)
     res = fopen(cuspLogFile.c_str(),"wb");
     if (res == NULL) {
         int backup_errno = errno;
-        printf("Cannot open %s for writing. Problem: %s\n", cuspLogFile.c_str(), strerror(backup_errno));
+        cout << "Cannot open " << cuspLogFile << " for writing."
+        << " Problem: " << strerror(backup_errno) << endl;
         exit(1);
     }
     return true;
@@ -643,7 +648,8 @@ int CUSP::solve()
     }
     lbool ret = l_True;
     if (onlyCount) {
-        printf("Number of solutions is:%d x 2^%d\n", solCount.cellSolCount, solCount.hashCount);
+        cout << "Number of solutions is: " << solCount.cellSolCount
+        << " x 2^" << solCount.hashCount << endl;
 
     } else {
 
@@ -651,7 +657,10 @@ int CUSP::solve()
         uint32_t minSolutions = (uint32_t) (conf.pivotUniGen / (1.41 * (1 + conf.kappa)));
         uint32_t samplesPerCall = SolutionsToReturn(minSolutions);
         uint32_t callsNeeded = (conf.samples + samplesPerCall - 1) / samplesPerCall;
-        printf("loThresh %d, hiThresh %d, startIteration %d\n", minSolutions, maxSolutions, conf.startIteration);
+        cout << "loThresh " << minSolutions
+        << ", hiThresh " << maxSolutions
+        << ", startIteration " << conf.startIteration << endl;;
+
         printf("Outputting %d solutions from each UniGen2 call\n", samplesPerCall);
         uint32_t numCallsInOneLoop = 0;
         if (conf.callsPerSolver == 0) {
