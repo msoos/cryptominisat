@@ -28,6 +28,7 @@ from distutils import sysconfig
 
 cconf = """${PY_C_CONFIG}""".split(" ")
 ldconf = """${PY_LD_CONFIG}""".split(" ")
+is_apple = """${APPLE}"""
 
 def cleanup(dat):
     ret = []
@@ -35,6 +36,11 @@ def cleanup(dat):
         elem = elem.strip()
         if elem != "":
             ret.append(elem)
+
+    if is_apple != "":
+        for x in ret:
+            if x == "-lpython" or x == "-lframework":
+                x = "-undefined dynamic_lookup"
 
     return ret
     # return []
