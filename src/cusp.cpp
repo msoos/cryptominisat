@@ -1,5 +1,5 @@
 /*
- * CUPS
+ * CUSP
  *
  * Copyright (c) 2009-2015, Mate Soos. All rights reserved.
  * Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
@@ -49,7 +49,7 @@
 #include <array>
 #include <time.h>
 
-#include "cups.h"
+#include "cusp.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
 #include "cryptominisat4/cryptominisat.h"
@@ -116,7 +116,7 @@ string binary(unsigned x, uint32_t length)
 
 }
 
-bool CUPS::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine)
+bool CUSP::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& randomEngine)
 {
     std::uniform_int_distribution<unsigned> uid {0, 2147483647};
     uint32_t i = 0;
@@ -127,7 +127,7 @@ bool CUPS::GenerateRandomBits(string& randomBits, uint32_t size, std::mt19937& r
     return true;
 }
 
-void CUPS::add_approxmc_options()
+void CUSP::add_approxmc_options()
 {
     approxMCOptions.add_options()
     ("samples", po::value(&conf.samples)->default_value(conf.samples), "")
@@ -148,20 +148,20 @@ void CUPS::add_approxmc_options()
     help_options_complicated.add(approxMCOptions);
 }
 
-void CUPS::add_supported_options()
+void CUSP::add_supported_options()
 {
     Main::add_supported_options();
     add_approxmc_options();
 }
 
-int CUPS::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
+int CUSP::GenerateRandomNum(int maxRange, std::mt19937& randomEngine)
 {
     std::uniform_int_distribution<int> uid {0, maxRange};
     return uid(randomEngine);
 }
 
 /* Number of solutions to return from one invocation of UniGen2 */
-uint32_t CUPS::SolutionsToReturn(
+uint32_t CUSP::SolutionsToReturn(
     uint32_t minSolutions
 ) {
     if (conf.multisample) {
@@ -170,7 +170,7 @@ uint32_t CUPS::SolutionsToReturn(
         return 1;
     }
 }
-bool CUPS::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine)
+bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions, std::mt19937& randomEngine)
 {
     string randomBits;
     GenerateRandomBits(randomBits, (independent_vars.size() + 1) * numClaus, randomEngine);
@@ -196,7 +196,7 @@ bool CUPS::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
     return true;
 }
 
-int32_t CUPS::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
+int32_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
 {
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
@@ -232,7 +232,7 @@ int32_t CUPS::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
     return current_nr_of_solutions;
 }
 
-lbool CUPS::BoundedSAT(
+lbool CUSP::BoundedSAT(
     uint32_t maxSolutions
     , uint32_t minSolutions
     , SATSolver* solver
@@ -355,7 +355,7 @@ inline int findMin(T numList)
     return min;
 }
 
-SATCount CUPS::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
+SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     vector<int> numHashList;
@@ -425,7 +425,7 @@ SATCount CUPS::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
     return solCount;
 }
 
-uint32_t CUPS::UniGen(
+uint32_t CUSP::UniGen(
     uint32_t samples
     , SATSolver* solver
     , FILE* resLog
@@ -525,7 +525,7 @@ uint32_t CUPS::UniGen(
     return sampleCounter;
 }
 
-int CUPS::singleThreadUniGenCall(
+int CUSP::singleThreadUniGenCall(
     uint32_t samples
     , FILE* resLog
     , uint32_t sampleCounter
@@ -551,7 +551,7 @@ int CUPS::singleThreadUniGenCall(
     return sampleCounter;
 }
 
-void CUPS::SeedEngine(std::mt19937& randomEngine)
+void CUSP::SeedEngine(std::mt19937& randomEngine)
 {
     /* Initialize PRNG with seed from random_device */
     std::random_device rd {};
@@ -561,7 +561,7 @@ void CUPS::SeedEngine(std::mt19937& randomEngine)
     randomEngine.seed(seed);
 }
 
-bool CUPS::openLogFile(FILE*& res)
+bool CUSP::openLogFile(FILE*& res)
 {
     if (false) {
         return false;
@@ -577,7 +577,7 @@ bool CUPS::openLogFile(FILE*& res)
 }
 
 //My stuff from OneThreadSolve
-int CUPS::solve()
+int CUSP::solve()
 {
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 7;
@@ -743,7 +743,7 @@ int main(int argc, char** argv)
     exit(-1);
     #endif
 
-    CUPS main(argc, argv);
+    CUSP main(argc, argv);
     main.parseCommandLine();
 
     signal(SIGINT, SIGINT_handler_exit);

@@ -217,10 +217,10 @@ if (NOT ONLY_SIMPLE)
         main_exe.cpp
         signalcode.cpp
     )
-    add_executable(cups4
+    add_executable(cusp4
         main.cpp
         signalcode.cpp
-        cups.cpp
+        cusp.cpp
     )
 endif()
 add_executable(cryptominisat4_simple
@@ -232,8 +232,8 @@ if (STATICCOMPILE)
         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_END_STATIC 1)
         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_START_STATIC 0)
 
-        set_target_properties(cups4 PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(cups4 PROPERTIES LINK_SEARCH_START_STATIC 0)
+        set_target_properties(cusp4 PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(cusp4 PROPERTIES LINK_SEARCH_START_STATIC 0)
     endif()
     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
@@ -252,8 +252,8 @@ if (NOT ONLY_SIMPLE)
     set_target_properties(cryptominisat4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
     set_target_properties(cryptominisat4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-    set_target_properties(cups4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-    set_target_properties(cups4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set_target_properties(cusp4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+    set_target_properties(cusp4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 set_target_properties(cryptominisat4_simple PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set_target_properties(cryptominisat4_simple PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -268,15 +268,15 @@ if (NOT ONLY_SIMPLE)
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4")
 
-    target_link_libraries(cups4
+    target_link_libraries(cusp4
         ${cryptoms_exec_link_libs}
         rt
     )
-    install(TARGETS cups4
+    install(TARGETS cusp4
         EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
         RUNTIME DESTINATION bin
     )
-    SET(CPACK_PACKAGE_EXECUTABLES "cups4")
+    SET(CPACK_PACKAGE_EXECUTABLES "cusp4")
 endif()
 
 target_link_libraries(cryptominisat4_simple

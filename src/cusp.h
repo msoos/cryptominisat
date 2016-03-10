@@ -1,5 +1,5 @@
 /*
- * CUPS
+ * CUSP
  *
  * Copyright (c) 2009-2015, Mate Soos. All rights reserved.
  * Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
@@ -22,15 +22,15 @@
  * MA 02110-1301  USA
 */
 
-#ifndef CUPS_H_
-#define CUPS_H_
+#ifndef CUSP_H_
+#define CUSP_H_
 
 #include "main.h"
 
-class CUPS: public Main
+class CUSP: public Main
 {
 public:
-    CUPS(int argc, char** argv):
+    CUSP(int argc, char** argv):
         Main(argc, argv)
         , approxMCOptions("ApproxMC options")
     {
@@ -97,4 +97,4 @@ private:
 };
 
 
-#endif //CUPS_H_
+#endif //CUSP_H_
