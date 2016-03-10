@@ -38,13 +38,15 @@ class Query:
         print("----------- MEMORY OUTLIERS --------------")
 
         query = """
-        select tags.tag, memused.name, memused.MB
+        select tags.tag, memused.name, max(memused.MB)
         from memused,tags
         where  tags.tagname="filename"
         and tags.runID = memused.runID
         and memused.MB > %d
         and memused.name != 'vm'
         and memused.name != 'rss'
+        and memused.name != 'longclauses'
+        group by tags.tag, memused.name
         order by MB desc;
         """ % (options.maxmemory)
 
@@ -58,12 +60,13 @@ class Query:
         print("----------- MEMORY OUTLIERS RSS --------------")
 
         query = """
-        select tags.tag, memused.name, memused.MB
+        select tags.tag, memused.name, max(memused.MB)
         from memused,tags
         where  tags.tagname="filename"
         and tags.runID = memused.runID
         and memused.MB > %d
         and memused.name == 'rss'
+        group by tags.tag, memused.name
         order by MB desc;
         """ % (options.maxmemory*2)
 
@@ -76,24 +79,24 @@ class Query:
     def find_worst_unaccounted_memory(self):
         print("----------- Largest RSS vs counted differences --------------")
         query = """
-        select tags.tag, a.`time`, abs((b.rss-a.mysum)/b.rss) as differperc,
+        select tags.tag, a.`runtime`, abs((b.rss-a.mysum)/b.rss) as differperc,
             a.mysum as counted, b.rss as total
         from tags,
 
-        (select runID, `time`, sum(MB) as mysum
+        (select runID, `runtime`, sum(MB) as mysum
         from memused
         where name != 'rss'
         and name != 'vm'
-        group by `time`, runID) as a,
+        group by `runtime`, runID) as a,
 
-        (select runID, name, `time`, MB as rss
+        (select runID, name, `runtime`, MB as rss
         from memused
         where name = 'rss') as b
 
         where tags.runID = a.runID
         and tags.tagname="filename"
         and a.runID = b.runID
-        and a.`time` = b.`time`
+        and a.`runtime` = b.`runtime`
         and total > %d
 
         order by differperc desc
@@ -204,7 +207,7 @@ class Query:
         query = """
         select a.runID, tags.tag, a.maxtime, a.maxconfl, mems.maxmem from
 
-            (select runID, max(conflicts) as maxconfl, max(`time`) as maxtime
+            (select runID, max(conflicts) as maxconfl, max(`runtime`) as maxtime
             from timepassed
             group by runID
             ) as a,
