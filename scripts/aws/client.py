@@ -190,7 +190,8 @@ class solverThread (threading.Thread):
             toexec.append("--keepglue 25")
             toexec.append("--otfsubsume 0")
         else:
-            toexec.append("--sqlfull 0")
+            if "cryptominisat" in self.indata["solver"]:
+                toexec.append("--sqlfull 0")
 
         return " ".join(toexec)
 
