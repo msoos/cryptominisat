@@ -1822,6 +1822,10 @@ lbool Solver::simplify_problem(const bool startup)
     test_all_clause_attached();
     check_wrong_attach();
     conf.global_timeout_multiplier *= solver->conf.global_timeout_multiplier_multiplier;
+    conf.global_timeout_multiplier =
+        std::max(
+            conf.global_timeout_multiplier, conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
+        );
 
     //Reconfigure
     if (nVars() > 2
@@ -3205,7 +3209,8 @@ void Solver::reconfigure(int val)
 
         case 5: {
             //Lots of simplifying
-            conf.global_timeout_multiplier = 2;
+            conf.orig_global_timeout_multiplier = 2;
+            conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
             conf.num_conflicts_of_search_inc = 1.25;
             break;
         }
@@ -3304,7 +3309,8 @@ void Solver::reconfigure(int val)
         }
 
         case 13: {
-            conf.global_timeout_multiplier = 5;
+            conf.orig_global_timeout_multiplier = 5;
+            conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;

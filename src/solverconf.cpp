@@ -249,7 +249,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Misc
         , orig_global_timeout_multiplier(1.0)
         , global_timeout_multiplier(1.0)
-        , global_timeout_multiplier_multiplier(1.2)
+        , global_timeout_multiplier_multiplier(1.1)
+        , global_multiplier_multiplier_max(3)
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(20000)

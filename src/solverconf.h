@@ -326,6 +326,7 @@ class SolverConf
         double orig_global_timeout_multiplier;
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;
+        double global_multiplier_multiplier_max;
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
