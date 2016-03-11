@@ -6,6 +6,7 @@ import random
 import time
 import string
 
+
 def parse_arguments():
     class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
@@ -62,7 +63,8 @@ def parse_arguments():
                       )
     # other possibilities:
     #
-    # SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
+    # --solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
+    # --solver lingeling_ayv/binary/lingeling
 
     parser.add_option("--s3bucket", default="msoos-solve-results",
                       dest="s3_bucket", help="S3 Bucket to upload finished data"
