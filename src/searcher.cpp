@@ -78,6 +78,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
 Searcher::~Searcher()
 {
+    clear_gauss();
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
@@ -3217,5 +3218,19 @@ void Searcher::clearGaussMatrixes()
         clauseAllocator.clauseFree(freeLater[i]);
     freeLater.clear();
     */
+}
+#endif
+
+#ifdef USE_GAUSS
+void Searcher::clear_gauss()
+{
+    xorclauses.clear();
+    for(Gaussian* g: gauss_matrixes) {
+        if (conf.verbosity >= 2) {
+            g->print_stats();
+        }
+        delete g;
+    }
+    gauss_matrixes.clear();
 }
 #endif

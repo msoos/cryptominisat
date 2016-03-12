@@ -297,7 +297,6 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution();
-        void clear_gauss();
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use

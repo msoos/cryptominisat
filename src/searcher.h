@@ -252,6 +252,13 @@ class Searcher : public HyperEngine
         int pathC;
         AtecedentData<uint16_t> antec_data;
 
+        //gauss
+        #ifdef USE_GAUSS
+        void clear_gauss();
+        #else
+        void clear_gauss() {}
+        #endif
+
         vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 
         /////////////////
