@@ -774,13 +774,9 @@ void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
     cout << "(" << matrix_no << ")Canceling until sublevel " << until_sublevel << endl;
     #endif
 
-    for (vector<Gaussian*>::iterator
-        gauss = solver->gauss_matrixes.begin(), end= solver->gauss_matrixes.end()
-        ; gauss != end
-        ; gauss++
-    )  {
-        if (*gauss != this) {
-            (*gauss)->canceling(until_sublevel);
+    for (auto gauss: solver->gauss_matrixes) {
+        if (gauss != this) {
+            gauss->canceling(until_sublevel);
         }
     }
 
