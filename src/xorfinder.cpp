@@ -491,7 +491,7 @@ void XorFinder::clean_up_xors()
     toClear.clear();
 }
 
-void XorFinder::recursively_xor_xors()
+void XorFinder::xor_xors()
 {
     uint32_t xored = 0;
     const double myTime = cpuTime();
@@ -589,7 +589,7 @@ void XorFinder::recursively_xor_xors()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(
             solver
-            , "xor-recur-xor"
+            , "xor-xor-together"
             , recur_time
         );
     }
