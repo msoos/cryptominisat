@@ -474,7 +474,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             #endif
             if (cl->red() && update_polarity_and_activity) {
                 bumpClauseAct(cl);
-                if (conf.update_glues_on_analyze) {
+                if (conf.update_glues_on_analyze
+                    && cl->size() < 40 //NOTE MAGIC CONSTANT
+                ) {
                     update_clause_glue_from_analysis(cl);
                 }
             }
