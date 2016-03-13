@@ -593,7 +593,7 @@ bool CUSP::openLogFile(FILE*& res)
 int CUSP::solve()
 {
     conf.reconfigure_at = 0;
-    conf.reconfigure_val = 7;
+    conf.reconfigure_val = 15;
     conf.gaussconf.autodisable = false;
 
     FILE* resLog;
