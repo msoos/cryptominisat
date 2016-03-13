@@ -898,12 +898,10 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
             solver->enqueue(tmp_clause[0]);
             return unit_propagation;
         case 2: {
-            solver->cancelUntil(0);
-            tmp_clause[0] = tmp_clause[0].unsign();
-            tmp_clause[1] = tmp_clause[1].unsign();
-            solver->add_xor_clause_inter(tmp_clause, rhs, true);
-            assert(solver->ok);
-            return unit_propagation;
+            solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
+            solver->attach_bin_clause(~tmp_clause[0], ~tmp_clause[1], true, false);
+            solver->enqueue(tmp_clause[0], PropBy(tmp_clause[1], true));
+            return propagation;
         }
         default:
             if (solver->decisionLevel() == 0) {
