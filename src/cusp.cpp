@@ -755,7 +755,7 @@ int main(int argc, char** argv)
 
     #ifndef USE_GAUSS
     std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
-              << "*** cmake -DUSE_GAUSS  ***" << endl
+              << "*** cmake -DUSE_GAUSS=ON (.. or .)  ***" << endl
               << "Refusing to run. Please reconfigure and then re-compile." << endl;
     exit(-1);
     #endif
