@@ -159,7 +159,7 @@ public:
     virtual size_t mem_used() const;
     void add_xors_to_gauss();
     void clean_up_xors();
-    void xor_xors();
+    void xor_together_xors();
     bool add_new_truths_from_xors();
 
     vector<Xor> xors;

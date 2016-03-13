@@ -491,7 +491,7 @@ void XorFinder::clean_up_xors()
     toClear.clear();
 }
 
-void XorFinder::xor_xors()
+void XorFinder::xor_together_xors()
 {
     uint32_t xored = 0;
     const double myTime = cpuTime();

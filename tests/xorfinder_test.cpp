@@ -302,7 +302,7 @@ TEST_F(xor_finder, xor_1)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 1; 1, 4, 5, 6 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     check_xors_eq(finder.xors, "2, 3, 4, 5, 6 = 1;");
 }
 
@@ -310,7 +310,7 @@ TEST_F(xor_finder, xor_2)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     check_xors_eq(finder.xors, "2, 3, 4, 5, 6 = 0;");
 }
 
@@ -318,7 +318,7 @@ TEST_F(xor_finder, xor_3)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     check_xors_eq(finder.xors, "1, 2, 3 = 0; 10, 4, 5, 6 = 0;");
 }
 
@@ -327,7 +327,7 @@ TEST_F(xor_finder, xor_4)
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
         "1, 9, 10, 11 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     EXPECT_EQ(finder.xors.size(), 3);
 }
 
@@ -336,7 +336,7 @@ TEST_F(xor_finder, xor_5)
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0;"
         "1, 4, 10, 11 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     EXPECT_EQ(finder.xors.size(), 2);
     check_xors_contains(finder.xors, "5, 6, 10, 11 = 0");
 }
@@ -346,7 +346,7 @@ TEST_F(xor_finder, xor_6)
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2 = 0; 1, 4= 0;"
         "6, 7 = 0; 6, 10 = 1");
-    finder.xor_xors();
+    finder.xor_together_xors();
     EXPECT_EQ(finder.xors.size(), 2);
     check_xors_eq(finder.xors, "2, 4 = 0; 7, 10 = 1");
 }
@@ -355,7 +355,7 @@ TEST_F(xor_finder, xor_7)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2 = 0; 1, 2= 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     EXPECT_EQ(finder.xors.size(), 0);
 }
 
@@ -363,7 +363,7 @@ TEST_F(xor_finder, xor_8)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2 = 0; 1, 2 = 1;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_FALSE(ret);
 }
@@ -372,7 +372,7 @@ TEST_F(xor_finder, xor_unit)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
@@ -383,7 +383,7 @@ TEST_F(xor_finder, xor_unit2)
     XorFinder finder(occsimp, s);
     s->add_clause_outer(str_to_cl("-3"));
     finder.xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_FALSE(ret);
 }
@@ -392,7 +392,7 @@ TEST_F(xor_finder, xor_binx)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 5 = 0; 1, 2, 3 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
@@ -403,7 +403,7 @@ TEST_F(xor_finder, xor_binx_inv)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
@@ -414,7 +414,7 @@ TEST_F(xor_finder, xor_binx_inv2)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 1;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
@@ -425,7 +425,7 @@ TEST_F(xor_finder, xor_binx2_recur)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 5 = 0; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
@@ -436,10 +436,10 @@ TEST_F(xor_finder, xor_binx3_recur)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("8, 9, 2 = 1; 8, 9, 1, 5 = 1; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
-    finder.xor_xors();
+    finder.xor_together_xors();
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
-    finder.xor_xors();
+    finder.xor_together_xors();
     ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
