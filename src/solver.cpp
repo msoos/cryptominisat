@@ -1691,6 +1691,10 @@ bool Solver::execute_inprocess_strategy(
             exit(-1);
         }
 
+        #ifdef SLOW_DEBUG
+        solver->check_stats();
+        #endif
+
         if (!ok) {
             return ok;
         }
