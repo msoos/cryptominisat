@@ -536,7 +536,7 @@ uint32_t CUSP::UniGen(
     return sampleCounter;
 }
 
-int CUSP::singleThreadUniGenCall(
+int CUSP::uniGenCall(
     uint32_t samples
     , FILE* resLog
     , uint32_t sampleCounter
@@ -610,7 +610,6 @@ int CUSP::solve()
     printVersionInfo();
     parseInAllFiles(solver);
 
-    int numThreads = 1;
     mytimer = new timer_t;
     timerSetFirstTime = new bool;
     struct sigaction sa;
@@ -626,6 +625,7 @@ int CUSP::solve()
              "is larger than the size of the independent set.\n" << endl;
         return -1;
     }
+
     SATCount solCount;
     if (startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
@@ -648,6 +648,8 @@ int CUSP::solve()
     } else {
         cout << "Using manually-specified startIteration" << endl;
     }
+
+    //Either onlycount or unigen
     lbool ret = l_True;
     if (onlyCount) {
         cout << "Number of solutions is: " << solCount.cellSolCount
@@ -694,7 +696,7 @@ int CUSP::solve()
         uint32_t lastSuccessfulHashOffset = 0;
         /* Perform extra UniGen calls that don't fit into the loops */
         if (remainingCalls > 0) {
-            sampleCounter = singleThreadUniGenCall(
+            sampleCounter = uniGenCall(
                                 remainingCalls, resLog, sampleCounter
                                 , threadSolutionMap, randomEngine
                                 , &lastSuccessfulHashOffset, threadStartTime);
@@ -703,7 +705,7 @@ int CUSP::solve()
         /* Perform main UniGen call loops */
         for (uint32_t i = 0; i < numCallLoops; i++) {
             if (!timedOut) {
-                sampleCounter = singleThreadUniGenCall(
+                sampleCounter = uniGenCall(
                                     numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
                                     , randomEngine, &lastSuccessfulHashOffset, threadStartTime
                                 );
@@ -730,10 +732,9 @@ int CUSP::solve()
         double timeTaken = cpuTimeTotal() - threadStartTime;
         allThreadsTime += timeTaken;
         cout
-                << "Total time for UniGen2 thread " << 1
-                << ": " << timeTaken << " s"
-                << (timedOut ? " (TIMED OUT)" : "")
-                << endl;
+        << "Total time for UniGen2: " << timeTaken << " s"
+        << (timedOut ? " (TIMED OUT)" : "")
+        << endl;
 
         cout << "Total time for all UniGen2 calls: " << allThreadsTime << " s" << endl;
         cout << "Samples generated: " << allThreadsSampleCount << endl;

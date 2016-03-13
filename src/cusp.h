@@ -77,7 +77,7 @@ private:
     int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
     bool printSolutions(FILE* res);
     void SeedEngine(std::mt19937& randomEngine);
-    int singleThreadUniGenCall(uint32_t samples
+    int uniGenCall(uint32_t samples
                                , FILE* resLog, uint32_t sampleCounter
                                , std::map<std::string, uint32_t>& solutionMap
                                , std::mt19937& randomEngine
@@ -86,7 +86,7 @@ private:
                               );
 
     //config
-    bool onlyCount = true;
+    int onlyCount = true;
     std::string cuspLogFile = "mylog.txt";
 
     double startTime;
