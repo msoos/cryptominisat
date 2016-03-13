@@ -145,7 +145,8 @@ void CUSP::add_approxmc_options()
     ("aggregation", po::value(&aggregateSolutions)->default_value(aggregateSolutions), "")
     ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
-    ("onlyCount", po::value(&onlyCount)->default_value(onlyCount),"")
+    ("onlyCount", po::value(&onlyCount)->default_value(onlyCount)
+        ,"Only counting, the default. Otherwise, UNIGEN is used")
     ;
 
     help_options_simple.add(approxMCOptions);
