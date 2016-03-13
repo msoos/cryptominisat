@@ -579,7 +579,7 @@ void XorFinder::xor_together_xors()
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity >= 2) {
         cout
-        << "c [occ-xor] recursively XORed " << xored
+        << "c [occ-xor] xored together " << xored*2
         << " clauses "
         << solver->conf.print_times(recur_time)
         << endl;
