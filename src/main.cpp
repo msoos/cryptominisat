@@ -453,9 +453,9 @@ void Main::add_supported_options()
         , "Don't allow redundant occur size to be beyond this many MB")
     ("substimelim", po::value(&conf.subsumption_time_limitM)->default_value(conf.subsumption_time_limitM)
         , "Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur")
-    ("substimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
+    ("strstimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
         , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
-    ("substimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
+    ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
         , "Time-out in bogoprops M of agressive(=uses reverse distillation) var-elimination")
     ;
 
