@@ -93,6 +93,8 @@ private:
     std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
     bool openLogFile(FILE*& res);
     std::atomic<bool> must_interrupt;
+    vector<uint32_t> independent_vars;
+    void call_after_parse(const vector<uint32_t>& independent_vars) override;
 
     uint32_t samples = 1;
     uint32_t callsPerSolver = 0;

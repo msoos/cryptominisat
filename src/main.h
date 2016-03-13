@@ -83,6 +83,9 @@ class Main
     protected:
         //Options
         virtual void add_supported_options();
+        virtual void call_after_parse(const vector<uint32_t>& independent_vars)
+        {}
+
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
         po::options_description hiddenOptions;
@@ -130,8 +133,6 @@ class Main
         std::ostream* dratf = NULL;
         bool dratDebug = false;
         bool clause_ID_needed = false;
-
-        vector<uint32_t> independent_vars;
 };
 
 #endif //MAIN_H

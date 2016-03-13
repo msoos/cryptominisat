@@ -142,12 +142,8 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     if (!parser.parse_DIMACS(in)) {
         exit(-1);
     }
-    independent_vars = parser.independent_vars;
-    if (independent_vars.empty()) {
-        for(size_t i = 0; i < solver->nVars(); i++) {
-            independent_vars.push_back(i);
-        }
-    }
+
+    call_after_parse(parser.independent_vars);
 
     #ifndef USE_ZLIB
         fclose(in);

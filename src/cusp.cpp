@@ -768,3 +768,13 @@ int main(int argc, char** argv)
     signal(SIGINT, SIGINT_handler_exit);
     return main.solve();
 }
+
+void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
+{
+    independent_vars = _independent_vars;
+    if (independent_vars.empty()) {
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            independent_vars.push_back(i);
+        }
+    }
+}
