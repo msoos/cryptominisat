@@ -507,7 +507,7 @@ void XorFinder::recursively_xor_xors()
         }
     }
 
-    //Link in
+    //Link in xors into watchlist
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& x = xors[i];
         for(uint32_t v: x) {
