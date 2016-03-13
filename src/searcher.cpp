@@ -1903,7 +1903,10 @@ lbool Searcher::solve(
     assert(qhead == trail.size());
     max_confl_per_search_solve_call = _maxConfls;
     num_search_called++;
+    #ifdef SLOW_DEBUG
+    //When asking for a lot of simple soluitons, search() gets called a lot
     check_no_removed_or_freed_cl_in_watch();
+    #endif
 
     if (solver->conf.verbosity >= 6) {
         cout
