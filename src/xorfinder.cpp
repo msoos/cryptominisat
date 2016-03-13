@@ -164,7 +164,7 @@ void XorFinder::find_xors()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "xorfind"
+            , "xor-find"
             , cpuTime() - myTime
             , time_out
             , time_remain
@@ -493,6 +493,8 @@ void XorFinder::clean_up_xors()
 
 void XorFinder::recursively_xor_xors()
 {
+    uint32_t xored = 0;
+    const double myTime = cpuTime();
     assert(toClear.empty());
     //count how many times a var is used
     for(const Xor& x: xors) {
@@ -564,6 +566,7 @@ void XorFinder::recursively_xor_xors()
         }
         xors[idxes[0]] = Xor();
         xors[idxes[1]] = Xor();
+        xored++;
     }
 
     for(const Lit l: toClear) {
@@ -573,6 +576,23 @@ void XorFinder::recursively_xor_xors()
 
     solver->clean_occur_from_idx_types_only_smudged();
     clean_xors_from_empty();
+    double recur_time = cpuTime() - myTime;
+        if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [occ-xor] recursively XORed " << xored
+        << " clauses "
+        << solver->conf.print_times(recur_time)
+        << endl;
+    }
+
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "xor-recur-xor"
+            , recur_time
+        );
+    }
 }
 
 void XorFinder::clean_xors_from_empty()
@@ -594,6 +614,10 @@ void XorFinder::clean_xors_from_empty()
 
 bool XorFinder::add_new_truths_from_xors()
 {
+    size_t origTrailSize  = solver->trail_size();
+    size_t origBins = solver->binTri.redBins;
+    double myTime = cpuTime();
+
     assert(solver->ok);
     size_t i2 = 0;
     for(size_t i = 0;i < xors.size(); i++) {
@@ -638,6 +662,27 @@ bool XorFinder::add_new_truths_from_xors()
         }
     }
     xors.resize(i2);
+
+    double add_time = cpuTime() - myTime;
+    uint32_t num_bins_added = solver->binTri.redBins - origBins;
+    uint32_t num_units_added = solver->trail_size() - origTrailSize;
+
+    if (solver->conf.verbosity >= 2) {
+        cout
+        << "c [occ-xor] added unit " << num_units_added
+        << " bin " << num_bins_added
+        << solver->conf.print_times(add_time)
+        << endl;
+    }
+
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "xor-add-new-bin-unit"
+            , add_time
+        );
+    }
 
     return true;
 }
