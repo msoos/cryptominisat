@@ -642,33 +642,10 @@ bool XorFinder::add_new_truths_from_xors()
     return true;
 }
 
-void XorFinder::clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2)
-{
-    auto ws = solver->watches[lit];
-    size_t i2 = 0;
-    for(size_t i = 0; i < ws.size(); i++) {
-        if (i != idx1 && i != idx2) {
-            ws[i2] = ws[i];
-            i2++;
-        }
-    }
-    ws.resize(ws.size()-2);
-}
-
-void XorFinder::clean_occur_from_idx(const Lit lit, size_t idx1)
-{
-    auto ws = solver->watches[lit];
-    size_t i2 = 0;
-    for(size_t i = 0; i < ws.size(); i++) {
-        if (i != idx1) {
-            ws[i2] = ws[i];
-            i2++;
-        }
-    }
-    ws.resize(ws.size()-1);
-}
-
-vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v)
+vector<uint32_t> XorFinder::xor_two(
+    Xor& x1, Xor& x2
+    , const size_t idx1, const size_t idx2
+    , const uint32_t v)
 {
     x1.sort();
     x2.sort();
@@ -678,14 +655,12 @@ vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, const size_t idx1, const s
     while(x1_at < x1.size() || x2_at < x2.size()) {
         if (x1_at == x1.size()) {
             ret.push_back(x2[x2_at]);
-            clean_occur_from_idx(Lit(x2[x2_at], false), idx2);
             x2_at++;
             continue;
         }
 
         if (x2_at == x2.size()) {
             ret.push_back(x1[x1_at]);
-            clean_occur_from_idx(Lit(x1[x1_at], false), idx1);
             x1_at++;
             continue;
         }
@@ -701,7 +676,6 @@ vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, const size_t idx1, const s
         if (a == b) {
             x1_at++;
             x2_at++;
-            clean_occur_from_idxs(Lit(a, false), idx1, idx2);
             //we could/should update seen[] but in case there are too many XORs
             //we could not store the value in seen[] when counting and then
             //everything would go haywire. So this algorithm is not perfect

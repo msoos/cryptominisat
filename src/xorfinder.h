@@ -173,8 +173,6 @@ private:
     void print_found_xors();
     bool xor_clause_already_inside(const Xor& xor_c);
     bool xor_has_interesting_var(const Xor& x);
-    void clean_occur_from_idxs(const Lit lit, size_t idx1, size_t idx2);
-    void clean_occur_from_idx(const Lit lit, size_t idx1);
     vector<uint32_t> xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v);
     void clean_xors_from_empty();
 
