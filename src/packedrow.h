@@ -113,9 +113,16 @@ public:
         #endif
     }
 
+    //popcnt is 1 given that there is a 1 at FROM
+    //and there are only zeroes before it
     bool popcnt_is_one(uint32_t from) const
     {
         from++;
+
+        //it's the last bit, there are none after, so it only has 1 bit set
+        if (from/64 == size) {
+            return true;
+        }
 
         uint64_t tmp = mp[from/64];
         tmp >>= from%64;
