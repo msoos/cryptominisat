@@ -1,3 +1,6 @@
+ver 2.9.11 14/03/2016
+* Fixed Gaussian elimination population count issue
+
 ver 2.9.8
 * Fixed problems with Gaussian elimination in case assumptions were used
 
