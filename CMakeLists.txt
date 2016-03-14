@@ -29,7 +29,7 @@ link_directories(${MySQL_LIB_DIR})
 
 #find_package(Perftools)
 
-add_definitions(-DVERSION="2.9.7")
+add_definitions(-DVERSION="2.9.11")
 add_definitions(-DUSE_GAUSS)
 
 add_subdirectory(cmsat)
