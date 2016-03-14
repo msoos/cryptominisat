@@ -30,6 +30,7 @@
 
 #include "clausecleaner.h"
 #include "solver.h"
+#include "constants.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
