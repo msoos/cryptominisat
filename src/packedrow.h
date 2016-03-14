@@ -125,7 +125,7 @@ public:
         }
 
         uint64_t tmp = mp[from/64];
-        tmp >>= from%64;
+        tmp >>= (from%64);
         if (tmp) return false;
 
         for (uint32_t i = from/64+1; i != size; i++)
