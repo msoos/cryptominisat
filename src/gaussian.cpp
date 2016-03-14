@@ -670,6 +670,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         confl = PropBy(lit1, false);
         solver->failBinLit = lit2;
     } else {
+        //NOTE: No need to put this clause into some special struct
+        //it will be immediately freed after calling solver->handle_conflict()
         Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause
         #ifdef STATS_NEEDED
         , 0
