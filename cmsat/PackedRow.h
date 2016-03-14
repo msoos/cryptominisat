@@ -119,8 +119,13 @@ public:
     {
         from++;
 
+        //it's the last bit, there are none after, so it only has 1 bit set
+        if (from/64 == size) {
+            return true;
+        }
+
         uint64_t tmp = mp[from/64];
-        tmp >>= from%64;
+        tmp >>= (from%64);
         if (tmp) return false;
 
         for (uint32_t i = from/64+1; i != size; i++)
