@@ -1025,7 +1025,7 @@ lbool Searcher::search()
             bool at_least_one_continue = false;
             for (Gaussian* g: gauss_matrixes) {
                 llbool ret = g->find_truths();
-                if (ret == llbool(l_Continue)) {
+                if (ret == l_Continue) {
                     at_least_one_continue = true;
                 } else if (ret == llbool(l_False)) {
                     return l_False;
