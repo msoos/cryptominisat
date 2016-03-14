@@ -105,7 +105,7 @@ private:
     uint32_t tApproxMC = 1;
     int      totalTimeout = 72000;
     int      loopTimeout = 3000;
-    double   kappa = 0.5;
+    double   kappa = 0.638;
     bool     multisample = true;
     bool     aggregateSolutions = true;
 };
