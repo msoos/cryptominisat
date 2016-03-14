@@ -536,13 +536,13 @@ uint32_t Gaussian::eliminate(matrixset& m)
         PackedMatrix::iterator this_matrix_row = rowIt;
         PackedMatrix::iterator end = beginIt + m.last_one_in_col[j];
         for (; this_matrix_row != end; ++this_matrix_row) {
-            if ((*this_matrix_row)[j])
+            if ((*this_matrix_row)[j]) {
                 break;
+            }
         }
         //First row with non-zero value at j is this_matrix_row
 
         if (this_matrix_row != end) {
-
             //swap rows i and maxi, but do not change the value of i;
             if (this_matrix_row != rowIt) {
                 #ifdef VERBOSE_DEBUG
@@ -561,8 +561,9 @@ uint32_t Gaussian::eliminate(matrixset& m)
             assert(m.matrix.getMatrixAt(i)[j]);
             #endif
 
-            if ((*rowIt).popcnt_is_one(j))
+            if ((*rowIt).popcnt_is_one(j)) {
                 propagatable_rows.push_back(i);
+            }
 
             //Now A[i,j] will contain the old value of A[maxi,j];
             ++this_matrix_row;
