@@ -497,8 +497,13 @@ uint32_t Gaussian::eliminate(matrixset& m)
         uint16_t until = std::min(m.last_one_in_col[m.least_column_changed] - 1, (int)m.num_rows);
         if (j-1 > m.first_one_in_row[m.num_rows-1])
             until = m.num_rows;
-        for (;i != until; i++, ++rowIt) if (changed_rows[i] && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
-            propagatable_rows.push_back(i);
+        for (;i != until; i++, ++rowIt) {
+            if (changed_rows[i]
+                && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
+            {
+                propagatable_rows.push_back(i);
+            }
+        }
     }
 
     #ifdef VERBOSE_DEBUG
