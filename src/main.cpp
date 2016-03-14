@@ -948,7 +948,9 @@ void Main::manually_parse_some_options()
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
-            cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
+            if (conf.verbosity >= 1) {
+                cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
+            }
         }
 
         if (num_threads > 1) {
