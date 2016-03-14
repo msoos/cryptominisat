@@ -974,15 +974,14 @@ void Gaussian::disable_if_necessary()
 
 llbool Gaussian::find_truths()
 {
-    PropBy confl;
-
     disable_if_necessary();
     if (!should_check_gauss(solver->decisionLevel())) {
         return l_Nothing;
     }
 
-    called++;
+    PropBy confl;
     gaussian_ret g = perform_gauss(confl);
+    called++;
 
     switch (g) {
         case conflict: {
@@ -1001,7 +1000,9 @@ llbool Gaussian::find_truths()
 
         case unit_propagation:
             unit_truths++;
-            //NOTE no break
+            useful_prop++;
+            return l_Continue;
+
         case propagation:
             useful_prop++;
             return l_Continue;
