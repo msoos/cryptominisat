@@ -525,6 +525,9 @@ uint32_t Gaussian::eliminate(matrixset& m)
     while (i < m.num_rows && j < m.num_cols) {
         //Find pivot in column j, starting in row i:
 
+        #ifdef VERBOSE_DEBUG_MORE
+        cout << "i: " << i << " j: " << j << endl;
+        #endif
         if (m.col_to_var[j] == unassigned_var) {
             j++;
             continue;
