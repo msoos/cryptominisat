@@ -593,7 +593,8 @@ uint32_t Gaussian::eliminate(matrixset& m)
     print_matrix(m);
     print_last_one_in_cols(m);
     #endif
-    cout << "(" << matrix_no << ") Exchanged:" << no_exchanged << " row additions:" << number_of_row_additions << endl;
+    cout << "(" << matrix_no << ") Exchanged:" << no_exchanged
+    << " row additions:" << number_of_row_additions << endl;
     #endif
 
     #ifdef DEBUG_GAUSS
