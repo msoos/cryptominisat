@@ -1024,14 +1024,18 @@ llbool Gaussian::find_truths()
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ")one-length conflict" << endl;
             #endif
-            if (solver->value(lit) != l_Undef) {
+
+            assert(solver->value(lit) == l_Undef);
+            //I don't think the below is possible!
+            /*if (solver->value(lit) != l_Undef) {
                 assert(solver->value(lit) == l_False);
                 #ifdef VERBOSE_DEBUG
                 cout << "(" << matrix_no << ") -> UNSAT" << endl;
                 #endif
                 solver->ok = false;
                 return llbool(l_False);
-            }
+            }*/
+
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ") -> setting to correct value" << endl;
             #endif
