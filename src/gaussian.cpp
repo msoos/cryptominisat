@@ -248,6 +248,10 @@ void Gaussian::fill_matrix(matrixset& origMat)
 
     uint32_t matrix_row = 0;
     for (const Xor& x: xors) {
+        #ifdef VEROBOSE_DEBUG
+        //Used with check_gauss.py
+        cout << "x " << x << endl;
+        #endif
         origMat.matrix.getVarsetAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         origMat.matrix.getMatrixAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         matrix_row++;
@@ -642,6 +646,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
     #ifdef VERBOSE_DEBUG
     const bool rhs = m.matrix.getVarsetAt(best_row).rhs();
+    //Used with check_gauss.py
     cout << "(" << matrix_no << ") confl clause: "
     << tmp_clause << " , "
     << "rhs:" << rhs << endl;
@@ -899,6 +904,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     const bool rhs = m.matrix.getVarsetAt(row).rhs();
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver->assigns, col_to_var_original);
     #ifdef VERBOSE_DEBUG
+    //Used with check_gauss.py
     cout << "(" << matrix_no << ") prop clause: "
     << tmp_clause << " , "
     << "rhs:" << rhs << endl;
