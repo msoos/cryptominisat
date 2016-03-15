@@ -103,20 +103,24 @@ void XorFinder::find_xors_based_on_short_clauses()
             if (!w.isTri())
                 continue;
 
-            //Only bother about each tri-clause once
-            if (lit > w.lit2()
-                || w.lit2() > w.lit3()
+
+            if (//Only bother about each tri-clause once
+                lit < w.lit2()
+                && w.lit2() < w.lit3()
+                //If there is an tri XOR = 1 or XOR = 0, there is ALWAYS
+                //a 3-clause with -1 -2 X in there. Take that only
+                && lit.sign()
+                && w.lit2().sign()
             ) {
-                continue;
+
+                lits.resize(3);
+                lits[0] = lit;
+                lits[1] = w.lit2();
+                lits[2] = w.lit3();
+
+                //TODO check if already inside in some clever way
+                findXor(lits, CL_OFFSET_MAX, calcAbstraction(lits));
             }
-
-            lits.resize(3);
-            lits[0] = lit;
-            lits[1] = w.lit2();
-            lits[2] = w.lit3();
-
-            //TODO check if already inside in some clever way
-            findXor(lits, CL_OFFSET_MAX, calcAbstraction(lits));
         }
     }
 }
