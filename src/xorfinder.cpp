@@ -70,6 +70,8 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             lits.resize(cl->size());
             std::copy(cl->begin(), cl->end(), lits.begin());
+
+            //TODO check if already inside in some clever way
             findXor(lits, offset, cl->abst);
         }
     }
@@ -113,6 +115,7 @@ void XorFinder::find_xors_based_on_short_clauses()
             lits[1] = w.lit2();
             lits[2] = w.lit3();
 
+            //TODO check if already inside in some clever way
             findXor(lits, CL_OFFSET_MAX, calcAbstraction(lits));
         }
     }
@@ -125,7 +128,6 @@ void XorFinder::find_xors()
 
     cls_of_xors.clear();
     xors.clear();
-    assert(solver->watches.get_smudged_list().empty());
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
         1000LL*1000LL*solver->conf.xor_finder_time_limitM
@@ -145,7 +147,6 @@ void XorFinder::find_xors()
         Clause* cl = solver->cl_alloc.ptr(offset);
         cl->stats.marked_clause = false;
     }
-    solver->clean_occur_from_idx_types_only_smudged();
 
     //Print stats
     const bool time_out = (xor_find_time_limit < 0);
@@ -195,19 +196,6 @@ void XorFinder::add_xors_to_gauss()
     }
 }
 
-bool XorFinder::xor_clause_already_inside(const Xor& xor_c)
-{
-    xor_find_time_limit -= 30;
-    for (const Watched ws: solver->watches.at(xor_c[0])) {
-        if (ws.isIdx()
-            && xors[ws.get_idx()] == xor_c
-        ) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst)
 {
     //Set this clause as the base for the XOR, fill 'seen'
@@ -237,9 +225,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, poss_xor.getRHS());
 
-        if (!xor_clause_already_inside(found_xor)) {
-            add_found_xor(found_xor);
-        }
+        //TODO check if already inside in some clever way
+        add_found_xor(found_xor);
         for(ClOffset off: poss_xor.get_offsets()) {
             cls_of_xors.push_back(off);
         }
@@ -253,14 +240,9 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
 void XorFinder::add_found_xor(const Xor& found_xor)
 {
-    xor_find_time_limit -= 20;
     xors.push_back(found_xor);
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
-    uint32_t thisXorIndex = xors.size()-1;
-    Lit attach_point = Lit(found_xor[0], false);
-    solver->watches[attach_point].push(Watched(thisXorIndex));
-    solver->watches.smudge(attach_point);
 }
 
 void XorFinder::findXorMatchExt(
@@ -493,6 +475,7 @@ void XorFinder::clean_up_xors()
 
 void XorFinder::xor_together_xors()
 {
+    assert(solver->watches.get_smudged_list().empty());
     uint32_t xored = 0;
     const double myTime = cpuTime();
     assert(toClear.empty());
