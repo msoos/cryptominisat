@@ -641,7 +641,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
     #ifdef VERBOSE_DEBUG
     const bool rhs = m.matrix.getVarsetAt(best_row).rhs();
-    cout << "(" << matrix_no << ") matrix confl clause:"
+    cout << "(" << matrix_no << ") confl clause: "
     << tmp_clause << " , "
     << "rhs:" << rhs << endl;
     #endif
@@ -898,7 +898,9 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     const bool rhs = m.matrix.getVarsetAt(row).rhs();
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver->assigns, col_to_var_original);
     #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ") prop clause: " << tmp_clause << endl;
+    cout << "(" << matrix_no << ") prop clause: "
+    << tmp_clause << " , "
+    << "rhs:" << rhs << endl;
     #endif
 
     switch(tmp_clause.size()) {
