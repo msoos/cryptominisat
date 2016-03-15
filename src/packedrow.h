@@ -88,6 +88,8 @@ public:
 
 
     uint32_t popcnt() const;
+
+    //Population count INCLUDING from
     uint32_t popcnt(uint32_t from) const;
 
     bool popcnt_is_one() const
