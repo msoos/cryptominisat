@@ -83,7 +83,7 @@ TEST_F(xor_finder, find_tri_2)
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_contains(finder.xors, "1, 2, 3 = 0");
+    check_xors_eq(finder.xors, "1, 2, 3 = 0");
 }
 
 TEST_F(xor_finder, find_tri_3)
