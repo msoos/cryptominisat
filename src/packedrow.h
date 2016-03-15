@@ -283,9 +283,9 @@ inline bool PackedRow::operator !=(const PackedRow& b) const
 inline uint32_t PackedRow::popcnt() const
 {
     uint32_t popcnt = 0;
-    for (uint32_t i = 0; i < size; i++) if (mp[i]) {
+    for (uint32_t i = 0; i < size; i++) {
         uint64_t tmp = mp[i];
-        for (uint32_t i2 = 0; i2 < 64; i2++) {
+        while(tmp) {
             popcnt += (tmp & 1);
             tmp >>= 1;
         }
