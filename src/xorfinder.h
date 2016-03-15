@@ -172,7 +172,7 @@ private:
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_has_interesting_var(const Xor& x);
-    vector<uint32_t> xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2, const uint32_t v);
+    vector<uint32_t> xor_two(Xor& x1, Xor& x2, const size_t idx1, const size_t idx2);
     void clean_xors_from_empty();
 
     int64_t xor_find_time_limit;

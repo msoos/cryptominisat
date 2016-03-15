@@ -539,7 +539,7 @@ void XorFinder::xor_together_xors()
             continue;
         }
 
-        vector<uint32_t> vars = xor_two(x[0], x[1], idxes[0], idxes[1], v);
+        vector<uint32_t> vars = xor_two(x[0], x[1], idxes[0], idxes[1]);
         Xor x_new(vars, x[0].rhs ^ x[1].rhs);
         xors.push_back(x_new);
         for(uint32_t v: x_new) {
@@ -672,8 +672,7 @@ bool XorFinder::add_new_truths_from_xors()
 
 vector<uint32_t> XorFinder::xor_two(
     Xor& x1, Xor& x2
-    , const size_t idx1, const size_t idx2
-    , const uint32_t v)
+    , const size_t idx1, const size_t idx2)
 {
     x1.sort();
     x2.sort();
@@ -695,19 +694,9 @@ vector<uint32_t> XorFinder::xor_two(
 
         const uint32_t a = x1[x1_at];
         const uint32_t b = x2[x2_at];
-        if (a == v) {
-            x1_at++;
-            x2_at++;
-            continue;
-        }
-
         if (a == b) {
             x1_at++;
             x2_at++;
-            //we could/should update seen[] but in case there are too many XORs
-            //we could not store the value in seen[] when counting and then
-            //everything would go haywire. So this algorithm is not perfect
-            //but is good enough
             continue;
         }
 
