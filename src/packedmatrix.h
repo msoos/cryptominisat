@@ -214,7 +214,7 @@ private:
 
     uint64_t* mp;
     uint32_t numRows;
-    uint32_t numCols;
+    uint32_t numCols; //where this each holds 64(!)
 };
 
 } //end namespace
