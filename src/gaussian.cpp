@@ -33,6 +33,7 @@
 #include "constants.h"
 
 //#define VERBOSE_DEBUG
+//#define VERBOSE_DEBUG_MORE
 //#define DEBUG_GAUSS
 
 using namespace CMSat;
