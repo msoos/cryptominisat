@@ -625,9 +625,8 @@ bool XorFinder::add_new_truths_from_xors()
             }
 
             case 1: {
-                vector<Lit> lits;
-                lits.push_back(Lit(x[0], !x.rhs));
-                solver->add_clause_int(lits);
+                vector<Lit> lits = {Lit(x[0], !x.rhs)};
+                solver->add_clause_int(lits, true, ClauseStats(), false);
                 if (!solver->ok) {
                     return false;
                 }
@@ -635,8 +634,14 @@ bool XorFinder::add_new_truths_from_xors()
             }
 
             case 2: {
-                vector<Lit> lits{Lit(x[0], false), Lit(x[1], false)};
-                solver->add_xor_clause_inter(lits, x.rhs, true);
+                //RHS == 1 means both same is not allowed
+                vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
+                solver->add_clause_int(lits, true, ClauseStats(), false);
+                if (!solver->ok) {
+                    return false;
+                }
+                lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
+                solver->add_clause_int(lits, true, ClauseStats(), false);
                 if (!solver->ok) {
                     return false;
                 }
