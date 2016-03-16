@@ -46,41 +46,34 @@ private:
 
     SATCount ApproxMC(
         SATSolver* solver
-        , std::mt19937& randomEngine
     );
 
     uint32_t UniGen(
         uint32_t samples
         , SATSolver* solver
         , uint32_t sampleCounter
-        , std::mt19937& randomEngine
         , std::map< string, uint32_t >& solutionMap
         , uint32_t* lastSuccessfulHashOffset, double timeReference
     );
 
-    bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions
-                 , std::mt19937& randomEngine);
+    bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions);
     int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
                             , vector<Lit>& assumptions
                            );
     lbool BoundedSAT(
         uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
-        , vector<Lit>& assumptions, std::mt19937& randomEngine
+        , vector<Lit>& assumptions
         , std::map<std::string, uint32_t>& solutionMap
         , uint32_t* solutionCount
     );
-    bool GenerateRandomBits(string& randomBits
-                            , uint32_t size
-                            , std::mt19937& randomEngine
-                           );
+    bool GenerateRandomBits(string& randomBits, uint32_t size);
     uint32_t SolutionsToReturn(uint32_t minSolutions);
-    int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
+    int GenerateRandomNum(int maxRange);
     bool printSolutions();
-    void SeedEngine(std::mt19937& randomEngine);
+    void seed_random_engine();
     int uniGenCall(uint32_t samples
                                , uint32_t sampleCounter
                                , std::map<std::string, uint32_t>& solutionMap
-                               , std::mt19937& randomEngine
                                , uint32_t* lastSuccessfulHashOffset
                                , double timeReference
                               );
@@ -110,6 +103,7 @@ private:
     bool     aggregateSolutions = true;
 
     std::ofstream cusp_logf;
+    std::mt19937 randomEngine;
 };
 
 
