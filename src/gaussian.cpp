@@ -456,6 +456,7 @@ Gaussian::gaussian_ret Gaussian::perform_gauss(PropBy& confl)
         cout << "(" << matrix_no << ") Useful. ";
     cout << "(" << matrix_no << ") Useful prop in " << float_div(useful_prop, called)*100.0 << "%" << endl;
     cout << "(" << matrix_no << ") Useful confl in " << float_div(useful_confl, called)*100.0 << "%" << endl;
+    cout << "(" << matrix_no << ") ------------ Finished perform_gauss -----------------------------." << endl;
     #endif
 
     //cout << "<<----G" << endl;
@@ -602,7 +603,7 @@ uint32_t Gaussian::eliminate(matrixset& m)
     m.least_column_changed = std::numeric_limits<int>::max();
 
     #ifdef VERBOSE_DEBUG
-    cout << "Finished elimination" << endl;
+    cout << "Finished elimination. Num propagatable rows: " << propagatable_rows.size() << endl;
     cout << "Returning with i,j:" << i << ", " << j << "(" << m.num_rows << ", " << m.num_cols << ") " << endl;
     #ifdef VERBOSE_DEBUG_MORE
     print_matrix(m);
