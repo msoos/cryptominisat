@@ -83,7 +83,7 @@ class Main
     protected:
         //Options
         virtual void add_supported_options();
-        virtual void call_after_parse(const vector<uint32_t>& independent_vars)
+        virtual void call_after_parse(const vector<uint32_t>& /*independent_vars*/)
         {}
 
         po::options_description help_options_simple;
