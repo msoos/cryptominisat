@@ -223,6 +223,9 @@ bool Solver::add_xor_clause_inter(
     //cout << "Cleaned ps is: " << ps << endl;
 
     if (!ps.empty()) {
+        if (ps.size() > 2) {
+            xorclauses.push_back(Xor(ps, rhs));
+        }
         ps[0] ^= rhs;
     } else {
         if (rhs) {
