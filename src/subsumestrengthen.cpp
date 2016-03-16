@@ -250,7 +250,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
         << " (" << std::setprecision(1) << std::fixed
         << stats_line_percent(wenThrough, simplifier->clauses.size())
         << "%)"
-        << solver->conf.print_times(time_used, time_out)
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->sqlStats) {
