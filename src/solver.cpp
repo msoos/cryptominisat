@@ -211,7 +211,6 @@ bool Solver::add_xor_clause_inter(
             assert(varData[p.var()].removed != Removed::elimed);
         } else {
             //modify rhs instead of adding
-            assert(value(ps[i]) != l_Undef);
             rhs ^= value(ps[i]) == l_True;
         }
     }
