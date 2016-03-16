@@ -818,6 +818,16 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
     }
 }
 
+void Solver::renumber_xor_clauses(const vector<uint32_t>& outerToInter)
+{
+    //Clauses' abstractions have to be re-calculated
+    for(Xor& x: xorclauses) {
+        for(uint32_t& v: x) {
+            v = getUpdatedVar(v, outerToInter);
+        }
+    }
+}
+
 size_t Solver::calculate_interToOuter_and_outerToInter(
     vector<uint32_t>& outerToInter
     , vector<uint32_t>& interToOuter
@@ -889,6 +899,7 @@ void Solver::renumber_variables()
         stamp.updateVars(outerToInter, interToOuter2, seen);
     }
     renumber_clauses(outerToInter);
+    renumber_xor_clauses(outerToInter);
 
     //Update sub-elements' vars
     varReplacer->updateVars(outerToInter, interToOuter);

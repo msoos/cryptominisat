@@ -313,6 +313,7 @@ class Solver : public Searcher
             , vector<uint32_t>& interToOuter
         );
         void renumber_clauses(const vector<uint32_t>& outerToInter);
+        void renumber_xor_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
 
 
