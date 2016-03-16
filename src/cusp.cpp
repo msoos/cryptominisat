@@ -362,7 +362,7 @@ inline int findMin(T numList)
     return min;
 }
 
-SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEngine)
+SATCount CUSP::ApproxMC(SATSolver* solver, std::mt19937& randomEngine)
 {
     int32_t currentNumSolutions = 0;
     vector<int> numHashList;
@@ -384,12 +384,12 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
             //cout << myTime << endl;
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             if (conf.verbosity >= 2) {
-                fprintf(resLog, "ApproxMC:%d:%d:%f:%d:%d\n"
+                fprintf(cusp_logf, "ApproxMC:%d:%d:%f:%d:%d\n"
                     , j, hashCount, myTime
                     , (currentNumSolutions == (int32_t)(pivotApproxMC + 1))
                     , currentNumSolutions
                 );
-                fflush(resLog);
+                fflush(cusp_logf);
             }
             if (currentNumSolutions <= 0) {
                 assumptions.clear();
@@ -438,7 +438,6 @@ SATCount CUSP::ApproxMC(SATSolver* solver, FILE* resLog, std::mt19937& randomEng
 uint32_t CUSP::UniGen(
     uint32_t samples
     , SATSolver* solver
-    , FILE* resLog
     , uint32_t sampleCounter
     , std::mt19937& randomEngine
     , std::map<string, uint32_t>& solutionMap
@@ -488,8 +487,8 @@ uint32_t CUSP::UniGen(
             uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
             if (conf.verbosity >= 2) {
-                fprintf(resLog, "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
-                fflush(resLog);
+                fprintf(cusp_logf, "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
+                fflush(cusp_logf);
             }
             if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
                 assumptions.clear();    /* Throw out old hash functions */
@@ -538,7 +537,6 @@ uint32_t CUSP::UniGen(
 
 int CUSP::uniGenCall(
     uint32_t samples
-    , FILE* resLog
     , uint32_t sampleCounter
     , std::map<string, uint32_t>& solutionMap
     , std::mt19937& randomEngine
@@ -553,7 +551,6 @@ int CUSP::uniGenCall(
     sampleCounter = UniGen(
                         samples
                         , &solver2
-                        , resLog
                         , sampleCounter
                         , randomEngine
                         , solutionMap
@@ -573,14 +570,10 @@ void CUSP::SeedEngine(std::mt19937& randomEngine)
     randomEngine.seed(seed);
 }
 
-bool CUSP::openLogFile(FILE*& res)
+bool CUSP::openLogFile()
 {
-    if (false) {
-        return false;
-    }
-
-    res = fopen(cuspLogFile.c_str(),"wb");
-    if (res == NULL) {
+    cusp_logf = fopen(cuspLogFile.c_str(),"w");
+    if (cusp_logf == NULL) {
         int backup_errno = errno;
         cout << "Cannot open " << cuspLogFile << " for writing."
         << " Problem: " << strerror(backup_errno) << endl;
@@ -596,8 +589,7 @@ int CUSP::solve()
     conf.reconfigure_val = 15;
     conf.gaussconf.autodisable = false;
 
-    FILE* resLog;
-    openLogFile(resLog);
+    openLogFile();
     startTime = cpuTimeTotal();
 
     solver = new SATSolver((void*)&conf, &must_interrupt);
@@ -632,7 +624,7 @@ int CUSP::solve()
 
         std::mt19937 randomEngine {};
         SeedEngine(randomEngine);
-        solCount = ApproxMC(solver, resLog, randomEngine);
+        solCount = ApproxMC(solver, randomEngine);
         double elapsedTime = cpuTimeTotal() - startTime;
         cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
         if (elapsedTime > totalTimeout - 3000) {
@@ -697,7 +689,7 @@ int CUSP::solve()
         /* Perform extra UniGen calls that don't fit into the loops */
         if (remainingCalls > 0) {
             sampleCounter = uniGenCall(
-                                remainingCalls, resLog, sampleCounter
+                                remainingCalls, sampleCounter
                                 , threadSolutionMap, randomEngine
                                 , &lastSuccessfulHashOffset, threadStartTime);
         }
@@ -706,7 +698,7 @@ int CUSP::solve()
         for (uint32_t i = 0; i < numCallLoops; i++) {
             if (!timedOut) {
                 sampleCounter = uniGenCall(
-                                    numCallsInOneLoop, resLog, sampleCounter, threadSolutionMap
+                                    numCallsInOneLoop, sampleCounter, threadSolutionMap
                                     , randomEngine, &lastSuccessfulHashOffset, threadStartTime
                                 );
 

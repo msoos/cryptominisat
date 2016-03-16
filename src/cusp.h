@@ -45,14 +45,13 @@ private:
 
     SATCount ApproxMC(
         SATSolver* solver
-        , FILE* resLog
         , std::mt19937& randomEngine
     );
 
     uint32_t UniGen(
         uint32_t samples
         , SATSolver* solver
-        , FILE* resLog, uint32_t sampleCounter
+        , uint32_t sampleCounter
         , std::mt19937& randomEngine
         , std::map< string, uint32_t >& solutionMap
         , uint32_t* lastSuccessfulHashOffset, double timeReference
@@ -75,10 +74,10 @@ private:
                            );
     uint32_t SolutionsToReturn(uint32_t minSolutions);
     int GenerateRandomNum(int maxRange, std::mt19937& randomEngine);
-    bool printSolutions(FILE* res);
+    bool printSolutions();
     void SeedEngine(std::mt19937& randomEngine);
     int uniGenCall(uint32_t samples
-                               , FILE* resLog, uint32_t sampleCounter
+                               , uint32_t sampleCounter
                                , std::map<std::string, uint32_t>& solutionMap
                                , std::mt19937& randomEngine
                                , uint32_t* lastSuccessfulHashOffset
@@ -91,7 +90,7 @@ private:
 
     double startTime;
     std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
-    bool openLogFile(FILE*& res);
+    bool openLogFile();
     std::atomic<bool> must_interrupt;
     vector<uint32_t> independent_vars;
     void call_after_parse(const vector<uint32_t>& independent_vars) override;
@@ -108,6 +107,8 @@ private:
     double   kappa = 0.638;
     bool     multisample = true;
     bool     aggregateSolutions = true;
+
+    FILE* cusp_logf;
 };
 
 
