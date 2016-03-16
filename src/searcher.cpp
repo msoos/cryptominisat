@@ -3228,7 +3228,6 @@ void Searcher::clearGaussMatrixes()
 #ifdef USE_GAUSS
 void Searcher::clear_gauss()
 {
-    xorclauses.clear();
     for(Gaussian* g: gauss_matrixes) {
         if (conf.verbosity >= 2) {
             g->print_stats();
