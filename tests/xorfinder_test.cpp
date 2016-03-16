@@ -397,7 +397,7 @@ TEST_F(xor_finder, xor_binx)
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
-    check_irred_cls_eq(s, "5, -3; -5, 3");
+    check_red_cls_eq(s, "5, -3; -5, 3");
 }
 
 TEST_F(xor_finder, xor_binx_inv)
@@ -408,7 +408,7 @@ TEST_F(xor_finder, xor_binx_inv)
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
-    check_irred_cls_eq(s, "-5, -3; 5, 3");
+    check_red_cls_eq(s, "-5, -3; 5, 3");
 }
 
 TEST_F(xor_finder, xor_binx_inv2)
@@ -419,7 +419,7 @@ TEST_F(xor_finder, xor_binx_inv2)
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
-    check_irred_cls_eq(s, "5, -3; -5, 3");
+    check_red_cls_eq(s, "5, -3; -5, 3");
 }
 
 TEST_F(xor_finder, xor_binx2_recur)
@@ -430,7 +430,7 @@ TEST_F(xor_finder, xor_binx2_recur)
     bool ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
-    check_irred_cls_eq(s, "5, -3; -5, 3");
+    check_red_cls_eq(s, "5, -3; -5, 3");
 }
 
 TEST_F(xor_finder, xor_binx3_recur)
@@ -444,7 +444,7 @@ TEST_F(xor_finder, xor_binx3_recur)
     ret = finder.add_new_truths_from_xors();
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder.xors.size(), 0);
-    check_irred_cls_eq(s, "5, -3; -5, 3");
+    check_red_cls_eq(s, "5, -3; -5, 3");
 }
 
 TEST_F(xor_finder, xor_recur_bug)

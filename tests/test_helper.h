@@ -273,6 +273,14 @@ void check_irred_cls_eq(const Solver* s, const string& data)
     check_fuzzy_equal(cls_expected, cls);
 }
 
+void check_red_cls_eq(const Solver* s, const string& data)
+{
+    vector<vector<Lit> > cls_expected = str_to_vecs(data);
+    vector<vector<Lit> > cls = get_red_cls(s);
+
+    check_fuzzy_equal(cls_expected, cls);
+}
+
 void check_irred_cls_contains(const Solver* s, const string& data)
 {
     vector<Lit> looking_for = str_to_cl(data);
