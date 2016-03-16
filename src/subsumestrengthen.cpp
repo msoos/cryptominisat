@@ -317,7 +317,7 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
         << " ("
         << stats_line_percent(wenThrough, simplifier->clauses.size())
         << ") "
-        << solver->conf.print_times(time_used, time_out)
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->sqlStats) {
