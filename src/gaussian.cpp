@@ -756,11 +756,14 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
     gaussian_ret ret = nothing;
 
     uint32_t num_props = 0;
+    uint32_t orig_dec_level = solver->decisionLevel();
     for (uint32_t prop_row : propagatable_rows) {
         //this is a "000..1..0000000X" row. I.e. it indicates a propagation
         ret = handle_matrix_prop(m, prop_row);
         num_props++;
-        if (ret == unit_propagation) {
+        if (ret == unit_propagation
+            && orig_dec_level != 0
+        ) {
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ") Unit prop! Breaking from prop examination" << endl;
             #endif
