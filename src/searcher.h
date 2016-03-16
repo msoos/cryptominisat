@@ -113,9 +113,16 @@ class Searcher : public HyperEngine
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         void move_activity_from_to(const uint32_t from, const uint32_t to);
         bool check_order_heap_sanity() const;
+
+        //Gauss
         vector<Gaussian*> gauss_matrixes;
         SQLStats* sqlStats = NULL;
         void consolidate_watches();
+        #ifdef USE_GAUSS
+        void clear_gauss();
+        #else
+        void clear_gauss() {}
+        #endif
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -251,13 +258,6 @@ class Searcher : public HyperEngine
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
         AtecedentData<uint16_t> antec_data;
-
-        //gauss
-        #ifdef USE_GAUSS
-        void clear_gauss();
-        #else
-        void clear_gauss() {}
-        #endif
 
         vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 

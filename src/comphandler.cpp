@@ -159,6 +159,8 @@ bool CompHandler::handle()
         return solver->ok;
     }
 
+    solver->clear_gauss();
+    solver->xorclauses.clear();
     map<uint32_t, vector<uint32_t> > reverseTable = compFinder->getReverseTable();
     assert(num_comps == compFinder->getReverseTable().size());
     vector<pair<uint32_t, uint32_t> > sizes = get_component_sizes();

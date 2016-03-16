@@ -1042,6 +1042,8 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
 
 bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given)
 {
+    solver->xorclauses.clear();
+    solver->clear_gauss();
     scc_finder->performSCC(bogoprops_given);
     if (scc_finder->get_num_binxors_found() < limit) {
         scc_finder->clear_binxors();
