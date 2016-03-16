@@ -383,14 +383,13 @@ SATCount CUSP::ApproxMC(SATSolver* solver, std::mt19937& randomEngine)
             myTime = cpuTimeTotal() - myTime;
             //cout << myTime << endl;
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
-            if (conf.verbosity >= 2) {
-                fprintf(cusp_logf, "ApproxMC:%d:%d:%f:%d:%d\n"
-                    , j, hashCount, myTime
-                    , (currentNumSolutions == (int32_t)(pivotApproxMC + 1))
-                    , currentNumSolutions
-                );
-                fflush(cusp_logf);
-            }
+            cusp_logf << "ApproxMC:"
+            << j << ":"
+            << hashCount << ":"
+            << std::fixed << std::setprecision(2) << myTime << ":"
+            << (int)(currentNumSolutions == (int32_t)(pivotApproxMC + 1)) << ":"
+            << currentNumSolutions << endl;
+
             if (currentNumSolutions <= 0) {
                 assumptions.clear();
                 if (repeatTry < 2) {    /* Retry up to twice more */
@@ -486,10 +485,15 @@ uint32_t CUSP::UniGen(
             uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
             uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
             ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, randomEngine, solutionMap, &solutionCount);
-            if (conf.verbosity >= 2) {
-                fprintf(cusp_logf, "UniGen2:%d:%d:%f:%d:%d\n", sampleCounter, currentHashCount, cpuTimeTotal() - timeReference, (ret == l_False ? 1 : (ret == l_True ? 0 : 2)), solutionCount);
-                fflush(cusp_logf);
-            }
+
+
+            cusp_logf << "UniGen2:"
+            << sampleCounter << ":"
+            << currentHashCount << ":"
+            << std::fixed << std::setprecision(2) << cpuTimeTotal() - timeReference << ":"
+            << (int)(ret == l_False ? 1 : (ret == l_True ? 0 : 2)) << ":"
+            << solutionCount << endl;
+
             if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
                 assumptions.clear();    /* Throw out old hash functions */
                 if (repeatTry < 2) {    /* Retry current hash count with new hash functions */
@@ -572,11 +576,10 @@ void CUSP::SeedEngine(std::mt19937& randomEngine)
 
 bool CUSP::openLogFile()
 {
-    cusp_logf = fopen(cuspLogFile.c_str(),"w");
-    if (cusp_logf == NULL) {
-        int backup_errno = errno;
-        cout << "Cannot open " << cuspLogFile << " for writing."
-        << " Problem: " << strerror(backup_errno) << endl;
+    cusp_logf.open(cuspLogFile.c_str());
+    if (!cusp_logf.is_open()) {
+        cout << "Cannot open CUSP log file '" << cuspLogFile
+        << "' for writing." << endl;
         exit(1);
     }
     return true;

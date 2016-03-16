@@ -26,6 +26,7 @@
 #define CUSP_H_
 
 #include "main.h"
+#include <fstream>
 
 class CUSP: public Main {
 public:
@@ -86,7 +87,7 @@ private:
 
     //config
     int onlyCount = true;
-    std::string cuspLogFile = "mylog.txt";
+    std::string cuspLogFile = "cusp_log.txt";
 
     double startTime;
     std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
@@ -108,7 +109,7 @@ private:
     bool     multisample = true;
     bool     aggregateSolutions = true;
 
-    FILE* cusp_logf;
+    std::ofstream cusp_logf;
 };
 
 
