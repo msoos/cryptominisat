@@ -48,9 +48,6 @@ print("our sys.path is", sys.path)
 from xor_to_cnf_class import *
 from debuglib import *
 
-maxTime = 80
-maxTimeDiff = 20
-
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
@@ -94,6 +91,12 @@ parser.add_option("--sqlite", dest="sqlite", default=False,
 
 parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
+
+parser.add_option("--tout", "-t", dest="maxtime", type=int, default=80,
+                  help="Max time to run")
+
+parser.add_option("--textra", dest="maxtimediff", type=int, default=20,
+                  help="Extra time on top of timeout for processing")
 
 
 (options, args) = parser.parse_args()
@@ -356,8 +359,8 @@ class create_fuzz:
 
 def setlimits():
     # sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" %
-    # (os.getpid(), maxTime))
-    resource.setrlimit(resource.RLIMIT_CPU, (maxTime, maxTime))
+    # (os.getpid(), options.maxtime))
+    resource.setrlimit(resource.RLIMIT_CPU, (options.maxtime, options.maxtime))
 
 
 def file_exists(fname):
@@ -630,7 +633,7 @@ class Tester:
 
         # if other solver was out of time, then we can't say anything
         diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > maxTime - maxTimeDiff:
+        if diffTime > options.maxtime - options.maxtimediff:
             print("Other solver: too much time to solve, aborted!")
             return None
 
@@ -815,7 +818,7 @@ class Tester:
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
         diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (maxTime - maxTimeDiff) / self.num_threads:
+        if diffTime > (options.maxtime - options.maxtimediff) / self.num_threads:
             print("Too much time to solve, aborted!")
             return None
         else:
