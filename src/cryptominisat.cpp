@@ -564,6 +564,16 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         exit(-1);
     }
 
+    if (!data->okay) {
+        return l_False;
+    }
+    for(auto& s:data->solvers) {
+        if (!s->okay()) {
+            data->okay = false;
+            return l_False;
+        }
+    }
+
     if (data->solvers.size() == 1) {
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
