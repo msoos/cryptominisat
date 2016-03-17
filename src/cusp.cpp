@@ -171,6 +171,19 @@ uint32_t CUSP::SolutionsToReturn(
         return 1;
     }
 }
+
+void print_xor(const vector<uint32_t>&vars, const uint32_t rhs)
+{
+    cout << "Added XOR ";
+    for(size_t i = 0; i < vars.size(); i++) {
+        cout << vars[i]+1;
+        if (i < vars.size()-1) {
+            cout << " + ";
+        }
+    }
+    cout << " = " << (rhs ? "True" : "False") << endl;
+}
+
 bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions)
 {
     string randomBits;
@@ -193,6 +206,9 @@ bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
             }
         }
         solver->add_xor_clause(vars, rhs);
+        if (conf.verbosity >= 3) {
+            print_xor(vars, rhs);
+        }
     }
     return true;
 }
@@ -208,6 +224,7 @@ int32_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<L
 
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
+    cout << "BoundedSATCount finding " << maxSolutions << " solutions" << endl;
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
         ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
@@ -254,6 +271,7 @@ lbool CUSP::BoundedSAT(
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
+        cout << "BoundedSAT solve!" << endl;
         ret = solver->solve(&allSATAssumptions);
         current_nr_of_solutions++;
 
