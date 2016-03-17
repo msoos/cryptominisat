@@ -48,14 +48,6 @@ private:
         SATSolver* solver
     );
 
-    uint32_t UniGen(
-        uint32_t samples
-        , SATSolver* solver
-        , uint32_t sampleCounter
-        , std::map< string, uint32_t >& solutionMap
-        , uint32_t* lastSuccessfulHashOffset, double timeReference
-    );
-
     bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions);
     int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
                             , vector<Lit>& assumptions
@@ -71,12 +63,6 @@ private:
     int GenerateRandomNum(int maxRange);
     bool printSolutions();
     void seed_random_engine();
-    int uniGenCall(uint32_t samples
-                               , uint32_t sampleCounter
-                               , std::map<std::string, uint32_t>& solutionMap
-                               , uint32_t* lastSuccessfulHashOffset
-                               , double timeReference
-                              );
 
     //config
     int onlyCount = true;
@@ -88,6 +74,7 @@ private:
     std::atomic<bool> must_interrupt;
     vector<uint32_t> independent_vars;
     void call_after_parse(const vector<uint32_t>& independent_vars) override;
+    void set_up_timer();
 
     uint32_t samples = 1;
     uint32_t callsPerSolver = 0;
@@ -101,9 +88,26 @@ private:
     double   kappa = 0.638;
     bool     multisample = true;
     bool     aggregateSolutions = true;
-
     std::ofstream cusp_logf;
     std::mt19937 randomEngine;
+
+
+
+    /// SAMPLING/UNIGEN
+    void generate_samples();
+    uint32_t UniGen(
+        uint32_t samples
+        , SATSolver* solver
+        , uint32_t sampleCounter
+        , std::map< string, uint32_t >& solutionMap
+        , uint32_t* lastSuccessfulHashOffset, double timeReference
+    );
+    int uniGenCall(uint32_t samples
+        , uint32_t sampleCounter
+        , std::map<std::string, uint32_t>& solutionMap
+        , uint32_t* lastSuccessfulHashOffset
+        , double timeReference
+    );
 };
 
 
