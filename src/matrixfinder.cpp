@@ -222,7 +222,7 @@ uint32_t MatrixFinder::setMatrixes()
 
         if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes)
         {
-            if (solver->conf.verbosity >=1) {
+            if (solver->conf.verbosity >= 3) {
                 cout << "c Matrix no " << std::setw(2) << realMatrixNum;
             }
             solver->gauss_matrixes.push_back(
@@ -234,7 +234,7 @@ uint32_t MatrixFinder::setMatrixes()
                 cout << "c Unused Matrix ";
             }
         }
-        if (solver->conf.verbosity >=1) {
+        if (solver->conf.verbosity >= 3) {
             cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
             cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
             cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
