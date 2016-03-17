@@ -1261,7 +1261,7 @@ lbool Solver::solve()
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
     if (!ok) {
-        conflict.clear();
+        assert(conflict.empty());
         status = l_False;
         if (conf.verbosity >= 6) {
             cout << "c Solver status " << status << " on startup of solve()" << endl;
