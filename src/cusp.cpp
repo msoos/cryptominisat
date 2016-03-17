@@ -70,7 +70,6 @@ void start_timer(int num)
     struct sigevent sev;
     sev.sigev_signo = SIGUSR1;
     sev.sigev_notify = SIGEV_SIGNAL;
-    //cout << "start_timer;thread:" << threadNum << endl;
     struct itimerspec value;
     value.it_value.tv_sec = num; //waits for n seconds before sending timer signal
     value.it_value.tv_nsec = 0;
