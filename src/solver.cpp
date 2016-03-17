@@ -1300,7 +1300,7 @@ lbool Solver::solve()
         ok = finder.findMatrixes();
         if (!ok) {
             status = l_False;
-            break;
+            goto end;
         }
         #endif
         status = iterate_until_solved();
