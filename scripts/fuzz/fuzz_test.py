@@ -820,9 +820,8 @@ class Tester:
         if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
             print("Too much time to solve, aborted!")
             return None
-        else:
-            print("Within time limit: %.2f s" % diff_time)
 
+        print("Within time limit: %.2f s" % diff_time)
         print("filename: %s" % fname)
 
         # if library debug is set, check it
