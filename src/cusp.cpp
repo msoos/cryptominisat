@@ -82,10 +82,6 @@ void start_timer(int num)
     *timerSetFirstTime = false;
     timer_settime(*mytimer, 0, &value, NULL);
 }
-void SIGINT_handler_exit(int)
-{
-    _exit(1);
-}
 
 void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
 {
@@ -750,7 +746,6 @@ int main(int argc, char** argv)
     CUSP main(argc, argv);
     main.parseCommandLine();
 
-    signal(SIGINT, SIGINT_handler_exit);
     return main.solve();
 }
 
