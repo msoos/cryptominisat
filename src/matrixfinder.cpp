@@ -151,7 +151,7 @@ bool MatrixFinder::findMatrixes()
 
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 3) {
         cout << "c Found matrixes: " << numMatrixes
         << solver->conf.print_times(time_used, time_out)
         << endl;
