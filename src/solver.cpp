@@ -1297,7 +1297,11 @@ lbool Solver::solve()
         #ifdef USE_GAUSS
         clear_gauss();
         MatrixFinder finder(this);
-        finder.findMatrixes();
+        ok = finder.findMatrixes();
+        if (!ok) {
+            status = l_False;
+            break;
+        }
         #endif
         status = iterate_until_solved();
     }
