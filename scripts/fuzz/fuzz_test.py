@@ -958,23 +958,30 @@ class Tester:
         # preprocess
         simp = "%s-simplified.cnf" % fname
         self.delete_file_no_matter_what(simp)
+        curr_time = time.time()
         console, retcode = self.execute(fname, fname2=simp,
                                         rnd_opts=rnd_opts,
                                         fixed_opts="--preproc 1")
-        if retcode != 0:
-            print("Return code is not 0, error!")
-            exit(-1)
 
-        solution = "%s-solution.txt" % fname
-        ret = self.check(fname=simp, dump_output_fname=solution)
-        if ret is not None:
-            # didn't time out, so let's reconstruct the solution
-            savedstate = "%s-savedstate.dat" % simp
-            self.check(fname=solution, checkAgainst=fname,
-                       fixed_opts="--preproc 2 --savedstate %s" % savedstate,
-                       rnd_opts=rnd_opts)
-            os.unlink(savedstate)
-            os.unlink(solution)
+        diff_time = time.time() - curr_time
+        if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
+            print("Too much time to solve, aborted!")
+        else:
+            print("Within time limit: %.2f s" % diff_time)
+            if retcode != 0:
+                print("Return code is not 0, error!")
+                exit(-1)
+
+            solution = "%s-solution.txt" % fname
+            ret = self.check(fname=simp, dump_output_fname=solution)
+            if ret is not None:
+                # didn't time out, so let's reconstruct the solution
+                savedstate = "%s-savedstate.dat" % simp
+                self.check(fname=solution, checkAgainst=fname,
+                           fixed_opts="--preproc 2 --savedstate %s" % savedstate,
+                           rnd_opts=rnd_opts)
+                os.unlink(savedstate)
+                os.unlink(solution)
 
         # remove temporary filenames
         os.unlink(fname)
