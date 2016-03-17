@@ -38,7 +38,6 @@ from random import choice
 from subprocess import Popen, PIPE, STDOUT
 # from optparse import OptionParser
 import optparse
-import calendar
 import glob
 
 print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
@@ -619,7 +618,7 @@ class Tester:
         # execute with the other solver
         toexec = "lingeling -f %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
-        currTime = calendar.timegm(time.gmtime())
+        curr_time = time.time()
         try:
             p = subprocess.Popen(toexec.rsplit(),
                                  stdout=subprocess.PIPE,
@@ -632,8 +631,8 @@ class Tester:
         os.unlink(tmpfname)
 
         # if other solver was out of time, then we can't say anything
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > options.maxtime - options.maxtimediff:
+        diff_time = time.time() - curr_time
+        if diff_time > options.maxtime - options.maxtimediff:
             print("Other solver: too much time to solve, aborted!")
             return None
 
@@ -808,7 +807,7 @@ class Tester:
         consoleOutput = ""
         if checkAgainst is None:
             checkAgainst = fname
-        currTime = calendar.timegm(time.gmtime())
+        curr_time = time.time()
 
         # Do we need to solve the problem, or is it already solved?
         consoleOutput, retcode = self.execute(
@@ -817,12 +816,12 @@ class Tester:
 
         # if time was limited, we need to know if we were over the time limit
         # and that is why there is no solution
-        diffTime = calendar.timegm(time.gmtime()) - currTime
-        if diffTime > (options.maxtime - options.maxtimediff) / self.num_threads:
+        diff_time = time.time() - curr_time
+        if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
             print("Too much time to solve, aborted!")
             return None
         else:
-            print("Within time limit: %.2f s" % (calendar.timegm(time.gmtime()) - currTime))
+            print("Within time limit: %.2f s" % diff_time)
 
         print("filename: %s" % fname)
 
@@ -855,7 +854,7 @@ class Tester:
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
             consoleOutput2 = p.communicate()[0]
-            diffTime = calendar.timegm(time.gmtime()) - currTime
+            diff_time = time.time() - curr_time
 
             # find verification code
             foundVerif = False
