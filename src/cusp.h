@@ -53,13 +53,13 @@ public:
 private:
     void add_approxmc_options();
 
-    bool ApproxMC(SATSolver* solver, SATCount& count);
-    bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions);
-    uint64_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
+    bool ApproxMC(SATCount& count);
+    bool AddHash(uint32_t clausNum, vector<Lit>& assumptions);
+    uint64_t BoundedSATCount(uint32_t maxSolutions
                             , vector<Lit>& assumptions
                            );
     lbool BoundedSAT(
-        uint32_t maxSolutions, uint32_t minSolutions, SATSolver* solver
+        uint32_t maxSolutions, uint32_t minSolutions
         , vector<Lit>& assumptions
         , std::map<std::string, uint32_t>& solutionMap
         , uint32_t* solutionCount
@@ -103,7 +103,6 @@ private:
     void generate_samples();
     uint32_t UniGen(
         uint32_t samples
-        , SATSolver* solver
         , uint32_t sampleCounter
         , std::map< string, uint32_t >& solutionMap
         , uint32_t* lastSuccessfulHashOffset, double timeReference

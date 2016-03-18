@@ -244,7 +244,7 @@ inline T findMin(vector<T>& numList)
     return min;
 }
 
-bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumptions)
+bool CUSP::AddHash(uint32_t numClaus, vector<Lit>& assumptions)
 {
     string randomBits;
     GenerateRandomBits(randomBits, (independent_vars.size() + 1) * numClaus);
@@ -273,7 +273,7 @@ bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
     return true;
 }
 
-uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
+uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, vector<Lit>& assumptions)
 {
     uint64_t current_nr_of_solutions = 0;
     lbool ret = l_True;
@@ -313,7 +313,6 @@ uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<
 lbool CUSP::BoundedSAT(
     uint32_t maxSolutions
     , uint32_t minSolutions
-    , SATSolver* solver
     , vector<Lit>& assumptions
     , std::map<string, uint32_t>& solutionMap
     , uint32_t* solutionCount
@@ -396,7 +395,7 @@ lbool CUSP::BoundedSAT(
     return l_False;
 }
 
-bool CUSP::ApproxMC(SATSolver* solver, SATCount& count)
+bool CUSP::ApproxMC(SATCount& count)
 {
     count.clear();
     uint64_t currentNumSolutions = 0;
@@ -411,7 +410,7 @@ bool CUSP::ApproxMC(SATSolver* solver, SATCount& count)
                 return false;
             }
             double myTime = cpuTimeTotal();
-            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, solver, assumptions);
+            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumptions);
 
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             cusp_logf << "ApproxMC:"
@@ -423,18 +422,18 @@ bool CUSP::ApproxMC(SATSolver* solver, SATCount& count)
             if (currentNumSolutions == 0) {
                 assumptions.clear();
                 if (repeatTry < 2) {    /* Retry up to twice more */
-                    AddHash(hashCount, solver, assumptions);
+                    AddHash(hashCount, assumptions);
                     assert(hashCount > 0);
                     hashCount --;
                     repeatTry += 1;
                 } else {
-                    AddHash(hashCount + 1, solver, assumptions);
+                    AddHash(hashCount + 1, assumptions);
                     repeatTry = 0;
                 }
                 continue;
             }
             if (currentNumSolutions == pivotApproxMC + 1) {
-                AddHash(1, solver, assumptions);
+                AddHash(1, assumptions);
             } else {
                 break;
             }
@@ -495,7 +494,7 @@ int CUSP::solve()
     if (startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
 
-        bool timeout = ApproxMC(solver, solCount);
+        bool timeout = ApproxMC(solCount);
         double elapsedTime = cpuTimeTotal() - startTime;
         cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
         if (timeout) {
@@ -518,6 +517,7 @@ int CUSP::solve()
         cout << "Number of solutions is: " << solCount.cellSolCount
         << " x 2^" << solCount.hashCount << endl;
     } else {
+        assert(false);
         generate_samples();
     }
 
@@ -563,7 +563,6 @@ void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
 
 
 ////// UNIGEN
-
 void CUSP::generate_samples()
 {
     uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
@@ -599,7 +598,7 @@ void CUSP::generate_samples()
     uint32_t allThreadsSampleCount = 0;
     double threadStartTime = cpuTimeTotal();
     uint32_t lastSuccessfulHashOffset = 0;
-    /* Perform extra UniGen calls that don't fit into the loops */
+    ///Perform extra UniGen calls that don't fit into the loops
     if (remainingCalls > 0) {
         sampleCounter = uniGenCall(
                             remainingCalls, sampleCounter
@@ -607,7 +606,7 @@ void CUSP::generate_samples()
                             , &lastSuccessfulHashOffset, threadStartTime);
     }
 
-    /* Perform main UniGen call loops */
+    // Perform main UniGen call loops
     for (uint32_t i = 0; i < numCallLoops; i++) {
         if (!timedOut) {
             sampleCounter = uniGenCall(
@@ -647,7 +646,6 @@ void CUSP::generate_samples()
 
 uint32_t CUSP::UniGen(
     uint32_t samples
-    , SATSolver* solver
     , uint32_t sampleCounter
     , std::map<string, uint32_t>& solutionMap
     , uint32_t* lastSuccessfulHashOffset
@@ -664,11 +662,11 @@ uint32_t CUSP::UniGen(
         sampleCounter ++;
         ret = l_False;
 
-        hashOffsets[0] = *lastSuccessfulHashOffset;   /* Start at last successful hash offset */
-        if (hashOffsets[0] == 0) { /* Starting at q-2; go to q-1 then q */
+        hashOffsets[0] = *lastSuccessfulHashOffset;   // Start at last successful hash offset
+        if (hashOffsets[0] == 0) { // Starting at q-2; go to q-1 then q
             hashOffsets[1] = 1;
             hashOffsets[2] = 2;
-        } else if (hashOffsets[0] == 2) { /* Starting at q; go to q-1 then q-2 */
+        } else if (hashOffsets[0] == 2) { // Starting at q; go to q-1 then q-26
             hashOffsets[1] = 1;
             hashOffsets[2] = 0;
         }
@@ -679,11 +677,11 @@ uint32_t CUSP::UniGen(
             currentHashCount = currentHashOffset + startIteration;
             hashDelta = currentHashCount - lastHashCount;
 
-            if (hashDelta > 0) { /* Add new hash functions */
-                AddHash(hashDelta, solver, assumptions);
-            } else if (hashDelta < 0) { /* Remove hash functions */
+            if (hashDelta > 0) { // Add new hash functions
+                AddHash(hashDelta, assumptions);
+            } else if (hashDelta < 0) { // Remove hash functions
                 assumptions.clear();
-                AddHash(currentHashCount, solver, assumptions);
+                AddHash(currentHashCount, assumptions);
             }
             lastHashCount = currentHashCount;
 
@@ -694,7 +692,7 @@ uint32_t CUSP::UniGen(
             }
             uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
             uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
-            ret = BoundedSAT(maxSolutions + 1, minSolutions, solver, assumptions, solutionMap, &solutionCount);
+            ret = BoundedSAT(maxSolutions + 1, minSolutions, assumptions, solutionMap, &solutionCount);
 
 
             cusp_logf << "UniGen2:"
@@ -703,16 +701,16 @@ uint32_t CUSP::UniGen(
             << (int)(ret == l_False ? 1 : (ret == l_True ? 0 : 2)) << ":"
             << solutionCount << endl;
 
-            if (ret == l_Undef) {   /* SATSolver timed out; retry current hash count at most twice more */
-                assumptions.clear();    /* Throw out old hash functions */
-                if (repeatTry < 2) {    /* Retry current hash count with new hash functions */
-                    AddHash(currentHashCount, solver, assumptions);
+            if (ret == l_Undef) {   // SATSolver timed out; retry current hash count at most twice more
+                assumptions.clear();    // Throw out old hash functions
+                if (repeatTry < 2) {    // Retry current hash count with new hash functions
+                    AddHash(currentHashCount, assumptions);
                     j--;
                     repeatTry += 1;
-                } else {     /* Go on to next hash count */
+                } else {     // Go on to next hash count
                     lastHashCount = 0;
-                    if ((j == 0) && (currentHashOffset == 1)) { /* At q-1, and need to pick next hash count */
-                        /* Somewhat arbitrarily pick q-2 first; then q */
+                    if ((j == 0) && (currentHashOffset == 1)) { // At q-1, and need to pick next hash count
+                        // Somewhat arbitrarily pick q-2 first; then q
                         hashOffsets[1] = 0;
                         hashOffsets[2] = 2;
                     }
@@ -720,17 +718,17 @@ uint32_t CUSP::UniGen(
                 }
                 continue;
             }
-            if (ret == l_True) {    /* Number of solutions in correct range */
+            if (ret == l_True) {    // Number of solutions in correct range
                 *lastSuccessfulHashOffset = currentHashOffset;
                 break;
-            } else { /* Number of solutions too small or too large */
-                if ((j == 0) && (currentHashOffset == 1)) { /* At q-1, and need to pick next hash count */
+            } else { // Number of solutions too small or too large
+                if ((j == 0) && (currentHashOffset == 1)) { // At q-1, and need to pick next hash count
                     if (solutionCount < minSolutions) {
-                        /* Go to q-2; next will be q */
+                        // Go to q-2; next will be q
                         hashOffsets[1] = 0;
                         hashOffsets[2] = 2;
                     } else {
-                        /* Go to q; next will be q-2 */
+                        // Go to q; next will be q-2
                         hashOffsets[1] = 2;
                         hashOffsets[2] = 0;
                     }
@@ -756,13 +754,13 @@ int CUSP::uniGenCall(
     , double timeReference
 )
 {
-    SATSolver solver2(&conf);
-    solverToInterrupt = &solver2;
+    delete solver;
+    solver = new SATSolver(&conf);
+    solverToInterrupt = solver;
 
-    parseInAllFiles(&solver2);
+    parseInAllFiles(solver);
     sampleCounter = UniGen(
                         samples
-                        , &solver2
                         , sampleCounter
                         , solutionMap
                         , lastSuccessfulHashOffset
