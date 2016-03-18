@@ -50,7 +50,7 @@ addons:
       name: "msoos/cryptominisat"
       description: "Advanced SAT solver"
     notification_email: soos.mate@gmail.com
-    build_command_prepend: "cmake .."
+    build_command_prepend: "cmake ."
     build_command: "make"
     branch_pattern: coverity_scan
 
