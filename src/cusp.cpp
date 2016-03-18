@@ -273,20 +273,21 @@ bool CUSP::AddHash(uint32_t numClaus, vector<Lit>& assumptions)
     return true;
 }
 
-uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, vector<Lit>& assumptions)
+int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 {
-    uint64_t current_nr_of_solutions = 0;
+    //Set up things for adding clauses that can later be removed
     lbool ret = l_True;
     solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
-    vector<Lit> allSATAssumptions(assumptions);
-    allSATAssumptions.push_back(Lit(activationVar, true));
+    vector<Lit> new_assumps(assumps);
+    new_assumps.push_back(Lit(activationVar, true));
 
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
-    cout << "BoundedSATCount finding " << maxSolutions << " solutions" << endl;
+    cout << "BoundedSATCount looking for " << maxSolutions << " solutions" << endl;
+    uint64_t current_nr_of_solutions = 0;
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
-        ret = solver->solve(&allSATAssumptions);
+        ret = solver->solve(&new_assumps);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
@@ -300,9 +301,13 @@ uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, vector<Lit>& assumptions)
             solver->add_clause(lits);
         }
     }
-    vector<Lit> cls_that_removes;
-    cls_that_removes.push_back(Lit(activationVar, false));
-    solver->add_clause(cls_that_removes);
+
+    //Remove clauses added
+    vector<Lit> cl_that_removes;
+    cl_that_removes.push_back(Lit(activationVar, false));
+    solver->add_clause(cl_that_removes);
+
+    //Timeout
     if (ret == l_Undef) {
         must_interrupt.store(false, std::memory_order_relaxed);
         return -1 * current_nr_of_solutions;
@@ -398,9 +403,9 @@ lbool CUSP::BoundedSAT(
 bool CUSP::ApproxMC(SATCount& count)
 {
     count.clear();
-    uint64_t currentNumSolutions = 0;
+    int64_t currentNumSolutions = 0;
     vector<uint64_t> numHashList;
-    vector<uint64_t> numCountList;
+    vector<int64_t> numCountList;
     vector<Lit> assumptions;
     uint32_t repeatTry = 0;
     for (uint32_t j = 0; j < tApproxMC; j++) {
@@ -419,6 +424,7 @@ bool CUSP::ApproxMC(SATCount& count)
             << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
             << currentNumSolutions << endl;
 
+            //UNSAT
             if (currentNumSolutions == 0) {
                 assumptions.clear();
                 if (repeatTry < 2) {    /* Retry up to twice more */
@@ -432,12 +438,14 @@ bool CUSP::ApproxMC(SATCount& count)
                 }
                 continue;
             }
+
             if (currentNumSolutions == pivotApproxMC + 1) {
+                //Found all solutions needed
                 AddHash(1, assumptions);
             } else {
+                //TIMEOUT
                 break;
             }
-
         }
         assumptions.clear();
         numHashList.push_back(hashCount);
@@ -448,12 +456,13 @@ bool CUSP::ApproxMC(SATCount& count)
         return true;
     }
 
-    int minHash = findMin(numHashList);
-    for (auto it1 = numHashList.begin(), it2 = numCountList.begin()
-            ; it1 != numHashList.end() && it2 != numCountList.end()
-            ; it1++, it2++
-        ) {
-        (*it2) *= pow(2, (*it1) - minHash);
+    auto minHash = findMin(numHashList);
+    auto hash_it = numHashList.begin();
+    auto cnt_it = numCountList.begin();
+    for (; hash_it != numHashList.end() && cnt_it != numCountList.end()
+        ; hash_it++, cnt_it++
+    ) {
+        *cnt_it *= pow(2, (*hash_it) - minHash);
     }
     int medSolCount = findMedian(numCountList);
 
@@ -755,7 +764,7 @@ int CUSP::uniGenCall(
 )
 {
     delete solver;
-    solver = new SATSolver(&conf);
+    solver = new SATSolver(&conf, &must_interrupt);
     solverToInterrupt = solver;
 
     parseInAllFiles(solver);
