@@ -92,4 +92,4 @@ install:
   - mkdir -p build
 
 script:
-  - if [ "$COVERITY_SCAN" != "1" ]; then ./scripts/travis-cmake.sh ; fi
+  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then make ; fi
