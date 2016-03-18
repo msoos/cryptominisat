@@ -139,12 +139,9 @@ struct ClauseStats
     uint64_t sum_of_branch_depth_conflict = 0;
     uint64_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
-    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP conflict generation
-    #endif
-
-    ///Number of resolutions it took to make the clause when it was
-    ///originally learnt. Only makes sense for redundant clauses
+    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation
     AtecedentData<uint16_t> antec_data;
+    #endif
 
     void clear()
     {
