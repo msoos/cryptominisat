@@ -456,13 +456,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
-                antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
-                antec_data.longRed++;
                 stats.resolvs.longRed++;
                 #ifdef STATS_NEEDED
+                antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
+                antec_data.longRed++;
                 antec_data.age_long_reds.push(sumConflicts() - cl->stats.introduced_at_conflict);
-                #endif
                 antec_data.glue_long_reds.push(cl->stats.glue);
+                #endif
             } else {
                 antec_data.longIrred++;
                 stats.resolvs.longRed++;
@@ -1396,12 +1396,12 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
 
         default:
             //Long learnt
-            cl->stats.antec_data = antec_data;
             stats.learntLongs++;
             solver->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
 
             #ifdef STATS_NEEDED
+            cl->stats.antec_data = antec_data;
             propStats.propsLongRed++;
             #endif
 
