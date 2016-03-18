@@ -273,9 +273,9 @@ bool CUSP::AddHash(uint32_t numClaus, SATSolver* solver, vector<Lit>& assumption
     return true;
 }
 
-int32_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
+uint64_t CUSP::BoundedSATCount(uint32_t maxSolutions, SATSolver* solver, vector<Lit>& assumptions)
 {
-    unsigned long current_nr_of_solutions = 0;
+    uint64_t current_nr_of_solutions = 0;
     lbool ret = l_True;
     solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
@@ -396,38 +396,35 @@ lbool CUSP::BoundedSAT(
     return l_False;
 }
 
-SATCount CUSP::ApproxMC(SATSolver* solver)
+bool CUSP::ApproxMC(SATSolver* solver, SATCount& count)
 {
-    int32_t currentNumSolutions = 0;
-    vector<int> numHashList;
-    vector<int> numCountList;
+    count.clear();
+    uint64_t currentNumSolutions = 0;
+    vector<uint64_t> numHashList;
+    vector<uint64_t> numCountList;
     vector<Lit> assumptions;
-    double elapsedTime = 0;
-    int repeatTry = 0;
+    uint32_t repeatTry = 0;
     for (uint32_t j = 0; j < tApproxMC; j++) {
-        uint32_t  hashCount;
+        uint64_t hashCount;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
-            elapsedTime = cpuTimeTotal() - startTime;
-            if (elapsedTime > totalTimeout - 3000) {
-                break;
+            if (cpuTimeTotal() - startTime > totalTimeout - 3000) {
+                return false;
             }
             double myTime = cpuTimeTotal();
             currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, solver, assumptions);
 
-            myTime = cpuTimeTotal() - myTime;
-            //cout << myTime << endl;
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             cusp_logf << "ApproxMC:"
-            << j << ":"
-            << hashCount << ":"
-            << std::fixed << std::setprecision(2) << myTime << ":"
-            << (int)(currentNumSolutions == (int32_t)(pivotApproxMC + 1)) << ":"
+            << j << ":" << hashCount << ":"
+            << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
+            << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
             << currentNumSolutions << endl;
 
-            if (currentNumSolutions <= 0) {
+            if (currentNumSolutions == 0) {
                 assumptions.clear();
                 if (repeatTry < 2) {    /* Retry up to twice more */
                     AddHash(hashCount, solver, assumptions);
+                    assert(hashCount > 0);
                     hashCount --;
                     repeatTry += 1;
                 } else {
@@ -444,15 +441,14 @@ SATCount CUSP::ApproxMC(SATSolver* solver)
 
         }
         assumptions.clear();
-        if (elapsedTime > totalTimeout - 3000) {
-            break;
-        }
         numHashList.push_back(hashCount);
         numCountList.push_back(currentNumSolutions);
     }
     if (numHashList.size() == 0) {
-        return SATCount();
+        //UNSAT
+        return true;
     }
+
     int minHash = findMin(numHashList);
     for (auto it1 = numHashList.begin(), it2 = numCountList.begin()
             ; it1 != numHashList.end() && it2 != numCountList.end()
@@ -462,10 +458,9 @@ SATCount CUSP::ApproxMC(SATSolver* solver)
     }
     int medSolCount = findMedian(numCountList);
 
-    SATCount solCount;
-    solCount.cellSolCount = medSolCount;
-    solCount.hashCount = minHash;
-    return solCount;
+    count.cellSolCount = medSolCount;
+    count.hashCount = minHash;
+    return true;
 }
 
 int CUSP::solve()
@@ -500,16 +495,17 @@ int CUSP::solve()
     if (startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
 
-        solCount = ApproxMC(solver);
+        bool timeout = ApproxMC(solver, solCount);
         double elapsedTime = cpuTimeTotal() - startTime;
         cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
-        if (elapsedTime > totalTimeout - 3000) {
+        if (timeout) {
             cout << " (TIMED OUT)" << endl;
             return 0;
         }
+
         if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
             cout << "The input formula is unsatisfiable." << endl;
-            return 0;
+            return correctReturnValue(l_False);
         }
         startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
                                     log2(1.8) - log2(pivotUniGen)) - 2;
@@ -518,7 +514,6 @@ int CUSP::solve()
     }
 
     //Either onlycount or unigen
-    lbool ret = l_True;
     if (onlyCount) {
         cout << "Number of solutions is: " << solCount.cellSolCount
         << " x 2^" << solCount.hashCount << endl;
@@ -530,7 +525,7 @@ int CUSP::solve()
         solver->print_stats();
     }
 
-    return correctReturnValue(ret);
+    return correctReturnValue(l_True);
 }
 
 int main(int argc, char** argv)
@@ -703,9 +698,8 @@ uint32_t CUSP::UniGen(
 
 
             cusp_logf << "UniGen2:"
-            << sampleCounter << ":"
-            << currentHashCount << ":"
-            << std::fixed << std::setprecision(2) << cpuTimeTotal() - timeReference << ":"
+            << sampleCounter << ":" << currentHashCount << ":"
+            << std::fixed << std::setprecision(2) << (cpuTimeTotal() - timeReference) << ":"
             << (int)(ret == l_False ? 1 : (ret == l_True ? 0 : 2)) << ":"
             << solutionCount << endl;
 

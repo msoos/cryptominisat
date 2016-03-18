@@ -28,6 +28,15 @@
 #include "main.h"
 #include <fstream>
 
+struct SATCount {
+    void clear() {
+        SATCount tmp;
+        *this = tmp;
+    }
+    uint32_t hashCount = 0;
+    uint32_t cellSolCount = 0;
+};
+
 class CUSP: public Main {
 public:
     CUSP(int argc, char** argv):
@@ -44,12 +53,9 @@ public:
 private:
     void add_approxmc_options();
 
-    SATCount ApproxMC(
-        SATSolver* solver
-    );
-
+    bool ApproxMC(SATSolver* solver, SATCount& count);
     bool AddHash(uint32_t clausNum, SATSolver* s, vector<Lit>& assumptions);
-    int32_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
+    uint64_t BoundedSATCount(uint32_t maxSolutions, SATSolver* solver
                             , vector<Lit>& assumptions
                            );
     lbool BoundedSAT(
@@ -79,7 +85,7 @@ private:
     uint32_t samples = 1;
     uint32_t callsPerSolver = 0;
     uint32_t startIteration = 0;
-    int32_t  pivotApproxMC = 60;
+    uint32_t pivotApproxMC = 60;
     uint32_t pivotUniGen = 27;
     uint32_t samplesGen  = 1;
     uint32_t tApproxMC = 1;
