@@ -277,8 +277,9 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions)
 
 int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 {
+    cout << "BoundedSATCount looking for " << maxSolutions << " solutions" << endl;
+
     //Set up things for adding clauses that can later be removed
-    lbool ret = l_True;
     solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
     vector<Lit> new_assumps(assumps);
@@ -286,18 +287,17 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
-    cout << "BoundedSATCount looking for " << maxSolutions << " solutions" << endl;
     uint64_t current_nr_of_solutions = 0;
+    lbool ret = l_True;
     while (current_nr_of_solutions < maxSolutions && ret == l_True) {
         ret = solver->solve(&new_assumps);
         current_nr_of_solutions++;
         if (ret == l_True && current_nr_of_solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
-            for (uint32_t j = 0; j < independent_vars.size(); j++) {
-                uint32_t var = independent_vars[j];
+            for (const uint32_t var: independent_vars) {
                 if (solver->get_model()[var] != l_Undef) {
-                    lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
+                    lits.push_back(Lit(var, solver->get_model()[var] == l_True));
                 }
             }
             solver->add_clause(lits);
