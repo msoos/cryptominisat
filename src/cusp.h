@@ -54,7 +54,7 @@ private:
     void add_approxmc_options();
 
     bool ApproxMC(SATCount& count);
-    bool AddHash(uint32_t clausNum, vector<Lit>& assumptions);
+    bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions);
     int64_t BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps);
     lbool BoundedSAT(
         uint32_t maxSolutions, uint32_t minSolutions

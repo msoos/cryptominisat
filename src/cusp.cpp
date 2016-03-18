@@ -244,19 +244,21 @@ inline T findMin(vector<T>& numList)
     return min;
 }
 
-bool CUSP::AddHash(uint32_t numClaus, vector<Lit>& assumptions)
+bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions)
 {
     string randomBits;
-    GenerateRandomBits(randomBits, (independent_vars.size() + 1) * numClaus);
+    GenerateRandomBits(randomBits, (independent_vars.size() + 1) * num_xor_cls);
     bool rhs = true;
     uint32_t activationVar;
     vector<uint32_t> vars;
 
-    for (uint32_t i = 0; i < numClaus; i++) {
-        vars.clear();
+    for (uint32_t i = 0; i < num_xor_cls; i++) {
+        //new activation variable
         solver->new_var();
         activationVar = solver->nVars()-1;
         assumptions.push_back(Lit(activationVar, true));
+
+        vars.clear();
         vars.push_back(activationVar);
         rhs = (randomBits[(independent_vars.size() + 1) * i] == 1);
 
@@ -412,6 +414,7 @@ bool CUSP::ApproxMC(SATCount& count)
         uint64_t hashCount;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
             if (cpuTimeTotal() - startTime > totalTimeout - 3000) {
+                cout << "Timeout in ApproxMC()" << endl;
                 return false;
             }
             double myTime = cpuTimeTotal();
@@ -424,17 +427,22 @@ bool CUSP::ApproxMC(SATCount& count)
             << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
             << currentNumSolutions << endl;
 
-            //UNSAT
-            if (currentNumSolutions == 0) {
+            //Timeout!
+            if (currentNumSolutions < 0) {
+                //Remove all hashes
                 assumptions.clear();
+
                 if (repeatTry < 2) {    /* Retry up to twice more */
-                    AddHash(hashCount, assumptions);
+                    AddHash(hashCount, assumptions); //add new set of hashes
                     assert(hashCount > 0);
                     hashCount --;
                     repeatTry += 1;
+                    cout << "Timeout, try again -- " << repeatTry << endl;
                 } else {
+                    //this set of hashes does not work, go up
                     AddHash(hashCount + 1, assumptions);
                     repeatTry = 0;
+                    cout << "Timeout, moving up" << endl;
                 }
                 continue;
             }
@@ -443,7 +451,7 @@ bool CUSP::ApproxMC(SATCount& count)
                 //Found all solutions needed
                 AddHash(1, assumptions);
             } else {
-                //TIMEOUT
+                //less than pivotApproxMC solutions
                 break;
             }
         }
@@ -503,10 +511,10 @@ int CUSP::solve()
     if (startIteration == 0) {
         cout << "Computing startIteration using ApproxMC" << endl;
 
-        bool timeout = ApproxMC(solCount);
+        bool finished = ApproxMC(solCount);
         double elapsedTime = cpuTimeTotal() - startTime;
         cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
-        if (timeout) {
+        if (!finished) {
             cout << " (TIMED OUT)" << endl;
             return 0;
         }
