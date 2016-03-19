@@ -755,8 +755,7 @@ bool VarReplacer::handleUpdatedClause(
         return false;
     }
 
-    assert(false);
-    return false;
+    release_assert(false);
 }
 
 void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint32_t sub_var)
