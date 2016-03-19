@@ -397,6 +397,8 @@ void Main::add_supported_options()
         , "Perform simplification rounds. If 0, we never perform any.")
     ("presimp", po::value(&conf.simplify_at_startup)->default_value(conf.simplify_at_startup)
         , "Perform simplification at the very start")
+    ("allpresimp", po::value(&conf.simplify_at_every_startup)->default_value(conf.simplify_at_every_startup)
+        , "Perform simplification at EVERY start -- only matters in library mode")
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
         , "Never stop the search() process in class SATSolver")
 
