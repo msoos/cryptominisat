@@ -170,8 +170,8 @@ bool CompHandler::handle()
     for (uint32_t it = 0; it < sizes.size()-1; ++it) {
         const uint32_t comp = sizes[it].first;
         vector<uint32_t>& vars = reverseTable[comp];
-        const bool cont = try_to_solve_component(it, comp, vars, num_comps);
-        if (!cont) {
+        const bool ok = try_to_solve_component(it, comp, vars, num_comps);
+        if (!ok) {
             break;
         }
         num_comps_solved++;
