@@ -33,7 +33,7 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-TopLevelGauss::TopLevelGauss(OccSimplifier* _occsimplifier, Solver* _solver) :
+TopLevelGauss::TopLevelGauss(Solver* _solver) :
     solver(_solver)
 {
     //NOT THREAD SAFE BUG

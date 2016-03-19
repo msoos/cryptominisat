@@ -32,12 +32,11 @@ using std::set;
 namespace CMSat {
 
 class Solver;
-class OccSimplifier;
 
 class TopLevelGauss: public TopLevelGaussAbst
 {
 public:
-    TopLevelGauss(OccSimplifier* _occsimplifier, Solver* _solver);
+    TopLevelGauss(Solver* _solver);
     bool toplevelgauss(const vector<Xor>& _xors);
 
     struct Stats

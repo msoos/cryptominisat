@@ -98,7 +98,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     topLevelGauss = new TopLevelGaussAbst;
     #ifdef USE_M4RI
     delete topLevelGauss;
-    topLevelGauss = new TopLevelGauss(this , solver);
+    topLevelGauss = new TopLevelGauss(solver);
     #endif
     sub_str = new SubsumeStrengthen(this, solver);
 
