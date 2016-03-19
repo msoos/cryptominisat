@@ -408,7 +408,10 @@ int CUSP::solve()
     solver = new SATSolver((void*)&conf, &must_interrupt);
     solverToInterrupt = solver;
     if (dratf) {
-        solver->set_drat(dratf, false);
+        cout
+        << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
+        << endl;
+        exit(-1);
     }
     //check_num_threads_sanity(num_threads);
     //solver->set_num_threads(num_threads);
