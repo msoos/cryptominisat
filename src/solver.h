@@ -95,6 +95,7 @@ class Solver : public Searcher
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
+        lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data);
         lbool model_value (const Lit p) const;  ///<Found model value for lit
         lbool model_value (const uint32_t p) const;  ///<Found model value for var
@@ -272,6 +273,7 @@ class Solver : public Searcher
         };
 
         lbool solve();
+        lbool simplify_problem_outside();
         vector<Lit> back_number_from_outside_to_outer_tmp;
         template<class T>
         void back_number_from_outside_to_outer(const vector<T>& lits)
@@ -423,6 +425,25 @@ inline lbool Solver::solve_with_assumptions(
         }
     }
     return solve();
+}
+
+inline lbool Solver::simplify_with_assumptions(
+    const vector<Lit>* _assumptions
+) {
+    outside_assumptions.clear();
+    if (_assumptions) {
+        for(const Lit lit: *_assumptions) {
+            if (lit.var() >= nVarsOutside()) {
+                std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
+                << " is too large, you never"
+                << " inserted that variable into the solver. Exiting."
+                << endl;
+                exit(-1);
+            }
+            outside_assumptions.push_back(lit);
+        }
+    }
+    return simplify_problem_outside();
 }
 
 inline bool Solver::find_with_stamp_a_or_b(Lit a, const Lit b) const

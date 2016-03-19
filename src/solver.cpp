@@ -1056,6 +1056,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     //print_mem_stats();
 }
 
+//Uneliminates, readds components, fills assumptionsSet, all the good stuff
 void Solver::set_assumptions()
 {
     assert(okay());
@@ -1239,6 +1240,23 @@ void Solver::check_config_parameters() const
     }
 }
 
+lbool Solver::simplify_problem_outside()
+{
+    if (!ok) {
+        return l_False;
+    }
+    conflict.clear();
+    check_config_parameters();
+    datasync->rebuild_bva_map();
+    set_assumptions();
+
+    lbool status = l_Undef;
+    if (nVars() > 0 && conf.do_simplify_problem) {
+        status = simplify_problem(false);
+    }
+    return status;
+}
+
 lbool Solver::solve()
 {
     #ifdef SLOW_DEBUG
@@ -1280,10 +1298,10 @@ lbool Solver::solve()
 
     //If still unknown, simplify
     if (status == l_Undef
+        && nVars() > 0
+        && conf.do_simplify_problem
         && conf.simplify_at_startup
         && (solveStats.numSimplify == 0 || conf.simplify_at_every_startup)
-        && conf.do_simplify_problem
-        && nVars() > 0
     ) {
         status = simplify_problem(!conf.full_simplify_at_startup);
     }

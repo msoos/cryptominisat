@@ -49,6 +49,7 @@ namespace CMSat {
         void new_var();
         void new_vars(const size_t n);
         lbool solve(const std::vector<Lit>* assumptions = 0);
+        lbool simplify(const std::vector<Lit>* assumptions = 0);
         const std::vector<lbool>& get_model() const;
         const std::vector<Lit>& get_conflict() const;
         bool okay() const;

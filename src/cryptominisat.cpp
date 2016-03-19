@@ -775,3 +775,15 @@ DLL_PUBLIC void SATSolver::set_mysql(
         , sqlPass
         , sqlDatabase);
 }
+
+DLL_PUBLIC lbool SATSolver::simplify(const vector<Lit>* assumptions)
+{
+    lbool final_ret = l_Undef;
+    for(Solver* s: data->solvers) {
+        lbool ret = s->simplify_with_assumptions(assumptions);
+        if (ret == l_False) {
+            final_ret = l_False;
+        }
+    }
+    return final_ret;
+}
