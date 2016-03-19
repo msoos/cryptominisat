@@ -85,7 +85,6 @@ void start_timer(int num)
 
 void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
 {
-    int num = si->si_value.sival_int;
     SATSolver* solver = solverToInterrupt;
     if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
         solver->interrupt_asap();
