@@ -65,8 +65,9 @@ void XorFinder::find_xors_based_on_long_clauses()
         }
 
         //If not tried already, find an XOR with it
-        if (!cl->stats.marked_clause) {
+        if (!cl->stats.marked_clause ) {
             cl->stats.marked_clause = true;
+            assert(!cl->getRemoved());
 
             lits.resize(cl->size());
             std::copy(cl->begin(), cl->end(), lits.begin());
@@ -194,8 +195,17 @@ void XorFinder::print_found_xors()
 void XorFinder::add_xors_to_gauss()
 {
     solver->xorclauses = xors;
+    #ifdef SLOW_DEBUG
+    for(const Xor& x: xors) {
+        for(uint32_t v: x) {
+            assert(solver->varData[v].removed == Removed::none);
+        }
+    }
+    #endif
+
     for(ClOffset offs: cls_of_xors) {
         Clause* cl = solver->cl_alloc.ptr(offs);
+        assert(!cl->getRemoved());
         cl->set_used_in_xor(true);
     }
 }
@@ -228,6 +238,11 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     if (found_all) {
         std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, poss_xor.getRHS());
+        #ifdef SLOW_DEBUG
+        for(Lit lit: lits) {
+            assert(solver->varData[lit.var()].removed == Removed::none);
+        }
+        #endif
 
         //TODO check if already inside in some clever way
         add_found_xor(found_xor);

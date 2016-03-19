@@ -252,6 +252,14 @@ void Gaussian::fill_matrix(matrixset& origMat)
         //Used with check_gauss.py
         cout << "x " << x << endl;
         #endif
+        #ifdef DEBUG_GAUSS
+        for(const Xor& x: xors) {
+            for(uint32_t v: x) {
+                assert(solver->varData[v].removed == Removed::none);
+            }
+        }
+        #endif
+
         origMat.matrix.getVarsetAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         origMat.matrix.getMatrixAt(matrix_row).set(x, var_to_col, origMat.num_cols);
         matrix_row++;
@@ -912,6 +920,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     cout << "(" << matrix_no << ") prop clause: "
     << tmp_clause << " , "
     << "rhs:" << rhs << endl;
+    cout << "varData [0]:" << removed_type_to_string(solver->varData[tmp_clause[0].var()].removed) << endl;
+    #endif
+    #ifdef DEBUG_GAUSS
+    for(Lit l: tmp_clause) {
+        assert(solver->varData[l.var()].removed == Removed::none);
+    }
     #endif
 
     switch(tmp_clause.size()) {
