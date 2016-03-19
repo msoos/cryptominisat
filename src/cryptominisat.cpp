@@ -498,11 +498,12 @@ DLL_PUBLIC bool SATSolver::add_xor_clause(const std::vector<unsigned>& vars, boo
     return ret;
 }
 
-struct OneThreadSolve
+struct OneThreadCalc
 {
-    OneThreadSolve(DataForThread& _data_for_thread, size_t _tid) :
+    OneThreadCalc(DataForThread& _data_for_thread, size_t _tid, bool _solve) :
         data_for_thread(_data_for_thread)
         , tid(_tid)
+        , solve(_solve)
     {}
 
     void operator()()
@@ -516,7 +517,12 @@ struct OneThreadSolve
 
         OneThreadAddCls cls_adder(data_for_thread, tid);
         cls_adder();
-        lbool ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions);
+        lbool ret;
+        if (solve) {
+            ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions);
+        } else {
+            ret = data_for_thread.solvers[tid]->simplify_with_assumptions(data_for_thread.assumptions);
+        }
 
         if (print_thread_start_and_finish) {
             double end_time = cpuTime();
@@ -542,15 +548,18 @@ struct OneThreadSolve
     DataForThread& data_for_thread;
     const size_t tid;
     double start_time;
+    bool solve;
 };
 
-DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
+lbool calc(const vector< Lit >* assumptions, bool solve, CMSatPrivateData *data)
 {
     //Reset the interrupt signal if it was set
     data->must_interrupt->store(false, std::memory_order_relaxed);
 
     if (data->log) {
-        (*data->log) << "c Solver::solve( ";
+        (*data->log) << "c Solver::"
+        << (solve ? "solve" : "simplify")
+        << "( ";
         if (assumptions) {
             (*data->log) << *assumptions;
         }
@@ -568,7 +577,12 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         data->solvers[0]->new_vars(data->vars_to_add);
         data->vars_to_add = 0;
 
-        lbool ret = data->solvers[0]->solve_with_assumptions(assumptions);
+        lbool ret ;
+        if (solve) {
+            ret = data->solvers[0]->solve_with_assumptions(assumptions);
+        } else {
+            ret = data->solvers[0]->simplify_with_assumptions(assumptions);
+        }
         data->okay = data->solvers[0]->okay();
         return ret;
     }
@@ -580,7 +594,7 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
         ; i < data->solvers.size()
         ; i++
     ) {
-        thds.push_back(thread(OneThreadSolve(data_for_thread, i)));
+        thds.push_back(thread(OneThreadCalc(data_for_thread, i, solve)));
     }
     for(std::thread& thread : thds){
         thread.join();
@@ -595,6 +609,16 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
     data->vars_to_add = 0;
     data->okay = data->solvers[*data_for_thread.which_solved]->okay();
     return real_ret;
+}
+
+DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
+{
+    return calc(assumptions, true, data);
+}
+
+DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
+{
+    return calc(assumptions, false, data);
 }
 
 DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
@@ -774,16 +798,4 @@ DLL_PUBLIC void SATSolver::set_mysql(
         , sqlUser
         , sqlPass
         , sqlDatabase);
-}
-
-DLL_PUBLIC lbool SATSolver::simplify(const vector<Lit>* assumptions)
-{
-    lbool final_ret = l_Undef;
-    for(Solver* s: data->solvers) {
-        lbool ret = s->simplify_with_assumptions(assumptions);
-        if (ret == l_False) {
-            final_ret = l_False;
-        }
-    }
-    return final_ret;
 }
