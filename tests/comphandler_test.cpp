@@ -88,7 +88,7 @@ TEST_F(comp_handle, handle_3_comps)
     EXPECT_EQ(chandle->get_num_vars_removed(), 8);
 }
 
-TEST_F(comp_handle, check_solution)
+TEST_F(comp_handle, check_solution_zero_lev_assign)
 {
     s->add_clause_outer(str_to_cl("1, 2"));
     s->add_clause_outer(str_to_cl("-1, 2"));
@@ -106,13 +106,43 @@ TEST_F(comp_handle, check_solution)
     chandle->handle();
     EXPECT_TRUE(s->okay());
     EXPECT_EQ(chandle->get_num_components_solved(), 2);
-    EXPECT_EQ(chandle->get_num_vars_removed(), 4);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 0);
     vector<lbool> solution(s->nVarsOuter(), l_Undef);
     chandle->addSavedState(solution);
-    EXPECT_EQ(solution[0], l_True);
-    EXPECT_EQ(solution[1], l_True);
-    EXPECT_EQ(solution[10], l_True);
-    EXPECT_EQ(solution[11], l_True);
+    check_zero_assigned_lits_contains(s, "1");
+    check_zero_assigned_lits_contains(s, "1");
+    check_zero_assigned_lits_contains(s, "11");
+    check_zero_assigned_lits_contains(s, "12");
+}
+
+TEST_F(comp_handle, check_solution_non_zero_lev_assign)
+{
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("-1, 2"));
+
+    s->add_clause_outer(str_to_cl("11, 12"));
+    s->add_clause_outer(str_to_cl("-11, 12"));
+
+    s->add_clause_outer(str_to_cl("20, 22"));
+    s->add_clause_outer(str_to_cl("-24, 22"));
+
+    s->add_clause_outer(str_to_cl("19, 14, 15"));
+    s->add_clause_outer(str_to_cl("15, 16, 17"));
+    s->add_clause_outer(str_to_cl("17, 16, 18, 14"));
+    s->add_clause_outer(str_to_cl("17, 18, 13"));
+
+    chandle->handle();
+    EXPECT_TRUE(s->okay());
+    EXPECT_EQ(chandle->get_num_components_solved(), 3);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 7);
+    vector<lbool> solution(s->nVarsOuter(), l_Undef);
+    chandle->addSavedState(solution);
+    EXPECT_TRUE(clause_satisfied("1, 2", solution));
+    EXPECT_TRUE(clause_satisfied("-1, 2", solution));
+    EXPECT_TRUE(clause_satisfied("11, 12", solution));
+    EXPECT_TRUE(clause_satisfied("-11, 12", solution));
+    EXPECT_TRUE(clause_satisfied("20, 22", solution));
+    EXPECT_TRUE(clause_satisfied("-24, 22", solution));
 }
 
 TEST_F(comp_handle, check_unsat)

@@ -550,6 +550,20 @@ void check_zero_assigned_lits_contains(Solver* s, const string& data)
     }
 }
 
+bool clause_satisfied(const string& data, vector<lbool>& solution)
+{
+    vector<Lit> lits = str_to_cl(data);
+    for(Lit l: lits) {
+        if (solution[l.var()] == l_Undef) {
+            continue;
+        }
+        if ((solution[l.var()] ^ l.sign()) == l_True) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {
