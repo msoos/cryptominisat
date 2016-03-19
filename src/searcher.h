@@ -327,8 +327,6 @@ class Searcher : public HyperEngine
         void   cache_based_more_minim(vector<Lit>& cl);
         void   stamp_based_more_minim(vector<Lit>& cl);
 
-        void calculate_and_set_polars();
-
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const Searcher* cc;

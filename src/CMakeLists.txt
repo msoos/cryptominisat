@@ -37,7 +37,6 @@ set(cryptoms_lib_files
     distillerallwithall.cpp
     distillerlongwithimpl.cpp
     str_impl_w_impl_stamp.cpp
-    calcdefpolars.cpp
     solutionextender.cpp
     completedetachreattacher.cpp
     searcher.cpp

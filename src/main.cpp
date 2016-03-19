@@ -276,6 +276,8 @@ void Main::add_supported_options()
         , "Multiplier for all simplification cutoffs")
     ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
+    ("polar", po::value<string>()->default_value("auto")
+        , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -343,16 +345,6 @@ void Main::add_supported_options()
         , "Use dominating literal every once in N when picking decision literal")
     ("morebump", po::value(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
         , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
-    ;
-
-    po::options_description polar_options("Variable polarity options");
-    polar_options.add_options()
-    ("polar", po::value<string>()->default_value("auto")
-        , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
-    ("calcpolar1st", po::value(&conf.do_calc_polarity_first_time)->default_value(conf.do_calc_polarity_first_time)
-        , "Calculate the polarity of variables based on their occurrences at startup of solve()")
-    ("calcpolarall", po::value(&conf.do_calc_polarity_every_time)->default_value(conf.do_calc_polarity_every_time)
-        , "Calculate the polarity of variables based on their occurrences at startup & after every simplification")
     ;
 
 
@@ -684,7 +676,6 @@ void Main::add_supported_options()
     .add(propOptions)
     .add(reduceDBOptions)
     .add(varPickOptions)
-    .add(polar_options)
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)

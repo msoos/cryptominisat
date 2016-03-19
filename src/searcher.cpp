@@ -21,7 +21,6 @@
 
 #include "searcher.h"
 #include "occsimplifier.h"
-#include "calcdefpolars.h"
 #include "time_mem.h"
 #include "solver.h"
 #include <iomanip>
@@ -37,6 +36,7 @@
 #include "reducedb.h"
 #include "gaussian.h"
 #include "sqlstats.h"
+#include "watchalgos.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -1931,12 +1931,6 @@ lbool Searcher::solve(
     }
 
     params.rest_type = conf.restartType;
-    if ((num_search_called == 1 && conf.do_calc_polarity_first_time)
-        || conf.do_calc_polarity_every_time
-    ) {
-        calculate_and_set_polars();
-    }
-
     max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
@@ -2817,16 +2811,6 @@ size_t Searcher::mem_used() const
     }
 
     return mem;
-}
-
-void Searcher::calculate_and_set_polars()
-{
-    CalcDefPolars calculator(solver);
-    vector<unsigned char> calc_polars = calculator.calculate();
-    assert(calc_polars.size() == nVars());
-    for(size_t i = 0; i < calc_polars.size(); i++) {
-        varData[i].polarity = calc_polars[i];
-    }
 }
 
 void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)

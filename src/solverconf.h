@@ -129,8 +129,6 @@ class SolverConf
         double  var_decay_max;
         double random_var_freq;
         PolarityMode polarity_mode;
-        int do_calc_polarity_first_time;
-        int do_calc_polarity_every_time;
 
         //Clause cleaning
         unsigned  max_temporary_learnt_clauses;

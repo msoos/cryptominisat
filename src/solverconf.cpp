@@ -34,8 +34,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_decay_max(0.95) // 1/0.95 = 1.05 -- smaller is better for hard instances
         , random_var_freq(0)
         , polarity_mode(PolarityMode::polarmode_automatic)
-        , do_calc_polarity_first_time(true)
-        , do_calc_polarity_every_time(false)
 
         //Clause cleaning
         , max_temporary_learnt_clauses(20000)

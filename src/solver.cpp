@@ -1249,9 +1249,6 @@ lbool Solver::solve()
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
-    if (solveStats.num_solve_calls > 1) {
-        conf.do_calc_polarity_every_time = false;
-    }
 
     if (conf.verbosity >= 6) {
         cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
@@ -3269,7 +3266,6 @@ void Solver::reconfigure(int val)
             conf.max_num_lits_more_red_min = 8;
             conf.varElimCostEstimateStrategy = 0;
             conf.doOTFSubsume = 1;
-            conf.do_calc_polarity_first_time = 1;
             conf.doFindXors = 0;
             conf.varElimRatioPerIter = 0.836063764936515;
             conf.update_glues_on_analyze = 0;
@@ -3281,7 +3277,6 @@ void Solver::reconfigure(int val)
             conf.cacheUpdateCutoff = 2669;
             conf.num_conflicts_of_search = 21671;
             conf.inc_max_temp_red_cls = 1.029816784872561;
-            conf.do_calc_polarity_every_time = 1;
             conf.distill_long_irred_cls_time_limitM = 1;
             conf.random_var_freq = 0.004446797134521431;
             conf.intree_time_limitM = 1652;
