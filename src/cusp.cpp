@@ -287,12 +287,12 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
-    uint64_t current_nr_of_solutions = 0;
+    uint64_t solutions = 0;
     lbool ret = l_True;
-    while (current_nr_of_solutions < maxSolutions && ret == l_True) {
+    while (solutions < maxSolutions && ret == l_True) {
         ret = solver->solve(&new_assumps);
-        current_nr_of_solutions++;
-        if (ret == l_True && current_nr_of_solutions < maxSolutions) {
+        solutions++;
+        if (ret == l_True && solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
             for (const uint32_t var: independent_vars) {
@@ -312,9 +312,9 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     //Timeout
     if (ret == l_Undef) {
         must_interrupt.store(false, std::memory_order_relaxed);
-        return -1 * current_nr_of_solutions;
+        return -1 * solutions;
     }
-    return current_nr_of_solutions;
+    return solutions;
 }
 
 lbool CUSP::BoundedSAT(
@@ -325,7 +325,7 @@ lbool CUSP::BoundedSAT(
     , uint32_t* solutionCount
 )
 {
-    unsigned long current_nr_of_solutions = 0;
+    unsigned long solutions = 0;
     lbool ret = l_True;
     solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
@@ -336,12 +336,12 @@ lbool CUSP::BoundedSAT(
     vector<lbool> model;
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
-    while (current_nr_of_solutions < maxSolutions && ret == l_True) {
+    while (solutions < maxSolutions && ret == l_True) {
         cout << "BoundedSAT solve!" << endl;
         ret = solver->solve(&allSATAssumptions);
-        current_nr_of_solutions++;
+        solutions++;
 
-        if (ret == l_True && current_nr_of_solutions < maxSolutions) {
+        if (ret == l_True && solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(activationVar, false));
             model.clear();
@@ -357,7 +357,7 @@ lbool CUSP::BoundedSAT(
         }
     }
     *solutionCount = modelsSet.size();
-    cout << "current_nr_of_solutions:" << current_nr_of_solutions << endl;
+    cout << "solutions:" << solutions << endl;
     vector<Lit> cls_that_removes;
     cls_that_removes.push_back(Lit(activationVar, false));
     solver->add_clause(cls_that_removes);
@@ -366,7 +366,7 @@ lbool CUSP::BoundedSAT(
         return ret;
     }
 
-    if (current_nr_of_solutions < maxSolutions && current_nr_of_solutions > minSolutions) {
+    if (solutions < maxSolutions && solutions > minSolutions) {
         std::vector<int> modelIndices;
         for (uint32_t i = 0; i < modelsSet.size(); i++) {
             modelIndices.push_back(i);
