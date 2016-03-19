@@ -79,7 +79,6 @@ public:
     size_t mem_used() const;
 
 private:
-    OccSimplifier* occsimplifier;
     Solver* solver;
 
     bool extractInfo();

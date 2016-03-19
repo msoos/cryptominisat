@@ -34,8 +34,7 @@ using std::cout;
 using std::endl;
 
 TopLevelGauss::TopLevelGauss(OccSimplifier* _occsimplifier, Solver* _solver) :
-    occsimplifier(_occsimplifier)
-    , solver(_solver)
+    solver(_solver)
 {
     //NOT THREAD SAFE BUG
     m4ri_build_all_codes();
