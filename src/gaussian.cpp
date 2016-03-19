@@ -37,7 +37,6 @@
 //#define DEBUG_GAUSS
 
 using namespace CMSat;
-using std::ostream;
 using std::cout;
 using std::endl;
 
