@@ -1891,19 +1891,6 @@ void Solver::reset_reason_levels_of_vars_to_zero()
     }
 }
 
-void Solver::clear_clauses_stats()
-{
-    for(ClOffset offs: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offs);
-        cl->stats.clear();
-    }
-
-    for(ClOffset offs: longRedCls) {
-        Clause* cl = cl_alloc.ptr(offs);
-        cl->stats.clear();
-    }
-}
-
 void Solver::print_prop_confl_stats(
     std::string name
     , const vector<ClauseUsageStats>& stats

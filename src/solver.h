@@ -228,7 +228,6 @@ class Solver : public Searcher
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
         );
-        void clear_clauses_stats();
         template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
