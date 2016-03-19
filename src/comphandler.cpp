@@ -778,7 +778,6 @@ void CompHandler::readdRemovedClauses()
         if (dat.removed == Removed::decomposed) {
             dat.removed = Removed::none;
             num_vars_removed--;
-            solver->set_decision_var(inter);
         }
     }
 
@@ -806,6 +805,16 @@ void CompHandler::readdRemovedClauses()
 
         //Move 'at' along
         at += sz;
+    }
+
+    //The variables have been added back thanks to addClause()
+    //-> set them decision
+    for(size_t outer = 0; outer < solver->nVarsOuter(); ++outer) {
+        const uint32_t inter = solver->map_outer_to_inter(outer);
+        VarData& dat = solver->varData[inter];
+        if (dat.removed == Removed::none) {
+            solver->set_decision_var(inter);
+        }
     }
 
     //Explain what we just did
