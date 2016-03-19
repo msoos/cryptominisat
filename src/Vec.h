@@ -74,8 +74,15 @@ public:
 
     void shrink_to_fit()
     {
+        if (sz == 0) {
+            free(_data);
+            cap = 0;
+            _data = NULL;
+            return;
+        }
+
         T* _data2 = (T*)realloc(_data, sz*sizeof(T));
-        if (!_data2) {
+        if (_data2 == NULL) {
             //We just keep the size then.
             return;
         }
