@@ -243,7 +243,7 @@ inline T findMin(vector<T>& numList)
     return min;
 }
 
-bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions)
+bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
 {
     string randomBits;
     GenerateRandomBits(randomBits, (independent_vars.size() + 1) * num_xor_cls);
@@ -255,7 +255,7 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions)
         //new activation variable
         solver->new_var();
         activationVar = solver->nVars()-1;
-        assumptions.push_back(Lit(activationVar, true));
+        assumps.push_back(Lit(activationVar, true));
 
         vars.clear();
         vars.push_back(activationVar);
@@ -319,7 +319,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 lbool CUSP::BoundedSAT(
     uint32_t maxSolutions
     , uint32_t minSolutions
-    , vector<Lit>& assumptions
+    , vector<Lit>& assumps
     , std::map<string, uint32_t>& solutionMap
     , uint32_t* solutionCount
 )
@@ -328,7 +328,7 @@ lbool CUSP::BoundedSAT(
     lbool ret = l_True;
     solver->new_var();
     uint32_t activationVar = solver->nVars()-1;
-    vector<Lit> allSATAssumptions(assumptions);
+    vector<Lit> allSATAssumptions(assumps);
     allSATAssumptions.push_back(Lit(activationVar, true));
 
     std::vector<vector<lbool>> modelsSet;
@@ -407,7 +407,7 @@ bool CUSP::ApproxMC(SATCount& count)
     int64_t currentNumSolutions = 0;
     vector<uint64_t> numHashList;
     vector<int64_t> numCountList;
-    vector<Lit> assumptions;
+    vector<Lit> assumps;
     uint32_t repeatTry = 0;
     for (uint32_t j = 0; j < tApproxMC; j++) {
         uint64_t hashCount;
@@ -417,7 +417,7 @@ bool CUSP::ApproxMC(SATCount& count)
                 return false;
             }
             double myTime = cpuTimeTotal();
-            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumptions);
+            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             cusp_logf << "ApproxMC:"
@@ -429,34 +429,37 @@ bool CUSP::ApproxMC(SATCount& count)
             //Timeout!
             if (currentNumSolutions < 0) {
                 //Remove all hashes
-                assumptions.clear();
+                assumps.clear();
 
                 if (repeatTry < 2) {    /* Retry up to twice more */
-                    AddHash(hashCount, assumptions); //add new set of hashes
                     assert(hashCount > 0);
+                    AddHash(hashCount, assumps); //add new set of hashes
+                    solver->simplify(&assumps);
                     hashCount --;
                     repeatTry += 1;
                     cout << "Timeout, try again -- " << repeatTry << endl;
                 } else {
                     //this set of hashes does not work, go up
-                    AddHash(hashCount + 1, assumptions);
+                    AddHash(hashCount + 1, assumps);
+                    solver->simplify(&assumps);
                     repeatTry = 0;
                     cout << "Timeout, moving up" << endl;
                 }
                 continue;
             }
 
-            if (currentNumSolutions == pivotApproxMC + 1) {
-                //Found all solutions needed
-                AddHash(1, assumptions);
-            } else {
+            if (currentNumSolutions < pivotApproxMC + 1) {
                 //less than pivotApproxMC solutions
                 break;
             }
+
+            //Found all solutions needed
+            AddHash(1, assumps);
         }
-        assumptions.clear();
+        assumps.clear();
         numHashList.push_back(hashCount);
         numCountList.push_back(currentNumSolutions);
+        solver->simplify(&assumps);
     }
     if (numHashList.size() == 0) {
         //UNSAT
@@ -671,7 +674,7 @@ uint32_t CUSP::UniGen(
     lbool ret = l_False;
     uint32_t i, solutionCount, currentHashCount, lastHashCount, currentHashOffset, hashOffsets[3];
     int hashDelta;
-    vector<Lit> assumptions;
+    vector<Lit> assumps;
     double elapsedTime = 0;
     int repeatTry = 0;
     for (i = 0; i < samples; i++) {
@@ -694,10 +697,10 @@ uint32_t CUSP::UniGen(
             hashDelta = currentHashCount - lastHashCount;
 
             if (hashDelta > 0) { // Add new hash functions
-                AddHash(hashDelta, assumptions);
+                AddHash(hashDelta, assumps);
             } else if (hashDelta < 0) { // Remove hash functions
-                assumptions.clear();
-                AddHash(currentHashCount, assumptions);
+                assumps.clear();
+                AddHash(currentHashCount, assumps);
             }
             lastHashCount = currentHashCount;
 
@@ -708,7 +711,7 @@ uint32_t CUSP::UniGen(
             }
             uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
             uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
-            ret = BoundedSAT(maxSolutions + 1, minSolutions, assumptions, solutionMap, &solutionCount);
+            ret = BoundedSAT(maxSolutions + 1, minSolutions, assumps, solutionMap, &solutionCount);
 
 
             cusp_logf << "UniGen2:"
@@ -718,9 +721,9 @@ uint32_t CUSP::UniGen(
             << solutionCount << endl;
 
             if (ret == l_Undef) {   // SATSolver timed out; retry current hash count at most twice more
-                assumptions.clear();    // Throw out old hash functions
+                assumps.clear();    // Throw out old hash functions
                 if (repeatTry < 2) {    // Retry current hash count with new hash functions
-                    AddHash(currentHashCount, assumptions);
+                    AddHash(currentHashCount, assumps);
                     j--;
                     repeatTry += 1;
                 } else {     // Go on to next hash count
@@ -754,7 +757,7 @@ uint32_t CUSP::UniGen(
         if (ret != l_True) {
             i --;
         }
-        assumptions.clear();
+        assumps.clear();
         if (elapsedTime > totalTimeout - 3000) {
             break;
         }
