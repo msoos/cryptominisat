@@ -62,7 +62,7 @@ private:
         , std::map<std::string, uint32_t>& solutionMap
         , uint32_t* solutionCount
     );
-    bool GenerateRandomBits(string& randomBits, uint32_t size);
+    string GenerateRandomBits(uint32_t size);
     uint32_t SolutionsToReturn(uint32_t minSolutions);
     int GenerateRandomNum(int maxRange);
     bool printSolutions();

@@ -114,15 +114,16 @@ string binary(unsigned x, uint32_t length)
 
 }
 
-bool CUSP::GenerateRandomBits(string& randomBits, uint32_t size)
+string CUSP::GenerateRandomBits(uint32_t size)
 {
+    string randomBits;
     std::uniform_int_distribution<unsigned> uid {0, 2147483647};
     uint32_t i = 0;
     while (i < size) {
         i += 31;
         randomBits += binary(uid(randomEngine), 31);
     }
-    return true;
+    return randomBits;
 }
 
 void CUSP::add_approxmc_options()
@@ -245,8 +246,7 @@ inline T findMin(vector<T>& numList)
 
 bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
 {
-    string randomBits;
-    GenerateRandomBits(randomBits, (independent_vars.size() + 1) * num_xor_cls);
+    string randomBits = GenerateRandomBits((independent_vars.size() + 1) * num_xor_cls);
     bool rhs = true;
     vector<uint32_t> vars;
 
