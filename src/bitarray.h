@@ -85,12 +85,16 @@ public:
 
     inline void setZero()
     {
-        memset(mp, 0, size*sizeof(uint64_t));
+        if (size != 0) {
+            memset(mp, 0, size*sizeof(uint64_t));
+        }
     }
 
     inline void setOne()
     {
-        memset(mp, 0xff, size*sizeof(uint64_t));
+        if (size != 0) {
+            memset(mp, 0xff, size*sizeof(uint64_t));
+        }
     }
 
     inline void clearBit(const uint32_t i)
