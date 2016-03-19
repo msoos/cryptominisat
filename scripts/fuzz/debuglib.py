@@ -93,15 +93,15 @@ class debuglib:
 
         # approx number of solve()-s to add
         if random.randint(0, 1) == 1:
-            num_solves_to_add = random.randint(0, 10)
+            num_to_add = random.randint(0, 10)
         else:
-            num_solves_to_add = 0
+            num_to_add = 0
 
         # based on length and number of solve()-s to add, intersperse
         # file with ::solve()
         file_len = debuglib.file_len_no_comment(fname1)
-        if num_solves_to_add > 0:
-            nextToAdd = random.randint(1, (file_len / num_solves_to_add) + 1)
+        if num_to_add > 0:
+            nextToAdd = random.randint(1, (file_len / num_to_add) + 1)
         else:
             nextToAdd = file_len + 1
 
@@ -120,10 +120,16 @@ class debuglib:
             at += 1
             if at >= nextToAdd:
                 assumps = debuglib.generate_random_assumps(maxvar)
-                # assumps = " "
-                fout.write("c Solver::solve( %s )\n" % assumps)
+                if random.choice([True, False]):
+                    fout.write("c Solver::solve( %s )\n" % assumps)
+                elif random.choice([True, False]):
+                    fout.write("c Solver::simplify( %s )\n" % assumps)
+                else:
+                    fout.write("c Solver::simplify( %s )\n" % assumps)
+                    fout.write("c Solver::solve( %s )\n" % assumps)
+
                 nextToAdd = at + \
-                    random.randint(1, (file_len / num_solves_to_add) + 1)
+                    random.randint(1, (file_len / num_to_add) + 1)
 
             # calculate max variable
             maxvar = max(maxvar, get_max_var_from_clause(line))

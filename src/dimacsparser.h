@@ -59,7 +59,7 @@ class DimacsParser
         bool printHeader(C& in);
         bool parseComments(C& in, const std::string& str);
         std::string stringify(uint32_t x) const;
-        bool parseSolveComment(C& in);
+        bool parse_solve_simp_comment(C& in, const bool solve);
         void write_solution_to_debuglib_file(const lbool ret) const;
         bool parseIndependentSet(C& in);
 
@@ -219,7 +219,7 @@ bool DimacsParser<C>::printHeader(C& in)
 }
 
 template<class C>
-bool DimacsParser<C>::parseSolveComment(C& in)
+bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
 {
     vector<Lit> assumps;
     in.skipWhitespace();
@@ -234,7 +234,9 @@ bool DimacsParser<C>::parseSolveComment(C& in)
 
     if (verbosity >= 2) {
         cout
-        << "c -----------> Solver::solve() called (number: "
+        << "c -----------> Solver::"
+        << (solve ? "solve" : "simplify")
+        <<" called (number: "
         << std::setw(3) << debugLibPart << ") with assumps :";
         for(Lit lit: assumps) {
             cout << lit << " ";
@@ -244,13 +246,19 @@ bool DimacsParser<C>::parseSolveComment(C& in)
         << endl;
     }
 
-    lbool ret = solver->solve(&assumps);
-
-    write_solution_to_debuglib_file(ret);
-    debugLibPart++;
+    lbool ret;
+    if (solve) {
+        ret = solver->solve(&assumps);
+        write_solution_to_debuglib_file(ret);
+        debugLibPart++;
+    } else {
+        ret = solver->simplify(&assumps);
+    }
 
     if (verbosity >= 6) {
-        cout << "c Parsed Solver::solve()" << endl;
+        cout << "c Parsed Solver::"
+        << (solve ? "solve" : "simplify")
+        << endl;
     }
     return true;
 }
@@ -298,9 +306,11 @@ template<class C>
 bool DimacsParser<C>::parseComments(C& in, const std::string& str)
 {
     if (!debugLib.empty() && str.substr(0, 13) == "Solver::solve") {
-        if (!parseSolveComment(in)) {
+        if (!parse_solve_simp_comment(in, true)) {
             return false;
         }
+    } else if (!debugLib.empty() && str.substr(0, 16) == "Solver::simplify") {
+        parse_solve_simp_comment(in, false);
     } else if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 

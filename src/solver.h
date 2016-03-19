@@ -274,6 +274,7 @@ class Solver : public Searcher
 
         lbool solve();
         lbool simplify_problem_outside();
+        void move_to_outside_assumps(const vector<Lit>* assumps);
         vector<Lit> back_number_from_outside_to_outer_tmp;
         template<class T>
         void back_number_from_outside_to_outer(const vector<T>& lits)
@@ -408,12 +409,11 @@ inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
     return tmpCl;
 }
 
-inline lbool Solver::solve_with_assumptions(
-    const vector<Lit>* _assumptions
-) {
+inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
+{
     outside_assumptions.clear();
-    if (_assumptions) {
-        for(const Lit lit: *_assumptions) {
+    if (assumps) {
+        for(const Lit lit: *assumps) {
             if (lit.var() >= nVarsOutside()) {
                 std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
                 << " is too large, you never"
@@ -424,25 +424,19 @@ inline lbool Solver::solve_with_assumptions(
             outside_assumptions.push_back(lit);
         }
     }
+}
+
+inline lbool Solver::solve_with_assumptions(
+    const vector<Lit>* _assumptions
+) {
+    move_to_outside_assumps(_assumptions);
     return solve();
 }
 
 inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions
 ) {
-    outside_assumptions.clear();
-    if (_assumptions) {
-        for(const Lit lit: *_assumptions) {
-            if (lit.var() >= nVarsOutside()) {
-                std::cerr << "ERROR: Assumption variable " << (lit.var()+1)
-                << " is too large, you never"
-                << " inserted that variable into the solver. Exiting."
-                << endl;
-                exit(-1);
-            }
-            outside_assumptions.push_back(lit);
-        }
-    }
+    move_to_outside_assumps(_assumptions);
     return simplify_problem_outside();
 }
 
