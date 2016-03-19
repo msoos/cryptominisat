@@ -65,13 +65,13 @@ using std::map;
 
 timer_t* mytimer;
 bool* timerSetFirstTime;
-void start_timer(int num)
+void start_timer(int secs)
 {
     struct sigevent sev;
     sev.sigev_signo = SIGUSR1;
     sev.sigev_notify = SIGEV_SIGNAL;
     struct itimerspec value;
-    value.it_value.tv_sec = num; //waits for n seconds before sending timer signal
+    value.it_value.tv_sec = secs; //waits for n seconds before sending timer signal
     value.it_value.tv_nsec = 0;
     value.it_interval.tv_sec = 0; //exipire once
     value.it_interval.tv_nsec = 0;
