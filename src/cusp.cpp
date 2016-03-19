@@ -283,7 +283,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     vector<Lit> new_assumps(assumps);
     new_assumps.push_back(Lit(act_var, true));
 
-    //signal(SIGALRM, SIGALARM_handler);
+    signal(SIGINT, SIGINT_handler);
     start_timer(loopTimeout);
     uint64_t solutions = 0;
     lbool ret = l_True;
