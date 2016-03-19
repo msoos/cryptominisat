@@ -1044,6 +1044,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
 {
     solver->xorclauses.clear();
     solver->clear_gauss();
+
     scc_finder->performSCC(bogoprops_given);
     if (scc_finder->get_num_binxors_found() < limit) {
         scc_finder->clear_binxors();
