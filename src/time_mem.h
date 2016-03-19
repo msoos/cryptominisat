@@ -24,7 +24,7 @@ THE SOFTWARE.
 #ifndef TIME_MEM_H
 #define TIME_MEM_H
 #include "constants.h"
-#include "assert.h"
+#include <cassert>
 
 #include <unistd.h>
 #include <ios>

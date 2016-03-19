@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 #include <string>
 #include <cstdlib>
-#include <assert.h>
+#include <cassert>
 #include "gaussianconfig.h"
 
 using std::string;

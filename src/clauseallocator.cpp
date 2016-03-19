@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <string.h>
 #include <limits>
-#include "assert.h"
+#include <cassert>
 #include "solvertypes.h"
 #include "clause.h"
 #include "solver.h"

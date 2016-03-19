@@ -26,7 +26,7 @@
 //#define DEBUG_BITARRAY
 
 #include <string.h>
-#include <assert.h>
+#include <cassert>
 #include "constants.h"
 #include <stdlib.h>
 

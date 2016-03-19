@@ -28,7 +28,7 @@
 #include "clauseallocator.h"
 #include "clausecleaner.h"
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 #include <iomanip>
 #include "cryptominisat4/cryptominisat.h"
 #include "sqlstats.h"

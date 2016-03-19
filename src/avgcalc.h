@@ -24,7 +24,7 @@
 
 #include "constants.h"
 #include <limits>
-#include "assert.h"
+#include <cassert>
 #include <vector>
 #include <cstring>
 #include <sstream>

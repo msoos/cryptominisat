@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include "constants.h"
 #include "avgcalc.h"
-#include "assert.h"
+#include <cassert>
 #include <vector>
 #include <cstring>
 #include <sstream>

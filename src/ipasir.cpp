@@ -29,7 +29,7 @@ IN THE SOFTWARE.
 #include "cryptominisat4/cryptominisat.h"
 #include <vector>
 #include <complex>
-#include <assert.h>
+#include <cassert>
 #include "constants.h"
 
 using std::vector;

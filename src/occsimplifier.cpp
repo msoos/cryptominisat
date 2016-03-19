@@ -20,7 +20,7 @@
 */
 
 #include "time_mem.h"
-#include "assert.h"
+#include <cassert>
 #include <iomanip>
 #include <cmath>
 #include <algorithm>

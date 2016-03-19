@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define Heap_h
 
 #include "constants.h"
-#include <assert.h>
+#include <cassert>
 #include <algorithm>
 #include <vector>
 using std::vector;

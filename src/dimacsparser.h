@@ -88,7 +88,7 @@ class DimacsParser
 #include <vector>
 #include <fstream>
 #include <complex>
-#include "assert.h"
+#include <cassert>
 
 using std::vector;
 using std::cout;
