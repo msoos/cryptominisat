@@ -117,7 +117,7 @@ string binary(unsigned x, uint32_t length)
 string CUSP::GenerateRandomBits(uint32_t size)
 {
     string randomBits;
-    std::uniform_int_distribution<unsigned> uid {0, 2147483647};
+    std::uniform_int_distribution<unsigned> uid {0, 2147483647U};
     uint32_t i = 0;
     while (i < size) {
         i += 31;
