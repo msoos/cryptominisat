@@ -131,7 +131,9 @@ void Gaussian::init()
     #endif
 
     fill_matrix(cur_matrixset);
-    if (!cur_matrixset.num_rows || !cur_matrixset.num_cols) {
+    if (cur_matrixset.num_rows == 0
+        || cur_matrixset.num_cols == 0
+    ) {
         disabled = true;
         badlevel = 0;
         return;
@@ -185,6 +187,15 @@ uint32_t Gaussian::select_columnorder(
             }
         }
     }
+    if (vars_needed.size() >= std::numeric_limits<uint16_t>::max()-1) {
+        //Too large to handle
+        return 0;
+    }
+    if (xors.size() < std::numeric_limits<uint16_t>::max()-1) {
+        //Too large to handle
+        return 0;
+    }
+
     var_to_col.resize(largest_used_var + 1);
     var_is_in.resize(var_to_col.size(), 0);
     origMat.var_is_set.resize(var_to_col.size(), 0);
@@ -228,6 +239,9 @@ void Gaussian::fill_matrix(matrixset& origMat)
 
     vector<uint16_t> var_to_col;
     origMat.num_rows = select_columnorder(var_to_col, origMat);
+    if (origMat.num_rows == 0) {
+        return;
+    }
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
     changed_rows.clear();
