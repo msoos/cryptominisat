@@ -248,17 +248,16 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
     string randomBits;
     GenerateRandomBits(randomBits, (independent_vars.size() + 1) * num_xor_cls);
     bool rhs = true;
-    uint32_t activationVar;
     vector<uint32_t> vars;
 
     for (uint32_t i = 0; i < num_xor_cls; i++) {
         //new activation variable
         solver->new_var();
-        activationVar = solver->nVars()-1;
-        assumps.push_back(Lit(activationVar, true));
+        uint32_t act_var = solver->nVars()-1;
+        assumps.push_back(Lit(act_var, true));
 
         vars.clear();
-        vars.push_back(activationVar);
+        vars.push_back(act_var);
         rhs = (randomBits[(independent_vars.size() + 1) * i] == 1);
 
         for (uint32_t j = 0; j < independent_vars.size(); j++) {
@@ -266,6 +265,15 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
                 vars.push_back(independent_vars[j]);
             }
         }
+        cout << "Adding XOR clause: ";
+        for(size_t i = 0; i < vars.size(); i++) {
+            cout << vars[i] + 1;
+            if (i + 1 < vars.size()) {
+                cout << " + ";
+            }
+        }
+        cout << endl;
+
         solver->add_xor_clause(vars, rhs);
         if (conf.verbosity >= 3) {
             print_xor(vars, rhs);
@@ -280,9 +288,9 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 
     //Set up things for adding clauses that can later be removed
     solver->new_var();
-    uint32_t activationVar = solver->nVars()-1;
+    uint32_t act_var = solver->nVars()-1;
     vector<Lit> new_assumps(assumps);
-    new_assumps.push_back(Lit(activationVar, true));
+    new_assumps.push_back(Lit(act_var, true));
 
     //signal(SIGALRM, SIGALARM_handler);
     start_timer(loopTimeout);
@@ -293,7 +301,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
         solutions++;
         if (ret == l_True && solutions < maxSolutions) {
             vector<Lit> lits;
-            lits.push_back(Lit(activationVar, false));
+            lits.push_back(Lit(act_var, false));
             for (const uint32_t var: independent_vars) {
                 if (solver->get_model()[var] != l_Undef) {
                     lits.push_back(Lit(var, solver->get_model()[var] == l_True));
@@ -305,7 +313,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 
     //Remove clauses added
     vector<Lit> cl_that_removes;
-    cl_that_removes.push_back(Lit(activationVar, false));
+    cl_that_removes.push_back(Lit(act_var, false));
     solver->add_clause(cl_that_removes);
 
     //Timeout
@@ -327,9 +335,9 @@ lbool CUSP::BoundedSAT(
     unsigned long solutions = 0;
     lbool ret = l_True;
     solver->new_var();
-    uint32_t activationVar = solver->nVars()-1;
+    uint32_t act_var = solver->nVars()-1;
     vector<Lit> allSATAssumptions(assumps);
-    allSATAssumptions.push_back(Lit(activationVar, true));
+    allSATAssumptions.push_back(Lit(act_var, true));
 
     std::vector<vector<lbool>> modelsSet;
     vector<lbool> model;
@@ -342,7 +350,7 @@ lbool CUSP::BoundedSAT(
 
         if (ret == l_True && solutions < maxSolutions) {
             vector<Lit> lits;
-            lits.push_back(Lit(activationVar, false));
+            lits.push_back(Lit(act_var, false));
             model.clear();
             model = solver->get_model();
             modelsSet.push_back(model);
@@ -358,7 +366,7 @@ lbool CUSP::BoundedSAT(
     *solutionCount = modelsSet.size();
     cout << "solutions:" << solutions << endl;
     vector<Lit> cls_that_removes;
-    cls_that_removes.push_back(Lit(activationVar, false));
+    cls_that_removes.push_back(Lit(act_var, false));
     solver->add_clause(cls_that_removes);
     if (ret == l_Undef) {
         must_interrupt.store(false, std::memory_order_relaxed);
