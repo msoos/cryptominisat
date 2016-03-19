@@ -42,14 +42,6 @@ public:
     {
     }
 
-    BitArray(const BitArray& b) :
-        size(b.size)
-    {
-        mp = (uint64_t*)malloc(size*sizeof(uint64_t));
-        assert(mp != NULL);
-        memcpy(mp, b.mp, sizeof(uint64_t)*size);
-    }
-
     ~BitArray()
     {
         free(mp);
@@ -76,40 +68,6 @@ public:
             *t1 &= *t2;
             ++t1;
             ++t2;
-        }
-
-        return *this;
-    }
-
-    BitArray& removeThese(const BitArray& b)
-    {
-        assert(size == b.size);
-        uint64_t* t1 = mp;
-        uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; ++i) {
-            *t1 &= ~(*t2);
-            ++t1;
-            ++t2;
-        }
-
-        return *this;
-    }
-
-    template<class T>
-    BitArray& removeThese(const T& rem)
-    {
-        for (size_t i = 0; i < rem.size(); ++i) {
-            clearBit(rem[i]);
-        }
-
-        return *this;
-    }
-
-    template<class T>
-    BitArray& removeTheseLit(const T& rem)
-    {
-        for (uint32_t i = 0; i < rem.size(); i++) {
-            clearBit(rem[i].var());
         }
 
         return *this;
