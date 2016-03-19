@@ -462,7 +462,7 @@ void XorFinder::xor_together_xors()
             continue;
         }
 
-        vector<uint32_t> vars = xor_two(x[0], x[1], idxes[0], idxes[1]);
+        vector<uint32_t> vars = xor_two(x[0], x[1]);
         Xor x_new(vars, x[0].rhs ^ x[1].rhs);
         xors.push_back(x_new);
         for(uint32_t v: x_new) {
@@ -600,8 +600,7 @@ bool XorFinder::add_new_truths_from_xors()
 
 vector<uint32_t> XorFinder::xor_two(
     Xor& x1, Xor& x2
-    , const size_t idx1, const size_t idx2)
-{
+) {
     x1.sort();
     x2.sort();
     vector<uint32_t> ret;

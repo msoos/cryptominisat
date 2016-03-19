@@ -32,6 +32,7 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <cassert>
 #include "src/solver.h"
 #include "src/stamp.h"
 #include "src/xor.h"
@@ -87,7 +88,8 @@ vector<Lit> str_to_cl(const string& data)
     vector<Lit> ret;
     for(string& token: tokens) {
         long int i = str_to_long_int(token);
-        Lit lit(abs(i)-1, i < 0);
+        assert(i == (int)i);
+        Lit lit(std::abs(i)-1, i < 0);
         ret.push_back(lit);
     }
     //cout << "input is: " << data << " LITs is: " << ret << endl;

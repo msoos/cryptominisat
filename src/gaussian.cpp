@@ -913,13 +913,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
     #endif
 
     assert(m.matrix.getMatrixAt(row).popcnt() == 1);
-    const bool rhs = m.matrix.getVarsetAt(row).rhs();
     m.matrix.getVarsetAt(row).fill(tmp_clause, solver->assigns, col_to_var_original);
     #ifdef VERBOSE_DEBUG
     //Used with check_gauss.py
     cout << "(" << matrix_no << ") prop clause: "
     << tmp_clause << " , "
-    << "rhs:" << rhs << endl;
+    << "rhs:" << m.matrix.getVarsetAt(row).rhs() << endl;
     cout << "varData [0]:" << removed_type_to_string(solver->varData[tmp_clause[0].var()].removed) << endl;
     #endif
     #ifdef DEBUG_GAUSS
