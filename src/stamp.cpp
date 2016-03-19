@@ -87,7 +87,7 @@ bool Stamp::stampBasedClRem(
         }
     }
 
-    return false;
+    assert(false);
 }
 
 void Stamp::updateVars(

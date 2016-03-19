@@ -405,7 +405,6 @@ bool ClauseCleaner::clean_one_xor(Xor& x)
         }
         default: {
             return true;
-            break;
         }
     }
 }

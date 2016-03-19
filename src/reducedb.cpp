@@ -95,9 +95,7 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
         }
 
         default: {
-            cout << "Unknown cleaning type: " << clean_to_int(clean_type) << endl;
-            assert(false);
-            exit(-1);
+            assert(false && "Unknown cleaning type");
         }
     }
 }

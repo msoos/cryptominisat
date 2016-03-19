@@ -3093,15 +3093,12 @@ uint32_t Solver::num_active_vars() const
             case Removed::decomposed :
                 removed_decomposed++;
                 continue;
-                break;
             case Removed::elimed :
                 removed_elimed++;
                 continue;
-                break;
             case Removed::replaced:
                 removed_replaced++;
                 continue;
-                break;
             case Removed::none:
                 break;
         }

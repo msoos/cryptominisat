@@ -776,8 +776,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
             case null_clause_t:
             default:
                 release_assert(false);
-                std::exit(-1);
-                break;
         }
 
         for (size_t i = 0
@@ -805,8 +803,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 case null_clause_t:
                 default:
                     release_assert(false);
-                    std::exit(-1);
-                    break;
             }
             stats.recMinimCost++;
 
@@ -1413,14 +1409,14 @@ void Searcher::print_learning_debug_info() const
 {
     #ifndef VERBOSE_DEBUG
     return;
-    #endif
-
+    #else
     cout
     << "Learning:" << learnt_clause
     << endl
     << "reverting var " << learnt_clause[0].var()+1
     << " to " << !learnt_clause[0].sign()
     << endl;
+    #endif
 }
 
 void Searcher::print_learnt_clause() const

@@ -52,7 +52,7 @@ inline unsigned clean_to_int(ClauseClean t)
             return 2;
     }
 
-    exit(-1);
+    assert(false);
 }
 
 enum class PolarityMode {
@@ -104,8 +104,6 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
     }
 
     assert(false && "Unknown elimination strategy type");
-    std::exit(-1);
-    return "";
 }
 
 class SolverConf
