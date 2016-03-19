@@ -905,6 +905,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
+                solver->xorclauses.clear();
+                solver->clear_gauss();
+
                 eliminate_empty_resolvent_vars();
                 eliminate_vars();
             }
