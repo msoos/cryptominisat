@@ -3229,7 +3229,7 @@ void Searcher::clearGaussMatrixes()
 void Searcher::clear_gauss()
 {
     for(Gaussian* g: gauss_matrixes) {
-        if (conf.verbosity >= 3) {
+        if (conf.verbosity >= 2) {
             g->print_stats();
         }
         delete g;
