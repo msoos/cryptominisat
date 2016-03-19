@@ -265,15 +265,6 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
                 vars.push_back(independent_vars[j]);
             }
         }
-        cout << "Adding XOR clause: ";
-        for(size_t i = 0; i < vars.size(); i++) {
-            cout << vars[i] + 1;
-            if (i + 1 < vars.size()) {
-                cout << " + ";
-            }
-        }
-        cout << endl;
-
         solver->add_xor_clause(vars, rhs);
         if (conf.verbosity >= 3) {
             print_xor(vars, rhs);
