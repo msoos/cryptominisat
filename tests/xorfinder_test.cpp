@@ -124,6 +124,27 @@ TEST_F(xor_finder, find_4_1)
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
 }
 
+TEST_F(xor_finder, find_4_4)
+{
+    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
+    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
+    s->add_clause_outer(str_to_cl("1, 2, -3, -4"));
+    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
+    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
+    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1");
+}
+
+/*
+ * These tests only work if the matching is non-exact
+ * i.e. if size is not checked for equality
+ *
 TEST_F(xor_finder, find_4_2)
 {
     s->add_clause_outer(str_to_cl("-1, 2, 3, 4"));
@@ -160,21 +181,35 @@ TEST_F(xor_finder, find_4_3)
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
 }
 
-TEST_F(xor_finder, find_4_4)
+TEST_F(xor_finder, find_5_2)
 {
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4"));
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  -3, 4"));
-    s->add_clause_outer(str_to_cl("-1, 2,  3, -4"));
-    s->add_clause_outer(str_to_cl("1, -2,  3, -4"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3"));
+    s->add_clause_outer(str_to_cl("-1, 2, 3"));
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
+    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
+
+    //
+
+    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
+    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
+
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
 
     occsimp->setup();
     XorFinder finder(occsimp, s);
     finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4 = 1");
+    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
 }
 
 TEST_F(xor_finder, find_4_5)
@@ -203,6 +238,7 @@ TEST_F(xor_finder, find_4_5)
     finder.find_xors();
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 1; 1, 2, 3, 4 = 0");
 }
+*/
 
 TEST_F(xor_finder, find_5_1)
 {
@@ -210,37 +246,6 @@ TEST_F(xor_finder, find_5_1)
     s->add_clause_outer(str_to_cl("-1, 2, -3, 4, 5"));
     s->add_clause_outer(str_to_cl("-1, 2, 3, -4, 5"));
     s->add_clause_outer(str_to_cl("-1, 2, 3, 4, -5"));
-
-    s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, -2, 3, 4, -5"));
-
-    s->add_clause_outer(str_to_cl("1, 2, -3, -4, 5"));
-    s->add_clause_outer(str_to_cl("1, 2, -3, 4, -5"));
-
-    s->add_clause_outer(str_to_cl("1, 2, 3, -4, -5"));
-
-    //
-
-    s->add_clause_outer(str_to_cl("1, -2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, 3, -4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, 4, -5"));
-    s->add_clause_outer(str_to_cl("-1, -2, -3, -4, 5"));
-
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
-
-    occsimp->setup();
-    XorFinder finder(occsimp, s);
-    finder.find_xors();
-    check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
-}
-
-TEST_F(xor_finder, find_5_2)
-{
-    s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
-    s->add_clause_outer(str_to_cl("-1, 2, -3"));
-    s->add_clause_outer(str_to_cl("-1, 2, 3"));
 
     s->add_clause_outer(str_to_cl("1, -2, -3, 4, 5"));
     s->add_clause_outer(str_to_cl("1, -2, 3, -4, 5"));

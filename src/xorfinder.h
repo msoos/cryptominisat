@@ -181,20 +181,10 @@ private:
     void findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst);
 
     ///Normal finding of matching clause for XOR
-    void findXorMatch(watch_subarray_const occ);
     void findXorMatch(
         watch_subarray_const occ
         , const Lit lit
     );
-    void findXorMatchExt(
-        watch_subarray_const occ
-        , const Lit lit
-    );
-    //TODO stamping finXorMatch with stamp
-    /*void findXorMatch(
-        const vector<LitExtra>& lits
-        , const Lit lit
-    ) const;*/
 
     OccSimplifier* occsimplifier;
     Solver *solver;
