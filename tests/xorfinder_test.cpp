@@ -272,6 +272,89 @@ TEST_F(xor_finder, find_5_1)
     check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
 }
 
+TEST_F(xor_finder, find_6_0)
+{
+    s->add_clause_outer(str_to_cl("1, -7, -3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-1, 7, -3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-1, -7, 3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("1, 7, 3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-1, -7, -3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("1, 7, -3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("1, -7, 3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-1, 7, 3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-1, -7, -3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("1, 7, -3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("1, -7, 3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-1, 7, 3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("1, -7, -3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-1, 7, -3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-1, -7, 3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("1, 7, 3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-1, -7, -3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("1, 7, -3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("1, -7, 3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-1, 7, 3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("1, -7, -3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-1, 7, -3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-1, -7, 3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("1, 7, 3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("1, -7, -3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-1, 7, -3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-1, -7, 3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("1, 7, 3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-1, -7, -3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("1, 7, -3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("1, -7, 3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-1, 7, 3, 4, 5, 9"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "1, 7, 3, 4, 5, 9 = 0;");
+}
+
+TEST_F(xor_finder, find_6_1)
+{
+    s->add_clause_outer(str_to_cl("-6, -7, -3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("6, 7, -3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("6, -7, 3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-6, 7, 3, -4, -5, -9"));
+    s->add_clause_outer(str_to_cl("6, -7, -3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-6, 7, -3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("-6, -7, 3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("6, 7, 3, 4, -5, -9"));
+    s->add_clause_outer(str_to_cl("6, -7, -3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-6, 7, -3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-6, -7, 3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("6, 7, 3, -4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-6, -7, -3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("6, 7, -3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("6, -7, 3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("-6, 7, 3, 4, 5, -9"));
+    s->add_clause_outer(str_to_cl("6, -7, -3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-6, 7, -3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-6, -7, 3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("6, 7, 3, -4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-6, -7, -3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("6, 7, -3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("6, -7, 3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-6, 7, 3, 4, -5, 9"));
+    s->add_clause_outer(str_to_cl("-6, -7, -3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("6, 7, -3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("6, -7, 3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-6, 7, 3, -4, 5, 9"));
+    s->add_clause_outer(str_to_cl("6, -7, -3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-6, 7, -3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("-6, -7, 3, 4, 5, 9"));
+    s->add_clause_outer(str_to_cl("6, 7, 3, 4, 5, 9"));
+
+    occsimp->setup();
+    XorFinder finder(occsimp, s);
+    finder.find_xors();
+    check_xors_eq(finder.xors, "6, 7, 3, 4, 5, 9 = 1;");
+}
+
+
 TEST_F(xor_finder, clean_v1)
 {
     XorFinder finder(occsimp, s);
