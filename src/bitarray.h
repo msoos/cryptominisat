@@ -36,15 +36,17 @@ namespace CMSat {
 class BitArray
 {
 public:
-    BitArray() :
-        size(0)
-        , mp(NULL)
-    {
-    }
-
     ~BitArray()
     {
         free(mp);
+    }
+
+    BitArray()
+    {}
+
+    BitArray(const BitArray& other)
+    {
+        *this = other;
     }
 
     BitArray& operator=(const BitArray& b)
@@ -55,20 +57,6 @@ public:
             size = b.size;
         }
         memcpy(mp, b.mp, size*sizeof(uint64_t));
-
-        return *this;
-    }
-
-    BitArray& operator&=(const BitArray& b)
-    {
-        assert(size == b.size);
-        uint64_t* t1 = mp;
-        uint64_t* t2 = b.mp;
-        for (uint64_t i = 0; i < size; ++i) {
-            *t1 &= *t2;
-            ++t1;
-            ++t2;
-        }
 
         return *this;
     }
@@ -139,8 +127,8 @@ public:
 
 private:
 
-    uint32_t size;
-    uint64_t* mp;
+    uint32_t size = 0;
+    uint64_t* mp = NULL;
 };
 
 } //end namespace
