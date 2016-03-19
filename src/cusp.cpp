@@ -315,91 +315,6 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     return solutions;
 }
 
-lbool CUSP::BoundedSAT(
-    uint32_t maxSolutions
-    , uint32_t minSolutions
-    , vector<Lit>& assumps
-    , std::map<string, uint32_t>& solutionMap
-    , uint32_t* solutionCount
-)
-{
-    unsigned long solutions = 0;
-    lbool ret = l_True;
-    solver->new_var();
-    uint32_t act_var = solver->nVars()-1;
-    vector<Lit> allSATAssumptions(assumps);
-    allSATAssumptions.push_back(Lit(act_var, true));
-
-    std::vector<vector<lbool>> modelsSet;
-    vector<lbool> model;
-    //signal(SIGALRM, SIGALARM_handler);
-    start_timer(loopTimeout);
-    while (solutions < maxSolutions && ret == l_True) {
-        cout << "BoundedSAT solve!" << endl;
-        ret = solver->solve(&allSATAssumptions);
-        solutions++;
-
-        if (ret == l_True && solutions < maxSolutions) {
-            vector<Lit> lits;
-            lits.push_back(Lit(act_var, false));
-            model.clear();
-            model = solver->get_model();
-            modelsSet.push_back(model);
-            for (uint32_t j = 0; j < independent_vars.size(); j++) {
-                uint32_t var = independent_vars[j];
-                if (solver->get_model()[var] != l_Undef) {
-                    lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
-                }
-            }
-            solver->add_clause(lits);
-        }
-    }
-    *solutionCount = modelsSet.size();
-    cout << "solutions:" << solutions << endl;
-    vector<Lit> cls_that_removes;
-    cls_that_removes.push_back(Lit(act_var, false));
-    solver->add_clause(cls_that_removes);
-    if (ret == l_Undef) {
-        must_interrupt.store(false, std::memory_order_relaxed);
-        return ret;
-    }
-
-    if (solutions < maxSolutions && solutions > minSolutions) {
-        std::vector<int> modelIndices;
-        for (uint32_t i = 0; i < modelsSet.size(); i++) {
-            modelIndices.push_back(i);
-        }
-        std::shuffle(modelIndices.begin(), modelIndices.end(), randomEngine);
-        uint32_t var;
-        uint32_t numSolutionsToReturn = SolutionsToReturn(minSolutions);
-        for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
-            vector<lbool> model = modelsSet.at(modelIndices.at(i));
-            string solution ("v");
-            for (uint32_t j = 0; j < independent_vars.size(); j++) {
-                var = independent_vars[j];
-                if (model[var] != l_Undef) {
-                    if (model[var] != l_True) {
-                        solution += "-";
-                    }
-                    solution += std::to_string(var + 1);
-                    solution += " ";
-                }
-            }
-            solution += "0";
-
-            std::map<string, uint32_t>::iterator it = solutionMap.find(solution);
-            if (it == solutionMap.end()) {
-                solutionMap[solution] = 0;
-            }
-            solutionMap[solution] += 1;
-        }
-        return l_True;
-
-    }
-
-    return l_False;
-}
-
 bool CUSP::ApproxMC(SATCount& count)
 {
     count.clear();
@@ -763,6 +678,92 @@ uint32_t CUSP::UniGen(
     }
     return sampleCounter;
 }
+
+lbool CUSP::BoundedSAT(
+    uint32_t maxSolutions
+    , uint32_t minSolutions
+    , vector<Lit>& assumps
+    , std::map<string, uint32_t>& solutionMap
+    , uint32_t* solutionCount
+)
+{
+    unsigned long solutions = 0;
+    lbool ret = l_True;
+    solver->new_var();
+    uint32_t act_var = solver->nVars()-1;
+    vector<Lit> allSATAssumptions(assumps);
+    allSATAssumptions.push_back(Lit(act_var, true));
+
+    std::vector<vector<lbool>> modelsSet;
+    vector<lbool> model;
+
+    start_timer(loopTimeout);
+    while (solutions < maxSolutions && ret == l_True) {
+        cout << "BoundedSAT solve!" << endl;
+        ret = solver->solve(&allSATAssumptions);
+        solutions++;
+
+        if (ret == l_True && solutions < maxSolutions) {
+            vector<Lit> lits;
+            lits.push_back(Lit(act_var, false));
+            model.clear();
+            model = solver->get_model();
+            modelsSet.push_back(model);
+            for (uint32_t j = 0; j < independent_vars.size(); j++) {
+                uint32_t var = independent_vars[j];
+                if (solver->get_model()[var] != l_Undef) {
+                    lits.push_back(Lit(var, (solver->get_model()[var] == l_True) ? true : false));
+                }
+            }
+            solver->add_clause(lits);
+        }
+    }
+    *solutionCount = modelsSet.size();
+    cout << "solutions:" << solutions << endl;
+    vector<Lit> cls_that_removes;
+    cls_that_removes.push_back(Lit(act_var, false));
+    solver->add_clause(cls_that_removes);
+    if (ret == l_Undef) {
+        must_interrupt.store(false, std::memory_order_relaxed);
+        return ret;
+    }
+
+    if (solutions < maxSolutions && solutions > minSolutions) {
+        std::vector<int> modelIndices;
+        for (uint32_t i = 0; i < modelsSet.size(); i++) {
+            modelIndices.push_back(i);
+        }
+        std::shuffle(modelIndices.begin(), modelIndices.end(), randomEngine);
+        uint32_t var;
+        uint32_t numSolutionsToReturn = SolutionsToReturn(minSolutions);
+        for (uint32_t i = 0; i < numSolutionsToReturn; i++) {
+            vector<lbool> model = modelsSet.at(modelIndices.at(i));
+            string solution ("v");
+            for (uint32_t j = 0; j < independent_vars.size(); j++) {
+                var = independent_vars[j];
+                if (model[var] != l_Undef) {
+                    if (model[var] != l_True) {
+                        solution += "-";
+                    }
+                    solution += std::to_string(var + 1);
+                    solution += " ";
+                }
+            }
+            solution += "0";
+
+            std::map<string, uint32_t>::iterator it = solutionMap.find(solution);
+            if (it == solutionMap.end()) {
+                solutionMap[solution] = 0;
+            }
+            solutionMap[solution] += 1;
+        }
+        return l_True;
+
+    }
+
+    return l_False;
+}
+
 
 int CUSP::uniGenCall(
     uint32_t samples
