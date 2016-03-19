@@ -197,6 +197,7 @@ uint32_t Gaussian::select_columnorder(
     }
 
     var_to_col.resize(largest_used_var + 1);
+    var_is_in.setZero();
     var_is_in.resize(var_to_col.size(), 0);
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
