@@ -199,7 +199,6 @@ private:
 
     //Other temporaries
     vector<uint16_t>& seen;
-    vector<uint16_t>& seen2;
     vector<Lit>& toClear;
 };
 

@@ -36,7 +36,6 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     occsimplifier(_occsimplifier)
     , solver(_solver)
     , seen(_solver->seen)
-    , seen2(_solver->seen2)
     , toClear(_solver->toClear)
 {
 }
