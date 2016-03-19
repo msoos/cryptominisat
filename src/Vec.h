@@ -74,12 +74,11 @@ public:
 
     void shrink_to_fit()
     {
-        T* _data2 = (T*)malloc(sz*sizeof(T));
+        T* _data2 = (T*)realloc(_data, sz*sizeof(T));
         if (!_data2) {
-            throw std::bad_alloc();
+            //We just keep the size then.
+            return;
         }
-        memcpy(_data2, _data, sz*sizeof(T));
-        free(_data);
         _data = _data2;
         cap = sz;
     }
