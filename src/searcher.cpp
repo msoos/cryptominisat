@@ -2105,6 +2105,7 @@ bool Searcher::pickPolarity(const uint32_t var)
 
         case PolarityMode::polarmode_automatic:
             return varData[var].polarity;
+
         default:
             assert(false);
     }
