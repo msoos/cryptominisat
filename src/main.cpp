@@ -528,8 +528,6 @@ void Main::add_supported_options()
 
     po::options_description propOptions("Propagation options");
     propOptions.add_options()
-    ("updateglueonprop", po::value(&conf.update_glues_on_prop)->default_value(conf.update_glues_on_prop)
-        , "Update glues while propagating")
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
     ("binpri", po::value(&conf.propBinFirst)->default_value(conf.propBinFirst)

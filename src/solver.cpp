@@ -3287,7 +3287,6 @@ void Solver::reconfigure(int val)
             conf.intree_time_limitM = 1652;
             conf.bva_also_twolit_diff = 0;
             conf.blocking_restart_trail_hist_length = 1;
-            conf.update_glues_on_prop = 1;
             conf.dominPickFreq = 503;
             conf.sccFindPercent = 0.0174091218619471;
             conf.do_empty_varelim = 1;
@@ -3338,7 +3337,6 @@ void Solver::reconfigure(int val)
 
             conf.inc_max_temp_red_cls = 1.02;
             conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.update_glues_on_prop = 0;
             conf.update_glues_on_analyze = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
