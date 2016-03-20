@@ -20,7 +20,6 @@
 */
 
 #include "stamp.h"
-#include "varreplacer.h"
 #include "varupdatehelper.h"
 
 using namespace CMSat;

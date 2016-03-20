@@ -31,7 +31,6 @@
 namespace CMSat {
 
 using std::vector;
-class VarReplacer;
 
 enum StampType {
     STAMP_IRRED = 0
