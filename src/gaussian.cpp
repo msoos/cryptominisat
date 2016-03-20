@@ -191,7 +191,7 @@ uint32_t Gaussian::select_columnorder(
         //Too large to handle
         return 0;
     }
-    if (xors.size() < std::numeric_limits<uint16_t>::max()-1) {
+    if (xors.size() >= std::numeric_limits<uint16_t>::max()-1) {
         //Too large to handle
         return 0;
     }
