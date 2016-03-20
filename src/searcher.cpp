@@ -2190,6 +2190,7 @@ Lit Searcher::pickBranchLit()
         }
     }
 
+    #ifdef MORE_DEBUG
     if (conf.verbosity >= 10) {
         if (next == lit_Undef) {
             cout << "SAT!" << endl;
@@ -2197,6 +2198,7 @@ Lit Searcher::pickBranchLit()
             cout << "decided on: " << next << endl;
         }
     }
+    #endif
 
     //No vars in heap: solution found
     if (next != lit_Undef) {
