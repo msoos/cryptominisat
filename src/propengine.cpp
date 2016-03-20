@@ -1082,15 +1082,13 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         propStats.bogoProps += 1;
     }
 
+    #ifdef STATS_NEEDED
     if (sign) {
-        #ifdef STATS_NEEDED
         propStats.varSetNeg++;
-        #endif
     } else {
-        #ifdef STATS_NEEDED
         propStats.varSetPos++;
-        #endif
     }
+    #endif
 
     //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
     if (!update_bogoprops
