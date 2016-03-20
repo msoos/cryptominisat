@@ -157,7 +157,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Propagation & search
         , propBinFirst     (false)
-        , dominPickFreq    (0)
 
         //Iterative Alo Scheduling
         , simplify_at_startup(true)
@@ -231,7 +230,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(30LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
-        , doCalcReach      (true)
 
         //Gates
         , doGateFind       (false)

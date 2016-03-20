@@ -223,7 +223,6 @@ class Prober {
         void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo);
         void check_if_must_disable_cache_update();
         vector<uint32_t> randomize_possible_choices();
-        Lit update_lit_for_dominator(Lit lit);
         void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);
         bool check_timeout_due_to_hyperbin();
 

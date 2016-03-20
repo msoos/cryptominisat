@@ -65,16 +65,6 @@ class SharedData;
 class ReduceDB;
 class InTree;
 
-class LitReachData {
-    public:
-        LitReachData() :
-            lit(lit_Undef)
-            , numInCache(0)
-        {}
-        Lit lit;
-        uint32_t numInCache;
-};
-
 struct SolveStats
 {
     uint64_t numSimplify = 0;
@@ -150,8 +140,6 @@ class Solver : public Searcher
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImplStamp* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
-
-        vector<LitReachData> litReachable;
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
@@ -259,17 +247,6 @@ class Solver : public Searcher
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();
-        struct ReachabilityStats
-        {
-            ReachabilityStats& operator+=(const ReachabilityStats& other);
-            void print() const;
-            void print_short(const Solver* solver) const;
-
-            double cpu_time = 0.0;
-            size_t numLits = 0;
-            size_t dominators = 0;
-            size_t numLitsDependent = 0;
-        };
 
         lbool solve();
         lbool simplify_problem_outside();
@@ -331,10 +308,6 @@ class Solver : public Searcher
         // Data
         size_t               zeroLevAssignsByCNF = 0;
         size_t               zero_level_assigns_by_searcher = 0;
-        void calculate_reachability();
-
-        //Main up stats
-        ReachabilityStats reachStats;
 
         /////////////////////
         // Clauses

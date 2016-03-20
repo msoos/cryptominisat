@@ -295,24 +295,6 @@ void Prober::check_if_must_disable_cache_update()
     }
 }
 
-Lit Prober::update_lit_for_dominator(
-    Lit lit
-) {
-    if (solver->conf.doCache) {
-        if (solver->litReachable[lit.toInt()].lit != lit_Undef) {
-            const Lit betterlit = solver->litReachable[lit.toInt()].lit;
-            if (solver->value(betterlit.var()) == l_Undef
-                && solver->varData[betterlit.var()].removed == Removed::none
-            ) {
-                //Update lit
-                lit = betterlit;
-            }
-        }
-    }
-
-    return lit;
-}
-
 vector<uint32_t> Prober::randomize_possible_choices()
 {
     vars_to_probe.clear();
@@ -396,7 +378,6 @@ bool Prober::probe(vector<uint32_t>* probe_order)
             continue;
         }
 
-        lit = update_lit_for_dominator(lit);
         runStats.numVarProbed++;
         extraTime += 20;
 

@@ -2159,35 +2159,11 @@ Lit Searcher::pickBranchLit()
 
     //Flip polaritiy if need be
     if (false
+        &&mtrand.randInt(50) == 1
         && next != lit_Undef
     ) {
         next ^= true;
         stats.decisionFlippedPolar++;
-    }
-
-    //Try to update to dominator
-    if (next != lit_Undef
-        && conf.dominPickFreq > 0
-        && (mtrand.randInt(conf.dominPickFreq) == 1)
-    ) {
-        Lit lit2 = lit_Undef;
-        if (conf.doCache) {
-            //Use cache
-            lit2 = solver->litReachable[next.toInt()].lit;
-        }
-
-        //Update
-        if (lit2 != lit_Undef
-            && value(lit2.var()) == l_Undef
-            && solver->varData[lit2.var()].removed == Removed::none
-        ) {
-            //Dominator may not actually dominate this variabe
-            //So just to be sure, re-insert it
-            insertVarOrder(next.var());
-
-            //Save this literal & sign
-            next = lit2;
-        }
     }
 
     #ifdef VERBOSE_DEBUG

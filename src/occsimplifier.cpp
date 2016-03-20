@@ -1062,7 +1062,7 @@ bool OccSimplifier::fill_occur()
 }
 
 //This must NEVER be called during solve. Only JUST BEFORE Solver::solve() is called
-//otherwise, uneliminated_vars_since_last_solve will be wrong and stamp dominators will not be cleared
+//otherwise, uneliminated_vars_since_last_solve will be wrong
 bool OccSimplifier::uneliminate(uint32_t var)
 {
     assert(solver->decisionLevel() == 0);

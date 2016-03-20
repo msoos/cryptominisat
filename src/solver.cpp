@@ -974,9 +974,6 @@ void Solver::new_vars(size_t n)
 
     check_switchoff_limits_newvar(n);
     Searcher::new_vars(n);
-    if (conf.doCache) {
-        litReachable.resize(litReachable.size()+n*2, LitReachData());
-    }
     varReplacer->new_vars(n);
 
     if (conf.perform_occur_based_simp) {
@@ -993,10 +990,6 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
 {
     check_switchoff_limits_newvar();
     Searcher::new_var(bva, orig_outer);
-    if (conf.doCache) {
-        litReachable.push_back(LitReachData());
-        litReachable.push_back(LitReachData());
-    }
 
     varReplacer->new_var(orig_outer);
 
@@ -1027,8 +1020,6 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     minNumVars = newNumVars;
     Searcher::save_on_var_memory();
 
-    litReachable.resize(nVars()*2);
-    litReachable.shrink_to_fit();
     varReplacer->save_on_var_memory();
     if (occsimplifier) {
         occsimplifier->save_on_var_memory();
@@ -1699,8 +1690,6 @@ bool Solver::execute_inprocess_strategy(
                         << endl;
                     }
                     implCache.free();
-                    vector<LitReachData> tmp;
-                    litReachable.swap(tmp);
                     conf.doCache = false;
                 }
             }
@@ -1829,13 +1818,6 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Free unused watch memory
     free_unused_watches();
-    //addSymmBreakClauses();
-
-    //Re-calculate reachability after re-numbering and new cache data
-    //This may actually affect correctness/code sanity, so we must do it!
-    if (conf.doCache) {
-        calculate_reachability();
-    }
 
     if (conf.verbosity >= 6) {
         cout << "c " << __PRETTY_FUNCTION__ << " finished" << endl;
@@ -2107,13 +2089,6 @@ void Solver::print_all_stats(const double cpu_time) const
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
     reduceDB->get_stats().print(cpu_time);
 
-    print_stats_line("c reachability time"
-        , reachStats.cpu_time
-        , stats_line_percent(reachStats.cpu_time, cpu_time)
-        , "% time"
-    );
-    reachStats.print();
-
     print_stats_line("c 0-depth assigns", trail.size()
         , stats_line_percent(trail.size(), nVars())
         , "% vars"
@@ -2240,7 +2215,6 @@ size_t Solver::mem_used() const
 {
     size_t mem = 0;
     mem += Searcher::mem_used();
-    mem += litReachable.capacity()*sizeof(Lit);
     mem += outside_assumptions.capacity()*sizeof(Lit);
 
     return mem;
@@ -2280,14 +2254,6 @@ void Solver::print_mem_stats() const
     account += mem;
 
     mem = implCache.mem_used();
-    mem += litReachable.capacity()*sizeof(LitReachData);
-    print_stats_line("c Mem for impl cache"
-        , mem/(1024UL*1024UL)
-        , "MB"
-        , stats_line_percent(mem, rss_mem_used)
-        , "%"
-    );
-    account += mem;
 
     account += print_stamp_mem(rss_mem_used);
 
@@ -2767,57 +2733,6 @@ size_t Solver::get_num_vars_elimed() const
     }
 }
 
-void Solver::calculate_reachability()
-{
-    double myTime = cpuTime();
-
-    //Clear out
-    for (size_t i = 0; i < nVars()*2; i++) {
-        litReachable[i] = LitReachData();
-    }
-
-    //Go through each that is decision variable
-    for (size_t i = 0, end = nVars()*2; i < end; i++) {
-        const Lit lit = Lit::toLit(i);
-
-        //Check if it's a good idea to look at the variable as a dominator
-        if (value(lit) != l_Undef
-            || varData[lit.var()].removed != Removed::none
-        ) {
-            continue;
-        }
-
-        const vector<LitExtra>& cache = implCache[lit].lits;
-        uint32_t cacheSize = cache.size();
-        for (const LitExtra litex: cache) {
-            assert(litex.getLit() != lit);
-            assert(litex.getLit() != ~lit);
-
-            if (litReachable[litex.getLit().toInt()].lit == lit_Undef
-                || litReachable[litex.getLit().toInt()].numInCache < cacheSize
-            ) {
-                litReachable[litex.getLit().toInt()].lit = ~lit;
-                litReachable[litex.getLit().toInt()].numInCache = cacheSize;
-            }
-        }
-    }
-
-    const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 1) {
-        cout
-        << "c calculated reachability. T: "
-        << std::setprecision(3) << time_used
-        << endl;
-    }
-    if (sqlStats) {
-        sqlStats->time_passed_min(
-            this
-            , "calc reachability"
-            , time_used
-        );
-    }
-}
-
 void Solver::free_unused_watches()
 {
     size_t wsLit = 0;
@@ -2991,60 +2906,6 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
     }
 
     return ret;
-}
-
-Solver::ReachabilityStats& Solver::ReachabilityStats::operator+=(const ReachabilityStats& other)
-{
-    cpu_time += other.cpu_time;
-
-    numLits += other.numLits;
-    dominators += other.dominators;
-    numLitsDependent += other.numLitsDependent;
-
-    return *this;
-}
-
-void Solver::ReachabilityStats::print() const
-{
-    cout << "c ------- REACHABILITY STATS -------" << endl;
-    print_stats_line("c time"
-        , cpu_time
-    );
-
-    print_stats_line("c dominator lits"
-        , stats_line_percent(dominators, numLits)
-        , "% of unknowns lits"
-    );
-
-    print_stats_line("c dependent lits"
-        , stats_line_percent(numLitsDependent, numLits)
-        , "% of unknown lits"
-    );
-
-    print_stats_line("c avg num. dominated lits"
-        , ratio_for_stat(numLitsDependent, dominators)
-    );
-
-    cout << "c ------- REACHABILITY STATS END -------" << endl;
-}
-
-void Solver::ReachabilityStats::print_short(const Solver* solver) const
-{
-    cout
-    << "c [reach]"
-    << " dom lits: " << std::fixed << std::setprecision(2)
-    << stats_line_percent(dominators, numLits)
-    << " %"
-
-    << " dep-lits: " << std::fixed << std::setprecision(2)
-    << stats_line_percent(numLitsDependent, numLits)
-    << " %"
-
-    << " dep-lits/dom-lits : " << std::fixed << std::setprecision(2)
-    << stats_line_percent(numLitsDependent, dominators)
-
-    << solver->conf.print_times(cpu_time)
-    << endl;
 }
 
 void Solver::update_assumptions_after_varreplace()
@@ -3285,7 +3146,6 @@ void Solver::reconfigure(int val)
             conf.intree_time_limitM = 1652;
             conf.bva_also_twolit_diff = 0;
             conf.blocking_restart_trail_hist_length = 1;
-            conf.dominPickFreq = 503;
             conf.sccFindPercent = 0.0174091218619471;
             conf.do_empty_varelim = 1;
             conf.updateVarElimComplexityOTF = 1;
@@ -3371,7 +3231,6 @@ void Solver::save_state(const string& fname, const lbool status) const
     //f.put_struct(sumStats);
     //f.put_struct(sumPropStats);
     //f.put_vector(outside_assumptions);
-    //f.put_vector(litReachable);
 
     varReplacer->save_state(f);
     if (occsimplifier) {
@@ -3389,7 +3248,6 @@ lbool Solver::load_state(const string& fname)
     //f.get_struct(sumStats);
     //f.get_struct(sumPropStats);
     //f.get_vector(outside_assumptions);
-    //f.get_vector(litReachable);
 
     varReplacer->load_state(f);
     if (occsimplifier) {

@@ -254,7 +254,6 @@ class SolverConf
 
         //Propagation & searching
         int      propBinFirst;
-        unsigned  dominPickFreq;
 
         //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)
@@ -302,7 +301,6 @@ class SolverConf
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;
-        int      doCalcReach; ///<Calculate reachability, and influence variable decisions with that
 
         //Gates
         int      doGateFind; ///< Find OR gates
