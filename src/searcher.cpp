@@ -2149,7 +2149,6 @@ Lit Searcher::pickBranchLit()
                 next_var = var_Undef;
                 break;
             }
-
             next_var = order_heap.remove_min();
         }
 
