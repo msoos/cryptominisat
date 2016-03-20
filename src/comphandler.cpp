@@ -812,7 +812,9 @@ void CompHandler::readdRemovedClauses()
     for(size_t outer = 0; outer < solver->nVarsOuter(); ++outer) {
         const uint32_t inter = solver->map_outer_to_inter(outer);
         VarData& dat = solver->varData[inter];
-        if (dat.removed == Removed::none) {
+        if (dat.removed == Removed::none
+            && solver->value(inter) == l_Undef
+        ) {
             solver->set_decision_var(inter);
         }
     }
