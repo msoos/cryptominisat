@@ -2190,13 +2190,11 @@ Lit Searcher::pickBranchLit()
         }
     }
 
-    #ifdef MORE_DEBUG
-    if (conf.verbosity >= 10) {
-        if (next == lit_Undef) {
-            cout << "SAT!" << endl;
-        } else {
-            cout << "decided on: " << next << endl;
-        }
+    #ifdef VERBOSE_DEBUG
+    if (next == lit_Undef) {
+        cout << "SAT!" << endl;
+    } else {
+        cout << "decided on: " << next << endl;
     }
     #endif
 
