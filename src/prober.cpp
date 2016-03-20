@@ -743,7 +743,7 @@ bool Prober::propagate(Lit& failed)
         if (!confl.isNULL()) {
             uint32_t  glue;
             uint32_t  backtrack_level;
-            solver->analyze_conflict(
+            solver->analyze_conflict<true>(
                 confl
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here

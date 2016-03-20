@@ -200,8 +200,10 @@ class Searcher : public HyperEngine
         // Searching
         /// Search for a given number of conflicts.
         bool last_decision_ended_in_conflict;
+        template<bool update_bogoprops>
         lbool search();
         lbool burst_search();
+        template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, size_t glue);
         void  attach_and_enqueue_learnt_clause(Clause* cl);
@@ -242,6 +244,7 @@ class Searcher : public HyperEngine
         };
         SearchParams params;
         vector<Lit> learnt_clause;
+        template<bool update_bogoprops>
         Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel      //backtrack level
@@ -252,9 +255,11 @@ class Searcher : public HyperEngine
         void mimimize_learnt_clause_more_maybe(const uint32_t glue);
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
+        template<bool update_bogoprops>
         void bump_var_activities_based_on_implied_by_learnts(const uint32_t glue);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(const PropBy confl);
+        template<bool update_bogoprops>
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
         AtecedentData<uint16_t> antec_data;
@@ -302,8 +307,10 @@ class Searcher : public HyperEngine
         void check_otf_subsume(const ClOffset offset, Clause& cl);
         void create_otf_subsuming_implicit_clause(const Clause& cl);
         void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);
+        template<bool update_bogoprops>
         Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p);
         void debug_print_resolving_clause(const PropBy confl) const;
+        template<bool update_bogoprops>
         void add_lit_to_learnt(Lit lit);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
@@ -340,8 +347,10 @@ class Searcher : public HyperEngine
         friend class Gaussian;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
+        template<bool update_bogoprops>
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
+        template<bool update_bogoprops>
         void     bump_var_activitiy  (uint32_t v);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<double>&  activities;

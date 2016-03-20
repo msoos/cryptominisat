@@ -126,6 +126,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
     solver->fill_assumptions_set_from(assumptions);
 }
 
+template<bool update_bogoprops>
 void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
@@ -141,7 +142,7 @@ void Searcher::add_lit_to_learnt(
     if (!seen[var]) {
         seen[var] = 1;
 
-        bump_var_activitiy(var);
+        bump_var_activitiy<update_bogoprops>(var);
         tmp_learnt_clause_size++;
         seen2[lit.toInt()] = 1;
         tmp_learnt_clause_abst |= abst_var(lit.var());
@@ -150,7 +151,7 @@ void Searcher::add_lit_to_learnt(
             pathC++;
 
             //Glucose 2.1
-            if (update_polarity_and_activity
+            if (!update_bogoprops
                 && params.rest_type != Restart::geom
                 && varData[var].reason != PropBy()
             ) {
@@ -412,6 +413,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     }
 }
 
+template<bool update_bogoprops>
 Clause* Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
@@ -428,13 +430,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.triIrred++;
                 stats.resolvs.triIrred++;
             }
-            add_lit_to_learnt(confl.lit3());
+            add_lit_to_learnt<update_bogoprops>(confl.lit3());
 
             if (p == lit_Undef) {
-                add_lit_to_learnt(failBinLit);
+                add_lit_to_learnt<update_bogoprops>(failBinLit);
             }
 
-            add_lit_to_learnt(confl.lit2());
+            add_lit_to_learnt<update_bogoprops>(confl.lit2());
             break;
         }
 
@@ -447,9 +449,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 stats.resolvs.binIrred++;
             }
             if (p == lit_Undef) {
-                add_lit_to_learnt(failBinLit);
+                add_lit_to_learnt<update_bogoprops>(failBinLit);
             }
-            add_lit_to_learnt(confl.lit2());
+            add_lit_to_learnt<update_bogoprops>(confl.lit2());
             break;
         }
 
@@ -472,7 +474,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
             #endif
-            if (cl->red() && update_polarity_and_activity) {
+            if (!update_bogoprops && cl->red()) {
                 bumpClauseAct(cl);
                 if (conf.update_glues_on_analyze
                     && cl->size() < 40 //NOTE MAGIC CONSTANT
@@ -487,7 +489,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 if (p != lit_Undef && j == 0)
                     continue;
 
-                add_lit_to_learnt((*cl)[j]);
+                add_lit_to_learnt<update_bogoprops>((*cl)[j]);
             }
             break;
         }
@@ -570,6 +572,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
     }
 }
 
+template<bool update_bogoprops>
 inline Clause* Searcher::create_learnt_clause(PropBy confl)
 {
     pathC = 0;
@@ -595,7 +598,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        last_resolved_cl = add_literals_from_confl_to_learnt(confl, p);
+        last_resolved_cl = add_literals_from_confl_to_learnt<update_bogoprops>(confl, p);
 
         // Select next implication to look at
         while (!seen[trail[index--].var()]);
@@ -603,7 +606,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         p = trail[index+1];
         assert(p != lit_Undef);
 
-        if (update_polarity_and_activity
+        if (!update_bogoprops
             && conf.doOTFSubsume
             //A long clause
             && last_resolved_cl != NULL
@@ -643,12 +646,14 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     return last_resolved_cl;
 }
 
+template<bool update_bogoprops>
 void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t glue)
 {
+    assert(!update_bogoprops);
     for (const auto dat :implied_by_learnts) {
         const uint32_t v_glue = dat.second;
         if (v_glue < glue) {
-            bump_var_activitiy(dat.first.var());
+            bump_var_activitiy<update_bogoprops>(dat.first.var());
         }
     }
 }
@@ -694,6 +699,7 @@ void Searcher::print_debug_resolution_data(const PropBy confl)
 #endif
 }
 
+template<bool update_bogoprops>
 Clause* Searcher::analyze_conflict(
     const PropBy confl
     , uint32_t& out_btlevel
@@ -710,7 +716,7 @@ Clause* Searcher::analyze_conflict(
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
-    Clause* last_resolved_cl = create_learnt_clause(confl);
+    Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
     glue = calc_glue_using_seen2(learnt_clause);
@@ -719,11 +725,11 @@ Clause* Searcher::analyze_conflict(
 
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
-    if (update_polarity_and_activity
+    if (!update_bogoprops
         && params.rest_type == Restart::glue
         && conf.extra_bump_var_activities_based_on_glue
     ) {
-        bump_var_activities_based_on_implied_by_learnts(glue);
+        bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(glue);
     }
     implied_by_learnts.clear();
 
@@ -828,7 +834,14 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
     return true;
 }
-
+template Clause* Searcher::analyze_conflict<true>(const PropBy confl
+    , uint32_t& out_btlevel
+    , uint32_t& glue
+);
+template Clause* Searcher::analyze_conflict<false>(const PropBy confl
+    , uint32_t& out_btlevel
+    , uint32_t& glue
+);
 
 bool Searcher::subset(const vector<Lit>& A, const Clause& B)
 {
@@ -964,6 +977,7 @@ void Searcher::check_blocking_restart()
     }
 }
 
+template<bool update_bogoprops>
 lbool Searcher::search()
 {
     assert(ok);
@@ -992,7 +1006,7 @@ lbool Searcher::search()
         if (!confl.isNULL()) {
             if (((stats.conflStats.numConflicts & 0xfff) == 0xfff)
                 && var_decay < conf.var_decay_max
-                && update_polarity_and_activity
+                && !update_bogoprops
             ) {
                 var_decay += 0.01;
             }
@@ -1010,7 +1024,7 @@ lbool Searcher::search()
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
             }
             check_blocking_restart();
-            if (!handle_conflict(confl)) {
+            if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_sql(myTime);
                 dump_search_loop_stats();
                 return l_False;
@@ -1519,6 +1533,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     return cl;
 }
 
+template<bool update_bogoprops>
 bool Searcher::handle_conflict(const PropBy confl)
 {
     uint32_t backtrack_level;
@@ -1532,7 +1547,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    Clause* cl = analyze_conflict(
+    Clause* cl = analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
@@ -1553,11 +1568,13 @@ bool Searcher::handle_conflict(const PropBy confl)
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
-    varDecayActivity();
+    varDecayActivity<update_bogoprops>();
     decayClauseAct();
 
     return true;
 }
+template bool Searcher::handle_conflict<true>(const PropBy confl);
+template bool Searcher::handle_conflict<false>(const PropBy confl);
 
 void Searcher::resetStats()
 {
@@ -1585,7 +1602,6 @@ lbool Searcher::burst_search()
     const PolarityMode backup_polar_mode = conf.polarity_mode;
     double backup_var_inc = var_inc;
     double backup_var_decay = var_decay;
-    update_polarity_and_activity = false;
 
     //Set burst config
     conf.random_var_freq = 1;
@@ -1595,14 +1611,13 @@ lbool Searcher::burst_search()
     params.clear();
     params.conflictsToDo = conf.burst_search_len;
     params.rest_type = Restart::never;
-    lbool status = search();
+    lbool status = search<true>();
 
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
     assert(var_decay == backup_var_decay);
     assert(var_inc == backup_var_inc);
-    update_polarity_and_activity = true;
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
@@ -1957,13 +1972,12 @@ lbool Searcher::solve(
         }
 
         assert(watches.get_smudged_list().empty());
-        assert(update_polarity_and_activity);
         print_search_loop_num();
 
         lastRestartConfl = sumConflicts();
         params.clear();
         params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
-        status = search();
+        status = search<false>();
 
         switch (params.rest_type) {
             case Restart::geom:
@@ -2090,7 +2104,7 @@ bool Searcher::pickPolarity(const uint32_t var)
             return mtrand.randInt(1);
 
         case PolarityMode::polarmode_automatic:
-            return getStoredPolarity(var);
+            return varData[var].polarity;
         default:
             assert(false);
     }
@@ -2856,18 +2870,20 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     }
 }
 
+template<bool update_bogoprops>
 inline void Searcher::varDecayActivity()
 {
-    if (!update_polarity_and_activity) {
+    if (update_bogoprops) {
         return;
     }
 
     var_inc *= (1.0 / var_decay);
 }
 
+template<bool update_bogoprops>
 inline void Searcher::bump_var_activitiy(uint32_t var)
 {
-    if (!update_polarity_and_activity) {
+    if (update_bogoprops) {
         return;
     }
 

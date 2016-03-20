@@ -1813,7 +1813,6 @@ lbool Solver::simplify_problem(const bool startup)
     assert(solver->check_order_heap_sanity());
     #endif
 
-    update_polarity_and_activity = false;
     //remove_xors();
 
     if (conf.verbosity >= 6) {
@@ -1838,7 +1837,6 @@ lbool Solver::simplify_problem(const bool startup)
         calculate_reachability();
     }
 
-    update_polarity_and_activity = true;
     if (conf.verbosity >= 6) {
         cout << "c " << __PRETTY_FUNCTION__ << " finished" << endl;
     }

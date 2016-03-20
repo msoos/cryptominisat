@@ -1046,8 +1046,6 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
     return true;
 }
 
-
-
 template<bool update_bogoprops>
 void PropEngine::enqueue(const Lit p, const PropBy from)
 {
@@ -1095,8 +1093,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
-    if (update_polarity_and_activity
-        //&& from != PropBy()
+    if (!update_bogoprops
+        && from != PropBy()
     ) {
         varData[v].polarity = !sign;
     }

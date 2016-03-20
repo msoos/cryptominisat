@@ -91,7 +91,6 @@ public:
     //Get state
     uint32_t    decisionLevel() const;      ///<Returns current decision level
     size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
-    bool        getStoredPolarity(const uint32_t var);
     size_t trail_size() const {
         return trail.size();
     }
@@ -100,7 +99,6 @@ public:
     template<bool update_bogoprops = true>
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
-    bool update_polarity_and_activity = true;
 
 protected:
     void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -343,12 +341,6 @@ uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
         seen2[lev] &= 1;
     }
     return nbLevels;
-}
-
-
-inline bool PropEngine::getStoredPolarity(const uint32_t var)
-{
-    return varData[var].polarity;
 }
 
 } //end namespace
