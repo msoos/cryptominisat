@@ -188,11 +188,16 @@ uint32_t Gaussian::select_columnorder(
         }
     }
     if (vars_needed.size() >= std::numeric_limits<uint16_t>::max()-1) {
-        //Too large to handle
+        if (solver->conf.verbosity >= 10) {
+            cout << "Matrix has too many columns, exiting select_columnorder" << endl;
+        }
+
         return 0;
     }
     if (xors.size() >= std::numeric_limits<uint16_t>::max()-1) {
-        //Too large to handle
+        if (solver->conf.verbosity >= 10) {
+            cout << "Matrix has too many rows, exiting select_columnorder" << endl;
+        }
         return 0;
     }
 
