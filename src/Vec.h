@@ -72,6 +72,16 @@ public:
        other.cap = 0;
     }
 
+    T* begin()
+    {
+        return _data;
+    }
+
+    T* end()
+    {
+        return _data+sz;
+    }
+
     void shrink_to_fit()
     {
         if (sz == 0) {
