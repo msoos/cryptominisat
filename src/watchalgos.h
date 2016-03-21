@@ -29,38 +29,6 @@
 namespace CMSat {
 using namespace CMSat;
 
-/**
-@brief Orders the watchlists such that the order is binary, tertiary, normal and size matters in NORMAL
-*/
-struct WatchedSorter
-{
-    WatchedSorter(ClauseAllocator& _cl_alloc) :
-        cl_alloc(_cl_alloc)
-    {}
-
-    bool operator () (const Watched& x, const Watched& y);
-    const ClauseAllocator& cl_alloc;
-};
-
-inline bool  WatchedSorter::operator () (const Watched& x, const Watched& y)
-{
-    //y is binary, x cannot be better than y
-    if (y.isBin()) return false;
-
-    //x is binary, but y is not.
-    if (x.isBin()) return true;
-
-    //from now on, none is binary.
-    if (y.isTri()) return false;
-    if (x.isTri()) return true;
-
-    assert(x.isClause());
-    assert(y.isClause());
-    auto c_x = cl_alloc.ptr(x.get_offset());
-    auto c_y = cl_alloc.ptr(y.get_offset());
-    return (c_x->size() < c_y->size());
-}
-
 //////////////////
 // NORMAL Clause
 //////////////////

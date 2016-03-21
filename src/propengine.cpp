@@ -598,13 +598,12 @@ void PropEngine::sortWatched()
     #endif
 
     const double myTime = cpuTime();
-    for (watch_array::iterator
-        i = watches.begin(), end = watches.end()
-        ; i != end
+    for (size_t i = 0
+        ; i < watches.watches.size()
         ; ++i
     ) {
-        watch_subarray ws = *i;
-        if (ws.size() == 0)
+        vec<Watched>& ws = watches.watches[i];
+        if (ws.size() <= 1)
             continue;
 
         #ifdef VERBOSE_DEBUG
@@ -617,7 +616,18 @@ void PropEngine::sortWatched()
         cout << endl;
         #endif //VERBOSE_DEBUG
 
-        std::sort(ws.begin(), ws.end(), WatchedSorter(cl_alloc));
+        vec<Watched> sorted;
+        for(Watched& w: ws) {
+            if (w.isBin()) {
+                sorted.push(w);
+            }
+        }
+        for(Watched& w: ws) {
+            if (!w.isBin()) {
+                sorted.push(w);
+            }
+        }
+        sorted.swap(ws);
 
         #ifdef VERBOSE_DEBUG
         cout << "After sorting : ";
