@@ -390,7 +390,9 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
 void Searcher::update_clause_glue_from_analysis(Clause* cl)
 {
     assert(cl->red());
-    if (cl->stats.glue == 2) {
+    if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq
+        || cl->stats.glue <= 3
+    ) {
         return;
     }
 
