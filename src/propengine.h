@@ -343,6 +343,47 @@ uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
     return nbLevels;
 }
 
+inline PropResult PropEngine::prop_normal_helper(
+    Clause& c
+    , ClOffset offset
+    , watch_subarray::iterator &j
+    , const Lit p
+) {
+    #ifdef STATS_NEEDED
+    c.stats.clause_looked_at++;
+    #endif
+
+    // Make sure the false literal is data[1]:
+    if (c[0] == ~p) {
+        std::swap(c[0], c[1]);
+    }
+
+    assert(c[1] == ~p);
+
+    // If 0th watch is true, then clause is already satisfied.
+    if (value(c[0]) == l_True) {
+        *j = Watched(offset, c[0]);
+        j++;
+        return PROP_NOTHING;
+    }
+
+    // Look for new watch:
+    for (Lit *k = c.begin() + 2, *end2 = c.end()
+        ; k != end2
+        ; k++
+    ) {
+        //Literal is either unset or satisfied, attach to other watchlist
+        if (value(*k) != l_False) {
+            c[1] = *k;
+            *k = ~p;
+            watches[c[1]].push(Watched(offset, c[0]));
+            return PROP_NOTHING;
+        }
+    }
+
+    return PROP_TODO;
+}
+
 } //end namespace
 
 #endif //__PROPENGINE_H__
