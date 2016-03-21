@@ -178,7 +178,7 @@ void Searcher::add_lit_to_learnt(
     }
 }
 
-void Searcher::recursiveConfClauseMin()
+inline void Searcher::recursiveConfClauseMin()
 {
     uint32_t abstract_level = 0;
     for (size_t i = 1; i < learnt_clause.size(); i++) {
@@ -420,11 +420,14 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
 ) {
+    #ifdef VERBOSE_DEBUG
     debug_print_resolving_clause(confl);
+    #endif
 
     Clause* cl = NULL;
     switch (confl.getType()) {
         case tertiary_t : {
+            #ifdef STATS_NEEDED
             if (confl.isRedStep()) {
                 antec_data.triRed++;
                 stats.resolvs.triRed++;
@@ -432,6 +435,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.triIrred++;
                 stats.resolvs.triIrred++;
             }
+            #endif
             add_lit_to_learnt<update_bogoprops>(confl.lit3());
 
             if (p == lit_Undef) {
@@ -443,6 +447,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
 
         case binary_t : {
+            #ifdef STATS_NEEDED
             if (confl.isRedStep()) {
                 antec_data.binRed++;
                 stats.resolvs.binRed++;
@@ -450,6 +455,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.binIrred++;
                 stats.resolvs.binIrred++;
             }
+            #endif
             if (p == lit_Undef) {
                 add_lit_to_learnt<update_bogoprops>(failBinLit);
             }
@@ -459,19 +465,19 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
 
         case clause_t : {
             cl = cl_alloc.ptr(confl.get_offset());
+            #ifdef STATS_NEEDED
             if (cl->red()) {
                 stats.resolvs.longRed++;
-                #ifdef STATS_NEEDED
                 antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
                 antec_data.longRed++;
                 antec_data.age_long_reds.push(sumConflicts() - cl->stats.introduced_at_conflict);
                 antec_data.glue_long_reds.push(cl->stats.glue);
-                #endif
             } else {
                 antec_data.longIrred++;
                 stats.resolvs.longRed++;
             }
             antec_data.size_longs.push(cl->size());
+            #endif
 
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
@@ -505,7 +511,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     return cl;
 }
 
-void Searcher::minimize_learnt_clause()
+inline void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
 
@@ -525,7 +531,7 @@ void Searcher::minimize_learnt_clause()
     stats.recMinLitRem += origSize - learnt_clause.size();
 }
 
-void Searcher::mimimize_learnt_clause_more_maybe(const uint32_t glue)
+inline void Searcher::mimimize_learnt_clause_more_maybe(const uint32_t glue)
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1

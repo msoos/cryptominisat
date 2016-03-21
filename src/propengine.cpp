@@ -546,6 +546,7 @@ PropBy PropEngine::propagate_any_order()
         if (update_bogoprops) {
             propStats.bogoProps += ws.size()/4 + 1;
         }
+        propStats.propagations++;
 
         for (; i != end; i++) {
             if (i->isBin()) {
@@ -1001,62 +1002,6 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
     #endif
 
     return true;
-}
-
-template<bool update_bogoprops>
-void PropEngine::enqueue(const Lit p, const PropBy from)
-{
-    #ifdef DEBUG_ENQUEUE_LEVEL0
-    #ifndef VERBOSE_DEBUG
-    if (decisionLevel() == 0)
-    #endif //VERBOSE_DEBUG
-    cout << "enqueue var " << p.var()+1
-    << " to val " << !p.sign()
-    << " level: " << decisionLevel()
-    << " sublevel: " << trail.size()
-    << " by: " << from << endl;
-    #endif //DEBUG_ENQUEUE_LEVEL0
-
-    #ifdef ENQUEUE_DEBUG
-    assert(trail.size() <= nVarsOuter());
-    assert(varData[p.var()].removed == Removed::none);
-    #endif
-
-    const uint32_t v = p.var();
-    assert(value(v) == l_Undef);
-    if (!watches[~p].empty()) {
-        watches.prefetch((~p).toInt());
-    }
-
-    const bool sign = p.sign();
-    assigns[v] = boolToLBool(!sign);
-    varData[v].reason = from;
-    varData[v].level = decisionLevel();
-
-    trail.push_back(p);
-    propStats.propagations++;
-    if (update_bogoprops) {
-        propStats.bogoProps += 1;
-    }
-
-    #ifdef STATS_NEEDED
-    if (sign) {
-        propStats.varSetNeg++;
-    } else {
-        propStats.varSetPos++;
-    }
-    #endif
-
-    //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
-    if (!update_bogoprops
-        && from != PropBy()
-    ) {
-        varData[v].polarity = !sign;
-    }
-
-    #ifdef ANIMATE3D
-    std::cerr << "s " << v << " " << p.sign() << endl;
-    #endif
 }
 
 void PropEngine::save_state(SimpleOutFile& f) const
