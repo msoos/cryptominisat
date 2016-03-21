@@ -444,7 +444,6 @@ class Tester:
             cmd += "--restart %s " % random.choice(
                 ["geom", "glue", "luby"])
             cmd += "--gluehist %s " % random.randint(1, 500)
-            cmd += "--updateglueonprop %s " % random.randint(0, 1)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
@@ -452,13 +451,11 @@ class Tester:
             cmd += "--cacheformoreminim %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--stampformoreminim %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--maxredratio %s " % random.randint(2, 20)
-            cmd += "--dompickf %s " % random.randint(1, 20)
             cmd += "--alwaysmoremin %s " % random.randint(0, 1)
             cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--cachesize %s " % random.randint(10, 100)
-            cmd += "--calcreach %s " % random.randint(0, 1)
             cmd += "--cachecutoff %s " % random.randint(0, 2000)
             cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
             cmd += "--elimcplxupd %s " % random.randint(0, 1)
