@@ -213,7 +213,6 @@ void ClauseAllocator::consolidate(
     BASE_DATA_TYPE* newDataStart = dataStart;
     BASE_DATA_TYPE* tmpDataStart = dataStart;
 
-    assert(sizeof(Clause) % sizeof(BASE_DATA_TYPE) == 0);
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
     for (const size_t sz: origClauseSizes) {
         Clause* clause = (Clause*)tmpDataStart;
