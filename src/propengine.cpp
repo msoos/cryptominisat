@@ -333,10 +333,8 @@ bool PropEngine::prop_long_cl_any_order(
     , const Lit p
     , PropBy& confl
 ) {
-    const Lit blocked = i->getBlockedLit();
-
     //Blocked literal is satisfied, so clause is satisfied
-    if (value(blocked) == l_True) {
+    if (value(i->getBlockedLit()) == l_True) {
         *j++ = *i;
         return true;
     }
