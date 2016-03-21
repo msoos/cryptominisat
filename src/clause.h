@@ -123,7 +123,9 @@ struct ClauseStats
     ClauseStats()
     {
         memset(this, 0, sizeof(ClauseStats));
+        #ifdef STATS_NEEDED
         ID = 1;
+        #endif
     }
 
     //Stored data
@@ -131,9 +133,9 @@ struct ClauseStats
     uint32_t locked:1;
     uint32_t marked_clause:1;
     uint32_t ttl:1;
-    double   activity = 0.0;
-    int64_t ID;
+    float   activity = 0.0;
     #ifdef STATS_NEEDED
+    int64_t ID;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint64_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;

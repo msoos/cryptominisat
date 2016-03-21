@@ -127,10 +127,12 @@ struct DratFile: public Drat
         } else {
             *file << cl << " ";
         }
+        #ifdef STATS_NEEDED
         if (add_ID) {
             ID = cl.stats.ID;
             assert(ID != 0);
         }
+        #endif
 
         return *this;
     }
