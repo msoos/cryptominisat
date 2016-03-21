@@ -290,6 +290,7 @@ class Searcher : public HyperEngine
         const SearchStats& get_stats() const;
         size_t mem_used() const;
         void restore_order_heap();
+        uint64_t max_conflicts_this_restart;
 
     private:
         //////////////
@@ -317,7 +318,6 @@ class Searcher : public HyperEngine
 
         //Restarts
         uint64_t max_confl_per_search_solve_call;
-        uint64_t max_conflicts_this_restart; // used by geom and luby restarts
         bool blocked_restart = false;
         void check_blocking_restart();
         uint32_t num_search_called = 0;

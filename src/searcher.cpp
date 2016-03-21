@@ -1195,6 +1195,9 @@ void Searcher::check_need_restart()
             ) {
                 params.needToStopSearch = true;
             }
+            if (params.conflictsDoneThisRestart > 2*max_conflicts_this_restart) {
+                params.needToStopSearch = true;
+            }
 
             break;
 
@@ -1946,7 +1949,6 @@ lbool Searcher::solve(
     }
 
     params.rest_type = conf.restartType;
-    max_conflicts_this_restart = conf.restart_first;
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
         ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
@@ -1989,6 +1991,11 @@ lbool Searcher::solve(
 
             default:
                 break;
+        }
+        if (params.rest_type == Restart::geom) {
+            params.rest_type = Restart::glue;
+        } else {
+            params.rest_type = Restart::geom;
         }
 
         if (must_abort(status)) {
