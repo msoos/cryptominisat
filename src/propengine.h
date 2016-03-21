@@ -413,9 +413,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
     varData[v].level = decisionLevel();
-
+    varData[v].polarity = !sign;
     trail.push_back(p);
-    //propStats.propagations++;
 
     if (update_bogoprops) {
         propStats.bogoProps += 1;
@@ -428,13 +427,6 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         propStats.varSetPos++;
     }
     #endif
-
-    //REVERSED: Only update non-decision: this way, flipped decisions don't get saved
-    /*if (!update_bogoprops
-        && from != PropBy()
-    ) {
-        varData[v].polarity = !sign;
-    }*/
 
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << endl;
