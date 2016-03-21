@@ -35,17 +35,14 @@ struct VarData
     ///contains the decision level at which the assignment was made.
     uint32_t level = 0;
 
-    //Used during hyper-bin and trans-reduction for speed
-    uint32_t depth = 0;
-
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason = PropBy();
 
-    ///Whether var has been eliminated (var-elim, different component, etc.)
-    Removed removed = Removed::none;
-
     ///The preferred polarity of each variable.
     bool polarity = false;
+
+    ///Whether var has been eliminated (var-elim, different component, etc.)
+    Removed removed = Removed::none;
     bool is_bva = false;
 };
 

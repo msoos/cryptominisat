@@ -600,17 +600,17 @@ Lit HyperEngine::remove_which_bin_due_to_trans_red(
     bool second_is_deeper = false;
     bool ambivalent = true;
     if (use_depth_trick) {
-        ambivalent = varData[thisAncestor.var()].depth == varData[lookingForAncestor.var()].depth;
-        if (varData[thisAncestor.var()].depth < varData[lookingForAncestor.var()].depth) {
+        ambivalent = depth[thisAncestor.var()] == depth[lookingForAncestor.var()];
+        if (depth[thisAncestor.var()] < depth[lookingForAncestor.var()]) {
             second_is_deeper = true;
         }
     }
     #ifdef DEBUG_DEPTH
     cout
     << "1st: " << std::setw(6) << thisAncestor
-    << " depth: " << std::setw(4) << varData[thisAncestor.var()].depth
+    << " depth: " << std::setw(4) << depth[thisAncestor.var()]
     << "  2nd: " << std::setw(6) << lookingForAncestor
-    << " depth: " << std::setw(4) << varData[lookingForAncestor.var()].depth
+    << " depth: " << std::setw(4) << depth[lookingForAncestor.var()]
     ;
     #endif
 
@@ -706,10 +706,10 @@ bool HyperEngine::is_ancestor_of(
     }
 
     //This is as low as we should search -- we cannot find what we are searchig for lower than this
-    const size_t bottom = varData[lookingForAncestor.var()].depth;
+    const size_t bottom = depth[lookingForAncestor.var()];
 
     while(thisAncestor != lit_Undef
-        && (!use_depth_trick || bottom <= varData[thisAncestor.var()].depth)
+        && (!use_depth_trick || bottom <= depth[thisAncestor.var()])
     ) {
         #ifdef VERBOSE_DEBUG_FULLPROP
         cout << "Current acestor: " << thisAncestor
@@ -1016,7 +1016,7 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
             //Update data indicating what lead to lit
             varData[lit.var()].reason = PropBy(~p, k->red(), false, false);
             assert(varData[p.var()].level != 0);
-            varData[lit.var()].depth = varData[p.var()].depth + 1;
+            depth[lit.var()] = depth[p.var()] + 1;
             //NOTE: we don't update the levels of other literals... :S
 
             //for correctness, we would need this, but that would need re-writing of history :S
@@ -1172,16 +1172,16 @@ void HyperEngine::enqueue_with_acestor_info(
     assert(varData[ancestor.var()].level != 0);
 
     if (use_depth_trick) {
-        varData[p.var()].depth = varData[ancestor.var()].depth + 1;
+        depth[p.var()] = depth[ancestor.var()] + 1;
     } else {
-        varData[p.var()].depth = 0;
+        depth[p.var()] = 0;
     }
     #if defined(DEBUG_DEPTH) || defined(VERBOSE_DEBUG_FULLPROP)
     cout
     << "Enqueued "
     << std::setw(6) << (p)
     << " by " << std::setw(6) << (~ancestor)
-    << " at depth " << std::setw(4) << varData[p.var()].depth
+    << " at depth " << std::setw(4) << depth[p.var()]
     << " at dec level: " << decisionLevel()
     << endl;
     #endif

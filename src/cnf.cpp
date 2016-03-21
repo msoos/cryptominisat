@@ -147,6 +147,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
     assigns.resize(assigns.size() + n, l_Undef);
     varData.resize(varData.size() + n, VarData());
+    depth.resize(depth.size() + n);
 }
 
 void CNF::enlarge_minimal_datastructs(size_t n)
