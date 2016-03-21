@@ -91,6 +91,7 @@ private:
         , const Lit lit1
         , PropBy& confl
     );
+
     PropResult prop_normal_cl_with_ancestor_info(
         watch_subarray_const::const_iterator i
         , watch_subarray::iterator &j
