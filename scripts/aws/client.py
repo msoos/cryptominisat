@@ -469,7 +469,8 @@ def build_cryptominisat(indata):
     opts = []
     opts.append(indata["git_rev"])
     opts.append(str(options.num_threads))
-    opts.append("-DSTATS=ON")
+    if False:
+        opts.append("-DSTATS=ON")
 
     ret = os.system('%s/cryptominisat/scripts/aws/build_cryptominisat.sh %s >> %s/build.log 2>&1' %
                     (options.base_dir,
