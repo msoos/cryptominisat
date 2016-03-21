@@ -1041,7 +1041,7 @@ llbool Gaussian::find_truths()
     switch (g) {
         case conflict: {
             useful_confl++;
-            bool ret = solver->handle_conflict(confl);
+            bool ret = solver->handle_conflict<true>(confl);
             if (confl.isClause()) {
                 solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
             }
