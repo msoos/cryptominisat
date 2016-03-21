@@ -1045,6 +1045,8 @@ lbool Searcher::search()
                 dump_search_loop_stats();
                 return l_False;
             }
+            reduce_db_if_needed();
+            check_need_restart();
         } else {
             assert(ok);
             #ifdef USE_GAUSS
@@ -1064,8 +1066,6 @@ lbool Searcher::search()
             assert(ok);
             #endif //USE_GAUSS
 
-            reduce_db_if_needed();
-            check_need_restart();
             dec_ret = new_decision();
             if (dec_ret != l_Undef) {
                 dump_search_sql(myTime);
