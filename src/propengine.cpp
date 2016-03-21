@@ -547,7 +547,6 @@ PropBy PropEngine::propagate_any_order()
             propStats.bogoProps += ws.size()/4 + 1;
         }
         propStats.propagations++;
-
         for (; i != end; i++) {
             if (i->isBin()) {
                 *j++ = *i;
