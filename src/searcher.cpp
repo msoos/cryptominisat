@@ -1437,7 +1437,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
     }
 }
 
-void Searcher::print_learning_debug_info() const
+inline void Searcher::print_learning_debug_info() const
 {
     #ifndef VERBOSE_DEBUG
     return;
