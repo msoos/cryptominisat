@@ -999,7 +999,6 @@ lbool Searcher::search()
     assert(solver->prop_at_head());
 
     //Loop until restart or finish (SAT/UNSAT)
-    last_decision_ended_in_conflict = false;
     blocked_restart = false;
     PropBy confl;
 
