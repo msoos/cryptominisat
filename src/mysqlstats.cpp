@@ -936,9 +936,6 @@ void MySQLStats::restart(
     stmtRst.numResolutionsHistMax =
         searchHist.numResolutionsHist.getMax();
 
-    stmtRst.conflictAfterConflict =
-        searchHist.conflictAfterConflict.avg();
-
     //Search stats
     stmtRst.branchDepthHist         = searchHist.branchDepthHist.avg();
     stmtRst.branchDepthHistSD       = std::sqrt(searchHist.branchDepthHist.var());
