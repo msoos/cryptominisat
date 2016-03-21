@@ -1968,8 +1968,7 @@ lbool Searcher::solve(
 
         //Only sort after a while
         //otherwise, we sort all the time for short queries
-        if ((loop_num & 0x7ff) == 0x020
-            && stats.conflStats.numConflicts > 4000
+        if ((loop_num & 0x7ff) == 0x008
             && conf.doSortWatched
         ) {
             sortWatched();
