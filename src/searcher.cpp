@@ -127,7 +127,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 }
 
 template<bool update_bogoprops>
-void Searcher::add_lit_to_learnt(
+inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
     antec_data.vsids_all_incoming_vars.push(activities[lit.var()]/var_inc);
@@ -434,13 +434,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.triIrred++;
                 stats.resolvs.triIrred++;
             }
-            add_lit_to_learnt<update_bogoprops>(confl.lit3());
-
-            if (p == lit_Undef) {
-                add_lit_to_learnt<update_bogoprops>(failBinLit);
-            }
-
-            add_lit_to_learnt<update_bogoprops>(confl.lit2());
             break;
         }
 
@@ -452,10 +445,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.binIrred++;
                 stats.resolvs.binIrred++;
             }
-            if (p == lit_Undef) {
-                add_lit_to_learnt<update_bogoprops>(failBinLit);
-            }
-            add_lit_to_learnt<update_bogoprops>(confl.lit2());
             break;
         }
 
@@ -486,23 +475,50 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     update_clause_glue_from_analysis(cl);
                 }
             }
-
-            assert(!cl->getRemoved());
-            for (size_t j = 0; j < cl->size(); j++) {
-                //Will be resolved away, skip
-                if (p != lit_Undef && j == 0)
-                    continue;
-
-                add_lit_to_learnt<update_bogoprops>((*cl)[j]);
-            }
             break;
         }
 
         case null_clause_t:
         default:
-            //otherwise should be UIP
-            assert(false && "Error in conflict analysis");
-            break;
+            assert(false && "Error in conflict analysis (otherwise should be UIP)");
+    }
+
+    size_t i = 0;
+    bool cont = true;
+    Lit x = lit_Undef;
+    while(cont) {
+        switch (confl.getType()) {
+            case tertiary_t:
+                if (i == 0) {
+                    x = failBinLit;
+                } else if (i == 1) {
+                    x = confl.lit2();
+                } else {
+                    x = confl.lit3();
+                    cont = false;
+                }
+                break;
+            case binary_t:
+                if (i == 0) {
+                    x = failBinLit;
+                } else {
+                    x = confl.lit2();
+                    cont = false;
+                }
+                break;
+
+            case clause_t :
+                assert(!cl->getRemoved());
+                x = (*cl)[i];
+                if (i == cl->size()-1) {
+                    cont = false;
+                }
+                break;
+        }
+        if (p == lit_Undef || i > 0) {
+            add_lit_to_learnt<update_bogoprops>(x);
+        }
+        i++;
     }
     return cl;
 }
