@@ -1017,10 +1017,6 @@ lbool Searcher::search()
 
             stats.conflStats.update(lastConflictCausedBy);
             print_restart_stat();
-            #ifdef STATS_NEEDED
-            hist.conflictAfterConflict.push(last_decision_ended_in_conflict);
-            #endif
-            last_decision_ended_in_conflict = true;
             if (params.update) {
                 #ifdef STATS_NEEDED
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
@@ -1054,7 +1050,6 @@ lbool Searcher::search()
 
             reduce_db_if_needed();
             check_need_restart();
-            last_decision_ended_in_conflict = false;
             dec_ret = new_decision();
             if (dec_ret != l_Undef) {
                 dump_search_sql(myTime);

@@ -57,7 +57,6 @@ struct SearchHist {
 
     #ifdef STATS_NEEDED
     bqueue<uint32_t>    trailDepthHist;
-    AvgCalc<bool>       conflictAfterConflict;
     #endif
 
     size_t mem_used() const
@@ -86,7 +85,6 @@ struct SearchHist {
 
         #ifdef STATS_NEEDED
         trailDepthHist.clear();
-        conflictAfterConflict.clear();
         #endif
     }
 

@@ -240,7 +240,7 @@ private:
             stmt(NULL)
         {}
 
-        MYSQL_BIND  bind[72+1]; //+1 == runID
+        MYSQL_BIND  bind[71+1]; //+1 == runID
         MYSQL_STMT  *stmt = NULL;
 
         //Position
@@ -274,8 +274,6 @@ private:
         double numResolutionsHistSD;
         uint64_t numResolutionsHistMin;
         uint64_t numResolutionsHistMax;
-
-        double conflictAfterConflict;
 
         //Search stats
         double branchDepthHist;

@@ -76,7 +76,6 @@ CREATE TABLE `restart` (
   `resolutionsSD` float NOT NULL,
   `resolutionsMin` int(20) NOT NULL,
   `resolutionsMax` int(20) NOT NULL,
-  `conflAfterConfl` float NOT NULL,
   `branchDepth` float NOT NULL,
   `branchDepthSD` float NOT NULL,
   `branchDepthMin` int(20) NOT NULL,

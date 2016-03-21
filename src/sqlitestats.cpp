@@ -428,7 +428,7 @@ void SQLiteStats::time_passed_min(
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 75;
+    const size_t numElems = 74;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -445,7 +445,6 @@ void SQLiteStats::initRestartSTMT()
     << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
     << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
     << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
-    << ", `conflAfterConfl`"
 
     //Search stats
     << ", `branchDepth`, `branchDepthSD`, `branchDepthMin`, `branchDepthMax`"
@@ -537,8 +536,6 @@ void SQLiteStats::restart(
     sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.numResolutionsHist.var()));
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.numResolutionsHist.getMin());
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.numResolutionsHist.getMax());
-
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.conflictAfterConflict.avg());
 
     //Search stats
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthHist.avg());

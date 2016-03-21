@@ -199,7 +199,6 @@ class Searcher : public HyperEngine
         /////////////////
         // Searching
         /// Search for a given number of conflicts.
-        bool last_decision_ended_in_conflict;
         template<bool update_bogoprops>
         lbool search();
         lbool burst_search();

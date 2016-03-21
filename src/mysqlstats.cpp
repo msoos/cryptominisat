@@ -476,7 +476,6 @@ void MySQLStats::initRestartSTMT()
     << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
     << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
     << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
-    << ", `conflAfterConfl`"
 
     //Search stats
     << ", `branchDepth`, `branchDepthSD`, `branchDepthMin`, `branchDepthMax`"
@@ -577,8 +576,6 @@ void MySQLStats::initRestartSTMT()
     bindTo(stmtRst, stmtRst.numResolutionsHistSD);
     bindTo(stmtRst, stmtRst.numResolutionsHistMin);
     bindTo(stmtRst, stmtRst.numResolutionsHistMax);
-
-    bindTo(stmtRst, stmtRst.conflictAfterConflict);
 
     //Search stats
     bindTo(stmtRst, stmtRst.branchDepthHist);
