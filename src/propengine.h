@@ -236,6 +236,7 @@ private:
         , const Lit lit3
         , const bool red
     );
+    void update_glue(Clause& c);
 
     PropResult prop_tri_cl_strict_order (
         watch_subarray_const::const_iterator i

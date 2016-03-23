@@ -204,6 +204,7 @@ class SolverConf
         long maxConfl;
 
         //Glues
+        int       update_glues_on_prop;
         int       update_glues_on_analyze;
 
         //OTF stuff

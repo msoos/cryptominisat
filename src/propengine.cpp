@@ -255,6 +255,25 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
+void PropEngine::update_glue(Clause& c)
+{
+    if (c.red()
+        && c.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+        && conf.update_glues_on_prop
+    ) {
+        const uint32_t new_glue = calc_glue(c);
+        if (new_glue < c.stats.glue
+            && new_glue < conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn
+        ) {
+            if (red_long_cls_is_reducedb(c)) {
+                num_red_cls_reducedb--;
+            }
+            c.stats.ttl = 1;
+        }
+        c.stats.glue = std::min(c.stats.glue, new_glue);
+    }
+}
+
 PropResult PropEngine::handle_normal_prop_fail(
     Clause& c
     , ClOffset offset
@@ -368,6 +387,9 @@ bool PropEngine::prop_long_cl_any_order(
         #endif
 
         enqueue<update_bogoprops>(c[0], PropBy(offset));
+        if (!update_bogoprops) {
+            update_glue(c);
+        }
     }
 
     return true;
