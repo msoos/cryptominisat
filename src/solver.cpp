@@ -1233,6 +1233,13 @@ void Solver::check_config_parameters() const
 
 lbool Solver::simplify_problem_outside()
 {
+    #ifdef SLOW_DEBUG
+    if (ok) {
+        assert(solver->check_order_heap_sanity());
+        check_implicit_stats();
+    }
+    #endif
+
     if (!ok) {
         return l_False;
     }
@@ -1251,8 +1258,10 @@ lbool Solver::simplify_problem_outside()
 lbool Solver::solve()
 {
     #ifdef SLOW_DEBUG
-    assert(solver->check_order_heap_sanity());
-    check_implicit_stats();
+    if (ok) {
+        assert(solver->check_order_heap_sanity());
+        check_implicit_stats();
+    }
     #endif
 
     solveStats.num_solve_calls++;
