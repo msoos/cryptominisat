@@ -542,21 +542,9 @@ inline void Searcher::mimimize_learnt_clause_more_maybe(const uint32_t glue)
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
-        && (conf.doAlwaysFMinim
-            //|| glue < 0.45*hist.glueHistLT.avg()
-            //    && learnt_clause.size() < 0.45*hist.conflSizeHistLT.avg())
-            && glue <= conf.max_glue_more_minim)
     ) {
         stats.moreMinimLitsStart += learnt_clause.size();
-
-        //Binary&cache-based minim
-        //minimise_redundant_more(learnt_clause);
-
         watch_based_learnt_minim();
-
-        /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
-            stamp_based_more_minim(learnt_clause);
-        }*/
 
         stats.moreMinimLitsEnd += learnt_clause.size();
     }
@@ -772,7 +760,9 @@ Clause* Searcher::analyze_conflict(
         glue = calc_glue(learnt_clause);
     }
     print_fully_minimized_learnt_clause();
-    if (glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+    if (learnt_clause.size() <= conf.max_size_more_minim
+        && glue <= conf.glue_must_keep_clause_if_below_or_eq
+    ) {
         minimise_redundant_more(learnt_clause);
     }
 
@@ -2306,6 +2296,13 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
 
 void Searcher::minimise_redundant_more(vector<Lit>& cl)
 {
+    //????????????
+    //Binary&cache-based minim
+    //minimise_redundant_more(learnt_clause);
+            /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
+        stamp_based_more_minim(learnt_clause);
+    }*/
+
     stats.furtherShrinkAttempt++;
     for (const Lit lit: cl) {
         seen[lit.toInt()] = 1;
