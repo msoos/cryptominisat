@@ -1240,6 +1240,8 @@ lbool Solver::simplify_problem_outside()
     }
     #endif
 
+    conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
+
     if (!ok) {
         return l_False;
     }
