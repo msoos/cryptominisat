@@ -161,7 +161,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
     }
 
     vector<uint16_t>& inside = solver->seen;
-    vector<uint16_t>& irred = solver->seen2;
+    vector<uint8_t>& irred = solver->seen2;
     size_t wsLit = 0;
     for(vector<TransCache>::iterator
         trans = implCache.begin(), transEnd = implCache.end()
@@ -272,7 +272,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
 }
 
 void ImplCache::handleNewData(
-    vector<uint16_t>& val
+    vector<uint8_t>& val
     , uint32_t var
     , Lit lit
 ) {
@@ -415,7 +415,7 @@ void ImplCache::tryVar(
 
     //Convenience
     vector<uint16_t>& seen = solver->seen;
-    vector<uint16_t>& val = solver->seen2;
+    vector<uint8_t>& val = solver->seen2;
 
     Lit lit = Lit(var, false);
 

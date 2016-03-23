@@ -172,7 +172,7 @@ class DistillerLongWithImpl {
         vector<Lit> lits;
         vector<Lit> lits2;
         vector<uint16_t>& seen;
-        vector<uint16_t>& seen_subs;
+        vector<uint8_t>& seen2;
 
         //Global status
         Stats runStats;

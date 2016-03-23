@@ -43,7 +43,7 @@ using std::endl;
 DistillerLongWithImpl::DistillerLongWithImpl(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
-    , seen_subs(solver->seen2)
+    , seen2(solver->seen2)
     , numCalls(0)
 {}
 
@@ -123,7 +123,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
 ) {
     //Subsumption w/ bin
     if (wit->isBin() &&
-        seen_subs[wit->lit2().toInt()]
+        seen2[wit->lit2().toInt()]
     ) {
         //If subsuming irred with redundant, make the redundant into irred
         if (wit->red() && !cl.red()) {
@@ -141,9 +141,9 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     //Extension w/ bin
     if (wit->isBin()
         && !wit->red()
-        && !seen_subs[(~(wit->lit2())).toInt()]
+        && !seen2[(~(wit->lit2())).toInt()]
     ) {
-        seen_subs[(~(wit->lit2())).toInt()] = 1;
+        seen2[(~(wit->lit2())).toInt()] = 1;
         lits2.push_back(~(wit->lit2()));
     }
 
@@ -154,8 +154,8 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     //Subsumption w/ tri
     if (wit->isTri()
         && lit < wit->lit2() //Check only one instance of the TRI clause
-        && seen_subs[wit->lit2().toInt()]
-        && seen_subs[wit->lit3().toInt()]
+        && seen2[wit->lit2().toInt()]
+        && seen2[wit->lit3().toInt()]
     ) {
         //If subsuming irred with redundant, make the redundant into irred
         if (!cl.red() && wit->red()) {
@@ -176,10 +176,10 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     if (wit->isTri()
         && lit < wit->lit2() //Check only one instance of the TRI clause
         && !wit->red()
-        && seen_subs[wit->lit2().toInt()]
-        && !seen_subs[(~(wit->lit3())).toInt()]
+        && seen2[wit->lit2().toInt()]
+        && !seen2[(~(wit->lit3())).toInt()]
     ) {
-        seen_subs[(~(wit->lit3())).toInt()] = 1;
+        seen2[(~(wit->lit3())).toInt()] = 1;
         lits2.push_back(~(wit->lit3()));
     }
 
@@ -187,10 +187,10 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     if (wit->isTri()
         && lit < wit->lit2() //Check only one instance of the TRI clause
         && !wit->red()
-        && !seen_subs[(~(wit->lit2())).toInt()]
-        && seen_subs[wit->lit3().toInt()]
+        && !seen2[(~(wit->lit2())).toInt()]
+        && seen2[wit->lit3().toInt()]
     ) {
-        seen_subs[(~(wit->lit2())).toInt()] = 1;
+        seen2[(~(wit->lit2())).toInt()] = 1;
         lits2.push_back(~(wit->lit2()));
     }
 
@@ -211,7 +211,7 @@ bool DistillerLongWithImpl::str_and_sub_clause_with_cache(const Lit lit, const b
                 thisRemLitCache++;
              }
 
-             if (seen_subs[elit.getLit().toInt()]
+             if (seen2[elit.getLit().toInt()]
                  && elit.getOnlyIrredBin()
              ) {
                  isSubsumed = true;
@@ -338,17 +338,17 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     lits2.clear();
     for (const Lit lit: cl) {
         seen[lit.toInt()] = 1;
-        seen_subs[lit.toInt()] = 1;
+        seen2[lit.toInt()] = 1;
         lits2.push_back(lit);
     }
 
     strsub_with_cache_and_watch(alsoStrengthen, cl);
     try_subsuming_by_stamping(red);
 
-    //Clear 'seen_subs'
+    //Clear 'seen2'
     timeAvailable -= (long)lits2.size()*3;
     for (const Lit lit: lits2) {
-        seen_subs[lit.toInt()] = 0;
+        seen2[lit.toInt()] = 0;
     }
 
     //Clear 'seen' and fill new clause data

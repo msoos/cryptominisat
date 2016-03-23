@@ -45,7 +45,7 @@ private:
     Solver* solver;
     OccSimplifier* simplifier;
     vector<uint16_t>& seen;
-    vector<uint16_t>& seen2;
+    vector<uint8_t>& seen2;
 
     bool bva_verbosity = 0;
     size_t bva_worked;

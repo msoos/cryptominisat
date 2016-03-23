@@ -242,7 +242,7 @@ private:
     void tryVar(Solver* solver, uint32_t var);
 
     void handleNewData(
-        vector<uint16_t>& val
+        vector<uint8_t>& val
         , uint32_t var
         , Lit lit
     );

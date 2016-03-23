@@ -109,8 +109,10 @@ public:
 
     //Temporaries
     vector<uint16_t> seen;
-    vector<uint16_t> seen2;
+    vector<uint8_t> seen2;
+    vector<uint64_t> permDiff;
     vector<Lit>      toClear;
+    uint64_t MYFLAG = 1;
 
     bool okay() const
     {

@@ -104,8 +104,7 @@ protected:
     void new_var(const bool bva, const uint32_t orig_outer) override;
     void new_vars(const size_t n) override;
     void save_on_var_memory();
-    template<class T> uint32_t calc_glue_using_seen2(const T& ps);
-    template<class T> uint32_t calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps);
+    template<class T> uint32_t calc_glue(const T& ps);
 
     //For state saving
     void save_state(SimpleOutFile& f) const;
@@ -302,45 +301,18 @@ inline bool PropEngine::satisfied(const BinaryClause& bin)
 }
 
 template<class T> inline
-uint32_t PropEngine::calc_glue_using_seen2(const T& ps)
+uint32_t PropEngine::calc_glue(const T& ps)
 {
-    uint32_t nbLevels = 0;
-    for(auto lit: ps) {
-        const uint32_t lev = varData[lit.var()].level;
-        if (lev != 0 && !seen2[lev]) {
-            nbLevels++;
-            seen2[lev] = 1;
+    MYFLAG++;
+    uint32_t nblevels = 0;
+    for (Lit lit: ps) {
+        int l = varData[lit.var()].level;
+        if (l != 0 && permDiff[l] != MYFLAG) {
+            permDiff[l] = MYFLAG;
+            nblevels++;
         }
     }
-
-    for(auto lit: ps) {
-        uint32_t lev = varData[lit.var()].level;
-        seen2[lev] = 0;
-    }
-    return nbLevels;
-}
-
-template<class T> inline
-uint32_t PropEngine::calc_glue_using_seen2_upper_bit_no_zero_lev(const T& ps)
-{
-    uint32_t nbLevels = 0;
-
-    for(const Lit lit: ps) {
-        const uint32_t lev = varData[lit.var()].level;
-        if (lev == 0) {
-            continue;
-        }
-        if (!(seen2[lev] & 2)) {
-            nbLevels++;
-            seen2[lev] |= 2;
-        }
-    }
-
-    for(const Lit lit: ps) {
-        const uint32_t lev = varData[lit.var()].level;
-        seen2[lev] &= 1;
-    }
-    return nbLevels;
+    return nblevels;
 }
 
 inline PropResult PropEngine::prop_normal_helper(

@@ -155,6 +155,7 @@ void CNF::enlarge_minimal_datastructs(size_t n)
     watches.resize(watches.size() + 2*n);
     seen.resize(seen.size() + 2*n, 0);
     seen2.resize(seen2.size() + 2*n,0);
+    permDiff.resize(seen2.size() + 2*n,0);
 }
 
 void CNF::save_on_var_memory()
@@ -174,6 +175,8 @@ void CNF::save_on_var_memory()
     seen.shrink_to_fit();
     seen2.resize(nVars()*2);
     seen2.shrink_to_fit();
+    permDiff.resize(nVars()*2);
+    permDiff.shrink_to_fit();
 }
 
 //Test for reflectivity of interToOuterMain & outerToInterMain
@@ -399,7 +402,7 @@ size_t CNF::mem_used() const
     mem += sizeof(conf);
     mem += sizeof(binTri);
     mem += seen.capacity()*sizeof(uint16_t);
-    mem += seen2.capacity()*sizeof(uint16_t);
+    mem += seen2.capacity()*sizeof(uint8_t);
     mem += toClear.capacity()*sizeof(Lit);
 
     return mem;

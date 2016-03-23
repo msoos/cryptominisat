@@ -396,7 +396,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         return;
     }
 
-    const unsigned new_glue = calc_glue_using_seen2_upper_bit_no_zero_lev(*cl);
+    const unsigned new_glue = calc_glue(*cl);
 
     if (new_glue + 1 < cl->stats.glue) {
         if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq
@@ -739,8 +739,11 @@ Clause* Searcher::analyze_conflict(
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
-    glue = calc_glue_using_seen2(learnt_clause);
-    mimimize_learnt_clause_more_maybe(glue);
+    if (learnt_clause.size() <= conf.max_size_more_minim) {
+        glue = calc_glue(learnt_clause);
+        mimimize_learnt_clause_more_maybe(glue);
+    }
+    glue = calc_glue(learnt_clause);
     print_fully_minimized_learnt_clause();
 
     stats.litsRedFinal += learnt_clause.size();
@@ -2525,7 +2528,7 @@ string Searcher::analyze_confl_for_graphviz_graph(
         seen[learnt_clause[j].var()] = 0;    // ('seen[]' is now cleared)
 
     //Calculate glue
-    glue = calc_glue_using_seen2(learnt_clause);
+    glue = calc_glue(learnt_clause);
 
     return resolutions_str.str();
 }

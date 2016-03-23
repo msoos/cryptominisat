@@ -304,7 +304,7 @@ private:
     OccSimplifier *simplifier;
     Solver *solver;
     vector<uint16_t>& seen;
-    vector<uint16_t>& seen2;
+    vector<uint8_t>& seen2;
     vector<Lit>& toClear;
 };
 
