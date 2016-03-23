@@ -764,12 +764,17 @@ Clause* Searcher::analyze_conflict(
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
-    if (learnt_clause.size() <= conf.max_size_more_minim) {
-        glue = calc_glue(learnt_clause);
-        mimimize_learnt_clause_more_maybe(glue);
-    }
     glue = calc_glue(learnt_clause);
+    if (learnt_clause.size() <= conf.max_size_more_minim
+        && glue <= conf.max_glue_more_minim
+    ) {
+        mimimize_learnt_clause_more_maybe(glue);
+        glue = calc_glue(learnt_clause);
+    }
     print_fully_minimized_learnt_clause();
+    if (glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+        minimise_redundant_more(learnt_clause);
+    }
 
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
