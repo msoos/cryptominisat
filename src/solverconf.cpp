@@ -36,7 +36,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        , max_temporary_learnt_clauses(30000)
+        , max_temporary_learnt_clauses(20000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , clean_confl_multiplier(0.2)
         , clean_prop_multiplier(1.0)
@@ -46,7 +46,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxNumRedsRatio(10)
         , clauseDecayActivity(1.0/0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
-        , glue_must_keep_clause_if_below_or_eq(5)
+        , glue_must_keep_clause_if_below_or_eq(4)
 
         //Restarting
         , restart_first(100)
@@ -93,7 +93,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //OTF
         , otfHyperbin      (true)
         , doOTFSubsume     (true)
-        , doOTFSubsumeOnlyAtOrBelowGlue(5)
+        , doOTFSubsumeOnlyAtOrBelowGlue(4)
         , rewardShortenedClauseWithConfl(3)
 
         //SQL
