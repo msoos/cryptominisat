@@ -310,6 +310,9 @@ uint32_t PropEngine::calc_glue(const T& ps)
         if (l != 0 && permDiff[l] != MYFLAG) {
             permDiff[l] = MYFLAG;
             nblevels++;
+            if (nblevels >= 50) {
+                return nblevels;
+            }
         }
     }
     return nblevels;
