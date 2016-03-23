@@ -460,10 +460,12 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
             #endif
-            if (!update_bogoprops && cl->red()) {
+            if (!update_bogoprops
+                && cl->red()
+                && cl->stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+            ) {
                 bumpClauseAct(cl);
                 if (conf.update_glues_on_analyze
-                    && cl->size() < 40 //NOTE MAGIC CONSTANT
                 ) {
                     update_clause_glue_from_analysis(cl);
                 }
