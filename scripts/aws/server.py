@@ -176,6 +176,7 @@ class Server (threading.Thread):
         tosend = {}
         tosend["solver"] = options.solver
         tosend["git_rev"] = options.git_rev
+        tosend["stats"] = options.stats
         tosend["s3_bucket"] = options.s3_bucket
         tosend["s3_folder"] = options.s3_folder
         tosend["timeout_in_secs"] = options.timeout_in_secs
