@@ -36,7 +36,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        , max_temporary_learnt_clauses(20000)
+        , max_temporary_learnt_clauses(30000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , clean_confl_multiplier(0.2)
         , clean_prop_multiplier(1.0)
@@ -52,7 +52,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.1)
         , burst_search_len(300)
-        , restartType(Restart::glue)
+        , restartType(Restart::geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)

@@ -251,6 +251,7 @@ class Searcher : public HyperEngine
         );
         void update_clause_glue_from_analysis(Clause* cl);
         void minimize_learnt_clause();
+        void watch_based_learnt_minim();
         void mimimize_learnt_clause_more_maybe(const uint32_t glue);
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
@@ -290,7 +291,9 @@ class Searcher : public HyperEngine
         const SearchStats& get_stats() const;
         size_t mem_used() const;
         void restore_order_heap();
-        uint64_t max_conflicts_this_restart;
+
+        int64_t max_confl_phase;
+        int64_t max_confl_this_phase;
 
     private:
         //////////////

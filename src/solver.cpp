@@ -1258,7 +1258,9 @@ lbool Solver::solve()
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
-    max_conflicts_this_restart = conf.restart_first;
+    max_confl_phase = conf.restart_first;
+    max_confl_this_phase = max_confl_phase;
+    params.rest_type = conf.restartType;
 
     if (conf.verbosity >= 6) {
         cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;

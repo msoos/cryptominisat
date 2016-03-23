@@ -69,6 +69,26 @@ enum class Restart {
     , never
 };
 
+inline std::string getNameOfRestartType(Restart rest_type)
+{
+    switch(rest_type) {
+        case Restart::glue :
+            return "glue";
+
+        case Restart::geom:
+            return "geometric";
+
+        case Restart::luby:
+            return "luby";
+
+        case Restart::never:
+            return "never";
+
+        default:
+            release_assert(false && "Unknown clause cleaning type?");
+    };
+}
+
 inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
 {
     switch(clauseCleaningType) {

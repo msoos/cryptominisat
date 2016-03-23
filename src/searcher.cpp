@@ -152,7 +152,6 @@ inline void Searcher::add_lit_to_learnt(
 
             //Glucose 2.1
             if (!update_bogoprops
-                && params.rest_type != Restart::geom
                 && varData[var].reason != PropBy()
             ) {
                 if (varData[var].reason.getType() == clause_t) {
@@ -550,21 +549,51 @@ inline void Searcher::mimimize_learnt_clause_more_maybe(const uint32_t glue)
         && (conf.doAlwaysFMinim
             //|| glue < 0.45*hist.glueHistLT.avg()
             //    && learnt_clause.size() < 0.45*hist.conflSizeHistLT.avg())
-            || (learnt_clause.size() <= conf.max_size_more_minim
-                && glue <= conf.max_glue_more_minim)
-            )
+            && glue <= conf.max_glue_more_minim)
     ) {
         stats.moreMinimLitsStart += learnt_clause.size();
 
         //Binary&cache-based minim
-        minimise_redundant_more(learnt_clause);
+        //minimise_redundant_more(learnt_clause);
 
-        //Stamp-based minimization -- cheap, so do it anyway
-        if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
+        watch_based_learnt_minim();
+
+        /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
             stamp_based_more_minim(learnt_clause);
-        }
+        }*/
 
         stats.moreMinimLitsEnd += learnt_clause.size();
+    }
+}
+
+inline void Searcher::watch_based_learnt_minim()
+{
+    MYFLAG++;
+    const auto& ws  = watches[~learnt_clause[0]];
+    uint32_t nb = 0;
+    for (const Watched& w: ws) {
+        if (w.isBin()) {
+            Lit imp = w.lit2();
+            if (permDiff[imp.var()] == MYFLAG && value(imp) == l_True) {
+                nb++;
+                permDiff[imp.var()] = MYFLAG - 1;
+            }
+        } else {
+            break;
+        }
+    }
+    int l = learnt_clause.size() - 1;
+    if (nb > 0) {
+        for (int i = 1; i < learnt_clause.size() - nb; i++) {
+            if (permDiff[learnt_clause[i].var()] != MYFLAG) {
+                Lit p = learnt_clause[l];
+                learnt_clause[l] = learnt_clause[i];
+                learnt_clause[i] = p;
+                l--;
+                i--;
+            }
+        }
+        learnt_clause.resize(learnt_clause.size()-nb);
     }
 }
 
@@ -1022,9 +1051,8 @@ lbool Searcher::search()
     PropBy confl;
 
     lbool dec_ret = l_Undef;
-    while (
-        !params.needToStopSearch
-            || !confl.isNULL() //always finish the last conflict
+    while (!params.needToStopSearch
+        || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
             if (((stats.conflStats.numConflicts & 0xfff) == 0xfff)
@@ -1080,6 +1108,7 @@ lbool Searcher::search()
         prop:
         confl = propagate<false>();
     }
+    max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil(0);
     assert(solver->prop_at_head());
@@ -1194,34 +1223,17 @@ void Searcher::check_need_restart()
         }
     }
 
-    switch (params.rest_type) {
-
-        case Restart::never:
-            //Just don't restart no matter what
-            break;
-
-        case Restart::geom:
-        case Restart::luby:
-            if (params.conflictsDoneThisRestart > max_conflicts_this_restart)
-                params.needToStopSearch = true;
-
-            break;
-
-        case Restart::glue:
-            if (hist.glueHist.isvalid()
-                && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
-            ) {
-                params.needToStopSearch = true;
-            }
-            if (params.conflictsDoneThisRestart > 2*max_conflicts_this_restart) {
-                params.needToStopSearch = true;
-            }
-
-            break;
-
-        default:
-            assert(false && "This should not happen, auto decision is make before this point");
-            break;
+    if (params.rest_type == Restart::glue) {
+        if (hist.glueHist.isvalid()
+            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
+        ) {
+            params.needToStopSearch = true;
+        }
+    }
+    if (params.rest_type != Restart::never
+        && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
+    ) {
+        params.needToStopSearch = true;
     }
 
     //Conflict limit reached?
@@ -1366,9 +1378,6 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
 {
     assert(decisionLevel() > 0);
 
-    //queues
-    hist.glueHist.push(glue);
-
     //short-term averages
     hist.branchDepthHist.push(decisionLevel());
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
@@ -1383,7 +1392,10 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
     hist.conflSizeHistLT.push(learnt_clause.size());
-    hist.glueHistLT.push(glue);
+    if (params.rest_type == Restart::glue) {
+        hist.glueHistLT.push(glue);
+        hist.glueHist.push(glue);
+    }
 }
 
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
@@ -1795,8 +1807,11 @@ void Searcher::reset_temp_cl_num()
 void Searcher::reduce_db_if_needed()
 {
     //Check if we should do DBcleaning
-    if (num_red_cls_reducedb <= conf.cur_max_temp_red_cls)
+    if (num_red_cls_reducedb <= conf.cur_max_temp_red_cls) {
+        //cout << "num_red_cls_reducedb: " << num_red_cls_reducedb
+        //<< " conf.cur_max_temp_red_cls: " << conf.cur_max_temp_red_cls << endl;
         return;
+    }
 
     if (conf.verbosity >= 3) {
         cout
@@ -1966,16 +1981,11 @@ lbool Searcher::solve(
             goto end;
     }
 
-    params.rest_type = conf.restartType;
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
         ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
         ; loop_num ++
     ) {
-        //#ifdef USE_GAUSS
-        //clearGaussMatrixes();
-        //#endif //USE_GAUSS
-
         #ifdef SLOW_DEBUG
         assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
         assert(order_heap.heap_property());
@@ -1998,22 +2008,35 @@ lbool Searcher::solve(
         params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search<false>();
 
-        switch (params.rest_type) {
-            case Restart::geom:
-                max_conflicts_this_restart *= conf.restart_inc;
-                break;
+        if (max_confl_this_phase <= 0) {
+            if (params.rest_type == Restart::geom) {
+                params.rest_type = Restart::glue;
+            } else {
+                params.rest_type = Restart::geom;
+            }
+            switch (params.rest_type) {
+                case Restart::geom:
+                    max_confl_phase = (double)max_confl_phase * conf.restart_inc;
+                    max_confl_this_phase = max_confl_phase;
+                    break;
 
-            case Restart::luby:
-                max_conflicts_this_restart = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
-                break;
+                case Restart::glue:
+                    max_confl_this_phase = 2*max_confl_phase;
+                    break;
 
-            default:
-                break;
-        }
-        if (params.rest_type == Restart::geom) {
-            params.rest_type = Restart::glue;
-        } else {
-            params.rest_type = Restart::geom;
+                case Restart::luby:
+                    max_confl_phase = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
+                    max_confl_this_phase = 2*max_confl_phase;
+                    break;
+
+                case Restart::never:
+                    release_assert(false);
+            }
+            if (conf.verbosity >= 3) {
+                cout << "Phase is now " << getNameOfRestartType(params.rest_type)
+                << " this phase size: " << max_confl_this_phase
+                << " global phase size: " << max_confl_phase << endl;
+            }
         }
 
         if (must_abort(status)) {
