@@ -566,9 +566,9 @@ inline void Searcher::watch_based_learnt_minim()
             break;
         }
     }
-    int l = learnt_clause.size() - 1;
+    uint32_t l = learnt_clause.size() - 1;
     if (nb > 0) {
-        for (int i = 1; i < learnt_clause.size() - nb; i++) {
+        for (uint32_t i = 1; i < learnt_clause.size() - nb; i++) {
             if (permDiff[learnt_clause[i].var()] != MYFLAG) {
                 Lit p = learnt_clause[l];
                 learnt_clause[l] = learnt_clause[i];
@@ -1096,7 +1096,9 @@ lbool Searcher::search()
             }
         }
 
+        #ifdef USE_GAUSS
         prop:
+        #endif
         confl = propagate<false>();
     }
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
@@ -1490,7 +1492,10 @@ void Searcher::dump_sql_clause_data(
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
-    , const uint32_t backtrack_level
+    , const uint32_t
+#ifdef STATS_NEEDED
+    backtrack_level
+#endif
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 3) {
