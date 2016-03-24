@@ -360,6 +360,35 @@ inline PropResult PropEngine::prop_normal_helper(
     return PROP_TODO;
 }
 
+
+inline PropResult PropEngine::handle_normal_prop_fail(
+    Clause& c
+    , ClOffset offset
+    , PropBy& confl
+) {
+    confl = PropBy(offset);
+    #ifdef VERBOSE_DEBUG_FULLPROP
+    cout << "Conflict from ";
+    for(size_t i = 0; i < c.size(); i++) {
+        cout  << c[i] << " , ";
+    }
+    cout << endl;
+    #endif //VERBOSE_DEBUG_FULLPROP
+
+    //Update stats
+    #ifdef STATS_NEEDED
+    c.stats.conflicts_made++;
+    c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
+    #endif
+    if (c.red())
+        lastConflictCausedBy = ConflCausedBy::longred;
+    else
+        lastConflictCausedBy = ConflCausedBy::longirred;
+
+    qhead = trail.size();
+    return PROP_FAIL;
+}
+
 template<bool update_bogoprops>
 void PropEngine::enqueue(const Lit p, const PropBy from)
 {
