@@ -73,9 +73,9 @@ private:
     }
 
     // Helpers for calculating next capacity:
-    static inline uint32_t  imax   (uint32_t x, uint32_t y)
+    static inline uint32_t  imax   (int32_t x, int32_t y)
     {
-        uint32_t mask = (y - x) >> (sizeof(uint32_t) * 8 - 1);
+        int32_t mask = (y - x) >> (sizeof(uint32_t) * 8 - 1);
         return (x & mask) + (y & (~mask));
     }
     //static inline void nextCap(uint32_t& cap){ cap += ((cap >> 1) + 2) & ~1; }
@@ -127,7 +127,7 @@ public:
     {
         return cap;
     }
-    void     capacity (uint32_t min_cap);
+    void     capacity (int32_t min_cap);
     void     growTo   (uint32_t size);
     void     growTo   (uint32_t size, const T& pad);
     void     clear    (bool dealloc = false);
@@ -224,14 +224,14 @@ public:
 
 
 template<class T>
-void vec<T>::capacity(uint32_t min_cap)
+void vec<T>::capacity(int32_t min_cap)
 {
     if (cap >= min_cap) {
         return;
     }
-    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+    int32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
     if (add > std::numeric_limits<uint32_t>::max() - cap
-        || (((data = (T*)::realloc(data, (cap += add) * sizeof(T))) == NULL)
+        || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
             && errno == ENOMEM)
        ) {
         throw std::bad_alloc();
