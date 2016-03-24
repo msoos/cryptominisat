@@ -58,8 +58,8 @@ public:
         return data + sz;
     }
 private:
-    int sz;
-    int cap;
+    uint32_t sz;
+    uint32_t cap;
 
     // Don't allow copying (error prone):
     vec<T>&  operator = (vec<T>& other)
@@ -73,13 +73,13 @@ private:
     }
 
     // Helpers for calculating next capacity:
-    static inline int  imax   (int x, int y)
+    static inline uint32_t  imax   (uint32_t x, uint32_t y)
     {
-        int mask = (y - x) >> (sizeof(int) * 8 - 1);
+        uint32_t mask = (y - x) >> (sizeof(uint32_t) * 8 - 1);
         return (x & mask) + (y & (~mask));
     }
-    //static inline void nextCap(int& cap){ cap += ((cap >> 1) + 2) & ~1; }
-    static inline void nextCap(int& cap)
+    //static inline void nextCap(uint32_t& cap){ cap += ((cap >> 1) + 2) & ~1; }
+    static inline void nextCap(uint32_t& cap)
     {
         cap += ((cap >> 1) + 2) & ~1;
     }
@@ -87,11 +87,11 @@ private:
 public:
     // Constructors:
     vec()                       : data(NULL) , sz(0)   , cap(0)    { }
-    explicit vec(int size)      : data(NULL) , sz(0)   , cap(0)
+    explicit vec(uint32_t size)      : data(NULL) , sz(0)   , cap(0)
     {
         growTo(size);
     }
-    vec(int size, const T& pad) : data(NULL) , sz(0)   , cap(0)
+    vec(uint32_t size, const T& pad) : data(NULL) , sz(0)   , cap(0)
     {
         growTo(size, pad);
     }
@@ -100,36 +100,36 @@ public:
         clear(true);
     }
 
-    // Pointer to first element:
+    // Pouint32_ter to first element:
     operator T*       (void)
     {
         return data;
     }
 
     // Size operations:
-    int      size     (void) const
+    uint32_t      size     (void) const
     {
         return sz;
     }
-    void     shrink   (int nelems)
+    void     shrink   (uint32_t nelems)
     {
         assert(nelems <= sz);
-        for (int i = 0; i < nelems; i++) {
+        for (uint32_t i = 0; i < nelems; i++) {
             sz--, data[sz].~T();
         }
     }
-    void     shrink_  (int nelems)
+    void     shrink_  (uint32_t nelems)
     {
         assert(nelems <= sz);
         sz -= nelems;
     }
-    int      capacity (void) const
+    uint32_t      capacity (void) const
     {
         return cap;
     }
-    void     capacity (int min_cap);
-    void     growTo   (int size);
-    void     growTo   (int size, const T& pad);
+    void     capacity (uint32_t min_cap);
+    void     growTo   (uint32_t size);
+    void     growTo   (uint32_t size, const T& pad);
     void     clear    (bool dealloc = false);
 
     // Stack interface:
@@ -173,11 +173,11 @@ public:
     }
 
     // Vector interface:
-    const T& operator [] (int index) const
+    const T& operator [] (uint32_t index) const
     {
         return data[index];
     }
-    T&       operator [] (int index)
+    T&       operator [] (uint32_t index)
     {
         return data[index];
     }
@@ -187,7 +187,7 @@ public:
     {
         copy.clear();
         copy.growTo(sz);
-        for (int i = 0; i < sz; i++) {
+        for (uint32_t i = 0; i < sz; i++) {
             copy[i] = data[i];
         }
     }
@@ -224,26 +224,29 @@ public:
 
 
 template<class T>
-void vec<T>::capacity(int min_cap)
+void vec<T>::capacity(uint32_t min_cap)
 {
     if (cap >= min_cap) {
         return;
     }
-    int add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
-    if (add > std::numeric_limits<int>::max() - cap || ((data = (T*)::realloc(data, (cap += add) * sizeof(T))) == NULL) && errno == ENOMEM) {
+    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+    if (add > std::numeric_limits<uint32_t>::max() - cap
+        || (((data = (T*)::realloc(data, (cap += add) * sizeof(T))) == NULL)
+            && errno == ENOMEM)
+       ) {
         throw std::bad_alloc();
     }
 }
 
 
 template<class T>
-void vec<T>::growTo(int size, const T& pad)
+void vec<T>::growTo(uint32_t size, const T& pad)
 {
     if (sz >= size) {
         return;
     }
     capacity(size);
-    for (int i = sz; i < size; i++) {
+    for (uint32_t i = sz; i < size; i++) {
         data[i] = pad;
     }
     sz = size;
@@ -251,13 +254,13 @@ void vec<T>::growTo(int size, const T& pad)
 
 
 template<class T>
-void vec<T>::growTo(int size)
+void vec<T>::growTo(uint32_t size)
 {
     if (sz >= size) {
         return;
     }
     capacity(size);
-    for (int i = sz; i < size; i++) {
+    for (uint32_t i = sz; i < size; i++) {
         new (&data[i]) T();
     }
     sz = size;
@@ -268,7 +271,7 @@ template<class T>
 void vec<T>::clear(bool dealloc)
 {
     if (data != NULL) {
-        for (int i = 0; i < sz; i++) {
+        for (uint32_t i = 0; i < sz; i++) {
             data[i].~T();
         }
         sz = 0;
