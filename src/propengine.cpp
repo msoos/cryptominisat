@@ -240,11 +240,12 @@ inline bool PropEngine::prop_bin_cl(
 
         enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
     } else if (val == l_False) {
-        //Update stats
+        #ifdef STATS_NEEDED
         if (i->red())
             lastConflictCausedBy = ConflCausedBy::binred;
         else
-            lastConflictCausedBy = ConflCausedBy::binirred;
+            lastConflictCausedBy = ConflCausedBy::binirred;*/
+        #endif
 
         confl = PropBy(~p, i->red());
         failBinLit = i->lit2();
@@ -380,11 +381,12 @@ PropResult PropEngine::handle_prop_tri_fail(
     #endif //VERBOSE_DEBUG_FULLPROP
     confl = PropBy(~lit1, i->lit3(), i->red());
 
-    //Update stats
+    #ifdef STATS_NEEDED
     if (i->red())
         lastConflictCausedBy = ConflCausedBy::trired;
     else
-        lastConflictCausedBy = ConflCausedBy::triirred;
+        lastConflictCausedBy = ConflCausedBy::triirred;*/
+    #endif
 
     failBinLit = i->lit2();
     qhead = trail.size();
@@ -454,11 +456,12 @@ inline bool PropEngine::prop_tri_cl_any_order(
         #endif //VERBOSE_DEBUG_FULLPROP
         confl = PropBy(~lit1, i->lit3(), i->red());
 
-        //Update stats
+        #ifdef STATS_NEEDED
         if (i->red())
             lastConflictCausedBy = ConflCausedBy::trired;
         else
-            lastConflictCausedBy = ConflCausedBy::triirred;
+            lastConflictCausedBy = ConflCausedBy::triirred;*/
+        #endif
 
         failBinLit = i->lit2();
         qhead = trail.size();

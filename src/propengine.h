@@ -362,7 +362,10 @@ inline PropResult PropEngine::prop_normal_helper(
 
 
 inline PropResult PropEngine::handle_normal_prop_fail(
-    Clause& c
+    Clause&
+    #ifdef STATS_NEEDED
+    c
+    #endif
     , ClOffset offset
     , PropBy& confl
 ) {
@@ -379,11 +382,11 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     #ifdef STATS_NEEDED
     c.stats.conflicts_made++;
     c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
-    #endif
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
-        lastConflictCausedBy = ConflCausedBy::longirred;
+        lastConflictCausedBy = ConflCausedBy::longirred;*/
+    #endif
 
     qhead = trail.size();
     return PROP_FAIL;
