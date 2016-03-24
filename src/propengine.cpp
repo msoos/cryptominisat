@@ -256,11 +256,11 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-void PropEngine::update_glue(Clause& c)
+inline void PropEngine::update_glue(Clause& c)
 {
-    if (c.red()
+    if (conf.update_glues_on_prop
+        && c.red()
         && c.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
-        && conf.update_glues_on_prop
     ) {
         const uint32_t new_glue = calc_glue(c);
         if (new_glue < c.stats.glue
