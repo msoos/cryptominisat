@@ -1937,7 +1937,7 @@ void Solver::print_stats(const double cpu_time) const
 
 void Solver::print_min_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short();
+    sumSearchStats.print_short(sumPropStats.propagations);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -2003,7 +2003,7 @@ void Solver::print_min_stats(const double cpu_time) const
 
 void Solver::print_norm_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short();
+    sumSearchStats.print_short(sumPropStats.propagations);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -2094,7 +2094,7 @@ void Solver::print_norm_stats(const double cpu_time) const
 
 void Solver::print_all_stats(const double cpu_time) const
 {
-    sumSearchStats.print();
+    sumSearchStats.print(sumPropStats.propagations);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)

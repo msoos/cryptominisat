@@ -145,7 +145,7 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
     return result;
 }
 
-void SearchStats::printCommon() const
+void SearchStats::printCommon(uint64_t props) const
 {
     print_stats_line("c restarts"
         , numRestarts
@@ -165,15 +165,17 @@ void SearchStats::printCommon() const
         , "% random"
     );
 
+    print_stats_line("c propagations", props);
+
     print_stats_line("c decisions/conflicts"
         , float_div(decisions, conflStats.numConflicts)
     );
 }
 
-void SearchStats::print_short() const
+void SearchStats::print_short(uint64_t props) const
 {
     //Restarts stats
-    printCommon();
+    printCommon(props);
     conflStats.print_short(cpu_time);
 
     print_stats_line("c conf lits non-minim"
@@ -187,9 +189,9 @@ void SearchStats::print_short() const
     );
 }
 
-void SearchStats::print() const
+void SearchStats::print(uint64_t props) const
 {
-    printCommon();
+    printCommon(props);
     conflStats.print(cpu_time);
 
     /*assert(numConflicts
