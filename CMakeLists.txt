@@ -299,7 +299,7 @@ if (NOT NOZLIB)
     ENDIF (ZLIB_FOUND)
 endif()
 
-option(NOVALGRIND "Don't use valgrind" OFF)
+option(NOVALGRIND "Don't use valgrind" ON)
 find_package(Valgrind)
 if (VALGRIND_FOUND AND NOT NOVALGRIND)
     message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
