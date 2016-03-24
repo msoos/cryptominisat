@@ -604,9 +604,9 @@ void OccSimplifier::remove_all_longs_from_watches()
     ) {
         watch_subarray ws = *it;
 
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = i;
-        for (watch_subarray::iterator end2 = ws.end(); i != end2; i++) {
+        Watched* i = ws.begin();
+        Watched* j = i;
+        for (Watched *end2 = ws.end(); i != end2; i++) {
             if (i->isClause()) {
                 continue;
             } else {
@@ -1244,8 +1244,7 @@ void OccSimplifier::sanityCheckElimedVars()
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -1731,8 +1730,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     uint32_t after_literals = 0;
 
     size_t at_poss = 0;
-    for (watch_subarray::const_iterator
-        it = poss.begin(), end = poss.end()
+    for (const Watched* it = poss.begin(), *end = poss.end()
         ; it != end
         ; ++it, at_poss++
     ) {
@@ -1741,8 +1739,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             continue;
 
         size_t at_negs = 0;
-        for (watch_subarray::const_iterator
-            it2 = negs.begin(), end2 = negs.end()
+        for (const Watched *it2 = negs.begin(), *end2 = negs.end()
             ; it2 != end2
             ; it2++, at_negs++
         ) {
@@ -2317,8 +2314,7 @@ bool OccSimplifier::aggressiveCheck(
 ) {
     watch_subarray_const ws = solver->watches[lit];
     aggressive_elim_time_limit -= (int64_t)ws.size()/3 + 2;
-    for(watch_subarray::const_iterator it =
-        ws.begin(), end = ws.end()
+    for(const Watched* it = ws.begin(), *end = ws.end()
         ; it != end
         ; ++it
     ) {

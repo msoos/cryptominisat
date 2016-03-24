@@ -74,12 +74,12 @@ class ClauseCleaner
         );
         void clean_binary_implicit(
            Watched& ws
-            , watch_subarray::iterator& j
+            , Watched*& j
             , const Lit lit
         );
         void clean_tertiary_implicit(
            Watched& ws
-            , watch_subarray::iterator& j
+            , Watched*& j
             , const Lit lit
         );
 

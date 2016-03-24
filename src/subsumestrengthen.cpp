@@ -355,8 +355,7 @@ void inline SubsumeStrengthen::fillSubs(
     Lit litSub;
     watch_subarray_const cs = solver->watches[lit];
     *simplifier->limit_to_decrease -= (long)cs.size()*2+ 40;
-    for (watch_subarray_const::const_iterator
-        it = cs.begin(), end = cs.end()
+    for (const Watched *it = cs.begin(), *end = cs.end()
         ; it != end
         ; ++it
     ) {
@@ -681,11 +680,10 @@ template<class T> void SubsumeStrengthen::find_subsumed(
     watch_subarray occ = solver->watches[ps[smallest]];
     *simplifier->limit_to_decrease -= (long)occ.size()*8 + 40;
 
-    watch_subarray::iterator it = occ.begin();
-    watch_subarray::iterator it2 = occ.begin();
+    Watched* it = occ.begin();
+    Watched* it2 = occ.begin();
     size_t numBinFound = 0;
-    for (watch_subarray::const_iterator
-        end = occ.end()
+    for (const Watched* end = occ.end()
         ; it != end
         ; ++it
     ) {

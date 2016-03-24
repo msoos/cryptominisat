@@ -2261,9 +2261,7 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
 
         //Watchlist-based minimisation
         watch_subarray_const ws = watches[lit];
-        for (watch_subarray_const::const_iterator
-            i = ws.begin()
-            , end = ws.end()
+        for (const Watched* i = ws.begin() , *end = ws.end()
             ; i != end && limit > 0
             ; i++
         ) {

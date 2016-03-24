@@ -225,7 +225,7 @@ sets failBinLit
 */
 template<bool update_bogoprops>
 inline bool PropEngine::prop_bin_cl(
-    watch_subarray_const::const_iterator i
+    const Watched* i
     , const Lit p
     , PropBy& confl
 ) {
@@ -275,8 +275,8 @@ void PropEngine::update_glue(Clause& c)
 }
 
 inline PropResult PropEngine::prop_long_cl_strict_order(
-    watch_subarray_const::const_iterator i
-    , watch_subarray::iterator &j
+    Watched* i
+    , Watched*& j
     , const Lit p
     , PropBy& confl
 ) {
@@ -319,8 +319,8 @@ inline PropResult PropEngine::prop_long_cl_strict_order(
 template<bool update_bogoprops>
 inline
 bool PropEngine::prop_long_cl_any_order(
-    watch_subarray_const::const_iterator i
-    , watch_subarray::iterator &j
+    Watched* i
+    , Watched*& j
     , const Lit p
     , PropBy& confl
 ) {
@@ -368,7 +368,7 @@ bool PropEngine::prop_long_cl_any_order(
 }
 
 PropResult PropEngine::handle_prop_tri_fail(
-    watch_subarray_const::const_iterator i
+    Watched* i
     , Lit lit1
     , PropBy& confl
 ) {
@@ -392,7 +392,7 @@ PropResult PropEngine::handle_prop_tri_fail(
 }
 
 inline PropResult PropEngine::prop_tri_cl_strict_order(
-    watch_subarray_const::const_iterator i
+    Watched* i
     , const Lit lit1
     , PropBy& confl
 ) {
@@ -427,7 +427,7 @@ inline PropResult PropEngine::prop_tri_cl_strict_order(
 
 template<bool update_bogoprops>
 inline bool PropEngine::prop_tri_cl_any_order(
-    watch_subarray_const::const_iterator i
+    Watched* i
     , const Lit lit1
     , PropBy& confl
 ) {
@@ -534,9 +534,9 @@ PropBy PropEngine::propagate_any_order()
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = i;
-        watch_subarray_const::const_iterator end = ws.end();
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* end = ws.end();
         if (update_bogoprops) {
             propStats.bogoProps += ws.size()/4 + 1;
         }
@@ -644,8 +644,7 @@ void PropEngine::sortWatched()
 void PropEngine::printWatchList(const Lit lit) const
 {
     watch_subarray_const ws = watches[lit];
-    for (watch_subarray_const::const_iterator
-        it2 = ws.begin(), end2 = ws.end()
+    for (const Watched *it2 = ws.begin(), *end2 = ws.end()
         ; it2 != end2
         ; it2++
     ) {
@@ -686,8 +685,7 @@ inline void PropEngine::updateWatch(
     watch_subarray ws
     , const vector<uint32_t>& outerToInter
 ) {
-    for(watch_subarray::iterator
-        it = ws.begin(), end = ws.end()
+    for(Watched *it = ws.begin(), *end = ws.end()
         ; it != end
         ; ++it
     ) {
@@ -736,8 +734,8 @@ PropBy PropEngine::propagate_strict_order()
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         watch_subarray_const ws = watches[~p];
-        watch_subarray::const_iterator i = ws.begin();
-        watch_subarray_const::const_iterator end = ws.end();
+        const Watched* i = ws.begin();
+        const Watched* end = ws.end();
         propStats.bogoProps += ws.size()/10 + 1;
         for (; i != end; i++) {
 
@@ -766,9 +764,9 @@ PropBy PropEngine::propagate_strict_order()
     while (qheadlong < qhead && confl.isNULL()) {
         const Lit p = trail[qheadlong];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = ws.begin();
-        watch_subarray_const::const_iterator end = ws.end();
+        Watched* i = ws.begin();
+        Watched* j = ws.begin();
+        const Watched* end = ws.end();
         propStats.bogoProps += ws.size()/4 + 1;
         for (; i != end; i++) {
             //Skip binary clauses
@@ -831,7 +829,7 @@ PropBy PropEngine::propagateIrredBin()
     while (qhead < trail.size()) {
         Lit p = trail[qhead++];
         watch_subarray ws = watches[~p];
-        for(watch_subarray::iterator k = ws.begin(), end = ws.end(); k != end; k++) {
+        for(Watched* k = ws.begin(), *end = ws.end(); k != end; k++) {
 
             //If not binary, or is redundant, skip
             if (!k->isBin() || k->red())
@@ -872,8 +870,7 @@ bool PropEngine::propagate_occur()
         watch_subarray ws = watches[~p];
 
         //Go through each occur
-        for (watch_subarray::const_iterator
-            it = ws.begin(), end = ws.end()
+        for (const Watched* it = ws.begin(), *end = ws.end()
             ; it != end
             ; ++it
         ) {

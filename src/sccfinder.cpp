@@ -112,8 +112,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
         //Go through the watch
         watch_subarray_const ws = solver->watches[~vertLit];
         runStats.bogoprops += ws.size()/4;
-        for (watch_subarray_const::const_iterator
-            it = ws.begin(), end = ws.end()
+        for (const Watched *it = ws.begin(), *end = ws.end()
             ; it != end
             ; ++it
         ) {

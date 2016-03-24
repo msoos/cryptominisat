@@ -85,13 +85,13 @@ private:
     //ImplSubsumeData impl_subs_dat;
     void try_subsume_tri(
         const Lit lit
-        , Watched*& i
+        , Watched* i
         , Watched*& j
         , const bool doStamp
     );
     void try_subsume_bin(
        const Lit lit
-        , Watched*& i
+        , Watched* i
         , Watched*& j
     );
 };

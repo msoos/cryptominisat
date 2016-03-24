@@ -206,16 +206,16 @@ class VarReplacer
         };
         ImplicitTmpStats impl_tmp_stats;
         void updateTri(
-            watch_subarray::iterator& i
-            , watch_subarray::iterator& j
+            Watched* i
+            , Watched*& j
             , const Lit origLit1
             , const Lit origLit2
             , Lit lit1
             , Lit lit2
         );
         void updateBin(
-            watch_subarray::iterator& i
-            , watch_subarray::iterator& j
+            Watched* i
+            , Watched*& j
             , const Lit origLit1
             , const Lit origLit2
             , Lit lit1

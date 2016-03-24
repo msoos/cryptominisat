@@ -443,8 +443,7 @@ void ImplCache::tryVar(
     }
 
     //Fill 'seen' and 'val' from watch
-    for (watch_subarray::const_iterator
-        it = ws1.begin(), end = ws1.end()
+    for (const Watched *it = ws1.begin(), *end = ws1.end()
         ; it != end
         ; ++it
     ) {
@@ -487,7 +486,7 @@ void ImplCache::tryVar(
 
     //Try to see if we propagate the same or opposite from the other end
     //Using binary clauses
-    for (watch_subarray::const_iterator it = ws2.begin(), end = ws2.end(); it != end; ++it) {
+    for (const Watched *it = ws2.begin(), *end = ws2.end(); it != end; ++it) {
         if (!it->isBin())
             continue;
 
@@ -508,7 +507,7 @@ void ImplCache::tryVar(
         val[it->getLit().var()] = false;
     }
 
-    for (watch_subarray::const_iterator it = ws1.begin(), end = ws1.end(); it != end; ++it) {
+    for (const Watched *it = ws1.begin(), *end = ws1.end(); it != end; ++it) {
         if (!it->isBin())
             continue;
 

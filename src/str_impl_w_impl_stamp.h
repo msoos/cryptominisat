@@ -48,13 +48,13 @@ private:
 
     void strengthen_bin_with_bin(
         const Lit lit
-        , Watched*& i
+        , Watched* i
         , Watched*& j
         , const Watched* end
     );
     void strengthen_tri_with_bin_tri_stamp(
        const Lit lit
-        , Watched*& i
+        , Watched* i
         , Watched*& j
     );
 

@@ -406,9 +406,9 @@ inline void CNF::clean_occur_from_idx_types_only_smudged()
 inline void CNF::clean_occur_from_idx(const Lit lit)
 {
     watch_subarray ws = watches[lit];
-    watch_subarray::iterator i = ws.begin();
-    watch_subarray::iterator j = ws.begin();
-    for(watch_subarray::const_iterator end = ws.end(); i < end; i++) {
+    Watched* i = ws.begin();
+    Watched* j = ws.begin();
+    for(const Watched* end = ws.end(); i < end; i++) {
         if (!i->isIdx()) {
             *j++ = *i;
         }

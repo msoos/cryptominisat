@@ -18,15 +18,14 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************************************/
 
-#ifndef Minisat_Vec_h
-#define Minisat_Vec_h
+#ifndef Vec_h
+#define Vec_h
 
 #include <cassert>
-#include <limits>
 #include <new>
+#include <cstdint>
+#include <limits>
 #include <utility>
-#include <string.h>
-#include "constants.h"
 
 #include "XAlloc.h"
 
@@ -35,158 +34,249 @@ namespace CMSat {
 //=================================================================================================
 // Automatically resizable arrays
 //
-// NOTE! Don't use this vector on _datatypes that cannot be re-located in memory (with realloc)
+// NOTE! Don't use this vector on datatypes that cannot be re-located in memory (with realloc)
 
-template<class T, class _Size = uint32_t>
+template<class T>
 class vec {
 public:
-    typedef _Size Size;
+    T*  data;
+    T* begin()
+    {
+        return data;
+    }
+    T* end()
+    {
+        return data + sz;
+    }
+
+    const T* begin() const
+    {
+        return data;
+    }
+    const T* end() const
+    {
+        return data + sz;
+    }
 private:
-    T*   _data;
-    Size sz;
-    Size cap;
+    int sz;
+    int cap;
 
     // Don't allow copying (error prone):
-    vec<T>&  operator=(vec<T>& other);
-             vec      (vec<T>& other);
+    vec<T>&  operator = (vec<T>& other)
+    {
+        assert(0);
+        return *this;
+    }
+    vec        (vec<T>& other)
+    {
+        assert(0);
+    }
 
-    static inline Size max(Size x, Size y){ return (x > y) ? x : y; }
+    // Helpers for calculating next capacity:
+    static inline int  imax   (int x, int y)
+    {
+        int mask = (y - x) >> (sizeof(int) * 8 - 1);
+        return (x & mask) + (y & (~mask));
+    }
+    //static inline void nextCap(int& cap){ cap += ((cap >> 1) + 2) & ~1; }
+    static inline void nextCap(int& cap)
+    {
+        cap += ((cap >> 1) + 2) & ~1;
+    }
 
 public:
     // Constructors:
-    vec()                        : _data(NULL), sz(0), cap(0)    { }
-    explicit vec(Size size)      : _data(NULL), sz(0), cap(0)    { growTo(size); }
-    vec(Size size, const T& pad) : _data(NULL), sz(0), cap(0)    { growTo(size, pad); }
-   ~vec()                                                       { clear(true); }
-   vec(vec&& other)
-   #ifndef _MSC_VER
-   noexcept
-   #endif
-   {
-       _data = other._data;
-       sz = other.sz;
-       cap = other.cap;
-
-       other._data = NULL;
-       other.sz = 0;
-       other.cap = 0;
-    }
-
-    T* begin()
+    vec()                       : data(NULL) , sz(0)   , cap(0)    { }
+    explicit vec(int size)      : data(NULL) , sz(0)   , cap(0)
     {
-        return _data;
+        growTo(size);
     }
-
-    T* end()
+    vec(int size, const T& pad) : data(NULL) , sz(0)   , cap(0)
     {
-        return _data+sz;
+        growTo(size, pad);
     }
-
-    void shrink_to_fit()
+    ~vec()
     {
-        if (sz == 0) {
-            free(_data);
-            cap = 0;
-            _data = NULL;
-            return;
-        }
-
-        T* _data2 = (T*)realloc(_data, sz*sizeof(T));
-        if (_data2 == NULL) {
-            //We just keep the size then.
-            return;
-        }
-        _data = _data2;
-        cap = sz;
+        clear(true);
     }
-
-   void swap(vec& other)
-   {
-       std::swap(_data, other._data);
-       std::swap(sz, other.sz);
-       std::swap(cap, other.cap);
-   }
 
     // Pointer to first element:
-    T* data       (void)           { return _data; }
-    const T* data        (void) const           { return _data; }
+    operator T*       (void)
+    {
+        return data;
+    }
 
     // Size operations:
-    Size     size     (void) const   { return sz; }
-    void     shrink   (Size nelems)  { shrink_(nelems); }
-    void     resize   (Size nelems)  {
-        if (nelems > size()) {
-            growTo(nelems);
-        } else if (nelems < size()) {
-            shrink(size()-nelems);
+    int      size     (void) const
+    {
+        return sz;
+    }
+    void     shrink   (int nelems)
+    {
+        assert(nelems <= sz);
+        for (int i = 0; i < nelems; i++) {
+            sz--, data[sz].~T();
         }
     }
-    void     shrink_  (Size nelems)  { assert(nelems <= sz); sz -= nelems; }
-    int      capacity (void) const   { return cap; }
-    void     capacity (Size min_cap);
-    void     growTo   (Size size);
-    void     growTo   (Size size, const T& pad);
+    void     shrink_  (int nelems)
+    {
+        assert(nelems <= sz);
+        sz -= nelems;
+    }
+    int      capacity (void) const
+    {
+        return cap;
+    }
+    void     capacity (int min_cap);
+    void     growTo   (int size);
+    void     growTo   (int size, const T& pad);
     void     clear    (bool dealloc = false);
 
     // Stack interface:
-    void     push  (void)              { if (sz == cap) capacity(sz+1); new (&_data[sz]) T(); sz++; }
-    //void     push  (const T& elem)     { if (sz == cap) capacity(sz+1); _data[sz++] = elem; }
-    void     push  (const T& elem)     { if (sz == cap) capacity(sz+1); new (&_data[sz++]) T(elem); }
-    void     push_ (const T& elem)     { assert(sz < cap); _data[sz++] = elem; }
-    void     pop   (void)              { assert(sz > 0); sz--, _data[sz].~T(); }
+    void     push  (void)
+    {
+        if (sz == cap) {
+            capacity(sz + 1);
+        }
+        new (&data[sz]) T();
+        sz++;
+    }
+    void     push  (const T& elem)
+    {
+        if (sz == cap) {
+            capacity(sz + 1);
+        }
+        data[sz++] = elem;
+    }
+    void     push_ (const T& elem)
+    {
+        assert(sz < cap);
+        data[sz++] = elem;
+    }
+    void     pop   (void)
+    {
+        assert(sz > 0);
+        sz--, data[sz].~T();
+    }
     // NOTE: it seems possible that overflow can happen in the 'sz+1' expression of 'push()', but
     // in fact it can not since it requires that 'cap' is equal to INT_MAX. This in turn can not
     // happen given the way capacities are calculated (below). Essentially, all capacities are
     // even, but INT_MAX is odd.
 
-    const T& last  (void) const        { return _data[sz-1]; }
-    T&       last  (void)              { return _data[sz-1]; }
+    const T& last  (void) const
+    {
+        return data[sz - 1];
+    }
+    T&       last  (void)
+    {
+        return data[sz - 1];
+    }
 
     // Vector interface:
-    const T& operator [] (Size index) const { return _data[index]; }
-    T&       operator [] (Size index)       { return _data[index]; }
-    const T& at (Size index) const { release_assert(index > size()); return _data[index]; }
-    T&       at (Size index)       { release_assert(index > size()); return _data[index]; }
-
-    bool empty() const { return size() == 0; }
+    const T& operator [] (int index) const
+    {
+        return data[index];
+    }
+    T&       operator [] (int index)
+    {
+        return data[index];
+    }
 
     // Duplicatation (preferred instead):
-    void copyTo(vec<T>& copy) const { copy.clear(); copy.growTo(sz); for (Size i = 0; i < sz; i++) copy[i] = _data[i]; }
-    void moveTo(vec<T>& dest) { dest.clear(true); dest._data = _data; dest.sz = sz; dest.cap = cap; _data = NULL; sz = 0; cap = 0; }
+    void copyTo(vec<T>& copy) const
+    {
+        copy.clear();
+        copy.growTo(sz);
+        for (int i = 0; i < sz; i++) {
+            copy[i] = data[i];
+        }
+    }
+    void moveTo(vec<T>& dest)
+    {
+        dest.clear(true);
+        dest.data = data;
+        dest.sz = sz;
+        dest.cap = cap;
+        data = NULL;
+        sz = 0;
+        cap = 0;
+    }
+    void swap(vec<T>& dest)
+    {
+        std::swap(dest.data, data);
+        std::swap(dest.sz, sz);
+        std::swap(dest.cap, cap);
+    }
+
+    void resize(uint32_t s) {
+        if (s < sz) {
+            shrink(sz - s);
+        } else {
+            growTo(s);
+        }
+    }
+
+    bool empty() const
+    {
+        return sz == 0;
+    }
 };
 
 
-template<class T, class _Size>
-void vec<T,_Size>::capacity(Size min_cap) {
-    if (cap >= min_cap) return;
-    Size add = max((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
-    const Size size_max = std::numeric_limits<Size>::max();
-    if ( ((size_max <= std::numeric_limits<int>::max()) && (add > size_max - cap))
-    ||   (((_data = (T*)::realloc(_data, (cap += add) * sizeof(T))) == NULL) && errno == ENOMEM) )
+template<class T>
+void vec<T>::capacity(int min_cap)
+{
+    if (cap >= min_cap) {
+        return;
+    }
+    int add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+    if (add > std::numeric_limits<int>::max() - cap || ((data = (T*)::realloc(data, (cap += add) * sizeof(T))) == NULL) && errno == ENOMEM) {
         throw std::bad_alloc();
- }
+    }
+}
 
 
-template<class T, class _Size>
-void vec<T,_Size>::growTo(Size size, const T& pad) {
-    if (sz >= size) return;
+template<class T>
+void vec<T>::growTo(int size, const T& pad)
+{
+    if (sz >= size) {
+        return;
+    }
     capacity(size);
-    for (Size i = sz; i < size; i++) _data[i] = pad;
-    sz = size; }
+    for (int i = sz; i < size; i++) {
+        data[i] = pad;
+    }
+    sz = size;
+}
 
 
-template<class T, class _Size>
-void vec<T,_Size>::growTo(Size size) {
-    if (sz >= size) return;
+template<class T>
+void vec<T>::growTo(int size)
+{
+    if (sz >= size) {
+        return;
+    }
     capacity(size);
-    sz = size; }
+    for (int i = sz; i < size; i++) {
+        new (&data[i]) T();
+    }
+    sz = size;
+}
 
 
-template<class T, class _Size>
-void vec<T,_Size>::clear(bool dealloc) {
-    if (_data != NULL){
+template<class T>
+void vec<T>::clear(bool dealloc)
+{
+    if (data != NULL) {
+        for (int i = 0; i < sz; i++) {
+            data[i].~T();
+        }
         sz = 0;
-        if (dealloc) free(_data), _data = NULL, cap = 0; } }
+        if (dealloc) {
+            free(data), data = NULL, cap = 0;
+        }
+    }
+}
 
 //=================================================================================================
 }

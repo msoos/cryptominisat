@@ -127,8 +127,8 @@ protected:
     PropBy propagate_strict_order();
     /*template<bool update_bogoprops>
     bool handle_xor_cl(
-        watch_subarray_const::const_iterator i
-        , watch_subarray::iterator &j
+        Watched*& i
+        , Watched*& &j
         , const Lit p
         , PropBy& confl
     );*/
@@ -136,12 +136,12 @@ protected:
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset
-        , watch_subarray::iterator &j
+        , Watched*& j
         , const Lit p
     );
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
     PropResult handle_prop_tri_fail(
-        watch_subarray_const::const_iterator i
+        Watched* i
         , Lit lit1
         , PropBy& confl
     );
@@ -217,7 +217,7 @@ private:
 
     template<bool update_bogoprops = true>
     bool prop_bin_cl(
-        watch_subarray_const::const_iterator i
+        const Watched* i
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
@@ -239,28 +239,28 @@ private:
     void update_glue(Clause& c);
 
     PropResult prop_tri_cl_strict_order (
-        watch_subarray_const::const_iterator i
+        Watched* i
         , const Lit p
         , PropBy& confl
     );
     template<bool update_bogoprops = true>
     bool prop_tri_cl_any_order(
-        watch_subarray_const::const_iterator i
+        Watched* i
         , const Lit lit1
         , PropBy& confl
     );
 
     ///Propagate >3-long clause
     PropResult prop_long_cl_strict_order(
-        watch_subarray_const::const_iterator i
-        , watch_subarray::iterator &j
+        Watched* i
+        , Watched*& j
         , const Lit p
         , PropBy& confl
     );
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
-        watch_subarray_const::const_iterator i
-        , watch_subarray::iterator &j
+        Watched* i
+        , Watched*& j
         , const Lit p
         , PropBy& confl
     );
@@ -322,7 +322,7 @@ uint32_t PropEngine::calc_glue(const T& ps)
 inline PropResult PropEngine::prop_normal_helper(
     Clause& c
     , ClOffset offset
-    , watch_subarray::iterator &j
+    , Watched*& j
     , const Lit p
 ) {
     #ifdef STATS_NEEDED

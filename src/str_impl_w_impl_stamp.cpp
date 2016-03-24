@@ -130,7 +130,7 @@ void StrImplWImplStamp::distill_implicit_with_implicit_lit(const Lit lit)
 
 void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
     const Lit lit
-    , Watched*& i
+    , Watched* i
     , Watched*& j
 ) {
     const Lit lit1 = i->lit2();
@@ -138,8 +138,7 @@ void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
     bool rem = false;
 
     timeAvailable -= (long)solver->watches[~lit].size();
-    for(watch_subarray::const_iterator
-        it2 = solver->watches[~lit].begin(), end2 = solver->watches[~lit].end()
+    for(const Watched* it2 = solver->watches[~lit].begin(), *end2 = solver->watches[~lit].end()
         ; it2 != end2 && timeAvailable > 0
         ; it2++
     ) {
@@ -229,7 +228,7 @@ void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
 
 void StrImplWImplStamp::strengthen_bin_with_bin(
     const Lit lit
-    , Watched*& i
+    , Watched* i
     , Watched*& j
     , const Watched* end
 ) {
@@ -264,7 +263,7 @@ void StrImplWImplStamp::strengthen_bin_with_bin(
     //that has ~i->lit2() inside. Everything is sorted, so we are
     //lucky, this is speedy
     bool rem = false;
-    watch_subarray::const_iterator i2 = i;
+    const Watched* i2 = i;
     while(i2 != end
         && (i2->isBin() || i2->isTri())
         && i->lit2().var() == i2->lit2().var()

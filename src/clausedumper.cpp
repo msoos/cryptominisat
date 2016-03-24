@@ -155,8 +155,7 @@ void ClauseDumper::dumpBinClauses(
         watch_subarray_const ws = *it;
 
         //Each element in the watchlist
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -199,8 +198,7 @@ void ClauseDumper::dumpTriClauses(
     ) {
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {

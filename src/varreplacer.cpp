@@ -316,9 +316,9 @@ void VarReplacer::newBinClause(
     }
 }
 
-void VarReplacer::updateTri(
-    watch_subarray::iterator& i
-    , watch_subarray::iterator& j
+inline void VarReplacer::updateTri(
+    Watched* i
+    , Watched*& j
     , const Lit origLit1
     , const Lit origLit2
     , Lit lit1
@@ -435,9 +435,9 @@ void VarReplacer::updateTri(
     return;
 }
 
-void VarReplacer::updateBin(
-    watch_subarray::iterator& i
-    , watch_subarray::iterator& j
+inline void VarReplacer::updateBin(
+    Watched* i
+    , Watched*& j
     , const Lit origLit1
     , const Lit origLit2
     , Lit lit1
@@ -529,9 +529,9 @@ bool VarReplacer::replaceImplicit()
         //const Lit origLit1 = Lit::toLit(at);
         watch_subarray ws = solver->watches[origLit1];
 
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = i;
-        for (watch_subarray::iterator end2 = ws.end(); i != end2; i++) {
+        Watched* i = ws.begin();
+        Watched* j = i;
+        for (Watched *end2 = ws.end(); i != end2; i++) {
             //Don't bother clauses
             if (i->isClause()) {
                 *j++ = *i;

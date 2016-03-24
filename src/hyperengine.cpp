@@ -70,8 +70,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         const Lit p = trail[nlBinQHead++];
         watch_subarray_const ws = watches[~p];
         propStats.bogoProps += 1;
-        for(watch_subarray_const::const_iterator
-            k = ws.begin(), end = ws.end()
+        for(const Watched *k = ws.begin(), *end = ws.end()
             ; k != end
             ; k++
         ) {
@@ -96,7 +95,7 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         propStats.bogoProps += 1;
         size_t done = 0;
 
-        for(watch_subarray::const_iterator k = ws.begin(), end = ws.end(); k != end; k++, done++) {
+        for(const Watched *k = ws.begin(), *end = ws.end(); k != end; k++, done++) {
 
             //If something other than redundant binary, skip
             if (!k->isBin() || !k->red())
@@ -122,9 +121,9 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
         watch_subarray ws = watches[~p];
         propStats.bogoProps += 1;
 
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = ws.begin();
-        watch_subarray_const::const_iterator end = ws.end();
+        Watched* i = ws.begin();
+        Watched* j = ws.begin();
+        Watched* end = ws.end();
         for(; i != end; i++) {
             if (i->isBin()) {
                 *j++ = *i;
@@ -184,8 +183,7 @@ Lit HyperEngine::prop_red_bin_dfs(
     const Lit p = toPropRedBin.top();
     watch_subarray_const ws = watches[~p];
     size_t done = 0;
-    for(watch_subarray::const_iterator
-        k = ws.begin(), end = ws.end()
+    for(const Watched *k = ws.begin(), *end = ws.end()
         ; k != end
         ; k++, done++
     ) {
@@ -248,8 +246,7 @@ Lit HyperEngine::prop_irred_bin_dfs(
     const Lit p = toPropBin.top();
     watch_subarray_const ws = watches[~p];
     size_t done = 0;
-    for(watch_subarray::const_iterator
-        k = ws.begin(), end = ws.end()
+    for(const Watched *k = ws.begin(), *end = ws.end()
         ; k != end
         ; k++, done++
     ) {
@@ -333,9 +330,9 @@ Lit HyperEngine::prop_larger_than_bin_cl_dfs(
     watch_subarray ws = watches[~p];
     propStats.bogoProps += 1;
 
-    watch_subarray::iterator i = ws.begin();
-    watch_subarray::iterator j = ws.begin();
-    watch_subarray_const::const_iterator end = ws.end();
+    Watched* i = ws.begin();
+    Watched* j = ws.begin();
+    Watched* end = ws.end();
     for(; i != end; i++) {
         propStats.bogoProps += 1;
         if (i->isBin()) {
@@ -964,7 +961,7 @@ void HyperEngine::remove_bin_clause(Lit lit)
 
 PropResult HyperEngine::prop_bin_with_ancestor_info(
     const Lit p
-    , watch_subarray::const_iterator k
+    , const Watched* k
     , PropBy& confl
 ) {
     const Lit lit = k->lit2();
@@ -1036,8 +1033,8 @@ PropResult HyperEngine::prop_bin_with_ancestor_info(
 
 
 PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
-    watch_subarray_const::const_iterator i
-    , watch_subarray::iterator &j
+    Watched* i
+    , Watched*& j
     , const Lit p
     , PropBy& confl
 ) {
@@ -1077,7 +1074,7 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
 }
 
 PropResult HyperEngine::prop_tri_clause_with_acestor_info(
-    watch_subarray_const::const_iterator i
+    Watched*& i
     , const Lit lit1
     , PropBy& confl
 ) {

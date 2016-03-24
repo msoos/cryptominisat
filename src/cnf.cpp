@@ -627,8 +627,7 @@ void CNF::print_all_clauses() const
         Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
         cout << "watches[" << lit << "]" << endl;
-        for (watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for (const Watched *it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {

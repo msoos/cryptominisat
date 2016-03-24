@@ -223,7 +223,7 @@ bool SolutionExtender::addClause(
 }
 
 inline bool SolutionExtender::prop_bin_cl(
-    watch_subarray_const::const_iterator i
+    Watched*& i
     , const Lit p
 ) {
     const lbool val = value(i->lit2());
@@ -244,7 +244,7 @@ inline bool SolutionExtender::prop_bin_cl(
 }
 
 inline bool SolutionExtender::prop_tri_cl_strict_order(
-    watch_subarray_const::const_iterator i
+    Watched*& i
     , const Lit p
 ) {
     const Lit lit2 = i->lit2();
@@ -301,7 +301,7 @@ bool SolutionExtender::propagate()
     while(qhead < trail.size()) {
         const Lit p = trail[qhead++];
         watch_subarray_const ws = solver->watches[~p];
-        for(watch_subarray::const_iterator
+        for(const Watched*
             it = ws.begin(), end = ws.end()
             ; it != end
             ; ++it

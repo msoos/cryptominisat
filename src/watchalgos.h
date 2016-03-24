@@ -34,17 +34,17 @@ using namespace CMSat;
 //////////////////
 static inline bool findWCl(watch_subarray_const ws, const ClOffset c)
 {
-    watch_subarray_const::const_iterator i = ws.begin(), end = ws.end();
+    const Watched* i = ws.begin(), *end = ws.end();
     for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
     return i != end;
 }
 
 static inline void removeWCl(watch_subarray ws, const ClOffset c)
 {
-    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    Watched* i = ws.begin(), *end = ws.end();
     for (; i != end && (!i->isClause() || i->get_offset() != c); i++);
     assert(i != end);
-    watch_subarray::iterator j = i;
+    Watched* j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
@@ -62,7 +62,7 @@ static inline Watched& findWatchedOfTri(
     , const bool red
 ) {
     watch_subarray ws = wsFull[lit1];
-    for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+    for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
         if (i->isTri()
             && i->lit2() == lit2
             && i->lit3() == lit3
@@ -84,8 +84,7 @@ static inline const Watched& findWatchedOfTri(
     , const bool red
 ) {
     watch_subarray_const ws = wsFull[lit1];
-    for (watch_subarray_const::const_iterator
-        it = ws.begin(), end = ws.end()
+    for (const Watched *it = ws.begin(), *end = ws.end()
         ; it != end
         ; ++it
     ) {
@@ -112,7 +111,7 @@ static inline void removeWTri(
     assert(lit2 < lit3);
 
     watch_subarray ws = wsFull[lit1];
-    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
         !i->isTri()
         || i->lit2() != lit2
@@ -121,7 +120,7 @@ static inline void removeWTri(
     ); i++);
 
     assert(i != end);
-    watch_subarray::iterator j = i;
+    Watched *j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
@@ -152,7 +151,7 @@ inline void removeWBin(
     , const bool red
 ) {
     watch_subarray ws = wsFull[lit1];
-    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
         !i->isBin()
         || i->lit2() != lit2
@@ -160,7 +159,7 @@ inline void removeWBin(
     ); i++);
 
     assert(i != end);
-    watch_subarray::iterator j = i;
+    Watched *j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
@@ -173,7 +172,7 @@ inline bool removeWBin_except_marked(
     , const bool red
 ) {
     watch_subarray ws = wsFull[lit1];
-    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (
         !i->isBin()
         || i->lit2() != lit2
@@ -185,7 +184,7 @@ inline bool removeWBin_except_marked(
         return false;
     }
 
-    watch_subarray::iterator j = i;
+    Watched *j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);
@@ -200,7 +199,7 @@ inline const Watched& findWatchedOfBin(
     , const bool red
 ) {
     watch_subarray_const ws = wsFull[lit1];
-    for (watch_subarray::const_iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+    for (const Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
         if (i->isBin() && i->lit2() == lit2 && i->red() == red)
             return *i;
     }
@@ -216,7 +215,7 @@ inline Watched& findWatchedOfBin(
     , const bool red
 ) {
     watch_subarray ws = wsFull[lit1];
-    for (watch_subarray::iterator i = ws.begin(), end = ws.end(); i != end; i++) {
+    for (Watched *i = ws.begin(), *end = ws.end(); i != end; i++) {
         if (i->isBin() && i->lit2() == lit2 && i->red() == red)
             return *i;
     }
@@ -230,10 +229,10 @@ static inline void removeWXCl(watch_array& wsFull
     , const ClOffset offs
 ) {
     watch_subarray ws = wsFull[lit];
-    watch_subarray::iterator i = ws.begin(), end = ws.end();
+    Watched *i = ws.begin(), *end = ws.end();
     for (; i != end && (!i->isClause() || i->get_offset() != offs); i++);
     assert(i != end);
-    watch_subarray::iterator j = i;
+    Watched *j = i;
     i++;
     for (; i != end; j++, i++) *j = *i;
     ws.shrink_(1);

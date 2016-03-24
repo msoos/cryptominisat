@@ -44,7 +44,7 @@ bool ClauseCleaner::satisfied(const Watched& watched, Lit lit)
 
 void ClauseCleaner::clean_binary_implicit(
     Watched& ws
-    , watch_subarray::iterator& j
+    , Watched*& j
     , const Lit lit
 ) {
     if (satisfied(ws, lit)) {
@@ -67,7 +67,7 @@ void ClauseCleaner::clean_binary_implicit(
 
 void ClauseCleaner::clean_tertiary_implicit(
     Watched& ws
-    , watch_subarray::iterator& j
+    , Watched*& j
     , const Lit lit
 ) {
     bool remove = false;
@@ -141,9 +141,9 @@ void ClauseCleaner::clean_implicit_watchlist(
     watch_subarray& watch_list
     , const Lit lit
 ) {
-    watch_subarray::iterator i = watch_list.begin();
-    watch_subarray::iterator j = i;
-    for (watch_subarray::iterator end2 = watch_list.end(); i != end2; i++) {
+    Watched* i = watch_list.begin();
+    Watched* j = i;
+    for (Watched* end2 = watch_list.end(); i != end2; i++) {
         if (i->isClause()) {
             *j++ = *i;
             continue;

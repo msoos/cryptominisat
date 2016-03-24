@@ -234,8 +234,7 @@ void DistillerLongWithImpl::str_and_sub_using_watch(
     //Go through the watchlist
     watch_subarray thisW = solver->watches[lit];
     timeAvailable -= (long)thisW.size()*2 + 5;
-    for(watch_subarray::iterator
-        wit = thisW.begin(), wend = thisW.end()
+    for(Watched* wit = thisW.begin(), *wend = thisW.end()
         ; wit != wend
         ; wit++
     ) {

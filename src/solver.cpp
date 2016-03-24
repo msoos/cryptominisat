@@ -1752,9 +1752,9 @@ bool Solver::execute_inprocess_strategy(
     }
 
     for(watch_subarray ws: solver->watches) {
-        watch_subarray::iterator i = ws.begin();
-        watch_subarray::iterator j = i;
-        for (watch_subarray::iterator end = ws.end(); i != end; i++) {
+        Watched*& i = ws.begin();
+        Watched*& j = i;
+        for (Watched*& end = ws.end(); i != end; i++) {
             if (!i->isClause()) {
                 *j++ = *i;
                 continue;
@@ -2637,8 +2637,7 @@ const char* Solver::get_compilation_env()
 
 void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
 {
-    for (watch_subarray::const_iterator
-        it = ws.begin(), end = ws.end()
+    for (const Watched *it = ws.begin(), *end = ws.end()
         ; it != end
         ; ++it
     ) {
@@ -2675,8 +2674,7 @@ void Solver::check_implicit_propagated() const
     ) {
         const Lit lit = Lit::toLit(wsLit);
         watch_subarray_const ws = *it;
-        for(watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for(const Watched *it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {
@@ -3404,8 +3402,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
         ; ++it, wsLit++
     ) {
         watch_subarray_const ws = *it;
-        for(watch_subarray_const::const_iterator
-            it2 = ws.begin(), end2 = ws.end()
+        for(const Watched* it2 = ws.begin(), *end2 = ws.end()
             ; it2 != end2
             ; it2++
         ) {

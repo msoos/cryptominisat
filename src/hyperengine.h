@@ -83,18 +83,18 @@ private:
 
     PropResult prop_bin_with_ancestor_info(
         const Lit p
-        , watch_subarray::const_iterator k
+        , const Watched* k
         , PropBy& confl
     );
     PropResult prop_tri_clause_with_acestor_info(
-        watch_subarray_const::const_iterator i
+        Watched*& i
         , const Lit lit1
         , PropBy& confl
     );
 
     PropResult prop_normal_cl_with_ancestor_info(
-        watch_subarray_const::const_iterator i
-        , watch_subarray::iterator &j
+        Watched* i
+        , Watched*& j
         , const Lit p
         , PropBy& confl
     );

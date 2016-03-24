@@ -196,8 +196,7 @@ void CompFinder::addToCompImplicits()
                 continue;
 
             bogoprops_remain -= ws.size() + 10;
-            for(watch_subarray::const_iterator
-                it2 = ws.begin(), end2 = ws.end()
+            for(const Watched *it2 = ws.begin(), *end2 = ws.end()
                 ; it2 != end2
                 ; it2++
             ) {

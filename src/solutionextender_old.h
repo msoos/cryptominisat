@@ -58,11 +58,11 @@ class SolutionExtender
         bool propagateCl(const Clause* cl, const Lit blockedOn);
         bool propagate();
         bool prop_bin_cl(
-            watch_subarray_const::const_iterator i
+            Watched*& i
             , const Lit p
         );
         bool prop_tri_cl_strict_order(
-            watch_subarray_const::const_iterator i
+            Watched*& i
             , const Lit p
         );
         bool satisfiedNorm(const vector<Lit>& lits) const;

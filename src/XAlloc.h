@@ -18,25 +18,27 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 
-#ifndef Minisat_XAlloc_h
-#define Minisat_XAlloc_h
+#ifndef Glucose_XAlloc_h
+#define Glucose_XAlloc_h
 
 #include <errno.h>
 #include <stdlib.h>
-#include <new>
+#include <stdio.h>
 
-namespace CMSat {
+namespace Glucose {
 
 //=================================================================================================
 // Simple layer on top of malloc/realloc to catch out-of-memory situtaions and provide some typing:
 
-static inline void* xrealloc(void *ptr, size_t size)
+class OutOfMemoryException {};
+static inline void* xrealloc(void* ptr, size_t size)
 {
     void* mem = realloc(ptr, size);
-    if (mem == NULL && errno == ENOMEM){
-        throw std::bad_alloc();
-    }else
+    if (mem == NULL && errno == ENOMEM) {
+        throw OutOfMemoryException();
+    } else {
         return mem;
+    }
 }
 
 //=================================================================================================
