@@ -72,7 +72,17 @@
 ///////////////////
 
 #ifndef NDEBUG
+//#define FAST_DEBUG
+#endif
+
+#ifdef SLOW_DEBUG
 #define FAST_DEBUG
+#define DEBUG_PROPAGATEFROM
+#define ENQUEUE_DEBUG
+#define DEBUG_ATTACH_MORE
+#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
+#define DEBUG_IMPLICIT_STATS
+#define DEBUG_GAUSS
 #endif
 
 #ifdef FAST_DEBUG
@@ -81,15 +91,6 @@
 #define DEBUG_ATTACH
 #define DEBUG_REPLACER
 #define DEBUG_MARKED_CLAUSE
-#endif
-
-#ifdef SLOW_DEBUG
-#define DEBUG_PROPAGATEFROM
-#define ENQUEUE_DEBUG
-#define DEBUG_ATTACH_MORE
-#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
-#define DEBUG_IMPLICIT_STATS
-#define DEBUG_GAUSS
 #endif
 
 //#define DEBUG_ATTACH_FULL
