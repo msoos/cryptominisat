@@ -186,7 +186,11 @@ class Watched {
             return _red;
         }
 
-        void setRed(const bool toSet)
+        void setRed(const bool
+        #ifdef DEBUG_WATCHED
+        toSet
+        #endif
+        )
         {
             #ifdef DEBUG_WATCHED
             assert(isBin() || isTri());
@@ -278,6 +282,31 @@ class Watched {
         bool operator!=(const Watched& other) const
         {
             return !(*this == other);
+        }
+
+        Watched(Watched&& o) noexcept {
+            data1 = o.data1;
+            data2 = o.data2;
+            type = o.type;
+            _red = o._red;
+            marked = o.marked;
+        }
+
+        Watched(const Watched& o) noexcept {
+            data1 = o.data1;
+            data2 = o.data2;
+            type = o.type;
+            _red = o._red;
+            marked = o.marked;
+        }
+
+        Watched& operator=(const Watched& o) noexcept {
+            data1 = o.data1;
+            data2 = o.data2;
+            type = o.type;
+            _red = o._red;
+            marked = o.marked;
+            return *this;
         }
 
     private:
