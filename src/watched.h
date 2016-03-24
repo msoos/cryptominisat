@@ -30,6 +30,8 @@
 #include "solvertypes.h"
 
 #include <limits>
+#include <string.h>
+
 
 namespace CMSat {
 
@@ -282,57 +284,17 @@ class Watched {
             return !(*this == other);
         }
 
-        class Iterator
-        {
-        public:
-            //end iterator
-            Iterator() :
-                at(2)
-            {}
-
-            //Begin iterator
-            Iterator(Lit lit2, Lit lit3) :
-                at(0)
-            {
-                lits[0] = lit2;
-                lits[1] = lit3;
-            }
-
-            Lit operator*()
-            {
-                return lits[at];
-            }
-
-            void operator++()
-            {
-                at++;
-            }
-
-            bool operator==(const Iterator& other) const
-            {
-                return (at == other.at);
-            }
-
-            bool operator!=(const Iterator& other) const
-            {
-                return (at != other.at);
-            }
-
-        private:
-            unsigned at;
-            Lit lits[2];
-        };
-
-        Iterator begin() const
-        {
-            assert(isTri());
-            return Iterator(lit2(), lit3());
+        Watched(Watched&& o) noexcept {
+            memmove(this, &o, sizeof(Watched));
         }
 
-        Iterator end() const
-        {
-            assert(isTri());
-            return Iterator();
+        Watched(const Watched& o) noexcept {
+            memmove(this, &o, sizeof(Watched));
+        }
+
+        Watched& operator=(const Watched& o) noexcept {
+            memmove(this, &o, sizeof(Watched));
+            return *this;
         }
 
     private:
