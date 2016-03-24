@@ -784,7 +784,7 @@ Clause* Searcher::analyze_conflict(
 
 }
 
-inline bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
+bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 {
     #ifdef DEBUG_LITREDUNDANT
     cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
