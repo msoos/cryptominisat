@@ -572,7 +572,6 @@ PropBy PropEngine::propagate_any_order()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
-
         qhead++;
     }
 
