@@ -353,7 +353,7 @@ class Searcher : public HyperEngine
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
         template<bool update_bogoprops>
-        void     bump_var_activitiy  (uint32_t v);
+        void     bump_var_activity  (uint32_t v);
         struct VarOrderLt { ///Order variables according to their activities
             const vector<double>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const

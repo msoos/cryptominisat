@@ -142,7 +142,7 @@ inline void Searcher::add_lit_to_learnt(
     if (!seen[var]) {
         seen[var] = 1;
 
-        bump_var_activitiy<update_bogoprops>(var);
+        bump_var_activity<update_bogoprops>(var);
         tmp_learnt_clause_size++;
         seen2[lit.toInt()] = 1;
         tmp_learnt_clause_abst |= abst_var(lit.var());
@@ -686,7 +686,7 @@ void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t gl
     for (const auto dat :implied_by_learnts) {
         const uint32_t v_glue = dat.second;
         if (v_glue < glue) {
-            bump_var_activitiy<update_bogoprops>(dat.first.var());
+            bump_var_activity<update_bogoprops>(dat.first.var());
         }
     }
 }
@@ -2902,7 +2902,7 @@ inline void Searcher::varDecayActivity()
 }
 
 template<bool update_bogoprops>
-inline void Searcher::bump_var_activitiy(uint32_t var)
+inline void Searcher::bump_var_activity(uint32_t var)
 {
     if (update_bogoprops) {
         return;
