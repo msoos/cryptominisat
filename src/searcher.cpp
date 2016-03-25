@@ -1053,7 +1053,10 @@ lbool Searcher::search()
                 var_decay += 0.01;
             }
 
+            #ifdef STATS_NEEDED
             stats.conflStats.update(lastConflictCausedBy);
+            #endif
+
             print_restart_stat();
             if (params.update) {
                 #ifdef STATS_NEEDED
