@@ -1823,8 +1823,8 @@ void Searcher::reduce_db_if_needed()
     if (conf.verbosity >= 3) {
         watches.print_stat();
     }
+
     must_consolidate_mem = true;
-    consolidate_watches();
     conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
 
     num_red_cls_reducedb = count_num_red_cls_reducedb();
