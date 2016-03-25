@@ -190,19 +190,18 @@ void ClauseAllocator::consolidate(
     Solver* solver
     , const bool force
 ) {
-    const double myTime = cpuTime();
-
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
     //1) There is too much memory allocated. Re-allocation will save space
     //   Avoiding segfault (max is 16 outerOffsets, more than 10 is near)
     //2) There is too much empty, unused space (>30%)
-    if (!force && float_div(currentlyUsedSize, size) > 0.7) {
+    if (!force && float_div(currentlyUsedSize, size) > 0.6) {
         if (solver->conf.verbosity >= 3) {
             cout << "c Not consolidating memory." << endl;
         }
         return;
     }
+    const double myTime = cpuTime();
 
     //Data for new struct
     vector<uint32_t> newOrigClauseSizes;
