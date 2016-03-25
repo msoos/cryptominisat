@@ -187,7 +187,7 @@ if (COVERAGE)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CMAKE_EXE_LINKER_FLAGS " -Wl,-O1 -Wl,--discard-all -Wl,--build-id=sha1")
+    set(CMAKE_EXE_LINKER_FLAGS " -Wl,--discard-all -Wl,--build-id=sha1")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -247,7 +247,7 @@ if (NOT ONLY_SIMPLE)
     find_package( Boost 1.46 COMPONENTS ${boost_components})
 endif()
 
-option(ALSO_BUILD_STATIC_LIB "Also build the static library" ON)
+option(ALSO_BUILD_STATIC_LIB "Also build the static library" OFF)
 
 
 find_package (Threads REQUIRED)
