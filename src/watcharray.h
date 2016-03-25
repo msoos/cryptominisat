@@ -170,16 +170,6 @@ public:
     }
 };
 
-/*inline size_t operator-(const watch_array::iterator lhs, const watch_array::iterator rhs)
-{
-    return lhs.it-rhs.it;
-}
-
-inline size_t operator-(const watch_array::const_iterator lhs, const watch_array::const_iterator rhs)
-{
-    return lhs.it-rhs.it;
-}*/
-
 inline void swap(watch_subarray a, watch_subarray b)
 {
     a.swap(b);
