@@ -637,6 +637,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 break;
             } else {
                 enqueue<false>(c[0], PropBy(offset));
+                update_glue(c);
             }
 
             nextClause:;
