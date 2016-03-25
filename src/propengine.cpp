@@ -244,7 +244,7 @@ inline bool PropEngine::prop_bin_cl(
         if (i->red())
             lastConflictCausedBy = ConflCausedBy::binred;
         else
-            lastConflictCausedBy = ConflCausedBy::binirred;*/
+            lastConflictCausedBy = ConflCausedBy::binirred;
         #endif
 
         confl = PropBy(~p, i->red());
@@ -385,7 +385,7 @@ PropResult PropEngine::handle_prop_tri_fail(
     if (i->red())
         lastConflictCausedBy = ConflCausedBy::trired;
     else
-        lastConflictCausedBy = ConflCausedBy::triirred;*/
+        lastConflictCausedBy = ConflCausedBy::triirred;
     #endif
 
     failBinLit = i->lit2();
@@ -460,7 +460,7 @@ inline bool PropEngine::prop_tri_cl_any_order(
         if (i->red())
             lastConflictCausedBy = ConflCausedBy::trired;
         else
-            lastConflictCausedBy = ConflCausedBy::triirred;*/
+            lastConflictCausedBy = ConflCausedBy::triirred;
         #endif
 
         failBinLit = i->lit2();
