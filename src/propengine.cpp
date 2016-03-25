@@ -552,6 +552,12 @@ PropBy PropEngine::propagate_any_order_fast()
                     confl = PropBy(~p, i->red());
                     failBinLit = i->lit2();
                     qhead = trail.size();
+                    #ifdef STATS_NEEDED
+                    if (i->red())
+                        lastConflictCausedBy = ConflCausedBy::binred;
+                    else
+                        lastConflictCausedBy = ConflCausedBy::binirred;
+                    #endif
                     i++;
                     break;
                 }
@@ -589,6 +595,12 @@ PropBy PropEngine::propagate_any_order_fast()
                     confl = PropBy(~p, i->lit3(), i->red());
                     failBinLit = i->lit2();
                     qhead = trail.size();
+                    #ifdef STATS_NEEDED
+                    if (i->red())
+                        lastConflictCausedBy = ConflCausedBy::trired;
+                    else
+                        lastConflictCausedBy = ConflCausedBy::triirred;
+                    #endif
                     i++;
                     break;
                 }
@@ -633,6 +645,12 @@ PropBy PropEngine::propagate_any_order_fast()
             if (value(c[0]) == l_False) {
                 confl = PropBy(offset);
                 qhead = trail.size();
+                #ifdef STATS_NEEDED
+                if (i->red())
+                    lastConflictCausedBy = ConflCausedBy::longred;
+                else
+                    lastConflictCausedBy = ConflCausedBy::longirred;
+                #endif
                 i++;
                 break;
             } else {
