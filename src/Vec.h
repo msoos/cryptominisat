@@ -220,6 +220,24 @@ public:
     {
         return sz == 0;
     }
+
+    void shrink_to_fit()
+    {
+        if (sz == 0) {
+            free(data);
+            cap = 0;
+            data = NULL;
+            return;
+        }
+
+        T* data2 = (T*)realloc(data, sz*sizeof(T));
+        if (data2 == 0) {
+            //We just keep the size then
+            return;
+        }
+        data = data2;
+        cap = sz;
+     }
 };
 
 
