@@ -80,7 +80,7 @@ class ClauseAllocator {
 
         inline Clause* ptr(const uint32_t offset) const
         {
-            return (Clause*)(dataStart + offset);
+            return (Clause*)(&dataStart[offset]);
         }
 
         void clauseFree(Clause* c); ///Frees memory and associated clause number
