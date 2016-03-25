@@ -385,7 +385,7 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else
-        lastConflictCausedBy = ConflCausedBy::longirred;*/
+        lastConflictCausedBy = ConflCausedBy::longirred;
     #endif
 
     qhead = trail.size();
