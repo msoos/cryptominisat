@@ -644,7 +644,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             //A long clause
             && last_resolved_cl != NULL
             //Good enough clause to try to minimize
-            && last_resolved_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue
+            && (!last_resolved_cl->red() || last_resolved_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue)
             //Must subsume, so must be smaller
             && last_resolved_cl->size() > tmp_learnt_clause_size
             //Must not be a temporary clause
