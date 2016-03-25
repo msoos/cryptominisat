@@ -872,15 +872,41 @@ size_t Solver::calculate_interToOuter_and_outerToInter(
     return numEffectiveVars;
 }
 
+double Solver::calc_renumber_saving()
+{
+    uint32_t num_used = 0;
+    for(size_t i = 0; i < nVars(); i++) {
+        if (value(i) != l_Undef
+            || varData[i].removed == Removed::elimed
+            || varData[i].removed == Removed::replaced
+            || varData[i].removed == Removed::decomposed
+        ) {
+            continue;
+        }
+        num_used++;
+    }
+    double saving = 1.0-(double)num_used/(double)nVars();
+    return saving;
+}
+
 //Beware. Cannot be called while Searcher is running.
 void Solver::renumber_variables()
 {
+    if (nVars() == 0) {
+        return;
+    }
+
+    if (calc_renumber_saving() < 0.2) {
+        return;
+    }
+
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<uint32_t> outerToInter(nVarsOuter());
     vector<uint32_t> interToOuter(nVarsOuter());
+
     size_t numEffectiveVars =
         calculate_interToOuter_and_outerToInter(outerToInter, interToOuter);
 

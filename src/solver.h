@@ -284,6 +284,7 @@ class Solver : public Searcher
         /////////////////////////////
         //Renumberer
         void renumber_variables();
+        double calc_renumber_saving();
         void free_unused_watches();
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
