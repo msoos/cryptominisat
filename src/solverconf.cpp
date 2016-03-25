@@ -36,7 +36,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        , max_temporary_learnt_clauses(20000)
+        , max_temporary_learnt_clauses(30000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , clean_confl_multiplier(0.2)
         , clean_prop_multiplier(1.0)
