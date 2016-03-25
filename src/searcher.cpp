@@ -1099,7 +1099,12 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         prop:
         #endif
-        confl = propagate<false>();
+
+        if (update_bogoprops) {
+            confl = propagate<update_bogoprops>();
+        } else {
+            confl = propagate_any_order_fast();
+        }
     }
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 

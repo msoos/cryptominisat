@@ -525,6 +525,136 @@ inline void PropEngine::propTriHelperAnyOrder(
     enqueue<update_bogoprops>(lit2, PropBy(~lit1, lit3, red));
 }
 
+PropBy PropEngine::propagate_any_order_fast()
+{
+    PropBy confl;
+
+    #ifdef VERBOSE_DEBUG_PROP
+    cout << "Fast Propagation started" << endl;
+    #endif
+
+    while (qhead < trail.size()) {
+        const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
+        watch_subarray ws = watches[~p];
+        Watched* i = ws.begin();
+        Watched* j = i;
+        Watched* end = ws.end();
+        propStats.propagations++;
+
+        for (; i != end; i++) {
+            //Prop bin clause
+            if (i->isBin()) {
+                *j++ = *i;
+                const lbool val = value(i->lit2());
+                if (val == l_Undef) {
+                    enqueue<false>(i->lit2(), PropBy(~p, i->red()));
+                } else if (val == l_False) {
+                    confl = PropBy(~p, i->red());
+                    failBinLit = i->lit2();
+                    qhead = trail.size();
+                    i++;
+                    break;
+                }
+                continue;
+            }
+
+            //Propagate tri clause
+            if (i->isTri()) {
+                *j++ = *i;
+                const Lit lit2 = i->lit2();
+                lbool val2 = value(lit2);
+
+                //literal is already satisfied, nothing to do
+                if (val2 == l_True)
+                    continue;
+
+                const Lit lit3 = i->lit3();
+                lbool val3 = value(lit3);
+
+                //literal is already satisfied, nothing to do
+                if (val3 == l_True)
+                    continue;
+
+                if (val2 == l_Undef && val3 == l_False) {
+                    enqueue<false>(lit2, PropBy(~p, lit3, i->red()));
+                    continue;
+                }
+
+                if (val3 == l_Undef && val2 == l_False) {
+                    enqueue<false>(lit3, PropBy(~p, lit2, i->red()));
+                    continue;
+                }
+
+                if (val2 == l_False && val3 == l_False) {
+                    confl = PropBy(~p, i->lit3(), i->red());
+                    failBinLit = i->lit2();
+                    qhead = trail.size();
+                    i++;
+                    break;
+                }
+                continue;
+            }
+
+            //propagate normal clause
+            assert(i->isClause());
+            if (value(i->getBlockedLit()) == l_True) {
+                *j++ = *i;
+                continue;
+            }
+
+            const ClOffset offset = i->get_offset();
+            Clause& c = *cl_alloc.ptr(offset);
+            Lit      false_lit = ~p;
+            if (c[0] == false_lit) {
+                c[0] = c[1], c[1] = false_lit;
+            }
+            assert(c[1] == false_lit);
+
+            Lit     first = c[0];
+            Watched w     = Watched(offset, first);
+            if (first != i->getBlockedLit() && value(first) == l_True) {
+                *j++ = w;
+                continue;
+            }
+
+            // Look for new watch:
+            for (uint32_t k = 2; k < c.size(); k++) {
+                //Literal is either unset or satisfied, attach to other watchlist
+                if (value(c[k]) != l_False) {
+                    c[1] = c[k];
+                    c[k] = false_lit;
+                    watches[c[1]].push(w);
+                    goto nextClause;
+                }
+            }
+
+            // Did not find watch -- clause is unit under assignment:
+            *j++ = w;
+            if (value(c[0]) == l_False) {
+                confl = PropBy(offset);
+                qhead = trail.size();
+                i++;
+                break;
+            } else {
+                enqueue<false>(c[0], PropBy(offset));
+            }
+
+            nextClause:;
+        }
+        while (i != end) {
+            *j++ = *i++;
+        }
+        ws.shrink_(end-j);
+        qhead++;
+    }
+
+    #ifdef VERBOSE_DEBUG
+    cout << "Propagation (propagate_any_order) ended." << endl;
+    #endif
+
+    return confl;
+}
+
 template<bool update_bogoprops>
 PropBy PropEngine::propagate_any_order()
 {

@@ -124,6 +124,7 @@ protected:
 
     template<bool update_bogoprops>
     PropBy propagate_any_order();
+    PropBy propagate_any_order_fast();
     PropBy propagate_strict_order();
     /*template<bool update_bogoprops>
     bool handle_xor_cl(
