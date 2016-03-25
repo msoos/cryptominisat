@@ -646,7 +646,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 confl = PropBy(offset);
                 qhead = trail.size();
                 #ifdef STATS_NEEDED
-                if (i->red())
+                if (c.red())
                     lastConflictCausedBy = ConflCausedBy::longred;
                 else
                     lastConflictCausedBy = ConflCausedBy::longirred;
