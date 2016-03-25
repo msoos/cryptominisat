@@ -42,10 +42,10 @@ public:
     {
         return nbReduceDB;
     }
+    uint64_t nbReduceDB = 0;
 
 private:
     Solver* solver;
-    uint64_t nbReduceDB = 0;
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
