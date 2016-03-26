@@ -149,7 +149,6 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->value(replaced_with) == l_Undef);
 
     solver->set_decision_var(replaced_with);
-    //solver->move_activity_from_to(orig, replaced_with);
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()

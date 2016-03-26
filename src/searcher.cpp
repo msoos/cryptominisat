@@ -65,7 +65,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         //variables
         , solver(_solver)
         , order_heap(VarOrderLt(activities))
-        , clauseActivityIncrease(1)
+        , cla_inc(1)
 {
     var_decay = conf.var_decay_start;
     var_inc = conf.var_inc_start;
@@ -1435,6 +1435,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             stats.learntLongs++;
             solver->attachClause(*cl);
             enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
+            bumpClauseAct(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -1601,8 +1602,10 @@ bool Searcher::handle_conflict(const PropBy confl)
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
-    varDecayActivity<update_bogoprops>();
-    decayClauseAct();
+    if (!update_bogoprops) {
+        varDecayActivity();
+        decayClauseAct();
+    }
 
     return true;
 }
@@ -2894,13 +2897,8 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     }
 }
 
-template<bool update_bogoprops>
 inline void Searcher::varDecayActivity()
 {
-    if (update_bogoprops) {
-        return;
-    }
-
     var_inc *= (1.0 / var_decay);
 }
 
@@ -2927,12 +2925,6 @@ inline void Searcher::bump_var_activity(uint32_t var)
 
         //Reset var_inc
         var_inc *= 1e-100;
-
-        //If var_inc is smaller than var_inc_start then this MUST be corrected
-        //otherwise the 'varDecayActivity' may not decay anything in fact
-        if (var_inc == 0.0) {
-            var_inc = conf.var_inc_start;
-        }
     }
 
     // Update order_heap with respect to new activity:

@@ -111,7 +111,6 @@ class Searcher : public HyperEngine
         }
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        void move_activity_from_to(const uint32_t from, const uint32_t to);
         bool check_order_heap_sanity() const;
 
         //Gauss
@@ -349,7 +348,6 @@ class Searcher : public HyperEngine
         friend class Gaussian;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
-        template<bool update_bogoprops>
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
         template<bool update_bogoprops>
@@ -371,7 +369,7 @@ class Searcher : public HyperEngine
         Heap<VarOrderLt> order_heap;
 
         //Clause activites
-        double clauseActivityIncrease;
+        double cla_inc;
         void decayClauseAct();
         void bumpClauseAct(Clause* cl);
 
@@ -448,31 +446,19 @@ inline void Searcher::bumpClauseAct(Clause* cl)
 {
     assert(!cl->getRemoved());
 
-    cl->stats.activity += clauseActivityIncrease;
+    cl->stats.activity += cla_inc;
     if (cl->stats.activity > 1e20 ) {
         // Rescale
         for(ClOffset offs: longRedCls[1]) {
             cl_alloc.ptr(offs)->stats.activity *= 1e-20;
         }
-        clauseActivityIncrease *= 1e-20;
-        if (clauseActivityIncrease == 0.0) {
-            clauseActivityIncrease = 1.0;
-        }
+        cla_inc *= 1e-20;
     }
 }
 
 inline void Searcher::decayClauseAct()
 {
-    clauseActivityIncrease *= conf.clauseDecayActivity;
-}
-
-inline void Searcher::move_activity_from_to(const uint32_t from, const uint32_t to)
-{
-    activities[to] += activities[from];
-    order_heap.update_if_inside(to);
-
-    activities[from] = 0;
-    order_heap.update_if_inside(from);
+    cla_inc *= (1 / conf.clause_decay);
 }
 
 inline bool Searcher::check_order_heap_sanity() const
