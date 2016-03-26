@@ -763,7 +763,6 @@ Clause* Searcher::analyze_conflict(
     stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (!update_bogoprops
-        && params.rest_type == Restart::glue
         && conf.extra_bump_var_activities_based_on_glue
     ) {
         bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(glue);
