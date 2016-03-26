@@ -158,16 +158,16 @@ inline void Searcher::add_lit_to_learnt(
                     Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
                     if (cl->red()) {
                         const uint32_t glue = cl->stats.glue;
-                        implied_by_learnts.push_back(std::make_pair(lit, glue));
+                        implied_by_learnts.push_back(std::make_pair(var, glue));
                     }
                 } else if (varData[var].reason.getType() == binary_t
                     && varData[var].reason.isRedStep()
                 ) {
-                    implied_by_learnts.push_back(std::make_pair(lit, 2));
+                    implied_by_learnts.push_back(std::make_pair(var, 2));
                 } else if (varData[var].reason.getType() == tertiary_t
                     && varData[var].reason.isRedStep()
                 ) {
-                    implied_by_learnts.push_back(std::make_pair(lit, 3));
+                    implied_by_learnts.push_back(std::make_pair(var, 3));
                 }
             }
         }
@@ -679,7 +679,7 @@ void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t gl
     for (const auto dat :implied_by_learnts) {
         const uint32_t v_glue = dat.second;
         if (v_glue < glue) {
-            bump_var_activity<update_bogoprops>(dat.first.var());
+            bump_var_activity<update_bogoprops>(dat.first);
         }
     }
 }

@@ -263,7 +263,7 @@ class Searcher : public HyperEngine
         int pathC;
         AtecedentData<uint16_t> antec_data;
 
-        vector<std::pair<Lit, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
+        vector<std::pair<uint32_t, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 
         /////////////////
         //Graphical conflict generation
