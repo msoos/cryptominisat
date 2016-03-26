@@ -392,17 +392,9 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     const unsigned new_glue = calc_glue(*cl);
 
     if (new_glue + 1 < cl->stats.glue) {
-        if (new_glue <= conf.glue_must_keep_clause_if_below_or_eq
-            && red_long_cls_is_reducedb(*cl)
-        ) {
-            num_red_cls_reducedb--;
-        }
         cl->stats.glue = new_glue;
 
         if (new_glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
-            if (red_long_cls_is_reducedb(*cl)) {
-                num_red_cls_reducedb--;
-            }
             cl->stats.ttl = 1;
         }
     }
@@ -1521,7 +1513,11 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         );
         cl->makeRed(glue);
         ClOffset offset = cl_alloc.get_offset(cl);
-        solver->longRedCls.push_back(offset);
+        if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+            solver->longRedCls[0].push_back(offset);
+        } else {
+            solver->longRedCls[1].push_back(offset);
+        }
         *drat << *cl << fin;
 
         #ifdef STATS_NEEDED
@@ -1682,9 +1678,13 @@ void Searcher::print_restart_header() const
     << " " << std::setw(5) << "IrrT"
     << " " << std::setw(5) << "IrrB"
     << " " << std::setw(7) << "l/longC"
-    << " " << std::setw(7) << "l/allC"
-    << " " << std::setw(5) << "RedL"
-    << " " << std::setw(5) << "RedT"
+    << " " << std::setw(7) << "l/allC";
+
+    for(size_t i = 0; i < longRedCls.size(); i++) {
+        cout << " " << std::setw(4) << "RedL" << i;
+    }
+
+    cout << " " << std::setw(5) << "RedT"
     << " " << std::setw(5) << "RedB"
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC"
@@ -1805,15 +1805,13 @@ void Searcher::restore_order_heap()
 void Searcher::reset_temp_cl_num()
 {
     conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
-    num_red_cls_reducedb = count_num_red_cls_reducedb();
+    //TODO move clauses between longRedCls arrays
+    assert(false);
 }
 
 void Searcher::reduce_db_if_needed()
 {
-    //Check if we should do DBcleaning
-    if (num_red_cls_reducedb <= conf.cur_max_temp_red_cls) {
-        //cout << "num_red_cls_reducedb: " << num_red_cls_reducedb
-        //<< " conf.cur_max_temp_red_cls: " << conf.cur_max_temp_red_cls << endl;
+    if (longRedCls[1].size() <= conf.cur_max_temp_red_cls) {
         return;
     }
 
@@ -1821,7 +1819,6 @@ void Searcher::reduce_db_if_needed()
         cout
         << "c "
         << " cleaning"
-        << " num_irred_cls_reducedb: " << num_red_cls_reducedb
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
         << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
@@ -1834,8 +1831,6 @@ void Searcher::reduce_db_if_needed()
 
     must_consolidate_mem = true;
     conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
-
-    num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
 void Searcher::clean_clauses_if_needed()
@@ -1991,7 +1986,6 @@ lbool Searcher::solve(
         ; loop_num ++
     ) {
         #ifdef SLOW_DEBUG
-        assert(num_red_cls_reducedb == count_num_red_cls_reducedb());
         assert(order_heap.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
@@ -2050,9 +2044,6 @@ lbool Searcher::solve(
         if (must_consolidate_mem) {
             cl_alloc.consolidate(solver);
             must_consolidate_mem = false;
-
-            //TODO complete detach-reattacher cannot count num_red_cls_reducedb
-            num_red_cls_reducedb = count_num_red_cls_reducedb();
         }
     }
 
@@ -2116,7 +2107,6 @@ void Searcher::finish_up_solve(const lbool status)
     if (conf.verbosity >= 4) {
         cout << "c Searcher::solve() finished"
         << " status: " << status
-        << " num_red_cls_reducedb: " << num_red_cls_reducedb
         << " numConflicts : " << stats.conflStats.numConflicts
         << " SumConfl: " << sumConflicts()
         << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
@@ -3037,7 +3027,11 @@ void Searcher::read_long_cls(
         attachClause(*cl);
         const ClOffset offs = cl_alloc.get_offset(cl);
         if (red) {
-            longRedCls.push_back(offs);
+            if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+                longRedCls[0].push_back(offs);
+            } else{
+                longRedCls[1].push_back(offs);
+            }
         } else {
             longIrredCls.push_back(offs);
         }
@@ -3146,7 +3140,9 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
         write_tri_cls(f, false);
         write_tri_cls(f, true);
         write_long_cls(longIrredCls, f, false);
-        write_long_cls(longRedCls, f, true);
+        for(auto& lredcls: longRedCls) {
+            write_long_cls(lredcls, f, true);
+        }
     }
 }
 
@@ -3175,7 +3171,6 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         read_long_cls(f, false);
         read_long_cls(f, true);
     }
-    num_red_cls_reducedb = count_num_red_cls_reducedb();
 }
 
 

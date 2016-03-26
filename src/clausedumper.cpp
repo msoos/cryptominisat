@@ -296,7 +296,9 @@ void ClauseDumper::dumpRedClauses(
     << "c --------------------" << endl
     << "c redundant long clauses" << endl
     << "c --------------------" << endl;
-    dump_clauses(solver->longRedCls, maxSize, true);
+    for(auto& lredcls: solver->longRedCls) {
+        dump_clauses(lredcls, maxSize, true);
+    }
 }
 
 void ClauseDumper::dump_clauses(

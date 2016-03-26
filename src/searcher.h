@@ -451,7 +451,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
     cl->stats.activity += clauseActivityIncrease;
     if (cl->stats.activity > 1e20 ) {
         // Rescale
-        for(ClOffset offs: longRedCls) {
+        for(ClOffset offs: longRedCls[1]) {
             cl_alloc.ptr(offs)->stats.activity *= 1e-20;
         }
         clauseActivityIncrease *= 1e-20;

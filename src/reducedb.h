@@ -49,14 +49,11 @@ private:
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
-    vector<ClOffset> never_cleaned;
-    void move_to_never_cleaned();
-    void move_from_never_cleaned();
+    void move_to_longRedCls0();
 
     unsigned cl_locked;
     unsigned cl_marked;
     unsigned cl_ttl;
-    unsigned cl_glue;
     unsigned cl_locked_solver;
 
     size_t last_reducedb_num_conflicts = 0;

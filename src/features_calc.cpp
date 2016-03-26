@@ -366,7 +366,7 @@ SolveFeatures SolveFeaturesCalc::extract()
     calculate_extra_clause_stats();
     calculate_extra_var_stats();
 
-    calculate_cl_distributions(solver->longRedCls, feat.red_cl_distrib);
+    calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
     calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
 
     if (solver->conf.verbosity >= 2) {

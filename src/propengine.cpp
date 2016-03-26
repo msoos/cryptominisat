@@ -143,7 +143,10 @@ void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
     , const bool red
-    , const bool checkUnassignedFirst
+    , const bool
+    #ifdef DEBUG_ATTACH
+    checkUnassignedFirst
+    #endif
 ) {
     #ifdef DEBUG_ATTACH
     assert(lit1.var() != lit2.var());
@@ -178,10 +181,6 @@ void PropEngine::attachClause(
         assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
     }
 
-    if (c.red() && red_long_cls_is_reducedb(c)) {
-        num_red_cls_reducedb++;
-    }
-
     #ifdef DEBUG_ATTACH
     for (uint32_t i = 0; i < c.size(); i++) {
         assert(varData[c[i].var()].removed == Removed::none);
@@ -207,9 +206,6 @@ void PropEngine::detach_modified_clause(
     , const Clause* address
 ) {
     assert(origSize > 3);
-    if (address->red() && red_long_cls_is_reducedb(*address)) {
-        num_red_cls_reducedb--;
-    }
 
     ClOffset offset = cl_alloc.get_offset(address);
     removeWCl(watches[lit1], offset);
@@ -266,9 +262,6 @@ inline void PropEngine::update_glue(Clause& c)
         if (new_glue < c.stats.glue
             && new_glue < conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn
         ) {
-            if (red_long_cls_is_reducedb(c)) {
-                num_red_cls_reducedb--;
-            }
             c.stats.ttl = 1;
         }
         c.stats.glue = std::min(c.stats.glue, new_glue);

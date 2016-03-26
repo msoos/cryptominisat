@@ -509,7 +509,9 @@ void CNF::find_all_attach() const
     }
 
     find_all_attach(longIrredCls);
-    find_all_attach(longRedCls);
+    for(auto& lredcls: longRedCls) {
+        find_all_attach(lredcls);
+    }
 #endif
 }
 
@@ -554,9 +556,12 @@ bool CNF::find_clause(const ClOffset offset) const
         if (longIrredCls[i] == offset)
             return true;
     }
-    for (uint32_t i = 0; i < longRedCls.size(); i++) {
-        if (longRedCls[i] == offset)
-            return true;
+
+    for(auto& lredcls: longRedCls) {
+        for (ClOffset off: lredcls) {
+            if (off == offset)
+                return true;
+        }
     }
 
     return false;
@@ -565,15 +570,13 @@ bool CNF::find_clause(const ClOffset offset) const
 void CNF::check_wrong_attach() const
 {
 #ifdef SLOW_DEBUG
-    for (vector<ClOffset>::const_iterator
-        it = longRedCls.begin(), end = longRedCls.end()
-        ; it != end
-        ; ++it
-    ) {
-        const Clause& cl = *cl_alloc.ptr(*it);
-        for (uint32_t i = 0; i < cl.size(); i++) {
-            if (i > 0)
-                assert(cl[i-1].var() != cl[i].var());
+    for(auto& lredcls: longRedCls) {
+        for (ClOffset offs: lredcls) {
+            const Clause& cl = *cl_alloc.ptr(offs);
+            for (uint32_t i = 0; i < cl.size(); i++) {
+                if (i > 0)
+                    assert(cl[i-1].var() != cl[i].var());
+            }
         }
     }
 #endif

@@ -231,9 +231,6 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
             cl.setRemoved();
             if (red) {
                 solver->litStats.redLits -= origSize;
-                if (solver->red_long_cls_is_reducedb(cl)) {
-                    solver->num_red_cls_reducedb--;
-                }
             } else {
                 solver->litStats.irredLits -= origSize;
             }
@@ -344,7 +341,9 @@ void ClauseCleaner::remove_and_clean_all()
 
     clean_clauses_pre();
     clean_clauses_inter(solver->longIrredCls);
-    clean_clauses_inter(solver->longRedCls);
+    for(auto& lredcls: solver->longRedCls) {
+        clean_clauses_inter(lredcls);
+    }
     clean_clauses_post();
 
 

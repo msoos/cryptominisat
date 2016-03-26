@@ -77,6 +77,8 @@ public:
         drat = new Drat();
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
+
+        longRedCls.resize(2);
     }
 
     virtual ~CNF()
@@ -94,14 +96,12 @@ public:
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
-    int64_t num_red_cls_reducedb = 0;
     bool red_long_cls_is_reducedb(const Clause& cl) const;
-    int64_t count_num_red_cls_reducedb() const;
     Drat* drat;
 
     //Clauses
     vector<ClOffset> longIrredCls;
-    vector<ClOffset> longRedCls;
+    vector<vector<ClOffset> > longRedCls;
     vector<Xor> xorclauses;
     BinTriStats binTri;
     LitStats litStats;
@@ -152,7 +152,7 @@ public:
 
     bool clause_locked(const Clause& c, const ClOffset offset) const;
     void unmark_all_irred_clauses();
-    void unmark_all_red_clauses();
+    void unmark_all_red1_clauses();
 
     bool redundant(const Watched& ws) const;
     bool redundant_or_removed(const Watched& ws) const;
@@ -385,10 +385,12 @@ inline bool CNF::no_marked_clauses() const
         }
     }
 
-    for(ClOffset offset: longRedCls) {
-        Clause* cl = cl_alloc.ptr(offset);
-        if (cl->stats.marked_clause) {
-            return false;
+    for(auto& lredcls: longRedCls) {
+        for(ClOffset offset: lredcls) {
+            Clause* cl = cl_alloc.ptr(offset);
+            if (cl->stats.marked_clause) {
+                return false;
+            }
         }
     }
 
@@ -451,9 +453,9 @@ inline void CNF::unmark_all_irred_clauses()
     }
 }
 
-inline void CNF::unmark_all_red_clauses()
+inline void CNF::unmark_all_red1_clauses()
 {
-    for(ClOffset offset: longRedCls) {
+    for(ClOffset offset: longRedCls[1]) {
         Clause* cl = cl_alloc.ptr(offset);
         cl->stats.marked_clause = false;
     }
@@ -495,18 +497,6 @@ inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
     return cl.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
         && !cl.stats.locked
         && cl.stats.ttl == 0;
-}
-
-inline int64_t CNF::count_num_red_cls_reducedb() const
-{
-    int64_t num = 0;
-    for(ClOffset offset: longRedCls) {
-         Clause& cl = *cl_alloc.ptr(offset);
-         if (red_long_cls_is_reducedb(cl)) {
-             num++;
-         }
-    }
-    return num;
 }
 
 inline void CNF::check_no_removed_or_freed_cl_in_watch() const

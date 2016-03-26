@@ -585,7 +585,11 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                solver->longRedCls.push_back(offs);
+                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                    solver->longRedCls[0].push_back(offs);
+                } else {
+                    solver->longRedCls[1].push_back(offs);
+                }
             } else {
                 solver->longIrredCls.push_back(offs);
             }
@@ -1039,23 +1043,31 @@ bool OccSimplifier::fill_occur()
     print_linkin_data(link_in_data);
 
     //Add redundant to occur
-    memUsage = calc_mem_usage_of_occur(solver->longRedCls);
+    memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
     print_mem_usage_of_occur(memUsage);
     bool linkin = true;
     if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL) {
         linkin = false;
     }
     //Sort, so we get the shortest ones in at least
-    std::sort(solver->longRedCls.begin(), solver->longRedCls.end()
+    std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end()
         , ClauseSizeSorter(solver->cl_alloc));
 
     link_in_data = link_in_clauses(
-        solver->longRedCls
+        solver->longRedCls[0]
         , linkin
         , solver->conf.maxRedLinkInSize
         , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL
     );
-    solver->longRedCls.clear();
+    solver->longRedCls[0].clear();
+
+    //Don't really link in the rest
+    for(auto& lredcls: solver->longRedCls) {
+        link_in_clauses(lredcls, linkin, 0, 0);
+    }
+    for(auto& lredcls: solver->longRedCls) {
+        lredcls.clear();
+    }
     print_linkin_data(link_in_data);
 
     return true;

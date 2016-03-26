@@ -267,7 +267,9 @@ bool CompHandler::solve_component(
     //Move clauses over
     moveClausesImplicit(&newSolver, comp, vars);
     moveClausesLong(solver->longIrredCls, &newSolver, comp);
-    moveClausesLong(solver->longRedCls, &newSolver, comp);
+    for(auto& lredcls: solver->longRedCls) {
+        moveClausesLong(lredcls, &newSolver, comp);
+    }
 
     const lbool status = newSolver.solve();
     //Out of time

@@ -195,7 +195,9 @@ void ClauseAllocator::consolidate(
     //1) There is too much memory allocated. Re-allocation will save space
     //   Avoiding segfault (max is 16 outerOffsets, more than 10 is near)
     //2) There is too much empty, unused space (>30%)
-    if (!force && float_div(currentlyUsedSize, size) > 0.6) {
+    if (!force
+        && (float_div(currentlyUsedSize, size) > 0.5 || currentlyUsedSize < (100ULL*1000ULL))
+    ) {
         if (solver->conf.verbosity >= 3) {
             cout << "c Not consolidating memory." << endl;
         }
@@ -294,8 +296,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     #endif
 
     //Make sure all non-freed clauses were accessible from solver
-    const size_t origNumClauses =
-        solver->longIrredCls.size() + solver->longRedCls.size();
+    size_t origNumClauses = solver->longIrredCls.size();
+    for(auto& lredcls: solver-> longRedCls) {
+        origNumClauses += lredcls.size();
+    }
+
     if (origNumClauses != offsets.size()) {
         std::cerr
         << "ERROR: Not all non-freed clauses are accessible from Solver"
@@ -313,7 +318,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Clear clauses
     solver->longIrredCls.clear();
-    solver->longRedCls.clear();
+    for(auto& lredcls: solver->longRedCls) {
+        lredcls.clear();
+    }
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
@@ -322,7 +329,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
         //Put it in the right bucket
         if (cl->red()) {
-            solver->longRedCls.push_back(offset);
+            if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                solver->longRedCls[0].push_back(offset);
+            } else {
+                solver->longRedCls[1].push_back(offset);
+            }
         } else {
             solver->longIrredCls.push_back(offset);
         }

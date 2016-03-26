@@ -131,12 +131,19 @@ Solver::~Solver()
 }
 
 void Solver::set_mysql(
-        string sqlServer
-        , string sqlUser
-        , string sqlPass
-        , string sqlDatabase)
-{
-    #if defined(USE_MYSQL)
+    #ifdef USE_MYSQL
+      string sqlServer
+    , string sqlUser
+    , string sqlPass
+    , string sqlDatabase
+    #else
+      string
+    , string
+    , string
+    , string
+    #endif
+) {
+    #ifdef USE_MYSQL
     sqlStats = new MySQLStats(sqlServer, sqlUser, sqlPass, sqlDatabase);
     sqlStats->setup(this);
     if (conf.verbosity >= 4) {
@@ -149,10 +156,12 @@ void Solver::set_mysql(
     #endif
 }
 
-void Solver::set_sqlite(string filename)
-{
-
-    #if defined(USE_SQLITE3)
+void Solver::set_sqlite(string
+    #ifdef USE_SQLITE3
+    filename
+    #endif
+) {
+    #ifdef USE_SQLITE3
     sqlStats = new SQLiteStats(filename);
     sqlStats->setup(this);
     if (conf.verbosity >= 4) {
@@ -759,7 +768,11 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
         if (!red) {
             longIrredCls.push_back(offset);
         } else {
-            longRedCls.push_back(offset);
+            if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+                longRedCls[0].push_back(offset);
+            } else {
+                longRedCls[1].push_back(offset);
+            }
         }
     }
 
@@ -811,10 +824,12 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
         cl->setStrenghtened();
     }
 
-    for(size_t i = 0; i < longRedCls.size(); i++) {
-        Clause* cl = cl_alloc.ptr(longRedCls[i]);
-        updateLitsMap(*cl, outerToInter);
-        cl->setStrenghtened();
+    for(auto& lredcls: longRedCls) {
+        for(ClOffset off: lredcls) {
+            Clause* cl = cl_alloc.ptr(off);
+            updateLitsMap(*cl, outerToInter);
+            cl->setStrenghtened();
+        }
     }
 }
 
@@ -1899,7 +1914,6 @@ lbool Solver::simplify_problem(const bool startup)
         check_implicit_propagated();
         restore_order_heap();
         reset_reason_levels_of_vars_to_zero();
-        num_red_cls_reducedb = count_num_red_cls_reducedb();
 
         return l_Undef;
     }
@@ -2565,7 +2579,9 @@ bool Solver::verify_model() const
 {
     bool verificationOK = true;
     verificationOK &= verify_model_long_clauses(longIrredCls);
-    verificationOK &= verify_model_long_clauses(longRedCls);
+    for(auto& lredcls: longRedCls) {
+        verificationOK &= verify_model_long_clauses(lredcls);
+    }
     verificationOK &= verify_model_implicit_clauses();
 
     if (conf.verbosity >= 1 && verificationOK) {
@@ -2634,15 +2650,20 @@ void Solver::print_clause_stats() const
     ;
 
     //Redundant
-    print_value_kilo_mega(longRedCls.size());
+    size_t tot = 0;
+    for(auto& lredcls: longRedCls) {
+        print_value_kilo_mega(lredcls.size());
+        tot += lredcls.size();
+    }
+
     print_value_kilo_mega(binTri.redTris);
     print_value_kilo_mega(binTri.redBins);
     cout
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
-    << ratio_for_stat(litStats.redLits, longRedCls.size())
+    << ratio_for_stat(litStats.redLits, tot)
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.redLits + binTri.redTris*3 + binTri.redBins*2
-    , longRedCls.size() + binTri.redTris + binTri.redBins)
+    , tot + binTri.redTris + binTri.redBins)
     ;
 }
 
@@ -3550,7 +3571,10 @@ void Solver::check_stats(const bool allowFreed) const
     }
     assert(numLitsIrred == litStats.irredLits);
 
-    uint64_t numLitsRed = count_lits(longRedCls, true, allowFreed);
+    uint64_t numLitsRed = 0;
+    for(auto& lredcls: longRedCls) {
+        numLitsRed += count_lits(lredcls, true, allowFreed);
+    }
     if (numLitsRed != litStats.redLits) {
         std::cerr << "ERROR: " << endl
         << "->numLitsRed: " << numLitsRed << endl
