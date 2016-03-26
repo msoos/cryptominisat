@@ -716,7 +716,7 @@ bool OccSimplifier::eliminate_vars()
             && !solver->must_interrupt_asap()
         ) {
             assert(limit_to_decrease == &norm_varelim_time_limit);
-            uint32_t var = velim_order.remove_min();
+            uint32_t var = velim_order.removeMin();
 
             //Stats
             *limit_to_decrease -= 20;
@@ -760,7 +760,7 @@ bool OccSimplifier::eliminate_vars()
                 break;
 
             Lit lit = Lit::toLit(l);
-            if (!velim_order.in_heap(lit.var())
+            if (!velim_order.inHeap(lit.var())
                 && can_eliminate_var(lit.var())
             ) {
                 varElimComplexity[lit.var()] = strategyCalcVarElimScore(lit.var());
@@ -2031,11 +2031,7 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
         }
 
         varElimComplexity[var] = strategyCalcVarElimScore(var);
-        if (!velim_order.in_heap(var)) {
-            velim_order.insert(var);
-        } else {
-            velim_order.update_if_inside(var);
-        }
+        velim_order.update(var);
     }
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
@@ -2688,7 +2684,7 @@ void OccSimplifier::order_vars_for_elim()
             continue;
 
         *limit_to_decrease -= 50;
-        assert(!velim_order.in_heap(var));
+        assert(!velim_order.inHeap(var));
         varElimComplexity[var] = strategyCalcVarElimScore(var);
         velim_order.insert(var);
     }

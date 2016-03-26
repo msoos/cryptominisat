@@ -526,13 +526,14 @@ PropBy PropEngine::propagate_any_order_fast()
     cout << "Fast Propagation started" << endl;
     #endif
 
+    int64_t num_props = 0;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
-        propStats.propagations++;
+        num_props++;
 
         for (; i != end; i++) {
             //Prop bin clause
@@ -659,6 +660,8 @@ PropBy PropEngine::propagate_any_order_fast()
         ws.shrink_(end-j);
         qhead++;
     }
+    simpDB_props -= num_props;
+    propStats.propagations += (uint64_t)num_props;
 
     #ifdef VERBOSE_DEBUG
     cout << "Propagation (propagate_any_order) ended." << endl;

@@ -70,7 +70,7 @@ class Searcher : public HyperEngine
         );
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
-        void clean_clauses_if_needed();
+        bool clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed();
         void dump_search_loop_stats();
         bool must_abort(lbool status);
@@ -323,8 +323,9 @@ class Searcher : public HyperEngine
         bool blocked_restart = false;
         void check_blocking_restart();
         uint32_t num_search_called = 0;
+        uint64_t lastRestartConfl;
+        double luby(double y, int x);
 
-        bool must_consolidate_mem = false;
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
 
@@ -373,10 +374,6 @@ class Searcher : public HyperEngine
         void decayClauseAct();
         void bumpClauseAct(Clause* cl);
 
-        //Other
-        uint64_t lastRestartConfl;
-        double luby(double y, int x);
-
         //SQL
         #ifdef STATS_NEEDED
         void dump_restart_sql();
@@ -392,6 +389,7 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
+        void rebuildOrderHeap();
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);
@@ -430,7 +428,7 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insertVarOrder(const uint32_t x)
 {
-    if (!order_heap.in_heap(x)
+    if (!order_heap.inHeap(x)
     ) {
         #ifdef SLOW_DEUG
         //All active varibles are decision variables
@@ -468,7 +466,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap.in_heap(i)) {
+            if (!order_heap.inHeap(i)) {
                 cout << "ERROR var " << i+1 << " not in heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)

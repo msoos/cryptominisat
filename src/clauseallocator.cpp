@@ -25,13 +25,12 @@
 #include <string.h>
 #include <limits>
 #include <cassert>
+ #include <stdlib.h>
 #include "solvertypes.h"
 #include "clause.h"
 #include "solver.h"
 #include "searcher.h"
 #include "time_mem.h"
-#include "occsimplifier.h"
-#include "completedetachreattacher.h"
 #include "sqlstats.h"
 #ifdef USE_GAUSS
 #include "gaussian.h"
@@ -163,7 +162,7 @@ void ClauseAllocator::clauseFree(Clause* cl)
     cl->setFreed();
     size_t est_sz = cl->size();
     est_sz = std::max(est_sz, (size_t)4); //we don't allow anything less than 4
-    size_t bytes_freed = (sizeof(Clause) + cl->size()*sizeof(Lit));
+    size_t bytes_freed = (sizeof(Clause) + est_sz*sizeof(Lit));
     size_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
     currentlyUsedSize -= elems_freed;
 
@@ -211,41 +210,48 @@ void ClauseAllocator::consolidate(
     uint64_t newSize = 0;
 
     //Pointers that will be moved along
-    BASE_DATA_TYPE* newDataStart = dataStart;
-    BASE_DATA_TYPE* tmpDataStart = dataStart;
+    BASE_DATA_TYPE* newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
+    BASE_DATA_TYPE* new_ptr = newDataStart;
+    BASE_DATA_TYPE* old_ptr = dataStart;
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
     for (const size_t sz: origClauseSizes) {
-        Clause* clause = (Clause*)tmpDataStart;
+        Clause* clause = (Clause*)old_ptr;
         //Already freed, so skip entirely
         if (clause->freed()) {
             #ifdef VALGRIND_MAKE_MEM_DEFINED
             VALGRIND_MAKE_MEM_DEFINED(((char*)clause)+sizeof(Clause), clause->size()*sizeof(Lit));
             #endif
-            tmpDataStart += sz;
-            continue;
+            old_ptr += sz;
+        } else {
+            //Move to new position
+            size_t bytesNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
+            size_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
+            assert(sizeNeeded <= sz && "New clause size must not be bigger than orig clause size");
+            memcpy(new_ptr, old_ptr, sizeNeeded*sizeof(BASE_DATA_TYPE));
+
+            Clause* c_old = (Clause*)old_ptr;
+            (*c_old)[0] = Lit::toLit(new_ptr-newDataStart);
+
+            //Record position
+            newOffsets.push_back(newSize);
+
+            //Record sizes
+            newOrigClauseSizes.push_back(sizeNeeded);
+            newSize += sizeNeeded;
+            assert(currentlyUsedSize >= newSize);
+
+            //Move pointers along
+            new_ptr += sizeNeeded;
+            old_ptr += sz;
         }
-
-        //Move to new position
-        size_t bytesNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
-        size_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
-        assert(sizeNeeded <= sz && "New clause size must not be bigger than orig clause size");
-        memmove(newDataStart, tmpDataStart, sizeNeeded*sizeof(BASE_DATA_TYPE));
-
-        //Record position
-        newOffsets.push_back(newSize);
-
-        //Record sizes
-        newOrigClauseSizes.push_back(sizeNeeded);
-        newSize += sizeNeeded;
-
-        //Move pointers along
-        newDataStart += sizeNeeded;
-        tmpDataStart += sz;
     }
 
     //Update offsets & pointers(?) now, when everything is in memory still
-    updateAllOffsetsAndPointers(solver, newOffsets);
+    updateAllOffsetsAndPointers(solver, newDataStart, newOffsets);
+
+    free(dataStart);
+    dataStart = newDataStart;
 
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
@@ -266,35 +272,15 @@ void ClauseAllocator::consolidate(
 
     //Update sizes
     size = newSize;
+    maxSize = currentlyUsedSize;
     currentlyUsedSize = newSize;
     newOrigClauseSizes.swap(origClauseSizes);
 }
 
-void ClauseAllocator::updateAllOffsetsAndPointers(
+void ClauseAllocator::check_all_cls_accessible(
     Solver* solver
     , const vector<ClOffset>& offsets
 ) {
-    //Must be at toplevel, otherwise propBy reset will not work
-    //and also, detachReattacher will fail
-    assert(solver->decisionLevel() == 0);
-
-    //We are at decision level 0, so we can reset all PropBy-s
-    for (VarData& vdata: solver->varData) {
-        vdata.reason = PropBy();
-        //vdata.level = 0;
-    }
-
-    //Detach long clauses
-    CompleteDetachReatacher detachReattach(solver);
-    detachReattach.detach_nonbins_nontris();
-
-    #ifdef USE_GAUSS
-    for(size_t i = 0; i < solver->gauss_matrixes.size(); i++) {
-        Gaussian* g = solver->gauss_matrixes[i];
-        g->assert_clauses_toclear_is_empty();
-    }
-    #endif
-
     //Make sure all non-freed clauses were accessible from solver
     size_t origNumClauses = solver->longIrredCls.size();
     for(auto& lredcls: solver-> longRedCls) {
@@ -315,6 +301,49 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(origNumClauses == offsets.size());
         std::exit(-1);
     }
+}
+
+void ClauseAllocator::updateAllOffsetsAndPointers(
+    Solver* solver
+    , BASE_DATA_TYPE* newDataStart
+    , const vector<ClOffset>& offsets
+) {
+    check_all_cls_accessible(solver, offsets);
+
+    for (size_t i = 0; i < solver->nVars(); i++) {
+        VarData& vdata = solver->varData[i];
+        if (vdata.reason.isClause()) {
+            if (vdata.removed == Removed::none
+                && solver->decisionLevel() >= vdata.level
+                && solver->decisionLevel() != 0
+                && solver->value(i) != l_Undef
+            ) {
+                Clause* old = ptr(vdata.reason.get_offset());
+                uint32_t newoffset = (*old)[0].toInt();
+                vdata.reason = PropBy(newoffset);
+            } else {
+                vdata.reason = PropBy();
+            }
+        }
+    }
+
+    #ifdef USE_GAUSS
+    for(size_t i = 0; i < solver->gauss_matrixes.size(); i++) {
+        Gaussian* g = solver->gauss_matrixes[i];
+        g->assert_clauses_toclear_is_empty();
+    }
+    #endif
+
+    for(auto& ws: solver->watches) {
+        for(Watched& w: ws) {
+            if (w.isClause()) {
+                Clause* old = ptr(w.get_offset());
+                uint32_t newoffset = (*old)[0].toInt();
+                Lit blocked = w.getBlockedLit();
+                w = Watched(newoffset, blocked);
+            }
+        }
+    }
 
     //Clear clauses
     solver->longIrredCls.clear();
@@ -324,7 +353,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
-        Clause* cl = ptr(offset);
+        Clause* cl = (Clause*)(newDataStart + offset);
         assert(!cl->freed());
 
         //Put it in the right bucket
@@ -338,9 +367,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
             solver->longIrredCls.push_back(offset);
         }
     }
-
-    //Finally, reattach long clauses
-    detachReattach.reattachLongsNoClean();
 }
 
 size_t ClauseAllocator::mem_used() const

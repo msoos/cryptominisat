@@ -96,6 +96,7 @@ class ClauseAllocator {
     private:
         void updateAllOffsetsAndPointers(
             Solver* solver
+            , BASE_DATA_TYPE* newDataStart
             , const vector<ClOffset>& offsets
         );
 
@@ -119,6 +120,11 @@ class ClauseAllocator {
         size_t currentlyUsedSize;
 
         void* allocEnough(const uint32_t size);
+
+        void check_all_cls_accessible(
+            Solver* solver
+            , const vector<ClOffset>& offsets
+        );
 };
 
 } //end namespace

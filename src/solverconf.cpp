@@ -46,7 +46,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxNumRedsRatio(10)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
-        , glue_must_keep_clause_if_below_or_eq(3)
+        , glue_must_keep_clause_if_below_or_eq(5)
 
         //Restarting
         , restart_first(100)
@@ -250,7 +250,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(20000)
-        , clean_after_perc_zero_depth_assigns(0.015)
         , reconfigure_val(0)
         , reconfigure_at(2)
         , preprocess(0)

@@ -344,7 +344,6 @@ class SolverConf
         unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
-        double clean_after_perc_zero_depth_assigns;
         unsigned reconfigure_val;
         unsigned reconfigure_at;
         unsigned preprocess;

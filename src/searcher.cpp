@@ -1084,6 +1084,12 @@ lbool Searcher::search()
             assert(ok);
             #endif //USE_GAUSS
 
+            if (decisionLevel() == 0
+                && !clean_clauses_if_needed()
+            ) {
+                return l_False;
+            };
+
             dec_ret = new_decision();
             if (dec_ret != l_Undef) {
                 dump_search_sql(myTime);
@@ -1835,21 +1841,47 @@ void Searcher::reduce_db_if_needed()
         watches.print_stat();
     }
 
-    must_consolidate_mem = true;
+    cl_alloc.consolidate(solver);
     conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
 }
 
-void Searcher::clean_clauses_if_needed()
+bool Searcher::clean_clauses_if_needed()
 {
+    assert(decisionLevel() == 0);
+
+    if (!ok || !propagate_any_order_fast().isNULL()) {
+        return ok = false;
+    }
+
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
-    if (newZeroDepthAss > ((double)solver->get_num_free_vars()*solver->conf.clean_after_perc_zero_depth_assigns))  {
+    if (newZeroDepthAss > 0
+        && simpDB_props < 0
+    ) {
         if (conf.verbosity >= 2) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
         }
-
         lastCleanZeroDepthAssigns = trail.size();
         solver->clauseCleaner->remove_and_clean_all();
+
+        cl_alloc.consolidate(solver);
+        rebuildOrderHeap();
+        simpDB_props = litStats.redLits + litStats.irredLits;
     }
+
+    return true;
+}
+
+void Searcher::rebuildOrderHeap()
+{
+    vec<uint32_t> vs;
+    for (uint32_t v = 0; v < nVars(); v++) {
+        if (varData[v].removed == Removed::none
+            && value(v) == l_Undef
+        ) {
+            vs.push(v);
+        }
+    }
+    order_heap.build(vs);
 }
 
 //NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
@@ -2046,11 +2078,6 @@ lbool Searcher::solve(
         if (must_abort(status)) {
             goto end;
         }
-
-        if (must_consolidate_mem) {
-            cl_alloc.consolidate(solver);
-            must_consolidate_mem = false;
-        }
     }
 
     end:
@@ -2169,7 +2196,7 @@ Lit Searcher::pickBranchLit()
     Lit next = lit_Undef;
 
     // Random decision:
-    if (conf.random_var_freq > 0) {
+    /*if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
         if (rand < frq && !order_heap.empty()) {
@@ -2182,7 +2209,7 @@ Lit Searcher::pickBranchLit()
                 next = Lit(next_var, !pickPolarity(next_var));
             }
         }
-    }
+    }*/
 
     // Activity based decision:
     if (next == lit_Undef) {
@@ -2196,7 +2223,7 @@ Lit Searcher::pickBranchLit()
                 next_var = var_Undef;
                 break;
             }
-            next_var = order_heap.remove_min();
+            next_var = order_heap.removeMin();
         }
 
         if (next_var != var_Undef) {
@@ -2931,7 +2958,7 @@ inline void Searcher::bump_var_activity(uint32_t var)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.in_heap(var)) {
+    if (order_heap.inHeap(var)) {
         order_heap.decrease(var);
     }
 
