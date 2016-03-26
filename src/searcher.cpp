@@ -589,9 +589,10 @@ size_t Searcher::find_backtrack_level_of_learnt()
         return 0;
     else {
         uint32_t max_i = 1;
-        for (uint32_t i = 2; i < learnt_clause.size(); i++)
+        for (uint32_t i = 2; i < learnt_clause.size(); i++) {
             if (varData[learnt_clause[i].var()].level > varData[learnt_clause[max_i].var()].level)
                 max_i = i;
+        }
         std::swap(learnt_clause[max_i], learnt_clause[1]);
         return varData[learnt_clause[1].var()].level;
     }
