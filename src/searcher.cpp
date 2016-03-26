@@ -1805,8 +1805,10 @@ void Searcher::restore_order_heap()
 void Searcher::reset_temp_cl_num()
 {
     conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
-    //TODO move clauses between longRedCls arrays
-    assert(false);
+    for(ClOffset offs: longRedCls[0]) {
+        longRedCls[1].push_back(offs);
+    }
+    longRedCls[0].clear();
 }
 
 void Searcher::reduce_db_if_needed()
@@ -2981,6 +2983,7 @@ void Searcher::write_long_cls(
     for(ClOffset c: clauses)
     {
         Clause& cl = *cl_alloc.ptr(c);
+        assert(cl.size() > 3);
         f.put_uint32_t(cl.size());
         for(const Lit l: cl)
         {
@@ -3169,7 +3172,9 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         read_tri_cls(f, false);
         read_tri_cls(f, true);
         read_long_cls(f, false);
-        read_long_cls(f, true);
+        for(auto& lredcls: longRedCls) {
+            read_long_cls(f, true);
+        }
     }
 }
 
