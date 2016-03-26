@@ -2222,9 +2222,11 @@ Lit Searcher::pickBranchLit()
     #endif
 
     //No vars in heap: solution found
+    #ifdef SLOW_DEBUG
     if (next != lit_Undef) {
         assert(solver->varData[next.var()].removed == Removed::none);
     }
+    #endif
     return next;
 }
 
