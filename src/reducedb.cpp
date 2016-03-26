@@ -198,7 +198,6 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         if ( cl->stats.locked
             || cl->used_in_xor()
             || cl->stats.ttl > 0
-            || cl->stats.marked_clause
             || solver->clause_locked(*cl, offset)
         ) {
             assert(cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq);
