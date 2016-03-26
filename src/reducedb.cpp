@@ -112,7 +112,7 @@ CleaningStats ReduceDB::reduceDB()
     const uint64_t sumConfl = solver->sumConflicts();
 
     move_to_longRedCls0();
-    int64_t num_to_reduce = solver->longRedCls.size();
+    int64_t num_to_reduce = solver->longRedCls[1].size();
 
     //TODO maybe we chould count binary learnt clauses as well into the kept no. of clauses as other solvers do
     for(unsigned keep_type = 0; keep_type < 3; keep_type++) {
