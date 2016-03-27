@@ -998,7 +998,6 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
 void Searcher::check_blocking_restart()
 {
     if (conf.do_blocking_restart
-        && params.rest_type == Restart::glue
         && sumConflicts() > conf.lower_bound_for_blocking_restart
         && hist.glueHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
