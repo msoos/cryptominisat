@@ -2062,12 +2062,12 @@ lbool Searcher::solve(
                     break;
 
                 case Restart::glue:
-                    max_confl_this_phase = 3*max_confl_phase;
+                    max_confl_this_phase = 2*max_confl_phase;
                     break;
 
                 case Restart::luby:
                     max_confl_phase = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
-                    max_confl_this_phase = 3*max_confl_phase;
+                    max_confl_this_phase = 2*max_confl_phase;
                     break;
 
                 case Restart::never:
