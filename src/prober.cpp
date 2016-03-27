@@ -669,7 +669,9 @@ bool Prober::try_this(const Lit lit, const bool first)
             << " Lit that got propagated to both values: " << failed << endl;
         }
         runStats.numFailed++;
+        #ifdef STATS_NEEDED
         runStats.conflStats.update(solver->lastConflictCausedBy);
+        #endif
         runStats.conflStats.numConflicts++;
 
         vector<Lit> lits;
