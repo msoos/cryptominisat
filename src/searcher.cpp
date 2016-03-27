@@ -2202,9 +2202,7 @@ Lit Searcher::pickBranchLit()
             next_var = order_heap.removeMin();
         }
 
-        if (next_var != var_Undef) {
-            next = Lit(next_var, !pickPolarity(next_var));
-        }
+        next = Lit(next_var, !pickPolarity(next_var));
     }
 
     //Flip polaritiy if need be
