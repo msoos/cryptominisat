@@ -2630,7 +2630,7 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
     switch(solver->conf.varElimCostEstimateStrategy) {
         case 0:
             normCost =
-                  neg.totalCls()*pos.totalCls();
+                  posTotalLonger + negTotalLonger + pos.bin + neg.bin;
             break;
 
         case 1:
