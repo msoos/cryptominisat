@@ -92,7 +92,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (true)
+        , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
         , rewardShortenedClauseWithConfl(5)
 

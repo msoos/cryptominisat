@@ -144,7 +144,9 @@ inline void Searcher::add_lit_to_learnt(
 
         bump_var_activity<update_bogoprops>(var);
         tmp_learnt_clause_size++;
-        seen2[lit.toInt()] = 1;
+        if (conf.doOTFSubsume) {
+            seen2[lit.toInt()] = 1;
+        }
         tmp_learnt_clause_abst |= abst_var(lit.var());
 
         if (varData[var].level == decisionLevel()) {
@@ -526,7 +528,9 @@ inline void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     for (const Lit lit: toClear) {
-        seen2[lit.toInt()] = 0;
+        if (conf.doOTFSubsume) {
+            seen2[lit.toInt()] = 0;
+        }
         seen[lit.var()] = 0;
     }
     toClear.clear();
@@ -621,9 +625,11 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
             antec_data.vsids_of_resolving_literals.push(activities[p.var()]/var_inc);
-            tmp_learnt_clause_size--;
-            assert(seen2[(~p).toInt()] == 1);
-            seen2[(~p).toInt()] = 0;
+            if (conf.doOTFSubsume) {
+                tmp_learnt_clause_size--;
+                assert(seen2[(~p).toInt()] == 1);
+                seen2[(~p).toInt()] = 0;
+            }
 
             //We MUST under-estimate
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
@@ -670,8 +676,11 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     } while (pathC > 0);
     assert(pathC == 0);
     learnt_clause[0] = ~p;
-    for(const Lit lit: learnt_clause) {
-        seen2[lit.toInt()] = 0;
+
+    if (conf.doOTFSubsume) {
+        for(const Lit lit: learnt_clause) {
+            seen2[lit.toInt()] = 0;
+        }
     }
 
     return last_resolved_cl;
