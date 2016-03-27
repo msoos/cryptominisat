@@ -1288,9 +1288,6 @@ void OccSimplifier::set_limits()
     aggressive_elim_time_limit = 300LL *1000LL*solver->conf.aggressive_elim_time_limitM
         *solver->conf.global_timeout_multiplier;
 
-    //numMaxElim = 0;
-    //numMaxElim = std::numeric_limits<int64_t>::max();
-
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
         && float_div(bvestats_global.numVarsElimed, bvestats_global.testedToElimVars) < 0.1
