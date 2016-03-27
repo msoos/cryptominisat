@@ -43,7 +43,7 @@ class Lit
 public:
     Lit() : x(var_Undef<<1) {}   // (lit_Undef)
     explicit Lit(uint32_t var, bool is_inverted) :
-        x((var<<1) | (uint32_t)is_inverted)
+        x(var + var + is_inverted)
     {}
 
     const uint32_t& toInt() const { // Guarantees small, positive integers suitable for array indexing.
