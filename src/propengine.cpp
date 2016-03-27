@@ -527,8 +527,8 @@ PropBy PropEngine::propagate_any_order_fast()
     #endif
 
     int64_t num_props = 0;
-    while (qhead < trail.size()) {
-        const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
+    while (qhead < trail.size() && confl.isNULL()) {
+        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
         Watched* i = ws.begin();
         Watched* j = i;
@@ -545,7 +545,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 } else if (val == l_False) {
                     confl = PropBy(~p, i->red());
                     failBinLit = i->lit2();
-                    qhead = trail.size();
                     #ifdef STATS_NEEDED
                     if (i->red())
                         lastConflictCausedBy = ConflCausedBy::binred;
@@ -588,7 +587,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 if (val2 == l_False && val3 == l_False) {
                     confl = PropBy(~p, i->lit3(), i->red());
                     failBinLit = i->lit2();
-                    qhead = trail.size();
                     #ifdef STATS_NEEDED
                     if (i->red())
                         lastConflictCausedBy = ConflCausedBy::trired;
@@ -603,7 +601,8 @@ PropBy PropEngine::propagate_any_order_fast()
 
             //propagate normal clause
             assert(i->isClause());
-            if (value(i->getBlockedLit()) == l_True) {
+            Lit blocked = i->getBlockedLit();
+            if (value(blocked) == l_True) {
                 *j++ = *i;
                 continue;
             }
@@ -618,7 +617,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
             Lit     first = c[0];
             Watched w     = Watched(offset, first);
-            if (first != i->getBlockedLit() && value(first) == l_True) {
+            if (first != blocked && value(first) == l_True) {
                 *j++ = w;
                 continue;
             }
@@ -638,7 +637,6 @@ PropBy PropEngine::propagate_any_order_fast()
             *j++ = w;
             if (value(c[0]) == l_False) {
                 confl = PropBy(offset);
-                qhead = trail.size();
                 #ifdef STATS_NEEDED
                 if (c.red())
                     lastConflictCausedBy = ConflCausedBy::longred;
@@ -658,8 +656,8 @@ PropBy PropEngine::propagate_any_order_fast()
             *j++ = *i++;
         }
         ws.shrink_(end-j);
-        qhead++;
     }
+    qhead = trail.size();
     simpDB_props -= num_props;
     propStats.propagations += (uint64_t)num_props;
 
