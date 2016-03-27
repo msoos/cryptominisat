@@ -2315,10 +2315,7 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
 
 void Searcher::minimise_redundant_more(vector<Lit>& cl)
 {
-    //????????????
-    //Binary&cache-based minim
-    //minimise_redundant_more(learnt_clause);
-            /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
+    /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
         stamp_based_more_minim(learnt_clause);
     }*/
 
