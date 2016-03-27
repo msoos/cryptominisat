@@ -135,47 +135,41 @@ inline void Searcher::add_lit_to_learnt(
     assert(varData[var].removed == Removed::none);
 
     //If var is at level 0, don't do anything with it, just skip
-    if (varData[var].level == 0)
+    if (seen[var] || varData[var].level == 0) {
         return;
+    }
 
     //Update our state of going through the conflict
-    if (!seen[var]) {
-        seen[var] = 1;
-
-        bump_var_activity<update_bogoprops>(var);
+    bump_var_activity<update_bogoprops>(var);
+    seen[var] = 1;
+    if (!update_bogoprops && conf.doOTFSubsume) {
         tmp_learnt_clause_size++;
-        if (conf.doOTFSubsume) {
-            seen2[lit.toInt()] = 1;
-        }
+        seen2[lit.toInt()] = 1;
         tmp_learnt_clause_abst |= abst_var(lit.var());
+    }
 
-        if (varData[var].level == decisionLevel()) {
-            pathC++;
+    if (varData[var].level >= decisionLevel()) {
+        pathC++;
 
-            //Glucose 2.1
-            if (!update_bogoprops
-                && varData[var].reason != PropBy()
-            ) {
-                if (varData[var].reason.getType() == clause_t) {
-                    Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
-                    if (cl->red()) {
-                        const uint32_t glue = cl->stats.glue;
-                        implied_by_learnts.push_back(std::make_pair(var, glue));
-                    }
-                } else if (varData[var].reason.getType() == binary_t
-                    && varData[var].reason.isRedStep()
-                ) {
-                    implied_by_learnts.push_back(std::make_pair(var, 2));
-                } else if (varData[var].reason.getType() == tertiary_t
-                    && varData[var].reason.isRedStep()
-                ) {
-                    implied_by_learnts.push_back(std::make_pair(var, 3));
+        if (!update_bogoprops && varData[var].reason != PropBy()) {
+            if (varData[var].reason.getType() == clause_t) {
+                Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
+                if (cl->red()) {
+                    const uint32_t glue = cl->stats.glue;
+                    implied_by_learnts.push_back(std::make_pair(var, glue));
                 }
+            } else if (varData[var].reason.getType() == binary_t
+                && varData[var].reason.isRedStep()
+            ) {
+                implied_by_learnts.push_back(std::make_pair(var, 2));
+            } else if (varData[var].reason.getType() == tertiary_t
+                && varData[var].reason.isRedStep()
+            ) {
+                implied_by_learnts.push_back(std::make_pair(var, 3));
             }
         }
-        else {
-            learnt_clause.push_back(lit);
-        }
+    } else {
+        learnt_clause.push_back(lit);
     }
 }
 
