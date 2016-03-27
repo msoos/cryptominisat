@@ -183,9 +183,6 @@ inline void Searcher::recursiveConfClauseMin()
 
     size_t i, j;
     for (i = j = 1; i < learnt_clause.size(); i++) {
-        #ifdef DEBUG_LITREDUNDANT
-        cout << "Calling litRedundant at i = " << i << endl;
-        #endif
         if (varData[learnt_clause[i].var()].reason.isNULL()
             || !litRedundant(learnt_clause[i], abstract_level)
         ) {
