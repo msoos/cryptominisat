@@ -423,7 +423,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
     varData[v].level = decisionLevel();
-    varData[v].polarity = !sign;
+    if (!update_bogoprops) {
+        varData[v].polarity = !sign;
+    }
     trail.push_back(p);
 
     if (update_bogoprops) {
