@@ -535,7 +535,7 @@ inline void Searcher::minimize_learnt_clause()
     stats.recMinLitRem += origSize - learnt_clause.size();
 }
 
-inline void Searcher::mimimize_learnt_clause_more_maybe()
+inline void Searcher::minimize_using_permdiff()
 {
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
@@ -753,7 +753,7 @@ Clause* Searcher::analyze_conflict(
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
-            mimimize_learnt_clause_more_maybe();
+            minimize_using_permdiff();
         }
     }
     glue = calc_glue(learnt_clause);
