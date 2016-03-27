@@ -2199,11 +2199,10 @@ Lit Searcher::pickBranchLit()
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap.empty()) {
                 next_var = var_Undef;
-                break;
+                return lit_Undef;
             }
             next_var = order_heap.removeMin();
         }
-
         next = Lit(next_var, !pickPolarity(next_var));
     }
 
@@ -2215,14 +2214,6 @@ Lit Searcher::pickBranchLit()
         next ^= true;
         stats.decisionFlippedPolar++;
     }
-
-    #ifdef VERBOSE_DEBUG
-    if (next == lit_Undef) {
-        cout << "SAT!" << endl;
-    } else {
-        cout << "decided on: " << next << endl;
-    }
-    #endif
 
     //No vars in heap: solution found
     #ifdef SLOW_DEBUG
