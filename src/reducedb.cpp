@@ -111,7 +111,7 @@ CleaningStats ReduceDB::reduceDB()
 
     const uint64_t sumConfl = solver->sumConflicts();
 
-    move_to_longRedCls0();
+    //move_to_longRedCls0();
     int64_t num_to_reduce = solver->longRedCls[1].size();
 
     //TODO maybe we chould count binary learnt clauses as well into the kept no. of clauses as other solvers do
@@ -167,24 +167,6 @@ CleaningStats ReduceDB::reduceDB()
     return tmpStats;
 }
 
-void ReduceDB::move_to_longRedCls0()
-{
-    size_t i = 0;
-    size_t j = 0;
-    for(size_t size = solver->longRedCls[1].size(); i < size; i++) {
-        const ClOffset offset = solver->longRedCls[1][i];
-        const Clause* cl = solver->cl_alloc.ptr(offset);
-        assert(!cl->stats.marked_clause);
-
-        if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
-            solver->longRedCls[0].push_back(offset);
-        } else {
-            solver->longRedCls[1][j++] = solver->longRedCls[1][i];
-        }
-    }
-    solver->longRedCls[1].resize(j);
-}
-
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
     size_t marked = 0;
@@ -198,8 +180,8 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
             || cl->used_in_xor()
             || cl->stats.ttl > 0
             || solver->clause_locked(*cl, offset)
+            || cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq
         ) {
-            assert(cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq);
             //no need to mark, skip
             continue;
         }
@@ -244,6 +226,11 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
             cl_ttl++;
         } else if (solver->clause_locked(*cl, offset)) {
             cl_locked_solver++;
+        }
+
+        if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+            solver->longRedCls[0].push_back(offset);
+            continue;
         }
 
         if (!cl_needs_removal(cl, offset)) {

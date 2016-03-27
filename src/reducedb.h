@@ -49,8 +49,6 @@ private:
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
-    void move_to_longRedCls0();
-
     unsigned cl_locked;
     unsigned cl_marked;
     unsigned cl_ttl;
