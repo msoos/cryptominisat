@@ -635,6 +635,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         assert(p != lit_Undef);
 
         if (!update_bogoprops
+            && pathC > 1
             && conf.doOTFSubsume
             //A long clause
             && last_resolved_cl != NULL
@@ -647,9 +648,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         ) {
             last_resolved_cl->recalc_abst_if_needed();
             //Everything in learnt_cl_2 seems to be also in cl
-            if (
-                ((last_resolved_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst)
-                && pathC > 1
+            if ((last_resolved_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst
             ) {
                 check_otf_subsume(confl.get_offset(), *last_resolved_cl);
             }
