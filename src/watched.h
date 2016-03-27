@@ -284,19 +284,6 @@ class Watched {
             return !(*this == other);
         }
 
-        Watched(Watched&& o) noexcept {
-            memmove(this, &o, sizeof(Watched));
-        }
-
-        Watched(const Watched& o) noexcept {
-            memmove(this, &o, sizeof(Watched));
-        }
-
-        Watched& operator=(const Watched& o) noexcept {
-            memmove(this, &o, sizeof(Watched));
-            return *this;
-        }
-
     private:
         uint32_t data1;
         // binary, tertiary or long, as per WatchType

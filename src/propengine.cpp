@@ -527,21 +527,23 @@ PropBy PropEngine::propagate_any_order_fast()
     #endif
 
     int64_t num_props = 0;
-    while (qhead < trail.size() && confl.isNULL()) {
+    while (qhead < trail.size()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
-        Watched* i = ws.begin();
-        Watched* j = i;
-        Watched* end = ws.end();
+        Watched* i;
+        Watched* j;
+        Watched* end;
         num_props++;
 
-        for (; i != end; i++) {
+        for (i = j = ws.begin(), end = ws.end(); i != end;) {
             //Prop bin clause
             if (i->isBin()) {
+                assert(j < end);
                 *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) {
                     enqueue<false>(i->lit2(), PropBy(~p, i->red()));
+                    i++;
                 } else if (val == l_False) {
                     confl = PropBy(~p, i->red());
                     failBinLit = i->lit2();
@@ -552,7 +554,12 @@ PropBy PropEngine::propagate_any_order_fast()
                         lastConflictCausedBy = ConflCausedBy::binirred;
                     #endif
                     i++;
-                    break;
+                    while (i < end) {
+                        *j++ = *i++;
+                    }
+                    qhead = trail.size();
+                } else {
+                    i++;
                 }
                 continue;
             }
@@ -564,23 +571,29 @@ PropBy PropEngine::propagate_any_order_fast()
                 lbool val2 = value(lit2);
 
                 //literal is already satisfied, nothing to do
-                if (val2 == l_True)
+                if (val2 == l_True) {
+                    i++;
                     continue;
+                }
 
                 const Lit lit3 = i->lit3();
                 lbool val3 = value(lit3);
 
                 //literal is already satisfied, nothing to do
-                if (val3 == l_True)
+                if (val3 == l_True) {
+                    i++;
                     continue;
+                }
 
                 if (val2 == l_Undef && val3 == l_False) {
                     enqueue<false>(lit2, PropBy(~p, lit3, i->red()));
+                    i++;
                     continue;
                 }
 
                 if (val3 == l_Undef && val2 == l_False) {
                     enqueue<false>(lit3, PropBy(~p, lit2, i->red()));
+                    i++;
                     continue;
                 }
 
@@ -594,8 +607,13 @@ PropBy PropEngine::propagate_any_order_fast()
                         lastConflictCausedBy = ConflCausedBy::triirred;
                     #endif
                     i++;
-                    break;
+                    while (i < end) {
+                        *j++ = *i++;
+                    }
+                    qhead = trail.size();
+                    continue;
                 }
+                i++;
                 continue;
             }
 
@@ -603,7 +621,7 @@ PropBy PropEngine::propagate_any_order_fast()
             assert(i->isClause());
             Lit blocked = i->getBlockedLit();
             if (value(blocked) == l_True) {
-                *j++ = *i;
+                *j++ = *i++;
                 continue;
             }
 
@@ -614,6 +632,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 c[0] = c[1], c[1] = false_lit;
             }
             assert(c[1] == false_lit);
+            i++;
 
             Lit     first = c[0];
             Watched w     = Watched(offset, first);
@@ -643,8 +662,11 @@ PropBy PropEngine::propagate_any_order_fast()
                 else
                     lastConflictCausedBy = ConflCausedBy::longirred;
                 #endif
-                i++;
-                break;
+                while (i < end) {
+                    *j++ = *i++;
+                }
+                assert(j <= end);
+                qhead = trail.size();
             } else {
                 enqueue<false>(c[0], PropBy(offset));
                 update_glue(c);
@@ -652,10 +674,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
             nextClause:;
         }
-        while (i != end) {
-            *j++ = *i++;
-        }
-        ws.shrink_(end-j);
+        ws.shrink_(i-j);
     }
     qhead = trail.size();
     simpDB_props -= num_props;
