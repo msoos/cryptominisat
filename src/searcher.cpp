@@ -749,6 +749,7 @@ Clause* Searcher::analyze_conflict(
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause();
+    stats.litsRedFinal += learnt_clause.size();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
@@ -764,7 +765,6 @@ Clause* Searcher::analyze_conflict(
         minimise_redundant_more(learnt_clause);
     }*/
 
-    stats.litsRedFinal += learnt_clause.size();
     out_btlevel = find_backtrack_level_of_learnt();
     if (!update_bogoprops
         && conf.extra_bump_var_activities_based_on_glue
