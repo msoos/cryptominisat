@@ -135,7 +135,6 @@ CleaningStats ReduceDB::reduceDB()
         solver->cl_alloc.clauseFree(offset);
     }
     delayed_clause_free.clear();
-    solver->unmark_all_red1_clauses();
 
     #ifdef SLOW_DEBUG
     solver->check_no_removed_or_freed_cl_in_watch();
@@ -248,11 +247,10 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         }
 
         if (!cl_needs_removal(cl, offset)) {
-            if (cl->stats.ttl > 0) {
-                cl->stats.ttl = 0;
-            }
+            cl->stats.ttl = 0;
             solver->longRedCls[1][j++] = offset;
             tmpStats.remain.incorporate(cl, sumConfl);
+            cl->stats.marked_clause = 0;
             continue;
         }
 
@@ -266,7 +264,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         *solver->drat << del << *cl << fin;
         delayed_clause_free.push_back(offset);
     }
-    solver->longRedCls[1].resize(solver->longRedCls[1].size() - (i - j));
+    solver->longRedCls[1].resize(j);
 }
 
 void ReduceDB::reduce_db_and_update_reset_stats()
