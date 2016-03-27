@@ -91,8 +91,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , update_glues_on_analyze(true)
 
         //OTF
-        , otfHyperbin      (false)
-        , doOTFSubsume     (false)
+        , otfHyperbin      (true)
+        , doOTFSubsume     (true)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
         , rewardShortenedClauseWithConfl(5)
 
