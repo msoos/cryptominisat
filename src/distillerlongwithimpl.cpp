@@ -60,15 +60,21 @@ bool DistillerLongWithImpl::distill_long_with_implicit(const bool alsoStrengthen
     if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, false))
         goto end;
 
-    if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, false))
+    if (solver->longRedCls[0].size() > 0
+        && !shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, false)
+    ) {
         goto end;
+    }
 
     if (alsoStrengthen) {
         if (!shorten_all_cl_with_cache_watch_stamp(solver->longIrredCls, false, true))
             goto end;
 
-        if (!shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, true))
+        if (solver->longRedCls[0].size() > 0
+            && !shorten_all_cl_with_cache_watch_stamp(solver->longRedCls[0], true, true)
+        ) {
             goto end;
+        }
     }
 
 end:
