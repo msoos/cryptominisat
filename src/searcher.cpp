@@ -2193,7 +2193,6 @@ Lit Searcher::pickBranchLit()
         uint32_t next_var = var_Undef;
         while (next_var == var_Undef
           || value(next_var) != l_Undef
-          || solver->varData[next_var].removed != Removed::none
         ) {
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap.empty()) {
