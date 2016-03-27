@@ -1387,10 +1387,12 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     //long-term averages
     hist.decisionLevelHistLT.push(decisionLevel());
     hist.backtrackLevelHistLT.push(backtrack_level);
-    hist.trailDepthHistLT.push(trail.size());
+
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
     hist.conflSizeHistLT.push(learnt_clause.size());
+
+    hist.trailDepthHistLT.push(trail.size());
     if (params.rest_type == Restart::glue) {
         hist.glueHistLT.push(glue);
         hist.glueHist.push(glue);
