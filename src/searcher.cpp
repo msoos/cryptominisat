@@ -1020,7 +1020,7 @@ lbool Searcher::search()
     const double myTime = cpuTime();
 
     //Stats reset & update
-    if (params.update) {
+    if (!update_bogoprops) {
         stats.numRestarts++;
         stats.clauseID_at_start_inclusive = clauseID;
     }
@@ -1050,7 +1050,7 @@ lbool Searcher::search()
             #endif
 
             print_restart_stat();
-            if (params.update) {
+            if (!update_bogoprops) {
                 #ifdef STATS_NEEDED
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
                 #endif
@@ -1594,7 +1594,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     );
     print_learnt_clause();
 
-    if (params.update) {
+    if (!update_bogoprops) {
         update_history_stats(backtrack_level, glue);
     }
     cancelUntil(backtrack_level);

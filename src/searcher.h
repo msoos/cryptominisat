@@ -229,13 +229,11 @@ class Searcher : public HyperEngine
 
             void clear()
             {
-                update = true;
                 needToStopSearch = false;
                 conflictsDoneThisRestart = 0;
             }
 
             bool needToStopSearch;
-            bool update;
             uint64_t conflictsDoneThisRestart;
             uint64_t conflictsToDo;
             Restart rest_type = Restart::never;
