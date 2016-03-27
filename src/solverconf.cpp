@@ -87,14 +87,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxConfl         (std::numeric_limits<long>::max())
 
         //Glues
-        , update_glues_on_prop(true)
+        , update_glues_on_prop(false)
         , update_glues_on_analyze(true)
 
         //OTF
-        , otfHyperbin      (true)
-        , doOTFSubsume     (true)
+        , otfHyperbin      (false)
+        , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
-        , rewardShortenedClauseWithConfl(3)
+        , rewardShortenedClauseWithConfl(5)
 
         //SQL
         , dump_individual_search_time(true)
