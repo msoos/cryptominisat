@@ -455,12 +455,17 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             if (!update_bogoprops
                 && cl->red()
                 && cl->stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+                && cl->stats.ttl == 0
             ) {
                 bumpClauseAct(cl);
-                if (conf.update_glues_on_analyze
-                ) {
-                    update_clause_glue_from_analysis(cl);
-                }
+            }
+
+            if (!update_bogoprops
+                && conf.update_glues_on_analyze
+                && cl->red()
+                && cl->stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+            ) {
+                update_clause_glue_from_analysis(cl);
             }
             break;
         }
