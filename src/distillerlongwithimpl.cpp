@@ -348,7 +348,9 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     }
 
     strsub_with_cache_and_watch(alsoStrengthen, cl);
-    try_subsuming_by_stamping(red);
+    if (solver->stamp.stampingTime != 0) {
+        try_subsuming_by_stamping(red);
+    }
 
     //Clear 'seen2'
     timeAvailable -= (long)lits2.size()*3;
