@@ -64,24 +64,24 @@ public:
 
     watch_subarray operator[](Lit pos)
     {
-        return watch_subarray(watches[pos.toInt()]);
+        return watches[pos.toInt()];
     }
 
     watch_subarray at(size_t pos)
     {
         assert(watches.size() > pos);
-        return watch_subarray(watches[pos]);
+        return watches[pos];
     }
 
     watch_subarray_const operator[](Lit at) const
     {
-        return watch_subarray_const(watches[at.toInt()]);
+        return watches[at.toInt()];
     }
 
     watch_subarray_const at(size_t pos) const
     {
         assert(watches.size() > pos);
-        return watch_subarray_const(watches[pos]);
+        return watches[pos];
     }
 
     void resize(const size_t new_size)
