@@ -478,6 +478,28 @@ inline bool Searcher::check_order_heap_sanity() const
     return true;
 }
 
+inline bool Searcher::pickPolarity(const uint32_t var)
+{
+    switch(conf.polarity_mode) {
+        case PolarityMode::polarmode_neg:
+            return false;
+
+        case PolarityMode::polarmode_pos:
+            return true;
+
+        case PolarityMode::polarmode_rnd:
+            return mtrand.randInt(1);
+
+        case PolarityMode::polarmode_automatic:
+            return varData[var].polarity;
+
+        default:
+            assert(false);
+    }
+
+    return true;
+}
+
 
 } //end namespace
 
