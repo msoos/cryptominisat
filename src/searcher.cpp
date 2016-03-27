@@ -1871,7 +1871,7 @@ bool Searcher::clean_clauses_if_needed()
 
         cl_alloc.consolidate(solver);
         rebuildOrderHeap();
-        simpDB_props = litStats.redLits + litStats.irredLits;
+        simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
     return true;
