@@ -2306,7 +2306,9 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
                         seen[(~i->lit3()).toInt()] = 0;
                     }
                 }
+                continue;
             }
+            break;
         }
     }
 }
