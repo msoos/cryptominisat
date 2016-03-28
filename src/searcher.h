@@ -119,6 +119,12 @@ class Searcher : public HyperEngine
         void clear_gauss() {}
         #endif
 
+        void testing_fill_assumptions_set()
+        {
+            assumptionsSet.clear();
+            assumptionsSet.resize(nVars(), false);
+        }
+
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
@@ -156,6 +162,11 @@ class Searcher : public HyperEngine
             , bool red
         );
 
+        //Misc
+        void update_var_decay();
+        void add_in_partial_solving_stats();
+
+
         struct AssumptionPair {
             AssumptionPair(const Lit _inter, const Lit _outer):
                 lit_inter(_inter)
@@ -172,15 +183,15 @@ class Searcher : public HyperEngine
                 return ~lit_inter < ~other.lit_inter;
             }
         };
-        void update_var_decay();
-        void renumber_assumptions(const vector<uint32_t>& outerToInter);
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
-        vector<char> assumptionsSet; //Needed so checking is fast -- we cannot eliminate / component-handle such vars
-        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user.
+        void renumber_assumptions(const vector<uint32_t>& outerToInter);
+        //we cannot eliminate / component-handle such vars
+        //Needed so checking is fast
+        vector<char> assumptionsSet;
+        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user
         void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
-        void add_in_partial_solving_stats();
 
         //For connection with Solver
         void  resetStats();

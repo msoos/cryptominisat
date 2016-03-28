@@ -2854,6 +2854,12 @@ size_t Searcher::mem_used() const
 
 void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)
 {
+    #ifdef SLOW_DEBUG
+    for(auto x: assumptionsSet) {
+        assert(!x);
+    }
+    #endif
+
     if (fill_from.empty()) {
         return;
     }
@@ -2862,7 +2868,8 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()]) {
-                //Yes, it can happen... due to variable value replacement
+                //Assumption contains the same literal twice. Shouldn't really be allowed...
+                //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
             } else {
                 assumptionsSet[lit.var()] = true;
             }
@@ -2893,6 +2900,12 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
             assumptionsSet[lit.var()] = false;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    for(auto x: assumptionsSet) {
+        assert(!x);
+    }
+    #endif
 }
 
 inline void Searcher::varDecayActivity()
