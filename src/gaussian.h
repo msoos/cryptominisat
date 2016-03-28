@@ -105,12 +105,6 @@ public:
 
     //functions used throughout the Solver
     void canceling(const uint32_t sublevel);
-    void assert_clauses_toclear_is_empty() {
-        for(GaussClauseToClear& c : clauses_toclear) {
-            cout << "Sublevel: " << c.sublevel << endl;
-        }
-        assert(clauses_toclear.empty());
-    }
     vector<GaussClauseToClear> clauses_toclear;
 
 protected:
