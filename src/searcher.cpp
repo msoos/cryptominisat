@@ -508,6 +508,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     return cl;
 }
 
+template<bool update_bogoprops>
 inline void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
@@ -519,7 +520,9 @@ inline void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     for (const Lit lit: toClear) {
-        if (conf.doOTFSubsume) {
+        if (!update_bogoprops
+            && conf.doOTFSubsume
+        ) {
             seen2[lit.toInt()] = 0;
         }
         seen[lit.var()] = 0;
@@ -616,7 +619,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
             antec_data.vsids_of_resolving_literals.push(activities[p.var()]/var_inc);
-            if (conf.doOTFSubsume) {
+            if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
                 seen2[(~p).toInt()] = 0;
@@ -667,7 +670,9 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     assert(pathC == 0);
     learnt_clause[0] = ~p;
 
-    if (conf.doOTFSubsume) {
+    if (conf.doOTFSubsume
+        && !update_bogoprops
+    ) {
         for(const Lit lit: learnt_clause) {
             seen2[lit.toInt()] = 0;
         }
@@ -748,7 +753,7 @@ Clause* Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
-    minimize_learnt_clause();
+    minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);

@@ -247,6 +247,7 @@ class Searcher : public HyperEngine
             , uint32_t &glue         //glue of the learnt clause
         );
         void update_clause_glue_from_analysis(Clause* cl);
+        template<bool update_bogoprops>
         void minimize_learnt_clause();
         void watch_based_learnt_minim();
         void minimize_using_permdiff();
