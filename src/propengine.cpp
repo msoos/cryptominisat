@@ -518,6 +518,11 @@ inline void PropEngine::propTriHelperAnyOrder(
     enqueue<update_bogoprops>(lit2, PropBy(~lit1, lit3, red));
 }
 
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+
+
+__attribute__((optimize("no-unroll-loops")))
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;
@@ -537,7 +542,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
         for (i = j = ws.begin(), end = ws.end(); i != end;) {
             //Prop bin clause
-            if (i->isBin()) {
+            if (unlikely(i->isBin())) {
                 assert(j < end);
                 *j++ = *i;
                 const lbool val = value(i->lit2());
@@ -565,7 +570,7 @@ PropBy PropEngine::propagate_any_order_fast()
             }
 
             //Propagate tri clause
-            if (i->isTri()) {
+            if (unlikely(i->isTri())) {
                 *j++ = *i;
                 const Lit lit2 = i->lit2();
                 lbool val2 = value(lit2);
@@ -579,7 +584,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 const Lit lit3 = i->lit3();
                 lbool val3 = value(lit3);
 
-                //literal is already satisfied, nothing to do
                 if (val3 == l_True) {
                     i++;
                     continue;
