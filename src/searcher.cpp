@@ -1875,6 +1875,7 @@ bool Searcher::clean_clauses_if_needed()
 
         cl_alloc.consolidate(solver);
         rebuildOrderHeap();
+        sortWatched();
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
@@ -2037,14 +2038,6 @@ lbool Searcher::solve(
         assert(order_heap.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
-
-        //Only sort after a while
-        //otherwise, we sort all the time for short queries
-        if ((loop_num & 0x7ff) == 0x008
-            && conf.doSortWatched
-        ) {
-            sortWatched();
-        }
 
         assert(watches.get_smudged_list().empty());
         print_search_loop_num();
