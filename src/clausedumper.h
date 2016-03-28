@@ -68,11 +68,6 @@ private:
         , const bool dumpIrred
         , const bool backnumber
     );
-    void dumpTriClauses(
-        const bool alsoRed
-        , const bool alsoIrred
-        , const bool backnumber
-    );
 
     void dumpEquivalentLits();
     void dumpUnitaryClauses();

@@ -75,7 +75,6 @@ public:
     //Learnt clause stats
     uint64_t learntUnits = 0;
     uint64_t learntBins = 0;
-    uint64_t learntTris = 0;
     uint64_t learntLongs = 0;
     uint64_t otfSubsumed = 0;
     uint64_t otfSubsumedImplicit = 0;

@@ -52,19 +52,11 @@ private:
         , Watched*& j
         , const Watched* end
     );
-    void strengthen_tri_with_bin_tri_stamp(
-       const Lit lit
-        , Watched* i
-        , Watched*& j
-    );
 
     //Vars for strengthen implicit
     struct StrImplicitData
     {
         uint64_t remLitFromBin = 0;
-        uint64_t remLitFromTri = 0;
-        uint64_t remLitFromTriByBin = 0;
-        uint64_t remLitFromTriByTri = 0;
         uint64_t stampRem = 0;
 
         uint64_t numWatchesLooked = 0;

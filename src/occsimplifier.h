@@ -52,7 +52,6 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-class GateFinder;
 class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
@@ -369,9 +368,7 @@ private:
             if (second.isClause())
                 return true;
 
-            //BIN is better than TRI
-            if (first.isBin() && second.isTri()) return true;
-
+            //Both are bin
             return false;
         }
     };
@@ -448,7 +445,6 @@ private:
     {
         HeuristicData() :
             bin(0)
-            , tri(0)
             , longer(0)
             , lit(0)
             , count(std::numeric_limits<uint32_t>::max())
@@ -456,11 +452,10 @@ private:
 
         uint32_t totalCls() const
         {
-            return bin + tri + longer;
+            return bin + longer;
         }
 
         uint32_t bin;
-        uint32_t tri;
         uint32_t longer;
         uint32_t lit;
         uint32_t count; //resolution count (if can be counted, otherwise MAX)
@@ -514,9 +509,9 @@ private:
     /////////////////////
     //Helpers
     friend class TopLevelGaussAbst;
-    friend class GateFinder;
+    //friend class GateFinder;
     TopLevelGaussAbst *topLevelGauss;
-    GateFinder *gateFinder;
+    //GateFinder *gateFinder;
 
     /////////////////////
     //Blocked clause elimination

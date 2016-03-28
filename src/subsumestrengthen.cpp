@@ -706,29 +706,6 @@ template<class T> void SubsumeStrengthen::find_subsumed(
                     continue;
                 }
             }
-
-            if (it->isTri()
-                && ps.size() == 2
-                && (ps[!smallest] == it->lit2() || ps[!smallest] == it->lit3())
-            ) {
-                /*cout
-                << "ps " << ps << " could subsume this tri: "
-                << ps[smallest] << ", " << it->lit2() << ", " << it->lit3()
-                << endl;
-                */
-                Lit lits[3];
-                lits[0] = ps[smallest];
-                lits[1] = it->lit2();
-                lits[2] = it->lit3();
-                std::sort(lits + 0, lits + 3);
-                removeTriAllButOne(solver->watches, ps[smallest], lits, it->red());
-                if (it->red()) {
-                    solver->binTri.redTris--;
-                } else {
-                    solver->binTri.irredTris--;
-                }
-                continue;
-            }
         }
         *it2++ = *it;
 
@@ -917,39 +894,6 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
                 solver->binTri.irredBins++;
                 findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
                 findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
-            }
-            continue;
-        }
-
-        //Each TRI only once
-        if (ws[i].isTri()
-            && (redundant_too ||
-             (lit < ws[i].lit2() && ws[i].lit2() < ws[i].lit3())
-            )
-        ) {
-            const bool red = ws[i].red();
-            tried_bin_tri++;
-            tmpLits.resize(3);
-            tmpLits[0] = lit;
-            tmpLits[1] = ws[i].lit2();
-            tmpLits[2] = ws[i].lit3();
-            std::sort(tmpLits.begin(), tmpLits.end());
-
-            Sub1Ret ret = sub_str_with_implicit(tmpLits);
-            subsumedTri += ret.sub;
-            strTri += ret.str;
-            if (!solver->ok)
-                return false;
-
-            if (red
-                && ret.subsumedIrred
-            ) {
-                //ws[i].setRed(false);
-                solver->binTri.redTris--;
-                solver->binTri.irredTris++;
-                findWatchedOfTri(solver->watches, tmpLits[0], tmpLits[1], tmpLits[2], true).setRed(false);
-                findWatchedOfTri(solver->watches, tmpLits[1], tmpLits[0], tmpLits[2], true).setRed(false);
-                findWatchedOfTri(solver->watches, tmpLits[2], tmpLits[0], tmpLits[1], true).setRed(false);
             }
             continue;
         }

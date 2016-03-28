@@ -243,58 +243,6 @@ inline bool SolutionExtender::prop_bin_cl(
     return true;
 }
 
-inline bool SolutionExtender::prop_tri_cl_strict_order(
-    Watched*& i
-    , const Lit p
-) {
-    const Lit lit2 = i->lit2();
-    lbool val2 = value(lit2);
-
-    //literal is already satisfied, nothing to do
-    if (val2 == l_True)
-        return true;
-
-    const Lit lit3 = i->lit3();
-    lbool val3 = value(lit3);
-
-    //literal is already satisfied, nothing to do
-    if (val3 == l_True)
-        return true;
-
-    if (val2 == l_False && val3 == l_False) {
-        return false;
-    }
-    if (val2 == l_Undef && val3 == l_False) {
-        #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        cout
-        << "c Due to cl "
-        << ~p << ", "
-        << i->lit2() << ", "
-        << i->lit3()
-        << " propagate enqueueing "
-        << lit2 << endl;
-        #endif
-        enqueue(lit2);
-        return true;
-    }
-
-    if (val3 == l_Undef && val2 == l_False) {
-        #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        cout
-        << "c Due to cl "
-        << ~p << ", "
-        << i->lit2() << ", "
-        << i->lit3()
-        << " propagate enqueueing "
-        << lit3 << endl;
-        #endif
-        enqueue(lit3);
-        return true;
-    }
-
-    return true;
-}
-
 bool SolutionExtender::propagate()
 {
     bool ret = true;
@@ -314,22 +262,6 @@ bool SolutionExtender::propagate()
                     << "Problem with implicit binary clause: "
                     << ~p
                     << ", " << it->lit2()
-                    << endl;
-                }
-
-                continue;
-            }
-
-            //Propagate tri clause
-            if (it->isTri() && !it->red()) {
-                bool thisret = prop_tri_cl_strict_order(it, p);
-                ret &= thisret;
-                if (!thisret) {
-                    cout
-                    << "Problem with implicit tertiary clause: "
-                    << ~p
-                    << ", " << it->lit2()
-                    << ", " << it->lit3()
                     << endl;
                 }
 

@@ -87,54 +87,6 @@ void XorFinder::find_xors_based_on_long_clauses()
     }
 }
 
-void XorFinder::find_xors_based_on_short_clauses()
-{
-    assert(solver->ok);
-
-    vector<Lit> lits;
-    for (size_t wsLit = 0, end = 2*solver->nVars()
-        ; wsLit < end && xor_find_time_limit > 0
-        ; wsLit++
-    ) {
-        const Lit lit = Lit::toLit(wsLit);
-        assert(solver->watches.size() > wsLit);
-        watch_subarray_const ws = solver->watches[lit];
-
-        xor_find_time_limit -= (int64_t)ws.size()*4;
-
-        //cannot use iterators because findXor may update the watchlist
-        for (size_t i = 0, size = solver->watches[lit].size()
-            ; i < size && xor_find_time_limit > 0
-            ; i++
-        ) {
-            const Watched& w = ws[i];
-
-            //Only care about tertiaries
-            if (!w.isTri())
-                continue;
-
-
-            if (//Only bother about each tri-clause once
-                lit < w.lit2()
-                && w.lit2() < w.lit3()
-                //If there is an tri XOR = 1 or XOR = 0, there is ALWAYS
-                //a 3-clause with -1 -2 X in there. Take that only
-                && lit.sign()
-                && w.lit2().sign()
-            ) {
-
-                lits.resize(3);
-                lits[0] = lit;
-                lits[1] = w.lit2();
-                lits[2] = w.lit3();
-
-                //TODO check if already inside in some clever way
-                findXor(lits, CL_OFFSET_MAX, calcAbstraction(lits));
-            }
-        }
-    }
-}
-
 void XorFinder::find_xors()
 {
     runStats.clear();
@@ -153,7 +105,6 @@ void XorFinder::find_xors()
     assert(solver->no_marked_clauses());
     #endif
 
-    find_xors_based_on_short_clauses();
     find_xors_based_on_long_clauses();
 
     //Cleanup
@@ -273,37 +224,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit lit)
     xor_find_time_limit -= (int64_t)occ.size();
     for (const Watched& w: occ) {
         if (w.isIdx() || w.isBin()) {
-            continue;
-        }
-
-        //Deal with tertiary
-        if (w.isTri()) {
-            if (poss_xor.getSize() == 3
-                //Only once per tri
-                //&& lit < w.lit2() && w.lit2() < w.lit3()
-
-                //Only for correct tri
-                && seen[w.lit2().var()] && seen[w.lit3().var()]
-            ) {
-                bool rhs = true;
-                rhs ^= lit.sign();
-                rhs ^= w.lit2().sign();
-                rhs ^= w.lit3().sign();
-
-                if (rhs == poss_xor.getRHS() || poss_xor.getSize() > 3) {
-                    tmpClause.clear();
-                    tmpClause.push_back(lit);
-                    tmpClause.push_back(w.lit2());
-                    tmpClause.push_back(w.lit3());
-                    std::sort(tmpClause.begin(), tmpClause.end());
-
-                    xor_find_time_limit-=20;
-                    poss_xor.add(tmpClause, CL_OFFSET_MAX, varsMissing);
-                    if (poss_xor.foundAll())
-                        break;
-                }
-
-            }
             continue;
         }
 

@@ -53,8 +53,6 @@ public:
     );
     bool handle_sub_str_with(size_t orig_limit = 400ULL*1000ULL*1000ULL);
 
-    //bool subsumeWithTris();
-
     struct Sub0Ret {
         bool subsumedIrred = 0;
         ClauseStats stats;

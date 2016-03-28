@@ -168,7 +168,6 @@ public:
 private:
     PossibleXor poss_xor;
     void add_found_xor(const Xor& found_xor);
-    void find_xors_based_on_short_clauses();
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_has_interesting_var(const Xor& x);

@@ -67,7 +67,6 @@ private:
     int64_t timeAvailable;
 
     Lit lastLit2;
-    Lit lastLit3;
     Watched* lastBin;
     bool lastRed;
     vector<Lit> tmplits;
@@ -77,18 +76,11 @@ private:
     void clear()
     {
         lastLit2 = lit_Undef;
-        lastLit3 = lit_Undef;
         lastBin = NULL;
         lastRed = false;
     }
 
     //ImplSubsumeData impl_subs_dat;
-    void try_subsume_tri(
-        const Lit lit
-        , Watched* i
-        , Watched*& j
-        , const bool doStamp
-    );
     void try_subsume_bin(
        const Lit lit
         , Watched* i

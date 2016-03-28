@@ -251,11 +251,9 @@ private:
 
         //Clause stats
         uint64_t numIrredBins;
-        uint64_t numIrredTris;
         uint64_t numIrredLongs;
         uint64_t numIrredLits;
         uint64_t numRedBins;
-        uint64_t numRedTris;
         uint64_t numRedLongs;
         uint64_t numRedLits;
 
@@ -299,23 +297,18 @@ private:
         //Prop
         uint64_t propsBinIrred;
         uint64_t propsBinRed;
-        uint64_t propsTriIrred;
-        uint64_t propsTriRed;
         uint64_t propsLongIrred;
         uint64_t propsLongRed;
 
         //Confl
         uint64_t conflsBinIrred;
         uint64_t conflsBinRed;
-        uint64_t conflsTriIrred;
-        uint64_t conflsTriRed;
         uint64_t conflsLongIrred;
         uint64_t conflsLongRed;
 
         //Red
         uint64_t learntUnits;
         uint64_t learntBins;
-        uint64_t learntTris;
         uint64_t learntLongs;
 
         //Resolution stats

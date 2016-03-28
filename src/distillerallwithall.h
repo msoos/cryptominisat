@@ -76,7 +76,6 @@ class DistillerAllWithAll {
 
         //Actual algorithms used
         bool distill_long_irred_cls(uint32_t queueByBy);
-        bool distill_tri_irred_cls();
         Solver* solver;
 
         //For distill

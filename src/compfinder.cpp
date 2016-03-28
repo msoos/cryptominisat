@@ -211,24 +211,6 @@ void CompFinder::addToCompImplicits()
                         seen[it2->lit2().var()] = 1;
                     }
                 }
-
-                if (it2->isTri()
-                    //irredundant
-                    && !it2->red()
-                    //Only do each tri once
-                    && lit < it2->lit3()
-                    && it2->lit2() < it2->lit3()
-                ) {
-                    if (!seen[it2->lit2().var()]) {
-                        lits.push_back(it2->lit2());
-                        seen[it2->lit2().var()] = 1;
-                    }
-
-                    if (!seen[it2->lit3().var()]) {
-                        lits.push_back(it2->lit3());
-                        seen[it2->lit3().var()] = 1;
-                    }
-                }
             }
         }
 

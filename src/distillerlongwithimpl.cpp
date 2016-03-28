@@ -99,25 +99,8 @@ void DistillerLongWithImpl::strengthen_clause_with_watch(
         && seen[lit.toInt()] //We haven't yet removed it
     ) {
         if (seen[(~wit->lit2()).toInt()]) {
-            thisRemLitBinTri++;
+            thisremLitBin++;
             seen[(~wit->lit2()).toInt()] = 0;
-        }
-    }
-
-    //Strengthening w/ tri
-    if (wit->isTri()
-        && seen[lit.toInt()] //We haven't yet removed it
-    ) {
-        if (seen[(wit->lit2()).toInt()]) {
-            if (seen[(~wit->lit3()).toInt()]) {
-                thisRemLitBinTri++;
-                seen[(~wit->lit3()).toInt()] = 0;
-            }
-        } else if (seen[wit->lit3().toInt()]) {
-            if (seen[(~wit->lit2()).toInt()]) {
-                thisRemLitBinTri++;
-                seen[(~wit->lit2()).toInt()] = 0;
-            }
         }
     }
 }
@@ -139,7 +122,7 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
             solver->binTri.redBins--;
             solver->binTri.irredBins++;
         }
-        cache_based_data.subBinTri++;
+        cache_based_data.subBin++;
         isSubsumed = true;
         return true;
     }
@@ -148,53 +131,6 @@ bool DistillerLongWithImpl::subsume_clause_with_watch(
     if (wit->isBin()
         && !wit->red()
         && !seen2[(~(wit->lit2())).toInt()]
-    ) {
-        seen2[(~(wit->lit2())).toInt()] = 1;
-        lits2.push_back(~(wit->lit2()));
-    }
-
-    if (wit->isTri()) {
-        assert(wit->lit2() < wit->lit3());
-    }
-
-    //Subsumption w/ tri
-    if (wit->isTri()
-        && lit < wit->lit2() //Check only one instance of the TRI clause
-        && seen2[wit->lit2().toInt()]
-        && seen2[wit->lit3().toInt()]
-    ) {
-        //If subsuming irred with redundant, make the redundant into irred
-        if (!cl.red() && wit->red()) {
-            wit->setRed(false);
-            timeAvailable -= (long)solver->watches[wit->lit2()].size()*3;
-            timeAvailable -= (long)solver->watches[wit->lit3()].size()*3;
-            findWatchedOfTri(solver->watches, wit->lit2(), lit, wit->lit3(), true).setRed(false);
-            findWatchedOfTri(solver->watches, wit->lit3(), lit, wit->lit2(), true).setRed(false);
-            solver->binTri.redTris--;
-            solver->binTri.irredTris++;
-        }
-        cache_based_data.subBinTri++;
-        isSubsumed = true;
-        return true;
-    }
-
-    //Extension w/ tri (1)
-    if (wit->isTri()
-        && lit < wit->lit2() //Check only one instance of the TRI clause
-        && !wit->red()
-        && seen2[wit->lit2().toInt()]
-        && !seen2[(~(wit->lit3())).toInt()]
-    ) {
-        seen2[(~(wit->lit3())).toInt()] = 1;
-        lits2.push_back(~(wit->lit3()));
-    }
-
-    //Extension w/ tri (2)
-    if (wit->isTri()
-        && lit < wit->lit2() //Check only one instance of the TRI clause
-        && !wit->red()
-        && !seen2[(~(wit->lit2())).toInt()]
-        && seen2[wit->lit3().toInt()]
     ) {
         seen2[(~(wit->lit2())).toInt()] = 1;
         lits2.push_back(~(wit->lit2()));
@@ -326,7 +262,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     , const bool alsoStrengthen
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
 
     if (solver->conf.verbosity >= 10) {
         cout << "Examining str clause:" << cl << endl;
@@ -337,7 +273,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     tmpStats.triedCls++;
     isSubsumed = false;
     thisRemLitCache = 0;
-    thisRemLitBinTri = 0;
+    thisremLitBin = 0;
 
     //Fill 'seen'
     lits2.clear();
@@ -393,7 +329,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     //Remove or shrink clause
     timeAvailable -= (long)cl.size()*10;
     cache_based_data.remLitCache += thisRemLitCache;
-    cache_based_data.remLitBinTri += thisRemLitBinTri;
+    cache_based_data.remLitBin += thisremLitBin;
     tmpStats.shrinked++;
     timeAvailable -= (long)lits.size()*2 + 50;
     Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
@@ -569,12 +505,12 @@ void DistillerLongWithImpl::CacheBasedData::clear()
 
 size_t DistillerLongWithImpl::CacheBasedData::get_cl_subsumed() const
 {
-    return subBinTri + subsumedStamp + subCache;
+    return subBin + subsumedStamp + subCache;
 }
 
 size_t DistillerLongWithImpl::CacheBasedData::get_lits_rem() const
 {
-    return remLitBinTri + remLitCache
+    return remLitBin + remLitCache
         + remLitTimeStampTotal + remLitTimeStampTotalInv;
 }
 
@@ -588,9 +524,9 @@ void DistillerLongWithImpl::CacheBasedData::print() const
     << endl;
 
     cout
-    << "c [distill-with-bin-ext] bintri-based"
-    << " lit-rem: " << remLitBinTri
-    << " cl-sub: " << subBinTri
+    << "c [distill-with-bin-ext] bin-based"
+    << " lit-rem: " << remLitBin
+    << " cl-sub: " << subBin
     << endl;
 
     cout

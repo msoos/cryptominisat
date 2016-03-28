@@ -142,11 +142,6 @@ protected:
         , const Lit p
     );
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
-    PropResult handle_prop_tri_fail(
-        Watched* i
-        , Lit lit1
-        , PropBy& confl
-    );
 
     /////////////////
     // Operations on clauses:
@@ -154,13 +149,6 @@ protected:
     virtual void attachClause(
         const Clause& c
         , const bool checkAttach = true
-    );
-    virtual void detach_tri_clause(
-        Lit lit1
-        , Lit lit2
-        , Lit lit3
-        , bool red
-        , bool allow_empty_watch = false
     );
     virtual void detach_bin_clause(
         Lit lit1
@@ -173,12 +161,6 @@ protected:
         , const Lit lit2
         , const bool red
         , const bool checkUnassignedFirst = true
-    );
-    virtual void attach_tri_clause(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
     );
     virtual void detach_modified_clause(
         const Lit lit1
@@ -213,7 +195,6 @@ protected:
     }
 
 private:
-    bool propagate_tri_clause_occur(const Watched& ws);
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
 
@@ -239,18 +220,6 @@ private:
         , const bool red
     );
     void update_glue(Clause& c);
-
-    PropResult prop_tri_cl_strict_order (
-        Watched* i
-        , const Lit p
-        , PropBy& confl
-    );
-    template<bool update_bogoprops = true>
-    bool prop_tri_cl_any_order(
-        Watched* i
-        , const Lit lit1
-        , PropBy& confl
-    );
 
     ///Propagate >3-long clause
     PropResult prop_long_cl_strict_order(

@@ -65,78 +65,6 @@ void ClauseCleaner::clean_binary_implicit(
     }
 }
 
-void ClauseCleaner::clean_tertiary_implicit(
-    Watched& ws
-    , Watched*& j
-    , const Lit lit
-) {
-    bool remove = false;
-
-    //Satisfied?
-    if (solver->value(lit) == l_True
-        || solver->value(ws.lit2()) == l_True
-        || solver->value(ws.lit3()) == l_True
-    ) {
-        remove = true;
-    }
-
-    //Shortened -- attach bin, but only *once*
-    Lit lits[2];
-    bool needAttach = false;
-    if (!remove
-        && solver->value(lit) == l_False
-    ) {
-        if (lit < ws.lit2()) {
-            lits[0] = ws.lit2();
-            lits[1] = ws.lit3();
-            needAttach = true;
-        }
-        remove = true;
-    }
-    if (!remove
-        && solver->value(ws.lit2()) == l_False
-    ) {
-        if (lit < ws.lit2()) {
-            lits[0] = lit;
-            lits[1] = ws.lit3();
-            needAttach = true;
-        }
-        remove = true;
-    }
-    if (!remove
-        && solver->value(ws.lit3()) == l_False
-    ) {
-        if (lit < ws.lit2()) {
-            lits[0] = lit;
-            lits[1] = ws.lit2();
-            needAttach = true;
-        }
-        remove = true;
-    }
-    if (needAttach) {
-        impl_data.toAttach.push_back(BinaryClause(lits[0], lits[1], ws.red()));
-        (*solver->drat) << lits[0] << lits[1] << fin;
-    }
-
-    if (remove) {
-        //Drat
-        if (//Only remove once --> exactly when adding
-            lit < ws.lit2()
-            && ws.lit2() < ws.lit3()
-        ) {
-            (*solver->drat)
-            << del << lit << ws.lit2() << ws.lit3() << fin;
-        }
-
-        if (ws.red())
-            impl_data.remLTri++;
-        else
-            impl_data.remNonLTri++;
-    } else {
-        *j++ = ws;
-    }
-}
-
 void ClauseCleaner::clean_implicit_watchlist(
     watch_subarray& watch_list
     , const Lit lit
@@ -154,9 +82,6 @@ void ClauseCleaner::clean_implicit_watchlist(
             clean_binary_implicit(*i, j, lit);
             continue;
         }
-
-        assert(i->isTri());
-        clean_tertiary_implicit(*i, j, lit);
     }
     watch_list.shrink_(i - j);
 }
@@ -245,7 +170,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
     assert(!solver->drat->something_delayed());
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
 
 
@@ -274,9 +199,6 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
     if (i != j) {
         if (cl.size() == 2) {
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
-            return true;
-        } else if (cl.size() == 3) {
-            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return true;
         } else {
             if (cl.red()) {
@@ -310,12 +232,8 @@ void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 
     assert(remNonLBin % 2 == 0);
     assert(remLBin % 2 == 0);
-    assert(remNonLTri % 3 == 0);
-    assert(remLTri % 3 == 0);
     solver->binTri.irredBins -= remNonLBin/2;
     solver->binTri.redBins -= remLBin/2;
-    solver->binTri.irredTris -= remNonLTri/3;
-    solver->binTri.redTris -= remLTri/3;
 }
 
 void ClauseCleaner::clean_clauses_pre()

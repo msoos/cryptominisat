@@ -114,11 +114,6 @@ class PropByForGraph
             return type == 1;
         }
 
-        bool isTri() const
-        {
-            return type == 2;
-        }
-
         const Clause* getClause() const
         {
             return clause;
@@ -149,8 +144,6 @@ inline std::ostream& operator<<(
 
     if (propByFull.isBin()) {
         os << propByFull[0] << " " << propByFull[1];
-    } else if (propByFull.isTri()) {
-        os <<propByFull[0] << " " << propByFull[1] << " " << propByFull[2];
     } else if (propByFull.isClause()) {
         if (propByFull.isNULL()) os << "null clause";
         else os << *propByFull.getClause();

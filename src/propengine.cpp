@@ -77,54 +77,6 @@ void PropEngine::save_on_var_memory()
     CNF::save_on_var_memory();
 }
 
-
-void PropEngine::attach_tri_clause(
-    Lit lit1
-    , Lit lit2
-    , Lit lit3
-    , const bool red
-) {
-    #ifdef DEBUG_ATTACH
-    assert(lit1.var() != lit2.var());
-    assert(value(lit1.var()) == l_Undef);
-    assert(value(lit2) == l_Undef || value(lit2) == l_False);
-
-    assert(varData[lit1.var()].removed == Removed::none);
-    assert(varData[lit2.var()].removed == Removed::none);
-    #endif //DEBUG_ATTACH
-
-    //Order them
-    orderLits(lit1, lit2, lit3);
-
-    //And now they are attached, ordered
-    watches[lit1].push(Watched(lit2, lit3, red));
-    watches[lit2].push(Watched(lit1, lit3, red));
-    watches[lit3].push(Watched(lit1, lit2, red));
-}
-
-void PropEngine::detach_tri_clause(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-    , const bool allow_empty_watch
-) {
-    Lit lits[3];
-    lits[0] = lit1;
-    lits[1] = lit2;
-    lits[2] = lit3;
-    orderLits(lits[0], lits[1], lits[2]);
-    if (!(allow_empty_watch && watches[lits[0]].empty())) {
-        removeWTri(watches, lits[0], lits[1], lits[2], red);
-    }
-    if (!(allow_empty_watch && watches[lits[1]].empty())) {
-        removeWTri(watches, lits[1], lits[0], lits[2], red);
-    }
-    if (!(allow_empty_watch && watches[lits[2]].empty())) {
-        removeWTri(watches, lits[2], lits[0], lits[1], red);
-    }
-}
-
 void PropEngine::detach_bin_clause(
     const Lit lit1
     , const Lit lit2
@@ -175,7 +127,7 @@ void PropEngine::attachClause(
 ) {
     const ClOffset offset = cl_alloc.get_offset(&c);
 
-    assert(c.size() > 3);
+    assert(c.size() > 2);
     if (checkAttach) {
         assert(value(c[0]) == l_Undef);
         assert(value(c[1]) == l_Undef || value(c[1]) == l_False);
@@ -205,8 +157,6 @@ void PropEngine::detach_modified_clause(
     , const uint32_t origSize
     , const Clause* address
 ) {
-    assert(origSize > 3);
-
     ClOffset offset = cl_alloc.get_offset(address);
     removeWCl(watches[lit1], offset);
     removeWCl(watches[lit2], offset);
@@ -361,168 +311,11 @@ bool PropEngine::prop_long_cl_any_order(
     return true;
 }
 
-PropResult PropEngine::handle_prop_tri_fail(
-    Watched* i
-    , Lit lit1
-    , PropBy& confl
-) {
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    cout << "Conflict from "
-        << lit1 << " , "
-        << i->lit2() << " , "
-        << i->lit3() << endl;
-    #endif //VERBOSE_DEBUG_FULLPROP
-    confl = PropBy(~lit1, i->lit3(), i->red());
-
-    #ifdef STATS_NEEDED
-    if (i->red())
-        lastConflictCausedBy = ConflCausedBy::trired;
-    else
-        lastConflictCausedBy = ConflCausedBy::triirred;
-    #endif
-
-    failBinLit = i->lit2();
-    qhead = trail.size();
-    return PROP_FAIL;
-}
-
-inline PropResult PropEngine::prop_tri_cl_strict_order(
-    Watched* i
-    , const Lit lit1
-    , PropBy& confl
-) {
-    const Lit lit2 = i->lit2();
-    lbool val2 = value(lit2);
-
-    //literal is already satisfied, nothing to do
-    if (val2 == l_True)
-        return PROP_NOTHING;
-
-    const Lit lit3 = i->lit3();
-    lbool val3 = value(lit3);
-
-    //literal is already satisfied, nothing to do
-    if (val3 == l_True)
-        return PROP_NOTHING;
-
-    if (val2 == l_False && val3 == l_False) {
-        return handle_prop_tri_fail(i, lit1, confl);
-    }
-
-    if (val2 == l_Undef && val3 == l_False) {
-        return propTriHelperSimple(lit1, lit2, lit3, i->red());
-    }
-
-    if (val3 == l_Undef && val2 == l_False) {
-        return propTriHelperSimple(lit1, lit3, lit2, i->red());
-    }
-
-    return PROP_NOTHING;
-}
-
-template<bool update_bogoprops>
-inline bool PropEngine::prop_tri_cl_any_order(
-    Watched* i
-    , const Lit lit1
-    , PropBy& confl
-) {
-    const Lit lit2 = i->lit2();
-    lbool val2 = value(lit2);
-
-    //literal is already satisfied, nothing to do
-    if (val2 == l_True)
-        return true;
-
-    const Lit lit3 = i->lit3();
-    lbool val3 = value(lit3);
-
-    //literal is already satisfied, nothing to do
-    if (val3 == l_True)
-        return true;
-
-    if (val2 == l_False && val3 == l_False) {
-        #ifdef VERBOSE_DEBUG_FULLPROP
-        cout << "Conflict from "
-            << lit1 << " , "
-            << i->lit2() << " , "
-            << i->lit3() << endl;
-        #endif //VERBOSE_DEBUG_FULLPROP
-        confl = PropBy(~lit1, i->lit3(), i->red());
-
-        #ifdef STATS_NEEDED
-        if (i->red())
-            lastConflictCausedBy = ConflCausedBy::trired;
-        else
-            lastConflictCausedBy = ConflCausedBy::triirred;
-        #endif
-
-        failBinLit = i->lit2();
-        qhead = trail.size();
-        return false;
-    }
-    if (val2 == l_Undef && val3 == l_False) {
-        propTriHelperAnyOrder<update_bogoprops>(
-            lit1
-            , lit2
-            , lit3
-            , i->red()
-        );
-        return true;
-    }
-
-    if (val3 == l_Undef && val2 == l_False) {
-        propTriHelperAnyOrder<update_bogoprops>(
-            lit1
-            , lit3
-            , lit2
-            , i->red()
-        );
-        return true;
-    }
-
-    return true;
-}
-
-inline PropResult PropEngine::propTriHelperSimple(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-) {
-    #ifdef STATS_NEEDED
-    if (red)
-        propStats.propsTriRed++;
-    else
-        propStats.propsTriIrred++;
-    #endif
-
-    enqueue(lit2, PropBy(~lit1, lit3, red));
-    return PROP_SOMETHING;
-}
-
-template<bool update_bogoprops>
-inline void PropEngine::propTriHelperAnyOrder(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-) {
-    #ifdef STATS_NEEDED
-    if (red)
-        propStats.propsTriRed++;
-    else
-        propStats.propsTriIrred++;
-    #endif
-
-    //Lazy hyper-bin is not possibe
-    enqueue<update_bogoprops>(lit2, PropBy(~lit1, lit3, red));
-}
-
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define likely(x)      (x) /*__builtin_expect(!!(x), 1)*/
+#define unlikely(x)    (x) /*__builtin_expect(!!(x), 0)*/
 
 
-__attribute__((optimize("no-unroll-loops")))
+//__attribute__((optimize("no-unroll-loops")))
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;
@@ -566,58 +359,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 } else {
                     i++;
                 }
-                continue;
-            }
-
-            //Propagate tri clause
-            if (unlikely(i->isTri())) {
-                *j++ = *i;
-                const Lit lit2 = i->lit2();
-                lbool val2 = value(lit2);
-
-                //literal is already satisfied, nothing to do
-                if (val2 == l_True) {
-                    i++;
-                    continue;
-                }
-
-                const Lit lit3 = i->lit3();
-                lbool val3 = value(lit3);
-
-                if (val3 == l_True) {
-                    i++;
-                    continue;
-                }
-
-                if (val2 == l_Undef && val3 == l_False) {
-                    enqueue<false>(lit2, PropBy(~p, lit3, i->red()));
-                    i++;
-                    continue;
-                }
-
-                if (val3 == l_Undef && val2 == l_False) {
-                    enqueue<false>(lit3, PropBy(~p, lit2, i->red()));
-                    i++;
-                    continue;
-                }
-
-                if (val2 == l_False && val3 == l_False) {
-                    confl = PropBy(~p, i->lit3(), i->red());
-                    failBinLit = i->lit2();
-                    #ifdef STATS_NEEDED
-                    if (i->red())
-                        lastConflictCausedBy = ConflCausedBy::trired;
-                    else
-                        lastConflictCausedBy = ConflCausedBy::triirred;
-                    #endif
-                    i++;
-                    while (i < end) {
-                        *j++ = *i++;
-                    }
-                    qhead = trail.size();
-                    continue;
-                }
-                i++;
                 continue;
             }
 
@@ -720,16 +461,6 @@ PropBy PropEngine::propagate_any_order()
                 continue;
             }
 
-            //Propagate tri clause
-            if (i->isTri()) {
-                *j++ = *i;
-                if (!prop_tri_cl_any_order<update_bogoprops>(i, p, confl)) {
-                    i++;
-                    break;
-                }
-                continue;
-            }
-
             //propagate normal clause
             if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl)) {
                 i++;
@@ -772,7 +503,6 @@ void PropEngine::sortWatched()
         cout << "Before sorting: ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
         cout << endl;
@@ -795,7 +525,6 @@ void PropEngine::sortWatched()
         cout << "After sorting : ";
         for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
             if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isTri()) cout << "Tri,";
             if (ws[i2].isClause()) cout << "Normal,";
         }
         cout << endl;
@@ -819,8 +548,6 @@ void PropEngine::printWatchList(const Lit lit) const
     ) {
         if (it2->isBin()) {
             cout << "bin: " << lit << " , " << it2->lit2() << " red : " <<  (it2->red()) << endl;
-        } else if (it2->isTri()) {
-            cout << "tri: " << lit << " , " << it2->lit2() << " , " <<  (it2->lit3()) << endl;
         } else if (it2->isClause()) {
             cout << "cla:" << it2->get_offset() << endl;
         } else {
@@ -862,20 +589,6 @@ inline void PropEngine::updateWatch(
             it->setLit2(
                 getUpdatedLit(it->lit2(), outerToInter)
             );
-
-            continue;
-        }
-
-        if (it->isTri()) {
-            Lit lit1 = it->lit2();
-            Lit lit2 = it->lit3();
-            lit1 = getUpdatedLit(lit1, outerToInter);
-            lit2 = getUpdatedLit(lit2, outerToInter);
-            if (lit1 > lit2)
-                std::swap(lit1, lit2);
-
-            it->setLit2(lit1);
-            it->setLit3(lit2);
 
             continue;
         }
@@ -943,21 +656,6 @@ PropBy PropEngine::propagate_strict_order()
                 *j++ = *i;
                 continue;
             }
-
-            if (i->isTri()) {
-                *j++ = *i;
-                //Propagate tri clause
-                ret = prop_tri_cl_strict_order(i, p, confl);
-                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
-                    //Conflict or propagated something
-                    i++;
-                    break;
-                } else {
-                    //Didn't propagate anything, continue
-                    assert(ret == PROP_NOTHING);
-                    continue;
-                }
-            } //end TRICLAUSE
 
             if (i->isClause()) {
                 ret = prop_long_cl_strict_order(i, j, p, confl);
@@ -1048,11 +746,6 @@ bool PropEngine::propagate_occur()
                     return false;
             }
 
-            if (it->isTri()) {
-                if (!propagate_tri_clause_occur(*it))
-                    return false;
-            }
-
             if (it->isBin()) {
                 if (!propagate_binary_clause_occur(*it))
                     return false;
@@ -1060,44 +753,6 @@ bool PropEngine::propagate_occur()
         }
     }
 
-    return true;
-}
-
-bool PropEngine::propagate_tri_clause_occur(const Watched& ws)
-{
-    const lbool val2 = value(ws.lit2());
-    const lbool val3 = value(ws.lit3());
-    if (val2 == l_True
-        || val3 == l_True
-    ) {
-        return true;
-    }
-
-    if (val2 == l_Undef
-        && val3 == l_Undef
-    ) {
-        return true;
-    }
-
-    if (val2 == l_False
-        && val3 == l_False
-    ) {
-        ok = false;
-        return false;
-    }
-
-    #ifdef STATS_NEEDED
-    if (ws.red())
-        propStats.propsTriRed++;
-    else
-        propStats.propsTriIrred++;
-    #endif
-
-    if (val2 == l_Undef) {
-        enqueue(ws.lit2());
-    } else {
-        enqueue(ws.lit3());
-    }
     return true;
 }
 

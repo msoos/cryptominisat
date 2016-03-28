@@ -117,8 +117,8 @@ class DistillerLongWithImpl {
             size_t remLitTimeStampTotalInv = 0;
             size_t subsumedStamp = 0;
             size_t remLitCache = 0;
-            size_t remLitBinTri = 0;
-            size_t subBinTri = 0;
+            size_t remLitBin = 0;
+            size_t subBin = 0;
             size_t subCache = 0;
             void clear();
             size_t get_cl_subsumed() const;
@@ -128,7 +128,7 @@ class DistillerLongWithImpl {
         CacheBasedData cache_based_data;
         bool isSubsumed;
         size_t thisRemLitCache;
-        size_t thisRemLitBinTri;
+        size_t thisremLitBin;
         void str_and_sub_using_watch(
             Clause& cl
             , const Lit lit

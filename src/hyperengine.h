@@ -57,9 +57,6 @@ public:
     ///Add hyper-binary clause given this bin clause
     void  add_hyper_bin(Lit p);
 
-    ///Add hyper-binary clause given this tri-clause
-    void  add_hyper_bin(Lit p, Lit lit1, Lit lit2);
-
     ///Add hyper-binary clause given this large clause
     void  add_hyper_bin(Lit p, const Clause& cl);
 
@@ -86,23 +83,12 @@ private:
         , const Watched* k
         , PropBy& confl
     );
-    PropResult prop_tri_clause_with_acestor_info(
-        Watched*& i
-        , const Lit lit1
-        , PropBy& confl
-    );
 
     PropResult prop_normal_cl_with_ancestor_info(
         Watched* i
         , Watched*& j
         , const Lit p
         , PropBy& confl
-    );
-    PropResult propTriHelperComplex(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
     );
     Lit prop_red_bin_dfs(
         StampType stampType

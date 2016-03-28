@@ -269,7 +269,7 @@ void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
     if (num_lits_from_cl != tmp_learnt_clause_size)
         return;
 
-    if (num_lits_from_cl <= 3) {
+    if (num_lits_from_cl <= 2) {
         create_otf_subsuming_implicit_clause(cl);
     } else {
         create_otf_subsuming_long_clause(cl, offset);
@@ -697,7 +697,7 @@ Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
         //Last was a lont clause
         || last_resolved_cl == NULL
         //Final clause will not be implicit
-        || learnt_clause.size() <= 3
+        || learnt_clause.size() <= 2
         //Larger or equivalent clauses cannot subsume the clause
         || learnt_clause.size() >= last_resolved_cl->size()
     ) {
@@ -1280,7 +1280,7 @@ void Searcher::add_otf_subsume_long_clauses()
                 break;
             }
         }
-        assert(cl.size() > 3);
+        assert(cl.size() > 2);
 
         if (at == 0) {
             //If none found, we have a propagating clause_t
@@ -1369,8 +1369,6 @@ void Searcher::add_otf_subsume_implicit_clause()
             if (it->size == 2) {
                 solver->datasync->signalNewBinClause(it->lits);
                 solver->attach_bin_clause(it->lits[0], it->lits[1], true);
-            } else {
-                solver->attach_tri_clause(it->lits[0], it->lits[1], it->lits[2], true);
             }
         }
     }
@@ -1428,17 +1426,6 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
-            #endif
-            break;
-
-        case 3:
-            //3-long learnt
-            stats.learntTris++;
-            solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
-
-            #ifdef STATS_NEEDED
-            propStats.propsTriRed++;
             #endif
             break;
 
@@ -1511,7 +1498,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 #endif
 ) {
     //Cannot make a non-implicit into an implicit
-    if (learnt_clause.size() <= 3) {
+    if (learnt_clause.size() <= 2) {
         *drat << learnt_clause << fin;
         return NULL;
     }
@@ -1537,7 +1524,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (solver->sqlStats
             && drat
             && conf.dump_individual_restarts_and_clauses
-            && learnt_clause.size() > 3
+            && learnt_clause.size() > 2
         ) {
             dump_sql_clause_data(
                 glue
@@ -1550,7 +1537,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         return cl;
     }
 
-    assert(cl->size() > 3);
+    assert(cl->size() > 2);
     *drat << learnt_clause << fin;
     if (conf.verbosity >= 6) {
         cout
@@ -1611,7 +1598,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
-    assert(learnt_clause.size() <= 3 || cl != NULL);
+    assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
     if (!update_bogoprops) {
@@ -2279,22 +2266,6 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
-                }
-                continue;
-            }
-
-            if (i->isTri()) {
-                if (seen[i->lit3().toInt()]) {
-                    if (seen[(~i->lit2()).toInt()]) {
-                        stats.binTriShrinkedClause++;
-                        seen[(~i->lit2()).toInt()] = 0;
-                    }
-                }
-                if (seen[i->lit2().toInt()]) {
-                    if (seen[(~i->lit3()).toInt()]) {
-                        stats.binTriShrinkedClause++;
-                        seen[(~i->lit3()).toInt()] = 0;
-                    }
                 }
                 continue;
             }
@@ -2975,7 +2946,7 @@ void Searcher::write_long_cls(
     for(ClOffset c: clauses)
     {
         Clause& cl = *cl_alloc.ptr(c);
-        assert(cl.size() > 3);
+        assert(cl.size() > 2);
         f.put_uint32_t(cl.size());
         for(const Lit l: cl)
         {
@@ -3061,37 +3032,6 @@ void Searcher::write_binary_cls(
     }
 }
 
-void Searcher::write_tri_cls(
-    SimpleOutFile& f
-    , bool red
-) const {
-    if (red) {
-        f.put_uint64_t(binTri.redTris);
-    } else {
-        f.put_uint64_t(binTri.irredTris);
-    }
-
-    size_t at = 0;
-    for(watch_subarray_const ws: watches)
-    {
-        Lit lit1 = Lit::toLit(at);
-        at++;
-        for(Watched w: ws)
-        {
-            if (w.isTri() && w.red() == red) {
-                if (lit1 < w.lit2()
-                    && w.lit2() < w.lit3()
-                ) {
-                    f.put_lit(lit1);
-                    f.put_lit(w.lit2());
-                    f.put_lit(w.lit3());
-                }
-            }
-        }
-    }
-}
-
-
 void Searcher::read_binary_cls(
     SimpleInFile& f
     , bool red
@@ -3102,20 +3042,6 @@ void Searcher::read_binary_cls(
         const Lit lit1 = f.get_lit();
         const Lit lit2 = f.get_lit();
         attach_bin_clause(lit1, lit2, red);
-    }
-}
-
-void Searcher::read_tri_cls(
-    SimpleInFile& f
-    , bool red
-) {
-    uint64_t num = f.get_uint64_t();
-    for(uint64_t i = 0; i < num; i++)
-    {
-        const Lit lit1 = f.get_lit();
-        const Lit lit2 = f.get_lit();
-        const Lit lit3 = f.get_lit();
-        attach_tri_clause(lit1, lit2, lit3, red);
     }
 }
 
@@ -3132,8 +3058,6 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     if (status == l_Undef) {
         write_binary_cls(f, false);
         write_binary_cls(f, true);
-        write_tri_cls(f, false);
-        write_tri_cls(f, true);
         write_long_cls(longIrredCls, f, false);
         for(auto& lredcls: longRedCls) {
             write_long_cls(lredcls, f, true);
@@ -3161,8 +3085,6 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     if (status == l_Undef) {
         read_binary_cls(f, false);
         read_binary_cls(f, true);
-        read_tri_cls(f, false);
-        read_tri_cls(f, true);
         read_long_cls(f, false);
         for(auto& lredcls: longRedCls) {
             read_long_cls(f, true);

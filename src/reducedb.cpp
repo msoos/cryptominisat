@@ -216,7 +216,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
     ) {
         ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-        assert(cl->size() > 3);
+        assert(cl->size() > 2);
 
         if (cl->stats.locked) {
             cl_locked++;

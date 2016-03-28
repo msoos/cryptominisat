@@ -60,30 +60,6 @@ void SolveFeaturesCalc::for_one_clause(
             break;
         }
 
-        case CMSat::watch_tertiary_t: {
-            if (cl.red()) {
-                //only irred cls
-                break;
-            }
-            if (lit > cl.lit2()) {
-                //only count once
-                break;
-            }
-
-            assert(cl.lit2() < cl.lit3());
-
-            pos_vars += !lit.sign();
-            pos_vars += !cl.lit2().sign();
-            pos_vars += !cl.lit3().sign();
-            size = 3;
-            neg_vars = size - pos_vars;
-            func_each_cl(size, pos_vars, neg_vars);
-            func_each_lit(lit, size, pos_vars, neg_vars);
-            func_each_lit(cl.lit2(), size, pos_vars, neg_vars);
-            func_each_lit(cl.lit3(), size, pos_vars, neg_vars);
-            break;
-        }
-
         case CMSat::watch_clause_t: {
             const Clause& clause = *solver->cl_alloc.ptr(cl.get_offset());
             if (clause.red()) {
@@ -130,7 +106,7 @@ void SolveFeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_ea
 void SolveFeaturesCalc::fill_vars_cls()
 {
     feat.numVars = solver->nVars();
-    feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins + solver->binTri.irredTris;
+    feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins;
     myVars.resize(solver->nVars());
 
     auto func_each_cl = [&](unsigned /*size*/, unsigned pos_vars, unsigned /*neg_vars*/) -> bool {
@@ -177,7 +153,6 @@ void SolveFeaturesCalc::calculate_clause_stats()
     feat.pnr_cls_mean /= (double)feat.numClauses;
     feat.horn /= (double)feat.numClauses;
     feat.binary = float_div(solver->binTri.irredBins, feat.numClauses);
-    feat.trinary = float_div(solver->binTri.irredTris, feat.numClauses);
 
     feat.vcg_cls_spread = feat.vcg_cls_max - feat.vcg_cls_min;
     feat.pnr_cls_spread = feat.pnr_cls_max - feat.pnr_cls_min;

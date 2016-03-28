@@ -103,7 +103,6 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
             size_t num_cls = 0;
             num_cls += solver->longIrredCls.size();
             num_cls += solver->binTri.irredBins;
-            num_cls += solver->binTri.irredTris;
 
             *outfile
             << "p cnf " << solver->nVars() << " " << num_cls << "\n";
@@ -185,53 +184,6 @@ void ClauseDumper::dumpBinClauses(
     }
 }
 
-void ClauseDumper::dumpTriClauses(
-    const bool alsoRed
-    , const bool alsoIrred
-    , const bool backnumber
-) {
-    uint32_t wsLit = 0;
-    for (watch_array::const_iterator
-        it = solver->watches.begin(), end = solver->watches.end()
-        ; it != end
-        ; ++it, wsLit++
-    ) {
-        Lit lit = Lit::toLit(wsLit);
-        watch_subarray_const ws = *it;
-        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
-            ; it2 != end2
-            ; it2++
-        ) {
-            //Only one instance of tri clause
-            if (it2->isTri() && lit < it2->lit2()) {
-                bool toDump = false;
-                if (it2->red() && alsoRed) toDump = true;
-                if (!it2->red() && alsoIrred) toDump = true;
-
-                if (toDump) {
-                    tmpCl.clear();
-                    tmpCl.push_back(lit);
-                    tmpCl.push_back(it2->lit2());
-                    tmpCl.push_back(it2->lit3());
-                    if (backnumber) {
-                        tmpCl[0] = solver->map_inter_to_outer(tmpCl[0]);
-                        tmpCl[1] = solver->map_inter_to_outer(tmpCl[1]);
-                        tmpCl[2] = solver->map_inter_to_outer(tmpCl[2]);
-                        std::sort(tmpCl.begin(), tmpCl.end());
-                    }
-
-                    *outfile
-                    << tmpCl[0] << " "
-                    << tmpCl[1] << " "
-                    << tmpCl[2]
-                    << " 0\n";
-                }
-            }
-        }
-    }
-}
-
-
 void ClauseDumper::dumpEquivalentLits()
 {
     *outfile
@@ -276,15 +228,6 @@ void ClauseDumper::dumpRedClauses(
     << "c ---------------------------------" << endl;
     if (maxSize >= 2) {
         dumpBinClauses(true, false, true);
-    }
-
-    *outfile
-    << "c " << endl
-    << "c ---------------------------------" << endl
-    << "c redundant tertiary clauses (extracted from watchlists)" << endl
-    << "c ---------------------------------" << endl;
-    if (maxSize >= 3) {
-        dumpTriClauses(true, false, true);
     }
 
     if (maxSize >= 2) {
@@ -344,13 +287,6 @@ void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
     << "c binary clauses" << endl
     << "c ---------------" << endl;
     dumpBinClauses(false, true, backnumber);
-
-    *outfile
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c tertiary clauses" << endl
-    << "c ---------------" << endl;
-    dumpTriClauses(false, true, backnumber);
 
     *outfile
     << "c " << endl

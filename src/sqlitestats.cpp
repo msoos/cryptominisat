@@ -438,7 +438,7 @@ void SQLiteStats::initRestartSTMT()
 
     //Clause stats
     << ", numIrredBins, numIrredTris, numIrredLongs"
-    << ", numRedBins, numRedTris, numRedLongs"
+    << ", numRedBins, numRedLongs"
     << ", numIrredLits, numRedLits"
 
     //Conflict stats
@@ -463,7 +463,7 @@ void SQLiteStats::initRestartSTMT()
     << ", `conflLongIrred`, `conflLongRed`"
 
     //Reds
-    << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
+    << ", `learntUnits`, `learntBins`, `learntLongs`"
 
     //Resolutions
     << ", `resolBinIrred`, `resolBinRed`, `resolTriIrred`, `resolTriRed`, `resolLIrred`, `resolLRed`"
@@ -511,11 +511,9 @@ void SQLiteStats::restart(
 
 
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.irredBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, binTri.irredTris);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_irred_cls());
 
     sqlite3_bind_int64(stmtRst, bindAt++, binTri.redBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, binTri.redTris);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_red_cls());
 
     sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.irredLits);
@@ -561,8 +559,6 @@ void SQLiteStats::restart(
     //Prop
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsBinIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsBinRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsTriIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsTriRed);
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsLongIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsLongRed);
 
@@ -577,7 +573,6 @@ void SQLiteStats::restart(
     //Red
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntUnits);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntTris);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntLongs);
 
     //Resolv stats

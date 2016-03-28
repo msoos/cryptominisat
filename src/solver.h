@@ -180,19 +180,6 @@ class Solver : public Searcher
             , const bool red
             , const bool checkUnassignedFirst = true
         ) override;
-        void attach_tri_clause(
-            const Lit lit1
-            , const Lit lit2
-            , const Lit lit3
-            , const bool red
-        ) override;
-        void detach_tri_clause(
-            Lit lit1
-            , Lit lit2
-            , Lit lit3
-            , bool red
-            , bool allow_empty_watch = false
-        ) override;
         void detach_bin_clause(
             Lit lit1
             , Lit lit2

@@ -237,16 +237,13 @@ uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
 bool CNF::redundant(const Watched& ws) const
 {
     return (   (ws.isBin() && ws.red())
-            || (ws.isTri()   && ws.red())
-            || (ws.isClause()
-                && cl_alloc.ptr(ws.get_offset())->red()
-                )
+            || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
     );
 }
 
 bool CNF::redundant_or_removed(const Watched& ws) const
 {
-    if (ws.isBin() || ws.isTri()) {
+    if (ws.isBin()) {
         return ws.red();
     }
 
@@ -260,9 +257,6 @@ size_t CNF::cl_size(const Watched& ws) const
     switch(ws.getType()) {
         case watch_binary_t:
             return 2;
-
-        case CMSat::watch_tertiary_t:
-            return 3;
 
         case watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
@@ -295,13 +289,6 @@ string CNF::watched_to_string(Lit otherLit, const Watched& ws) const
             }
             break;
 
-        case CMSat::watch_tertiary_t:
-            ss << otherLit << ", " << ws.lit2() << ", " << ws.lit3();
-            if (ws.red()) {
-                ss << "(red)";
-            }
-            break;
-
         case watch_clause_t: {
             const Clause* cl = cl_alloc.ptr(ws.get_offset());
             for(size_t i = 0; i < cl->size(); i++) {
@@ -328,32 +315,6 @@ bool ClauseSizeSorter::operator () (const ClOffset x, const ClOffset y)
     Clause* cl1 = cl_alloc.ptr(x);
     Clause* cl2 = cl_alloc.ptr(y);
     return (cl1->size() < cl2->size());
-}
-
-void CNF::remove_tri_but_lit1(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-    , int64_t& timeAvailable
-) {
-    //Remove tri
-    Lit lits[3];
-    lits[0] = lit1;
-    lits[1] = lit2;
-    lits[2] = lit3;
-    std::sort(lits, lits+3);
-    timeAvailable -= watches[lits[0]].size();
-    timeAvailable -= watches[lits[1]].size();
-    timeAvailable -= watches[lits[2]].size();
-    removeTriAllButOne(watches, lit1, lits, red);
-
-    //Update stats for tri
-    if (red) {
-        binTri.redTris--;
-    } else {
-        binTri.irredTris--;
-    }
 }
 
 size_t CNF::mem_used_renumberer() const
@@ -461,7 +422,7 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
 {
     bool attached = true;
     const Clause& cl = *cl_alloc.ptr(offset);
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
 
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
@@ -638,11 +599,6 @@ void CNF::print_all_clauses() const
                 cout << "Binary clause part: " << lit << " , " << it2->lit2() << endl;
             } else if (it2->isClause()) {
                 cout << "Normal clause offs " << it2->get_offset() << endl;
-            } else if (it2->isTri()) {
-                cout << "Tri clause:"
-                << lit << " , "
-                << it2->lit2() << " , "
-                << it2->lit3() << endl;
             }
         }
     }

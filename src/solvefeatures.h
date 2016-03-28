@@ -41,7 +41,6 @@ struct SolveFeatures
 
     //Clause distribution
     double binary = 0;
-    double trinary = 0;
     double horn = 0;
     double horn_mean = 0;
     double horn_std = 0;
@@ -84,7 +83,6 @@ struct SolveFeatures
     double num_resolutions_min = 0.0;
     double num_resolutions_max = 0.0;
     double learnt_bins_per_confl = 0;
-    double learnt_tris_per_confl = 0;
 
     //Search
     double avg_branch_depth = 0.0;

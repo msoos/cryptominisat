@@ -130,18 +130,6 @@ Lit HyperEngine::propagate_bfs(const uint64_t timeout)
                 continue;
             }
 
-            if (i->isTri()) {
-                *j++ = *i;
-                ret = prop_tri_clause_with_acestor_info(i, p, confl);
-                if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
-                    i++;
-                    break;
-                } else {
-                    assert(ret == PROP_NOTHING);
-                    continue;
-                }
-            }
-
             if (i->isClause()) {
                 ret = prop_normal_cl_with_ancestor_info(i, j, p, confl);
                 if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
@@ -338,18 +326,6 @@ Lit HyperEngine::prop_larger_than_bin_cl_dfs(
         if (i->isBin()) {
             *j++ = *i;
             continue;
-        }
-
-        if (i->isTri()) {
-            *j++ = *i;
-            ret = prop_tri_clause_with_acestor_info(i, p, confl);
-            if (ret == PROP_SOMETHING || ret == PROP_FAIL) {
-                i++;
-                break;
-            } else {
-                assert(ret == PROP_NOTHING);
-                continue;
-            }
         }
 
         if (i->isClause()) {
@@ -750,33 +726,6 @@ bool HyperEngine::is_ancestor_of(
     return false;
 }
 
-void HyperEngine::add_hyper_bin(const Lit lit1, const Lit lit2, const Lit lit3)
-{
-    assert(value(lit1.var()) == l_Undef);
-
-    #ifdef VERBOSE_DEBUG_FULLPROP
-    print_trail();
-    cout << "Enqueing " << lit1
-    << " with ancestor 3-long clause: " << lit1 << " , "
-    << lit2 << " (lev:" << varData[lit2.var()].level << ") "
-    << lit3 << " (lev:" << varData[lit3.var()].level << ") "
-    << endl;
-    #endif
-
-    assert(value(lit2) == l_False);
-    assert(value(lit3) == l_False);
-
-    currAncestors.clear();
-    if (varData[lit2.var()].level != 0) {
-        currAncestors.push_back(~lit2);
-    }
-
-    if (varData[lit3.var()].level != 0)
-        currAncestors.push_back(~lit3);
-
-    add_hyper_bin(lit1);
-}
-
 void HyperEngine::add_hyper_bin(const Lit p, const Clause& cl)
 {
     assert(value(p.var()) == l_Undef);
@@ -1070,61 +1019,6 @@ PropResult HyperEngine::prop_normal_cl_with_ancestor_info(
 
     add_hyper_bin(c[0], c);
 
-    return PROP_SOMETHING;
-}
-
-PropResult HyperEngine::prop_tri_clause_with_acestor_info(
-    Watched*& i
-    , const Lit lit1
-    , PropBy& confl
-) {
-    const Lit lit2 = i->lit2();
-    lbool val2 = value(lit2);
-
-    //literal is already satisfied, nothing to do
-    if (val2 == l_True)
-        return PROP_NOTHING;
-
-    const Lit lit3 = i->lit3();
-    lbool val3 = value(lit3);
-
-    //literal is already satisfied, nothing to do
-    if (val3 == l_True)
-        return PROP_NOTHING;
-
-    if (val2 == l_False && val3 == l_False) {
-        return handle_prop_tri_fail(i, lit1, confl);
-    }
-
-    if (val2 == l_Undef && val3 == l_False) {
-        return propTriHelperComplex(lit2, ~lit1, lit3, i->red());
-    }
-
-    if (val3 == l_Undef && val2 == l_False) {
-        return propTriHelperComplex(lit3, ~lit1,  lit2, i->red());
-    }
-
-    return PROP_NOTHING;
-}
-
-PropResult HyperEngine::propTriHelperComplex(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool
-    #ifdef STATS_NEEDED
-    red
-    #endif
-) {
-    #ifdef STATS_NEEDED
-    if (red)
-        propStats.propsTriRed++;
-    else
-        propStats.propsTriIrred++;
-    #endif
-
-    //Not simple
-    add_hyper_bin(lit1, lit2, lit3);
     return PROP_SOMETHING;
 }
 

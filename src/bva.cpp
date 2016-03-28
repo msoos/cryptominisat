@@ -136,12 +136,6 @@ void BVA::remove_duplicates_from_m_cls()
             if (btype == watch_binary_t && atype != CMSat::watch_binary_t) {
                 return false;
             }
-            if (atype == watch_tertiary_t && btype != CMSat::watch_tertiary_t) {
-                return true;
-            }
-            if (btype == watch_tertiary_t && atype != CMSat::watch_tertiary_t) {
-                return false;
-            }
 
             assert(atype == btype);
             switch(atype) {
@@ -149,14 +143,6 @@ void BVA::remove_duplicates_from_m_cls()
                     //subsumption could have time-outed
                     //assert(a.ws.lit2() != b.ws.lit2() && "Implicit has been cleaned of duplicates!!");
                     return a.ws.lit2() < b.ws.lit2();
-                }
-                case CMSat::watch_tertiary_t: {
-                    if (a.ws.lit2() != b.ws.lit2()) {
-                        return a.ws.lit2() < b.ws.lit2();
-                    }
-                    //subsumption could have time-outed
-                    //assert(a.ws.lit3() != b.ws.lit3() && "Implicit has been cleaned of duplicates!!");
-                    return a.ws.lit3() < b.ws.lit3();
                 }
                 case CMSat::watch_clause_t: {
                     *simplifier->limit_to_decrease -= 20;
@@ -205,12 +191,6 @@ void BVA::remove_duplicates_from_m_cls()
                 if (prev.lit2() == next.lit2()) {
                     del = true;
                 }
-                break;
-            }
-
-            case CMSat::watch_tertiary_t: {
-                if (prev.lit2() == next.lit2() && prev.lit3() == next.lit3())
-                    del = true;
                 break;
             }
 
@@ -411,12 +391,6 @@ void BVA::fill_m_cls_lits_and_red()
                 red = cl.ws.red();
                 break;
             }
-            case CMSat::watch_tertiary_t: {
-                tmp.push_back(cl.ws.lit2());
-                tmp.push_back(cl.ws.lit3());
-                red = cl.ws.red();
-                break;
-            }
             case CMSat::watch_clause_t: {
                 const Clause* cl_orig = solver->cl_alloc.ptr(cl.ws.get_offset());
                 for(const Lit lit: *cl_orig) {
@@ -467,15 +441,6 @@ void BVA::remove_matching_clause(
             bool red = false;
             *(solver->drat) << del << to_remove << fin;
             solver->detach_bin_clause(to_remove[0], to_remove[1], red);
-            break;
-        }
-
-        case 3: {
-            std::sort(to_remove.begin(), to_remove.end());
-            *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0]].size();
-            bool red = false;
-            *(solver->drat) << del << to_remove << fin;
-            solver->detach_tri_clause(to_remove[0], to_remove[1], to_remove[2], red);
             break;
         }
 
@@ -534,15 +499,6 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
-            break;
-        }
-
-        case CMSat::watch_tertiary_t: {
-            lits.resize(3);
-            lits[0] = new_lit;
-            lits[1] = cl.ws.lit2();
-            lits[2] = cl.ws.lit3();
             solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
             break;
         }
@@ -808,7 +764,7 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
     size_t num = 0;
     watch_subarray_const ws = solver->watches[lit];
     for(const Watched w: ws) {
-        if (w.isBin() || w.isTri()) {
+        if (w.isBin()) {
             num += !w.red();
             continue;
         }

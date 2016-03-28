@@ -55,10 +55,6 @@ bool DistillerAllWithAll::distill(uint32_t queueByBy)
         goto end;
     }
 
-    if (!distill_tri_irred_cls()) {
-        goto end;
-    }
-
 end:
     globalStats += runStats;
     if (solver->conf.verbosity >= 1) {
@@ -68,106 +64,6 @@ end:
             runStats.print_short(solver);
     }
     runStats.clear();
-
-    return solver->ok;
-}
-
-bool DistillerAllWithAll::distill_tri_irred_cls()
-{
-    if (solver->conf.verbosity >= 6) {
-        cout
-        << "c Doing distill for tri irred clauses"
-        << endl;
-    }
-
-    //solver->watches.size()-1 would overflow
-    if (solver->watches.size() == 0) {
-        return solver->ok;
-    }
-
-    uint64_t origShorten = runStats.numClShorten;
-    uint64_t origLitRem = runStats.numLitsRem;
-    const double myTime = cpuTime();
-    uint64_t maxNumProps =
-        2LL*1000LL*solver->conf.distill_time_limitM
-        *solver->conf.global_timeout_multiplier;
-    uint64_t oldBogoProps = solver->propStats.bogoProps;
-    size_t origTrailSize = solver->trail_size();
-
-    //Randomize start in the watchlist
-    size_t upI;
-    upI = solver->mtrand.randInt(solver->watches.size()-1);
-    size_t numDone = 0;
-    for (; numDone < solver->watches.size()
-        ; upI = (upI +1) % solver->watches.size(), numDone++
-
-    ) {
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps
-            || solver->must_interrupt_asap()
-        ) {
-            break;
-        }
-
-        const Lit lit = Lit::toLit(upI);
-        for (size_t i = 0; i < solver->watches[lit].size(); i++) {
-            if (solver->propStats.bogoProps-oldBogoProps + extraTime > maxNumProps) {
-                break;
-            }
-
-            Watched ws = solver->watches[lit][i];
-
-            //Only irred TRI and each TRI only once
-            if (ws.isTri()
-                && !ws.red()
-                && lit < ws.lit2()
-                && ws.lit2() < ws.lit3()
-            ) {
-                uselessLits.clear();
-                lits.resize(3);
-                lits[0] = lit;
-                lits[1] = ws.lit2();
-                lits[2] = ws.lit3();
-                try_distill_clause_and_return_new(
-                    CL_OFFSET_MAX
-                    , ws.red()
-                    , NULL
-                    , 2
-                );
-
-                //We could have modified the watchlist, better exit now
-                break;
-            }
-        }
-
-        if (!solver->okay()) {
-            break;
-        }
-    }
-
-    int64_t diff_bogoprops = (int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps;
-    const bool time_out =  diff_bogoprops + extraTime > maxNumProps;
-    const double time_used = cpuTime() - myTime;
-    const double time_remain = 1.0 - float_div(diff_bogoprops + extraTime, maxNumProps);
-    if (solver->conf.verbosity >= 3) {
-        cout
-        << "c [distill] tri irred"
-        << " shorten: " << runStats.numClShorten - origShorten
-        << " lit-rem: " << runStats.numLitsRem - origLitRem
-        << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
-            solver
-            , "distill tri irred"
-            , time_used
-            , time_out
-            , time_remain
-        );
-    }
-
-    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }
@@ -278,7 +174,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
         runStats.checkedClauses++;
 
         //Sanity check
-        assert(cl.size() > 3);
+        assert(cl.size() > 2);
         assert(!cl.red());
 
         //Copy literals

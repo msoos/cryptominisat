@@ -115,115 +115,12 @@ void StrImplWImplStamp::distill_implicit_with_implicit_lit(const Lit lit)
                 strengthen_bin_with_bin(lit, i, j, end);
                 break;
 
-            case CMSat::watch_tertiary_t:
-                timeAvailable -= 20;
-                strengthen_tri_with_bin_tri_stamp(lit, i, j);
-                break;
-
             default:
                 assert(false);
                 break;
         }
     }
     ws.shrink(i-j);
-}
-
-void StrImplWImplStamp::strengthen_tri_with_bin_tri_stamp(
-    const Lit lit
-    , Watched* i
-    , Watched*& j
-) {
-    const Lit lit1 = i->lit2();
-    const Lit lit2 = i->lit3();
-    bool rem = false;
-
-    timeAvailable -= (long)solver->watches[~lit].size();
-    for(const Watched* it2 = solver->watches[~lit].begin(), *end2 = solver->watches[~lit].end()
-        ; it2 != end2 && timeAvailable > 0
-        ; it2++
-    ) {
-        if (it2->isBin()
-            && (it2->lit2() == lit1 || it2->lit2() == lit2)
-        ) {
-            rem = true;
-            str_impl_data.remLitFromTriByBin++;
-            break;
-        }
-
-        if (it2->isTri()
-            && (
-                (it2->lit2() == lit1 && it2->lit3() == lit2)
-                ||
-                (it2->lit2() == lit2 && it2->lit3() == lit1)
-            )
-
-        ) {
-            rem = true;
-            str_impl_data.remLitFromTriByTri++;
-            break;
-        }
-
-        //watches are sorted, so early-abort
-        if (it2->isClause())
-            break;
-    }
-
-    if (rem) {
-        solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-        str_impl_data.remLitFromTri++;
-        str_impl_data.binsToAdd.push_back(BinaryClause(i->lit2(), i->lit3(), i->red()));
-
-        (*solver->drat)
-        << i->lit2()  << i->lit3() << fin
-        << del << lit << i->lit2() << i->lit3() << fin;
-        return;
-    }
-
-    if (solver->conf.doStamp) {
-        //Strengthen TRI using stamps
-        lits.clear();
-        lits.push_back(lit);
-        lits.push_back(i->lit2());
-        lits.push_back(i->lit3());
-
-        //Try both stamp types to reduce size
-        timeAvailable -= 15;
-        std::pair<size_t, size_t> tmp = solver->stamp.stampBasedLitRem(lits, STAMP_RED);
-        str_impl_data.stampRem += tmp.first;
-        str_impl_data.stampRem += tmp.second;
-        if (lits.size() > 1) {
-            timeAvailable -= 15;
-            std::pair<size_t, size_t> tmp2 = solver->stamp.stampBasedLitRem(lits, STAMP_IRRED);
-            str_impl_data.stampRem += tmp2.first;
-            str_impl_data.stampRem += tmp2.second;
-        }
-
-        if (lits.size() == 2) {
-            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-            str_impl_data.remLitFromTri++;
-            str_impl_data.binsToAdd.push_back(BinaryClause(lits[0], lits[1], i->red()));
-
-            //Drat
-            (*solver->drat)
-            << lits[0] << lits[1] << fin
-            << del << lit << i->lit2() << i->lit3() << fin;
-
-            return;
-        } else if (lits.size() == 1) {
-            solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-            str_impl_data.remLitFromTri+=2;
-            str_impl_data.toEnqueue.push_back(lits[0]);
-            (*solver->drat)
-            << lits[0] << fin
-            << del << lit << i->lit2() << i->lit3() << fin;
-
-            return;
-        }
-    }
-
-
-    //Nothing to do, copy
-    *j++ = *i;
 }
 
 void StrImplWImplStamp::strengthen_bin_with_bin(
@@ -265,12 +162,12 @@ void StrImplWImplStamp::strengthen_bin_with_bin(
     bool rem = false;
     const Watched* i2 = i;
     while(i2 != end
-        && (i2->isBin() || i2->isTri())
+        && i2->isBin()
         && i->lit2().var() == i2->lit2().var()
     ) {
         timeAvailable -= 2;
         //Yay, we have found what we needed!
-        if (i2->isBin() && i2->lit2() == ~i->lit2()) {
+        if (i2->lit2() == ~i->lit2()) {
             rem = true;
             break;
         }
@@ -300,8 +197,6 @@ void StrImplWImplStamp::StrImplicitData::print(
     cout
     << "c [impl str]"
     << " lit bin: " << remLitFromBin
-    << " lit tri: " << remLitFromTri
-    << " (by tri: " << remLitFromTriByTri << ")"
     << " (by stamp: " << stampRem << ")"
     << " set-var: " << trail_diff
     << solver->conf.print_times(time_used, time_out, time_remain)

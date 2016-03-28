@@ -38,120 +38,13 @@ SubsumeImplicit::SubsumeImplicit(Solver* _solver) :
 {
 }
 
-void SubsumeImplicit::try_subsume_tri(
-    const Lit lit
-    , Watched* i
-    , Watched*& j
-    , const bool doStamp
-) {
-    //Only treat one of the TRI's instances
-    if (lit > i->lit2()) {
-        *j++ = *i;
-        return;
-    }
-
-    bool remove = false;
-
-    //Subsumed by bin
-    if (lastLit2 == i->lit2()
-        && lastLit3 == lit_Undef
-    ) {
-        if (lastRed && !i->red()) {
-            assert(lastBin->isBin());
-            assert(lastBin->red());
-            assert(lastBin->lit2() == lastLit2);
-
-            lastBin->setRed(false);
-            timeAvailable -= 20;
-            timeAvailable -= solver->watches[lastLit2].size();
-            findWatchedOfBin(solver->watches, lastLit2, lit, true).setRed(false);
-            solver->binTri.redBins--;
-            solver->binTri.irredBins++;
-            lastRed = false;
-        }
-
-        remove = true;
-    }
-
-    //Subsumed by Tri
-    if (!remove
-        && lastLit2 == i->lit2()
-        && lastLit3 == i->lit3()
-    ) {
-        //The sorting algorithm prefers irred to red, so it is
-        //impossible to have irred before red
-        assert(!(i->red() == false && lastRed == true));
-
-        remove = true;
-    }
-
-    tmplits.clear();
-    tmplits.push_back(lit);
-    tmplits.push_back(i->lit2());
-    tmplits.push_back(i->lit3());
-
-    //Subsumed by stamp
-    if (doStamp && !remove
-        && (solver->conf.otfHyperbin || !solver->drat->enabled())
-    ) {
-        timeAvailable -= 15;
-        remove = solver->stamp.stampBasedClRem(tmplits);
-        runStats.stampTriRem += remove;
-    }
-
-    //Subsumed by cache
-    if (!remove
-        && solver->conf.doCache
-        && (solver->conf.otfHyperbin || !solver->drat->enabled())
-    ) {
-        for(size_t at = 0; at < tmplits.size() && !remove; at++) {
-            timeAvailable -= (int64_t)solver->implCache[lit].lits.size();
-            for (vector<LitExtra>::const_iterator
-                it2 = solver->implCache[tmplits[at]].lits.begin()
-                , end2 = solver->implCache[tmplits[at]].lits.end()
-                ; it2 != end2
-                ; it2++
-            ) {
-                if ((   it2->getLit() == tmplits[0]
-                        || it2->getLit() == tmplits[1]
-                        || it2->getLit() == tmplits[2]
-                    )
-                    && it2->getOnlyIrredBin()
-                ) {
-                    remove = true;
-                    runStats.cacheTriRem++;
-                    break;
-                 }
-            }
-        }
-    }
-
-    if (remove) {
-        timeAvailable -= 30;
-        solver->remove_tri_but_lit1(lit, i->lit2(), i->lit3(), i->red(), timeAvailable);
-        runStats.remTris++;
-        (*solver->drat) << del << lit  << i->lit2()  << i->lit3() << fin;
-        return;
-    }
-
-    //Don't remove
-    lastLit2 = i->lit2();
-    lastLit3 = i->lit3();
-    lastRed = i->red();
-
-    *j++ = *i;
-    return;
-}
-
 void SubsumeImplicit::try_subsume_bin(
     const Lit lit
     , Watched* i
     , Watched*& j
 ) {
     //Subsume bin with bin
-    if (i->lit2() == lastLit2
-        && lastLit3 == lit_Undef
-    ) {
+    if (i->lit2() == lastLit2) {
         //The sorting algorithm prefers irred to red, so it is
         //impossible to have irred before red
         assert(!(i->red() == false && lastRed == true));
@@ -172,7 +65,6 @@ void SubsumeImplicit::try_subsume_bin(
     } else {
         lastBin = j;
         lastLit2 = i->lit2();
-        lastLit3 = lit_Undef;
         lastRed = i->red();
         *j++ = *i;
     }
@@ -225,10 +117,6 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
             switch(i->getType()) {
                 case CMSat::watch_clause_t:
                     *j++ = *i;
-                    break;
-
-                case CMSat::watch_tertiary_t:
-                    try_subsume_tri(lit, i, j, doStamp);
                     break;
 
                 case CMSat::watch_binary_t:
