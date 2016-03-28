@@ -350,6 +350,16 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     for(auto& lredcls: solver->longRedCls) {
         lredcls.clear();
     }
+    #ifdef USE_GAUSS
+    for (Gaussian* gauss : solver->gauss_matrixes) {
+        for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
+            ClOffset& off = gcl.offs;
+            Clause* old = ptr(off);
+            uint32_t newoffset = (*old)[0].toInt();
+            off = newoffset;
+        }
+    }
+    #endif //USE_GAUSS
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {

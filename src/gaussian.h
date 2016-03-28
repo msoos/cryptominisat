@@ -111,6 +111,7 @@ public:
         }
         assert(clauses_toclear.empty());
     }
+    vector<GaussClauseToClear> clauses_toclear;
 
 protected:
     Solver* solver;
@@ -206,7 +207,6 @@ private:
     void print_last_one_in_cols(matrixset& m) const;
     static string lbool_to_string(const lbool toprint);
     vector<Xor> xors;
-    vector<GaussClauseToClear> clauses_toclear;
 };
 
 inline bool Gaussian::should_check_gauss(const uint32_t decisionlevel) const
