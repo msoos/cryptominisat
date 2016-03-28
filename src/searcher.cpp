@@ -508,6 +508,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     return cl;
 }
 
+template<bool update_bogoprops>
 inline void Searcher::minimize_learnt_clause()
 {
     const size_t origSize = learnt_clause.size();
@@ -519,7 +520,9 @@ inline void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     for (const Lit lit: toClear) {
-        if (conf.doOTFSubsume) {
+        if (!update_bogoprops
+            && conf.doOTFSubsume
+        ) {
             seen2[lit.toInt()] = 0;
         }
         seen[lit.var()] = 0;
@@ -616,7 +619,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
             antec_data.vsids_of_resolving_literals.push(activities[p.var()]/var_inc);
-            if (conf.doOTFSubsume) {
+            if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
                 seen2[(~p).toInt()] = 0;
@@ -667,7 +670,9 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     assert(pathC == 0);
     learnt_clause[0] = ~p;
 
-    if (conf.doOTFSubsume) {
+    if (conf.doOTFSubsume
+        && !update_bogoprops
+    ) {
         for(const Lit lit: learnt_clause) {
             seen2[lit.toInt()] = 0;
         }
@@ -748,7 +753,7 @@ Clause* Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
-    minimize_learnt_clause();
+    minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
@@ -1857,6 +1862,7 @@ bool Searcher::clean_clauses_if_needed()
 
         cl_alloc.consolidate(solver);
         rebuildOrderHeap();
+        sortWatched();
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
@@ -2019,14 +2025,6 @@ lbool Searcher::solve(
         assert(order_heap.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
-
-        //Only sort after a while
-        //otherwise, we sort all the time for short queries
-        if ((loop_num & 0x7ff) == 0x008
-            && conf.doSortWatched
-        ) {
-            sortWatched();
-        }
 
         assert(watches.get_smudged_list().empty());
         print_search_loop_num();
@@ -2827,6 +2825,12 @@ size_t Searcher::mem_used() const
 
 void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)
 {
+    #ifdef SLOW_DEBUG
+    for(auto x: assumptionsSet) {
+        assert(!x);
+    }
+    #endif
+
     if (fill_from.empty()) {
         return;
     }
@@ -2835,7 +2839,8 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()]) {
-                //Yes, it can happen... due to variable value replacement
+                //Assumption contains the same literal twice. Shouldn't really be allowed...
+                //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
             } else {
                 assumptionsSet[lit.var()] = true;
             }
@@ -2866,6 +2871,12 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
             assumptionsSet[lit.var()] = false;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    for(auto x: assumptionsSet) {
+        assert(!x);
+    }
+    #endif
 }
 
 inline void Searcher::varDecayActivity()

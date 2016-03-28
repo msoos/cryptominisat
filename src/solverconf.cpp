@@ -171,10 +171,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_startup(
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
-            "scc-vrepl"
-            ", sub-str-cls-with-bin"
+            "scc-vrepl,"
+            "sub-str-cls-with-bin"
             #ifdef USE_GAUSS
-            "occ-gauss"
+            ",occ-gauss"
             #endif
         )
         , simplify_schedule_nonstartup(

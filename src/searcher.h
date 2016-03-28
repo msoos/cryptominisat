@@ -103,10 +103,6 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
         bool var_inside_assumptions(const uint32_t var) const
         {
-            if (assumptionsSet.empty()) {
-                return false;
-            }
-
             return assumptionsSet.at(var);
         }
         template<bool also_insert_varorder = true>
@@ -122,6 +118,12 @@ class Searcher : public HyperEngine
         #else
         void clear_gauss() {}
         #endif
+
+        void testing_fill_assumptions_set()
+        {
+            assumptionsSet.clear();
+            assumptionsSet.resize(nVars(), false);
+        }
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -152,6 +154,11 @@ class Searcher : public HyperEngine
             , bool red
         ) const;
 
+        //Misc
+        void update_var_decay();
+        void add_in_partial_solving_stats();
+
+
         struct AssumptionPair {
             AssumptionPair(const Lit _inter, const Lit _outer):
                 lit_inter(_inter)
@@ -168,15 +175,15 @@ class Searcher : public HyperEngine
                 return ~lit_inter < ~other.lit_inter;
             }
         };
-        void update_var_decay();
-        void renumber_assumptions(const vector<uint32_t>& outerToInter);
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
-        vector<char> assumptionsSet; //Needed so checking is fast -- we cannot eliminate / component-handle such vars
-        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user.
+        void renumber_assumptions(const vector<uint32_t>& outerToInter);
+        //we cannot eliminate / component-handle such vars
+        //Needed so checking is fast
+        vector<char> assumptionsSet;
+        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user
         void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
-        void add_in_partial_solving_stats();
 
         //For connection with Solver
         void  resetStats();
@@ -239,6 +246,7 @@ class Searcher : public HyperEngine
             , uint32_t &glue         //glue of the learnt clause
         );
         void update_clause_glue_from_analysis(Clause* cl);
+        template<bool update_bogoprops>
         void minimize_learnt_clause();
         void watch_based_learnt_minim();
         void minimize_using_permdiff();

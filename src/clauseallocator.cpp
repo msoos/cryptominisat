@@ -287,6 +287,12 @@ void ClauseAllocator::check_all_cls_accessible(
         origNumClauses += lredcls.size();
     }
 
+    #ifdef USE_GAUSS
+    for (Gaussian* gauss : solver->gauss_matrixes) {
+        origNumClauses += gauss->clauses_toclear.size();
+    }
+    #endif //USE_GAUSS
+
     if (origNumClauses != offsets.size()) {
         std::cerr
         << "ERROR: Not all non-freed clauses are accessible from Solver"
@@ -327,13 +333,6 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         }
     }
 
-    #ifdef USE_GAUSS
-    for(size_t i = 0; i < solver->gauss_matrixes.size(); i++) {
-        Gaussian* g = solver->gauss_matrixes[i];
-        g->assert_clauses_toclear_is_empty();
-    }
-    #endif
-
     for(auto& ws: solver->watches) {
         for(Watched& w: ws) {
             if (w.isClause()) {
@@ -350,6 +349,16 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     for(auto& lredcls: solver->longRedCls) {
         lredcls.clear();
     }
+    #ifdef USE_GAUSS
+    for (Gaussian* gauss : solver->gauss_matrixes) {
+        for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
+            ClOffset& off = gcl.offs;
+            Clause* old = ptr(off);
+            uint32_t newoffset = (*old)[0].toInt();
+            off = newoffset;
+        }
+    }
+    #endif //USE_GAUSS
 
     //Add back to the solver the correct red & irred clauses
     for(auto offset: offsets) {
@@ -357,14 +366,16 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(!cl->freed());
 
         //Put it in the right bucket
-        if (cl->red()) {
-            if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
-                solver->longRedCls[0].push_back(offset);
+        if (!cl->gauss_temp_cl()) {
+            if (cl->red()) {
+                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                    solver->longRedCls[0].push_back(offset);
+                } else {
+                    solver->longRedCls[1].push_back(offset);
+                }
             } else {
-                solver->longRedCls[1].push_back(offset);
+                solver->longIrredCls.push_back(offset);
             }
-        } else {
-            solver->longIrredCls.push_back(offset);
         }
     }
 }
