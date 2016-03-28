@@ -1097,7 +1097,6 @@ void Solver::set_assumptions()
     assumptions.clear();
     assumptionsSet.clear();
     if (outside_assumptions.empty()) {
-        assumptionsSet.shrink_to_fit();
         return;
     }
 
