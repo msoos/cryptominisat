@@ -169,8 +169,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(3)
         , simplify_schedule_startup(
-            "sub-impl, occ-backw-sub-str, occ-clean-implicit, occ-bve,"
-            "scc-vrepl, sub-str-cls-with-bin"
+            "sub-impl,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
+            "scc-vrepl"
+            ", sub-str-cls-with-bin"
             #ifdef USE_GAUSS
             "occ-gauss"
             #endif
@@ -181,7 +183,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, occ-gates, occ-xor,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva"
+            //",occ-gates"
+            ", occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
             #ifdef USE_GAUSS
@@ -193,7 +197,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-            "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,"
+            "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+            //"occ-gates,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "str-impl, sub-impl, sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,"
             "check-cache-size, renumber"

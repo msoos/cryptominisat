@@ -524,7 +524,7 @@ class Tester:
         sched_opts += "sub-impl, intree-probe, probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,"
+        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "check-cache-size, renumber"
 
         sched = ",".join(create_rnd_sched(sched_opts))

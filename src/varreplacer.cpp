@@ -177,7 +177,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
 void VarReplacer::attach_delayed_attach()
 {
     for(Clause* c: delayed_attach_or_free) {
-        if (c->size() <= 3) {
+        if (c->size() <= 2) {
             solver->cl_alloc.clauseFree(c);
         } else {
             c->unset_removed();
