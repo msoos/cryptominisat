@@ -367,14 +367,16 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         assert(!cl->freed());
 
         //Put it in the right bucket
-        if (cl->red()) {
-            if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
-                solver->longRedCls[0].push_back(offset);
+        if (!cl->gauss_temp_cl()) {
+            if (cl->red()) {
+                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                    solver->longRedCls[0].push_back(offset);
+                } else {
+                    solver->longRedCls[1].push_back(offset);
+                }
             } else {
-                solver->longRedCls[1].push_back(offset);
+                solver->longIrredCls.push_back(offset);
             }
-        } else {
-            solver->longIrredCls.push_back(offset);
         }
     }
 }
