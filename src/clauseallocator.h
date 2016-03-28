@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-#define BASE_DATA_TYPE uint64_t
+#define BASE_DATA_TYPE uint32_t
 
 namespace CMSat {
 
