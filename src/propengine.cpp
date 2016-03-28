@@ -333,6 +333,7 @@ PropBy PropEngine::propagate_any_order_fast()
         Watched* end;
         num_props++;
 
+        bool must_copy = false;
         for (i = j = ws.begin(), end = ws.end(); i != end;) {
             //Prop bin clause
             if (unlikely(i->isBin())) {
@@ -352,8 +353,10 @@ PropBy PropEngine::propagate_any_order_fast()
                         lastConflictCausedBy = ConflCausedBy::binirred;
                     #endif
                     i++;
-                    while (i < end) {
-                        *j++ = *i++;
+                    if (must_copy) {
+                        while (i < end) {
+                            *j++ = *i++;
+                        }
                     }
                     qhead = trail.size();
                 } else {
@@ -383,6 +386,7 @@ PropBy PropEngine::propagate_any_order_fast()
             Watched w     = Watched(offset, first);
             if (first != blocked && value(first) == l_True) {
                 *j++ = w;
+                must_copy = true;
                 continue;
             }
 
@@ -407,8 +411,10 @@ PropBy PropEngine::propagate_any_order_fast()
                 else
                     lastConflictCausedBy = ConflCausedBy::longirred;
                 #endif
-                while (i < end) {
-                    *j++ = *i++;
+                if (must_copy) {
+                    while (i < end) {
+                        *j++ = *i++;
+                    }
                 }
                 assert(j <= end);
                 qhead = trail.size();
