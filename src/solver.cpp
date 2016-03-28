@@ -1045,7 +1045,7 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
         datasync->new_var(bva);
     }
 
-    if (bva && !assumptionsSet.empty()) {
+    if (bva) {
         assumptionsSet.push_back(false);
     }
 
@@ -1069,13 +1069,8 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
-    if (outside_assumptions.empty()) {
-        assert(assumptionsSet.empty());
-    } else {
-        assert(assumptionsSet.size() >= nVars());
-        assumptionsSet.resize(nVars());
-        assumptionsSet.shrink_to_fit();
-    }
+    assumptionsSet.resize(nVars(), false);
+    assumptionsSet.shrink_to_fit();
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
@@ -1095,7 +1090,7 @@ void Solver::set_assumptions()
 
     conflict.clear();
     assumptions.clear();
-    assumptionsSet.clear();
+    assumptionsSet.resize(nVars(), false);
     if (outside_assumptions.empty()) {
         return;
     }
@@ -1103,7 +1098,6 @@ void Solver::set_assumptions()
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-    assumptionsSet.resize(nVars(), false);
 
     assert(inter_assumptions.size() == outside_assumptions.size());
     for(size_t i = 0; i < inter_assumptions.size(); i++) {
