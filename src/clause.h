@@ -193,8 +193,6 @@ to hold the clause.
 class Clause
 {
 protected:
-
-    uint32_t mySize;
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
@@ -218,6 +216,7 @@ protected:
 public:
     cl_abst_type abst;
     ClauseStats stats;
+    uint32_t mySize;
 
     template<class V>
     Clause(const V& ps
