@@ -21,11 +21,11 @@
 
 #include "clauseallocator.h"
 
+#include <stdlib.h>
 #include <algorithm>
 #include <string.h>
 #include <limits>
 #include <cassert>
- #include <stdlib.h>
 #include "solvertypes.h"
 #include "clause.h"
 #include "solver.h"
@@ -55,7 +55,7 @@ using std::endl;
 //#define DEBUG_CLAUSEALLOCATOR2
 
 #define MIN_LIST_SIZE (50000 * (sizeof(Clause) + 4*sizeof(Lit))/sizeof(uint32_t))
-#define ALLOC_GROW_MULT 2
+#define ALLOC_GROW_MULT 1.5
 //We shift stuff around in Watched, so not all of 32 bits are useable.
 #define EFFECTIVELY_USEABLE_BITS 30
 #define MAXSIZE ((1 << (EFFECTIVELY_USEABLE_BITS))-1)
@@ -63,7 +63,7 @@ using std::endl;
 ClauseAllocator::ClauseAllocator() :
     dataStart(NULL)
     , size(0)
-    , maxSize(0)
+    , capacity(0)
     , currentlyUsedSize(0)
 {
     assert(MIN_LIST_SIZE < MAXSIZE);
@@ -85,19 +85,19 @@ void* ClauseAllocator::allocEnough(
     uint32_t needed
         = neededbytes/sizeof(BASE_DATA_TYPE) + (bool)(neededbytes % sizeof(BASE_DATA_TYPE));
 
-    if (size + needed > maxSize) {
+    if (size + needed > capacity) {
         //Grow by default, but don't go under or over the limits
-        size_t newMaxSize = maxSize * ALLOC_GROW_MULT;
-        newMaxSize = std::min<size_t>(newMaxSize, MAXSIZE);
-        newMaxSize = std::max<size_t>(newMaxSize, MIN_LIST_SIZE);
+        size_t newcapacity = capacity * ALLOC_GROW_MULT;
+        newcapacity = std::min<size_t>(newcapacity, MAXSIZE);
+        newcapacity = std::max<size_t>(newcapacity, MIN_LIST_SIZE);
 
         //Oops, not enough space anyway
-        if (newMaxSize < size + needed) {
+        if (newcapacity < size + needed) {
             std::cerr
             << "ERROR: memory manager can't handle the load"
             << " size: " << size
             << " needed: " << needed
-            << " newMaxSize: " << newMaxSize
+            << " newcapacity: " << newcapacity
             << endl;
 
             throw std::bad_alloc();
@@ -106,7 +106,7 @@ void* ClauseAllocator::allocEnough(
         //Reallocate data
         dataStart = (BASE_DATA_TYPE*)realloc(
             dataStart
-            , newMaxSize*sizeof(BASE_DATA_TYPE)
+            , newcapacity*sizeof(BASE_DATA_TYPE)
         );
 
         //Realloc failed?
@@ -118,15 +118,14 @@ void* ClauseAllocator::allocEnough(
             throw std::bad_alloc();
         }
 
-        //Update maxSize to reflect the update
-        maxSize = newMaxSize;
+        //Update capacity to reflect the update
+        capacity = newcapacity;
     }
 
     //Add clause to the set
     Clause* pointer = (Clause*)(dataStart + size);
     size += needed;
     currentlyUsedSize += needed;
-    origClauseSizes.push_back(needed);
 
     return pointer;
 }
@@ -177,6 +176,23 @@ void ClauseAllocator::clauseFree(ClOffset offset)
     clauseFree(cl);
 }
 
+uint32_t ClauseAllocator::move_cl(
+    uint32_t* newDataStart
+    , uint32_t*& new_ptr
+    , Clause* old
+) const {
+    size_t bytesNeeded = sizeof(Clause) + old->size()*sizeof(Lit);
+    size_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
+    memcpy(new_ptr, old, sizeNeeded*sizeof(BASE_DATA_TYPE));
+
+    uint32_t new_offset = new_ptr-newDataStart;
+    (*old)[0] = Lit::toLit(new_offset);
+    old->reloced = true;
+
+    new_ptr += sizeNeeded;
+    return new_offset;
+}
+
 /**
 @brief If needed, compacts stacks, removing unused clauses
 
@@ -204,61 +220,82 @@ void ClauseAllocator::consolidate(
     }
     const double myTime = cpuTime();
 
-    //Data for new struct
-    vector<uint32_t> newOrigClauseSizes;
-    vector<ClOffset> newOffsets;
-    uint64_t newSize = 0;
-
     //Pointers that will be moved along
-    BASE_DATA_TYPE* newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
-    BASE_DATA_TYPE* new_ptr = newDataStart;
-    BASE_DATA_TYPE* old_ptr = dataStart;
+    BASE_DATA_TYPE * const newDataStart = (BASE_DATA_TYPE*)malloc(currentlyUsedSize*sizeof(BASE_DATA_TYPE));
+    BASE_DATA_TYPE * new_ptr = newDataStart;
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
-    for (const size_t sz: origClauseSizes) {
-        Clause* clause = (Clause*)old_ptr;
-        //Already freed, so skip entirely
-        if (clause->freed()) {
-            #ifdef VALGRIND_MAKE_MEM_DEFINED
-            VALGRIND_MAKE_MEM_DEFINED(((char*)clause)+sizeof(Clause), clause->size()*sizeof(Lit));
-            #endif
-            old_ptr += sz;
-        } else {
-            //Move to new position
-            size_t bytesNeeded = sizeof(Clause) + clause->size()*sizeof(Lit);
-            size_t sizeNeeded = bytesNeeded/sizeof(BASE_DATA_TYPE) + (bool)(bytesNeeded % sizeof(BASE_DATA_TYPE));
-            assert(sizeNeeded <= sz && "New clause size must not be bigger than orig clause size");
-            memcpy(new_ptr, old_ptr, sizeNeeded*sizeof(BASE_DATA_TYPE));
-
-            Clause* c_old = (Clause*)old_ptr;
-            (*c_old)[0] = Lit::toLit(new_ptr-newDataStart);
-
-            //Record position
-            newOffsets.push_back(newSize);
-
-            //Record sizes
-            newOrigClauseSizes.push_back(sizeNeeded);
-            newSize += sizeNeeded;
-            assert(currentlyUsedSize >= newSize);
-
-            //Move pointers along
-            new_ptr += sizeNeeded;
-            old_ptr += sz;
+    for(auto& ws: solver->watches) {
+        for(Watched& w: ws) {
+            if (w.isClause()) {
+                Clause* old = ptr(w.get_offset());
+                assert(!old->freed());
+                Lit blocked = w.getBlockedLit();
+                if (old->reloced) {
+                    Lit newoffset = (*old)[0];
+                    w = Watched(newoffset.toInt(), blocked);
+                } else {
+                    uint32_t new_offset = move_cl(newDataStart, new_ptr, old);
+                    w = Watched(new_offset, blocked);
+                }
+            }
         }
     }
 
-    //Update offsets & pointers(?) now, when everything is in memory still
-    updateAllOffsetsAndPointers(solver, newDataStart, newOffsets);
+    #ifdef USE_GAUSS
+    for (Gaussian* gauss : solver->gauss_matrixes) {
+        for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
+            ClOffset& off = gcl.offs;
+            Clause* old = ptr(off);
+            if (old->reloced) {
+                Lit new_offset = (*old)[0].toInt();
+                off = new_offset;
+            } else {
+                uint32_t new_offset = move_cl(newDataStart, new_ptr, old);
+                off = new_offset;
+            }
+            assert(!old->freed());
+        }
+    }
+    #endif //USE_GAUSS
 
+    update_offsets(solver->longIrredCls);
+    for(auto& lredcls: solver->longRedCls) {
+        update_offsets(lredcls);
+    }
+
+    //Fix up propBy
+    for (size_t i = 0; i < solver->nVars(); i++) {
+        VarData& vdata = solver->varData[i];
+        if (vdata.reason.isClause()) {
+            if (vdata.removed == Removed::none
+                && solver->decisionLevel() >= vdata.level
+                && vdata.level != 0
+                && solver->value(i) != l_Undef
+            ) {
+                Clause* old = ptr(vdata.reason.get_offset());
+                assert(!old->freed());
+                uint32_t new_offset = (*old)[0].toInt();
+                vdata.reason = PropBy(new_offset);
+            } else {
+                vdata.reason = PropBy();
+            }
+        }
+    }
+
+    //Update sizes
+    const uint32_t old_size = size;
+    size = new_ptr-newDataStart;
+    capacity = currentlyUsedSize;
+    currentlyUsedSize = size;
     free(dataStart);
     dataStart = newDataStart;
 
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
         cout << "c [mem] Consolidated memory ";
-        cout << " cls"; print_value_kilo_mega(newOrigClauseSizes.size());
-        cout << " old size"; print_value_kilo_mega(size);
-        cout << " new size"; print_value_kilo_mega(newSize);
+        cout << " old size"; print_value_kilo_mega(old_size);
+        cout << " new size"; print_value_kilo_mega(size);
         cout << solver->conf.print_times(time_used)
         << endl;
     }
@@ -269,122 +306,23 @@ void ClauseAllocator::consolidate(
             , time_used
         );
     }
-
-    //Update sizes
-    size = newSize;
-    maxSize = currentlyUsedSize;
-    currentlyUsedSize = newSize;
-    newOrigClauseSizes.swap(origClauseSizes);
 }
 
-void ClauseAllocator::check_all_cls_accessible(
-    Solver* solver
-    , const vector<ClOffset>& offsets
+void ClauseAllocator::update_offsets(
+    vector<ClOffset>& offsets
 ) {
-    //Make sure all non-freed clauses were accessible from solver
-    size_t origNumClauses = solver->longIrredCls.size();
-    for(auto& lredcls: solver-> longRedCls) {
-        origNumClauses += lredcls.size();
-    }
 
-    #ifdef USE_GAUSS
-    for (Gaussian* gauss : solver->gauss_matrixes) {
-        origNumClauses += gauss->clauses_toclear.size();
-    }
-    #endif //USE_GAUSS
-
-    if (origNumClauses != offsets.size()) {
-        std::cerr
-        << "ERROR: Not all non-freed clauses are accessible from Solver"
-        << endl
-        << " This usually means that a clause was not freed, i.e. a mem leak"
-        << endl
-        << " no. clauses accessible from solver: " << origNumClauses
-        << endl
-        << " no. clauses non-freed: " << offsets.size()
-        << endl;
-
-        assert(origNumClauses == offsets.size());
-        std::exit(-1);
-    }
-}
-
-void ClauseAllocator::updateAllOffsetsAndPointers(
-    Solver* solver
-    , BASE_DATA_TYPE* newDataStart
-    , const vector<ClOffset>& offsets
-) {
-    check_all_cls_accessible(solver, offsets);
-
-    for (size_t i = 0; i < solver->nVars(); i++) {
-        VarData& vdata = solver->varData[i];
-        if (vdata.reason.isClause()) {
-            if (vdata.removed == Removed::none
-                && solver->decisionLevel() >= vdata.level
-                && solver->decisionLevel() != 0
-                && solver->value(i) != l_Undef
-            ) {
-                Clause* old = ptr(vdata.reason.get_offset());
-                uint32_t newoffset = (*old)[0].toInt();
-                vdata.reason = PropBy(newoffset);
-            } else {
-                vdata.reason = PropBy();
-            }
-        }
-    }
-
-    for(auto& ws: solver->watches) {
-        for(Watched& w: ws) {
-            if (w.isClause()) {
-                Clause* old = ptr(w.get_offset());
-                uint32_t newoffset = (*old)[0].toInt();
-                Lit blocked = w.getBlockedLit();
-                w = Watched(newoffset, blocked);
-            }
-        }
-    }
-
-    //Clear clauses
-    solver->longIrredCls.clear();
-    for(auto& lredcls: solver->longRedCls) {
-        lredcls.clear();
-    }
-    #ifdef USE_GAUSS
-    for (Gaussian* gauss : solver->gauss_matrixes) {
-        for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
-            ClOffset& off = gcl.offs;
-            Clause* old = ptr(off);
-            uint32_t newoffset = (*old)[0].toInt();
-            off = newoffset;
-        }
-    }
-    #endif //USE_GAUSS
-
-    //Add back to the solver the correct red & irred clauses
-    for(auto offset: offsets) {
-        Clause* cl = (Clause*)(newDataStart + offset);
-        assert(!cl->freed());
-
-        //Put it in the right bucket
-        if (!cl->gauss_temp_cl()) {
-            if (cl->red()) {
-                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
-                    solver->longRedCls[0].push_back(offset);
-                } else {
-                    solver->longRedCls[1].push_back(offset);
-                }
-            } else {
-                solver->longIrredCls.push_back(offset);
-            }
-        }
+    for(ClOffset& offs: offsets) {
+        Clause* cl = ptr(offs);
+        assert(cl->reloced);
+        offs = (*cl)[0].toInt();
     }
 }
 
 size_t ClauseAllocator::mem_used() const
 {
     uint64_t mem = 0;
-    mem += maxSize*sizeof(BASE_DATA_TYPE);
-    mem += origClauseSizes.capacity()*sizeof(uint32_t);
+    mem += capacity*sizeof(BASE_DATA_TYPE);
 
     return mem;
 }
