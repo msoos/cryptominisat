@@ -1080,6 +1080,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
             , time_used
         );
     }
+    restore_order_heap();
     //print_mem_stats();
 }
 
