@@ -1080,7 +1080,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
             , time_used
         );
     }
-    restore_order_heap();
+    restore_order_heap(); //TODO should be 'filter' we don't need to rebuild
     //print_mem_stats();
 }
 
