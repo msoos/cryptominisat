@@ -222,6 +222,9 @@ void ClauseAllocator::consolidate(
             #ifdef VALGRIND_MAKE_MEM_DEFINED
             VALGRIND_MAKE_MEM_DEFINED(((char*)clause)+sizeof(Clause), clause->size()*sizeof(Lit));
             #endif
+            Clause* c_old = (Clause*)old_ptr;
+            (*c_old)[0] = lit_Error;
+
             old_ptr += sz;
         } else {
             //Move to new position
@@ -325,8 +328,9 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
                 && solver->value(i) != l_Undef
             ) {
                 Clause* old = ptr(vdata.reason.get_offset());
-                uint32_t newoffset = (*old)[0].toInt();
-                vdata.reason = PropBy(newoffset);
+                Lit newoffset = (*old)[0];
+                assert(newoffset != lit_Error);
+                vdata.reason = PropBy(newoffset.toInt());
             } else {
                 vdata.reason = PropBy();
             }
@@ -337,9 +341,11 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         for(Watched& w: ws) {
             if (w.isClause()) {
                 Clause* old = ptr(w.get_offset());
-                uint32_t newoffset = (*old)[0].toInt();
+                Lit newoffset = (*old)[0];
+                assert(newoffset != lit_Error);
+
                 Lit blocked = w.getBlockedLit();
-                w = Watched(newoffset, blocked);
+                w = Watched(newoffset.toInt(), blocked);
             }
         }
     }
@@ -353,9 +359,12 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
     for (Gaussian* gauss : solver->gauss_matrixes) {
         for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
             ClOffset& off = gcl.offs;
+
             Clause* old = ptr(off);
-            uint32_t newoffset = (*old)[0].toInt();
-            off = newoffset;
+            Lit newoffset = (*old)[0];
+            assert(newoffset != lit_Error);
+
+            off = newoffset.toInt();
         }
     }
     #endif //USE_GAUSS
