@@ -94,11 +94,13 @@ class ClauseAllocator {
         size_t mem_used() const;
 
     private:
-        void updateAllOffsetsAndPointers(
-            Solver* solver
-            , BASE_DATA_TYPE* newDataStart
-            , const vector<ClOffset>& offsets
-        );
+        void update_offsets(vector<ClOffset>& offsets);
+
+        uint32_t move_cl(
+            uint32_t* newDataStart
+            , uint32_t*& new_ptr
+            , Clause* old
+        ) const;
 
         BASE_DATA_TYPE* dataStart; ///<Stacks start at these positions
         size_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
@@ -108,8 +110,7 @@ class ClauseAllocator {
         the running of the solver. Therefore, it is imperative that their orignal
         size is saved. This way, we can later move clauses around.
         */
-        vector<uint32_t> origClauseSizes;
-        size_t maxSize; ///<The number of BASE_DATA_TYPE datapieces allocated
+        size_t capacity; ///<The number of BASE_DATA_TYPE datapieces allocated
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
@@ -120,11 +121,6 @@ class ClauseAllocator {
         size_t currentlyUsedSize;
 
         void* allocEnough(const uint32_t size);
-
-        void check_all_cls_accessible(
-            Solver* solver
-            , const vector<ClOffset>& offsets
-        );
 };
 
 } //end namespace

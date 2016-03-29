@@ -192,7 +192,7 @@ to hold the clause.
 */
 class Clause
 {
-protected:
+public:
     uint16_t isRed:1; ///<Is the clause a redundant clause?
     uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
@@ -201,6 +201,7 @@ protected:
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
     uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
+    uint16_t reloced:1;
 
 
     Lit* getData()
@@ -242,6 +243,7 @@ public:
         must_recalc_abst = true;
         _used_in_xor = false;
         _gauss_temp_cl = false;
+        reloced = false;
 
         for (uint32_t i = 0; i < ps.size(); i++) {
             getData()[i] = ps[i];
