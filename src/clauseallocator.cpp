@@ -248,7 +248,7 @@ void ClauseAllocator::consolidate(
             ClOffset& off = gcl.offs;
             Clause* old = ptr(off);
             if (old->reloced) {
-                Lit new_offset = (*old)[0].toInt();
+                uint32_t new_offset = (*old)[0].toInt();
                 off = new_offset;
             } else {
                 uint32_t new_offset = move_cl(newDataStart, new_ptr, old);
