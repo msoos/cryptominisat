@@ -324,7 +324,7 @@ void ClauseAllocator::updateAllOffsetsAndPointers(
         if (vdata.reason.isClause()) {
             if (vdata.removed == Removed::none
                 && solver->decisionLevel() >= vdata.level
-                && solver->decisionLevel() != 0
+                && vdata.level != 0
                 && solver->value(i) != l_Undef
             ) {
                 Clause* old = ptr(vdata.reason.get_offset());
