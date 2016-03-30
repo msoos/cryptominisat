@@ -63,6 +63,20 @@ using boost::lexical_cast;
 using std::list;
 using std::map;
 
+void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
+{
+    SATSolver* solver = solverToInterrupt;
+    if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
+        solver->interrupt_asap();
+    } else {
+        if (solver->nVars() > 0) {
+            solver->add_in_partial_solving_stats();
+            solver->print_stats();
+        }
+        _exit(1);
+    }
+}
+
 timer_t* mytimer;
 bool* timerSetFirstTime;
 void start_timer(int secs)
@@ -83,18 +97,17 @@ void start_timer(int secs)
     timer_settime(*mytimer, 0, &value, NULL);
 }
 
-void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
+void CUSP::set_up_timer()
 {
-    SATSolver* solver = solverToInterrupt;
-    if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
-        solver->interrupt_asap();
-    } else {
-        if (solver->nVars() > 0) {
-            solver->add_in_partial_solving_stats();
-            solver->print_stats();
-        }
-        _exit(1);
-    }
+    mytimer = new timer_t;
+    timerSetFirstTime = new bool;
+    struct sigaction sa;
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = SIGALARM_handler;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGUSR1, &sa, NULL);
+    *timerSetFirstTime = true;
+    need_clean_exit = true;
 }
 
 
@@ -203,19 +216,6 @@ bool CUSP::openLogFile()
         exit(1);
     }
     return true;
-}
-
-void CUSP::set_up_timer()
-{
-    mytimer = new timer_t;
-    timerSetFirstTime = new bool;
-    struct sigaction sa;
-    sa.sa_flags = SA_SIGINFO;
-    sa.sa_sigaction = SIGALARM_handler;
-    sigemptyset(&sa.sa_mask);
-    sigaction(SIGUSR1, &sa, NULL);
-    *timerSetFirstTime = true;
-    need_clean_exit = true;
 }
 
 template<class T>
