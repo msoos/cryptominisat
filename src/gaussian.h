@@ -44,33 +44,10 @@ using std::string;
 using std::pair;
 using std::vector;
 
+enum gauss_ret {gauss_cont, gauss_confl, gauss_false, gauss_nothing};
+
 class Clause;
 class Solver;
-
-/// Hackish lbool that also supports l_Nothing and l_Continue
-class llbool
-{
-    char value;
-
-public:
-    llbool(): value(0) {};
-    explicit llbool(lbool v) :
-            value(v.value) {};
-    explicit llbool(char a) :
-            value(a) {}
-
-    inline bool operator!=(const llbool& v) const {
-        return (v.value != value);
-    }
-
-    inline bool operator==(const llbool& v) const {
-        return (v.value == value);
-    }
-
-    friend class lbool;
-};
-const llbool l_Nothing  = llbool(2);
-const llbool l_Continue = llbool(3);
 
 struct GaussClauseToClear
 {
@@ -91,7 +68,7 @@ public:
     ~Gaussian();
 
     bool init_until_fixedpoint();
-    llbool find_truths();
+    gauss_ret find_truths();
 
     //statistics
     void print_stats() const;
@@ -106,6 +83,7 @@ public:
     //functions used throughout the Solver
     void canceling(const uint32_t sublevel);
     vector<GaussClauseToClear> clauses_toclear;
+    PropBy found_conflict;
 
 protected:
     Solver* solver;

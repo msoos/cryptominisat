@@ -1058,14 +1058,15 @@ lbool Searcher::search()
             stats.conflStats.update(lastConflictCausedBy);
             #endif
 
+            confl:
             print_restart_stat();
             if (!update_bogoprops) {
                 #ifdef STATS_NEEDED
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
                 #endif
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
+                check_blocking_restart();
             }
-            check_blocking_restart();
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_sql(myTime);
                 dump_search_loop_stats();
@@ -1078,15 +1079,19 @@ lbool Searcher::search()
             #ifdef USE_GAUSS
             bool at_least_one_continue = false;
             for (Gaussian* g: gauss_matrixes) {
-                llbool ret = g->find_truths();
-                if (ret == l_Continue) {
-                    at_least_one_continue = true;
-                } else if (ret == llbool(l_False)) {
-                    return l_False;
+                gauss_ret ret = g->find_truths();
+                switch (ret) {
+                    case gauss_cont:
+                        at_least_one_continue = true;
+                        break;
+                    case gauss_false:
+                        return l_False;
+                    case gauss_confl:
+                        confl = g->found_conflict;
+                        goto confl;
                 }
             }
             if (at_least_one_continue) {
-                //cout << "** Searcher continuing" << endl;
                 goto prop;
             }
             assert(ok);
@@ -1163,8 +1168,8 @@ lbool Searcher::new_decision()
             //These are not supposed to be changed *at all* by the funciton
             //since it has already been called before
             for (Gaussian* g: gauss_matrixes) {
-                llbool ret = g->find_truths();
-                assert(ret == l_Nothing);
+                gauss_ret ret = g->find_truths();
+                assert(ret == gauss_nothing);
             }
             #endif //USE_GAUSS
 

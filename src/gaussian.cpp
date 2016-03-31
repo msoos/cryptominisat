@@ -1027,11 +1027,11 @@ void Gaussian::disable_if_necessary()
     }
 }
 
-llbool Gaussian::find_truths()
+gauss_ret Gaussian::find_truths()
 {
     disable_if_necessary();
     if (!should_check_gauss(solver->decisionLevel())) {
-        return l_Nothing;
+        return gauss_nothing;
     }
 
     PropBy confl;
@@ -1039,28 +1039,22 @@ llbool Gaussian::find_truths()
     called++;
 
     switch (g) {
-        case conflict: {
+        case conflict:
             useful_confl++;
-            bool ret = solver->handle_conflict<true>(confl);
             if (confl.isClause()) {
-                solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
+                clauses_toclear.push_back(GaussClauseToClear(confl.get_offset(), solver->trail.size()-1));
             }
-
-            if (!ret) {
-                solver->ok = false;
-                return llbool(l_False);
-            }
-            return l_Continue;
-        }
+            found_conflict = confl;
+            return gauss_confl;
 
         case unit_propagation:
             unit_truths++;
             useful_prop++;
-            return l_Continue;
+            return gauss_cont;
 
         case propagation:
             useful_prop++;
-            return l_Continue;
+            return gauss_cont;
 
         case unit_conflict: {
             unit_truths++;
@@ -1070,7 +1064,7 @@ llbool Gaussian::find_truths()
                 cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return llbool(l_False);
+                return gauss_false;
             }
 
             Lit lit = confl.lit2();
@@ -1086,21 +1080,21 @@ llbool Gaussian::find_truths()
                 cout << "(" << matrix_no << ") -> UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return llbool(l_False);
+                return gauss_false;
             }
 
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ") -> setting to correct value" << endl;
             #endif
             solver->enqueue(lit);
-            return l_Continue;
+            return gauss_cont;
         }
 
         case nothing:
             break;
     }
 
-    return l_Nothing;
+    return gauss_nothing;
 }
 
 template<class T>
