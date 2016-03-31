@@ -49,6 +49,7 @@ Gaussian::Gaussian(
     , const uint32_t _matrix_no
 ) :
     solver(_solver)
+    , seen(_solver->seen)
     , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
     , messed_matrix_vars_since_reversal(true)
@@ -696,20 +697,27 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
     const uint32_t curr_dec_level = solver->decisionLevel();
     assert(maxlevel == curr_dec_level);
 
-    uint32_t maxsublevel = 0;
+    uint32_t first_var = std::numeric_limits<uint32_t>::max();
     if (tmp_clause.size() == 2) {
         solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
         Lit lit1 = tmp_clause[0];
         Lit lit2 = tmp_clause[1];
+        seen[lit1.var()] = 1;
+        seen[lit2.var()] = 1;
 
-        const uint32_t sublevel1 = find_sublevel(lit1.var());
-        const uint32_t sublevel2 = find_sublevel(lit2.var());
-        if (sublevel1 > sublevel2) {
-            maxsublevel = sublevel1;
-            std::swap(lit1, lit2);
-        } else {
-            maxsublevel = sublevel2;
+        for (int i = solver->trail.size()-1; i >= 0; i --) {
+            uint32_t v = solver->trail[i].var();
+            if (seen[v]) {
+                first_var = v;
+            }
         }
+
+        if (lit1.var() != first_var) {
+            std::swap(lit1, lit2);
+        }
+
+        seen[lit1.var()] = 0;
+        seen[lit2.var()] = 0;
 
         confl = PropBy(lit1, false);
         solver->failBinLit = lit2;
@@ -724,26 +732,32 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         );
         confl = PropBy(solver->cl_alloc.get_offset(cl));
 
-        uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
-        for (uint32_t i = 0, size = cl->size(); i != size; i++)  {
-            if (solver->varData[(*cl)[i].var()].level == curr_dec_level) {
-                uint32_t tmp = find_sublevel((*cl)[i].var());
-                if (tmp >= maxsublevel) {
-                    maxsublevel = tmp;
-                    maxsublevel_at = i;
-                }
+        uint32_t first_var_at = std::numeric_limits<uint32_t>::max();
+        for(Lit l: tmp_clause) {
+            if (solver->varData[l.var()].level == curr_dec_level) {
+                seen[l.var()] = 1;
             }
         }
-        #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel
-        << " (due to var:" << (*cl)[maxsublevel_at].var()+1 << ")" << endl;
-        #endif
 
-        std::swap((*cl)[maxsublevel_at], (*cl)[1]);
+        for (int i = solver->trail.size()-1; i >= 0; i --) {
+            uint32_t v = solver->trail[i].var();
+            if (seen[v]) {
+                first_var = v;
+            }
+        }
+        for(size_t i = 0; i < tmp_clause.size(); i++) {
+            Lit l = tmp_clause[i];
+            if (l.var() == first_var) {
+                first_var_at = i;
+            }
+            if (solver->varData[l.var()].level == curr_dec_level) {
+                seen[l.var()] = 0;
+            }
+        }
+
+        std::swap((*cl)[first_var_at], (*cl)[1]);
         cl->set_gauss_temp_cl();
     }
-
-    cancel_until_sublevel(maxsublevel+1);
     messed_matrix_vars_since_reversal = true;
 
     return conflict;

@@ -87,6 +87,7 @@ public:
 
 protected:
     Solver* solver;
+    vector<uint16_t>& seen;
 
     //Gauss high-level configuration
     const GaussConf& config;
