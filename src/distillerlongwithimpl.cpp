@@ -490,12 +490,11 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
         }
 
         //Check status
+        offset = clauses[i];
         if (need_to_finish) {
-            clauses[j++] = clauses[i];
             goto copy;
         }
 
-        offset = clauses[i];
         #ifdef USE_GAUS
         solver->cl_alloc.ptr(offset);
         if (cl->_used_in_xor) {
