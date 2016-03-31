@@ -648,6 +648,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             && last_resolved_cl->size() > tmp_learnt_clause_size
             //Must not be a temporary clause
             && !last_resolved_cl->gauss_temp_cl()
+            && !last_resolved_cl->used_in_xor()
         ) {
             last_resolved_cl->recalc_abst_if_needed();
             //Everything in learnt_cl_2 seems to be also in cl
