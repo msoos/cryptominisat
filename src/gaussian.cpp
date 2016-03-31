@@ -672,6 +672,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
     const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver->assigns, col_to_var_original);
     release_assert(!wasUndef);
+    /*
+     * TODO: try out on a cluster
+     *
+     * for(Lit l: tmp_clause) {
+        solver->bump_var_activity<false>(l.var());
+    }*/
 
     #ifdef VERBOSE_DEBUG
     const bool rhs = m.matrix.getVarsetAt(best_row).rhs();
