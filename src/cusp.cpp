@@ -445,7 +445,10 @@ int CUSP::solve()
         << " x 2^" << solCount.hashCount << endl;
     } else {
         assert(false);
-        generate_samples();
+        cout << "UNIGEN not compiled in. Exiting" << endl;
+        exit(-1);
+        //NOT here, in unigen.cpp
+        //generate_samples();
     }
 
     if (conf.verbosity >= 1) {
