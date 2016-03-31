@@ -66,15 +66,7 @@ using std::map;
 void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
 {
     SATSolver* solver = solverToInterrupt;
-    if (!redDumpFname.empty() || !irredDumpFname.empty() || need_clean_exit) {
-        solver->interrupt_asap();
-    } else {
-        if (solver->nVars() > 0) {
-            solver->add_in_partial_solving_stats();
-            solver->print_stats();
-        }
-        _exit(1);
-    }
+    solver->interrupt_asap();
 }
 
 timer_t* mytimer;
@@ -107,7 +99,6 @@ void CUSP::set_up_timer()
     sigemptyset(&sa.sa_mask);
     sigaction(SIGUSR1, &sa, NULL);
     *timerSetFirstTime = true;
-    need_clean_exit = true;
 }
 
 
