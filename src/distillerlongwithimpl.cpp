@@ -496,10 +496,12 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
         }
 
         offset = clauses[i];
+        #ifdef USE_GAUS
         solver->cl_alloc.ptr(offset);
         if (cl->_used_in_xor) {
             goto copy;
         }
+        #endif
 
         if (sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen)) {
             solver->detachClause(offset);
