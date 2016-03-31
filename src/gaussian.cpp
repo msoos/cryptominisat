@@ -712,7 +712,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
             }
         }
 
-        if (lit1.var() != first_var) {
+        if (lit1.var() == first_var) {
             std::swap(lit1, lit2);
         }
 
