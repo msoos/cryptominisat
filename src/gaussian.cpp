@@ -749,6 +749,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
             uint32_t v = solver->trail[i].var();
             if (seen[v]) {
                 first_var = v;
+                break;
             }
         }
         for(size_t i = 0; i < tmp_clause.size(); i++) {
