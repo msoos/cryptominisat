@@ -2183,7 +2183,7 @@ Lit Searcher::pickBranchLit()
     Lit next = lit_Undef;
 
     // Random decision:
-    /*if (conf.random_var_freq > 0) {
+    if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
         if (rand < frq && !order_heap.empty()) {
@@ -2196,7 +2196,7 @@ Lit Searcher::pickBranchLit()
                 next = Lit(next_var, !pickPolarity(next_var));
             }
         }
-    }*/
+    }
 
     // Activity based decision:
     if (next == lit_Undef) {
