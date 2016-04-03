@@ -313,14 +313,10 @@ bool CUSP::ApproxMC(SATCount& count)
     vector<uint64_t> numHashList;
     vector<int64_t> numCountList;
     vector<Lit> assumps;
-    uint32_t repeatTry = 0;
     for (uint32_t j = 0; j < tApproxMC; j++) {
         uint64_t hashCount;
+        uint32_t repeatTry = 0;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
-            if (cpuTimeTotal() - startTime > totalTimeout - 3000) {
-                cout << "Timeout in ApproxMC()" << endl;
-                return false;
-            }
             double myTime = cpuTimeTotal();
             currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
@@ -347,7 +343,6 @@ bool CUSP::ApproxMC(SATCount& count)
                     //this set of hashes does not work, go up
                     AddHash(hashCount + 1, assumps);
                     solver->simplify(&assumps);
-                    repeatTry = 0;
                     cout << "Timeout, moving up" << endl;
                 }
                 continue;
