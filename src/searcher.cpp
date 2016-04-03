@@ -1659,6 +1659,7 @@ lbool Searcher::burst_search()
     //Save old config
     const double backup_rand = conf.random_var_freq;
     const PolarityMode backup_polar_mode = conf.polarity_mode;
+    Restart backup_restart_type = params.rest_type;
     double backup_var_inc = var_inc;
     double backup_var_decay = var_decay;
 
@@ -1675,8 +1676,9 @@ lbool Searcher::burst_search()
     //Restore config
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
-    assert(var_decay == backup_var_decay);
+    params.rest_type = backup_restart_type;
     assert(var_inc == backup_var_inc);
+    assert(var_decay == backup_var_decay);
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
