@@ -2068,10 +2068,11 @@ void Solver::print_norm_stats(const double cpu_time) const
         , "% time"
     );
 
-    prober->get_stats().print_short(this, 0, 0);
-
     //Failed lit stats
-    if (conf.doProbe) {
+    if (conf.doProbe
+        && prober
+    ) {
+        prober->get_stats().print_short(this, 0, 0);
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
