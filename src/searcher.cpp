@@ -1244,7 +1244,7 @@ void Searcher::check_need_restart()
             params.needToStopSearch = true;
         }
     }
-    if (params.rest_type != Restart::never
+    if (conf.restartType == Restart::glue_geom
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;
@@ -2051,9 +2051,14 @@ lbool Searcher::solve(
         lastRestartConfl = sumConflicts();
         params.clear();
         params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
+        if (params.rest_type == Restart::glue_geom) {
+            params.rest_type = Restart::geom;
+        }
         status = search<false>();
 
-        if (max_confl_this_phase <= 0) {
+        if (max_confl_this_phase <= 0
+            && conf.restartType == Restart::glue_geom
+        ) {
             if (params.rest_type == Restart::geom) {
                 params.rest_type = Restart::glue;
             } else {
@@ -2078,7 +2083,7 @@ lbool Searcher::solve(
                     release_assert(false);
             }
             if (conf.verbosity >= 3) {
-                cout << "Phase is now " << getNameOfRestartType(params.rest_type)
+                cout << "Phase is now " << std::setw(10) << getNameOfRestartType(params.rest_type)
                 << " this phase size: " << max_confl_this_phase
                 << " global phase size: " << max_confl_phase << endl;
             }

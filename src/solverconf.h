@@ -65,6 +65,7 @@ enum class PolarityMode {
 enum class Restart {
     glue
     , geom
+    , glue_geom
     , luby
     , never
 };

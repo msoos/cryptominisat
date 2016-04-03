@@ -52,7 +52,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , restart_first(100)
         , restart_inc(1.1)
         , burst_search_len(300)
-        , restartType(Restart::geom)
+        , restartType(Restart::glue_geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
