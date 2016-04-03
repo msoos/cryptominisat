@@ -1391,6 +1391,8 @@ lbool Solver::solve()
 
     handle_found_solution(status);
     unfill_assumptions_set_from(assumptions);
+    conf.maxConfl = std::numeric_limits<long>::max();
+    conf.maxTime = std::numeric_limits<double>::max();
     return status;
 }
 

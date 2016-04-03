@@ -67,7 +67,7 @@ namespace CMSat {
         unsigned long get_sql_id() const;
 
         //Setup
-        void set_max_confl(int64_t max_confl = -1);
+        void set_max_confl(int64_t max_confl);
         void set_verbosity(unsigned verbosity = 0);
         void set_default_polarity(bool polarity);
         void set_no_simplify();

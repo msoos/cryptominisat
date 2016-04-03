@@ -369,7 +369,7 @@ DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
   for (size_t i = 0; i < data->solvers.size(); ++i) {
     Solver& s = *data->solvers[i];
     if (max_confl >= 0) {
-      s.conf.maxConfl = max_confl;
+      s.conf.maxConfl = s.get_stats().conflStats.numConflicts + max_confl;
     }
   }
 }
