@@ -279,6 +279,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     uint64_t solutions = 0;
     lbool ret = l_True;
     while (solutions < maxSolutions && ret == l_True) {
+        //solver->set_max_confl(10*1000*1000);
         ret = solver->solve(&new_assumps);
         solutions++;
         if (ret == l_True && solutions < maxSolutions) {
