@@ -72,8 +72,8 @@ class Heap {
     void percolateDown(int i)
     {
         int x = heap[i];
-        while (left(i) < heap.size()) {
-            int child = right(i) < heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
+        while (left(i) < (int)heap.size()) {
+            int child = right(i) < (int)heap.size() && lt(heap[right(i)], heap[left(i)]) ? right(i) : left(i);
             if (!lt(heap[child], x)) {
                 break;
             }
@@ -99,11 +99,11 @@ public:
     }
     bool inHeap    (int n)     const
     {
-        return n < indices.size() && indices[n] >= 0;
+        return n < (int)indices.size() && indices[n] >= 0;
     }
     int  operator[](int index) const
     {
-        assert(index < heap.size());
+        assert(index < (int)heap.size());
         return heap[index];
     }
     int random_element(MiniSatRnd& rnd)
@@ -165,7 +165,7 @@ public:
     // Rebuild the heap from scratch, using the elements in 'ns':
     void build(vec<uint32_t>& ns)
     {
-        for (int i = 0; i < heap.size(); i++) {
+        for (int i = 0; i < (int)heap.size(); i++) {
             indices[heap[i]] = -1;
         }
         heap.clear();
@@ -182,7 +182,7 @@ public:
 
     void clear(bool dealloc = false)
     {
-        for (int i = 0; i < heap.size(); i++) {
+        for (int i = 0; i < (int)heap.size(); i++) {
             indices[heap[i]] = -1;
         }
         heap.clear(dealloc);

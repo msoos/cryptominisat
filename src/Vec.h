@@ -62,12 +62,12 @@ private:
     uint32_t cap;
 
     // Don't allow copying (error prone):
-    vec<T>&  operator = (vec<T>& other)
+    vec<T>&  operator = (vec<T>& /*other*/)
     {
         assert(0);
         return *this;
     }
-    vec        (vec<T>& other)
+    vec      (vec<T>& /*other*/)
     {
         assert(0);
     }
@@ -101,13 +101,13 @@ public:
     }
 
     // Pouint32_ter to first element:
-    operator T*       (void)
+    /*operator T*  ()
     {
         return data;
-    }
+    }*/
 
     // Size operations:
-    uint32_t      size     (void) const
+    uint32_t      size() const
     {
         return sz;
     }
@@ -123,7 +123,7 @@ public:
         assert(nelems <= sz);
         sz -= nelems;
     }
-    uint32_t      capacity (void) const
+    uint32_t      capacity () const
     {
         return cap;
     }
@@ -133,7 +133,7 @@ public:
     void     clear    (bool dealloc = false);
 
     // Stack interface:
-    void     push  (void)
+    void     push  ()
     {
         if (sz == cap) {
             capacity(sz + 1);
@@ -153,7 +153,7 @@ public:
         assert(sz < cap);
         data[sz++] = elem;
     }
-    void     pop   (void)
+    void     pop   ()
     {
         assert(sz > 0);
         sz--, data[sz].~T();
@@ -163,11 +163,11 @@ public:
     // happen given the way capacities are calculated (below). Essentially, all capacities are
     // even, but INT_MAX is odd.
 
-    const T& last  (void) const
+    const T& last  () const
     {
         return data[sz - 1];
     }
-    T&       last  (void)
+    T&       last  ()
     {
         return data[sz - 1];
     }
@@ -244,10 +244,10 @@ public:
 template<class T>
 void vec<T>::capacity(int32_t min_cap)
 {
-    if (cap >= min_cap) {
+    if ((int32_t)cap >= min_cap) {
         return;
     }
-    int32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
     if (add > std::numeric_limits<uint32_t>::max() - cap
         || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
             && errno == ENOMEM)

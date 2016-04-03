@@ -55,6 +55,9 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::luby:
             return "luby";
 
+        case Restart::glue_geom:
+            return "switch-glue-geom";
+
         case Restart::never:
             return "never restart";
     }
