@@ -212,7 +212,7 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, size_t glue);
-        void  attach_and_enqueue_learnt_clause(Clause* cl);
+        void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
         void  add_otf_subsume_long_clauses();
@@ -248,6 +248,7 @@ class Searcher : public HyperEngine
         };
         SearchParams params;
         vector<Lit> learnt_clause;
+        vector<Lit> decision_clause;
         template<bool update_bogoprops>
         Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating

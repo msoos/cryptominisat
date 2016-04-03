@@ -179,6 +179,7 @@ protected:
         , const Lit lit2
         , const Lit lit3
         , const bool red
+        , const bool checkUnassignedFirst = true
     );
     virtual void detach_modified_clause(
         const Lit lit1

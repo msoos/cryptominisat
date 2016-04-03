@@ -185,6 +185,7 @@ class Solver : public Searcher
             , const Lit lit2
             , const Lit lit3
             , const bool red
+            , const bool checkUnassignedFirst = true
         ) override;
         void detach_tri_clause(
             Lit lit1

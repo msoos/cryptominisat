@@ -1414,7 +1414,7 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     }
 }
 
-void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
+void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
 {
     switch (learnt_clause.size()) {
         case 0:
@@ -1422,7 +1422,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 1:
             //Unitary learnt
             stats.learntUnits++;
-            enqueue(learnt_clause[0]);
+            if (enq) enqueue(learnt_clause[0]);
             assert(decisionLevel() == 0);
 
             #ifdef STATS_NEEDED
@@ -1434,8 +1434,8 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
             //Binary learnt
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
-            solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1], true));
+            solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, enq);
+            if (enq) enqueue(learnt_clause[0], PropBy(learnt_clause[1], true));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
@@ -1445,8 +1445,8 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         case 3:
             //3-long learnt
             stats.learntTris++;
-            solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true);
-            enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
+            solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true, enq);
+            if (enq) enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
 
             #ifdef STATS_NEEDED
             propStats.propsTriRed++;
@@ -1456,8 +1456,8 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl)
         default:
             //Long learnt
             stats.learntLongs++;
-            solver->attachClause(*cl);
-            enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
+            solver->attachClause(*cl, enq);
+            if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
             bumpClauseAct(cl);
 
             #ifdef STATS_NEEDED
@@ -1611,6 +1611,18 @@ bool Searcher::handle_conflict(const PropBy confl)
     );
     print_learnt_clause();
 
+
+    decision_clause.clear();
+    if (!update_bogoprops
+        && learnt_clause.size() > 50 //TODO MAGIC parameter
+        && decisionLevel() <= 9
+        && decisionLevel() >= 2
+    ) {
+        for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
+            decision_clause.push_back(~trail[trail_lim[i]]);
+        }
+    }
+
     if (!update_bogoprops) {
         update_history_stats(backtrack_level, glue);
     }
@@ -1624,6 +1636,22 @@ bool Searcher::handle_conflict(const PropBy confl)
     cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
+    if (!update_bogoprops
+        && decision_clause.size() > 0
+    ) {
+        int i = decision_clause.size();
+        while(--i >= 0) {
+            if (value(decision_clause[i]) == l_True
+                || value(decision_clause[i]) == l_Undef
+            ) {
+                break;
+            }
+        }
+        std::swap(decision_clause[0], decision_clause[i]);
+        learnt_clause = decision_clause;
+        cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), decisionLevel());
+        attach_and_enqueue_learnt_clause(cl, false);
+    }
 
     if (!update_bogoprops) {
         varDecayActivity();

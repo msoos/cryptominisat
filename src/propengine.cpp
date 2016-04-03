@@ -83,14 +83,20 @@ void PropEngine::attach_tri_clause(
     , Lit lit2
     , Lit lit3
     , const bool red
+    , const bool
+    #ifdef DEBUG_ATTACH
+    checkUnassignedFirst
+    #endif
 ) {
     #ifdef DEBUG_ATTACH
-    assert(lit1.var() != lit2.var());
-    assert(value(lit1.var()) == l_Undef);
-    assert(value(lit2) == l_Undef || value(lit2) == l_False);
+    if (checkUnassignedFirst) {
+        assert(lit1.var() != lit2.var());
+        assert(value(lit1.var()) == l_Undef);
+        assert(value(lit2) == l_Undef || value(lit2) == l_False);
 
-    assert(varData[lit1.var()].removed == Removed::none);
-    assert(varData[lit2.var()].removed == Removed::none);
+        assert(varData[lit1.var()].removed == Removed::none);
+        assert(varData[lit2.var()].removed == Removed::none);
+    }
     #endif //DEBUG_ATTACH
 
     //Order them

@@ -515,6 +515,7 @@ void Solver::attach_tri_clause(
     , const Lit lit2
     , const Lit lit3
     , const bool red
+    , const bool checkUnassignedFirst
 ) {
     #if defined(DRAT_DEBUG) && defined(DRAT)
     if (drat) {
@@ -530,7 +531,7 @@ void Solver::attach_tri_clause(
     }
 
     //Call Solver's function for heavy-lifting
-    PropEngine::attach_tri_clause(lit1, lit2, lit3, red);
+    PropEngine::attach_tri_clause(lit1, lit2, lit3, red, checkUnassignedFirst);
 }
 
 void Solver::attach_bin_clause(
