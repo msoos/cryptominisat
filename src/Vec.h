@@ -62,12 +62,12 @@ private:
     uint32_t cap;
 
     // Don't allow copying (error prone):
-    vec<T>&  operator = (vec<T>& other)
+    vec<T>&  operator = (vec<T>& /*other*/)
     {
         assert(0);
         return *this;
     }
-    vec        (vec<T>& other)
+    vec        (vec<T>& /*other*/)
     {
         assert(0);
     }
