@@ -501,7 +501,7 @@ inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
 
 inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 {
-    for(const watch_subarray_const ws: watches) {
+    for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.isIdx());
             if (w.isBin() || w.isTri()) {

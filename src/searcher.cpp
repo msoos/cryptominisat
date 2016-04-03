@@ -1059,7 +1059,9 @@ lbool Searcher::search()
             stats.conflStats.update(lastConflictCausedBy);
             #endif
 
+            #ifdef USE_GAUSS
             confl:
+            #endif
             print_restart_stat();
             if (!update_bogoprops) {
                 #ifdef STATS_NEEDED
@@ -2096,7 +2098,7 @@ lbool Searcher::solve(
                     max_confl_this_phase = 2*max_confl_phase;
                     break;
 
-                case Restart::never:
+                default:
                     release_assert(false);
             }
             if (conf.verbosity >= 3) {
@@ -2237,13 +2239,12 @@ Lit Searcher::pickBranchLit()
     }
 
     //Flip polaritiy if need be
-    if (false
-        &&mtrand.randInt(50) == 1
+    /*if (mtrand.randInt(50) == 1
         && next != lit_Undef
     ) {
         next ^= true;
         stats.decisionFlippedPolar++;
-    }
+    }*/
 
     //No vars in heap: solution found
     #ifdef SLOW_DEBUG
@@ -3203,7 +3204,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         read_tri_cls(f, false);
         read_tri_cls(f, true);
         read_long_cls(f, false);
-        for(auto& lredcls: longRedCls) {
+        for(size_t i = 0; i < longRedCls.size(); i++) {
             read_long_cls(f, true);
         }
     }
