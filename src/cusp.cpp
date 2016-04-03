@@ -385,8 +385,8 @@ bool CUSP::ApproxMC(SATCount& count)
 int CUSP::solve()
 {
     seed_random_engine();
-    conf.reconfigure_at = 0;
-    conf.reconfigure_val = 15;
+    //conf.reconfigure_at = 0;
+    //conf.reconfigure_val = 15;
     conf.gaussconf.autodisable = false;
 
     openLogFile();
