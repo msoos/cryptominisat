@@ -181,7 +181,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, occ-gates, occ-xor,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, "//occ-gates,"
+            "occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
             #ifdef USE_GAUSS
