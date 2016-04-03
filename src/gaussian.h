@@ -155,10 +155,6 @@ protected:
     gaussian_ret handle_matrix_prop(matrixset& m, const uint32_t row); // Handle matrix propagation at row 'row'
     vector<Lit> tmp_clause;
 
-    //propagation&conflict handling
-    void cancel_until_sublevel(const uint32_t until_sublevel); // cancels until sublevel 'until_sublevel'. The var 'until_sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
-    uint32_t find_sublevel(const uint32_t v) const; // find the sublevel (i.e. trail[X]) of a given variable
-
     //helper functions
     bool at_first_init() const;
     bool should_check_gauss(const uint32_t decisionlevel) const;

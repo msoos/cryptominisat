@@ -825,51 +825,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
     return ret;
 }
 
-uint32_t Gaussian::find_sublevel(const uint32_t v) const
-{
-    for (int i = solver->trail.size()-1; i >= 0; i --)
-        if (solver->trail[i].var() == v) return i;
-
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Oooops! uint32_t " << v+1 << " does not have a sublevel!!"
-    << "(so it must be undefined)" << endl;
-    #endif
-
-    assert(false);
-    return 0;
-}
-
-void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Canceling until sublevel " << until_sublevel << endl;
-    #endif
-
-    for (auto gauss: solver->gauss_matrixes) {
-        if (gauss != this) {
-            gauss->canceling(until_sublevel);
-        }
-    }
-
-    for (int64_t sublevel = (int64_t)solver->trail.size()-1
-        ; sublevel >= (int64_t)until_sublevel
-        ; sublevel--
-    ) {
-        const uint32_t var  = solver->trail[sublevel].var();
-        #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
-        #endif
-
-        solver->assigns[var] = l_Undef;
-        solver->insertVarOrder(var);
-    }
-    solver->trail.resize(until_sublevel);
-
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Canceling sublevel finished." << endl;
-    #endif
-}
-
 void Gaussian::analyse_confl(
     const matrixset& m
     , const uint32_t row
