@@ -244,10 +244,10 @@ public:
 template<class T>
 void vec<T>::capacity(int32_t min_cap)
 {
-    if (cap >= min_cap) {
+    if ((int32_t)cap >= min_cap) {
         return;
     }
-    int32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
     if (add > std::numeric_limits<uint32_t>::max() - cap
         || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
             && errno == ENOMEM)
