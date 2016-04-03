@@ -108,6 +108,7 @@ class Searcher : public HyperEngine
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
+        vector<double> activities;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;
@@ -286,7 +287,6 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        vector<double> activities;
         double var_inc;
         void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
 
@@ -295,10 +295,14 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_cache_actual;
         const SearchStats& get_stats() const;
         size_t mem_used() const;
-        void restore_order_heap();
 
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
+        void rebuildOrderHeap();
+        void clear_order_heap()
+        {
+            order_heap.clear();
+        }
 
     private:
         //////////////
@@ -395,7 +399,6 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
-        void rebuildOrderHeap();
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);

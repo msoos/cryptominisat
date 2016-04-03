@@ -1815,19 +1815,6 @@ void Searcher::print_restart_stat()
     }
 }
 
-void Searcher::restore_order_heap()
-{
-    order_heap.clear();
-    for(size_t var = 0; var < nVars(); var++) {
-        if (solver->varData[var].removed == Removed::none
-            && value(var) == l_Undef
-        ) {
-            insertVarOrder(var);
-        }
-    }
-    assert(order_heap.heap_property());
-}
-
 void Searcher::reset_temp_cl_num()
 {
     conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
@@ -1880,7 +1867,7 @@ bool Searcher::clean_clauses_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         cl_alloc.consolidate(solver);
-        rebuildOrderHeap();
+        rebuildOrderHeap(); //TODO only filter is needed!
         sortWatched();
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }

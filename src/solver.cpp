@@ -1080,7 +1080,6 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
             , time_used
         );
     }
-    restore_order_heap(); //TODO should be 'filter' we don't need to rebuild
     //print_mem_stats();
 }
 
@@ -1856,6 +1855,7 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
 
     //remove_xors();
+    clear_order_heap();
 
     if (conf.verbosity >= 6) {
         cout
@@ -1908,7 +1908,7 @@ lbool Solver::simplify_problem(const bool startup)
     } else {
         check_stats();
         check_implicit_propagated();
-        restore_order_heap();
+        rebuildOrderHeap();
         reset_reason_levels_of_vars_to_zero();
 
         return l_Undef;
