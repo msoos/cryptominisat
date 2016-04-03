@@ -1561,8 +1561,8 @@ lbool Solver::iterate_until_solved()
         clear_gauss();
 
         //Check for effectiveness
-        check_recursive_minimization_effectiveness(status);
-        check_minimization_effectiveness(status);
+        //check_recursive_minimization_effectiveness(status);
+        //check_minimization_effectiveness(status);
 
         //Update stats
         sumSearchStats += Searcher::get_stats();
