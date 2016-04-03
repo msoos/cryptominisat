@@ -1909,17 +1909,8 @@ lbool Solver::simplify_problem(const bool startup)
         check_stats();
         check_implicit_propagated();
         rebuildOrderHeap();
-        reset_reason_levels_of_vars_to_zero();
 
         return l_Undef;
-    }
-}
-
-void Solver::reset_reason_levels_of_vars_to_zero()
-{
-    assert(decisionLevel() == 0);
-    for(VarData& dat: varData) {
-        dat.level = 0;
     }
 }
 
