@@ -963,9 +963,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
 
 void Gaussian::canceling(const uint32_t sublevel)
 {
-    if (disabled)
-        return;
-
     uint32_t rem = 0;
     for (int i = (int)clauses_toclear.size()-1
         ; i >= 0 && clauses_toclear[i].sublevel >= sublevel
@@ -976,6 +973,13 @@ void Gaussian::canceling(const uint32_t sublevel)
     }
     clauses_toclear.resize(clauses_toclear.size()-rem);
 
+    //We cannot check for 'disabled' above this point --we must cancel
+    //the clauses at the right time
+    if (disabled) {
+        return;
+    }
+
+    //Check if nothing has been messed with, i.e. if matrix is still intact
     if (messed_matrix_vars_since_reversal)
         return;
 
@@ -994,11 +998,13 @@ void Gaussian::canceling(const uint32_t sublevel)
 
 void Gaussian::disable_if_necessary()
 {
-    if (config.autodisable
+    if (!disabled
+        && config.autodisable
         && called > 50
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
     {
-        canceling(0);
+        //NOTE: we cannot call "cancelling(0);" here or we will have
+        //dangling PropBy values.
         disabled = true;
     }
 }
