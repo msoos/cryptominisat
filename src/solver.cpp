@@ -1659,7 +1659,7 @@ bool Solver::execute_inprocess_strategy(
                     << occ_strategy_tokens << "'\n";
                 }
                 occsimplifier->simplify(startup, occ_strategy_tokens);
-                if (occ_strategy_tokens == "occ-gauss,") {
+                if (ok && occ_strategy_tokens == "occ-gauss,") {
                     #ifdef USE_GAUSS
                     MatrixFinder finder(this);
                     finder.findMatrixes();
