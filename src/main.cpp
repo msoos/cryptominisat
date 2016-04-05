@@ -41,7 +41,6 @@ THE SOFTWARE.
 #include <set>
 #include <fstream>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
 #include <list>
 #include <array>

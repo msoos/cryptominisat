@@ -22,8 +22,10 @@ THE SOFTWARE.
 */
 
 #include "signalcode.h"
-#include <unistd.h>
 #include "cryptominisat4/cryptominisat.h"
+#if not defined (_MSC_VER)
+#include <unistd.h>
+#endif
 
 
 using namespace CMSat;
@@ -58,6 +60,10 @@ void SIGINT_handler(int)
             << "No clauses or variables were put into the solver, exiting without stats"
             << endl;
         }
+        #if defined (_MSC_VER)
+        exit(1);
+        #else
         _exit(1);
+        #endif
     }
 }
