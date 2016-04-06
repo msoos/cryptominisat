@@ -153,16 +153,16 @@ void Gaussian::init()
 
 struct HeapSorter
 {
-    HeapSorter(vector<double>& _activities) :
+    HeapSorter(vector<std::array<double,2> >& _activities) :
         activities(_activities)
     {}
 
     //higher activity first
     bool operator()(uint32_t a, uint32_t b) {
-        return activities[a] < activities[b];
+        return activities[a][0] < activities[b][0];
     }
 
-    const vector<double>& activities;
+    const vector<std::array<double,2> >& activities;
 };
 
 uint32_t Gaussian::select_columnorder(
@@ -208,7 +208,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_gg));
 
     for(uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);

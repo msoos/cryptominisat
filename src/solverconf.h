@@ -146,8 +146,10 @@ class SolverConf
 
         //Variable activities
         double  var_inc_start;
-        double  var_decay_start;
-        double  var_decay_max;
+        double  var_decay_start_glue;
+        double  var_decay_max_glue;
+        double  var_decay_geom;
+
         double random_var_freq;
         PolarityMode polarity_mode;
 

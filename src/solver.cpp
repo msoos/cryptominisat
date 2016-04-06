@@ -3154,7 +3154,8 @@ void Solver::reconfigure(int val)
 
         case 8: {
             conf.glue_must_keep_clause_if_below_or_eq = 7;
-            conf.var_decay_max = 0.98; //more 'fast' in adjusting activities
+            conf.var_decay_max_glue = 0.98; //more 'fast' in adjusting activities
+            update_var_decay();
             break;
         }
 
@@ -3204,7 +3205,8 @@ void Solver::reconfigure(int val)
             conf.updateVarElimComplexityOTF = 1;
             conf.more_otf_shrink_with_stamp = 0;
             conf.watch_cache_stamp_based_str_time_limitM = 37;
-            conf.var_decay_max = 0.9565818549080972;
+            conf.var_decay_max_glue = 0.9565818549080972;
+            update_var_decay();
             reset_temp_cl_num();
             break;
         }
@@ -3217,7 +3219,7 @@ void Solver::reconfigure(int val)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
-            conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
+            conf.var_decay_max_glue = 0.90; //more 'slow' in adjusting activities
             update_var_decay();
             reset_temp_cl_num();
             break;
@@ -3231,7 +3233,8 @@ void Solver::reconfigure(int val)
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
             conf.max_temporary_learnt_clauses = 10000;
-            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
+            conf.var_decay_max_glue = 0.99; //more 'fast' in adjusting activities
+            update_var_decay();
             break;
         }
 

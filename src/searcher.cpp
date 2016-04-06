@@ -64,11 +64,14 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         , solver(_solver)
-        , order_heap_glue(VarOrderLt(activ_glue))
+        , order_heap_glue(VarOrderLt<0>(activ_gg))
+        , order_heap_geom(VarOrderLt<1>(activ_gg))
         , cla_inc(1)
 {
-    var_decay = conf.var_decay_start;
-    var_inc = conf.var_inc_start;
+    var_decay[0] = conf.var_decay_start_glue;
+    var_decay[1] = conf.var_decay_geom;
+    var_inc[0] = conf.var_inc_start;
+    var_inc[1] = conf.var_inc_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
@@ -85,7 +88,7 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    activ_glue.push_back(0);
+    activ_gg.push_back({0.0, 0.0});
     insertVarOrder((int)nVars()-1);
 }
 
@@ -93,7 +96,7 @@ void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
 
-    activ_glue.resize(activ_glue.size() + n, 0);
+    activ_gg.resize(activ_gg.size() + n, {0.0, 0.0});
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
     }
@@ -102,16 +105,16 @@ void Searcher::new_vars(size_t n)
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
-    activ_glue.resize(nVars());
-    activ_glue.shrink_to_fit();
+    activ_gg.resize(nVars());
+    activ_gg.shrink_to_fit();
 }
 
 void Searcher::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    updateArray(activ_glue, interToOuter);
-    //activ_glue are not updated, they are taken from backup, which is updated
+    updateArray(activ_gg, interToOuter);
+    //activ_gg are not updated, they are taken from backup, which is updated
 
     renumber_assumptions(outerToInter);
 }
@@ -130,7 +133,7 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    antec_data.vsids_all_incoming_vars.push(activ_glue[lit.var()]/var_inc);
+    antec_data.vsids_all_incoming_vars.push(activ_gg[lit.var()][0]/var_inc[0]);
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -618,7 +621,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            antec_data.vsids_of_resolving_literals.push(activ_glue[p.var()]/var_inc);
+            antec_data.vsids_of_resolving_literals.push(activ_gg[p.var()][0]/var_inc[0]);
             if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
@@ -780,7 +783,7 @@ Clause* Searcher::analyze_conflict(
     implied_by_learnts.clear();
 
     for(const Lit l: learnt_clause) {
-        antec_data.vsids_vars.push(activ_glue[l.var()]/var_inc);
+        antec_data.vsids_vars.push(activ_gg[l.var()][0]/var_inc[0]);
     }
 
     return otf_subsume_last_resolved_clause(last_resolved_cl);
@@ -1048,11 +1051,12 @@ lbool Searcher::search()
         || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
-            if (((stats.conflStats.numConflicts & 0xfff) == 0xfff)
-                && var_decay < conf.var_decay_max
-                && !update_bogoprops
-            ) {
-                var_decay += 0.01;
+            if ((stats.conflStats.numConflicts & 0xfff) == 0xfff) {
+                if (var_decay[0] < conf.var_decay_max_glue
+                    && !update_bogoprops
+                ) {
+                    var_decay[0] += 0.01;
+                }
             }
 
             #ifdef STATS_NEEDED
@@ -1189,7 +1193,11 @@ lbool Searcher::new_decision()
 
     if (next == lit_Undef) {
         // New variable decision:
-        next = pickBranchLit();
+        if (params.rest_type == Restart::geom) {
+            next = pickBranchLit(order_heap_geom);
+        } else {
+            next = pickBranchLit(order_heap_glue);
+        }
 
         //No decision taken, because it's SAT
         if (next == lit_Undef)
@@ -1690,8 +1698,8 @@ lbool Searcher::burst_search()
     const double backup_rand = conf.random_var_freq;
     const PolarityMode backup_polar_mode = conf.polarity_mode;
     Restart backup_restart_type = params.rest_type;
-    double backup_var_inc = var_inc;
-    double backup_var_decay = var_decay;
+    std::array<double,2> backup_var_inc = var_inc;
+    std::array<double,2> backup_var_decay = var_decay;
 
     //Set burst config
     conf.random_var_freq = 1;
@@ -1918,6 +1926,7 @@ void Searcher::rebuildOrderHeap()
         }
     }
     order_heap_glue.build(vs);
+    order_heap_geom.build(vs);
 }
 
 //NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
@@ -2061,6 +2070,7 @@ lbool Searcher::solve(
     ) {
         #ifdef SLOW_DEBUG
         assert(order_heap_glue.heap_property());
+        assert(order_heap_geom.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
 
@@ -2198,7 +2208,8 @@ void Searcher::print_iteration_solving_stats()
     }
 }
 
-Lit Searcher::pickBranchLit()
+template<class T>
+Lit Searcher::pickBranchLit(T& heap)
 {
     #ifdef VERBOSE_DEBUG
     cout << "picking decision variable, dec. level: " << decisionLevel() << " ";
@@ -2210,8 +2221,8 @@ Lit Searcher::pickBranchLit()
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
-        if (rand < frq && !order_heap_glue.empty()) {
-            const uint32_t next_var = order_heap_glue.random_element(mtrand);
+        if (rand < frq && !heap.empty()) {
+            const uint32_t next_var = heap.random_element(mtrand);
 
             if (value(next_var) == l_Undef
                 && solver->varData[next_var].removed == Removed::none
@@ -2229,11 +2240,11 @@ Lit Searcher::pickBranchLit()
           || value(next_var) != l_Undef
         ) {
             //There is no more to branch on. Satisfying assignment found.
-            if (order_heap_glue.empty()) {
+            if (heap.empty()) {
                 next_var = var_Undef;
                 return lit_Undef;
             }
-            next_var = order_heap_glue.removeMin();
+            next_var = heap.removeMin();
         }
         next = Lit(next_var, !pickPolarity(next_var));
     }
@@ -2811,8 +2822,9 @@ size_t Searcher::mem_used() const
     size_t mem = HyperEngine::mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
-    mem += activ_glue.capacity()*sizeof(uint32_t);
+    mem += activ_gg.capacity()*sizeof(uint32_t);
     mem += order_heap_glue.mem_used();
+    mem += order_heap_geom.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -2848,13 +2860,18 @@ size_t Searcher::mem_used() const
         << endl;
 
         cout
-        << "c activ_glue bytes: "
-        << activ_glue.capacity()*sizeof(uint32_t)
+        << "c activ_gg bytes: "
+        << activ_gg.capacity()*sizeof(uint32_t)
         << endl;
 
         cout
         << "c order_heap_glue bytes: "
         << order_heap_glue.mem_used()
+        << endl;
+
+        cout
+        << "c order_heap_geom bytes: "
+        << order_heap_geom.mem_used()
         << endl;
 
         cout
@@ -2939,7 +2956,9 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
 
 inline void Searcher::varDecayActivity()
 {
-    var_inc *= (1.0 / var_decay);
+    for(int i = 0; i < var_inc.size(); i++) {
+        var_inc[i] *= (1.0 / var_decay[i]);
+    }
 }
 
 template<bool update_bogoprops>
@@ -2949,39 +2968,54 @@ inline void Searcher::bump_var_activity(uint32_t var)
         return;
     }
 
-    activ_glue[var] += var_inc;
-
-    #ifdef SLOW_DEBUG
-    bool rescaled = false;
-    #endif
-    if (activ_glue[var] > 1e100) {
-        // Rescale:
-        for (double& act : activ_glue) {
-            act *= 1e-100;
-        }
+    for(int i = 0; i < 2; i++) {
         #ifdef SLOW_DEBUG
-        rescaled = true;
+        bool rescaled = false;
         #endif
 
-        //Reset var_inc
-        var_inc *= 1e-100;
-    }
+        activ_gg[var][i] += var_inc[i];
+        if (activ_gg[var][i] > 1e100) {
+            // Rescale:
+            for (auto& act : activ_gg) {
+                act[i] *= 1e-100;
+            }
+            #ifdef SLOW_DEBUG
+            rescaled = true;
+            #endif
 
-    // Update order_heap with respect to new activity:
-    if (order_heap_glue.inHeap(var)) {
-        order_heap_glue.decrease(var);
-    }
+            //Reset var_inc
+            var_inc[i] *= 1e-100;
+        }
+        if (i == 0) {
+            // Update order_heap with respect to new activity:
+            if (order_heap_glue.inHeap(var)) {
+                order_heap_glue.decrease(var);
+            }
 
-    #ifdef SLOW_DEBUG
-    if (rescaled) {
-        assert(order_heap_glue.heap_property());
+            #ifdef SLOW_DEBUG
+            if (rescaled) {
+                assert(order_heap_glue.heap_property());
+            }
+            #endif
+        } else {
+            // Update order_heap with respect to new activity:
+            if (order_heap_geom.inHeap(var)) {
+                order_heap_geom.decrease(var);
+            }
+
+            #ifdef SLOW_DEBUG
+            if (rescaled) {
+                assert(order_heap_geom.heap_property());
+            }
+            #endif
+        }
     }
-    #endif
 }
 
 void Searcher::update_var_decay()
 {
-    var_decay = conf.var_decay_max;
+    var_decay[0] = conf.var_decay_max_glue;
+    var_decay[1] = conf.var_decay_geom;
 }
 
 void Searcher::consolidate_watches()
@@ -3164,7 +3198,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     assert(decisionLevel() == 0);
     PropEngine::save_state(f);
 
-    f.put_vector(activ_glue);
+    f.put_vector(activ_gg);
     f.put_vector(model);
     f.put_vector(conflict);
 
@@ -3186,7 +3220,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     assert(decisionLevel() == 0);
     PropEngine::load_state(f);
 
-    f.get_vector(activ_glue);
+    f.get_vector(activ_gg);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef

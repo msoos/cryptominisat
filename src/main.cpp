@@ -324,17 +324,17 @@ void Main::add_supported_options()
     std::ostringstream s_random_var_freq;
     s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
 
-    std::ostringstream s_var_decay_start;
-    s_var_decay_start << std::setprecision(5) << conf.var_decay_start;
+    std::ostringstream s_var_decay_start_glue;
+    s_var_decay_start_glue << std::setprecision(5) << conf.var_decay_start_glue;
 
-    std::ostringstream s_var_decay_max;
-    s_var_decay_max << std::setprecision(5) << conf.var_decay_max;
+    std::ostringstream s_var_decay_max_glue;
+    s_var_decay_max_glue << std::setprecision(5) << conf.var_decay_max_glue;
 
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start, s_var_decay_start.str())
+    ("vardecaystartglue", po::value(&conf.var_decay_start_glue)->default_value(conf.var_decay_start_glue, s_var_decay_start_glue.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max, s_var_decay_max.str())
+    ("vardecaymaxglue", po::value(&conf.var_decay_max_glue)->default_value(conf.var_decay_max_glue, s_var_decay_max_glue.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
