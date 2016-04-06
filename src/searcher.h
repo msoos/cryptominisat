@@ -302,7 +302,7 @@ class Searcher : public HyperEngine
         void rebuildOrderHeap();
         void clear_order_heap()
         {
-            order_heap.clear();
+            order_heap_glue.clear();
         }
 
     private:
@@ -378,7 +378,7 @@ class Searcher : public HyperEngine
 
         ///activity-ordered heap of decision variables.
         ///NOT VALID WHILE SIMPLIFYING
-        Heap<VarOrderLt> order_heap;
+        Heap<VarOrderLt> order_heap_glue;
 
         //Clause activites
         double cla_inc;
@@ -438,14 +438,14 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insertVarOrder(const uint32_t x)
 {
-    if (!order_heap.inHeap(x)
+    if (!order_heap_glue.inHeap(x)
     ) {
         #ifdef SLOW_DEUG
         //All active varibles are decision variables
         assert(varData[x].removed == Removed::none);
         #endif
 
-        order_heap.insert(x);
+        order_heap_glue.insert(x);
     }
 }
 
@@ -476,7 +476,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap.inHeap(i)) {
+            if (!order_heap_glue.inHeap(i)) {
                 cout << "ERROR var " << i+1 << " not in heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
@@ -485,7 +485,7 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
-    assert(order_heap.heap_property());
+    assert(order_heap_glue.heap_property());
 
     return true;
 }
