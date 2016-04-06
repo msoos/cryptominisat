@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <iterator>
 #include <limits>
+#include <array>
 
 #include "clausecleaner.h"
 #include "solver.h"
