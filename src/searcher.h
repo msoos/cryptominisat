@@ -108,7 +108,7 @@ class Searcher : public HyperEngine
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
-        vector<double> activities;
+        vector<double> activ_glue;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;

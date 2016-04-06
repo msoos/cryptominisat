@@ -64,7 +64,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         , solver(_solver)
-        , order_heap(VarOrderLt(activities))
+        , order_heap(VarOrderLt(activ_glue))
         , cla_inc(1)
 {
     var_decay = conf.var_decay_start;
@@ -85,7 +85,7 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    activities.push_back(0);
+    activ_glue.push_back(0);
     insertVarOrder((int)nVars()-1);
 }
 
@@ -93,7 +93,7 @@ void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
 
-    activities.resize(activities.size() + n, 0);
+    activ_glue.resize(activ_glue.size() + n, 0);
     for(int i = n-1; i >= 0; i--) {
         insertVarOrder((int)nVars()-i-1);
     }
@@ -102,16 +102,16 @@ void Searcher::new_vars(size_t n)
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
-    activities.resize(nVars());
-    activities.shrink_to_fit();
+    activ_glue.resize(nVars());
+    activ_glue.shrink_to_fit();
 }
 
 void Searcher::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    updateArray(activities, interToOuter);
-    //activities are not updated, they are taken from backup, which is updated
+    updateArray(activ_glue, interToOuter);
+    //activ_glue are not updated, they are taken from backup, which is updated
 
     renumber_assumptions(outerToInter);
 }
@@ -130,7 +130,7 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    antec_data.vsids_all_incoming_vars.push(activities[lit.var()]/var_inc);
+    antec_data.vsids_all_incoming_vars.push(activ_glue[lit.var()]/var_inc);
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -618,7 +618,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            antec_data.vsids_of_resolving_literals.push(activities[p.var()]/var_inc);
+            antec_data.vsids_of_resolving_literals.push(activ_glue[p.var()]/var_inc);
             if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
@@ -780,7 +780,7 @@ Clause* Searcher::analyze_conflict(
     implied_by_learnts.clear();
 
     for(const Lit l: learnt_clause) {
-        antec_data.vsids_vars.push(activities[l.var()]/var_inc);
+        antec_data.vsids_vars.push(activ_glue[l.var()]/var_inc);
     }
 
     return otf_subsume_last_resolved_clause(last_resolved_cl);
@@ -2811,7 +2811,7 @@ size_t Searcher::mem_used() const
     size_t mem = HyperEngine::mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
-    mem += activities.capacity()*sizeof(uint32_t);
+    mem += activ_glue.capacity()*sizeof(uint32_t);
     mem += order_heap.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
@@ -2848,8 +2848,8 @@ size_t Searcher::mem_used() const
         << endl;
 
         cout
-        << "c activities bytes: "
-        << activities.capacity()*sizeof(uint32_t)
+        << "c activ_glue bytes: "
+        << activ_glue.capacity()*sizeof(uint32_t)
         << endl;
 
         cout
@@ -2949,14 +2949,14 @@ inline void Searcher::bump_var_activity(uint32_t var)
         return;
     }
 
-    activities[var] += var_inc;
+    activ_glue[var] += var_inc;
 
     #ifdef SLOW_DEBUG
     bool rescaled = false;
     #endif
-    if (activities[var] > 1e100) {
+    if (activ_glue[var] > 1e100) {
         // Rescale:
-        for (double& act : activities) {
+        for (double& act : activ_glue) {
             act *= 1e-100;
         }
         #ifdef SLOW_DEBUG
@@ -3164,7 +3164,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     assert(decisionLevel() == 0);
     PropEngine::save_state(f);
 
-    f.put_vector(activities);
+    f.put_vector(activ_glue);
     f.put_vector(model);
     f.put_vector(conflict);
 
@@ -3186,7 +3186,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     assert(decisionLevel() == 0);
     PropEngine::load_state(f);
 
-    f.get_vector(activities);
+    f.get_vector(activ_glue);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef
