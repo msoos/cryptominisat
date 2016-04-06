@@ -92,7 +92,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (false)
+        , doOTFSubsume     (true)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
         , rewardShortenedClauseWithConfl(5)
 
@@ -110,7 +110,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
         , var_elim_strategy  (ElimStrategy::heuristic)
-        , varElimCostEstimateStrategy(0)
+        , varElimCostEstimateStrategy(2)
         , varElimRatioPerIter(0.70)
         , skip_some_bve_resolvents(true)
         , velim_resolvent_too_large(20)
@@ -246,7 +246,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , remove_cl_with_gates_time_limitM(100)
 
         //Misc
-        , orig_global_timeout_multiplier(1.0)
+        , orig_global_timeout_multiplier(2.0)
         , global_timeout_multiplier(1.0)
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
