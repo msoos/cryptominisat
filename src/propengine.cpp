@@ -524,11 +524,13 @@ inline void PropEngine::propTriHelperAnyOrder(
     enqueue<update_bogoprops>(lit2, PropBy(~lit1, lit3, red));
 }
 
+#ifdef __GNUC__
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
-
-#ifdef __GNUC__
 __attribute__((optimize("no-unroll-loops")))
+#else
+#define likely(x)      (x)
+#define unlikely(x)    (x)
 #endif
 PropBy PropEngine::propagate_any_order_fast()
 {
