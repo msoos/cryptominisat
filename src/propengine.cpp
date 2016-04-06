@@ -527,8 +527,9 @@ inline void PropEngine::propTriHelperAnyOrder(
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 
-
+#ifdef __GNUC__
 __attribute__((optimize("no-unroll-loops")))
+#endif
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;

@@ -24,6 +24,7 @@
 
 //#define DEBUG_ROW
 
+#include "popcnt.h"
 #include "constants.h"
 #include "solvertypes.h"
 #include <string.h>
@@ -94,25 +95,13 @@ public:
 
     bool popcnt_is_one() const
     {
-        #if __GNUC__ >= 4
         int ret = 0;
         for (uint32_t i = 0; i != size; i++) {
-            ret += __builtin_popcount(mp[i]&0xffffffff);
-            ret += __builtin_popcount(mp[i]>>32);
+            ret += my_popcnt(mp[i]&0xffffffff);
+            ret += my_popcnt(mp[i]>>32);
             if (ret > 1) return false;
         }
         return ret == 1;
-        #else
-        uint32_t popcount = 0;
-        for (uint32_t i = 0; i != size; i++) {
-            uint64_t tmp = mp[i];
-            while(tmp) {
-                popcount += tmp & 1;
-                tmp >>= 1;
-            }
-        }
-        return popcount == 1;
-        #endif
     }
 
     //popcnt is 1 given that there is a 1 at FROM
