@@ -22,9 +22,10 @@
 #ifndef __SEARCHER_H__
 #define __SEARCHER_H__
 
+#include <array>
+
 #include "propengine.h"
 #include "solvertypes.h"
-
 #include "time_mem.h"
 #include "hyperengine.h"
 #include "minisat_rnd.h"
