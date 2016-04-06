@@ -64,7 +64,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         , solver(_solver)
-        , order_heap(VarOrderLt(activ_glue))
+        , order_heap_glue(VarOrderLt(activ_glue))
         , cla_inc(1)
 {
     var_decay = conf.var_decay_start;
@@ -1917,7 +1917,7 @@ void Searcher::rebuildOrderHeap()
             vs.push(v);
         }
     }
-    order_heap.build(vs);
+    order_heap_glue.build(vs);
 }
 
 //NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
@@ -2060,7 +2060,7 @@ lbool Searcher::solve(
         ; loop_num ++
     ) {
         #ifdef SLOW_DEBUG
-        assert(order_heap.heap_property());
+        assert(order_heap_glue.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
 
@@ -2210,8 +2210,8 @@ Lit Searcher::pickBranchLit()
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
-        if (rand < frq && !order_heap.empty()) {
-            const uint32_t next_var = order_heap.random_element(mtrand);
+        if (rand < frq && !order_heap_glue.empty()) {
+            const uint32_t next_var = order_heap_glue.random_element(mtrand);
 
             if (value(next_var) == l_Undef
                 && solver->varData[next_var].removed == Removed::none
@@ -2229,11 +2229,11 @@ Lit Searcher::pickBranchLit()
           || value(next_var) != l_Undef
         ) {
             //There is no more to branch on. Satisfying assignment found.
-            if (order_heap.empty()) {
+            if (order_heap_glue.empty()) {
                 next_var = var_Undef;
                 return lit_Undef;
             }
-            next_var = order_heap.removeMin();
+            next_var = order_heap_glue.removeMin();
         }
         next = Lit(next_var, !pickPolarity(next_var));
     }
@@ -2812,7 +2812,7 @@ size_t Searcher::mem_used() const
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += activ_glue.capacity()*sizeof(uint32_t);
-    mem += order_heap.mem_used();
+    mem += order_heap_glue.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -2853,8 +2853,8 @@ size_t Searcher::mem_used() const
         << endl;
 
         cout
-        << "c order_heap bytes: "
-        << order_heap.mem_used()
+        << "c order_heap_glue bytes: "
+        << order_heap_glue.mem_used()
         << endl;
 
         cout
@@ -2968,13 +2968,13 @@ inline void Searcher::bump_var_activity(uint32_t var)
     }
 
     // Update order_heap with respect to new activity:
-    if (order_heap.inHeap(var)) {
-        order_heap.decrease(var);
+    if (order_heap_glue.inHeap(var)) {
+        order_heap_glue.decrease(var);
     }
 
     #ifdef SLOW_DEBUG
     if (rescaled) {
-        assert(order_heap.heap_property());
+        assert(order_heap_glue.heap_property());
     }
     #endif
 }
