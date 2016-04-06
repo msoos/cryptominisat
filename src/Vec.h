@@ -100,12 +100,6 @@ public:
         clear(true);
     }
 
-    // Pouint32_ter to first element:
-    /*operator T*  ()
-    {
-        return data;
-    }*/
-
     // Size operations:
     uint32_t      size() const
     {
