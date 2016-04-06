@@ -103,7 +103,7 @@ parser.add_option("--textra", dest="maxtimediff", type=int, default=20,
 
 def fuzzer_call_failed():
     print("OOps, fuzzer executable call failed!")
-    print("Did you build with TESTING_ENABLED? Did you do git submodules init & update?")
+    print("Did you build with cmake -DENABLE_TESTING=ON? Did you do git submodules init & update?")
     exit(-1)
 
 
