@@ -208,7 +208,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activities));
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
 
     for(uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
