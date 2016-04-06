@@ -1312,7 +1312,7 @@ lbool Solver::solve()
     params.rest_type = conf.restartType;
 
     if (conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
+        cout << "c " << __func__ << " called" << endl;
     }
     conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
 
@@ -1862,7 +1862,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     if (conf.verbosity >= 6) {
         cout
-        << "c " <<  __PRETTY_FUNCTION__ << " called"
+        << "c " <<  __func__ << " called"
         << endl;
     }
 
@@ -1876,7 +1876,7 @@ lbool Solver::simplify_problem(const bool startup)
     free_unused_watches();
 
     if (conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " finished" << endl;
+        cout << "c " << __func__ << " finished" << endl;
     }
     test_all_clause_attached();
     check_wrong_attach();

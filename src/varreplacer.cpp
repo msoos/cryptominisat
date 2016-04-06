@@ -790,7 +790,7 @@ void VarReplacer::extend_model(const uint32_t var)
 void VarReplacer::extend_model()
 {
     if (solver->conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
+        cout << "c " << __func__ << " called" << endl;
     }
 
     assert(solver->model.size() == solver->nVarsOuter());
@@ -809,7 +809,7 @@ void VarReplacer::extend_model()
     }
 
     if (solver->conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " ended" << endl;
+        cout << "c " << __func__ << " ended" << endl;
     }
 }
 

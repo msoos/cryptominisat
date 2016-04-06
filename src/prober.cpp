@@ -394,7 +394,7 @@ bool Prober::probe(vector<uint32_t>* probe_order)
 end:
 
     if (solver->conf.verbosity >= 10) {
-        cout << "c main loop for " << __PRETTY_FUNCTION__
+        cout << "c main loop for " << __func__
         << " finished: "
         << " must_interrupt? " << solver->must_interrupt_asap()
         << " limit_used? " << (limit_used() >= numPropsTodo)
