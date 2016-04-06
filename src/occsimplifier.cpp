@@ -2652,8 +2652,8 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
         normCost /= 2;
     }*/
 
-    if ((pos.longer + pos.tri + pos.bin) == 0
-        || (neg.longer + neg.tri + neg.bin) == 0
+    if (pos.totalCls() == 0
+        || neg.totalCls() == 0
     ) {
         normCost = 0;
     }
