@@ -2535,7 +2535,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                     case ResolvCount::count:
                         uint16_t tmp = seen[(~ws.lit2()).toInt()] | seen[(~ws.lit3()).toInt()];
-                        int num = __builtin_popcount(tmp);
+                        int num = my_popcnt(tmp);
                         assert(num <= otherSize);
                         count += otherSize - num;
                         break;
@@ -2636,6 +2636,10 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
                 + pos.bin*negTotalLonger*2
                 + neg.bin*posTotalLonger*2
                 + pos.bin*neg.bin*3;
+            break;
+
+        case 2:
+            normCost =  pos.totalCls() * neg.totalCls();
             break;
 
         default:
