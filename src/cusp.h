@@ -27,7 +27,7 @@
 
 #include "main.h"
 #include <fstream>
-
+#include <map>
 struct SATCount {
     void clear() {
         SATCount tmp;
@@ -52,9 +52,11 @@ public:
 
 private:
     void add_approxmc_options();
-
+    bool ScalApproxMC(SATCount& count);
     bool ApproxMC(SATCount& count);
-    bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumptions);
+    bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumps);
+    bool SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit> &assumps);
+    
     int64_t BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps);
     lbool BoundedSAT(
         uint32_t maxSolutions, uint32_t minSolutions
@@ -87,6 +89,7 @@ private:
     uint32_t pivotUniGen = 27;
     uint32_t samplesGen  = 1;
     uint32_t tApproxMC = 1;
+    uint32_t searchMode = 1;
     int      totalTimeout = 72000;
     int      loopTimeout = 2500;
     double   kappa = 0.638;
