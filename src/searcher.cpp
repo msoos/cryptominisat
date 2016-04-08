@@ -2108,7 +2108,8 @@ lbool Searcher::solve(
             }
 
             //don't go into the geom phase in case we would stop it due to simplification
-            if (params.rest_type  == Restart::geom
+            if (conf.abort_searcher_solve_on_geom_phase
+                && params.rest_type  == Restart::geom
                 && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
             ) {
                 if (conf.verbosity >= 2) {

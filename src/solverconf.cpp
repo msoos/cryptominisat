@@ -61,6 +61,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , lower_bound_for_blocking_restart(10000)
         , more_otf_shrink_with_cache(false)
         , more_otf_shrink_with_stamp(false)
+        , abort_searcher_solve_on_geom_phase(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)
