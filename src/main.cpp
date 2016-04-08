@@ -330,12 +330,17 @@ void Main::add_supported_options()
     std::ostringstream s_var_decay_max_glue;
     s_var_decay_max_glue << std::setprecision(5) << conf.var_decay_max_glue;
 
+    std::ostringstream s_var_decay_geom;
+    s_var_decay_geom << std::setprecision(5) << conf.var_decay_geom;
+
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
     ("vardecaystartglue", po::value(&conf.var_decay_start_glue)->default_value(conf.var_decay_start_glue, s_var_decay_start_glue.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vardecaymaxglue", po::value(&conf.var_decay_max_glue)->default_value(conf.var_decay_max_glue, s_var_decay_max_glue.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
+    ("vardecaygeom", po::value(&conf.var_decay_geom)->default_value(conf.var_decay_geom, s_var_decay_geom.str())
+        , "variable activity increase divider for GEOM restarts")
     ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
