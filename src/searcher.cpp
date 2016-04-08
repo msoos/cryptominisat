@@ -3074,10 +3074,11 @@ void Searcher::read_long_cls(
         const ClOffset offs = cl_alloc.get_offset(cl);
         if (red) {
             if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
-                longRedCls[0].push_back(offs);
+                cl->stats.which_red_array = 0;
             } else{
-                longRedCls[1].push_back(offs);
+                cl->stats.which_red_array = 1;
             }
+            longRedCls[0].push_back(cl->stats.which_red_array);
         } else {
             longIrredCls.push_back(offs);
         }
