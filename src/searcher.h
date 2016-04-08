@@ -385,6 +385,10 @@ class Searcher : public HyperEngine
         double cla_inc;
         void decayClauseAct();
         void bumpClauseAct(Clause* cl);
+        unsigned guess_clause_array(
+            const uint32_t glue
+            , const uint32_t backtrack_lev
+        ) const;
 
         //SQL
         #ifdef STATS_NEEDED
