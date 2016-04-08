@@ -148,14 +148,12 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     assert(solver->value(replaced_with) == l_Undef);
 
-    for(int i = 0;i < 2; i++ ) {
-        double orig_act = solver->activ_gg[orig][i];
-        double repl_with_act = solver->activ_gg[replaced_with][i];
-        if (orig_act + repl_with_act >= orig_act) {
-            solver->activ_gg[replaced_with][i] += orig_act;
-        }
-        repl_with_act += orig_act;
+    double orig_act = solver->activ_glue[orig];
+    double repl_with_act = solver->activ_glue[replaced_with];
+    if (orig_act + repl_with_act >= orig_act) {
+        solver->activ_glue[replaced_with] += orig_act;
     }
+    repl_with_act += orig_act;
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
