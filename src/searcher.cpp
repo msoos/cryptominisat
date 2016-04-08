@@ -2118,8 +2118,6 @@ lbool Searcher::solve(
             }
 
             //don't go into the geom phase in case we would stop it due to simplification
-            cout << "max_confl_this_phase + stats.conflStats.numConflicts:" << max_confl_this_phase + stats.conflStats.numConflicts << " max_confl_per_search_solve_call: " << max_confl_per_search_solve_call << endl;
-
             if (params.rest_type  == Restart::geom
                 && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
             ) {
