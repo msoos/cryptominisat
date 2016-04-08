@@ -299,6 +299,8 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many concflicts")
+    ("abortsearchgeomphase", po::value(&conf.abort_searcher_solve_on_geom_phase)->default_value(conf.abort_searcher_solve_on_geom_phase)
+        , "Abort Searcher:solve when geom would run out of its phase")
     ;
 
     std::ostringstream s_incclean;

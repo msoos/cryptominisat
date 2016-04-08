@@ -179,6 +179,7 @@ class SolverConf
         unsigned lower_bound_for_blocking_restart;
         int more_otf_shrink_with_cache;
         int more_otf_shrink_with_stamp;
+        int abort_searcher_solve_on_geom_phase;
 
         //Clause minimisation
         int doRecursiveMinim;
