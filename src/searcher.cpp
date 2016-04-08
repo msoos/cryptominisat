@@ -1519,9 +1519,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
     , const uint32_t
-#ifdef STATS_NEEDED
     backtrack_level
-#endif
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 3) {
@@ -1539,11 +1537,21 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         );
         cl->makeRed(glue);
         ClOffset offset = cl_alloc.get_offset(cl);
+        unsigned which_arr;
         if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
-            solver->longRedCls[0].push_back(offset);
+            which_arr = 0;
         } else {
-            solver->longRedCls[1].push_back(offset);
+            which_arr = 1;
         }
+        unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level);
+        /*static int xx = 0;
+        if (guess < which_arr) {
+            xx++;
+            cout << "Guessed differently: " << xx << endl;
+        }*/
+        which_arr = std::min(which_arr, guess);
+        cl->stats.which_red_array = which_arr;
+        solver->longRedCls[cl->stats.which_red_array].push_back(offset);
         *drat << *cl << fin;
 
         #ifdef STATS_NEEDED
@@ -3078,11 +3086,42 @@ void Searcher::read_long_cls(
             } else{
                 cl->stats.which_red_array = 1;
             }
+
             longRedCls[0].push_back(cl->stats.which_red_array);
         } else {
             longIrredCls.push_back(offs);
         }
     }
+}
+
+unsigned Searcher::guess_clause_array(
+    const uint32_t glue
+    , const uint32_t backtrack_lev
+) const {
+    uint32_t votes = 0;
+    double perc_trail_depth = (double)trail.size()/hist.trailDepthHistLT.avg();
+    if (perc_trail_depth < 0.3) {
+        votes++;
+    }
+
+    double perc_dec_lev = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
+    if (perc_dec_lev< 0.3) {
+        votes++;
+    }
+
+    double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
+    if (perc_backtrack_lev < 0.2) {
+        votes++;
+    }
+
+    if (antec_data.vsids_vars.avg() < 7.5) {
+        votes += 2;
+    }
+
+    if (votes > 2) {
+        return 0;
+    }
+    return 1;
 }
 
 void Searcher::write_binary_cls(
