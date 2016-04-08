@@ -1543,13 +1543,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         } else {
             which_arr = 1;
         }
-        unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level);
-        /*static int xx = 0;
-        if (guess < which_arr) {
-            xx++;
-            cout << "Guessed differently: " << xx << endl;
-        }*/
-        which_arr = std::min(which_arr, guess);
+        if (conf.guess_cl_effectiveness) {
+            unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level);
+            which_arr = std::min(which_arr, guess);
+        }
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
         *drat << *cl << fin;

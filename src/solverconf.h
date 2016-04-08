@@ -165,6 +165,7 @@ class SolverConf
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
         unsigned glue_must_keep_clause_if_below_or_eq;
+        int      guess_cl_effectiveness;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
