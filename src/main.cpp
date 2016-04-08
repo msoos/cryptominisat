@@ -320,6 +320,8 @@ void Main::add_supported_options()
         , "Maximum number of temporary clauses of high glue")
     ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
         , "Keep all clauses at or below this value")
+    ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
+        , "Keep clauses that we guess to be good")
     ;
 
     std::ostringstream s_random_var_freq;
