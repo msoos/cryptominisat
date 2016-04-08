@@ -330,17 +330,12 @@ void Main::add_supported_options()
     std::ostringstream s_var_decay_max;
     s_var_decay_max << std::setprecision(5) << conf.var_decay_max;
 
-    std::ostringstream s_var_decay_geom;
-    s_var_decay_geom << std::setprecision(5) << conf.var_decay_geom;
-
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
     ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start, s_var_decay_start.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max, s_var_decay_max.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vardecaygeom", po::value(&conf.var_decay_geom)->default_value(conf.var_decay_geom, s_var_decay_geom.str())
-        , "variable activity increase divider for GEOM restarts")
     ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
