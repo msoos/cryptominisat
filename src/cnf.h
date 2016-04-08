@@ -495,7 +495,6 @@ inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
 {
     assert(cl.red());
     return cl.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
-        && !cl.stats.locked
         && cl.stats.ttl == 0;
 }
 
