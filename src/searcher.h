@@ -109,7 +109,7 @@ class Searcher : public HyperEngine
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
-        vector<std::array<double,2> > activ_gg;
+        vector<double> activ_glue;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;
@@ -225,7 +225,7 @@ class Searcher : public HyperEngine
         );
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
-        template<class T> Lit pickBranchLit(T& heap);
+        Lit   pickBranchLit();
 
         ///////////////
         // Conflicting
@@ -289,7 +289,7 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        std::array<double,2> var_inc;
+        double var_inc;
         void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
 
 
@@ -304,7 +304,6 @@ class Searcher : public HyperEngine
         void clear_order_heap()
         {
             order_heap_glue.clear();
-            order_heap_geom.clear();
         }
 
     private:
@@ -366,24 +365,21 @@ class Searcher : public HyperEngine
         ///Increase a variable with the current 'bump' value.
         template<bool update_bogoprops>
         void     bump_var_activity  (uint32_t v);
-
-        template<int num>
         struct VarOrderLt { ///Order variables according to their activities
-            const vector<std::array<double, 2> >&  activities;
+            const vector<double>&  activities;
             bool operator () (const uint32_t x, const uint32_t y) const
             {
-                return activities[x][num] > activities[y][num];
+                return activities[x] > activities[y];
             }
 
-            VarOrderLt(const vector<std::array<double, 2>>& _activities) :
+            VarOrderLt(const vector<double>& _activities) :
                 activities(_activities)
             {}
         };
 
         ///activity-ordered heap of decision variables.
         ///NOT VALID WHILE SIMPLIFYING
-        Heap<VarOrderLt<0> > order_heap_glue;
-        Heap<VarOrderLt<1> > order_heap_geom;
+        Heap<VarOrderLt> order_heap_glue;
 
         //Clause activites
         double cla_inc;
@@ -418,7 +414,7 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         SearchStats stats;
-        std::array<double,2> var_decay;
+        double   var_decay;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
@@ -452,16 +448,6 @@ inline void Searcher::insertVarOrder(const uint32_t x)
 
         order_heap_glue.insert(x);
     }
-
-    if (!order_heap_geom.inHeap(x)
-    ) {
-        #ifdef SLOW_DEUG
-        //All active varibles are decision variables
-        assert(varData[x].removed == Removed::none);
-        #endif
-
-        order_heap_geom.insert(x);
-    }
 }
 
 
@@ -491,9 +477,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap_glue.inHeap(i)
-                || !order_heap_geom.inHeap(i)
-            ) {
+            if (!order_heap_glue.inHeap(i)) {
                 cout << "ERROR var " << i+1 << " not in heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
@@ -503,7 +487,6 @@ inline bool Searcher::check_order_heap_sanity() const
         }
     }
     assert(order_heap_glue.heap_property());
-    assert(order_heap_geom.heap_property());
 
     return true;
 }
