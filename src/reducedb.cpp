@@ -178,11 +178,12 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         if (cl->used_in_xor()
             || cl->stats.ttl > 0
             || solver->clause_locked(*cl, offset)
-            || cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq
+            || cl->stats.which_red_array == 0
         ) {
             //no need to mark, skip
             continue;
         }
+        assert(cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq);
 
         if (!cl->stats.marked_clause) {
             marked++;
@@ -194,10 +195,13 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
+    if (cl->stats.which_red_array != 0) {
+        assert(cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq);
+    }
     return !cl->used_in_xor()
          && !cl->stats.marked_clause
          && cl->stats.ttl == 0
-         && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
+         && cl->stats.which_red_array > 0
          && !solver->clause_locked(*cl, offset);
 }
 
@@ -222,10 +226,11 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
             cl_locked_solver++;
         }
 
-        if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+        if (cl->stats.which_red_array == 0) {
             solver->longRedCls[0].push_back(offset);
             continue;
         }
+        assert(cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq);
 
         if (!cl_needs_removal(cl, offset)) {
             cl->stats.ttl = 0;

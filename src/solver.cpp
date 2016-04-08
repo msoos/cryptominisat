@@ -770,10 +770,11 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
             longIrredCls.push_back(offset);
         } else {
             if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
-                longRedCls[0].push_back(offset);
+                cl->stats.which_red_array = 0;
             } else {
-                longRedCls[1].push_back(offset);
+                cl->stats.which_red_array = 1;
             }
+            longRedCls[cl->stats.which_red_array].push_back(offset);
         }
     }
 
