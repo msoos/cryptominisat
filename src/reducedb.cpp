@@ -124,7 +124,6 @@ CleaningStats ReduceDB::reduceDB()
         mark_top_N_clauses(keep_num);
     }
     assert(delayed_clause_free.empty());
-    cl_locked = 0;
     cl_marked = 0;
     cl_ttl = 0;
     cl_locked_solver = 0;
@@ -146,7 +145,7 @@ CleaningStats ReduceDB::reduceDB()
     else if (solver->conf.verbosity >= 3) {
         tmpStats.print_short(solver);
     } else if (solver->conf.verbosity >= 2) {
-        cout << "c [DBclean] locked:" << cl_locked
+        cout << "c [DBclean]"
         << " marked: " << cl_marked
         << " ttl:" << cl_ttl
         << " locked_solver:" << cl_locked_solver
@@ -176,8 +175,7 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
     ) {
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-        if ( cl->stats.locked
-            || cl->used_in_xor()
+        if (cl->used_in_xor()
             || cl->stats.ttl > 0
             || solver->clause_locked(*cl, offset)
             || cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq
@@ -196,9 +194,7 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
 {
     assert(cl->red());
-    return
-         !cl->stats.locked
-         && !cl->used_in_xor()
+    return !cl->used_in_xor()
          && !cl->stats.marked_clause
          && cl->stats.ttl == 0
          && cl->stats.glue > solver->conf.glue_must_keep_clause_if_below_or_eq
@@ -218,9 +214,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 3);
 
-        if (cl->stats.locked) {
-            cl_locked++;
-        } else if (cl->stats.marked_clause) {
+        if (cl->stats.marked_clause) {
             cl_marked++;
         } else if (cl->stats.ttl != 0) {
             cl_ttl++;

@@ -130,7 +130,6 @@ struct ClauseStats
 
     //Stored data
     uint32_t glue:29;
-    uint32_t locked:1;
     uint32_t marked_clause:1;
     uint32_t ttl:1;
     float   activity = 0.0;
@@ -161,7 +160,6 @@ struct ClauseStats
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
         #endif
-        ret.locked = first.locked | second.locked;
 
         return ret;
     }

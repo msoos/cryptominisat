@@ -49,7 +49,6 @@ private:
     vector<ClOffset> delayed_clause_free;
     CleaningStats cleaningStats;
 
-    unsigned cl_locked;
     unsigned cl_marked;
     unsigned cl_ttl;
     unsigned cl_locked_solver;
