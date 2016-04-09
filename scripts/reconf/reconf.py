@@ -25,9 +25,15 @@ import ntpath
 import os
 
 from optparse import OptionParser
-parser = OptionParser()
+usage = """
+./reconf.py -n 15 ~/media/sat/out/satcomp091113/reconf0-09113-23-July-2015-mark-XZGKC-78499d3f2-tout-5000-mout-1600/*.stdout* ~/media/sat/out/satcomp091113/reconf14-091113-28-August-2015-mark-O5T8F-169dfc802-tout-5000-mout-1600/*.stdout*
+
+NOTE: you *must* have reconf14 in there or a lot of data will be missing
+in particular avg_confl_size, which will make the system error out on you.
+"""
+parser = OptionParser(usage=usage)
 parser.add_option("-f", "--file",
-                  dest="outfname", type=str,
+                  dest="outfname", type=str, default="outfile",
                   help="print final values to this file")
 parser.add_option("-n", "--num",
                   dest="num", type=int,
