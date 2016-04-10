@@ -1551,7 +1551,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             if (guess < which_arr) {
                 stats.guess_different++;
             }
-            which_arr = std::min(which_arr, guess);
+            cl->stats.ttl = 1;
         }
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
