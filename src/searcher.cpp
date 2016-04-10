@@ -2993,7 +2993,9 @@ inline void Searcher::bump_var_activity(uint32_t var)
 
 void Searcher::update_var_decay()
 {
-    var_decay = conf.var_decay_max;
+    if (var_decay >= conf.var_decay_max) {
+        var_decay = conf.var_decay_max;
+    }
 }
 
 void Searcher::consolidate_watches()
