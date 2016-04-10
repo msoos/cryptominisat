@@ -444,6 +444,7 @@ class Tester:
             cmd += "--keepguess %s " % random.choice([0, 1, 2, 3, 4, 5, 6, 7])
             cmd += "--restart %s " % random.choice(
                 ["geom", "glue", "luby"])
+            cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             cmd += "--otfhyper %s " % random.randint(0, 1)
