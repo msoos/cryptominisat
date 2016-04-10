@@ -70,8 +70,11 @@ for x in ignore.split(","):
 subprocess.call("rm outs/*", shell=True)
 toexec = "./reconf.py -n %d -i %s  -f outs/out  ~/media/sat/out/satcomp091113/reconf*/*stdout*" % (num, ignore)
 f = open("output", "w")
-subprocess.call(toexec, shell=True, stdout=f)
+ret = subprocess.call(toexec, shell=True, stdout=f)
 f.close()
+if ret != 0:
+    print "ERROR: reconf call exited non-zero: %s" % toexec
+    exit(-1)
 
 for i in range(num):
     if i in ignore_elems:
