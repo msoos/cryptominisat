@@ -279,10 +279,10 @@ template<class T> void PossibleXor::add(
     assert(cl.size() < size || rhs == thisRhs);
 
     //set to true every combination for the missing variables
-    for (uint32_t i = 0; i < 1UL<<(varsMissing.size()); i++) {
+    for (uint32_t j = 0; j < 1UL<<(varsMissing.size()); j++) {
         uint32_t thisWhichOne = whichOne;
         for (uint32_t i2 = 0; i2 < varsMissing.size(); i2++) {
-            if (bit(i, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
+            if (bit(j, i2)) thisWhichOne+= 1<<(varsMissing[i2]);
         }
         foundComb[thisWhichOne] = true;
     }
