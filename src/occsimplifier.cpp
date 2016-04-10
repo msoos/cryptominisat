@@ -1725,7 +1725,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Update after-stats
             after_clauses++;
             after_literals += dummy.size();
-            if (dummy.size() > 3)
+            if (dummy.size() >= 3)
                 after_long++;
             if (dummy.size() == 2)
                 after_bin++;
