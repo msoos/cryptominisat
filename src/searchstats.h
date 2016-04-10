@@ -82,6 +82,8 @@ public:
     uint64_t otfSubsumedLong = 0;
     uint64_t otfSubsumedRed = 0;
     uint64_t otfSubsumedLitsGained = 0;
+    uint64_t guess_different = 0;
+    uint64_t red_cl_in_which0 = 0;
 
     //Hyper-bin & transitive reduction
     uint64_t advancedPropCalled = 0;
