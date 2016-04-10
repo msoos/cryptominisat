@@ -3307,7 +3307,6 @@ void Solver::check_stats(const bool allowFreed) const
         << "->numLitsIrred: " << numLitsIrred << endl
         << "->litStats.irredLits: " << litStats.irredLits << endl;
     }
-    assert(numLitsIrred == litStats.irredLits);
 
     uint64_t numLitsRed = 0;
     for(auto& lredcls: longRedCls) {
@@ -3319,6 +3318,7 @@ void Solver::check_stats(const bool allowFreed) const
         << "->litStats.redLits: " << litStats.redLits << endl;
     }
     assert(numLitsRed == litStats.redLits);
+    assert(numLitsIrred == litStats.irredLits);
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
