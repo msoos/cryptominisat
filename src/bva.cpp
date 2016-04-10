@@ -328,7 +328,7 @@ bool BVA::bva_simplify_system()
     const uint32_t newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
-    //Binary clauses
+    //Binary/Tertiary clauses
     for(const lit_pair m_lit: m_lits) {
         bva_tmp_lits.clear();
         bva_tmp_lits.push_back(m_lit.lit1);
@@ -336,7 +336,12 @@ bool BVA::bva_simplify_system()
             bva_tmp_lits.push_back(m_lit.lit2);
         }
         bva_tmp_lits.push_back(new_lit);
-        solver->add_clause_int(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
+        Clause* newCl = solver->add_clause_int(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
+        if (newCl != NULL) {
+            simplifier->linkInClause(*newCl);
+            ClOffset offset = solver->cl_alloc.get_offset(newCl);
+            simplifier->clauses.push_back(offset);
+        }
         touched.touch(bva_tmp_lits);
     }
 
@@ -499,7 +504,8 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            Clause* cl = solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            assert(cl == NULL);
             break;
         }
 
