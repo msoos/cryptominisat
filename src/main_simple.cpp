@@ -195,7 +195,7 @@ int main(int argc, char** argv)
 
     solver = &S;
     signal(SIGINT,SIGINT_handler);
-    #if not defined (_MSC_VER)
+    #if !defined (_MSC_VER)
     signal(SIGHUP,SIGINT_handler);
     #endif
 
