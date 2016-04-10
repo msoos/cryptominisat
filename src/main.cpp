@@ -664,7 +664,7 @@ void Main::add_supported_options()
 
     help_options_complicated
     .add(generalOptions)
-    #if defined(USE_MYSQL) or defined(USE_SQLITE3)
+    #if defined(USE_MYSQL) || defined(USE_SQLITE3)
     .add(sqlOptions)
     #endif
     .add(restartOptions)
