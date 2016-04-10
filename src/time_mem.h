@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <fstream>
 #include <string>
 
-#if defined (_MSC_VER)
+#if defined (_MSC_VER) || defined CROSS_COMPILE
 #include <ctime>
 static inline double cpuTime(void)
 {
