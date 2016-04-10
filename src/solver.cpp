@@ -2337,6 +2337,7 @@ void Solver::print_mem_stats() const
 
 void Solver::print_clause_size_distrib()
 {
+    size_t size3 = 0;
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
@@ -2353,7 +2354,7 @@ void Solver::print_clause_size_distrib()
                 assert(false);
                 break;
             case 3:
-                assert(false);
+                size3++;
                 break;
             case 4:
                 size4++;
@@ -2369,6 +2370,7 @@ void Solver::print_clause_size_distrib()
 
     cout
     << "c clause size stats."
+    << " size3: " << size3
     << " size4: " << size4
     << " size5: " << size5
     << " larger: " << sizeLarge << endl;
