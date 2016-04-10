@@ -763,13 +763,6 @@ Lit HyperEngine::analyzeFail(const PropBy propBy)
     //Each literal in the clause is an ancestor. So just 'push' them inside the
     //'currAncestors' variable
     switch(propBy.getType()) {
-        case tertiary_t : {
-            const Lit lit = ~propBy.lit3();
-            if (varData[lit.var()].level != 0)
-                currAncestors.push_back(lit);
-            //intentionally falling through here
-            //i.e. there is no 'break' here for a reason
-        }
         case binary_t: {
             const Lit lit = ~propBy.lit2();
             if (varData[lit.var()].level != 0)

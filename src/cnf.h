@@ -94,7 +94,6 @@ public:
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
-    bool red_long_cls_is_reducedb(const Clause& cl) const;
     Drat* drat;
 
     //Clauses
@@ -469,17 +468,9 @@ inline vector<Lit> unsign_lits(const T& lits)
     return ret;
 }
 
-inline bool CNF::red_long_cls_is_reducedb(const Clause& cl) const
-{
-    assert(cl.red());
-    return cl.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
-        && !cl.stats.locked
-        && cl.stats.ttl == 0;
-}
-
 inline void CNF::check_no_removed_or_freed_cl_in_watch() const
 {
-    for(const watch_subarray_const ws: watches) {
+    for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.isIdx());
             if (w.isBin()) {

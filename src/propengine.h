@@ -384,9 +384,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
 
     const uint32_t v = p.var();
     assert(value(v) == l_Undef);
-    /*if (!watches[~p].empty()) {
+    if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
-    }*/
+    }
 
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);

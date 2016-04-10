@@ -160,7 +160,7 @@ void ClauseAllocator::clauseFree(Clause* cl)
 
     cl->setFreed();
     size_t est_sz = cl->size();
-    est_sz = std::max(est_sz, (size_t)3); //we don't allow anything less than 4
+    est_sz = std::max(est_sz, (size_t)3);
     size_t bytes_freed = (sizeof(Clause) + est_sz*sizeof(Lit));
     size_t elems_freed = bytes_freed/sizeof(BASE_DATA_TYPE) + (bool)(bytes_freed % sizeof(BASE_DATA_TYPE));
     currentlyUsedSize -= elems_freed;
@@ -248,7 +248,7 @@ void ClauseAllocator::consolidate(
             ClOffset& off = gcl.offs;
             Clause* old = ptr(off);
             if (old->reloced) {
-                Lit new_offset = (*old)[0].toInt();
+                uint32_t new_offset = (*old)[0].toInt();
                 off = new_offset;
             } else {
                 uint32_t new_offset = move_cl(newDataStart, new_ptr, old);

@@ -195,7 +195,9 @@ int main(int argc, char** argv)
 
     solver = &S;
     signal(SIGINT,SIGINT_handler);
+    #if !defined (_MSC_VER)
     signal(SIGHUP,SIGINT_handler);
+    #endif
 
     if (argc == 1) {
         printf("Reading from standard input... Use '-h' or '--help' for help.\n");

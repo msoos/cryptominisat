@@ -9,6 +9,8 @@ import subprocess
 import server_option_parser
 
 
+print("NOTE: you have to give options to cryptominisat as --opt \"--keepguess=1,--keepglue=4\"")
+
 def get_answer():
     yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
@@ -38,7 +40,21 @@ for a, b in options.__dict__.iteritems():
 assert args == []
 
 push()
-data = " ".join(sys.argv[1:])
+data = ""
+opt_is_on = False
+for x in sys.argv[1:]:
+    if opt_is_on:
+        data += " ".join(x.split(","))
+        data += "\" "
+        opt_is_on = False
+        continue
+    if x != "--opt":
+        data += x + " "
+        continue
+
+    opt_is_on = True
+    data += "--opt \""
+
 
 if ("--git" not in data) and ("--solver" not in data):
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])

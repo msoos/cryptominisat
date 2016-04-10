@@ -410,6 +410,10 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
 
     size_t i = 0;
     size_t j = i;
+    ClOffset offset;
+    #ifdef USE_GAUS
+    Clause* cl;
+    #endif
     const size_t end = clauses.size();
     for (
         ; i < end
@@ -424,19 +428,26 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
         }
 
         //Check status
+        offset = clauses[i];
         if (need_to_finish) {
-            clauses[j++] = clauses[i];
+            goto copy;
+        }
+
+        #ifdef USE_GAUS
+        solver->cl_alloc.ptr(offset);
+        if (cl->_used_in_xor) {
+            goto copy;
+        }
+        #endif
+
+        if (sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen)) {
+            solver->detachClause(offset);
+            solver->cl_alloc.clauseFree(offset);
             continue;
         }
 
-        ClOffset offset = clauses[i];
-        const bool remove = sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen);
-        if (remove) {
-            solver->detachClause(offset);
-            solver->cl_alloc.clauseFree(offset);
-        } else {
-            clauses[j++] = offset;
-        }
+        copy:
+        clauses[j++] = offset;
     }
     clauses.resize(clauses.size() - (i-j));
     #ifdef DEBUG_IMPLICIT_STATS

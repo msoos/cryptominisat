@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <iterator>
 #include <limits>
+#include <array>
 
 #include "clausecleaner.h"
 #include "solver.h"
@@ -49,6 +50,7 @@ Gaussian::Gaussian(
     , const uint32_t _matrix_no
 ) :
     solver(_solver)
+    , seen(_solver->seen)
     , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
     , messed_matrix_vars_since_reversal(true)
@@ -207,7 +209,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.var_is_set.resize(var_to_col.size(), 0);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activities));
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
 
     for(uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
@@ -671,6 +673,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
     const bool wasUndef = m.matrix.getVarsetAt(best_row).fill(tmp_clause, solver->assigns, col_to_var_original);
     release_assert(!wasUndef);
+    /*
+     * TODO: try out on a cluster
+     *
+     * for(Lit l: tmp_clause) {
+        solver->bump_var_activity<false>(l.var());
+    }*/
 
     #ifdef VERBOSE_DEBUG
     const bool rhs = m.matrix.getVarsetAt(best_row).rhs();
@@ -696,20 +704,27 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
     const uint32_t curr_dec_level = solver->decisionLevel();
     assert(maxlevel == curr_dec_level);
 
-    uint32_t maxsublevel = 0;
+    uint32_t first_var = std::numeric_limits<uint32_t>::max();
     if (tmp_clause.size() == 2) {
         solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
         Lit lit1 = tmp_clause[0];
         Lit lit2 = tmp_clause[1];
+        seen[lit1.var()] = 1;
+        seen[lit2.var()] = 1;
 
-        const uint32_t sublevel1 = find_sublevel(lit1.var());
-        const uint32_t sublevel2 = find_sublevel(lit2.var());
-        if (sublevel1 > sublevel2) {
-            maxsublevel = sublevel1;
-            std::swap(lit1, lit2);
-        } else {
-            maxsublevel = sublevel2;
+        for (int i = solver->trail.size()-1; i >= 0; i --) {
+            uint32_t v = solver->trail[i].var();
+            if (seen[v]) {
+                first_var = v;
+            }
         }
+
+        if (lit1.var() == first_var) {
+            std::swap(lit1, lit2);
+        }
+
+        seen[lit1.var()] = 0;
+        seen[lit2.var()] = 0;
 
         confl = PropBy(lit1, false);
         solver->failBinLit = lit2;
@@ -724,26 +739,33 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         );
         confl = PropBy(solver->cl_alloc.get_offset(cl));
 
-        uint32_t maxsublevel_at = std::numeric_limits<uint32_t>::max();
-        for (uint32_t i = 0, size = cl->size(); i != size; i++)  {
-            if (solver->varData[(*cl)[i].var()].level == curr_dec_level) {
-                uint32_t tmp = find_sublevel((*cl)[i].var());
-                if (tmp >= maxsublevel) {
-                    maxsublevel = tmp;
-                    maxsublevel_at = i;
-                }
+        uint32_t first_var_at = std::numeric_limits<uint32_t>::max();
+        for(Lit l: tmp_clause) {
+            if (solver->varData[l.var()].level == curr_dec_level) {
+                seen[l.var()] = 1;
             }
         }
-        #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ") || Sublevel of confl: " << maxsublevel
-        << " (due to var:" << (*cl)[maxsublevel_at].var()+1 << ")" << endl;
-        #endif
 
-        std::swap((*cl)[maxsublevel_at], (*cl)[1]);
+        for (int i = solver->trail.size()-1; i >= 0; i --) {
+            uint32_t v = solver->trail[i].var();
+            if (seen[v]) {
+                first_var = v;
+                break;
+            }
+        }
+        for(size_t i = 0; i < tmp_clause.size(); i++) {
+            Lit l = tmp_clause[i];
+            if (l.var() == first_var) {
+                first_var_at = i;
+            }
+            if (solver->varData[l.var()].level == curr_dec_level) {
+                seen[l.var()] = 0;
+            }
+        }
+
+        std::swap((*cl)[first_var_at], (*cl)[1]);
         cl->set_gauss_temp_cl();
     }
-
-    cancel_until_sublevel(maxsublevel+1);
     messed_matrix_vars_since_reversal = true;
 
     return conflict;
@@ -802,51 +824,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop_and_confl(
     #endif
 
     return ret;
-}
-
-uint32_t Gaussian::find_sublevel(const uint32_t v) const
-{
-    for (int i = solver->trail.size()-1; i >= 0; i --)
-        if (solver->trail[i].var() == v) return i;
-
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Oooops! uint32_t " << v+1 << " does not have a sublevel!!"
-    << "(so it must be undefined)" << endl;
-    #endif
-
-    assert(false);
-    return 0;
-}
-
-void Gaussian::cancel_until_sublevel(const uint32_t until_sublevel)
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Canceling until sublevel " << until_sublevel << endl;
-    #endif
-
-    for (auto gauss: solver->gauss_matrixes) {
-        if (gauss != this) {
-            gauss->canceling(until_sublevel);
-        }
-    }
-
-    for (int64_t sublevel = (int64_t)solver->trail.size()-1
-        ; sublevel >= (int64_t)until_sublevel
-        ; sublevel--
-    ) {
-        const uint32_t var  = solver->trail[sublevel].var();
-        #ifdef VERBOSE_DEBUG
-        cout << "(" << matrix_no << ")Canceling var " << var+1 << endl;
-        #endif
-
-        solver->assigns[var] = l_Undef;
-        solver->insertVarOrder(var);
-    }
-    solver->trail.resize(until_sublevel);
-
-    #ifdef VERBOSE_DEBUG
-    cout << "(" << matrix_no << ")Canceling sublevel finished." << endl;
-    #endif
 }
 
 void Gaussian::analyse_confl(
@@ -987,9 +964,6 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
 
 void Gaussian::canceling(const uint32_t sublevel)
 {
-    if (disabled)
-        return;
-
     uint32_t rem = 0;
     for (int i = (int)clauses_toclear.size()-1
         ; i >= 0 && clauses_toclear[i].sublevel >= sublevel
@@ -1000,6 +974,13 @@ void Gaussian::canceling(const uint32_t sublevel)
     }
     clauses_toclear.resize(clauses_toclear.size()-rem);
 
+    //We cannot check for 'disabled' above this point --we must cancel
+    //the clauses at the right time
+    if (disabled) {
+        return;
+    }
+
+    //Check if nothing has been messed with, i.e. if matrix is still intact
     if (messed_matrix_vars_since_reversal)
         return;
 
@@ -1018,20 +999,22 @@ void Gaussian::canceling(const uint32_t sublevel)
 
 void Gaussian::disable_if_necessary()
 {
-    if (config.autodisable
+    if (!disabled
+        && config.autodisable
         && called > 50
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
     {
-        canceling(0);
+        //NOTE: we cannot call "cancelling(0);" here or we will have
+        //dangling PropBy values.
         disabled = true;
     }
 }
 
-llbool Gaussian::find_truths()
+gauss_ret Gaussian::find_truths()
 {
     disable_if_necessary();
     if (!should_check_gauss(solver->decisionLevel())) {
-        return l_Nothing;
+        return gauss_nothing;
     }
 
     PropBy confl;
@@ -1039,28 +1022,22 @@ llbool Gaussian::find_truths()
     called++;
 
     switch (g) {
-        case conflict: {
+        case conflict:
             useful_confl++;
-            bool ret = solver->handle_conflict<true>(confl);
             if (confl.isClause()) {
-                solver->cl_alloc.clauseFree(solver->cl_alloc.ptr(confl.get_offset()));
+                clauses_toclear.push_back(GaussClauseToClear(confl.get_offset(), solver->trail.size()-1));
             }
-
-            if (!ret) {
-                solver->ok = false;
-                return llbool(l_False);
-            }
-            return l_Continue;
-        }
+            found_conflict = confl;
+            return gauss_confl;
 
         case unit_propagation:
             unit_truths++;
             useful_prop++;
-            return l_Continue;
+            return gauss_cont;
 
         case propagation:
             useful_prop++;
-            return l_Continue;
+            return gauss_cont;
 
         case unit_conflict: {
             unit_truths++;
@@ -1070,7 +1047,7 @@ llbool Gaussian::find_truths()
                 cout << "(" << matrix_no << ")zero-length conflict. UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return llbool(l_False);
+                return gauss_false;
             }
 
             Lit lit = confl.lit2();
@@ -1086,21 +1063,21 @@ llbool Gaussian::find_truths()
                 cout << "(" << matrix_no << ") -> UNSAT" << endl;
                 #endif
                 solver->ok = false;
-                return llbool(l_False);
+                return gauss_false;
             }
 
             #ifdef VERBOSE_DEBUG
             cout << "(" << matrix_no << ") -> setting to correct value" << endl;
             #endif
             solver->enqueue(lit);
-            return l_Continue;
+            return gauss_cont;
         }
 
         case nothing:
             break;
     }
 
-    return l_Nothing;
+    return gauss_nothing;
 }
 
 template<class T>

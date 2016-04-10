@@ -88,7 +88,7 @@ private:
     uint32_t samplesGen  = 1;
     uint32_t tApproxMC = 1;
     int      totalTimeout = 72000;
-    int      loopTimeout = 3000;
+    int      loopTimeout = 2500;
     double   kappa = 0.638;
     bool     multisample = true;
     bool     aggregateSolutions = true;

@@ -62,9 +62,9 @@ before_install:
   - sudo apt-get update
 
 install:
-  - sudo apt-get install -y libboost-test-dev gcc-4.7 g++-4.7
-  - sudo apt-get remove -y g++-4.6 gcc-4.6
-  - sudo apt-get install -y cmake valgrind swig3.0
+  - sudo apt-get install -y --force-yes libboost-test-dev gcc-4.7 g++-4.7
+  - sudo apt-get remove -y --force-yes  g++-4.6 gcc-4.6
+  - sudo apt-get install -y --force-yes cmake valgrind swig3.0
   - sudo pip install lit
 #coveralls
   - sudo pip install cpp-coveralls

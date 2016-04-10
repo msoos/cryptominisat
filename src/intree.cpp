@@ -270,7 +270,7 @@ void InTree::tree_look()
                 if (tmp.var_reason_changed != var_Undef) {
                     solver->varData[tmp.var_reason_changed].reason = tmp.orig_propby;
                     if (solver->conf.verbosity >= 10) {
-                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to: " << tmp.orig_propby.lit2() << " red: " << (int)tmp.orig_propby.isRedStep() << endl;
+                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to:  ????" << /*tmp.orig_propby.lit2() << */ " red: " << (int)tmp.orig_propby.isRedStep() << endl;
                     }
                 }
             }

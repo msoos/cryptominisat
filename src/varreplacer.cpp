@@ -148,7 +148,12 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     assert(solver->value(replaced_with) == l_Undef);
 
-    solver->set_decision_var(replaced_with);
+    double orig_act = solver->activ_glue[orig];
+    double repl_with_act = solver->activ_glue[replaced_with];
+    if (orig_act + repl_with_act >= orig_act) {
+        solver->activ_glue[replaced_with] += orig_act;
+    }
+    repl_with_act += orig_act;
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
@@ -643,7 +648,7 @@ void VarReplacer::extend_model(const uint32_t var)
 void VarReplacer::extend_model()
 {
     if (solver->conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " called" << endl;
+        cout << "c " << __func__ << " called" << endl;
     }
 
     assert(solver->model.size() == solver->nVarsOuter());
@@ -662,7 +667,7 @@ void VarReplacer::extend_model()
     }
 
     if (solver->conf.verbosity >= 6) {
-        cout << "c " << __PRETTY_FUNCTION__ << " ended" << endl;
+        cout << "c " << __func__ << " ended" << endl;
     }
 }
 

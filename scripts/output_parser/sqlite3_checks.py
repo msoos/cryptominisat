@@ -256,7 +256,7 @@ if __name__ == "__main__":
                       help="Max memory for a subsystem")
 
     parser.add_option("--minmemory", metavar="MINMEM",
-                      dest="minmemory", default=100, type=int,
+                      dest="minmemory", default=800, type=int,
                       help="Minimum memory to be checked for RSS vs counted check")
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,

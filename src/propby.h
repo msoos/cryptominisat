@@ -32,7 +32,7 @@
 
 namespace CMSat {
 
-enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2, tertiary_t = 3};
+enum PropByType {null_clause_t = 0, clause_t = 1, binary_t = 2};
 
 class PropBy
 {
@@ -100,15 +100,6 @@ class PropBy
                 | ((uint32_t)hyperBinNotAdded) << 2;
         }
 
-        //Tertiary prop
-        PropBy(const Lit lit1, const Lit lit2, const bool redStep) :
-            red_step(redStep)
-            , data1(lit1.toInt())
-            , type(tertiary_t)
-            , data2(lit2.toInt())
-        {
-        }
-
         bool isRedStep() const
         {
             return red_step;
@@ -157,17 +148,9 @@ class PropBy
         Lit lit2() const
         {
             #ifdef DEBUG_PROPAGATEFROM
-            assert(type == tertiary_t || type == binary_t);
+            assert(type == binary_t);
             #endif
             return Lit::toLit(data1);
-        }
-
-        Lit lit3() const
-        {
-            #ifdef DEBUG_PROPAGATEFROM
-            assert(type == tertiary_t);
-            #endif
-            return Lit::toLit(data2);
         }
 
         ClOffset get_offset() const
@@ -203,10 +186,6 @@ inline std::ostream& operator<<(std::ostream& os, const PropBy& pb)
     switch (pb.getType()) {
         case binary_t :
             os << " binary, other lit= " << pb.lit2();
-            break;
-
-        case tertiary_t :
-            os << " tri, other 2 lits= " << pb.lit2() << " , "<< pb.lit3();
             break;
 
         case clause_t :

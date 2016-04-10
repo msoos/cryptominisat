@@ -65,6 +65,7 @@ enum class PolarityMode {
 enum class Restart {
     glue
     , geom
+    , glue_geom
     , luby
     , never
 };
@@ -160,10 +161,10 @@ class SolverConf
         unsigned  long long preClauseCleanLimit;
         double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
         double    inc_max_temp_red_cls;
-        double    maxNumRedsRatio; ///<Number of red clauses must not be more than red*maxNumRedsRatio
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
         unsigned glue_must_keep_clause_if_below_or_eq;
+        int      guess_cl_effectiveness;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
@@ -178,6 +179,7 @@ class SolverConf
         unsigned lower_bound_for_blocking_restart;
         int more_otf_shrink_with_cache;
         int more_otf_shrink_with_stamp;
+        int abort_searcher_solve_on_geom_phase;
 
         //Clause minimisation
         int doRecursiveMinim;

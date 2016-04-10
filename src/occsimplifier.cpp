@@ -34,6 +34,7 @@
 #include <functional>
 
 
+#include "popcnt.h"
 #include "occsimplifier.h"
 #include "clause.h"
 #include "solver.h"
@@ -576,10 +577,9 @@ void OccSimplifier::add_back_to_solver()
             solver->attachClause(*cl);
             if (cl->red()) {
                 if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
-                    solver->longRedCls[0].push_back(offs);
-                } else {
-                    solver->longRedCls[1].push_back(offs);
+                    cl->stats.which_red_array = 0;
                 }
+                solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {
                 solver->longIrredCls.push_back(offs);
             }
@@ -2357,7 +2357,7 @@ int OccSimplifier::check_empty_resolvent_action(
                         break;
 
                     case ResolvCount::count:
-                        int num = __builtin_popcount(seen[(~ws.lit2()).toInt()]);
+                        int num = my_popcnt(seen[(~ws.lit2()).toInt()]);
                         assert(num <= otherSize);
                         count += otherSize - num;
                         break;
@@ -2406,7 +2406,7 @@ int OccSimplifier::check_empty_resolvent_action(
 
                 //Count using tmp
                 if (action == ResolvCount::count) {
-                    int num = __builtin_popcount(tmp);
+                    int num = my_popcnt(tmp);
                     assert(num <= otherSize);
                     count += otherSize - num;
                 }
@@ -2459,6 +2459,10 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
                 + pos.bin*neg.bin*3;
             break;
 
+        case 2:
+            normCost =  pos.totalCls() * neg.totalCls();
+            break;
+
         default:
             std::cerr
             << "ERROR: Invalid var-elim cost estimation strategy"
@@ -2466,8 +2470,14 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
             std::exit(-1);
     }
 
-    if ((pos.longer + pos.bin) == 0
-        || (neg.longer + neg.bin) == 0
+    /*if ((pos.longer + pos.tri + pos.bin) <= 2
+        && (neg.longer + neg.tri + neg.bin) <= 2
+    ) {
+        normCost /= 2;
+    }*/
+
+    if (pos.totalCls() == 0
+        || neg.totalCls() == 0
     ) {
         normCost = 0;
     }

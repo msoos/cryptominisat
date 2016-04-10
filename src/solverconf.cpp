@@ -43,16 +43,16 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doPreClauseCleanPropAndConfl(false)
         , preClauseCleanLimit(2)
         , inc_max_temp_red_cls(1.0)
-        , maxNumRedsRatio(10)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
         , glue_must_keep_clause_if_below_or_eq(5)
+        , guess_cl_effectiveness(false)
 
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
         , burst_search_len(300)
-        , restartType(Restart::geom)
+        , restartType(Restart::glue_geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
@@ -61,6 +61,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , lower_bound_for_blocking_restart(10000)
         , more_otf_shrink_with_cache(false)
         , more_otf_shrink_with_stamp(false)
+        , abort_searcher_solve_on_geom_phase(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)
@@ -92,7 +93,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (false)
+        , doOTFSubsume     (true)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
         , rewardShortenedClauseWithConfl(5)
 
@@ -110,7 +111,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
         , var_elim_strategy  (ElimStrategy::heuristic)
-        , varElimCostEstimateStrategy(0)
+        , varElimCostEstimateStrategy(2)
         , varElimRatioPerIter(0.70)
         , skip_some_bve_resolvents(true)
         , velim_resolvent_too_large(20)
@@ -174,7 +175,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             "sub-str-cls-with-bin"
             #ifdef USE_GAUSS
-            ",occ-gauss"
+            //occ--gauss must be last
+            "occ-gauss"
             #endif
         )
         , simplify_schedule_nonstartup(
@@ -183,12 +185,12 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva"
-            //",occ-gates"
-            ", occ-xor,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, "//occ-gates,"
+            "occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
             #ifdef USE_GAUSS
+            //occ--gauss must be last
             "occ-gauss"
             #endif
         )
@@ -248,7 +250,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , remove_cl_with_gates_time_limitM(100)
 
         //Misc
-        , orig_global_timeout_multiplier(1.0)
+        , orig_global_timeout_multiplier(2.0)
         , global_timeout_multiplier(1.0)
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)

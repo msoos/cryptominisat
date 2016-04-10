@@ -1,6 +1,5 @@
 /*
 Copyright (c) 2010-2015 Mate Soos
-Copyright (c) Kuldeep S. Meel, Daniel J. Fremont
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +40,6 @@ THE SOFTWARE.
 #include <set>
 #include <fstream>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
 #include <list>
 #include <array>
@@ -301,6 +299,8 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many concflicts")
+    ("abortsearchgeomphase", po::value(&conf.abort_searcher_solve_on_geom_phase)->default_value(conf.abort_searcher_solve_on_geom_phase)
+        , "Abort Searcher:solve when geom would run out of its phase")
     ;
 
     std::ostringstream s_incclean;
@@ -314,12 +314,12 @@ void Main::add_supported_options()
         , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())
         , "Clean increment cleaning by this factor for next cleaning")
-    ("maxredratio", po::value(&conf.maxNumRedsRatio)->default_value(conf.maxNumRedsRatio)
-        , "Don't ever have more than maxNumRedsRatio*(irred_clauses) redundant clauses")
     ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
         , "Maximum number of temporary clauses of high glue")
     ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
         , "Keep all clauses at or below this value")
+    ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
+        , "Keep clauses that we guess to be good")
     ;
 
     std::ostringstream s_random_var_freq;

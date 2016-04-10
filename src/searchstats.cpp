@@ -63,6 +63,8 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     otfSubsumedLong += other.otfSubsumedLong;
     otfSubsumedRed += other.otfSubsumedRed;
     otfSubsumedLitsGained += other.otfSubsumedLitsGained;
+    guess_different += other.guess_different;
+    red_cl_in_which0 += other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
     advancedPropCalled += other.advancedPropCalled;
@@ -119,6 +121,8 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     otfSubsumedLong -= other.otfSubsumedLong;
     otfSubsumedRed -= other.otfSubsumedRed;
     otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
+    guess_different -= other.guess_different;
+    red_cl_in_which0 -= other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
     advancedPropCalled -= other.advancedPropCalled;
@@ -185,6 +189,18 @@ void SearchStats::print_short(uint64_t props) const
     print_stats_line("c conf lits final"
         , float_div(litsRedFinal, conflStats.numConflicts)
     );
+
+    print_stats_line("c guess different"
+        , guess_different
+        , stats_line_percent(guess_different, conflStats.numConflicts)
+        , "% of confl"
+    );
+
+    print_stats_line("c red which0"
+        , red_cl_in_which0
+        , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)
+        , "% of confl"
+    );
 }
 
 void SearchStats::print(uint64_t props) const
@@ -240,6 +256,18 @@ void SearchStats::print(uint64_t props) const
         , otfSubsumedLitsGained
         , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
         , "lits/otf subsume"
+    );
+
+    print_stats_line("c guess different"
+        , guess_different
+        , stats_line_percent(guess_different, conflStats.numConflicts)
+        , "% of confl"
+    );
+
+    print_stats_line("c red which0"
+        , red_cl_in_which0
+        , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)
+        , "% of confl"
     );
 
     cout << "c SEAMLESS HYPERBIN&TRANS-RED stats" << endl;

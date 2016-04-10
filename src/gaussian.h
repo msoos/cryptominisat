@@ -44,33 +44,10 @@ using std::string;
 using std::pair;
 using std::vector;
 
+enum gauss_ret {gauss_cont, gauss_confl, gauss_false, gauss_nothing};
+
 class Clause;
 class Solver;
-
-/// Hackish lbool that also supports l_Nothing and l_Continue
-class llbool
-{
-    char value;
-
-public:
-    llbool(): value(0) {};
-    explicit llbool(lbool v) :
-            value(v.value) {};
-    explicit llbool(char a) :
-            value(a) {}
-
-    inline bool operator!=(const llbool& v) const {
-        return (v.value != value);
-    }
-
-    inline bool operator==(const llbool& v) const {
-        return (v.value == value);
-    }
-
-    friend class lbool;
-};
-const llbool l_Nothing  = llbool(2);
-const llbool l_Continue = llbool(3);
 
 struct GaussClauseToClear
 {
@@ -91,7 +68,7 @@ public:
     ~Gaussian();
 
     bool init_until_fixedpoint();
-    llbool find_truths();
+    gauss_ret find_truths();
 
     //statistics
     void print_stats() const;
@@ -106,9 +83,11 @@ public:
     //functions used throughout the Solver
     void canceling(const uint32_t sublevel);
     vector<GaussClauseToClear> clauses_toclear;
+    PropBy found_conflict;
 
 protected:
     Solver* solver;
+    vector<uint16_t>& seen;
 
     //Gauss high-level configuration
     const GaussConf& config;
@@ -175,10 +154,6 @@ protected:
     gaussian_ret handle_matrix_confl(PropBy& confl, const matrixset& m, const uint32_t maxlevel, const uint32_t best_row);
     gaussian_ret handle_matrix_prop(matrixset& m, const uint32_t row); // Handle matrix propagation at row 'row'
     vector<Lit> tmp_clause;
-
-    //propagation&conflict handling
-    void cancel_until_sublevel(const uint32_t until_sublevel); // cancels until sublevel 'until_sublevel'. The var 'until_sublevel' must NOT go over the current level. I.e. this function is ONLY for moving inside the current level
-    uint32_t find_sublevel(const uint32_t v) const; // find the sublevel (i.e. trail[X]) of a given variable
 
     //helper functions
     bool at_first_init() const;

@@ -313,8 +313,6 @@ bool PropEngine::prop_long_cl_any_order(
 
 #define likely(x)      (x) /*__builtin_expect(!!(x), 1)*/
 #define unlikely(x)    (x) /*__builtin_expect(!!(x), 0)*/
-
-
 //__attribute__((optimize("no-unroll-loops")))
 PropBy PropEngine::propagate_any_order_fast()
 {

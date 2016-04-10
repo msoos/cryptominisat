@@ -22,9 +22,10 @@
 #ifndef __SEARCHER_H__
 #define __SEARCHER_H__
 
+#include <array>
+
 #include "propengine.h"
 #include "solvertypes.h"
-
 #include "time_mem.h"
 #include "hyperengine.h"
 #include "minisat_rnd.h"
@@ -108,6 +109,7 @@ class Searcher : public HyperEngine
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
+        vector<double> activ_glue;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;
@@ -123,6 +125,10 @@ class Searcher : public HyperEngine
         {
             assumptionsSet.clear();
             assumptionsSet.resize(nVars(), false);
+        }
+        double get_cla_inc() const
+        {
+            return cla_inc;
         }
 
     protected:
@@ -203,7 +209,7 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, size_t glue);
-        void  attach_and_enqueue_learnt_clause(Clause* cl);
+        void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
         void  add_otf_subsume_long_clauses();
@@ -239,6 +245,7 @@ class Searcher : public HyperEngine
         };
         SearchParams params;
         vector<Lit> learnt_clause;
+        vector<Lit> decision_clause;
         template<bool update_bogoprops>
         Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating
@@ -278,7 +285,6 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        vector<double> activities;
         double var_inc;
         void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
 
@@ -287,10 +293,14 @@ class Searcher : public HyperEngine
         uint64_t more_red_minim_limit_cache_actual;
         const SearchStats& get_stats() const;
         size_t mem_used() const;
-        void restore_order_heap();
 
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
+        void rebuildOrderHeap();
+        void clear_order_heap()
+        {
+            order_heap_glue.clear();
+        }
 
     private:
         //////////////
@@ -365,12 +375,16 @@ class Searcher : public HyperEngine
 
         ///activity-ordered heap of decision variables.
         ///NOT VALID WHILE SIMPLIFYING
-        Heap<VarOrderLt> order_heap;
+        Heap<VarOrderLt> order_heap_glue;
 
         //Clause activites
         double cla_inc;
         void decayClauseAct();
         void bumpClauseAct(Clause* cl);
+        unsigned guess_clause_array(
+            const uint32_t glue
+            , const uint32_t backtrack_lev
+        ) const;
 
         //SQL
         #ifdef STATS_NEEDED
@@ -387,7 +401,6 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
-        void rebuildOrderHeap();
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);
@@ -426,14 +439,14 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insertVarOrder(const uint32_t x)
 {
-    if (!order_heap.inHeap(x)
+    if (!order_heap_glue.inHeap(x)
     ) {
         #ifdef SLOW_DEUG
         //All active varibles are decision variables
         assert(varData[x].removed == Removed::none);
         #endif
 
-        order_heap.insert(x);
+        order_heap_glue.insert(x);
     }
 }
 
@@ -464,7 +477,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap.inHeap(i)) {
+            if (!order_heap_glue.inHeap(i)) {
                 cout << "ERROR var " << i+1 << " not in heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
@@ -473,7 +486,7 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
-    assert(order_heap.heap_property());
+    assert(order_heap_glue.heap_property());
 
     return true;
 }
