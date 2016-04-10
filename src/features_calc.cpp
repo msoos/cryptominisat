@@ -313,12 +313,13 @@ void SolveFeaturesCalc::calculate_cl_distributions(
     double activity_var = 0;
 
     //Calculate means
+    double cla_inc = solver->get_cla_inc();
     for(ClOffset off: clauses)
     {
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_mean += cl.size();
         glue_mean += cl.stats.glue;
-        activity_mean += cl.stats.activity;
+        activity_mean += cl.stats.activity/cla_inc;
     }
     size_mean /= clauses.size();
     glue_mean /= clauses.size();
@@ -330,7 +331,7 @@ void SolveFeaturesCalc::calculate_cl_distributions(
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_var += std::pow(size_mean-cl.size(), 2);
         glue_var += std::pow(glue_mean-cl.stats.glue, 2);
-        activity_var += std::pow(activity_mean-cl.stats.activity, 2);
+        activity_var += std::pow(activity_mean-cl.stats.activity/cla_inc, 2);
     }
     size_var /= clauses.size();
     glue_var /= clauses.size();
