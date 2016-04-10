@@ -63,6 +63,16 @@
 #define VERBOSE_DEBUG_RECONSTRUCT
 #endif
 
+//Thanks to Axel Kemper for the definitions below
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)  //  C4244 : 'Argument': Konvertierung von 'const uint64_t' in 'double', möglicher Datenverlust
+#pragma warning(disable : 4267)  //  C4267 : 'return': Konvertierung von 'size_t' nach 'uint32_t', Datenverlust möglich
+#pragma warning(disable : 4302)  //  C4302 : truncation
+#pragma warning(disable : 4311)  //  C4311 : pointer truncation
+#pragma warning(disable : 4800)  //  C4800 : 'const uint32_t' : Variable wird auf booleschen Wert('True' oder 'False') gesetzt(Auswirkungen auf Leistungsverhalten möglich)
+#pragma warning(disable : 4805)  //  C4805 : '==' : unsichere Kombination von Typ 'unsigned short' mit Typ 'bool' in einer Operation
+#endif
+
 
 ///////////////////
 // Silent Debug
