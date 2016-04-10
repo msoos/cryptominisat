@@ -438,7 +438,7 @@ class Tester:
         cmd = " --zero-exit-status "
 
         if random.choice([True, False]):
-            cmd += " --reconf %d " % random.randint(0, 13)
+            cmd += " --reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
             cmd += "--restart %s " % random.choice(
