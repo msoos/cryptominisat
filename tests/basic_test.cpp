@@ -69,7 +69,7 @@ TEST(normal_interface, multi_solve_unsat)
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_False);
         EXPECT_EQ( s.okay(), false);
     }
@@ -86,7 +86,7 @@ TEST(normal_interface, multi_solve_unsat_multi_thread)
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_False);
         EXPECT_EQ( s.okay(), false);
     }
@@ -198,7 +198,7 @@ TEST(xor_interface, xor_check_sat_solution)
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_False);
     }
     EXPECT_EQ( s.nVars(), 1);
@@ -213,7 +213,7 @@ TEST(xor_interface, xor_check_unsat_solution)
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_True);
         EXPECT_EQ( s.okay(), true);
     }
@@ -229,7 +229,7 @@ TEST(xor_interface, xor_check_solution_values)
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_True);
         EXPECT_EQ( s.okay(), true);
     }
@@ -246,7 +246,7 @@ TEST(xor_interface, xor_check_solution_values2)
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
     for(size_t i = 0;i < 10; i++) {
-        lbool ret = s.solve();
+        ret = s.solve();
         EXPECT_EQ( ret, l_True);
         EXPECT_EQ(s.get_model()[0], l_True);
         EXPECT_EQ(s.get_model()[1], l_True);

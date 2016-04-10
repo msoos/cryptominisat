@@ -46,7 +46,7 @@ class StreamBuffer
             size = C(buf, 1, sizeof(buf), in);
         }
     }
-    char    buf[CHUNK_LIMIT];
+    char    *buf;
     int     pos;
     int     size;
 
@@ -61,7 +61,13 @@ class StreamBuffer
 
 public:
     StreamBuffer(A i) : in(i), pos(0), size(0) {
+        buf = new char[CHUNK_LIMIT];
         assureLookahead();
+    }
+
+    ~StreamBuffer()
+    {
+        delete buf;
     }
 
     int  operator *  () {
