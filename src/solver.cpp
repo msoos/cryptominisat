@@ -3091,46 +3091,14 @@ void Solver::reconfigure(int val)
 
     assert(val > 0);
     switch (val) {
-        case 1: {
-            conf.max_temporary_learnt_clauses = 30000;
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 2: {
-            //Luby
-            conf.restart_inc = 1.5;
-            conf.restart_first = 100;
-            conf.restartType = CMSat::Restart::luby;
-            break;
-        }
-
         case 3: {
-            //Similar to old CMS except we look at learnt DB size insteead
-            //of conflicts to see if we need to clean.
+            //Glue clause cleaning
+            conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
             conf.inc_max_temp_red_cls = 1.03;
             reset_temp_cl_num();
-            break;
-        }
-
-        case 4: {
-            //Different glue limit
-            conf.glue_must_keep_clause_if_below_or_eq = 4;
-            conf.max_num_lits_more_red_min = 3;
-            conf.max_glue_more_minim = 4;
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 5: {
-            //Lots of simplifying
-            conf.orig_global_timeout_multiplier = 2;
-            conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
-            conf.num_conflicts_of_search_inc = 1.25;
             break;
         }
 
@@ -3141,83 +3109,26 @@ void Solver::reconfigure(int val)
         }
 
         case 7: {
+            //Geom restart, but keep low glue clauses
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-
-            conf.inc_max_temp_red_cls = 1.02;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
-            reset_temp_cl_num();
-            break;
-        }
-
-        case 8: {
-            conf.glue_must_keep_clause_if_below_or_eq = 7;
-            conf.var_decay_max = 0.98; //more 'fast' in adjusting activities
-            break;
-        }
-
-        case 9: {
-            conf.propBinFirst= true;
-            break;
-        }
-
-        case 10: {
-            conf.more_red_minim_limit_cache = 1200;
-            conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_red_min = 20;
-            break;
-        }
-
-        case 11: {
-            conf.more_otf_shrink_with_cache = 0;
-            conf.max_temporary_learnt_clauses = 29633;
-            conf.burst_search_len = 1114;
-            conf.probe_bogoprops_time_limitM = 309;
-            conf.distill_implicit_with_implicit_time_limitM = 145;
-            conf.blocking_restart_multip = 0.10120348330944741;
-            conf.do_blocking_restart = 1;
-            conf.shortTermHistorySize = 84;
-            conf.max_num_lits_more_red_min = 8;
-            conf.varElimCostEstimateStrategy = 0;
-            conf.doOTFSubsume = 1;
-            conf.doFindXors = 0;
-            conf.varElimRatioPerIter = 0.836063764936515;
-            conf.update_glues_on_analyze = 0;
-            conf.varelim_time_limitM = 134;
-            conf.bva_limit_per_call = 410437;
-            conf.subsume_implicit_time_limitM = 154;
-            conf.bva_time_limitM = 166;
-            conf.distill_time_limitM = 1;
-            conf.cacheUpdateCutoff = 2669;
-            conf.num_conflicts_of_search = 21671;
-            conf.inc_max_temp_red_cls = 1.029816784872561;
-            conf.distill_long_irred_cls_time_limitM = 1;
-            conf.random_var_freq = 0.004446797134521431;
-            conf.intree_time_limitM = 1652;
-            conf.bva_also_twolit_diff = 0;
-            conf.blocking_restart_trail_hist_length = 1;
-            conf.update_glues_on_prop = 1;
-            conf.sccFindPercent = 0.0174091218619471;
-            conf.do_empty_varelim = 1;
-            conf.updateVarElimComplexityOTF = 1;
-            conf.more_otf_shrink_with_stamp = 0;
-            conf.watch_cache_stamp_based_str_time_limitM = 37;
-            conf.var_decay_max = 0.9565818549080972;
+            conf.inc_max_temp_red_cls = 1.02;;
             reset_temp_cl_num();
             break;
         }
 
         case 12: {
+            //Mix of keeping clauses
             conf.do_bva = false;
-            conf.glue_must_keep_clause_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
-            conf.inc_max_temp_red_cls = 1.04;
+
+            conf.glue_must_keep_clause_if_below_or_eq = 2;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
+            conf.inc_max_temp_red_cls = 1.04;
+
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             update_var_decay();
             reset_temp_cl_num();
@@ -3227,34 +3138,20 @@ void Solver::reconfigure(int val)
         case 13: {
             conf.orig_global_timeout_multiplier = 5;
             conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
+            conf.global_multiplier_multiplier_max = 5;
+
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
             conf.max_temporary_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
+            update_var_decay();
             break;
         }
 
         case 14: {
             conf.shortTermHistorySize = 600;
-            break;
-        }
-
-        case 15: {
-            //Like OLD-OLD minisat
-            conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
-            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-
-            conf.inc_max_temp_red_cls = 1.02;
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.update_glues_on_prop = 0;
-            conf.update_glues_on_analyze = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
-            reset_temp_cl_num();
             break;
         }
 
