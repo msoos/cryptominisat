@@ -164,6 +164,7 @@ class SolverConf
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
         unsigned glue_must_keep_clause_if_below_or_eq;
+        double   adjust_glue_if_too_many_low;
         int      guess_cl_effectiveness;
 
         //For restarting

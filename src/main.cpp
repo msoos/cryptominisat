@@ -308,6 +308,9 @@ void Main::add_supported_options()
     std::ostringstream s_clean_confl_multiplier;
     s_clean_confl_multiplier << std::setprecision(2) << conf.clean_confl_multiplier;
 
+    std::ostringstream s_adjust_low;
+    s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
+
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
     ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier, s_clean_confl_multiplier.str())
@@ -317,6 +320,8 @@ void Main::add_supported_options()
     ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
         , "Maximum number of temporary clauses of high glue")
     ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
+        , "Keep all clauses at or below this value")
+    ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
         , "Keep all clauses at or below this value")
     ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Keep clauses that we guess to be good")
