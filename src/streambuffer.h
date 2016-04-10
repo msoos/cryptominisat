@@ -67,7 +67,7 @@ public:
 
     ~StreamBuffer()
     {
-        delete buf;
+        delete[] buf;
     }
 
     int  operator *  () {
