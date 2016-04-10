@@ -126,6 +126,10 @@ class Searcher : public HyperEngine
             assumptionsSet.clear();
             assumptionsSet.resize(nVars(), false);
         }
+        double get_cla_inc() const
+        {
+            return cla_inc;
+        }
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
