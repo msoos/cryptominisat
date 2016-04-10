@@ -55,7 +55,6 @@ set(cryptoms_lib_files
     clausedumper.cpp
     bva.cpp
     intree.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     features_calc.cpp
     features_to_reconf.cpp
     solvefeatures.cpp
@@ -87,7 +86,10 @@ if (MYSQL_FOUND AND STATS)
 endif ()
 
 if (SQLITE3_FOUND AND STATS)
-    SET(cryptoms_lib_files ${cryptoms_lib_files} sqlitestats.cpp)
+    SET(cryptoms_lib_files ${cryptoms_lib_files}
+        sqlitestats.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+    )
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
