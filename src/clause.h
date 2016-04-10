@@ -126,6 +126,9 @@ struct ClauseStats
         #ifdef STATS_NEEDED
         ID = 1;
         #endif
+        which_red_array = 1;
+        glue = 1000;
+        activity = 0;
     }
 
     //Stored data
