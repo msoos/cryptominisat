@@ -237,7 +237,9 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         }
 
         if (!cl_needs_removal(cl, offset)) {
-            cl->stats.ttl = 0;
+            if (cl->stats.ttl > 0) {
+                cl->stats.ttl--;
+            }
             solver->longRedCls[1][j++] = offset;
             tmpStats.remain.incorporate(cl, sumConfl);
             cl->stats.marked_clause = 0;

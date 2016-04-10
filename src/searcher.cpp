@@ -1546,13 +1546,90 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (which_arr == 0) {
             stats.red_cl_in_which0++;
         }
-        if (conf.guess_cl_effectiveness) {
-            unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level);
-            if (guess < which_arr) {
-                stats.guess_different++;
+        switch(conf.guess_cl_effectiveness) {
+            case 0:
+                break;
+
+            case 1: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
             }
-            if (guess == 0) {
-                cl->stats.ttl = 1;
+
+            case 2: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 2;
+                }
+                break;
+            }
+
+            case 3: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    which_arr = 0;
+                }
+                break;
+            }
+
+            case 4: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 6.0);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
+            case 5: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 8.5);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
+            case 6: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
+            case 7: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0, true);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
+            default: {
+                cout << "ERROR: no such guess value: " << conf.guess_cl_effectiveness << endl;
+                exit(-1);
             }
         }
         cl->stats.which_red_array = which_arr;
@@ -3100,24 +3177,33 @@ void Searcher::read_long_cls(
 unsigned Searcher::guess_clause_array(
     const uint32_t glue
     , const uint32_t backtrack_lev
+    , const double vsids_cutoff
+    , const double offset_percent
+    , bool count_antec_glue_long_reds
 ) const {
     uint32_t votes = 0;
     double perc_trail_depth = (double)trail.size()/hist.trailDepthHistLT.avg();
-    if (perc_trail_depth < 0.3) {
+    if (perc_trail_depth < (0.3-offset_percent)) {
         votes++;
     }
 
     double perc_dec_lev = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
-    if (perc_dec_lev< 0.3) {
+    if (perc_dec_lev < (0.3-offset_percent)) {
         votes++;
     }
 
     double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (perc_backtrack_lev < 0.2) {
+    if (perc_backtrack_lev < (0.3-offset_percent)) {
         votes++;
     }
 
-    if (antec_data.vsids_vars.avg() > 7.5) {
+    if (count_antec_glue_long_reds) {
+        if (antec_data.glue_long_reds.avg() > 12) {
+            votes += 1;
+        }
+    }
+
+    if (antec_data.vsids_vars.avg() > vsids_cutoff) {
         votes += 2;
     }
 
