@@ -175,7 +175,7 @@ public:
             heap.push(ns[i]);
         }
 
-        for (int i = heap.size() / 2 - 1; i >= 0; i--) {
+        for (int i = (int)heap.size() / 2 - 1; i >= 0; i--) {
             percolateDown(i);
         }
     }
