@@ -3119,7 +3119,7 @@ void Solver::reconfigure(int val)
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            conf.inc_max_temp_red_cls = 1.02;;
+            conf.inc_max_temp_red_cls = 1.02;
             reset_temp_cl_num();
             break;
         }
