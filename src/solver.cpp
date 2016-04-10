@@ -3102,6 +3102,12 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 4: {
+            conf.max_temporary_learnt_clauses = 10000;
+            reset_temp_cl_num();
+            break;
+        }
+
         case 6: {
             //No more simplifying
             conf.never_stop_search = true;
