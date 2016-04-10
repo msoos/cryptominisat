@@ -392,6 +392,9 @@ class Searcher : public HyperEngine
         unsigned guess_clause_array(
             const uint32_t glue
             , const uint32_t backtrack_lev
+            , const double vsids_cutoff
+            , const double offset_percent = 0.0
+            , bool count_antec_glue_long_reds = false
         ) const;
 
         //SQL

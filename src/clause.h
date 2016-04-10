@@ -132,9 +132,9 @@ struct ClauseStats
     }
 
     //Stored data
-    uint32_t glue:28;
+    uint32_t glue:27;
     uint32_t marked_clause:1;
-    uint32_t ttl:1;
+    uint32_t ttl:2;
     uint32_t which_red_array:2;
     float   activity = 0.0;
     #ifdef STATS_NEEDED
