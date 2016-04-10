@@ -504,6 +504,10 @@ Clause* BVA::find_cl_for_bva(
         ) {
             continue;
         }
+        #ifdef SLOW_DEBUG
+        assert(!cl->freed());
+        assert(!cl->getRemoved());
+        #endif
 
         bool OK = true;
         for(const Lit lit: *cl) {
