@@ -1855,10 +1855,6 @@ void Searcher::print_restart_stat()
 void Searcher::reset_temp_cl_num()
 {
     conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
-    for(ClOffset offs: longRedCls[0]) {
-        longRedCls[1].push_back(offs);
-    }
-    longRedCls[0].clear();
 }
 
 void Searcher::reduce_db_if_needed()
