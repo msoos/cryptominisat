@@ -1810,58 +1810,12 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
     printOccur(~lit);
 }
 
-bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits_orig)
-{
-    assert(lits_orig.size() == 2);
-    Lit lits[2];
-    lits[0] = lits_orig[0];
-    lits[1] = lits_orig[1];
-    if (solver->watches[lits[0]].size() > solver->watches[lits[1]].size()) {
-        std::swap(lits[0], lits[1]);
-    }
-
-    bool already_inside = false;
-    *limit_to_decrease -= solver->watches[lits[0]].size()/2;
-    Watched* i = solver->watches[lits[0]].begin();
-    Watched* j = i;
-    for(Watched* end = solver->watches[lits[0]].end(); i != end; i++) {
-        const Watched& w = *i;
-
-        if (w.isBin()
-            && !w.red()
-            && w.lit2() == lits[1]
-        ) {
-            if (solver->conf.verbosity >= 6) {
-                cout
-                << "Not adding resolvd BIN, it's aready inside"
-                << " irred bin: "
-                << lits[0]
-                << ", " << w.lit2()
-                << endl;
-            }
-            already_inside = true;
-        }
-        *j++ = *i;
-    }
-    solver->watches[lits[0]].shrink(i-j);
-
-    return already_inside;
-}
-
 bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
 ) {
     bvestats.newClauses++;
     Clause* newCl = NULL;
-
-    //Check if a new 2-long would subsume a 3-long if we have time
-    if (finalLits.size() == 2 && *limit_to_decrease > 10LL*1000LL) {
-        bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
-        if (already_inside) {
-            goto subsume;
-        }
-    }
 
     if (solver->conf.verbosity >= 6) {
         cout

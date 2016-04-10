@@ -421,7 +421,6 @@ private:
     bool        skip_resolution_thanks_to_gate(const size_t at_poss, const size_t at_negs) const;
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
-    bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const uint32_t var);
     void        print_var_elim_complexity_stats(const uint32_t var) const;
     struct Resolvent {
