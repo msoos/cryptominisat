@@ -276,6 +276,8 @@ class Solver : public Searcher
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
         void extend_solution();
+        void check_too_many_low_glues();
+        bool adjusted_glue_cutoff_if_too_many = false;
 
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use

@@ -1573,6 +1573,7 @@ lbool Solver::iterate_until_solved()
         sumPropStats += propStats;
         propStats.clear();
         Searcher::resetStats();
+        check_too_many_low_glues();
 
         //Solution has been found
         if (status != l_Undef) {
@@ -1597,6 +1598,27 @@ lbool Solver::iterate_until_solved()
     clear_gauss();
     conf.burst_search_len = backup_burst_len;
     return status;
+}
+
+void Solver::check_too_many_low_glues()
+{
+    if (conf.glue_must_keep_clause_if_below_or_eq == 0
+        || sumConflicts() < (150*1000ULL)
+        || adjusted_glue_cutoff_if_too_many
+        || conf.adjust_glue_if_too_many_low >= 1.0
+    ) {
+        return;
+    }
+
+    double perc = float_div(sumSearchStats.red_cl_in_which0, sumConflicts());
+    if (perc > conf.adjust_glue_if_too_many_low) {
+        conf.glue_must_keep_clause_if_below_or_eq--;
+        adjusted_glue_cutoff_if_too_many = true;
+        if (conf.verbosity >= 2) {
+            cout << "c Adjusted glue cutoff to " << conf.glue_must_keep_clause_if_below_or_eq
+            << " due to too many low glues: " << perc*100.0 << " %" << endl;
+        }
+    }
 }
 
 void Solver::handle_found_solution(const lbool status)
