@@ -1543,8 +1543,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         } else {
             which_arr = 1;
         }
+        if (which_arr == 0) {
+            stats.red_cl_in_which0++;
+        }
         if (conf.guess_cl_effectiveness) {
             unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level);
+            if (guess < which_arr) {
+                stats.guess_different++;
+            }
             which_arr = std::min(which_arr, guess);
         }
         cl->stats.which_red_array = which_arr;
@@ -3109,7 +3115,7 @@ unsigned Searcher::guess_clause_array(
         votes++;
     }
 
-    if (antec_data.vsids_vars.avg() < 7.5) {
+    if (antec_data.vsids_vars.avg() > 7.5) {
         votes += 2;
     }
 
