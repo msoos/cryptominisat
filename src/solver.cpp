@@ -1153,6 +1153,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
                 << "c recursive minimization too costly: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
                 << "Kcost/(% lits removed) --> disabling"
+                << std::setprecision(2)
                 << endl;
             }
         } else {
@@ -1161,6 +1162,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
                 << "c recursive minimization cost OK: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
                 << "Kcost/(% lits removed)"
+                << std::setprecision(2)
                 << endl;
             }
         }
