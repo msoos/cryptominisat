@@ -72,14 +72,23 @@ class Server (threading.Thread):
         self.files_finished = []
         self.files = {}
 
-        os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_dir)
-        fnames = open(options.cnf_dir, "r")
-        logging.info("CNF dir is %s", options.cnf_dir)
-        for num, fname in zip(xrange(10000), fnames):
+        os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_list)
+        fnames = open(options.cnf_list, "r")
+        logging.info("CNF list is file %s", options.cnf_list)
+        start = True
+        num = 0
+        for fname in fnames:
             fname = fname.strip()
+            if start:
+                self.cnf_dir = fname
+                logging.info("CNF dir is %s", self.cnf_dir)
+                start = False
+                continue
+
             self.files[num] = ToSolve(num, fname)
             self.files_available.append(num)
             logging.info("File added: %s", fname)
+            num = num+1
         fnames.close()
 
         self.files_running = {}
@@ -182,7 +191,7 @@ class Server (threading.Thread):
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
-        tosend["cnf_dir"] = options.cnf_dir
+        tosend["cnf_dir"] = self.cnf_dir
         tosend["extra_opts"] = options.extra_opts
         tosend["drat"] = options.drat
 
@@ -302,7 +311,7 @@ class SpotManager (threading.Thread):
     def __init__(self, noshutdown):
         threading.Thread.__init__(self)
         self.spot_creator = RequestSpotClient.RequestSpotClient(
-            options.cnf_dir == "test", noshutdown=noshutdown,
+            options.cnf_list == "test", noshutdown=noshutdown,
             count=options.client_count)
 
     def run(self):

@@ -52,7 +52,7 @@ For the --solver options you can give:
                       type=int
                       )
 
-    parser.add_option("--cnfdir", default="satcomp14", dest="cnf_dir",
+    parser.add_option("--cnflist", default="satcomp14", dest="cnf_list",
                       type=str,
                       help="The list of CNF files to solve, first line the dir"
                       "[default: %default]",
