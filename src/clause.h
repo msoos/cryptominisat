@@ -129,6 +129,8 @@ struct ClauseStats
         which_red_array = 1;
         glue = 1000;
         activity = 0;
+        ttl = 0;
+        marked_clause = 0;
     }
 
     //Stored data
