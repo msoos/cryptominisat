@@ -14,8 +14,9 @@ import logging
 
 
 class RequestSpotClient:
-    def __init__(self, test, noshutdown=False):
+    def __init__(self, test, noshutdown=False, count=1):
         self.conf = ConfigParser.ConfigParser()
+        self.count = count
         if test:
             self.conf.read('ec2-spot-instance-test.cfg')
             self.limit_create = 1
@@ -82,7 +83,7 @@ DATA="%s"
 
     def __provision_instances(self):
         reqs = self.ec2conn.request_spot_instances(price = self.conf.get('ec2', 'max_bid'),
-                count = int(self.conf.get('ec2', 'count')),
+                count = self.count,
                 image_id = self.conf.get('ec2', 'ami_id'),
                 subnet_id = self.conf.get('ec2', 'subnet_id'),
                 instance_type = self.conf.get('ec2', 'type'),
