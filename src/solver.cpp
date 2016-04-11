@@ -3122,6 +3122,7 @@ void Solver::reconfigure(int val)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.inc_max_temp_red_cls = 1.03;
+
             reset_temp_cl_num();
             break;
         }
@@ -3144,7 +3145,9 @@ void Solver::reconfigure(int val)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
             conf.inc_max_temp_red_cls = 1.02;
+
             reset_temp_cl_num();
+            params.rest_type = conf.restartType;
             break;
         }
 
