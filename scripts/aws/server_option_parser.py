@@ -26,7 +26,7 @@ For the --solver options you can give:
                       default=False, dest="verbose", help="Be more verbose"
                       )
 
-    parser.add_option("--numclients", "-n", default=1, type=int,
+    parser.add_option("--numclients", "-c", default=1, type=int,
                       dest="client_count", help="Number of clients to launch"
                       )
 
