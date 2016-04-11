@@ -1551,7 +1551,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
                 break;
 
             case 1: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1562,7 +1562,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 2: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1573,7 +1573,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 3: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1584,7 +1584,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 4: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 6.0);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 6.0, 0.3);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1595,7 +1595,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 5: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 8.5);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 8.5, 0.3);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1606,7 +1606,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 6: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3, -0.08);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1617,7 +1617,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 7: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0, true);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3, 0, true);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1628,7 +1628,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 8: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08, true);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.15, -0.08, true);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1639,7 +1639,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 9: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -1650,7 +1650,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             case 10: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0, true);
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2, 0, true);
                 if (guess < which_arr) {
                     stats.guess_different++;
                 }
@@ -3211,6 +3211,7 @@ unsigned Searcher::guess_clause_array(
     const uint32_t glue
     , const uint32_t backtrack_lev
     , const double vsids_cutoff
+    , double backtrack_cutoff
     , const double offset_percent
     , bool count_antec_glue_long_reds
 ) const {
@@ -3226,7 +3227,7 @@ unsigned Searcher::guess_clause_array(
     }
 
     double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (perc_backtrack_lev < (0.15-offset_percent)) {
+    if (perc_backtrack_lev < (backtrack_cutoff-offset_percent)) {
         votes++;
     }
 
