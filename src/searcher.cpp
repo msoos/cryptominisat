@@ -1246,7 +1246,7 @@ void Searcher::check_need_restart()
             params.needToStopSearch = true;
         }
     }
-    if (conf.restartType == Restart::glue_geom
+    if ((conf.restartType == Restart::glue_geom || conf.restartType == Restart::geom)
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;
@@ -2184,6 +2184,12 @@ lbool Searcher::solve(
             goto end;
     }
 
+    if (conf.restartType == Restart::geom) {
+        max_confl_phase = conf.restart_first;
+        max_confl_this_phase = conf.restart_first;
+        params.rest_type = Restart::geom;
+    }
+
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
         ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
@@ -2205,8 +2211,15 @@ lbool Searcher::solve(
         }
         status = search<false>();
 
-        if (max_confl_this_phase <= 0
-            && conf.restartType == Restart::glue_geom
+        if (conf.restartType == Restart::geom
+            && max_confl_this_phase <= 0
+        ) {
+            max_confl_phase *= conf.restart_inc;
+            max_confl_this_phase = max_confl_phase;
+        }
+
+        if (conf.restartType == Restart::glue_geom
+            && max_confl_this_phase <= 0
         ) {
             if (params.rest_type == Restart::geom) {
                 params.rest_type = Restart::glue;
