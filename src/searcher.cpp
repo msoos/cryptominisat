@@ -1627,6 +1627,39 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
                 break;
             }
 
+            case 8: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08, true);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 2;
+                }
+                break;
+            }
+
+            case 9: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, -0.08);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 2;
+                }
+                break;
+            }
+
+            case 10: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0, true);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
             default: {
                 cout << "ERROR: no such guess value: " << conf.guess_cl_effectiveness << endl;
                 exit(-1);
@@ -3193,7 +3226,7 @@ unsigned Searcher::guess_clause_array(
     }
 
     double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (perc_backtrack_lev < (0.2-offset_percent)) {
+    if (perc_backtrack_lev < (0.15-offset_percent)) {
         votes++;
     }
 
