@@ -1660,6 +1660,17 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
                 break;
             }
 
+            case 11: {
+                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.1, 0, true);
+                if (guess < which_arr) {
+                    stats.guess_different++;
+                }
+                if (guess == 0) {
+                    cl->stats.ttl = 1;
+                }
+                break;
+            }
+
             default: {
                 cout << "ERROR: no such guess value: " << conf.guess_cl_effectiveness << endl;
                 exit(-1);
