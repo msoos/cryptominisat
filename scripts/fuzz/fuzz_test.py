@@ -441,7 +441,7 @@ class Tester:
             cmd += " --reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
-            cmd += "--keepguess %s " % random.choice([0, 1, 2, 3, 4, 5, 6, 7])
+            cmd += "--keepguess %s " % random.randint(0, 10)
             cmd += "--restart %s " % random.choice(
                 ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
