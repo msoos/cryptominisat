@@ -3193,7 +3193,7 @@ unsigned Searcher::guess_clause_array(
     }
 
     double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (perc_backtrack_lev < (0.3-offset_percent)) {
+    if (perc_backtrack_lev < (0.2-offset_percent)) {
         votes++;
     }
 
