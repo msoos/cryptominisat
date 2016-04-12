@@ -3147,7 +3147,6 @@ void Solver::reconfigure(int val)
             conf.inc_max_temp_red_cls = 1.02;
 
             reset_temp_cl_num();
-            params.rest_type = conf.restartType;
             break;
         }
 
