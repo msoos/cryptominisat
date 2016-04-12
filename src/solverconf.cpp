@@ -46,8 +46,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
         , glue_must_keep_clause_if_below_or_eq(5)
-        , adjust_glue_if_too_many_low(0.20)
-        , guess_cl_effectiveness(10)
+        , adjust_glue_if_too_many_low(2.0)
+        , guess_cl_effectiveness(1)
 
         //Restarting
         , restart_first(100)
