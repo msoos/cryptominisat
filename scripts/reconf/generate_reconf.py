@@ -55,8 +55,10 @@ def query_yes_no(question, default="no"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
-num = 15
-ignore = "2,4,5,0,8,11,9,10"
+#num = 15
+#ignore = "2,4,5,0,8,11,9,10"
+num = 8
+ignore = "1,2,3,4,5,6"
 ignore_elems = {}
 for x in ignore.split(","):
     x = x.strip()
@@ -68,7 +70,7 @@ for x in ignore.split(","):
 
 #os.rm -f
 subprocess.call("rm outs/*", shell=True)
-toexec = "./reconf.py -n %d -i %s  -f outs/out  ~/media/sat/out/satcomp091113/reconf*/*stdout*" % (num, ignore)
+toexec = "./reconf.py -n %d -i %s  -f outs/out  /home/soos/media/sat/out/large_fixed_adjust_guess-12-April-2016-MMEDX-13e1c9168-tout-1500-mout-1600/*stdout* /home/soos/media/sat/out/large_reconf7-14-April-2016-W2ZZ5-636d5f5dd-tout-1500-mout-1600/*stdout*" % (num, ignore)
 f = open("output", "w")
 ret = subprocess.call(toexec, shell=True, stdout=f)
 f.close()
