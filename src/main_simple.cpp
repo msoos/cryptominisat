@@ -68,9 +68,21 @@ void printVersionInfo()
     #endif
 }
 
-void drat_stuff(SolverConf& conf)
+
+void handle_drat_option(SolverConf& conf, const char* dratfilname)
 {
-    dratf = &std::cout;
+    std::ofstream* dratfTmp = new std::ofstream;
+    dratfTmp->open(dratfilname, std::ofstream::out);
+    if (!*dratfTmp) {
+        std::cerr
+        << "ERROR: Could not open DRAT file "
+        << dratfilname
+        << " for writing"
+        << endl;
+
+        std::exit(-1);
+    }
+    dratf = dratfTmp;
 
     if (!conf.otfHyperbin) {
         if (conf.verbosity >= 2) {
@@ -141,14 +153,7 @@ int main(int argc, char** argv)
     const char* value;
     for (i = j = 0; i < argc; i++){
         if ((value = hasPrefix(argv[i], "--drat="))){
-            long int drat = (int)strtol(value, NULL, 10);
-            if (drat == 0 && errno == EINVAL){
-                printf("ERROR! illegal drat level %s\n", value);
-                exit(0);
-            }
-            if (drat > 0) {
-                drat_stuff(conf);
-            }
+            handle_drat_option(conf, value);
         }else if ((value = hasPrefix(argv[i], "--verb="))){
             long int verbosity = (int)strtol(value, NULL, 10);
             if (verbosity == 0 && errno == EINVAL){
