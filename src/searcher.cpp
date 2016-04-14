@@ -1246,7 +1246,9 @@ void Searcher::check_need_restart()
             params.needToStopSearch = true;
         }
     }
-    if ((conf.restartType == Restart::glue_geom || conf.restartType == Restart::geom)
+    if ((conf.restartType == Restart::glue_geom
+        || conf.restartType == Restart::geom
+        || conf.restartType == Restart::luby)
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;
@@ -2190,6 +2192,11 @@ lbool Searcher::solve(
         params.rest_type = Restart::geom;
     }
 
+    if (conf.restartType == Restart::luby) {
+        max_confl_this_phase = conf.restart_first;
+        params.rest_type = Restart::luby;
+    }
+
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
         ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
@@ -2218,6 +2225,10 @@ lbool Searcher::solve(
             max_confl_this_phase = max_confl_phase;
         }
 
+        if (conf.restartType == Restart::luby) {
+            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num) * (double)conf.restart_first/2.0;
+        }
+
         if (conf.restartType == Restart::glue_geom
             && max_confl_this_phase <= 0
         ) {
@@ -2233,11 +2244,6 @@ lbool Searcher::solve(
                     break;
 
                 case Restart::glue:
-                    max_confl_this_phase = 2*max_confl_phase;
-                    break;
-
-                case Restart::luby:
-                    max_confl_phase = luby(conf.restart_inc, loop_num) * (double)conf.restart_first;
                     max_confl_this_phase = 2*max_confl_phase;
                     break;
 
