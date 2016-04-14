@@ -167,6 +167,13 @@ int main(int argc, char** argv)
                 printf("ERROR! illegal threads %s\n", value);
                 exit(0);
             }
+        }else if ((value = hasPrefix(argv[i], "--reconf="))){
+            long int reconf  = (int)strtol(value, NULL, 10);
+            if (reconf == 0 && errno == EINVAL){
+                printf("ERROR! illegal threads %s\n", value);
+                exit(0);
+            }
+            conf.reconfigure_val = reconf;
         }else if (strcmp(argv[i], "--zero-exit-status") == 0){
             zero_exit_status = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "--help") == 0){
