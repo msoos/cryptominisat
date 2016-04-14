@@ -67,30 +67,7 @@ if options.ignore:
         r = int(r)
         ignore[r] = True
 
-order = ["numVars", "numClauses", "var_cl_ratio", "binary", "trinary", "horn",
-         "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread",
-         "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max",
-         "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min",
-         "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std",
-         "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean",
-         "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread",
-         "avg_confl_size", "confl_size_min", "confl_size_max",
-         "avg_confl_glue", "confl_glue_min", "confl_glue_max",
-         "avg_num_resolutions", "num_resolutions_min",
-         "num_resolutions_max", "learnt_bins_per_confl",
-         "learnt_tris_per_confl", "avg_branch_depth", "branch_depth_min",
-         "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min",
-         "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl",
-         "confl_per_restart", "decisions_per_conflict",
-         "irred-glue_distr_mean", "irred-glue_distr_var",
-         "irred-size_distr_mean", "irred-size_distr_var",
-         "irred-uip_use_distr_mean", "irred-uip_use_distr_var",
-         "irred-activity_distr_mean", "irred-activity_distr_var",
-         "red-glue_distr_mean", "red-glue_distr_var", "red-size_distr_mean",
-         "red-size_distr_var", "red-uip_use_distr_mean",
-         "red-uip_use_distr_var", "red-activity_distr_mean",
-         "red-activity_distr_var", "num_gates_found_last",
-         "num_xors_found_last"]
+order = ["numVars", "numClauses", "var_cl_ratio", "binary", "trinary", "horn", "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread", "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread", "avg_confl_size", "confl_size_min", "confl_size_max", "avg_confl_glue", "confl_glue_min", "confl_glue_max", "avg_num_resolutions", "num_resolutions_min", "num_resolutions_max", "learnt_bins_per_confl", "learnt_tris_per_confl", "avg_branch_depth", "branch_depth_min", "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min", "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl", "confl_per_restart", "decisions_per_conflict", "irred_cl_distrib.glue_distr_mean", "irred_cl_distrib.glue_distr_var", "irred_cl_distrib.size_distr_mean", "irred_cl_distrib.size_distr_var", "irred_cl_distrib.uip_use_distr_mean", "irred_cl_distrib.uip_use_distr_var", "irred_cl_distrib.activity_distr_mean", "irred_cl_distrib.activity_distr_var", "red_cl_distrib.glue_distr_mean", "red_cl_distrib.glue_distr_var", "red_cl_distrib.size_distr_mean", "red_cl_distrib.size_distr_var", "red_cl_distrib.uip_use_distr_mean", "red_cl_distrib.uip_use_distr_var", "red_cl_distrib.activity_distr_mean", "red_cl_distrib.activity_distr_var", "num_gates_found_last", "num_xors_found_last"]
 
 f = open("outs/reconf.names", "w")
 f.write("reconf.                     | the target attribute\n\n")
