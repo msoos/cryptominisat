@@ -169,7 +169,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
-            conf.max_temporary_learnt_clauses = 30000;
+            conf.max_temporary_learnt_clauses = 10000;
             break;
         }
         case 6: {
@@ -203,7 +203,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 9: {
             //Different glue limit
-            conf.glue_must_keep_clause_if_below_or_eq = 7;
+            conf.glue_must_keep_clause_if_below_or_eq = 2;
             break;
         }
         case 10: {
