@@ -148,7 +148,11 @@ if (ALSO_BUILD_STATIC_LIB)
     )
 endif()
 
-add_library(libcryptominisat4 SHARED ${cms_lib_objects_norm})
+if (NOT STATICCOMPILE)
+    add_library(libcryptominisat4 SHARED ${cms_lib_objects_norm})
+else()
+    add_library(libcryptominisat4 STATIC ${cms_lib_objects_norm})
+endif()
 target_link_libraries(libcryptominisat4
     LINK_PUBLIC ${cryptoms_lib_link_libs}
 )
@@ -159,7 +163,11 @@ set_target_properties(libcryptominisat4 PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-add_library(libcryptominisat4ipasir SHARED ${cms_lib_objects_ipasir})
+if (NOT STATICCOMPILE)
+    add_library(libcryptominisat4ipasir SHARED ${cms_lib_objects_ipasir})
+else()
+    add_library(libcryptominisat4ipasir STATIC ${cms_lib_objects_ipasir})
+endif()
 target_link_libraries(libcryptominisat4ipasir
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     libcryptominisat4
@@ -228,17 +236,17 @@ add_executable(cryptominisat4_simple
     main_simple.cpp
 )
 
-if (STATICCOMPILE)
-    if (NOT ONLY_SIMPLE)
-        set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_START_STATIC 0)
-
-        set_target_properties(cusp4 PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(cusp4 PROPERTIES LINK_SEARCH_START_STATIC 0)
-    endif()
-    set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
-    set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
-endif (STATICCOMPILE)
+# if (STATICCOMPILE)
+#     if (NOT ONLY_SIMPLE)
+#         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_END_STATIC 1)
+#         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_START_STATIC 0)
+#
+#         set_target_properties(cusp4 PROPERTIES LINK_SEARCH_END_STATIC 1)
+#         set_target_properties(cusp4 PROPERTIES LINK_SEARCH_START_STATIC 0)
+#     endif()
+#     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
+#     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
+# endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
     ${Boost_LIBRARIES}
