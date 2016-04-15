@@ -5,7 +5,7 @@ BIB = bibtex
 all: cmsv5.pdf
 
 view :
-	    okular cmsv54.pdf
+	    okular cmsv5.pdf
 
 cmsv5.pdf : clean cmsv5.tex cmsv5.bbl cmsv5.blg
 	    $(TEX) cmsv5.tex
