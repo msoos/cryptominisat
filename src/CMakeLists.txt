@@ -141,7 +141,7 @@ if (ALSO_BUILD_STATIC_LIB)
         libcryptominisat4_static
     )
     set_target_properties(libcryptominisat4_ipasir_static PROPERTIES
-        OUTPUT_NAME cryptominisat4ipasir
+        OUTPUT_NAME ipasircryptominisat4
         PUBLIC_HEADER "${cryptominisat4_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -164,16 +164,16 @@ set_target_properties(libcryptominisat4 PROPERTIES
 )
 
 if (NOT STATICCOMPILE)
-    add_library(libcryptominisat4ipasir SHARED ${cms_lib_objects_ipasir})
+    add_library(ipasircryptominisat4 SHARED ${cms_lib_objects_ipasir})
 else()
-    add_library(libcryptominisat4ipasir STATIC ${cms_lib_objects_ipasir})
+    add_library(ipasircryptominisat4 STATIC ${cms_lib_objects_ipasir})
 endif()
-target_link_libraries(libcryptominisat4ipasir
+target_link_libraries(ipasircryptominisat4
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     libcryptominisat4
 )
-set_target_properties(libcryptominisat4ipasir PROPERTIES
-    OUTPUT_NAME cryptominisat4ipasir
+set_target_properties(ipasircryptominisat4 PROPERTIES
+    OUTPUT_NAME ipasircryptominisat4
     PUBLIC_HEADER "${cryptominisat4_public_headers}"
     VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
