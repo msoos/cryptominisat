@@ -165,13 +165,17 @@ set_target_properties(libcryptominisat4 PROPERTIES
 
 if (NOT STATICCOMPILE)
     add_library(ipasircryptominisat4 SHARED ${cms_lib_objects_ipasir})
+    target_link_libraries(ipasircryptominisat4
+        LINK_PUBLIC ${cryptoms_lib_link_libs}
+        libcryptominisat4
+    )
 else()
-    add_library(ipasircryptominisat4 STATIC ${cms_lib_objects_ipasir})
+    add_library(ipasircryptominisat4 STATIC ${cms_lib_objects_ipasir} ${cms_lib_objects_norm})
+    target_link_libraries(ipasircryptominisat4
+        PUBLIC ${cryptoms_lib_link_libs}
+    )
 endif()
-target_link_libraries(ipasircryptominisat4
-    LINK_PUBLIC ${cryptoms_lib_link_libs}
-    libcryptominisat4
-)
+
 set_target_properties(ipasircryptominisat4 PROPERTIES
     OUTPUT_NAME ipasircryptominisat4
     PUBLIC_HEADER "${cryptominisat4_public_headers}"
