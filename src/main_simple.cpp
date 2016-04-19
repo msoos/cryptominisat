@@ -279,6 +279,13 @@ int main(int argc, char** argv)
         print_model(&std::cout, solver);
     }
 
+    if (dratf) {
+        *dratf << std::flush;
+        if (dratf != &std::cout) {
+            delete dratf;
+        }
+    }
+
     if (zero_exit_status)
         return 0;
     else {
