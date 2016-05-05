@@ -97,6 +97,18 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+add_executable(multisol_test
+    multisol_test.cpp
+)
+target_link_libraries(multisol_test
+    libcryptominisat4
+)
+add_test (
+    NAME multisol_test
+    COMMAND multisol_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 set (MY_TESTS
     basic_test
     assump_test
