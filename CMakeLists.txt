@@ -445,7 +445,7 @@ set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
 set(CRYPTOMINISAT4_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
     ${MYSQL_LIB}
-    m4ri
+    ${M4RI_LIBRARIES}
 )
 
 # Export targets
