@@ -176,6 +176,7 @@ add_cxx_flag_if_supported("-Winit-self")
 add_cxx_flag_if_supported("-Wparentheses")
 add_cxx_flag_if_supported("-Wunreachable-code")
 add_cxx_flag_if_supported("-ggdb3")
+add_cxx_flag("-fPIC")
 # add_cxx_flag_if_supported("-flto") # slow compile and not enough benefits
 #add_cxx_flag_if_supported("-fno-exceptions")
 
@@ -197,12 +198,12 @@ if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(Boost_USE_STATIC_LIBS ON)
     set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
-    MESSAGE(STATUS "Statically compiling")
+    MESSAGE(STATUS "Compiling for static library use")
 
     set(NOMYSQL ON)
 else()
-    add_cxx_flag("-fPIC")
     add_definitions(-DBOOST_TEST_DYN_LINK)
+    MESSAGE(STATUS "Compiling for dynamic library use")
 endif()
 
 option(SLOW_DEBUG "Use more debug flags" OFF)
