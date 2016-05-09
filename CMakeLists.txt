@@ -312,6 +312,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Look for M4RI (for Gauss)
 # -----------------------------------------------------------------------------
+option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
 if (NOT NOM4RI)
     find_package(M4RI)
@@ -320,6 +321,9 @@ if (NOT NOM4RI)
         add_definitions( -DUSE_M4RI )
     ELSE (M4RI_FOUND)
         MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
+        if (REQUIRE_M4RI)
+            MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
+        endif()
     ENDIF (M4RI_FOUND)
 endif()
 
