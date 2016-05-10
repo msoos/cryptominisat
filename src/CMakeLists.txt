@@ -253,8 +253,8 @@ add_executable(cryptominisat4_simple
 # endif (STATICCOMPILE)
 
 set(cryptoms_exec_link_libs
-    ${Boost_LIBRARIES}
     libcryptominisat4
+    ${Boost_LIBRARIES}
 )
 
 IF (ZLIB_FOUND)
