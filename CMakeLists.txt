@@ -195,12 +195,16 @@ endif()
 # -----------------------------------------------------------------------------
 option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    SET(Boost_USE_STATIC_LIBS ON)
-    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
     MESSAGE(STATUS "Compiling for static library use")
 
+    #SET(Boost_USE_STATIC_LIBS ON)
+    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -static")
     set(NOMYSQL ON)
+    #set(CMAKE_EXE_LINKER_FLAGS "-static ${CMAKE_EXE_LINKER_FLAGS}")
+    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    SET(BUILD_SHARED_LIBRARIES OFF)
+    set(STP_STATIC_LIBRARY libstp) # Used for exporting target
+    unset(ALSO_BUILD_STATIC_LIB CACHE) # Hide this option for ccmake and cmake-gui users
 else()
     add_definitions(-DBOOST_TEST_DYN_LINK)
     MESSAGE(STATUS "Compiling for dynamic library use")
