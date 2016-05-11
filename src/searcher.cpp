@@ -763,6 +763,9 @@ Clause* Searcher::analyze_conflict(
         }
     }
     glue = calc_glue(learnt_clause);
+    if (conf.calc_glue_user != NULL) {
+      glue = conf.calc_glue_user(learnt_clause, glue);
+    }
     print_fully_minimized_learnt_clause();
 
     if (learnt_clause.size() > conf.max_size_more_minim

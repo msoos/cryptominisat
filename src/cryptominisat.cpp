@@ -418,6 +418,16 @@ DLL_PUBLIC void SATSolver::set_no_bva()
     }
 }
 
+DLL_PUBLIC void SATSolver::append_glue_calc(uint32_t (*function)(vector<Lit>&, uint32_t))
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.do_bva = false;
+        s.conf.doRenumberVars = false;
+        s.conf.calc_glue_user = function;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {

@@ -74,6 +74,7 @@ namespace CMSat {
         void set_no_simplify_at_startup();
         void set_no_equivalent_lit_replacement();
         void set_no_bva();
+        void append_glue_calc(uint32_t (*function)(std::vector<Lit>&, uint32_t));
 
         //Get info
         static const char* get_version();

@@ -24,13 +24,17 @@ THE SOFTWARE.
 #define SOLVERCONF_H
 
 #include <string>
+#include <vector>
 #include <cstdlib>
 #include <cassert>
 #include "gaussianconfig.h"
 
 using std::string;
+using std::vector;
 
 namespace CMSat {
+
+class Lit;
 
 enum class ClauseClean {
     glue = 0
@@ -209,6 +213,7 @@ class SolverConf
         //Glues
         int       update_glues_on_prop;
         int       update_glues_on_analyze;
+        uint32_t  (*calc_glue_user)(vector<Lit>&, uint32_t);
 
         //OTF stuff
         int       otfHyperbin;
@@ -344,15 +349,15 @@ class SolverConf
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;
         double global_multiplier_multiplier_max;
-        unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
+        unsigned maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
         unsigned reconfigure_val;
         unsigned reconfigure_at;
         unsigned preprocess;
-        std::string simplified_cnf;
-        std::string solution_file;
-        std::string saved_state_file;
+        string simplified_cnf;
+        string solution_file;
+        string saved_state_file;
 };
 
 } //end namespace

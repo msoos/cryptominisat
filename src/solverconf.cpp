@@ -91,6 +91,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Glues
         , update_glues_on_prop(false)
         , update_glues_on_analyze(true)
+        , calc_glue_user(NULL)
 
         //OTF
         , otfHyperbin      (true)
