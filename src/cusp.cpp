@@ -144,7 +144,7 @@ void CUSP::add_approxmc_options()
     ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
     ("onlyCount", po::value(&onlyCount)->default_value(onlyCount)
-        ,"Only counting, the default. Otherwise, UNIGEN is used")
+     ,"Only counting, the default. Otherwise, UNIGEN is used")
     ;
 
     help_options_simple.add(approxMCOptions);
@@ -175,10 +175,10 @@ uint32_t CUSP::SolutionsToReturn(
     }
 }
 
-void print_xor(const vector<uint32_t>&vars, const uint32_t rhs)
+void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
 {
     cout << "Added XOR ";
-    for(size_t i = 0; i < vars.size(); i++) {
+    for (size_t i = 0; i < vars.size(); i++) {
         cout << vars[i]+1;
         if (i < vars.size()-1) {
             cout << " + ";
@@ -202,7 +202,7 @@ bool CUSP::openLogFile()
     cusp_logf.open(cuspLogFile.c_str());
     if (!cusp_logf.is_open()) {
         cout << "Cannot open CUSP log file '" << cuspLogFile
-        << "' for writing." << endl;
+             << "' for writing." << endl;
         exit(1);
     }
     return true;
@@ -322,10 +322,10 @@ bool CUSP::ApproxMC(SATCount& count)
 
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             cusp_logf << "ApproxMC:"
-            << j << ":" << hashCount << ":"
-            << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
-            << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
-            << currentNumSolutions << endl;
+                      << j << ":" << hashCount << ":"
+                      << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
+                      << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
+                      << currentNumSolutions << endl;
 
             //Timeout!
             if (currentNumSolutions < 0) {
@@ -370,8 +370,8 @@ bool CUSP::ApproxMC(SATCount& count)
     auto hash_it = numHashList.begin();
     auto cnt_it = numCountList.begin();
     for (; hash_it != numHashList.end() && cnt_it != numCountList.end()
-        ; hash_it++, cnt_it++
-    ) {
+            ; hash_it++, cnt_it++
+        ) {
         *cnt_it *= pow(2, (*hash_it) - minHash);
     }
     int medSolCount = findMedian(numCountList);
@@ -395,8 +395,8 @@ int CUSP::solve()
     solverToInterrupt = solver;
     if (dratf) {
         cout
-        << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
-        << endl;
+                << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
+                << endl;
         exit(-1);
     }
     //check_num_threads_sanity(num_threads);
@@ -429,7 +429,7 @@ int CUSP::solve()
             return correctReturnValue(l_False);
         }
         startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
-                                    log2(1.8) - log2(pivotUniGen)) - 2;
+                               log2(1.8) - log2(pivotUniGen)) - 2;
     } else {
         cout << "Using manually-specified startIteration" << endl;
     }
@@ -437,7 +437,7 @@ int CUSP::solve()
     //Either onlycount or unigen
     if (onlyCount) {
         cout << "Number of solutions is: " << solCount.cellSolCount
-        << " x 2^" << solCount.hashCount << endl;
+             << " x 2^" << solCount.hashCount << endl;
     } else {
         assert(false);
         cout << "UNIGEN not compiled in. Exiting" << endl;
@@ -479,7 +479,7 @@ void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
 {
     independent_vars = _independent_vars;
     if (independent_vars.empty()) {
-        for(size_t i = 0; i < solver->nVars(); i++) {
+        for (size_t i = 0; i < solver->nVars(); i++) {
             independent_vars.push_back(i);
         }
     }

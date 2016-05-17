@@ -44,7 +44,6 @@
 #include <fstream>
 #include <signal.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
 #include <list>
 #include <array>
