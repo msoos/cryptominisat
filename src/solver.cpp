@@ -3187,6 +3187,23 @@ void Solver::reconfigure(int val)
             break;
         }
 
+        case 15: {
+            //Like OLD-OLD minisat
+            conf.varElimRatioPerIter = 1;
+            conf.restartType = Restart::geom;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+
+            conf.inc_max_temp_red_cls = 1.02;
+            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            conf.update_glues_on_prop = 0;
+            conf.update_glues_on_analyze = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
+            reset_temp_cl_num();
+            break;
+        }
+
         default: {
             cout << "ERROR: You must give a value for reconfigure that is lower" << endl;
             exit(-1);
