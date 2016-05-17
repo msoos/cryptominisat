@@ -262,14 +262,17 @@ IF (ZLIB_FOUND)
 ENDIF()
 
 if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-    set_target_properties(cryptominisat4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set_target_properties(cryptominisat4 PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-    set_target_properties(cusp4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-    set_target_properties(cusp4 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set_target_properties(cusp4 PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
-set_target_properties(cryptominisat4_simple PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set_target_properties(cryptominisat4_simple PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_target_properties(cryptominisat4_simple PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+    INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (NOT ONLY_SIMPLE)
     target_link_libraries(cryptominisat4
