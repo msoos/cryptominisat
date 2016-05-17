@@ -245,18 +245,6 @@ add_executable(cryptominisat4_simple
     main_simple.cpp
 )
 
-# if (STATICCOMPILE)
-#     if (NOT ONLY_SIMPLE)
-#         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_END_STATIC 1)
-#         set_target_properties(cryptominisat4 PROPERTIES LINK_SEARCH_START_STATIC 0)
-#
-#         set_target_properties(cusp PROPERTIES LINK_SEARCH_END_STATIC 1)
-#         set_target_properties(cusp PROPERTIES LINK_SEARCH_START_STATIC 0)
-#     endif()
-#     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
-#     set_target_properties(cryptominisat4_simple PROPERTIES LINK_SEARCH_START_STATIC 0)
-# endif (STATICCOMPILE)
-
 set(cryptoms_exec_link_libs
     libcryptominisat4
     ${Boost_LIBRARIES}
