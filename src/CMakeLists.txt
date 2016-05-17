@@ -94,7 +94,6 @@ if (SQLITE3_FOUND AND STATS)
 endif ()
 
 if (TBB_FOUND)
-    #set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES} ${TBB_MALLOC_PROXY_LIBRARY_NAMES})
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
 endif()
 
