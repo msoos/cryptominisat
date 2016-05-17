@@ -29,7 +29,8 @@
 #include <fstream>
 #include <map>
 struct SATCount {
-    void clear() {
+    void clear()
+    {
         SATCount tmp;
         *this = tmp;
     }
@@ -55,8 +56,8 @@ private:
     bool ScalApproxMC(SATCount& count);
     bool ApproxMC(SATCount& count);
     bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumps);
-    bool SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit> &assumps);
-    
+    bool SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps);
+
     int64_t BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps);
     lbool BoundedSAT(
         uint32_t maxSolutions, uint32_t minSolutions
@@ -109,11 +110,11 @@ private:
         , uint32_t* lastSuccessfulHashOffset, double timeReference
     );
     int uniGenCall(uint32_t samples
-        , uint32_t sampleCounter
-        , std::map<std::string, uint32_t>& solutionMap
-        , uint32_t* lastSuccessfulHashOffset
-        , double timeReference
-    );
+                   , uint32_t sampleCounter
+                   , std::map<std::string, uint32_t>& solutionMap
+                   , uint32_t* lastSuccessfulHashOffset
+                   , double timeReference
+                  );
 };
 
 
