@@ -234,6 +234,12 @@ if (NOT ONLY_SIMPLE)
         signalcode.cpp
         cusp.cpp
     )
+
+    add_executable(scalmc
+        main.cpp
+        signalcode.cpp
+        scalmc.cpp
+    )
 endif()
 add_executable(cryptominisat4_simple
     main_simple.cpp
@@ -268,6 +274,10 @@ if (NOT ONLY_SIMPLE)
     set_target_properties(cusp4 PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+    set_target_properties(scalmc PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 set_target_properties(cryptominisat4_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -292,6 +302,16 @@ if (NOT ONLY_SIMPLE)
         RUNTIME DESTINATION bin
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cusp4")
+
+    target_link_libraries(scalmc
+        ${cryptoms_exec_link_libs}
+        rt
+    )
+    install(TARGETS scalmc
+        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+        RUNTIME DESTINATION bin
+    )
+    SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
 endif()
 
 target_link_libraries(cryptominisat4_simple
