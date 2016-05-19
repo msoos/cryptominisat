@@ -486,16 +486,13 @@ bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<
         for (uint64_t i = 0; i<numberToRemove; i++) {
             assumps.pop_back();
         }
-    }
-
-    else {
+    } else {
         if (clausNum > assumps.size() && assumps.size() < hashVars.size()) {
             for (uint32_t i = assumps.size(); i< hashVars.size() && i < clausNum; i++) {
                 assumps.push_back(hashVars[i]);
             }
         }
         if (clausNum > hashVars.size()) {
-
             AddHash(clausNum-hashVars.size(),assumps);
             for (uint64_t i = hashVars.size(); i < clausNum; i++) {
                 hashVars[i] = assumps[i];
@@ -508,17 +505,13 @@ bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<
 bool CUSP::ScalApproxMC(SATCount& count)
 {
     count.clear();
-    int64_t currentNumSolutions = 0;
     vector<uint64_t> numHashList;
     vector<int64_t> numCountList;
     vector<Lit> assumps;
     uint64_t hashCount = startIteration, hashPrev = 0, mPrev = 0, swapVar = 0;
-    map<uint64_t,int64_t> countRecord;
-    map<uint64_t,uint32_t> succRecord;
-    map<uint64_t,Lit> hashVars;
     double myTime = cpuTimeTotal();
     if (hashCount == 0) {
-        currentNumSolutions = BoundedSATCount(pivotApproxMC+1,assumps);
+        int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC+1,assumps);
         cusp_logf << "ApproxMC:"<< searchMode<<":"<<"0:0:"
                   << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
                   << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
@@ -530,16 +523,21 @@ bool CUSP::ScalApproxMC(SATCount& count)
         }
         hashCount++;
     }
-    myTime = cpuTimeTotal();
+
     for (uint32_t j = 0; j < tApproxMC; j++) {
+        map<uint64_t,int64_t> countRecord;
+        map<uint64_t,uint32_t> succRecord;
+        map<uint64_t,Lit> hashVars;
+
         uint32_t repeatTry = 0;
         uint64_t numExplored = 1;
         uint64_t lowerFib = 0, upperFib = independent_vars.size();
 
         while (numExplored < independent_vars.size()) {
+            myTime = cpuTimeTotal();
             swapVar = hashCount;
             SetHash(hashCount,hashVars,assumps);
-            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
+            int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
             cusp_logf << "ApproxMC:" << searchMode<<":"
@@ -547,7 +545,6 @@ bool CUSP::ScalApproxMC(SATCount& count)
                       << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
                       << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
                       << currentNumSolutions << endl;
-            myTime = cpuTimeTotal();
             //Timeout!
             if (currentNumSolutions < 0) {
                 //Remove all hashes
@@ -556,10 +553,8 @@ bool CUSP::ScalApproxMC(SATCount& count)
                 if (repeatTry < 2) {    /* Retry up to twice more */
                     assert(hashCount > 0);
                     SetHash(hashCount,hashVars,assumps);
-
                     solver->simplify(&assumps);
                     hashCount --;
-
                     repeatTry += 1;
                     cout << "Timeout, try again -- " << repeatTry << endl;
                 } else {
@@ -620,8 +615,6 @@ bool CUSP::ScalApproxMC(SATCount& count)
             }
             hashPrev = swapVar;
         }
-        succRecord.clear();
-        countRecord.clear();
         assumps.clear();
         hashVars.clear();
         solver->simplify(&assumps);
@@ -633,11 +626,11 @@ bool CUSP::ScalApproxMC(SATCount& count)
     }
 
     auto minHash = findMin(numHashList);
-    auto hash_it = numHashList.begin();
     auto cnt_it = numCountList.begin();
-    for (; hash_it != numHashList.end() && cnt_it != numCountList.end()
-            ; hash_it++, cnt_it++
-        ) {
+    for (auto hash_it = numHashList.begin()
+        ; hash_it != numHashList.end() && cnt_it != numCountList.end()
+        ; hash_it++, cnt_it++
+    ) {
         *cnt_it *= pow(2, (*hash_it) - minHash);
     }
     int medSolCount = findMedian(numCountList);
