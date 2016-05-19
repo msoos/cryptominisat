@@ -144,8 +144,6 @@ void CUSP::add_approxmc_options()
     ("aggregation", po::value(&aggregateSolutions)->default_value(aggregateSolutions), "")
     ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
-    ("onlyCount", po::value(&onlyCount)->default_value(onlyCount)
-     ,"Only counting, the default. Otherwise, UNIGEN is used")
     ;
 
     help_options_simple.add(approxMCOptions);
@@ -264,31 +262,6 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
     return true;
 }
 
-bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps)
-{
-    if (clausNum < assumps.size()) {
-        uint64_t numberToRemove = assumps.size()- clausNum;
-        for (uint64_t i = 0; i<numberToRemove; i++) {
-            assumps.pop_back();
-        }
-    }
-
-    else {
-        if (clausNum > assumps.size() && assumps.size() < hashVars.size()) {
-            for (uint32_t i = assumps.size(); i< hashVars.size() && i < clausNum; i++) {
-                assumps.push_back(hashVars[i]);
-            }
-        }
-        if (clausNum > hashVars.size()) {
-
-            AddHash(clausNum-hashVars.size(),assumps);
-            for (uint64_t i = hashVars.size(); i < clausNum; i++) {
-                hashVars[i] = assumps[i];
-            }
-        }
-    }
-    return true;
-}
 int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 {
     cout << "BoundedSATCount looking for " << maxSolutions << " solutions" << endl;
@@ -331,6 +304,207 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     }
     return solutions;
 }
+
+bool CUSP::ApproxMC(SATCount& count)
+{
+    count.clear();
+    int64_t currentNumSolutions = 0;
+    vector<uint64_t> numHashList;
+    vector<int64_t> numCountList;
+    vector<Lit> assumps;
+    for (uint32_t j = 0; j < tApproxMC; j++) {
+        uint64_t hashCount;
+        uint32_t repeatTry = 0;
+        for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
+            double myTime = cpuTimeTotal();
+            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
+
+            //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
+            cusp_logf << "ApproxMC:" << searchMode << ":"
+                      << j << ":" << hashCount << ":"
+                      << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
+                      << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
+                      << currentNumSolutions << endl;
+            //Timeout!
+            if (currentNumSolutions < 0) {
+                //Remove all hashes
+                assumps.clear();
+
+                if (repeatTry < 2) {    /* Retry up to twice more */
+                    assert(hashCount > 0);
+                    AddHash(hashCount, assumps); //add new set of hashes
+                    solver->simplify(&assumps);
+                    hashCount --;
+                    repeatTry += 1;
+                    cout << "Timeout, try again -- " << repeatTry << endl;
+                } else {
+                    //this set of hashes does not work, go up
+                    AddHash(hashCount + 1, assumps);
+                    solver->simplify(&assumps);
+                    cout << "Timeout, moving up" << endl;
+                }
+                continue;
+            }
+
+            if (currentNumSolutions < pivotApproxMC + 1) {
+                //less than pivotApproxMC solutions
+                break;
+            }
+
+            //Found all solutions needed
+            AddHash(1, assumps);
+        }
+        assumps.clear();
+        numHashList.push_back(hashCount);
+        numCountList.push_back(currentNumSolutions);
+        solver->simplify(&assumps);
+    }
+    if (numHashList.size() == 0) {
+        //UNSAT
+        return true;
+    }
+
+    auto minHash = findMin(numHashList);
+    auto hash_it = numHashList.begin();
+    auto cnt_it = numCountList.begin();
+    for (; hash_it != numHashList.end() && cnt_it != numCountList.end()
+            ; hash_it++, cnt_it++
+        ) {
+        *cnt_it *= pow(2, (*hash_it) - minHash);
+    }
+    int medSolCount = findMedian(numCountList);
+
+    count.cellSolCount = medSolCount;
+    count.hashCount = minHash;
+    return true;
+}
+
+int CUSP::solve()
+{
+    seed_random_engine();
+    conf.reconfigure_at = 0;
+    conf.reconfigure_val = 15;
+    conf.gaussconf.autodisable = false;
+
+    openLogFile();
+    startTime = cpuTimeTotal();
+
+    solver = new SATSolver((void*)&conf, &must_interrupt);
+    solverToInterrupt = solver;
+    if (dratf) {
+        cout
+                << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
+                << endl;
+        exit(-1);
+    }
+    //check_num_threads_sanity(num_threads);
+    //solver->set_num_threads(num_threads);
+    printVersionInfo();
+    parseInAllFiles(solver);
+
+    set_up_timer();
+
+    if (startIteration > independent_vars.size()) {
+        cout << "ERROR: Manually-specified startIteration"
+             "is larger than the size of the independent set.\n" << endl;
+        return -1;
+    }
+
+    SATCount solCount;
+    if (startIteration == 0) {
+        cout << "Computing startIteration using ApproxMC" << endl;
+
+        bool finished = false;
+        if (searchMode == 0) {
+            finished = ApproxMC(solCount);
+        } else {
+            finished = ScalApproxMC(solCount);
+        }
+        double elapsedTime = cpuTimeTotal() - startTime;
+        cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
+        if (!finished) {
+            cout << " (TIMED OUT)" << endl;
+            return 0;
+        }
+
+        if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
+            cout << "The input formula is unsatisfiable." << endl;
+            return correctReturnValue(l_False);
+        }
+        startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
+                               log2(1.8) - log2(pivotUniGen)) - 2;
+    } else {
+        cout << "Using manually-specified startIteration" << endl;
+    }
+
+    cout << "Number of solutions is: " << solCount.cellSolCount
+         << " x 2^" << solCount.hashCount << endl;
+
+    if (conf.verbosity >= 1) {
+        solver->print_stats();
+    }
+
+    return correctReturnValue(l_True);
+}
+
+int main(int argc, char** argv)
+{
+    #if defined(__GNUC__) && defined(__linux__)
+    feenableexcept(FE_INVALID   |
+                   FE_DIVBYZERO |
+                   FE_OVERFLOW
+                  );
+    #endif
+
+    #ifndef USE_GAUSS
+    std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
+              << "*** cmake -DUSE_GAUSS=ON (.. or .)  ***" << endl
+              << "Refusing to run. Please reconfigure and then re-compile." << endl;
+    exit(-1);
+    #endif
+
+    CUSP main(argc, argv);
+    main.parseCommandLine();
+
+    return main.solve();
+}
+
+void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
+{
+    independent_vars = _independent_vars;
+    if (independent_vars.empty()) {
+        for (size_t i = 0; i < solver->nVars(); i++) {
+            independent_vars.push_back(i);
+        }
+    }
+}
+
+bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps)
+{
+    if (clausNum < assumps.size()) {
+        uint64_t numberToRemove = assumps.size()- clausNum;
+        for (uint64_t i = 0; i<numberToRemove; i++) {
+            assumps.pop_back();
+        }
+    }
+
+    else {
+        if (clausNum > assumps.size() && assumps.size() < hashVars.size()) {
+            for (uint32_t i = assumps.size(); i< hashVars.size() && i < clausNum; i++) {
+                assumps.push_back(hashVars[i]);
+            }
+        }
+        if (clausNum > hashVars.size()) {
+
+            AddHash(clausNum-hashVars.size(),assumps);
+            for (uint64_t i = hashVars.size(); i < clausNum; i++) {
+                hashVars[i] = assumps[i];
+            }
+        }
+    }
+    return true;
+}
+
 bool CUSP::ScalApproxMC(SATCount& count)
 {
     count.clear();
@@ -471,188 +645,4 @@ bool CUSP::ScalApproxMC(SATCount& count)
     count.cellSolCount = medSolCount;
     count.hashCount = minHash;
     return true;
-}
-
-bool CUSP::ApproxMC(SATCount& count)
-{
-    count.clear();
-    int64_t currentNumSolutions = 0;
-    vector<uint64_t> numHashList;
-    vector<int64_t> numCountList;
-    vector<Lit> assumps;
-    double myTime = cpuTimeTotal();
-    for (uint32_t j = 0; j < tApproxMC; j++) {
-        uint64_t hashCount;
-        uint32_t repeatTry = 0;
-        for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
-            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
-
-            //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
-            cusp_logf << "ApproxMC:" << searchMode << ":"
-                      << j << ":" << hashCount << ":"
-                      << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
-                      << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
-                      << currentNumSolutions << endl;
-            myTime = cpuTimeTotal();
-            //Timeout!
-            if (currentNumSolutions < 0) {
-                //Remove all hashes
-                assumps.clear();
-
-                if (repeatTry < 2) {    /* Retry up to twice more */
-                    assert(hashCount > 0);
-                    AddHash(hashCount, assumps); //add new set of hashes
-                    solver->simplify(&assumps);
-                    hashCount --;
-                    repeatTry += 1;
-                    cout << "Timeout, try again -- " << repeatTry << endl;
-                } else {
-                    //this set of hashes does not work, go up
-                    AddHash(hashCount + 1, assumps);
-                    solver->simplify(&assumps);
-                    cout << "Timeout, moving up" << endl;
-                }
-                continue;
-            }
-
-            if (currentNumSolutions < pivotApproxMC + 1) {
-                //less than pivotApproxMC solutions
-                break;
-            }
-
-            //Found all solutions needed
-            AddHash(1, assumps);
-        }
-        assumps.clear();
-        numHashList.push_back(hashCount);
-        numCountList.push_back(currentNumSolutions);
-        solver->simplify(&assumps);
-    }
-    if (numHashList.size() == 0) {
-        //UNSAT
-        return true;
-    }
-
-    auto minHash = findMin(numHashList);
-    auto hash_it = numHashList.begin();
-    auto cnt_it = numCountList.begin();
-    for (; hash_it != numHashList.end() && cnt_it != numCountList.end()
-            ; hash_it++, cnt_it++
-        ) {
-        *cnt_it *= pow(2, (*hash_it) - minHash);
-    }
-    int medSolCount = findMedian(numCountList);
-
-    count.cellSolCount = medSolCount;
-    count.hashCount = minHash;
-    return true;
-}
-
-int CUSP::solve()
-{
-    seed_random_engine();
-    conf.reconfigure_at = 0;
-    conf.reconfigure_val = 15;
-    conf.gaussconf.autodisable = false;
-
-    openLogFile();
-    startTime = cpuTimeTotal();
-
-    solver = new SATSolver((void*)&conf, &must_interrupt);
-    solverToInterrupt = solver;
-    if (dratf) {
-        cout
-                << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
-                << endl;
-        exit(-1);
-    }
-    //check_num_threads_sanity(num_threads);
-    //solver->set_num_threads(num_threads);
-    printVersionInfo();
-    parseInAllFiles(solver);
-
-    set_up_timer();
-
-    if (startIteration > independent_vars.size()) {
-        cout << "ERROR: Manually-specified startIteration"
-             "is larger than the size of the independent set.\n" << endl;
-        return -1;
-    }
-
-    SATCount solCount;
-    if (startIteration == 0 || onlyCount) {
-        cout << "Computing startIteration using ApproxMC" << endl;
-
-        bool finished = false;
-        if (searchMode == 0) {
-            finished = ApproxMC(solCount);
-        } else {
-            finished = ScalApproxMC(solCount);
-        }
-        double elapsedTime = cpuTimeTotal() - startTime;
-        cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
-        if (!finished) {
-            cout << " (TIMED OUT)" << endl;
-            return 0;
-        }
-
-        if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
-            cout << "The input formula is unsatisfiable." << endl;
-            return correctReturnValue(l_False);
-        }
-        startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
-                               log2(1.8) - log2(pivotUniGen)) - 2;
-    } else {
-        cout << "Using manually-specified startIteration" << endl;
-    }
-
-    //Either onlycount or unigen
-    if (onlyCount) {
-        cout << "Number of solutions is: " << solCount.cellSolCount
-             << " x 2^" << solCount.hashCount << endl;
-    } else {
-        assert(false);
-        cout << "UNIGEN not compiled in. Exiting" << endl;
-        exit(-1);
-        //NOT here, in unigen.cpp
-        //generate_samples();
-    }
-
-    if (conf.verbosity >= 1) {
-        solver->print_stats();
-    }
-
-    return correctReturnValue(l_True);
-}
-
-int main(int argc, char** argv)
-{
-    #if defined(__GNUC__) && defined(__linux__)
-    feenableexcept(FE_INVALID   |
-                   FE_DIVBYZERO |
-                   FE_OVERFLOW
-                  );
-    #endif
-
-    #ifndef USE_GAUSS
-    std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
-              << "*** cmake -DUSE_GAUSS=ON (.. or .)  ***" << endl
-              << "Refusing to run. Please reconfigure and then re-compile." << endl;
-    exit(-1);
-    #endif
-
-    CUSP main(argc, argv);
-    main.parseCommandLine();
-
-    return main.solve();
-}
-
-void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
-{
-    independent_vars = _independent_vars;
-    if (independent_vars.empty()) {
-        for (size_t i = 0; i < solver->nVars(); i++) {
-            independent_vars.push_back(i);
-        }
-    }
 }

@@ -72,7 +72,6 @@ private:
     void seed_random_engine();
 
     //config
-    int onlyCount = true;
     std::string cuspLogFile = "cusp_log.txt";
 
     double startTime;
