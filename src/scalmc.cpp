@@ -132,7 +132,6 @@ string CUSP::GenerateRandomBits(uint32_t size)
 void CUSP::add_approxmc_options()
 {
     approxMCOptions.add_options()
-    ("samples", po::value(&samples)->default_value(samples), "")
     ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC), "")
     ("pivotUniGen", po::value(&pivotUniGen)->default_value(pivotUniGen), "")
     ("searchMode", po::value(&searchMode)->default_value(searchMode),"")
