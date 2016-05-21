@@ -287,7 +287,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     //Timeout
     if (ret == l_Undef) {
         must_interrupt.store(false, std::memory_order_relaxed);
-        return -1 * solutions;
+        return -1;
     }
     return solutions;
 }
