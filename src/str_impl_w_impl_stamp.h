@@ -42,6 +42,8 @@ public:
     {}
 
     bool str_impl_w_impl_stamp();
+    double mem_used() const;
+
 private:
     Solver* solver;
     void distill_implicit_with_implicit_lit(const Lit lit);

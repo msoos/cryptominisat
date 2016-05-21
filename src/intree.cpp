@@ -418,3 +418,16 @@ void InTree::enqueue(const Lit lit, const Lit other_lit, bool red_cl)
     }
     queue.push_back(QueueElem(lit_Undef, lit_Undef, false));
 }
+
+
+double InTree::mem_used() const
+{
+    double mem = 0;
+    mem += sizeof(InTree);
+    mem += roots.size()*sizeof(Lit);
+    mem += failed.size()*sizeof(Lit);
+    mem += reset_reason_stack.size()*sizeof(ResetReason);
+    mem += queue.size()*sizeof(QueueElem);
+    mem += depth_failed.size()*sizeof(char);
+    return mem;
+}
