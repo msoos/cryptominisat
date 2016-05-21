@@ -83,7 +83,6 @@ private:
     void set_up_timer();
 
     uint32_t samples = 1;
-    uint32_t callsPerSolver = 0;
     uint32_t startIteration = 0;
     uint32_t pivotApproxMC = 60;
     uint32_t pivotUniGen = 27;
@@ -92,9 +91,6 @@ private:
     uint32_t searchMode = 1;
     int      totalTimeout = 72000;
     int      loopTimeout = 2500;
-    double   kappa = 0.638;
-    bool     multisample = true;
-    bool     aggregateSolutions = true;
     std::ofstream cusp_logf;
     std::mt19937 randomEngine;
 
