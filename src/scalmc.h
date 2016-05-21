@@ -83,9 +83,9 @@ private:
     void set_up_timer();
 
     uint32_t startIteration = 0;
-    uint32_t pivotApproxMC = 60;
+    uint32_t pivotApproxMC = 52;
     uint32_t pivotUniGen = 27;
-    uint32_t tApproxMC = 1;
+    uint32_t tApproxMC = 17;
     uint32_t searchMode = 1;
     int      loopTimeout = 2500;
     std::ofstream cusp_logf;
