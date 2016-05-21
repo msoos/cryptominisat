@@ -462,6 +462,7 @@ void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
     }
 }
 
+//For ScalApproxMC only
 bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps)
 {
     if (clausNum < assumps.size()) {
@@ -485,6 +486,7 @@ bool CUSP::SetHash(uint32_t clausNum,  std::map<uint64_t,Lit>& hashVars, vector<
     return true;
 }
 
+//For ScalApproxMC only
 bool CUSP::ScalApproxMC(SATCount& count)
 {
     count.clear();
