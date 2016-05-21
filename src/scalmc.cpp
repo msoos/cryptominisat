@@ -132,12 +132,15 @@ string CUSP::GenerateRandomBits(uint32_t size)
 void CUSP::add_approxmc_options()
 {
     approxMCOptions.add_options()
-    ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC), "")
+    ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC)
+        , "Number of solutions to check for")
     ("pivotUniGen", po::value(&pivotUniGen)->default_value(pivotUniGen), "")
     ("searchMode", po::value(&searchMode)->default_value(searchMode),"")
-    ("tApproxMC", po::value(&tApproxMC)->default_value(tApproxMC), "")
+    ("tApproxMC", po::value(&tApproxMC)->default_value(tApproxMC)
+        , "Number of measurements")
     ("startIteration", po::value(&startIteration)->default_value(startIteration), "")
-    ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
+    ("looptout", po::value(&loopTimeout)->default_value(loopTimeout)
+        , "Timeout for one measurement, consisting of finding pivotAC solutions")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
     ;
 
