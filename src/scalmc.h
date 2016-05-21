@@ -82,7 +82,6 @@ private:
     void call_after_parse(const vector<uint32_t>& independent_vars) override;
     void set_up_timer();
 
-    uint32_t samples = 1;
     uint32_t startIteration = 0;
     uint32_t pivotApproxMC = 60;
     uint32_t pivotUniGen = 27;
