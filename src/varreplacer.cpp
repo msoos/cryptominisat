@@ -153,7 +153,6 @@ void VarReplacer::update_vardata_and_activities(
     if (orig_act + repl_with_act >= orig_act) {
         solver->activ_glue[replaced_with] += orig_act;
     }
-    repl_with_act += orig_act;
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()

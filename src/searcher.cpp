@@ -2390,7 +2390,6 @@ Lit Searcher::pickBranchLit()
         ) {
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap_glue.empty()) {
-                next_var = var_Undef;
                 return lit_Undef;
             }
             next_var = order_heap_glue.removeMin();
