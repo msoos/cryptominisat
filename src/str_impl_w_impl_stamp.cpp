@@ -318,3 +318,12 @@ void StrImplWImplStamp::StrImplicitData::print(
         );
     }
 }
+
+double StrImplWImplStamp::mem_used() const
+{
+    double mem = sizeof(StrImplWImplStamp);
+    mem += lits.size()*sizeof(Lit);
+
+    return mem;
+
+}

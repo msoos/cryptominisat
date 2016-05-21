@@ -95,6 +95,7 @@ class DistillerLongWithImpl {
         };
 
         const Stats& get_stats() const;
+        double mem_used() const;
 
     private:
 

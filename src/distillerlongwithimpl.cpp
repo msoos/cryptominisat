@@ -682,3 +682,12 @@ void DistillerLongWithImpl::Stats::CacheBased::print() const
     );
 
 }
+
+double DistillerLongWithImpl::mem_used() const
+{
+    double mem = sizeof(DistillerLongWithImpl);
+    mem+= lits.size()*sizeof(Lit);
+    mem +=lits2.size()*sizeof(Lit);
+
+    return mem;
+}

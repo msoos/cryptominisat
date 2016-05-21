@@ -494,3 +494,11 @@ void DistillerAllWithAll::Stats::print(const size_t nVars) const
     );
     cout << "c -------- DISTILL STATS END --------" << endl;
 }
+
+double DistillerAllWithAll::mem_used() const
+{
+    double mem_used = sizeof(DistillerAllWithAll);
+    mem_used += lits.size()*sizeof(Lit);
+    mem_used += uselessLits.size()*sizeof(Lit);
+    return mem_used;
+}

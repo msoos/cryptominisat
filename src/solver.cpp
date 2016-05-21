@@ -2050,8 +2050,9 @@ void Solver::print_min_stats(const double cpu_time) const
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
+    double vm_usage;
     print_stats_line("c Mem used"
-        , mem_used()/(1024UL*1024UL)
+        , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
 }
@@ -2133,19 +2134,21 @@ void Solver::print_norm_stats(const double cpu_time) const
                     , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
+    if (conf.doCache) {
+        implCache.print_statsSort(this);
+    }
+
     print_stats_line("c Conflicts in UIP"
         , sumSearchStats.conflStats.numConflicts
         , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
-    print_stats_line("c Total time", cpu_time);
+    double vm_usage;
     print_stats_line("c Mem used"
-        , mem_used()/(1024UL*1024UL)
+        , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
-    if (conf.doCache) {
-        implCache.print_statsSort(this);
-    }
+    print_stats_line("c Total time", cpu_time);
 }
 
 void Solver::print_all_stats(const double cpu_time) const
@@ -2321,22 +2324,19 @@ void Solver::print_mem_stats() const
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
         , "%"
-
     );
     account += mem;
 
     mem = implCache.mem_used();
-
-    account += print_stamp_mem(rss_mem_used);
-
-    mem = hist.mem_used();
-    print_stats_line("c Mem for history stats"
+    print_stats_line("c Mem for implication cache"
         , mem/(1024UL*1024UL)
         , "MB"
         , stats_line_percent(mem, rss_mem_used)
         , "%"
     );
     account += mem;
+
+    account += print_stamp_mem(rss_mem_used);
 
     mem = mem_used();
     print_stats_line("c Mem for search&solve"
@@ -2396,9 +2396,32 @@ void Solver::print_mem_stats() const
     );
     account += mem;
 
+    if (subsumeImplicit) {
+        mem = subsumeImplicit->mem_used();
+        print_stats_line("c Mem for impl subsume"
+            , mem/(1024UL*1024UL)
+            , "MB"
+            , stats_line_percent(mem, rss_mem_used)
+            , "%"
+        );
+        account += mem;
+    }
+
+
+    mem = distill_all_with_all->mem_used();
+    mem += dist_long_with_impl->mem_used();
+    mem += dist_impl_with_impl->mem_used();
+    print_stats_line("c Mem for 3 distills"
+        , mem/(1024UL*1024UL)
+        , "MB"
+        , stats_line_percent(mem, rss_mem_used)
+        , "%"
+    );
+    account += mem;
+
     if (prober) {
-        mem = prober->mem_used();
-        print_stats_line("c Mem for prober"
+        mem = prober->mem_used() + intree->mem_used();
+        print_stats_line("c Mem for prober+intree"
             , mem/(1024UL*1024UL)
             , "MB"
             , stats_line_percent(mem, rss_mem_used)

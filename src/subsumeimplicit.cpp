@@ -326,3 +326,11 @@ SubsumeImplicit::Stats SubsumeImplicit::get_stats() const
 {
     return globalStats;
 }
+
+double SubsumeImplicit::mem_used() const
+{
+    double mem = sizeof(SubsumeImplicit);
+    mem += tmplits.size()*sizeof(Lit);
+
+    return mem;
+}

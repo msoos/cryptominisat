@@ -61,6 +61,7 @@ public:
         uint64_t numWatchesLooked = 0;
     };
     Stats get_stats() const;
+    double mem_used() const;
 
 private:
     Solver* solver;

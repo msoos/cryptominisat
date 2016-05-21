@@ -64,6 +64,7 @@ class DistillerAllWithAll {
         };
 
         const Stats& get_stats() const;
+        double mem_used() const;
 
     private:
 

@@ -62,6 +62,8 @@ public:
         PropBy orig_propby;
     };
 
+    double mem_used() const;
+
 private:
 
     bool check_timeout_due_to_hyperbin();
