@@ -133,15 +133,11 @@ void CUSP::add_approxmc_options()
 {
     approxMCOptions.add_options()
     ("samples", po::value(&samples)->default_value(samples), "")
-    ("callsPerSolver", po::value(&callsPerSolver)->default_value(callsPerSolver), "")
     ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC), "")
     ("pivotUniGen", po::value(&pivotUniGen)->default_value(pivotUniGen), "")
     ("searchMode", po::value(&searchMode)->default_value(searchMode),"")
-    ("kappa", po::value(&kappa)->default_value(kappa), "")
     ("tApproxMC", po::value(&tApproxMC)->default_value(tApproxMC), "")
     ("startIteration", po::value(&startIteration)->default_value(startIteration), "")
-    ("multisample", po::value(&multisample)->default_value(multisample), "")
-    ("aggregation", po::value(&aggregateSolutions)->default_value(aggregateSolutions), "")
     ("looptout", po::value(&loopTimeout)->default_value(loopTimeout), "")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
     ;
@@ -160,18 +156,6 @@ int CUSP::GenerateRandomNum(int maxRange)
 {
     std::uniform_int_distribution<int> uid {0, maxRange};
     return uid(randomEngine);
-}
-
-/* Number of solutions to return from one invocation of UniGen2 */
-uint32_t CUSP::SolutionsToReturn(
-    uint32_t minSolutions
-)
-{
-    if (multisample) {
-        return minSolutions;
-    } else {
-        return 1;
-    }
 }
 
 void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
