@@ -172,16 +172,6 @@ void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
     cout << " = " << (rhs ? "True" : "False") << endl;
 }
 
-void CUSP::seed_random_engine()
-{
-    /* Initialize PRNG with seed from random_device */
-    std::random_device rd {};
-    std::array<int, 10> seedArray;
-    std::generate_n(seedArray.data(), seedArray.size(), std::ref(rd));
-    std::seed_seq seed(std::begin(seedArray), std::end(seedArray));
-    randomEngine.seed(seed);
-}
-
 bool CUSP::openLogFile()
 {
     cusp_logf.open(cuspLogFile.c_str());
@@ -371,7 +361,6 @@ bool CUSP::ApproxMC(SATCount& count)
 
 int CUSP::solve()
 {
-    seed_random_engine();
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 15;
     conf.gaussconf.autodisable = false;
