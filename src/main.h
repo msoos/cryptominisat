@@ -55,6 +55,7 @@ class Main
 
         void parseCommandLine();
         virtual int solve();
+        SolverConf conf;
 
     private:
         //arguments
@@ -87,7 +88,6 @@ class Main
         po::options_description generalOptions;
 
         SATSolver* solver = NULL;
-        SolverConf conf;
 
         //File reading
         void readInAFile(SATSolver* solver2, const string& filename);

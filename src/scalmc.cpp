@@ -454,6 +454,7 @@ int main(int argc, char** argv)
     #endif
 
     CUSP main(argc, argv);
+    main.conf.verbStats = 1;
     main.parseCommandLine();
 
     return main.solve();

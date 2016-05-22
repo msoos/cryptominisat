@@ -36,6 +36,8 @@ int main(int argc, char** argv)
     #endif
 
     Main main(argc, argv);
+    main.conf.verbosity = 2;
+    main.conf.verbStats = 1;
     main.parseCommandLine();
 
     signal(SIGINT, SIGINT_handler);

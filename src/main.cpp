@@ -1074,8 +1074,6 @@ void Main::manually_parse_some_options()
 void Main::parseCommandLine()
 {
     need_clean_exit = 0;
-    conf.verbosity = 2;
-    conf.verbStats = 1;
 
     //Reconstruct the command line so we can emit it later if needed
     for(int i = 0; i < argc; i++) {
