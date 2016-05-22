@@ -90,23 +90,6 @@ private:
     int      loopTimeout = 2500;
     std::ofstream cusp_logf;
     std::mt19937 randomEngine;
-
-
-
-    /// SAMPLING/UNIGEN
-    void generate_samples();
-    uint32_t UniGen(
-        uint32_t samples
-        , uint32_t sampleCounter
-        , std::map< string, uint32_t >& solutionMap
-        , uint32_t* lastSuccessfulHashOffset, double timeReference
-    );
-    int uniGenCall(uint32_t samples
-                   , uint32_t sampleCounter
-                   , std::map<std::string, uint32_t>& solutionMap
-                   , uint32_t* lastSuccessfulHashOffset
-                   , double timeReference
-                  );
 };
 
 
