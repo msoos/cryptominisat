@@ -390,38 +390,31 @@ int CUSP::solve()
     }
 
     SATCount solCount;
-    if (startIteration == 0) {
-        cout << "Computing startIteration using ApproxMC" << endl;
+    cout << "Using start iteration " << startIteration << endl;
 
-        bool finished = false;
-        if (searchMode == 0) {
-            finished = ApproxMC(solCount);
-        } else {
-            finished = ScalApproxMC(solCount);
-        }
-        double elapsedTime = cpuTimeTotal() - startTime;
-        cout << "Completed ApproxMC at " << elapsedTime << " s" <<endl;
-        if (!finished) {
-            cout << " (TIMED OUT)" << endl;
-            return 0;
-        }
-
-        if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
-            cout << "The input formula is unsatisfiable." << endl;
-            return correctReturnValue(l_False);
-        }
-        startIteration = round(solCount.hashCount + log2(solCount.cellSolCount) +
-                               log2(1.8) - log2(pivotUniGen)) - 2;
+    bool finished = false;
+    if (searchMode == 0) {
+        finished = ApproxMC(solCount);
     } else {
-        cout << "Using manually-specified startIteration" << endl;
+        finished = ScalApproxMC(solCount);
+    }
+    double elapsedTime = cpuTimeTotal() - startTime;
+    if (!finished) {
+        cout << " (TIMED OUT)" << endl;
+        return 0;
     }
 
-    cout << "Number of solutions is: " << solCount.cellSolCount
-         << " x 2^" << solCount.hashCount << endl;
+    if (solCount.hashCount == 0 && solCount.cellSolCount == 0) {
+        cout << "The input formula is unsatisfiable." << endl;
+        return correctReturnValue(l_False);
+    }
 
     if (conf.verbosity >= 1) {
         solver->print_stats();
     }
+
+    cout << "Number of solutions is: " << solCount.cellSolCount
+         << " x 2^" << solCount.hashCount << endl;
 
     return correctReturnValue(l_True);
 }
