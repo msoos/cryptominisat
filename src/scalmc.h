@@ -45,6 +45,7 @@ public:
         , approxMCOptions("ApproxMC options")
     {
         must_interrupt.store(false, std::memory_order_relaxed);
+        randomEngine.seed(0);
     }
     int solve() override;
     void add_supported_options() override;
@@ -69,7 +70,6 @@ private:
     uint32_t SolutionsToReturn(uint32_t minSolutions);
     int GenerateRandomNum(int maxRange);
     bool printSolutions();
-    void seed_random_engine();
 
     //config
     std::string cuspLogFile = "cusp_log.txt";
