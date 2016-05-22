@@ -154,12 +154,6 @@ void CUSP::add_supported_options()
     add_approxmc_options();
 }
 
-int CUSP::GenerateRandomNum(int maxRange)
-{
-    std::uniform_int_distribution<int> uid {0, maxRange};
-    return uid(randomEngine);
-}
-
 void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
 {
     cout << "Added XOR ";
