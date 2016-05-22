@@ -551,14 +551,14 @@ bool CUSP::ScalApproxMC(SATCount& count)
 
             if (currentNumSolutions < pivotApproxMC + 1) {
                 numExplored = lowerFib+independent_vars.size()-hashCount;
-                if (succRecord.find(hashCount-1) != succRecord.end()) {
-                    if (succRecord[hashCount-1] == 1) {
-                        numHashList.push_back(hashCount);
-                        numCountList.push_back(currentNumSolutions);
-                        mPrev = hashCount;
-                        //less than pivotApproxMC solutions
-                        break;
-                    }
+                if (succRecord.find(hashCount-1) != succRecord.end()
+                    && succRecord[hashCount-1] == 1
+                ) {
+                    numHashList.push_back(hashCount);
+                    numCountList.push_back(currentNumSolutions);
+                    mPrev = hashCount;
+                    //less than pivotApproxMC solutions
+                    break;
                 }
                 succRecord[hashCount] = 0;
                 countRecord[hashCount] = currentNumSolutions;
@@ -577,13 +577,13 @@ bool CUSP::ScalApproxMC(SATCount& count)
                 }
             } else if (currentNumSolutions == pivotApproxMC+1) {
                 numExplored = hashCount + independent_vars.size()-upperFib;
-                if (succRecord.find(hashCount+1) != succRecord.end()) {
-                    if (succRecord[hashCount+1] == 0) {
-                        numHashList.push_back(hashCount+1);
-                        numCountList.push_back(countRecord[hashCount+1]);
-                        mPrev = hashCount+1;
-                        break;
-                    }
+                if (succRecord.find(hashCount+1) != succRecord.end()
+                    && succRecord[hashCount+1] == 0
+                ) {
+                    numHashList.push_back(hashCount+1);
+                    numCountList.push_back(countRecord[hashCount+1]);
+                    mPrev = hashCount+1;
+                    break;
                 }
                 succRecord[hashCount] = 1;
                 if (abs(hashCount - mPrev) < 2 && mPrev!=0) {
