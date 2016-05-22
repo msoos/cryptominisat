@@ -488,7 +488,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
     vector<uint64_t> numHashList;
     vector<int64_t> numCountList;
     vector<Lit> assumps;
-    uint64_t hashCount = startIteration, hashPrev = 0, mPrev = 0, swapVar = 0;
+    uint64_t hashCount = startIteration, hashPrev = 0, mPrev = 0;
     double myTime = cpuTimeTotal();
     if (hashCount == 0) {
         int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC+1,assumps);
@@ -517,7 +517,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
             cout << "Num Explored: " << numExplored
                  << " ind set size: " << independent_vars.size() << endl;
             myTime = cpuTimeTotal();
-            swapVar = hashCount;
+            uint64_t swapVar = hashCount;
             SetHash(hashCount,hashVars,assumps);
             int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
