@@ -67,9 +67,6 @@ private:
         , uint32_t* solutionCount
     );
     string GenerateRandomBits(uint32_t size);
-    uint32_t SolutionsToReturn(uint32_t minSolutions);
-    int GenerateRandomNum(int maxRange);
-    bool printSolutions();
 
     //config
     std::string cuspLogFile = "cusp_log.txt";
