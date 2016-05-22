@@ -296,6 +296,7 @@ bool CUSP::ApproxMC(SATCount& count)
         uint64_t hashCount;
         uint32_t repeatTry = 0;
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
+            cout << "-> Hash Count " << hashCount << endl;
             double myTime = cpuTimeTotal();
             currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
@@ -513,6 +514,8 @@ bool CUSP::ScalApproxMC(SATCount& count)
         uint64_t lowerFib = 0, upperFib = independent_vars.size();
 
         while (numExplored < independent_vars.size()) {
+            cout << "Num Explored: " << numExplored
+                 << " ind set size: " << independent_vars.size() << endl;
             myTime = cpuTimeTotal();
             swapVar = hashCount;
             SetHash(hashCount,hashVars,assumps);
