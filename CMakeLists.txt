@@ -115,6 +115,11 @@ if (USE_GAUSS)
 endif()
 
 option(ENABLE_ASSERTIONS "Build with assertions enabled" ON)
+message(STATUS "build type is ${CMAKE_BUILD_TYPE}")
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(ENABLE_ASSERTIONS OFF)
+endif()
+
 if (ENABLE_ASSERTIONS)
     # NDEBUG was already removed.
 else()
