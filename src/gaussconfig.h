@@ -42,7 +42,6 @@ class GaussConf
     {
     }
 
-    //tuneable gauss parameters
     uint32_t only_nth_gauss_save;  //save only every n-th gauss matrix
     uint32_t decision_until; //do Gauss until this level
     bool autodisable; //If activated, gauss elimination is never disabled
