@@ -1,5 +1,5 @@
 /*
- * CUSP
+ * CUSP and ScalMC
  *
  * Copyright (c) 2009-2015, Mate Soos. All rights reserved.
  * Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
