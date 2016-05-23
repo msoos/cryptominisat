@@ -99,6 +99,7 @@ class VarReplacer
         const Stats& get_stats() const;
         size_t mem_used() const;
         vector<std::pair<Lit, Lit> > get_all_binary_xors_outer() const;
+        vector<uint32_t> get_vars_replacing_others() const;
 
         void save_state(SimpleOutFile& f) const;
         void load_state(SimpleInFile& f);
@@ -283,6 +284,15 @@ inline bool VarReplacer::isReplaced_fast(const Lit lit) const
 inline size_t VarReplacer::getNumTrees() const
 {
     return reverseTable.size();
+}
+
+inline vector<uint32_t> VarReplacer::get_vars_replacing_others() const
+{
+    vector<uint32_t> replacingVars;
+    for(const auto& it: reverseTable) {
+        replacingVars.push_back(it.first);
+    }
+    return replacingVars;
 }
 
 inline const VarReplacer::Stats& VarReplacer::get_stats() const
