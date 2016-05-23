@@ -358,6 +358,7 @@ int CUSP::solve()
 {
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 15;
+    conf.gaussconf.max_num_matrixes = 10;
     conf.gaussconf.autodisable = false;
 
     openLogFile();
