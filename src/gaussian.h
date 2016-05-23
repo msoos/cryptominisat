@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "solvertypes.h"
-#include "gaussianconfig.h"
+#include "gaussconfig.h"
 #include "propby.h"
 #include "packedmatrix.h"
 #include "bitarray.h"
