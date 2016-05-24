@@ -40,8 +40,8 @@ class FindUndef {
         Solver* solver;
 
         bool updateTables();
-        void fillPotential();
-        void unboundIsPotentials();
+        void fill_potentials();
+        void unset_potentials();
 
         //If set to TRUE, then that clause already has only 1 lit that is true,
         //so it can be skipped during updateFixNeed()
@@ -49,10 +49,13 @@ class FindUndef {
 
         vector<uint32_t> satisfies;
         vector<char> can_be_unset;
-        uint32_t can_be_unsetSum(0);
+        uint32_t can_be_unsetSum = 0;
+        bool all_sat = true;
+        template<class C>
+        bool look_at_one_clause(const C& c);
 
 };
 
-};
+}
 
 #endif //

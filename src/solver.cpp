@@ -64,6 +64,7 @@
 #include "gaussian.h"
 #include "matrixfinder.h"
 #include "sqlstats.h"
+#include "findundef.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1221,6 +1222,12 @@ void Solver::extend_solution()
     #endif
 
     const double myTime = cpuTime();
+    FindUndef undef_finder(this);
+    uint32_t unset = undef_finder.unRoll();
+    cout << "c **************" << endl;
+    cout << "c Unset " << unset << " vars" << endl;
+    cout << "c **************" << endl;
+
     model = back_number_solution_from_inter_to_outer(model);
 
     //Extend solution to stored solution in component handler
