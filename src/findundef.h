@@ -48,8 +48,8 @@ class FindUndef {
         vector<char> dontLookAtClause;
 
         vector<uint32_t> satisfies;
-        vector<char> isPotential;
-        uint32_t isPotentialSum(0);
+        vector<char> can_be_unset;
+        uint32_t can_be_unsetSum(0);
 
 };
 
