@@ -98,7 +98,6 @@ const uint32_t FindUndef::unRoll()
     }
 
     unboundIsPotentials();
-    moveBinFromNormal();
 
     return isPotentialSum;
 }
