@@ -49,8 +49,8 @@ class FindUndef {
 
         vector<uint32_t> satisfies;
         vector<char> isPotential;
-        uint32_t isPotentialSum;
         uint32_t binPosition;
+        uint32_t isPotentialSum(0);
 
 };
 
