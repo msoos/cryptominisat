@@ -29,7 +29,6 @@ using namespace CMSat;
 
 FindUndef::FindUndef(Solver* _solver) :
     solver(_solver)
-    , isPotentialSum(0)
 {
 }
 
