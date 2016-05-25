@@ -227,6 +227,8 @@ class Solver : public Searcher
             , string sqlPass
             , string sqlDatabase);
 
+        uint32_t undefine();
+
     private:
         friend class Prober;
         friend class ClauseDumper;
@@ -297,6 +299,23 @@ class Solver : public Searcher
         void renumber_clauses(const vector<uint32_t>& outerToInter);
         void renumber_xor_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
+
+        //Value Unsetter
+        struct FindUndef {
+            //If set to TRUE, then that clause already has only 1 lit that is true,
+            //so it can be skipped during updateFixNeed()
+            vector<char> dontLookAtClause;
+
+            vector<uint32_t> satisfies;
+            vector<char> can_be_unset;
+            uint32_t can_be_unsetSum;
+            bool all_sat;
+        };
+        FindUndef undef;
+        bool undef_updateTables();
+        void undef_fill_potentials();
+        void undef_unset_potentials();
+        template<class C> bool undef_look_at_one_clause(const C& c);
 
 
 
