@@ -64,7 +64,6 @@
 #include "gaussian.h"
 #include "matrixfinder.h"
 #include "sqlstats.h"
-#include "findundef.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1222,12 +1221,6 @@ void Solver::extend_solution()
     #endif
 
     const double myTime = cpuTime();
-    FindUndef undef_finder(this);
-    uint32_t unset = undef_finder.unRoll();
-    cout << "c **************" << endl;
-    cout << "c Unset " << unset << " vars" << endl;
-    cout << "c **************" << endl;
-
     model = back_number_solution_from_inter_to_outer(model);
 
     //Extend solution to stored solution in component handler
@@ -3565,4 +3558,165 @@ void Solver::add_sql_tag(const string& tagname, const string& tag)
     if (sqlStats) {
         sqlStats->add_tag(std::make_pair(tagname, tag));
     }
+}
+
+uint32_t Solver::undefine()
+{
+    undef.can_be_unsetSum = 0;
+    if (solver->decisionLevel() == 0)
+        return 0;
+
+    undef.dontLookAtClause.clear();
+    undef.dontLookAtClause.resize(solver->longIrredCls.size(), false);
+    undef.can_be_unset.clear();
+    undef.can_be_unset.resize(solver->nVarsOuter(), false);
+    undef.satisfies.clear();
+    undef.satisfies.resize(solver->nVarsOuter(), 0);
+    undef_fill_potentials();
+    cout << "Can be unset: " << undef.can_be_unsetSum << endl;
+
+    while(!undef_updateTables()) {
+        assert(undef.can_be_unsetSum > 0);
+
+        uint32_t maximum = 0;
+        uint32_t v = var_Undef;
+        for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
+            if (undef.can_be_unset[i] && undef.satisfies[i] >= maximum) {
+                maximum = undef.satisfies[i];
+                v = i;
+            }
+        }
+        assert(v != var_Undef);
+
+        //Fix 'v' to be set to curent value
+        undef.can_be_unset[v] = false;
+        undef.can_be_unsetSum--;
+
+        std::fill(undef.satisfies.begin(), undef.satisfies.end(), 0);
+    }
+
+    undef_unset_potentials();
+
+    return undef.can_be_unsetSum;
+}
+
+void Solver::undef_fill_potentials()
+{
+    int trail = solver->decisionLevel()-1;
+
+    //Mark everything on the trail except at lev 0
+    while(trail > 0) {
+        assert(trail < (int)solver->trail_lim.size());
+        uint32_t at = solver->trail_lim[trail];
+        assert(at > 0);
+
+        const uint32_t v = solver->trail[at].var();
+        assert(solver->varData[v].removed == Removed::none);
+        if (solver->value(v) != l_Undef
+        ) {
+            undef.can_be_unset[v] = true;
+            undef.can_be_unsetSum++;
+        }
+
+        trail--;
+    }
+
+    //Mark variables replacing others as non-eligible
+    vector<uint32_t> replacingVars = solver->varReplacer->get_vars_replacing_others();
+    for (const uint32_t v: replacingVars) {
+        if (undef.can_be_unset[v]) {
+            undef.can_be_unset[v] = false;
+            undef.can_be_unsetSum--;
+        }
+    }
+}
+
+void Solver::undef_unset_potentials()
+{
+    for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
+        if (undef.can_be_unset[i])
+            solver->value(i) = l_Undef;
+    }
+}
+
+template<class C>
+bool Solver::undef_look_at_one_clause(const C& c)
+{
+    bool satisfied = false;
+    uint32_t v = var_Undef;
+    uint32_t numTrue = 0;
+    for (const Lit l: c) {
+        if (solver->value(l) == l_True) {
+            if (!undef.can_be_unset[l.var()]) {
+                //clause definitely satisfied
+                return true;
+            } else {
+                numTrue ++;
+                v = l.var();
+            }
+        }
+    }
+
+    //Greedy
+    if (numTrue == 1) {
+        assert(v != var_Undef);
+        undef.can_be_unset[v] = false;
+        undef.can_be_unsetSum--;
+        //clause definitely satisfied
+        return true;
+    }
+
+    //numTrue > 1
+    undef.all_sat = false;
+    assert(numTrue > 1);
+    for (const Lit l: c) {
+        if (solver->value(l) == l_True)
+            undef.satisfies[l.var()]++;
+    }
+
+    //Clause is not definitely satisfied
+    return false;
+}
+
+bool Solver::undef_updateTables()
+{
+    undef.all_sat = true;
+    for (uint32_t i = 0
+         ; i++
+         ; i < solver->longIrredCls.size()
+    ) {
+        if (undef.dontLookAtClause[i])
+            continue;
+
+        Clause& c = *solver->cl_alloc.ptr(i);
+        if (undef_look_at_one_clause(c)) {
+            //clause definitely satisfied
+            undef.dontLookAtClause[i] = true;
+        }
+    }
+
+    for(size_t i = 0;i < solver->watches.size(); i++) {
+        const Lit l = Lit::toLit(i);
+        if (!undef.can_be_unset[l.var()] && solver->value(l) == l_True) {
+            continue;
+        }
+        for(const Watched& w: solver->watches[l]) {
+            if (w.isBin()) {
+                uint32_t v = w.lit2().var();
+                if (undef.can_be_unset[v]) {
+                    undef.can_be_unset[v] = true;
+                    undef.can_be_unsetSum--;
+                }
+            }
+
+            if (w.isTri()) {
+                std::array<Lit, 2> c;
+                c[0] = w.lit2();
+                c[1] = w.lit3();
+                undef_look_at_one_clause(c);
+            }
+        }
+    }
+
+    return undef.all_sat;
 }
