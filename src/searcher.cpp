@@ -2321,7 +2321,7 @@ void Searcher::finish_up_solve(const lbool status)
     print_solution_type(status);
 
     if (status == l_True) {
-        uint32_t unset = solver->undefine();
+        //uint32_t unset = solver->undefine();
         //cout << "c **************" << endl;
         //cout << "dec level: " << decisionLevel() << endl;
         //cout << "c Unset " << unset << " vars" << endl;
