@@ -3563,16 +3563,17 @@ void Solver::add_sql_tag(const string& tagname, const string& tag)
 uint32_t Solver::undefine()
 {
     undef.can_be_unsetSum = 0;
-    if (solver->decisionLevel() == 0)
+    if (decisionLevel() == 0)
         return 0;
 
     undef.dontLookAtClause.clear();
-    undef.dontLookAtClause.resize(solver->longIrredCls.size(), false);
+    undef.dontLookAtClause.resize(longIrredCls.size(), false);
     undef.can_be_unset.clear();
-    undef.can_be_unset.resize(solver->nVarsOuter(), false);
+    undef.can_be_unset.resize(nVarsOuter(), false);
     undef.satisfies.clear();
-    undef.satisfies.resize(solver->nVarsOuter(), 0);
+    undef.satisfies.resize(nVarsOuter(), 0);
     undef_fill_potentials();
+
     cout << "Can be unset: " << undef.can_be_unsetSum << endl;
 
     while(!undef_updateTables()) {
@@ -3602,27 +3603,27 @@ uint32_t Solver::undefine()
 
 void Solver::undef_fill_potentials()
 {
-    int trail = solver->decisionLevel()-1;
+    int trail_at = decisionLevel()-1;
 
     //Mark everything on the trail except at lev 0
-    while(trail > 0) {
-        assert(trail < (int)solver->trail_lim.size());
-        uint32_t at = solver->trail_lim[trail];
+    while(trail_at > 0) {
+        assert(trail_at < (int)trail_lim.size());
+        uint32_t at = trail_lim[trail_at];
         assert(at > 0);
 
-        const uint32_t v = solver->trail[at].var();
-        assert(solver->varData[v].removed == Removed::none);
-        if (solver->value(v) != l_Undef
+        const uint32_t v = trail[at].var();
+        assert(varData[v].removed == Removed::none);
+        if (value(v) != l_Undef
         ) {
             undef.can_be_unset[v] = true;
             undef.can_be_unsetSum++;
         }
 
-        trail--;
+        trail_at--;
     }
 
     //Mark variables replacing others as non-eligible
-    vector<uint32_t> replacingVars = solver->varReplacer->get_vars_replacing_others();
+    vector<uint32_t> replacingVars = varReplacer->get_vars_replacing_others();
     for (const uint32_t v: replacingVars) {
         if (undef.can_be_unset[v]) {
             undef.can_be_unset[v] = false;
@@ -3635,7 +3636,7 @@ void Solver::undef_unset_potentials()
 {
     for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
         if (undef.can_be_unset[i])
-            solver->value(i) = l_Undef;
+            value(i) = l_Undef;
     }
 }
 
@@ -3646,7 +3647,7 @@ bool Solver::undef_look_at_one_clause(const C& c)
     uint32_t v = var_Undef;
     uint32_t numTrue = 0;
     for (const Lit l: c) {
-        if (solver->value(l) == l_True) {
+        if (value(l) == l_True) {
             if (!undef.can_be_unset[l.var()]) {
                 //clause definitely satisfied
                 return true;
@@ -3670,7 +3671,7 @@ bool Solver::undef_look_at_one_clause(const C& c)
     undef.all_sat = false;
     assert(numTrue > 1);
     for (const Lit l: c) {
-        if (solver->value(l) == l_True)
+        if (value(l) == l_True)
             undef.satisfies[l.var()]++;
     }
 
@@ -3683,24 +3684,24 @@ bool Solver::undef_updateTables()
     undef.all_sat = true;
     for (uint32_t i = 0
          ; i++
-         ; i < solver->longIrredCls.size()
+         ; i < longIrredCls.size()
     ) {
         if (undef.dontLookAtClause[i])
             continue;
 
-        Clause& c = *solver->cl_alloc.ptr(i);
+        Clause& c = *cl_alloc.ptr(i);
         if (undef_look_at_one_clause(c)) {
             //clause definitely satisfied
             undef.dontLookAtClause[i] = true;
         }
     }
 
-    for(size_t i = 0;i < solver->watches.size(); i++) {
+    for(size_t i = 0;i < watches.size(); i++) {
         const Lit l = Lit::toLit(i);
-        if (!undef.can_be_unset[l.var()] && solver->value(l) == l_True) {
+        if (!undef.can_be_unset[l.var()] && value(l) == l_True) {
             continue;
         }
-        for(const Watched& w: solver->watches[l]) {
+        for(const Watched& w: watches[l]) {
             if (w.isBin()) {
                 uint32_t v = w.lit2().var();
                 if (undef.can_be_unset[v]) {
