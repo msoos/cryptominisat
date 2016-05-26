@@ -42,7 +42,6 @@ namespace CMSat {
         , std::atomic<bool>* interrupt_asap = NULL
         );
         ~SATSolver();
-        void set_num_threads(unsigned n);
         unsigned nVars() const;
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
@@ -67,6 +66,7 @@ namespace CMSat {
         unsigned long get_sql_id() const;
 
         //Setup
+        void set_num_threads(unsigned n);
         void set_allow_otf_gauss();
         void set_max_confl(int64_t max_confl);
         void set_verbosity(unsigned verbosity = 0);
