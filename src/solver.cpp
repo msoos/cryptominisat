@@ -1273,12 +1273,12 @@ lbool Solver::simplify_problem_outside()
 {
     #ifdef SLOW_DEBUG
     if (ok) {
-        assert(solver->check_order_heap_sanity());
+        assert(check_order_heap_sanity());
         check_implicit_stats();
     }
     #endif
 
-    conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
+    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
 
     if (!ok) {
         return l_False;
@@ -1300,7 +1300,7 @@ lbool Solver::solve()
 {
     #ifdef SLOW_DEBUG
     if (ok) {
-        assert(solver->check_order_heap_sanity());
+        assert(check_order_heap_sanity());
         check_implicit_stats();
     }
     #endif
@@ -1317,7 +1317,7 @@ lbool Solver::solve()
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
-    conf.global_timeout_multiplier = solver->conf.orig_global_timeout_multiplier;
+    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
@@ -1375,7 +1375,7 @@ lbool Solver::solve()
     if (conf.preprocess == 1) {
         if (status == l_Undef) {
             //So no set variables end up in the clauses
-            solver->clauseCleaner->remove_and_clean_all();
+            clauseCleaner->remove_and_clean_all();
         }
 
         save_state(conf.saved_state_file, status);
@@ -1663,9 +1663,9 @@ bool Solver::execute_inprocess_strategy(
         ) {
             return ok;
         }
-        assert(solver->watches.get_smudged_list().empty());
+        assert(watches.get_smudged_list().empty());
         #ifdef SLOW_DEBUG
-        solver->check_stats();
+        check_stats();
         #endif
 
         token = trim(token);
@@ -1750,7 +1750,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_all_with_all->distill(solver->conf.distill_queue_by);
+                distill_all_with_all->distill(conf.distill_queue_by);
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
@@ -1798,7 +1798,7 @@ bool Solver::execute_inprocess_strategy(
         }
 
         #ifdef SLOW_DEBUG
-        solver->check_stats();
+        check_stats();
         #endif
 
         if (!ok) {
@@ -1815,7 +1815,7 @@ bool Solver::execute_inprocess_strategy(
         return;
     }
 
-    for(watch_subarray ws: solver->watches) {
+    for(watch_subarray ws: watches) {
         Watched*& i = ws.begin();
         Watched*& j = i;
         for (Watched*& end = ws.end(); i != end; i++) {
@@ -1879,7 +1879,7 @@ lbool Solver::simplify_problem(const bool startup)
     check_stats();
     #endif
     #ifdef SLOW_DEBUG
-    assert(solver->check_order_heap_sanity());
+    assert(check_order_heap_sanity());
     #endif
 
     //remove_xors();
@@ -1905,7 +1905,7 @@ lbool Solver::simplify_problem(const bool startup)
     }
     test_all_clause_attached();
     check_wrong_attach();
-    conf.global_timeout_multiplier *= solver->conf.global_timeout_multiplier_multiplier;
+    conf.global_timeout_multiplier *= conf.global_timeout_multiplier_multiplier;
     conf.global_timeout_multiplier =
         std::max(
             conf.global_timeout_multiplier, conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
@@ -3011,7 +3011,7 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
 void Solver::update_assumptions_after_varreplace()
 {
     //Update assumptions
-    for(AssumptionPair& lit_pair: solver->assumptions) {
+    for(AssumptionPair& lit_pair: assumptions) {
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
             assumptionsSet[lit_pair.lit_inter.var()] = false;
         } else {
@@ -3037,7 +3037,7 @@ uint32_t Solver::num_active_vars() const
     uint32_t removed_set = 0;
     uint32_t removed_elimed = 0;
     uint32_t removed_non_decision = 0;
-    for(uint32_t var = 0; var < solver->nVarsOuter(); var++) {
+    for(uint32_t var = 0; var < nVarsOuter(); var++) {
         if (value(var) != l_Undef) {
             if (varData[var].removed != Removed::none)
             {
