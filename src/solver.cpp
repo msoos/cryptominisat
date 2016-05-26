@@ -3574,7 +3574,6 @@ uint32_t Solver::undefine()
     undef.satisfies.resize(nVarsOuter(), 0);
     undef_fill_potentials();
 
-    cout << "Can be unset: " << undef.can_be_unsetSum << endl;
 
     while(!undef_updateTables()) {
         assert(undef.can_be_unsetSum > 0);
