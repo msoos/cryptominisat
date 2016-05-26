@@ -394,6 +394,22 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
+{
+    #ifndef USE_GAUSS
+    cout << "ERROR: CryptoMiniSat was not compiled with GAUSS" << endl;
+    exit(-1);
+    #endif
+
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.reconfigure_at = 0;
+        s.conf.reconfigure_val = 15;
+        s.conf.gaussconf.max_num_matrixes = 10;
+        s.conf.gaussconf.autodisable = false;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_no_simplify_at_startup()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
