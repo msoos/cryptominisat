@@ -439,6 +439,7 @@ class Tester:
 
         if random.choice([True, False]):
             cmd += " --reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
+            cmd += " --undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
             cmd += "--keepguess %s " % random.randint(0, 10)

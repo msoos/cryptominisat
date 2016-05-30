@@ -335,6 +335,7 @@ class SolverConf
         long long gatefinder_time_limitM;
         long long shorten_with_gates_time_limitM;
         long long remove_cl_with_gates_time_limitM;
+        int      greedy_undef;
 
         //Gauss
         GaussConf gaussconf;

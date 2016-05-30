@@ -434,6 +434,14 @@ DLL_PUBLIC void SATSolver::set_no_bva()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_greedy_undef()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.greedy_undef = true;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {
