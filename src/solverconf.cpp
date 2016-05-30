@@ -246,14 +246,18 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , gatefinder_time_limitM(200)
         , shorten_with_gates_time_limitM(200)
         , remove_cl_with_gates_time_limitM(100)
+
+        //Greedy Undef
         , greedy_undef(false)
         , independent_vars (NULL)
 
-        //Misc
+        //Timeouts
         , orig_global_timeout_multiplier(2.0)
         , global_timeout_multiplier(1.0)
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
+
+        //misc
         , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(20000)

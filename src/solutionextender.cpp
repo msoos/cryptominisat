@@ -36,6 +36,8 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 
 void SolutionExtender::extend()
 {
+    var_has_been_blocked.resize(solver->nVarsOuter(), false);
+
     if (solver->varReplacer)
         solver->varReplacer->extend_model();
 
@@ -77,17 +79,19 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
 
-    //Oher blocked clauses set its value already
+    //Blocked clauses set its value already
     if (solver->model_value(blockedOn) != l_Undef)
         return;
 
-    assert(solver->model_value(blockedOn) == l_Undef);
-    solver->model[blockedOn.var()] = l_True;
-    solver->varReplacer->extend_model(blockedOn.var());
 
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    cout << "dummy now: " << solver->model_value(blockedOn) << endl;
-    #endif
+    //If var is replacing something else, it MUST be set.
+    if (solver->varReplacer->var_is_replacing(blockedOn.var())) {
+        //Picking l_False because MiniSat likes False solutions. Could pick anything.
+        solver->model[blockedOn.var()] = l_False;
+        solver->varReplacer->extend_model(blockedOn.var());
+    }
+
+    var_has_been_blocked[blockedOn.var()] = true;
 }
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
@@ -95,8 +99,32 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
-    if (satisfied(lits))
+    if (satisfied(lits)) {
         return;
+    } else {
+        //Try to extend the model to full_model, see if that helps
+        for(Lit l: lits) {
+            if (solver->model_value(l) == l_Undef
+                && solver->full_model_value(l) == l_True
+            ) {
+                solver->model[l.var()] = solver->full_model[l.var()];
+                solver->varReplacer->extend_model(l.var());
+                return;
+            }
+        }
+
+        //Try to extend through setting variables that have been blocked but
+        //were not required to be set until now
+        for(Lit l: lits) {
+            if (solver->model_value(l) == l_Undef
+                && var_has_been_blocked[l.var()]
+            ) {
+                solver->model[l.var()] = l.sign() ? l_False : l_True;
+                solver->varReplacer->extend_model(l.var());
+                return;
+            }
+        }
+    }
 
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     for(Lit lit: lits) {
@@ -120,9 +148,8 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
         cout << "Extending VELIM cls. -- setting model for var "
         << blockedOn.unsign() << " to " << solver->model[blockedOn.var()] << endl;
     }
+    solver->varReplacer->extend_model(blockedOn.var());
 
     assert(satisfied(lits));
-
-    solver->varReplacer->extend_model(blockedOn.var());
 }
 

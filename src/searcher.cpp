@@ -2322,6 +2322,7 @@ void Searcher::finish_up_solve(const lbool status)
 
     if (status == l_True) {
         model = assigns;
+        full_model = assigns;
         vector<uint32_t> trail_lim_vars;
         for(size_t i = 0; i < decisionLevel(); i++) {
             uint32_t at = trail_lim[i];
@@ -3392,6 +3393,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
 
     f.put_vector(activ_glue);
     f.put_vector(model);
+    f.put_vector(full_model);
     f.put_vector(conflict);
 
     //Clauses
@@ -3421,6 +3423,7 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         }
     }
     f.get_vector(model);
+    f.get_vector(full_model);
     f.get_vector(conflict);
 
     //Clauses
