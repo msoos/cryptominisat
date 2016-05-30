@@ -442,6 +442,15 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_independent_vars(vector<uint32_t>* ind_vars)
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.independent_vars = ind_vars;
+    }
+}
+
+
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {

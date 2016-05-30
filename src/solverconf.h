@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define SOLVERCONF_H
 
 #include <string>
+#include <vector>
 #include <cstdlib>
 #include <cassert>
 #include "gaussconfig.h"
@@ -335,12 +336,15 @@ class SolverConf
         long long gatefinder_time_limitM;
         long long shorten_with_gates_time_limitM;
         long long remove_cl_with_gates_time_limitM;
-        int      greedy_undef;
 
         //Gauss
         GaussConf gaussconf;
 
-        //interrupting & dumping
+        //Greedy undef
+        int      greedy_undef;
+        std::vector<uint32_t>* independent_vars;
+
+        //Timeouts
         double orig_global_timeout_multiplier;
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;

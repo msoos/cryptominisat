@@ -247,6 +247,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , shorten_with_gates_time_limitM(200)
         , remove_cl_with_gates_time_limitM(100)
         , greedy_undef(false)
+        , independent_vars (NULL)
 
         //Misc
         , orig_global_timeout_multiplier(2.0)

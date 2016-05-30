@@ -450,6 +450,7 @@ void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
             independent_vars.push_back(i);
         }
     }
+    solver->set_independent_vars(&independent_vars);
 }
 
 //For ScalApproxMC only
