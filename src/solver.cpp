@@ -3676,11 +3676,8 @@ bool Solver::undef_look_at_one_clause(const C c)
     if (undef.verbose) {
         cout << "Check called on clause: ";
         for(Lit l: *c) {
-            cout << l;
-            if (l.toInt() > model.size()) {
-                cout << "(TOO LARGE)";
-            }
-            cout << " ";
+            cout << l << " ";
+            assert(l.var() < model.size());
         }
         cout << endl;
     }
