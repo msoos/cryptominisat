@@ -3580,10 +3580,10 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         cout << "--" << endl;
     }
 
-    while(undef_check_must_fix()) {
+    while(undef_check_must_fix()
+        && undef.can_be_unsetSum > 0
+    ) {
         //Find variable to fix.
-        assert(undef.can_be_unsetSum > 0);
-
         uint32_t maximum = 0;
         uint32_t v = var_Undef;
         for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
@@ -3603,6 +3603,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         assert(v != var_Undef);
 
         //Fix 'v' to be set to curent value
+        assert(undef.can_be_unset[v]);
         undef.can_be_unset[v] = 0;
         undef.can_be_unsetSum--;
         undef.num_fixed++;
@@ -3663,15 +3664,6 @@ void Solver::undef_fill_potentials()
         }
     }
 
-    //Mark variables replacing others as non-eligible
-    vector<uint32_t> replacingVars = varReplacer->get_vars_replacing_others();
-    for (const uint32_t v: replacingVars) {
-        if (undef.can_be_unset[v]) {
-            undef.can_be_unset[v] = false;
-            undef.can_be_unsetSum--;
-        }
-    }
-
     if (conf.independent_vars) {
         //Only those with a setting of both independent_vars and in trail
         //can be unset
@@ -3679,6 +3671,15 @@ void Solver::undef_fill_potentials()
             if (v < 2) {
                 v = false;
             }
+        }
+    }
+
+    //Mark variables replacing others as non-eligible
+    vector<uint32_t> replacingVars = varReplacer->get_vars_replacing_others();
+    for (const uint32_t v: replacingVars) {
+        if (undef.can_be_unset[v]) {
+            undef.can_be_unset[v] = false;
+            undef.can_be_unsetSum--;
         }
     }
 }
@@ -3721,6 +3722,8 @@ bool Solver::undef_look_at_one_clause(const C c)
     //Greedy
     if (numTrue == 1) {
         assert(v != var_Undef);
+        assert(undef.can_be_unset[v]);
+
         undef.can_be_unset[v] = false;
         if (undef.verbose) cout << "Setting " << v+1 << " as fixed" << endl;
         undef.can_be_unsetSum--;
