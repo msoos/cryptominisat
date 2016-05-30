@@ -195,13 +195,18 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     #endif
 
     //go through in reverse order
-    for (vector<BlockedClause>::const_reverse_iterator
+    for (vector<BlockedClause>::reverse_iterator
         it = blockedClauses.rbegin(), end = blockedClauses.rend()
         ; it != end
         ; ++it
     ) {
         if (it->toRemove) {
             continue;
+        }
+
+        it->blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->blockedOn);
+        for(Lit& l: it->lits) {
+            l = solver->varReplacer->get_lit_replaced_with_outer(l);
         }
 
         if (it->dummy) {
