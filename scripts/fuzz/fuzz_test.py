@@ -75,7 +75,9 @@ parser.add_option("--verbose", "-v", action="store_true", default=False,
 
 # for fuzz-testing
 parser.add_option("--seed", dest="fuzz_seed_start",
-                  help="Fuzz test start seed", type=int)
+                  help="Fuzz test start seed. Otherwise, random seed is picked"
+                  " (printed to console)", type=int)
+
 parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                   help="Number of fuzz tests to run"
                   )
@@ -83,7 +85,9 @@ parser.add_option("--novalgrind", dest="novalgrind", default=False,
                   action="store_true", help="No valgrind installed")
 
 parser.add_option("--small", dest="small", default=False,
-                  action="store_true", help="Don't run 'large' fuzzer (may mem-out on smaller systems)")
+                  action="store_true",
+                  help="Don't run 'large' fuzzer"
+                  " (may mem-out on smaller systems)")
 
 parser.add_option("--sqlite", dest="sqlite", default=False,
                   action="store_true", help="Test SQLite dumping")
@@ -92,11 +96,11 @@ parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
 
 parser.add_option("--tout", "-t", dest="maxtime", type=int, default=80,
-                  help="Max time to run")
+                  help="Max time to run. Default: %default")
 
 parser.add_option("--textra", dest="maxtimediff", type=int, default=20,
-                  help="Extra time on top of timeout for processing")
-
+                  help="Extra time on top of timeout for processing."
+                  " Default: %default")
 
 (options, args) = parser.parse_args()
 
