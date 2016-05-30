@@ -317,6 +317,9 @@ void CompHandler::check_local_vardata_sanity()
         if (savedState[outerVar] != l_Undef) {
             assert(solver->varData[interVar].removed == Removed::decomposed);
             assert(solver->value(interVar) == l_Undef || solver->varData[interVar].level == 0);
+        }
+
+        if (solver->varData[interVar].removed == Removed::decomposed) {
             num_vars_removed_check++;
         }
     }

@@ -75,6 +75,7 @@ namespace CMSat {
         void set_no_simplify_at_startup();
         void set_no_equivalent_lit_replacement();
         void set_no_bva();
+        void set_greedy_undef();
 
         //Get info
         static const char* get_version();

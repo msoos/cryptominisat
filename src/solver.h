@@ -227,7 +227,7 @@ class Solver : public Searcher
             , string sqlPass
             , string sqlDatabase);
 
-        uint32_t undefine();
+        uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 
     private:
         friend class Prober;
@@ -308,14 +308,17 @@ class Solver : public Searcher
 
             vector<uint32_t> satisfies;
             vector<char> can_be_unset;
+            vector<uint32_t>* trail_lim_vars;
             uint32_t can_be_unsetSum;
-            bool all_sat;
+            bool must_fix;
+            uint32_t num_fixed;
+            bool verbose = false;
         };
         FindUndef undef;
-        bool undef_updateTables();
+        bool undef_check_must_fix();
         void undef_fill_potentials();
         void undef_unset_potentials();
-        template<class C> bool undef_look_at_one_clause(const C& c);
+        template<class C> bool undef_look_at_one_clause(const C c);
 
 
 
