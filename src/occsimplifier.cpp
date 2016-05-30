@@ -185,7 +185,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     for(size_t i = 0; i < solver->nVarsOuter(); i++) {
         const uint32_t outer = solver->map_inter_to_outer(i);
         assert(solver->varData[i].removed != Removed::elimed
-            || (solver->value(i) == l_Undef && solver->model[outer] == l_Undef)
+            || (solver->value(i) == l_Undef && solver->model_value(outer) == l_Undef)
         );
     }
 
