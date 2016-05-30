@@ -1340,8 +1340,8 @@ lbool Solver::solve()
         status = load_state(conf.saved_state_file);
         if (status == l_Undef) {
             model = assigns;
-            full_model = assigns;
             status = load_solution_from_file(conf.solution_file);
+            full_model = model;
         }
     }
 
