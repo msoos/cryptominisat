@@ -307,7 +307,7 @@ class Solver : public Searcher
             vector<char> dontLookAtClause;
 
             vector<uint32_t> satisfies;
-            vector<char> can_be_unset;
+            vector<unsigned char> can_be_unset;
             vector<uint32_t>* trail_lim_vars;
             uint32_t can_be_unsetSum;
             bool must_fix;

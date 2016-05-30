@@ -76,6 +76,7 @@ namespace CMSat {
         void set_no_equivalent_lit_replacement();
         void set_no_bva();
         void set_greedy_undef();
+        void set_independent_vars(std::vector<uint32_t>* ind_vars);
 
         //Get info
         static const char* get_version();

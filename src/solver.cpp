@@ -3570,7 +3570,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
     undef.dontLookAtClause.clear();
     undef.dontLookAtClause.resize(longIrredCls.size(), false);
     undef.can_be_unset.clear();
-    undef.can_be_unset.resize(nVarsOuter(), false);
+    undef.can_be_unset.resize(nVarsOuter(), 0);
     undef.satisfies.clear();
     undef.satisfies.resize(nVarsOuter(), 0);
 
@@ -3610,7 +3610,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         assert(v != var_Undef);
 
         //Fix 'v' to be set to curent value
-        undef.can_be_unset[v] = false;
+        undef.can_be_unset[v] = 0;
         undef.can_be_unsetSum--;
         undef.num_fixed++;
 
@@ -3640,8 +3640,10 @@ void Solver::undef_fill_potentials()
         if (model_value(v) != l_Undef
             && assumptionsSet[v] == false
         ) {
-            undef.can_be_unset[v] = true;
-            undef.can_be_unsetSum++;
+            undef.can_be_unset[v] += 1;
+            if (conf.independent_vars == NULL) {
+                undef.can_be_unsetSum++;
+            }
         }
 
         trail_at--;
@@ -3650,12 +3652,40 @@ void Solver::undef_fill_potentials()
         cout << "-" << endl;
     }
 
+    if (conf.independent_vars) {
+        for(uint32_t v: *conf.independent_vars) {
+            if (v > nVarsOutside()) {
+                cout << "ERROR: Variabe in independent set, " << v+1
+                << " is bigger than any variable inside the solver! " << endl
+                << " Please examine the call set_independent_vars or the CNF"
+                " lines starting with 'c ind'"
+                << endl;
+                std::exit(-1);
+            }
+            v = map_inter_to_outer(v);
+            undef.can_be_unset[v]++;
+            if (undef.can_be_unset[v] == 2) {
+                undef.can_be_unsetSum++;
+            }
+        }
+    }
+
     //Mark variables replacing others as non-eligible
     vector<uint32_t> replacingVars = varReplacer->get_vars_replacing_others();
     for (const uint32_t v: replacingVars) {
         if (undef.can_be_unset[v]) {
             undef.can_be_unset[v] = false;
             undef.can_be_unsetSum--;
+        }
+    }
+
+    if (conf.independent_vars) {
+        //Only those with a setting of both independent_vars and in trail
+        //can be unset
+        for(unsigned char& v: undef.can_be_unset) {
+            if (v < 2) {
+                v = false;
+            }
         }
     }
 }
