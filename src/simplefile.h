@@ -100,8 +100,13 @@ class SimpleInFile
 public:
     void start(const string& fname)
     {
-        inf = new std::ifstream(fname.c_str(), ios::in | ios::binary);
-        inf->exceptions(~std::ios::goodbit);
+        try {
+            inf = new std::ifstream(fname.c_str(), ios::in | ios::binary);
+            inf->exceptions(~std::ios::goodbit);
+        } catch (...) {
+            cout << "Error opening file " << fname.c_str() << endl;
+            exit(-1);
+        }
     }
 
     ~SimpleInFile()
