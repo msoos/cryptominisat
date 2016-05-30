@@ -87,10 +87,15 @@ class Solver : public Searcher
         lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data);
+
+        //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
         lbool model_value (const uint32_t p) const;  ///<Found model value for var
+        lbool full_model_value (const Lit p) const;  ///<Found model value for lit
+        lbool full_model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
+
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
@@ -525,6 +530,26 @@ inline void Solver::setConf(const SolverConf& _conf)
 inline bool Solver::prop_at_head() const
 {
     return qhead == trail.size();
+}
+
+inline lbool Solver::model_value (const Lit p) const
+{
+    return model[p.var()] ^ p.sign();
+}
+
+inline lbool Solver::model_value (const uint32_t p) const
+{
+    return model[p];
+}
+
+inline lbool Solver::full_model_value (const Lit p) const
+{
+    return full_model[p.var()] ^ p.sign();
+}
+
+inline lbool Solver::full_model_value  (const uint32_t p) const
+{
+    return full_model[p];
 }
 
 } //end namespace

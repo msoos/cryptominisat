@@ -52,6 +52,7 @@ class SolutionExtender
             const vector<Lit>& lits
             , const Lit tocontain
         ) const;
+        vector<char> var_has_been_blocked;
 };
 
 } //end namespace

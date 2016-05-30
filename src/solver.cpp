@@ -1222,10 +1222,12 @@ void Solver::extend_solution()
 
     const double myTime = cpuTime();
     model = back_number_solution_from_inter_to_outer(model);
+    full_model = back_number_solution_from_inter_to_outer(full_model);
 
     //Extend solution to stored solution in component handler
     if (compHandler) {
         compHandler->addSavedState(model);
+        compHandler->addSavedState(full_model);
     }
 
     SolutionExtender extender(this, occsimplifier);
@@ -1338,6 +1340,7 @@ lbool Solver::solve()
         status = load_state(conf.saved_state_file);
         if (status == l_Undef) {
             model = assigns;
+            full_model = assigns;
             status = load_solution_from_file(conf.solution_file);
         }
     }
@@ -2634,16 +2637,6 @@ bool Solver::verify_model() const
     }
 
     return verificationOK;
-}
-
-lbool Solver::model_value (const Lit p) const
-{
-    return model[p.var()] ^ p.sign();
-}
-
-lbool Solver::model_value (const uint32_t p) const
-{
-    return model[p];
 }
 
 size_t Solver::get_num_nonfree_vars() const

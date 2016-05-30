@@ -765,7 +765,8 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     assert(solver->model[sub_var] == l_Undef);
 
     if (solver->conf.verbosity >= 20) {
-        cout << "Varreplace-extend: setting outer " << sub_var+1 << " to " << to_set << " because of " << var+1 << endl;
+        cout << "Varreplace-extend: setting outer " << sub_var+1
+        << " to " << to_set << " because of " << var+1 << endl;
     }
     solver->model[sub_var] = to_set;
 }

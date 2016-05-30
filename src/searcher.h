@@ -81,6 +81,7 @@ class Searcher : public HyperEngine
 
 
         vector<lbool>  model;
+        vector<lbool>  full_model;
         vector<Lit>   conflict;     ///<If problem is unsatisfiable (possibly under assumptions), this vector represent the final conflict clause expressed in the assumptions.
         template<bool update_bogoprops>
         PropBy propagate();

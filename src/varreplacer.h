@@ -64,6 +64,7 @@ class VarReplacer
         uint32_t get_var_replaced_with(const Lit lit) const;
         Lit get_lit_replaced_with(Lit lit) const;
         Lit get_lit_replaced_with_outer(Lit lit) const;
+        bool var_is_replacing(const uint32_t var);
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
         void updateVars(
@@ -293,6 +294,12 @@ inline vector<uint32_t> VarReplacer::get_vars_replacing_others() const
         replacingVars.push_back(it.first);
     }
     return replacingVars;
+}
+
+inline bool VarReplacer::var_is_replacing(const uint32_t var)
+{
+    auto it = reverseTable.find(var);
+    return it != reverseTable.end();
 }
 
 inline const VarReplacer::Stats& VarReplacer::get_stats() const
