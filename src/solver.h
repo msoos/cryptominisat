@@ -324,7 +324,7 @@ class Solver : public Searcher
             uint32_t num_fixed;
             bool verbose = false;
         };
-        FindUndef undef;
+        FindUndef* undef;
         bool undef_check_must_fix();
         void undef_fill_potentials();
         void undef_unset_potentials();
