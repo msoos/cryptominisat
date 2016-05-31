@@ -39,6 +39,7 @@ from subprocess import Popen, PIPE, STDOUT
 # from optparse import OptionParser
 import optparse
 import glob
+from verifier import solution_parser
 
 print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
 sys.path.append(os.getcwd())
@@ -95,10 +96,10 @@ parser.add_option("--sqlite", dest="sqlite", default=False,
 parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
 
-parser.add_option("--tout", "-t", dest="maxtime", type=int, default=80,
+parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
                   help="Max time to run. Default: %default")
 
-parser.add_option("--textra", dest="maxtimediff", type=int, default=20,
+parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
                   help="Extra time on top of timeout for processing."
                   " Default: %default")
 
@@ -109,179 +110,6 @@ def fuzzer_call_failed():
     print("OOps, fuzzer executable call failed!")
     print("Did you build with cmake -DENABLE_TESTING=ON? Did you do git submodules init & update?")
     exit(-1)
-
-
-class solution_parser:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def parse_solution_from_output(output_lines, ignoreNoSolution):
-        if len(output_lines) == 0:
-            print("Error! SAT solver output is empty!")
-            print("output lines: %s" % output_lines)
-            print("Error code 500")
-            exit(500)
-
-        # solution will be put here
-        satunsatfound = False
-        vlinefound = False
-        solution = {}
-        conflict = None
-
-        # parse in solution
-        for line in output_lines:
-            # skip comment
-            if re.match('^conflict ', line):
-                line = line.strip().split()[1:]
-                conflict = [int(elem) for elem in line]
-                continue
-
-            if (re.match('^c ', line)):
-                continue
-
-            # solution
-            if (re.match('^s ', line)):
-                if (satunsatfound):
-                    print("ERROR: solution twice in solver output!")
-                    exit(400)
-
-                if 'UNSAT' in line:
-                    unsat = True
-                    satunsatfound = True
-                    continue
-
-                if 'SAT' in line:
-                    unsat = False
-                    satunsatfound = True
-                    continue
-
-                print("ERROR: line starts with 's' but no SAT/UNSAT on line")
-                exit(400)
-
-            # parse in solution
-            if (re.match('^v ', line)):
-                vlinefound = True
-                myvars = line.split(' ')
-                for var in myvars:
-                    var = var.strip()
-                    if var == "" or var == 'v':
-                        continue
-                    if (int(var) == 0):
-                        break
-                    intvar = int(var)
-                    solution[abs(intvar)] = (intvar >= 0)
-        # print("Parsed values:", solution)
-
-        if (ignoreNoSolution is False and
-                (satunsatfound is False or (
-                    unsat is False and vlinefound is False))):
-            print("Error: Cannot find line starting with 's' or 'v' in output!")
-            print(output_lines)
-            print("Error code 500")
-            exit(500)
-
-        if (ignoreNoSolution is True and
-                (satunsatfound is False or (
-                    unsat is False and vlinefound is False))):
-            print("Probably timeout, since no solution  printed. Could, of course, be segfault/assert fault, etc.")
-            print("Making it look like an UNSAT, so no checks!")
-            return (True, [])
-
-        if (satunsatfound is False):
-            print("Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?")
-            print(output_lines)
-            print("Error code 500")
-            exit(500)
-
-        if (unsat is False and vlinefound is False):
-            print("Error: Solution is SAT, but no 'v' line")
-            print (output_lines)
-            print("Error code 500")
-            exit(500)
-
-        return unsat, solution, conflict
-
-    @staticmethod
-    def check_regular_clause(line, solution):
-            lits = line.split()
-            final = False
-            for lit in lits:
-                numlit = int(lit)
-                if numlit != 0:
-                    if (abs(numlit) not in solution):
-                        continue
-                    if numlit < 0:
-                        final |= ~solution[abs(numlit)]
-                    else:
-                        final |= solution[numlit]
-                    if final is True:
-                        break
-            if final is False:
-                print("Error: clause '%s' not satisfied." % line)
-                print("Error code 100")
-                exit(100)
-
-    @staticmethod
-    def check_xor_clause(line, solution):
-        line = line.lstrip('x')
-        lits = line.split()
-        final = False
-        for lit in lits:
-            numlit = int(lit)
-            if numlit != 0:
-                if abs(numlit) not in solution:
-                    print("Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit))
-                    print("Error code 200")
-                    exit(200)
-                final ^= solution[abs(numlit)]
-                final ^= numlit < 0
-        if final is False:
-            print("Error: xor-clause '%s' not satisfied." % line)
-            exit(-1)
-
-    @staticmethod
-    def test_found_solution(solution, fname, debugLibPart=None):
-        if debugLibPart is None:
-            print("Verifying solution for CNF file %s" % fname)
-        else:
-            print("Verifying solution for CNF file %s, part %d" %
-                  (fname, debugLibPart))
-
-        if fnmatch.fnmatch(fname, '*.gz'):
-            f = gzip.open(fname, "r")
-        else:
-            f = open(fname, "r")
-        clauses = 0
-        thisDebugLibPart = 0
-
-        for line in f:
-            line = line.rstrip()
-
-            # skip empty lines
-            if len(line) == 0:
-                continue
-
-            # count debug lib parts
-            if line[0] == 'c' and "Solver::solve" in line:
-                thisDebugLibPart += 1
-
-            # if we are over debugLibPart, exit
-            if debugLibPart is not None and thisDebugLibPart >= debugLibPart:
-                f.close()
-                return
-
-            # check solution against clause
-            if line[0] != 'c' and line[0] != 'p':
-                if line[0] != 'x':
-                    solution_parser.check_regular_clause(line, solution)
-                else:
-                    solution_parser.check_xor_clause(line, solution)
-
-                clauses += 1
-
-        f.close()
-        print("Verified %d original xor&regular clauses" % clauses)
 
 
 class create_fuzz:
