@@ -22,7 +22,6 @@ from __future__ import with_statement  # Required in 2.5
 from __future__ import print_function
 import subprocess
 import os
-import stat
 import fnmatch
 import gzip
 import re
@@ -30,7 +29,6 @@ import commands
 import getopt
 import sys
 import signal
-import resource
 import time
 import struct
 import random
@@ -39,13 +37,12 @@ from subprocess import Popen, PIPE, STDOUT
 # from optparse import OptionParser
 import optparse
 import glob
-from verifier import solution_parser
+from verifier import *
 
 print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
 sys.path.append(os.getcwd())
 print("our sys.path is", sys.path)
 
-from xor_to_cnf_class import *
 from debuglib import *
 
 
@@ -114,21 +111,6 @@ def fuzzer_call_failed():
 
 class create_fuzz:
 
-    @staticmethod
-    def unique_file(fname_begin, fname_end=".cnf"):
-        counter = 1
-        while 1:
-            fname = fname_begin + '_' + str(counter) + fname_end
-            try:
-                fd = os.open(
-                    fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
-                os.fdopen(fd).close()
-                return fname
-            except OSError:
-                pass
-
-            counter += 1
-
     def call_from_fuzzer(self, fuzzer, fname):
         seed = random.randint(0, 1000000)
         if len(fuzzer) == 1:
@@ -154,7 +136,7 @@ class create_fuzz:
             fixed = random.getrandbits(1) == 1
 
             for i in range(random.randrange(2, 4)):
-                fname2 = create_fuzz.unique_file("fuzzTest")
+                fname2 = unique_file("fuzzTest")
                 fnames_multi.append(fname2)
 
                 # chose a ranom fuzzer, not multipart
@@ -186,12 +168,6 @@ class create_fuzz:
         # handle normal fuzzer
         else:
             return self.call_from_fuzzer(fuzzer, fname), []
-
-
-def setlimits():
-    # sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" %
-    # (os.getpid(), options.maxtime))
-    resource.setrlimit(resource.RLIMIT_CPU, (options.maxtime, options.maxtime))
 
 
 def file_exists(fname):
@@ -243,6 +219,7 @@ class Tester:
         self.ignoreNoSolution = False
         self.extra_options_if_supported = self.list_options_if_supported(
             ["xor", "autodisablegauss"])
+        self.sol_parser = solution_parser(options)
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -408,7 +385,7 @@ class Tester:
             print("CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU))
 
         # if need time limit, then limit
-        err_fname = create_fuzz.unique_file("%s_err" % fname, ".out")
+        err_fname = unique_file("%s_err" % fname, ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
@@ -442,194 +419,6 @@ class Tester:
 
         return consoleOutput, retcode
 
-    def check_unsat(self, fname):
-        a = XorToCNF()
-        tmpfname = create_fuzz.unique_file("tmp_for_xor_to_cnf_convert")
-        a.convert(fname, tmpfname)
-        # execute with the other solver
-        toexec = "lingeling -f %s" % tmpfname
-        print("Solving with other solver: %s" % toexec)
-        curr_time = time.time()
-        try:
-            p = subprocess.Popen(toexec.rsplit(),
-                                 stdout=subprocess.PIPE,
-                                 preexec_fn=setlimits)
-        except OSError:
-            print("ERROR: Probably you don't have lingeling installed!")
-            raise
-
-        consoleOutput2 = p.communicate()[0]
-        os.unlink(tmpfname)
-
-        # if other solver was out of time, then we can't say anything
-        diff_time = time.time() - curr_time
-        if diff_time > options.maxtime - options.maxtimediff:
-            print("Other solver: too much time to solve, aborted!")
-            return None
-
-        # extract output from the other solver
-        print("Checking other solver output...")
-        otherSolverUNSAT, otherSolverSolution, _ = solution_parser.parse_solution_from_output(
-            consoleOutput2.split("\n"), self.ignoreNoSolution)
-
-        # check if the other solver agrees with us
-        return otherSolverUNSAT
-
-    def extract_lib_part(self, fname, debug_num, assumps, tofile):
-        fromf = open(fname, "r")
-        thisDebugLibPart = 0
-        maxvar = 0
-        numcls = 0
-        for line in fromf:
-            line = line.strip()
-
-            # ignore empty strings and headers
-            if not line or line[0] == "p":
-                continue
-
-            # process (potentially special) comments
-            if line[0] == "c":
-                if "Solver::solve" in line:
-                    thisDebugLibPart += 1
-
-                continue
-
-            # break out if we reached the debug lib part
-            if thisDebugLibPart >= debug_num:
-                break
-
-            # count clauses and get max var number
-            numcls += 1
-            maxvar = max(maxvar, get_max_var_from_clause(line))
-
-        fromf.close()
-
-        # now we can create the new CNF file
-        fromf = open(fname, "r")
-        tof = open(tofile, "w")
-        tof.write("p cnf %d %d\n" % (maxvar, numcls + len(assumps)))
-
-        thisDebugLibPart = 0
-        for line in fromf:
-            line = line.strip()
-            # skip empty lines and headers
-            if not line or line[0] == "p":
-                continue
-
-            # parse up special header
-            if line[0] == "c":
-                if "Solver::solve" in line:
-                    thisDebugLibPart += 1
-
-                continue
-
-            # break out if we reached the debug lib part
-            if thisDebugLibPart >= debug_num:
-                break
-
-            tof.write(line + '\n')
-
-        # add assumptions
-        for lit in assumps:
-            tof.write("%d 0\n" % lit)
-
-        fromf.close()
-        tof.close()
-
-    def get_assumps(self, fname, debugLibPart):
-        f = open(fname, "r")
-
-        thispart = 0
-        solveline = None
-        for line in f:
-            if "Solver::solve" in line:
-                thispart += 1
-                if thispart == debugLibPart:
-                    solveline = line
-                    break
-        f.close()
-
-        assert solveline is not None
-        ret = re.match("c.*Solver::solve\((.*)\)", solveline)
-        assert ret is not None
-        assumps = ret.group(1).strip().split()
-        assumps = [int(x) for x in assumps]
-
-        print("Assumptions: ", assumps)
-        return assumps
-
-    def check_assumps_inside_conflict(self, assumps, conflict):
-        for lit in conflict:
-            if -1 * lit not in assumps:
-                print("ERROR: Final conflict contains %s but assumps is %s" %(conflict, assumps))
-                print("ERROR: lit ", lit, " is in conflict but its inverse is not is assumps!")
-                exit(-100)
-
-        print("OK, final conflict only contains elements from assumptions")
-
-    def check_assumps_inside_solution(self, assumps, solution):
-        for lit in assumps:
-            var = abs(lit)
-            val = lit > 0
-            if var in solution:
-                if solution[var] != val:
-                    print("Solution pinted has literal %s but assumptions contained the inverse: '%s'" % (-1 * lit, assumps))
-                    exit(-100)
-
-        print("OK, all assumptions inside solution")
-
-    def find_largest_debuglib_part(self, fname):
-        largestPart = 0
-        dirList2 = os.listdir(".")
-        for fname_debug in dirList2:
-            if fnmatch.fnmatch(fname_debug, "%s-debugLibPart*.output" % fname):
-                largestPart += 1
-
-        return largestPart
-
-    def check_debug_lib(self, fname):
-        largestPart = self.find_largest_debuglib_part(fname)
-        for debugLibPart in range(1, largestPart + 1):
-            fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
-            print("Checking debug lib part %s -- %s " % (debugLibPart, fname_debug))
-
-            if (os.path.isfile(fname_debug) is False):
-                print("Error: Filename to be read '%s' is not a file!" % fname_debug)
-                exit(-1)
-
-            # take file into mem
-            f = open(fname_debug, "r")
-            text = f.read()
-            output_lines = text.splitlines()
-            f.close()
-
-            unsat, solution, conflict = solution_parser.parse_solution_from_output(
-                output_lines, self.ignoreNoSolution)
-            assumps = self.get_assumps(fname, debugLibPart)
-            if unsat is False:
-                print("debugLib is SAT")
-                self.check_assumps_inside_solution(assumps, solution)
-                solution_parser.test_found_solution(solution, fname, debugLibPart)
-            else:
-                print("debugLib is UNSAT")
-                assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
-                self.check_assumps_inside_conflict(assumps, conflict)
-                tmpfname = create_fuzz.unique_file("tmp_for_extract_libpart")
-                self.extract_lib_part(fname, debugLibPart, assumps, tmpfname)
-
-                # check with other solver
-                ret = self.check_unsat(tmpfname)
-                if ret is None:
-                    print("Cannot check, other solver took too much time")
-                elif ret is True:
-                    print("UNSAT verified by other solver")
-                else:
-                    print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
-                    exit(-1)
-                os.unlink(tmpfname)
-
-            os.unlink(fname_debug)
-
     def check(self, fname, fname2=None,
               checkAgainst=None,
               fixed_opts="", dump_output_fname=None,
@@ -657,14 +446,14 @@ class Tester:
 
         # if library debug is set, check it
         if (self.needDebugLib):
-            self.check_debug_lib(checkAgainst)
+            self.sol_parser.check_debug_lib(checkAgainst)
 
         if retcode != 0:
             print("Return code is not 0, error!")
             exit(-1)
 
         print("Checking console output...")
-        unsat, solution, _ = solution_parser.parse_solution_from_output(
+        unsat, solution, _ = self.sol_parser.parse_solution_from_output(
             consoleOutput.split("\n"), self.ignoreNoSolution)
 
         # preprocessing
@@ -675,7 +464,7 @@ class Tester:
             return True
 
         if not unsat:
-            solution_parser.test_found_solution(solution, checkAgainst)
+            self.sol_parser.test_found_solution(solution, checkAgainst)
             return
 
         # it's UNSAT, let's check with DRAT
@@ -707,7 +496,7 @@ class Tester:
                 print("OK, DRAT says: %s" % dratLine)
 
         # check with other solver
-        ret = self.check_unsat(checkAgainst)
+        ret = self.sol_parser.check_unsat(checkAgainst)
         if ret is None:
             print("Other solver time-outed, cannot check")
         elif ret is True:
@@ -726,7 +515,7 @@ class Tester:
             fuzzers = fuzzers_nodrat
         fuzzer = random.choice(fuzzers)
 
-        fname = create_fuzz.unique_file("fuzzTest")
+        fname = unique_file("fuzzTest")
         fname_drat = None
         if self.drat:
             fname_drat = "%s-drat" % fname
@@ -741,7 +530,7 @@ class Tester:
 
         if not self.drat:
             self.needDebugLib = True
-            interspersed_fname = create_fuzz.unique_file("fuzzTest")
+            interspersed_fname = unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
             intersperse(fname, interspersed_fname, seed_for_inters)
             print("Interspersed: ./intersperse.py %s %s %d" % (fname,
@@ -772,7 +561,7 @@ class Tester:
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
-        fname = create_fuzz.unique_file("fuzzTest")
+        fname = unique_file("fuzzTest")
         self.drat = False
 
         # create the fuzz file
