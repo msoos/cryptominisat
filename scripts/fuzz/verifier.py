@@ -182,7 +182,7 @@ class solution_parser:
             os.unlink(fname_debug)
 
     @staticmethod
-    def parse_solution_from_output(output_lines, ignoreNoSolution = False):
+    def parse_solution_from_output(output_lines, ignoreNoSolution=False):
         if len(output_lines) == 0:
             print("Error! SAT solver output is empty!")
             print("output lines: %s" % output_lines)
