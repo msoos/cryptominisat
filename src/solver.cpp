@@ -3568,25 +3568,26 @@ void Solver::add_sql_tag(const string& tagname, const string& tag)
 
 uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
 {
-    undef.trail_lim_vars = &trail_lim_vars;
-    undef.can_be_unsetSum = 0;
-    undef.num_fixed = 0;
-    undef.verbose = true;
+    undef = new FindUndef;
+    undef->trail_lim_vars = &trail_lim_vars;
+    undef->can_be_unsetSum = 0;
+    undef->num_fixed = 0;
+    undef->verbose = false;
 
-    undef.dontLookAtClause.clear();
-    undef.dontLookAtClause.resize(longIrredCls.size(), false);
-    undef.can_be_unset.clear();
-    undef.can_be_unset.resize(nVarsOuter(), 0);
-    undef.satisfies.clear();
-    undef.satisfies.resize(nVarsOuter(), 0);
+    undef->dontLookAtClause.clear();
+    undef->dontLookAtClause.resize(longIrredCls.size(), false);
+    undef->can_be_unset.clear();
+    undef->can_be_unset.resize(nVarsOuter(), 0);
+    undef->satisfies.clear();
+    undef->satisfies.resize(nVarsOuter(), 0);
 
     undef_fill_potentials();
 
-    if (undef.verbose) {
-        cout << "NUM Can be unset: " << undef.can_be_unsetSum << endl;
+    if (undef->verbose) {
+        cout << "NUM Can be unset: " << undef->can_be_unsetSum << endl;
         cout << "--" << endl;
-        for(size_t i = 0; i < undef.can_be_unset.size(); i++) {
-            if (undef.can_be_unset[i]) {
+        for(size_t i = 0; i < undef->can_be_unset.size(); i++) {
+            if (undef->can_be_unset[i]) {
                 cout << "Can be unset var  " << i+1 << endl;
             }
         }
@@ -3594,68 +3595,70 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
     }
 
     while(undef_check_must_fix()
-        && undef.can_be_unsetSum > 0
+        && undef->can_be_unsetSum > 0
     ) {
         //Find variable to fix.
         uint32_t maximum = 0;
         uint32_t v = var_Undef;
-        for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
-            if (undef.can_be_unset[i]) {
+        for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
+            if (undef->can_be_unset[i]) {
 
-                if (undef.verbose) {
+                if (undef->verbose) {
                     cout << "Var " << i+1 << " can be fixed"
-                    << ", it satisfies: " << undef.satisfies[i] << " clauses" << endl;
+                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;
                 }
             }
-            if (undef.can_be_unset[i] && undef.satisfies[i] >= maximum) {
-                maximum = undef.satisfies[i];
+            if (undef->can_be_unset[i] && undef->satisfies[i] >= maximum) {
+                maximum = undef->satisfies[i];
                 v = i;
             }
         }
-        if (undef.verbose) cout << "--" << endl;
+        if (undef->verbose) cout << "--" << endl;
         assert(v != var_Undef);
 
         //Fix 'v' to be set to curent value
-        assert(undef.can_be_unset[v]);
-        undef.can_be_unset[v] = 0;
-        undef.can_be_unsetSum--;
-        undef.num_fixed++;
+        assert(undef->can_be_unset[v]);
+        undef->can_be_unset[v] = 0;
+        undef->can_be_unsetSum--;
+        undef->num_fixed++;
 
-        if (undef.verbose) cout << "Fixed var " << v+1 << endl;
+        if (undef->verbose) cout << "Fixed var " << v+1 << endl;
 
-        std::fill(undef.satisfies.begin(), undef.satisfies.end(), 0);
+        std::fill(undef->satisfies.begin(), undef->satisfies.end(), 0);
     }
 
     //Everything that hasn't been fixed and can be unset, is now unset
     undef_unset_potentials();
 
-    return undef.can_be_unsetSum;
+    int toret = undef->can_be_unsetSum;
+    delete undef;
+    return toret;
 }
 
 void Solver::undef_fill_potentials()
 {
-    int trail_at = ((int)undef.trail_lim_vars->size())-1;
-    if (undef.verbose) cout << "trail_at: " << trail_at << endl;
+    int trail_at = ((int)undef->trail_lim_vars->size())-1;
+    if (undef->verbose) cout << "trail_at: " << trail_at << endl;
 
     //Mark everything on the trail except at lev 0
     while(trail_at >= 0) {
-        uint32_t v = (*undef.trail_lim_vars)[trail_at];
-        if (undef.verbose) cout << "Examining trail var: " << v+1 << endl;
+        uint32_t v = (*undef->trail_lim_vars)[trail_at];
+        if (undef->verbose) cout << "Examining trail var: " << v+1 << endl;
 
         assert(varData[v].removed == Removed::none);
         assert(assumptionsSet.size() > v);
         if (model_value(v) != l_Undef
             && assumptionsSet[v] == false
         ) {
-            undef.can_be_unset[v] += 1;
+            undef->can_be_unset[v] += 1;
             if (conf.independent_vars == NULL) {
-                undef.can_be_unsetSum++;
+                undef->can_be_unsetSum++;
             }
         }
 
         trail_at--;
     }
-    if (undef.verbose) {
+    if (undef->verbose) {
         cout << "-" << endl;
     }
 
@@ -3670,9 +3673,9 @@ void Solver::undef_fill_potentials()
                 std::exit(-1);
             }
             v = map_inter_to_outer(v);
-            undef.can_be_unset[v]++;
-            if (undef.can_be_unset[v] == 2) {
-                undef.can_be_unsetSum++;
+            undef->can_be_unset[v]++;
+            if (undef->can_be_unset[v] == 2) {
+                undef->can_be_unsetSum++;
             }
         }
     }
@@ -3680,7 +3683,7 @@ void Solver::undef_fill_potentials()
     if (conf.independent_vars) {
         //Only those with a setting of both independent_vars and in trail
         //can be unset
-        for(unsigned char& v: undef.can_be_unset) {
+        for(unsigned char& v: undef->can_be_unset) {
             if (v < 2) {
                 v = false;
             }
@@ -3690,19 +3693,19 @@ void Solver::undef_fill_potentials()
     //Mark variables replacing others as non-eligible
     vector<uint32_t> replacingVars = varReplacer->get_vars_replacing_others();
     for (const uint32_t v: replacingVars) {
-        if (undef.can_be_unset[v]) {
-            undef.can_be_unset[v] = false;
-            undef.can_be_unsetSum--;
+        if (undef->can_be_unset[v]) {
+            undef->can_be_unset[v] = false;
+            undef->can_be_unsetSum--;
         }
     }
 }
 
 void Solver::undef_unset_potentials()
 {
-    for (uint32_t i = 0; i < undef.can_be_unset.size(); i++) {
-        if (undef.can_be_unset[i]) {
+    for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
+        if (undef->can_be_unset[i]) {
             model_value(i) = l_Undef;
-            if (undef.verbose) cout << "Unset variable " << i << endl;
+            if (undef->verbose) cout << "Unset variable " << i << endl;
         }
     }
 }
@@ -3710,7 +3713,7 @@ void Solver::undef_unset_potentials()
 template<class C>
 bool Solver::undef_look_at_one_clause(const C c)
 {
-    if (undef.verbose) {
+    if (undef->verbose) {
         cout << "Check called on clause: ";
         for(Lit l: *c) {
             cout << l << " ";
@@ -3723,7 +3726,7 @@ bool Solver::undef_look_at_one_clause(const C c)
     uint32_t numTrue = 0;
     for (const Lit l: *c) {
         if (model_value(l) == l_True) {
-            if (undef.can_be_unset[l.var()]) {
+            if (undef->can_be_unset[l.var()]) {
                 numTrue ++;
                 v = l.var();
             } else {
@@ -3735,21 +3738,21 @@ bool Solver::undef_look_at_one_clause(const C c)
     //Greedy
     if (numTrue == 1) {
         assert(v != var_Undef);
-        assert(undef.can_be_unset[v]);
+        assert(undef->can_be_unset[v]);
 
-        undef.can_be_unset[v] = false;
-        if (undef.verbose) cout << "Setting " << v+1 << " as fixed" << endl;
-        undef.can_be_unsetSum--;
+        undef->can_be_unset[v] = false;
+        if (undef->verbose) cout << "Setting " << v+1 << " as fixed" << endl;
+        undef->can_be_unsetSum--;
         //clause definitely satisfied
         return true;
     }
 
     //numTrue > 1
-    undef.must_fix = true;
+    undef->must_fix = true;
     assert(numTrue > 1);
     for (const Lit l: *c) {
         if (model_value(l) == l_True)
-            undef.satisfies[l.var()]++;
+            undef->satisfies[l.var()]++;
     }
 
     //Clause is not definitely satisfied
@@ -3758,26 +3761,26 @@ bool Solver::undef_look_at_one_clause(const C c)
 
 bool Solver::undef_check_must_fix()
 {
-    undef.must_fix = false;
+    undef->must_fix = false;
 
     for (uint32_t i = 0
          ; i < longIrredCls.size()
          ; i++
     ) {
-        if (undef.dontLookAtClause[i])
+        if (undef->dontLookAtClause[i])
             continue;
 
         Clause* c = cl_alloc.ptr(longIrredCls[i]);
         cout << "Clause is " << *c << endl;
         if (undef_look_at_one_clause(c)) {
             //clause definitely satisfied
-            undef.dontLookAtClause[i] = true;
+            undef->dontLookAtClause[i] = true;
         }
     }
 
     for(size_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
-        if (!undef.can_be_unset[l.var()]
+        if (!undef->can_be_unset[l.var()]
             && model_value(l) == l_True
         ) {
             continue;
@@ -3806,5 +3809,5 @@ bool Solver::undef_check_must_fix()
     }
 
     //There is hope
-    return undef.must_fix;
+    return undef->must_fix;
 }
