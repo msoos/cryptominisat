@@ -30,6 +30,7 @@ import os
 import stat
 import time
 import resource
+from functools import partial
 
 
 def unique_file(fname_begin, fname_end=".cnf"):
@@ -46,10 +47,12 @@ def unique_file(fname_begin, fname_end=".cnf"):
 
             counter += 1
 
-def setlimits():
+
+def setlimits(maxtime):
     # sys.stdout.write("Setting resource limit in child (pid %d): %d s\n" %
-    # (os.getpid(), options.maxtime))
-    resource.setrlimit(resource.RLIMIT_CPU, (options.maxtime, options.maxtime))
+    # (os.getpid(), maxtime))
+    resource.setrlimit(resource.RLIMIT_CPU, (maxtime, maxtime))
+
 
 class solution_parser:
     def __init__(self, options):
@@ -110,7 +113,7 @@ class solution_parser:
         try:
             p = subprocess.Popen(toexec.rsplit(),
                                  stdout=subprocess.PIPE,
-                                 preexec_fn=setlimits)
+                                 preexec_fn=partial(setlimits, self.options.maxtime))
         except OSError:
             print("ERROR: Probably you don't have lingeling installed!")
             raise

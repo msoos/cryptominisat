@@ -38,6 +38,7 @@ from subprocess import Popen, PIPE, STDOUT
 import optparse
 import glob
 from verifier import *
+from functools import partial
 
 print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
 sys.path.append(os.getcwd())
@@ -388,7 +389,7 @@ class Tester:
         err_fname = unique_file("%s_err" % fname, ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
-            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=setlimits)
+            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=partial(setlimits, options.maxtime))
 
         # print time limit after child startup
         if options.verbose:
