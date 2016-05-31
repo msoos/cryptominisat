@@ -91,7 +91,12 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
         solver->varReplacer->extend_model(blockedOn.var());
     }
 
-    var_has_been_blocked[blockedOn.var()] = true;
+    //If greedy undef is not set, set model to value
+    if (!solver->conf.greedy_undef) {
+        solver->model[blockedOn.var()] = l_False;
+    } else {
+        var_has_been_blocked[blockedOn.var()] = true;
+    }
 }
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
@@ -101,7 +106,7 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     assert(contains_lit(lits, blockedOn));
     if (satisfied(lits)) {
         return;
-    } else {
+    } else if (solver->conf.greedy_undef) {
         //Try to extend the model to full_model, see if that helps
         for(Lit l: lits) {
             if (solver->model_value(l) == l_Undef
