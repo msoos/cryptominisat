@@ -172,9 +172,9 @@ class solution_parser:
                     exit(-1)
                 os.unlink(tmpfname)
 
-        self.remove_debuglib_files()
+        self.remove_debuglib_files(fname)
 
-    def remove_debuglib_files(self):
+    def remove_debuglib_files(self, fname):
         #removing debuglib files
         largestPart = self._find_largest_debuglib_part(fname)
         for debugLibPart in range(1, largestPart + 1):
