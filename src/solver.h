@@ -234,6 +234,11 @@ class Solver : public Searcher
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 
+        //if set to TRUE, a clause has been removed during add_clause_int
+        //that contained "lit, ~lit". So "lit" must be set to a value
+        //Contains _outer_ variables
+        vector<char> undef_must_set_vars;
+
     private:
         friend class Prober;
         friend class ClauseDumper;
@@ -243,7 +248,7 @@ class Solver : public Searcher
         void reconfigure(int val);
 
         vector<Lit> finalCl_tmp;
-        bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl);
+        bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl, const bool red);
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 

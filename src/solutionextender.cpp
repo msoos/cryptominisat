@@ -43,6 +43,15 @@ void SolutionExtender::extend()
 
     if (simplifier)
         simplifier->extend_model(this);
+
+    //clause has been added with "lit, ~lit" so var must be set
+    for(size_t i = 0; i < solver->undef_must_set_vars.size(); i++) {
+        if (solver->undef_must_set_vars[i]
+            && solver->model_value(i) == l_Undef
+        ) {
+            solver->model[i] = l_False;
+        }
+    }
 }
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const
