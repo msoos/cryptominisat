@@ -340,15 +340,28 @@ unsigned Solver::num_bits_set(const size_t x, const unsigned max_size) const
 }
 
 
-bool Solver::sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl)
-{
+bool Solver::sort_and_clean_clause(
+    vector<Lit>& ps
+    , const vector<Lit>& origCl
+    , const bool red
+) {
     std::sort(ps.begin(), ps.end());
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
-        if (value(ps[i]) == l_True || ps[i] == ~p)
+        if (value(ps[i]) == l_True) {
             return false;
-        else if (value(ps[i]) != l_False && ps[i] != p) {
+        } else if (ps[i] == ~p) {
+            if (!red) {
+                uint32_t var = p.var();
+                var = map_inter_to_outer(var);
+                if (undef_must_set_vars.size() < var+1) {
+                    undef_must_set_vars.resize(var+1, false);
+                }
+                undef_must_set_vars[var] = true;
+            }
+            return false;
+        } else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
             if (varData[p.var()].removed != Removed::none) {
@@ -400,7 +413,7 @@ Clause* Solver::add_clause_int(
     #endif
 
     vector<Lit> ps = lits;
-    if (!sort_and_clean_clause(ps, lits)) {
+    if (!sort_and_clean_clause(ps, lits, red)) {
         return NULL;
     }
 
