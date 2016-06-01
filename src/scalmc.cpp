@@ -142,6 +142,9 @@ void CUSP::add_approxmc_options()
     ("looptout", po::value(&loopTimeout)->default_value(loopTimeout)
         , "Timeout for one measurement, consisting of finding pivotAC solutions")
     ("cuspLogFile", po::value(&cuspLogFile)->default_value(cuspLogFile),"")
+    ("unset", po::value(&unset_vars)->default_value(unset_vars),
+     "Try to ask the solver to unset some independent variables, thereby"
+     "finding more than one solution at a time")
     ;
 
     help_options_simple.add(approxMCOptions);
@@ -249,21 +252,36 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     while (solutions < maxSolutions) {
         //solver->set_max_confl(10*1000*1000);
         ret = solver->solve(&new_assumps);
-        if (ret == l_True)
-            solutions++;
-        else
+        if (ret != l_True)
             break;
 
+        size_t num_undef = 0;
         if (solutions < maxSolutions) {
             vector<Lit> lits;
             lits.push_back(Lit(act_var, false));
             for (const uint32_t var: independent_vars) {
                 if (solver->get_model()[var] != l_Undef) {
                     lits.push_back(Lit(var, solver->get_model()[var] == l_True));
+                } else {
+                    num_undef++;
                 }
             }
             solver->add_clause(lits);
         }
+        if (num_undef) {
+            cout << "WOW Num undef:" << num_undef << endl;
+        }
+
+        //Try not to be crazy, 2**30 solutions is enough
+        if (num_undef <= 30) {
+            solutions += 1U << num_undef;
+        } else {
+            solutions += 1U << 30;
+            cout << "WARNING, in this cut there are > 2**30 solutions indicated by the solver!" << endl;
+        }
+    }
+    if (solutions > maxSolutions) {
+        solutions = maxSolutions;
     }
 
     //Remove clauses added
@@ -374,6 +392,9 @@ int CUSP::solve()
     }
     //check_num_threads_sanity(num_threads);
     //solver->set_num_threads(num_threads);
+    if (unset_vars) {
+        solver->set_greedy_undef();
+    }
     printVersionInfo();
     parseInAllFiles(solver);
 
