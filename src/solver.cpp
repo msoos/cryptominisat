@@ -3771,7 +3771,6 @@ bool Solver::undef_check_must_fix()
             continue;
 
         Clause* c = cl_alloc.ptr(longIrredCls[i]);
-        cout << "Clause is " << *c << endl;
         if (undef_look_at_one_clause(c)) {
             //clause definitely satisfied
             undef->dontLookAtClause[i] = true;
