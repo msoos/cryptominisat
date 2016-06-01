@@ -564,6 +564,17 @@ bool clause_satisfied(const string& data, vector<lbool>& solution)
     return false;
 }
 
+uint32_t count_num_undef_in_solution(const Solver* s)
+{
+    uint32_t num = 0;
+    for(size_t i = 0; i < s->nVarsOuter(); i++) {
+        if (s->model_value(i) == l_Undef) {
+            num++;
+        }
+    }
+    return num;
+}
+
 // string print(const vector<Lit>& dat) {
 //     std::stringstream m;
 //     for(size_t i = 0; i < dat.size();) {
