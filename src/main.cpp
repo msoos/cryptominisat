@@ -246,7 +246,10 @@ void Main::printResultFunc(
             }
             *os << "0" << endl;
         } else {
-            print_model(os, solver);
+            const uint32_t num_undef = print_model(os, solver);
+            if (num_undef && !toFile && conf.verbosity >= 2) {
+               cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+            }
         }
     }
 }

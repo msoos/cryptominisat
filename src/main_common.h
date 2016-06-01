@@ -28,10 +28,12 @@ THE SOFTWARE.
 #include <iostream>
 #include <cmath>
 
-void print_model(std::ostream* os, CMSat::SATSolver* solver)
+//Returns the number of undefined variables
+uint32_t print_model(std::ostream* os, CMSat::SATSolver* solver)
 {
     *os << "v ";
     size_t line_size = 2;
+    size_t num_undef = 0;
     for (uint32_t var = 0; var < solver->nVars(); var++) {
         if (solver->get_model()[var] != CMSat::l_Undef) {
             const bool value_is_positive = (solver->get_model()[var] == CMSat::l_True);
@@ -43,11 +45,11 @@ void print_model(std::ostream* os, CMSat::SATSolver* solver)
             }
             *os << (value_is_positive? "" : "-") << var+1 << " ";
         } else {
-            //*os << "(UNDEF " << var+1 << ") ";
+            num_undef++;
         }
     }
-
     *os << "0" << std::endl;
+    return num_undef;
 }
 
 #endif //__MAIN_COMMON_H__
