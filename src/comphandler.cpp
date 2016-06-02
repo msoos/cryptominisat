@@ -398,6 +398,15 @@ SolverConf CompHandler::configureNewSolver(
         conf.verbosity = std::min(solver->conf.verbosity, 0);
     }
 
+    //Otherwise issues are:
+    // * variable elimination assumes some of these variables are set
+    //   (in orig instance)
+    //
+    // * every var replaced with var replacement would need to be set anyway
+    //
+    // Let's not complicate all of this.
+    conf.greedy_undef = false;
+
     //To small, don't clogger up the screen
     if (numVars < 20 && solver->conf.verbosity < 3) {
         conf.verbosity = 0;
