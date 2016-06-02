@@ -153,8 +153,15 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 
     if (solver->model_value(blockedOn) != l_Undef) {
         cout << "ERROR: Model value for var " << blockedOn.unsign() << " is "
-        << solver->model_value(blockedOn) << " but that doesn't satisfy a v-elim clause on the stack!"
+        << solver->model_value(blockedOn)
+        << " but that doesn't satisfy a v-elim clause on the stack!"
+        << " clause is: " << lits
         << endl;
+
+        for(Lit l: lits) {
+            cout << "Value of " << l << " : " << solver-> model_value(l)
+            << endl;
+        }
     }
     assert(solver->model_value(blockedOn) == l_Undef);
     solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
