@@ -499,6 +499,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     cont = false;
                 }
                 break;
+            case null_clause_t:
+                assert(false);
         }
         if (p == lit_Undef || i > 0) {
             add_lit_to_learnt<update_bogoprops>(x);
@@ -1092,6 +1094,8 @@ lbool Searcher::search()
                     case gauss_confl:
                         confl = g->found_conflict;
                         goto confl;
+                    case gauss_nothing:
+                        ;
                 }
             }
             if (at_least_one_continue) {
@@ -3270,7 +3274,7 @@ void Searcher::read_long_cls(
 }
 
 unsigned Searcher::guess_clause_array(
-    const uint32_t glue
+    const uint32_t /*glue*/
     , const uint32_t backtrack_lev
     , const double vsids_cutoff
     , double backtrack_cutoff
