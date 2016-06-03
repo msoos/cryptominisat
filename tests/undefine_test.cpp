@@ -80,6 +80,21 @@ TEST_F(undef, simple_2)
     EXPECT_EQ(undef, 2);
 }
 
+TEST_F(undef, simple_2_mult)
+{
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("1, 2, 3"));
+    for(size_t i = 0; i < 20; i++) {
+        lbool ret = s->solve_with_assumptions();
+        EXPECT_EQ(ret, l_True);
+        uint32_t undef = count_num_undef_in_solution(s);
+        EXPECT_EQ(undef, 2);
+    }
+}
+
+//TODO add test for multiple solve() calls
+//TODO add test for varelim->solve->varelim->solve etc. calls
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
