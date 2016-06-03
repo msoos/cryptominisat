@@ -492,7 +492,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 }
                 break;
 
-            case clause_t :
+            case clause_t:
                 assert(!cl->getRemoved());
                 x = (*cl)[i];
                 if (i == cl->size()-1) {
