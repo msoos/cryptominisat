@@ -49,7 +49,7 @@ bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors)
     size_t origTrailSize = solver->trail_size();
     extractInfo();
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         runStats.print_short(solver);
     }
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
@@ -384,7 +384,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
         runStats.numVarsInBlocks += it->size();
     }
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout << "c Sum vars in blocks: " << runStats.numVarsInBlocks << endl;
     }
 }

@@ -190,7 +190,7 @@ bool DimacsParser<C>::printHeader(C& in)
         ) {
             return false;
         }
-        if (verbosity >= 1) {
+        if (verbosity) {
             cout << "c -- header says num vars:   " << std::setw(12) << num_vars << endl;
             cout << "c -- header says num clauses:" <<  std::setw(12) << clauses << endl;
         }
@@ -232,7 +232,7 @@ bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
         in.skipWhitespace();
     }
 
-    if (verbosity >= 2) {
+    if (verbosity) {
         cout
         << "c -----------> Solver::"
         << (solve ? "solve" : "simplify")
@@ -450,7 +450,7 @@ bool DimacsParser<C>::parse_DIMACS(T input_stream)
         return false;
     }
 
-    if (verbosity >= 1) {
+    if (verbosity) {
         cout
         << "c -- clauses added: " << norm_clauses_added << endl
         << "c -- xor clauses added: " << xor_clauses_added << endl

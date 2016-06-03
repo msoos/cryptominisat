@@ -134,7 +134,7 @@ void CompFinder::print_and_add_to_sql_result(const double myTime) const
 
     assert(reverse_table_is_correct());
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [comp] Found component(s): " <<  reverseTable.size()
         << " BP: "

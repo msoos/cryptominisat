@@ -112,7 +112,7 @@ bool SQLiteStats::connectServer(const int verbosity)
         std::exit(-1);
     }
 
-    if (verbosity >= 1) {
+    if (verbosity) {
         cout << "c writing to SQLite file: " << filename << endl;
     }
 
@@ -170,7 +170,7 @@ void SQLiteStats::getID(const Solver* solver)
         }
     }
 
-    if (solver->getConf().verbosity >= 1) {
+    if (solver->getConf().verbosity) {
         cout << "c SQL runID is " << runID << endl;
     }
 }

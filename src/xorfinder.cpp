@@ -171,7 +171,7 @@ void XorFinder::find_xors()
     solver->sumSearchStats.num_xors_found_last = xors.size();
     print_found_xors();
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         runStats.print_short(solver);
     }
     globalStats += runStats;
@@ -482,7 +482,7 @@ void XorFinder::xor_together_xors()
     solver->clean_occur_from_idx_types_only_smudged();
     clean_xors_from_empty();
     double recur_time = cpuTime() - myTime;
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
         cout
         << "c [occ-xor] xored together " << xored*2
         << " clauses "
@@ -577,7 +577,7 @@ bool XorFinder::add_new_truths_from_xors()
     uint32_t num_bins_added = solver->binTri.redBins - origBins;
     uint32_t num_units_added = solver->trail_size() - origTrailSize;
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [occ-xor] added unit " << num_units_added
         << " bin " << num_bins_added

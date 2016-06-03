@@ -812,7 +812,7 @@ void PropEngine::sortWatched()
         #endif //VERBOSE_DEBUG
     }
 
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity) {
         cout << "c [w-sort] "
         << conf.print_times(cpuTime()-myTime)
         << endl;

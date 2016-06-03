@@ -73,7 +73,7 @@ bool StrImplWImplStamp::str_impl_w_impl_stamp()
 
 end:
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         str_impl_data.print(
             solver->trail_size() - origTrailSize
             , cpuTime() - myTime

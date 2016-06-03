@@ -84,7 +84,7 @@ bool InTree::check_timeout_due_to_hyperbin()
     if (solver->timedOutPropagateFull
         && !solver->drat->enabled()
     ) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [intree] intra-propagation timout,"
             << " turning off OTF hyper-bin&trans-red"
@@ -136,7 +136,7 @@ bool InTree::intree_probe()
         return false;
     }
     if (aborted) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [intree] too expensive SCC + varreplace loop: aborting"
             << endl;
@@ -176,7 +176,7 @@ bool InTree::intree_probe()
     const double time_remain = float_div(bogoprops_remain, bogoprops_to_use);
     const bool time_out = (bogoprops_remain < 0);
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout << "c [intree] Set "
         << (orig_num_free_vars - solver->get_num_free_vars())
         << " vars"

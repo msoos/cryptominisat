@@ -292,7 +292,7 @@ void ClauseAllocator::consolidate(
     dataStart = newDataStart;
 
     const double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout << "c [mem] Consolidated memory ";
         cout << " old size"; print_value_kilo_mega(old_size);
         cout << " new size"; print_value_kilo_mega(size);

@@ -61,7 +61,7 @@ bool DistillerAllWithAll::distill(uint32_t queueByBy)
 
 end:
     globalStats += runStats;
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
@@ -314,7 +314,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(solver->propStats.bogoProps-oldBogoProps + extraTime, maxNumProps);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout << "c [distill] longirred"
         << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
         << " cl-r:" << runStats.numClShorten- origClShorten

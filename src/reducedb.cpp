@@ -144,7 +144,7 @@ CleaningStats ReduceDB::reduceDB()
         tmpStats.print(0);
     else if (solver->conf.verbosity >= 3) {
         tmpStats.print_short(solver);
-    } else if (solver->conf.verbosity >= 2) {
+    } else if (solver->conf.verbosity) {
         cout << "c [DBclean]"
         << " marked: " << cl_marked
         << " ttl:" << cl_ttl

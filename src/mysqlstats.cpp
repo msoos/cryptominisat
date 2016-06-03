@@ -181,7 +181,7 @@ void MySQLStats::getID(const Solver* solver)
         }
     }
 
-    if (solver->getConf().verbosity >= 1) {
+    if (solver->getConf().verbosity) {
         cout << "c SQL runID is " << runID << endl;
     }
 }

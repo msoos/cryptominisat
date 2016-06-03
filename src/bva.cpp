@@ -99,7 +99,7 @@ bool BVA::bounded_var_addition()
     bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_used = cpuTime() - my_time;
     double time_remain = float_div(*simplifier->limit_to_decrease ,limit_orig);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [occ-bva] added: " << bva_worked
         << " simp: " << bva_simp_size

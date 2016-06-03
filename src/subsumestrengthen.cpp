@@ -243,7 +243,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*simplifier->limit_to_decrease <= 0);
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [sub] rem cl: " << subsumed
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
@@ -309,7 +309,7 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [str] sub: " << ret.sub
         << " str: " << ret.str
@@ -477,7 +477,7 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
     const bool time_out =  limit_to_handle_sub_str_with <= 0;
     const double time_used = cpuTime() - start_time;
     const double time_remain = float_div(limit_to_handle_sub_str_with, orig_limit);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [occ-substr] sub_str_with"
         << " sub: " << stat.sub
@@ -996,7 +996,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
     const double time_used = cpuTime() - myTime;
     const bool time_out = *simplifier->limit_to_decrease <= 0;
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [sub] tri"
         << " upI: " << upI
