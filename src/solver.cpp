@@ -3704,7 +3704,7 @@ void Solver::undef_unset_potentials()
 {
     for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
         if (undef->can_be_unset[i]) {
-            model_value(i) = l_Undef;
+            model[i] = l_Undef;
             if (undef->verbose) cout << "Unset variable " << i << endl;
         }
     }
