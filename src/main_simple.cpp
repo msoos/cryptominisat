@@ -85,7 +85,7 @@ void handle_drat_option(SolverConf& conf, const char* dratfilname)
     dratf = dratfTmp;
 
     if (!conf.otfHyperbin) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
             << endl;
@@ -94,7 +94,7 @@ void handle_drat_option(SolverConf& conf, const char* dratfilname)
     }
 
     if (conf.doFindXors) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c XOR manipulation is not supported in DRAT, turning it off"
             << endl;
@@ -103,7 +103,7 @@ void handle_drat_option(SolverConf& conf, const char* dratfilname)
     }
 
     if (conf.doRenumberVars) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Variable renumbering is not supported during DRAT, turning it off"
             << endl;
@@ -112,7 +112,7 @@ void handle_drat_option(SolverConf& conf, const char* dratfilname)
     }
 
     if (conf.doCompHandler) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Component finding & solving is not supported during DRAT, turning it off"
             << endl;
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
     }
     solver->set_num_threads(num_threads);
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         printVersionInfo();
     }
     double cpu_time = cpuTime();
@@ -266,12 +266,12 @@ int main(int argc, char** argv)
     }
 
     double parse_time = cpuTime() - cpu_time;
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         printf("c  Parsing time: %-12.2f s\n", parse_time);
     }
 
     lbool ret = S.solve();
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         S.print_stats();
     }
     printf(ret == l_True ? "s SATISFIABLE\n" : "s UNSATISFIABLE\n");

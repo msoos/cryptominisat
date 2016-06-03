@@ -71,7 +71,7 @@ void Prober::checkOTFRatio()
     }
     val++;*/
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [probe] Ratio of hyperbin/(bogo+hyperbin) is : "
         << std::setprecision(2) << ratio
@@ -89,7 +89,7 @@ void Prober::checkOTFRatio()
         && !solver->drat->enabled()
     ) {
         solver->conf.otfHyperbin = false;
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout << "c [probe] no longer doing OTF hyper-bin&trans-red" << endl;
         }
         solver->needToAddBinClause.clear();
@@ -139,7 +139,7 @@ uint64_t Prober::calc_numpropstodo()
     }
 
     runStats.origNumFreeVars = num_active_vars;
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
     cout
         << "c [probe] lits : "
         << std::setprecision(2) << (double)(solver->litStats.redLits + solver->litStats.irredLits)/(1000.0*1000.0)
@@ -274,7 +274,7 @@ void Prober::check_if_must_disable_cache_update()
     //More than 50% of the time is spent updating the cache... that's a lot
     //Disable and free
     if (timeOnCache > 50.0 && solver->conf.doCache)  {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [probe] too much time spent on updating cache: "
             << std::fixed << std::setprecision(1) << timeOnCache
@@ -285,7 +285,7 @@ void Prober::check_if_must_disable_cache_update()
         solver->conf.doCache = false;
         solver->implCache.free();
     } else {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [probe] time spent updating cache during probing: "
             << std::fixed << std::setprecision(1) << timeOnCache
@@ -436,7 +436,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     runStats.numCalls = 1;
     globalStats += runStats;
 
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
@@ -572,7 +572,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     if (solver->timedOutPropagateFull
         && !solver->drat->enabled()
     ) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [probe] intra-propagation timout,"
             << " turning off OTF hyper-bin&trans-red"

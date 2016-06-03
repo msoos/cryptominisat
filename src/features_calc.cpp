@@ -370,7 +370,7 @@ SolveFeatures SolveFeaturesCalc::extract()
     calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
     calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout << "c [features] extracted"
         << solver->conf.print_times(cpuTime() - start_time)
         << endl;

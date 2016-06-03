@@ -426,7 +426,7 @@ int CUSP::solve()
         return correctReturnValue(l_False);
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         solver->print_stats();
     }
 

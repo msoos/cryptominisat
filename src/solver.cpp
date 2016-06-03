@@ -970,7 +970,7 @@ void Solver::renumber_variables()
 
     //Print results
     const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity) {
         cout
         << "c [renumber]"
         << conf.print_times(time_used)
@@ -999,7 +999,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
     ) {
         conf.doStamp = false;
         stamp.freeMem();
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Switching off stamping due to excessive number of variables"
             << " (it would take too much memory)"
@@ -1013,7 +1013,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
         conf.doCache = false;
         implCache.free();
 
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Switching off caching due to excessive number of variables"
             << " (it would take too much memory)"
@@ -1161,7 +1161,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
         double costPerGained = float_div(stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity) {
                 cout
                 << "c recursive minimization too costly: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
@@ -1170,7 +1170,7 @@ void Solver::check_recursive_minimization_effectiveness(const lbool status)
                 << endl;
             }
         } else {
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity) {
                 cout
                 << "c recursive minimization cost OK: "
                 << std::fixed << std::setprecision(0) << (costPerGained/1000.0)
@@ -1196,7 +1196,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
         //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
             conf.doMinimRedMore = false;
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness low: "
                 << std::fixed << std::setprecision(2) << remPercent
@@ -1206,7 +1206,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
         } else if (remPercent > 7.0) {
             more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
             more_red_minim_limit_cache_actual  = 3*conf.more_red_minim_limit_cache;
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness good: "
                 << std::fixed << std::setprecision(2) << remPercent
@@ -1216,7 +1216,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
         } else {
             more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
             more_red_minim_limit_cache_actual  = conf.more_red_minim_limit_cache;
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity) {
                 cout
                 << "c more minimization effectiveness OK: "
                 << std::fixed << std::setprecision(2) << remPercent
@@ -1557,7 +1557,7 @@ lbool Solver::iterate_until_solved()
         && sumSearchStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
     ) {
         iteration_num++;
-        if (conf.verbosity >= 2 && iteration_num >= 2) {
+        if (conf.verbosity && iteration_num >= 2) {
             print_clause_size_distrib();
         }
         if (iteration_num >= 2) {
@@ -1632,7 +1632,7 @@ void Solver::check_too_many_low_glues()
     if (perc > conf.adjust_glue_if_too_many_low) {
         conf.glue_must_keep_clause_if_below_or_eq--;
         adjusted_glue_cutoff_if_too_many = true;
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout << "c Adjusted glue cutoff to " << conf.glue_must_keep_clause_if_below_or_eq
             << " due to too many low glues: " << perc*100.0 << " %" << endl;
         }
@@ -1686,7 +1686,7 @@ bool Solver::execute_inprocess_strategy(
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (conf.verbosity >= 2 && token.substr(0,3) != "occ" && token != "") {
+        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
             cout << "c --> Executing strategy token: " << token << '\n';
         }
 
@@ -1695,7 +1695,7 @@ bool Solver::execute_inprocess_strategy(
                 && occsimplifier
             ) {
                 occ_strategy_tokens = trim(occ_strategy_tokens);
-                if (conf.verbosity >= 2) {
+                if (conf.verbosity) {
                     cout << "c --> Executing OCC strategy token(s): '"
                     << occ_strategy_tokens << "'\n";
                 }
@@ -1778,7 +1778,7 @@ bool Solver::execute_inprocess_strategy(
             if (conf.doCache) {
                 const size_t memUsedMB = implCache.mem_used()/(1024UL*1024UL);
                 if (memUsedMB > conf.maxCacheSizeMB) {
-                    if (conf.verbosity >= 2) {
+                    if (conf.verbosity) {
                         cout
                         << "c Turning off cache, memory used, "
                         << memUsedMB/(1024UL*1024UL) << " MB"
@@ -2639,7 +2639,7 @@ bool Solver::verify_model() const
     }
     verificationOK &= verify_model_implicit_clauses();
 
-    if (conf.verbosity >= 1 && verificationOK) {
+    if (conf.verbosity && verificationOK) {
         cout
         << "c Verified "
         << longIrredCls.size() + longRedCls.size()
@@ -3131,7 +3131,7 @@ SolveFeatures Solver::calculate_features() const
     feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
     feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         feat.print_stats();
     }
 
@@ -3239,7 +3239,7 @@ void Solver::reconfigure(int val)
         }
     }
 
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity) {
         cout << "c [features] reconfigured solver to config " << val << endl;
     }
 

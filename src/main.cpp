@@ -117,7 +117,7 @@ Main::Main(int _argc, char** _argv) :
 void Main::readInAFile(SATSolver* solver2, const string& filename)
 {
     solver2->add_sql_tag("filename", filename);
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         cout << "c Reading file '" << filename << "'" << endl;
     }
     #ifndef USE_ZLIB
@@ -207,7 +207,7 @@ void Main::parseInAllFiles(SATSolver* solver2)
         readInStandardInput(solver2);
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         cout
         << "c Parsing time: "
         << std::fixed << std::setprecision(2)
@@ -247,7 +247,7 @@ void Main::printResultFunc(
             *os << "0" << endl;
         } else {
             const uint32_t num_undef = print_model(os, solver);
-            if (num_undef && !toFile && conf.verbosity >= 2) {
+            if (num_undef && !toFile && conf.verbosity) {
                cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
             }
         }
@@ -852,7 +852,7 @@ void Main::handle_drat_option()
     }
 
     if (!conf.otfHyperbin) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
             << endl;
@@ -861,7 +861,7 @@ void Main::handle_drat_option()
     }
 
     if (conf.doFindXors) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c XOR manipulation is not supported in DRAT, turning it off"
             << endl;
@@ -870,7 +870,7 @@ void Main::handle_drat_option()
     }
 
     if (conf.doRenumberVars) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Variable renumbering is not supported during DRAT, turning it off"
             << endl;
@@ -879,7 +879,7 @@ void Main::handle_drat_option()
     }
 
     if (conf.doCompHandler) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout
             << "c Component finding & solving is not supported during DRAT, turning it off"
             << endl;
@@ -947,7 +947,7 @@ void Main::manually_parse_some_options()
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
-            if (conf.verbosity >= 1) {
+            if (conf.verbosity) {
                 cout << "c Cannot handle components when preprocessing. Turning it off." << endl;
             }
         }
@@ -1071,7 +1071,7 @@ void Main::manually_parse_some_options()
         handle_drat_option();
     }
 
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         cout << "c Outputting solution to console" << endl;
     }
 }
@@ -1134,14 +1134,14 @@ void Main::dumpIfNeeded() const
 
     if (!redDumpFname.empty()) {
         solver->open_file_and_dump_red_clauses(redDumpFname);
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity) {
             cout << "c Dumped redundant clauses" << endl;
         }
     }
 
     if (!irredDumpFname.empty()) {
         solver->open_file_and_dump_irred_clauses(irredDumpFname);
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity) {
             cout
             << "c [solver] Dumped irredundant clauses to file "
             << "'" << irredDumpFname << "'." << endl
@@ -1160,7 +1160,7 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
         return;
     }
 
-    if (thread_num > num_cores && conf.verbosity >= 1) {
+    if (thread_num > num_cores && conf.verbosity) {
         std::cerr
         << "c WARNING: Number of threads requested is more than the number of"
         << " cores reported by the system.\n"
@@ -1210,7 +1210,7 @@ int Main::solve()
     }
 
     //Print command line used to execute the solver: for options and inputs
-    if (conf.verbosity >= 1) {
+    if (conf.verbosity) {
         printVersionInfo();
         cout
         << "c Executed with command line: "
@@ -1240,12 +1240,12 @@ int Main::solve()
     dumpIfNeeded();
 
     if (conf.preprocess != 1) {
-        if (ret == l_Undef && conf.verbosity >= 1) {
+        if (ret == l_Undef && conf.verbosity) {
             cout
             << "c Not finished running -- signal caught or some maximum reached"
             << endl;
         }
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity) {
             solver->print_stats();
         }
     }
@@ -1271,7 +1271,7 @@ lbool Main::multi_solutions()
                 printResultFunc(resultfile, true, ret);
             }
 
-            if (conf.verbosity >= 1) {
+            if (conf.verbosity) {
                 cout
                 << "c Number of solutions found until now: "
                 << std::setw(6) << current_nr_of_solutions

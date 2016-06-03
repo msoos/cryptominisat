@@ -1848,7 +1848,7 @@ lbool Searcher::burst_search()
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity) {
         cout
         << "c "
         << conf.burst_search_len << "-long burst search "
@@ -1967,7 +1967,7 @@ inline void Searcher::dump_restart_sql()
 void Searcher::print_restart_stat()
 {
     //Print restart stat
-    if (conf.verbosity >= 2
+    if (conf.verbosity
         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
           < sumConflicts())
     ) {
@@ -2024,7 +2024,7 @@ bool Searcher::clean_clauses_if_needed()
     if (newZeroDepthAss > 0
         && simpDB_props < 0
     ) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
         }
         lastCleanZeroDepthAssigns = trail.size();
@@ -2060,7 +2060,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
             && (solver->binTri.numNewBinsSinceSCC
                 > ((double)solver->get_num_free_vars()*conf.sccFindPercent))
     ) {
-        if (conf.verbosity >= 1) {
+        if (conf.verbosity) {
             cout
             << "c new bins since last SCC: "
             << std::setw(2)
@@ -2261,7 +2261,7 @@ lbool Searcher::solve(
                 && params.rest_type  == Restart::geom
                 && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
             ) {
-                if (conf.verbosity >= 2) {
+                if (conf.verbosity) {
                     cout << "c Returning from Searcher::solve() due to phase change and insufficient conflicts left" << endl;
                 }
                 goto end;
@@ -3184,7 +3184,7 @@ void Searcher::consolidate_watches()
     watches.consolidate();
     double time_used = cpuTime() - t;
 
-    if (conf.verbosity >= 2) {
+    if (conf.verbosity) {
         cout
         << "c [consolidate]"
         << conf.print_times(time_used)
@@ -3527,7 +3527,7 @@ void Searcher::clearGaussMatrixes()
 void Searcher::clear_gauss()
 {
     for(Gaussian* g: gauss_matrixes) {
-        if (conf.verbosity >= 2) {
+        if (conf.verbosity) {
             g->print_stats();
         }
         delete g;

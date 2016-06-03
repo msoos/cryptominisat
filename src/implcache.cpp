@@ -252,7 +252,7 @@ bool ImplCache::clean(Solver* solver, bool* setSomething)
     }
 
     const double time_used = cpuTime()-myTime;
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         cout << "c [cache] cleaned."
         << " Updated: " << std::setw(7) << numUpdated/1000 << " K"
         << " Cleaned: " << std::setw(7) << numCleaned/1000 << " K"
@@ -390,7 +390,7 @@ end:
     const double time_used = cpuTime() - myTime;
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         runStats.print_short(solver);
     }
     globalStats += runStats;

@@ -249,7 +249,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     runStats.numCalled++;
     runStats.time_used += time_used;
     runStats.time_out += time_out;
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         runStats.print_short(solver);
     }
     if (solver->sqlStats) {

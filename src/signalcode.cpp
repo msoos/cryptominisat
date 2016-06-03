@@ -51,7 +51,7 @@ void SIGINT_handler(int)
         << endl;
     } else {
         if (solver->nVars() > 0) {
-            //if (conf.verbosity >= 1) {
+            //if (conf.verbosity) {
                 solver->add_in_partial_solving_stats();
                 solver->print_stats();
             //}

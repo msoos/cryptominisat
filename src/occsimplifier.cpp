@@ -432,7 +432,7 @@ uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) c
 
 void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 {
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [simp] mem usage for occur "
         << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
@@ -506,7 +506,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
     if (irred
         && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurIrredMB
     ) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [simp] Not linking in irred due to excessive expected memory usage"
             << endl;
@@ -518,7 +518,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
     if (!irred
         && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurRedMB
     ) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [simp] Not linking in red due to excessive expected memory usage"
             << endl;
@@ -662,7 +662,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     const double time_used = cpuTime() - myTime;
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c Empty resolvent elimed: " << var_elimed
         << solver->conf.print_times(time_used, time_out)
@@ -774,7 +774,7 @@ bool OccSimplifier::eliminate_vars()
         }
 
         impl_sub_lits.clear();
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             double time_used = cpuTime() - after_sub_time;
             cout << "c [occ-bve] process impls_sub_lits "
             << solver->conf.print_times(time_used)
@@ -791,7 +791,7 @@ end:
     const bool time_out = (*limit_to_decrease <= 0);
     const double time_remain = float_div(*limit_to_decrease, orig_norm_varelim_time_limit);
 
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c  #try to eliminate: " << wenThrough << endl
         << "c  #var-elim: " << vars_elimed << endl
@@ -799,7 +799,7 @@ end:
         << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
         << "c  #T: " << time_used << endl;
     }
-    if (solver->conf.verbosity >= 1) {
+    if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
             runStats.print(solver->nVars());
         else
@@ -851,7 +851,7 @@ bool OccSimplifier::fill_occur_and_print_stats()
     }
 
     //Print memory usage after occur link-in
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         double vm_usage = 0;
         solver->print_watch_mem_used(memUsedTotal(vm_usage));
     }
@@ -883,7 +883,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (token != "" && solver->conf.verbosity >= 2) {
+        if (token != "" && solver->conf.verbosity) {
             cout << "c --> Executing OCC strategy token: " << token << '\n';
         }
         if (token == "occ-backw-sub-str") {
@@ -2013,7 +2013,7 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
 
         if (avg > solver->conf.updateVarElimComplexityOTF_limitavg) {
             solver->conf.updateVarElimComplexityOTF = false;
-            if (solver->conf.verbosity >= 2) {
+            if (solver->conf.verbosity) {
                 cout
                 << "c [occ-bve] Turning off OTF complexity update, it's too expensive"
                 << endl;

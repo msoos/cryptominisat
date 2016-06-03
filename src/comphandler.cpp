@@ -248,7 +248,7 @@ bool CompHandler::solve_component(
     std::sort(vars.begin(), vars.end());
     createRenumbering(vars);
 
-    if (solver->conf.verbosity >= 1 && num_comps < 20) {
+    if (solver->conf.verbosity && num_comps < 20) {
         cout
         << "c [comp] Solving component " << comp_at
         << " num vars: " << vars.size()
@@ -274,7 +274,7 @@ bool CompHandler::solve_component(
     const lbool status = newSolver.solve();
     //Out of time
     if (status == l_Undef) {
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [comp] subcomponent returned l_Undef -- timeout or interrupt."
             << endl;
@@ -285,7 +285,7 @@ bool CompHandler::solve_component(
 
     if (status == l_False) {
         solver->ok = false;
-        if (solver->conf.verbosity >= 2) {
+        if (solver->conf.verbosity) {
             cout
             << "c [comp] The component is UNSAT -> problem is UNSAT"
             << endl;
@@ -297,7 +297,7 @@ bool CompHandler::solve_component(
     save_solution_to_savedstate(&newSolver, vars, comp);
     move_decision_level_zero_vars_here(&newSolver);
 
-    if (solver->conf.verbosity >= 1 && num_comps < 20) {
+    if (solver->conf.verbosity && num_comps < 20) {
         cout
         << "c [comp] component " << comp_at
         << " ======================================="
@@ -835,7 +835,7 @@ void CompHandler::readdRemovedClauses()
 
     //Explain what we just did
     const double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity) {
         cout
         << "c [comp] re-added components. Lits: "
         << removedClauses.lits.size()
