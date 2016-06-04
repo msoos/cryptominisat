@@ -77,7 +77,6 @@ private:
     std::atomic<bool> must_interrupt;
     vector<uint32_t> independent_vars;
     void call_after_parse(const vector<uint32_t>& independent_vars) override;
-    void set_up_timer();
 
     uint32_t startIteration = 0;
     uint32_t pivotApproxMC = 52;

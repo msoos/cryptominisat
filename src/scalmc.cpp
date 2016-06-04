@@ -42,12 +42,10 @@
 #include <map>
 #include <set>
 #include <fstream>
-#include <signal.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <list>
 #include <array>
-#include <time.h>
 
 #include "scalmc.h"
 #include "time_mem.h"
@@ -62,44 +60,12 @@ using boost::lexical_cast;
 using std::list;
 using std::map;
 
+TimerStruct t;
 void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
 {
     SATSolver* solver = solverToInterrupt;
     solver->interrupt_asap();
 }
-
-timer_t* mytimer;
-bool* timerSetFirstTime;
-void start_timer(int secs)
-{
-    struct sigevent sev;
-    sev.sigev_signo = SIGUSR1;
-    sev.sigev_notify = SIGEV_SIGNAL;
-    struct itimerspec value;
-    value.it_value.tv_sec = secs; //waits for n seconds before sending timer signal
-    value.it_value.tv_nsec = 0;
-    value.it_interval.tv_sec = 0; //exipire once
-    value.it_interval.tv_nsec = 0;
-    if (*timerSetFirstTime) {
-        timer_create(CLOCK_REALTIME, &sev, mytimer);
-        //timer_delete(mytimer);
-    }
-    *timerSetFirstTime = false;
-    timer_settime(*mytimer, 0, &value, NULL);
-}
-
-void CUSP::set_up_timer()
-{
-    mytimer = new timer_t;
-    timerSetFirstTime = new bool;
-    struct sigaction sa;
-    sa.sa_flags = SA_SIGINFO;
-    sa.sa_sigaction = SIGALARM_handler;
-    sigemptyset(&sa.sa_mask);
-    sigaction(SIGUSR1, &sa, NULL);
-    *timerSetFirstTime = true;
-}
-
 
 string binary(unsigned x, uint32_t length)
 {
@@ -246,7 +212,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     new_assumps.push_back(Lit(act_var, true));
 
     signal(SIGINT, SIGINT_handler);
-    start_timer(loopTimeout);
+    start_timer(loopTimeout, &t);
     uint64_t solutions = 0;
     lbool ret;
     while (solutions < maxSolutions) {
@@ -398,7 +364,7 @@ int CUSP::solve()
     printVersionInfo();
     parseInAllFiles(solver);
 
-    set_up_timer();
+    set_up_timer(&t, SIGALARM_handler);
 
     if (startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
