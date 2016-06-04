@@ -57,7 +57,7 @@ TEST_F(comp_handle, handle_1_comp)
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
-    EXPECT_EQ(chandle->get_num_vars_removed(), 0);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 0u);
 }
 
 TEST_F(comp_handle, handle_2_comps)
@@ -69,8 +69,8 @@ TEST_F(comp_handle, handle_2_comps)
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
-    EXPECT_EQ(chandle->get_num_vars_removed(), 3);
-    EXPECT_EQ(chandle->get_num_components_solved(), 1);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 3u);
+    EXPECT_EQ(chandle->get_num_components_solved(), 1u);
 }
 
 TEST_F(comp_handle, handle_3_comps)
@@ -85,8 +85,8 @@ TEST_F(comp_handle, handle_3_comps)
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
-    EXPECT_EQ(chandle->get_num_components_solved(), 2);
-    EXPECT_EQ(chandle->get_num_vars_removed(), 8);
+    EXPECT_EQ(chandle->get_num_components_solved(), 2u);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 8u);
 }
 
 TEST_F(comp_handle, check_solution_zero_lev_assign)
@@ -106,8 +106,8 @@ TEST_F(comp_handle, check_solution_zero_lev_assign)
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
-    EXPECT_EQ(chandle->get_num_components_solved(), 2);
-    EXPECT_EQ(chandle->get_num_vars_removed(), 0);
+    EXPECT_EQ(chandle->get_num_components_solved(), 2u);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 0u);
     vector<lbool> solution(s->nVarsOuter(), l_Undef);
     chandle->addSavedState(solution);
     check_zero_assigned_lits_contains(s, "1");
@@ -134,8 +134,8 @@ TEST_F(comp_handle, check_solution_non_zero_lev_assign)
 
     chandle->handle();
     EXPECT_TRUE(s->okay());
-    EXPECT_EQ(chandle->get_num_components_solved(), 3);
-    EXPECT_EQ(chandle->get_num_vars_removed(), 7);
+    EXPECT_EQ(chandle->get_num_components_solved(), 3u);
+    EXPECT_EQ(chandle->get_num_vars_removed(), 7u);
     vector<lbool> solution(s->nVarsOuter(), l_Undef);
     chandle->addSavedState(solution);
     EXPECT_TRUE(clause_satisfied("1, 2", solution));
@@ -161,7 +161,7 @@ TEST_F(comp_handle, check_unsat)
     bool ret = chandle->handle();
     EXPECT_FALSE(ret);
     EXPECT_FALSE(s->okay());
-    EXPECT_EQ(chandle->get_num_components_solved(), 1);
+    EXPECT_EQ(chandle->get_num_components_solved(), 1u);
 }
 
 int main(int argc, char **argv) {
