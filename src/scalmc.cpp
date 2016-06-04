@@ -61,7 +61,7 @@ using std::list;
 using std::map;
 
 TimerStruct t;
-void SIGALARM_handler(int /*sig*/, siginfo_t* si, void* /*uc*/)
+void SIGALARM_handler(int /*sig*/, siginfo_t* /*si*/, void* /*uc*/)
 {
     SATSolver* solver = solverToInterrupt;
     solver->interrupt_asap();
