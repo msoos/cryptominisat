@@ -41,9 +41,12 @@ void SolutionExtender::extend()
 
     if (solver->varReplacer)
         solver->varReplacer->extend_model();
+    //cout << "aft varreplacer unset: " << count_num_unset_model() << endl;
 
     if (simplifier)
         simplifier->extend_model(this);
+
+    //cout << "aft simp unset       : " << count_num_unset_model() << endl;
 
     //clause has been added with "lit, ~lit" so var must be set
     for(size_t i = 0; i < solver->undef_must_set_vars.size(); i++) {
