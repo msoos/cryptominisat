@@ -185,11 +185,18 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 size_t SolutionExtender::count_num_unset_model() const
 {
     size_t num_unset = 0;
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        if (solver->model_value(i) == l_Undef
-            && solver->varData[i].removed == Removed::none
-        ) {
-            num_unset++;
+    if (solver->conf.independent_vars) {
+        for(size_t i = 0; i < solver->conf.independent_vars->size(); i++) {
+            uint32_t var = (*solver->conf.independent_vars)[i];
+            if (solver->model_value(var) == l_Undef) {
+                num_unset++;
+            }
+        }
+    } else {
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            if (solver->model_value(i) == l_Undef) {
+                num_unset++;
+            }
         }
     }
     return num_unset;
