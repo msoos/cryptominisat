@@ -178,7 +178,6 @@ void BVA::remove_duplicates_from_m_cls()
                     // This should never be here
                     assert(false);
                     exit(-1);
-                    break;
                 }
             }
 
@@ -433,7 +432,6 @@ void BVA::fill_m_cls_lits_and_red()
                 // This should never be here
                 assert(false);
                 exit(-1);
-                break;
             }
         }
         m_cls_lits.push_back(m_cls_lits_and_red(tmp, red));
@@ -574,7 +572,6 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             // This should never be here
             assert(false);
             exit(-1);
-            break;
         }
     }
     touched.touch(lits);
