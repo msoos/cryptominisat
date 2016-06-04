@@ -210,10 +210,14 @@ public:
         return nVarsOuter() - num_bva_vars;
     }
 
-    template<class T>
-    Lit map_to_with_bva(const T lit) const
+    Lit map_to_with_bva(const Lit lit) const
     {
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
+    }
+
+    uint32_t map_to_with_bva(const uint32_t var) const
+    {
+        return outer_to_with_bva_map.at(var);
     }
 
     size_t nVars() const
