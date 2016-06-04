@@ -3572,7 +3572,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
     undef->trail_lim_vars = &trail_lim_vars;
     undef->can_be_unsetSum = 0;
     undef->num_fixed = 0;
-    undef->verbose = false;
+    undef->verbose = conf.verbosity > 15;
 
     undef->dontLookAtClause.clear();
     undef->dontLookAtClause.resize(longIrredCls.size(), false);
