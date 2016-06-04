@@ -84,7 +84,7 @@ private:
     uint32_t pivotUniGen = 27;
     uint32_t tApproxMC = 17;
     uint32_t searchMode = 1;
-    int      loopTimeout = 2500;
+    double   loopTimeout = 2500;
     int      unset_vars = 0;
     std::ofstream cusp_logf;
     std::mt19937 randomEngine;

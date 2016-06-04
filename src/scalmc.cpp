@@ -60,13 +60,6 @@ using boost::lexical_cast;
 using std::list;
 using std::map;
 
-TimerStruct t;
-void SIGALARM_handler(int /*sig*/, siginfo_t* /*si*/, void* /*uc*/)
-{
-    SATSolver* solver = solverToInterrupt;
-    solver->interrupt_asap();
-}
-
 string binary(unsigned x, uint32_t length)
 {
     uint32_t logSize = (x == 0 ? 1 : log2(x) + 1);
@@ -211,12 +204,13 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     vector<Lit> new_assumps(assumps);
     new_assumps.push_back(Lit(act_var, true));
 
-    signal(SIGINT, SIGINT_handler);
-    start_timer(loopTimeout, &t);
+    double start_time = cpuTime();
     uint64_t solutions = 0;
     lbool ret;
     while (solutions < maxSolutions) {
         //solver->set_max_confl(10*1000*1000);
+        double this_iter_timeout = loopTimeout-(cpuTime()-start_time);
+        solver->set_timeout_all_calls(this_iter_timeout);
         ret = solver->solve(&new_assumps);
         if (ret != l_True)
             break;
@@ -363,8 +357,6 @@ int CUSP::solve()
     }
     printVersionInfo();
     parseInAllFiles(solver);
-
-    set_up_timer(&t, SIGALARM_handler);
 
     if (startIteration > independent_vars.size()) {
         cout << "ERROR: Manually-specified startIteration"
