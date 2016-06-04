@@ -3243,21 +3243,21 @@ void Searcher::read_long_cls(
         {
             tmp_cl.push_back(f.get_lit());
         }
-        ClauseStats stats;
+        ClauseStats cl_stats;
         if (red) {
-            f.get_struct(stats);
+            f.get_struct(cl_stats);
         }
 
         Clause* cl = cl_alloc.Clause_new(tmp_cl
         #ifdef STATS_NEEDED
-        , stats.introduced_at_conflict
-        , stats.ID
+        , cl_stats.introduced_at_conflict
+        , cl_stats.ID
         #endif
         );
         if (red) {
-            cl->makeRed(stats.glue);
+            cl->makeRed(cl_stats.glue);
         }
-        cl->stats = stats;
+        cl->stats = cl_stats;
         attachClause(*cl);
         const ClOffset offs = cl_alloc.get_offset(cl);
         if (red) {
