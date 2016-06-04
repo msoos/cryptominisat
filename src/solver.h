@@ -265,11 +265,10 @@ class Solver : public Searcher
         lbool simplify_problem_outside();
         void move_to_outside_assumps(const vector<Lit>* assumps);
         vector<Lit> back_number_from_outside_to_outer_tmp;
-        template<class T>
-        void back_number_from_outside_to_outer(const vector<T>& lits)
+        void back_number_from_outside_to_outer(const vector<Lit>& lits)
         {
             back_number_from_outside_to_outer_tmp.clear();
-            for (const T& lit: lits) {
+            for (const Lit lit: lits) {
                 assert(lit.var() < nVarsOutside());
                 back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
                 assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());

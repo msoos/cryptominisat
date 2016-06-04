@@ -3672,10 +3672,14 @@ void Solver::undef_fill_potentials()
                 << endl;
                 std::exit(-1);
             }
-            v = map_inter_to_outer(v);
-            undef->can_be_unset[v]++;
-            if (undef->can_be_unset[v] == 2) {
-                undef->can_be_unsetSum++;
+
+            v = map_to_with_bva(v);
+            v = map_outer_to_inter(v);
+            if (v < nVars()) {
+                undef->can_be_unset[v]++;
+                if (undef->can_be_unset[v] == 2) {
+                    undef->can_be_unsetSum++;
+                }
             }
         }
     }
