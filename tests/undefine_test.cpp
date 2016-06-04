@@ -56,7 +56,7 @@ TEST_F(undef, replace)
     EXPECT_EQ(ret, l_True);
 
     uint32_t num_undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(num_undef, 0);
+    EXPECT_EQ(num_undef, 0u);
 }
 
 TEST_F(undef, simple_1)
@@ -67,7 +67,7 @@ TEST_F(undef, simple_1)
     EXPECT_EQ(ret, l_True);
 
     uint32_t num_undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(num_undef, 1);
+    EXPECT_EQ(num_undef, 1u);
 }
 
 TEST_F(undef, simple_2)
@@ -78,7 +78,7 @@ TEST_F(undef, simple_2)
     EXPECT_EQ(ret, l_True);
 
     uint32_t num_undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(num_undef, 2);
+    EXPECT_EQ(num_undef, 2u);
 }
 
 TEST_F(undef, simple_2_mult)
@@ -89,7 +89,7 @@ TEST_F(undef, simple_2_mult)
         lbool ret = s->solve_with_assumptions();
         EXPECT_EQ(ret, l_True);
         uint32_t num_undef = count_num_undef_in_solution(s);
-        EXPECT_EQ(num_undef, 2);
+        EXPECT_EQ(num_undef, 2u);
     }
 }
 
@@ -104,7 +104,7 @@ TEST_F(undef, simple_2_mult_novarelim)
         lbool ret = s->solve_with_assumptions();
         EXPECT_EQ(ret, l_True);
         uint32_t num_undef = count_num_undef_in_solution(s);
-        EXPECT_EQ(num_undef, 2);
+        EXPECT_EQ(num_undef, 2u);
     }
 }
 
@@ -121,7 +121,7 @@ TEST_F(undef, simple_2_ind_no)
     EXPECT_EQ(ret, l_True);
 
     uint32_t num_undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(num_undef, 0);
+    EXPECT_EQ(num_undef, 0u);
     delete s->conf.independent_vars;
 }
 
