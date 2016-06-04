@@ -175,7 +175,6 @@ void CompFinder::add_clauses_to_component(const vector<ClOffset>& cs)
 void CompFinder::addToCompImplicits()
 {
     vector<Lit> lits;
-    vector<uint16_t>& seen = solver->seen;
 
     for (size_t var = 0; var < solver->nVars(); var++) {
         if (bogoprops_remain <= 0) {

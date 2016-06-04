@@ -170,7 +170,7 @@ public:
         }
         heap.clear();
 
-        for (int i = 0; i < ns.size(); i++) {
+        for (uint32_t i = 0; i < ns.size(); i++) {
             indices[ns[i]] = i;
             heap.push(ns[i]);
         }
