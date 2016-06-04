@@ -67,7 +67,7 @@ TEST_F(assump_interf, single_false)
     assumps.push_back(Lit(0, true));
     lbool ret = s->solve(&assumps);
     EXPECT_EQ( ret, l_False);
-    EXPECT_EQ( s->get_conflict().size(), 1);
+    EXPECT_EQ( s->get_conflict().size(), 1u);
     EXPECT_EQ( s->get_conflict()[0], Lit(0, false));
 }
 
@@ -108,7 +108,7 @@ TEST_F(assump_interf, binclause_false)
     assumps.push_back(Lit(1, true));
     lbool ret = s->solve(&assumps);
     EXPECT_EQ( ret, l_False);
-    EXPECT_EQ( s->get_conflict().size(), 2);
+    EXPECT_EQ( s->get_conflict().size(), 2u);
 
     vector<Lit> tmp = s->get_conflict();
     std::sort(tmp.begin(), tmp.end());
@@ -146,7 +146,7 @@ TEST_F(assump_interf, replace_false)
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s->okay(), true);
 
-    EXPECT_EQ( s->get_conflict().size(), 2);
+    EXPECT_EQ( s->get_conflict().size(), 2u);
 
     vector<Lit> tmp = s->get_conflict();
     std::sort(tmp.begin(), tmp.end());
@@ -169,7 +169,7 @@ TEST_F(assump_interf, set_var_by_prop)
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s->okay(), true);
 
-    EXPECT_EQ( s->get_conflict().size(), 1);
+    EXPECT_EQ( s->get_conflict().size(), 1u);
 
     vector<Lit> tmp = s->get_conflict();
     EXPECT_EQ( tmp[0], Lit(1, false) );
@@ -186,7 +186,7 @@ TEST_F(assump_interf, only_assump)
     lbool ret = s->solve(&assumps);
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s->okay(), true);
-    EXPECT_EQ( s->get_conflict().size(), 2);
+    EXPECT_EQ( s->get_conflict().size(), 2u);
 
     vector<Lit> tmp = s->get_conflict();
     std::sort(tmp.begin(), tmp.end());
