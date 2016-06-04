@@ -408,13 +408,13 @@ int main(int argc, char** argv)
               << "*** cmake -DUSE_GAUSS=ON (.. or .)  ***" << endl
               << "Refusing to run. Please reconfigure and then re-compile." << endl;
     exit(-1);
-    #endif
+    #else
 
     CUSP main(argc, argv);
     main.conf.verbStats = 1;
     main.parseCommandLine();
-
     return main.solve();
+    #endif
 }
 
 void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
