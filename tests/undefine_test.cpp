@@ -36,6 +36,7 @@ struct undef : public ::testing::Test {
         conf.doCache = false;
         s = new Solver(&conf, &must_inter);
         s->conf.greedy_undef = true;
+        s->conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
     }
     ~undef()
     {
@@ -54,8 +55,8 @@ TEST_F(undef, replace)
     lbool ret = s->solve_with_assumptions();
     EXPECT_EQ(ret, l_True);
 
-    uint32_t undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(undef, 0);
+    uint32_t num_undef = count_num_undef_in_solution(s);
+    EXPECT_EQ(num_undef, 0);
 }
 
 TEST_F(undef, simple_1)
@@ -65,8 +66,8 @@ TEST_F(undef, simple_1)
     lbool ret = s->solve_with_assumptions();
     EXPECT_EQ(ret, l_True);
 
-    uint32_t undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(undef, 1);
+    uint32_t num_undef = count_num_undef_in_solution(s);
+    EXPECT_EQ(num_undef, 1);
 }
 
 TEST_F(undef, simple_2)
@@ -76,8 +77,8 @@ TEST_F(undef, simple_2)
     lbool ret = s->solve_with_assumptions();
     EXPECT_EQ(ret, l_True);
 
-    uint32_t undef = count_num_undef_in_solution(s);
-    EXPECT_EQ(undef, 2);
+    uint32_t num_undef = count_num_undef_in_solution(s);
+    EXPECT_EQ(num_undef, 2);
 }
 
 TEST_F(undef, simple_2_mult)
@@ -87,8 +88,23 @@ TEST_F(undef, simple_2_mult)
     for(size_t i = 0; i < 20; i++) {
         lbool ret = s->solve_with_assumptions();
         EXPECT_EQ(ret, l_True);
-        uint32_t undef = count_num_undef_in_solution(s);
-        EXPECT_EQ(undef, 2);
+        uint32_t num_undef = count_num_undef_in_solution(s);
+        EXPECT_EQ(num_undef, 2);
+    }
+}
+
+TEST_F(undef, simple_2_mult_novarelim)
+{
+    s->conf.verbosity = 0;
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("-1, -2, -3"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->conf.perform_occur_based_simp = 0;
+    for(size_t i = 0; i < 20; i++) {
+        lbool ret = s->solve_with_assumptions();
+        EXPECT_EQ(ret, l_True);
+        uint32_t num_undef = count_num_undef_in_solution(s);
+        EXPECT_EQ(num_undef, 2);
     }
 }
 
