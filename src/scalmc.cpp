@@ -374,7 +374,6 @@ int CUSP::solve()
     } else {
         finished = ScalApproxMC(solCount);
     }
-    double elapsedTime = cpuTimeTotal() - startTime;
     if (!finished) {
         cout << " (TIMED OUT)" << endl;
         return 0;
