@@ -47,6 +47,7 @@ class SolutionExtender
         Solver* solver;
         OccSimplifier* simplifier;
 
+        size_t count_num_unset_model() const;
         bool satisfied(const vector<Lit>& lits) const;
         bool contains_lit(
             const vector<Lit>& lits

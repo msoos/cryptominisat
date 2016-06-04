@@ -2342,7 +2342,8 @@ void Searcher::finish_up_solve(const lbool status)
                 }
             }
             cancelUntil(0);
-            uint32_t unset = solver->undefine(trail_lim_vars);
+            const uint32_t unset = solver->undefine(trail_lim_vars);
+
             if (conf.verbosity) {
                 cout << "c [undef] Freed up " << unset << " var(s)"
                 << conf.print_times(cpuTime()-myTime)
