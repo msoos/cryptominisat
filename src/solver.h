@@ -233,7 +233,6 @@ class Solver : public Searcher
             , string sqlDatabase);
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
-        size_t count_num_unset_model() const;
 
         //if set to TRUE, a clause has been removed during add_clause_int
         //that contained "lit, ~lit". So "lit" must be set to a value

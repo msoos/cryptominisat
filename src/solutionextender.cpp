@@ -175,3 +175,15 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     assert(satisfied(lits));
 }
 
+size_t SolutionExtender::count_num_unset_model() const
+{
+    size_t num_unset = 0;
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        if (solver->model_value(i) == l_Undef
+            && solver->varData[i].removed == Removed::none
+        ) {
+            num_unset++;
+        }
+    }
+    return num_unset;
+}

@@ -3814,16 +3814,3 @@ bool Solver::undef_check_must_fix()
     //There is hope
     return undef->must_fix;
 }
-
-size_t Solver::count_num_unset_model() const
-{
-    size_t num_unset = 0;
-    for(size_t i = 0; i < solver->nVars(); i++) {
-        if (solver->model_value(map_inter_to_outer(i)) == l_Undef
-            && varData[i].removed == Removed::none
-        ) {
-            num_unset++;
-        }
-    }
-    return num_unset;
-}
