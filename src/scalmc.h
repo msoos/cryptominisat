@@ -27,6 +27,7 @@
 
 #include "main.h"
 #include <fstream>
+#include <random>
 #include <map>
 struct SATCount {
     void clear()
