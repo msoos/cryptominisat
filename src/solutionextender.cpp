@@ -116,23 +116,28 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     assert(contains_lit(lits, blockedOn));
     if (satisfied(lits)) {
         return;
-    } else if (solver->conf.greedy_undef) {
-        //Try to extend the model to full_model, see if that helps
-        for(Lit l: lits) {
-            if (solver->model_value(l) == l_Undef
-                && solver->full_model_value(l) == l_True
-            ) {
-                solver->model[l.var()] = solver->full_model[l.var()];
-                solver->varReplacer->extend_model(l.var());
-                return;
-            }
-        }
+    } else {
+        //Note: we need to do this even if solver->conf.greedy_undef is FALSE
+        //because the solution we are given (when used as a preprocessor)
+        //may not be full
 
         //Try to extend through setting variables that have been blocked but
         //were not required to be set until now
         for(Lit l: lits) {
             if (solver->model_value(l) == l_Undef
                 && var_has_been_blocked[l.var()]
+            ) {
+                solver->model[l.var()] = l.sign() ? l_False : l_True;
+                solver->varReplacer->extend_model(l.var());
+                return;
+            }
+        }
+
+        //Try to set var that hasn't been set
+        for(Lit l: lits) {
+            uint32_t v_inter = solver->map_outer_to_inter(l.var());
+            if (solver->model_value(l) == l_Undef
+                && solver->varData[v_inter].removed == Removed::none
             ) {
                 solver->model[l.var()] = l.sign() ? l_False : l_True;
                 solver->varReplacer->extend_model(l.var());
@@ -160,7 +165,9 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
         << endl;
 
         for(Lit l: lits) {
+            uint32_t v_inter = solver->map_outer_to_inter(l.var());
             cout << "Value of " << l << " : " << solver-> model_value(l)
+            << " removed: " << removed_type_to_string(solver->varData[v_inter].removed)
             << endl;
         }
     }
