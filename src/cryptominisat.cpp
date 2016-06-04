@@ -79,6 +79,7 @@ namespace CMSat {
         bool okay = true;
         std::ofstream* log = NULL;
         int sql = 0;
+        double timeout = std::numeric_limits<double>::max();
     };
 }
 
@@ -459,6 +460,11 @@ DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
   }
 }
 
+DLL_PUBLIC void SATSolver::set_timeout_all_calls(double timeout)
+{
+    data->timeout = timeout;
+}
+
 DLL_PUBLIC bool SATSolver::add_clause(const vector< Lit >& lits)
 {
     if (data->log) {
@@ -588,6 +594,14 @@ lbool calc(const vector< Lit >* assumptions, bool solve, CMSatPrivateData *data)
 {
     //Reset the interrupt signal if it was set
     data->must_interrupt->store(false, std::memory_order_relaxed);
+
+    //Set timeout information
+    if (data->timeout != std::numeric_limits<double>::max()) {
+        for (size_t i = 0; i < data->solvers.size(); ++i) {
+            Solver& s = *data->solvers[i];
+            s.conf.maxTime = cpuTime() + data->timeout;
+        }
+    }
 
     if (data->log) {
         (*data->log) << "c Solver::"

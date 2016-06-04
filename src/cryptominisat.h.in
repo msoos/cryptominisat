@@ -77,6 +77,7 @@ namespace CMSat {
         void set_no_bva();
         void set_greedy_undef();
         void set_independent_vars(std::vector<uint32_t>* ind_vars);
+        void set_timeout_all_calls(double secs);
 
         //Get info
         static const char* get_version();
