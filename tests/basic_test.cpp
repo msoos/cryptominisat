@@ -201,7 +201,7 @@ TEST(xor_interface, xor_check_sat_solution)
         ret = s.solve();
         EXPECT_EQ( ret, l_False);
     }
-    EXPECT_EQ( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1u);
 }
 
 TEST(xor_interface, xor_check_unsat_solution)
@@ -217,7 +217,7 @@ TEST(xor_interface, xor_check_unsat_solution)
         EXPECT_EQ( ret, l_True);
         EXPECT_EQ( s.okay(), true);
     }
-    EXPECT_EQ( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1u);
 }
 
 TEST(xor_interface, xor_check_solution_values)
@@ -233,7 +233,7 @@ TEST(xor_interface, xor_check_solution_values)
         EXPECT_EQ( ret, l_True);
         EXPECT_EQ( s.okay(), true);
     }
-    EXPECT_EQ( s.nVars(), 1);
+    EXPECT_EQ( s.nVars(), 1u);
 }
 
 TEST(xor_interface, xor_check_solution_values2)
@@ -251,7 +251,7 @@ TEST(xor_interface, xor_check_solution_values2)
         EXPECT_EQ(s.get_model()[0], l_True);
         EXPECT_EQ(s.get_model()[1], l_True);
     }
-    EXPECT_EQ( s.nVars(), 2);
+    EXPECT_EQ( s.nVars(), 2u);
 }
 
 TEST(xor_interface, xor_check_solution_values3)
@@ -272,7 +272,7 @@ TEST(xor_interface, xor_check_solution_values4)
     s.add_xor_clause(vector<uint32_t>{0U, 0U}, false);
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
-    EXPECT_EQ( s.nVars(), 2);
+    EXPECT_EQ( s.nVars(), 2u);
 }
 
 
@@ -288,7 +288,7 @@ TEST(xor_interface, xor_check_solution_values5)
     EXPECT_EQ( s.okay(), true);
     EXPECT_EQ(s.get_model()[0], l_True);
     EXPECT_EQ(s.get_model()[1], l_False);
-    EXPECT_EQ( s.nVars(), 2);
+    EXPECT_EQ( s.nVars(), 2u);
 }
 
 TEST(xor_interface, xor_check_solution_values6)
@@ -302,7 +302,7 @@ TEST(xor_interface, xor_check_solution_values6)
     EXPECT_EQ( ret, l_True);
     EXPECT_EQ(s.get_model()[0], l_False);
     EXPECT_EQ(s.get_model()[1], l_False);
-    EXPECT_EQ( s.nVars(), 2);
+    EXPECT_EQ( s.nVars(), 2u);
 }
 
 TEST(xor_interface, xor_check_solution_values7)
@@ -318,7 +318,7 @@ TEST(xor_interface, xor_check_solution_values7)
     EXPECT_EQ(s.get_model()[0], l_True);
     EXPECT_EQ(s.get_model()[1], l_True);
     EXPECT_EQ(s.get_model()[2], l_False);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_3_long)
@@ -335,7 +335,7 @@ TEST(xor_interface, xor_3_long)
     EXPECT_EQ(s.get_model()[0], l_True);
     EXPECT_EQ(s.get_model()[1], l_True);
     EXPECT_EQ(s.get_model()[2], l_True);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_3_long2)
@@ -352,7 +352,7 @@ TEST(xor_interface, xor_3_long2)
     EXPECT_EQ(s.get_model()[0], l_True);
     EXPECT_EQ(s.get_model()[1], l_True);
     EXPECT_EQ(s.get_model()[2], l_False);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_4_long)
@@ -372,7 +372,7 @@ TEST(xor_interface, xor_4_long)
     EXPECT_EQ(s.get_model()[1], l_False);
     EXPECT_EQ(s.get_model()[2], l_False);
     EXPECT_EQ(s.get_model()[3], l_False);
-    EXPECT_EQ( s.nVars(), 4);
+    EXPECT_EQ( s.nVars(), 4u);
 }
 
 TEST(xor_interface, xor_4_long2)
@@ -392,7 +392,7 @@ TEST(xor_interface, xor_4_long2)
     EXPECT_EQ(s.get_model()[1], l_False);
     EXPECT_EQ(s.get_model()[2], l_True);
     EXPECT_EQ(s.get_model()[3], l_False);
-    EXPECT_EQ( s.nVars(), 4);
+    EXPECT_EQ( s.nVars(), 4u);
 }
 
 TEST(xor_interface, xor_very_long)
@@ -412,7 +412,7 @@ TEST(xor_interface, xor_very_long)
     for(unsigned i = 0; i < 30; i++) {
         EXPECT_EQ(s.get_model()[i], l_False);
     }
-    EXPECT_EQ( s.nVars(), 30);
+    EXPECT_EQ( s.nVars(), 30u);
 }
 
 TEST(xor_interface, xor_very_long2)
@@ -446,7 +446,7 @@ TEST(xor_interface, xor_check_unsat)
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_check_unsat_multi_thread)
@@ -459,7 +459,7 @@ TEST(xor_interface, xor_check_unsat_multi_thread)
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_check_unsat_multi_solve_multi_thread)
@@ -471,7 +471,7 @@ TEST(xor_interface, xor_check_unsat_multi_solve_multi_thread)
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, true);
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 
     s.add_xor_clause(vector<uint32_t>{0U}, false);
     ret = s.solve();
@@ -479,12 +479,12 @@ TEST(xor_interface, xor_check_unsat_multi_solve_multi_thread)
     EXPECT_EQ( s.get_model()[0], l_False);
     EXPECT_EQ( s.get_model()[1], l_False);
     EXPECT_EQ( s.get_model()[2], l_True);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 
     s.add_xor_clause(vector<uint32_t>{1U}, true);
     ret = s.solve();
     EXPECT_EQ( ret, l_False);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, xor_norm_mix_unsat_multi_thread)
@@ -498,7 +498,7 @@ TEST(xor_interface, xor_norm_mix_unsat_multi_thread)
     s.add_clause(vector<Lit>{Lit(2, false)});
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
-    EXPECT_EQ( s.nVars(), 3);
+    EXPECT_EQ( s.nVars(), 3u);
 }
 
 TEST(xor_interface, unit)
@@ -510,7 +510,7 @@ TEST(xor_interface, unit)
     EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    EXPECT_EQ( units.size(), 1);
+    EXPECT_EQ( units.size(), 1u);
     EXPECT_EQ( units[0], Lit(0, false));
 }
 
@@ -523,7 +523,7 @@ TEST(xor_interface, unit2)
     EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    EXPECT_EQ( units.size(), 1);
+    EXPECT_EQ( units.size(), 1u);
     EXPECT_EQ( units[0], Lit(0, false));
 
     s.add_clause(vector<Lit>{Lit(1, true)});
@@ -531,7 +531,7 @@ TEST(xor_interface, unit2)
     EXPECT_EQ( ret, l_True);
 
     units = s.get_zero_assigned_lits();
-    EXPECT_EQ( units.size(), 2);
+    EXPECT_EQ( units.size(), 2u);
     EXPECT_EQ( units[0], Lit(0, false));
     EXPECT_EQ( units[1], Lit(1, true));
 }
@@ -546,7 +546,7 @@ TEST(xor_interface, unit3)
     EXPECT_EQ( ret, l_True);
 
     vector<Lit> units = s.get_zero_assigned_lits();
-    EXPECT_EQ( units.size(), 2);
+    EXPECT_EQ( units.size(), 2u);
     EXPECT_EQ( units[0], Lit(0, false));
     EXPECT_EQ( units[1], Lit(1, true));
 }
@@ -564,7 +564,7 @@ TEST(xor_interface, xor1)
     EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    EXPECT_EQ( pairs.size(), 1);
+    EXPECT_EQ( pairs.size(), 1u);
 }
 
 TEST(xor_interface, xor2)
@@ -581,7 +581,7 @@ TEST(xor_interface, xor2)
     EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    EXPECT_EQ( pairs.size(), 2);
+    EXPECT_EQ( pairs.size(), 2u);
 }
 
 TEST(xor_interface, abort_early)
@@ -617,13 +617,13 @@ TEST(xor_interface, xor3)
     EXPECT_EQ( ret, l_True);
 
     vector<std::pair<Lit, Lit> > pairs = s.get_all_binary_xors();
-    EXPECT_EQ( pairs.size(), 1);
+    EXPECT_EQ( pairs.size(), 1u);
 
     s.add_xor_clause(vector<uint32_t>{1, 2}, false);
     ret = s.solve();
     EXPECT_EQ( ret, l_True);
     pairs = s.get_all_binary_xors();
-    EXPECT_EQ( pairs.size(), 2);
+    EXPECT_EQ( pairs.size(), 2u);
 }
 
 
