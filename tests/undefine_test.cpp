@@ -108,6 +108,40 @@ TEST_F(undef, simple_2_mult_novarelim)
     }
 }
 
+TEST_F(undef, simple_2_ind_no)
+{
+    s->conf.verbosity = 0;
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("-1, -2, -3"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->conf.independent_vars = new std::vector<uint32_t>();
+    s->conf.perform_occur_based_simp = 0;
+
+    lbool ret = s->solve_with_assumptions();
+    EXPECT_EQ(ret, l_True);
+
+    uint32_t num_undef = count_num_undef_in_solution(s);
+    EXPECT_EQ(num_undef, 0);
+    delete s->conf.independent_vars;
+}
+
+TEST_F(undef, simple_2_ind_1)
+{
+    s->conf.verbosity = 0;
+    s->new_vars(3);
+    s->add_clause_outer(str_to_cl("-1, -2, -3"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->conf.independent_vars = new std::vector<uint32_t>();
+    s->conf.perform_occur_based_simp = 0;
+    s->conf.independent_vars->push_back(1); //i.e. var 2
+
+    lbool ret = s->solve_with_assumptions();
+    EXPECT_EQ(ret, l_True);
+
+    EXPECT_EQ(s->model_value(1), l_Undef);
+    delete s->conf.independent_vars;
+}
+
 //TODO add test for multiple solve() calls
 //TODO add test for varelim->solve->varelim->solve etc. calls
 
