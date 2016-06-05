@@ -132,6 +132,13 @@ class Searcher : public HyperEngine
             return cla_inc;
         }
 
+        //Needed for tests around renumbering
+        void rebuildOrderHeap();
+        void clear_order_heap()
+        {
+            order_heap_glue.clear();
+        }
+
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
         void new_vars(const size_t n) override;
@@ -305,11 +312,6 @@ class Searcher : public HyperEngine
 
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
-        void rebuildOrderHeap();
-        void clear_order_heap()
-        {
-            order_heap_glue.clear();
-        }
 
     private:
         //////////////
