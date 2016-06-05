@@ -29,14 +29,12 @@ build:
 before_build:
   - echo Running cmake...
   - cd c:\projects\cryptominisat
-  - mkdir build
-  - cd build
-  - cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_INSTALL_PREFIX=%P% ..
+  - cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_INSTALL_PREFIX=%P%
 
 # scripts to run after build
 after_build:
   - cd %P%
-  - 7z a c:\projects\cryptominisat\build\cryptominisat.zip * -tzip
+  - 7z a c:\projects\cryptominisat\cryptominisat.zip * -tzip
   - cd c:\projects\cryptominisat
 
 artifacts:
