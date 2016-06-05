@@ -43,12 +43,10 @@ struct gauss : public ::testing::Test {
     }
     ~gauss()
     {
-        delete g;
         delete s;
     }
 
     Solver* s;
-    Gaussian* g = NULL;
     MatrixFinder* mf = NULL;
     std::vector<uint32_t> vars;
     std::atomic<bool> must_inter;
