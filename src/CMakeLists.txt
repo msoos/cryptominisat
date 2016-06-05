@@ -108,6 +108,13 @@ else()
         cryptominisat.cpp
     )
 endif()
+GENERATE_EXPORT_HEADER(libcryptominisat4
+         BASE_NAME libcryptominisat4
+         #EXPORT_MACRO_NAME libcryptominisat4_EXPORT
+         #EXPORT_FILE_NAME MyLibrary_Export.h
+         #STATIC_DEFINE MyLibrary_BUILT_AS_STATIC
+)
+
 add_dependencies(libcryptominisat4
     tablestruct
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
