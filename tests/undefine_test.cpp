@@ -142,6 +142,58 @@ TEST_F(undef, simple_2_ind_1)
     delete s->conf.independent_vars;
 }
 
+TEST_F(undef, simple_2_ind_renumber)
+{
+    s->conf.verbosity = 0;
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("-4, -2, -3"));
+    s->add_clause_outer(str_to_cl("-4, -3"));
+    s->add_clause_outer(str_to_cl("-1"));
+    s->conf.independent_vars = new std::vector<uint32_t>();
+    s->conf.perform_occur_based_simp = 0;
+    s->conf.independent_vars->push_back(1); //i.e. var 2
+
+    //since '1' has been set but renumer NOT called
+    EXPECT_EQ(s->nVars(), 4);
+    s->renumber_variables();
+
+    lbool ret = s->solve_with_assumptions();
+    EXPECT_EQ(ret, l_True);
+
+    //since '1' has been set and renumber called
+    EXPECT_EQ(s->nVars(), 3);
+
+    EXPECT_EQ(s->model_value(1), l_Undef);
+    delete s->conf.independent_vars;
+}
+
+TEST_F(undef, simple_2_ind_renumber_empty_indep)
+{
+    s->conf.verbosity = 0;
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("-4, -2, -3"));
+    s->add_clause_outer(str_to_cl("-4, -3"));
+    s->add_clause_outer(str_to_cl("-1"));
+    s->conf.independent_vars = new std::vector<uint32_t>();
+    s->conf.perform_occur_based_simp = 0;
+
+    //since '1' has been set but renumer NOT called
+    EXPECT_EQ(s->nVars(), 4);
+    s->renumber_variables();
+
+    lbool ret = s->solve_with_assumptions();
+    EXPECT_EQ(ret, l_True);
+
+    //since '1' has been set and renumber called
+    EXPECT_EQ(s->nVars(), 3);
+
+    //Since indep vars is empty, all is set
+    for(size_t i = 0; i < 4; i++) {
+        EXPECT_NE(s->model_value(i), l_Undef);
+    }
+    delete s->conf.independent_vars;
+}
+
 //TODO add test for multiple solve() calls
 //TODO add test for varelim->solve->varelim->solve etc. calls
 
