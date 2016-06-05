@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
-DLL_PUBLIC SolverConf::SolverConf() :
+SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
         , var_decay_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
