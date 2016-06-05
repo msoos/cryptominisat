@@ -43,3 +43,6 @@ artifacts:
 deploy_script:
   #- cd c:\projects\cryptominisat
   #- curl -T cryptominisat.zip --user %ACCOUNT% https://someplace/
+
+on_finish:
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
