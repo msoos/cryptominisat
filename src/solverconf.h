@@ -128,7 +128,7 @@ inline std::string getNameOfElimStrategy(ElimStrategy strategy)
     assert(false && "Unknown elimination strategy type");
 }
 
-class SolverConf
+class DLL_PUBLIC SolverConf
 {
     public:
         SolverConf();
