@@ -40,10 +40,8 @@
 #endif //__GNUC__
 
 
-#if defined _WIN32 || defined __CYGWIN__
-    //#define DLL_PUBLIC __declspec(dllexport)
-    //#define DLL_LOCAL
-    #define DLL_PUBLIC
+#if defined _WIN32
+    #define DLL_PUBLIC __declspec(dllexport)
 #else
     #define DLL_PUBLIC __attribute__ ((visibility ("default")))
     #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
