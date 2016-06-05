@@ -46,4 +46,5 @@ deploy_script:
   #- curl -T cryptominisat.zip --user %ACCOUNT% https://someplace/
 
 on_finish:
-- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    # to connect over rdp after build finished
+    #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
