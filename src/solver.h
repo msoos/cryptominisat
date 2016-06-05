@@ -231,6 +231,8 @@ class Solver : public Searcher
             , string sqlUser
             , string sqlPass
             , string sqlDatabase);
+        //Not Private for testing (maybe could be called from outside)
+        void renumber_variables();
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 
@@ -296,7 +298,6 @@ class Solver : public Searcher
 
         /////////////////////////////
         //Renumberer
-        void renumber_variables();
         double calc_renumber_saving();
         void free_unused_watches();
         void save_on_var_memory(uint32_t newNumVars);
