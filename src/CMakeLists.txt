@@ -293,7 +293,6 @@ if (NOT ONLY_SIMPLE)
 
     target_link_libraries(scalmc
         ${cryptoms_exec_link_libs}
-        rt
     )
     install(TARGETS scalmc
         EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
