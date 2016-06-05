@@ -29,7 +29,7 @@ build:
 before_build:
   - echo Running cmake...
   - cd c:\projects\cryptominisat
-  - cmake -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON -DCMAKE_INSTALL_PREFIX=%P%
+  - cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON -DCMAKE_INSTALL_PREFIX=%P%
 
 # scripts to run after build
 after_build:
