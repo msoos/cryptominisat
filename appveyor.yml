@@ -3,6 +3,7 @@ branches:
   # whitelist
   only:
     - master
+    - appveyor_debug
 
 # Operating system (build VM template)
 os: Visual Studio 2015
