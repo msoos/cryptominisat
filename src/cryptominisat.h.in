@@ -35,7 +35,11 @@ THE SOFTWARE.
 
 namespace CMSat {
     struct CMSatPrivateData;
+    #ifdef _WIN32
+    class __declspec(dllexport) SATSolver
+    #else
     class SATSolver
+    #endif
     {
     public:
         SATSolver(void* config = NULL
