@@ -181,7 +181,9 @@ TEST_F(undef, simple_2_ind_renumber_empty_indep)
 
     //since '1' has been set but renumer NOT called
     EXPECT_EQ(s->nVars(), 4);
+    s->clear_order_heap();
     s->renumber_variables();
+    s->rebuildOrderHeap();
 
     lbool ret = s->solve_with_assumptions();
     EXPECT_EQ(ret, l_True);
