@@ -97,61 +97,24 @@ if (TBB_FOUND)
     set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
 endif()
 
-add_library(temp_lib_norm OBJECT
-    ${cryptoms_lib_files}
-    cryptominisat.cpp
-)
-
-add_library(temp_lib_ipasir OBJECT
-    ipasir.cpp
-)
-
-add_dependencies(temp_lib_norm
-    tablestruct
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-)
-add_dependencies(temp_lib_ipasir
+if (NOT STATICCOMPILE)
+    add_library(libcryptominisat4 SHARED
+        ${cryptoms_lib_files}
+        cryptominisat.cpp
+    )
+else()
+    add_library(libcryptominisat4 STATIC
+        ${cryptoms_lib_files}
+        cryptominisat.cpp
+    )
+endif()
+add_dependencies(libcryptominisat4
     tablestruct
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-list(APPEND cms_lib_objects_norm $<TARGET_OBJECTS:temp_lib_norm>)
-list(APPEND cms_lib_objects_ipasir $<TARGET_OBJECTS:temp_lib_ipasir>)
-
-if (ALSO_BUILD_STATIC_LIB)
-    add_library(libcryptominisat4_static STATIC ${cms_lib_objects_norm})
-    target_link_libraries(libcryptominisat4_static LINK_INTERFACE_LIBRARIES
-        ${cryptoms_lib_link_libs}
-    )
-    set_target_properties(libcryptominisat4_static PROPERTIES
-        OUTPUT_NAME cryptominisat4
-        PUBLIC_HEADER "${cryptominisat4_public_headers}"
-        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    )
-
-    add_library(libcryptominisat4_ipasir_static STATIC ${cms_lib_objects_ipasir})
-    target_link_libraries(libcryptominisat4_ipasir_static LINK_INTERFACE_LIBRARIES
-        ${cryptoms_lib_link_libs}
-        libcryptominisat4_static
-    )
-    set_target_properties(libcryptominisat4_ipasir_static PROPERTIES
-        OUTPUT_NAME ipasircryptominisat4
-        PUBLIC_HEADER "${cryptominisat4_public_headers}"
-        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    )
-endif()
-
-if (NOT STATICCOMPILE)
-    add_library(libcryptominisat4 SHARED ${cms_lib_objects_norm})
-else()
-    add_library(libcryptominisat4 STATIC ${cms_lib_objects_norm})
-endif()
 target_link_libraries(libcryptominisat4
     LINK_PUBLIC ${cryptoms_lib_link_libs}
 )
@@ -162,25 +125,28 @@ set_target_properties(libcryptominisat4 PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-if (NOT STATICCOMPILE)
-    add_library(ipasircryptominisat4 SHARED ${cms_lib_objects_ipasir})
+if (IPASIR)
+    if (NOT STATICCOMPILE)
+        add_library(ipasircryptominisat4 SHARED
+            ${cryptoms_lib_files}
+            ipasir.cpp
+        )
+    else()
+        add_library(ipasircryptominisat4 STATIC
+            ${cryptoms_lib_files}
+            ipasir.cpp
+        )
+    endif()
     target_link_libraries(ipasircryptominisat4
         LINK_PUBLIC ${cryptoms_lib_link_libs}
-        libcryptominisat4
     )
-else()
-    add_library(ipasircryptominisat4 STATIC ${cms_lib_objects_ipasir} ${cms_lib_objects_norm})
-    target_link_libraries(ipasircryptominisat4
-        PUBLIC ${cryptoms_lib_link_libs}
+    set_target_properties(ipasircryptominisat4 PROPERTIES
+        OUTPUT_NAME ipasircryptominisat4
+        PUBLIC_HEADER "${cryptominisat4_public_headers}"
+        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
 endif()
-
-set_target_properties(ipasircryptominisat4 PROPERTIES
-    OUTPUT_NAME ipasircryptominisat4
-    PUBLIC_HEADER "${cryptominisat4_public_headers}"
-    VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-)
 
 cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h )
 cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h )
@@ -213,15 +179,6 @@ install(TARGETS libcryptominisat4
     ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
 )
-if (ALSO_BUILD_STATIC_LIB)
-    install(TARGETS libcryptominisat4_static
-        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
-        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
-    )
-endif()
-
 
 if (NOT ONLY_SIMPLE)
     add_executable(cryptominisat4

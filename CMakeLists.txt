@@ -185,6 +185,7 @@ add_cxx_flag("-fPIC")
 # add_cxx_flag_if_supported("-flto") # slow compile and not enough benefits
 #add_cxx_flag_if_supported("-fno-exceptions")
 
+option(IPASIR "Also build IPASIR" OFF)
 
 option(COVERAGE "Build with coverage check" OFF)
 if (COVERAGE)
@@ -209,7 +210,6 @@ if(STATICCOMPILE AND (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     SET(BUILD_SHARED_LIBRARIES OFF)
     set(STP_STATIC_LIBRARY libstp) # Used for exporting target
-    unset(ALSO_BUILD_STATIC_LIB CACHE) # Hide this option for ccmake and cmake-gui users
 else()
     add_definitions(-DBOOST_TEST_DYN_LINK)
     MESSAGE(STATUS "Compiling for dynamic library use")
@@ -255,9 +255,6 @@ if (NOT ONLY_SIMPLE)
     set(boost_components ${boost_components} program_options)
     find_package( Boost 1.46 COMPONENTS ${boost_components})
 endif()
-
-option(ALSO_BUILD_STATIC_LIB "Also build the static library" OFF)
-
 
 find_package (Threads REQUIRED)
 
@@ -461,9 +458,6 @@ set(CRYPTOMINISAT4_STATIC_DEPS
 set(MY_TARGETS libcryptominisat4 cryptominisat4_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat4)
-endif()
-if (ALSO_BUILD_STATIC_LIB)
-    set(MY_TARGETS ${MY_TARGETS} libcryptominisat4_static)
 endif()
 export(TARGETS ${MY_TARGETS} FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
 
