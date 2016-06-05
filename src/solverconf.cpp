@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <sstream>
 using namespace CMSat;
 
-SolverConf::SolverConf() :
+DLL_PUBLIC SolverConf::SolverConf() :
         //Variable activities
         var_inc_start(1)
         , var_decay_start(0.8) // 1/0.8 = 1.2 -- large is better for frequent restarts
@@ -273,7 +273,7 @@ SolverConf::SolverConf() :
 }
 
 
-std::string SolverConf::print_times(
+DLL_PUBLIC std::string SolverConf::print_times(
     const double time_used
     , const bool time_out
     , const double time_remain
@@ -291,7 +291,7 @@ std::string SolverConf::print_times(
     return std::string();
 }
 
-std::string SolverConf::print_times(
+DLL_PUBLIC std::string SolverConf::print_times(
     const double time_used
     , const bool time_out
 ) const {
@@ -307,7 +307,7 @@ std::string SolverConf::print_times(
     return std::string();
 }
 
-std::string SolverConf::print_times(
+DLL_PUBLIC std::string SolverConf::print_times(
     const double time_used
 ) const {
     if (do_print_times) {
