@@ -47,9 +47,9 @@ class StreamBuffer
             size = C(buf.get(), 1, CHUNK_LIMIT, in);
         }
     }
-    std::unique_ptr<char[]> buf;
     int     pos;
     int     size;
+    std::unique_ptr<char[]> buf;
 
     void advance()
     {
