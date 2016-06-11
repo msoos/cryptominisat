@@ -761,7 +761,7 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     const lbool to_set = solver->model[var] ^ table[sub_var].sign();
     const uint32_t sub_var_inter = solver->map_outer_to_inter(sub_var);
     assert(solver->varData[sub_var_inter].removed == Removed::replaced);
-    assert(solver->model[sub_var] == l_Undef);
+    assert(solver->model_value(sub_var) == l_Undef);
 
     if (solver->conf.verbosity) {
         cout << "Varreplace-extend: setting outer " << sub_var+1
@@ -789,10 +789,6 @@ void VarReplacer::extend_model(const uint32_t var)
 
 void VarReplacer::extend_model_already_set()
 {
-    if (solver->conf.verbosity >= 6) {
-        cout << "c " << __func__ << " called" << endl;
-    }
-
     assert(solver->model.size() == solver->nVarsOuter());
     for (map<uint32_t, vector<uint32_t> >::const_iterator
         it = reverseTable.begin() , end = reverseTable.end()
