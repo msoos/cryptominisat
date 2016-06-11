@@ -1525,6 +1525,10 @@ void Searcher::dump_sql_clause_data(
 
 bool Searcher::check_and_insert_into_hash_learnt_cl()
 {
+    if (!conf.hash_relearn_check) {
+        return false;
+    }
+
     if (hits == NULL
         && solver->get_num_long_irred_cls() > 30000 //TODO: MAGIC CONSTANT
     ) {

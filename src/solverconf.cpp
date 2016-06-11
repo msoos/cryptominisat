@@ -48,6 +48,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , glue_must_keep_clause_if_below_or_eq(5)
         , adjust_glue_if_too_many_low(2.0)
         , guess_cl_effectiveness(1)
+        , hash_relearn_check(0)
 
         //Restarting
         , restart_first(100)
