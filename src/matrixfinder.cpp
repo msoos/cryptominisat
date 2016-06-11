@@ -175,13 +175,14 @@ bool MatrixFinder::findMatrixes()
 
 uint32_t MatrixFinder::setMatrixes()
 {
-    vector<pair<uint32_t, uint32_t> > numXorInMatrix;
-    for (uint32_t i = 0; i < matrix_no; i++)
-        numXorInMatrix.push_back(std::make_pair(i, 0));
-
-    vector<uint32_t> sumXorSizeInMatrix(matrix_no, 0);
-    vector<vector<uint32_t> > xorSizesInMatrix(matrix_no);
+    vector<MatrixShape> matrix_shape;
     vector<vector<Xor> > xorsInMatrix(matrix_no);
+
+    for (uint32_t i = 0; i < matrix_no; i++) {
+        matrix_shape.push_back(MatrixShape(i));
+        matrix_shape[i].num = i;
+        matrix_shape[i].cols = reverseTable[i].size();
+    }
 
     for (const Xor& x : solver->xorclauses) {
         //take 1st variable to check which matrix it's in.
@@ -189,37 +190,36 @@ uint32_t MatrixFinder::setMatrixes()
         assert(matrix < matrix_no);
 
         //for stats
-        numXorInMatrix[matrix].second++;
-        sumXorSizeInMatrix[matrix] += x.size();
-        xorSizesInMatrix[matrix].push_back(x.size());
+        matrix_shape[matrix].rows ++;
+        matrix_shape[matrix].sum_xor_sizes += x.size();
         xorsInMatrix[matrix].push_back(x);
     }
 
-    std::sort(numXorInMatrix.begin(), numXorInMatrix.end(), mysorter());
+    for(auto& m: matrix_shape) {
+        if (m.tot_size() > 0) {
+            m.density = (double)m.sum_xor_sizes / (double)(m.tot_size());
+        }
+    }
+
+    std::sort(matrix_shape.begin(), matrix_shape.end(), mysorter());
 
     uint32_t realMatrixNum = 0;
     for (int a = matrix_no-1; a >= 0; a--) {
-        uint32_t i = numXorInMatrix[a].first;
-        if (numXorInMatrix[a].second == 0) {
+        MatrixShape& m = matrix_shape[a];
+        uint32_t i = m.num;
+        if (m.rows == 0) {
             continue;
         }
 
-        if (numXorInMatrix[a].second < solver->conf.gaussconf.min_matrix_rows
-            || numXorInMatrix[a].second > solver->conf.gaussconf.max_matrix_rows
+        //cout << "small check" << endl;
+        if (m.rows < solver->conf.gaussconf.min_matrix_rows
+            || m.rows > solver->conf.gaussconf.max_matrix_rows
         ) {
             //cout << "Too small or too large:" << numXorInMatrix[a].second << endl;
             continue;
         }
 
-        const uint32_t totalSize = reverseTable[i].size()*numXorInMatrix[a].second;
-        const double density = (double)sumXorSizeInMatrix[i]/(double)totalSize*100.0;
-        double avg = (double)sumXorSizeInMatrix[i]/(double)numXorInMatrix[a].second;
-        double variance = 0.0;
-        for (uint32_t i2 = 0; i2 < xorSizesInMatrix[i].size(); i2++)
-            variance += std::pow((double)xorSizesInMatrix[i][i2]-avg, 2);
-        variance /= (double)xorSizesInMatrix.size();
-        const double stdDeviation = std::sqrt(variance);
-
+        double avg = (double)m.sum_xor_sizes/(double)m.rows;
         if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes)
         {
             if (solver->conf.verbosity) {
@@ -230,15 +230,18 @@ uint32_t MatrixFinder::setMatrixes()
             );
             realMatrixNum++;
         } else {
-            if (solver->conf.verbosity >=1) {
+            if (solver->conf.verbosity >= 2) {
                 cout << "c Unused Matrix ";
             }
         }
+
         if (solver->conf.verbosity) {
-            cout << std::setw(7) << numXorInMatrix[a].second << " x" << std::setw(5) << reverseTable[i].size();
-            cout << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << density << "%";
-            cout << "  xorlen avg:" << std::setw(5) << std::fixed << std::setprecision(2)  << avg;
-            cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation << endl;
+            cout << std::setw(7) << m.rows << " x"
+            << std::setw(5) << reverseTable[i].size()
+            << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << m.density << "%"
+            << "  xorlen avg: " << std::setw(5) << std::fixed << std::setprecision(2)  << avg
+            //cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation
+            << endl;
         }
     }
 

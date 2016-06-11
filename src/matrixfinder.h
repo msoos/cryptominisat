@@ -43,12 +43,32 @@ class MatrixFinder {
 
     private:
         uint32_t setMatrixes();
+        struct MatrixShape
+        {
+            MatrixShape(uint32_t matrix_num) :
+                num(matrix_num)
+            {}
+
+            MatrixShape()
+            {}
+
+            uint32_t num;
+            uint32_t rows = 0;
+            uint32_t cols = 0;
+            uint32_t sum_xor_sizes = 0;
+            double density = 0;
+
+            uint64_t tot_size() const
+            {
+                return rows*cols;
+            }
+        };
 
         struct mysorter
         {
-            bool operator () (const pair<uint32_t, uint32_t>& left, const pair<uint32_t, uint32_t>& right)
+            bool operator () (const MatrixShape& left, const MatrixShape& right)
             {
-                return left.second < right.second;
+                return left.sum_xor_sizes < right.sum_xor_sizes;
             }
         };
 
