@@ -1678,6 +1678,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learnt_clause();
 
 
+    //Add decision-based clause in case it's short
     decision_clause.clear();
     if (!update_bogoprops
         && learnt_clause.size() > 50 //TODO MAGIC parameter
@@ -1702,6 +1703,8 @@ bool Searcher::handle_conflict(const PropBy confl)
     cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
+
+    //Add decision-based clause
     if (!update_bogoprops
         && decision_clause.size() > 0
     ) {
