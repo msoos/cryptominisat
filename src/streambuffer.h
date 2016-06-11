@@ -20,7 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef STREAMBUFFER_H
 #define STREAMBUFFER_H
 
-#define CHUNK_LIMIT 1048576
+static const unsigned chunk_limit = 148576;
 
 #ifdef USE_ZLIB
 #include <zlib.h>
@@ -44,7 +44,7 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            size = C(buf.get(), 1, CHUNK_LIMIT, in);
+            size = C(buf.get(), 1, chunk_limit, in);
         }
     }
     int     pos;
@@ -65,7 +65,7 @@ public:
         in(i)
         , pos(0)
         , size(0)
-        , buf(new char[CHUNK_LIMIT]())
+        , buf(new char[chunk_limit]())
     {
         assureLookahead();
     }
