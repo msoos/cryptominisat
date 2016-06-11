@@ -788,7 +788,7 @@ void VarReplacer::extend_model(const uint32_t var)
     }
 }
 
-void VarReplacer::extend_model()
+void VarReplacer::extend_model_all(bool set_all)
 {
     if (solver->conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
@@ -800,8 +800,13 @@ void VarReplacer::extend_model()
         ; it != end
         ; ++it
     ) {
-        if (solver->model[it->first] == l_Undef)
-            continue;
+        if (solver->model_value(it->first) == l_Undef) {
+            if (!set_all) {
+                continue;
+            } else {
+                solver->model[it->first] = l_False;
+            }
+        }
 
         for(const uint32_t sub_var: it->second)
         {
