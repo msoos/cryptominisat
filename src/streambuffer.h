@@ -31,6 +31,7 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 #include <iomanip>
 #include <limits>
 #include <string>
+#include <memory>
 
 //A = gzFile, FILE
 //B = fread, gz_read
@@ -43,10 +44,10 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            size = C(buf, 1, sizeof(buf), in);
+            size = C(buf.get(), 1, CHUNK_LIMIT, in);
         }
     }
-    char    *buf;
+    std::unique_ptr<char[]> buf;
     int     pos;
     int     size;
 
@@ -60,14 +61,13 @@ class StreamBuffer
     }
 
 public:
-    StreamBuffer(A i) : in(i), pos(0), size(0) {
-        buf = new char[CHUNK_LIMIT];
-        assureLookahead();
-    }
-
-    ~StreamBuffer()
+    StreamBuffer(A i) :
+        in(i)
+        , pos(0)
+        , size(0)
+        , buf(new char[CHUNK_LIMIT]())
     {
-        delete[] buf;
+        assureLookahead();
     }
 
     int  operator *  () {
