@@ -62,6 +62,7 @@ class DimacsParser
         bool parse_solve_simp_comment(C& in, const bool solve);
         void write_solution_to_debuglib_file(const lbool ret) const;
         bool parseIndependentSet(C& in);
+        std::string get_debuglib_fname() const;
 
 
         SATSolver* solver;
@@ -219,6 +220,13 @@ bool DimacsParser<C>::printHeader(C& in)
 }
 
 template<class C>
+std::string DimacsParser<C>::get_debuglib_fname() const
+{
+    std::string sol_fname = debugLib + "-debugLibPart" + stringify(debugLibPart) +".output";
+    return sol_fname;
+}
+
+template<class C>
 bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
 {
     vector<Lit> assumps;
@@ -241,13 +249,15 @@ bool DimacsParser<C>::parse_solve_simp_comment(C& in, const bool solve)
         for(Lit lit: assumps) {
             cout << lit << " ";
         }
-        cout
-        << "<-----------"
-        << endl;
+        cout << "<-----------" << endl;
     }
 
     lbool ret;
     if (solve) {
+        if (verbosity) {
+            cout << "c Solution will be written to: "
+            << get_debuglib_fname() << endl;
+        }
         ret = solver->solve(&assumps);
         write_solution_to_debuglib_file(ret);
         debugLibPart++;
@@ -267,7 +277,7 @@ template<class C>
 void DimacsParser<C>::write_solution_to_debuglib_file(const lbool ret) const
 {
     //Open file for writing
-    std::string s = debugLib + "-debugLibPart" + stringify(debugLibPart) +".output";
+    std::string s = get_debuglib_fname();
     std::ofstream partFile;
     partFile.open(s.c_str());
     if (!partFile) {
