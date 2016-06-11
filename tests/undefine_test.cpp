@@ -154,7 +154,7 @@ TEST_F(undef, simple_2_ind_renumber)
     s->conf.independent_vars->push_back(1); //i.e. var 2
 
     //since '1' has been set but renumer NOT called
-    EXPECT_EQ(s->nVars(), 4);
+    EXPECT_EQ(s->nVars(), 4u);
     s->clear_order_heap();
     s->renumber_variables();
     s->rebuildOrderHeap();
@@ -163,7 +163,7 @@ TEST_F(undef, simple_2_ind_renumber)
     EXPECT_EQ(ret, l_True);
 
     //since '1' has been set and renumber called
-    EXPECT_EQ(s->nVars(), 3);
+    EXPECT_EQ(s->nVars(), 3u);
 
     EXPECT_EQ(s->model_value(1), l_Undef);
     delete s->conf.independent_vars;
@@ -180,7 +180,7 @@ TEST_F(undef, simple_2_ind_renumber_empty_indep)
     s->conf.perform_occur_based_simp = 0;
 
     //since '1' has been set but renumer NOT called
-    EXPECT_EQ(s->nVars(), 4);
+    EXPECT_EQ(s->nVars(), 4u);
     s->clear_order_heap();
     s->renumber_variables();
     s->rebuildOrderHeap();
@@ -189,7 +189,7 @@ TEST_F(undef, simple_2_ind_renumber_empty_indep)
     EXPECT_EQ(ret, l_True);
 
     //since '1' has been set and renumber called
-    EXPECT_EQ(s->nVars(), 3);
+    EXPECT_EQ(s->nVars(), 3u);
 
     //Since indep vars is empty, all is set
     for(size_t i = 0; i < 4; i++) {
