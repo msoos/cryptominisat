@@ -322,6 +322,11 @@ class Searcher : public HyperEngine
         MyStack<Lit> analyze_stack;
         uint32_t        abstractLevel(const uint32_t x) const;
 
+        //Cache for re-learnt clauses
+        bool check_and_insert_into_hash_learnt_cl();
+        uint32_t* hits = NULL;
+        vector<Lit> learnt_clause_sorted;
+
         //OTF subsumption during learning
         vector<ClOffset> otf_subsuming_long_cls;
         vector<OTFClause> otf_subsuming_short_cls;
