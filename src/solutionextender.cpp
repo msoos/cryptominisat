@@ -56,6 +56,15 @@ void SolutionExtender::extend()
             solver->model[i] = l_False;
         }
     }
+
+    for(size_t i = 0; i < solver->nVarsOuter(); i++) {
+        if (solver->varReplacer->var_is_replacing(i)
+            && solver->model_value(i) == l_Undef
+        ) {
+            solver->model[i] = l_False;
+            solver->varReplacer->extend_model(i);
+        }
+    }
 }
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const
