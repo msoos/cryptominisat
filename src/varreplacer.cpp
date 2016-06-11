@@ -24,7 +24,6 @@
 #include "solver.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
-#include "solutionextender.h"
 #include "clauseallocator.h"
 #include "sqlstats.h"
 #include "sccfinder.h"
