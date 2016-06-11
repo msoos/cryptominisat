@@ -771,6 +771,7 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
     solver->model[sub_var] = to_set;
 }
 
+//NOTE: 'var' is OUTER
 void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
