@@ -787,7 +787,7 @@ void VarReplacer::extend_model(const uint32_t var)
     }
 }
 
-void VarReplacer::extend_model_all(bool set_all)
+void VarReplacer::extend_model_already_set()
 {
     if (solver->conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
@@ -800,11 +800,7 @@ void VarReplacer::extend_model_all(bool set_all)
         ; ++it
     ) {
         if (solver->model_value(it->first) == l_Undef) {
-            if (!set_all) {
-                continue;
-            } else {
-                solver->model[it->first] = l_False;
-            }
+            continue;
         }
 
         for(const uint32_t sub_var: it->second)
@@ -812,9 +808,22 @@ void VarReplacer::extend_model_all(bool set_all)
             set_sub_var_during_solution_extension(it->first, sub_var);
         }
     }
+}
 
-    if (solver->conf.verbosity >= 6) {
-        cout << "c " << __func__ << " ended" << endl;
+void VarReplacer::extend_model_set_undef()
+{
+    assert(solver->model.size() == solver->nVarsOuter());
+    for (auto it = reverseTable.begin() , end = reverseTable.end()
+        ; it != end
+        ; ++it
+    ) {
+        if (solver->model_value(it->first) == l_Undef) {
+            solver->model[it->first] = l_False;
+            for(const uint32_t sub_var: it->second)
+            {
+                set_sub_var_during_solution_extension(it->first, sub_var);
+            }
+        }
     }
 }
 

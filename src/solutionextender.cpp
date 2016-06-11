@@ -40,7 +40,7 @@ void SolutionExtender::extend()
     //cout << "c [extend] start num unset: " << solver->count_num_unset_model() << endl;
 
     //Extend variables already set
-    solver->varReplacer->extend_model_all();
+    solver->varReplacer->extend_model_already_set();
     //cout << "aft varreplacer unset: " << count_num_unset_model() << endl;
 
     if (simplifier)
@@ -58,7 +58,7 @@ void SolutionExtender::extend()
     }
 
     //All variables, not just those set
-    solver->varReplacer->extend_model_all(true);
+    solver->varReplacer->extend_model_set_undef();
 }
 
 bool SolutionExtender::satisfied(const vector< Lit >& lits) const
