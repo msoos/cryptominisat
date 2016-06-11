@@ -774,9 +774,7 @@ void VarReplacer::set_sub_var_during_solution_extension(uint32_t var, const uint
 void VarReplacer::extend_model(const uint32_t var)
 {
     assert(solver->model[var] != l_Undef);
-    map<uint32_t, vector<uint32_t> >::const_iterator it
-        = reverseTable.find(var);
-
+    auto it = reverseTable.find(var);
     if (it == reverseTable.end())
         return;
 
@@ -790,8 +788,7 @@ void VarReplacer::extend_model(const uint32_t var)
 void VarReplacer::extend_model_already_set()
 {
     assert(solver->model.size() == solver->nVarsOuter());
-    for (map<uint32_t, vector<uint32_t> >::const_iterator
-        it = reverseTable.begin() , end = reverseTable.end()
+    for (auto it = reverseTable.begin() , end = reverseTable.end()
         ; it != end
         ; ++it
     ) {
