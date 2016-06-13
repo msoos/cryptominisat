@@ -470,6 +470,8 @@ bool CUSP::ScalApproxMC(SATCount& count)
                   << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
                   << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
                   << currentNumSolutions << endl;
+
+        //Din't find at least pivotApproxMC+1
         if (currentNumSolutions <= pivotApproxMC) {
             count.cellSolCount = currentNumSolutions;
             count.hashCount = 0;
