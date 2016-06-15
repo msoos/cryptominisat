@@ -176,7 +176,7 @@ bool MatrixFinder::findMatrixes()
 uint32_t MatrixFinder::setMatrixes()
 {
     if (solver->conf.independent_vars) {
-        uint32_t size_at_least = (double)solver->conf.independent_vars->size()*1.5;
+        uint32_t size_at_least = (double)solver->conf.independent_vars->size()*3;
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
             solver->conf.gaussconf.max_matrix_rows = size_at_least;
             if (solver->conf.verbosity) {
