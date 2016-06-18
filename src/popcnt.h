@@ -31,7 +31,7 @@ extern int popcnt_capable;
 namespace CMSat {
 
 #if defined (_MSC_VER)
-inline int my_popcnt(uint64_t w)
+int my_popcnt(uint64_t w)
 {
     if (popcnt_capable) {
         return __popcnt(w);
