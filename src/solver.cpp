@@ -83,6 +83,8 @@ using std::endl;
 
 //#define DEBUG_IMPLICIT_PAIRS_TRIPLETS
 
+int popcnt_capable;
+
 Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter) :
     Searcher(_conf, this, _must_interrupt_inter)
 {
@@ -111,6 +113,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     reduceDB = new ReduceDB(this);
 
     set_up_sql_writer();
+    popcnt_capable = check_popcnt_capable();
 }
 
 Solver::~Solver()
