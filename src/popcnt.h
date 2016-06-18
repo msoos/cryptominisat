@@ -22,45 +22,15 @@
 #ifndef POPCNT__H
 #define POPCNT__H
 
+
 #if defined (_MSC_VER)
 #include <intrin.h>
 #endif
 
-extern int popcnt_capable;
-
-namespace CMSat {
-
 #if defined (_MSC_VER)
-int my_popcnt(uint64_t w)
-{
-    if (popcnt_capable) {
-        return __popcnt(w);
-    } else {
-       uint64_t w1 = (w & 0x2222222222222222) + ((w+w) & 0x2222222222222222);
-       uint64_t w2 = (w >> 1 & 0x2222222222222222) + (w >> 2 & 0x2222222222222222);
-       w1 = w1 + (w1 >> 4) & 0x0f0f0f0f0f0f0f0f;
-       w2 = w2 + (w2 >> 4) & 0x0f0f0f0f0f0f0f0f;
-       return (w1 + w2) * 0x0101010101010101 >> 57;
-    }
-}
+#define my_popcnt(x) __popcnt(x)
 #else
 #define my_popcnt(x) __builtin_popcount(x)
 #endif
-
-inline bool check_popcnt_capable()
-{
-    #if defined (_MSC_VER)
-    int is_capable;
-    int cpu_info[4];
-    __cpuid(cpu_info, 1);
-    is_capable = (cpu_info[2] >> 23) & 1;
-
-    return is_capable;
-    #else
-    return true;
-    #endif
-}
-
-}
 
 #endif //POPCNT__H
