@@ -88,6 +88,7 @@ public:
 protected:
     Solver* solver;
     vector<uint16_t>& seen;
+    vector<uint16_t> var_to_col;
 
     //Gauss high-level configuration
     const GaussConf& config;
@@ -104,7 +105,7 @@ protected:
     {
     public:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
-        BitArray var_is_set;
+        vector<char> col_is_set;
         vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
         uint16_t num_rows = 0; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint16_t num_cols = 0; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
@@ -136,7 +137,7 @@ protected:
     //gauss init functions
     void init(); // Initalise gauss state
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
-    uint32_t select_columnorder(vector<uint16_t>& var_to_col, matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
+    uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //Main function
     uint32_t eliminate(matrixset& matrix); //does the actual gaussian elimination
