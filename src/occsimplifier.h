@@ -285,6 +285,7 @@ public:
         , bool only_set_is_removed = false
     );
     void free_clauses_to_free();
+    void cleanBlockedClausesIfDirty();
 
 private:
     friend class SubsumeStrengthen;
@@ -526,6 +527,7 @@ private:
     bool blockedMapBuilt;
     void buildBlockedMap();
     void cleanBlockedClauses();
+    bool can_remove_blocked_clauses = false;
 
     //validity checking
     void sanityCheckElimedVars();

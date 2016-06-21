@@ -43,8 +43,10 @@ void SolutionExtender::extend()
     solver->varReplacer->extend_model_already_set();
     //cout << "aft varreplacer unset: " << count_num_unset_model() << endl;
 
-    if (simplifier)
+    if (simplifier) {
         simplifier->extend_model(this);
+        simplifier->cleanBlockedClausesIfDirty();
+    }
 
     //cout << "aft simp unset       : " << count_num_unset_model() << endl;
 
