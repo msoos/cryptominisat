@@ -313,6 +313,12 @@ inline const SCCFinder* VarReplacer::get_scc_finder() const
     return scc_finder;
 }
 
+inline Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
+{
+    Lit lit2 = table[lit.var()] ^ lit.sign();
+    return lit2;
+}
+
 } //end namespace
 
 #endif //VARREPLACER_H

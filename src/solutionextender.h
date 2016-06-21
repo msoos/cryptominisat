@@ -56,6 +56,18 @@ class SolutionExtender
         vector<char> var_has_been_blocked;
 };
 
+inline bool SolutionExtender::contains_lit(
+    const vector<Lit>& lits
+    , const Lit tocontain
+) const {
+    for(const Lit lit: lits) {
+        if (lit == tocontain)
+            return true;
+    }
+
+    return false;
+}
+
 } //end namespace
 
 #endif //__SOLUTIONEXTENDER_H__
