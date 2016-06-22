@@ -57,6 +57,13 @@ public:
         delete[] mp;
     }
 
+    uint32_t used_mem() const
+    {
+        uint32_t mem = 0;
+        mem += numRows*2*(numCols+1)*sizeof(uint64_t);
+        return mem;
+    }
+
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);

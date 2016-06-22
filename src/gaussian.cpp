@@ -127,6 +127,23 @@ bool Gaussian::init_until_fixedpoint()
             }
     }
 
+    if (solver->conf.verbosity >= 3) {
+        uint32_t mem1 = cur_matrixset.col_is_set.size()*sizeof(char);
+        cout << "c [gauss] Mem used for col_is_set: " << (double)mem1/(1024.0) << " KB" << endl;
+
+        uint32_t mem2 = cur_matrixset.col_to_var.size()*sizeof(uint32_t);
+        cout << "c [gauss] Mem used for col_to_var: " << (double)mem2/(1024.0) << " KB" << endl;
+
+        uint32_t mem3 = cur_matrixset.last_one_in_col.size()*sizeof(uint16_t);
+        cout << "c [gauss] Mem used for last_one_in_col: " << (double)mem3/(1024.0) << " KB" << endl;
+
+        uint32_t mem4 = cur_matrixset.first_one_in_row.size()*sizeof(uint16_t);
+        cout << "c [gauss] Mem used for first_one_in_row: " << (double)mem4/(1024.0) << " KB" << endl;
+
+        uint32_t mem5 = cur_matrixset.matrix.used_mem();
+        cout << "c [gauss] Mem used for matrix: " << (double)mem5/(1024.0) << " KB" << endl;
+    }
+
     return true;
 }
 
