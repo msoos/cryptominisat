@@ -197,6 +197,14 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     //go through in reverse order
     for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
         BlockedClause* it = &blockedClauses[i];
+        if (i > 3) {
+            BlockedClause* it2 = &blockedClauses[i-3];
+            if (!it2->dummy
+                && !it->toRemove
+            ) {
+                __builtin_prefetch(it->lits.data());
+            }
+        }
         if (it->toRemove) {
             continue;
         }
