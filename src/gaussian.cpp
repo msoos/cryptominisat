@@ -56,6 +56,7 @@ Gaussian::Gaussian(
 ) :
     solver(_solver)
     , seen(_solver->seen)
+    , seen2(_solver->seen2)
     , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
     , messed_matrix_vars_since_reversal(true)
@@ -272,8 +273,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
     }
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
-    changed_rows.clear();
-    changed_rows.resize(origMat.num_rows, 0);
+    assert(changed_rows.empty());
 
     origMat.last_one_in_col.clear();
     origMat.last_one_in_col.resize(origMat.num_cols, origMat.num_rows);
@@ -332,7 +332,10 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
             ; ++this_row, row_num++
         ) {
             if ((*this_row)[col]) {
-                changed_rows[row_num] = true;
+                if (!seen2[row_num]) {
+                    seen2[row_num] = true;
+                    changed_rows.push_back(row_num);
+                }
                 (*this_row).invert_is_true();
                 (*this_row).clearBit(col);
             }
@@ -343,7 +346,10 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
             ; ++this_row, row_num++
         ) {
             if ((*this_row)[col]) {
-                changed_rows[row_num] = true;
+                if (!seen2[row_num]) {
+                    seen2[row_num] = true;
+                    changed_rows.push_back(row_num);
+                }
                 (*this_row).clearBit(col);
             }
         }
@@ -380,8 +386,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(nothing_to_propagate(cur_matrixset));
     assert(solver->decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
-
-    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
+    assert(changed_rows.empty());
 
     uint32_t last = 0;
     uint32_t col = 0;
@@ -554,13 +559,19 @@ uint32_t Gaussian::eliminate(matrixset& m)
         if (j-1 > m.first_one_in_row[m.num_rows-1])
             until = m.num_rows;
         for (;i != until; i++, ++rowIt) {
-            if (changed_rows[i]
+            if (seen2[i]
                 && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
             {
                 propagatable_rows.push_back(i);
             }
         }
     }
+
+    //Clear seen2 & changed_rows
+    for(uint32_t r: changed_rows) {
+        seen2[r] = false;
+    }
+    changed_rows.clear();
 
     #ifdef VERBOSE_DEBUG
     cout << "At while() start: i,j = " << i << ", " << j << endl;

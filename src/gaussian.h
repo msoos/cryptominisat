@@ -88,6 +88,7 @@ public:
 protected:
     Solver* solver;
     vector<uint16_t>& seen;
+    vector<uint8_t>& seen2; //for marking changed_rows
     vector<uint16_t> var_to_col;
 
     //Gauss high-level configuration
@@ -129,7 +130,7 @@ protected:
 
     //State of current elimnation
     vector<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
-    vector<unsigned char> changed_rows; //used to store which rows were deemed propagatable during elimination
+    vector<uint32_t> changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
     uint32_t useful_prop = 0; //how many times Gauss gave propagation as a result
