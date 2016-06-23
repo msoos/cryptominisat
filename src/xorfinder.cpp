@@ -419,10 +419,10 @@ void XorFinder::xor_together_xors()
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& x = xors[i];
         for(uint32_t v: x) {
-            Lit var(v, false);
-            assert(solver->watches.size() > var.toInt());
-            solver->watches[var].push(Watched(i));
-            solver->watches.smudge(var);
+            Lit l(v, false);
+            assert(solver->watches.size() > l.toInt());
+            solver->watches[l].push(Watched(i)); //Idx watch
+            solver->watches.smudge(l);
         }
     }
 
@@ -472,9 +472,9 @@ void XorFinder::xor_together_xors()
         Xor x_new(vars, x[0].rhs ^ x[1].rhs);
         xors.push_back(x_new);
         for(uint32_t v: x_new) {
-            Lit var(v, false);
-            solver->watches[var].push(Watched(xors.size()-1));
-            solver->watches.smudge(var);
+            Lit l(v, false);
+            solver->watches[l].push(Watched(xors.size()-1));
+            solver->watches.smudge(l);
         }
         xors[idxes[0]] = Xor();
         xors[idxes[1]] = Xor();
