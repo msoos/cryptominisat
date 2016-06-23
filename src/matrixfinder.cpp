@@ -25,6 +25,7 @@
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "sqlstats.h"
+#include "varreplacer.h"
 
 #include <set>
 #include <map>
@@ -240,6 +241,7 @@ uint32_t MatrixFinder::setMatrixes()
 
             for(uint32_t outside_var: *solver->conf.independent_vars) {
                 uint32_t outer_var = solver->map_to_with_bva(outside_var);
+                outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 if (int_var < solver->nVars()
                     && solver->seen[int_var]
