@@ -264,7 +264,11 @@ uint32_t MatrixFinder::setMatrixes()
         if (m.rows < solver->conf.gaussconf.min_matrix_rows
             || m.rows > solver->conf.gaussconf.max_matrix_rows
         ) {
-            //cout << "Too small or too large:" << numXorInMatrix[a].second << endl;
+            if (m.rows > solver->conf.gaussconf.max_matrix_rows
+                && solver->conf.verbosity
+            ) {
+                cout << "c [matrix] Too many rows in matrix: " << m.rows << endl;
+            }
             continue;
         }
 
