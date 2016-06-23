@@ -70,6 +70,28 @@ inline bool MatrixFinder::firstPartOfSecond(const Xor& c1, const Xor& c2) const
     return (i1 == c1.size());
 }
 
+inline bool MatrixFinder::belong_same_matrix(const Xor& x)
+{
+    uint32_t comp_num = std::numeric_limits<uint32_t>::max();
+    for (uint32_t v : x) {
+        if (table[v] == var_Undef) {
+            //Belongs to none, abort
+            return false;
+        }
+
+        if (comp_num == std::numeric_limits<uint32_t>::max()) {
+            //Belongs to this one
+            comp_num = table[v];
+        } else {
+            if (comp_num != table[v]) {
+                //Another var in this XOR belongs to another component
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool MatrixFinder::findMatrixes()
 {
     assert(solver->decisionLevel() == 0);
@@ -83,9 +105,19 @@ bool MatrixFinder::findMatrixes()
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses
         || solver->conf.gaussconf.decision_until <= 0
-        || solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
     ) {
         return true;
+    }
+
+    if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
+        && solver->conf.independent_vars->size() > 0
+    ) {
+        if (solver->conf.verbosity) {
+            cout << "c WARNING independent vars have been given but there"
+            "are too many XORs and it would take too much time to put them"
+            "into matrixes. Skipping!" << endl;
+            return true;
+        }
     }
 
     bool ret = solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
@@ -103,6 +135,10 @@ bool MatrixFinder::findMatrixes()
     vector<uint32_t> newSet;
     set<uint32_t> tomerge;
     for (const Xor& x : solver->xorclauses) {
+        if (belong_same_matrix(x)) {
+            continue;
+        }
+
         tomerge.clear();
         newSet.clear();
         for (uint32_t v : x) {
@@ -113,7 +149,7 @@ bool MatrixFinder::findMatrixes()
         }
         if (tomerge.size() == 1) {
             const uint32_t into = *tomerge.begin();
-            map<uint32_t, vector<uint32_t> >::iterator intoReverse = reverseTable.find(into);
+            auto intoReverse = reverseTable.find(into);
             for (uint32_t i = 0; i < newSet.size(); i++) {
                 intoReverse->second.push_back(newSet[i]);
                 table[newSet[i]] = into;

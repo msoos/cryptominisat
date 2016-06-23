@@ -53,7 +53,7 @@ class GaussConf
     //Matrix extraction config
     bool doMatrixFind = true;
     uint32_t min_gauss_xor_clauses = 3;
-    uint32_t max_gauss_xor_clauses = 50000;
+    uint32_t max_gauss_xor_clauses = 500000;
 };
 
 }
