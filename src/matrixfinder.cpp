@@ -235,6 +235,8 @@ uint32_t MatrixFinder::setMatrixes()
         double ratio_indep = 0;
         if (solver->conf.independent_vars) {
             uint32_t indep_var_inside_matrix = 0;
+
+            //'seen' with what is in Matrix
             for(uint32_t int_var: reverseTable[i]) {
                 solver->seen[int_var] = true;
             }
@@ -250,6 +252,7 @@ uint32_t MatrixFinder::setMatrixes()
                 }
             }
 
+            //Clear 'seen'
             for(uint32_t int_var: reverseTable[i]) {
                 solver->seen[int_var] = false;
             }
