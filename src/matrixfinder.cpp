@@ -263,7 +263,7 @@ uint32_t MatrixFinder::setMatrixes()
 
         bool use_matrix = false;
         if (solver->conf.independent_vars) {
-            if (ratio_indep > 0.3) {
+            if (ratio_indep > 1.0) { //TODO Magic constant
                 use_matrix = true;
             }
         }
