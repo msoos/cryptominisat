@@ -65,6 +65,7 @@ class VarReplacer
         uint32_t get_var_replaced_with(const Lit lit) const;
         Lit get_lit_replaced_with(Lit lit) const;
         Lit get_lit_replaced_with_outer(Lit lit) const;
+        uint32_t get_var_replaced_with_outer(uint32_t var) const;
         bool var_is_replacing(const uint32_t var);
 
         vector<uint32_t> get_vars_replacing(uint32_t var) const;
@@ -317,6 +318,11 @@ inline Lit VarReplacer::get_lit_replaced_with_outer(Lit lit) const
 {
     Lit lit2 = table[lit.var()] ^ lit.sign();
     return lit2;
+}
+
+inline uint32_t VarReplacer::get_var_replaced_with_outer(uint32_t var) const
+{
+    return table[var].var();
 }
 
 } //end namespace
