@@ -296,7 +296,7 @@ uint32_t MatrixFinder::setMatrixes()
             << "  xorlen avg: "
             << std::setw(5) << std::fixed << std::setprecision(2)  << avg
             << "  perc indep: "
-            << std::setw(5) << std::fixed << std::setprecision(1) << ratio_indep*100.0 << " %"
+            << std::setw(5) << std::fixed << std::setprecision(3) << ratio_indep*100.0 << " %"
             << endl;
         }
 
