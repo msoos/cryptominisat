@@ -36,6 +36,11 @@
 //#define VERBOSE_DEBUG
 //#define VERBOSE_DEBUG_MORE
 //#define DEBUG_GAUSS
+#ifdef SLOW_DEBUG
+#define slow_debug_assert(x) assert(x)
+#else
+#define slow_debug_assert(x)
+#endif
 
 using namespace CMSat;
 using std::cout;
@@ -51,6 +56,7 @@ Gaussian::Gaussian(
 ) :
     solver(_solver)
     , seen(_solver->seen)
+    , seen2(_solver->seen2)
     , config(solver->conf.gaussconf)
     , matrix_no(_matrix_no)
     , messed_matrix_vars_since_reversal(true)
@@ -122,6 +128,23 @@ bool Gaussian::init_until_fixedpoint()
             }
     }
 
+    if (solver->conf.verbosity >= 3) {
+        uint32_t mem1 = cur_matrixset.col_is_set.size()*sizeof(char);
+        cout << "c [gauss] Mem used for col_is_set: " << (double)mem1/(1024.0) << " KB" << endl;
+
+        uint32_t mem2 = cur_matrixset.col_to_var.size()*sizeof(uint32_t);
+        cout << "c [gauss] Mem used for col_to_var: " << (double)mem2/(1024.0) << " KB" << endl;
+
+        uint32_t mem3 = cur_matrixset.last_one_in_col.size()*sizeof(uint16_t);
+        cout << "c [gauss] Mem used for last_one_in_col: " << (double)mem3/(1024.0) << " KB" << endl;
+
+        uint32_t mem4 = cur_matrixset.first_one_in_row.size()*sizeof(uint16_t);
+        cout << "c [gauss] Mem used for first_one_in_row: " << (double)mem4/(1024.0) << " KB" << endl;
+
+        uint32_t mem5 = cur_matrixset.matrix.used_mem();
+        cout << "c [gauss] Mem used for matrix: " << (double)mem5/(1024.0) << " KB" << endl;
+    }
+
     return true;
 }
 
@@ -167,8 +190,7 @@ struct HeapSorter
 };
 
 uint32_t Gaussian::select_columnorder(
-    vector<uint16_t>& var_to_col
-    , matrixset& origMat
+    matrixset& origMat
 ) {
     var_to_col.clear();
     var_to_col.resize(solver->nVars(), unassigned_col);
@@ -206,7 +228,7 @@ uint32_t Gaussian::select_columnorder(
     var_to_col.resize(largest_used_var + 1);
     var_is_in.setZero();
     var_is_in.resize(var_to_col.size(), 0);
-    origMat.var_is_set.resize(var_to_col.size(), 0);
+    origMat.col_is_set.resize(origMat.num_cols, false);
 
     origMat.col_to_var.clear();
     std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
@@ -245,15 +267,13 @@ void Gaussian::fill_matrix(matrixset& origMat)
     cout << "(" << matrix_no << ") Filling matrix" << endl;
     #endif
 
-    vector<uint16_t> var_to_col;
-    origMat.num_rows = select_columnorder(var_to_col, origMat);
+    origMat.num_rows = select_columnorder(origMat);
     if (origMat.num_rows == 0) {
         return;
     }
     origMat.num_cols = origMat.col_to_var.size();
     col_to_var_original = origMat.col_to_var;
-    changed_rows.clear();
-    changed_rows.resize(origMat.num_rows, 0);
+    assert(changed_rows.empty());
 
     origMat.last_one_in_col.clear();
     origMat.last_one_in_col.resize(origMat.num_cols, origMat.num_rows);
@@ -312,7 +332,10 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
             ; ++this_row, row_num++
         ) {
             if ((*this_row)[col]) {
-                changed_rows[row_num] = true;
+                if (!seen2[row_num]) {
+                    seen2[row_num] = true;
+                    changed_rows.push_back(row_num);
+                }
                 (*this_row).invert_is_true();
                 (*this_row).clearBit(col);
             }
@@ -323,7 +346,10 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
             ; ++this_row, row_num++
         ) {
             if ((*this_row)[col]) {
-                changed_rows[row_num] = true;
+                if (!seen2[row_num]) {
+                    seen2[row_num] = true;
+                    changed_rows.push_back(row_num);
+                }
                 (*this_row).clearBit(col);
             }
         }
@@ -342,7 +368,8 @@ void Gaussian::update_matrix_col(matrixset& m, const uint32_t var, const uint32_
 
     m.removeable_cols++;
     m.col_to_var[col] = unassigned_var;
-    m.var_is_set.setBit(var);
+    slow_debug_assert(var_to_col[var] == col);
+    m.col_is_set[col] = true;
 }
 
 void Gaussian::update_matrix_by_col_all(matrixset& m)
@@ -359,8 +386,7 @@ void Gaussian::update_matrix_by_col_all(matrixset& m)
     assert(nothing_to_propagate(cur_matrixset));
     assert(solver->decisionLevel() == 0 || check_last_one_in_cols(m));
     #endif
-
-    memset(&changed_rows[0], 0, sizeof(unsigned char)*changed_rows.size());
+    assert(changed_rows.empty());
 
     uint32_t last = 0;
     uint32_t col = 0;
@@ -533,13 +559,19 @@ uint32_t Gaussian::eliminate(matrixset& m)
         if (j-1 > m.first_one_in_row[m.num_rows-1])
             until = m.num_rows;
         for (;i != until; i++, ++rowIt) {
-            if (changed_rows[i]
+            if (seen2[i]
                 && (*rowIt).popcnt_is_one(m.first_one_in_row[i]))
             {
                 propagatable_rows.push_back(i);
             }
         }
     }
+
+    //Clear seen2 & changed_rows
+    for(uint32_t r: changed_rows) {
+        seen2[r] = false;
+    }
+    changed_rows.clear();
 
     #ifdef VERBOSE_DEBUG
     cout << "At while() start: i,j = " << i << ", " << j << endl;
@@ -989,7 +1021,7 @@ void Gaussian::canceling(const uint32_t sublevel)
         uint32_t var  = solver->trail[c].var();
         if (var < var_is_in.getSize()
             && var_is_in[var]
-            && cur_matrixset.var_is_set[var]
+            && cur_matrixset.col_is_set[var_to_col[var]]
         ) {
             messed_matrix_vars_since_reversal = true;
             return;
@@ -1251,18 +1283,19 @@ void Gaussian::check_matrix_against_varset(PackedMatrix& matrix, const matrixset
             const uint32_t var = col_to_var_original[col];
             assert(var < solver->nVars());
 
+            slow_debug_assert(var_to_col[var] == col);
             if (solver->value(var) == l_True) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
-                assert(m.var_is_set[var]);
+                assert(m.col_is_set[col]);
                 final = !final;
             } else if (solver->value(var) == l_False) {
                 assert(!mat_row[col]);
                 assert(m.col_to_var[col] == unassigned_var);
-                assert(m.var_is_set[var]);
+                assert(m.col_is_set[col]);
             } else if (solver->value(var) == l_Undef) {
                 assert(m.col_to_var[col] != unassigned_var);
-                assert(!m.var_is_set[var]);
+                assert(!m.col_is_set[col]);
                 assert(mat_row[col]);
             } else {
                 assert(false);

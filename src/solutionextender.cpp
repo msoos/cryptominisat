@@ -43,8 +43,10 @@ void SolutionExtender::extend()
     solver->varReplacer->extend_model_already_set();
     //cout << "aft varreplacer unset: " << count_num_unset_model() << endl;
 
-    if (simplifier)
+    if (simplifier) {
         simplifier->extend_model(this);
+        simplifier->cleanBlockedClausesIfDirty();
+    }
 
     //cout << "aft simp unset       : " << count_num_unset_model() << endl;
 
@@ -61,22 +63,10 @@ void SolutionExtender::extend()
     solver->varReplacer->extend_model_set_undef();
 }
 
-bool SolutionExtender::satisfied(const vector< Lit >& lits) const
+inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
 {
     for(const Lit lit: lits) {
         if (solver->model_value(lit) == l_True)
-            return true;
-    }
-
-    return false;
-}
-
-bool SolutionExtender::contains_lit(
-    const vector<Lit>& lits
-    , const Lit tocontain
-) const {
-    for(const Lit lit: lits) {
-        if (lit == tocontain)
             return true;
     }
 
@@ -118,8 +108,10 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
     const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
+    #ifdef SLOW_DEBUG
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
+    #endif
     if (satisfied(lits)) {
         return;
     } else {

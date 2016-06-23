@@ -25,6 +25,7 @@
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "sqlstats.h"
+#include "varreplacer.h"
 
 #include <set>
 #include <map>
@@ -69,6 +70,28 @@ inline bool MatrixFinder::firstPartOfSecond(const Xor& c1, const Xor& c2) const
     return (i1 == c1.size());
 }
 
+inline bool MatrixFinder::belong_same_matrix(const Xor& x)
+{
+    uint32_t comp_num = std::numeric_limits<uint32_t>::max();
+    for (uint32_t v : x) {
+        if (table[v] == var_Undef) {
+            //Belongs to none, abort
+            return false;
+        }
+
+        if (comp_num == std::numeric_limits<uint32_t>::max()) {
+            //Belongs to this one
+            comp_num = table[v];
+        } else {
+            if (comp_num != table[v]) {
+                //Another var in this XOR belongs to another component
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool MatrixFinder::findMatrixes()
 {
     assert(solver->decisionLevel() == 0);
@@ -82,9 +105,19 @@ bool MatrixFinder::findMatrixes()
 
     if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses
         || solver->conf.gaussconf.decision_until <= 0
-        || solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
     ) {
         return true;
+    }
+
+    if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
+        && solver->conf.independent_vars->size() > 0
+    ) {
+        if (solver->conf.verbosity) {
+            cout << "c WARNING independent vars have been given but there"
+            "are too many XORs and it would take too much time to put them"
+            "into matrixes. Skipping!" << endl;
+            return true;
+        }
     }
 
     bool ret = solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
@@ -102,6 +135,10 @@ bool MatrixFinder::findMatrixes()
     vector<uint32_t> newSet;
     set<uint32_t> tomerge;
     for (const Xor& x : solver->xorclauses) {
+        if (belong_same_matrix(x)) {
+            continue;
+        }
+
         tomerge.clear();
         newSet.clear();
         for (uint32_t v : x) {
@@ -112,7 +149,7 @@ bool MatrixFinder::findMatrixes()
         }
         if (tomerge.size() == 1) {
             const uint32_t into = *tomerge.begin();
-            map<uint32_t, vector<uint32_t> >::iterator intoReverse = reverseTable.find(into);
+            auto intoReverse = reverseTable.find(into);
             for (uint32_t i = 0; i < newSet.size(); i++) {
                 intoReverse->second.push_back(newSet[i]);
                 table[newSet[i]] = into;
@@ -175,6 +212,18 @@ bool MatrixFinder::findMatrixes()
 
 uint32_t MatrixFinder::setMatrixes()
 {
+    if (solver->conf.independent_vars) {
+        uint32_t size_at_least = (double)solver->conf.independent_vars->size()*3;
+        if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
+            solver->conf.gaussconf.max_matrix_rows = size_at_least;
+            if (solver->conf.verbosity) {
+                cout << "c [matrixfind] incrementing max number of rows to "
+                << size_at_least
+                << endl;
+            }
+        }
+    }
+
     vector<MatrixShape> matrix_shape;
     vector<vector<Xor> > xorsInMatrix(matrix_no);
 
@@ -215,34 +264,126 @@ uint32_t MatrixFinder::setMatrixes()
         if (m.rows < solver->conf.gaussconf.min_matrix_rows
             || m.rows > solver->conf.gaussconf.max_matrix_rows
         ) {
-            //cout << "Too small or too large:" << numXorInMatrix[a].second << endl;
+            if (m.rows > solver->conf.gaussconf.max_matrix_rows
+                && solver->conf.verbosity
+            ) {
+                cout << "c [matrix] Too many rows in matrix: " << m.rows << endl;
+            }
             continue;
         }
 
-        double avg = (double)m.sum_xor_sizes/(double)m.rows;
-        if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes)
-        {
+        double ratio_indep = 0;
+        if (solver->conf.independent_vars) {
+            uint32_t indep_var_inside_matrix = 0;
+
+            //'seen' with what is in Matrix
+            for(uint32_t int_var: reverseTable[i]) {
+                solver->seen[int_var] = true;
+            }
+
+            for(uint32_t outside_var: *solver->conf.independent_vars) {
+                uint32_t outer_var = solver->map_to_with_bva(outside_var);
+                outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+                uint32_t int_var = solver->map_outer_to_inter(outer_var);
+                if (int_var < solver->nVars()
+                    && solver->seen[int_var]
+                ) {
+                    indep_var_inside_matrix++;
+                }
+            }
+
+            //Clear 'seen'
+            for(uint32_t int_var: reverseTable[i]) {
+                solver->seen[int_var] = false;
+            }
+
+            ratio_indep = (double)indep_var_inside_matrix/(double)reverseTable[i].size();
+        }
+
+
+        bool use_matrix = false;
+        if (solver->conf.independent_vars) {
+            if (ratio_indep > 1.0) { //TODO Magic constant
+                use_matrix = true;
+            }
+        }
+
+        if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes) {
+            use_matrix = true;
+        }
+
+        if (use_matrix) {
             if (solver->conf.verbosity) {
-                cout << "c Matrix no " << std::setw(2) << realMatrixNum;
+                cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             }
             solver->gauss_matrixes.push_back(
                 new Gaussian(solver, xorsInMatrix[i], realMatrixNum)
             );
             realMatrixNum++;
         } else {
-            if (solver->conf.verbosity >= 2) {
-                cout << "c Unused Matrix ";
+            if (solver->conf.verbosity) {
+                cout << "c [matrix] UNused matrix   ";
             }
         }
 
         if (solver->conf.verbosity) {
+            double avg = (double)m.sum_xor_sizes/(double)m.rows;
+
             cout << std::setw(7) << m.rows << " x"
             << std::setw(5) << reverseTable[i].size()
-            << "  density:" << std::setw(5) << std::fixed << std::setprecision(1) << m.density << "%"
-            << "  xorlen avg: " << std::setw(5) << std::fixed << std::setprecision(2)  << avg
-            //cout << " stdev:" << std::setw(6) << std::fixed << std::setprecision(2) << stdDeviation
+            << "  density:"
+            << std::setw(5) << std::fixed << std::setprecision(1) << m.density << "%"
+            << "  xorlen avg: "
+            << std::setw(5) << std::fixed << std::setprecision(2)  << avg
+            << "  perc indep: "
+            << std::setw(5) << std::fixed << std::setprecision(3) << ratio_indep*100.0 << " %"
             << endl;
         }
+
+#if 0
+        vector<uint32_t> vars;
+        for(const Xor& x: xorsInMatrix[i]) {
+            for(uint32_t var: x) {
+                if (!solver->seen[var]) {
+                    vars.push_back(var);
+                }
+                solver->seen[var]++;
+            }
+        }
+
+        for(const uint32_t var: vars) {
+            cout << "c [matrix] num xors touching var " << var << " : " << solver->seen[var] << endl;
+            solver->seen[var] = false;
+        }
+
+        for(uint32_t outside_var: *solver->conf.independent_vars) {
+            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+            if (int_var < solver->nVars()) {
+                solver->seen[int_var] = true;
+            }
+        }
+
+        for(const Xor& x: xorsInMatrix[i]) {
+            bool num_indeps = 0;
+            for(uint32_t var: x) {
+                vars.push_back(var);
+                if (solver->seen[var]) {
+                    num_indeps++;
+                }
+            }
+            cout << "c [matrix] num indep perc: " << ((double)num_indeps/(double)x.size())*100.0 << " %" << endl;
+        }
+
+        for(uint32_t outside_var: *solver->conf.independent_vars) {
+            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+            if (int_var < solver->nVars()) {
+                solver->seen[int_var] = false;
+            }
+        }
+#endif
+
     }
 
     return realMatrixNum;

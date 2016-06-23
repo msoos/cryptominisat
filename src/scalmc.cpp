@@ -93,7 +93,6 @@ void CUSP::add_approxmc_options()
     approxMCOptions.add_options()
     ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC)
         , "Number of solutions to check for")
-    ("pivotUniGen", po::value(&pivotUniGen)->default_value(pivotUniGen), "")
     ("mode", po::value(&searchMode)->default_value(searchMode)
         ,"Seach mode. ApproxMX = 0, ScalMC = 1")
     ("tApproxMC", po::value(&tApproxMC)->default_value(tApproxMC)
@@ -337,7 +336,7 @@ int CUSP::solve()
 {
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 15;
-    conf.gaussconf.max_num_matrixes = 10;
+    conf.gaussconf.max_num_matrixes = 1;
     conf.gaussconf.autodisable = false;
 
     openLogFile();
@@ -471,6 +470,8 @@ bool CUSP::ScalApproxMC(SATCount& count)
                   << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
                   << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
                   << currentNumSolutions << endl;
+
+        //Din't find at least pivotApproxMC+1
         if (currentNumSolutions <= pivotApproxMC) {
             count.cellSolCount = currentNumSolutions;
             count.hashCount = 0;

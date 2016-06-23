@@ -20,7 +20,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef STREAMBUFFER_H
 #define STREAMBUFFER_H
 
-#define CHUNK_LIMIT 1048576
+static const unsigned chunk_limit = 148576;
 
 #ifdef USE_ZLIB
 #include <zlib.h>
@@ -31,6 +31,7 @@ typedef size_t(*fread_op_zip)(void*, size_t, size_t, gzFile);
 #include <iomanip>
 #include <limits>
 #include <string>
+#include <memory>
 
 //A = gzFile, FILE
 //B = fread, gz_read
@@ -43,12 +44,12 @@ class StreamBuffer
     void assureLookahead() {
         if (pos >= size) {
             pos  = 0;
-            size = C(buf, 1, sizeof(buf), in);
+            size = C(buf.get(), 1, chunk_limit, in);
         }
     }
-    char    *buf;
     int     pos;
     int     size;
+    std::unique_ptr<char[]> buf;
 
     void advance()
     {
@@ -60,14 +61,13 @@ class StreamBuffer
     }
 
 public:
-    StreamBuffer(A i) : in(i), pos(0), size(0) {
-        buf = new char[CHUNK_LIMIT];
-        assureLookahead();
-    }
-
-    ~StreamBuffer()
+    StreamBuffer(A i) :
+        in(i)
+        , pos(0)
+        , size(0)
+        , buf(new char[chunk_limit]())
     {
-        delete[] buf;
+        assureLookahead();
     }
 
     int  operator *  () {

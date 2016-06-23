@@ -200,6 +200,7 @@ private:
     //Other temporaries
     vector<uint16_t>& seen;
     vector<Lit>& toClear;
+    vector<uint32_t> interesting;
 };
 
 

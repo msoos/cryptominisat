@@ -408,7 +408,8 @@ void XorFinder::xor_together_xors()
                 toClear.push_back(Lit(v, false));
             }
 
-            if (seen[v] < 3) {
+            //Don't roll around
+            if (seen[v] != std::numeric_limits<uint16_t>::max()) {
                 seen[v]++;
             }
         }
@@ -418,15 +419,15 @@ void XorFinder::xor_together_xors()
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& x = xors[i];
         for(uint32_t v: x) {
-            Lit var(v, false);
-            assert(solver->watches.size() > var.toInt());
-            solver->watches[var].push(Watched(i));
-            solver->watches.smudge(var);
+            Lit l(v, false);
+            assert(solver->watches.size() > l.toInt());
+            solver->watches[l].push(Watched(i)); //Idx watch
+            solver->watches.smudge(l);
         }
     }
 
     //Only when a var is used exactly twice it's interesting
-    vector<uint32_t> interesting;
+    interesting.clear();
     for(const Lit l: toClear) {
         if (seen[l.var()] == 2) {
             interesting.push_back(l.var());
@@ -449,7 +450,13 @@ void XorFinder::xor_together_xors()
                 ws[i2] = ws[i];
                 i2++;
             } else if (xors[w.get_idx()] != Xor()) {
-                assert(at < 2);
+
+                //Rollaround in 'seen' -- probably will never happen
+                if (at > 2) {
+                    assert(false && "Rollaround in 'seen'? May happen, but weird");
+                    continue;
+                }
+
                 x[at] = xors[w.get_idx()];
                 idxes[at] = w.get_idx();
                 at++;
@@ -465,9 +472,9 @@ void XorFinder::xor_together_xors()
         Xor x_new(vars, x[0].rhs ^ x[1].rhs);
         xors.push_back(x_new);
         for(uint32_t v: x_new) {
-            Lit var(v, false);
-            solver->watches[var].push(Watched(xors.size()-1));
-            solver->watches.smudge(var);
+            Lit l(v, false);
+            solver->watches[l].push(Watched(xors.size()-1));
+            solver->watches.smudge(l);
         }
         xors[idxes[0]] = Xor();
         xors[idxes[1]] = Xor();
@@ -623,6 +630,11 @@ vector<uint32_t> XorFinder::xor_two(
         if (a == b) {
             x1_at++;
             x2_at++;
+
+            seen[a] -= 2;
+            if (seen[a] == 2) {
+                interesting.push_back(a);
+            }
             continue;
         }
 

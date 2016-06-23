@@ -167,6 +167,7 @@ class DLL_PUBLIC SolverConf
         unsigned glue_must_keep_clause_if_below_or_eq;
         double   adjust_glue_if_too_many_low;
         int      guess_cl_effectiveness;
+        int      hash_relearn_check;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)

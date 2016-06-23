@@ -195,25 +195,46 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     #endif
 
     //go through in reverse order
-    for (vector<BlockedClause>::reverse_iterator
-        it = blockedClauses.rbegin(), end = blockedClauses.rend()
-        ; it != end
-        ; ++it
-    ) {
+    for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
+        BlockedClause* it = &blockedClauses[i];
+        if (i > 3) {
+            BlockedClause* it2 = &blockedClauses[i-3];
+            if (!it2->dummy
+                && !it->toRemove
+            ) {
+                __builtin_prefetch(it->lits.data());
+            }
+        }
         if (it->toRemove) {
             continue;
         }
 
         it->blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->blockedOn);
-        for(Lit& l: it->lits) {
-            l = solver->varReplacer->get_lit_replaced_with_outer(l);
-        }
-
         if (it->dummy) {
             extender->dummyBlocked(it->blockedOn);
         } else {
+            for(Lit& l: it->lits) {
+                l = solver->varReplacer->get_lit_replaced_with_outer(l);
+                if (solver->model_value(l) == l_True) {
+                    goto next;
+                }
+
+                //Check if it can be removed
+                Lit inter = solver->map_outer_to_inter(l);
+                if (solver->value(inter) == l_True
+                    && solver->varData[inter.var()].level == 0
+                ) {
+                    it->toRemove = true;
+                    can_remove_blocked_clauses = true;
+                    goto next;
+                }
+            }
             extender->addClause(it->lits, it->blockedOn);
         }
+        next:;
+    }
+    if (solver->conf.verbosity) {
+        cout << "c [extend] Extended " << blockedClauses.size() << " var-elim clauses" << endl;
     }
 }
 
@@ -1114,6 +1135,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
         //Mark for removal from blocked list
         blockedClauses[at].toRemove = true;
+        can_remove_blocked_clauses = true;
         assert(blockedClauses[at].blockedOn.var() == var);
 
         if (blockedClauses[at].dummy)
@@ -1330,6 +1352,13 @@ void OccSimplifier::set_limits()
     //numMaxElim     = std::numeric_limits<int64_t>::max();
 }
 
+void OccSimplifier::cleanBlockedClausesIfDirty()
+{
+    if (can_remove_blocked_clauses) {
+        cleanBlockedClauses();
+    }
+}
+
 void OccSimplifier::cleanBlockedClauses()
 {
     assert(solver->decisionLevel() == 0);
@@ -1361,6 +1390,7 @@ void OccSimplifier::cleanBlockedClauses()
         }
     }
     blockedClauses.resize(blockedClauses.size()-(i-j));
+    can_remove_blocked_clauses = false;
 }
 
 size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(

@@ -88,6 +88,8 @@ public:
 protected:
     Solver* solver;
     vector<uint16_t>& seen;
+    vector<uint8_t>& seen2; //for marking changed_rows
+    vector<uint16_t> var_to_col;
 
     //Gauss high-level configuration
     const GaussConf& config;
@@ -104,14 +106,17 @@ protected:
     {
     public:
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
-        BitArray var_is_set;
-        vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
         uint16_t num_rows = 0; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint16_t num_cols = 0; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
         int least_column_changed; // when updating the matrix, this value contains the smallest column number that has been updated  (Gauss elim. can start from here instead of from column 0)
-        vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row+1 that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
-        vector<uint16_t> first_one_in_row; //first columnt with a '1' in [ROW]
         uint32_t removeable_cols; // the number of columns that have been zeroed out (i.e. assigned)
+
+        vector<char> col_is_set;
+        vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
+        vector<uint16_t> last_one_in_col; //last_one_in_col[COL] tells the last row+1 that has a '1' in that column. Used to reduce the burden of Gauss elim. (it only needs to look until that row)
+
+
+        vector<uint16_t> first_one_in_row; //first columnt with a '1' in [ROW]
     };
 
     //Saved states
@@ -125,7 +130,7 @@ protected:
 
     //State of current elimnation
     vector<uint32_t> propagatable_rows; //used to store which rows were deemed propagatable during elimination
-    vector<unsigned char> changed_rows; //used to store which rows were deemed propagatable during elimination
+    vector<uint32_t> changed_rows; //used to store which rows were deemed propagatable during elimination
 
     //Statistics
     uint32_t useful_prop = 0; //how many times Gauss gave propagation as a result
@@ -136,7 +141,7 @@ protected:
     //gauss init functions
     void init(); // Initalise gauss state
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
-    uint32_t select_columnorder(vector<uint16_t>& var_to_col, matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
+    uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //Main function
     uint32_t eliminate(matrixset& matrix); //does the actual gaussian elimination

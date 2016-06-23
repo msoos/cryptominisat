@@ -65,6 +65,7 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     otfSubsumedRed += other.otfSubsumedRed;
     otfSubsumedLitsGained += other.otfSubsumedLitsGained;
     guess_different += other.guess_different;
+    cache_hit += other.cache_hit;
     red_cl_in_which0 += other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
@@ -124,6 +125,7 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     otfSubsumedRed -= other.otfSubsumedRed;
     otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
     guess_different -= other.guess_different;
+    cache_hit -= other.cache_hit;
     red_cl_in_which0 -= other.red_cl_in_which0;
 
     //Hyper-bin & transitive reduction
@@ -198,6 +200,12 @@ void SearchStats::print_short(uint64_t props) const
         , "% of confl"
     );
 
+    print_stats_line("c cache hit re-learnt cl"
+        , cache_hit
+        , stats_line_percent(cache_hit, conflStats.numConflicts)
+        , "% of confl"
+    );
+
     print_stats_line("c red which0"
         , red_cl_in_which0
         , stats_line_percent(red_cl_in_which0, conflStats.numConflicts)
@@ -268,6 +276,12 @@ void SearchStats::print(uint64_t props) const
     print_stats_line("c guess different"
         , guess_different
         , stats_line_percent(guess_different, conflStats.numConflicts)
+        , "% of confl"
+    );
+
+    print_stats_line("c cache hit re-learnt cl"
+        , cache_hit
+        , stats_line_percent(cache_hit, conflStats.numConflicts)
         , "% of confl"
     );
 

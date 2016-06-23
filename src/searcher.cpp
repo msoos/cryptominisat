@@ -37,6 +37,7 @@
 #include "gaussian.h"
 #include "sqlstats.h"
 #include "watchalgos.h"
+#include "hasher.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -79,6 +80,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 Searcher::~Searcher()
 {
     clear_gauss();
+    delete[] hits;
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
@@ -1521,6 +1523,47 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
+bool Searcher::check_and_insert_into_hash_learnt_cl()
+{
+    if (!conf.hash_relearn_check) {
+        return false;
+    }
+
+    if (hits == NULL
+        && solver->get_num_long_irred_cls() > 30000 //TODO: MAGIC CONSTANT
+    ) {
+        hits = new uint32_t[hash_size];
+    }
+
+    //Don't do it for very large clauses, like 400 etc.
+    if (learnt_clause.size() > 40  //TODO MAGIC CONSTANT
+        || hits == NULL
+    ) {
+        return false;
+    }
+
+    learnt_clause_sorted.resize(learnt_clause.size());
+    std::copy(learnt_clause.begin(), learnt_clause.end()
+        , learnt_clause_sorted.begin());
+    std::sort(learnt_clause_sorted.begin(), learnt_clause_sorted.end());
+
+    uint64_t hash = clause_hash(learnt_clause_sorted);
+    uint32_t hash_i = hash & hash_mask;
+    uint32_t hash_j = (1UL << (hash >> hash_bits) ) & (8 * sizeof(hits[0]) - 1);
+
+    if (hits[hash_i] & hash_j) {
+        //It seems we've already learnt this clause before.
+        //Let's make sure we don't forget it this time.
+        hits[hash_i] &= ~hash_j;
+        return true;
+    } else {
+        //Even if we forget this learnt clause, we can still
+        //prevent us from unlearning it again in the future
+        hits[hash_i] |= hash_j;
+        return false;
+    }
+}
+
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
@@ -1552,136 +1595,21 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (which_arr == 0) {
             stats.red_cl_in_which0++;
         }
-        switch(conf.guess_cl_effectiveness) {
-            case 0:
-                break;
-
-            case 1: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
+        if (conf.guess_cl_effectiveness) {
+            unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
+            if (guess < which_arr) {
+                stats.guess_different++;
             }
-
-            case 2: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 2;
-                }
-                break;
-            }
-
-            case 3: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    which_arr = 0;
-                }
-                break;
-            }
-
-            case 4: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 6.0, 0.3);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            case 5: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 8.5, 0.3);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            case 6: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3, -0.08);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            case 7: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.3, 0, true);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            case 8: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.15, -0.08, true);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 2;
-                }
-                break;
-            }
-
-            case 9: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 2;
-                }
-                break;
-            }
-
-            case 10: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2, 0, true);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            case 11: {
-                unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.1, 0, true);
-                if (guess < which_arr) {
-                    stats.guess_different++;
-                }
-                if (guess == 0) {
-                    cl->stats.ttl = 1;
-                }
-                break;
-            }
-
-            default: {
-                cout << "ERROR: no such guess value: " << conf.guess_cl_effectiveness << endl;
-                exit(-1);
+            if (guess == 0) {
+                cl->stats.ttl = 1;
             }
         }
+        const bool inside_hash = check_and_insert_into_hash_learnt_cl();
+        if (inside_hash && which_arr > 0) {
+            which_arr = 0;
+            stats.cache_hit++;
+        }
+
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
         *drat << *cl << fin;
@@ -1754,6 +1682,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learnt_clause();
 
 
+    //Add decision-based clause in case it's short
     decision_clause.clear();
     if (!update_bogoprops
         && learnt_clause.size() > 50 //TODO MAGIC parameter
@@ -1778,6 +1707,8 @@ bool Searcher::handle_conflict(const PropBy confl)
     cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 3 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
+
+    //Add decision-based clause
     if (!update_bogoprops
         && decision_clause.size() > 0
     ) {

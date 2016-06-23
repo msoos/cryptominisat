@@ -1,10 +1,10 @@
 #!/bin/sh
 
-zgrep -i assert -- *stdout* *stderr*
-zgrep -i signal -- *stderr* *stderr*
-zgrep -i error -- *stderr* *stderr*
-zgrep -i abort -- *stderr* *stderr*
-zgrep -i failed -- *stderr* *stderr*
+zgrep --color -i "assert.*fail" -- *stdout* *stderr*
+zgrep --color -i signal -- *stderr* *stderr*
+zgrep --color -i error -- *stderr* *stderr*
+zgrep --color -i abort -- *stderr* *stderr*
+zgrep --color -i failed -- *stderr* *stderr*
 
 
 zgrep "Total" -- *stdout.gz | awk '{print $5}' > solveTimes

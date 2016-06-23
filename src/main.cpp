@@ -330,6 +330,8 @@ void Main::add_supported_options()
         , "Keep all clauses at or below this value")
     ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Keep clauses that we guess to be good")
+    ("hash", po::value(&conf.hash_relearn_check)->default_value(conf.hash_relearn_check)
+        , "Hash clauses to check re-learning")
     ;
 
     std::ostringstream s_random_var_freq;
