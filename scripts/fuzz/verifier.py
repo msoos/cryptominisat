@@ -386,23 +386,22 @@ class solution_parser:
 
     @staticmethod
     def _check_regular_clause(line, solution):
-            lits = line.split()
-            final = False
-            for lit in lits:
-                numlit = int(lit)
-                if numlit != 0:
-                    if (abs(numlit) not in solution):
-                        continue
-                    if numlit < 0:
-                        final |= ~solution[abs(numlit)]
-                    else:
-                        final |= solution[numlit]
-                    if final is True:
-                        break
-            if final is False:
-                print("Error: clause '%s' not satisfied." % line)
-                print("Error code 100")
-                exit(100)
+        lits = line.split()
+        final = False
+        for lit in lits:
+            numlit = int(lit)
+            if numlit == 0:
+                break
+
+            if abs(numlit) not in solution:
+                continue
+
+            if solution[abs(numlit)] ^ (numlit < 0):
+                return
+
+        print("Error: clause '%s' not satisfied." % line)
+        print("Error code 100")
+        exit(100)
 
     @staticmethod
     def _check_xor_clause(line, solution):
