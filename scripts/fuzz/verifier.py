@@ -397,11 +397,9 @@ class solution_parser:
                 continue
 
             if solution[abs(numlit)] ^ (numlit < 0):
-                return
+                return True
 
-        print("Error: clause '%s' not satisfied." % line)
-        print("Error code 100")
-        exit(100)
+        raise NameError("Error: clause '%s' not satisfied." % line)
 
     @staticmethod
     def _check_xor_clause(line, solution):
@@ -412,14 +410,14 @@ class solution_parser:
             numlit = int(lit)
             if numlit != 0:
                 if abs(numlit) not in solution:
-                    print("Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit))
-                    print("Error code 200")
-                    exit(200)
+                    raise NameError("Error: var %d not solved, but referred to in a xor-clause of the CNF" % abs(numlit))
                 final ^= solution[abs(numlit)]
                 final ^= numlit < 0
         if final is False:
-            print("Error: xor-clause '%s' not satisfied." % line)
-            exit(-1)
+            raise NameError("Error: xor-clause '%s' not satisfied." % line)
+
+        return final
+
 
 def parse_arguments():
     class PlainHelpFormatter(optparse.IndentedHelpFormatter):
