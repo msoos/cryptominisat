@@ -95,6 +95,7 @@ class solution_parser:
                 if line[0] != 'x':
                     solution_parser._check_regular_clause(line, solution)
                 else:
+                    assert line[0] == 'x', "Line must start with p, c, v or x"
                     solution_parser._check_xor_clause(line, solution)
 
                 clauses += 1
