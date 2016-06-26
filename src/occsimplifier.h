@@ -273,7 +273,7 @@ public:
     void check_elimed_vars_are_unassigned() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
-    void save_state(SimpleOutFile& f) const;
+    void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
     vector<ClOffset> sub_str_with;
     TouchListLit impl_sub_lits;
