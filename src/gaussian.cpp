@@ -743,16 +743,12 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         Lit lit2 = tmp_clause[1];
         seen[lit1.var()] = 1;
         seen[lit2.var()] = 1;
-        uint32_t seen_vars = 0;
 
-        for (int i = solver->trail.size()-1
-            ; i >= 0 && seen_vars < 2
-            ; i --
-        ) {
+        for (int i = solver->trail.size()-1; i >= 0; i --) {
             uint32_t v = solver->trail[i].var();
             if (v < seen.size() && seen[v]) {
                 first_var = v;
-                seen_vars++; //allows for early exit
+                break;
             }
         }
 
