@@ -468,6 +468,7 @@ if (ENABLE_TESTING)
     message(STATUS "Testing is enabled")
     set(UNIT_TEST_EXE_SUFFIX "Tests" CACHE STRING "Suffix for Unit test executable")
     add_subdirectory(tests)
+    add_subdirectory(scripts/fuzz)
 
 else()
     message(WARNING "Testing is disabled")
