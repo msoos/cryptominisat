@@ -102,7 +102,7 @@ class ClauseAllocator {
             , Clause* old
         ) const;
 
-        BASE_DATA_TYPE* dataStart; ///<Stacks start at these positions
+        BASE_DATA_TYPE* dataStart; ///<Stack starts at these positions
         size_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
