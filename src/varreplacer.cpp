@@ -1297,11 +1297,12 @@ void VarReplacer::load_state(SimpleInFile& f)
     f.get_vector(table);
     replacedVars = f.get_uint32_t();
 
+    vector<uint32_t> point_to;
     uint32_t num = f.get_uint32_t();
     for(uint32_t i = 0; i < num; i++)
     {
         uint32_t v = f.get_uint32_t();
-        vector<uint32_t> point_to;
+        point_to.clear();
         f.get_vector(point_to);
         reverseTable[v] = point_to;
     }
