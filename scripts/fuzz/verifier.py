@@ -438,10 +438,10 @@ For example:
     parser.add_option("--verbose", "-v", action="store_true",
                       default=False, dest="verbose", help="Be more verbose")
     parser.add_option("--tout", "-t", dest="maxtime", type=int, default=100,
-                  help="Max time to run. Default: %default")
+                      help="Max time to run. Default: %default")
     parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
-                  help="Extra time on top of timeout for processing."
-                  " Default: %default")
+                      help="Extra time on top of timeout for processing."
+                      " Default: %default")
     # parse options
     options, args = parser.parse_args()
     return options, args
@@ -451,14 +451,15 @@ if __name__ == "__main__":
     print("Options are:", options)
     print("args are:", args)
     if len(args) != 2:
-        print("ERROR: You must give exactly two parameters, one SOLUTION and one CNF")
-        print("You gave {n} parameters".format(**{"n":len(args)}))
+        print("ERROR: You must give exactly two parameters, "
+              "one SOLUTION and one CNF")
+        print("You gave {n} parameters".format(**{"n": len(args)}))
         exit(-1)
 
     sol_file = args[0]
     cnf_file = args[1]
     print("Verifying CNF file '{cnf}' against solution in file '{sol}'".format(
-        **{"cnf":cnf_file, "sol":sol_file}))
+        **{"cnf": cnf_file, "sol": sol_file}))
 
     print("Checking debug libs...")
     sol_parser = solution_parser(options)
