@@ -781,7 +781,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
 
         for (int i = solver->trail.size()-1; i >= 0; i --) {
             uint32_t v = solver->trail[i].var();
-            if (seen[v]) {
+            if (v < seen.size() && seen[v]) {
                 first_var = v;
                 break;
             }
