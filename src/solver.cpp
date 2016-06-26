@@ -1351,7 +1351,7 @@ lbool Solver::solve()
 
     if (conf.preprocess == 2) {
         status = load_state(conf.saved_state_file);
-        if (status == l_Undef) {
+        if (status != l_False) {
             model = assigns;
             status = load_solution_from_file(conf.solution_file);
             full_model = model;
@@ -1389,17 +1389,20 @@ lbool Solver::solve()
     }
 
     if (conf.preprocess == 1) {
-        if (status == l_Undef) {
+        cancelUntil(0);
+        if (status != l_False) {
             //So no set variables end up in the clauses
             clauseCleaner->remove_and_clean_all();
         }
 
+        if (status == l_True) {
+            cout << "WARN: Solution found during preprocessing,"
+            "but putting simplified CNF to file" << endl;
+        }
         save_state(conf.saved_state_file, status);
         ClauseDumper dumper(this);
         if (status == l_False) {
             dumper.open_file_and_write_unsat(conf.simplified_cnf);
-        } else if (status == l_True) {
-            dumper.open_file_and_write_sat(conf.simplified_cnf);
         } else {
             dumper.open_file_and_dump_irred_clauses_preprocessor(conf.simplified_cnf);
         }
