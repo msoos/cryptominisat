@@ -276,6 +276,11 @@ MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
 MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
+
+if (STATICCOMPILE)
+    set(ONLY_SIMPLE ON)
+endif()
+
 if (NOT ONLY_SIMPLE)
     set (boost_components "")
     set(boost_components ${boost_components} program_options)
@@ -319,6 +324,11 @@ ENDIF ()
 # Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
 option(NOZLIB "Don't use zlib" OFF)
+
+if (STATICCOMPILE)
+    set(NOZLIB ON)
+endif()
+
 if (NOT NOZLIB)
     find_package(ZLIB)
     IF (ZLIB_FOUND)
@@ -395,6 +405,11 @@ endmacro()
 # Look for python
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
+
+if (STATICCOMPILE)
+    set(ENABLE_PYTHON_INTERFACE OFF)
+endif()
+
 find_package (PythonInterp 2.7)
 find_package (PythonLibs 2.7)
 if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIR AND NOT WIN32)
