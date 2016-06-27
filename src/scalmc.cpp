@@ -486,7 +486,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
     for (uint32_t j = 0; j < tApproxMC; j++) {
         map<uint64_t,int64_t> countRecord;
         map<uint64_t,uint32_t> succRecord;
-        map<uint64_t,Lit> hashVars;
+        map<uint64_t,Lit> hashVars; //map assumption var to XOR hash
 
         uint32_t repeatTry = 0;
         uint64_t numExplored = 1;
@@ -498,6 +498,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
             myTime = cpuTimeTotal();
             uint64_t swapVar = hashCount;
             SetHash(hashCount,hashVars,assumps);
+            cout << "Number of XOR hashes active: " << hashCount << endl;
             int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
 
             //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
