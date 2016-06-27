@@ -555,7 +555,9 @@ bool CUSP::ScalApproxMC(SATCount& count)
                     }
                     hashCount = (upperFib+lowerFib)/2;
                 }
-            } else if (currentNumSolutions == pivotApproxMC+1) {
+            } else {
+                assert(currentNumSolutions == pivotApproxMC+1);
+
                 numExplored = hashCount + independent_vars.size()-upperFib;
                 if (succRecord.find(hashCount+1) != succRecord.end()
                     && succRecord[hashCount+1] == 0
