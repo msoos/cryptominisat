@@ -506,6 +506,28 @@ void XorFinder::xor_together_xors()
             , recur_time
         );
     }
+
+    #ifdef SLOW_DEBUG
+    //Make sure none is 2.
+    for(const Xor& x: xors) {
+        for(uint32_t v: x) {
+            if (seen[v] == 0) {
+                toClear.push_back(Lit(v, false));
+            }
+
+            //Don't roll around
+            if (seen[v] != std::numeric_limits<uint16_t>::max()) {
+                seen[v]++;
+            }
+        }
+    }
+
+    for(const Lit c: toClear) {
+        assert(seen[c.var()] != 2);
+        seen[c.var()] = 0;
+    }
+    toClear.clear();
+    #endif
 }
 
 void XorFinder::clean_xors_from_empty()
