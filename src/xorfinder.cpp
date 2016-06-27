@@ -71,10 +71,10 @@ void XorFinder::find_xors_based_on_long_clauses()
             const size_t needed_per_ws = 1ULL << (cl->size()-2);
             for(const Lit lit: *cl) {
                 if (solver->watches[lit].size() < needed_per_ws) {
-                    continue;
+                    goto next;
                 }
                 if (solver->watches[~lit].size() < needed_per_ws) {
-                    continue;
+                    goto next;
                 }
             }
 
@@ -83,6 +83,7 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             //TODO check if already inside in some clever way
             findXor(lits, offset, cl->abst);
+            next:;
         }
     }
 }
