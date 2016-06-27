@@ -461,7 +461,11 @@ bool CUSP::ScalApproxMC(SATCount& count)
     vector<uint64_t> numHashList;
     vector<int64_t> numCountList;
     vector<Lit> assumps;
-    uint64_t hashCount = startIteration, hashPrev = 0, mPrev = 0;
+
+    uint64_t hashCount = startIteration;
+    uint64_t hashPrev = 0;
+    uint64_t mPrev = 0;
+
     double myTime = cpuTimeTotal();
     if (hashCount == 0) {
         int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC+1,assumps);
