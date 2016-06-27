@@ -58,7 +58,7 @@ private:
     bool ScalApproxMC(SATCount& count);
     bool ApproxMC(SATCount& count);
     bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumps);
-    bool SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps);
+    void SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps);
 
     int64_t BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps);
     lbool BoundedSAT(
