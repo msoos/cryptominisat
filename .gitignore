@@ -16,5 +16,6 @@ scripts/reconf/outs
 tests/cnf-files/*.sqlite
 scripts/fuzz/fuzzTest_*
 scripts/fuzz/tmp_for_xor_to_cnf_*
+scripts/reconf/outfile*
 
 web/jquery-1.11.3.min.js
