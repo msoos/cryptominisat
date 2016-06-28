@@ -194,11 +194,13 @@ if (NOT ONLY_SIMPLE)
         signalcode.cpp
     )
 
-    add_executable(scalmc
-        main.cpp
-        signalcode.cpp
-        scalmc.cpp
-    )
+    if (USE_GAUSS)
+        add_executable(scalmc
+            main.cpp
+            signalcode.cpp
+            scalmc.cpp
+        )
+    endif()
 endif()
 add_executable(cryptominisat5_simple
     main_simple.cpp
@@ -218,9 +220,12 @@ if (NOT ONLY_SIMPLE)
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-    set_target_properties(scalmc PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-        INSTALL_RPATH_USE_LINK_PATH TRUE)
+    if (USE_GAUSS)
+        set_target_properties(scalmc PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+            INSTALL_RPATH_USE_LINK_PATH TRUE)
+    endif()
+
 endif()
 set_target_properties(cryptominisat5_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -236,14 +241,16 @@ if (NOT ONLY_SIMPLE)
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 
-    target_link_libraries(scalmc
-        ${cryptoms_exec_link_libs}
-    )
-    install(TARGETS scalmc
-        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-        RUNTIME DESTINATION bin
-    )
-    SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
+    if (USE_GAUSS)
+        target_link_libraries(scalmc
+            ${cryptoms_exec_link_libs}
+        )
+        install(TARGETS scalmc
+            EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+            RUNTIME DESTINATION bin
+        )
+        SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
+    endif()
 endif()
 
 target_link_libraries(cryptominisat5_simple
