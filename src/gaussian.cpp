@@ -1034,7 +1034,7 @@ void Gaussian::disable_if_necessary()
 {
     if (!disabled
         && config.autodisable
-        && called > 50
+        && called > 300
         && useful_confl*2+useful_prop < (uint32_t)((double)called*0.05) )
     {
         //NOTE: we cannot call "cancelling(0);" here or we will have
