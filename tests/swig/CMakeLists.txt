@@ -10,12 +10,12 @@ configure_file(${SETUP_PY_IN} ${SETUP_PY})
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/solver.so
 
                    COMMAND swig3.0
-                   ARGS -I${PROJECT_SOURCE_DIR}/src -I${PROJECT_BINARY_DIR}/cmsat4-src -python -c++ -o ${CMAKE_CURRENT_BINARY_DIR}/solver_module.cpp ${CMAKE_CURRENT_SOURCE_DIR}/solver.i
+                   ARGS -I${PROJECT_SOURCE_DIR}/src -I${PROJECT_BINARY_DIR}/cmsat5-src -python -c++ -o ${CMAKE_CURRENT_BINARY_DIR}/solver_module.cpp ${CMAKE_CURRENT_SOURCE_DIR}/solver.i
 
                    COMMAND ${PYTHON_EXECUTABLE}
                    ARGS ${SETUP_PY} build_ext --inplace --rpath ${PROJECT_BINARY_DIR}/lib
 
-                   DEPENDS libcryptominisat4
+                   DEPENDS libcryptominisat5
 )
 
 add_custom_target(solver_swig_test ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/solver.so)

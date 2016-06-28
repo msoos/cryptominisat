@@ -26,7 +26,7 @@ IN THE SOFTWARE.
  * solving library.
  */
 
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 #include <vector>
 #include <complex>
 #include <cassert>

@@ -34,7 +34,7 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
         else:
             return ""
 
-usage = "usage: %prog [options] cryptominisat4-binary testfile(s)"
+usage = "usage: %prog [options] cryptominisat5-binary testfile(s)"
 desc = """Test solver against some problems
 """
 
@@ -48,7 +48,7 @@ parser.add_option("--verbose", "-v", action="store_true", default=False,
 
 
 if len(args) < 1:
-    print("ERROR: You must call this script with at least one argument, the cryptominisat4 binary")
+    print("ERROR: You must call this script with at least one argument, the cryptominisat5 binary")
     exit(-1)
 
 if len(args) < 2:

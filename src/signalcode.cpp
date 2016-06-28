@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 #include "signalcode.h"
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 #if !defined (_MSC_VER)
 #include <unistd.h>
 #endif

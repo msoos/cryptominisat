@@ -63,7 +63,7 @@ For the --solver options you can give:
                       )
 
     parser.add_option("--solver",
-                      default="cryptominisat/build/cryptominisat4",
+                      default="cryptominisat/build/cryptominisat5",
                       dest="solver",
                       help="Solver executable"
                       "[default: %default]",

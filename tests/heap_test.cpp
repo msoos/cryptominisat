@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 
 #include "src/heap.h"
 

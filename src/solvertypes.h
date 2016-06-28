@@ -34,7 +34,7 @@
 #include <limits>
 #include <cassert>
 #include "solverconf.h"
-#include "cryptominisat4/solvertypesmini.h"
+#include "cryptominisat5/solvertypesmini.h"
 
 namespace CMSat {
 

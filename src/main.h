@@ -28,7 +28,7 @@
 #include <fstream>
 
 #include "solverconf.h"
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 
 using std::string;
 using std::vector;

@@ -83,11 +83,11 @@ ext_kwds = dict(
     name = "pycryptosat",
     sources = ["${CMAKE_CURRENT_SOURCE_DIR}/pycryptosat.cpp"],
     define_macros = [],
-    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat4-src'],
+    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
     extra_link_args = ldconf,
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
-    libraries = ['cryptominisat4']
+    libraries = ['cryptominisat5']
 )
 
 setup(

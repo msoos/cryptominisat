@@ -50,7 +50,7 @@
 #include "scalmc.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 #include "signalcode.h"
 
 using std::cout;

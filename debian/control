@@ -1,4 +1,4 @@
-Source: cryptominisat4
+Source: cryptominisat5
 Section: science
 Priority: optional
 Maintainer: Mate Soos <soos.mate@gmail.com>
@@ -8,7 +8,7 @@ Homepage: http://msoos.org
 Vcs-Git: git://github.com/msoos/cryptominisat.git
 Vcs-Browser: git://github.com/msoos/cryptominisat.git
 
-Package: cryptominisat4
+Package: cryptominisat5
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: An advanced SAT solver

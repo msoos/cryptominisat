@@ -23,7 +23,7 @@
 
 #include <fstream>
 
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"

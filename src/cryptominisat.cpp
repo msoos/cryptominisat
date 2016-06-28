@@ -20,7 +20,7 @@
 */
 
 #include "constants.h"
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 #include "solver.h"
 #include "drat.h"
 #include "shareddata.h"

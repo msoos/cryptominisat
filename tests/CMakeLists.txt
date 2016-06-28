@@ -82,14 +82,14 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
 )
 include_directories(
-    ${PROJECT_BINARY_DIR}/cmsat4-src
+    ${PROJECT_BINARY_DIR}/cmsat5-src
 )
 
 add_executable(readme_test
     readme_test.cpp
 )
 target_link_libraries(readme_test
-    libcryptominisat4
+    libcryptominisat5
 )
 add_test (
     NAME readme_test
@@ -101,7 +101,7 @@ add_executable(multisol_test
     multisol_test.cpp
 )
 target_link_libraries(multisol_test
-    libcryptominisat4
+    libcryptominisat5
 )
 add_test (
     NAME multisol_test
@@ -147,7 +147,7 @@ foreach(F ${MY_TESTS})
     endif (STATICCOMPILE)
     target_link_libraries(${F}
         ${GTEST_BOTH_LIBRARIES}
-        libcryptominisat4
+        libcryptominisat5
     )
     add_test (
         NAME ${F}
@@ -164,6 +164,6 @@ endforeach()
 #     )
 #
 #     target_link_libraries(library_speed_test
-#         libcryptominisat4
+#         libcryptominisat5
 #     )
 # endif()

@@ -26,6 +26,6 @@ cmake ${3} ..
 make "-j${2}" VERBOSE=1
 echo "built CMS"
 
-# solver is now in cryptominisat/build/cryptominisat4
+# solver is now in cryptominisat/build/cryptominisat5
 
 exit 0

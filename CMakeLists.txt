@@ -52,7 +52,7 @@ foreach (build_config ${build_types})
     endforeach()
 endforeach()
 
-PROJECT(cryptominisat4)
+PROJECT(cryptominisat5)
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
@@ -238,7 +238,7 @@ if(WIN32 AND NOT CYGWIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /PDBCOMPRESS")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:1572864")
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat4)
+  set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 endif()
 
 option(SLOW_DEBUG "Use more debug flags" OFF)
@@ -266,7 +266,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "4.5.3")
+set(CMS_FULL_VERSION "5.0.0")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -438,9 +438,9 @@ endif()
 # -----------------------------------------------------------------------------
 # Provide an export name to be used by targets that wish to export themselves.
 # -----------------------------------------------------------------------------
-set(CRYPTOMINISAT4_EXPORT_NAME "cryptominisat4Targets")
+set(CRYPTOMINISAT5_EXPORT_NAME "cryptominisat5Targets")
 
-add_subdirectory(src cmsat4-src)
+add_subdirectory(src cmsat5-src)
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
@@ -487,47 +487,47 @@ endif()
 
 # -----------------------------------------------------------------------------
 # Export our targets so that other CMake based projects can interface with
-# the build of cryptominisat4 in the build-tree
+# the build of cryptominisat5 in the build-tree
 # -----------------------------------------------------------------------------
-set(CRYPTOMINISAT4_TARGETS_FILENAME "cryptominisat4Targets.cmake")
-set(CRYPTOMINISAT4_CONFIG_FILENAME "cryptominisat4Config.cmake")
-set(CRYPTOMINISAT4_STATIC_DEPS
+set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
+set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
+set(CRYPTOMINISAT5_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
     ${MYSQL_LIB}
     ${M4RI_LIBRARIES}
 )
 
 # Export targets
-set(MY_TARGETS libcryptominisat4 cryptominisat4_simple)
+set(MY_TARGETS libcryptominisat5 cryptominisat5_simple)
 if (NOT ONLY_SIMPLE)
-    set(MY_TARGETS ${MY_TARGETS} cryptominisat4)
+    set(MY_TARGETS ${MY_TARGETS} cryptominisat5)
 endif()
-export(TARGETS ${MY_TARGETS} FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT4_TARGETS_FILENAME}")
+export(TARGETS ${MY_TARGETS} FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_TARGETS_FILENAME}")
 
-# Create cryptominisat4Config file
+# Create cryptominisat5Config file
 set(EXPORT_TYPE "Build-tree")
 set(CONF_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include")
-configure_file(cryptominisat4Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
+configure_file(cryptominisat5Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
 )
 
-set(CRYPTOMINISAT4_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-    "Installation directory for cryptominisat4 CMake files")
+set(CRYPTOMINISAT5_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+    "Installation directory for cryptominisat5 CMake files")
 
-# Create cryptominisat4Config file
+# Create cryptominisat5Config file
 set(EXPORT_TYPE "installed")
 set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(cryptominisat4Config.cmake.in
-   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}" @ONLY
+configure_file(cryptominisat5Config.cmake.in
+   "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT4_CONFIG_FILENAME}"
-    DESTINATION "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${CRYPTOMINISAT5_CONFIG_FILENAME}"
+    DESTINATION "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
 )
 
 # Install the export set for use with the install-tree
-install(EXPORT ${CRYPTOMINISAT4_EXPORT_NAME} DESTINATION
-    "${CRYPTOMINISAT4_INSTALL_CMAKE_DIR}"
+install(EXPORT ${CRYPTOMINISAT5_EXPORT_NAME} DESTINATION
+    "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
 )
 

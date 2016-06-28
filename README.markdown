@@ -50,9 +50,9 @@ $ sudo make install
 ```
 
 Once cryptominisat is installed, the binary is available under
-`/usr/local/bin/cryptominisat4`, the library shared library is available
-under `/usr/local/lib/libcryptominisat4.so` and the 3 header files are
-available under `/usr/local/include/cryptominisat4/`. To use the python
+`/usr/local/bin/cryptominisat5`, the library shared library is available
+under `/usr/local/lib/libcryptominisat5.so` and the 3 header files are
+available under `/usr/local/include/cryptominisat5/`. To use the python
 bindings, you must have python installed while compiling and after the
 compilation has finished, issue:
 
@@ -79,7 +79,7 @@ The files has 3 clauses and 2 variables, this is reflected in the header
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
 True. The only solution to this problem is::
 ```
-$ cryptominisat4 --verb 0 file.cnf
+$ cryptominisat5 --verb 0 file.cnf
 s SATISFIABLE
 v 1 -2 3 0
 ```
@@ -139,7 +139,7 @@ be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
 such, the 1st CNF above would become::
 
 ```
-#include <cryptominisat4/cryptominisat.h>
+#include <cryptominisat5/cryptominisat.h>
 #include <assert.h>
 #include <vector>
 using std::vector;

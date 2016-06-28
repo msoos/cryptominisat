@@ -9,8 +9,8 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h" @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
 
 
 add_custom_command(
@@ -98,75 +98,75 @@ if (TBB_FOUND)
 endif()
 
 if (NOT STATICCOMPILE)
-    add_library(libcryptominisat4 SHARED
+    add_library(libcryptominisat5 SHARED
         ${cryptoms_lib_files}
         cryptominisat.cpp
     )
 else()
-    add_library(libcryptominisat4 STATIC
+    add_library(libcryptominisat5 STATIC
         ${cryptoms_lib_files}
         cryptominisat.cpp
     )
 endif()
-GENERATE_EXPORT_HEADER(libcryptominisat4
-         BASE_NAME libcryptominisat4
-         #EXPORT_MACRO_NAME libcryptominisat4_EXPORT
+GENERATE_EXPORT_HEADER(libcryptominisat5
+         BASE_NAME libcryptominisat5
+         #EXPORT_MACRO_NAME libcryptominisat5_EXPORT
          #EXPORT_FILE_NAME MyLibrary_Export.h
          #STATIC_DEFINE MyLibrary_BUILT_AS_STATIC
 )
 
-add_dependencies(libcryptominisat4
+add_dependencies(libcryptominisat5
     tablestruct
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
-target_link_libraries(libcryptominisat4
+target_link_libraries(libcryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
 )
-set_target_properties(libcryptominisat4 PROPERTIES
-    OUTPUT_NAME cryptominisat4
-    PUBLIC_HEADER "${cryptominisat4_public_headers}"
+set_target_properties(libcryptominisat5 PROPERTIES
+    OUTPUT_NAME cryptominisat5
+    PUBLIC_HEADER "${cryptominisat5_public_headers}"
     VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
 if (IPASIR)
     if (NOT STATICCOMPILE)
-        add_library(ipasircryptominisat4 SHARED
+        add_library(ipasircryptominisat5 SHARED
             ${cryptoms_lib_files}
             ipasir.cpp
         )
     else()
-        add_library(ipasircryptominisat4 STATIC
+        add_library(ipasircryptominisat5 STATIC
             ${cryptoms_lib_files}
             ipasir.cpp
         )
     endif()
-    target_link_libraries(ipasircryptominisat4
+    target_link_libraries(ipasircryptominisat5
         LINK_PUBLIC ${cryptoms_lib_link_libs}
     )
-    set_target_properties(ipasircryptominisat4 PROPERTIES
-        OUTPUT_NAME ipasircryptominisat4
-        PUBLIC_HEADER "${cryptominisat4_public_headers}"
+    set_target_properties(ipasircryptominisat5 PROPERTIES
+        OUTPUT_NAME ipasircryptominisat5
+        PUBLIC_HEADER "${cryptominisat5_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
 endif()
 
-cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/cryptominisat.h )
-cmsat_add_public_header(libcryptominisat4 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat4/solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
-# The cryptominisat4Config.cmake we generate in the build directory depends on
+# The cryptominisat5Config.cmake we generate in the build directory depends on
 # this.
 # -----------------------------------------------------------------------------
-set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat4")
+set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat5")
 add_custom_target(CopyPublicHeaders ALL)
-get_target_property(cryptominisat4_public_headers libcryptominisat4 PUBLIC_HEADER)
-foreach(public_header ${cryptominisat4_public_headers})
+get_target_property(cryptominisat5_public_headers libcryptominisat5 PUBLIC_HEADER)
+foreach(public_header ${cryptominisat5_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
     add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
                        COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -180,15 +180,15 @@ foreach(public_header ${cryptominisat4_public_headers})
                       )
 endforeach()
 
-install(TARGETS libcryptominisat4
-    EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+install(TARGETS libcryptominisat5
+    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat4"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat5"
 )
 
 if (NOT ONLY_SIMPLE)
-    add_executable(cryptominisat4
+    add_executable(cryptominisat5
         main.cpp
         main_exe.cpp
         signalcode.cpp
@@ -200,12 +200,12 @@ if (NOT ONLY_SIMPLE)
         scalmc.cpp
     )
 endif()
-add_executable(cryptominisat4_simple
+add_executable(cryptominisat5_simple
     main_simple.cpp
 )
 
 set(cryptoms_exec_link_libs
-    libcryptominisat4
+    libcryptominisat5
     ${Boost_LIBRARIES}
 )
 
@@ -214,7 +214,7 @@ IF (ZLIB_FOUND)
 ENDIF()
 
 if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat4 PROPERTIES
+    set_target_properties(cryptominisat5 PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -222,38 +222,38 @@ if (NOT ONLY_SIMPLE)
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
-set_target_properties(cryptominisat4_simple PROPERTIES
+set_target_properties(cryptominisat5_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (NOT ONLY_SIMPLE)
-    target_link_libraries(cryptominisat4
+    target_link_libraries(cryptominisat5
         ${cryptoms_exec_link_libs}
     )
-    install(TARGETS cryptominisat4
-        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+    install(TARGETS cryptominisat5
+        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         RUNTIME DESTINATION bin
     )
-    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4")
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 
     target_link_libraries(scalmc
         ${cryptoms_exec_link_libs}
     )
     install(TARGETS scalmc
-        EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         RUNTIME DESTINATION bin
     )
     SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
 endif()
 
-target_link_libraries(cryptominisat4_simple
+target_link_libraries(cryptominisat5_simple
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat4_simple
-    EXPORT ${CRYPTOMINISAT4_EXPORT_NAME}
+install(TARGETS cryptominisat5_simple
+    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     RUNTIME DESTINATION bin
 )
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat4_simple")
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 
 if (FEEDBACKFUZZ)

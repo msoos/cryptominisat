@@ -20,7 +20,7 @@ export DH_OPTIONS
 #export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
 BUILDDIR = $(CURDIR)/build
-OUTPUTCHECK_ARCHIVE = $(CURDIR)/../cryptominisat4_4.6.0+dfsg.orig-outputcheck.tar.gz
+OUTPUTCHECK_ARCHIVE = $(CURDIR)/../cryptominisat5_5.0.0+dfsg.orig-outputcheck.tar.gz
 UTILS_DIR = $(CURDIR)/utils
 
 override_dh_auto_clean:
@@ -28,13 +28,13 @@ override_dh_auto_clean:
 	$(RM) -rf $(UTILS_DIR)/gtest/*
 	$(RM) -rf $(UTILS_DIR)/OutputCheck
 
-override_dh_auto_configure: configure_cryptominisat4 configure_gtest
+override_dh_auto_configure: configure_cryptominisat5 configure_gtest
 
 override_dh_auto_build:
 	dh_auto_build
 	$(MAKE) --directory=$(CURDIR)/utils/gtest
 
-configure_cryptominisat4: copy_gtest extract_outputcheck
+configure_cryptominisat5: copy_gtest extract_outputcheck
 	dh_auto_configure -- \
 	-DENABLE_TESTING=ON \
 	-DLIT_TOOL=/usr/lib/llvm-3.5/build/utils/lit/lit.py \

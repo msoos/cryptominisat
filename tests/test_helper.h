@@ -27,7 +27,7 @@
 #include "gtest/gtest.h"
 #endif
 
-#include "cryptominisat4/solvertypesmini.h"
+#include "cryptominisat5/solvertypesmini.h"
 #include <vector>
 #include <ostream>
 #include <iostream>
@@ -36,7 +36,7 @@
 #include "src/solver.h"
 #include "src/stamp.h"
 #include "src/xor.h"
-#include "cryptominisat4/cryptominisat.h"
+#include "cryptominisat5/cryptominisat.h"
 
 using std::cout;
 using std::endl;

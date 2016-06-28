@@ -25,7 +25,7 @@ import RequestSpotClient
 
 def get_revision():
     _, solvername = os.path.split(options.base_dir + options.solver)
-    if solvername != "cryptominisat4":
+    if solvername != "cryptominisat5":
         return solvername
 
     pwd = os.getcwd()

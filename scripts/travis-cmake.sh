@@ -224,15 +224,15 @@ sudo make install
 
 case $CMS_CONFIG in
     MYSQL|WEB)
-        echo "1 2 0" | ./cryptominisat4 --sql 1 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat5 --sql 1 --zero-exit-status
     ;;
 
     SQLITE)
-        echo "1 2 0" | ./cryptominisat4 --sql 2 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat5 --sql 2 --zero-exit-status
     ;;
 
     M4RI)
-        echo "1 2 0" | ./cryptominisat4 --xor 1 --zero-exit-status
+        echo "1 2 0" | ./cryptominisat5 --xor 1 --zero-exit-status
     ;;
 
     *)
@@ -242,7 +242,7 @@ esac
 
 if [ "$CMS_CONFIG" == "NORMAL" ]; then
     #elimination checks
-    CMS_PATH="${BUILD_DIR}/cryptominisat4"
+    CMS_PATH="${BUILD_DIR}/cryptominisat5"
     cd ../tests/simp-checks/
     git clone --depth 1 https://github.com/msoos/testfiles.git
 
@@ -304,7 +304,7 @@ esac
 
 if [ "$CMS_CONFIG" = "COVERAGE" ]; then
   # capture coverage info
-  lcov --directory build/cmsat4-src/CMakeFiles/libcryptominisat4.dir --capture --output-file coverage.info
+  lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
 
   # filter out system and test code
   lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
