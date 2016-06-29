@@ -290,7 +290,23 @@ cmake -DUSE_GAUSS=ON ..
 make
 ```
 
-To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use "--hhelp" to find all the gaussian elimination options.
+To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
+
+```
+Gauss options:
+  --iterreduce arg (=1)       Reduce iteratively the matrix that is updated.We
+                              effectively are moving the start to the last
+                              column updated
+  --maxmatrixrows arg (=3000) Set maximum no. of rows for gaussian matrix. Too
+                              large matrixesshould bee discarded for reasons of
+                              efficiency
+  --autodisablegauss arg (=1) Automatically disable gauss when performing badly
+  --minmatrixrows arg (=5)    Set minimum no. of rows for gaussian matrix.
+                              Normally, too smallmatrixes are discarded for
+                              reasons of efficiency
+  --savematrix arg (=2)       Save matrix every Nth decision level
+  --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
+```
 
 Testing
 -----
