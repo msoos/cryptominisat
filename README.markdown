@@ -242,6 +242,45 @@ only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,
 important variables.
 
+Preprocessor usage
+-----
+
+Run cryptominisat5 as:
+
+```
+./cryptominisat5 -p1 input.cnf simplified.cnf
+some_sat_solver simplified.cnf > output
+./cryptominisat5 -p2 output
+```
+
+where `some_sat_solver` is a SAT solver of your choice that outputs a solution in the format of:
+
+```
+s SATISFIABLE
+v [solution] 0
+```
+
+or 
+
+```
+s UNSATISFIABLE
+```
+
+You can tune the schedule of simplifications by issuing `--sched X,Y,Z...`. The default schedule for preprocessing is: `handle-comps,scc-vrepl, cache-clean, cache-tryboth,sub-impl, intree-probe, probe,sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,str-impl, sub-impl, sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber`. Note that `occ-gauss` must be the very last scheduled option, in case you wish to use it.
+
+Gaussian elimination
+-----
+For building with Gaussian Elimination, you need to perform:
+
+```
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
+mkdir build && cd build
+cmake -DUSE_GAUSS=ON ..
+make
+```
+
+To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use "--hhelp" to find all the gaussian elimination options.
 
 Testing
 -----
