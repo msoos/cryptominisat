@@ -339,6 +339,7 @@ int CUSP::solve()
     conf.gaussconf.max_matrix_rows = 3000;
     conf.gaussconf.decision_until = 3000;
     conf.gaussconf.max_num_matrixes = 1;
+    conf.gaussconf.min_matrix_rows = 5;
     conf.gaussconf.autodisable = false;
 
     openLogFile();

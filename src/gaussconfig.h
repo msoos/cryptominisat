@@ -37,7 +37,7 @@ class GaussConf
         , autodisable(true)
         , iterativeReduce(true)
         , max_matrix_rows(800)
-        , min_matrix_rows(5)
+        , min_matrix_rows(15)
         , max_num_matrixes(2)
     {
     }
