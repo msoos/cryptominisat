@@ -107,8 +107,8 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
-    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     #ifdef SLOW_DEBUG
+    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_lit(lits, blockedOn));
     #endif
