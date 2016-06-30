@@ -336,6 +336,8 @@ int CUSP::solve()
 {
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 15;
+    conf.gaussconf.max_matrix_rows = 3000;
+    conf.gaussconf.decision_until = 3000;
     conf.gaussconf.max_num_matrixes = 1;
     conf.gaussconf.autodisable = false;
 

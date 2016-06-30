@@ -33,12 +33,12 @@ class GaussConf
 
     GaussConf() :
         only_nth_gauss_save(2)
-        , decision_until(3000)
+        , decision_until(700)
         , autodisable(true)
         , iterativeReduce(true)
-        , max_matrix_rows(3000)
+        , max_matrix_rows(800)
         , min_matrix_rows(5)
-        , max_num_matrixes(3)
+        , max_num_matrixes(2)
     {
     }
 
