@@ -35,33 +35,38 @@ The following are not required but are useful::
 $ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev libsqlite3-dev
 ```
 
-Compiling and installing
+Compiling and installing under Linux
 -----
 
 You have to use cmake to compile and install. I suggest::
 ```
-$ tar xzvf my-cryptominisat-tarball.tar.gz
+$ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
 $ mkdir build
 $ cd build
 $ cmake ..
 $ make -j4
 $ sudo make install
+$ sudo ldconfig
 ```
 
 Once cryptominisat is installed, the binary is available under
 `/usr/local/bin/cryptominisat5`, the library shared library is available
 under `/usr/local/lib/libcryptominisat5.so` and the 3 header files are
-available under `/usr/local/include/cryptominisat5/`. To use the python
-bindings, you must have python installed while compiling and after the
-compilation has finished, issue:
+available under `/usr/local/include/cryptominisat5/`.You can uninstall
+both by executing `sudo make uninstall`.
+
+Compiling under Windows
+-----
 
 ```
-$ sudo ldconfig
+$ unzip cryptominisat-version.zip
+$ cd cryptominisat-version
+$ cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON
+$ msbuild INSTALL.vcxproj
 ```
 
-You can uninstall both by simply doing `sudo make uninstall` in their respective
-directories.
+The `cryptominisat5_simple` binary should now be built. In case you have boost libraries installed, it may also detect it, and you may get the full `cryptominisat5` binary built too. The two binaries only differ in the number of options supported.
 
 Command-line usage
 -----
