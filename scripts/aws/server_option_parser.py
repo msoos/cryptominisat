@@ -103,6 +103,10 @@ For the --solver options you can give:
                       action="store_true", help="Use STATS and get SQLITE data"
                       )
 
+    parser.add_option("--gauss", default=False, dest="gauss",
+                      action="store_true", help="Use GAUSS"
+                      )
+
     parser.add_option("--logfile", dest="logfile_name", type=str,
                       default="python_server_log.txt", help="Name of LOG file")
 

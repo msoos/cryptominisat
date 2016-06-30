@@ -472,6 +472,9 @@ def build_cryptominisat(indata):
     if indata["stats"]:
         opts.append("-DSTATS=ON")
 
+    if indata["gauss"]:
+        opts.append("-DUSE_GAUSS=ON")
+
     ret = os.system('%s/cryptominisat/scripts/aws/build_cryptominisat.sh %s >> %s/build.log 2>&1' %
                     (options.base_dir,
                      " ".join(opts),
