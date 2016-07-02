@@ -145,7 +145,9 @@ void Solver::set_mysql(
 ) {
     #ifdef USE_MYSQL
     sqlStats = new MySQLStats(sqlServer, sqlUser, sqlPass, sqlDatabase);
-    sqlStats->setup(this);
+    if (!sqlStats->setup(this)) {
+        exit(-1);
+    }
     if (conf.verbosity >= 4) {
         cout << "c Connected to MySQL server" << endl;
     }
@@ -163,7 +165,9 @@ void Solver::set_sqlite(string
 ) {
     #ifdef USE_SQLITE3
     sqlStats = new SQLiteStats(filename);
-    sqlStats->setup(this);
+    if (!sqlStats->setup(this)) {
+        exit(-1);
+    }
     if (conf.verbosity >= 4) {
         cout << "c Connected to SQLite server" << endl;
     }
