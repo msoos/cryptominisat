@@ -90,7 +90,7 @@ public:
 
     //Get state
     uint32_t    decisionLevel() const;      ///<Returns current decision level
-    size_t      getTrailSize() const;       ///<Return trail size (MUST be called at decision level 0)
+    size_t      getTrailSize() const; //number of variables set at decision level 0
     size_t trail_size() const {
         return trail.size();
     }
@@ -293,9 +293,11 @@ inline uint32_t PropEngine::nAssigns() const
 
 inline size_t PropEngine::getTrailSize() const
 {
-    assert(decisionLevel() == 0);
-
-    return trail.size();
+    if (decisionLevel() == 0) {
+        return trail.size();
+    } else {
+        return trail_lim[0];
+    }
 }
 
 inline bool PropEngine::satisfied(const BinaryClause& bin)
