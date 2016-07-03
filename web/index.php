@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8">
-    <title>Cryptominisat 3 visualization</title>
+    <title>Cryptominisat 5 visualization</title>
 
     <link rel="stylesheet" type="text/css" href="jquery.jqplot.css" />
     <script type="text/javascript" src="jquery-1.11.3.min.js"></script>
