@@ -21,7 +21,7 @@ if [ $1 ]; then
 
     echo "$SETUP_DB" | mysql -u root -p "$1"
     if [ $? -ne 0 ]; then
-        echo "ERROR: Cannot create database!";
+        echo "ERROR: Cannot create database! Maybe wrong password?";
         exit -1;
     fi
     mysql -u root -p "$1" cmsat < cmsat_tablestructure.sql
