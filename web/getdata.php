@@ -262,39 +262,6 @@ class MainDataGetter
         );
 
         $this->print_one_graph(
-            "Avg. agility"
-            , array("agility")
-            , array("avg. agility")
-        );
-
-//         $this->print_one_graph(
-//             array("var polarity flipped")
-//             , array("flipped")
-//             , array("")
-//         );
-
-        $this->print_one_graph(
-            "Conflicts immediately following a conflict %"
-            , array("conflAfterConfl")
-            , array("")
-        );
-
-        /*print_one_graph("conflAfterConflSD", array("conflAfterConfl")
-            , array("conflict after conflict std dev %"));*/
-
-//         $this->print_one_graph(
-//             "Avg. traversed watchlist size"
-//             , array("watchListSizeTraversed")
-//             , array("")
-//         );
-
-        /*print_one_graph(array("watchListSizeTraversedSD")
-            , array("avg. traversed watchlist size std dev"));*/
-
-        /*print_one_graph("litPropagatedSomething", array("litPropagatedSomething")
-            , array("literal propagated something with binary clauses %"));*/
-
-        $this->print_one_graph(
             "No. of variables replaced"
             , array("replaced")
             , array("")
@@ -365,21 +332,21 @@ class MainDataGetter
             )
         );
 
-        $this->print_one_graph(
-            "Resolutions used clause types %"
-            , array(
-              "resolBin"
-            , "resolTri"
-            , "resolLIrred"
-            , "resolLRed"
-            )
-            ,array(
-              "bin"
-            , "tri"
-            , "long irred"
-            , "long red"
-            )
-        );
+//         $this->print_one_graph(
+//             "Resolutions used clause types %"
+//             , array(
+//               "resolBin"
+//             , "resolTri"
+//             , "resolLIrred"
+//             , "resolLRed"
+//             )
+//             ,array(
+//               "bin"
+//             , "tri"
+//             , "long irred"
+//             , "long red"
+//             )
+//         );
 
         /*print_one_graph("branchDepthSD", array("branchDepthSD")
             , array("branch depth std dev"));

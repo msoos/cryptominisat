@@ -7,7 +7,7 @@ $username="cmsat_presenter";
 
 #this is for my local MySQL install, not my website
 #sorry for getting your hopes up
-$password="neud21kahgsdk";
+$password="";
 $database="cmsat";
 
 $sql = new mysqli("localhost", $username, $password, $database);

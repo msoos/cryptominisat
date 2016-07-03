@@ -35,7 +35,7 @@
 </head>
 
 <body>
-<h1>Cryptominisat 3</h1>
+<h1>Cryptominisat 5</h1>
 
 <h3>Replacing wordy authority with visible certainty</h4>
 <p>This webpage shows the partial solving of two SAT instances, visually.
@@ -70,9 +70,9 @@ find a full list of terms below.
 &nbsp;
 <div style="display:inline;" id="total_files_info"></div>
 <br/>
-<select id='version' onchange='changed_version(this.value);' style="width:20%;">
+<!--<select id='version' onchange='changed_version(this.value);' style="width:20%;">
 <option value = "idtest">idtest</option>
-</select>
+</select>-->
 <select id="fname" style="width:60%;">
 <option value="test">Test</option>
 </select>
@@ -80,15 +80,16 @@ find a full list of terms below.
 </div>
 
 <script type="text/javascript">
-function changed_version(val) {
-    console.log(val);
-    new fill_files_options(val);
-};
+// function changed_version(val) {
+//     console.log(val);
+//     new fill_files_options(val);
+// };
+fill_files_options();
 
-$('#fname').change(function(){
-    selected_runID(jQuery("#fname option:selected").val());
-    //selected_runID(jQuery("#fname option:selected").text());
-});
+// $('#fname').change(function(){
+//     selected_runID(jQuery("#fname option:selected").val());
+//     //selected_runID(jQuery("#fname option:selected").text());
+// });
 
 function fill_versions()
 {
@@ -109,8 +110,7 @@ function fill_versions()
 function fill_files_options()
 {
     link = "get_files_for_version.php?";
-    link += "version=" + jQuery("#version option:selected").text();
-    link += "&unfinish=" + $('#need_unfinished')[0].checked;
+    link += "unfinish=" + $('#need_unfinished')[0].checked;
     link += "&sat=" + $('#need_SAT')[0].checked;
     link += "&unsat=" + $('#need_UNSAT')[0].checked;
     jQuery.getJSON(link,

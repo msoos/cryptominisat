@@ -1,7 +1,6 @@
 <?php
 include "mysql_connect.php";
 
-$version = $_GET["version"];
 $unfinished = $_GET["unfinish"] == "true";
 $sat = $_GET["sat"] == "true";
 $unsat = $_GET["unsat"] == "true";
@@ -36,8 +35,7 @@ function get_files_for_version($sat, $unsat, $unfinished)
     $query = "
     select solverRun.runID as runID, tags.tag as fname
     from tags, solverRun left join finishup on (finishup.runID = solverRun.runID)
-    where solverRun.version = ?
-    and solverRun.runID = tags.runID
+    where solverRun.runID = tags.runID
     and tags.tagname='filename'
     and $toadd
     order by tags.tag;";
@@ -47,7 +45,6 @@ function get_files_for_version($sat, $unsat, $unfinished)
         print "Error:".$sql->error;
         die("Cannot prepare statement");
     }
-    $stmt->bind_param('s', $version);
     $stmt->execute();
     $stmt->bind_result($runID, $fname);
 
