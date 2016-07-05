@@ -80,36 +80,16 @@ find a full list of terms below.
 </div>
 
 <script type="text/javascript">
-// function changed_version(val) {
-//     console.log(val);
-//     new fill_files_options(val);
-// };
 fill_files_options();
 
-// $('#fname').change(function(){
-//     selected_runID(jQuery("#fname option:selected").val());
-//     //selected_runID(jQuery("#fname option:selected").text());
-// });
-
-function fill_versions()
-{
-    jQuery.getJSON("get_versions.php",
-        function(data){
-            var select = document.getElementById('version');
-            select.options.length = 0; // clear out existing items
-            for(var i=0; i < data.length; i++) {
-                var d = data[i];
-                select.options.add(new Option(d.text, d.value));
-            }
-
-            changed_version(jQuery("#version option:selected").val());
-        }
-    );
-};
+$('#fname').change(function(){
+    selected_runID(jQuery("#fname option:selected").val());
+    //selected_runID(jQuery("#fname option:selected").text());
+});
 
 function fill_files_options()
 {
-    link = "get_files_for_version.php?";
+    link = "get_files.php?";
     link += "unfinish=" + $('#need_unfinished')[0].checked;
     link += "&sat=" + $('#need_SAT')[0].checked;
     link += "&unsat=" + $('#need_UNSAT')[0].checked;
@@ -130,8 +110,7 @@ function fill_files_options()
     );
 };
 
-
-fill_versions();
+// fill_versions();
 </script>
 
 <p id="fileinfo"></p>

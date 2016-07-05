@@ -387,8 +387,10 @@ class MainDataGetter
         $this->print_one_graph(
             "Cleaning removed learnt cls with resolutions %"
             , array(
-                  "removedResolBin"
-                , "removedResolTri"
+                  "removedResolBinIrred"
+                , "removedResolBinRed"
+                , "removedResolTriIrred"
+                , "removedResolTriRed"
                 , "removedResolLIrred"
                 , "removedResolLRed"
             )
@@ -403,8 +405,10 @@ class MainDataGetter
         $this->print_one_graph(
             "After cleaning remaining learnt cls with resolutions %"
             , array(
-                  "remainResolBin"
-                , "remainResolTri"
+                  "remainResolBinIrred"
+                , "remainResolBinRed"
+                , "remainResolTriIrred"
+                , "remainResolTriRed"
                 , "remainResolLIrred"
                 , "remainResolLRed"
             )
