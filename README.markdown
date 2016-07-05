@@ -332,3 +332,7 @@ cmake -DENABLE_TESTING=ON ..
 make -j4
 make test
 ```
+
+Web-based run explorer
+-----
+Please see under web/README.markdown for details. This is an experimental feature.
