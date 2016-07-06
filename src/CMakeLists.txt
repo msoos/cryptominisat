@@ -219,6 +219,9 @@ if (NOT ONLY_SIMPLE)
     set_target_properties(cryptominisat5 PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
+    if (STATICCOMPILE)
+      SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_END_STATIC 1)
+    endif()
 
     if (USE_GAUSS)
         set_target_properties(scalmc PROPERTIES
@@ -230,6 +233,9 @@ endif()
 set_target_properties(cryptominisat5_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
+if (STATICCOMPILE)
+    SET_TARGET_PROPERTIES(cryptominisat5_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
+ endif()
 
 if (NOT ONLY_SIMPLE)
     target_link_libraries(cryptominisat5

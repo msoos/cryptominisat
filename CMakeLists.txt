@@ -104,7 +104,7 @@ if (SANITIZE)
     #add_cxx_flag("-Wsign-conversion")
     #add_cxx_flag("-Wconversion")
     add_cxx_flag("-Wdeprecated")
-    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
+    #set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -pie ")
 endif()
 
 include(CheckCXXCompilerFlag)
@@ -208,7 +208,7 @@ if (COVERAGE)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CMAKE_EXE_LINKER_FLAGS " -Wl,--discard-all -Wl,--build-id=sha1")
+    set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -218,7 +218,8 @@ option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(STATICCOMPILE)
         MESSAGE(STATUS "Compiling for static library use")
-        set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -static")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -static ")
+        #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static ")
         SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
         set(NOMYSQL ON)
     else()
@@ -284,10 +285,6 @@ MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 
-if (STATICCOMPILE)
-    set(ONLY_SIMPLE ON)
-endif()
-
 if (NOT ONLY_SIMPLE)
     set (boost_components "")
     set(boost_components ${boost_components} program_options)
@@ -331,10 +328,6 @@ ENDIF ()
 # Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------
 option(NOZLIB "Don't use zlib" OFF)
-
-if (STATICCOMPILE)
-    set(NOZLIB ON)
-endif()
 
 if (NOT NOZLIB)
     find_package(ZLIB)
