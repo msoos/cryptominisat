@@ -626,6 +626,36 @@ TEST(xor_interface, xor3)
     EXPECT_EQ( pairs.size(), 2u);
 }
 
+TEST(error_throw, multithread_newvar)
+{
+    SATSolver s;
+
+    s.new_vars(3);
+    EXPECT_THROW({
+        s.set_num_threads(3);}
+        , std::runtime_error);
+}
+
+TEST(error_throw, multithread_0)
+{
+    SATSolver s;
+
+    EXPECT_THROW({
+        s.set_num_threads(0);}
+        , std::runtime_error);
+}
+
+TEST(error_throw, multithread_drat)
+{
+    SATSolver s;
+    std::ostream* os;
+    s.set_drat(os, false);
+
+    EXPECT_THROW({
+        s.set_num_threads(3);}
+        , std::runtime_error);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

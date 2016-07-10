@@ -252,7 +252,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 {
     if (num <= 0) {
         std::cerr << "ERROR: Number of threads must be at least 1" << endl;
-        exit(-1);
+        throw std::runtime_error("ERROR: Number of threads must be at least 1");
     }
     if (num == 1) {
         return;
@@ -260,12 +260,12 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 
     if (data->solvers[0]->drat->enabled()) {
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
-        exit(-1);
+        throw std::runtime_error("ERROR: DRAT cannot be used in multi-threaded mode");
     }
 
     if (data->cls > 0 || nVars() > 0) {
         std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
-        exit(-1);
+        throw std::runtime_error("ERROR: You must first call set_num_threads() and only then add clauses and variables");
     }
 
     data->cls_lits.reserve(CACHE_SIZE);
