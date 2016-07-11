@@ -281,7 +281,7 @@ class Solver : public Searcher
         //Stats printing
         void print_norm_stats(const double cpu_time) const;
         void print_min_stats(const double cpu_time) const;
-        void print_all_stats(const double cpu_time) const;
+        void print_full_restart_stat(const double cpu_time) const;
 
         lbool simplify_problem(const bool startup);
         bool execute_inprocess_strategy(const bool startup, const string& strategy);

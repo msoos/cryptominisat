@@ -2004,7 +2004,7 @@ void Solver::print_stats(const double cpu_time) const
     );
 
     if (conf.verbStats >= 2) {
-        print_all_stats(cpu_time);
+        print_full_restart_stat(cpu_time);
     } else if (conf.verbStats == 1) {
         print_norm_stats(cpu_time);
     } else {
@@ -2174,7 +2174,7 @@ void Solver::print_norm_stats(const double cpu_time) const
     print_stats_line("c Total time", cpu_time);
 }
 
-void Solver::print_all_stats(const double cpu_time) const
+void Solver::print_full_restart_stat(const double cpu_time) const
 {
     sumSearchStats.print(sumPropStats.propagations);
     sumPropStats.print(sumSearchStats.cpu_time);

@@ -199,7 +199,7 @@ class DLL_PUBLIC SolverConf
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
         int  doPrintGateDot; ///< Print DOT file of gates
         int  doPrintConflDot; ///< Print DOT file for each conflict
-        int  print_all_stats;
+        int  print_full_restart_stat;
         int  verbStats;
         int do_print_times; ///Print times during verbose output
         int print_restart_line_every_n_confl;

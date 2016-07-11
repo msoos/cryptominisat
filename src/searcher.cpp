@@ -1823,7 +1823,7 @@ void Searcher::print_restart_header() const
 void Searcher::print_restart_stat_line() const
 {
     printBaseStats();
-    if (conf.print_all_stats) {
+    if (conf.print_full_restart_stat) {
         solver->print_clause_stats();
         hist.print();
     } else {
