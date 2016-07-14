@@ -8,7 +8,7 @@ input in the [DIMACS](http://www.satcompetition.org/2009/format-benchmarks2009.h
 format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
-provides the best of both words: ease of use and a powerful interface.
+provides the best of both worlds: ease of use and a powerful interface.
 
 TravisCi: [![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 
@@ -328,6 +328,7 @@ Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
 
 ```
 mkdir build
+cd build
 cmake -DENABLE_TESTING=ON ..
 make -j4
 make test
