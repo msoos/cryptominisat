@@ -320,8 +320,8 @@ For testing you will need the GIT checkout and get the submodules:
 ```
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
-git submodules init
-git submodules update
+git submodule init
+git submodule update
 ```
 
 Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
