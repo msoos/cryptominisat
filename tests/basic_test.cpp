@@ -656,6 +656,25 @@ TEST(error_throw, multithread_drat)
         , std::runtime_error);
 }
 
+TEST(error_throw, toomany_vars)
+{
+    SATSolver s;
+
+    EXPECT_THROW({
+        s.new_vars(1ULL << 28);}
+        , std::runtime_error);
+}
+
+TEST(error_throw, toomany_vars2)
+{
+    SATSolver s;
+    s.new_vars(1ULL << 27);
+
+    EXPECT_THROW({
+        s.new_vars(1ULL << 27);}
+        , std::runtime_error);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -694,6 +694,13 @@ DLL_PUBLIC void SATSolver::new_var()
 
 DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 {
+    if (n >= 1ULL<<28
+        || (data->vars_to_add + n) >= 1ULL<<28
+    ) {
+        cout << "ERROR! Variable requested is far too large" << endl;
+        throw std::runtime_error("ERROR! Variable requested is far too large");
+    }
+
     if (data->log) {
         (*data->log) << "c Solver::new_vars( " << n << " )" << endl;
     }
