@@ -675,6 +675,16 @@ TEST(error_throw, toomany_vars2)
         , std::runtime_error);
 }
 
+TEST(error_throw, toomany_vars_single)
+{
+    SATSolver s;
+    s.new_vars((1ULL << 28) -1);
+
+    EXPECT_THROW({
+        s.new_var();}
+        , std::runtime_error);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
