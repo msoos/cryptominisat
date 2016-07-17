@@ -686,10 +686,7 @@ DLL_PUBLIC uint32_t SATSolver::nVars() const
 
 DLL_PUBLIC void SATSolver::new_var()
 {
-    if (data->log) {
-        (*data->log) << "c Solver::new_var()" << endl;
-    }
-    data->vars_to_add += 1;
+    new_vars(1);
 }
 
 DLL_PUBLIC void SATSolver::new_vars(const size_t n)
