@@ -21,6 +21,8 @@
 
 #include "cnf.h"
 
+#include <stdexcept>
+
 #include "vardata.h"
 #include "solvertypes.h"
 #include "clauseallocator.h"
