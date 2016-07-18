@@ -88,6 +88,10 @@ include_directories(
 add_executable(readme_test
     readme_test.cpp
 )
+    if (STATICCOMPILE)
+        set_target_properties(readme_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(readme_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+    endif (STATICCOMPILE)
 target_link_libraries(readme_test
     libcryptominisat5
 )
@@ -100,6 +104,10 @@ add_test (
 add_executable(multisol_test
     multisol_test.cpp
 )
+    if (STATICCOMPILE)
+        set_target_properties(multisol_test PROPERTIES LINK_SEARCH_END_STATIC 1)
+        set_target_properties(multisol_test PROPERTIES LINK_SEARCH_START_STATIC 0)
+    endif (STATICCOMPILE)
 target_link_libraries(multisol_test
     libcryptominisat5
 )
