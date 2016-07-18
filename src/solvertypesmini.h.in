@@ -152,6 +152,8 @@ public:
         return lbool(v);
     }
 
+    uint8_t getValue() const { return value; }
+
     friend int   toInt  (lbool l);
     friend lbool toLbool(int   v);
     friend class llbool;
