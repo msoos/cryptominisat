@@ -376,6 +376,7 @@ int CUSP::solve()
     } else {
         finished = ScalApproxMC(solCount);
     }
+    cout << "ApproxMC finished in " << (cpuTimeTotal() - startTime) << " s" << endl;
     if (!finished) {
         cout << " (TIMED OUT)" << endl;
         return 0;
@@ -514,6 +515,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
             if (currentNumSolutions < 0) {
                 //Remove all hashes
                 assumps.clear();
+                hashVars.clear();
 
                 if (repeatTry < 2) {    /* Retry up to twice more */
                     assert(hashCount > 0);
