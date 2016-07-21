@@ -60,6 +60,8 @@ set(cryptoms_lib_files
     solvefeatures.cpp
     searchstats.cpp
     xorfinder.cpp
+    cryptominisat_c.cpp
+    ctest.c
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
