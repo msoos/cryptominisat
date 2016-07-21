@@ -11,6 +11,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h"
+    DESTINATION
+    "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/")
 
 
 add_custom_command(
@@ -61,7 +65,6 @@ set(cryptoms_lib_files
     searchstats.cpp
     xorfinder.cpp
     cryptominisat_c.cpp
-    ctest.c
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -119,8 +122,9 @@ GENERATE_EXPORT_HEADER(libcryptominisat5
 
 add_dependencies(libcryptominisat5
     tablestruct
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
@@ -157,6 +161,7 @@ if (IPASIR)
     )
 endif()
 
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
 

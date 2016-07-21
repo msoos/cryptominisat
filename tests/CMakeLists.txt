@@ -85,13 +85,10 @@ include_directories(
     ${PROJECT_BINARY_DIR}/cmsat5-src
 )
 
+# README test
 add_executable(readme_test
     readme_test.cpp
 )
-    if (STATICCOMPILE)
-        set_target_properties(readme_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(readme_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-    endif (STATICCOMPILE)
 target_link_libraries(readme_test
     libcryptominisat5
 )
@@ -101,13 +98,23 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+# C bindings test
+add_executable(c_test
+    c_test.c
+)
+target_link_libraries(c_test
+    libcryptominisat5
+)
+add_test (
+    NAME c_test
+    COMMAND c_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+# Multisol test
 add_executable(multisol_test
     multisol_test.cpp
 )
-    if (STATICCOMPILE)
-        set_target_properties(multisol_test PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(multisol_test PROPERTIES LINK_SEARCH_START_STATIC 0)
-    endif (STATICCOMPILE)
 target_link_libraries(multisol_test
     libcryptominisat5
 )
@@ -117,6 +124,7 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+#google test harness
 set (MY_TESTS
     basic_test
     assump_test
@@ -149,10 +157,6 @@ foreach(F ${MY_TESTS})
     add_executable(${F}
         ${F}.cpp
     )
-    if (STATICCOMPILE)
-        set_target_properties(${F} PROPERTIES LINK_SEARCH_END_STATIC 1)
-        set_target_properties(${F} PROPERTIES LINK_SEARCH_START_STATIC 0)
-    endif (STATICCOMPILE)
     target_link_libraries(${F}
         ${GTEST_BOTH_LIBRARIES}
         libcryptominisat5
