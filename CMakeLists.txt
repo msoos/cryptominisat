@@ -383,22 +383,18 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 macro(cmsat_add_public_header LIBTARGET HEADER)
-    if(EXISTS "${HEADER}")
-        # Get existing PUBLIC_HEADER
-        get_target_property(EXISTING_PUBLIC_HEADERS ${LIBTARGET} PUBLIC_HEADER)
-        if(EXISTING_PUBLIC_HEADERS)
-            list(APPEND EXISTING_PUBLIC_HEADERS "${HEADER}")
-        else()
-            # Do not append to empty list
-            set(EXISTING_PUBLIC_HEADERS "${HEADER}")
-        endif()
-        set_target_properties(${LIBTARGET}
-                              PROPERTIES
-                              PUBLIC_HEADER "${EXISTING_PUBLIC_HEADERS}"
-                             )
+    get_target_property(EXISTING_PUBLIC_HEADERS ${LIBTARGET} PUBLIC_HEADER)
+    if(EXISTING_PUBLIC_HEADERS)
+        list(APPEND EXISTING_PUBLIC_HEADERS "${HEADER}")
     else()
-        message(FATAL_ERROR "Cannot add public header, file ${HEADER} does not exist.")
+        # Do not append to empty list
+        set(EXISTING_PUBLIC_HEADERS "${HEADER}")
     endif()
+    set_target_properties(
+        ${LIBTARGET}
+        PROPERTIES
+        PUBLIC_HEADER "${EXISTING_PUBLIC_HEADERS}"
+     )
 endmacro()
 
 # -----------------------------------------------------------------------------

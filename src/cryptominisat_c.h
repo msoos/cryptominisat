@@ -42,8 +42,8 @@ typedef struct slice_lbool { const c_lbool* vals; size_t num_vals; } slice_lbool
     #define NOEXCEPT
 
     #define L_TRUE (0u)
-    #define L_FALSE (0u)
-    #define L_UNDEF (0u)
+    #define L_FALSE (1u)
+    #define L_UNDEF (2u)
 
     // forward declaration
     typedef struct SATSolver SATSolver;

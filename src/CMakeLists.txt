@@ -11,11 +11,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
-file(COPY
-    "${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h"
-    DESTINATION
-    "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/")
+add_custom_command(
+    OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h)
 
+add_custom_target(cmsat_c_header ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h)
 
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
@@ -122,9 +123,9 @@ GENERATE_EXPORT_HEADER(libcryptominisat5
 
 add_dependencies(libcryptominisat5
     tablestruct
+    cmsat_c_header
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h
     ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
