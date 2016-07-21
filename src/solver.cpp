@@ -229,9 +229,9 @@ bool Solver::add_xor_clause_inter(
     }
     ps.resize(ps.size() - (i - j));
 
-    if (ps.size() > (0x01UL << 18)) {
+    if (ps.size() >= (0x01UL << 28)) {
         cout << "Too long clause!" << endl;
-        std::exit(-1);
+        throw std::runtime_error("ERROR! Too long clause");
     }
     //cout << "Cleaned ps is: " << ps << endl;
 
