@@ -57,4 +57,5 @@ int main(void) {
     assert(model.vals[2].x == L_TRUE);
 
     cmsat_free(solver);
+    return 0;
 }
