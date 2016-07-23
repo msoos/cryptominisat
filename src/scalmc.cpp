@@ -587,7 +587,6 @@ bool CUSP::ScalApproxMC(SATCount& count)
             hashPrev = swapVar;
         }
         assumps.clear();
-        hashVars.clear();
         solver->simplify(&assumps);
         hashCount =mPrev;
     }
