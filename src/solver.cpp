@@ -647,9 +647,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     assert(qhead == trail.size());
 
     //Check for too long clauses
-    if (ps.size() > (0x01UL << 18)) {
+    if (ps.size() > (0x01UL << 28)) {
         cout << "Too long clause!" << endl;
-        std::exit(-1);
+        throw std::runtime_error("ERROR! Too long clause");
     }
 
     //Check for too large variable number
