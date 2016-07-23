@@ -685,6 +685,20 @@ TEST(error_throw, toomany_vars_single)
         , std::runtime_error);
 }
 
+TEST(no_error_throw, long_clause)
+{
+    SATSolver s;
+    s.new_vars(1ULL << 20);
+
+    vector<Lit> cl;
+    for(size_t i = 0; i < 1ULL << 20; i++) {
+        cl.push_back(Lit(i, false));
+    }
+    s.add_clause(cl);
+    lbool ret = s.solve();
+    EXPECT_EQ(ret, l_True);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

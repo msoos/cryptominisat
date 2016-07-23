@@ -88,6 +88,7 @@ void* ClauseAllocator::allocEnough(
     if (size + needed > capacity) {
         //Grow by default, but don't go under or over the limits
         size_t newcapacity = capacity * ALLOC_GROW_MULT;
+        newcapacity = std::max<size_t>(newcapacity, size+needed);
         newcapacity = std::min<size_t>(newcapacity, MAXSIZE);
         newcapacity = std::max<size_t>(newcapacity, MIN_LIST_SIZE);
 
