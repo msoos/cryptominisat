@@ -342,6 +342,11 @@ int CUSP::solve()
     conf.gaussconf.min_matrix_rows = 5;
     conf.gaussconf.autodisable = false;
 
+    //set seed
+    assert(vm.count("random"));
+    unsigned int seed = vm["random"].as<unsigned int>();
+    randomEngine.seed(seed);
+
     openLogFile();
     startTime = cpuTimeTotal();
 

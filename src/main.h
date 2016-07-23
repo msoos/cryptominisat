@@ -74,10 +74,10 @@ class Main
 
         po::positional_options_description p;
         po::options_description all_options;
-        po::variables_map vm;
 
     protected:
         //Options
+        po::variables_map vm;
         virtual void add_supported_options();
         virtual void call_after_parse(const vector<uint32_t>& /*independent_vars*/)
         {}

@@ -46,7 +46,6 @@ public:
         , approxMCOptions("ApproxMC options")
     {
         must_interrupt.store(false, std::memory_order_relaxed);
-        randomEngine.seed(0);
     }
     int solve() override;
     void add_supported_options() override;
