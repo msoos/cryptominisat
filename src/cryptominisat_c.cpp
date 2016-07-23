@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "cryptominisat_c.h"
+#include "cryptominisat5/cryptominisat_c.h"
 #include "constants.h"
 #include "cryptominisat5/cryptominisat.h"
 
