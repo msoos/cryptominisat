@@ -101,6 +101,7 @@ class SCCFinder {
     private:
         void tarjan(const uint32_t vertex);
         void doit(const Lit lit, const uint32_t vertex);
+        void add_bin_xor_in_tmp();
 
         //temporaries
         uint32_t globalIndex;
