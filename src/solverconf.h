@@ -277,6 +277,7 @@ class DLL_PUBLIC SolverConf
         int doFindAndReplaceEqLits;
         int doExtendedSCC;
         double sccFindPercent;
+        int max_scc_depth;
 
         //Propagation & searching
         int      propBinFirst;

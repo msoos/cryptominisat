@@ -55,14 +55,17 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     stackIndicator.resize(solver->nVars()*2, false);
     assert(stack.empty());
 
+    depth = 0;
     for (uint32_t vertex = 0; vertex < solver->nVars()*2; vertex++) {
         //Start a DFS at each node we haven't visited yet
         const uint32_t v = vertex>>1;
         if (solver->value(v) != l_Undef) {
             continue;
         }
+        assert(depth == 0);
         if (index[vertex] == std::numeric_limits<uint32_t>::max()) {
             tarjan(vertex);
+            depth--;
             assert(stack.empty());
         }
     }
@@ -88,6 +91,14 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 
 void SCCFinder::tarjan(const uint32_t vertex)
 {
+    depth++;
+    if (depth >= solver->conf.max_scc_depth) {
+        if (solver->conf.verbosity) {
+            cout << "c [scc] WARNING: reached maximum depth of " << solver->conf.max_scc_depth << endl;
+        }
+        return;
+    }
+
     const Lit vertLit = Lit::toLit(vertex);
     if (solver->varData[vertLit.var()].removed != Removed::none) {
         return;

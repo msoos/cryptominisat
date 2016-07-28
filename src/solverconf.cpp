@@ -158,6 +158,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
         , sccFindPercent        (0.04)
+        , max_scc_depth (10000)
 
         //Propagation & search
         , propBinFirst     (false)

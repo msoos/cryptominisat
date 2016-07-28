@@ -130,6 +130,55 @@ TEST(scc_test, find_0)
     EXPECT_EQ(scc.get_binxors().size(), 0);
 }
 
+
+TEST(scc_test, limit_test4)
+{
+    SolverConf conf;
+    conf.max_scc_depth = 4;
+
+    Solver s(&conf, new std::atomic<bool>(false));
+    s.new_vars(4);
+    s.add_clause_outer(str_to_cl("1, 2"));
+    s.add_clause_outer(str_to_cl("-2, 3"));
+    s.add_clause_outer(str_to_cl("-3, -1"));
+
+    SCCFinder scc(&s);
+    scc.performSCC();
+    EXPECT_EQ(scc.get_binxors().size(), 3);
+}
+
+TEST(scc_test, limit_test3)
+{
+    SolverConf conf;
+    conf.max_scc_depth = 3;
+
+    Solver s(&conf, new std::atomic<bool>(false));
+    s.new_vars(4);
+    s.add_clause_outer(str_to_cl("1, 2"));
+    s.add_clause_outer(str_to_cl("-2, 3"));
+    s.add_clause_outer(str_to_cl("-3, -1"));
+
+    SCCFinder scc(&s);
+    scc.performSCC();
+    EXPECT_EQ(scc.get_binxors().size(), 0);
+}
+
+TEST(scc_test, limit_test2)
+{
+    SolverConf conf;
+    conf.max_scc_depth = 2;
+
+    Solver s(&conf, new std::atomic<bool>(false));
+    s.new_vars(4);
+    s.add_clause_outer(str_to_cl("1, 2"));
+    s.add_clause_outer(str_to_cl("-2, 3"));
+    s.add_clause_outer(str_to_cl("-3, -1"));
+
+    SCCFinder scc(&s);
+    scc.performSCC();
+    EXPECT_EQ(scc.get_binxors().size(), 0);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

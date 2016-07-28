@@ -110,6 +110,7 @@ class SCCFinder {
         std::stack<uint32_t, vector<uint32_t> > stack;
         vector<char> stackIndicator;
         vector<uint32_t> tmp;
+        uint32_t depth;
 
         Solver* solver;
         std::set<BinaryXor> binxors;
@@ -123,6 +124,7 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     // Was successor v' visited?
     if (index[lit.toInt()] ==  std::numeric_limits<uint32_t>::max()) {
         tarjan(lit.toInt());
+        depth--;
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
     } else if (stackIndicator[lit.toInt()])  {
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
