@@ -126,7 +126,7 @@ void SCCFinder::tarjan(const uint32_t vertex)
 
     if (transCache) {
         runStats.bogoprops += transCache->size()/4;
-        for (const LitExtra le: *transCache) {
+        for (const LitExtra& le: *transCache) {
             Lit lit = le.getLit();
             if (solver->value(lit) != l_Undef) {
                 continue;
