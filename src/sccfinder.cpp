@@ -112,15 +112,12 @@ void SCCFinder::tarjan(const uint32_t vertex)
     //Go through the watch
     watch_subarray_const ws = solver->watches[~vertLit];
     runStats.bogoprops += ws.size()/4;
-    for (const Watched *it = ws.begin(), *end = ws.end()
-        ; it != end
-        ; ++it
-    ) {
+    for (const Watched& w: ws) {
         //Only binary clauses matter
-        if (!it->isBin())
+        if (!w.isBin())
             continue;
 
-        const Lit lit = it->lit2();
+        const Lit lit = w.lit2();
         if (solver->value(lit) != l_Undef) {
             continue;
         }
