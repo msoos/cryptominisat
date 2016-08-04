@@ -1,3 +1,14 @@
+[![release](https://img.shields.io/badge/Release-v5.0.0-blue.svg)](https://github.com/msoos/cryptominisat/releases/tag/cryptominisat-5.0.0)
+![licence](https://img.shields.io/badge/License-LGPLv2-brightgreen.svg)
+
+[![linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
+[![windows build](https://ci.appveyor.com/api/projects/status/github/gruntjs/grunt?branch=master&svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
+<a href="https://scan.coverity.com/projects/507">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/507/badge.svg"/>
+</a>
+[![code coverage](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
+
 CryptoMiniSat SAT solver
 ===========================================
 
@@ -9,17 +20,6 @@ format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
 provides the best of both worlds: ease of use and a powerful interface.
-
-TravisCi: [![Build Status](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
-
-AppVeyor: [![Build Status Appveyor](https://ci.appveyor.com/api/projects/status/github/gruntjs/grunt?branch=master&svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
-
-<a href="https://scan.coverity.com/projects/507">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/507/badge.svg"/>
-</a>
-
-[![Coverage Status](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
 
 Prerequisites
 -----
