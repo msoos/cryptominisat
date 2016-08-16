@@ -1266,14 +1266,8 @@ lbool Main::multi_solutions()
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
         ret = solver->solve();
 
-        //BUG: this should a bug here:
-        // If current clauses are unsat we are counting up, line should be moved
-        // into the next then branch
-        current_nr_of_solutions++;
-
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
-
-            //current_nr_of_solutions++;
+            current_nr_of_solutions++;
 
             printResultFunc(&cout, false, ret);
             if (resultfile) {
@@ -1316,6 +1310,5 @@ lbool Main::multi_solutions()
         }
     }
 
-    std::cout << current_nr_of_solutions << std::endl;
     return ret;
 }
