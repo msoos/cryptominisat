@@ -63,7 +63,7 @@ static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
 #include <boost/lexical_cast.hpp>
 using namespace CMSat;
 using boost::lexical_cast;
-
+using std::set;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -1265,9 +1265,16 @@ lbool Main::multi_solutions()
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
         ret = solver->solve();
+
+        //BUG: this should a bug here:
+        // If current clauses are unsat we are counting up, line should be moved
+        // into the next then branch
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
+
+            //current_nr_of_solutions++;
+
             printResultFunc(&cout, false, ret);
             if (resultfile) {
                 printResultFunc(resultfile, true, ret);
@@ -1279,19 +1286,36 @@ lbool Main::multi_solutions()
                 << std::setw(6) << current_nr_of_solutions
                 << endl;
             }
-            #ifdef VERBOSE_DEBUG_RECONSTRUCT
+
+#ifdef VERBOSE_DEBUG_RECONSTRUCT
             solver->print_removed_vars();
-            #endif
+#endif
 
             //Banning found solution
             vector<Lit> lits;
-            for (uint32_t var = 0; var < solver->nVars(); var++) {
-                if (solver->get_model()[var] != l_Undef) {
-                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+            const vector<lbool> model = solver->get_model();
+
+            if (solver->has_projection_scope()) {
+                // Just pick up the variables from the projection corpus
+                for(auto var : solver->get_projection_scope()) {
+                    const bool varIsDefined = model[var] != l_Undef;
+                    if (varIsDefined) {
+                        lits.push_back( Lit(var, model[var] == l_True) );
+                    }
                 }
+
+            } else {
+                for (uint32_t var = 0; var < solver->nVars(); var++) {
+                    if (solver->get_model()[var] != l_Undef) {
+                        lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                    }
+                }
+
             }
             solver->add_clause(lits);
         }
     }
+
+    std::cout << current_nr_of_solutions << std::endl;
     return ret;
 }

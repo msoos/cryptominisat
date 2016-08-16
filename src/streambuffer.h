@@ -145,7 +145,7 @@ public:
         }
         if (c < '0' || c > '9') {
             std::cerr
-            << "PARSE ERROR! Unexpected char (dec: '" << c << ")"
+            << "PARSE ERROR! Unexpected char (dec: '" << (int) c << "')"
             << " At line " << lineNum
             << " we expected a number"
             << std::endl;
