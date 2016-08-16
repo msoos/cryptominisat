@@ -64,8 +64,10 @@ class DimacsParser
         bool parseIndependentSet(C& in);
         std::string get_debuglib_fname() const;
 
+        bool parseProjectionCorpus(C& in);
 
-        SATSolver* solver;
+
+	SATSolver* solver;
         const std::string debugLib;
         unsigned verbosity;
 
@@ -81,6 +83,10 @@ class DimacsParser
 
         size_t norm_clauses_added = 0;
         size_t xor_clauses_added = 0;
+
+
+        // projection for model count
+        std::set<uint32_t> projection_corpus;
 };
 
 #include <sstream>
@@ -313,8 +319,73 @@ void DimacsParser<C>::write_solution_to_debuglib_file(const lbool ret) const
 }
 
 template<class C>
+bool DimacsParser<C>::parseProjectionCorpus(C& in) {
+    int32_t parsed_lit;
+    uint32_t var;
+    while(*in != '\n') { // parse till end of line
+        if(*in=='\n' || *in =='\r')
+            break;
+
+        if (!in.parseInt(parsed_lit, lineNum)) {
+            return false;
+        }
+
+        if (parsed_lit == 0) {
+            break;
+        }
+
+        var = abs(parsed_lit) - 1;
+
+        if (var > max_var) {
+            std::cerr
+            << "ERROR! "
+            << "Variable requested is too large for DIMACS parser parameter: "
+            << var << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            return false;
+        }
+
+        if (var >= (1ULL<<28)) {
+            std::cerr
+            << "ERROR! "
+            << "Variable requested is far too large: " << var << endl
+            << "--> At line " << lineNum+1
+            << endl;
+            return false;
+        }
+
+        projection_corpus.insert( var );
+
+        in.skipWhitespace();
+        /*if (*in != ' ' && *in!='\n') {
+            std::cerr
+            << "ERROR! " << " got  " << *in
+            << " After each literal there must be an empty space!"
+            << "--> At line " << lineNum+1 << endl
+            << endl;
+            return false;
+        }*/
+    }
+
+    ++in; // consume new line
+    solver->set_projection_scope(projection_corpus);
+
+    cout << "cr " ;
+    for(auto v: projection_corpus){
+        cout << v << " ";
+    }
+    cout << endl;
+
+    return true;
+}
+
+template<class C>
 bool DimacsParser<C>::parseComments(C& in, const std::string& str)
 {
+    if(str == "r") {
+        return parseProjectionCorpus(in);
+    }
     if (!debugLib.empty() && str.substr(0, 13) == "Solver::solve") {
         if (!parse_solve_simp_comment(in, true)) {
             return false;

@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <utility>
 #include <atomic>
 #include "cryptominisat5/solvertypesmini.h"
+#include <set>
 
 namespace CMSat {
     struct CMSatPrivateData;
@@ -97,8 +98,15 @@ namespace CMSat {
 
         std::vector<Lit> get_zero_assigned_lits() const;
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const;
+
+
+        //projection variables (remembering) for model couting
+        bool has_projection_scope() const { return ! projection_scope.empty(); }
+        void set_projection_scope(const std::set<uint32_t> ps) { projection_scope = ps;}
+        std::set<uint32_t> get_projection_scope() const { return projection_scope;}
     private:
         CMSatPrivateData *data;
+        std::set<uint32_t> projection_scope;
     };
 }
 
