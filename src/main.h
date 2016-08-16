@@ -79,8 +79,7 @@ class Main
         //Options
         po::variables_map vm;
         virtual void add_supported_options();
-        virtual void call_after_parse(const vector<uint32_t>& /*independent_vars*/)
-        {}
+        virtual void call_after_parse() {};
 
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
@@ -119,6 +118,7 @@ class Main
         string sqlUser;
         string sqlPass;
         string sqlDatabase;
+        vector<uint32_t> independent_vars;
 
         //Files to read & write
         bool fileNamePresent;

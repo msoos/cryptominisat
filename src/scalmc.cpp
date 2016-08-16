@@ -425,9 +425,8 @@ int main(int argc, char** argv)
     #endif
 }
 
-void CUSP::call_after_parse(const vector<uint32_t>& _independent_vars)
+void CUSP::call_after_parse()
 {
-    independent_vars = _independent_vars;
     if (independent_vars.empty()) {
         cout
         << "c WARNING! No independet vars were set using 'c ind var1 [var2 var3 ..]'"

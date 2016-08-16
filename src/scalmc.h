@@ -75,8 +75,7 @@ private:
     std::map< std::string, std::vector<uint32_t>> globalSolutionMap;
     bool openLogFile();
     std::atomic<bool> must_interrupt;
-    vector<uint32_t> independent_vars;
-    void call_after_parse(const vector<uint32_t>& independent_vars) override;
+    void call_after_parse() override;
 
     uint32_t startIteration = 0;
     uint32_t pivotApproxMC = 52;

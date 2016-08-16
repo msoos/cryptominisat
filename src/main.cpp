@@ -141,7 +141,8 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    call_after_parse(parser.independent_vars);
+    independent_vars.swap(parser.independent_vars);
+    call_after_parse();
 
     #ifndef USE_ZLIB
         fclose(in);
@@ -1285,10 +1286,18 @@ lbool Main::multi_solutions()
 
             //Banning found solution
             vector<Lit> lits;
-            for (uint32_t var = 0; var < solver->nVars(); var++) {
-                if (solver->get_model()[var] != l_Undef) {
-                    lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
-                }
+            if (independent_vars.empty()) {
+              for (uint32_t var = 0; var < solver->nVars(); var++) {
+                  if (solver->get_model()[var] != l_Undef) {
+                      lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                  }
+              }
+            } else {
+              for (const uint32_t var: independent_vars) {
+                  if (solver->get_model()[var] != l_Undef) {
+                      lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                  }
+              }
             }
             solver->add_clause(lits);
         }
