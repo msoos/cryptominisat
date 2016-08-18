@@ -62,7 +62,7 @@ sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_swdia5by
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_swdia5by_old.sh >> /home/ubuntu/build.log'
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_lingeling_ayv.sh >> /home/ubuntu/build.log'
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_drat-trim2.sh >> /home/ubuntu/build.log'
-sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_glucose2015.sh >> /home/ubuntu/build.log'
+sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_glucose2016.sh >> /home/ubuntu/build.log'
 
 # Start client
 cd /home/ubuntu/cryptominisat
