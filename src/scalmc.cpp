@@ -429,7 +429,7 @@ void CUSP::call_after_parse()
 {
     if (independent_vars.empty()) {
         cout
-        << "c WARNING! No independet vars were set using 'c ind var1 [var2 var3 ..]'"
+        << "c WARNING! No independent vars were set using 'c ind var1 [var2 var3 ..] 0'"
         "notation in the CNF." << endl
         << " c ScalMC may work substantially worse!" << endl;
         for (size_t i = 0; i < solver->nVars(); i++) {
