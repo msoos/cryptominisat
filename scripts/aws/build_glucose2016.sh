@@ -8,6 +8,6 @@ cd simp
 make rs
 
 #binary is now at:
-# --solver glucose2015/simp/glucose_static
+# --solver glucose2016/simp/glucose_static
 
 cd /home/ubuntu
