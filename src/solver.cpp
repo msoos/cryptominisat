@@ -1788,7 +1788,7 @@ bool Solver::execute_inprocess_strategy(
                     if (conf.verbosity) {
                         cout
                         << "c Turning off cache, memory used, "
-                        << memUsedMB/(1024UL*1024UL) << " MB"
+                        << memUsedMB << " MB"
                         << " is over limit of " << conf.maxCacheSizeMB  << " MB"
                         << endl;
                     }
