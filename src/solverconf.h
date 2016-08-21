@@ -224,7 +224,7 @@ class DLL_PUBLIC SolverConf
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
-        unsigned varelim_cutoff_too_many_clauses;
+        uint64_t varelim_cutoff_too_many_clauses;
         int      do_empty_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;

@@ -1754,7 +1754,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
     //Too expensive to check, it's futile
-    if ((neg.totalCls() * pos.totalCls())
+    if ((uint64_t)neg.totalCls() * (uint64_t)pos.totalCls()
         >= solver->conf.varelim_cutoff_too_many_clauses
     ) {
         return std::numeric_limits<int>::max();
