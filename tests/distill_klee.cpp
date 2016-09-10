@@ -20,18 +20,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef POPCNT__H
-#define POPCNT__H
+#include <set>
+using std::set;
 
+#include "src/solver.h"
+#include "src/distillerlongwithimpl.h"
+#include "src/solverconf.h"
+using namespace CMSat;
+#include "test_helper.h"
+#include <klee/klee.h>
 
-#if defined (_MSC_VER)
-#include <intrin.h>
-#endif
+int main(int argc, char **argv)
+{
+    Solver* s;
+    DistillerLongWithImpl* distillwbin;
+    std::atomic<bool> must_inter;
+    SolverConf conf;
+    //conf.verbosity = 20;
+    must_inter.store(false, std::memory_order_relaxed);
+    s = new Solver(&conf, &must_inter);
+    distillwbin = s->dist_long_with_impl;
 
-#if defined (_MSC_VER)
-#define my_popcnt(x) __popcnt(x)
-#else
-#define my_popcnt(x) __builtin_popcount(x)
-#endif
+    s->new_vars(4);
+    s->add_clause_outer(str_to_cl("1, 2"));
+    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
+    distillwbin->distill_long_with_implicit(false);
+    //check_irred_cls_eq(s, "1, 2");
 
-#endif //POPCNT__H
+    delete s;
+
+    return 0;
+}
+
