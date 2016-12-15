@@ -19,6 +19,8 @@ format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. The python system is an interface to the C++ system that
 provides the best of both worlds: ease of use and a powerful interface.
+Additionally, the C++ library exposes a C compatible wrapper, enabling it to
+be used from C or any language which is capable of calling C functions.
 
 Prerequisites
 -----
@@ -336,3 +338,7 @@ make test
 Web-based run explorer
 -----
 Please see under web/README.markdown for details. This is an experimental feature.
+
+C usage
+-----
+See src/cryptominisat_c.h.in for details. This is an experimental feature.
