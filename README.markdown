@@ -17,10 +17,9 @@ takes a [cnf](http://en.wikipedia.org/wiki/Conjunctive_normal_form) as an
 input in the [DIMACS](http://www.satcompetition.org/2009/format-benchmarks2009.html)
 format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
-`solve()` calls. The python system is an interface to the C++ system that
-provides the best of both worlds: ease of use and a powerful interface.
-Additionally, the C++ library exposes a C compatible wrapper, enabling it to
-be used from C or any language which is capable of calling C functions.
+`solve()` calls. A C compatible wrapper is also provided. The python interface provides
+a high-level yet efficient API to use most of the C++ interface with ease.
+
 
 Prerequisites
 -----
