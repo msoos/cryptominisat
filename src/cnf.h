@@ -1,0 +1,516 @@
+/******************************************
+Copyright (c) 2016, Mate Soos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+***********************************************/
+
+#ifndef __CNF_H__
+#define __CNF_H__
+
+#include <atomic>
+
+#include "constants.h"
+#include "vardata.h"
+#include "propby.h"
+#include "solverconf.h"
+#include "stamp.h"
+#include "solvertypes.h"
+#include "implcache.h"
+#include "watcharray.h"
+#include "drat.h"
+#include "clauseallocator.h"
+#include "varupdatehelper.h"
+#include "simplefile.h"
+#include "xor.h"
+
+namespace CMSat {
+using namespace CMSat;
+
+class ClauseAllocator;
+
+struct BinTriStats
+{
+    uint64_t irredBins = 0;
+    uint64_t redBins = 0;
+    uint64_t irredTris = 0;
+    uint64_t redTris = 0;
+    uint64_t numNewBinsSinceSCC = 0;
+};
+
+struct LitStats
+{
+    uint64_t irredLits = 0;
+    uint64_t redLits = 0;
+};
+
+class CNF
+{
+public:
+    void save_on_var_memory();
+    void updateVars(
+        const vector<uint32_t>& outerToInter
+        , const vector<uint32_t>& interToOuter
+    );
+    size_t mem_used_renumberer() const;
+    size_t mem_used() const;
+
+    CNF(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter)
+    {
+        if (_conf != NULL) {
+            conf = *_conf;
+        }
+        drat = new Drat();
+        assert(_must_interrupt_inter != NULL);
+        must_interrupt_inter = _must_interrupt_inter;
+
+        longRedCls.resize(2);
+    }
+
+    virtual ~CNF()
+    {
+        delete drat;
+    }
+
+    ClauseAllocator cl_alloc;
+    SolverConf conf;
+    //If FALSE, state of CNF is UNSAT
+    bool ok = true;
+    watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
+    vector<VarData> varData;
+    vector<uint32_t> depth;
+    Stamp stamp;
+    ImplCache implCache;
+    uint32_t minNumVars = 0;
+    Drat* drat;
+
+    //Clauses
+    vector<ClOffset> longIrredCls;
+    vector<vector<ClOffset> > longRedCls;
+    vector<Xor> xorclauses;
+    BinTriStats binTri;
+    LitStats litStats;
+    int64_t clauseID = 2;
+
+    //Temporaries
+    vector<uint16_t> seen;
+    vector<uint8_t> seen2;
+    vector<uint64_t> permDiff;
+    vector<Lit>      toClear;
+    uint64_t MYFLAG = 1;
+
+    bool okay() const
+    {
+        return ok;
+    }
+
+    lbool value (const uint32_t x) const
+    {
+        return assigns[x];
+    }
+
+    lbool value (const Lit p) const
+    {
+        return assigns[p.var()] ^ p.sign();
+    }
+
+    bool must_interrupt_asap() const
+    {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        return *must_interrupt_inter;
+    }
+
+    void set_must_interrupt_asap()
+    {
+        must_interrupt_inter->store(true, std::memory_order_relaxed);
+    }
+
+    void unset_must_interrupt_asap()
+    {
+        must_interrupt_inter->store(false, std::memory_order_relaxed);
+    }
+
+    std::atomic<bool>* get_must_interrupt_inter_asap_ptr()
+    {
+        return must_interrupt_inter;
+    }
+
+    bool clause_locked(const Clause& c, const ClOffset offset) const;
+    void unmark_all_irred_clauses();
+    void unmark_all_red1_clauses();
+
+    bool redundant(const Watched& ws) const;
+    bool redundant_or_removed(const Watched& ws) const;
+    size_t cl_size(const Watched& ws) const;
+    string watched_to_string(Lit otherLit, const Watched& ws) const;
+    string watches_to_string(const Lit lit, watch_subarray_const ws) const;
+
+    uint64_t print_mem_used_longclauses(size_t totalMem) const;
+    uint64_t mem_used_longclauses() const;
+    template<class Function>
+    void for_each_lit(
+        const OccurClause& cl
+        ,  Function func
+        , int64_t* limit
+    ) const;
+    template<class Function>
+    void for_each_lit_except_watched(
+        const OccurClause& cl
+        , Function func
+        , int64_t* limit
+    ) const;
+    void remove_tri_but_lit1(
+        const Lit lit1
+        , const Lit lit2
+        , const Lit lit3
+        , const bool red
+        , int64_t& timeAvailable
+    );
+    uint32_t map_inter_to_outer(const uint32_t inter) const
+    {
+        return interToOuterMain[inter];
+    }
+    Lit map_inter_to_outer(const Lit lit) const
+    {
+        return Lit(interToOuterMain[lit.var()], lit.sign());
+    }
+    uint32_t map_outer_to_inter(const uint32_t outer) const
+    {
+        return outerToInterMain[outer];
+    }
+    Lit map_outer_to_inter(const Lit outer) const
+    {
+        return Lit(outerToInterMain[outer.var()], outer.sign());
+    }
+    void map_inter_to_outer(vector<Lit>& lits) const
+    {
+        updateLitsMap(lits, interToOuterMain);
+    }
+    void renumber_outer_to_inter_lits(vector<Lit>& ps) const;
+
+    uint32_t nVarsOutside() const
+    {
+        #ifdef DEBUG_SLOW
+        assert(outer_to_with_bva_map.size() == nVarsOuter() - num_bva_vars);
+        #endif
+        return nVarsOuter() - num_bva_vars;
+    }
+
+    Lit map_to_with_bva(const Lit lit) const
+    {
+        return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
+    }
+
+    uint32_t map_to_with_bva(const uint32_t var) const
+    {
+        return outer_to_with_bva_map.at(var);
+    }
+
+    size_t nVars() const
+    {
+        return minNumVars;
+    }
+
+    size_t nVarsOuter() const
+    {
+        return assigns.size();
+    }
+
+    size_t get_num_bva_vars() const
+    {
+        return num_bva_vars;
+    }
+
+    vector<uint32_t> build_outer_to_without_bva_map() const;
+    void clean_occur_from_removed_clauses();
+    void clean_occur_from_removed_clauses_only_smudged();
+    void clean_occur_from_idx_types_only_smudged();
+    void clean_occur_from_idx(const Lit lit);
+    void clear_one_occur_from_removed_clauses(watch_subarray w);
+    bool no_marked_clauses() const;
+    void check_no_removed_or_freed_cl_in_watch() const;
+    bool normClauseIsAttached(const ClOffset offset) const;
+    void find_all_attach() const;
+    void find_all_attach(const vector<ClOffset>& cs) const;
+    bool find_clause(const ClOffset offset) const;
+    void test_all_clause_attached() const;
+    void check_wrong_attach() const;
+    void print_all_clauses() const;
+    uint64_t count_lits(
+        const vector<ClOffset>& clause_array
+        , const bool red
+        , const bool allowFreed
+    ) const;
+
+protected:
+    virtual void new_var(const bool bva, const uint32_t orig_outer);
+    virtual void new_vars(const size_t n);
+    void test_reflectivity_of_renumbering() const;
+    vector<lbool> back_number_solution_from_inter_to_outer(const vector<lbool>& solution) const
+    {
+        vector<lbool> back_numbered = solution;
+        updateArrayRev(back_numbered, interToOuterMain);
+        return back_numbered;
+    }
+
+    vector<lbool> map_back_to_without_bva(const vector<lbool>& val) const;
+    vector<lbool> assigns;
+
+    void save_state(SimpleOutFile& f) const;
+    void load_state(SimpleInFile& f);
+
+private:
+    std::atomic<bool> *must_interrupt_inter; ///<Interrupt cleanly ASAP if true
+    void enlarge_minimal_datastructs(size_t n = 1);
+    void enlarge_nonminimial_datastructs(size_t n = 1);
+    void swapVars(const uint32_t which, const int off_by = 0);
+
+    vector<uint32_t> outerToInterMain;
+    vector<uint32_t> interToOuterMain;
+    size_t num_bva_vars = 0;
+    vector<uint32_t> outer_to_with_bva_map;
+};
+
+template<class Function>
+void CNF::for_each_lit(
+    const OccurClause& cl
+    ,  Function func
+    , int64_t* limit
+) const {
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            *limit -= 2;
+            func(cl.lit);
+            func(cl.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            *limit -= 3;
+            func(cl.lit);
+            func(cl.ws.lit2());
+            func(cl.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
+            *limit -= clause.size();
+            for(const Lit lit: clause) {
+                func(lit);
+            }
+            break;
+        }
+
+        case watch_idx_t :
+            assert(false);
+            break;
+    }
+}
+
+template<class Function>
+void CNF::for_each_lit_except_watched(
+    const OccurClause& cl
+    , Function func
+    , int64_t* limit
+) const {
+    switch(cl.ws.getType()) {
+        case CMSat::watch_binary_t:
+            *limit -= 1;
+            func(cl.ws.lit2());
+            break;
+
+        case CMSat::watch_tertiary_t:
+            *limit -= 2;
+            func(cl.ws.lit2());
+            func(cl.ws.lit3());
+            break;
+
+        case CMSat::watch_clause_t: {
+            const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
+            *limit -= clause.size();
+            for(const Lit lit: clause) {
+                if (lit != cl.lit) {
+                    func(lit);
+                }
+            }
+            break;
+        }
+
+        case CMSat::watch_idx_t:
+            assert(false);
+            break;
+    }
+}
+
+struct ClauseSizeSorter
+{
+    ClauseSizeSorter(const ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+    bool operator () (const ClOffset x, const ClOffset y);
+    const ClauseAllocator& cl_alloc;
+};
+
+inline void CNF::clean_occur_from_removed_clauses()
+{
+    for(watch_subarray w: watches) {
+        clear_one_occur_from_removed_clauses(w);
+    }
+}
+
+inline void CNF::clean_occur_from_removed_clauses_only_smudged()
+{
+    for(const Lit l: watches.get_smudged_list()) {
+        clear_one_occur_from_removed_clauses(watches[l]);
+    }
+    watches.clear_smudged();
+}
+
+inline bool CNF::no_marked_clauses() const
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        if (cl->stats.marked_clause) {
+            return false;
+        }
+    }
+
+    for(auto& lredcls: longRedCls) {
+        for(ClOffset offset: lredcls) {
+            Clause* cl = cl_alloc.ptr(offset);
+            if (cl->stats.marked_clause) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+inline void CNF::clean_occur_from_idx_types_only_smudged()
+{
+    for(const Lit lit: watches.get_smudged_list()) {
+        clean_occur_from_idx(lit);
+    }
+    watches.clear_smudged();
+}
+
+inline void CNF::clean_occur_from_idx(const Lit lit)
+{
+    watch_subarray ws = watches[lit];
+    Watched* i = ws.begin();
+    Watched* j = ws.begin();
+    for(const Watched* end = ws.end(); i < end; i++) {
+        if (!i->isIdx()) {
+            *j++ = *i;
+        }
+    }
+    ws.shrink(i-j);
+}
+
+inline bool CNF::clause_locked(const Clause& c, const ClOffset offset) const
+{
+    return value(c[0]) == l_True
+        && varData[c[0].var()].reason.isClause()
+        && varData[c[0].var()].reason.get_offset() == offset;
+}
+
+inline void CNF::clear_one_occur_from_removed_clauses(watch_subarray w)
+{
+    size_t i = 0;
+    size_t j = 0;
+    size_t end = w.size();
+    for(; i < end; i++) {
+        const Watched ws = w[i];
+        if (!ws.isClause()) {
+            w[j++] = w[i];
+            continue;
+        }
+
+        Clause* cl = cl_alloc.ptr(ws.get_offset());
+        if (!cl->getRemoved()) {
+            w[j++] = w[i];
+        }
+    }
+    w.shrink(i-j);
+}
+
+inline void CNF::unmark_all_irred_clauses()
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        cl->stats.marked_clause = false;
+    }
+}
+
+inline void CNF::unmark_all_red1_clauses()
+{
+    for(ClOffset offset: longRedCls[1]) {
+        Clause* cl = cl_alloc.ptr(offset);
+        cl->stats.marked_clause = false;
+    }
+}
+
+inline void CNF::renumber_outer_to_inter_lits(vector<Lit>& ps) const
+{
+    for (Lit& lit: ps) {
+        const Lit origLit = lit;
+
+        //Update variable numbering
+        assert(lit.var() < nVarsOuter());
+        lit = map_outer_to_inter(lit);
+
+        if (conf.verbosity >= 52) {
+            cout
+            << "var-renumber updating lit "
+            << origLit
+            << " to lit "
+            << lit
+            << endl;
+        }
+    }
+}
+
+template<typename T>
+inline vector<Lit> unsign_lits(const T& lits)
+{
+    vector<Lit> ret(lits.size());
+    for(size_t i = 0; i < lits.size(); i++) {
+        ret[i] = lits[i].unsign();
+    }
+    return ret;
+}
+
+inline void CNF::check_no_removed_or_freed_cl_in_watch() const
+{
+    for(watch_subarray_const ws: watches) {
+        for(const Watched& w: ws) {
+            assert(!w.isIdx());
+            if (w.isBin() || w.isTri()) {
+                continue;
+            }
+            assert(w.isClause());
+            Clause& cl = *cl_alloc.ptr(w.get_offset());
+            assert(!cl.getRemoved());
+            assert(!cl.freed());
+        }
+    }
+}
+
+}
+
+#endif //__CNF_H__
