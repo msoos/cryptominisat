@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <Python.h>
 #include <structmember.h>
 #include <limits>
+#include <algorithm>
 
 #include "assert.h"
 #include <cryptominisat5/cryptominisat.h>
@@ -38,6 +39,9 @@ using namespace CMSat;
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
 #define PyUnicode_FromString  PyString_FromString
 #endif
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 typedef struct {
     PyObject_HEAD
@@ -273,6 +277,51 @@ static PyObject* get_solution(SATSolver *cmsat)
     return tuple;
 }
 
+static PyObject* get_raw_solution(SATSolver *cmsat) {
+
+    // Create tuple with the size of number of variables in model
+    PyObject *tuple;
+
+    unsigned max_idx = cmsat->nVars();
+    tuple = PyTuple_New((Py_ssize_t) max_idx);
+    if (tuple == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
+        return NULL;
+    }
+
+    // Add each variable in model to the tuple
+    int sign;
+    for (long var = 0; var != (long)max_idx; var++) {
+
+        if (cmsat->get_model()[var] != l_Undef) {
+
+            PyObject *py_value = NULL;
+            sign = (cmsat->get_model()[var] == l_True) ? 1 : -1;
+            py_value = PyInt_FromLong((var + 1) * sign);
+            // Py_INCREF(py_value) ?????????????????????
+
+            if (PyTuple_SetItem(tuple, (Py_ssize_t)var, py_value) < 0) {
+                PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
+                Py_DECREF(tuple);
+                return NULL;
+            }
+        }
+    }
+    return tuple;
+}
+
+static PyObject* nb_vars(Solver *self)
+{
+    return PyInt_FromLong(self->cmsat->nVars());
+}
+
+/*
+static PyObject* nb_clauses(Solver *self)
+{
+    // Private attribute => need to make a public method
+    return PyInt_FromLong(self->cmsat->data->solvers.size());
+}*/
+
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
     PyObject *iterator = PyObject_GetIter(assumptions);
@@ -358,6 +407,170 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     return result;
 }
 
+static PyObject* is_satisfiable(Solver *self)
+{
+    lbool ret = l_True;
+
+    Py_BEGIN_ALLOW_THREADS      /* release GIL */
+    ret = self->cmsat->solve();
+    Py_END_ALLOW_THREADS
+
+    if (ret == l_True) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    } else if (ret == l_False) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+
+    // l_Undef
+    return PyErr_SetFromErrno(outofconflerr);
+}
+
+static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
+{
+    int max_nr_of_solutions;
+    int raw_solutions_activated = true;
+    PyObject *var_selected;
+
+    static char* kwlist[] = {"max_nr_of_solutions", "var_selected", "raw", NULL};
+    // Use 'p' wildcard on version 3.3+ of Python
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|ii", kwlist,
+                                     &max_nr_of_solutions,
+                                     &var_selected,
+                                     &raw_solutions_activated)) {
+        return NULL;
+    }
+
+    // sort using a custom function object
+//      struct {
+//          bool operator()(Lit a, Lit b)
+//          {
+//              return a < b;
+//          }
+//      } customLess;
+
+    std::vector<Lit> var_lits;
+    if (!parse_clause(self, var_selected, var_lits)) {
+        return 0;
+    }
+
+    // Debug
+    std::cout << "Nb max solutions: " << max_nr_of_solutions << std::endl;
+    std::cout << "Nb literals: " << var_lits.size() << std::endl;
+    std::cout << "Raw sols ?: " << raw_solutions_activated << std::endl;
+//     for (unsigned long i = 0; i < var_lits.size(); i++) {
+//         std::cout << "real value: " << var_lits[i]
+//                   << "; x: " << var_lits[i].toInt()
+//                   << "; sign: " << var_lits[i].sign()
+//                   << "; var: " << var_lits[i].var()
+//                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
+//                   << '\n';
+//     }
+
+//      std::sort(var_lits.begin(), var_lits.end(), customLess);
+//
+//     for (unsigned long i = 0; i < var_lits.size(); i++) {
+//         std::cout << var_lits[i] << ';';
+//     }
+//     std::cout << std::endl;
+
+    int current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    std::vector<Lit>::iterator it;
+
+////////////////////////
+// Search in vector
+//     it = std::find(var_lits.begin(), var_lits.end(), Lit(21, false));
+//     std::cout <<  Lit(21, false).toInt() << std::endl;
+//
+//     if (it != var_lits.end())
+//         std::cout << "Element found in myvector: " << *it << '\n';
+//     else
+//         std::cout << "Element not found in myvector\n";
+//
+//    return NULL;
+////////////////////////
+
+    PyObject *solutions = NULL;
+    solutions = PyList_New(0);
+    if (solutions == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a list");
+        return NULL;
+    }
+
+    while((current_nr_of_solutions < max_nr_of_solutions) && (ret == l_True)) {
+
+        Py_BEGIN_ALLOW_THREADS      /* release GIL */
+        ret = self->cmsat->solve();
+        Py_END_ALLOW_THREADS
+
+        current_nr_of_solutions++;
+
+        std::cout << "state : " << ret << std::endl;
+        std::cout << "current sol: " << current_nr_of_solutions << std::endl;
+
+        if(ret == l_True) {
+
+            // Memorize the solution
+            PyObject* solution = NULL;
+            if (!raw_solutions_activated) {
+                // Solution in v5 format
+                solution = get_solution(self->cmsat);
+            } else {
+                // Solution in v2.9 format
+                solution = get_raw_solution(self->cmsat);
+            }
+
+            if (!solution) { // CF dans SOLVE comment c'est géré !! => ajout de None si aps de sol !
+                PyErr_SetString(PyExc_SystemError, "no solution");
+                Py_DECREF(solutions);
+                return NULL;
+            }
+            // Add solution
+            PyList_Append(solutions, solution);
+
+            // Prepare next statement
+            if (current_nr_of_solutions < max_nr_of_solutions) {
+
+                std::vector<Lit> ban_solution;
+                for (long var = 0; var != (long)self->cmsat->nVars(); var++) {
+                    // Search var+1 in [var_lits.begin(), var_lits.end()[
+                    // false : > 0; true : < 0 sign !!
+                    it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
+                    //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
+
+                    if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
+                        //std::cout << "ici: " << var << std::endl;
+                        ban_solution.push_back(
+                            Lit(var,
+                                (self->cmsat->get_model()[var] == l_True) ? true : false)
+                        );
+                    }
+                }
+
+                // Ban current solution for the next run
+                self->cmsat->add_clause(ban_solution);
+
+    //               for (unsigned long i = 0; i < ban_solution.size(); i++) {
+    //                   std::cout << ban_solution[i] << ';';
+    //               }
+    //               std::cout << std::endl;
+            }
+        } else if (ret == l_False) {
+            std::cout << "No more solution or limitation reached" << std::endl;
+            //Py_INCREF(Py_None);
+            //PyList_Append(solutions, Py_None);
+        } else if (ret == l_Undef) {
+            std::cout << "Nothing to do => sol undef" << std::endl;
+            Py_DECREF(solutions);
+            return PyErr_SetFromErrno(outofconflerr);
+        }
+    }
+    // Return list of all solutions
+    return solutions;
+}
+
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
@@ -369,6 +582,10 @@ static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
+    {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, "returns number of variables"},
+    //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
+    {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, "solve selected variables"},
+    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, "return satisfiability of the system"},
     {NULL,        NULL}  /* sentinel */
 };
 
