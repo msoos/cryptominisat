@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # CryptoMiniSat
 #
@@ -21,78 +22,184 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #THE SOFTWARE.
 
-
-import sys
+#import os
 from distutils.core import setup, Extension
 from distutils import sysconfig
 
-cconf = """${PY_C_CONFIG}""".split(" ")
-ldconf = """${PY_LD_CONFIG}""".split(" ")
-is_apple = """${APPLE}"""
 
-def cleanup(dat):
-    ret = []
-    for elem in dat:
-        elem = elem.strip()
-        if elem != "":
-            ret.append(elem)
+#import distutils.command.build_ext
+#from distutils.spawn import find_executable
+#from distutils.version import LooseVersion
+#import re
+#import subprocess
 
-    if is_apple != "":
-        for x in ret:
-            if x == "-lpython" or x == "-lframework":
-                x = "-undefined dynamic_lookup"
+__PACKAGE_VERSION__ = "0.1.1"
+__LIBRARY_VERSION__ = "5.0.1"
+SWIG_MIN_VERSION    = "2.0"
 
-    return ret
-    # return []
+#cconf = """-I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security
+#""".split(" ")
+#ldconf = """-lpython2.7 -lpthread -ldl -lutil -lm -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
+#""".split(" ")
+#is_apple = """"""
 
-cconf = cleanup(cconf)
-ldconf = cleanup(ldconf)
-# print "Extra C flags from python-config:", cconf
-# print "Extra libraries from python-config:", ldconf
+#def cleanup(dat):
+#    ret = []
+#    for elem in dat:
+#        elem = elem.strip()
+#        if elem != "":
+#            ret.append(elem)
+#
+#    if is_apple != "":
+#        for x in ret:
+#            if x == "-lpython" or x == "-lframework":
+#                x = "-undefined dynamic_lookup"
+#
+#    return ret
 
+#cconf = cleanup(cconf)
+#ldconf = cleanup(ldconf)
+#print "Extra C flags from python-config:", cconf
+#print "Extra libraries from python-config:", ldconf
 
-def _init_posix(init):
-    """
-    Forces g++ instead of gcc on most systems
-    credits to eric jones (eric@enthought.com) (found at Google Groups)
-    """
-    def wrapper():
-        init()
+################################################################################
 
-        config_vars = sysconfig.get_config_vars()  # by reference
-        if config_vars["MACHDEP"].startswith("sun"):
-            # Sun needs forced gcc/g++ compilation
-            config_vars['CC'] = 'gcc'
-            config_vars['CXX'] = 'g++'
+# Delete unwanted flags for C compilation
+# Distutils has the lovely feature of providing all the same flags that
+# Python was compiled with. The result is that adding extra flags is easy,
+# but removing them is a total pain. Doing so involves subclassing the
+# compiler class, catching the arguments and manually removing the offending
+# flag from the argument list used by the compile function.
+# That's the theory anyway, the docs are too poor to actually guide you
+# through what you have to do to make that happen.
+d = sysconfig.get_config_vars()
+for k, v in d.items():
+    for unwanted in ('-Wstrict-prototypes', '-DNDEBUG',
+                     '-O2', '-D_FORTIFY_SOURCE=2', '-fstack-protector-strong'):
+        if str(v).find(unwanted) != -1:
+            v = d[k] = str(v).replace(unwanted, '')
 
-        # FIXME raises hardening-no-fortify-functions lintian warning.
-        else:
-            # Non-Sun needs linkage with g++
-            config_vars['LDSHARED'] = 'g++ -shared -g -W -Wall -Wno-deprecated'
+################################################################################
 
-        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated -std=c++11'
-        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated -std=c++11'
+#def _init_posix(init):
+#    """
+#    Forces g++ instead of gcc on most systems
+#    credits to eric jones (eric@enthought.com) (found at Google Groups)
+#    """
+#    def wrapper():
+#        init()
+#
+#        config_vars = sysconfig.get_config_vars()  # by reference
+#        if config_vars["MACHDEP"].startswith("sun"):
+#            # Sun needs forced gcc/g++ compilation
+#            config_vars['CC'] = 'gcc'
+#            config_vars['CXX'] = 'g++'
+#
+#        # FIXME raises hardening-no-fortify-functions lintian warning.
+#        else:
+#            # Non-Sun needs linkage with g++
+#            config_vars['LDSHARED'] = 'g++ -g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter'
+#
+#        config_vars['CFLAGS'] = '-g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -std=c++11'
+#        config_vars['OPT'] = '-g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -std=c++11'
+#
+#    return wrapper
 
-    return wrapper
+#sysconfig._init_posix = _init_posix(sysconfig._init_posix)
 
-sysconfig._init_posix = _init_posix(sysconfig._init_posix)
+cryptoms_lib_files = [
+    "GitSHA1.cpp",
+    "cnf.cpp",
+    "propengine.cpp",
+    "varreplacer.cpp",
+    "clausecleaner.cpp",
+    "clauseusagestats.cpp",
+    "prober.cpp",
+    "occsimplifier.cpp",
+    "subsumestrengthen.cpp",
+    "clauseallocator.cpp",
+    "sccfinder.cpp",
+    "solverconf.cpp",
+    "distillerallwithall.cpp",
+    "distillerlongwithimpl.cpp",
+    "str_impl_w_impl_stamp.cpp",
+    "solutionextender.cpp",
+    "completedetachreattacher.cpp",
+    "searcher.cpp",
+    "solver.cpp",
+    "gatefinder.cpp",
+    "sqlstats.cpp",
+    "implcache.cpp",
+    "stamp.cpp",
+    "compfinder.cpp",
+    "comphandler.cpp",
+    "hyperengine.cpp",
+    "subsumeimplicit.cpp",
+    "cleaningstats.cpp",
+    "datasync.cpp",
+    "reducedb.cpp",
+    "clausedumper.cpp",
+    "bva.cpp",
+    "intree.cpp",
+    "features_calc.cpp",
+    "features_to_reconf.cpp",
+    "solvefeatures.cpp",
+    "searchstats.cpp",
+    "xorfinder.cpp",
+    "cryptominisat_c.cpp",
+    "cryptominisat.cpp",
+#    "gaussian.cpp",
+#    "matrixfinder.cpp",
+]
 
-__version__ = '@PROJECT_VERSION@'
+modules = [
+    Extension(
+        "pycryptosat",
+        ["python/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
+        language = "c++",
+        swig_opts=['-c++', '-threads', '-includeall'],
+        include_dirs=['src', 'cryptominisat5', '.'],
+        extra_compile_args=[
+            "-g",
+            #"-MD", "-MP", "-MF",
+            "-flto",
+            "-march=native",
+            "-mtune=native",
+            "-Ofast",
+            #"-O3",
+            #"-Wall",
+            "-DNDEBUG",
+            #"-DBOOST_TEST_DYN_LINK",
+            "-DUSE_ZLIB",
+            "-std=c++11",
+            "-Wno-unused-variable",
+            "-Wno-unused-but-set-variable",
+            # assume that signed arithmetic overflow of addition, subtraction
+            # and multiplication wraps around using twos-complement
+            # representation
+            "-fwrapv",
+            #BOF protect (use both)
+            #"-D_FORTIFY_SOURCE=2",
+            #"-fstack-protector-strong",
+            "-pthread",
+            "-DUSE_PTHREADS",
+            "-fopenmp",
+            "-D_GLIBCXX_PARALLEL",
 
-ext_kwds = dict(
-    name = "pycryptosat",
-    sources = ["${CMAKE_CURRENT_SOURCE_DIR}/pycryptosat.cpp"],
-    define_macros = [],
-    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
-    extra_link_args = ldconf,
-    language = "c++",
-    library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
-    libraries = ['cryptominisat5']
-)
+        ],
+        extra_link_args=[
+            "-Ofast",
+            "-march=native",
+            "-flto",
+            "-lz",
+            "-fopenmp",
+        ]
+    ),
+]
 
 setup(
     name = "pycryptosat",
-    version = __version__,
+    version = __LIBRARY_VERSION__,
     author = "Mate Soos",
     author_email = "soos.mate@gmail.com",
     url = "https://github.com/msoos/cryptominisat",
@@ -108,8 +215,8 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Topic :: Utilities",
     ],
-    ext_modules = [Extension(**ext_kwds)],
+    ext_modules = modules,
     py_modules = ['pycryptosat'],
     description = "bindings to CryptoMiniSat (a SAT solver)",
-    long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
+    long_description = open('python/README.rst').read(),
 )
