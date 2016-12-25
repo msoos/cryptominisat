@@ -34,10 +34,28 @@ THE SOFTWARE.
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
-#define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
-
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
 #define PyUnicode_FromString  PyString_FromString
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+#ifdef IS_PY3K
+    #define IS_INT(x)  PyLong_Check(x)
+
+    #define MODULE_INIT_FUNC(name) \
+        PyMODINIT_FUNC PyInit_ ## name(void); \
+        PyMODINIT_FUNC PyInit_ ## name(void)
+#else
+    #define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
+
+    #define MODULE_INIT_FUNC(name) \
+        static PyObject *PyInit_ ## name(void); \
+        PyMODINIT_FUNC init ## name(void); \
+        PyMODINIT_FUNC init ## name(void) { PyInit_ ## name(); } \
+        static PyObject *PyInit_ ## name(void)
 #endif
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -297,7 +315,12 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
 
             PyObject *py_value = NULL;
             sign = (cmsat->get_model()[var] == l_True) ? 1 : -1;
+
+            #ifdef IS_PY3K
+            py_value = PyLong_FromLong((var + 1) * sign);
+            #else
             py_value = PyInt_FromLong((var + 1) * sign);
+            #endif
             // Py_INCREF(py_value) ?????????????????????
 
             if (PyTuple_SetItem(tuple, (Py_ssize_t)var, py_value) < 0) {
@@ -312,7 +335,12 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
 
 static PyObject* nb_vars(Solver *self)
 {
+    #ifdef IS_PY3K
+    return PyLong_FromLong(self->cmsat->nVars());
+    #else
     return PyInt_FromLong(self->cmsat->nVars());
+    #endif
+
 }
 
 /*
@@ -593,7 +621,11 @@ static void
 Solver_dealloc(Solver* self)
 {
     delete self->cmsat;
+    #ifdef IS_PY3K
+    Py_TYPE(self)->tp_free ((PyObject*) self);
+    #else
     self->ob_type->tp_free((PyObject*)self);
+    #endif
 }
 
 static PyObject *
@@ -609,7 +641,6 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
-
     return (PyObject *)self;
 }
 
@@ -641,8 +672,12 @@ static const char solver_create_docstring[] = "Create Solver object.\n"
 ;
 
 static PyTypeObject pycryptosat_SolverType = {
+    #ifndef IS_PY3K
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
+    #else
+    PyVarObject_HEAD_INIT(NULL, 0)
+    #endif
     "pycryptosat.Solver",             /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
@@ -682,26 +717,46 @@ static PyTypeObject pycryptosat_SolverType = {
     Solver_new,                 /* tp_new */
 };
 
-#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
-#endif
-PyMODINIT_FUNC
-initpycryptosat(void)
+MODULE_INIT_FUNC(pycryptosat)
 {
     PyObject* m;
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&pycryptosat_SolverType) < 0)
+    if (PyType_Ready(&pycryptosat_SolverType) < 0) {
+        #ifdef IS_PY3K
+        return NULL;
+        #else
         return;
+        #endif
+    }
 
+    #ifdef IS_PY3K
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,  /* m_base */
+        "pycryptosat",          /* m_name */
+        NULL,                   /* m_doc */
+        -1,                     /* m_size */
+        module_methods          /* m_methods */
+    };
+
+    m = PyModule_Create(&moduledef);
+    if (m == NULL)
+        return NULL;
+    #else
     m = Py_InitModule3("pycryptosat", module_methods,
                        "Example module that creates an extension type.");
+    if (m == NULL)
+        return;
+    #endif
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
-
     outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
+
+    #ifdef IS_PY3K
+    return m;
+    #endif
 }
