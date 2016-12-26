@@ -723,11 +723,9 @@ MODULE_INIT_FUNC(pycryptosat)
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&pycryptosat_SolverType) < 0) {
-        #ifdef IS_PY3K
+        // Return NULL on Python3 and with on Python2 with MODULE_INIT_FUNC macro
+        // In pure Python2: return nothing.
         return NULL;
-        #else
-        return;
-        #endif
     }
 
     #ifdef IS_PY3K
@@ -740,14 +738,15 @@ MODULE_INIT_FUNC(pycryptosat)
     };
 
     m = PyModule_Create(&moduledef);
-    if (m == NULL)
-        return NULL;
     #else
     m = Py_InitModule3("pycryptosat", module_methods,
                        "Example module that creates an extension type.");
-    if (m == NULL)
-        return;
     #endif
+
+    // Return NULL on Python3 and with on Python2 with MODULE_INIT_FUNC macro
+    // In pure Python2: return nothing.
+    if (m == NULL)
+        return NULL;
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
