@@ -22,46 +22,12 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #THE SOFTWARE.
 
-#import os
 from distutils.core import setup, Extension
 from distutils import sysconfig
-
-
-#import distutils.command.build_ext
-#from distutils.spawn import find_executable
-#from distutils.version import LooseVersion
-#import re
-#import subprocess
 
 __PACKAGE_VERSION__ = "0.1.1"
 __LIBRARY_VERSION__ = "5.0.1"
 
-#cconf = """-I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security
-#""".split(" ")
-#ldconf = """-lpython2.7 -lpthread -ldl -lutil -lm -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
-#""".split(" ")
-#is_apple = """"""
-
-#def cleanup(dat):
-#    ret = []
-#    for elem in dat:
-#        elem = elem.strip()
-#        if elem != "":
-#            ret.append(elem)
-#
-#    if is_apple != "":
-#        for x in ret:
-#            if x == "-lpython" or x == "-lframework":
-#                x = "-undefined dynamic_lookup"
-#
-#    return ret
-
-#cconf = cleanup(cconf)
-#ldconf = cleanup(ldconf)
-#print "Extra C flags from python-config:", cconf
-#print "Extra libraries from python-config:", ldconf
-
-################################################################################
 
 # Delete unwanted flags for C compilation
 # Distutils has the lovely feature of providing all the same flags that
@@ -80,31 +46,25 @@ for k, v in d.items():
 
 ################################################################################
 
-#def _init_posix(init):
-#    """
-#    Forces g++ instead of gcc on most systems
-#    credits to eric jones (eric@enthought.com) (found at Google Groups)
-#    """
-#    def wrapper():
-#        init()
-#
-#        config_vars = sysconfig.get_config_vars()  # by reference
-#        if config_vars["MACHDEP"].startswith("sun"):
-#            # Sun needs forced gcc/g++ compilation
-#            config_vars['CC'] = 'gcc'
-#            config_vars['CXX'] = 'g++'
-#
-#        # FIXME raises hardening-no-fortify-functions lintian warning.
-#        else:
-#            # Non-Sun needs linkage with g++
-#            config_vars['LDSHARED'] = 'g++ -g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter'
-#
-#        config_vars['CFLAGS'] = '-g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -std=c++11'
-#        config_vars['OPT'] = '-g -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -std=c++11'
-#
-#    return wrapper
+def _init_posix(init):
+    """
+    Forces g++ instead of gcc on most systems
+    credits to eric jones (eric@enthought.com) (found at Google Groups)
+    """
+    def wrapper():
+        init()
 
-#sysconfig._init_posix = _init_posix(sysconfig._init_posix)
+        config_vars = sysconfig.get_config_vars()  # by reference
+        if config_vars["MACHDEP"].startswith("sun"):
+            # Sun needs forced gcc/g++ compilation
+            config_vars['CC'] = 'gcc'
+            config_vars['CXX'] = 'g++'
+
+    return wrapper
+
+sysconfig._init_posix = _init_posix(sysconfig._init_posix)
+
+################################################################################
 
 cryptoms_lib_files = [
     "GitSHA1.cpp",
@@ -212,6 +172,7 @@ setup(
         "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
     ext_modules = modules,
