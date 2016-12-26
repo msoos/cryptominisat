@@ -35,7 +35,6 @@ from distutils import sysconfig
 
 __PACKAGE_VERSION__ = "0.1.1"
 __LIBRARY_VERSION__ = "5.0.1"
-SWIG_MIN_VERSION    = "2.0"
 
 #cconf = """-I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -I/home/Lex/.virtualenvs/cadbiom2/local/include/python2.7 -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security
 #""".split(" ")
@@ -170,7 +169,7 @@ modules = [
             #"-Wall",
             "-DNDEBUG",
             #"-DBOOST_TEST_DYN_LINK",
-            "-DUSE_ZLIB",
+            #"-DUSE_ZLIB",
             "-std=c++11",
             "-Wno-unused-variable",
             "-Wno-unused-but-set-variable",
@@ -191,7 +190,7 @@ modules = [
             "-Ofast",
             "-march=native",
             "-flto",
-            "-lz",
+            #"-lz",
             "-fopenmp",
         ]
     ),
