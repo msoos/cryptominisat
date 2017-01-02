@@ -198,7 +198,7 @@ before the `return 0;` above::
 ```
 vector<Lit> assumptions;
 assumptions.push_back(Lit(2, true));
-lbool ret = solver.solve(assumptions);
+lbool ret = solver.solve(&assumptions);
 assert(ret == l_False);
 
 lbool ret = solver.solve();
