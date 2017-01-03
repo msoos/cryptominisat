@@ -185,9 +185,9 @@ endforeach()
 
 install(TARGETS libcryptominisat5
     EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/include/cryptominisat5"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBDIR}"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/${INCLUDEDIR}/cryptominisat5"
 )
 
 if (NOT ONLY_SIMPLE)
@@ -246,7 +246,7 @@ if (NOT ONLY_SIMPLE)
     )
     install(TARGETS cryptominisat5
         EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-        RUNTIME DESTINATION bin
+        RUNTIME DESTINATION ${BINDIR}
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 
@@ -256,7 +256,7 @@ if (NOT ONLY_SIMPLE)
         )
         install(TARGETS scalmc
             EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-            RUNTIME DESTINATION bin
+            RUNTIME DESTINATION ${BINDIR}
         )
         SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
     endif()
@@ -267,7 +267,7 @@ target_link_libraries(cryptominisat5_simple
 )
 install(TARGETS cryptominisat5_simple
     EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
