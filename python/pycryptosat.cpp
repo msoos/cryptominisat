@@ -462,13 +462,24 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     PyObject *var_selected;
 
     static char* kwlist[] = {"max_nr_of_solutions", "var_selected", "raw", NULL};
-    // Use 'p' wildcard on version 3.3+ of Python
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|ii", kwlist,
+
+    #ifdef IS_PY3K
+    // Use 'p' wildcard for the boolean on version 3.3+ of Python
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|p", kwlist,
                                      &max_nr_of_solutions,
                                      &var_selected,
                                      &raw_solutions_activated)) {
         return NULL;
     }
+    #else
+    // Use 'i' wildcard for the boolean on version 2.x of Python
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|i", kwlist,
+                                     &max_nr_of_solutions,
+                                     &var_selected,
+                                     &raw_solutions_activated)) {
+        return NULL;
+    }
+    #endif
 
     // sort using a custom function object
 //      struct {
@@ -723,7 +734,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&pycryptosat_SolverType) < 0) {
-        // Return NULL on Python3 and with on Python2 with MODULE_INIT_FUNC macro
+        // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
         // In pure Python2: return nothing.
         return NULL;
     }
@@ -743,7 +754,7 @@ MODULE_INIT_FUNC(pycryptosat)
                        "Example module that creates an extension type.");
     #endif
 
-    // Return NULL on Python3 and with on Python2 with MODULE_INIT_FUNC macro
+    // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
     // In pure Python2: return nothing.
     if (m == NULL)
         return NULL;
@@ -755,7 +766,5 @@ MODULE_INIT_FUNC(pycryptosat)
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
 
-    #ifdef IS_PY3K
     return m;
-    #endif
 }
