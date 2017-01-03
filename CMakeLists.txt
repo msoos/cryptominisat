@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 include (GenerateExportHeader)
+if (NOT WIN32)
+    include (GNUInstallDirs)
+else()
+    set(CMAKE_INSTALL_BINDIR "bin")
+    set(CMAKE_INSTALL_LIBDIR "lib")
+    set(CMAKE_INSTALL_INCLUDEDIR "include")
+endif()
+
 if(NOT (CMAKE_MAJOR_VERSION LESS 2))
     if(POLICY CMP0022)
         cmake_policy(SET CMP0022 OLD)
