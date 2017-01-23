@@ -120,7 +120,6 @@ modules = [
         include_dirs=['src', 'cryptominisat5', '.'],
         extra_compile_args=[
             "-g",
-            #"-MD", "-MP", "-MF",
             "-flto",
             "-march=native",
             "-mtune=native",
@@ -144,7 +143,6 @@ modules = [
             "-DUSE_PTHREADS",
             "-fopenmp",
             "-D_GLIBCXX_PARALLEL",
-
         ],
         extra_link_args=[
             "-Ofast",
