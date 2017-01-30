@@ -216,6 +216,11 @@ endif()
 
 option(IPASIR "Also build IPASIR" OFF)
 
+option(LIMITMEM "Limit memory used by CMS through number of variables" OFF)
+if (LIMITMEM)
+    set(LIMITMEM "ON")
+endif()
+
 option(COVERAGE "Build with coverage check" OFF)
 if (COVERAGE)
     add_cxx_flag("--coverage")

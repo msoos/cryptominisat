@@ -33,6 +33,11 @@ THE SOFTWARE.
 using std::thread;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
+#ifndef LIMITMEM
+#define MAX_VARS (1ULL<<28)
+#else
+#define MAX_VARS 3000
+#endif
 
 using namespace CMSat;
 
@@ -692,11 +697,10 @@ DLL_PUBLIC void SATSolver::new_var()
 
 DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 {
-    if (n >= 1ULL<<28
-        || (data->vars_to_add + n) >= 1ULL<<28
+    if (n >= MAX_VARS
+        || (data->vars_to_add + n) >= MAX_VARS
     ) {
-        cout << "ERROR! Variable requested is far too large" << endl;
-        throw std::runtime_error("ERROR! Variable requested is far too large");
+        throw CMSat::TooManyVarsError();
     }
 
     if (data->log) {

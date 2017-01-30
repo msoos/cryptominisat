@@ -70,6 +70,11 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
+namespace CMSat {
+    class TooManyVarsError {};
+    class TooLongClauseError {};
+}
+
 #ifdef USE_MYSQL
 #include "mysqlstats.h"
 #endif
@@ -231,8 +236,7 @@ bool Solver::add_xor_clause_inter(
     ps.resize(ps.size() - (i - j));
 
     if (ps.size() >= (0x01UL << 28)) {
-        cout << "Too long clause!" << endl;
-        throw std::runtime_error("ERROR! Too long clause");
+        throw CMSat::TooLongClauseError();
     }
     //cout << "Cleaned ps is: " << ps << endl;
 
@@ -650,7 +654,7 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Check for too long clauses
     if (ps.size() > (0x01UL << 28)) {
         cout << "Too long clause!" << endl;
-        throw std::runtime_error("ERROR! Too long clause");
+        throw CMSat::TooLongClauseError();
     }
 
     //Check for too large variable number
