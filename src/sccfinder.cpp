@@ -93,7 +93,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 void SCCFinder::tarjan(const uint32_t vertex)
 {
     depth++;
-    if (depth >= solver->conf.max_scc_depth) {
+    if (depth >= (uint32_t)solver->conf.max_scc_depth) {
         if (solver->conf.verbosity) {
             cout << "c [scc] WARNING: reached maximum depth of " << solver->conf.max_scc_depth << endl;
         }
