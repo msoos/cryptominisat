@@ -1,4 +1,3 @@
-[![release](https://img.shields.io/badge/Release-v5.0.0-blue.svg)](https://github.com/msoos/cryptominisat/releases/tag/cryptominisat-5.0.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 [![windows build](https://ci.appveyor.com/api/projects/status/github/gruntjs/grunt?branch=master&svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
