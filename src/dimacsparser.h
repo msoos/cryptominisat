@@ -327,7 +327,9 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
             return false;
         }
     } else if (!debugLib.empty() && str.substr(0, 16) == "Solver::simplify") {
-        parse_solve_simp_comment(in, false);
+        if (!parse_solve_simp_comment(in, false)) {
+            return false;
+        }
     } else if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 
