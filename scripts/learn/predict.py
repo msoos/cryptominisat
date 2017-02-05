@@ -353,11 +353,10 @@ class Classify:
         with open(classifiername, "w") as f:
             pickle.dump(self.clf, f)
 
-    def output_to_pdf(self, clstats_names, fname):
+    def output_to_dot(self, clstats_names, fname):
         print("clstats_names len:", len(clstats_names))
         print("clstats_names: %s" % clstats_names)
 
-        #dot_data = StringIO()
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
                                      feature_names=clstats_names,
                                      class_names=["BAD", "GOOD"],
@@ -365,10 +364,8 @@ class Classify:
                                      special_characters=True,
                                      proportion=True
                                      )
-        #graph = pydot.graph_from_dot_data(dot_data.getvalue())
         print("Run dot:")
         print("dot -Tpng %s -o tree.png" % fname)
-        #Image(graph.create_png())
 
         #graph.write_pdf(fname)
         #print("Wrote final tree to %s" % fname)
@@ -436,7 +433,7 @@ if __name__ == "__main__":
         else:
             clf = Classify()
             clf.learn(cl.X, cl.y, "%s.classifier" % cleanname)
-            clf.output_to_pdf(cl.colnames, "%s.tree.dot" % cleanname)
+            clf.output_to_dot(cl.colnames, "%s.tree.dot" % cleanname)
             if cl_data is None:
                 cl_data = cl
             else:
@@ -458,7 +455,7 @@ if __name__ == "__main__":
         print("Columns used were:")
         for i, name in zip(xrange(100), cl_data.colnames):
             print("%-3d  %s" % (i, name))
-        clf.output_to_pdf(cl_data.colnames, "final.dot")
+        clf.output_to_dot(cl_data.colnames, "final.dot")
 
         with open("final.cldata", "w") as f:
             pickle.dump(cl_data, f)
