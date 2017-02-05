@@ -75,7 +75,8 @@ class Query2 (Query):
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
-        create index `idxclid3` on `restart` (`runID`,`clauseIDstartInclusive`, `clauseIDendExclusive`);
+        create index `idxclid3` on `restart`
+            (`runID`,`clauseIDstartInclusive`, `clauseIDendExclusive`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -124,10 +125,6 @@ class Query2 (Query):
             r = self.transform_rst_row(r[2:])
             X.append(r)
             y.append(perc)
-            #print("---<<<")
-            #print(r)
-            #print(perc)
-            #print("---")
 
         return X, y
 
@@ -156,7 +153,7 @@ class Query2 (Query):
         for row in self.c.execute(q):
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(1) # GOOD clause
+            y.append(1)  # GOOD clause
 
         # BAD caluses
         q = """
@@ -182,7 +179,7 @@ class Query2 (Query):
         for row in self.c.execute(q):
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(0) # BAD clause
+            y.append(0)  # BAD clause
 
         return X, y
 
@@ -226,7 +223,6 @@ class Query2 (Query):
         self.clstats_names = names
         self.ntoc = {}
         for n, c in zip(names, xrange(10000)):
-            #print(n, ":", c)
             self.ntoc[n] = c
 
     def reset_some_to_null(self, row):
@@ -237,13 +233,15 @@ class Query2 (Query):
             "clauseStats.conflicts",
             "clauseStats.clauseID",
             "clauseStats.conflicts_this_restart"]
-            #"restart.runID",
-            #"restart.simplifications",
-            #"restart.restarts",
-            #"restart.conflicts",
-            #"restart.runtime",
-            #"restart.clauseIDstartInclusive",
-            #"restart.clauseIDendExclusive"]
+
+        # set these too in case restarts are added
+        # "restart.runID",
+        # "restart.simplifications",
+        # "restart.restarts",
+        # "restart.conflicts",
+        # "restart.runtime",
+        # "restart.clauseIDstartInclusive",
+        # "restart.clauseIDendExclusive"]
 
         row2 = list(row)
         for e in set_to_null:
@@ -263,7 +261,6 @@ class Query2 (Query):
             row[self.ntoc["clauseStats.glue_hist"]] == 0 or \
             row[self.ntoc["clauseStats.num_antecedents_hist"]] == 0:
                 print(row)
-
 
         row[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
         row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
@@ -361,9 +358,6 @@ class Classify:
         print("Run dot:")
         print("dot -Tpng %s -o tree.png" % fname)
 
-        #graph.write_pdf(fname)
-        #print("Wrote final tree to %s" % fname)
-
 
 class Check:
     def __init__(self, classf_fname):
@@ -458,10 +452,3 @@ if __name__ == "__main__":
 
         with open("final.cldata", "w") as f:
             pickle.dump(cl_data, f)
-
-
-
-
-
-
-
