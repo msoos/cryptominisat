@@ -27,7 +27,7 @@ def mypow(to, base):
     return base**to
 
 
-class Query:
+class QueryHelper:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
@@ -64,7 +64,7 @@ class Query:
         return runID
 
 
-class Query2 (Query):
+class Query2 (QueryHelper):
     def create_indexes(self):
         print("Recreating indexes...")
         t = time.time()
