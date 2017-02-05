@@ -13,11 +13,15 @@ class Data:
 
 
 def parse_lemmas(lemmafname):
+    """Takes the lemma file and returns map with clauses' IDs and data"""
+
     ret = {}
     with open(lemmafname, "r") as f:
         for line, lineno in zip(f, xrange(1000*1000*1000)):
+            l = line.strip().split(" ")
+
+            # checking that delete line is ok AND calculating used_for_time
             if line[0] == "d":
-                l = line.strip().split(" ")
                 myid = int(l[len(l)-3])
                 if myid <= 1:
                     continue
@@ -25,16 +29,16 @@ def parse_lemmas(lemmafname):
                 last_used = int(l[len(l)-2])
                 num_used = int(l[len(l)-1])
                 ret[myid].used_for_time = last_used - myid
-                #print(myid)
-                #print(num_used)
-                #print(ret[myid].num_used)
+                if options.verbose:
+                    print("myid:", myid)
+                    print("num used:", num_used)
+                    print(ret[myid].num_used)
                 if ret[myid].num_used != num_used:
                     print("Line no %d wrong usage value" % lineno)
                     print("line: '%s'" % line.strip())
                     assert ret[myid].num_used == num_used
                 continue
 
-            l = line.strip().split(" ")
             if len(l) == 1:
                 # empty clause, finished
                 continue
@@ -42,7 +46,7 @@ def parse_lemmas(lemmafname):
             myid = int(l[len(l)-3])
             num_used = int(l[len(l)-1])
 
-            # used until the end.
+            # used until the end
             used_for_time = 1000000
             ret[myid] = Data(used_for_time, num_used)
 
