@@ -442,7 +442,12 @@ if __name__ == "__main__":
             with open("%s.cldata" % cleanname, "w") as f:
                 pickle.dump(cl, f)
 
-    if len(args) == 1 or options.check:
+    # intermediate predictor is final
+    if len(args) == 1:
+        exit(0)
+
+    # no need, we checked them all individually
+    if options.check:
         exit(0)
 
     print("----- FINAL predictor -------\n")
