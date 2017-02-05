@@ -150,6 +150,7 @@ class Query2 (Query):
 
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
+        and clauseStats.restarts > 1 -- to avoid history being invalid
 
         -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
@@ -176,6 +177,7 @@ class Query2 (Query):
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
+        and clauseStats.restarts > 1 -- to avoid history being invalid
 
         -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
