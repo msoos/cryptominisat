@@ -22,12 +22,6 @@ import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
 
-#for presentation (PDF)
-
-from sklearn.externals.six import StringIO
-import pydot
-from IPython.display import Image
-
 
 def mypow(to, base):
     return base**to
