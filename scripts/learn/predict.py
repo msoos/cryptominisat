@@ -414,11 +414,6 @@ if __name__ == "__main__":
             cl = get_one_file(dbfname)
         print("Read in data in %-5.2f secs" % (time.time()-t))
 
-        #print("cl x:")
-        #print(cl.X)
-        #print("cl data x:")
-        #print(cl_data.X)
-
         cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
 
         if options.check:

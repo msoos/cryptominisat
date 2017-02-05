@@ -36,13 +36,13 @@ def parse_lemmas(lemmafname):
 
             l = line.strip().split(" ")
             if len(l) == 1:
-                #empty clause, finished
+                # empty clause, finished
                 continue
 
             myid = int(l[len(l)-3])
             num_used = int(l[len(l)-1])
 
-            #used until the end.
+            # used until the end.
             used_for_time = 1000000
             ret[myid] = Data(used_for_time, num_used)
 
@@ -81,9 +81,11 @@ class Query:
     def add_goods(self, ids):
         self.c.execute('delete from goodClauses;')
 
-        id_b = [(self.runID, ID, x.num_used, x.used_for_time) for ID, x in ids.iteritems()]
+        id_b = [(self.runID, ID, x.num_used, x.used_for_time) for ID,
+                x in ids.iteritems()]
         self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`, `usedForTime`)
+            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`,
+                `usedForTime`)
             VALUES (?, ?, ?, ?);""", id_b)
 
 
