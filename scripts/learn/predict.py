@@ -193,7 +193,7 @@ class Query2 (Query):
         return X, y
 
     def transform_rst_row(self, row):
-        row = list(row[5:])
+        row = self.reset_some_to_null(row)
 
         ret = []
         if options.add_pow2:
@@ -235,7 +235,7 @@ class Query2 (Query):
             #print(n, ":", c)
             self.ntoc[n] = c
 
-    def transform_clstat_row(self, row):
+    def reset_some_to_null(self, row):
         set_to_null = [
             "clauseStats.runID",
             "clauseStats.simplifications",
@@ -256,23 +256,38 @@ class Query2 (Query):
             row_to_reset = self.ntoc[e]
             row2[row_to_reset] = 0
 
-        row2[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
-        row2[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
-        row2[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_hist"]]
-        row2[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
-        row2[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
-        row2[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
-        row2[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
-
-        row2[self.ntoc["clauseStats.decision_level_hist"]] = 0
-        row2[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
-        row2[self.ntoc["clauseStats.trail_depth_hist"]] = 0
-        row2[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
-        row2[self.ntoc["clauseStats.size_hist"]] = 0
-        row2[self.ntoc["clauseStats.glue_hist"]] = 0
-        row2[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
-
         return row2
+
+    def transform_clstat_row(self, row):
+        row = self.reset_some_to_null(row)
+
+        if row[self.ntoc["clauseStats.decision_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.backtrack_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.trail_depth_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.vsids_vars_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.size_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.glue_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.num_antecedents_hist"]] == 0:
+                print(row)
+
+
+        row[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
+        row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
+        row[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_level_hist"]]
+        row[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
+        row[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
+        row[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
+        row[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
+
+        row[self.ntoc["clauseStats.decision_level_hist"]] = 0
+        row[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
+        row[self.ntoc["clauseStats.trail_depth_level_hist"]] = 0
+        row[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
+        row[self.ntoc["clauseStats.size_hist"]] = 0
+        row[self.ntoc["clauseStats.glue_hist"]] = 0
+        row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
+
+        return row
 
 
 class Data:
