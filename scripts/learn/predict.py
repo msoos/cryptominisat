@@ -156,16 +156,15 @@ class Query2 (Query):
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
         for row in self.c.execute(q):
-            #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(1)
+            y.append(1) # GOOD clause
 
+        # BAD caluses
         q = """
         SELECT clauseStats.*
         -- , restart.*
@@ -183,15 +182,13 @@ class Query2 (Query):
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
         for row in self.c.execute(q):
-            #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(0)
+            y.append(0) # BAD clause
 
         return X, y
 
