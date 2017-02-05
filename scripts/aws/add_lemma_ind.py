@@ -90,7 +90,11 @@ class Query:
 
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] sqlite_db lemmas"
+    usage = """usage: %prog [options] sqlite_db lemmas
+
+It adds lemma indices from "lemmas" to the SQLite database, indicating whether
+it was good or not."""
+
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
