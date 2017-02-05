@@ -311,16 +311,11 @@ void Main::add_supported_options()
 
     std::ostringstream s_incclean;
 
-    std::ostringstream s_clean_confl_multiplier;
-    s_clean_confl_multiplier << std::setprecision(2) << conf.clean_confl_multiplier;
-
     std::ostringstream s_adjust_low;
     s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
-    ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier, s_clean_confl_multiplier.str())
-        , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
     ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())
         , "Clean increment cleaning by this factor for next cleaning")
     ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
@@ -331,8 +326,6 @@ void Main::add_supported_options()
         , "Keep all clauses at or below this value")
     ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Keep clauses that we guess to be good")
-    ("hash", po::value(&conf.hash_relearn_check)->default_value(conf.hash_relearn_check)
-        , "Hash clauses to check re-learning")
     ;
 
     std::ostringstream s_random_var_freq;

@@ -156,10 +156,6 @@ class DLL_PUBLIC SolverConf
         unsigned  max_temporary_learnt_clauses;
         unsigned  cur_max_temp_red_cls;
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
-        double    clean_confl_multiplier;
-        double    clean_prop_multiplier;
-        int       doPreClauseCleanPropAndConfl;
-        unsigned  long long preClauseCleanLimit;
         double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
         double    inc_max_temp_red_cls;
         double    clause_decay;
@@ -171,7 +167,6 @@ class DLL_PUBLIC SolverConf
         uint64_t min_num_confl_adjust_glue_cutoff;
 
         int      guess_cl_effectiveness;
-        int      hash_relearn_check;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)

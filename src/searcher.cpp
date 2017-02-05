@@ -81,7 +81,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 Searcher::~Searcher()
 {
     clear_gauss();
-    delete[] hits;
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
@@ -1524,47 +1523,6 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
-bool Searcher::check_and_insert_into_hash_learnt_cl()
-{
-    if (!conf.hash_relearn_check) {
-        return false;
-    }
-
-    if (hits == NULL
-        && solver->get_num_long_irred_cls() > 30000 //TODO: MAGIC CONSTANT
-    ) {
-        hits = new uint32_t[hash_size];
-    }
-
-    //Don't do it for very large clauses, like 400 etc.
-    if (learnt_clause.size() > 40  //TODO MAGIC CONSTANT
-        || hits == NULL
-    ) {
-        return false;
-    }
-
-    learnt_clause_sorted.resize(learnt_clause.size());
-    std::copy(learnt_clause.begin(), learnt_clause.end()
-        , learnt_clause_sorted.begin());
-    std::sort(learnt_clause_sorted.begin(), learnt_clause_sorted.end());
-
-    uint64_t hash = clause_hash(learnt_clause_sorted);
-    uint32_t hash_i = hash & hash_mask;
-    uint32_t hash_j = (1UL << (hash >> hash_bits) ) & (8 * sizeof(hits[0]) - 1);
-
-    if (hits[hash_i] & hash_j) {
-        //It seems we've already learnt this clause before.
-        //Let's make sure we don't forget it this time.
-        hits[hash_i] &= ~hash_j;
-        return true;
-    } else {
-        //Even if we forget this learnt clause, we can still
-        //prevent us from unlearning it again in the future
-        hits[hash_i] |= hash_j;
-        return false;
-    }
-}
-
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
@@ -1604,11 +1562,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             if (guess == 0) {
                 cl->stats.ttl = 1;
             }
-        }
-        const bool inside_hash = check_and_insert_into_hash_learnt_cl();
-        if (inside_hash && which_arr > 0) {
-            which_arr = 0;
-            stats.cache_hit++;
         }
 
         cl->stats.which_red_array = which_arr;

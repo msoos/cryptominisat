@@ -38,10 +38,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause cleaning
         , max_temporary_learnt_clauses(30000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        , clean_confl_multiplier(0.2)
-        , clean_prop_multiplier(1.0)
-        , doPreClauseCleanPropAndConfl(false)
-        , preClauseCleanLimit(2)
         , inc_max_temp_red_cls(1.0)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
@@ -49,7 +45,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         , guess_cl_effectiveness(1)
-        , hash_relearn_check(0)
 
         //Restarting
         , restart_first(100)
