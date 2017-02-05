@@ -1633,7 +1633,7 @@ lbool Solver::iterate_until_solved()
 void Solver::check_too_many_low_glues()
 {
     if (conf.glue_must_keep_clause_if_below_or_eq == 0
-        || sumConflicts() < (150*1000ULL)
+        || sumConflicts() < conf.min_num_confl_adjust_glue_cutoff
         || adjusted_glue_cutoff_if_too_many
         || conf.adjust_glue_if_too_many_low >= 1.0
     ) {

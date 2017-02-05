@@ -165,7 +165,11 @@ class DLL_PUBLIC SolverConf
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
         unsigned glue_must_keep_clause_if_below_or_eq;
+
+        //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
         double   adjust_glue_if_too_many_low;
+        uint64_t min_num_confl_adjust_glue_cutoff;
+
         int      guess_cl_effectiveness;
         int      hash_relearn_check;
 

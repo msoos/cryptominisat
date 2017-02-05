@@ -46,7 +46,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
         , glue_must_keep_clause_if_below_or_eq(5)
-        , adjust_glue_if_too_many_low(2.0)
+        , adjust_glue_if_too_many_low(0.7)
+        , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         , guess_cl_effectiveness(1)
         , hash_relearn_check(0)
 
