@@ -7,13 +7,16 @@ import optparse
 
 
 class Data:
-    def __init__(self, used_for_time=-1, num_used=0):
+    def __init__(self, cl, used_for_time=-1, num_used=0):
         self.used_for_time = used_for_time
         self.num_used = num_used
+        self.cl = cl
 
 
 def parse_lemmas(lemmafname):
     """Takes the lemma file and returns map with clauses' IDs and data"""
+
+    # clause in lemmas: "CLAUSE 0 ID last_used num_used"
 
     ret = {}
     with open(lemmafname, "r") as f:
@@ -33,22 +36,28 @@ def parse_lemmas(lemmafname):
                     print("myid:", myid)
                     print("num used:", num_used)
                     print(ret[myid].num_used)
-                if ret[myid].num_used != num_used:
-                    print("Line no %d wrong usage value" % lineno)
-                    print("line: '%s'" % line.strip())
-                    assert ret[myid].num_used == num_used
+
+                # self-subsuming resolution keeps the ID the same
+                cl = sorted(l[1:-4])
+                if ret[myid].cl != cl:
+                    if options.verbose:
+                        print("orig cl: ", ret[myid].cl)
+                        print("new cl : ", cl)
+                        print("Updated num used, id %d, num used orig %d add: %d"
+                              % (myid, ret[myid].num_used, num_used))
+                    ret[myid].num_used += num_used
                 continue
 
             if len(l) == 1:
                 # empty clause, finished
                 continue
 
+            cl = sorted(l[:-4])
             myid = int(l[len(l)-3])
             num_used = int(l[len(l)-1])
+            used_for_time = 1000000  # used until the end
 
-            # used until the end
-            used_for_time = 1000000
-            ret[myid] = Data(used_for_time, num_used)
+            ret[myid] = Data(cl, used_for_time, num_used)
 
     print("Parsed %d number of good lemmas" % len(ret))
     return ret
