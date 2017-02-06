@@ -77,10 +77,9 @@ private:
 
     void dumpEquivalentLits();
     void dumpUnitaryClauses();
-    void dumpRedClauses(const uint32_t maxSize);
+    void dumpRedClauses();
     void dump_clauses(
         const vector<ClOffset>& cls
-        , size_t max_size
         , const bool backnumber
     );
 

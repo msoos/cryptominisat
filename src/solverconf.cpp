@@ -254,7 +254,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , global_multiplier_multiplier_max(3)
 
         //misc
-        , maxDumpRedsSize(std::numeric_limits<uint32_t>::max())
         , origSeed(0)
         , sync_every_confl(20000)
         , reconfigure_val(0)

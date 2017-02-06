@@ -350,7 +350,6 @@ class DLL_PUBLIC SolverConf
         double global_multiplier_multiplier_max;
 
         //Misc
-        unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
         unsigned reconfigure_val;
