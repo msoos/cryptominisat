@@ -322,8 +322,6 @@ class DLL_PUBLIC SolverConf
 
 
         //Misc Optimisations
-        int      doExtBinSubs;
-        int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;

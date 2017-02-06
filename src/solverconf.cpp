@@ -229,8 +229,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , comp_find_time_limitM (500)
 
         //Misc optimisations
-        , doExtBinSubs     (true)
-        , doSortWatched    (true)
         , doStrSubImplicit (true)
         , subsume_implicit_time_limitM(30LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
