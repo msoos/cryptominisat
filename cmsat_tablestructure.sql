@@ -198,8 +198,8 @@ CREATE TABLE `clauseStats` (
   `vsids_vars_var` double NOT NULL,
   `vsids_vars_max` double NOT NULL,
 
-  `antecedents_glue_long_reds_avg` double NOT NULL,
-  `antecedents_glue_long_reds_var` double NOT NULL,
+  `antecedents_glue_long_reds_avg` float NOT NULL,
+  `antecedents_glue_long_reds_var` float NOT NULL,
   `antecedents_glue_long_reds_min` int(20) NOT NULL,
   `antecedents_glue_long_reds_max` int(20) NOT NULL,
 
@@ -220,13 +220,13 @@ CREATE TABLE `clauseStats` (
 
   `antecedents_antecedents_vsids_avg` double NOT NULL,
 
-  `decision_level_hist` double NOT NULL,
-  `backtrack_level_hist` double NOT NULL,
-  `trail_depth_level_hist` double NOT NULL,
+  `decision_level_hist` float NOT NULL,
+  `backtrack_level_hist` float NOT NULL,
+  `trail_depth_level_hist` float NOT NULL,
   `vsids_vars_hist` double NOT NULL,
-  `size_hist` double NOT NULL,
-  `glue_hist` double NOT NULL,
-  `num_antecedents_hist` double NOT NULL
+  `size_hist` float NOT NULL,
+  `glue_hist` float NOT NULL,
+  `num_antecedents_hist` float NOT NULL
 );
 
 DROP TABLE IF EXISTS `goodClauses`;
