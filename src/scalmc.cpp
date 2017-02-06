@@ -78,7 +78,6 @@ string binary(unsigned x, uint32_t length)
     std::reverse(s.begin(), s.end());
 
     return s;
-
 }
 
 string CUSP::GenerateRandomBits(uint32_t size)
