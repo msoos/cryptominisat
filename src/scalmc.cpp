@@ -70,7 +70,8 @@ string binary(unsigned x, uint32_t length)
     do {
         s.push_back('0' + (x & 1));
     } while (x >>= 1);
-    for (uint32_t i = logSize; i < (uint32_t) length; i++) {
+
+    for (uint32_t i = logSize; i < length; i++) {
         s.push_back('0');
     }
     std::reverse(s.begin(), s.end());
