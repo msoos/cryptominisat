@@ -21,6 +21,7 @@ import sklearn.tree
 import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
+import math
 
 
 def mypow(to, base):
@@ -276,6 +277,15 @@ class Query2 (QueryHelper):
         row[self.ntoc["clauseStats.size_hist"]] = 0
         row[self.ntoc["clauseStats.glue_hist"]] = 0
         row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
+
+        f32_max = numpy.finfo("float32").max;
+        f32_min = numpy.finfo("float32").min;
+        for i in range(len(row)):
+            if row[i] > f32_max:
+                row[i] = f32_max
+
+            if row[i] < f32_min:
+                row[i] = f32_min
 
         return row
 
