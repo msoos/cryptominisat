@@ -49,6 +49,7 @@
 #include <string.h>
 #include <list>
 #include <array>
+#include <cmath>
 
 #include "scalmc.h"
 #include "time_mem.h"
