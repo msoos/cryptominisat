@@ -1408,7 +1408,9 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
         todo_copy.push_back(tmp);
     }
 
+    //We clear this one, so we don't need to remove the clauses one-by-one
     solver->watches[lit].clear();
+
     for (const Watched watch :todo_copy) {
         lits.clear();
         bool red = false;
