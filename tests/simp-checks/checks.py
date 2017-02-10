@@ -26,6 +26,7 @@ import optparse
 import subprocess
 import time
 
+
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
 
     def format_description(self, description):
@@ -63,6 +64,7 @@ if not os.path.isfile(cms4_exe):
 if not os.access(cms4_exe, os.X_OK):
     print("CryptoMiniSat executable you gave, '%s' is not executable. Exiting." % cms4_exe)
     exit(-1)
+
 
 def test_velim_one_file(fname):
     simp_fname = "simp.out"
