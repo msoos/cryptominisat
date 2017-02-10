@@ -929,13 +929,15 @@ double Solver::calc_renumber_saving()
 }
 
 //Beware. Cannot be called while Searcher is running.
-void Solver::renumber_variables()
+void Solver::renumber_variables(bool must_renumber)
 {
     if (nVars() == 0) {
         return;
     }
 
-    if (calc_renumber_saving() < 0.2) {
+    if (!must_renumber
+        && calc_renumber_saving() < 0.2
+    ) {
         return;
     }
 
@@ -1801,7 +1803,7 @@ bool Solver::execute_inprocess_strategy(
                     conf.doCache = false;
                 }
             }
-        } else if (token == "renumber") {
+        } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars) {
                 //Clean cache before renumber -- very important, otherwise
                 //we will be left with lits inside the cache that are out-of-bounds
@@ -1813,7 +1815,7 @@ bool Solver::execute_inprocess_strategy(
                     }
                 }
 
-                renumber_variables();
+                renumber_variables(token == "must-renumber");
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore

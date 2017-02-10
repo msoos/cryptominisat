@@ -233,7 +233,7 @@ class Solver : public Searcher
             , string sqlPass
             , string sqlDatabase);
         //Not Private for testing (maybe could be called from outside)
-        void renumber_variables();
+        void renumber_variables(bool must_renumber = true);
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 
