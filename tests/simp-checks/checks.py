@@ -66,14 +66,14 @@ if not os.access(cms4_exe, os.X_OK):
     exit(-1)
 
 
-def test_velim_one_file(fname):
+def test_velim_one_file(fname, extraopt):
     simp_fname = "simp.out"
     try:
         os.unlink(simp_fname)
     except:
         pass
 
-    toexec = "%s --zero-exit-status -p1 %s %s" % (cms4_exe, fname, simp_fname)
+    toexec = "%s --zero-exit-status --preproc 1 %s %s %s" % (cms4_exe, fname, extraopt, simp_fname)
     print("Executing: %s" % toexec)
 
     start = time.time()
@@ -104,16 +104,24 @@ def test_velim_one_file(fname):
     print("-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed))
     return exitnum
 
-minisat_exe = os.getcwd() + "/minisat/build/release/bin/minisat"
+minisat_exe = os.getcwd() + "/minisat/build/minisat"
+
+
+def test(extraopt):
+    exitnum = 0
+    for fname in args[1:]:
+        exitnum |= test_velim_one_file(fname)
+
+    if exitnum == 0:
+        print("ALL PASSED")
+        subprocess.check_call("rm *.out", shell=True)
+    else:
+        print("SOME CHECKS FAILED")
+
+    return exitnum
 
 exitnum = 0
-for fname in args[1:]:
-    exitnum |= test_velim_one_file(fname)
-
-if exitnum == 0:
-    print("ALL PASSED")
-    subprocess.check_call("rm *.out", shell=True)
-else:
-    print("SOME CHECKS FAILED")
+exitnum |= test("")
+exitnum |= test("--preschedule \"occ-bve, must-renumber\"")
 
 exit(exitnum)
