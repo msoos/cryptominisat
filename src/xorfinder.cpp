@@ -189,8 +189,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     }
 
     xor_find_time_limit -= 20;
-    findXorMatch(solver->watches[slit], slit);
-    findXorMatch(solver->watches[~slit], ~slit);
+    findXorMatch(solver->watches[slit]);
+    findXorMatch(solver->watches[~slit]);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -221,7 +221,7 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     runStats.sumSizeXors += found_xor.size();
 }
 
-void XorFinder::findXorMatch(watch_subarray_const occ, const Lit lit)
+void XorFinder::findXorMatch(watch_subarray_const occ)
 {
     xor_find_time_limit -= (int64_t)occ.size();
     for (const Watched& w: occ) {
