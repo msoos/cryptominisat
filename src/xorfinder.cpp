@@ -231,8 +231,8 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit lit)
 
         //Deal with clause
 
-        //Clause will be at least 4 long
-        if (poss_xor.getSize() <= 3) {
+        //Clause will be at least 3 long
+        if (poss_xor.getSize() <= 2) {
             continue;
         }
 
