@@ -266,26 +266,17 @@ class Query2 (QueryHelper):
         row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
         row[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_level_hist"]]
         row[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
-        row[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
-        row[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
-        row[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
+        #row[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
+        #row[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
+        #row[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
 
         row[self.ntoc["clauseStats.decision_level_hist"]] = 0
         row[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
         row[self.ntoc["clauseStats.trail_depth_level_hist"]] = 0
         row[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
-        row[self.ntoc["clauseStats.size_hist"]] = 0
-        row[self.ntoc["clauseStats.glue_hist"]] = 0
-        row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
-
-        f32_max = numpy.finfo("float32").max;
-        f32_min = numpy.finfo("float32").min;
-        for i in range(len(row)):
-            if row[i] > f32_max:
-                row[i] = f32_max
-
-            if row[i] < f32_min:
-                row[i] = f32_min
+        #row[self.ntoc["clauseStats.size_hist"]] = 0
+        #row[self.ntoc["clauseStats.glue_hist"]] = 0
+        #row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
 
         return row
 
