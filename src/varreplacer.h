@@ -95,7 +95,6 @@ class VarReplacer
             uint64_t zeroDepthAssigns = 0;
             uint64_t actuallyReplacedVars = 0;
             uint64_t removedBinClauses = 0;
-            uint64_t removedTriClauses = 0;
             uint64_t removedLongClauses = 0;
             uint64_t removedLongLits = 0;
             uint64_t bogoprops = 0;
@@ -175,20 +174,12 @@ class VarReplacer
             ImplicitTmpStats() :
                 removedRedBin(0)
                 , removedIrredBin(0)
-                , removedRedTri(0)
-                , removedIrredTri(0)
             {
             }
 
             void remove(const Watched& ws)
             {
-                if (ws.isTri()) {
-                    if (ws.red()) {
-                        removedRedTri++;
-                    } else {
-                        removedIrredTri++;
-                    }
-                } else if (ws.isBin()) {
+                if (ws.isBin()) {
                     if (ws.red()) {
                         removedRedBin++;
                     } else {
@@ -206,18 +197,8 @@ class VarReplacer
 
             size_t removedRedBin;
             size_t removedIrredBin;
-            size_t removedRedTri;
-            size_t removedIrredTri;
         };
         ImplicitTmpStats impl_tmp_stats;
-        void updateTri(
-            Watched* i
-            , Watched*& j
-            , const Lit origLit1
-            , const Lit origLit2
-            , Lit lit1
-            , Lit lit2
-        );
         void updateBin(
             Watched* i
             , Watched*& j

@@ -42,7 +42,6 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
-#include "gatefinder.h"
 #include "completedetachreattacher.h"
 #include "compfinder.h"
 #include "comphandler.h"
@@ -479,10 +478,6 @@ Clause* Solver::add_clause_int(
             attach_bin_clause(ps[0], ps[1], red);
             return NULL;
 
-        case 3:
-            attach_tri_clause(ps[0], ps[1], ps[2], red);
-            return NULL;
-
         default:
             Clause* c = cl_alloc.Clause_new(ps
             #ifdef STATS_NEEDED
@@ -532,30 +527,6 @@ void Solver::attachClause(
     PropEngine::attachClause(cl, checkAttach);
 }
 
-void Solver::attach_tri_clause(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-    , const bool checkUnassignedFirst
-) {
-    #if defined(DRAT_DEBUG) && defined(DRAT)
-    if (drat) {
-        *drat << lit1  << lit2  << lit3 << fin;
-    }
-    #endif
-
-    //Update stats
-    if (red) {
-        binTri.redTris++;
-    } else {
-        binTri.irredTris++;
-    }
-
-    //Call Solver's function for heavy-lifting
-    PropEngine::attach_tri_clause(lit1, lit2, lit3, red, checkUnassignedFirst);
-}
-
 void Solver::attach_bin_clause(
     const Lit lit1
     , const Lit lit2
@@ -576,22 +547,6 @@ void Solver::attach_bin_clause(
 
     //Call Solver's function for heavy-lifting
     PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);
-}
-
-void Solver::detach_tri_clause(
-    const Lit lit1
-    , const Lit lit2
-    , const Lit lit3
-    , const bool red
-    , const bool allow_empty_watch
-) {
-    if (red) {
-        binTri.redTris--;
-    } else {
-        binTri.irredTris--;
-    }
-
-    PropEngine::detach_tri_clause(lit1, lit2, lit3, red, allow_empty_watch);
 }
 
 void Solver::detach_bin_clause(
@@ -615,7 +570,7 @@ void Solver::detachClause(const Clause& cl, const bool removeDrat)
         *drat << del << cl << fin;
     }
 
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
     detach_modified_clause(cl[0], cl[1], cl.size(), &cl);
 }
 
@@ -1730,6 +1685,9 @@ bool Solver::execute_inprocess_strategy(
             ) {
                 return ok;
             }
+            #ifdef SLOW_DEBUG
+            solver->check_stats();
+            #endif
         }
 
         if (token == "find-comps") {
@@ -1943,10 +1901,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     //Reconfigure
     if (nVars() > 2
-        && (longIrredCls.size() > 1 ||
-            (binTri.irredBins + binTri.redBins
-             + binTri.irredTris + binTri.redTris) > 1
-            )
+        && (longIrredCls.size() > 1 || (binTri.irredBins + binTri.redBins))
     ) {
         if (solveStats.numSimplify == conf.reconfigure_at) {
             SolveFeatures feat = calculate_features();
@@ -2231,23 +2186,10 @@ void Solver::print_full_restart_stat(const double cpu_time) const
         occsimplifier->get_stats().print(nVars());
     }
 
-    if (occsimplifier && conf.doGateFind) {
+    //TODO after TRI to LONG conversion
+    /*if (occsimplifier && conf.doGateFind) {
         occsimplifier->print_gatefinder_stats();
-    }
-
-    //GateFinder stats
-
-
-    /*
-    //XOR stats
-    print_stats_line("c XOR time"
-        , subsumer->getXorFinder()->get_stats().total_time()
-        , subsumer->getXorFinder()->get_stats().total_time()/cpu_time*100.0
-        , "% time"
-    );
-    subsumer->getXorFinder()->get_stats().print(
-        subsumer->getXorFinder()->getNumCalls()
-    );*/
+    }*/
 
     //VarReplacer stats
     print_stats_line("c SCC time"
@@ -2472,6 +2414,7 @@ void Solver::print_mem_stats() const
 
 void Solver::print_clause_size_distrib()
 {
+    size_t size3 = 0;
     size_t size4 = 0;
     size_t size5 = 0;
     size_t sizeLarge = 0;
@@ -2488,7 +2431,7 @@ void Solver::print_clause_size_distrib()
                 assert(false);
                 break;
             case 3:
-                assert(false);
+                size3++;
                 break;
             case 4:
                 size4++;
@@ -2504,6 +2447,7 @@ void Solver::print_clause_size_distrib()
 
     cout
     << "c clause size stats."
+    << " size3: " << size3
     << " size4: " << size4
     << " size5: " << size5
     << " larger: " << sizeLarge << endl;
@@ -2588,29 +2532,6 @@ bool Solver::verify_model_implicit_clauses() const
 
                 return false;
             }
-
-             if (w.isTri()
-                && model_value(lit) != l_True
-                && model_value(w.lit2()) != l_True
-                && model_value(w.lit3()) != l_True
-            ) {
-                cout
-                << "tri clause: "
-                << lit
-                << " , " << w.lit2()
-                << " , " << w.lit3()
-                << " not satisfied!"
-                << endl;
-
-                cout
-                << "value of unsat tri clause: "
-                << value(lit)
-                << " , " << value(w.lit2())
-                << " , " << value(w.lit3())
-                << endl;
-
-                return false;
-            }
         }
     }
 
@@ -2658,7 +2579,6 @@ bool Solver::verify_model() const
         << "c Verified "
         << longIrredCls.size() + longRedCls.size()
             + binTri.irredBins + binTri.redBins
-            + binTri.irredTris + binTri.redTris
         << " clause(s)."
         << endl;
     }
@@ -2698,14 +2618,13 @@ void Solver::print_clause_stats() const
 {
     //Irredundant
     print_value_kilo_mega(longIrredCls.size());
-    print_value_kilo_mega(binTri.irredTris);
     print_value_kilo_mega(binTri.irredBins);
     cout
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.irredLits, longIrredCls.size())
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
-    << ratio_for_stat(litStats.irredLits + binTri.irredTris*3 + binTri.irredBins*2
-    , longIrredCls.size() + binTri.irredTris + binTri.irredBins)
+    << ratio_for_stat(litStats.irredLits + binTri.irredBins*2
+    , longIrredCls.size() + binTri.irredBins)
     ;
 
     //Redundant
@@ -2715,14 +2634,13 @@ void Solver::print_clause_stats() const
         tot += lredcls.size();
     }
 
-    print_value_kilo_mega(binTri.redTris);
     print_value_kilo_mega(binTri.redBins);
     cout
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.redLits, tot)
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
-    << ratio_for_stat(litStats.redLits + binTri.redTris*3 + binTri.redBins*2
-    , tot + binTri.redTris + binTri.redBins)
+    << ratio_for_stat(litStats.redLits + binTri.redBins*2
+    , tot + binTri.redBins)
     ;
 }
 
@@ -2755,12 +2673,6 @@ void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
         if (it->isBin()) {
             cout
             << "BIN: " << lit << ", " << it->lit2()
-            << " (l: " << it->red() << ")";
-        }
-
-        if (it->isTri()) {
-            cout
-            << "TRI: " << lit << ", " << it->lit2() << ", " << it->lit3()
             << " (l: " << it->red() << ")";
         }
 
@@ -2808,29 +2720,6 @@ void Solver::check_implicit_propagated() const
 
                 if (val2 == l_False)
                     assert(val1 == l_True);
-            }
-
-            //Handle 3-long clause
-            if (it2->isTri()) {
-                const lbool val3 = value(it2->lit3());
-
-                if (val1 == l_False
-                    && val2 == l_False
-                ) {
-                    assert(val3 == l_True);
-                }
-
-                if (val2 == l_False
-                    && val3 == l_False
-                ) {
-                    assert(val1 == l_True);
-                }
-
-                if (val1 == l_False
-                    && val3 == l_False
-                ) {
-                    assert(val2 == l_True);
-                }
             }
         }
     }
@@ -3139,7 +3028,6 @@ SolveFeatures Solver::calculate_features() const
         feat.confl_per_restart = (double)sumSearchStats.conflStats.numConflicts / (double)sumSearchStats.numRestarts;
         feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumSearchStats.conflStats.numConflicts;
         feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumSearchStats.conflStats.numConflicts;
-        feat.learnt_tris_per_confl = (double)sumSearchStats.learntTris / (double)sumSearchStats.conflStats.numConflicts;
     }
 
     feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
@@ -3423,8 +3311,6 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     //Check number of red & irred binary clauses
     uint64_t thisNumRedBins = 0;
     uint64_t thisNumIrredBins = 0;
-    uint64_t thisNumRedTris = 0;
-    uint64_t thisNumIrredTris = 0;
 
     size_t wsLit = 0;
     for(watch_array::const_iterator
@@ -3451,29 +3337,6 @@ void Solver::check_implicit_stats(const bool onlypairs) const
                     thisNumRedBins++;
                 else
                     thisNumIrredBins++;
-
-                continue;
-            }
-
-            if (it2->isTri()) {
-                assert(it2->lit2() < it2->lit3());
-                assert(it2->lit2().var() != it2->lit3().var());
-
-                #ifdef DEBUG_IMPLICIT_PAIRS_TRIPLETS
-                Lit lits[3];
-                lits[0] = Lit::toLit(wsLit);
-                lits[1] = it2->lit2();
-                lits[2] = it2->lit3();
-                std::sort(lits, lits + 3);
-                findWatchedOfTri(watches, lits[0], lits[1], lits[2], it2->red());
-                findWatchedOfTri(watches, lits[1], lits[0], lits[2], it2->red());
-                findWatchedOfTri(watches, lits[2], lits[0], lits[1], it2->red());
-                #endif //DEBUG_IMPLICIT_PAIRS_TRIPLETS
-
-                if (it2->red())
-                    thisNumRedTris++;
-                else
-                    thisNumIrredTris++;
 
                 continue;
             }
@@ -3505,26 +3368,6 @@ void Solver::check_implicit_stats(const bool onlypairs) const
     assert(thisNumRedBins % 2 == 0);
     assert(thisNumRedBins/2 == binTri.redBins);
 
-    if (thisNumIrredTris/3 != binTri.irredTris) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumIrredTris/3: " << thisNumIrredTris/3
-        << " binTri.irredTris: " << binTri.irredTris
-        << endl;
-    }
-    assert(thisNumIrredTris % 3 == 0);
-    assert(thisNumIrredTris/3 == binTri.irredTris);
-
-    if (thisNumRedTris/3 != binTri.redTris) {
-        std::cerr
-        << "ERROR:"
-        << " thisNumRedTris/3: " << thisNumRedTris/3
-        << " binTri.redTris: " << binTri.redTris
-        << endl;
-    }
-    assert(thisNumRedTris % 3 == 0);
-    assert(thisNumRedTris/3 == binTri.redTris);
-
     end:
 
     const double time_used = cpuTime() - myTime;
@@ -3553,7 +3396,6 @@ void Solver::check_stats(const bool allowFreed) const
         << "->numLitsIrred: " << numLitsIrred << endl
         << "->litStats.irredLits: " << litStats.irredLits << endl;
     }
-    assert(numLitsIrred == litStats.irredLits);
 
     uint64_t numLitsRed = 0;
     for(auto& lredcls: longRedCls) {
@@ -3565,6 +3407,7 @@ void Solver::check_stats(const bool allowFreed) const
         << "->litStats.redLits: " << litStats.redLits << endl;
     }
     assert(numLitsRed == litStats.redLits);
+    assert(numLitsIrred == litStats.irredLits);
 
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
@@ -3812,17 +3655,6 @@ bool Solver::undef_check_must_fix()
                 std::array<Lit, 2> c;
                 c[0] = l;
                 c[1] = w.lit2();
-                undef_look_at_one_clause(&c);
-            }
-
-            if (w.isTri()
-                && l < w.lit2()
-                && w.lit2() < w.lit3()
-            ) {
-                std::array<Lit, 3> c;
-                c[0] = l;
-                c[1] = w.lit2();
-                c[2] = w.lit3();
                 undef_look_at_one_clause(&c);
             }
         }

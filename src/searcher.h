@@ -168,14 +168,6 @@ class Searcher : public HyperEngine
             SimpleOutFile& f
             , bool red
         ) const;
-        void write_tri_cls(
-            SimpleOutFile& f
-            , bool red
-        ) const;
-        void read_tri_cls(
-            SimpleInFile& f
-            , bool red
-        );
 
         //Misc
         void update_var_decay();

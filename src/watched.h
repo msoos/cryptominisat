@@ -39,7 +39,6 @@ namespace CMSat {
 enum WatchType {
     watch_clause_t = 0
     , watch_binary_t = 1
-    , watch_tertiary_t = 2
     , watch_idx_t = 3
 };
 
@@ -91,16 +90,6 @@ class Watched {
         }
 
         /**
-        @brief Constructor for a 3-long clause
-        */
-        Watched(const Lit lit1, const Lit lit2, const bool red) :
-            data1(lit1.toInt())
-            , type(watch_tertiary_t)
-            , data2((lit2.toInt() << 1) | (uint32_t)red)
-        {
-        }
-
-        /**
         @brief Constructor for an Index value
         */
         Watched(const uint32_t idx) :
@@ -144,11 +133,6 @@ class Watched {
             return (type == watch_clause_t);
         }
 
-        bool isTri() const
-        {
-            return (type == watch_tertiary_t);
-        }
-
         bool isIdx() const
         {
             return (type == watch_idx_t);
@@ -168,7 +152,7 @@ class Watched {
         Lit lit2() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBin() || isTri());
+            assert(isBin());
             #endif
             return Lit::toLit(data1);
         }
@@ -179,7 +163,7 @@ class Watched {
         void setLit2(const Lit lit)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBin() || isTri());
+            assert(isBin());
             #endif
             data1 = lit.toInt();
         }
@@ -187,7 +171,7 @@ class Watched {
         bool red() const
         {
             #ifdef DEBUG_WATCHED
-            assert(isBin() || isTri());
+            assert(isBin());
             #endif
             return data2 & 1;
         }
@@ -195,30 +179,11 @@ class Watched {
         void setRed(const bool toSet)
         {
             #ifdef DEBUG_WATCHED
-            assert(isBin() || isTri());
+            assert(isBin());
             assert(red());
             #endif
             assert(toSet == false);
             data2 &= (~(1U));
-        }
-
-        /**
-        @brief Get the 3rd literal of a 3-long clause
-        */
-        Lit lit3() const
-        {
-            #ifdef DEBUG_WATCHED
-            assert(isTri());
-            #endif
-            return Lit::toLit(data2>>1);
-        }
-
-        void setLit3(const Lit lit2)
-        {
-            #ifdef DEBUG_WATCHED
-            assert(isTri());
-            #endif
-            data2 = (lit2.toInt()<<1) | (data2&1);
         }
 
         void mark_bin_cl()
@@ -305,12 +270,6 @@ inline std::ostream& operator<<(std::ostream& os, const Watched& ws)
         os << "Bin lit " << ws.lit2() << " (red: " << ws.red() << " )";
     }
 
-    if (ws.isTri()) {
-        os << "Tri lits "
-        << ws.lit2() << ", " << ws.lit3()
-        << " (red: " << ws.red() << " )";
-    }
-
     return os;
 }
 
@@ -348,29 +307,15 @@ struct WatchSorterBinTriLong {
                 //B is clause, A is NOT a clause. So A is better than B.
                 return true;
             }
-            //Now nothing is clause
+
+            //Both are BIN
+            assert(a.isBin());
+            assert(b.isBin());
 
             if (a.lit2() != b.lit2()) {
                 return a.lit2() < b.lit2();
             }
-            if (a.isBin() && b.isTri()) return true;
-            if (a.isTri() && b.isBin()) return false;
-            //At this point either both are BIN or both are TRI
 
-            //Both are BIN
-            if (a.isBin()) {
-                assert(b.isBin());
-                if (a.red() != b.red()) {
-                    return !a.red();
-                }
-                return false;
-            }
-
-            //Both are Tri
-            assert(a.isTri() && b.isTri());
-            if (a.lit3() != b.lit3()) {
-                return a.lit3() < b.lit3();
-            }
             if (a.red() != b.red()) {
                 return !a.red();
             }

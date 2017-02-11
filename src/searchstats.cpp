@@ -58,7 +58,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     //Red stats
     learntUnits += other.learntUnits;
     learntBins += other.learntBins;
-    learntTris += other.learntTris;
     learntLongs += other.learntLongs;
     otfSubsumed += other.otfSubsumed;
     otfSubsumedImplicit += other.otfSubsumedImplicit;
@@ -118,7 +117,6 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     //Red stats
     learntUnits -= other.learntUnits;
     learntBins -= other.learntBins;
-    learntTris -= other.learntTris;
     learntLongs -= other.learntLongs;
     otfSubsumed -= other.otfSubsumed;
     otfSubsumedImplicit -= other.otfSubsumedImplicit;
@@ -231,11 +229,6 @@ void SearchStats::print(uint64_t props) const
     print_stats_line("c bins learnt"
         , learntBins
         , stats_line_percent(learntBins, conflStats.numConflicts)
-        , "% of conflicts");
-
-    print_stats_line("c tris learnt"
-        , learntTris
-        , stats_line_percent(learntTris, conflStats.numConflicts)
         , "% of conflicts");
 
     print_stats_line("c long learnt"

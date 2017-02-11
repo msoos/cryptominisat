@@ -39,7 +39,6 @@ void SolveFeatures::print_stats() const
 
     //Clause distribution
     cout << "binary " << binary << ", ";
-    cout << "trinary " << trinary << ", ";
 
     cout << "horn " << horn << ", ";
     cout << "horn_mean " << horn_mean << ", ";
@@ -83,7 +82,6 @@ void SolveFeatures::print_stats() const
     cout << "num_resolutions_min " << num_resolutions_min << ", ";
     cout << "num_resolutions_max " << num_resolutions_max << ", ";
     cout << "learnt_bins_per_confl " << learnt_bins_per_confl << ", ";
-    cout << "learnt_tris_per_confl "<< learnt_tris_per_confl << ", ";
 
     //Search
     cout << "avg_branch_depth " << avg_branch_depth << ", ";

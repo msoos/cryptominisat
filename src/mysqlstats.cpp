@@ -495,7 +495,7 @@ void MySQLStats::initRestartSTMT()
     << ", `conflLongIrred`, `conflLongRed`"
 
     //Reds
-    << ", `learntUnits`, `learntBins`, `learntTris`, `learntLongs`"
+    << ", `learntUnits`, `learntBins`, `learntLongs`"
 
     //Resolutions
     << ", `resolBinIrred`, `resolBinRed`"
@@ -554,7 +554,6 @@ void MySQLStats::initRestartSTMT()
 
     //Clause stats
     bindTo(stmtRst, stmtRst.numIrredBins);
-    bindTo(stmtRst, stmtRst.numIrredTris);
     bindTo(stmtRst, stmtRst.numIrredLongs);
     bindTo(stmtRst, stmtRst.numRedBins);
     bindTo(stmtRst, stmtRst.numRedTris);
@@ -618,7 +617,6 @@ void MySQLStats::initRestartSTMT()
     //Red
     bindTo(stmtRst, stmtRst.learntUnits);
     bindTo(stmtRst, stmtRst.learntBins);
-    bindTo(stmtRst, stmtRst.learntTris);
     bindTo(stmtRst, stmtRst.learntLongs);
 
     //Resolutions
@@ -909,11 +907,9 @@ void MySQLStats::restart(
 
     //Clause stats
     stmtRst.numIrredBins  = binTri.irredBins;
-    stmtRst.numIrredTris  = binTri.irredTris;
     stmtRst.numIrredLongs = solver->get_num_long_irred_cls();
     stmtRst.numIrredLits  = solver->litStats.irredLits;
     stmtRst.numRedBins    = binTri.redBins;
-    stmtRst.numRedTris    = binTri.redTris;
     stmtRst.numRedLongs   = solver->get_num_long_red_cls();
     stmtRst.numRedLits    = solver->litStats.redLits;
 
@@ -962,23 +958,18 @@ void MySQLStats::restart(
     //Prop
     stmtRst.propsBinIrred    = thisPropStats.propsBinIrred;
     stmtRst.propsBinRed      = thisPropStats.propsBinRed;
-    stmtRst.propsTriIrred    = thisPropStats.propsTriIrred;
-    stmtRst.propsTriRed      = thisPropStats.propsTriRed;
     stmtRst.propsLongIrred   = thisPropStats.propsLongIrred;
     stmtRst.propsLongRed     = thisPropStats.propsLongRed;
 
     //Confl
     stmtRst.conflsBinIrred  =  thisStats.conflStats.conflsBinIrred;
     stmtRst.conflsBinRed    = thisStats.conflStats.conflsBinRed;
-    stmtRst.conflsTriIrred  = thisStats.conflStats.conflsTriIrred;
-    stmtRst.conflsTriRed    = thisStats.conflStats.conflsTriRed;
     stmtRst.conflsLongIrred = thisStats.conflStats.conflsLongIrred;
     stmtRst.conflsLongRed   = thisStats.conflStats.conflsLongRed;
 
     //Red
     stmtRst.learntUnits = thisStats.learntUnits;
     stmtRst.learntBins  = thisStats.learntBins;
-    stmtRst.learntTris  = thisStats.learntTris;
     stmtRst.learntLongs = thisStats.learntLongs;
 
     //Resolv stats

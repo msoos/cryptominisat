@@ -57,12 +57,6 @@ void CompleteDetachReatacher::detach_nonbins_nontris()
 
     assert(stay.irredBins % 2 == 0);
     solver->binTri.irredBins = stay.irredBins/2;
-
-    assert(stay.redTris % 3 == 0);
-    solver->binTri.redTris = stay.redTris/3;
-
-    assert(stay.irredTris % 3 == 0);
-    solver->binTri.irredTris = stay.irredTris/3;
 }
 
 /**
@@ -81,13 +75,6 @@ CompleteDetachReatacher::ClausesStay CompleteDetachReatacher::clearWatchNotBinNo
                 stay.redBins++;
             else
                 stay.irredBins++;
-
-            *j++ = *i;
-        } else if (i->isTri()) {
-            if (i->red())
-                stay.redTris++;
-            else
-                stay.irredTris++;
 
             *j++ = *i;
         }
@@ -186,13 +173,13 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 {
     Clause& ps = *cl;
     (*solver->drat) << deldelay << ps << fin;
-    if (ps.size() <= 3) {
+    if (ps.size() <= 2) {
         cout
         << "ERROR, clause is too small, and linked in: "
         << *cl
         << endl;
     }
-    assert(ps.size() > 3);
+    assert(ps.size() > 2);
 
     Lit *i = ps.begin();
     Lit *j = i;
@@ -228,11 +215,6 @@ bool CompleteDetachReatacher::clean_clause(Clause* cl)
 
         case 2: {
             solver->attach_bin_clause(ps[0], ps[1], ps.red());
-            return false;
-        }
-
-        case 3: {
-            solver->attach_tri_clause(ps[0], ps[1], ps[2], ps.red());
             return false;
         }
 

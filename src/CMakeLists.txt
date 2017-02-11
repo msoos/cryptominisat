@@ -41,7 +41,6 @@ set(cryptoms_lib_files
     completedetachreattacher.cpp
     searcher.cpp
     solver.cpp
-    gatefinder.cpp
     sqlstats.cpp
     implcache.cpp
     stamp.cpp

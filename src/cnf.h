@@ -48,8 +48,6 @@ struct BinTriStats
 {
     uint64_t irredBins = 0;
     uint64_t redBins = 0;
-    uint64_t irredTris = 0;
-    uint64_t redTris = 0;
     uint64_t numNewBinsSinceSCC = 0;
 };
 
@@ -174,13 +172,6 @@ public:
         , Function func
         , int64_t* limit
     ) const;
-    void remove_tri_but_lit1(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-        , int64_t& timeAvailable
-    );
     uint32_t map_inter_to_outer(const uint32_t inter) const
     {
         return interToOuterMain[inter];
@@ -299,13 +290,6 @@ void CNF::for_each_lit(
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_tertiary_t:
-            *limit -= 3;
-            func(cl.lit);
-            func(cl.ws.lit2());
-            func(cl.ws.lit3());
-            break;
-
         case CMSat::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
@@ -331,12 +315,6 @@ void CNF::for_each_lit_except_watched(
         case CMSat::watch_binary_t:
             *limit -= 1;
             func(cl.ws.lit2());
-            break;
-
-        case CMSat::watch_tertiary_t:
-            *limit -= 2;
-            func(cl.ws.lit2());
-            func(cl.ws.lit3());
             break;
 
         case CMSat::watch_clause_t: {
@@ -500,7 +478,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
     for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.isIdx());
-            if (w.isBin() || w.isTri()) {
+            if (w.isBin()) {
                 continue;
             }
             assert(w.isClause());

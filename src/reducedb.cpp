@@ -218,7 +218,7 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
     ) {
         ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-        assert(cl->size() > 3);
+        assert(cl->size() > 2);
 
         if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
             cl->stats.which_red_array = 0;

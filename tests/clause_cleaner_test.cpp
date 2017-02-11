@@ -56,7 +56,6 @@ TEST_F(clause_clean_test, no_clean)
 
     cc->remove_and_clean_all();
     EXPECT_EQ(s->binTri.irredBins, 1U);
-    EXPECT_EQ(s->binTri.irredTris, 1U);
     std::string exp = "1, 2;  1, 2, 3";
     check_irred_cls_eq(s, exp);
 }
@@ -69,7 +68,6 @@ TEST_F(clause_clean_test, clean_bin_pos)
 
     cc->remove_and_clean_all();
     EXPECT_EQ(s->binTri.irredBins, 0U);
-    EXPECT_EQ(s->binTri.irredTris, 0U);
 }
 
 TEST_F(clause_clean_test, clean_bin_neg)
@@ -100,7 +98,6 @@ TEST_F(clause_clean_test, clean_tri_neg)
 
     cc->remove_and_clean_all();
     EXPECT_EQ(s->binTri.irredBins, 1U);
-    EXPECT_EQ(s->binTri.irredTris, 0U);
     check_irred_cls_eq(s, "2, 3");
 }
 
