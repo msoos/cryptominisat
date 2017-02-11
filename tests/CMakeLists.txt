@@ -136,7 +136,6 @@ set (MY_TESTS
     clause_cleaner_test
     probe_test
     distiller_all_with_all_test
-    str_impl_w_impl_stamp
     distill_long_with_implicit_test
     subsume_impl_test
     comp_find_test
