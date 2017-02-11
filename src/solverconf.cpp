@@ -196,13 +196,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_preproc(
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
-            "sub-impl, intree-probe, probe,"
+            "sub-impl,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
             //"occ-gates,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-            "str-impl, sub-impl, sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,"
-            "check-cache-size, must-renumber"
+            "str-impl, sub-impl, sub-str-cls-with-bin,"
+            "intree-probe, probe,"
+            "must-renumber"
         )
 
         //Occur based simplification
