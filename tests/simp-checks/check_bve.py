@@ -143,7 +143,11 @@ def test_velim_one_file(fname, extraopts):
     diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
     limit = float(orig_num_vars)*0.05
     if diff > limit:
-        print("Wrong, difference, %d is more than 5%% of original no. of vars, %d" % (diff, limit))
+        print("*** ERROR: No. vars difference %d is more than 5%% of original no. of vars, %d" % (diff, limit))
+        return 1
+
+    if t_cms > (t_msat*2 + 8):
+        print("*** ERROR: Time difference %d is too big!" % (t_cms-t_msat))
         return 1
 
     return 0
