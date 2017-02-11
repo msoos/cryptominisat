@@ -66,14 +66,17 @@ if not os.access(cms4_exe, os.X_OK):
     exit(-1)
 
 
-def test_velim_one_file(fname, extraopt):
+def test_velim_one_file(fname, extraopts):
     simp_fname = "simp.out"
     try:
         os.unlink(simp_fname)
     except:
         pass
 
-    toexec = "%s --zero-exit-status --preproc 1 %s %s %s" % (cms4_exe, fname, extraopt, simp_fname)
+    toexec = [cms4_exe, "--zero-exit-status", "--preproc", "1"]
+    toexec.extend(extraopts)
+    toexec.extend([fname, simp_fname])
+
     print("Executing: %s" % toexec)
 
     start = time.time()
@@ -107,10 +110,10 @@ def test_velim_one_file(fname, extraopt):
 minisat_exe = os.getcwd() + "/minisat/build/minisat"
 
 
-def test(extraopt):
+def test(extraopts):
     exitnum = 0
     for fname in args[1:]:
-        exitnum |= test_velim_one_file(fname)
+        exitnum |= test_velim_one_file(fname, extraopts)
 
     if exitnum == 0:
         print("ALL PASSED")
@@ -121,7 +124,7 @@ def test(extraopt):
     return exitnum
 
 exitnum = 0
-exitnum |= test("")
-exitnum |= test("--preschedule \"occ-bve, must-renumber\"")
+exitnum |= test([])
+exitnum |= test(["--preschedule", "occ-bve, must-renumber"])
 
 exit(exitnum)

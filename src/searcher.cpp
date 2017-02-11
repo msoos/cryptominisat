@@ -1681,7 +1681,6 @@ void Searcher::print_restart_header() const
     << " " << std::setw(5) << "conf"
     << " " << std::setw(5) << "freevar"
     << " " << std::setw(5) << "IrrL"
-    << " " << std::setw(5) << "IrrT"
     << " " << std::setw(5) << "IrrB"
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC";
@@ -1690,7 +1689,7 @@ void Searcher::print_restart_header() const
         cout << " " << std::setw(4) << "RedL" << i;
     }
 
-    cout << " " << std::setw(5) << "RedT"
+    cout
     << " " << std::setw(5) << "RedB"
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC"
