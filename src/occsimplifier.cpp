@@ -1396,19 +1396,16 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
     , const Lit lit
 ) {
     blockedMapBuilt = false;
-    vector<Lit> lits;
     const size_t orig_blocked_cls_size = blockedClauses.size();
 
     //Copy todo --> it will be manipulated below
-    vector<Watched> todo_copy;
-    for(Watched tmp: todo) {
-        todo_copy.push_back(tmp);
-    }
+    todo.copyTo(tmp_rem_cls_copy);
 
     //We clear this one, so we don't need to remove the clauses one-by-one
     solver->watches[lit].clear();
 
-    for (const Watched watch :todo_copy) {
+    vector<Lit>& lits = tmp_rem_lits;
+    for (const Watched watch :tmp_rem_cls_copy) {
         lits.clear();
         bool red = false;
 

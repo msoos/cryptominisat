@@ -404,6 +404,8 @@ private:
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
     size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
+    vector<Lit> tmp_rem_lits;
+    vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const uint32_t var, const Lit lit);
     bool        can_eliminate_var(const uint32_t var) const;
