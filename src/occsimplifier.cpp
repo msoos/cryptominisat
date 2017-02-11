@@ -1915,7 +1915,6 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
         }
     }
 
-
     int64_t limit_before = *limit_to_decrease;
     num_otf_update_until_now++;
     for(uint32_t var: touched.getTouchedList()) {
