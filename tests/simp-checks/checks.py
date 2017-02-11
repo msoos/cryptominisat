@@ -82,7 +82,7 @@ def test_velim_one_file(fname, extraopts):
     start = time.time()
     cms_out_fname = "cms-%s.out" % os.path.split(fname)[1]
     with open(cms_out_fname, "w") as f:
-        subprocess.check_call(toexec.split(), stdout=f)
+        subprocess.check_call(toexec, stdout=f)
     t_cms = time.time()-start
 
     start = time.time()
