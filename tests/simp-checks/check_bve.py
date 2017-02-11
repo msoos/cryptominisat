@@ -25,6 +25,7 @@ import sys
 import optparse
 import subprocess
 import time
+import gzip
 
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -66,7 +67,37 @@ if not os.access(cms4_exe, os.X_OK):
     exit(-1)
 
 
+def go_through_cnf(f):
+    maxvar = 0
+    for line in f:
+        line = line.strip()
+        if line[0] == "c" or line[0] == "p":
+            continue
+
+        line = line.split()
+        for lit in line:
+            if lit.isdigit():
+                if abs(int(lit)) > maxvar:
+                    maxvar = abs(int(lit))
+
+    return maxvar
+
+
+def find_num_vars(fname):
+
+    try:
+        with gzip.open(fname, 'rb') as f:
+            maxvar = go_through_cnf(f)
+    except IOError:
+        with open(fname, 'rb') as f:
+            maxvar = go_through_cnf(f)
+
+    return maxvar
+
+
 def test_velim_one_file(fname, extraopts):
+    orig_num_vars = find_num_vars(fname)
+
     simp_fname = "simp.out"
     try:
         os.unlink(simp_fname)
@@ -84,28 +115,38 @@ def test_velim_one_file(fname, extraopts):
     with open(cms_out_fname, "w") as f:
         subprocess.check_call(toexec, stdout=f)
     t_cms = time.time()-start
+    num_vars_after_cms_preproc = find_num_vars(simp_fname)
 
     start = time.time()
+    toexec = [minisat_exe, fname]
+    print("Executing: %s" % toexec)
     with open("minisat_elim_data.out", "w") as f:
-        subprocess.check_call([minisat_exe, simp_fname], stdout=f)
+        subprocess.check_call(toexec, stdout=f)
     t_msat = time.time()-start
+
     var_elimed = None
+    num_vars_after_ms_preproc = None
     with open("minisat_elim_data.out", "r") as f:
         for line in f:
             line = line.strip()
             if "num-vars-eliminated" in line:
                 var_elimed = int(line.split()[1])
+            if "num-free-vars" in line:
+                num_vars_after_ms_preproc = int(line.split()[1])
 
     assert var_elimed is not None, "Couldn't find var-elimed line"
-    if var_elimed > 30:
-        print("FAILED file %s" % fname)
-        exitnum = 1
-    else:
-        print("PASSED file %s" % fname)
-        exitnum = 0
+    assert num_vars_after_ms_preproc is not None, "Couldn't find num-free-vars line"
 
-    print("-> T-cms: %.2f T-msat: %.2f msat-bve: %d\n" % (t_cms, t_msat, var_elimed))
-    return exitnum
+    print("-> orig num vars: %d" % orig_num_vars)
+    print("-> T-cms : %-4.2f free vars after: %-9d" % (t_cms, num_vars_after_cms_preproc))
+    print("-> T-msat: %-4.2f free vars after: %-9d" % (t_msat, num_vars_after_ms_preproc))
+    diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
+    limit = float(orig_num_vars)*0.05
+    if diff > limit:
+        print("Wrong, difference, %d is more than 5%% of original no. of vars, %d" % (diff, limit))
+        return 1
+
+    return 0
 
 minisat_exe = os.getcwd() + "/minisat/build/minisat"
 
@@ -124,7 +165,6 @@ def test(extraopts):
     return exitnum
 
 exitnum = 0
-exitnum |= test([])
 exitnum |= test(["--preschedule", "occ-bve, must-renumber"])
 
 exit(exitnum)
