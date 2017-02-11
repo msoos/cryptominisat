@@ -1452,8 +1452,8 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= (long)solver->watches[lits[0]].size();
-            *limit_to_decrease -= (long)solver->watches[lits[1]].size();
+            //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
+            *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
             solver->detach_bin_clause(lits[0], lits[1], red, true, true);
         }
 
@@ -1899,10 +1899,10 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
     if (!solver->conf.updateVarElimComplexityOTF)
         return;
 
-    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars) {
+    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars
+        || time_spent_on_calc_otf_update > solver->conf.updateVarElimComplexityOTF_limitavg*100000
+    ) {
         const double avg = float_div(time_spent_on_calc_otf_update, num_otf_update_until_now);
-        //cout << "num_otf_update_until_now: " << num_otf_update_until_now << endl;
-        //cout << "avg: " << avg << endl;
 
         if (avg > solver->conf.updateVarElimComplexityOTF_limitavg) {
             solver->conf.updateVarElimComplexityOTF = false;

@@ -933,7 +933,8 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess != 0) {
-        conf.varelim_time_limitM *= 3;
+        conf.varelim_time_limitM *= 5;
+        conf.varElimRatioPerIter = 2.0;
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
