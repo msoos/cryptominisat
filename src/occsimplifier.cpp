@@ -1380,17 +1380,15 @@ void OccSimplifier::cleanBlockedClauses()
 }
 
 size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
-    watch_subarray_const todo
+    watch_subarray todo
     , const Lit lit
 ) {
     blockedMapBuilt = false;
     const size_t orig_blocked_cls_size = blockedClauses.size();
 
-    //Copy todo --> it will be manipulated below
-    todo.copyTo(tmp_rem_cls_copy);
-
-    //We clear this one, so we don't need to remove the clauses one-by-one
-    solver->watches[lit].clear();
+    //Copy&clear i.e. MOVE
+    todo.moveTo(tmp_rem_cls_copy);
+    assert(solver->watches[lit].empty());
 
     vector<Lit>& lits = tmp_rem_lits;
     for (const Watched watch :tmp_rem_cls_copy) {
@@ -1456,7 +1454,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             //Remove
             *limit_to_decrease -= (long)solver->watches[lits[0]].size();
             *limit_to_decrease -= (long)solver->watches[lits[1]].size();
-            solver->detach_bin_clause(lits[0], lits[1], red, true);
+            solver->detach_bin_clause(lits[0], lits[1], red, true, true);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {

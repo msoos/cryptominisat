@@ -78,20 +78,6 @@ void PropEngine::save_on_var_memory()
     CNF::save_on_var_memory();
 }
 
-void PropEngine::detach_bin_clause(
-    const Lit lit1
-    , const Lit lit2
-    , const bool red
-    , const bool allow_empty_watch
-) {
-    if (!(allow_empty_watch && watches[lit1].empty())) {
-        removeWBin(watches, lit1, lit2, red);
-    }
-    if (!(allow_empty_watch && watches[lit2].empty())) {
-        removeWBin(watches, lit2, lit1, red);
-    }
-}
-
 void PropEngine::attach_bin_clause(
     const Lit lit1
     , const Lit lit2

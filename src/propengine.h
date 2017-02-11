@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include "clause.h"
 #include "boundedqueue.h"
 #include "cnf.h"
+#include "watchalgos.h"
 
 namespace CMSat {
 
@@ -147,23 +148,41 @@ protected:
     /////////////////
     // Operations on clauses:
     /////////////////
-    virtual void attachClause(
+    void attachClause(
         const Clause& c
         , const bool checkAttach = true
     );
-    virtual void detach_bin_clause(
+
+    void detach_bin_clause(
         Lit lit1
         , Lit lit2
         , bool red
         , bool allow_empty_watch = false
-    );
-    virtual void attach_bin_clause(
+        , bool allow_change_order = false
+    ) {
+        if (!allow_change_order) {
+            if (!(allow_empty_watch && watches[lit1].empty())) {
+                removeWBin(watches, lit1, lit2, red);
+            }
+            if (!(allow_empty_watch && watches[lit2].empty())) {
+                removeWBin(watches, lit2, lit1, red);
+            }
+        } else {
+            if (!(allow_empty_watch && watches[lit1].empty())) {
+                removeWBin_change_order(watches, lit1, lit2, red);
+            }
+            if (!(allow_empty_watch && watches[lit2].empty())) {
+                removeWBin_change_order(watches, lit2, lit1, red);
+            }
+        }
+    }
+    void attach_bin_clause(
         const Lit lit1
         , const Lit lit2
         , const bool red
         , const bool checkUnassignedFirst = true
     );
-    virtual void detach_modified_clause(
+    void detach_modified_clause(
         const Lit lit1
         , const Lit lit2
         , const uint32_t origSize

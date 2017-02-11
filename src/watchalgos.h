@@ -76,6 +76,25 @@ inline void removeWBin(
     ws.shrink_(1);
 }
 
+inline void removeWBin_change_order(
+    watch_array &wsFull
+    , const Lit lit1
+    , const Lit lit2
+    , const bool red
+) {
+    watch_subarray ws = wsFull[lit1];
+    Watched *i = ws.begin(), *end = ws.end();
+    for (; i != end && (
+        !i->isBin()
+        || i->lit2() != lit2
+        || i->red() != red
+    ); i++);
+
+    assert(i != end);
+    *i = ws[ws.size()-1];
+    ws.shrink_(1);
+}
+
 inline bool removeWBin_except_marked(
     watch_array &wsFull
     , const Lit lit1

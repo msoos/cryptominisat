@@ -549,21 +549,6 @@ void Solver::attach_bin_clause(
     PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);
 }
 
-void Solver::detach_bin_clause(
-    const Lit lit1
-    , const Lit lit2
-    , const bool red
-    , const bool allow_empty_watch
-) {
-    if (red) {
-        binTri.redBins--;
-    } else {
-        binTri.irredBins--;
-    }
-
-    PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch);
-}
-
 void Solver::detachClause(const Clause& cl, const bool removeDrat)
 {
     if (removeDrat) {

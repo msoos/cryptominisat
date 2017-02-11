@@ -179,19 +179,28 @@ class Solver : public Searcher
         void attachClause(
             const Clause& c
             , const bool checkAttach = true
-        ) override;
+        );
         void attach_bin_clause(
             const Lit lit1
             , const Lit lit2
             , const bool red
             , const bool checkUnassignedFirst = true
-        ) override;
+        );
         void detach_bin_clause(
             Lit lit1
             , Lit lit2
             , bool red
             , bool allow_empty_watch = false
-        ) override;
+            , bool allow_change_order = false
+        ) {
+            if (red) {
+                binTri.redBins--;
+            } else {
+                binTri.irredBins--;
+            }
+
+            PropEngine::detach_bin_clause(lit1, lit2, red, allow_empty_watch, allow_change_order);
+        }
         void detachClause(const Clause& c, const bool removeDrat = true);
         void detachClause(const ClOffset offset, const bool removeDrat = true);
         void detach_modified_clause(
@@ -199,7 +208,7 @@ class Solver : public Searcher
             , const Lit lit2
             , const uint32_t origSize
             , const Clause* address
-        ) override;
+        );
         Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
