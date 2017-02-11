@@ -658,11 +658,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-    size_t num = 0;
-    for(size_t var = solver->mtrand.randInt(solver->nVars())
-        ; num < solver->nVars()
-        && var < solver->nVars()
-        && *limit_to_decrease > 0
+    for(size_t var = solver->mtrand.randInt(solver->nVars()), num = 0
+        ; num < solver->nVars() && *limit_to_decrease > 0
         ; var = (var + 1) % solver->nVars(), num++
     ) {
         if (!can_eliminate_var(var))
