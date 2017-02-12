@@ -273,10 +273,8 @@ class Tester:
             cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
             cmd += "--elimcplxupd %s " % random.randint(0, 1)
             cmd += "--occredmax %s " % random.randint(0, 100)
-            cmd += "--noextbinsubs %s " % random.randint(0, 1)
             cmd += "--extscc %s " % random.randint(0, 1)
             cmd += "--distill %s " % random.randint(0, 1)
-            cmd += "--sortwatched %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)
             cmd += "--compsfrom %d " % random.randint(0, 2)
             cmd += "--compsvar %d " % random.randint(20000, 500000)
@@ -299,7 +297,7 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
-                    "binpri", "stamp", "cache", "otfsubsume",
+                    "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp",
                     "elimcoststrategy"]
