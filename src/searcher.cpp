@@ -2765,11 +2765,7 @@ PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
-    if (conf.propBinFirst) {
-        ret = propagate_strict_order();
-    } else {
-        ret = propagate_any_order<update_bogoprops>();
-    }
+    ret = propagate_any_order<update_bogoprops>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && drat->enabled()) {

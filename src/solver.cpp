@@ -3131,7 +3131,6 @@ void Solver::reconfigure(int val)
     }
 
     /*Note to self: change
-     * propBinFirst 0->1
      * inc_max_temp_red_cls 1.1 -> 1.3
      * numCleanBetweenSimplify 2->4
      * bva: 1->0

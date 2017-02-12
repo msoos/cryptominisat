@@ -532,8 +532,6 @@ void Main::add_supported_options()
         , "Update glues while propagating")
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
-    ("binpri", po::value(&conf.propBinFirst)->default_value(conf.propBinFirst)
-        , "Propagated binary clauses strictly first")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
         , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;

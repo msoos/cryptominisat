@@ -240,13 +240,6 @@ private:
     );
     void update_glue(Clause& c);
 
-    ///Propagate >3-long clause
-    PropResult prop_long_cl_strict_order(
-        Watched* i
-        , Watched*& j
-        , const Lit p
-        , PropBy& confl
-    );
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
         Watched* i

@@ -278,9 +278,6 @@ class DLL_PUBLIC SolverConf
         double sccFindPercent;
         int max_scc_depth;
 
-        //Propagation & searching
-        int      propBinFirst;
-
         //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)
         int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup

@@ -156,9 +156,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , sccFindPercent        (0.04)
         , max_scc_depth (10000)
 
-        //Propagation & search
-        , propBinFirst     (false)
-
         //Iterative Alo Scheduling
         , simplify_at_startup(true)
         , simplify_at_every_startup(false)
