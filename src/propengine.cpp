@@ -141,7 +141,6 @@ the clause is
 void PropEngine::detach_modified_clause(
     const Lit lit1
     , const Lit lit2
-    , const uint32_t origSize
     , const Clause* address
 ) {
     ClOffset offset = cl_alloc.get_offset(address);

@@ -79,7 +79,6 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
         1000LL*1000LL*solver->conf.subsume_implicit_time_limitM
         *solver->conf.global_timeout_multiplier;
     timeAvailable = orig_timeAvailable;
-    const bool doStamp = solver->conf.doStamp;
     runStats.clear();
 
     //For randomization, we must have at least 1

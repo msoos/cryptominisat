@@ -1873,7 +1873,6 @@ bool OccSimplifier::add_varelim_resolvent(
         bvestats.subsumedByVE += ret.sub;
 
     } else if (finalLits.size() == 2) {
-        subsume:
         std::sort(finalLits.begin(), finalLits.end());
         SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
         bvestats.subsumedByVE += ret.sub;

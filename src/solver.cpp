@@ -578,7 +578,7 @@ void Solver::detach_modified_clause(
         litStats.irredLits -= origSize;
 
     //Call heavy-lifter
-    PropEngine::detach_modified_clause(lit1, lit2, origSize, address);
+    PropEngine::detach_modified_clause(lit1, lit2, address);
 }
 
 bool Solver::addClauseHelper(vector<Lit>& ps)
