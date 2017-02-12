@@ -40,7 +40,7 @@ import glob
 from verifier import *
 from functools import partial
 
-print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
+print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")))
 sys.path.append(os.getcwd())
 print("our sys.path is", sys.path)
 
@@ -188,7 +188,8 @@ def print_version():
 fuzzers_noxor = [
     ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
+    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero "
+        "--message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
     # ["build/cnf-fuzz-nossum"],
     ["../../build/tests/cnf-utils/largefuzzer"],
