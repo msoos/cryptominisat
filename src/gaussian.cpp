@@ -1175,7 +1175,7 @@ void Gaussian::print_stats() const
         }
         cout << endl;
     } else
-        cout << "c Gauss(" << matrix_no << ") not called.";
+        cout << "c Gauss(" << matrix_no << ") not called" << endl;
 }
 
 void Gaussian::print_matrix_stats() const
