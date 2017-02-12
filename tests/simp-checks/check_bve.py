@@ -26,6 +26,7 @@ import optparse
 import subprocess
 import time
 import gzip
+import threading
 
 
 class PlainHelpFormatter(optparse.IndentedHelpFormatter):
@@ -45,9 +46,12 @@ parser = optparse.OptionParser(usage=usage, description=desc,
 
 parser.add_option("--verbose", "-v", action="store_true", default=False,
                   dest="verbose", help="Print more output")
+parser.add_option("--threads", "-t", default=4, type=int,
+                  dest="threads", help="Number of threads")
 
 (options, args) = parser.parse_args()
-
+print_lock = threading.Lock()
+todo_lock = threading.Lock()
 
 if len(args) < 1:
     print("ERROR: You must call this script with at least one argument, the cryptominisat5 binary")
@@ -73,16 +77,13 @@ def go_through_cnf(f):
         line = line.strip()
         if len(line) == 0:
             continue
-        if line[0] == "c" or line[0] == "p":
-            continue
+        if line[0] == "p":
+            line = line.split()
+            assert line[1].strip() == "cnf"
+            assert line[2].isdigit()
+            return int(line[2])
 
-        line = line.split()
-        for lit in line:
-            if lit.isdigit():
-                if abs(int(lit)) > maxvar:
-                    maxvar = abs(int(lit))
-
-    return maxvar
+    assert False
 
 
 def find_num_vars(fname):
@@ -97,74 +98,127 @@ def find_num_vars(fname):
     return maxvar
 
 
-def test_velim_one_file(fname, extraopts):
-    orig_num_vars = find_num_vars(fname)
-
-    simp_fname = "simp.out"
-    try:
-        os.unlink(simp_fname)
-    except:
-        pass
-
-    toexec = [cms4_exe, "--zero-exit-status", "--preproc", "1"]
-    toexec.extend(extraopts)
-    toexec.extend([fname, simp_fname])
-
-    print("Executing: %s" % toexec)
-
-    start = time.time()
-    cms_out_fname = "cms-%s.out" % os.path.split(fname)[1]
-    with open(cms_out_fname, "w") as f:
-        subprocess.check_call(toexec, stdout=f)
-    t_cms = time.time()-start
-    num_vars_after_cms_preproc = find_num_vars(simp_fname)
-
-    start = time.time()
-    toexec = [minisat_exe, fname]
-    print("Executing: %s" % toexec)
-    with open("minisat_elim_data.out", "w") as f:
-        subprocess.check_call(toexec, stdout=f)
-    t_msat = time.time()-start
-
-    var_elimed = None
-    num_vars_after_ms_preproc = None
-    with open("minisat_elim_data.out", "r") as f:
-        for line in f:
-            line = line.strip()
-            if "num-vars-eliminated" in line:
-                var_elimed = int(line.split()[1])
-            if "num-free-vars" in line:
-                num_vars_after_ms_preproc = int(line.split()[1])
-
-    assert var_elimed is not None, "Couldn't find var-elimed line"
-    assert num_vars_after_ms_preproc is not None, "Couldn't find num-free-vars line"
-
-    print("-> orig num vars: %d" % orig_num_vars)
-    print("-> T-cms : %-4.2f free vars after: %-9d" % (t_cms, num_vars_after_cms_preproc))
-    print("-> T-msat: %-4.2f free vars after: %-9d" % (t_msat, num_vars_after_ms_preproc))
-    diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
-    limit = float(orig_num_vars)*0.05
-    if diff < limit*8 and t_msat > t_cms*3 and t_msat > 20:
-        print(" * MiniSat didn't timeout, but we did, acceptable difference.")
-        return 0
-
-    if diff > limit:
-        print("*** ERROR: No. vars difference %d is more than 5%% of original no. of vars, %d" % (diff, limit))
-        return 1
-
-    if t_cms > (t_msat*2 + 8):
-        print("*** ERROR: Time difference %d is too big!" % (t_cms-t_msat))
-        return 1
-
-    return 0
-
 minisat_exe = os.getcwd() + "/minisat/build/release/bin/minisat"
+todo = []
+exitnum = 0
+
+
+class MyThread(threading.Thread):
+    def __init__(self, threadID, extraopts):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.extraopts = extraopts
+
+    def run(self):
+        global todo
+        global exitnum
+        while len(todo) > 0:
+            with todo_lock:
+                fname = todo[0]
+                todo = todo[1:]
+
+            if options.verbose:
+                with print_lock:
+                    print("Thread %d pikced up %s" % (self.threadID, fname))
+
+            ret = self.test_velim_one_file(fname)
+
+            with todo_lock:
+                exitnum |= ret
+
+        if options.verbose:
+            with print_lock:
+                print("Finished thread %d" % self.threadID)
+
+    def test_velim_one_file(self, fname):
+        orig_num_vars = find_num_vars(fname)
+
+        simp_fname = "simp.out-%d" % self.threadID
+        try:
+            os.unlink(simp_fname)
+        except:
+            pass
+
+        toprint = ""
+
+        toexec = [cms4_exe, "--zero-exit-status", "--preproc", "1", "--verb", "0"]
+        toexec.extend(self.extraopts)
+        toexec.extend([fname, simp_fname])
+
+        toprint += "Executing: %s\n" % toexec
+
+        start = time.time()
+        cms_out_fname = "cms-%s.out" % os.path.split(fname)[1]
+        with open(cms_out_fname, "w") as f:
+            subprocess.check_call(" ".join(toexec), stdout=f, shell=True)
+        t_cms = time.time()-start
+        num_vars_after_cms_preproc = find_num_vars(simp_fname)
+
+        start = time.time()
+        toexec = [minisat_exe, fname]
+        toprint += "Executing: %s\n" % toexec
+        minisat_out_fname = "minisat_elim_data.out-%d" % self.threadID
+        try:
+            with open(minisat_out_fname, "w") as f:
+                subprocess.check_call(" ".join(toexec), stdout=f, shell=True)
+        except subprocess.CalledProcessError:
+            # probably solved it
+            pass
+        t_msat = time.time()-start
+
+        var_elimed = None
+        num_vars_after_ms_preproc = None
+        with open(minisat_out_fname, "r") as f:
+            for line in f:
+                line = line.strip()
+                if "num-vars-eliminated" in line:
+                    var_elimed = int(line.split()[1])
+                if "num-free-vars" in line:
+                    num_vars_after_ms_preproc = int(line.split()[1])
+
+        assert var_elimed is not None, "Couldn't find var-elimed line, out: %s" % toprint
+        assert num_vars_after_ms_preproc is not None, "Couldn't find num-free-vars line, out: %s" % toprint
+
+        toprint += "-> orig num vars: %d\n" % orig_num_vars
+        toprint += "-> T-cms : %-4.2f free vars after: %-9d\n" % (t_cms, num_vars_after_cms_preproc)
+        toprint += "-> T-msat: %-4.2f free vars after: %-9d\n" % (t_msat, num_vars_after_ms_preproc)
+        diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
+        limit = float(orig_num_vars)*0.05
+        if diff < limit*8 and t_msat > t_cms*3 and t_msat > 20:
+            toprint += " * MiniSat didn't timeout, but we did, acceptable difference.\n"
+            return 0
+
+        if diff > limit:
+            toprint += "*** ERROR: No. vars difference %d is more than 5%% " % diff
+            toprint += "of original no. of vars, %d\n" % limit
+            return 1
+
+        if t_cms > (t_msat*2 + 8):
+            toprint += "*** ERROR: Time difference %d is too big!\n" % (t_cms-t_msat)
+            return 1
+
+        toprint += "------------------[ thread %d ]------------------------" % self.threadID
+
+        with print_lock:
+            print(toprint)
+
+        return 0
 
 
 def test(extraopts):
     exitnum = 0
-    for fname in args[1:]:
-        exitnum |= test_velim_one_file(fname, extraopts)
+    global todo
+    todo = args[1:]
+
+    threads = []
+    for i in range(options.threads):
+        threads.append(MyThread(i, extraopts))
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
 
     if exitnum == 0:
         print("ALL PASSED")
@@ -174,7 +228,6 @@ def test(extraopts):
 
     return exitnum
 
-exitnum = 0
-exitnum |= test(["--preschedule", "occ-bve, must-renumber"])
+test(["--preschedule", "occ-bve,must-renumber"])
 
 exit(exitnum)
