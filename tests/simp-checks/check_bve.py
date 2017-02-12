@@ -158,7 +158,7 @@ def test_velim_one_file(fname, extraopts):
 
     return 0
 
-minisat_exe = os.getcwd() + "/minisat/build/minisat"
+minisat_exe = os.getcwd() + "/minisat/build/release/bin/minisat"
 
 
 def test(extraopts):
