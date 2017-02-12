@@ -390,7 +390,8 @@ class Tester:
         err_fname = unique_file("%s_err" % fname, ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
-            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=partial(setlimits, options.maxtime))
+            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
+            preexec_fn=partial(setlimits, options.maxtime))
 
         # print time limit after child startup
         if options.verbose:
