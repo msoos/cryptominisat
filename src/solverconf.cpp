@@ -169,7 +169,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "scc-vrepl,"
-            "sub-str-cls-with-bin"
+            "sub-str-cls-with-bin,"
             #ifdef USE_GAUSS
             //occ--gauss must be last
             "occ-gauss"
