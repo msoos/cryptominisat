@@ -343,6 +343,24 @@ struct ClauseSizeSorter
     const ClauseAllocator& cl_alloc;
 };
 
+inline bool CNF::redundant(const Watched& ws) const
+{
+    return (   (ws.isBin() && ws.red())
+            || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
+    );
+}
+
+inline bool CNF::redundant_or_removed(const Watched& ws) const
+{
+    if (ws.isBin()) {
+        return ws.red();
+    }
+
+   assert(ws.isClause());
+   const Clause* cl = cl_alloc.ptr(ws.get_offset());
+   return cl->red() || cl->getRemoved();
+}
+
 inline void CNF::clean_occur_from_removed_clauses()
 {
     for(watch_subarray w: watches) {

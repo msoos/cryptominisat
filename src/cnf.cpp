@@ -237,24 +237,6 @@ uint64_t CNF::print_mem_used_longclauses(const size_t totalMem) const
     return mem;
 }
 
-bool CNF::redundant(const Watched& ws) const
-{
-    return (   (ws.isBin() && ws.red())
-            || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
-    );
-}
-
-bool CNF::redundant_or_removed(const Watched& ws) const
-{
-    if (ws.isBin()) {
-        return ws.red();
-    }
-
-   assert(ws.isClause());
-   const Clause* cl = cl_alloc.ptr(ws.get_offset());
-   return cl->red() || cl->getRemoved();
-}
-
 size_t CNF::cl_size(const Watched& ws) const
 {
     switch(ws.getType()) {
