@@ -186,9 +186,9 @@ def print_version():
     print("Version values: %s" % consoleOutput.strip())
 
 fuzzers_noxor = [
-    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero "
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --zero "
         "--message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
     # ["build/cnf-fuzz-nossum"],
