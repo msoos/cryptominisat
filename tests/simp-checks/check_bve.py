@@ -71,6 +71,8 @@ def go_through_cnf(f):
     maxvar = 0
     for line in f:
         line = line.strip()
+        if len(line) == 0:
+            continue
         if line[0] == "c" or line[0] == "p":
             continue
 
@@ -142,6 +144,10 @@ def test_velim_one_file(fname, extraopts):
     print("-> T-msat: %-4.2f free vars after: %-9d" % (t_msat, num_vars_after_ms_preproc))
     diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
     limit = float(orig_num_vars)*0.05
+    if diff < limit*8 and t_msat > t_cms*3 and t_msat > 20:
+        print(" * MiniSat didn't timeout, but we did, acceptable difference.")
+        return 0
+
     if diff > limit:
         print("*** ERROR: No. vars difference %d is more than 5%% of original no. of vars, %d" % (diff, limit))
         return 1
