@@ -260,7 +260,8 @@ class Query2 (QueryHelper):
             row[self.ntoc["clauseStats.size_hist"]] == 0 or \
             row[self.ntoc["clauseStats.glue_hist"]] == 0 or \
             row[self.ntoc["clauseStats.num_antecedents_hist"]] == 0:
-                print(row)
+                print("ERROR: Data is in error:", row)
+                exit(-1)
 
         row[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
         row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
