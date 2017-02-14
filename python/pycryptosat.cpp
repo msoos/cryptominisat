@@ -475,9 +475,7 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    PyObject *result = NULL;
-
-    result = PyTuple_New((Py_ssize_t) 2);
+    PyObject *result = PyTuple_New((Py_ssize_t) 2);
     if (result == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
@@ -591,6 +589,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     }
     #else
     // Use 'i' wildcard for the boolean on version 2.x of Python
+    // O (object) [PyObject *] : Store a Python object (without any conversion) in a C object pointer.
+    // https://docs.python.org/2/c-api/arg.html
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|i", kwlist,
                                      &max_nr_of_solutions,
                                      &var_selected,
@@ -599,23 +599,16 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     }
     #endif
 
-    // sort using a custom function object
-//      struct {
-//          bool operator()(Lit a, Lit b)
-//          {
-//              return a < b;
-//          }
-//      } customLess;
-
     std::vector<Lit> var_lits;
     if (!parse_clause(self, var_selected, var_lits)) {
         return 0;
     }
 
     // Debug
-    std::cout << "Nb max solutions: " << max_nr_of_solutions << std::endl;
-    std::cout << "Nb literals: " << var_lits.size() << std::endl;
-    std::cout << "Raw sols ?: " << raw_solutions_activated << std::endl;
+    std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
+    std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
+    std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
+
 //     for (unsigned long i = 0; i < var_lits.size(); i++) {
 //         std::cout << "real value: " << var_lits[i]
 //                   << "; x: " << var_lits[i].toInt()
@@ -625,52 +618,31 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 //                   << '\n';
 //     }
 
-//      std::sort(var_lits.begin(), var_lits.end(), customLess);
-//
-//     for (unsigned long i = 0; i < var_lits.size(); i++) {
-//         std::cout << var_lits[i] << ';';
-//     }
-//     std::cout << std::endl;
-
     int current_nr_of_solutions = 0;
-    lbool ret = l_True;
+    lbool res = l_True;
     std::vector<Lit>::iterator it;
 
-////////////////////////
-// Search in vector
-//     it = std::find(var_lits.begin(), var_lits.end(), Lit(21, false));
-//     std::cout <<  Lit(21, false).toInt() << std::endl;
-//
-//     if (it != var_lits.end())
-//         std::cout << "Element found in myvector: " << *it << '\n';
-//     else
-//         std::cout << "Element not found in myvector\n";
-//
-//    return NULL;
-////////////////////////
-
-    PyObject *solutions = NULL;
-    solutions = PyList_New(0);
+    PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a list");
         return NULL;
     }
 
-    while((current_nr_of_solutions < max_nr_of_solutions) && (ret == l_True)) {
+    PyObject* solution = NULL;
+    while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
 
         Py_BEGIN_ALLOW_THREADS      /* release GIL */
-        ret = self->cmsat->solve();
+        res = self->cmsat->solve();
         Py_END_ALLOW_THREADS
 
         current_nr_of_solutions++;
 
-        std::cout << "state : " << ret << std::endl;
-        std::cout << "current sol: " << current_nr_of_solutions << std::endl;
+        std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
+                  << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
 
-        if(ret == l_True) {
+        if(res == l_True) {
 
             // Memorize the solution
-            PyObject* solution = NULL;
             if (!raw_solutions_activated) {
                 // Solution in v5 format
                 solution = get_solution(self->cmsat);
@@ -709,19 +681,22 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
                 // Ban current solution for the next run
                 self->cmsat->add_clause(ban_solution);
 
-    //               for (unsigned long i = 0; i < ban_solution.size(); i++) {
-    //                   std::cout << ban_solution[i] << ';';
-    //               }
-    //               std::cout << std::endl;
+                //for (unsigned long i = 0; i < ban_solution.size(); i++) {
+                //    std::cout << ban_solution[i] << ';';
+                //}
+                //std::cout << std::endl;
             }
-        } else if (ret == l_False) {
-            std::cout << "No more solution or limitation reached" << std::endl;
-            //Py_INCREF(Py_None);
-            //PyList_Append(solutions, Py_None);
-        } else if (ret == l_Undef) {
-            std::cout << "Nothing to do => sol undef" << std::endl;
+        } else if (res == l_False) {
+            std::cout << "DEBUG :: Solver: No more solution" << std::endl;
+        } else if (res == l_Undef) {
             Py_DECREF(solutions);
-            return PyErr_SetFromErrno(outofconflerr);
+            PyErr_SetString(PyExc_SystemError, "Nothing to do => sol undef");
+            return NULL;
+        } else {
+            // res can only be l_False, l_True, l_Undef
+            assert((res == l_False) || (res == l_True) || (res == l_Undef));
+            Py_DECREF(solutions);
+            return NULL;
         }
     }
     // Return list of all solutions
