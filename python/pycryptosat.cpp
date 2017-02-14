@@ -707,8 +707,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
-    //{"solve",     (PyCFunction) full_solve,  METH_VARARGS | METH_KEYWORDS, "my new solver stuff"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL, NULL, 0, NULL}     /* Sentinel - marks the end of this structure */
 };
 
 static PyMethodDef Solver_methods[] = {
