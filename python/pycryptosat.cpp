@@ -843,8 +843,10 @@ MODULE_INIT_FUNC(pycryptosat)
 
     // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
     // In pure Python2: return nothing.
-    if (m == NULL)
+    if (!m) {
+        Py_XDECREF(m);
         return NULL;
+    }
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
@@ -853,5 +855,11 @@ MODULE_INIT_FUNC(pycryptosat)
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
 
+    if (PyErr_Occurred())
+    {
+        PyErr_SetString(PyExc_ImportError, "pycryptosat: init failed");
+        Py_DECREF(m);
+        m = NULL;
+    }
     return m;
 }
