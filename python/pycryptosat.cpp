@@ -322,37 +322,41 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyObject* get_solution(SATSolver *cmsat)
 {
-    PyObject *tuple;
-
+    // Create tuple with the size of number of variables in model
     unsigned max_idx = cmsat->nVars();
-    tuple = PyTuple_New((Py_ssize_t) max_idx+1);
+    PyObject *tuple = PyTuple_New((Py_ssize_t) max_idx+1);
     if (tuple == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
     }
 
+    // no error checking
     Py_INCREF(Py_None);
-    if (PyTuple_SetItem(tuple, (Py_ssize_t)0, Py_None) < 0) {
+    if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)0, Py_None) < 0) {
         PyErr_SetString(PyExc_SystemError, "failed to add 1st element to tuple");
         Py_DECREF(tuple);
         return NULL;
     }
 
+    PyObject *py_value = NULL;
+    lbool v;
     for (unsigned i = 0; i < max_idx; i++) {
-        lbool v = cmsat->get_model()[i];
-        PyObject *py_value = NULL;
+        v = cmsat->get_model()[i];
+
         if (v == l_True) {
-            Py_INCREF(Py_True);
             py_value = Py_True;
         } else if (v == l_False) {
-            Py_INCREF(Py_False);
             py_value = Py_False;
         } else if (v == l_Undef) {
-            Py_INCREF(Py_None);
             py_value = Py_None;
+        } else {
+            // v can only be l_False, l_True, l_Undef
+            assert((v == l_False) || (v == l_True) || (v == l_Undef));
         }
+        Py_INCREF(py_value);
 
-        if (PyTuple_SetItem(tuple, (Py_ssize_t)i+1, py_value) < 0) {
+        // no error checking
+        if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)i+1, py_value) < 0) {
             PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
             Py_DECREF(tuple);
             return NULL;
@@ -364,22 +368,20 @@ static PyObject* get_solution(SATSolver *cmsat)
 static PyObject* get_raw_solution(SATSolver *cmsat) {
 
     // Create tuple with the size of number of variables in model
-    PyObject *tuple;
-
     unsigned max_idx = cmsat->nVars();
-    tuple = PyTuple_New((Py_ssize_t) max_idx);
+    PyObject *tuple = PyTuple_New((Py_ssize_t) max_idx);
     if (tuple == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
     }
 
     // Add each variable in model to the tuple
+    PyObject *py_value = NULL;
     int sign;
     for (long var = 0; var != (long)max_idx; var++) {
 
         if (cmsat->get_model()[var] != l_Undef) {
 
-            PyObject *py_value = NULL;
             sign = (cmsat->get_model()[var] == l_True) ? 1 : -1;
 
             #ifdef IS_PY3K
@@ -387,9 +389,10 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
             #else
             py_value = PyInt_FromLong((var + 1) * sign);
             #endif
-            // Py_INCREF(py_value) ?????????????????????
+            Py_INCREF(py_value);
 
-            if (PyTuple_SetItem(tuple, (Py_ssize_t)var, py_value) < 0) {
+            // no error checking
+            if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value) < 0) {
                 PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
                 Py_DECREF(tuple);
                 return NULL;
