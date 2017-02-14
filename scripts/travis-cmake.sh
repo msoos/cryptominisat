@@ -253,7 +253,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ]; then
     git checkout -b only_elim_and_subsume
     make
     cd ..
-    ./checks.py "$CMS_PATH" testfiles/*
+    ./check_bve.py "$CMS_PATH" testfiles/*
     cd "${BUILD_DIR}"
 
     #STP build check
