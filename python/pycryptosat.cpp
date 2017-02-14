@@ -250,6 +250,51 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+PyDoc_STRVAR(add_clauses_doc,
+"add_clauses(clauses)\n\
+Add iterable of clauses to the solver.\n\
+\n\
+:param arg1: List of clauses. Each clause contains literals (ints)\n\
+:return: None\n\
+:type arg1: <list>\n\
+:rtype: <None>"
+);
+
+static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"clauses", NULL};
+    PyObject *clauses;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
+        return NULL;
+    }
+
+    PyObject *iterator = PyObject_GetIter(clauses);
+    if (iterator == NULL) {
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
+        return NULL;
+    }
+
+    PyObject *clause;
+    while ((clause = PyIter_Next(iterator)) != NULL) {
+
+        PyObject *arglist = Py_BuildValue("(O)", clause);
+        add_clause(self, arglist, NULL);
+
+        /* release reference when done */
+        Py_DECREF(arglist);
+        Py_DECREF(clause);
+    }
+
+    /* release reference when done */
+    Py_DECREF(iterator);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"xor_clause", "rhs", NULL};
@@ -689,8 +734,9 @@ static PyMethodDef module_methods[] = {
 };
 
 static PyMethodDef Solver_methods[] = {
-    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
-    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
+    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solve the system"},
+    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
+    {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
     {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
