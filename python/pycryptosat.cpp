@@ -69,6 +69,17 @@ typedef struct {
 
 static PyObject *outofconflerr = NULL;
 
+static const char solver_create_docstring[] = \
+"Solver([verbose, confl_limit, threads])\n\
+Create Solver object.\n\
+\n\
+:param 'verbose': Verbosity level: 0: nothing printed; 15: very verbose. Default: 0\n\
+:param 'confl_limit': Propagation limit: abort after this many conflicts. Default: never abort.\n\
+:param 'threads': Number of threads to use. Default: 4\n\
+:type 'verbose': <int>\n\
+:type 'confl_limit': <int>\n\
+:type 'threads': <int>";
+
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
@@ -211,6 +222,16 @@ static int parse_xor_clause(
     return 1;
 }
 
+PyDoc_STRVAR(add_clause_doc,
+"add_clause(clause)\n\
+Add a clause to the solver.\n\
+\n\
+:param arg1: A clause contains literals (ints)\n\
+:return: None\n\
+:type arg1: <list>\n\
+:rtype: <None>"
+);
+
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
@@ -333,6 +354,14 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
     return tuple;
 }
 
+PyDoc_STRVAR(nb_vars_doc,
+"nb_vars()\n\
+Return the number of literals in the solver.\n\
+\n\
+:return: Number of literals\n\
+:rtype: <int>"
+);
+
 static PyObject* nb_vars(Solver *self)
 {
     #ifdef IS_PY3K
@@ -419,40 +448,83 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         Py_INCREF(Py_True);
-        PyTuple_SetItem(result, 0, Py_True);
-        PyTuple_SetItem(result, 1, solution);
+
+        // no error checking
+        PyTuple_SET_ITEM(result, 0, Py_True);
+        PyTuple_SET_ITEM(result, 1, solution);
+
     } else if (res == l_False) {
         Py_INCREF(Py_False);
-        PyTuple_SetItem(result, 0, Py_False);
         Py_INCREF(Py_None);
-        PyTuple_SetItem(result, 1, Py_None);
+
+        // no error checking
+        PyTuple_SET_ITEM(result, 0, Py_False);
+        PyTuple_SET_ITEM(result, 1, Py_None);
+
     } else if (res == l_Undef) {
         Py_DECREF(result);
         return PyErr_SetFromErrno(outofconflerr);
+    } else {
+        // res can only be l_False, l_True, l_Undef
+        assert((res == l_False) || (res == l_True) || (res == l_Undef));
+        Py_DECREF(result);
+        return NULL;
     }
 
     return result;
 }
 
+PyDoc_STRVAR(is_satisfiable_doc,
+"is_satisfiable()\n\
+Return satisfiability of the system.\n\
+\n\
+:return: True or False\n\
+:rtype: <boolean>"
+);
+
 static PyObject* is_satisfiable(Solver *self)
 {
-    lbool ret = l_True;
-
+    lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
-    ret = self->cmsat->solve();
+    res = self->cmsat->solve();
     Py_END_ALLOW_THREADS
 
-    if (ret == l_True) {
+    if (res == l_True) {
         Py_INCREF(Py_True);
         return Py_True;
-    } else if (ret == l_False) {
+    } else if (res == l_False) {
         Py_INCREF(Py_False);
         return Py_False;
+    } else if (res == l_Undef) {
+        return PyErr_SetFromErrno(outofconflerr);
+    } else {
+        // res can only be l_False, l_True, l_Undef
+        assert((res == l_False) || (res == l_True) || (res == l_Undef));
+        return NULL;
     }
-
-    // l_Undef
-    return PyErr_SetFromErrno(outofconflerr);
 }
+
+PyDoc_STRVAR(msolve_selected_doc,
+"msolve_selected(max_nr_of_solutions, var_selected, [raw])\n\
+Find multiple solutions to your problem, the solver is ran in a loop and each \n\
+previous solution found will be banned.\n\
+\n\
+.. warning:: The loop will run as long as there are solutions.\n\
+    a maximum of loops must be set with 'max_nr_of_solutions' parameter\n\
+\n\
+:param arg1: Maximum number of solutions before stop the search\n\
+:param arg2: Variables for which the solver must find different solutions\n\
+:param arg3: Format of literals for each solution returned. \n\
+    If set to True, lists of literals will be returned;\n\
+    if set to False, tuples of booleans will be returned,\n\
+    with None at the first position.\n\
+    .. example:: (None, True, False, True)\n\
+:type arg1: <int>\n\
+:type arg2: <list>\n\
+:type arg3: <boolean>\n\
+:return: List of solutions (list of lists of literals)\n\
+:rtype: <list <list>>"
+);
 
 static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 {
@@ -620,10 +692,10 @@ static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
-    {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, "returns number of variables"},
+    {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
-    {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, "solve selected variables"},
-    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, "return satisfiability of the system"},
+    {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
+    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
     {NULL,        NULL}  /* sentinel */
 };
 
@@ -673,13 +745,6 @@ static PyMemberDef Solver_members[] = {
      "noddy number"},*/
     {NULL}  /* Sentinel */
 };
-
-static const char solver_create_docstring[] = "Create Solver object.\n"
-"Supported arguments: verbose, clause_limit, threads.\n"
-"   'verbose' -- integer. 0: nothing printed. 15: very verbose. Default: 0\n"
-"   'confl_limit' -- integer. Abort after this many conflicts. Default: never abort.\n"
-"   'threads' -- integer. Number of threads to use. Default: 4"
-;
 
 static PyTypeObject pycryptosat_SolverType = {
     #ifndef IS_PY3K
