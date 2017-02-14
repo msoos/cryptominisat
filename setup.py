@@ -39,10 +39,10 @@ __LIBRARY_VERSION__ = "5.0.1"
 # through what you have to do to make that happen.
 d = sysconfig.get_config_vars()
 for k, v in d.items():
-    for unwanted in ('-Wstrict-prototypes', '-DNDEBUG',
+    for unwanted in ('-Wstrict-prototypes', '-DNDEBUG', ' -g ',
                      '-O2', '-D_FORTIFY_SOURCE=2', '-fstack-protector-strong'):
         if str(v).find(unwanted) != -1:
-            v = d[k] = str(v).replace(unwanted, '')
+            v = d[k] = str(v).replace(unwanted, ' ')
 
 ################################################################################
 
@@ -119,14 +119,14 @@ modules = [
         swig_opts=['-c++', '-threads', '-includeall'],
         include_dirs=['src', 'cryptominisat5', '.'],
         extra_compile_args=[
-            "-g",
             "-flto",
             "-march=native",
             "-mtune=native",
             "-Ofast",
             #"-O3",
             #"-Wall",
-            "-DNDEBUG",
+            # "-g", # Not define NDEBUG macro => Debug build
+            "-DNDEBUG", # Force release build
             #"-DBOOST_TEST_DYN_LINK",
             #"-DUSE_ZLIB",
             "-std=c++11",
