@@ -129,13 +129,8 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
         return 0;
     }
 
-    sign = false;
-    if (val < 0) {
-        val *= -1;
-        sign = true;
-    }
-    val--;
-    var = val;
+    sign = (val < 0);
+    var = std::abs(val) - 1;
 
     return 1;
 }
