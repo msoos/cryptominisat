@@ -658,6 +658,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
             }
             // Add solution
             PyList_Append(solutions, solution);
+            Py_DECREF(solution);
 
             // Prepare next statement
             if (current_nr_of_solutions < max_nr_of_solutions) {
