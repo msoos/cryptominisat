@@ -103,7 +103,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
 {
     if (!IS_INT(lit))  {
-        PyErr_SetString(PyExc_TypeError, "integer expected");
+        PyErr_SetString(PyExc_TypeError, "integer expected !");
         return 0;
     }
 
@@ -137,7 +137,7 @@ static int parse_clause(
 ) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
         return 0;
     }
 
@@ -175,7 +175,7 @@ static int parse_xor_clause(
 ) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
         return 0;
     }
 
@@ -340,7 +340,6 @@ static PyObject* nb_vars(Solver *self)
     #else
     return PyInt_FromLong(self->cmsat->nVars());
     #endif
-
 }
 
 /*
@@ -689,42 +688,42 @@ static PyTypeObject pycryptosat_SolverType = {
     #else
     PyVarObject_HEAD_INIT(NULL, 0)
     #endif
-    "pycryptosat.Solver",             /*tp_name*/
+    "pycryptosat.Solver",       /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
+    0,                          /*tp_itemsize*/
     (destructor)Solver_dealloc, /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
+    0,                          /*tp_print*/
+    0,                          /*tp_getattr*/
+    0,                          /*tp_setattr*/
+    0,                          /*tp_compare*/
+    0,                          /*tp_repr*/
+    0,                          /*tp_as_number*/
+    0,                          /*tp_as_sequence*/
+    0,                          /*tp_as_mapping*/
+    0,                          /*tp_hash */
+    0,                          /*tp_call*/
+    0,                          /*tp_str*/
+    0,                          /*tp_getattro*/
+    0,                          /*tp_setattro*/
+    0,                          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    solver_create_docstring,           /* tp_doc */
-    0,                     /* tp_traverse */
-    0,                     /* tp_clear */
-    0,                     /* tp_richcompare */
-    0,                     /* tp_weaklistoffset */
-    0,                     /* tp_iter */
-    0,                     /* tp_iternext */
+    solver_create_docstring,    /* tp_doc */
+    0,                          /* tp_traverse */
+    0,                          /* tp_clear */
+    0,                          /* tp_richcompare */
+    0,                          /* tp_weaklistoffset */
+    0,                          /* tp_iter */
+    0,                          /* tp_iternext */
     Solver_methods,             /* tp_methods */
-    Solver_members,            /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
+    Solver_members,             /* tp_members */
+    0,                          /* tp_getset */
+    0,                          /* tp_base */
+    0,                          /* tp_dict */
+    0,                          /* tp_descr_get */
+    0,                          /* tp_descr_set */
+    0,                          /* tp_dictoffset */
     (initproc)Solver_init,      /* tp_init */
-    0,                         /* tp_alloc */
+    0,                          /* tp_alloc */
     Solver_new,                 /* tp_new */
 };
 
