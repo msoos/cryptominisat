@@ -3335,9 +3335,9 @@ void Solver::check_implicit_stats(const bool onlypairs) const
         std::cerr
         << "ERROR:"
         << " thisNumIrredBins/2: " << thisNumIrredBins/2
+        << " thisNumIrredBins: " << thisNumIrredBins
         << " binTri.irredBins: " << binTri.irredBins
-        << "thisNumIrredBins: " << thisNumIrredBins
-        << "thisNumRedBins: " << thisNumRedBins << endl;
+        << endl;
     }
     assert(thisNumIrredBins % 2 == 0);
     assert(thisNumIrredBins/2 == binTri.irredBins);
@@ -3346,6 +3346,7 @@ void Solver::check_implicit_stats(const bool onlypairs) const
         std::cerr
         << "ERROR:"
         << " thisNumRedBins/2: " << thisNumRedBins/2
+        << " thisNumRedBins: " << thisNumRedBins
         << " binTri.redBins: " << binTri.redBins
         << endl;
     }

@@ -160,7 +160,7 @@ class Searcher : public HyperEngine
             SimpleInFile& f
             , const bool red
         );
-        void read_binary_cls(
+        uint64_t read_binary_cls(
             SimpleInFile& f
             , bool red
         );

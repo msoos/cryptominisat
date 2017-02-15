@@ -3055,8 +3055,10 @@ void Searcher::read_long_cls(
             }
 
             longRedCls[0].push_back(cl->stats.which_red_array);
+            litStats.redLits += cl->size();
         } else {
             longIrredCls.push_back(offs);
+            litStats.irredLits += cl->size();
         }
     }
 }
@@ -3129,7 +3131,7 @@ void Searcher::write_binary_cls(
     }
 }
 
-void Searcher::read_binary_cls(
+uint64_t Searcher::read_binary_cls(
     SimpleInFile& f
     , bool red
 ) {
@@ -3140,6 +3142,7 @@ void Searcher::read_binary_cls(
         const Lit lit2 = f.get_lit();
         attach_bin_clause(lit1, lit2, red);
     }
+    return num;
 }
 
 void Searcher::save_state(SimpleOutFile& f, const lbool status) const
@@ -3182,8 +3185,8 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
 
     //Clauses
     if (status == l_Undef) {
-        read_binary_cls(f, false);
-        read_binary_cls(f, true);
+        binTri.irredBins = read_binary_cls(f, false);
+        binTri.redBins =read_binary_cls(f, true);
         read_long_cls(f, false);
         for(size_t i = 0; i < longRedCls.size(); i++) {
             read_long_cls(f, true);
