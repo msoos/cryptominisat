@@ -649,7 +649,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
                 solution = get_raw_solution(self->cmsat);
             }
 
-            if (!solution) { // CF dans SOLVE comment c'est géré !! => ajout de None si aps de sol !
+            if (!solution) {
                 PyErr_SetString(PyExc_SystemError, "no solution");
                 Py_DECREF(solutions);
                 return NULL;
