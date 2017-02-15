@@ -117,20 +117,6 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
-    NOMYSQL)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get remove libmysqlclient-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
-                   "${SOURCE_DIR}"
-    ;;
-
-    NOMYSQLNOSQLITE)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get remove libmysqlclient-dev
-        sudo apt-get remove libsqlite3-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
-                   "${SOURCE_DIR}"
-    ;;
 
     NOPYTHON)
         sudo apt-get install libboost-program-options-dev
@@ -148,15 +134,11 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
-    MYSQL|WEB)
+    WEB)
         sudo apt-get install libboost-program-options-dev
-        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password '
-        sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password '
-        sudo apt-get install mysql-server
-        sudo apt-get install mysql-client
-        sudo apt-get install libmysqlclient-dev
+
         cd "$SOURCE_DIR"
-        ./cmsat_mysql_setup.sh
+        #./cmsat_mysql_setup.sh
         cd "$BUILD_DIR"
 
         eval cmake "${COMMON_CMAKE_ARGS}" \
@@ -223,7 +205,7 @@ ctest -V
 sudo make install
 
 case $CMS_CONFIG in
-    MYSQL|WEB)
+    WEB)
         echo "1 2 0" | ./cryptominisat5 --sql 1 --zero-exit-status
     ;;
 
@@ -278,7 +260,7 @@ fi
 
 
 #do fuzz testing
-if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] && [ "$CMS_CONFIG" != "MYSQL" ]; then
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
     cd ../scripts/fuzz/
     ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
