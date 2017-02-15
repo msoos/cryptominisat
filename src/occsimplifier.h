@@ -112,7 +112,6 @@ struct BVEStats
     uint64_t clauses_elimed_bin = 0;
     uint64_t clauses_elimed_sumsize = 0;
     uint64_t longRedClRemThroughElim = 0;
-    uint64_t triRedClRemThroughElim = 0;
     uint64_t binRedClRemThroughElim = 0;
     uint64_t numRedBinVarRemAdded = 0;
     uint64_t testedToElimVars = 0;
@@ -145,7 +144,6 @@ struct BVEStats
         << "c [occ-bve]"
         << " subs: "  << subsumedByVE
         << " red-bin rem: " << binRedClRemThroughElim
-        << " red-tri rem: " << triRedClRemThroughElim
         << " red-long rem: " << longRedClRemThroughElim
         << endl;
     }
@@ -179,9 +177,6 @@ struct BVEStats
 
         print_stats_line("c elim-bin-lt-cl"
             , binRedClRemThroughElim);
-
-        print_stats_line("c elim-tri-lt-cl"
-            , triRedClRemThroughElim);
 
         print_stats_line("c elim-long-lt-cl"
             , longRedClRemThroughElim);

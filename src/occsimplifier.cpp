@@ -2668,7 +2668,6 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     clauses_elimed_bin += other.clauses_elimed_bin;
     clauses_elimed_sumsize += other.clauses_elimed_sumsize;
     longRedClRemThroughElim += other.longRedClRemThroughElim;
-    triRedClRemThroughElim += other.triRedClRemThroughElim;
     binRedClRemThroughElim += other.binRedClRemThroughElim;
     numRedBinVarRemAdded += other.numRedBinVarRemAdded;
     testedToElimVars += other.testedToElimVars;

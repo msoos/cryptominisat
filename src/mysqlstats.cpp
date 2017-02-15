@@ -469,8 +469,8 @@ void MySQLStats::initRestartSTMT()
     << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
 
     //Clause stats
-    << ", numIrredBins, numIrredTris, numIrredLongs"
-    << ", numRedBins, numRedTris, numRedLongs"
+    << ", numIrredBins, numIrredLongs"
+    << ", numRedBins, numRedLongs"
     << ", numIrredLits, numRedLits"
 
     //Conflict stats
@@ -486,12 +486,10 @@ void MySQLStats::initRestartSTMT()
 
     //Propagations
     << ", `propBinIrred` , `propBinRed` "
-    << ", `propTriIrred` , `propTriRed`"
     << ", `propLongIrred` , `propLongRed`"
 
     //Conflicts
     << ", `conflBinIrred`, `conflBinRed`"
-    << ", `conflTriIrred`, `conflTriRed`"
     << ", `conflLongIrred`, `conflLongRed`"
 
     //Reds
@@ -499,7 +497,6 @@ void MySQLStats::initRestartSTMT()
 
     //Resolutions
     << ", `resolBinIrred`, `resolBinRed`"
-    << ", `resolTriIrred`, `resolTriRed`"
     << ", `resolLIrred`, `resolLRed`"
 
     //Var stats
@@ -556,7 +553,6 @@ void MySQLStats::initRestartSTMT()
     bindTo(stmtRst, stmtRst.numIrredBins);
     bindTo(stmtRst, stmtRst.numIrredLongs);
     bindTo(stmtRst, stmtRst.numRedBins);
-    bindTo(stmtRst, stmtRst.numRedTris);
     bindTo(stmtRst, stmtRst.numRedLongs);
     bindTo(stmtRst, stmtRst.numIrredLits);
     bindTo(stmtRst, stmtRst.numRedLits);
@@ -601,16 +597,12 @@ void MySQLStats::initRestartSTMT()
     //Prop
     bindTo(stmtRst, stmtRst.propsBinIrred);
     bindTo(stmtRst, stmtRst.propsBinRed);
-    bindTo(stmtRst, stmtRst.propsTriIrred);
-    bindTo(stmtRst, stmtRst.propsTriRed);
     bindTo(stmtRst, stmtRst.propsLongIrred);
     bindTo(stmtRst, stmtRst.propsLongRed);
 
     //Confl
     bindTo(stmtRst, stmtRst.conflsBinIrred);
     bindTo(stmtRst, stmtRst.conflsBinRed);
-    bindTo(stmtRst, stmtRst.conflsTriIrred);
-    bindTo(stmtRst, stmtRst.conflsTriRed);
     bindTo(stmtRst, stmtRst.conflsLongIrred);
     bindTo(stmtRst, stmtRst.conflsLongRed);
 
@@ -622,8 +614,6 @@ void MySQLStats::initRestartSTMT()
     //Resolutions
     bindTo(stmtRst, stmtRst.resolv.binIrred);
     bindTo(stmtRst, stmtRst.resolv.binRed);
-    bindTo(stmtRst, stmtRst.resolv.triIrred);
-    bindTo(stmtRst, stmtRst.resolv.triRed);
     bindTo(stmtRst, stmtRst.resolv.longIrred);
     bindTo(stmtRst, stmtRst.resolv.longRed);
 
@@ -667,15 +657,13 @@ void MySQLStats::initReduceDBSTMT()
     //Clean data
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBinIrred, removedResolBinRed"
-    << ", removedResolTriIrred, removedResolTriRed"
-    << ", removedResolLIrred, removedResolLRed"
+    << ", removedResolLRed, removedResolLIrred""
     << ", removedAge"
     << ", removedProp, removedConfl"
     << ", removedLookedAt, removedUsedUIP"
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBinIrred, remainResolBinRed"
-    << ", remainResolTriIrred, remainResolTriRed"
     << ", remainResolLIrred, remainResolLRed"
     << ", remainAge"
     << ", remainProp, remainConfl"
@@ -739,8 +727,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.glue);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.binIrred);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.binRed);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.triIrred);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.triRed);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.longIrred);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.antec_data.longRed);
     bindTo(stmtReduceDB, stmtReduceDB.clean.removed.age);
@@ -754,8 +740,6 @@ void MySQLStats::initReduceDBSTMT()
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.glue);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.binIrred);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.binRed);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.triIrred);
-    bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.triRed);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.longIrred);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.antec_data.longRed);
     bindTo(stmtReduceDB, stmtReduceDB.clean.remain.age);

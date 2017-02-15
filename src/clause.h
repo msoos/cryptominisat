@@ -54,7 +54,7 @@ struct AtecedentData
 
     uint64_t num() const
     {
-        return binRed + binIrred + triRed + triIrred + longIrred + longRed;
+        return binRed + binIrred + longIrred + longRed;
     }
 
     template<class T2>
@@ -62,8 +62,6 @@ struct AtecedentData
     {
         binRed += other.binRed;
         binIrred += other.binIrred;
-        triRed += other.triRed;
-        triIrred += other.triIrred;
         longIrred += other.longIrred;
         longRed += other.longRed;
 
@@ -80,8 +78,6 @@ struct AtecedentData
     {
         binRed -= other.binRed;
         binIrred -= other.binIrred;
-        triRed -= other.triRed;
-        triIrred -= other.triIrred;
         longIrred -= other.longIrred;
         longRed -= other.longRed;
 
@@ -98,8 +94,6 @@ struct AtecedentData
         uint32_t sum = 0;
         sum += binIrred*2;
         sum += binRed*2;
-        sum += triIrred*3;
-        sum += triRed*3;
         sum += size_longs.get_sum();
 
         return sum;
@@ -107,8 +101,6 @@ struct AtecedentData
 
     T binRed = 0;
     T binIrred = 0;
-    T triRed = 0;
-    T triIrred = 0;
     T longIrred = 0;
     T longRed = 0;
     AvgCalc<uint32_t> glue_long_reds;

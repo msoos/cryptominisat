@@ -429,7 +429,7 @@ void SQLiteStats::time_passed_min(
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 74;
+    const size_t numElems = 65;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -438,7 +438,7 @@ void SQLiteStats::initRestartSTMT()
     << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
 
     //Clause stats
-    << ", numIrredBins, numIrredTris, numIrredLongs"
+    << ", numIrredBins, numIrredLongs"
     << ", numRedBins, numRedLongs"
     << ", numIrredLits, numRedLits"
 
@@ -455,19 +455,17 @@ void SQLiteStats::initRestartSTMT()
 
     //Propagations
     << ", `propBinIrred` , `propBinRed` "
-    << ", `propTriIrred` , `propTriRed`"
     << ", `propLongIrred` , `propLongRed`"
 
     //Conflicts
     << ", `conflBinIrred`, `conflBinRed`"
-    << ", `conflTriIrred`, `conflTriRed`"
     << ", `conflLongIrred`, `conflLongRed`"
 
     //Reds
     << ", `learntUnits`, `learntBins`, `learntLongs`"
 
     //Resolutions
-    << ", `resolBinIrred`, `resolBinRed`, `resolTriIrred`, `resolTriRed`, `resolLIrred`, `resolLRed`"
+    << ", `resolBinIrred`, `resolBinRed`, `resolLIrred`, `resolLRed`"
 
     //Var stats
     << ", `propagations`"
@@ -566,8 +564,6 @@ void SQLiteStats::restart(
     //Confl
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsBinIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsBinRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsTriIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsTriRed);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsLongIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsLongRed);
 
@@ -579,8 +575,6 @@ void SQLiteStats::restart(
     //Resolv stats
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.triIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.triRed);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longIrred);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longRed);
 
@@ -626,7 +620,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 40;
+    const size_t numElems = 36;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
@@ -642,7 +636,6 @@ void SQLiteStats::initReduceDBSTMT()
     //Clean data
     << ", removedNum, removedLits, removedGlue"
     << ", removedResolBinIrred, removedResolBinRed"
-    << ", removedResolTriIrred, removedResolTriRed"
     << ", removedResolLIrred, removedResolLRed"
     << ", removedAge"
     << ", removedLitVisited, removedProp, removedConfl"
@@ -650,7 +643,6 @@ void SQLiteStats::initReduceDBSTMT()
 
     << ", remainNum, remainLits, remainGlue"
     << ", remainResolBinIrred, remainResolBinRed"
-    << ", remainResolTriIrred, remainResolTriRed"
     << ", remainResolLIrred, remainResolLRed"
     << ", remainAge"
     << ", remainLitVisited, remainProp, remainConfl"
@@ -706,8 +698,6 @@ void SQLiteStats::reduceDB(
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.binIrred);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.binRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.triIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.triRed);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.longIrred);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.removed.antec_data.longRed);
 
@@ -727,8 +717,6 @@ void SQLiteStats::reduceDB(
 
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.binIrred);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.binRed);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.triIrred);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.triRed);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.longIrred);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, clean.remain.antec_data.longRed);
 
@@ -766,7 +754,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 47;
+    const size_t numElems = 45;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -790,8 +778,6 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
-    << " `atedecents_triIrred`,"
-    << " `atedecents_triRed`,"
     << " `atedecents_longIrred`,"
     << " `atedecents_longRed`,"
 
@@ -883,8 +869,6 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binRed);
-    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.triIrred);
-    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.triRed);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longRed);
 

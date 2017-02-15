@@ -664,17 +664,10 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
 
     enqueue(lastUndef);
     #ifdef STATS_NEEDED
-    if (cl.size() == 3)
-        if (cl.red())
-            propStats.propsTriRed++;
-        else
-            propStats.propsTriIrred++;
-    else {
-        if (cl.red())
-            propStats.propsLongRed++;
-        else
-            propStats.propsLongIrred++;
-    }
+    if (cl.red())
+        propStats.propsLongRed++;
+    else
+        propStats.propsLongIrred++;
     #endif
 
     return true;

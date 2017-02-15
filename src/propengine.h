@@ -216,30 +216,13 @@ protected:
 private:
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
-
     template<bool update_bogoprops = true>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
-
-    ///Propagate 3-long clause
-    PropResult propTriHelperSimple(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-    );
-    template<bool update_bogoprops = true>
-    void propTriHelperAnyOrder(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-    );
     void update_glue(Clause& c);
-
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
         Watched* i
