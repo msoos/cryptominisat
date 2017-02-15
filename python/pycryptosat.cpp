@@ -74,7 +74,7 @@ Create Solver object.\n\
 \n\
 :param 'verbose': Verbosity level: 0: nothing printed; 15: very verbose. Default: 0\n\
 :param 'confl_limit': Propagation limit: abort after this many conflicts. Default: never abort.\n\
-:param 'threads': Number of threads to use. Default: 4\n\
+:param 'threads': Number of threads to use. Default: 1\n\
 :type 'verbose': <int>\n\
 :type 'confl_limit': <int>\n\
 :type 'threads': <int>";
@@ -84,7 +84,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
-    int num_threads = 4;
+    int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
         return NULL;
