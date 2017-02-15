@@ -836,22 +836,3 @@ DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
     data->solvers[0]->set_sqlite(filename);
 }
 
-DLL_PUBLIC void SATSolver::set_mysql(
-    std::string sqlServer
-    , std::string sqlUser
-    , std::string sqlPass
-    , std::string sqlDatabase)
-{
-    if (data->solvers.size() > 1) {
-        std::cerr
-        << "Multithreaded solving and SQL cannot be specified at the same time"
-        << endl;
-        exit(-1);
-    }
-    data->sql = 2;
-    data->solvers[0]->set_mysql(
-        sqlServer
-        , sqlUser
-        , sqlPass
-        , sqlDatabase);
-}

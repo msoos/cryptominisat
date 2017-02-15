@@ -74,10 +74,6 @@ namespace CMSat {
     class TooLongClauseError {};
 }
 
-#ifdef USE_MYSQL
-#include "mysqlstats.h"
-#endif
-
 #ifdef USE_SQLITE3
 #include "sqlitestats.h"
 #endif
@@ -133,34 +129,6 @@ Solver::~Solver()
     delete subsumeImplicit;
     delete datasync;
     delete reduceDB;
-}
-
-void Solver::set_mysql(
-    #ifdef USE_MYSQL
-      string sqlServer
-    , string sqlUser
-    , string sqlPass
-    , string sqlDatabase
-    #else
-      string
-    , string
-    , string
-    , string
-    #endif
-) {
-    #ifdef USE_MYSQL
-    sqlStats = new MySQLStats(sqlServer, sqlUser, sqlPass, sqlDatabase);
-    if (!sqlStats->setup(this)) {
-        exit(-1);
-    }
-    if (conf.verbosity >= 4) {
-        cout << "c Connected to MySQL server" << endl;
-    }
-    #else
-    std::cerr << "MySQL support was not compiled in, cannot use it. Exiting."
-    << endl;
-    std::exit(-1);
-    #endif
 }
 
 void Solver::set_sqlite(string

@@ -222,11 +222,6 @@ class Solver : public Searcher
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
         void set_sqlite(string filename);
-        void set_mysql(
-            string sqlServer
-            , string sqlUser
-            , string sqlPass
-            , string sqlDatabase);
         //Not Private for testing (maybe could be called from outside)
         void renumber_variables(bool must_renumber = true);
 

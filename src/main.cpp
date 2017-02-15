@@ -106,10 +106,6 @@ bool fileExists(const string& filename)
 Main::Main(int _argc, char** _argv) :
     argc(_argc)
     , argv(_argv)
-    , sqlServer ("localhost")
-    , sqlUser ("cmsat_solver")
-    , sqlPass ("")
-    , sqlDatabase("cmsat")
     , fileNamePresent (false)
 {
 }
@@ -552,17 +548,9 @@ void Main::add_supported_options()
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
     ("sql", po::value(&sql)->default_value(0)
-        , "Write to SQL. 0 = no SQL, 1 = mysql, 2 = sqlite")
+        , "Write to SQL. 0 = no SQL, 1 or 2 = sqlite")
     ("sqlitedb", po::value(&sqlite_filename)
         , "Where to put the SQLite database")
-    ("sqluser", po::value(&sqlUser)->default_value(sqlUser)
-        , "SQL user to connect with")
-    ("sqlpass", po::value(&sqlPass)->default_value(sqlPass)
-        , "SQL user's pass to connect with")
-    ("sqldb", po::value(&sqlDatabase)->default_value(sqlDatabase)
-        , "SQL database name. Default is used by PHP system, so it's highly recommended")
-    ("sqlserver", po::value(&sqlServer)->default_value(sqlServer)
-        , "SQL server hostname/IP")
     ("sqlfull", po::value(&conf.dump_individual_restarts_and_clauses)->default_value(conf.dump_individual_restarts_and_clauses)
         , "Dump individual clause and restart statistics in FULL")
     ("sqlresttime", po::value(&conf.dump_individual_search_time)->default_value(conf.dump_individual_search_time)
@@ -662,7 +650,7 @@ void Main::add_supported_options()
 
     help_options_complicated
     .add(generalOptions)
-    #if defined(USE_MYSQL) || defined(USE_SQLITE3)
+    #if defined(USE_SQLITE3)
     .add(sqlOptions)
     #endif
     .add(restartOptions)
@@ -1189,12 +1177,7 @@ int Main::solve()
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
-    if (sql == 1) {
-        solver->set_mysql(sqlServer
-        , sqlUser
-        , sqlPass
-        , sqlDatabase);
-    } else if (sql == 2) {
+    if (sql != 0) {
         solver->set_sqlite(sqlite_filename);
     }
 

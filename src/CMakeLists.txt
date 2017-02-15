@@ -80,11 +80,6 @@ if (M4RI_FOUND)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${M4RI_LIBRARIES})
 endif (M4RI_FOUND)
 
-if (MYSQL_FOUND AND STATS)
-    SET(cryptoms_lib_files ${cryptoms_lib_files} mysqlstats.cpp)
-    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${MYSQL_LIB})
-endif ()
-
 if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
