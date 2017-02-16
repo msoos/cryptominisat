@@ -849,9 +849,12 @@ MODULE_INIT_FUNC(pycryptosat)
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
-    outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
-    Py_INCREF(outofconflerr);
+    if (!(outofconflerr = PyErr_NewExceptionWithDoc("_cadbiom.InternalError", "Unsupported error.", NULL, NULL))) {
+        goto error;
+    }
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
+
+error:
 
     if (PyErr_Occurred())
     {
