@@ -171,7 +171,9 @@ void CNF::save_on_var_memory()
     watches.consolidate(); //not using the one with SQL because it's already saved
     implCache.save_on_var_memorys(nVars());
     stamp.save_on_var_memory(nVars());
-    longRedCls.shrink_to_fit();
+    for(auto& l: longRedCls) {
+        l.shrink_to_fit();
+    }
     longIrredCls.shrink_to_fit();
 
     seen.resize(nVars()*2);
@@ -220,7 +222,9 @@ uint64_t CNF::mem_used_longclauses() const
     uint64_t mem = 0;
     mem += cl_alloc.mem_used();
     mem += longIrredCls.capacity()*sizeof(ClOffset);
-    mem += longRedCls.capacity()*sizeof(ClOffset);
+    for(auto& l: longRedCls) {
+        mem += l.capacity()*sizeof(ClOffset);
+    }
     return mem;
 }
 
