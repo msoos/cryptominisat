@@ -138,6 +138,9 @@ modules = [
         ["python/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
         language = "c++",
         include_dirs=['src', '.'],
+        define_macros=[
+            ('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')
+        ],
         extra_compile_args=[
             "-pthread",
             "-DUSE_PTHREADS",
