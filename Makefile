@@ -11,6 +11,10 @@ compile:
 	@echo Building the library...
 	python2.7 setup.py build
 
+test:
+	@echo Test the solver...
+	python2.7 setup.py test
+
 sdist:
 	@echo Building the distribution package...
 	python2.7 setup.py sdist

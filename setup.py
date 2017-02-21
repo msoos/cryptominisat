@@ -24,6 +24,7 @@
 #THE SOFTWARE.
 
 from distutils.core import setup, Extension
+from distutils.cmd import Command
 from distutils import sysconfig
 
 __PACKAGE_VERSION__ = "0.1.1"
@@ -64,6 +65,24 @@ def _init_posix(init):
     return wrapper
 
 sysconfig._init_posix = _init_posix(sysconfig._init_posix)
+
+################################################################################
+
+class TestCommand(Command):
+    """Call tests with the custom 'python setup.py test' command."""
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+
+        import tests as tp
+        tp.run()
 
 ################################################################################
 
@@ -189,4 +208,7 @@ setup(
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
     long_description = open('python/README.rst').read(),
+    cmdclass={
+        'test': TestCommand
+    }
 )
