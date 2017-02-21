@@ -66,6 +66,7 @@ sysconfig._init_posix = _init_posix(sysconfig._init_posix)
 
 ################################################################################
 
+# Source files
 cryptoms_lib_files = [
     "GitSHA1.cpp",
     "cnf.cpp",
@@ -116,39 +117,48 @@ modules = [
         "pycryptosat",
         ["python/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
         language = "c++",
-        swig_opts=['-c++', '-threads', '-includeall'],
-        include_dirs=['src', 'cryptominisat5', '.'],
+        include_dirs=['src', '.'],
         extra_compile_args=[
-            "-flto",
-            "-march=native",
-            "-mtune=native",
-            "-Ofast",
-            #"-O3",
-            #"-Wall",
-            # "-g", # Not define NDEBUG macro => Debug build
-            "-DNDEBUG", # Force release build
-            #"-DBOOST_TEST_DYN_LINK",
-            #"-DUSE_ZLIB",
-            "-std=c++11",
-            "-Wno-unused-variable",
-            "-Wno-unused-but-set-variable",
-            # assume that signed arithmetic overflow of addition, subtraction
-            # and multiplication wraps around using twos-complement
-            # representation
-            "-fwrapv",
-            #BOF protect (use both)
-            #"-D_FORTIFY_SOURCE=2",
-            #"-fstack-protector-strong",
             "-pthread",
             "-DUSE_PTHREADS",
             "-fopenmp",
             "-D_GLIBCXX_PARALLEL",
+            "-flto",
+            "-std=c++11",
+            "-Wno-unused-variable",
+            "-Wno-unused-but-set-variable",
+
+            # Assume that signed arithmetic overflow of addition, subtraction
+            # and multiplication wraps around using twos-complement
+            # representation
+            "-fwrapv",
+
+            # Buffer Overflow protection (use both)
+            #"-D_FORTIFY_SOURCE=2",
+            #"-fstack-protector-strong",
+
+            # Allows GCC to generate code that may not run
+            # at all on processors other than the one indicated
+            # -march=cpu-type implies -mtune=cpu-type.
+            # See CPU type with:
+            # gcc -march=native -Q --help=target | grep march
+            "-march=native", # haswell
+            # Produce code optimized by enabling all
+            # instruction subsets supported by the local machine
+            # See CPU type with:
+            # gcc -mtune=native -Q --help=target | grep march
+            "-mtune=native", # x86-64
+
+            # Release/Debug flags
+            "-Ofast",
+            #"-O3",
+            # "-g", # Not define NDEBUG macro => Debug build
+            "-DNDEBUG", # Force release build
+            #"-Wall",
         ],
         extra_link_args=[
             "-Ofast",
-            "-march=native",
             "-flto",
-            #"-lz",
             "-fopenmp",
         ]
     ),
@@ -156,7 +166,7 @@ modules = [
 
 setup(
     name = "pycryptosat",
-    version = __LIBRARY_VERSION__,
+    version = __PACKAGE_VERSION__,
     author = "Mate Soos",
     author_email = "soos.mate@gmail.com",
     url = "https://github.com/msoos/cryptominisat",
@@ -167,14 +177,13 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: C++",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.5",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
     ext_modules = modules,
     py_modules = ['pycryptosat'],
-    description = "bindings to CryptoMiniSat (a SAT solver)",
+    description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
+        format(__LIBRARY_VERSION__),
     long_description = open('python/README.rst').read(),
 )
