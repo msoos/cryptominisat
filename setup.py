@@ -2,7 +2,8 @@
 #
 # CryptoMiniSat
 #
-# Copyright (c) 2009-2014, Mate Soos. All rights reserved.
+# Original work Copyright (c) 2009-2014, Mate Soos. All rights reserved.
+# Modified work Copyright (c) 2017, Pierre Vignet
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy
 #of this software and associated documentation files (the "Software"), to deal
@@ -170,7 +171,7 @@ setup(
     author = "Mate Soos",
     author_email = "soos.mate@gmail.com",
     url = "https://github.com/msoos/cryptominisat",
-    license = "LGPLv2",
+    license = "MIT",
     classifiers = [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -179,6 +180,8 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "License :: OSI Approved :: MIT License",
         "Topic :: Utilities",
     ],
     ext_modules = modules,
