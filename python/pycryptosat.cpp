@@ -384,7 +384,6 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
             #else
             py_value = PyInt_FromLong((var + 1) * sign);
             #endif
-            Py_INCREF(py_value);
 
             // no error checking
             if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value) < 0) {
