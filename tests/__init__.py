@@ -1,1 +1,1 @@
-from test_pycryptosat import *
+from .test_pycryptosat import *
