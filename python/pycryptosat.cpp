@@ -2,7 +2,7 @@
 Python bindings to CryptoMiniSat (http://msoos.org)
 
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
-            2014, Mate Soos
+              2014, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **********************************/
-
-#define PYCRYPTOSAT_URL  "https://pypi.python.org/pypi/pycryptosat"
 
 #include <Python.h>
 #include <structmember.h>
@@ -848,7 +846,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString(LIBRARY_VERSION));
     if (!(outofconflerr = PyErr_NewExceptionWithDoc("_cadbiom.InternalError", "Unsupported error.", NULL, NULL))) {
         goto error;
     }
