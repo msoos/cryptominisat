@@ -325,8 +325,8 @@ static PyObject* get_solution(SATSolver *cmsat)
         return NULL;
     }
 
-    // no error checking
     Py_INCREF(Py_None);
+    // no error checking
     if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)0, Py_None) < 0) {
         PyErr_SetString(PyExc_SystemError, "failed to add 1st element to tuple");
         Py_DECREF(tuple);
@@ -613,9 +613,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 //                   << '\n';
 //     }
 
-    int current_nr_of_solutions = 0;
-    lbool res = l_True;
-    std::vector<Lit>::iterator it;
+
 
     PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
@@ -623,6 +621,9 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    int current_nr_of_solutions = 0;
+    lbool res = l_True;
+    std::vector<Lit>::iterator it;
     PyObject* solution = NULL;
     while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
 
@@ -666,10 +667,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
                     //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
 
                     if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
-                        //std::cout << "ici: " << var << std::endl;
                         ban_solution.push_back(
-                            Lit(var,
-                                (self->cmsat->get_model()[var] == l_True) ? true : false)
+                            Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
                         );
                     }
                 }
