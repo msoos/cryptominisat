@@ -552,6 +552,14 @@ previous solution found will be banned.\n\
 .. warning:: The loop will run as long as there are solutions.\n\
     a maximum of loops must be set with 'max_nr_of_solutions' parameter\n\
 \n\
+.. note:: As it is highly suggested in the documentation of cryptominisat,\n\
+    the new clause (banned solutions) contains the variables that are \n\
+    \"important\" or \"main\" to your problem (i.e. \"var_selected\" argument).\n\
+    Variables that were only used to translate the original problem into CNF \n\
+    should not be added.\n\
+    This way, you will not get spurious solutions that don't differ in \n\
+    the main, important variables.\n\
+\n\
 :param arg1: Maximum number of solutions before stop the search\n\
 :param arg2: Variables for which the solver must find different solutions\n\
 :param arg3: Format of literals for each solution returned. \n\
@@ -613,8 +621,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 //                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
 //                   << '\n';
 //     }
-
-
 
     PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
