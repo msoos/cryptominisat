@@ -556,9 +556,10 @@ previous solution found will be banned.\n\
 :param arg2: Variables for which the solver must find different solutions\n\
 :param arg3: Format of literals for each solution returned. \n\
     If set to True, lists of literals will be returned;\n\
+    .. example:: [(1, -2, -3, -4, -5, -6, -7, -8, -9, 10,),]\n\
     if set to False, tuples of booleans will be returned,\n\
     with None at the first position.\n\
-    .. example:: (None, True, False, True)\n\
+    .. example:: [(None, True, False, True,),]\n\
 :type arg1: <int>\n\
 :type arg2: <list>\n\
 :type arg3: <boolean>\n\
@@ -666,6 +667,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
                     it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
                     //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
 
+                    // If selected vars have been found with the sign false (> 0)
                     if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
                         ban_solution.push_back(
                             Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
