@@ -37,14 +37,17 @@ $ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev libsqlite3-dev
 Compiling and installing under Linux
 -----
 
-You have to use cmake to compile and install. I suggest::
+Build:
 ```
 $ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make -j4
+$ cmake .
+$ make
+```
+
+Install:
+
+```
 $ sudo make install
 $ sudo ldconfig
 ```
@@ -70,7 +73,7 @@ The `cryptominisat5_simple` binary should now be built. In case you have boost l
 Command-line usage
 -----
 
-Let's take the file::
+Let's take the file:
 ```
 p cnf 2 3
 1 0
@@ -319,15 +322,13 @@ For testing you will need the GIT checkout and get the submodules:
 ```
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
-git submodule init
-git submodule update
+git submodule update --init
 ```
 
 Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
 
 ```
-mkdir build
-cd build
+mkdir build && cd build
 cmake -DENABLE_TESTING=ON ..
 make -j4
 make test
