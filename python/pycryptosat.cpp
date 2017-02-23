@@ -664,19 +664,47 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
             Py_DECREF(solution);
 
             // Prepare next statement
+            // Ban previous solution
             if (current_nr_of_solutions < max_nr_of_solutions) {
+                // std::cout << "Nb vars:" << self->cmsat->nVars() << std::endl;
 
                 std::vector<Lit> ban_solution;
-                for (long var = 0; var != (long)self->cmsat->nVars(); var++) {
-                    // Search var+1 in [var_lits.begin(), var_lits.end()[
-                    // false : > 0; true : < 0 sign !!
-                    it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
-                    //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
 
-                    // If selected vars have been found with the sign false (> 0)
-                    if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
+                // Old algorithm
+                //for (long var = 0; var != (long)self->cmsat->nVars(); var++) {
+                //    // Search var+1 in [var_lits.begin(), var_lits.end()[
+                //    // false : > 0; true : < 0 sign !!
+                //    it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
+                //    //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
+                //    // If selected vars have been found with the sign false (> 0)
+                //    if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
+                //        ban_solution.push_back(
+                //            Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
+                //        );
+                //    }
+                //}
+
+
+                const std::vector<lbool> model = self->cmsat->get_model();
+
+                // Iterate on var_selected (instead of iterate on all vars in solver)
+                for (unsigned long i = 0; i < var_lits.size(); i++) {
+
+                    // If the current variable is > 0 (false)
+                    // PS: internal value of any literal is equal to i;
+                    // human readable value is i+1 (begins with 1 instead of 0)
+                    if (var_lits[i].sign() == false) {
+
+                        // The current value of the variable must belong to the solver variables
+                        assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
+
+                        // std::cout << "human readable lit: " << var_lits[i] << "; lit sign: " << ((var_lits[i].sign() == 0) ? "false" : "true") << std::endl;
+                        // std::cout << "lit value: " << var_lits[i].var() << "; model status: " << model[var_lits[i].var()] << std::endl;
+
+                        // Get the corresponding variable in the model, whatever its sign
+                        // Add it to the futur banned clause
                         ban_solution.push_back(
-                            Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
+                            Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
                         );
                     }
                 }

@@ -144,8 +144,6 @@ modules = [
         extra_compile_args=[
             "-pthread",
             "-DUSE_PTHREADS",
-            "-fopenmp",
-            "-D_GLIBCXX_PARALLEL",
             "-flto",
             "-std=c++11",
             "-Wno-unused-variable",
@@ -182,7 +180,6 @@ modules = [
         extra_link_args=[
             "-Ofast",
             "-flto",
-            "-fopenmp",
         ]
     ),
 ]
