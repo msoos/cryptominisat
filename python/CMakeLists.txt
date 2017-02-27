@@ -20,8 +20,7 @@ configure_file("${PROJECT_SOURCE_DIR}/src/solvertypesmini.h.in" "${CMAKE_CURRENT
 
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
-                   ARGS setup.py build_ext --inplace --rpath ../lib
-                   DEPENDS libcryptominisat5
+                   ARGS ${SETUP_PY} build
 )
 
 add_custom_target(python_interface ALL DEPENDS ${OUTPUT}/timestamp)
