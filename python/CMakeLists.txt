@@ -1,10 +1,22 @@
-execute_process(COMMAND python-config --cflags OUTPUT_VARIABLE PY_C_CONFIG)
-execute_process(COMMAND python-config --ldflags OUTPUT_VARIABLE PY_LD_CONFIG)
-set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
 set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build")
 
-configure_file(${SETUP_PY_IN} ${SETUP_PY})
+# Copy environment for distutils
+file(COPY "${PROJECT_SOURCE_DIR}/src" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/README.rst" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tests" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/bindings" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY_DIR}/MANIFEST.in")
+configure_file("${PROJECT_SOURCE_DIR}/src/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/GitSHA1.cpp" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/GitSHA1.h" "${CMAKE_CURRENT_BINARY_DIR}/src/GitSHA1.h" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/cryptominisat_c.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
+
 
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
