@@ -28,7 +28,7 @@ from distutils.cmd import Command
 from distutils import sysconfig
 
 __PACKAGE_VERSION__ = "0.1.1"
-__LIBRARY_VERSION__ = "5.0.1"
+__LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
 
 
 # Delete unwanted flags for C compilation
@@ -135,9 +135,9 @@ cryptoms_lib_files = [
 modules = [
     Extension(
         "pycryptosat",
-        ["bindings/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
+        ["${CMAKE_CURRENT_BINARY_DIR}/bindings/pycryptosat.cpp"] + ['${CMAKE_CURRENT_BINARY_DIR}/src/' + fd for fd in cryptoms_lib_files],
         language = "c++",
-        include_dirs=['src', '.'],
+        include_dirs=['${CMAKE_CURRENT_BINARY_DIR}/src', '${CMAKE_CURRENT_BINARY_DIR}'],
         define_macros=[
             ('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')
         ],
@@ -163,12 +163,12 @@ modules = [
             # -march=cpu-type implies -mtune=cpu-type.
             # See CPU type with:
             # gcc -march=native -Q --help=target | grep march
-            "-march=native", # haswell
+            "-march=native",
             # Produce code optimized by enabling all
             # instruction subsets supported by the local machine
             # See CPU type with:
             # gcc -mtune=native -Q --help=target | grep march
-            "-mtune=native", # x86-64
+            "-mtune=native",
 
             # Release/Debug flags
             "-Ofast",
@@ -207,7 +207,7 @@ setup(
     py_modules = ['pycryptosat'],
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
-    long_description = open('README.rst').read(),
+    long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
     cmdclass={
         'test': TestCommand
     }
