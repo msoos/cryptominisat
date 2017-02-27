@@ -135,7 +135,7 @@ cryptoms_lib_files = [
 modules = [
     Extension(
         "pycryptosat",
-        ["python/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
+        ["bindings/pycryptosat.cpp"] + ['src/' + fd for fd in cryptoms_lib_files],
         language = "c++",
         include_dirs=['src', '.'],
         define_macros=[
@@ -207,7 +207,7 @@ setup(
     py_modules = ['pycryptosat'],
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
-    long_description = open('python/README.rst').read(),
+    long_description = open('README.rst').read(),
     cmdclass={
         'test': TestCommand
     }
