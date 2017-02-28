@@ -455,6 +455,44 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
     return 1;
 }
 
+PyDoc_STRVAR(solve_doc,
+"solve(assumptions=None)\n\
+Solve the system of equations that have been added with add_clause();\n\
+\n\
+.. example:: \n\
+    from pycryptosat import Solver\n\
+    >>> s = Solver()\n\
+    >>> s.add_clause([1])\n\
+    >>> s.add_clause([-2])\n\
+    >>> s.add_clause([3])\n\
+    >>> s.add_clause([-1, 2, 3])\n\
+    >>> sat, solution = s.solve()\n\
+    >>> print sat\n\
+    True\n\
+    >>> print solution\n\
+    (None, True, False, True)\n\
+    \n\
+    We can also try to assume any variable values for a single solver run:\n\
+    \n\
+    sat, solution = s.solve([-3])\n\
+    >>> print sat\n\
+    False\n\
+    >>> print solution\n\
+    None\n\
+\n\
+:param arg1: (Optional) Allows the user to set values to specific variables\n\
+    in the solver in a temporary fashion. This means that in case the problem\n\
+    is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
+    solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
+    still return a solution.\n\
+:type arg1: <list>\n\
+:return: A tuple. First part of the tuple indicates whether the problem\n\
+    is satisfiable. The second part is a tuple contains the solution,\n\
+    preceded by None, so you can index into it with the variable number.\n\
+    E.g. solution[1] returns the value for variabe 1.\n\
+:rtype: <list <tuple>>"
+);
+
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
@@ -741,7 +779,7 @@ static PyMethodDef module_methods[] = {
 };
 
 static PyMethodDef Solver_methods[] = {
-    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solve the system"},
+    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, solve_doc},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
