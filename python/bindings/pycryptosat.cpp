@@ -72,7 +72,8 @@ static const char solver_create_docstring[] = \
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
-:param confl_limit: Propagation limit: abort after this many conflicts. Default: never abort.\n\
+:param confl_limit: Propagation limit: abort after this many conflicts.\n\
+    Default: never abort.\n\
 :param threads: Number of threads to use.\n\
 :type verbose: <int>\n\
 :type confl_limit: <int>\n\
