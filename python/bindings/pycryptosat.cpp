@@ -647,9 +647,9 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     // Debug
-    std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
-    std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
-    std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
+    // std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
+    // std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
+    // std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
 
 //     for (unsigned long i = 0; i < var_lits.size(); i++) {
 //         std::cout << "real value: " << var_lits[i]
@@ -678,8 +678,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
         current_nr_of_solutions++;
 
-        std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
-                  << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
+        // std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
+        //           << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
 
         if(res == l_True) {
 
@@ -704,7 +704,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
             // Prepare next statement
             // Ban previous solution
             if (current_nr_of_solutions < max_nr_of_solutions) {
-                // std::cout << "Nb vars:" << self->cmsat->nVars() << std::endl;
 
                 std::vector<Lit> ban_solution;
 
@@ -756,7 +755,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
                 //std::cout << std::endl;
             }
         } else if (res == l_False) {
-            std::cout << "DEBUG :: Solver: No more solution" << std::endl;
+            // std::cout << "DEBUG :: Solver: No more solution" << std::endl;
         } else if (res == l_Undef) {
             Py_DECREF(solutions);
             PyErr_SetString(PyExc_SystemError, "Nothing to do => sol undef");
