@@ -67,15 +67,15 @@ typedef struct {
 static PyObject *outofconflerr = NULL;
 
 static const char solver_create_docstring[] = \
-"Solver([verbose, confl_limit, threads])\n\
+"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1)\n\
 Create Solver object.\n\
 \n\
-:param 'verbose': Verbosity level: 0: nothing printed; 15: very verbose. Default: 0\n\
-:param 'confl_limit': Propagation limit: abort after this many conflicts. Default: never abort.\n\
-:param 'threads': Number of threads to use. Default: 1\n\
-:type 'verbose': <int>\n\
-:type 'confl_limit': <int>\n\
-:type 'threads': <int>";
+:param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
+:param confl_limit: Propagation limit: abort after this many conflicts. Default: never abort.\n\
+:param threads: Number of threads to use.\n\
+:type verbose: <int>\n\
+:type confl_limit: <int>\n\
+:type threads: <int>";
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
@@ -545,8 +545,8 @@ static PyObject* is_satisfiable(Solver *self)
 }
 
 PyDoc_STRVAR(msolve_selected_doc,
-"msolve_selected(max_nr_of_solutions, var_selected, [raw])\n\
-Find multiple solutions to your problem, the solver is ran in a loop and each \n\
+"msolve_selected(max_nr_of_solutions, var_selected, raw=True)\n\
+Find multiple solutions to your problem, the solver is ran in a loop and each\n\
 previous solution found will be banned.\n\
 \n\
 .. warning:: The loop will run as long as there are solutions.\n\
@@ -562,7 +562,7 @@ previous solution found will be banned.\n\
 \n\
 :param arg1: Maximum number of solutions before stop the search\n\
 :param arg2: Variables for which the solver must find different solutions\n\
-:param arg3: Format of literals for each solution returned. \n\
+:param arg3: (Optional) Format of literals for each solution returned. \n\
     If set to True, lists of literals will be returned;\n\
     .. example:: [(1, -2, -3, -4, -5, -6, -7, -8, -9, 10,),]\n\
     if set to False, tuples of booleans will be returned,\n\
@@ -571,8 +571,8 @@ previous solution found will be banned.\n\
 :type arg1: <int>\n\
 :type arg2: <list>\n\
 :type arg3: <boolean>\n\
-:return: List of solutions (list of lists of literals)\n\
-:rtype: <list <list>>"
+:return: List of solutions (list of tuples of literals)\n\
+:rtype: <list <tuple>>"
 );
 
 static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
