@@ -1,17 +1,35 @@
-PYTHON=python
-
-pycryptosat.so: pycryptosat.cpp
-	$(PYTHON) setup.py build_ext --inplace
-
-test: pycryptosat.so
-	$(PYTHON) test_pycryptosat.py
-
-install: pycryptosat.so
-	$(PYTHON) setup.py install --record files.txt
-
-uninstall: pycryptosat.so
-	cat files.txt | xargs rm
+all: clean compile sdist
 
 clean:
-	rm -rf build dist *.egg-info
-	rm -f *.pyc *.so *.o *.a
+	@echo Clean Python build dir...
+	python setup.py clean --all
+	@echo Clean Python distribution dir...
+	@-rm -rf dist
+
+compile:
+	@echo Building the library...
+	python setup.py build
+
+test:
+	@echo Test the solver...
+	python setup.py test
+
+sdist:
+	@echo Building the distribution package...
+	python setup.py sdist
+
+install:
+	@echo Install the package...
+	python setup.py install --record files.txt
+
+uninstall: files.txt
+	@echo Uninstalling the package...
+	cat files.txt | xargs rm -rf
+	rm files.txt
+
+test_register:
+	python setup.py register -r https://testpypi.python.org/pypi
+
+test_install:
+	python setup.py sdist upload -r https://testpypi.python.org/pypi
+	pip install -U -i https://testpypi.python.org/pypi pycryptosat

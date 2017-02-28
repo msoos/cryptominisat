@@ -2,7 +2,7 @@
 Python bindings to CryptoMiniSat (http://msoos.org)
 
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
-            2014, Mate Soos
+              2014, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,21 +23,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **********************************/
 
-#define PYCRYPTOSAT_URL  "https://pypi.python.org/pypi/pycryptosat"
-
 #include <Python.h>
 #include <structmember.h>
 #include <limits>
-
-#include "assert.h"
+#include <algorithm>
+#include <assert.h>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
-
-#define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
 
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
 #define PyUnicode_FromString  PyString_FromString
 #endif
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+#ifdef IS_PY3K
+    #define IS_INT(x)  PyLong_Check(x)
+
+    #define MODULE_INIT_FUNC(name) \
+        PyMODINIT_FUNC PyInit_ ## name(void); \
+        PyMODINIT_FUNC PyInit_ ## name(void)
+#else
+    #define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
+
+    #define MODULE_INIT_FUNC(name) \
+        static PyObject *PyInit_ ## name(void); \
+        PyMODINIT_FUNC init ## name(void); \
+        PyMODINIT_FUNC init ## name(void) { PyInit_ ## name(); } \
+        static PyObject *PyInit_ ## name(void)
+#endif
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 typedef struct {
     PyObject_HEAD
@@ -46,6 +65,17 @@ typedef struct {
 } Solver;
 
 static PyObject *outofconflerr = NULL;
+
+static const char solver_create_docstring[] = \
+"Solver([verbose, confl_limit, threads])\n\
+Create Solver object.\n\
+\n\
+:param 'verbose': Verbosity level: 0: nothing printed; 15: very verbose. Default: 0\n\
+:param 'confl_limit': Propagation limit: abort after this many conflicts. Default: never abort.\n\
+:param 'threads': Number of threads to use. Default: 1\n\
+:type 'verbose': <int>\n\
+:type 'confl_limit': <int>\n\
+:type 'threads': <int>";
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
@@ -81,7 +111,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
 {
     if (!IS_INT(lit))  {
-        PyErr_SetString(PyExc_TypeError, "integer expected");
+        PyErr_SetString(PyExc_TypeError, "integer expected !");
         return 0;
     }
 
@@ -97,13 +127,8 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
         return 0;
     }
 
-    sign = false;
-    if (val < 0) {
-        val *= -1;
-        sign = true;
-    }
-    val--;
-    var = val;
+    sign = (val < 0);
+    var = std::abs(val) - 1;
 
     return 1;
 }
@@ -115,7 +140,7 @@ static int parse_clause(
 ) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
         return 0;
     }
 
@@ -153,7 +178,7 @@ static int parse_xor_clause(
 ) {
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "interable object expected");
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
         return 0;
     }
 
@@ -189,6 +214,16 @@ static int parse_xor_clause(
     return 1;
 }
 
+PyDoc_STRVAR(add_clause_doc,
+"add_clause(clause)\n\
+Add a clause to the solver.\n\
+\n\
+:param arg1: A clause contains literals (ints)\n\
+:return: None\n\
+:type arg1: <list>\n\
+:rtype: <None>"
+);
+
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
@@ -202,6 +237,54 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
     self->cmsat->add_clause(lits);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyDoc_STRVAR(add_clauses_doc,
+"add_clauses(clauses)\n\
+Add iterable of clauses to the solver.\n\
+\n\
+:param arg1: List of clauses. Each clause contains literals (ints)\n\
+:return: None\n\
+:type arg1: <list>\n\
+:rtype: <None>"
+);
+
+static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"clauses", NULL};
+    PyObject *clauses;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
+        return NULL;
+    }
+
+    PyObject *iterator = PyObject_GetIter(clauses);
+    if (iterator == NULL) {
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
+        return NULL;
+    }
+
+    PyObject *clause;
+    PyObject *arglist;
+    PyObject *ret;
+    while ((clause = PyIter_Next(iterator)) != NULL) {
+
+        arglist = Py_BuildValue("(O)", clause);
+        ret = add_clause(self, arglist, NULL);
+        Py_DECREF(ret);
+
+        /* release reference when done */
+        Py_DECREF(arglist);
+        Py_DECREF(clause);
+    }
+
+    /* release reference when done */
+    Py_DECREF(iterator);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -234,37 +317,41 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyObject* get_solution(SATSolver *cmsat)
 {
-    PyObject *tuple;
-
+    // Create tuple with the size of number of variables in model
     unsigned max_idx = cmsat->nVars();
-    tuple = PyTuple_New((Py_ssize_t) max_idx+1);
+    PyObject *tuple = PyTuple_New((Py_ssize_t) max_idx+1);
     if (tuple == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
     }
 
     Py_INCREF(Py_None);
-    if (PyTuple_SetItem(tuple, (Py_ssize_t)0, Py_None) < 0) {
+    // no error checking
+    if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)0, Py_None) < 0) {
         PyErr_SetString(PyExc_SystemError, "failed to add 1st element to tuple");
         Py_DECREF(tuple);
         return NULL;
     }
 
+    PyObject *py_value = NULL;
+    lbool v;
     for (unsigned i = 0; i < max_idx; i++) {
-        lbool v = cmsat->get_model()[i];
-        PyObject *py_value = NULL;
+        v = cmsat->get_model()[i];
+
         if (v == l_True) {
-            Py_INCREF(Py_True);
             py_value = Py_True;
         } else if (v == l_False) {
-            Py_INCREF(Py_False);
             py_value = Py_False;
         } else if (v == l_Undef) {
-            Py_INCREF(Py_None);
             py_value = Py_None;
+        } else {
+            // v can only be l_False, l_True, l_Undef
+            assert((v == l_False) || (v == l_True) || (v == l_Undef));
         }
+        Py_INCREF(py_value);
 
-        if (PyTuple_SetItem(tuple, (Py_ssize_t)i+1, py_value) < 0) {
+        // no error checking
+        if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)i+1, py_value) < 0) {
             PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
             Py_DECREF(tuple);
             return NULL;
@@ -272,6 +359,66 @@ static PyObject* get_solution(SATSolver *cmsat)
     }
     return tuple;
 }
+
+static PyObject* get_raw_solution(SATSolver *cmsat) {
+
+    // Create tuple with the size of number of variables in model
+    unsigned max_idx = cmsat->nVars();
+    PyObject *tuple = PyTuple_New((Py_ssize_t) max_idx);
+    if (tuple == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
+        return NULL;
+    }
+
+    // Add each variable in model to the tuple
+    PyObject *py_value = NULL;
+    int sign;
+    for (long var = 0; var != (long)max_idx; var++) {
+
+        if (cmsat->get_model()[var] != l_Undef) {
+
+            sign = (cmsat->get_model()[var] == l_True) ? 1 : -1;
+
+            #ifdef IS_PY3K
+            py_value = PyLong_FromLong((var + 1) * sign);
+            #else
+            py_value = PyInt_FromLong((var + 1) * sign);
+            #endif
+
+            // no error checking
+            if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value) < 0) {
+                PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
+                Py_DECREF(tuple);
+                return NULL;
+            }
+        }
+    }
+    return tuple;
+}
+
+PyDoc_STRVAR(nb_vars_doc,
+"nb_vars()\n\
+Return the number of literals in the solver.\n\
+\n\
+:return: Number of literals\n\
+:rtype: <int>"
+);
+
+static PyObject* nb_vars(Solver *self)
+{
+    #ifdef IS_PY3K
+    return PyLong_FromLong(self->cmsat->nVars());
+    #else
+    return PyInt_FromLong(self->cmsat->nVars());
+    #endif
+}
+
+/*
+static PyObject* nb_clauses(Solver *self)
+{
+    // Private attribute => need to make a public method
+    return PyInt_FromLong(self->cmsat->data->solvers.size());
+}*/
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
@@ -323,9 +470,7 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    PyObject *result = NULL;
-
-    result = PyTuple_New((Py_ssize_t) 2);
+    PyObject *result = PyTuple_New((Py_ssize_t) 2);
     if (result == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
@@ -343,32 +488,267 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         Py_INCREF(Py_True);
-        PyTuple_SetItem(result, 0, Py_True);
-        PyTuple_SetItem(result, 1, solution);
+
+        // no error checking
+        PyTuple_SET_ITEM(result, 0, Py_True);
+        PyTuple_SET_ITEM(result, 1, solution);
+
     } else if (res == l_False) {
         Py_INCREF(Py_False);
-        PyTuple_SetItem(result, 0, Py_False);
         Py_INCREF(Py_None);
-        PyTuple_SetItem(result, 1, Py_None);
+
+        // no error checking
+        PyTuple_SET_ITEM(result, 0, Py_False);
+        PyTuple_SET_ITEM(result, 1, Py_None);
+
     } else if (res == l_Undef) {
         Py_DECREF(result);
         return PyErr_SetFromErrno(outofconflerr);
+    } else {
+        // res can only be l_False, l_True, l_Undef
+        assert((res == l_False) || (res == l_True) || (res == l_Undef));
+        Py_DECREF(result);
+        return NULL;
     }
 
     return result;
 }
 
+PyDoc_STRVAR(is_satisfiable_doc,
+"is_satisfiable()\n\
+Return satisfiability of the system.\n\
+\n\
+:return: True or False\n\
+:rtype: <boolean>"
+);
+
+static PyObject* is_satisfiable(Solver *self)
+{
+    lbool res;
+    Py_BEGIN_ALLOW_THREADS      /* release GIL */
+    res = self->cmsat->solve();
+    Py_END_ALLOW_THREADS
+
+    if (res == l_True) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    } else if (res == l_False) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    } else if (res == l_Undef) {
+        return PyErr_SetFromErrno(outofconflerr);
+    } else {
+        // res can only be l_False, l_True, l_Undef
+        assert((res == l_False) || (res == l_True) || (res == l_Undef));
+        return NULL;
+    }
+}
+
+PyDoc_STRVAR(msolve_selected_doc,
+"msolve_selected(max_nr_of_solutions, var_selected, [raw])\n\
+Find multiple solutions to your problem, the solver is ran in a loop and each \n\
+previous solution found will be banned.\n\
+\n\
+.. warning:: The loop will run as long as there are solutions.\n\
+    a maximum of loops must be set with 'max_nr_of_solutions' parameter\n\
+\n\
+.. note:: As it is highly suggested in the documentation of cryptominisat,\n\
+    the new clause (banned solutions) contains the variables that are \n\
+    \"important\" or \"main\" to your problem (i.e. \"var_selected\" argument).\n\
+    Variables that were only used to translate the original problem into CNF \n\
+    should not be added.\n\
+    This way, you will not get spurious solutions that don't differ in \n\
+    the main, important variables.\n\
+\n\
+:param arg1: Maximum number of solutions before stop the search\n\
+:param arg2: Variables for which the solver must find different solutions\n\
+:param arg3: Format of literals for each solution returned. \n\
+    If set to True, lists of literals will be returned;\n\
+    .. example:: [(1, -2, -3, -4, -5, -6, -7, -8, -9, 10,),]\n\
+    if set to False, tuples of booleans will be returned,\n\
+    with None at the first position.\n\
+    .. example:: [(None, True, False, True,),]\n\
+:type arg1: <int>\n\
+:type arg2: <list>\n\
+:type arg3: <boolean>\n\
+:return: List of solutions (list of lists of literals)\n\
+:rtype: <list <list>>"
+);
+
+static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
+{
+    int max_nr_of_solutions;
+    int raw_solutions_activated = true;
+    PyObject *var_selected;
+
+    static char* kwlist[] = {"max_nr_of_solutions", "var_selected", "raw", NULL};
+
+    #ifdef IS_PY3K
+    // Use 'p' wildcard for the boolean on version 3.3+ of Python
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|p", kwlist,
+                                     &max_nr_of_solutions,
+                                     &var_selected,
+                                     &raw_solutions_activated)) {
+        return NULL;
+    }
+    #else
+    // Use 'i' wildcard for the boolean on version 2.x of Python
+    // O (object) [PyObject *] : Store a Python object (without any conversion) in a C object pointer.
+    // https://docs.python.org/2/c-api/arg.html
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "iO|i", kwlist,
+                                     &max_nr_of_solutions,
+                                     &var_selected,
+                                     &raw_solutions_activated)) {
+        return NULL;
+    }
+    #endif
+
+    std::vector<Lit> var_lits;
+    if (!parse_clause(self, var_selected, var_lits)) {
+        return 0;
+    }
+
+    // Debug
+    std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
+    std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
+    std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
+
+//     for (unsigned long i = 0; i < var_lits.size(); i++) {
+//         std::cout << "real value: " << var_lits[i]
+//                   << "; x: " << var_lits[i].toInt()
+//                   << "; sign: " << var_lits[i].sign()
+//                   << "; var: " << var_lits[i].var()
+//                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
+//                   << '\n';
+//     }
+
+    PyObject *solutions = PyList_New(0);
+    if (solutions == NULL) {
+        PyErr_SetString(PyExc_SystemError, "failed to create a list");
+        return NULL;
+    }
+
+    int current_nr_of_solutions = 0;
+    lbool res = l_True;
+    std::vector<Lit>::iterator it;
+    PyObject* solution = NULL;
+    while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
+
+        Py_BEGIN_ALLOW_THREADS      /* release GIL */
+        res = self->cmsat->solve();
+        Py_END_ALLOW_THREADS
+
+        current_nr_of_solutions++;
+
+        std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
+                  << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
+
+        if(res == l_True) {
+
+            // Memorize the solution
+            if (!raw_solutions_activated) {
+                // Solution in v5 format
+                solution = get_solution(self->cmsat);
+            } else {
+                // Solution in v2.9 format
+                solution = get_raw_solution(self->cmsat);
+            }
+
+            if (!solution) {
+                PyErr_SetString(PyExc_SystemError, "no solution");
+                Py_DECREF(solutions);
+                return NULL;
+            }
+            // Add solution
+            PyList_Append(solutions, solution);
+            Py_DECREF(solution);
+
+            // Prepare next statement
+            // Ban previous solution
+            if (current_nr_of_solutions < max_nr_of_solutions) {
+                // std::cout << "Nb vars:" << self->cmsat->nVars() << std::endl;
+
+                std::vector<Lit> ban_solution;
+
+                // Old algorithm
+                //for (long var = 0; var != (long)self->cmsat->nVars(); var++) {
+                //    // Search var+1 in [var_lits.begin(), var_lits.end()[
+                //    // false : > 0; true : < 0 sign !!
+                //    it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
+                //    //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
+                //    // If selected vars have been found with the sign false (> 0)
+                //    if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
+                //        ban_solution.push_back(
+                //            Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
+                //        );
+                //    }
+                //}
+
+
+                const std::vector<lbool> model = self->cmsat->get_model();
+
+                // Iterate on var_selected (instead of iterate on all vars in solver)
+                for (unsigned long i = 0; i < var_lits.size(); i++) {
+
+                    // If the current variable is > 0 (false)
+                    // PS: internal value of any literal is equal to i;
+                    // human readable value is i+1 (begins with 1 instead of 0)
+                    if (var_lits[i].sign() == false) {
+
+                        // The current value of the variable must belong to the solver variables
+                        assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
+
+                        // std::cout << "human readable lit: " << var_lits[i] << "; lit sign: " << ((var_lits[i].sign() == 0) ? "false" : "true") << std::endl;
+                        // std::cout << "lit value: " << var_lits[i].var() << "; model status: " << model[var_lits[i].var()] << std::endl;
+
+                        // Get the corresponding variable in the model, whatever its sign
+                        // Add it to the futur banned clause
+                        ban_solution.push_back(
+                            Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
+                        );
+                    }
+                }
+
+                // Ban current solution for the next run
+                self->cmsat->add_clause(ban_solution);
+
+                //for (unsigned long i = 0; i < ban_solution.size(); i++) {
+                //    std::cout << ban_solution[i] << ';';
+                //}
+                //std::cout << std::endl;
+            }
+        } else if (res == l_False) {
+            std::cout << "DEBUG :: Solver: No more solution" << std::endl;
+        } else if (res == l_Undef) {
+            Py_DECREF(solutions);
+            PyErr_SetString(PyExc_SystemError, "Nothing to do => sol undef");
+            return NULL;
+        } else {
+            // res can only be l_False, l_True, l_Undef
+            assert((res == l_False) || (res == l_True) || (res == l_Undef));
+            Py_DECREF(solutions);
+            return NULL;
+        }
+    }
+    // Return list of all solutions
+    return solutions;
+}
+
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
-    //{"solve",     (PyCFunction) full_solve,  METH_VARARGS | METH_KEYWORDS, "my new solver stuff"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL, NULL, 0, NULL}     /* Sentinel - marks the end of this structure */
 };
 
 static PyMethodDef Solver_methods[] = {
-    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
-    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
+    {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solve the system"},
+    {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
+    {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
+    {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
+    //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
+    {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
+    {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
     {NULL,        NULL}  /* sentinel */
 };
 
@@ -376,7 +756,11 @@ static void
 Solver_dealloc(Solver* self)
 {
     delete self->cmsat;
+    #ifdef IS_PY3K
+    Py_TYPE(self)->tp_free ((PyObject*) self);
+    #else
     self->ob_type->tp_free((PyObject*)self);
+    #endif
 }
 
 static PyObject *
@@ -392,7 +776,6 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
-
     return (PyObject *)self;
 }
 
@@ -416,75 +799,100 @@ static PyMemberDef Solver_members[] = {
     {NULL}  /* Sentinel */
 };
 
-static const char solver_create_docstring[] = "Create Solver object.\n"
-"Supported arguments: verbose, clause_limit, threads.\n"
-"   'verbose' -- integer. 0: nothing printed. 15: very verbose. Default: 0\n"
-"   'confl_limit' -- integer. Abort after this many conflicts. Default: never abort.\n"
-"   'threads' -- integer. Number of threads to use. Default: 1"
-;
-
 static PyTypeObject pycryptosat_SolverType = {
+    #ifndef IS_PY3K
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "pycryptosat.Solver",             /*tp_name*/
+    #else
+    PyVarObject_HEAD_INIT(NULL, 0)
+    #endif
+    "pycryptosat.Solver",       /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
+    0,                          /*tp_itemsize*/
     (destructor)Solver_dealloc, /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
+    0,                          /*tp_print*/
+    0,                          /*tp_getattr*/
+    0,                          /*tp_setattr*/
+    0,                          /*tp_compare*/
+    0,                          /*tp_repr*/
+    0,                          /*tp_as_number*/
+    0,                          /*tp_as_sequence*/
+    0,                          /*tp_as_mapping*/
+    0,                          /*tp_hash */
+    0,                          /*tp_call*/
+    0,                          /*tp_str*/
+    0,                          /*tp_getattro*/
+    0,                          /*tp_setattro*/
+    0,                          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    solver_create_docstring,           /* tp_doc */
-    0,                     /* tp_traverse */
-    0,                     /* tp_clear */
-    0,                     /* tp_richcompare */
-    0,                     /* tp_weaklistoffset */
-    0,                     /* tp_iter */
-    0,                     /* tp_iternext */
+    solver_create_docstring,    /* tp_doc */
+    0,                          /* tp_traverse */
+    0,                          /* tp_clear */
+    0,                          /* tp_richcompare */
+    0,                          /* tp_weaklistoffset */
+    0,                          /* tp_iter */
+    0,                          /* tp_iternext */
     Solver_methods,             /* tp_methods */
-    Solver_members,            /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
+    Solver_members,             /* tp_members */
+    0,                          /* tp_getset */
+    0,                          /* tp_base */
+    0,                          /* tp_dict */
+    0,                          /* tp_descr_get */
+    0,                          /* tp_descr_set */
+    0,                          /* tp_dictoffset */
     (initproc)Solver_init,      /* tp_init */
-    0,                         /* tp_alloc */
+    0,                          /* tp_alloc */
     Solver_new,                 /* tp_new */
 };
 
-#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
-#endif
-PyMODINIT_FUNC
-initpycryptosat(void)
+MODULE_INIT_FUNC(pycryptosat)
 {
     PyObject* m;
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&pycryptosat_SolverType) < 0)
-        return;
+    if (PyType_Ready(&pycryptosat_SolverType) < 0) {
+        // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
+        // In pure Python2: return nothing.
+        return NULL;
+    }
 
+    #ifdef IS_PY3K
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,  /* m_base */
+        "pycryptosat",          /* m_name */
+        NULL,                   /* m_doc */
+        -1,                     /* m_size */
+        module_methods          /* m_methods */
+    };
+
+    m = PyModule_Create(&moduledef);
+    #else
     m = Py_InitModule3("pycryptosat", module_methods,
                        "Example module that creates an extension type.");
+    #endif
+
+    // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
+    // In pure Python2: return nothing.
+    if (!m) {
+        Py_XDECREF(m);
+        return NULL;
+    }
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
-
-    outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
-    Py_INCREF(outofconflerr);
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString(LIBRARY_VERSION));
+    if (!(outofconflerr = PyErr_NewExceptionWithDoc("_cadbiom.InternalError", "Unsupported error.", NULL, NULL))) {
+        goto error;
+    }
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
+
+error:
+
+    if (PyErr_Occurred())
+    {
+        PyErr_SetString(PyExc_ImportError, "pycryptosat: init failed");
+        Py_DECREF(m);
+        m = NULL;
+    }
+    return m;
 }

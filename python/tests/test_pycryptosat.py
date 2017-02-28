@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # CryptoMiniSat
 #
@@ -19,17 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import unicode_literals
+from __future__ import print_function
 import sys
-import copy
-import random
-from os.path import basename
 import unittest
 
 import os
 import glob
-print "our CWD is:", os.getcwd(), "files here: ", glob.glob("*")
+print("our CWD is:", os.getcwd(), "files here: ", glob.glob("*"))
 sys.path.append(os.getcwd())
-print "our sys.path is", sys.path
+print("our sys.path is", sys.path)
 
 
 import pycryptosat
