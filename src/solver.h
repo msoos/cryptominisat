@@ -239,6 +239,7 @@ class Solver : public Searcher
         uint64_t mem_used_vardata() const;
         SolveFeatures calculate_features() const;
         void reconfigure(int val);
+        long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;
         bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl, const bool red);
@@ -333,7 +334,6 @@ class Solver : public Searcher
         /////////////////////
         // Data
         size_t               zeroLevAssignsByCNF = 0;
-        size_t               zero_level_assigns_by_searcher = 0;
 
         /////////////////////
         // Clauses

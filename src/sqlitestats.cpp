@@ -288,7 +288,7 @@ void SQLiteStats::mem_used(
     //Position
     sqlite3_bind_int64(stmtMemUsed, bindAt++, runID);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().numSimplify);
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
     //memory stats
     sqlite3_bind_text(stmtMemUsed, bindAt++, name.c_str(), -1, NULL);
@@ -360,7 +360,7 @@ void SQLiteStats::time_passed(
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
@@ -397,7 +397,7 @@ void SQLiteStats::time_passed_min(
     int bindAt = 1;
     sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
     sqlite3_bind_double(stmtTimePassed, bindAt++, time_passed);
@@ -505,7 +505,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, runID);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtRst, bindAt++, cpuTime());
 
 
@@ -679,7 +679,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, runID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtReduceDB, bindAt++, cpuTime());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->reduceDB->get_nbReduceDB());
 
@@ -853,7 +853,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts());
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);

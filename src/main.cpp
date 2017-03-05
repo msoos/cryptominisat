@@ -312,12 +312,10 @@ void Main::add_supported_options()
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
-    ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())
-        , "Clean increment cleaning by this factor for next cleaning")
-    ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
-        , "Maximum number of temporary clauses of high glue")
-    ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
-        , "Keep all clauses at or below this value")
+    ("gluecut0", po::value(&conf.glue_put_lev0_if_below_or_eq)->default_value(conf.glue_put_lev0_if_below_or_eq)
+        , "Glue value for lev 0 ('keep') cut")
+    ("gluecut1", po::value(&conf.glue_put_lev1_if_below_or_eq)->default_value(conf.glue_put_lev1_if_below_or_eq)
+        , "Glue value for lev 1 cut")
     ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
         , "Keep all clauses at or below this value")
     ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
@@ -343,8 +341,6 @@ void Main::add_supported_options()
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
-    ("morebump", po::value(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
-        , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
     ;
 
 

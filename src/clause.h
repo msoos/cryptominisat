@@ -120,11 +120,12 @@ struct ClauseStats
         #ifdef STATS_NEEDED
         ID = 1;
         #endif
-        which_red_array = 1;
+        which_red_array = 2;
         glue = 1000;
         activity = 0;
         ttl = 0;
         marked_clause = 0;
+        last_touched = 0;
     }
 
     //Stored data
@@ -133,6 +134,7 @@ struct ClauseStats
     uint32_t ttl:2;
     uint32_t which_red_array:2;
     float   activity = 0.0;
+    uint32_t last_touched;
     #ifdef STATS_NEEDED
     int64_t ID;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced

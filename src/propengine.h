@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <stack>
 #include <set>
+#include <cmath>
 
 //#define ANIMATE3D
 
@@ -101,6 +102,8 @@ public:
     template<bool update_bogoprops = true>
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
+    vector<double> var_act_vsids;
+    vector<double> activ_weird;
 
 protected:
     int64_t simpDB_props = 0;
@@ -122,6 +125,24 @@ protected:
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
+
+
+    struct VarOrderLt { ///Order variables according to their activities
+        const vector<double>&  activities;
+        bool operator () (const uint32_t x, const uint32_t y) const
+        {
+            return activities[x] > activities[y];
+        }
+
+        VarOrderLt(const vector<double>& _activities) :
+            activities(_activities)
+        {}
+    };
+
+    ///activity-ordered heap of decision variables.
+    ///NOT VALID WHILE SIMPLIFYING
+    Heap<VarOrderLt> order_heap_vsids;
+    Heap<VarOrderLt> order_heap_weird;
 
     friend class Gaussian;
 
@@ -383,6 +404,21 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     assert(value(v) == l_Undef);
     if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
+    }
+
+    if (!VSIDS) {
+        varData[v].picked = sumConflicts;
+        varData[v].conflicted = 0;
+        varData[v].almost_conflicted = 0;
+
+        assert(sumConflicts >= varData[v].cancelled);
+        uint32_t age = sumConflicts - varData[v].cancelled;
+        if (age > 0) {
+            double decay = std::pow(0.95, age);
+            activ_weird[v] *= decay;
+            if (order_heap_weird.inHeap(v))
+                order_heap_weird.increase(v);
+        }
     }
 
     const bool sign = p.sign();

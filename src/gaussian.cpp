@@ -232,7 +232,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.col_is_set.resize(origMat.num_cols, false);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
 
     for(uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
@@ -710,7 +710,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
      * TODO: try out on a cluster
      *
      * for(Lit l: tmp_clause) {
-        solver->bump_var_activity<false>(l.var());
+        solver->bump_vsids_var_act<false>(l.var());
     }*/
 
     #ifdef VERBOSE_DEBUG

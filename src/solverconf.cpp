@@ -36,12 +36,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        , max_temporary_learnt_clauses(30000)
+        //, max_temporary_learnt_clauses(30000)
+        //, inc_max_temp_red_cls(1.0)
+        , every_lev1_reduce(10000)
+        , every_lev2_reduce(15000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        , inc_max_temp_red_cls(1.0)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
-        , glue_must_keep_clause_if_below_or_eq(5)
+        , glue_put_lev0_if_below_or_eq(3)
+        , glue_put_lev1_if_below_or_eq(6)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         , guess_cl_effectiveness(1)
@@ -70,7 +73,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , more_red_minim_limit_cache(400)
         , more_red_minim_limit_binary(200)
         , max_num_lits_more_red_min(1)
-        , extra_bump_var_activities_based_on_glue(true)
 
         //Verbosity
         , verbosity        (0)
@@ -262,9 +264,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , preprocess(0)
         , saved_state_file("savedstate.dat")
 {
-
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-    ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
 }
 

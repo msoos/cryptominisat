@@ -98,7 +98,6 @@ class Searcher : public HyperEngine
         void     print_restart_stat_line() const;
         void     printBaseStats() const;
         void     print_clause_stats() const;
-        uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
         const SearchHist& getHistory() const;
 
@@ -111,7 +110,6 @@ class Searcher : public HyperEngine
         template<bool also_insert_varorder = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
-        vector<double> activ_glue;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;
@@ -137,8 +135,9 @@ class Searcher : public HyperEngine
         void rebuildOrderHeap();
         void clear_order_heap()
         {
-            order_heap_glue.clear();
+            order_heap_vsids.clear();
         }
+        void bumpClauseAct(Clause* cl);
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -306,6 +305,9 @@ class Searcher : public HyperEngine
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
 
+        uint64_t next_lev1_reduce;
+        uint64_t next_lev2_reduce;
+
     private:
         //////////////
         // Conflict minimisation
@@ -364,27 +366,11 @@ class Searcher : public HyperEngine
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
         template<bool update_bogoprops>
-        void     bump_var_activity  (uint32_t v);
-        struct VarOrderLt { ///Order variables according to their activities
-            const vector<double>&  activities;
-            bool operator () (const uint32_t x, const uint32_t y) const
-            {
-                return activities[x] > activities[y];
-            }
-
-            VarOrderLt(const vector<double>& _activities) :
-                activities(_activities)
-            {}
-        };
-
-        ///activity-ordered heap of decision variables.
-        ///NOT VALID WHILE SIMPLIFYING
-        Heap<VarOrderLt> order_heap_glue;
+        void     bump_vsids_var_act(uint32_t v, double mult = 1.0);
 
         //Clause activites
         double cla_inc;
         void decayClauseAct();
-        void bumpClauseAct(Clause* cl);
         unsigned guess_clause_array(
             const uint32_t glue
             , const uint32_t backtrack_lev
@@ -447,17 +433,16 @@ inline void Searcher::add_in_partial_solving_stats()
 
 inline void Searcher::insertVarOrder(const uint32_t x)
 {
-    if (!order_heap_glue.inHeap(x)
-    ) {
+    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_weird;
+    if (!order_heap.inHeap(x)) {
         #ifdef SLOW_DEUG
-        //All active varibles are decision variables
-        assert(varData[x].removed == Removed::none);
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
         #endif
 
-        order_heap_glue.insert(x);
+        order_heap.insert(x);
     }
 }
-
 
 inline void Searcher::bumpClauseAct(Clause* cl)
 {
@@ -466,7 +451,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
     cl->stats.activity += cla_inc;
     if (cl->stats.activity > 1e20 ) {
         // Rescale
-        for(ClOffset offs: longRedCls[1]) {
+        for(ClOffset offs: longRedCls[2]) {
             cl_alloc.ptr(offs)->stats.activity *= 1e-20;
         }
         cla_inc *= 1e-20;
@@ -485,7 +470,7 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap_glue.inHeap(i)) {
+            if (!order_heap_vsids.inHeap(i)) {
                 cout << "ERROR var " << i+1 << " not in heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
@@ -494,7 +479,7 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
-    assert(order_heap_glue.heap_property());
+    assert(order_heap_vsids.heap_property());
 
     return true;
 }
@@ -519,6 +504,57 @@ inline bool Searcher::pickPolarity(const uint32_t var)
     }
 
     return true;
+}
+
+template<bool update_bogoprops>
+void Searcher::bump_var_activities_based_on_implied_by_learnts(
+    const uint32_t glue
+) {
+    assert(!update_bogoprops);
+
+    for (const auto dat :implied_by_learnts) {
+        const uint32_t v_glue = dat.second;
+        if (v_glue < glue) {
+            bump_vsids_var_act<update_bogoprops>(dat.first);
+        }
+    }
+}
+
+template<bool update_bogoprops>
+inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
+{
+    if (update_bogoprops) {
+        return;
+    }
+
+    var_act_vsids[var] += var_inc * mult;
+
+    #ifdef SLOW_DEBUG
+    bool rescaled = false;
+    #endif
+    if (var_act_vsids[var] > 1e100) {
+        // Rescale:
+        for (double& act : var_act_vsids) {
+            act *= 1e-100;
+        }
+        #ifdef SLOW_DEBUG
+        rescaled = true;
+        #endif
+
+        //Reset var_inc
+        var_inc *= 1e-100;
+    }
+
+    // Update order_heap with respect to new activity:
+    if (order_heap_vsids.inHeap(var)) {
+        order_heap_vsids.decrease(var);
+    }
+
+    #ifdef SLOW_DEBUG
+    if (rescaled) {
+        assert(order_heap_vsids.heap_property());
+    }
+    #endif
 }
 
 

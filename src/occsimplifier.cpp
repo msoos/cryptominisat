@@ -603,8 +603,10 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
+                } else if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq) {
+                    cl->stats.which_red_array = 1;
                 }
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {

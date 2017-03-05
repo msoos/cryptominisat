@@ -74,11 +74,8 @@ void DataSync::updateVars(
 bool DataSync::syncData()
 {
     if (!enabled()
-        || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts()
+        || lastSyncConf + solver->conf.sync_every_confl >= solver->sumConflicts
     ) {
-        //cout << "sharedData:" << sharedData << endl;
-        //cout << "conf: " << solver->sumConflicts() << endl;
-        //cout << "todo: " << lastSyncConf + SYNC_EVERY_CONFL << endl;
         return true;
     }
 
@@ -103,7 +100,7 @@ bool DataSync::syncData()
     sharedData->bin_mutex.unlock();
     if (!ok) return false;
 
-    lastSyncConf = solver->sumConflicts();
+    lastSyncConf = solver->sumConflicts;
 
     return true;
 }

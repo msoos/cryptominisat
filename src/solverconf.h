@@ -35,8 +35,7 @@ namespace CMSat {
 
 enum class ClauseClean {
     glue = 0
-    , size = 1
-    , activity = 2
+    , activity = 1
 };
 
 inline unsigned clean_to_int(ClauseClean t)
@@ -46,11 +45,8 @@ inline unsigned clean_to_int(ClauseClean t)
         case ClauseClean::glue:
             return 0;
 
-        case ClauseClean::size:
-            return 1;
-
         case ClauseClean::activity:
-            return 2;
+            return 1;
     }
 
     assert(false);
@@ -96,9 +92,6 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     switch(clauseCleaningType) {
         case ClauseClean::glue :
             return "glue";
-
-        case ClauseClean::size:
-            return "size";
 
         case ClauseClean::activity:
             return "activity";
@@ -153,14 +146,18 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Clause cleaning
-        unsigned  max_temporary_learnt_clauses;
-        unsigned  cur_max_temp_red_cls;
+//         unsigned  max_temporary_learnt_clauses;
+//         unsigned  cur_max_temp_red_cls;
+//         double    inc_max_temp_red_cls;
+        unsigned every_lev1_reduce;
+        unsigned every_lev2_reduce;
+
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
-        double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
-        double    inc_max_temp_red_cls;
+        double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
-        unsigned glue_must_keep_clause_if_below_or_eq;
+        unsigned glue_put_lev0_if_below_or_eq;
+        unsigned glue_put_lev1_if_below_or_eq;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
         double   adjust_glue_if_too_many_low;
@@ -192,7 +189,6 @@ class DLL_PUBLIC SolverConf
         unsigned more_red_minim_limit_cache;
         unsigned more_red_minim_limit_binary;
         unsigned max_num_lits_more_red_min;
-        int extra_bump_var_activities_based_on_glue;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
@@ -220,6 +216,11 @@ class DLL_PUBLIC SolverConf
         //SQL
         bool      dump_individual_search_time;
         bool      dump_individual_restarts_and_clauses;
+
+        //Steps
+        double step_size = 0.40;
+        double step_size_dec = 0.000001;
+        double min_step_size = 0.06;
 
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination

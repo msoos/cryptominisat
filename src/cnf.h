@@ -77,7 +77,7 @@ public:
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
 
-        longRedCls.resize(2);
+        longRedCls.resize(3);
     }
 
     virtual ~CNF()
@@ -91,11 +91,13 @@ public:
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<VarData> varData;
+    bool VSIDS = true; //TODO: change to false
     vector<uint32_t> depth;
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
     Drat* drat;
+    uint32_t sumConflicts = 0;
 
     //Clauses
     vector<ClOffset> longIrredCls;

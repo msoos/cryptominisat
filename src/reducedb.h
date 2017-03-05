@@ -37,6 +37,7 @@ public:
     ReduceDB(Solver* solver);
     void reduce_db_and_update_reset_stats();
     const CleaningStats& get_stats() const;
+    void handle_lev1();
 
     uint64_t get_nbReduceDB() const
     {
@@ -58,13 +59,9 @@ private:
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
-    void remove_cl_from_array_and_count_stats(
-        CleaningStats& tmpStats
-        , uint64_t sumConflicts
-    );
+    void remove_cl_from_array_and_count_stats(CleaningStats& tmpStats);
 
     CleaningStats reduceDB();
-    void lock_most_UIP_used_clauses();
 
     void sort_red_cls(ClauseClean clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);

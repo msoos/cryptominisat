@@ -112,6 +112,8 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     reduceDB = new ReduceDB(this);
 
     set_up_sql_writer();
+    next_lev1_reduce = conf.every_lev1_reduce;
+    next_lev2_reduce =  conf.every_lev2_reduce;
 }
 
 Solver::~Solver()
@@ -385,7 +387,7 @@ Clause* Solver::add_clause_int(
 
     //Make stats sane
     #ifdef STATS_NEEDED
-    stats.introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts(), stats.introduced_at_conflict);
+    stats.introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts, stats.introduced_at_conflict);
     #endif
 
     vector<Lit> ps = lits;
@@ -449,7 +451,7 @@ Clause* Solver::add_clause_int(
         default:
             Clause* c = cl_alloc.Clause_new(ps
             #ifdef STATS_NEEDED
-            , sumSearchStats.conflStats.numConflicts
+            , sumConflicts
             , 1
             #endif
             );
@@ -699,9 +701,10 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
         if (!red) {
             longIrredCls.push_back(offset);
         } else {
-            if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+            cl->stats.which_red_array = 2;
+            if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
                 cl->stats.which_red_array = 0;
-            } else {
+            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq) {
                 cl->stats.which_red_array = 1;
             }
             longRedCls[cl->stats.which_red_array].push_back(offset);
@@ -1466,6 +1469,22 @@ void Solver::dump_memory_stats_to_sql()
     );
 }
 
+long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
+{
+    double mult = std::pow(conf.num_conflicts_of_search_inc, (double)iteration_num);
+    mult = std::min(mult, conf.num_conflicts_of_search_inc_max);
+    long num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
+    if (conf.never_stop_search) {
+        num_conflicts_of_search = 500ULL*1000ULL*1000ULL;
+    }
+    num_conflicts_of_search = std::min<long>(
+        num_conflicts_of_search
+        , (long)conf.maxConfl - (long)sumConflicts
+    );
+
+    return num_conflicts_of_search;
+}
+
 lbool Solver::iterate_until_solved()
 {
     uint64_t backup_burst_len = conf.burst_search_len;
@@ -1476,7 +1495,7 @@ lbool Solver::iterate_until_solved()
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
-        && sumSearchStats.conflStats.numConflicts < (uint64_t)conf.maxConfl
+        && sumConflicts < (uint64_t)conf.maxConfl
     ) {
         iteration_num++;
         if (conf.verbosity && iteration_num >= 2) {
@@ -1487,21 +1506,11 @@ lbool Solver::iterate_until_solved()
         }
         dump_memory_stats_to_sql();
 
-        const size_t origTrailSize = trail.size();
-        double mult = std::pow(conf.num_conflicts_of_search_inc, (double)iteration_num);
-        mult = std::min(mult, conf.num_conflicts_of_search_inc_max);
-        long num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
-        if (conf.never_stop_search) {
-            num_conflicts_of_search = 500ULL*1000ULL*1000ULL;
-        }
-        num_conflicts_of_search = std::min<long>(
-            num_conflicts_of_search
-            , (long)conf.maxConfl - (long)sumSearchStats.conflStats.numConflicts
-        );
-        if (num_conflicts_of_search <= 0) {
+        const long num_confl = calc_num_confl_to_do_this_iter(iteration_num);
+        if (num_confl <= 0) {
             break;
         }
-        status = Searcher::solve(num_conflicts_of_search, iteration_num);
+        status = Searcher::solve(num_confl, iteration_num);
         clear_gauss();
 
         //Check for effectiveness
@@ -1521,14 +1530,12 @@ lbool Solver::iterate_until_solved()
         }
 
         //If we are over the limit, exit
-        if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+        if (sumConflicts >= (uint64_t)conf.maxConfl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
             break;
         }
-
-        zero_level_assigns_by_searcher += trail.size() - origTrailSize;
 
         if (conf.do_simplify_problem) {
             status = simplify_problem(false);
@@ -1542,20 +1549,20 @@ lbool Solver::iterate_until_solved()
 
 void Solver::check_too_many_low_glues()
 {
-    if (conf.glue_must_keep_clause_if_below_or_eq == 0
-        || sumConflicts() < conf.min_num_confl_adjust_glue_cutoff
+    if (conf.glue_put_lev0_if_below_or_eq == 2
+        || sumConflicts < conf.min_num_confl_adjust_glue_cutoff
         || adjusted_glue_cutoff_if_too_many
         || conf.adjust_glue_if_too_many_low >= 1.0
     ) {
         return;
     }
 
-    double perc = float_div(sumSearchStats.red_cl_in_which0, sumConflicts());
+    double perc = float_div(sumSearchStats.red_cl_in_which0, sumConflicts);
     if (perc > conf.adjust_glue_if_too_many_low) {
-        conf.glue_must_keep_clause_if_below_or_eq--;
+        conf.glue_put_lev0_if_below_or_eq--;
         adjusted_glue_cutoff_if_too_many = true;
         if (conf.verbosity) {
-            cout << "c Adjusted glue cutoff to " << conf.glue_must_keep_clause_if_below_or_eq
+            cout << "c Adjusted glue cutoff to " << conf.glue_put_lev0_if_below_or_eq
             << " due to too many low glues: " << perc*100.0 << " %" << endl;
         }
     }
@@ -1593,7 +1600,7 @@ bool Solver::execute_inprocess_strategy(
     std::string occ_strategy_tokens;
 
     while(std::getline(ss, token, ',')) {
-        if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+        if (sumConflicts >= (uint64_t)conf.maxConfl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
@@ -1630,7 +1637,7 @@ bool Solver::execute_inprocess_strategy(
                 }
             }
             occ_strategy_tokens.clear();
-            if (sumSearchStats.conflStats.numConflicts >= (uint64_t)conf.maxConfl
+            if (sumConflicts >= (uint64_t)conf.maxConfl
                 || cpuTime() > conf.maxTime
                 || must_interrupt_asap()
                 || nVars() == 0
@@ -1749,65 +1756,6 @@ bool Solver::execute_inprocess_strategy(
 
     return ok;
 }
-
-/*void Solver::remove_xors()
-{
-    if (xorclauses.empty()) {
-        return;
-    }
-
-    for(watch_subarray ws: watches) {
-        Watched*& i = ws.begin();
-        Watched*& j = i;
-        for (Watched*& end = ws.end(); i != end; i++) {
-            if (!i->isClause()) {
-                *j++ = *i;
-                continue;
-            }
-            Clause& cl = *cl_alloc.ptr(i->get_offset());
-            if (!cl.is_xor()) {
-                *j++ = *i;
-            }
-        }
-        ws.shrink_(i-j);
-    }
-
-    for(ClOffset offs: xorclauses) {
-        Clause* cl = cl_alloc.ptr(offs);
-        assert(cl->is_xor());
-        cl_alloc.clauseFree(cl);
-    }
-    xorclauses.clear();
-
-    for(ClOffset offs: cls_of_xorclauses) {
-        Clause& cl = *cl_alloc.ptr(offs);
-        unsigned at = 0;
-        bool rem = false;
-        for (Lit& l: cl) {
-            if (value(l) == l_True) {
-                rem = true;
-            }
-            if (value(l) == l_Undef) {
-                std::swap(cl[at], l);
-                at++;
-            }
-        }
-        if (rem) {
-            cl_alloc.clauseFree(&cl);
-            continue;
-        }
-        assert(at >= 2);
-        attachClause(cl, false);
-        cl.set_represented_by_xor(false);
-        assert(!cl.freed());
-        if (cl.red()) {
-            longRedCls.push_back(offs);
-        } else {
-            longIrredCls.push_back(offs);
-        }
-    }
-    cls_of_xorclauses.clear();
-}*/
 
 /**
 @brief The function that brings together almost all CNF-simplifications
@@ -1935,7 +1883,7 @@ void Solver::print_min_stats(const double cpu_time) const
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
@@ -1983,8 +1931,8 @@ void Solver::print_min_stats(const double cpu_time) const
                     , "% time"
     );
     print_stats_line("c Conflicts in UIP"
-        , sumSearchStats.conflStats.numConflicts
-        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
+        , sumConflicts
+        , float_div(sumConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2002,16 +1950,11 @@ void Solver::print_norm_stats(const double cpu_time) const
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumConflicts)
     );
 
     print_stats_line("c 0-depth assigns", trail.size()
         , stats_line_percent(trail.size(), nVars())
-        , "% vars"
-    );
-    print_stats_line("c 0-depth assigns by thrds"
-        , zero_level_assigns_by_searcher
-        , stats_line_percent(zero_level_assigns_by_searcher, nVars())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
@@ -2077,8 +2020,8 @@ void Solver::print_norm_stats(const double cpu_time) const
     }
 
     print_stats_line("c Conflicts in UIP"
-        , sumSearchStats.conflStats.numConflicts
-        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
+        , sumConflicts
+        , float_div(sumConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     double vm_usage;
@@ -2097,18 +2040,13 @@ void Solver::print_full_restart_stat(const double cpu_time) const
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
     print_stats_line("c props/conflict"
-        , float_div(propStats.propagations, sumSearchStats.conflStats.numConflicts)
+        , float_div(propStats.propagations, sumConflicts)
     );
     cout << "c ------- FINAL TOTAL SOLVING STATS END ---------" << endl;
     reduceDB->get_stats().print(cpu_time);
 
     print_stats_line("c 0-depth assigns", trail.size()
         , stats_line_percent(trail.size(), nVars())
-        , "% vars"
-    );
-    print_stats_line("c 0-depth assigns by searcher"
-        , zero_level_assigns_by_searcher
-        , stats_line_percent(zero_level_assigns_by_searcher, nVars())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
@@ -2182,8 +2120,8 @@ void Solver::print_full_restart_stat(const double cpu_time) const
 
     //Other stats
     print_stats_line("c Conflicts in UIP"
-        , sumSearchStats.conflStats.numConflicts
-        , float_div(sumSearchStats.conflStats.numConflicts, cpu_time)
+        , sumConflicts
+        , float_div(sumConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
     print_stats_line("c Total time", cpu_time);
@@ -2974,13 +2912,13 @@ SolveFeatures Solver::calculate_features() const
     feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
     if (sumPropStats.propagations != 0
-        && sumSearchStats.conflStats.numConflicts != 0
+        && sumConflicts != 0
         && sumSearchStats.numRestarts != 0
     ) {
-        feat.props_per_confl = (double)sumSearchStats.conflStats.numConflicts / (double)sumPropStats.propagations;
-        feat.confl_per_restart = (double)sumSearchStats.conflStats.numConflicts / (double)sumSearchStats.numRestarts;
-        feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumSearchStats.conflStats.numConflicts;
-        feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumSearchStats.conflStats.numConflicts;
+        feat.props_per_confl = (double)sumConflicts / (double)sumPropStats.propagations;
+        feat.confl_per_restart = (double)sumConflicts / (double)sumSearchStats.numRestarts;
+        feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumConflicts;
+        feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
     }
 
     feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
@@ -3001,18 +2939,17 @@ void Solver::reconfigure(int val)
     switch (val) {
         case 3: {
             //Glue clause cleaning
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
+            conf.adjust_glue_if_too_many_low = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.inc_max_temp_red_cls = 1.03;
+            //conf.inc_max_temp_red_cls = 1.03;
 
             reset_temp_cl_num();
             break;
         }
 
         case 4: {
-            conf.max_temporary_learnt_clauses = 10000;
+            //conf.max_temporary_learnt_clauses = 10000;
             reset_temp_cl_num();
             break;
         }
@@ -3028,7 +2965,7 @@ void Solver::reconfigure(int val)
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            conf.inc_max_temp_red_cls = 1.02;
+            //conf.inc_max_temp_red_cls = 1.02;
 
             reset_temp_cl_num();
             break;
@@ -3039,11 +2976,11 @@ void Solver::reconfigure(int val)
             conf.do_bva = false;
             conf.varElimRatioPerIter = 1;
 
-            conf.glue_must_keep_clause_if_below_or_eq = 2;
+            conf.glue_put_lev0_if_below_or_eq = 2;
+            conf.glue_put_lev1_if_below_or_eq = 4;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
-            conf.inc_max_temp_red_cls = 1.04;
+            //conf.inc_max_temp_red_cls = 1.04;
 
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             update_var_decay();
@@ -3060,7 +2997,7 @@ void Solver::reconfigure(int val)
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
-            conf.max_temporary_learnt_clauses = 10000;
+            //conf.max_temporary_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             update_var_decay();
             break;
@@ -3077,12 +3014,11 @@ void Solver::reconfigure(int val)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.inc_max_temp_red_cls = 1.02;
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
+            //conf.inc_max_temp_red_cls = 1.02;
+            conf.glue_put_lev0_if_below_or_eq = 0;
             conf.update_glues_on_prop = 0;
             conf.update_glues_on_analyze = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             reset_temp_cl_num();
             break;

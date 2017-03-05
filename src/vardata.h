@@ -36,6 +36,11 @@ struct VarData
     ///contains the decision level at which the assignment was made.
     uint32_t level = 0;
 
+    uint32_t cancelled = 0;
+    uint32_t picked = 0;
+    uint32_t conflicted = 0;
+    uint32_t almost_conflicted = 0;
+
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason = PropBy();
 

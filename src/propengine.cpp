@@ -51,6 +51,8 @@ PropEngine::PropEngine(
     const SolverConf* _conf, std::atomic<bool>* _must_interrupt_inter
 ) :
         CNF(_conf, _must_interrupt_inter)
+        , order_heap_vsids(VarOrderLt(var_act_vsids))
+        , order_heap_weird(VarOrderLt(activ_weird))
         , qhead(0)
 {
 }
@@ -192,7 +194,7 @@ inline void PropEngine::update_glue(Clause& c)
 {
     if (conf.update_glues_on_prop
         && c.red()
-        && c.stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+        && c.stats.glue > conf.glue_put_lev0_if_below_or_eq
     ) {
         const uint32_t new_glue = calc_glue(c);
         if (new_glue < c.stats.glue

@@ -105,7 +105,7 @@ bool BVA::bounded_var_addition()
         << "c [occ-bva] added: " << bva_worked
         << " simp: " << bva_simp_size
         << " 2lit: " << ((solver->conf.bva_also_twolit_diff
-            && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
+            && (long)solver->sumConflicts >= solver->conf.bva_extra_lit_and_red_start) ? "Y" : "N")
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -595,7 +595,7 @@ void BVA::fill_potential(const Lit lit)
                 && (sz_c == sz_d
                     || (sz_c+1 == sz_d
                         && solver->conf.bva_also_twolit_diff
-                        && (long)solver->sumConflicts() >= solver->conf.bva_extra_lit_and_red_start
+                        && (long)solver->sumConflicts >= solver->conf.bva_extra_lit_and_red_start
                     )
                 )
                 && !solver->redundant(d.ws)
