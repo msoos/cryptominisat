@@ -33,10 +33,31 @@ THE SOFTWARE.
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
+#define MODULE_NAME "pycryptosat"
+#define MODULE_DOC "CryptoSAT satisfiability solver."
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+#ifndef IS_PY3K
 #define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
+#else
+#define IS_INT(x)  PyLong_Check(x)
+#endif
 
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
 #define PyUnicode_FromString  PyString_FromString
+#endif
+
+// Should only be necessary on Python <2.6
+#ifndef Py_TYPE
+    #define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#endif
+
+#ifndef PyVarObject_HEAD_INIT
+    #define PyVarObject_HEAD_INIT(type, size) \
+        PyObject_HEAD_INIT(type) size,
 #endif
 
 typedef struct {
@@ -372,11 +393,26 @@ static PyMethodDef Solver_methods[] = {
     {NULL,        NULL, 0, NULL}  /* sentinel */
 };
 
+#ifdef IS_PY3K
+static PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    MODULE_NAME,      // m_name
+    MODULE_DOC,       // m_doc
+    -1,               // m_size
+    module_methods,   // m_methods
+    NULL,             // m_reload
+    NULL,             // m_traverse
+    NULL,             // m_clear
+    NULL              // m_free
+};
+
+#endif
+
 static void
 Solver_dealloc(Solver* self)
 {
     delete self->cmsat;
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -424,8 +460,7 @@ static const char solver_create_docstring[] = "Create Solver object.\n"
 ;
 
 static PyTypeObject pycryptosat_SolverType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "pycryptosat.Solver",             /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
@@ -468,17 +503,30 @@ static PyTypeObject pycryptosat_SolverType = {
 #ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
+
+#ifdef IS_PY3K
+#define INIT_ERROR NULL
+#define INIT_OK(module) (module)
+#else
+#define INIT_ERROR
+#define INIT_OK(module)
+#define PyInit_pycryptosat initpycryptosat
+#endif
+
 PyMODINIT_FUNC
-initpycryptosat(void)
+PyInit_pycryptosat(void)
 {
     PyObject* m;
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&pycryptosat_SolverType) < 0)
-        return;
+        return INIT_ERROR;
 
-    m = Py_InitModule3("pycryptosat", module_methods,
-                       "Example module that creates an extension type.");
+#ifdef IS_PY3K
+    m = PyModule_Create(&module_def);
+#else
+    m = Py_InitModule3(MODULE_NAME, module_methods, MODULE_DOC);
+#endif
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
@@ -487,4 +535,6 @@ initpycryptosat(void)
     outofconflerr = PyErr_NewExceptionWithDoc(const_cast<char *>("Solver.OutOfConflicts"), const_cast<char *>("Ran out of the number of conflicts"), NULL, NULL);
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
+
+    return INIT_OK(m);
 }
