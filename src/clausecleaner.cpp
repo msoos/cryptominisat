@@ -220,7 +220,7 @@ bool ClauseCleaner::satisfied(const Clause& cl) const
     for (uint32_t i = 0; i != cl.size(); i++)
         if (solver->value(cl[i]) == l_True)
             return true;
-        return false;
+    return false;
 }
 
 void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
