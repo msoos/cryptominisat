@@ -49,12 +49,12 @@ static PyObject *outofconflerr = NULL;
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+    static const char * kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", const_cast<char **>(kwlist), &verbose, &confl_limit, &num_threads)) {
         return NULL;
     }
     if (verbose < 0) {
@@ -191,9 +191,9 @@ static int parse_xor_clause(
 
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"clause", NULL};
+    static const char* kwlist[] = {"clause", NULL};
     PyObject *clause;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", const_cast<char **>(kwlist), &clause)) {
         return NULL;
     }
 
@@ -209,10 +209,10 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"xor_clause", "rhs", NULL};
+    static const char* kwlist[] = {"xor_clause", "rhs", NULL};
     PyObject *rhs;
     PyObject *clause;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &clause, &rhs)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", const_cast<char **>(kwlist), &clause, &rhs)) {
         return NULL;
     }
     if (!PyBool_Check(rhs)) {
@@ -311,8 +311,8 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    static char* kwlist[] = {"assumptions", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+    static const char* kwlist[] = {"assumptions", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", const_cast<char **>(kwlist), &assumptions)) {
         return NULL;
     }
 
@@ -362,14 +362,14 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyMethodDef module_methods[] = {
     //{"solve",     (PyCFunction) full_solve,  METH_VARARGS | METH_KEYWORDS, "my new solver stuff"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL,        NULL, 0, NULL}  /* sentinel */
 };
 
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL,        NULL, 0, NULL}  /* sentinel */
 };
 
 static void
@@ -413,7 +413,7 @@ static PyMemberDef Solver_members[] = {
      "last name"},
     {"number", T_INT, offsetof(Noddy, number), 0,
      "noddy number"},*/
-    {NULL}  /* Sentinel */
+    {NULL, 0, 0, 0, NULL}  /* Sentinel */
 };
 
 static const char solver_create_docstring[] = "Create Solver object.\n"
@@ -484,7 +484,7 @@ initpycryptosat(void)
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
 
-    outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
+    outofconflerr = PyErr_NewExceptionWithDoc(const_cast<char *>("Solver.OutOfConflicts"), const_cast<char *>("Ran out of the number of conflicts"), NULL, NULL);
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
 }
