@@ -108,8 +108,8 @@ absolute value corresponds to i\ :sup:`th` variable::
    >>> solver = pycryptosat.Solver()
    >>> solver.add_clause([1, -5, 4])
    >>> solver.add_clause([-1, 5, 3, 4])
-   >>> solver.add_clause([-3, -4]])
-   >>> pycryptosat.solve()
+   >>> solver.add_clause([-3, -4])
+   >>> solver.solve()
    (True, (None, True, False, False, True, True))
 
 This solution translates to: x\ :sub:`1` = x\ :sub:`4` = x\ :sub:`5` = True,
