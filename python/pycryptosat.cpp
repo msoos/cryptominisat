@@ -33,10 +33,31 @@ THE SOFTWARE.
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
+#define MODULE_NAME "pycryptosat"
+#define MODULE_DOC "CryptoSAT satisfiability solver."
+
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
+#ifndef IS_PY3K
 #define IS_INT(x)  (PyInt_Check(x) || PyLong_Check(x))
+#else
+#define IS_INT(x)  PyLong_Check(x)
+#endif
 
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
 #define PyUnicode_FromString  PyString_FromString
+#endif
+
+// Should only be necessary on Python <2.6
+#ifndef Py_TYPE
+    #define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#endif
+
+#ifndef PyVarObject_HEAD_INIT
+    #define PyVarObject_HEAD_INIT(type, size) \
+        PyObject_HEAD_INIT(type) size,
 #endif
 
 typedef struct {
@@ -49,12 +70,12 @@ static PyObject *outofconflerr = NULL;
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+    static const char * kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", const_cast<char **>(kwlist), &verbose, &confl_limit, &num_threads)) {
         return NULL;
     }
     if (verbose < 0) {
@@ -191,9 +212,9 @@ static int parse_xor_clause(
 
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"clause", NULL};
+    static const char* kwlist[] = {"clause", NULL};
     PyObject *clause;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", const_cast<char **>(kwlist), &clause)) {
         return NULL;
     }
 
@@ -209,10 +230,10 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"xor_clause", "rhs", NULL};
+    static const char* kwlist[] = {"xor_clause", "rhs", NULL};
     PyObject *rhs;
     PyObject *clause;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &clause, &rhs)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", const_cast<char **>(kwlist), &clause, &rhs)) {
         return NULL;
     }
     if (!PyBool_Check(rhs)) {
@@ -311,8 +332,8 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    static char* kwlist[] = {"assumptions", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+    static const char* kwlist[] = {"assumptions", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", const_cast<char **>(kwlist), &assumptions)) {
         return NULL;
     }
 
@@ -362,21 +383,36 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
 static PyMethodDef module_methods[] = {
     //{"solve",     (PyCFunction) full_solve,  METH_VARARGS | METH_KEYWORDS, "my new solver stuff"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL,        NULL, 0, NULL}  /* sentinel */
 };
 
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, "solves the system"},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, "adds a clause to the system"},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
-    {NULL,        NULL}  /* sentinel */
+    {NULL,        NULL, 0, NULL}  /* sentinel */
 };
+
+#ifdef IS_PY3K
+static PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    MODULE_NAME,      // m_name
+    MODULE_DOC,       // m_doc
+    -1,               // m_size
+    module_methods,   // m_methods
+    NULL,             // m_reload
+    NULL,             // m_traverse
+    NULL,             // m_clear
+    NULL              // m_free
+};
+
+#endif
 
 static void
 Solver_dealloc(Solver* self)
 {
     delete self->cmsat;
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -413,7 +449,7 @@ static PyMemberDef Solver_members[] = {
      "last name"},
     {"number", T_INT, offsetof(Noddy, number), 0,
      "noddy number"},*/
-    {NULL}  /* Sentinel */
+    {NULL, 0, 0, 0, NULL}  /* Sentinel */
 };
 
 static const char solver_create_docstring[] = "Create Solver object.\n"
@@ -424,8 +460,7 @@ static const char solver_create_docstring[] = "Create Solver object.\n"
 ;
 
 static PyTypeObject pycryptosat_SolverType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "pycryptosat.Solver",             /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
@@ -468,23 +503,38 @@ static PyTypeObject pycryptosat_SolverType = {
 #ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
+
+#ifdef IS_PY3K
+#define INIT_ERROR NULL
+#define INIT_OK(module) (module)
+#else
+#define INIT_ERROR
+#define INIT_OK(module)
+#define PyInit_pycryptosat initpycryptosat
+#endif
+
 PyMODINIT_FUNC
-initpycryptosat(void)
+PyInit_pycryptosat(void)
 {
     PyObject* m;
 
     pycryptosat_SolverType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&pycryptosat_SolverType) < 0)
-        return;
+        return INIT_ERROR;
 
-    m = Py_InitModule3("pycryptosat", module_methods,
-                       "Example module that creates an extension type.");
+#ifdef IS_PY3K
+    m = PyModule_Create(&module_def);
+#else
+    m = Py_InitModule3(MODULE_NAME, module_methods, MODULE_DOC);
+#endif
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(SATSolver::get_version()));
 
-    outofconflerr = PyErr_NewExceptionWithDoc("Solver.OutOfConflicts", "Ran out of the number of conflicts", NULL, NULL);
+    outofconflerr = PyErr_NewExceptionWithDoc(const_cast<char *>("Solver.OutOfConflicts"), const_cast<char *>("Ran out of the number of conflicts"), NULL, NULL);
     Py_INCREF(outofconflerr);
     PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
+
+    return INIT_OK(m);
 }
