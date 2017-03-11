@@ -40,6 +40,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //, inc_max_temp_red_cls(1.0)
         , every_lev1_reduce(10000)
         , every_lev2_reduce(15000)
+        , must_touch_lev1_within(30000)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)

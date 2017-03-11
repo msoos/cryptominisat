@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "reducedb.h"
 #include "solver.h"
+#include "solverconf.h"
 #include "sqlstats.h"
 #include <functional>
 
@@ -184,7 +185,7 @@ void ReduceDB::handle_lev1()
             assert(false && "we should never move up through any other means");
         } else {
             if (!solver->clause_locked(*cl, offset)
-                && cl->stats.last_touched + 30000 < solver->sumConflicts
+                && cl->stats.last_touched + solver->conf.must_touch_lev1_within < solver->sumConflicts
             ) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;

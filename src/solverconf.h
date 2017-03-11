@@ -151,6 +151,7 @@ class DLL_PUBLIC SolverConf
 //         double    inc_max_temp_red_cls;
         unsigned every_lev1_reduce;
         unsigned every_lev2_reduce;
+        uint32_t must_touch_lev1_within;
 
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
         double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
