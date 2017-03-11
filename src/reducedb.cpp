@@ -263,19 +263,17 @@ void ReduceDB::remove_cl_from_array_and_count_stats(
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 2);
 
-        if (cl->stats.which_red_array != 2) {
-            solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-            continue;
-        }
-
         if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-            assert(false);
-            //cl->stats.which_red_array = 0;
+            cl->stats.which_red_array = 0;
         }
 
         if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq) {
-            assert(false);
-            //cl->stats.which_red_array = 1;
+            cl->stats.which_red_array = 1;
+        }
+
+        if (cl->stats.which_red_array != 2) {
+            solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+            continue;
         }
 
         if (cl->stats.marked_clause) {
