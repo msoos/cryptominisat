@@ -1851,7 +1851,6 @@ void Searcher::reduce_db_if_needed()
         solver->reduceDB->reduce_db_and_update_reset_stats();
         cl_alloc.consolidate(solver);
         //conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
-
         next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
     }
 }
