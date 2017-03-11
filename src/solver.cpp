@@ -450,8 +450,8 @@ Clause* Solver::add_clause_int(
 
         default:
             Clause* c = cl_alloc.Clause_new(ps
-            #ifdef STATS_NEEDED
             , sumConflicts
+            #ifdef STATS_NEEDED
             , 1
             #endif
             );

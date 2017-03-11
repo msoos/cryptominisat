@@ -59,17 +59,14 @@ class ClauseAllocator {
         ~ClauseAllocator();
 
         template<class T>
-        Clause* Clause_new(
-            const T& ps
+        Clause* Clause_new(const T& ps, const uint32_t conflictNum
             #ifdef STATS_NEEDED
-            , const uint32_t conflictNum
             , const int64_t ID
             #endif
         ) {
             void* mem = allocEnough(ps.size());
-            Clause* real= new (mem) Clause(ps
+            Clause* real = new (mem) Clause(ps, conflictNum
             #ifdef STATS_NEEDED
-            , conflictNum
             , ID
             #endif
             );

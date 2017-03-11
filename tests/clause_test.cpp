@@ -43,8 +43,8 @@ struct F : public ::testing::Test {
             lits.push_back(Lit(i, false));
         }
         Clause* c_ptr = new(tmp) Clause(lits
-        #ifdef STATS_NEEDED
         , 0
+        #ifdef STATS_NEEDED
         , 0
         #endif
         );

@@ -221,15 +221,15 @@ public:
     uint32_t mySize;
 
     template<class V>
-    Clause(const V& ps
+    Clause(const V& ps, const uint32_t _introduced_at_conflict
         #ifdef STATS_NEEDED
-        , const uint32_t _introduced_at_conflict
         , const int64_t _ID
         #endif
         )
     {
         //assert(ps.size() > 2);
 
+        stats.last_touched = _introduced_at_conflict;
         #ifdef STATS_NEEDED
         stats.introduced_at_conflict = _introduced_at_conflict;
         stats.ID = _ID;

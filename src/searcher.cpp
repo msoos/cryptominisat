@@ -1491,8 +1491,8 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     //No on-the-fly subsumption
     if (cl == NULL || cl->gauss_temp_cl()) {
         cl = cl_alloc.Clause_new(learnt_clause
-        #ifdef STATS_NEEDED
         , sumConflicts
+        #ifdef STATS_NEEDED
         , clauseID
         #endif
         );
@@ -3035,8 +3035,8 @@ void Searcher::read_long_cls(
         }
 
         Clause* cl = cl_alloc.Clause_new(tmp_cl
+        , cl_stats.last_touched
         #ifdef STATS_NEEDED
-        , cl_stats.introduced_at_conflict
         , cl_stats.ID
         #endif
         );
