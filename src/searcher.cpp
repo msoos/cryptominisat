@@ -1504,7 +1504,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             which_arr = 0;
         } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq){
             which_arr = 1;
-            cl->stats.last_touched = solver->sumConflicts;
         } else {
             which_arr = 2;
         }
