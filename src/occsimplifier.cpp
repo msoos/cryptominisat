@@ -1320,9 +1320,6 @@ void OccSimplifier::set_limits()
     strengthening_time_limit *= 2;
 
     varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
-    if (globalStats.numCalls > 0) {
-        varelim_num_limit = (double)varelim_num_limit * (globalStats.numCalls+0.5);
-    }
 
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
