@@ -1842,8 +1842,8 @@ void Searcher::reset_temp_cl_num()
 void Searcher::reduce_db_if_needed()
 {
     if (sumConflicts >= next_lev1_reduce) {
-        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
         solver->reduceDB->handle_lev1();
+        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }
 
     //if (longRedCls[1].size() > conf.cur_max_temp_red_cls) {
