@@ -61,6 +61,8 @@ both by executing `sudo make uninstall`.
 Compiling under Windows
 -----
 
+You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then:
+
 ```
 $ unzip cryptominisat-version.zip
 $ cd cryptominisat-version
