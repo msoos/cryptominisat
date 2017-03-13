@@ -42,8 +42,23 @@ build_script:
   - echo %CMAKE_GENERATOR%
   - echo %configuration%
 
+  # zlib
+  - echo %cd%
+  - git clone https://github.com/madler/zlib
+  - cd zlib
+  - git checkout v1.2.8
+  - echo %cd%
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" ../ -DCMAKE_INSTALL_PREFIX=../../../libs/zlib
+  - if %PLATFORM%==x86 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x86" zlib.sln
+  - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
+  - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
+
   - echo Running cmake...
-#  - cd c:\projects\cryptominisat
+  - echo %APPVEYOR_BUILD_FOLDER%
+  - cd c:\projects\cryptominisat
+  - git submodule update --init --recursive
   - mkdir build
   - cd build
   - cmake --version
