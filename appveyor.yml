@@ -49,13 +49,7 @@ build_script:
   - cd c:\projects\cryptominisat
   - mkdir boost_1_59_0_install
 
-  - ps: |
-    Add-Type -assembly “system.io.compression.filesystem”
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile("http://bit.ly/1JPHkL3", "C:\projects\cryptominisat\boost_1_59_0.zip")
-
-#[io.compression.zipfile]::ExtractToDirectory("C:\projects\cryptominisat\boost_1_59_0.zip", "C:\projects\cryptominisat\")
-
+  - ps: . .\scripts\appveyor.ps1
   - cd boost_1_59_0
   - "Building boost.."
   - bootstrap.bat
