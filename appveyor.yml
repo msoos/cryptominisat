@@ -4,6 +4,7 @@ branches:
   only:
     - master
     - appveyor_debug
+    - multilevel_maple
 
 # Operating system (build VM template)
 os: Visual Studio 2015
@@ -16,25 +17,49 @@ init:
 # clone directory
 clone_folder: c:\projects\cryptominisat
 
-platform: x64
-configuration: Release
+platform:
+  - x64
+#  - x86
 
-install:
-  # by default, all script lines are interpreted as batch
+environment:
+  global:
+    BOOST_ROOT: C:/Libraries/boost_1_59_0
+    BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
+    BUILD_TYPE: Release
+
+configuration:
+  - Release
+
+build_script:
+  - IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
+  - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
+
+  - IF "%PLATFORM%" == "x64" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib64-msvc-14.0)
+  - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
+
+  - echo %PLATFORM%
+  - echo %BOOST_LIBRARYDIR%
+  - echo %CMAKE_GENERATOR%
+  - echo %configuration%
+
+  - echo Running cmake...
+#  - cd c:\projects\cryptominisat
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
+  - cmake --build . --config Release
+
 
 build:
-  project: INSTALL.vcxproj      # path to Visual Studio solution or project
+  # project: INSTALL.vcxproj      # path to Visual Studio solution or project
+  parallel: true
+  verbosity: detailed
 
-# scripts to run before build
-before_build:
-  - echo Running cmake...
-  - cd c:\projects\cryptominisat
-  - cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON -DCMAKE_INSTALL_PREFIX=%P%
 
 # scripts to run after build
 after_build:
-  - cd %P%
-  - 7z a c:\projects\cryptominisat\cryptominisat.zip * -tzip
+  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER% -tzip
   - cd c:\projects\cryptominisat
 
 artifacts:
@@ -44,7 +69,3 @@ artifacts:
 deploy_script:
   #- cd c:\projects\cryptominisat
   #- curl -T cryptominisat.zip --user %ACCOUNT% https://someplace/
-
-on_finish:
-    # to connect over rdp after build finished
-    #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
