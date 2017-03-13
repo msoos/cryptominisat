@@ -51,10 +51,8 @@ build_script:
 
   - ps: |
     add-type -AssemblyName System.IO.Compression.FileSystem
-    Write-Host "Downloading boost.."
     $wc = New-Object System.Net.WebClient
     $wc.DownloadFile("http://bit.ly/1JPHkL3", "C:\projects\cryptominisat\boost_1_59_0.zip")
-    Write-Host "Extracting archive.."
     [io.compression.zipfile]::ExtractToDirectory("C:\projects\cryptominisat\boost_1_59_0.zip", "C:\projects\cryptominisat\")
 
   - cd boost_1_59_0
