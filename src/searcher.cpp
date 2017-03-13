@@ -1388,7 +1388,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     if (params.rest_type == Restart::glue
         && VSIDS
     ) {
-        hist.glueHistLT.push(std::min(glue, 50LU));
+        hist.glueHistLT.push(std::min<size_t>(glue, 50));
         hist.glueHist.push(glue);
     }
 }
