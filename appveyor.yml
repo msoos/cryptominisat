@@ -26,6 +26,7 @@ environment:
     BOOST_ROOT: C:/Libraries/boost_1_59_0
     BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
     BUILD_TYPE: Release
+    MSBUILD_FLAGS: /maxcpucount /nologo
 
 configuration:
   - Release
@@ -44,19 +45,20 @@ build_script:
 
   # zlib
   - echo %cd%
+  - echo %APPVEYOR_BUILD_FOLDER%
+  - cd c:\projects\cryptominisat
   - git clone https://github.com/madler/zlib
   - cd zlib
   - git checkout v1.2.8
   - echo %cd%
   - mkdir build
   - cd build
-  - cmake -G "%generator%" ../ -DCMAKE_INSTALL_PREFIX=../../../libs/zlib
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_INSTALL_PREFIX=. ..
   - if %PLATFORM%==x86 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x86" zlib.sln
   - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
 
   - echo Running cmake...
-  - echo %APPVEYOR_BUILD_FOLDER%
   - cd c:\projects\cryptominisat
   - git submodule update --init --recursive
   - mkdir build
