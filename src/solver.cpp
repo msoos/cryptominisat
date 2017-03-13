@@ -3015,7 +3015,7 @@ void Solver::reconfigure(int val)
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
-            //conf.max_temporary_learnt_clauses = 10000;
+            conf.max_temp_lev2_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             update_var_decay();
             break;
