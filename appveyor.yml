@@ -51,7 +51,7 @@ build_script:
 
   - ps: . .\scripts\appveyor.ps1
   - cd boost_1_59_0
-  - "Building boost.."
+  - echo "Building boost.."
   - bootstrap.bat
   - b2 address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static --with-program_options
   - b2 install --prefix="C:\projects\cryptominisat\boost_1_59_0_install"
