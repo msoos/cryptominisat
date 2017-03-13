@@ -216,7 +216,7 @@ class Searcher : public HyperEngine
         lbool burst_search();
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
-        void  update_history_stats(size_t backtrack_level, size_t glue);
+        void  update_history_stats(size_t backtrack_level, uint32_t glue);
         void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;

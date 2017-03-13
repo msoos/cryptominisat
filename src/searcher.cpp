@@ -1365,7 +1365,7 @@ void Searcher::add_otf_subsume_implicit_clause()
     otf_subsuming_short_cls.clear();
 }
 
-void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
+void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 {
     assert(decisionLevel() > 0);
 
