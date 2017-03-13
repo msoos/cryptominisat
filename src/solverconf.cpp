@@ -36,11 +36,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        //, max_temporary_learnt_clauses(30000)
-        //, inc_max_temp_red_cls(1.0)
         , every_lev1_reduce(10000)
         , every_lev2_reduce(15000)
         , must_touch_lev1_within(30000)
+
+        , max_temp_lev2_learnt_clauses(30000)
+        , inc_max_temp_lev2_red_cls(1.0)
+
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , clause_decay(0.999)
         , min_time_in_db_before_eligible_for_cleaning(5ULL*1000ULL)
@@ -58,6 +60,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
+        , maple(0)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)

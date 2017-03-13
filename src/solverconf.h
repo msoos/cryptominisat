@@ -146,12 +146,12 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Clause cleaning
-//         unsigned  max_temporary_learnt_clauses;
-//         unsigned  cur_max_temp_red_cls;
-//         double    inc_max_temp_red_cls;
         unsigned every_lev1_reduce;
         unsigned every_lev2_reduce;
         uint32_t must_touch_lev1_within;
+
+        unsigned  max_temp_lev2_learnt_clauses;
+        double    inc_max_temp_lev2_red_cls;
 
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
         double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
@@ -174,6 +174,8 @@ class DLL_PUBLIC SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        int      maple;
+
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;

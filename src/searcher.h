@@ -248,7 +248,7 @@ class Searcher : public HyperEngine
 
             bool needToStopSearch;
             uint64_t conflictsDoneThisRestart;
-            uint64_t conflictsToDo;
+            uint64_t max_confl_to_do;
             Restart rest_type = Restart::never;
         };
         SearchParams params;

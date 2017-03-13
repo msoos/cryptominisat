@@ -1249,7 +1249,11 @@ lbool Solver::solve()
     //Parameters for restarts
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
+    VSIDS = true;
     params.rest_type = conf.restartType;
+    if (params.rest_type == Restart::glue_geom) {
+        params.rest_type = Restart::geom;
+    }
 
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
@@ -2939,17 +2943,24 @@ void Solver::reconfigure(int val)
     switch (val) {
         case 3: {
             //Glue clause cleaning
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
+
             conf.adjust_glue_if_too_many_low = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            //conf.inc_max_temp_red_cls = 1.03;
+            conf.inc_max_temp_lev2_red_cls = 1.03;
 
             reset_temp_cl_num();
             break;
         }
 
         case 4: {
-            //conf.max_temporary_learnt_clauses = 10000;
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
+            conf.max_temp_lev2_learnt_clauses = 10000;
             reset_temp_cl_num();
             break;
         }
@@ -2965,7 +2976,11 @@ void Solver::reconfigure(int val)
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-            //conf.inc_max_temp_red_cls = 1.02;
+
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.02;
 
             reset_temp_cl_num();
             break;
@@ -2975,12 +2990,15 @@ void Solver::reconfigure(int val)
             //Mix of keeping clauses
             conf.do_bva = false;
             conf.varElimRatioPerIter = 1;
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
 
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 4;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
-            //conf.inc_max_temp_red_cls = 1.04;
+            conf.inc_max_temp_lev2_red_cls = 1.04;
 
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             update_var_decay();
@@ -3014,8 +3032,12 @@ void Solver::reconfigure(int val)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            //conf.inc_max_temp_red_cls = 1.02;
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.02;
+
             conf.update_glues_on_prop = 0;
             conf.update_glues_on_analyze = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;

@@ -75,7 +75,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
-    //conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 }
 
 Searcher::~Searcher()
@@ -1039,7 +1039,6 @@ lbool Searcher::search()
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
                 #endif
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
-                check_blocking_restart();
             }
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_sql(myTime);
@@ -1212,23 +1211,29 @@ void Searcher::check_need_restart()
         }
     }
 
-    if (params.rest_type == Restart::glue) {
+    assert(params.rest_type != Restart::glue_geom);
+
+    if (VSIDS
+        && params.rest_type == Restart::glue
+    ) {
+        check_blocking_restart();
         if (hist.glueHist.isvalid()
             && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
         ) {
             params.needToStopSearch = true;
         }
     }
-    if ((conf.restartType == Restart::glue_geom
-        || conf.restartType == Restart::geom
-        || conf.restartType == Restart::luby)
+    if (   (!VSIDS
+            || conf.restartType == Restart::glue_geom
+            || params.rest_type == Restart::geom
+            || params.rest_type == Restart::luby)
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;
     }
 
     //Conflict limit reached?
-    if (params.conflictsDoneThisRestart > params.conflictsToDo) {
+    if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
         if (conf.verbosity >= 3) {
             cout
             << "c Over limit of conflicts for this restart"
@@ -1687,7 +1692,7 @@ lbool Searcher::burst_search()
 
     //Do burst
     params.clear();
-    params.conflictsToDo = conf.burst_search_len;
+    params.max_confl_to_do = conf.burst_search_len;
     params.rest_type = Restart::never;
     lbool status = search<true>();
 
@@ -1836,22 +1841,30 @@ void Searcher::print_restart_stat()
 
 void Searcher::reset_temp_cl_num()
 {
-    //conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 }
 
 void Searcher::reduce_db_if_needed()
 {
-    if (sumConflicts >= next_lev1_reduce) {
+    if (conf.every_lev1_reduce != 0
+        && sumConflicts >= next_lev1_reduce
+    ) {
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }
 
-    //if (longRedCls[1].size() > conf.cur_max_temp_red_cls) {
-    if (sumConflicts >= next_lev2_reduce) {
-        solver->reduceDB->reduce_db_and_update_reset_stats();
-        cl_alloc.consolidate(solver);
-        //conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
-        next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
+    if (conf.every_lev2_reduce != 0) {
+        if (sumConflicts >= next_lev2_reduce) {
+            solver->reduceDB->reduce_db_and_update_reset_stats();
+            cl_alloc.consolidate(solver);
+            next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
+        }
+    } else {
+        if (longRedCls[1].size() > cur_max_temp_red_lev2_cls) {
+            solver->reduceDB->reduce_db_and_update_reset_stats();
+            cur_max_temp_red_lev2_cls *= conf.inc_max_temp_lev2_red_cls;
+            cl_alloc.consolidate(solver);
+        }
     }
 }
 
@@ -2039,6 +2052,7 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
+    VSIDS = true;
 
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
@@ -2055,59 +2069,68 @@ lbool Searcher::solve(
 
         lastRestartConfl = sumConflicts;
         params.clear();
-        params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
-        if (params.rest_type == Restart::glue_geom) {
-            params.rest_type = Restart::geom;
-        }
+        params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search<false>();
 
-        if (conf.restartType == Restart::geom
-            && max_confl_this_phase <= 0
+        if (VSIDS
+            && conf.maple
         ) {
-            max_confl_phase *= conf.restart_inc;
-            max_confl_this_phase = max_confl_phase;
-        }
-
-        if (conf.restartType == Restart::luby) {
-            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num) * (double)conf.restart_first/2.0;
-        }
-
-        if (conf.restartType == Restart::glue_geom
-            && max_confl_this_phase <= 0
-        ) {
-            if (params.rest_type == Restart::geom) {
-                params.rest_type = Restart::glue;
-            } else {
-                params.rest_type = Restart::geom;
-            }
-            switch (params.rest_type) {
-                case Restart::geom:
-                    max_confl_phase = (double)max_confl_phase * conf.restart_inc;
-                    max_confl_this_phase = max_confl_phase;
-                    break;
-
-                case Restart::glue:
-                    max_confl_this_phase = 2*max_confl_phase;
-                    break;
-
-                default:
-                    release_assert(false);
-            }
-            if (conf.verbosity >= 3) {
-                cout << "Phase is now " << std::setw(10) << getNameOfRestartType(params.rest_type)
-                << " this phase size: " << max_confl_this_phase
-                << " global phase size: " << max_confl_phase << endl;
-            }
-
-            //don't go into the geom phase in case we would stop it due to simplification
-            if (conf.abort_searcher_solve_on_geom_phase
-                && params.rest_type  == Restart::geom
-                && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
+            VSIDS = false;
+            max_confl_this_phase = 5000;
+            cout << "c doing NON-VSIDS" << endl;
+        } else {
+            VSIDS = false;
+            cout << "c doing VSIDS" << endl;
+            if (conf.restartType == Restart::geom
+                && max_confl_this_phase <= 0
             ) {
-                if (conf.verbosity) {
-                    cout << "c Returning from Searcher::solve() due to phase change and insufficient conflicts left" << endl;
+                max_confl_phase *= conf.restart_inc;
+                max_confl_this_phase = max_confl_phase;
+            }
+
+            if (conf.restartType == Restart::luby
+                && max_confl_this_phase <= 0
+            ) {
+                max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num) * (double)conf.restart_first/2.0;
+            }
+
+            if (conf.restartType == Restart::glue_geom
+                && max_confl_this_phase <= 0
+            ) {
+                if (params.rest_type == Restart::geom) {
+                    params.rest_type = Restart::glue;
+                } else {
+                    params.rest_type = Restart::geom;
                 }
-                goto end;
+                switch (params.rest_type) {
+                    case Restart::geom:
+                        max_confl_phase = (double)max_confl_phase * conf.restart_inc;
+                        max_confl_this_phase = max_confl_phase;
+                        break;
+
+                    case Restart::glue:
+                        max_confl_this_phase = 2*max_confl_phase;
+                        break;
+
+                    default:
+                        release_assert(false);
+                }
+                if (conf.verbosity >= 3) {
+                    cout << "Phase is now " << std::setw(10) << getNameOfRestartType(params.rest_type)
+                    << " this phase size: " << max_confl_this_phase
+                    << " global phase size: " << max_confl_phase << endl;
+                }
+
+                //don't go into the geom phase in case we would stop it due to simplification
+                if (conf.abort_searcher_solve_on_geom_phase
+                    && params.rest_type  == Restart::geom
+                    && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
+                ) {
+                    if (conf.verbosity) {
+                        cout << "c Returning from Searcher::solve() due to phase change and insufficient conflicts left" << endl;
+                    }
+                    goto end;
+                }
             }
         }
 
@@ -2262,25 +2285,23 @@ Lit Searcher::pickBranchLit()
     Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_weird;
     if (next == lit_Undef) {
         uint32_t v = var_Undef;
-        while (v == var_Undef
-          || value(v) != l_Undef
-        ) {
+        while (v == var_Undef || value(v) != l_Undef) {
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap.empty()) {
                 return lit_Undef;
             } else {
                 if (VSIDS) {
-                    v = order_heap_vsids.removeMin();
+                    v = order_heap.removeMin();
                 } else {
-                    uint32_t v = order_heap_weird[0];
+                    uint32_t v = order_heap[0];
                     uint32_t age = sumConflicts - varData[v].cancelled;
                     while (age > 0) {
                         double decay = pow(0.95, age);
                         activ_weird[v] *= decay;
-                        if (order_heap_weird.inHeap(v))
-                            order_heap_weird.increase(v);
+                        if (order_heap.inHeap(v))
+                            order_heap.increase(v);
                         varData[v].cancelled = sumConflicts;
-                        v = order_heap_weird[0];
+                        v = order_heap[0];
                         age = sumConflicts - varData[v].cancelled;
                     }
                 }

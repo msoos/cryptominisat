@@ -91,13 +91,14 @@ public:
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<VarData> varData;
-    bool VSIDS = true; //TODO: change to false
+    bool VSIDS = true;
     vector<uint32_t> depth;
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
     Drat* drat;
     uint32_t sumConflicts = 0;
+    unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 
     //Clauses
     vector<ClOffset> longIrredCls;

@@ -150,7 +150,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            //conf.inc_max_temp_red_cls = 1.02;
+            conf.inc_max_temp_lev2_red_cls = 1.02;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
@@ -161,7 +161,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.glue_put_lev0_if_below_or_eq = 0;
-            //conf.inc_max_temp_red_cls = 1.03;
+            conf.inc_max_temp_lev2_red_cls = 1.03;
             break;
         }
         case 3: {
@@ -181,7 +181,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.do_bva = false;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
-            //conf.inc_max_temp_red_cls = 1.04
+            conf.inc_max_temp_lev2_red_cls = 1.04;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
@@ -237,13 +237,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
 
-            //conf.inc_max_temp_red_cls = 1.01;
+            conf.inc_max_temp_lev2_red_cls = 1.01;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             break;
         }
         case 15: {
-            //conf.inc_max_temp_red_cls = 1.001;
+            conf.inc_max_temp_lev2_red_cls = 1.001;
             break;
         }
 
