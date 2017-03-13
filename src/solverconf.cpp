@@ -116,7 +116,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
         , var_elim_strategy  (ElimStrategy::heuristic)
         , varElimCostEstimateStrategy(2)
-        , varElimRatioPerIter(0.90)
+        , varElimRatioPerIter(0.60)
         , skip_some_bve_resolvents(true)
         , velim_resolvent_too_large(20)
 
