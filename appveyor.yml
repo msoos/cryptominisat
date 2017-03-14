@@ -84,7 +84,7 @@ build_script:
 build:
   # project: INSTALL.vcxproj      # path to Visual Studio solution or project
   parallel: true
-  verbosity: detailed
+  verbosity: minimal
 
 
 # scripts to run after build
