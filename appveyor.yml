@@ -54,8 +54,7 @@ build_script:
   - echo "Building boost.."
   - bootstrap.bat --with-libraries=program_options
   - cat project-config.jam
-  - b2 address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static
-  - b2 install --prefix="C:\projects\cryptominisat\boost_1_59_0_install"
+  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static install --prefix="C:\projects\cryptominisat\boost_1_59_0_install"
 
   # zlib
   - echo %APPVEYOR_BUILD_FOLDER%
