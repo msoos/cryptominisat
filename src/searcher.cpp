@@ -2087,6 +2087,10 @@ lbool Searcher::solve(
 
 void Searcher::adjust_phases_restarts()
 {
+    //Haven't finished the phase. Keep rolling.
+    if (max_confl_this_phase > 0)
+        return;
+
     if (VSIDS && conf.maple) {
         //VSIDS = false;
         max_confl_this_phase = 5000;
@@ -2098,10 +2102,6 @@ void Searcher::adjust_phases_restarts()
         if (conf.verbosity) {
             cout << "c doing VSIDS" << endl;
         }
-
-        if (max_confl_this_phase == 0)
-            return;
-
         switch(conf.restartType) {
         case Restart::never:
         case Restart::glue:
