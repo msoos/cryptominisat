@@ -2072,67 +2072,7 @@ lbool Searcher::solve(
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search<false>();
 
-        if (VSIDS
-            && conf.maple
-        ) {
-            VSIDS = false;
-            max_confl_this_phase = 5000;
-            cout << "c doing NON-VSIDS" << endl;
-        } else {
-            VSIDS = false;
-            cout << "c doing VSIDS" << endl;
-            if (conf.restartType == Restart::geom
-                && max_confl_this_phase <= 0
-            ) {
-                max_confl_phase *= conf.restart_inc;
-                max_confl_this_phase = max_confl_phase;
-            }
-
-            if (conf.restartType == Restart::luby
-                && max_confl_this_phase <= 0
-            ) {
-                max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num) * (double)conf.restart_first/2.0;
-            }
-
-            if (conf.restartType == Restart::glue_geom
-                && max_confl_this_phase <= 0
-            ) {
-                if (params.rest_type == Restart::geom) {
-                    params.rest_type = Restart::glue;
-                } else {
-                    params.rest_type = Restart::geom;
-                }
-                switch (params.rest_type) {
-                    case Restart::geom:
-                        max_confl_phase = (double)max_confl_phase * conf.restart_inc;
-                        max_confl_this_phase = max_confl_phase;
-                        break;
-
-                    case Restart::glue:
-                        max_confl_this_phase = 2*max_confl_phase;
-                        break;
-
-                    default:
-                        release_assert(false);
-                }
-                if (conf.verbosity >= 3) {
-                    cout << "Phase is now " << std::setw(10) << getNameOfRestartType(params.rest_type)
-                    << " this phase size: " << max_confl_this_phase
-                    << " global phase size: " << max_confl_phase << endl;
-                }
-
-                //don't go into the geom phase in case we would stop it due to simplification
-                if (conf.abort_searcher_solve_on_geom_phase
-                    && params.rest_type  == Restart::geom
-                    && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
-                ) {
-                    if (conf.verbosity) {
-                        cout << "c Returning from Searcher::solve() due to phase change and insufficient conflicts left" << endl;
-                    }
-                    goto end;
-                }
-            }
-        }
+        adjust_phases_restarts();
 
         if (must_abort(status)) {
             goto end;
@@ -2143,6 +2083,68 @@ lbool Searcher::solve(
     finish_up_solve(status);
 
     return status;
+}
+
+void Searcher::adjust_phases_restarts()
+{
+    if (VSIDS && conf.maple) {
+        //VSIDS = false;
+        max_confl_this_phase = 5000;
+        if (conf.verbosity) {
+            cout << "c doing NON-VSIDS" << endl;
+        }
+    } else {
+        //VSIDS = true;
+        if (conf.verbosity) {
+            cout << "c doing VSIDS" << endl;
+        }
+
+        if (max_confl_this_phase == 0)
+            return;
+
+        switch(conf.restartType) {
+        case Restart::never:
+        case Restart::glue:
+            //nothing special
+            break;
+        case Restart::geom:
+            max_confl_phase *= conf.restart_inc;
+            max_confl_this_phase = max_confl_phase;
+            break;
+
+        case Restart::luby:
+            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num)
+                                    * (double)conf.restart_first/2.0;
+            break;
+
+        case Restart::glue_geom:
+            if (params.rest_type == Restart::geom) {
+                params.rest_type = Restart::glue;
+            } else {
+                params.rest_type = Restart::geom;
+            }
+            switch (params.rest_type) {
+                case Restart::geom:
+                    max_confl_phase = (double)max_confl_phase * conf.restart_inc;
+                    max_confl_this_phase = max_confl_phase;
+                    break;
+
+                case Restart::glue:
+                    max_confl_this_phase = 2*max_confl_phase;
+                    break;
+
+                default:
+                    release_assert(false);
+            }
+            if (conf.verbosity >= 2) {
+                cout << "Phase is now "
+                << std::setw(10) << getNameOfRestartType(params.rest_type)
+                << " this phase size: " << max_confl_this_phase
+                << " global phase size: " << max_confl_phase << endl;
+            }
+            break;
+        }
+    }
 }
 
 void Searcher::print_solution_varreplace_status() const

@@ -339,6 +339,7 @@ class Searcher : public HyperEngine
         uint32_t num_search_called = 0;
         uint64_t lastRestartConfl;
         double luby(double y, int x);
+        void adjust_phases_restarts();
 
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
