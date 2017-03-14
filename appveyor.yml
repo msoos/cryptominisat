@@ -25,7 +25,7 @@ environment:
   global:
     #BOOST_ROOT: C:/Libraries/boost_1_59_0
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
-    BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
+    #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
     ZLIB_ROOT: C:/projects/cryptominisat/zlib/build/
     BUILD_TYPE: Release
     MSBUILD_FLAGS: /maxcpucount /nologo
@@ -34,10 +34,10 @@ configuration:
   - Release
 
 build_script:
-  - IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
+  #- IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
   - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
 
-  - IF "%PLATFORM%" == "x64" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib64-msvc-14.0)
+  #- IF "%PLATFORM%" == "x64" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib64-msvc-14.0)
   - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
 
   - echo %PLATFORM%
@@ -53,6 +53,7 @@ build_script:
   - cd boost_1_59_0
   - echo "Building boost.."
   - bootstrap.bat --with-libraries=program_options
+  - cat project-config.jam
   - b2 address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static
   - b2 install --prefix="C:\projects\cryptominisat\boost_1_59_0_install"
 
