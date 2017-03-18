@@ -110,7 +110,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     }
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
     DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
