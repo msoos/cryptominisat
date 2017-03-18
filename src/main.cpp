@@ -150,7 +150,7 @@ void Main::readInStandardInput(SATSolver* solver2)
     #ifndef USE_ZLIB
     FILE * in = stdin;
     #else
-    gzFile in = gzdopen(fileno(stdin), "rb");
+    gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
     #endif
 
     if (in == NULL) {

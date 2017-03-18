@@ -217,7 +217,7 @@ int main(int argc, char** argv)
         FILE* in = stdin;
         DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
         #else
-        gzFile in = gzdopen(fileno(stdin), "rb");
+        gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
         DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
