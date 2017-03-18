@@ -29,7 +29,6 @@ THE SOFTWARE.
 
 namespace CMSat
 {
-using namespace CMSat;
 
 struct VarData
 {

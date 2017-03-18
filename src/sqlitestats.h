@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include <sqlite3.h>
 
-using namespace CMSat;
+namespace CMSat {
 
 
 class SQLiteStats: public SQLStats
@@ -112,3 +112,5 @@ private:
     bool setup_ok = false;
     const string filename;
 };
+
+}

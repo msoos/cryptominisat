@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 
 namespace CMSat {
-using namespace CMSat;
 
 //////////////////
 // NORMAL Clause

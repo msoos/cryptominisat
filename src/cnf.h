@@ -40,7 +40,6 @@ THE SOFTWARE.
 #include "xor.h"
 
 namespace CMSat {
-using namespace CMSat;
 
 class ClauseAllocator;
 

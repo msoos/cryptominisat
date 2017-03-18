@@ -33,7 +33,6 @@ using std::vector;
 using std::set;
 
 namespace CMSat {
-using namespace CMSat;
 
 class HyperEngine : public PropEngine {
 public:

@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <iostream>
 
 namespace CMSat {
-using namespace CMSat;
 
 enum DratFlag{fin, deldelay, del, findelay};
 

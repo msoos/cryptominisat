@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <vector>
 
 namespace CMSat {
-using namespace CMSat;
 using std::vector;
 
 struct watch_array;
