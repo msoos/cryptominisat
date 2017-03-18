@@ -53,7 +53,7 @@ THE SOFTWARE.
 #include "signalcode.h"
 
 #ifdef USE_ZLIB
-static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
+static inline size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
 {
     return gzread(f, buf, num*count);
 }
