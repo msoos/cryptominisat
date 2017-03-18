@@ -116,7 +116,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , var_elim_strategy  (ElimStrategy::heuristic)
         , varElimCostEstimateStrategy(2)
         , varElimRatioPerIter(0.60)
-        , skip_some_bve_resolvents(true)
+        , skip_some_bve_resolvents(true) //based on gates
         , velim_resolvent_too_large(20)
 
         //Subs, str limits for simplifier
