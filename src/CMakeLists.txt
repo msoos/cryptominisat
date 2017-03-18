@@ -121,12 +121,22 @@ add_dependencies(libcryptominisat5
 target_link_libraries(libcryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
 )
-set_target_properties(libcryptominisat5 PROPERTIES
-    OUTPUT_NAME cryptominisat5
-    PUBLIC_HEADER "${cryptominisat5_public_headers}"
-    VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-)
+
+if (NOT WIN32)
+    set_target_properties(libcryptominisat5 PROPERTIES
+        OUTPUT_NAME cryptominisat5
+        PUBLIC_HEADER "${cryptominisat5_public_headers}"
+        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    )
+else()
+    set_target_properties(libcryptominisat5 PROPERTIES
+        OUTPUT_NAME cryptominisat5win
+        PUBLIC_HEADER "${cryptominisat5_public_headers}"
+        VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+        SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    )
+endif()
 
 if (IPASIR)
     if (NOT STATICCOMPILE)

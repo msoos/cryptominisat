@@ -26,7 +26,7 @@ environment:
     #BOOST_ROOT: C:/Libraries/boost_1_59_0
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
     #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
-    ZLIB_ROOT: C:/projects/cryptominisat/zlib/build/
+    ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
     BUILD_TYPE: Release
     MSBUILD_FLAGS: /maxcpucount /nologo
 
@@ -57,15 +57,17 @@ build_script:
   - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static install --prefix="C:\projects\cryptominisat\boost_1_59_0_install" > boost_install.out
 
   # zlib
+  # TODO check out http://stackoverflow.com/questions/10507893/libzip-with-visual-studio-2010
   - echo %APPVEYOR_BUILD_FOLDER%
-  - cd c:\projects\cryptominisat
+  - cd C:\projects\cryptominisat
   - git clone https://github.com/madler/zlib
   - cd zlib
   - git checkout v1.2.8
   - echo %cd%
   - mkdir build
+  - mkdir myinstall
   - cd build
-  - cmake -G %CMAKE_GENERATOR% -DCMAKE_INSTALL_PREFIX=. ..
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_INSTALL_PREFIX=%ZLIB_ROOT% ..
   - if %PLATFORM%==x86 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x86" zlib.sln
   - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
