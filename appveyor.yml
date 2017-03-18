@@ -101,3 +101,5 @@ artifacts:
 deploy_script:
   #- cd c:\projects\cryptominisat
   #- curl -T cryptominisat.zip --user %ACCOUNT% https://someplace/
+
+test: off
