@@ -32,7 +32,7 @@ static const unsigned chunk_limit = 148576;
 #ifdef USE_ZLIB
 #include <zlib.h>
 struct GZ {
-    static int read(void* buf, size_t num, size_t count, gzFile f)
+    static inline int read(void* buf, size_t num, size_t count, gzFile f)
     {
         return gzread(f, buf, num*count);
     }
@@ -40,7 +40,7 @@ struct GZ {
 #endif
 
 struct FN {
-    static int read(void* buf, size_t num, size_t count, FILE* f)
+    static inline int read(void* buf, size_t num, size_t count, FILE* f)
     {
         return fread(buf, num, count, f);
     }
