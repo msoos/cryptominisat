@@ -189,8 +189,8 @@ else()
     add_compile_options(/GS)
 
     # warnings
-    add_compile_options(/W3)
-    add_compile_options(/Wall)
+    add_compile_options(/W1)
+    # add_compile_options(/Wall)
 
     # /Za = only ansi C98 & C++11
     add_compile_options(/Za)
