@@ -64,10 +64,34 @@ Compiling under Windows
 You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then:
 
 ```
-$ unzip cryptominisat-version.zip
-$ cd cryptominisat-version
-$ cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON
-$ msbuild INSTALL.vcxproj
+C:\> [ download cryptominisat-version.zip ]
+C:\> unzip cryptominisat-version.zip
+C:\> rename cryptominisat-version cms
+C:\> cd cms
+C:\cms> mkdir build
+C:\cms> cd build
+
+C:\cms\build> [ download http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.zip ]
+C:\cms\build> unzip boost_1_59_0.zip
+C:\cms\build> mkdir boost_1_59_0_install
+C:\cms\build> cd boost_1_59_0
+C:\cms\build\boost_1_59_0> bootstrap.bat --with-libraries=program_options
+C:\cms\build\boost_1_59_0> b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static install --prefix="C:\cms\build\boost_1_59_0_install" > boost_install.out
+C:\cms\build\boost_1_59_0> cd ..
+
+C:\cms\build> git clone https://github.com/madler/zlib
+C:\cms\build> cd zlib
+C:\cms\build\zlib> git checkout v1.2.8
+C:\cms\build\zlib> mkdir build
+C:\cms\build\zlib> mkdir myinstall
+C:\cms\build\zlib> cd build
+C:\cms\build\zlib\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\cms\build\zlib\myinstall ..
+C:\cms\build\zlib\build> msbuild /t:Build /p:Configuration=Release /p:Platform="x64" zlib.sln
+C:\cms\build\zlib\build> msbuild INSTALL.vcxproj
+C:\cms\build> cd ..\..
+
+C:\cms\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON -DZLIB_ROOT=C:\cms\build\zlib\myinstall -DBOOST_ROOT=C:\cms\build\boost_1_59_0_install ..
+C:\cms\build> cmake --build --config Release .
 ```
 
 The `cryptominisat5_simple` binary should now be built. In case you have boost libraries installed, it may also detect it, and you may get the full `cryptominisat5` binary built too. The two binaries only differ in the number of options supported.
