@@ -163,17 +163,29 @@ if (NOT WIN32)
     if (USE_PTHREADS)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     endif()
-else()
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O3")
-    SET(CMAKE_CXX_FLAGS_RELEASE "/O3 -DNDEBUG")
-    SET(CMAKE_CXX_FLAGS_DEBUG "/Od")
-endif()
-
-if (NOT WIN32)
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
     SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
     SET(CMAKE_CXX_FLAGS_DEBUG "-O0")
+else()
+    # /ZI = include debug info
+    # /W3 = warning level 3
+    # /Wall = all warnings
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/O3 /ZI")
+    SET(CMAKE_CXX_FLAGS_RELEASE "/O3 /D NDEBUG /ZI")
+    SET(CMAKE_CXX_FLAGS_DEBUG "/Od")
 endif()
+
+if(MSVC)
+    # We statically link to reduce dependencies
+    foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        if(${flag_var} MATCHES "/MD")
+            string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+        endif(${flag_var} MATCHES "/MD")
+        if(${flag_var} MATCHES "/MDd")
+            string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+        endif(${flag_var} MATCHES "/MDd")
+    endforeach(flag_var)
+endif(MSVC)
 
 include(CheckCXXCompilerFlag)
 macro(add_cxx_flag_if_supported flagname)
@@ -252,15 +264,24 @@ endif()
 
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
-#     add_compile_options($<$<CONFIG:Debug>:-DDEBUG>)
-#     add_compile_options($<$<CONFIG:Debug>:/Od>)
-#     add_compile_options($<$<CONFIG:Debug>:/Gm>)
-    add_compile_options(/DEBUG)
+    # see https://msdn.microsoft.com/en-us/library/fwkeyyhe.aspx for details
+
+    # buffers security check
     add_compile_options(/GS)
-    add_compile_options(/W1)
-    add_compile_options(/Zc:inline)
+
+    # warnings
+    add_compile_options(/W3)
+    add_compile_options(/Wall)
+
+    # /Za = only ansi C98 & C++11
+    add_compile_options(/Za)
     add_compile_options(/fp:precise)
+
+    # exception handling. s = The exception-handling model that catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" may throw an exception.
+    # exception handling. c = If used with s (/EHsc), catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" never throw a C++ exception.
     add_compile_options(/EHsc)
+
+    # Creates a multithreaded executable file using LIBCMT.lib.
     add_compile_options(/MT)
 
     # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ")
