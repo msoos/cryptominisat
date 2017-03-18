@@ -78,7 +78,7 @@ build_script:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON ..
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON -DZLIB_ROOT=%ZLIB_ROOT% ..
   - cmake --build . --config Release
 
 
