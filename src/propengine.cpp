@@ -51,9 +51,9 @@ PropEngine::PropEngine(
     const SolverConf* _conf, std::atomic<bool>* _must_interrupt_inter
 ) :
         CNF(_conf, _must_interrupt_inter)
+        , qhead(0)
         , order_heap_vsids(VarOrderLt(var_act_vsids))
         , order_heap_weird(VarOrderLt(activ_weird))
-        , qhead(0)
 {
 }
 
