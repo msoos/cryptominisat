@@ -232,7 +232,7 @@ class DLL_PUBLIC SolverConf
         long long varelim_time_limitM;
         int      updateVarElimComplexityOTF;
         unsigned updateVarElimComplexityOTF_limitvars;
-        int      updateVarElimComplexityOTF_limitavg;
+        unsigned updateVarElimComplexityOTF_limitavg;
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
