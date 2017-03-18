@@ -58,6 +58,7 @@ build_script:
 
   # zlib
   # TODO check out http://stackoverflow.com/questions/10507893/libzip-with-visual-studio-2010
+  # below is C:\projects\cryptominisat
   - echo %APPVEYOR_BUILD_FOLDER%
   - cd C:\projects\cryptominisat
   - git clone https://github.com/madler/zlib
