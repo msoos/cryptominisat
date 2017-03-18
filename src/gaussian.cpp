@@ -766,8 +766,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         //NOTE: No need to put this clause into some special struct
         //it will be immediately freed after calling solver->handle_conflict()
         Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause
+        , solver->sumConflicts
         #ifdef STATS_NEEDED
-        , 0
         , 1
         #endif
         );
@@ -978,8 +978,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 return unit_propagation;
             }
             Clause* x = solver->cl_alloc.Clause_new(tmp_clause
+            , solver->sumConflicts
             #ifdef STATS_NEEDED
-            , 0
             , 1
             #endif
             );
