@@ -7,7 +7,7 @@ branches:
     - multilevel_maple
 
 # Operating system (build VM template)
-os: Visual Studio 2015
+image: Visual Studio 2017
 
 # scripts that are called at very beginning, before repo cloning
 init:
