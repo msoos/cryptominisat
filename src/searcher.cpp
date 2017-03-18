@@ -2094,12 +2094,12 @@ void Searcher::adjust_phases_restarts()
     if (VSIDS && conf.maple) {
         //VSIDS = false;
         max_confl_this_phase = 5000;
-        if (conf.verbosity) {
+        if (conf.verbosity >= 3) {
             cout << "c doing NON-VSIDS" << endl;
         }
     } else {
         //VSIDS = true;
-        if (conf.verbosity) {
+        if (conf.verbosity >= 3) {
             cout << "c doing VSIDS" << endl;
         }
         switch(conf.restartType) {
@@ -2136,7 +2136,7 @@ void Searcher::adjust_phases_restarts()
                 default:
                     release_assert(false);
             }
-            if (conf.verbosity >= 2) {
+            if (conf.verbosity >= 3) {
                 cout << "Phase is now "
                 << std::setw(10) << getNameOfRestartType(params.rest_type)
                 << " this phase size: " << max_confl_this_phase
