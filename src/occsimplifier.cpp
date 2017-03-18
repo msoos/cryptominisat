@@ -764,7 +764,7 @@ bool OccSimplifier::eliminate_vars()
 
         for(uint32_t l: impl_sub_lits.getTouchedList()) {
             Lit lit = Lit::toLit(l);
-            if (!sub_str->backw_sub_str_with_bin_tris_watch(lit, true)) {
+            if (!sub_str->backw_sub_str_with_bins_watch(lit, true)) {
                 goto end;
             }
             if (*limit_to_decrease <= 0)
@@ -1007,7 +1007,7 @@ bool OccSimplifier::backward_sub_str()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-    if (!sub_str->backward_sub_str_with_bins_tris()) {
+    if (!sub_str->backward_sub_str_with_bins()) {
         goto end;
     }
     if (solver->must_interrupt_asap())
@@ -1026,8 +1026,6 @@ bool OccSimplifier::backward_sub_str()
     if (!sub_str->handle_sub_str_with()) {
         goto end;
     }
-
-    //TODO subsume tri with bin+tri, bin with bin.
 
     end:
     free_clauses_to_free();

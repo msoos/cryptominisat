@@ -856,7 +856,7 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::sub_str_with_implicit(
     return ret;
 }
 
-bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
+bool SubsumeStrengthen::backw_sub_str_with_bins_watch(
     const Lit lit
     , const bool redundant_too
 ) {
@@ -907,7 +907,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bin_tris_watch(
     return true;
 }
 
-bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
+bool SubsumeStrengthen::backward_sub_str_with_bins()
 {
     size_t strSucceed = 0;
 
@@ -933,7 +933,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins_tris()
 
     ) {
         Lit lit = Lit::toLit(upI);
-        if (!backw_sub_str_with_bin_tris_watch(lit)) {
+        if (!backw_sub_str_with_bins_watch(lit)) {
             break;
         }
     }

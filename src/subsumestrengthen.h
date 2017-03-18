@@ -44,11 +44,11 @@ public:
 
     void backward_subsumption_long_with_long();
     bool backward_strengthen_long_with_long();
-    bool backward_sub_str_with_bins_tris();
+    bool backward_sub_str_with_bins();
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
-    bool backw_sub_str_with_bin_tris_watch(
+    bool backw_sub_str_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
     );
