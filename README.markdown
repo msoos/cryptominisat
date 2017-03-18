@@ -61,7 +61,7 @@ both by executing `sudo make uninstall`.
 Compiling under Windows
 -----
 
-You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then:
+You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then you need to perform the following for Visual Studio 2015:
 
 ```
 C:\> [ download cryptominisat-version.zip ]
@@ -94,7 +94,7 @@ C:\cms\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release 
 C:\cms\build> cmake --build --config Release .
 ```
 
-The `cryptominisat5_simple` binary should now be built. In case you have boost libraries installed, it may also detect it, and you may get the full `cryptominisat5` binary built too. The two binaries only differ in the number of options supported.
+This should build the static Windows binary under `C:\cms\build\Release\cryptominisat5.exe`.
 
 Command-line usage
 -----
