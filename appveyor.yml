@@ -91,7 +91,7 @@ build:
 
 # scripts to run after build
 after_build:
-  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER% -tzip
+  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
   - cd c:\projects\cryptominisat
 
 artifacts:
