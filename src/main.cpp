@@ -52,11 +52,6 @@ THE SOFTWARE.
 #include "cryptominisat5/cryptominisat.h"
 #include "signalcode.h"
 
-#ifdef USE_ZLIB
-extern int gz_read(void* buf, size_t num, size_t count, gzFile f);
-#endif
-
-
 #include <boost/lexical_cast.hpp>
 using namespace CMSat;
 using boost::lexical_cast;
@@ -118,7 +113,7 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -164,9 +159,9 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
     #else
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (!parser.parse_DIMACS(in)) {

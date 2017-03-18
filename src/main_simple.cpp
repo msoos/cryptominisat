@@ -43,7 +43,10 @@ using namespace CMSat;
 std::ostream* dratf;
 
 #ifdef USE_ZLIB
-extern int gz_read(void* buf, size_t num, size_t count, gzFile f);
+static int gz_read(void* buf, size_t num, size_t count, gzFile f)
+{
+    return gzread(f, buf, num*count);
+}
 #endif
 
 SATSolver* solver;
@@ -215,7 +218,7 @@ int main(int argc, char** argv)
         DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
         #else
         gzFile in = gzdopen(fileno(stdin), "rb");
-        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in)) {
@@ -246,9 +249,9 @@ int main(int argc, char** argv)
         }
 
         #ifndef USE_ZLIB
-        DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, "", conf.verbosity);
         #else
-        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in)) {

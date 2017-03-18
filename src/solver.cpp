@@ -3111,7 +3111,7 @@ lbool Solver::load_solution_from_file(const string& fname)
         << endl;
         std::exit(-1);
     }
-    StreamBuffer<FILE*, fread_op_norm, fread> in(input_stream);
+    StreamBuffer<FILE*, FN> in(input_stream);
 
     unsigned lineNum = 0;
     std::string str;
