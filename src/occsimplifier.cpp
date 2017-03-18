@@ -133,8 +133,6 @@ void OccSimplifier::save_on_var_memory()
 
     touched.shrink_to_fit();
     resolvents.shrink_to_fit();
-    poss_gate_parts.shrink_to_fit();
-    negs_gate_parts.shrink_to_fit();
     blockedClauses.shrink_to_fit();;
 }
 
@@ -1473,35 +1471,33 @@ void OccSimplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
     blockedClauses.push_back(BlockedClause(lit_outer, lits_outer));
 }
 
-bool OccSimplifier::find_gate(
+void OccSimplifier::find_gate(
     Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
 ) {
-    bool found_better = false;
     assert(toClear.empty());
     for(const Watched w: a) {
-        if (w.isBin()
-            && !w.red()
-        ) {
+        if (w.isBin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
             toClear.push_back(~w.lit2());
         }
     }
 
+    //Have to find the corresponding gate. Finding one is good enough
     for(const Watched w: b) {
         if (w.isBin()) {
             continue;
         }
 
         if (w.isClause()) {
-            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
             if (cl->getRemoved()) {
                 continue;
             }
 
             assert(cl->size() > 2);
-            if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
+            if (!cl->red()) {
                 bool OK = true;
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
@@ -1514,13 +1510,9 @@ bool OccSimplifier::find_gate(
 
                 //Found all lits inside
                 if (OK) {
-                    gate_lits_of_elim_cls.clear();
-                    for(const Lit lit: *cl) {
-                        if (lit != ~elim_lit) {
-                            gate_lits_of_elim_cls.push_back(lit);
-                        }
-                    }
-                    found_better = true;
+                    cl->stats.marked_clause = true;
+                    gate_varelim_clause = cl;
+                    break;
                 }
             }
         }
@@ -1530,8 +1522,6 @@ bool OccSimplifier::find_gate(
         seen[l.toInt()] = 0;
     }
     toClear.clear();
-
-    return found_better;
 }
 
 void OccSimplifier::mark_gate_in_poss_negs(
@@ -1539,125 +1529,22 @@ void OccSimplifier::mark_gate_in_poss_negs(
     , watch_subarray_const poss
     , watch_subarray_const negs
 ) {
-    gate_lits_of_elim_cls.clear();
-
-    //Either of the two is OK
+    //Either of the two is OK. Let's just find ONE, not the biggest one.
+    //We could find the biggest one, but it's expensive.
+    bool found_pos = false;
+    gate_varelim_clause = NULL;
     find_gate(elim_lit, poss, negs);
-    bool gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+    if (gate_varelim_clause == NULL) {
+        find_gate(~elim_lit, negs, poss);
+        found_pos = true;
+    }
 
-    if (!gate_lits_of_elim_cls.empty()
-        && solver->conf.verbosity >= 10
-    ) {
+    if (gate_varelim_clause != NULL && solver->conf.verbosity >= 10) {
         cout
         << "Lit: " << elim_lit
-        << " gate_lits_of_elim_cls.size():" << gate_lits_of_elim_cls << endl
-        << " gate_found_elim_pos:" << gate_found_elim_pos
+        << " gate_found_elim_pos:" << found_pos
         << endl;
     }
-    if (!gate_lits_of_elim_cls.empty()) {
-        gate_found_elim = true;
-        if (!gate_found_elim_pos) {
-            mark_gate_parts(elim_lit, poss, negs, poss_gate_parts, negs_gate_parts);
-        } else {
-            mark_gate_parts(~elim_lit, negs, poss, negs_gate_parts, poss_gate_parts);
-        }
-    }
-}
-
-void OccSimplifier::mark_gate_parts(
-    Lit elim_lit
-    , watch_subarray_const a
-    , watch_subarray_const b
-    , vector<char>& a_mark
-    , vector<char>& b_mark
-) {
-    a_mark.clear();
-    a_mark.resize(a.size(), 0);
-    b_mark.clear();
-    b_mark.resize(b.size(), 0);
-
-    for(Lit lit: gate_lits_of_elim_cls) {
-        seen[lit.toInt()] = 1;
-    }
-
-    size_t num_found = 0;
-    size_t at = 0;
-    for(Watched w: a) {
-        if (w.isBin()
-            && !w.red()
-            && seen[(~w.lit2()).toInt()]
-        ) {
-            num_found++;
-            a_mark[at] = 1;
-        }
-        at++;
-    }
-    assert(num_found >= gate_lits_of_elim_cls.size()
-        && "We have to find all, but there could be multiple that are the same"
-        //NOTE: this is not a precise check but it's better than nothing
-    );
-
-    assert(false);
-    /*
-     * TODO move to LONG after move to TRI removal
-     *
-     *
-    at = 0;
-    num_found = 0;
-    for(Watched w: b) {
-        if (gate_lits_of_elim_cls.size() == 2
-            && w.isTri()
-            && !w.red()
-            && seen[w.lit2().toInt()]
-            && seen[w.lit3().toInt()]
-        ) {
-            b_mark[at] = 1;
-            num_found++;
-        }
-
-        if (gate_lits_of_elim_cls.size() >= 3
-            && w.isClause()
-        ) {
-            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->getRemoved()) {
-                continue;
-            }
-
-            if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
-                bool found_it = true;
-                for(const Lit lit: *cl) {
-                    if (lit != ~elim_lit) {
-                        if (!seen[lit.toInt()]) {
-                            found_it = false;
-                            break;
-                        }
-                    }
-                }
-                if (found_it) {
-                    b_mark[at] = 1;
-                    num_found++;
-                }
-            }
-        }
-        at++;
-    }*/
-    assert(num_found >= 1
-        && "We have to find the matching gate clause. But there could be multiple matching"
-    );
-
-    for(Lit lit: gate_lits_of_elim_cls) {
-        seen[lit.toInt()] = 0;
-    }
-}
-
-bool OccSimplifier::skip_resolution_thanks_to_gate(
-    const size_t at_poss
-    , const size_t at_negs
-) const {
-    if (!gate_found_elim)
-        return false;
-
-    return poss_gate_parts[at_poss] == negs_gate_parts[at_negs];
 }
 
 int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
@@ -1700,9 +1587,9 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         return std::numeric_limits<int>::max();
     }
 
-    gate_found_elim = false;
+    gate_varelim_clause = NULL;
     if (solver->conf.skip_some_bve_resolvents) {
-        //mark_gate_in_poss_negs(lit, poss, negs);
+        mark_gate_in_poss_negs(lit, poss, negs);
     }
 
     // Count clauses/literals after elimination
@@ -1730,16 +1617,6 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             if (solver->redundant_or_removed(*it2))
                 continue;
 
-            if (solver->conf.skip_some_bve_resolvents
-                && solver->conf.otfHyperbin
-                //Below: Always resolve binaries so that cache&stamps stay OK
-                && !(it->isBin() && it2->isBin())
-                //Real check
-                && skip_resolution_thanks_to_gate(at_poss, at_negs)
-            ) {
-                continue;
-            }
-
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
             if (tautological)
@@ -1766,6 +1643,9 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 || *limit_to_decrease < -10LL*1000LL
 
             ) {
+                if (gate_varelim_clause) {
+                    gate_varelim_clause->stats.marked_clause = false;
+                }
                 return std::numeric_limits<int>::max();
             }
 
@@ -1783,6 +1663,10 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
             resolvents.push_back(Resolvent(dummy, stats));
         }
+    }
+
+    if (gate_varelim_clause) {
+        gate_varelim_clause->stats.marked_clause = false;
     }
 
     //Smaller value returned, the better
@@ -2149,15 +2033,34 @@ bool OccSimplifier::resolve_clauses(
     , const bool aggressive
 ) {
     //If clause has already been freed, skip
-    if (ps.isClause()
-        && solver->cl_alloc.ptr(ps.get_offset())->freed()
-    ) {
-        return false;
+    Clause *cl1 = NULL;
+    if (ps.isClause()) {
+         cl1 = solver->cl_alloc.ptr(ps.get_offset());
+        if (cl1->freed()) {
+            return true;
+        }
     }
-    if (qs.isClause()
-        && solver->cl_alloc.ptr(qs.get_offset())->freed()
+
+    Clause *cl2 = NULL;
+    if (qs.isClause()) {
+         cl2 = solver->cl_alloc.ptr(qs.get_offset());
+        if (cl2->freed()) {
+            return true;
+        }
+    }
+    if (gate_varelim_clause
+        && cl1 && cl2
+        && !cl1->stats.marked_clause
+        && !cl2->stats.marked_clause
     ) {
-        return false;
+        //for G (U) R, we only neede to resolve to
+        // (Gx * R!x) (U) (G!x * Rx)
+        // So Rx * R!x is skipped
+        //
+        // Here: Both are long clauses, so only one could be in G. But neither
+        // are marked, hence neither are in G, so both are in R.
+        // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
+        return true;
     }
 
     dummy.clear();
@@ -2553,9 +2456,6 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
 size_t OccSimplifier::mem_used() const
 {
     size_t b = 0;
-    b += poss_gate_parts.capacity()*sizeof(char);
-    b += negs_gate_parts.capacity()*sizeof(char);
-    b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
     b += dummy.capacity()*sizeof(char);
     b += sub_str_with.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
