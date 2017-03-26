@@ -119,6 +119,7 @@ For the --solver options you can give:
     options.logfile_name = options.base_dir + options.logfile_name
     options.s3_folder += "-" + time.strftime("%d-%B-%Y")
     options.s3_folder += "-%s" % rnd_id()
+    options.s3_folder += "-%s" % options.cnf_list
 
     return options, args
 
