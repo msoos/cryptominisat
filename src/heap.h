@@ -161,7 +161,8 @@ public:
 
 
     // Rebuild the heap from scratch, using the elements in 'ns':
-    void build(vec<uint32_t>& ns)
+    template<typename T>
+    void build(const T& ns)
     {
         for (int i = 0; i < (int)heap.size(); i++) {
             indices[heap[i]] = -1;
