@@ -53,7 +53,7 @@ PropEngine::PropEngine(
         CNF(_conf, _must_interrupt_inter)
         , qhead(0)
         , order_heap_vsids(VarOrderLt(var_act_vsids))
-        , order_heap_weird(VarOrderLt(activ_weird))
+        , order_heap_maple(VarOrderLt(var_act_maple))
 {
 }
 

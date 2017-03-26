@@ -88,8 +88,8 @@ void Searcher::new_var(const bool bva, const uint32_t orig_outer)
     PropEngine::new_var(bva, orig_outer);
 
     var_act_vsids.push_back(0);
-    activ_weird.push_back(0);
-    insertVarOrder((int)nVars()-1);
+    var_act_maple.push_back(0);
+    insert_var_order_all((int)nVars()-1);
 }
 
 void Searcher::new_vars(size_t n)
@@ -97,16 +97,22 @@ void Searcher::new_vars(size_t n)
     PropEngine::new_vars(n);
 
     var_act_vsids.resize(var_act_vsids.size() + n, 0);
+    var_act_maple.resize(var_act_maple.size() + n, 0);
     for(int i = n-1; i >= 0; i--) {
-        insertVarOrder((int)nVars()-i-1);
+        insert_var_order_all((int)nVars()-i-1);
     }
 }
 
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
+
     var_act_vsids.resize(nVars());
+    var_act_maple.resize(nVars());
+
     var_act_vsids.shrink_to_fit();
+    var_act_maple.shrink_to_fit();
+
 }
 
 void Searcher::updateVars(
@@ -114,7 +120,7 @@ void Searcher::updateVars(
     , const vector<uint32_t>& interToOuter
 ) {
     updateArray(var_act_vsids, interToOuter);
-    //var_act_vsids are not updated, they are taken from backup, which is updated
+    updateArray(var_act_maple, interToOuter);
 
     renumber_assumptions(outerToInter);
 }
@@ -1906,6 +1912,7 @@ void Searcher::rebuildOrderHeap()
         }
     }
     order_heap_vsids.build(vs);
+    order_heap_maple.build(vs);
 }
 
 //NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
@@ -2092,13 +2099,13 @@ void Searcher::adjust_phases_restarts()
         return;
 
     if (VSIDS && conf.maple) {
-        //VSIDS = false;
+        VSIDS = false;
         max_confl_this_phase = 5000;
         if (conf.verbosity >= 3) {
             cout << "c doing NON-VSIDS" << endl;
         }
     } else {
-        //VSIDS = true;
+        VSIDS = true;
         if (conf.verbosity >= 3) {
             cout << "c doing VSIDS" << endl;
         }
@@ -2269,11 +2276,12 @@ Lit Searcher::pickBranchLit()
     Lit next = lit_Undef;
 
     // Random decision:
+    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
-        if (rand < frq && !order_heap_vsids.empty()) {
-            const uint32_t next_var = order_heap_vsids.random_element(mtrand);
+        if (rand < frq && !order_heap.empty()) {
+            const uint32_t next_var = order_heap.random_element(mtrand);
 
             if (value(next_var) == l_Undef
                 && solver->varData[next_var].removed == Removed::none
@@ -2284,30 +2292,28 @@ Lit Searcher::pickBranchLit()
         }
     }
 
-    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_weird;
     if (next == lit_Undef) {
         uint32_t v = var_Undef;
         while (v == var_Undef || value(v) != l_Undef) {
             //There is no more to branch on. Satisfying assignment found.
             if (order_heap.empty()) {
                 return lit_Undef;
-            } else {
-                if (VSIDS) {
-                    v = order_heap.removeMin();
-                } else {
-                    uint32_t v = order_heap[0];
-                    uint32_t age = sumConflicts - varData[v].cancelled;
-                    while (age > 0) {
-                        double decay = pow(0.95, age);
-                        activ_weird[v] *= decay;
-                        if (order_heap.inHeap(v))
-                            order_heap.increase(v);
-                        varData[v].cancelled = sumConflicts;
-                        v = order_heap[0];
-                        age = sumConflicts - varData[v].cancelled;
-                    }
+            }
+
+            if (!VSIDS) {
+                uint32_t v = order_heap[0];
+                uint32_t age = sumConflicts - varData[v].cancelled;
+                while (age > 0) {
+                    double decay = pow(0.95, age);
+                    var_act_maple[v] *= decay;
+                    if (order_heap.inHeap(v))
+                        order_heap.increase(v);
+                    varData[v].cancelled = sumConflicts;
+                    v = order_heap[0];
+                    age = sumConflicts - varData[v].cancelled;
                 }
             }
+            v = order_heap.removeMin();
         }
         next = Lit(v, !pickPolarity(v));
     }
@@ -2853,7 +2859,9 @@ size_t Searcher::mem_used() const
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += var_act_vsids.capacity()*sizeof(uint32_t);
+    mem += var_act_maple.capacity()*sizeof(uint32_t);
     mem += order_heap_vsids.mem_used();
+    mem += order_heap_maple.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -2889,13 +2897,13 @@ size_t Searcher::mem_used() const
         << endl;
 
         cout
-        << "c var_act_vsids bytes: "
-        << var_act_vsids.capacity()*sizeof(uint32_t)
+        << "c order_heap_vsids bytes: "
+        << order_heap_vsids.mem_used()
         << endl;
 
         cout
-        << "c order_heap_vsids bytes: "
-        << order_heap_vsids.mem_used()
+        << "c order_heap_maple bytes: "
+        << order_heap_maple.mem_used()
         << endl;
 
         cout
@@ -3172,6 +3180,7 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     PropEngine::save_state(f);
 
     f.put_vector(var_act_vsids);
+    f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(full_model);
     f.put_vector(conflict);
@@ -3193,11 +3202,12 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     PropEngine::load_state(f);
 
     f.get_vector(var_act_vsids);
+    f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef
         ) {
-            insertVarOrder(i);
+            insert_var_order_all(i);
         }
     }
     f.get_vector(model);
@@ -3221,7 +3231,7 @@ void Searcher::cancelUntil<true>(uint32_t level);
 template
 void Searcher::cancelUntil<false>(uint32_t level);
 
-template<bool also_insert_varorder>
+template<bool also_insert_var_order>
 void Searcher::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
@@ -3262,21 +3272,21 @@ void Searcher::cancelUntil(uint32_t level)
                 uint32_t age = sumConflicts - varData[var].picked;
                 if (age > 0) {
                     double adjusted_reward = ((double)(varData[var].conflicted + varData[var].almost_conflicted)) / ((double)age);
-                    double old_activity = activ_weird[var];
-                    activ_weird[var] = conf.step_size * adjusted_reward + ((1 - conf.step_size) * old_activity);
-                    if (order_heap_weird.inHeap(var)) {
-                        if (activ_weird[var] > old_activity)
-                            order_heap_weird.decrease(var);
+                    double old_activity = var_act_maple[var];
+                    var_act_maple[var] = conf.step_size * adjusted_reward + ((1 - conf.step_size) * old_activity);
+                    if (order_heap_maple.inHeap(var)) {
+                        if (var_act_maple[var] > old_activity)
+                            order_heap_maple.decrease(var);
                         else
-                            order_heap_weird.increase(var);
+                            order_heap_maple.increase(var);
                     }
                 }
                 varData[var].cancelled = sumConflicts;
             }
 
             assigns[var] = l_Undef;
-            if (also_insert_varorder) {
-                insertVarOrder(var);
+            if (also_insert_var_order) {
+                insert_var_order(var);
             }
         }
         qhead = trail_lim[level];

@@ -107,7 +107,7 @@ class Searcher : public HyperEngine
         {
             return assumptionsSet.at(var);
         }
-        template<bool also_insert_varorder = true>
+        template<bool also_insert_var_order = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
 
@@ -136,6 +136,7 @@ class Searcher : public HyperEngine
         void clear_order_heap()
         {
             order_heap_vsids.clear();
+            order_heap_maple.clear();
         }
         void bumpClauseAct(Clause* cl);
 
@@ -294,7 +295,8 @@ class Searcher : public HyperEngine
         /////////////////
         // Variable activity
         double var_inc;
-        void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
+        void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
+        void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
 
 
         uint64_t more_red_minim_limit_binary_actual;
@@ -432,9 +434,9 @@ inline void Searcher::add_in_partial_solving_stats()
     stats.cpu_time = cpuTime() - startTime;
 }
 
-inline void Searcher::insertVarOrder(const uint32_t x)
+inline void Searcher::insert_var_order(const uint32_t x)
 {
-    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_weird;
+    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
     if (!order_heap.inHeap(x)) {
         #ifdef SLOW_DEUG
         assert(varData[x].removed == Removed::none
@@ -442,6 +444,26 @@ inline void Searcher::insertVarOrder(const uint32_t x)
         #endif
 
         order_heap.insert(x);
+    }
+}
+
+inline void Searcher::insert_var_order_all(const uint32_t x)
+{
+    if (!order_heap_vsids.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_vsids.insert(x);
+    }
+    if (!order_heap_maple.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_maple.insert(x);
     }
 }
 
@@ -472,7 +494,14 @@ inline bool Searcher::check_order_heap_sanity() const
             && value(i) == l_Undef)
         {
             if (!order_heap_vsids.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in heap."
+                cout << "ERROR var " << i+1 << " not in VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+            if (!order_heap_maple.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
                 << endl;
@@ -481,6 +510,7 @@ inline bool Searcher::check_order_heap_sanity() const
         }
     }
     assert(order_heap_vsids.heap_property());
+    assert(order_heap_maple.heap_property());
 
     return true;
 }

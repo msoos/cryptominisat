@@ -353,7 +353,7 @@ class Solver : public Searcher
 
 inline void Solver::set_decision_var(const uint32_t var)
 {
-    insertVarOrder(var);
+    insert_var_order_all(var);
 }
 
 inline uint64_t Solver::getNumLongClauses() const

@@ -103,7 +103,7 @@ public:
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
     vector<double> var_act_vsids;
-    vector<double> activ_weird;
+    vector<double> var_act_maple;
 
 protected:
     int64_t simpDB_props = 0;
@@ -142,7 +142,7 @@ protected:
     ///activity-ordered heap of decision variables.
     ///NOT VALID WHILE SIMPLIFYING
     Heap<VarOrderLt> order_heap_vsids;
-    Heap<VarOrderLt> order_heap_weird;
+    Heap<VarOrderLt> order_heap_maple;
 
     friend class Gaussian;
 
@@ -415,9 +415,9 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         uint32_t age = sumConflicts - varData[v].cancelled;
         if (age > 0) {
             double decay = std::pow(0.95, age);
-            activ_weird[v] *= decay;
-            if (order_heap_weird.inHeap(v))
-                order_heap_weird.increase(v);
+            var_act_maple[v] *= decay;
+            if (order_heap_maple.inHeap(v))
+                order_heap_maple.increase(v);
         }
     }
 
