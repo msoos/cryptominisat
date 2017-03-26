@@ -2079,8 +2079,9 @@ lbool Searcher::solve(
         params.clear();
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search<false>();
-
-        adjust_phases_restarts();
+        if (status == l_Undef) {
+            adjust_phases_restarts();
+        }
 
         if (must_abort(status)) {
             goto end;
