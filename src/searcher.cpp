@@ -1905,12 +1905,12 @@ bool Searcher::clean_clauses_if_needed()
 
 void Searcher::rebuildOrderHeap()
 {
-    vec<uint32_t> vs;
+    vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed == Removed::none
             && value(v) == l_Undef
         ) {
-            vs.push(v);
+            vs.push_back(v);
         }
     }
     order_heap_vsids.build(vs);
