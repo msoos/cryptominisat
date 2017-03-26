@@ -59,7 +59,7 @@ For the --solver options you can give:
                       )
 
     parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
-                      help="The home dir of cryptominisat"
+                      help="The home dir of cryptominisat [default: %default]"
                       )
 
     parser.add_option("--solver",
