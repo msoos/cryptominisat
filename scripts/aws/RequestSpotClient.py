@@ -24,6 +24,9 @@ class RequestSpotClient:
             self.conf.read('ec2-spot-instance.cfg')
             self.limit_create = 8
 
+        if self.count is None:
+            self.count = int(self.conf.get('ec2', 'count'))
+
         self.ec2conn = self.__create_ec2conn()
         if self.ec2conn is None:
             print 'Unable to create EC2 ec2conn'
