@@ -24,7 +24,7 @@ Prerequisites
 -----
 
 You need to have the following installed in case you use Debian or Ubuntu -- for
-other distros, the packages should be similarly named::
+other distros, the packages should be similarly named:
 ```
 $ sudo apt-get install build-essential cmake
 ```
@@ -38,6 +38,9 @@ Compiling and installing under Linux
 -----
 
 Build:
+=======
+You have to use cmake to compile and install:
+
 ```
 $ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
@@ -110,14 +113,14 @@ p cnf 2 3
 The files has 3 clauses and 2 variables, this is reflected in the header
 `p cnf 2 3`. Every clause is ended by '0'. The clauses say: 1 must be True, 2
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
-True. The only solution to this problem is::
+True. The only solution to this problem is:
 ```
 $ cryptominisat5 --verb 0 file.cnf
 s SATISFIABLE
 v 1 -2 3 0
 ```
 
-If the file had contained::
+If the file had contained:
 ```
 p cnf 2 4
 1 0
@@ -132,7 +135,7 @@ Python usage
 -----
 
 The python module is under the directory `python`. You have to first compile
-and install this module, as explained above. You can then use it as::
+and install this module, as explained above. You can then use it as:
 
 ```
 >>> from pycryptosat import Solver
@@ -148,7 +151,7 @@ True
 (None, True, False, True)
 ```
 
-We can also try to assume any variable values for a single solver run::
+We can also try to assume any variable values for a single solver run:
 ```
 >>> sat, solution = s.solve([-3])
 >>> print sat
@@ -169,7 +172,7 @@ Library usage
 -----
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
-such, the 1st CNF above would become::
+such, the 1st CNF above would become:
 
 ```
 #include <cryptominisat5/cryptominisat.h>
@@ -222,7 +225,7 @@ int main()
 ```
 
 The library usage also allows for assumptions. We can add these lines just
-before the `return 0;` above::
+before the `return 0;` above:
 ```
 vector<Lit> assumptions;
 assumptions.push_back(Lit(2, true));
