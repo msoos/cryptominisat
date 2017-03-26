@@ -153,6 +153,7 @@ void VarReplacer::update_vardata_and_activities(
     if (orig_act + repl_with_act >= orig_act) {
         solver->var_act_vsids[replaced_with] += orig_act;
     }
+    //TODO: should we do the above for maple too?
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
