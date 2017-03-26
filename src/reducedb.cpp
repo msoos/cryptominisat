@@ -222,7 +222,9 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 
         if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
             cl->stats.which_red_array = 0;
-        } else if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq) {
+        } else if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
+            && solver->conf.glue_put_lev1_if_below_or_eq != 0
+        ) {
             cl->stats.which_red_array = 1;
         }
 

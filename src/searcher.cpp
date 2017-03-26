@@ -1513,7 +1513,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
         if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
             which_arr = 0;
-        } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq){
+        } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
+            && conf.glue_put_lev1_if_below_or_eq != 0
+        ){
             which_arr = 1;
         } else {
             which_arr = 2;
@@ -3079,7 +3081,9 @@ void Searcher::read_long_cls(
             cl->stats.which_red_array = 2;
             if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
                 cl->stats.which_red_array = 0;
-            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq) {
+            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
+                && conf.glue_put_lev1_if_below_or_eq != 0
+            ) {
                 cl->stats.which_red_array = 1;
             }
 

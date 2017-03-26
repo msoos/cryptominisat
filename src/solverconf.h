@@ -146,7 +146,14 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Clause cleaning
+
+        //if non-zero, we reduce at every X conflicts.
+        //Reduced according to whether it's been used recently
+        //Otherwise, we *never* reduce
         unsigned every_lev1_reduce;
+
+        //if non-zero, we reduce at every X conflicts.
+        //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
         uint32_t must_touch_lev1_within;
 
