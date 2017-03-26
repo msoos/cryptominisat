@@ -29,9 +29,9 @@ other distros, the packages should be similarly named::
 $ sudo apt-get install build-essential cmake
 ```
 
-The following are not required but are useful::
+The following are not required but are *very* useful:
 ```
-$ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev libsqlite3-dev
+$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
 ```
 
 Compiling and installing under Linux
