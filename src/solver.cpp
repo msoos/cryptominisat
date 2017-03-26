@@ -1777,7 +1777,6 @@ lbool Solver::simplify_problem(const bool startup)
     assert(check_order_heap_sanity());
     #endif
 
-    //remove_xors();
     clear_order_heap();
 
     if (conf.verbosity >= 6) {
