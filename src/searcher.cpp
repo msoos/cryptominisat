@@ -2069,7 +2069,6 @@ lbool Searcher::solve(
         ; loop_num ++
     ) {
         #ifdef SLOW_DEBUG
-        assert(order_heap_vsids.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
 
