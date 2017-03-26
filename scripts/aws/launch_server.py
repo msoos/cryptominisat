@@ -76,25 +76,25 @@ if __name__ == "__main__":
     print("Executing!")
 
     cloud_init = """#!/bin/bash
-    set -e
+set -e
 
-    apt-get update
-    apt-get -y install git python-boto awscli
+apt-get update
+apt-get -y install git python-boto awscli
 
-    cd /home/ubuntu
-    sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
-    sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptominisat.git'
+cd /home/ubuntu
+sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
+sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptominisat.git'
 
-    # Get credentials
-    cd /home/ubuntu
-    sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
-    sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region=us-west-2'
+# Get credentials
+cd /home/ubuntu
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/.boto . --region=us-west-2'
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region=us-west-2'
 
-    # Start server
-    cd /home/ubuntu/cryptominisat
-    sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
+# Start server
+cd /home/ubuntu/cryptominisat
+sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
 
-    DATA="%s"
+DATA="%s"
     """ % data
 
     conn = boto.ec2.connect_to_region("us-west-2")
