@@ -20,7 +20,7 @@ config = ConfigParser.ConfigParser()
 config.read("/home/ubuntu/email.conf")
 
 
-def send_email(subject, text, fname = None):
+def send_email(subject, text, fname=None):
     msg = MIMEMultipart()
     msg['Subject'] = 'Email from solver: %s' % subject
     msg['From'] = 'msoos@msoos.org'
@@ -35,7 +35,7 @@ def send_email(subject, text, fname = None):
 
     # Attachment(s)
     if fname:
-        part = MIMEApplication(open(fname,"rb").read())
+        part = MIMEApplication(open(fname, "rb").read())
         part.add_header('Content-Disposition', 'attachment', filename="attachment.txt")
         msg.attach(part)
 
