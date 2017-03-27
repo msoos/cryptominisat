@@ -23,18 +23,6 @@ from common_aws import *
 import RequestSpotClient
 
 
-def get_revision():
-    _, solvername = os.path.split(options.base_dir + options.solver)
-    if solvername != "cryptominisat5":
-        return solvername
-
-    pwd = os.getcwd()
-    os.chdir(options.base_dir + "cryptominisat")
-    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    os.chdir(pwd)
-    return revision.strip()
-
-
 def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
@@ -405,7 +393,7 @@ if __name__ == "__main__":
                  pprint.pformat(options, indent=4).replace("\n", " || "))
 
     if not options.git_rev:
-        options.git_rev = get_revision()
+        options.git_rev = get_revision(options.base_dir + options.solver, options.base_dir)
         logging.info("Revision not given, taking HEAD: %s", options.git_rev)
 
     server = Server()
