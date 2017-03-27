@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import boto
 import sys
 import ConfigParser
@@ -29,7 +30,7 @@ class RequestSpotClient:
 
         self.ec2conn = self.__create_ec2conn()
         if self.ec2conn is None:
-            print 'Unable to create EC2 ec2conn'
+            print('Unable to create EC2 ec2conn')
             sys.exit(0)
 
         self.user_data = self.__get_user_data(noshutdown)
