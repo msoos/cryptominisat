@@ -397,14 +397,22 @@ void CNF::load_state(SimpleInFile& f)
 void CNF::test_all_clause_attached() const
 {
 #ifdef DEBUG_ATTACH_MORE
+    test_all_clause_attached(longIrredCls);
+    for(const vector<ClOffset>& l: longRedCls) {
+        test_all_clause_attached(l);
+    }
+#endif
+}
+
+void CNF::test_all_clause_attached(const vector<ClOffset>& offsets) const
+{
     for (vector<ClOffset>::const_iterator
-        it = longIrredCls.begin(), end = longIrredCls.end()
+        it = offsets.begin(), end = offsets.end()
         ; it != end
         ; ++it
     ) {
         assert(normClauseIsAttached(*it));
     }
-#endif
 }
 
 bool CNF::normClauseIsAttached(const ClOffset offset) const
@@ -415,6 +423,39 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
 
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
+
+    bool satisfied = false;
+    for(Lit l: cl) {
+        if (value(l) == l_True) {
+            satisfied = true;
+        }
+    }
+    uint32_t num_false2 = 0;
+    num_false2 += value(cl[0]) == l_False;
+    num_false2 += value(cl[1]) == l_False;
+    if (!satisfied) {
+        if (num_false2 != 0) {
+            cout << "Clause failed: " << cl << endl;
+            for(Lit l: cl) {
+                cout << "val " << l << " : " << value(l) << endl;
+            }
+            for(const Watched& w: watches[cl[0]]) {
+                cout << "watch " << cl[0] << endl;
+                if (w.isClause() && w.get_offset() == offset) {
+                    cout << "Block lit: " << w.getBlockedLit()
+                    << " val: " << value(w.getBlockedLit()) << endl;
+                }
+            }
+            for(const Watched& w: watches[cl[1]]) {
+                cout << "watch " << cl[1] << endl;
+                if (w.isClause() && w.get_offset() == offset) {
+                    cout << "Block lit: " << w.getBlockedLit()
+                    << " val: " << value(w.getBlockedLit()) << endl;
+                }
+            }
+        }
+        assert(num_false2 == 0 && "propagation was not full??");
+    }
 
     return attached;
 }
@@ -432,6 +473,20 @@ void CNF::find_all_attach() const
             //Get clause
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
+
+            bool satisfied = false;
+            for(Lit l: *cl) {
+                if (value(l) == l_True) {
+                    satisfied = true;
+                }
+            }
+            if (!satisfied) {
+                if (value(w.getBlockedLit())  == l_True) {
+                    cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
+                    << w.getBlockedLit() << " is." << endl;
+                }
+                assert(value(w.getBlockedLit()) != l_True && "Blocked lit is satisfied but clause is NOT!!");
+            }
 
             //Assert watch correctness
             if ((*cl)[0] != lit

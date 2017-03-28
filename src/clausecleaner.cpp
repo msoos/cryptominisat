@@ -174,6 +174,13 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
     assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
 
+    #ifdef SLOW_DEBUG
+    uint32_t num_false_begin = 0;
+    Lit l1 = cl[0];
+    Lit l2 = cl[1];
+    num_false_begin += solver->value(cl[0]) == l_False;
+    num_false_begin += solver->value(cl[1]) == l_False;
+    #endif
 
     Lit *i, *j, *end;
     uint32_t num = 0;
@@ -197,6 +204,18 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
     }
 
     assert(cl.size() > 1);
+    assert(solver->value(cl[0]) == l_Undef);
+    assert(solver->value(cl[1]) == l_Undef);
+
+    #ifdef SLOW_DEBUG
+    //no l_True, so first 2 of orig must have been l_Undef
+    if (num_false_begin != 0) {
+        cout << "val " << l1 << ":" << solver->value(l1) << endl;
+        cout << "val " << l2 << ":" << solver->value(l2) << endl;
+    }
+    assert(num_false_begin == 0 && "Propagation wasn't full? Watch lit was l_False and clause wasn't satisfied");
+    #endif
+
     if (i != j) {
         if (cl.size() == 2) {
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
@@ -207,8 +226,6 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
             } else {
                 solver->litStats.irredLits -= i-j;
             }
-            assert(solver->value(cl[0]) == l_Undef);
-            assert(solver->value(cl[1]) == l_Undef);
         }
     }
 

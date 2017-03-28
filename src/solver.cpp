@@ -1214,6 +1214,8 @@ lbool Solver::simplify_problem_outside()
     if (ok) {
         assert(check_order_heap_sanity());
         check_implicit_stats();
+        find_all_attach();
+        test_all_clause_attached();
     }
     #endif
 
@@ -1241,6 +1243,7 @@ lbool Solver::solve()
     if (ok) {
         assert(check_order_heap_sanity());
         check_implicit_stats();
+        find_all_attach();
     }
     #endif
 
@@ -1579,6 +1582,9 @@ void Solver::handle_found_solution(const lbool status)
     if (status == l_True) {
         extend_solution();
         cancelUntil(0);
+
+        find_all_attach();
+        test_all_clause_attached();
     } else if (status == l_False) {
         cancelUntil(0);
 
@@ -1770,6 +1776,7 @@ lbool Solver::simplify_problem(const bool startup)
 {
     assert(ok);
     test_all_clause_attached();
+    find_all_attach();
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
@@ -1828,6 +1835,8 @@ lbool Solver::simplify_problem(const bool startup)
         check_stats();
         check_implicit_propagated();
         rebuildOrderHeap();
+        find_all_attach();
+        test_all_clause_attached();
 
         return l_Undef;
     }

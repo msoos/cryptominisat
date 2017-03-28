@@ -242,6 +242,7 @@ public:
     void find_all_attach(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
     void test_all_clause_attached() const;
+    void test_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
     void print_all_clauses() const;
     uint64_t count_lits(
