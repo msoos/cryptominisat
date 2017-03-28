@@ -294,7 +294,7 @@ void ClauseCleaner::remove_and_clean_all()
     ) {
         const Lit lit = Lit::toLit(wsLit);
         if (solver->value(lit) != l_Undef) {
-            assert((*it).empty());
+            assert(it->empty());
         }
     }
     #endif
