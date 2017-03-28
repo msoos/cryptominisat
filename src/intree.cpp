@@ -349,7 +349,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             depth_failed.back() = 1;
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
-                cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
+                cout << "(timeout?) Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
             }
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);
