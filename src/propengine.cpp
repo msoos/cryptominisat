@@ -538,9 +538,27 @@ inline void PropEngine::updateWatch(
         }
 
         if (it->isClause()) {
-            it->setBlockedLit(
-                getUpdatedLit(it->getBlockedLit(), outerToInter)
-            );
+            //We need this because:
+            //When e.g. replacing variables, the claues' blocked variables don't get updated
+            //this is fine, because the variable is not being used for anything, so
+            //the blocked lit will be fixed eventually (hopefully)
+            //
+            //BUT when we renumber, we might now renumber this unused replaced
+            //variabe to something else, which may be used (e.g. a var set at decision level 0)
+            //and so this becomes very harmful
+
+            //note, varData has already been updated.
+            const auto vdata = varData[getUpdatedLit(it->getBlockedLit(), outerToInter).var()];
+            if (vdata.removed != Removed::none) {
+                const Clause &cl = *cl_alloc.ptr(it->get_offset());
+                it->setBlockedLit(cl[2]);
+            } else {
+                it->setBlockedLit(
+                    getUpdatedLit(it->getBlockedLit(), outerToInter)
+                );
+                const Clause &cl = *cl_alloc.ptr(it->get_offset());
+                //cout << "Setting blocked lit " << it->getBlockedLit() << " For clause " << cl << endl;
+            }
         }
     }
 }
