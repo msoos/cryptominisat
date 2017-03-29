@@ -3442,6 +3442,7 @@ void Solver::undef_fill_potentials()
         cout << "-" << endl;
     }
 
+    //More stringent check for "can_be_unset"
     if (conf.independent_vars) {
         for(uint32_t v: *conf.independent_vars) {
             if (v > nVarsOutside()) {
