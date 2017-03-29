@@ -3377,23 +3377,21 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         && undef->can_be_unsetSum > 0
     ) {
         //Find variable to fix.
-        uint32_t maximum = 0;
+        int32_t maximum = -1;
         uint32_t v = var_Undef;
         for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
             if (undef->can_be_unset[i]) {
-
-                if (undef->verbose) {
-                    cout << "Var " << i+1 << " can be fixed"
-                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;
+                    /*cout << "Var " << i+1 << " can be fixed"
+                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;*/
+                if ((int32_t)undef->satisfies[i] >= maximum) {
+                    maximum = (int32_t)undef->satisfies[i];
+                    v = i;
+                    //cout << "v set to:" << Lit(v, false) << endl;
                 }
-            }
-            if (undef->can_be_unset[i] && undef->satisfies[i] >= maximum) {
-                maximum = undef->satisfies[i];
-                v = i;
             }
         }
         if (undef->verbose) cout << "--" << endl;
-        assert(v != var_Undef);
+        assert(v != var_Undef && "maximum satisfied by this var is zero? Then can_be_unsetSum was wrongly calculated!");
 
         //Fix 'v' to be set to curent value
         assert(undef->can_be_unset[v]);
@@ -3401,7 +3399,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         undef->can_be_unsetSum--;
         undef->num_fixed++;
 
-        if (undef->verbose) cout << "Fixed var " << v+1 << endl;
+        //cout << "Fixed var " << v+1 << endl;
 
         std::fill(undef->satisfies.begin(), undef->satisfies.end(), 0);
     }
