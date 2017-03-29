@@ -1804,8 +1804,6 @@ lbool Solver::simplify_problem(const bool startup)
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " finished" << endl;
     }
-    test_all_clause_attached();
-    check_wrong_attach();
     conf.global_timeout_multiplier *= conf.global_timeout_multiplier_multiplier;
     conf.global_timeout_multiplier =
         std::min(
