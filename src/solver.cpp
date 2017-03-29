@@ -3463,9 +3463,7 @@ void Solver::undef_fill_potentials()
                 }
             }
         }
-    }
 
-    if (conf.independent_vars) {
         //Only those with a setting of both independent_vars and in trail
         //can be unset
         for(unsigned char& v: undef->can_be_unset) {
