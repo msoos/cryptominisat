@@ -3417,17 +3417,20 @@ void Solver::undef_fill_potentials()
     int trail_at = ((int)undef->trail_lim_vars->size())-1;
     if (undef->verbose) cout << "trail_at: " << trail_at << endl;
 
-    //Mark everything on the trail except at lev 0
-    while(trail_at >= 0) {
+    while(trail_at >= (int)assumptions.size()) {
         uint32_t v = (*undef->trail_lim_vars)[trail_at];
-        if (undef->verbose) cout << "Examining trail var: " << v+1 << endl;
+        if (undef->verbose) {
+            cout << "Examining trail_at: " << trail_at << " v: "
+            << Lit(v, false) << endl;
+        }
 
         assert(varData[v].removed == Removed::none);
         assert(assumptionsSet.size() > v);
         if (model_value(v) != l_Undef
             && assumptionsSet[v] == false
         ) {
-            undef->can_be_unset[v] += 1;
+            assert(undef->can_be_unset[v] == 0);
+            undef->can_be_unset[v] ++;
             if (conf.independent_vars == NULL) {
                 undef->can_be_unsetSum++;
             }
