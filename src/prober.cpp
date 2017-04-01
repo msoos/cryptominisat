@@ -328,7 +328,6 @@ bool Prober::probe(vector<uint32_t>* probe_order)
     assert(solver->qhead == solver->trail.size());
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
-    solver->test_all_clause_attached();
 
     clean_clauses_before_probe();
     reset_stats_and_state();
@@ -414,13 +413,13 @@ end:
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
         clean_clauses_after_probe();
+        solver->test_all_clause_attached();
     }
 
     update_and_print_stats(myTime, numPropsTodo);
     check_if_must_disable_otf_hyperbin_and_tred(numPropsTodo);
     check_if_must_disable_cache_update();
 
-    solver->test_all_clause_attached();
     return solver->ok;
 }
 

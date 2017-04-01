@@ -1214,6 +1214,7 @@ lbool Solver::simplify_problem_outside()
     if (ok) {
         assert(check_order_heap_sanity());
         check_implicit_stats();
+        check_wrong_attach();
         find_all_attach();
         test_all_clause_attached();
     }
@@ -1621,6 +1622,7 @@ bool Solver::execute_inprocess_strategy(
             return ok;
         }
         assert(watches.get_smudged_list().empty());
+        check_wrong_attach();
         #ifdef SLOW_DEBUG
         check_stats();
         #endif
@@ -1764,6 +1766,7 @@ bool Solver::execute_inprocess_strategy(
         if (!ok) {
             return ok;
         }
+        check_wrong_attach();
     }
 
     return ok;
@@ -1835,6 +1838,7 @@ lbool Solver::simplify_problem(const bool startup)
         rebuildOrderHeap();
         find_all_attach();
         test_all_clause_attached();
+        check_wrong_attach();
 
         return l_Undef;
     }

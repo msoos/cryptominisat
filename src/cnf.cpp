@@ -424,12 +424,7 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
 
-    bool satisfied = false;
-    for(Lit l: cl) {
-        if (value(l) == l_True) {
-            satisfied = true;
-        }
-    }
+    bool satisfied = satisfied_cl(&cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
     num_false2 += value(cl[1]) == l_False;
@@ -474,12 +469,7 @@ void CNF::find_all_attach() const
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
 
-            bool satisfied = false;
-            for(Lit l: *cl) {
-                if (value(l) == l_True) {
-                    satisfied = true;
-                }
-            }
+            bool satisfied = satisfied_cl(cl);
             if (!satisfied) {
                 if (value(w.getBlockedLit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
@@ -584,8 +574,60 @@ void CNF::check_wrong_attach() const
             }
         }
     }
+    for(watch_subarray_const ws: watches) {
+        check_watchlist(ws);
+    }
 #endif
 }
+
+bool CNF::satisfied_cl(const Clause* cl) const {
+    for(Lit lit: *cl) {
+        if (value(lit) == l_True) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CNF::check_watchlist(watch_subarray_const ws) const
+{
+    for(const Watched& w: ws) {
+        if (!w.isClause()) {
+            continue;
+        }
+
+        const ClOffset offs = w.get_offset();
+        const Clause& c = *cl_alloc.ptr(offs);
+        Lit blockedLit = w.getBlockedLit();
+        /*cout << "Clause " << c << " blocked lit:  "<< blockedLit << " val: " << value(blockedLit)
+        << " blocked removed:" << !(varData[blockedLit.var()].removed == Removed::none)
+        << " cl satisfied: " << satisfied_cl(&c)
+        << endl;*/
+        assert(blockedLit.var() < nVars());
+
+        if (varData[blockedLit.var()].removed == Removed::none
+            //0-level FALSE --> clause cleaner removed it from clause, that's OK
+            && value(blockedLit) != l_False
+            && !satisfied_cl(&c)
+        ) {
+            bool found = false;
+            for(Lit l: c) {
+                if (l == blockedLit) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                cout << "Did not find non-removed blocked lit " << blockedLit
+                << " val: " << value(blockedLit) << endl
+                << "In clause " << c << endl;
+            }
+            assert(found);
+        }
+
+    }
+}
+
 
 uint64_t CNF::count_lits(
     const vector<ClOffset>& clause_array

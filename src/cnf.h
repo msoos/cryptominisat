@@ -244,6 +244,8 @@ public:
     void test_all_clause_attached() const;
     void test_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
+    void check_watchlist(watch_subarray_const ws) const;
+    bool satisfied_cl(const Clause* cl) const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
