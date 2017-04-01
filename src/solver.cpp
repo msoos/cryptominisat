@@ -629,9 +629,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         if (conf.perform_occur_based_simp
             && varData[lit.var()].removed == Removed::elimed
         ) {
-            #ifdef VERBOSE_DEBUG_RECONSTRUCT
-            cout << "Uneliminating var " << lit.var() + 1 << endl;
-            #endif
             if (!occsimplifier->uneliminate(lit.var()))
                 return false;
         }

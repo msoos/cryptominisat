@@ -1087,6 +1087,9 @@ bool OccSimplifier::fill_occur()
 //otherwise, uneliminated_vars_since_last_solve will be wrong
 bool OccSimplifier::uneliminate(uint32_t var)
 {
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout << "calling uneliminate() on var" << var+1 << endl;
+    #endif
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
