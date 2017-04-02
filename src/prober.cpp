@@ -413,7 +413,6 @@ end:
     runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
     if (solver->ok && runStats.zeroDepthAssigns) {
         clean_clauses_after_probe();
-        solver->test_all_clause_attached();
     }
 
     update_and_print_stats(myTime, numPropsTodo);

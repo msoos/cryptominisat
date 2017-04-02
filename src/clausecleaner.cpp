@@ -258,7 +258,6 @@ void ClauseCleaner::clean_clauses_pre()
 {
     assert(solver->watches.get_smudged_list().empty());
     assert(delayed_free.empty());
-    solver->check_wrong_attach();
 }
 
 void ClauseCleaner::clean_clauses_post()
