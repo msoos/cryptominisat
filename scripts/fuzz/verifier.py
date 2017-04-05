@@ -91,14 +91,20 @@ class solution_parser:
                 return
 
             # check solution against clause
-            if line[0] != 'c' and line[0] != 'p':
-                if line[0] != 'x':
-                    solution_parser._check_regular_clause(line, solution)
-                else:
-                    assert line[0] == 'x', "Line must start with p, c, v or x"
-                    solution_parser._check_xor_clause(line, solution)
+            try:
+                if line[0] != 'c' and line[0] != 'p':
+                    if line[0] != 'x':
+                        solution_parser._check_regular_clause(line, solution)
+                    else:
+                        assert line[0] == 'x', "Line must start with p, c, v or x"
+                        solution_parser._check_xor_clause(line, solution, thisDebugLibPart, debugLibPart)
 
                 clauses += 1
+            except:
+                if debugLibPart is not None:
+                    print("--> Error in part: %s. We are reading up to and including part: %s"
+                          % (thisDebugLibPart, debugLibPart-1))
+                raise
 
         f.close()
         print("Verified %d original xor&regular clauses" % clauses)
