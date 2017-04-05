@@ -752,8 +752,8 @@ void Solver::test_renumbering() const
 void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
 {
     //Clauses' abstractions have to be re-calculated
-    for(size_t i = 0; i < longIrredCls.size(); i++) {
-        Clause* cl = cl_alloc.ptr(longIrredCls[i]);
+    for(ClOffset offs: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offs);
         updateLitsMap(*cl, outerToInter);
         cl->setStrenghtened();
     }
