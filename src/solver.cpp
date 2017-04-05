@@ -869,6 +869,7 @@ void Solver::renumber_variables(bool must_renumber)
     }
 
     renumber_clauses(outerToInter);
+    renumber_xor_clauses(outerToInter);
     CNF::updateVars(outerToInter, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
@@ -876,7 +877,6 @@ void Solver::renumber_variables(bool must_renumber)
     if (conf.doStamp) {
         stamp.updateVars(outerToInter, interToOuter2, seen);
     }
-    renumber_xor_clauses(outerToInter);
 
     //Update sub-elements' vars
     varReplacer->updateVars(outerToInter, interToOuter);
