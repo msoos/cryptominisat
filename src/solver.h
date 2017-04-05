@@ -312,15 +312,15 @@ class Solver : public Searcher
             vector<unsigned char> can_be_unset;
             vector<uint32_t>* trail_lim_vars;
             int64_t can_be_unsetSum;
-            bool must_fix;
+            bool must_fix_at_least_one_var;
             uint32_t num_fixed;
             bool verbose = false;
         };
         FindUndef* undef;
-        bool undef_check_must_fix();
+        bool undef_must_fix_var();
         void undef_fill_potentials();
         void undef_unset_potentials();
-        template<class C> bool undef_look_at_one_clause(const C c);
+        template<class C> bool undef_clause_surely_satisfied(const C c);
 
 
 

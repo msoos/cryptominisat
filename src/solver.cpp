@@ -3374,9 +3374,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         cout << "--" << endl;
     }
 
-    while(undef_check_must_fix()
-        && undef->can_be_unsetSum > 0
-    ) {
+    while(undef_must_fix_var() && undef->can_be_unsetSum > 0) {
         //Find variable to fix.
         int32_t maximum = -1;
         uint32_t v = var_Undef;
@@ -3391,6 +3389,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
                 }
             }
         }
+        assert(maximum > 0);
         if (undef->verbose) cout << "--" << endl;
         assert(v != var_Undef && "maximum satisfied by this var is zero? Then can_be_unsetSum was wrongly calculated!");
 
@@ -3427,12 +3426,11 @@ void Solver::undef_fill_potentials()
 
         assert(varData[v].removed == Removed::none);
         assert(assumptionsSet.size() > v);
-        if (model_value(v) != l_Undef
-            && assumptionsSet[v] == false
-        ) {
+        if (model_value(v) != l_Undef && assumptionsSet[v] == false) {
             assert(undef->can_be_unset[v] == 0);
             undef->can_be_unset[v] ++;
             if (conf.independent_vars == NULL) {
+                undef->can_be_unset[v] ++;
                 undef->can_be_unsetSum++;
             }
         }
@@ -3495,7 +3493,7 @@ void Solver::undef_unset_potentials()
 }
 
 template<class C>
-bool Solver::undef_look_at_one_clause(const C c)
+bool Solver::undef_clause_surely_satisfied(const C c)
 {
     if (undef->verbose) {
         cout << "Check called on clause: ";
@@ -3507,11 +3505,11 @@ bool Solver::undef_look_at_one_clause(const C c)
     }
 
     uint32_t v = var_Undef;
-    uint32_t numTrue = 0;
+    uint32_t numTrue_can_be_unset = 0;
     for (const Lit l: *c) {
         if (model_value(l) == l_True) {
             if (undef->can_be_unset[l.var()]) {
-                numTrue ++;
+                numTrue_can_be_unset ++;
                 v = l.var();
             } else {
                 return true;
@@ -3520,7 +3518,7 @@ bool Solver::undef_look_at_one_clause(const C c)
     }
 
     //Greedy
-    if (numTrue == 1) {
+    if (numTrue_can_be_unset == 1) {
         assert(v != var_Undef);
         assert(undef->can_be_unset[v]);
 
@@ -3531,9 +3529,8 @@ bool Solver::undef_look_at_one_clause(const C c)
         return true;
     }
 
-    //numTrue > 1
-    undef->must_fix = true;
-    assert(numTrue > 1);
+    assert(numTrue_can_be_unset > 1);
+    undef->must_fix_at_least_one_var = true;
     for (const Lit l: *c) {
         if (model_value(l) == l_True)
             undef->satisfies[l.var()]++;
@@ -3543,10 +3540,11 @@ bool Solver::undef_look_at_one_clause(const C c)
     return false;
 }
 
-bool Solver::undef_check_must_fix()
+bool Solver::undef_must_fix_var()
 {
-    undef->must_fix = false;
+    undef->must_fix_at_least_one_var = false;
 
+    //Long clauses
     for (uint32_t i = 0
          ; i < longIrredCls.size()
          ; i++
@@ -3555,17 +3553,16 @@ bool Solver::undef_check_must_fix()
             continue;
 
         Clause* c = cl_alloc.ptr(longIrredCls[i]);
-        if (undef_look_at_one_clause(c)) {
+        if (undef_clause_surely_satisfied(c)) {
             //clause definitely satisfied
             undef->dontLookAtClause[i] = true;
         }
     }
 
+    //Binary clauses
     for(size_t i = 0; i < nVars()*2; i++) {
         const Lit l = Lit::toLit(i);
-        if (!undef->can_be_unset[l.var()]
-            && model_value(l) == l_True
-        ) {
+        if (!undef->can_be_unset[l.var()] && model_value(l) == l_True) {
             continue;
         }
         for(const Watched& w: watches[l]) {
@@ -3575,11 +3572,11 @@ bool Solver::undef_check_must_fix()
                 std::array<Lit, 2> c;
                 c[0] = l;
                 c[1] = w.lit2();
-                undef_look_at_one_clause(&c);
+                undef_clause_surely_satisfied(&c);
             }
         }
     }
 
     //There is hope
-    return undef->must_fix;
+    return undef->must_fix_at_least_one_var;
 }
