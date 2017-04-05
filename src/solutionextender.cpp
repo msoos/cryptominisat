@@ -57,6 +57,7 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
+            //any setting would work, let's set to l_False (MiniSat default)
             solver->model[i] = l_False;
         }
     }
