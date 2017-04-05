@@ -37,6 +37,7 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 
 void SolutionExtender::extend()
 {
+    assert(var_has_been_blocked.empty());
     var_has_been_blocked.resize(solver->nVarsOuter(), false);
     //cout << "c [extend] start num unset: " << solver->count_num_unset_model() << endl;
 
