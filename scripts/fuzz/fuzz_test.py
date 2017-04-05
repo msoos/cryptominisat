@@ -368,7 +368,7 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
-        if options.verbose is False:
+        if not options.verbose:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
@@ -393,7 +393,7 @@ class Tester:
 
         # print time limit after child startup
         if options.verbose:
-            print("CPU limit of parent (pid %d) after startup of child" %
+            print("CPU limit of parent (pid %d) after startup of child: %s secs" %
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         # Get solver output
@@ -415,7 +415,7 @@ class Tester:
         os.unlink(err_fname)
 
         if options.verbose:
-            print("CPU limit of parent (pid %d) after child finished executing" %
+            print("CPU limit of parent (pid %d) after child finished executing: %s" %
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         return consoleOutput, retcode
