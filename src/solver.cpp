@@ -1024,6 +1024,7 @@ void Solver::set_assumptions()
 {
     assert(okay());
 
+    unfill_assumptions_set_from(assumptions);
     conflict.clear();
     assumptions.clear();
 
@@ -1232,6 +1233,7 @@ lbool Solver::simplify_problem_outside()
         status = simplify_problem(false);
     }
     unfill_assumptions_set_from(assumptions);
+    assumptions.clear();
     return status;
 }
 
@@ -1342,6 +1344,7 @@ lbool Solver::solve()
 
     handle_found_solution(status);
     unfill_assumptions_set_from(assumptions);
+    assumptions.clear();
     conf.maxConfl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     return status;
@@ -2832,8 +2835,14 @@ void Solver::update_assumptions_after_varreplace()
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
         }
 
+        Lit orig = lit_pair.lit_inter;
         lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
+        //remove old from set
+        if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
+                assumptionsSet[orig.var()] = false;
+        }
 
+        //add new to set
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
             assumptionsSet[lit_pair.lit_inter.var()] = true;
         }
