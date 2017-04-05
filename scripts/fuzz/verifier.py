@@ -405,6 +405,17 @@ class solution_parser:
             if solution[abs(numlit)] ^ (numlit < 0):
                 return True
 
+        # print not set vars
+        print("Unset vars:")
+        for lit in lits:
+            numlit = int(lit)
+            if numlit == 0:
+                break
+
+            if abs(numlit) not in solution:
+                print("var %d not set" % abs(numlit))
+
+        print("Every other var set to FALSE")
         raise NameError("Error: clause '%s' not satisfied." % line)
 
     @staticmethod
