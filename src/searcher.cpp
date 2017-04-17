@@ -2975,12 +2975,25 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
         goto end;
     }
 
+    //First check -- can't unset at the same time since the same
+    //internal variable may be inside 'assumptions' -- in case the variables
+    //have been replaced with each other.
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
+            #ifdef SLOW_DEBUG
+            if (!assumptionsSet[lit.var()]) {
+                cout << "ERROR: var " << lit.var() + 1 << " is in assumptions but not in assumptionsSet" << endl;
+            }
+            #endif
             assert(assumptionsSet[lit.var()]);
-            assumptionsSet[lit.var()] = false;
         }
+    }
+
+    //Then unset
+    for(const AssumptionPair lit_pair: unfill_from) {
+        const Lit lit = lit_pair.lit_inter;
+        assumptionsSet[lit.var()] = false;
     }
 
     end:;
