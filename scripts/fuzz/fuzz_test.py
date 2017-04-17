@@ -445,6 +445,9 @@ class Tester:
         print("Within time limit: %.2f s" % diff_time)
         print("filename: %s" % fname)
 
+        if options.verbose:
+            print(consoleOutput)
+
         # if library debug is set, check it
         if (self.needDebugLib):
             self.sol_parser.check_debug_lib(checkAgainst)
