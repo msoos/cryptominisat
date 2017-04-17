@@ -196,7 +196,13 @@ class Searcher : public HyperEngine
         //we cannot eliminate / component-handle such vars
         //Needed so checking is fast
         vector<char> assumptionsSet;
-        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user
+
+        //Note that this array can have the same internal variable more than
+        //once, in case one has been replaced with the other. So if var 1 =  var 2
+        //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
+        //insided this array twice, once it needs to be set to TRUE and once FALSE
+        vector<AssumptionPair> assumptions;
+
         void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
 
