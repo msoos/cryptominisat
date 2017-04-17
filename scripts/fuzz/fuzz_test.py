@@ -94,6 +94,9 @@ parser.add_option("--sqlite", dest="sqlite", default=False,
 parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
 
+parser.add_option("--maxthreads", dest="max_threads", default=100,
+                  type=int, help="Max number of threads")
+
 parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
                   help="Max time to run. Default: %default")
 
@@ -249,8 +252,9 @@ class Tester:
         cmd = " --zero-exit-status "
 
         if random.choice([True, False]):
-            cmd += " --reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
-            cmd += " --undef %d " % random.choice([0, 1])
+            cmd += "--maple %d " % random.choice([0, 0, 0, 1])
+            cmd += "--reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
+            cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
             cmd += "--keepguess %s " % random.randint(0, 10)
@@ -512,7 +516,9 @@ class Tester:
     def fuzz_test_one(self):
         print("\n--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
+        self.num_threads = min(options.max_threads, self.num_threads)
         self.drat = self.num_threads == 1 and random.choice([True, False])
+
         if self.drat:
             fuzzers = fuzzers_drat
         else:
