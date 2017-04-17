@@ -2983,7 +2983,7 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
         }
     }
 
-    end:
+    end:;
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
         assert(!x);
