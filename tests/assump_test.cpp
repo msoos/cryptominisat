@@ -129,6 +129,12 @@ TEST_F(assump_interf, replace_true)
     EXPECT_EQ( ret, l_True);
     EXPECT_EQ( s->get_model()[0], l_False );
     EXPECT_EQ( s->get_model()[1], l_False );
+
+    assumps.clear();
+    assumps.push_back(Lit(0, true));
+    assumps.push_back(Lit(1, false));
+    ret = s->solve(&assumps);
+    EXPECT_EQ( ret, l_False);
 }
 
 TEST_F(assump_interf, replace_false)
