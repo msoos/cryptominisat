@@ -2202,6 +2202,7 @@ void Searcher::finish_up_solve(const lbool status)
         model = assigns;
         full_model = assigns;
         if (conf.greedy_undef) {
+            assert(false && "Currently greedy undef is not supported, broken");
             vector<uint32_t> trail_lim_vars;
             for(size_t i = 0; i < decisionLevel(); i++) {
                 uint32_t at = trail_lim[i];
