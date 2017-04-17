@@ -533,23 +533,24 @@ inline void PropEngine::updateWatch(
             it->setLit2(
                 getUpdatedLit(it->lit2(), outerToInter)
             );
-
             continue;
         }
 
-        if (it->isClause()) {
-            const Clause &cl = *cl_alloc.ptr(it->get_offset());
-            Lit blocked_lit = it->getBlockedLit();
-            bool found = false;
-            for(Lit lit: cl) {
-                if (lit == blocked_lit) {
-                    found = true;
-                    break;
-                }
+        assert(it->isClause());
+        const Clause &cl = *cl_alloc.ptr(it->get_offset());
+        Lit blocked_lit = it->getBlockedLit();
+        blocked_lit = getUpdatedLit(it->getBlockedLit(), outerToInter);
+        bool found = false;
+        for(Lit lit: cl) {
+            if (lit == blocked_lit) {
+                found = true;
+                break;
             }
-            if (!found) {
-                it->setBlockedLit(cl[2]);
-            }
+        }
+        if (!found) {
+            it->setBlockedLit(cl[2]);
+        } else {
+            it->setBlockedLit(blocked_lit);
         }
     }
 }

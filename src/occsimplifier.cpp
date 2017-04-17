@@ -211,19 +211,22 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         if (it->dummy) {
             extender->dummyBlocked(it->blockedOn);
         } else {
+            //Check if clause can be removed, update literals to replaced literals
             for(Lit& l: it->lits) {
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
-                if (solver->model_value(l) == l_True) {
-                    goto next;
-                }
 
-                //Check if it can be removed
+                //Check if clause can be removed because it's set at dec level 0
                 Lit inter = solver->map_outer_to_inter(l);
                 if (solver->value(inter) == l_True
                     && solver->varData[inter.var()].level == 0
                 ) {
                     it->toRemove = true;
                     can_remove_blocked_clauses = true;
+                    goto next;
+                }
+
+                //Blocked clause can be skipped, it's satisfied
+                if (solver->model_value(l) == l_True) {
                     goto next;
                 }
             }
