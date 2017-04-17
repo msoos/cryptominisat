@@ -3476,7 +3476,7 @@ void Solver::undef_fill_potentials()
 
         //Only those with a setting of both independent_vars and in trail
         //can be unset
-        for(unsigned char& v: undef->can_be_unset) {
+        for(auto& v: undef->can_be_unset) {
             if (v < 2) {
                 v = false;
             }
