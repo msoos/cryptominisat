@@ -3418,6 +3418,8 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
 
     int toret = undef->can_be_unsetSum;
     delete undef;
+
+    verify_model();
     return toret;
 }
 
