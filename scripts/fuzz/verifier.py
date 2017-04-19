@@ -97,7 +97,7 @@ class solution_parser:
                         solution_parser._check_regular_clause(line, solution)
                     else:
                         assert line[0] == 'x', "Line must start with p, c, v or x"
-                        solution_parser._check_xor_clause(line, solution, thisDebugLibPart, debugLibPart)
+                        solution_parser._check_xor_clause(line, solution)
 
                 clauses += 1
             except:
