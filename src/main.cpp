@@ -272,6 +272,8 @@ void Main::add_supported_options()
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
+    ("maple", po::value(&conf.maple)->default_value(conf.maple)
+        , "Use maple-type variable picking sometimes")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
