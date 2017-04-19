@@ -572,10 +572,12 @@ struct OneThreadCalc
         if (print_thread_start_and_finish) {
             double end_time = cpuTime();
             data_for_thread.update_mutex->lock();
+            ios::fmtflags f(cout.flags());
             cout << "c Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (end_time-start_time)
             << endl;
+            cout.flags(f);
             data_for_thread.update_mutex->unlock();
         }
 
