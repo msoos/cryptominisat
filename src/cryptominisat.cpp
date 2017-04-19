@@ -555,9 +555,9 @@ struct OneThreadCalc
     {
         if (print_thread_start_and_finish) {
             start_time = cpuTime();
-            data_for_thread.update_mutex->lock();
+            //data_for_thread.update_mutex->lock();
             //cout << "c Starting thread " << tid << endl;
-            data_for_thread.update_mutex->unlock();
+            //data_for_thread.update_mutex->unlock();
         }
 
         OneThreadAddCls cls_adder(data_for_thread, tid);
