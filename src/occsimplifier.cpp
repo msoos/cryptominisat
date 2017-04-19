@@ -1786,7 +1786,7 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
         return;
 
     if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars
-        || time_spent_on_calc_otf_update > solver->conf.updateVarElimComplexityOTF_limitavg*100000
+        || time_spent_on_calc_otf_update > solver->conf.updateVarElimComplexityOTF_limitavg*100ULL*1000ULL
     ) {
         const double avg = float_div(time_spent_on_calc_otf_update, num_otf_update_until_now);
 
