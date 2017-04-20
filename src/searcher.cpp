@@ -2993,7 +2993,9 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     //Then unset
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
-        assumptionsSet[lit.var()] = false;
+        if (lit.var() < assumptionsSet.size()) {
+            assumptionsSet[lit.var()] = false;
+        }
     }
 
     end:;
