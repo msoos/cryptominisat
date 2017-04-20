@@ -335,6 +335,7 @@ endif()
 find_package (Threads REQUIRED)
 
 option(STATS "Don't use statistics at all" OFF)
+option(NOSQLITE "Don't detect or build with SQLITE" OFF)
 if (STATS)
     add_definitions( -DSTATS_NEEDED )
     if (NOT NOSQLITE)
