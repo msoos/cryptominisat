@@ -28,7 +28,7 @@ environment:
     #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
     ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
     BUILD_TYPE: Release
-    MSBUILD_FLAGS: /maxcpucount /nologo
+    MSBUILD_FLAGS: /maxcpucount /nologo /p:WarningLevel=1
 
 configuration:
   - Release
