@@ -222,39 +222,35 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat5 PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-        INSTALL_RPATH_USE_LINK_PATH TRUE)
-    if (STATICCOMPILE)
-      SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_END_STATIC 1)
-    endif()
-
-    if (USE_GAUSS)
-        set_target_properties(scalmc PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-            INSTALL_RPATH_USE_LINK_PATH TRUE)
-    endif()
-
+if (STATICCOMPILE)
+    SET_TARGET_PROPERTIES(cryptominisat5_simple PROPERTIES LINK_SEARCH_START_STATIC 1)
 endif()
 set_target_properties(cryptominisat5_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
 if (STATICCOMPILE)
     SET_TARGET_PROPERTIES(cryptominisat5_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
- endif()
+endif()
+target_link_libraries(cryptominisat5_simple
+    ${cryptoms_exec_link_libs}
+)
+install(TARGETS cryptominisat5_simple
+    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+    RUNTIME DESTINATION ${BINDIR}
+)
+SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    target_link_libraries(cryptominisat5
-        ${cryptoms_exec_link_libs}
-    )
-    install(TARGETS cryptominisat5
-        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-        RUNTIME DESTINATION ${BINDIR}
-    )
-    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
-
     if (USE_GAUSS)
+        if (STATICCOMPILE)
+            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_START_STATIC 1)
+        endif()
+        set_target_properties(scalmc PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+            INSTALL_RPATH_USE_LINK_PATH TRUE)
+        if (STATICCOMPILE)
+            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_END_STATIC 1)
+        endif()
         target_link_libraries(scalmc
             ${cryptoms_exec_link_libs}
         )
@@ -264,16 +260,25 @@ if (NOT ONLY_SIMPLE)
         )
         SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
     endif()
-endif()
 
-target_link_libraries(cryptominisat5_simple
-    ${cryptoms_exec_link_libs}
-)
-install(TARGETS cryptominisat5_simple
-    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-    RUNTIME DESTINATION ${BINDIR}
-)
-SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
+    if (STATICCOMPILE)
+        SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_START_STATIC 1)
+    endif()
+    set_target_properties(cryptominisat5 PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
+        INSTALL_RPATH_USE_LINK_PATH TRUE)
+    if (STATICCOMPILE)
+        SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_END_STATIC 1)
+    endif()
+    target_link_libraries(cryptominisat5
+        ${cryptoms_exec_link_libs}
+    )
+    install(TARGETS cryptominisat5
+        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+        RUNTIME DESTINATION ${BINDIR}
+    )
+    SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
+endif()
 
 
 if (FEEDBACKFUZZ)
