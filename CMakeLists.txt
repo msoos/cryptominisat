@@ -269,7 +269,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
+option(STATICCOMPILE "Compile to static executable" OFF)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
     if(STATICCOMPILE)
@@ -335,7 +335,6 @@ endif()
 find_package (Threads REQUIRED)
 
 option(STATS "Don't use statistics at all" OFF)
-option(NOSQLITE "Don't detect or build with SQLITE" OFF)
 if (STATS)
     add_definitions( -DSTATS_NEEDED )
     if (NOT NOSQLITE)
