@@ -66,8 +66,7 @@ foreach (build_config ${build_types})
         string(REGEX REPLACE "(^| )[/-]D *NDEBUG($| )"
                              " "
                              replacement
-                             "${${VAR_TO_MODIFY}}"
-              )
+                             "${${VAR_TO_MODIFY}}")
         #message("Original (${VAR_TO_MODIFY}) is ${${VAR_TO_MODIFY}} replacement is ${replacement}")
         set(${VAR_TO_MODIFY} "${replacement}" CACHE STRING "Default flags for ${build_config} configuration" FORCE)
     endforeach()
