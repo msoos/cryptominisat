@@ -1126,7 +1126,7 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 
     if (thread_num > num_cores && conf.verbosity) {
-        std::cerr
+        std::cout
         << "c WARNING: Number of threads requested is more than the number of"
         << " cores reported by the system.\n"
         << "c WARNING: This is not a good idea in general. It's best to set the"
