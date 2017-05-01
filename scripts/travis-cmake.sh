@@ -242,7 +242,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ]; then
 fi
 
 # STP build check
-if [ "$CMS_CONFIG" == "NORMAL" ]
+if [ "$CMS_CONFIG" == "NORMAL" ]; then
     cd "${BUILD_DIR}"
 
     #STP build check
