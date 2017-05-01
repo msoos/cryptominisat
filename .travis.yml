@@ -95,6 +95,9 @@ install:
   - sudo -H pip install --upgrade pip
   - sudo -H pip install lit
   - lit --version
+  - python2 "/usr/local/bin/lit" "-v"
+  - python2.7 "/usr/local/bin/lit" "-v"
+  - /opt/python/2.7.12/bin/python2.7 "/usr/local/bin/lit" "-v"
 #submodules
   - git submodule init
   - git submodule update
