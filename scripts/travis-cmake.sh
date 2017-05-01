@@ -23,9 +23,6 @@
 set -e
 set -x
 
-COMMON_CMAKE_ARGS="-G \"Unix Makefiles\" -DENABLE_TESTING:BOOL=ON"
-COMMON_CMAKE_ARGS_NO_TEST="-G \"Unix Makefiles\""
-
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
 NUM=`./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l`
@@ -51,39 +48,39 @@ BUILD_DIR=$(pwd)
 case $CMS_CONFIG in
     SLOW_DEBUG)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     COVERAGE)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCOVERAGE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     STATIC)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     ONLY_SIMPLE)
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DONLY_SIMPLE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     ONLY_SIMPLE_STATIC)
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DONLY_SIMPLE:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
@@ -91,21 +88,21 @@ case $CMS_CONFIG in
 
     STATS)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATS:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     NOZLIB)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DNOZLIB:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     RELEASE)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCMAKE_BUILD_TYPE:STRING=Release \
                    "${SOURCE_DIR}"
     ;;
@@ -113,7 +110,7 @@ case $CMS_CONFIG in
     NOSQLITE)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove libsqlite3-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
@@ -121,7 +118,7 @@ case $CMS_CONFIG in
     NOPYTHON)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get remove python2.7-dev python-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
@@ -130,7 +127,7 @@ case $CMS_CONFIG in
         SOURCE_DIR=$(pwd)
         BUILD_DIR=$(pwd)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
@@ -141,7 +138,7 @@ case $CMS_CONFIG in
         #./cmsat_mysql_setup.sh
         cd "$BUILD_DIR"
 
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATS:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
@@ -150,22 +147,21 @@ case $CMS_CONFIG in
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
 
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATS:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     NOTEST)
         sudo apt-get install libboost-program-options-dev
-        eval cmake "${COMMON_CMAKE_ARGS_NO_TEST}" \
-                   "${SOURCE_DIR}"
+        eval cmake "${SOURCE_DIR}"
     ;;
 
     GAUSS)
         sudo apt-get install libboost-program-options-dev
         sudo apt-get install libsqlite3-dev
 
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
                     -DUSE_GAUSS=ON \
                    "${SOURCE_DIR}"
     ;;
@@ -180,7 +176,7 @@ case $CMS_CONFIG in
         sudo make install
         cd ..
 
-        eval cmake "${COMMON_CMAKE_ARGS}" \
+        eval cmake -DENABLE_TESTING:BOOL=ON \
             "${SOURCE_DIR}"
     ;;
 
