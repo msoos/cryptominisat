@@ -238,8 +238,9 @@ case $CMS_CONFIG in
     ;;
 esac
 
-if [ "$CMS_CONFIG" == "NORMAL" ]; then
-    #elimination checks
+# elimination checks
+# NOTE: minisat doesn't build with clang
+if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" -ne "clang++" ]; then
     CMS_PATH="${BUILD_DIR}/cryptominisat5"
     cd ../tests/simp-checks/
     git clone --depth 1 https://github.com/msoos/testfiles.git
@@ -252,6 +253,10 @@ if [ "$CMS_CONFIG" == "NORMAL" ]; then
     make
     cd ..
     ./check_bve.py "$CMS_PATH" testfiles/*
+fi
+
+# STP build check
+if [ "$CMS_CONFIG" == "NORMAL" ]
     cd "${BUILD_DIR}"
 
     #STP build check
