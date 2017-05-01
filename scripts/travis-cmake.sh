@@ -245,7 +245,7 @@ fi
 if [ "$CMS_CONFIG" == "NORMAL" ]; then
     cd "${BUILD_DIR}"
 
-    #STP build check
+    # minisat
     git clone --depth 1 https://github.com/niklasso/minisat.git
     cd minisat
     mkdir -p build
@@ -255,6 +255,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ]; then
     sudo make install
     cd "${BUILD_DIR}"
 
+    # STP
     git clone --depth 1 https://github.com/stp/stp.git
     cd stp
     mkdir -p build
