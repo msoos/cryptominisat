@@ -1,7 +1,7 @@
 language: cpp
 compiler:
   - gcc
-  # -clang
+  - clang
 
 os:
   - linux
@@ -42,26 +42,26 @@ matrix:
       compiler: gcc
       env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
 
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-      env:
-        - CMS_CONFIG=STATIC_CMS
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-      env:
-        - CMS_CONFIG=NORM
+    #- compiler: clang
+      #addons:
+        #apt:
+          #sources:
+            #- ubuntu-toolchain-r-test
+            #- llvm-toolchain-precise-3.7
+          #packages:
+            #- clang-3.7
+      #env:
+        #- CMS_CONFIG=STATIC_CMS
+    #- compiler: clang
+      #addons:
+        #apt:
+          #sources:
+            #- ubuntu-toolchain-r-test
+            #- llvm-toolchain-precise-3.7
+          #packages:
+            #- clang-3.7
+      #env:
+        #- CMS_CONFIG=NORM
 
   allow_failures:
     # Covertiy scan might fail
