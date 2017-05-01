@@ -201,6 +201,26 @@ if [ "$CMS_CONFIG" == "NOTEST" ]; then
     exit 0
 fi
 
+if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
+     ldd ./cryptominisat5_simple
+     RETVAL=$?
+     if [ $RETVAL -eq 0 ] ; then
+        echo "ERROR: NOT STATIC!"
+        # Not static.
+        exit 1
+     fi
+fi
+
+if [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
+     ldd ./cryptominisat5
+     RETVAL=$?
+     if [ $RETVAL -eq 0 ] ; then
+        echo "ERROR: NOT STATIC!"
+        # Not static.
+        exit 1
+     fi
+fi
+
 ctest -V
 sudo make install
 
