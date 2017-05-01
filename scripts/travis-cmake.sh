@@ -226,6 +226,7 @@ esac
 
 # elimination checks
 # NOTE: minisat doesn't build with clang
+echo "CXX: '${CXX}'"
 if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     CMS_PATH="${BUILD_DIR}/cryptominisat5"
     cd ../tests/simp-checks/
