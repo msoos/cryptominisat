@@ -191,10 +191,6 @@ case $CMS_CONFIG in
 esac
 
 make
-if [ "$CMS_CONFIG" == "GAUSS" ]; then
-    echo "Currently, Gauss is only being *built*. Not tried for correctness"
-    exit 0
-fi
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install
