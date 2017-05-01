@@ -94,6 +94,7 @@ install:
   #- cd ..
   - sudo -H pip install --upgrade pip
   - sudo -H pip install lit
+  - lit --version
 #submodules
   - git submodule init
   - git submodule update
