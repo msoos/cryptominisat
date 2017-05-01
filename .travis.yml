@@ -87,11 +87,13 @@ install:
   - sudo cp drat-trim /usr/local/bin/
   - cd ..
 # lit
-  - wget https://pypi.python.org/packages/5b/a0/dbed2c8dfb220eb9a5a893257223cd0ff791c0fbc34ce2f1a957fa4b6c6f/lit-0.5.0.tar.gz
-  - tar xzvf lit-0.5.0.tar.gz
-  - cd lit-0.5.0
-  - sudo python2 setup.py install
-  - cd ..
+  #- wget https://pypi.python.org/packages/5b/a0/dbed2c8dfb220eb9a5a893257223cd0ff791c0fbc34ce2f1a957fa4b6c6f/lit-0.5.0.tar.gz
+  #- tar xzvf lit-0.5.0.tar.gz
+  #- cd lit-0.5.0
+  #- sudo python2 setup.py install
+  #- cd ..
+  - sudo pip install --upgrade pip
+  - sudo pip install lit
 #submodules
   - git submodule init
   - git submodule update
