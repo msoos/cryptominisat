@@ -274,7 +274,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(STATICCOMPILE)
         MESSAGE(STATUS "Compiling for static library use")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -static ")
-        #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static ")
         SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
         # removing -rdynamic that's automatically added
