@@ -226,7 +226,6 @@ esac
 
 # elimination checks
 # NOTE: minisat doesn't build with clang
-echo "CXX: '${CXX}'"
 if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     CMS_PATH="${BUILD_DIR}/cryptominisat5"
     cd ../tests/simp-checks/
@@ -240,12 +239,9 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     make
     cd ..
     ./check_bve.py "$CMS_PATH" testfiles/*
-fi
 
-# STP build check
-if [ "$CMS_CONFIG" == "NORMAL" ]; then
+    # building STP
     cd "${BUILD_DIR}"
-
     # minisat
     git clone --depth 1 https://github.com/niklasso/minisat.git
     cd minisat
