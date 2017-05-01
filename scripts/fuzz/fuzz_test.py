@@ -186,6 +186,8 @@ def file_exists(fname):
 
 def print_version():
     command = options.solver + " --version"
+    if options.verbose:
+        print("Executing: %s" % command)
     p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     consoleOutput, err = p.communicate()
     print("Version values: %s" % consoleOutput.strip())
