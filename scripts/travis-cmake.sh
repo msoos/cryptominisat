@@ -69,7 +69,7 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
-    STATIC_BIN)
+    STATIC)
         sudo apt-get install libboost-program-options-dev
         eval cmake "${COMMON_CMAKE_ARGS}" \
                    -DSTATICCOMPILE:BOOL=ON \
