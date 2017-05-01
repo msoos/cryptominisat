@@ -92,8 +92,8 @@ install:
   #- cd lit-0.5.0
   #- sudo python2 setup.py install
   #- cd ..
-  - sudo pip install --upgrade pip
-  - sudo pip install lit
+  - sudo -H pip install --upgrade pip
+  - sudo -H pip install lit
 #submodules
   - git submodule init
   - git submodule update
