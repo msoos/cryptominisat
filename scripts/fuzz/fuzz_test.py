@@ -82,6 +82,8 @@ parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                   )
 parser.add_option("--novalgrind", dest="novalgrind", default=False,
                   action="store_true", help="No valgrind installed")
+parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
+                  default=10, help="1 out of X times valgrind will be used. Default: %default in 1")
 
 parser.add_option("--small", dest="small", default=False,
                   action="store_true",
@@ -364,7 +366,7 @@ class Tester:
 
         # construct command
         command = ""
-        if not options.novalgrind and random.randint(0, 10) == 0:
+        if not options.novalgrind and random.randint(0, options.valgrind_freq) == 0:
             command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
         if rnd_opts is None:
