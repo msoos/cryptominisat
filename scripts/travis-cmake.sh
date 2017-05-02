@@ -59,6 +59,21 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
+    LARGEMEM)
+        sudo apt-get install libboost-program-options-dev
+        eval cmake -DENABLE_TESTING:BOOL=ON \
+                   -DLARGEMEM:BOOL=ON \
+                   "${SOURCE_DIR}"
+    ;;
+
+    LARGEMEM_GAUSS)
+        sudo apt-get install libboost-program-options-dev
+        eval cmake -DENABLE_TESTING:BOOL=ON \
+                   -DLARGEMEM:BOOL=ON \
+                   -DUSE_GAUSS=ON \
+                   "${SOURCE_DIR}"
+    ;;
+
     COVERAGE)
         sudo apt-get install libboost-program-options-dev
         eval cmake -DENABLE_TESTING:BOOL=ON \
@@ -162,7 +177,7 @@ case $CMS_CONFIG in
         sudo apt-get install libsqlite3-dev
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
-                    -DUSE_GAUSS=ON \
+                   -DUSE_GAUSS=ON \
                    "${SOURCE_DIR}"
     ;;
 

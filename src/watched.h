@@ -255,8 +255,8 @@ class Watched {
         // binary, tertiary or long, as per WatchType
         // currently WatchType is enum with range [0..3] and fits in type
         // in case if WatchType extended type size won't be enough.
-        uint32_t type:2;
-        uint32_t data2:30;
+        ClOffset type:2;
+        ClOffset data2:EFFECTIVELY_USEABLE_BITS;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Watched& ws)

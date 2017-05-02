@@ -33,8 +33,6 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 
-#define BASE_DATA_TYPE uint32_t
-
 namespace CMSat {
 
 class Clause;
@@ -76,7 +74,7 @@ class ClauseAllocator {
 
         ClOffset get_offset(const Clause* ptr) const;
 
-        inline Clause* ptr(const uint32_t offset) const
+        inline Clause* ptr(const ClOffset offset) const
         {
             return (Clause*)(&dataStart[offset]);
         }
@@ -94,21 +92,21 @@ class ClauseAllocator {
     private:
         void update_offsets(vector<ClOffset>& offsets);
 
-        uint32_t move_cl(
-            uint32_t* newDataStart
-            , uint32_t*& new_ptr
+        ClOffset move_cl(
+            ClOffset* newDataStart
+            , ClOffset*& new_ptr
             , Clause* old
         ) const;
 
         BASE_DATA_TYPE* dataStart; ///<Stack starts at these positions
-        size_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
+        uint64_t size; ///<The number of BASE_DATA_TYPE datapieces currently used in each stack
         /**
         @brief Clauses in the stack had this size when they were allocated
         This my NOT be their current size: the clauses may be shrinked during
         the running of the solver. Therefore, it is imperative that their orignal
         size is saved. This way, we can later move clauses around.
         */
-        size_t capacity; ///<The number of BASE_DATA_TYPE datapieces allocated
+        uint64_t capacity; ///<The number of BASE_DATA_TYPE datapieces allocated
         /**
         @brief The estimated used size of the stack
         This is incremented by clauseSize each time a clause is allocated, and
@@ -116,9 +114,9 @@ class ClauseAllocator {
         problem is, that clauses can shrink, and thus this value will be an
         overestimation almost all the time
         */
-        size_t currentlyUsedSize;
+        uint64_t currentlyUsedSize;
 
-        void* allocEnough(const uint32_t size);
+        void* allocEnough(const uint32_t num_lits);
 };
 
 } //end namespace

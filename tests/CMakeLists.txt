@@ -126,6 +126,7 @@ add_test (
 
 #google test harness
 set (MY_TESTS
+#     clause_alloc_test
     basic_test
     assump_test
     heap_test

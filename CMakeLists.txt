@@ -87,6 +87,11 @@ if (FEEDBACKFUZZ)
     add_cxx_flag("-fsanitize-coverage=edge,indirect-calls,8bit-counters")
 endif()
 
+option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
+if (LARGEMEM)
+    add_definitions(-DLARGE_OFFSETS)
+endif()
+
 option(SANITIZE "Use Clang sanitizers. This will force using clang++ as the compiler" OFF)
 if (SANITIZE)
     SET (CMAKE_CXX_COMPILER "clang++")
