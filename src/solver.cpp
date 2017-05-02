@@ -1237,8 +1237,10 @@ lbool Solver::simplify_problem_outside()
     return status;
 }
 
-lbool Solver::solve()
-{
+lbool Solver::solve_with_assumptions(
+    const vector<Lit>* _assumptions
+) {
+    move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
     if (ok) {
         assert(check_order_heap_sanity());

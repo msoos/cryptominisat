@@ -254,7 +254,6 @@ class Solver : public Searcher
         void check_too_large_variable_number(const vector<Lit>& lits) const;
         void set_assumptions();
 
-        lbool solve();
         lbool simplify_problem_outside();
         void move_to_outside_assumps(const vector<Lit>* assumps);
         vector<Lit> back_number_from_outside_to_outer_tmp;
@@ -422,13 +421,6 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
             outside_assumptions.push_back(lit);
         }
     }
-}
-
-inline lbool Solver::solve_with_assumptions(
-    const vector<Lit>* _assumptions
-) {
-    move_to_outside_assumps(_assumptions);
-    return solve();
 }
 
 inline lbool Solver::simplify_with_assumptions(
