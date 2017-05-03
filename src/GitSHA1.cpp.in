@@ -43,7 +43,6 @@ const char* get_compilation_env()
     "ONLY_SIMPLE = @ONLY_SIMPLE@ | "
     "Boost_FOUND = @Boost_FOUND@ | "
     "STATS = @STATS@ | "
-    "MYSQL_FOUND = @MYSQL_FOUND@ | "
     "SQLITE3_FOUND = @SQLITE3_FOUND@ | "
     "ZLIB_FOUND = @ZLIB_FOUND@ | "
     "VALGRIND_FOUND = @VALGRIND_FOUND@ | "
