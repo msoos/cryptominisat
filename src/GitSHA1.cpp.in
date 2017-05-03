@@ -54,6 +54,7 @@ const char* get_compilation_env()
     "PYTHON_LIBRARY = @PYTHON_LIBRARY@ | "
     "PYTHON_INCLUDE_DIRS = @PYTHON_INCLUDE_DIRS@ | "
     "MY_TARGETS = @MY_TARGETS@ | "
+    "LARGEMEM = @LARGEMEM@ | "
     "LIMITMEM = @LIMITMEM@ | "
     "compilation date time = " __DATE__ " " __TIME__
     ""
