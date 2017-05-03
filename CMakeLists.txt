@@ -260,7 +260,7 @@ endif()
 
 option(IPASIR "Also build IPASIR" OFF)
 
-option(LIMITMEM "Limit memory used by CMS through number of variables" OFF)
+option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
     set(LIMITMEM "ON")
 endif()
