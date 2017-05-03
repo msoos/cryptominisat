@@ -42,7 +42,6 @@ const char* get_compilation_env()
     "STATICCOMPILE = @STATICCOMPILE@ | "
     "ONLY_SIMPLE = @ONLY_SIMPLE@ | "
     "Boost_FOUND = @Boost_FOUND@ | "
-    "TBB_FOUND = @TBB_FOUND@ | "
     "STATS = @STATS@ | "
     "MYSQL_FOUND = @MYSQL_FOUND@ | "
     "SQLITE3_FOUND = @SQLITE3_FOUND@ | "

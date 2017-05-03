@@ -88,10 +88,6 @@ if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
-if (TBB_FOUND)
-    set(cryptoms_lib_link_libs  ${cryptoms_lib_link_libs} ${TBB_MALLOC_LIBRARY_NAMES})
-endif()
-
 if (NOT STATICCOMPILE)
     add_library(libcryptominisat5 SHARED
         ${cryptoms_lib_files}
