@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <Python.h>
 #include <structmember.h>
 #include <limits>
-
 #include <cassert.h>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
