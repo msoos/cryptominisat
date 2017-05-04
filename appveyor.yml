@@ -29,13 +29,12 @@ environment:
     ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
     BUILD_TYPE: Release
     MSBUILD_FLAGS: /maxcpucount /nologo
+  matrix:
+  - STATICCOMPILE_SETTING: ON
+  - STATICCOMPILE_SETTING: OFF
 
 configuration:
   - Release
-
-matrix:
-  - STATICCOMPILE_SETTING: ON
-  - STATICCOMPILE_SETTING: OFF
 
 build_script:
   #- IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
