@@ -33,6 +33,10 @@ environment:
 configuration:
   - Release
 
+matrix:
+  - STATICCOMPILE_SETTING: ON
+  - STATICCOMPILE_SETTING: OFF
+
 build_script:
   #- IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
   - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
@@ -79,8 +83,9 @@ build_script:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=ON -DZLIB_ROOT=%ZLIB_ROOT% ..
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% ..
   - cmake --build . --config %CONFIGURATION%
+  - if %STATICCOMPILE_SETTING%==ON call ctest -V
 
 
 build:
