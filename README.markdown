@@ -131,9 +131,20 @@ p cnf 2 4
 
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
-Python usage
+Building the python module
 -----
 
+```
+$ sudo apt-get install python-setuptools python-dev
+$ tar xzvf cryptominisat-version.tar.gz
+$ cd cryptominisat-version
+$ cmake .
+$ make
+
+```
+
+Python usage
+-----
 The python module is under the directory `python`. You have to first compile
 and install this module, as explained above. You can then use it as:
 
@@ -349,7 +360,7 @@ Testing
 For testing you will need the GIT checkout and get the submodules:
 
 ```
-$ sudo apt-get install git python-pip
+$ sudo apt-get install git python-pip python-setuptools python-dev
 $ sudo pip install pip
 $ git clone https://github.com/msoos/cryptominisat.git
 $ cd cryptominisat
