@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 
-#include "assert.h"
+#include <cassert.h>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
