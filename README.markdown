@@ -284,9 +284,9 @@ Preprocessor usage
 Run cryptominisat5 as:
 
 ```
-./cryptominisat5 -p1 input.cnf simplified.cnf
-some_sat_solver simplified.cnf > output
-./cryptominisat5 -p2 output
+$ ./cryptominisat5 -p1 input.cnf simplified.cnf
+$ some_sat_solver simplified.cnf > output
+$ ./cryptominisat5 -p2 output
 ```
 
 where `some_sat_solver` is a SAT solver of your choice that outputs a solution in the format of:
@@ -319,11 +319,11 @@ Gaussian elimination
 For building with Gaussian Elimination, you need to perform:
 
 ```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-mkdir build && cd build
-cmake -DUSE_GAUSS=ON ..
-make
+$ tar xzvf cryptominisat-version.tar.gz
+$ cd cryptominisat-version
+$ mkdir build && cd build
+$ cmake -DUSE_GAUSS=ON ..
+$ make
 ```
 
 To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
@@ -349,18 +349,20 @@ Testing
 For testing you will need the GIT checkout and get the submodules:
 
 ```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
+$ sudo apt-get install git python-pip
+$ sudo pip install pip
+$ git clone https://github.com/msoos/cryptominisat.git
+$ cd cryptominisat
+$ git submodule update --init
 ```
 
 Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
 
 ```
-mkdir build && cd build
-cmake -DENABLE_TESTING=ON ..
-make -j4
-make test
+$ mkdir build && cd build
+$ cmake -DENABLE_TESTING=ON ..
+$ make -j4
+$ make test
 ```
 
 Web-based run explorer
