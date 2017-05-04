@@ -143,6 +143,8 @@ $ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
 $ cmake .
 $ make
+$ sudo make install
+$ sudo ldconfig
 
 ```
 
@@ -373,6 +375,8 @@ $ mkdir build && cd build
 $ cmake -DENABLE_TESTING=ON ..
 $ make -j4
 $ make test
+$ sudo make install
+$ sudo ldconfig
 ```
 
 Web-based run explorer
