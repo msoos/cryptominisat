@@ -131,10 +131,13 @@ p cnf 2 4
 
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
-Building the python module
+Python usage
 -----
+The python module must be compiled as per:
 
 ```
+$ sudo apt-get install build-essential cmake
+$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
 $ sudo apt-get install python-setuptools python-dev
 $ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
@@ -143,10 +146,7 @@ $ make
 
 ```
 
-Python usage
------
-The python module is under the directory `python`. You have to first compile
-and install this module, as explained above. You can then use it as:
+You can then use it as:
 
 ```
 >>> from pycryptosat import Solver
@@ -176,7 +176,7 @@ True
 (None, True, False, True)
 ```
 
-For more detailed instruction, please see the README.rst under the `python`
+For more detailed usage instructions, please see the README.rst under the `python`
 directory.
 
 Library usage
@@ -327,9 +327,11 @@ It is a good idea to put `renumber` as late as possible, as it renumbers the var
 
 Gaussian elimination
 -----
-For building with Gaussian Elimination, you need to perform:
+For building with Gaussian Elimination, you need to build as per:
 
 ```
+$ sudo apt-get install build-essential cmake
+$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
 $ tar xzvf cryptominisat-version.tar.gz
 $ cd cryptominisat-version
 $ mkdir build && cd build
@@ -357,19 +359,16 @@ Gauss options:
 
 Testing
 -----
-For testing you will need the GIT checkout and get the submodules:
+For testing you will need the GIT checkout and build as per:
 
 ```
+$ sudo apt-get install build-essential cmake
+$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
 $ sudo apt-get install git python-pip python-setuptools python-dev
 $ sudo pip install pip
 $ git clone https://github.com/msoos/cryptominisat.git
 $ cd cryptominisat
 $ git submodule update --init
-```
-
-Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
-
-```
 $ mkdir build && cd build
 $ cmake -DENABLE_TESTING=ON ..
 $ make -j4
