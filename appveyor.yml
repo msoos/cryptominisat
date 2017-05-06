@@ -82,6 +82,7 @@ build_script:
   # get "lit" from python pip
   - python -m pip install lit
 
+  # build CMS
   - echo Running cmake...
   - cd c:\projects\cryptominisat
   - git submodule update --init --recursive
