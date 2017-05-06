@@ -28,7 +28,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 cmake .
@@ -119,7 +119,7 @@ The python module must be compiled as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install python-setuptools python-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
@@ -315,7 +315,7 @@ For building with Gaussian Elimination, you need to build as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -347,7 +347,7 @@ For testing you will need the GIT checkout and build as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python-pip python-setuptools python-dev
 pip install pip
 git clone https://github.com/msoos/cryptominisat.git
