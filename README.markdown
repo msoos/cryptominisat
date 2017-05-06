@@ -20,39 +20,21 @@ that it allows for a more efficient system, with assumptions and multiple
 a high-level yet efficient API to use most of the C++ interface with ease.
 
 
-Prerequisites
+Building
 -----
 
-You need to have the following installed in case you use Debian or Ubuntu -- for
-other distros, the packages should be similarly named:
-```
-$ sudo apt-get install build-essential cmake
-```
-
-The following are not required but are *very* useful:
-```
-$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
-```
-
-Compiling and installing under Linux
------
-
-Build:
-=======
-You have to use cmake to compile and install:
+To build and install, issue:
 
 ```
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ cmake .
-$ make
-```
-
-Install:
-
-```
-$ sudo make install
-$ sudo ldconfig
+sudo apt-get install build-essential cmake
+# not required but very useful
+sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+sudo ldconfig
 ```
 
 Once cryptominisat is installed, the binary is available under
@@ -115,7 +97,7 @@ The files has 3 clauses and 2 variables, this is reflected in the header
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
 True. The only solution to this problem is:
 ```
-$ cryptominisat5 --verb 0 file.cnf
+cryptominisat5 --verb 0 file.cnf
 s SATISFIABLE
 v 1 -2 3 0
 ```
@@ -136,15 +118,15 @@ Python usage
 The python module must be compiled as per:
 
 ```
-$ sudo apt-get install build-essential cmake
-$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
-$ sudo apt-get install python-setuptools python-dev
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ cmake .
-$ make
-$ sudo make install
-$ sudo ldconfig
+sudo apt-get install build-essential cmake
+sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install python-setuptools python-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+sudo ldconfig
 
 ```
 
@@ -297,9 +279,9 @@ Preprocessor usage
 Run cryptominisat5 as:
 
 ```
-$ ./cryptominisat5 -p1 input.cnf simplified.cnf
-$ some_sat_solver simplified.cnf > output
-$ ./cryptominisat5 -p2 output
+./cryptominisat5 -p1 input.cnf simplified.cnf
+some_sat_solver simplified.cnf > output
+./cryptominisat5 -p2 output
 ```
 
 where `some_sat_solver` is a SAT solver of your choice that outputs a solution in the format of:
@@ -332,13 +314,13 @@ Gaussian elimination
 For building with Gaussian Elimination, you need to build as per:
 
 ```
-$ sudo apt-get install build-essential cmake
-$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ mkdir build && cd build
-$ cmake -DUSE_GAUSS=ON ..
-$ make
+sudo apt-get install build-essential cmake
+sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+mkdir build && cd build
+cmake -DUSE_GAUSS=ON ..
+make
 ```
 
 To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
@@ -364,19 +346,19 @@ Testing
 For testing you will need the GIT checkout and build as per:
 
 ```
-$ sudo apt-get install build-essential cmake
-$ sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
-$ sudo apt-get install git python-pip python-setuptools python-dev
-$ sudo pip install pip
-$ git clone https://github.com/msoos/cryptominisat.git
-$ cd cryptominisat
-$ git submodule update --init
-$ mkdir build && cd build
-$ cmake -DENABLE_TESTING=ON ..
-$ make -j4
-$ make test
-$ sudo make install
-$ sudo ldconfig
+sudo apt-get install build-essential cmake
+sudo apt-get install libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install git python-pip python-setuptools python-dev
+pip install pip
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
+git submodule update --init
+mkdir build && cd build
+cmake -DENABLE_TESTING=ON ..
+make -j4
+make test
+sudo make install
+sudo ldconfig
 ```
 
 Web-based run explorer
