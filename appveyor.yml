@@ -80,6 +80,7 @@ build_script:
 
   # get "lit" from python pip
   - python -m pip install lit
+  - python -c "import platform; print(platform.architecture())"
 
   # build CMS
   - echo Running cmake...
