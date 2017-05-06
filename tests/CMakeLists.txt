@@ -167,15 +167,3 @@ foreach(F ${MY_TESTS})
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endforeach()
-
-
-# This test is not stable enough, depends on CPU speed
-# if (NOT SLOW_DEBUG)
-#     add_executable(library_speed_test
-#         library_speed_test.cpp
-#     )
-#
-#     target_link_libraries(library_speed_test
-#         libcryptominisat5
-#     )
-# endif()
