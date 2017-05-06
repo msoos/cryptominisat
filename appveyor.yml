@@ -23,9 +23,11 @@ platform:
 
 environment:
   global:
-    PYTHON: "C:\\Python27-x64"
+    #PYTHON: "C:\\Python27-x64"
+    #PYTHON_ARCH: "x64"
+    PYTHON: "C:\\Python27"
+    PYTHON_ARCH: "x86"
     PYTHON_VERSION: "2.7.13"
-    PYTHON_ARCH: "x64"
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
     #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
     ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
