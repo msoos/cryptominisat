@@ -25,7 +25,8 @@ THE SOFTWARE.
 #include "assert.h"
 
 c_Lit new_lit(uint32_t var, bool neg) {
-    c_Lit x = {(var << 1) | neg};
+    c_Lit x;
+    x.x = (var << 1) | neg;
     return x;
 }
 
