@@ -361,6 +361,28 @@ sudo make install
 sudo ldconfig
 ```
 
+Fuzzing
+-----
+Build for test as per above, then:
+
+```
+sudo apt-get install valgrind
+cd ../../
+git clone https://github.com/msoos/drat-trim
+cd drat-trim
+make
+sudo cp drat-trim2 /usr/local/bin/drat-trim
+cd ..
+git clone https://github.com/msoos/lingeling-ala
+cd lingeling-ala
+./configure
+make
+sudo cp lingeling /usr/local/bin/
+cd ../cryptominisat/scripts/fuzz/
+./fuzz_test.py
+
+```
+
 Web-based run explorer
 -----
 Please see under web/README.markdown for details. This is an experimental feature.
