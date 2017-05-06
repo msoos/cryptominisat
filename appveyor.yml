@@ -80,7 +80,7 @@ build_script:
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
 
   # get "lit" from python pip
-  - "%PYTHON%\python -m pip install lit"
+  - call "%PYTHON%\python -m pip install lit"
 
   # build CMS
   - echo Running cmake...
