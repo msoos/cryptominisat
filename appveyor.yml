@@ -23,7 +23,9 @@ platform:
 
 environment:
   global:
-    PYTHON: "C:\\Python27"
+    PYTHON: "C:\Python27-x64"
+    PYTHON_VERSION: "2.7.13"
+    PYTHON_ARCH: "x64"
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
     #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
     ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
@@ -39,12 +41,11 @@ configuration:
   - Release
 
 build_script:
-  #- IF "%PLATFORM%" == "x86" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib32-msvc-14.0)
+
+  - echo %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%
+  - %PYTHON%\python -c "import platform; print(platform.architecture())"
   - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
-
-  #- IF "%PLATFORM%" == "x64" ( SET BOOST_LIBRARYDIR=C:/Libraries/boost_1_59_0/lib64-msvc-14.0)
   - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
-
   - echo %PLATFORM%
   - echo %BOOST_LIBRARYDIR%
   - echo %CMAKE_GENERATOR%
@@ -79,8 +80,7 @@ build_script:
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
 
   # get "lit" from python pip
-  - python -m pip install lit
-  - python -c "import platform; print(platform.architecture())"
+  - %PYTHON%\python -m pip install lit
 
   # build CMS
   - echo Running cmake...
