@@ -197,7 +197,10 @@ else()
     # add_compile_options(/Wall)
 
     # /Za = only ansi C98 & C++11
-    add_compile_options(/Za)
+    # /Za is not recommended for use, not tested, etc.
+    # see: http://stackoverflow.com/questions/5489326/za-compiler-directive-does-not-compile-system-headers-in-vs2010
+    # add_compile_options(/Za)
+
     add_compile_options(/fp:precise)
 
     # exception handling. s = The exception-handling model that catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" may throw an exception.
