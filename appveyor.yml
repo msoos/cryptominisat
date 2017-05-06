@@ -23,7 +23,7 @@ platform:
 
 environment:
   global:
-    PYTHON: "C:\Python27-x64"
+    PYTHON: "C:\\Python27-x64"
     PYTHON_VERSION: "2.7.13"
     PYTHON_ARCH: "x64"
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
@@ -50,6 +50,9 @@ build_script:
   - echo %BOOST_LIBRARYDIR%
   - echo %CMAKE_GENERATOR%
   - echo %configuration%
+
+  # get "lit" from python pip
+  - "%PYTHON%/python -m pip install lit"
 
   - echo %cd%
   - cd c:\projects\cryptominisat
@@ -78,9 +81,6 @@ build_script:
   - if %PLATFORM%==x86 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x86" zlib.sln
   - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
   - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
-
-  # get "lit" from python pip
-  - call "%PYTHON%\python -m pip install lit"
 
   # build CMS
   - echo Running cmake...
