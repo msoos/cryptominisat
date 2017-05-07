@@ -518,7 +518,7 @@ class Tester:
             exit()
 
     def fuzz_test_one(self):
-        print("\n--- NORMAL TESTING ---")
+        print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.drat = self.num_threads == 1 and random.choice([True, False])
@@ -571,7 +571,7 @@ class Tester:
             pass
 
     def fuzz_test_preproc(self):
-        print("\n--- PREPROC TESTING ---")
+        print("--- PREPROC TESTING ---")
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
@@ -658,7 +658,9 @@ while True:
     if options.small:
         toexec += " --small"
 
-    print("To re-create fuzz-test below: %s" % toexec)
+    print("")
+    print("")
+    print("--> To re-create fuzz-test below: %s" % toexec)
 
     random.seed(rnd_seed)
     if random.choice([True, False]):
