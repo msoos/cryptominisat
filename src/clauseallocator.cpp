@@ -114,19 +114,21 @@ void* ClauseAllocator::allocEnough(
         }
 
         //Reallocate data
-        dataStart = (BASE_DATA_TYPE*)realloc(
+        BASE_DATA_TYPE* new_dataStart;
+        new_dataStart = (BASE_DATA_TYPE*)realloc(
             dataStart
             , newcapacity*sizeof(BASE_DATA_TYPE)
         );
 
         //Realloc failed?
-        if (dataStart == NULL) {
+        if (new_dataStart == NULL) {
             std::cerr
             << "ERROR: while reallocating clause space"
             << endl;
 
             throw std::bad_alloc();
         }
+        dataStart = new_dataStart;
 
         //Update capacity to reflect the update
         capacity = newcapacity;
