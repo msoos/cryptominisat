@@ -210,7 +210,7 @@ case $CMS_CONFIG in
     ;;
 
     *)
-        echo "\"${STP_CONFIG}\" configuration not recognised"
+        echo "\"${CMS_CONFIG}\" configuration not recognised"
         exit 1
     ;;
 esac
@@ -249,7 +249,7 @@ case $CMS_CONFIG in
     ;;
 
     *)
-        echo "\"${STP_CONFIG}\" Binary no extra testing (sql, xor, etc), skipping this part"
+        echo "\"${CMS_CONFIG}\" Binary no extra testing (sql, xor, etc), skipping this part"
     ;;
 esac
 
@@ -314,7 +314,7 @@ case $CMS_CONFIG in
     ;;
 
     *)
-        echo "\"${STP_CONFIG}\" No further testing"
+        echo "\"${CMS_CONFIG}\" No further testing"
     ;;
 esac
 
