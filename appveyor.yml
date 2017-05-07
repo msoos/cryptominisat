@@ -97,7 +97,7 @@ build_script:
   - cmake --version
   - cmake -G %CMAKE_GENERATOR% library_speed_test -DENABLE_PYTHON_INTERFACE=ON -DENABLE_TESTING=ON  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% ..
   - cmake --build . --config %CONFIGURATION%
-  - if %STATICCOMPILE_SETTING%==ON call ctest -V
+  - if %STATICCOMPILE_SETTING%==ON call ctest -V -C %CONFIGURATION%
 
 
 build:
