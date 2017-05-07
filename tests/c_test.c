@@ -37,7 +37,7 @@ int main(void) {
     cmsat_set_num_threads(solver, 4);
     cmsat_new_vars(solver, 3);
 
-    c_Lit clause[4] = {};
+    c_Lit clause[4];
     clause[0] = new_lit(0, false);
     cmsat_add_clause(solver, clause, 1);
 
