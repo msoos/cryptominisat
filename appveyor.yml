@@ -38,8 +38,8 @@ environment:
     BUILD_TYPE: Release
     MSBUILD_FLAGS: /maxcpucount /nologo
   matrix:
-  - STATICCOMPILE_SETTING: OFF
-    BOOST_OPTIONS:
+  #- STATICCOMPILE_SETTING: OFF
+  #  BOOST_OPTIONS:
   - STATICCOMPILE_SETTING: ON
     BOOST_OPTIONS: runtime-link=static  link=static
 
