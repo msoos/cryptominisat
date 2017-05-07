@@ -1,7 +1,12 @@
-get_target_property(cryptominisat5_EXECUTABLE_PATH cryptominisat5 LOCATION)
+# get_target_property(cryptominisat5_EXECUTABLE_PATH cryptominisat5 LOCATION)
 
 # Create llvm-lit configuration file
-configure_file(lit.site.cfg.in lit.site.cfg @ONLY)
+configure_file(lit.site.cfg.in lit.site.cfg.in2 @ONLY)
+
+file(GENERATE
+     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+     INPUT ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.in2)
+
 
 # Make sure this test-suite runs when "test" is target
 add_test(CNF ${LIT_TOOL} ${LIT_ARGS} .)

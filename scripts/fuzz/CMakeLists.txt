@@ -12,7 +12,7 @@ if (ENABLE_TESTING)
 
     add_test (
         NAME verifier_test
-        COMMAND verifier_test.py
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/verifier_test.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endif()

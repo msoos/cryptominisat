@@ -28,7 +28,7 @@ if(NOT (CMAKE_MAJOR_VERSION LESS 2))
     endif()
 
     if(POLICY CMP0026)
-        cmake_policy(SET CMP0026 OLD)
+        cmake_policy(SET CMP0026 NEW)
     endif()
 
     if(POLICY CMP0048)

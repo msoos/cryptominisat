@@ -5,7 +5,7 @@ import sys
 config.cryptominisat_src_root = "@cryptominisat5_SOURCE_DIR@"
 config.cryptominisat_obj_root = "@cryptominisat5_BINARY_DIR@"
 config.python_executable = "@PYTHON_EXECUTABLE@"
-config.cryptominisat_executable = "@cryptominisat5_EXECUTABLE_PATH@"
+config.cryptominisat_executable = "$<TARGET_FILE:cryptominisat5>"
 config.sqlite = "@USING_SQLITE@"
 config.mysql = "@USING_SQLITE@"
 config.simple = "@SIMPLE@"
