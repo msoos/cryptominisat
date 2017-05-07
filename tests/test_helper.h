@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <functional>
 #include <cassert>
 #include "src/solver.h"
 #include "src/stamp.h"
