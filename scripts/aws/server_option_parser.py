@@ -18,9 +18,27 @@ def parse_arguments():
 
     usage = """usage: %prog
 
-For the --solver options you can give:
-* SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
-* lingeling_ayv/binary/lingeling"""
+To use other solvers, give:
+--solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
+--solver lingeling_ayv/binary/lingeling
+
+
+Use-cases:
+# normal run
+./launch_solver.py --cnflist satcomp14 --s3folder norm
+
+# testing, using small instance to check (cheaper & faster)
+./launch_solver.py --cnflist test
+
+# 2 clients, no preprocessing
+./launch_solver.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --s3folder no_preproc
+
+# gaussian elimination -- automatic detection, built with GAUSS
+./launch_solver.py --cnflist satcomp14 --s3folder gauss
+
+# clause IDs so learning can be performed -- gzipped SQL output with clause IDs will be produced
+./launch_solver.py --stats --drat --s3folder learning
+"""
     parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
     parser.add_option("--verbose", "-v", action="store_true",
                       default=False, dest="verbose", help="Be more verbose"
