@@ -139,6 +139,10 @@ Use-cases:
     options.s3_folder += "-%s" % rnd_id()
     options.s3_folder += "-%s" % options.cnf_list
 
+    if options.drat and not options.stats:
+        print("ERROR: You must have --stats when you use --drat")
+        exit(-1)
+
     return options, args
 
 if __name__ == "__main__":
