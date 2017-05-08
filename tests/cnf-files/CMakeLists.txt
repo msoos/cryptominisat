@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-# get_target_property(cryptominisat5_EXECUTABLE_PATH cryptominisat5 LOCATION)
 
 # Create llvm-lit configuration file
 configure_file(lit.site.cfg.in lit.site.cfg.in2 @ONLY)

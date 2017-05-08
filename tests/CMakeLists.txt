@@ -17,15 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-# -----------------------------------------------------------------------------
-# Check we can find Python and the lit tool
-# -----------------------------------------------------------------------------
-find_package(PythonInterp REQUIRED)
-mark_as_advanced(CLEAR PYTHON_EXECUTABLE) # Make visible in cmake-gui/ccmake
 
-if(NOT PYTHONINTERP_FOUND)
-    message(FATAL_ERROR "Python cannot be found. Please install it or disable testing.")
-endif()
 
 find_program(LIT_TOOL
     lit
