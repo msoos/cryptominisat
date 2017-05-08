@@ -25,19 +25,19 @@ To use other solvers, give:
 
 Use-cases:
 # normal run
-./launch_solver.py --cnflist satcomp14 --s3folder norm
+./launch_server.py --cnflist satcomp14 --s3folder norm
 
 # testing, using small instance to check (cheaper & faster)
-./launch_solver.py --cnflist test
+#./launch_server.py --cnflist test
 
 # 2 clients, no preprocessing
-./launch_solver.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --s3folder no_preproc
+./launch_server.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --s3folder no_preproc
 
 # gaussian elimination -- automatic detection, built with GAUSS
-./launch_solver.py --cnflist satcomp14 --s3folder gauss
+./launch_server.py --cnflist satcomp14 --s3folder gauss
 
 # clause IDs so learning can be performed -- gzipped SQL output with clause IDs will be produced
-./launch_solver.py --stats --drat --s3folder learning
+./launch_server.py --stats --drat --s3folder learning
 
 # to upload features_to_reconf.cpp
 aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
