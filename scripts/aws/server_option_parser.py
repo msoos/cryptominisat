@@ -38,6 +38,10 @@ Use-cases:
 
 # clause IDs so learning can be performed -- gzipped SQL output with clause IDs will be produced
 ./launch_solver.py --stats --drat --s3folder learning
+
+# to upload features_to_reconf.cpp
+aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
+
 """
     parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
     parser.add_option("--verbose", "-v", action="store_true",
