@@ -56,7 +56,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
                       help="Port to listen on. [default: %default]", type="int"
                       )
 
-    parser.add_option("--tout", "-t", default=1500, dest="timeout_in_secs",
+    parser.add_option("--tout", "-t", default=3000, dest="timeout_in_secs",
                       help="Timeout for the file in seconds"
                       "[default: %default]",
                       type=int
