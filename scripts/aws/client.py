@@ -476,6 +476,7 @@ def build_cryptominisat(indata):
     global s3_folder
     s3_folder = get_s3_folder(indata["given_folder"],
                               indata["git_rev"],
+                              indata["solver"],
                               indata["timeout_in_secs"],
                               indata["mem_limit_in_mb"]
                               )
