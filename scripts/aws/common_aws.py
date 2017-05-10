@@ -60,11 +60,12 @@ def get_ip_address(ifname):
 
 def get_revision(full_solver_path, base_dir):
     _, solvername = os.path.split(full_solver_path)
-    if solvername == "cryptominisat":
-        os.chdir('%s/cryptominisat' % base_dir)
-        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    else:
-        revision = solvername
+    #if solvername == "cryptominisat":
+    #    os.chdir('%s/cryptominisat' % base_dir)
+    #    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+    #else:
+    #    revision = solvername
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
 
     return revision.strip()
 
@@ -85,9 +86,7 @@ def upload_log(bucket, folder, logfile_name, fname):
         print("traceback for boto issue: %s" % the_trace)
 
 
-def get_s3_folder(folder, rev, timeout, memout):
+def get_s3_folder(folder, rev, solver, timeout, memout):
     print("folder: %s rev: %s tout: %s memout %s" % (folder, rev, timeout, memout))
-    return folder + "-%s-tout-%d-mout-%d" \
-        % (rev[:9],
-           timeout,
-           memout)
+    return folder + "-{rev}-{solver}-tout-{tout}-mout-{mout}".format(
+        rev=rev[:9], solver=solver, tout=timeout, mout=memout)

@@ -291,8 +291,9 @@ class solverThread (threading.Thread):
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
-        s3_folder = get_s3_folder(self.indata["s3_folder"],
+        s3_folder = get_s3_folder(self.indata["given_folder"],
                                   self.indata["git_rev"],
+                                  self.indata["solver"],
                                   self.indata["timeout_in_secs"],
                                   self.indata["mem_limit_in_mb"])
 
@@ -473,7 +474,7 @@ def build_cryptominisat(indata):
                      " ".join(opts),
                      options.base_dir))
     global s3_folder
-    s3_folder = get_s3_folder(indata["s3_folder"],
+    s3_folder = get_s3_folder(indata["given_folder"],
                               indata["git_rev"],
                               indata["timeout_in_secs"],
                               indata["mem_limit_in_mb"]

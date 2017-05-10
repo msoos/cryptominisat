@@ -169,7 +169,7 @@ class Server (threading.Thread):
         tosend["stats"] = options.stats
         tosend["gauss"] = options.gauss
         tosend["s3_bucket"] = options.s3_bucket
-        tosend["s3_folder"] = options.s3_folder
+        tosend["given_folder"] = options.given_folder
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
@@ -321,10 +321,12 @@ def shutdown(exitval=0):
         else:
             email_subject += "FAIL"
 
-        full_s3_folder = get_s3_folder(options.s3_folder,
-                                       options.git_rev,
-                                       options.timeout_in_secs,
-                                       options.mem_limit_in_mb)
+        full_s3_folder = get_s3_folder(
+            options.given_folder,
+            options.git_rev,
+            options.solver,
+            options.timeout_in_secs,
+            options.mem_limit_in_mb)
         text = """Server finished. Please download the final data:
 
 mkdir {0}

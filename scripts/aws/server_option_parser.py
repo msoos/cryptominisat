@@ -101,7 +101,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
                       type=str
                       )
 
-    parser.add_option("--s3folder", default="results", dest="s3_folder",
+    parser.add_option("--folder", default="results", dest="given_folder",
                       help="S3 folder name to upload data"
                       "[default: %default]",
                       type=str
@@ -142,9 +142,9 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
     options.logfile_name = options.base_dir + options.logfile_name
-    options.s3_folder += "-" + time.strftime("%d-%B-%Y")
-    options.s3_folder += "-%s" % rnd_id()
-    options.s3_folder += "-%s" % options.cnf_list
+    options.given_folder += "-" + time.strftime("%d-%B-%Y")
+    options.given_folder += "-%s" % rnd_id()
+    options.given_folder += "-%s" % options.cnf_list
 
     if options.drat and not options.stats:
         print("ERROR: You must have --stats when you use --drat")
