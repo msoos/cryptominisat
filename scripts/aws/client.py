@@ -163,9 +163,6 @@ class solverThread (threading.Thread):
     def get_stderr_fname(self):
         return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
-    def get_perf_fname(self):
-        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
-
     def get_sqlite_fname(self):
         return self.get_tmp_cnf_fname() + ".sqlite"
 
@@ -322,12 +319,6 @@ class solverThread (threading.Thread):
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
         toreturn.append([fname, fname_clean])
 
-        # perf
-        # os.system("gzip -f %s" % self.get_perf_fname())
-        # k.key = s3_folder_and_fname + ".perf.gz"
-        # boto_bucket.delete_key(k)
-        # k.set_contents_from_filename(self.get_perf_fname() + ".gz")
-
         # sqlite
         if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
             os.system("gzip -f %s" % self.get_sqlite_fname())
@@ -338,12 +329,11 @@ class solverThread (threading.Thread):
             k.set_contents_from_filename(self.get_sqlite_fname() + ".gz")
             toreturn.append([fname, fname_clean])
 
-        logging.info("Uploaded stdout+stderr+sqlite+perf files: %s",
+        logging.info("Uploaded stdout+stderr+sqlite files: %s",
                      toreturn, extra=self.logextra)
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
-        # os.unlink(self.get_perf_fname() + ".gz")
         if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
             os.unlink(self.get_sqlite_fname() + ".gz")
 
