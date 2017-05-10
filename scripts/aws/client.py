@@ -543,16 +543,19 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
 
-    #signal error to master
+    # signal error to master
     if exitval != 0:
         try:
             signal_error_to_master()
         except:
             pass
 
-    #send email
-    if exitval == 0: reason = "OK"
-    else: reason ="FAIL"
+    # send email
+    if exitval == 0:
+        reason = "OK"
+    else:
+        reason = "FAIL"
+
     try:
         send_email("Client shutting down %s" % reason,
                    "Client finished.", options.logfile_name)
@@ -562,7 +565,7 @@ def shutdown(exitval=0):
         logging.error("Cannot send email! Traceback: %s", the_trace,
                       extra={"threadid": -1})
 
-    #upload log
+    # upload log
     global s3_bucket
     global s3_folder
     upload_log(s3_bucket,
@@ -620,7 +623,8 @@ def build_system_full():
 
 def start_threads():
     threads = []
-    options.num_threads = max(options.num_threads, 2) # for test
+    # we should test at least 2 threads, it's only used during testing anyway
+    options.num_threads = max(options.num_threads, 2)
     for i in range(options.num_threads):
         threads.append(solverThread(i))
 
@@ -757,7 +761,7 @@ if __name__ == "__main__":
     exitapp = False
     options.logfile_name = options.base_dir + options.logfile_name
 
-    #get host
+    # get host
     if options.host is None:
         for line in boto.utils.get_instance_userdata().split("\n"):
             if "DATA" in line:
@@ -781,7 +785,7 @@ if __name__ == "__main__":
         while threading.active_count() > 1:
             time.sleep(0.1)
 
-        #finish up
+        # finish up
         logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
         v.delete_volume()
     except:
