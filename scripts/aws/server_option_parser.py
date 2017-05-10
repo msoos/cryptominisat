@@ -21,6 +21,7 @@ def parse_arguments():
 To use other solvers, give:
 --solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
 --solver lingeling_ayv/binary/lingeling
+--solver MapleCOMSPS/simp/maplecomsps_static
 
 
 Use-cases:
