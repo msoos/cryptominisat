@@ -88,5 +88,6 @@ def upload_log(bucket, folder, logfile_name, fname):
 
 def get_s3_folder(folder, rev, solver, timeout, memout):
     print("folder: %s rev: %s tout: %s memout %s" % (folder, rev, timeout, memout))
+    solver_exe = solver[solver.rfind("/")+1:]
     return folder + "-{rev}-{solver}-tout-{tout}-mout-{mout}".format(
-        rev=rev[:9], solver=solver, tout=timeout, mout=memout)
+        rev=rev[:9], solver=solver_exe, tout=timeout, mout=memout)
