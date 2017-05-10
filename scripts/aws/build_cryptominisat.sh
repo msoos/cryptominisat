@@ -12,12 +12,6 @@ sudo make install
 echo "built and installed M4RI"
 
 cd /home/ubuntu/cryptominisat
-git fetch
-git checkout "${1}"
-echo "got revision ${1}"
-git submodule init
-git submodule update
-
 rm -rf build
 mkdir -p build
 cd build
