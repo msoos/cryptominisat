@@ -293,7 +293,7 @@ class SpotManager (threading.Thread):
         threading.Thread.__init__(self)
         self.spot_creator = RequestSpotClient.RequestSpotClient(
             options.git_rev,
-            options.cnf_list == "test", noshutdown=options.noshutdown,
+            ("test" in options.cnf_list), noshutdown=options.noshutdown,
             count=options.client_count)
 
     def run(self):
