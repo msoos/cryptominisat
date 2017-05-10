@@ -7,7 +7,8 @@ tar xzvf SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5.tar.gz
 cd SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5
 ./build.sh
 
+mv /home/ubuntu/SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static /home/ubuntu/SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static.alt.vd
 # binary is now at:
-# --solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
+# --solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static.alt.vd
 
 cd /home/ubuntu/

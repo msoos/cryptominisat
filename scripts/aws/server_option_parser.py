@@ -19,10 +19,10 @@ def parse_arguments():
     usage = """usage: %prog
 
 To use other solvers, give:
---solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
---solver SWDiA5BY_A26/binary/SWDiA5BY_static
---solver lingeling_ayv/binary/lingeling
---solver glucose2016/simp/glucose_static
+--solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static.alt.vd
+--solver SWDiA5BY_A26/binary/SWDiA5BY_static_A26
+--solver lingeling_ayv/binary/lingeling_ayv
+--solver glucose2016/simp/glucose_static_2016
 --solver MapleCOMSPS/simp/maplecomsps_static
 
 
