@@ -20,7 +20,9 @@ def parse_arguments():
 
 To use other solvers, give:
 --solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
+--solver SWDiA5BY_A26/binary/SWDiA5BY_static
 --solver lingeling_ayv/binary/lingeling
+--solver glucose2016/simp/glucose_static
 --solver MapleCOMSPS/simp/maplecomsps_static
 
 
