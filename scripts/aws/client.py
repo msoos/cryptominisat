@@ -149,7 +149,7 @@ class solverThread (threading.Thread):
     def get_fname_no_dir(self):
         fname = self.indata["cnf_filename"]
         slash_at = fname.find("/")
-        return fname[slash_at+1]
+        return fname[slash_at+1:]
 
     def get_tmp_cnf_fname(self):
         return "%s/%s" % (
