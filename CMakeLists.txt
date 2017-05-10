@@ -193,7 +193,6 @@ if (NOT MSVC)
 else()
     # see https://msdn.microsoft.com/en-us/library/fwkeyyhe.aspx for details
     # /ZI = include debug info
-    # /W3 = warning level 3
     # /Wall = all warnings
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Ox /ZI")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O3 /D NDEBUG /ZI")
@@ -212,7 +211,7 @@ else()
     # buffers security check
     add_compile_options(/GS)
 
-    # warnings
+    # not too many warnings
     add_compile_options(/W1)
     # add_compile_options(/Wall)
 
