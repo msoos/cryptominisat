@@ -146,23 +146,28 @@ class solverThread (threading.Thread):
 
         return newdir
 
-    def get_cnf_fname(self):
+    def get_fname_no_dir(self):
+        fname = self.indata["cnf_filename"]
+        slash_at = fname.find("/")
+        return fname[slash_at+1]
+
+    def get_tmp_cnf_fname(self):
         return "%s/%s" % (
             self.temp_space,
-            self.indata["cnf_filename"]
+            self.get_fname_no_dir()
         )
 
     def get_stdout_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
 
     def get_stderr_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_perf_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
 
     def get_sqlite_fname(self):
-        return self.get_cnf_fname() + ".sqlite"
+        return self.get_tmp_cnf_fname() + ".sqlite"
 
     def get_lemmas_fname(self):
         return "%s/lemmas" % self.temp_space
@@ -171,9 +176,9 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s --region us-west-2" % (
-            self.indata["cnf_dir"], self.indata["cnf_filename"],
-            self.get_cnf_fname()))
+        os.system("aws s3 cp s3://msoos-solve-data/%s %s --region us-west-2" % (
+            self.indata["cnf_filename"],
+            self.get_tmp_cnf_fname()))
 
         toexec = []
         toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))
@@ -183,7 +188,7 @@ class solverThread (threading.Thread):
             if self.indata["stats"]:
                 toexec.append("--sql 2")
 
-        toexec.append(self.get_cnf_fname())
+        toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
             toexec.append(self.get_drat_fname())
             toexec.append("--clid")
@@ -237,7 +242,7 @@ class solverThread (threading.Thread):
     def run_drat_trim(self):
         toexec = "%s/drat-trim/drat-trim2 %s %s -l %s" % (
             options.base_dir,
-            self.get_cnf_fname(),
+            self.get_tmp_cnf_fname(),
             self.get_drat_fname(),
             self.get_lemmas_fname())
         logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
@@ -294,10 +299,8 @@ class solverThread (threading.Thread):
                                   self.indata["timeout_in_secs"],
                                   self.indata["mem_limit_in_mb"])
 
-        s3_folder_and_fname = s3_folder + "/" + self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"]
-        s3_folder_and_fname_clean = s3_folder + "/" + self.indata[
-            "cnf_filename"]
+        s3_folder_and_fname = s3_folder + "/" + self.get_fname_no_dir() + "-" + self.indata["uniq_cnt"]
+        s3_folder_and_fname_clean = s3_folder + "/" + self.get_fname_no_dir()
 
         toreturn = []
 
@@ -398,7 +401,7 @@ class solverThread (threading.Thread):
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
-                os.unlink(self.get_cnf_fname())
+                os.unlink(self.get_tmp_cnf_fname())
                 if self.indata["drat"]:
                     os.unlink(self.get_drat_fname())
                 files = self.copy_solution_to_s3()

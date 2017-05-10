@@ -63,16 +63,9 @@ class Server (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_list)
         fnames = open(options.cnf_list, "r")
         logging.info("CNF list is file %s", options.cnf_list)
-        start = True
         num = 0
         for fname in fnames:
             fname = fname.strip()
-            if start:
-                self.cnf_dir = fname
-                logging.info("CNF dir is %s", self.cnf_dir)
-                start = False
-                continue
-
             self.files[num] = ToSolve(num, fname)
             self.files_available.append(num)
             logging.info("File added: %s", fname)
@@ -180,7 +173,6 @@ class Server (threading.Thread):
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
-        tosend["cnf_dir"] = self.cnf_dir
         tosend["extra_opts"] = options.extra_opts
         tosend["drat"] = options.drat
 
