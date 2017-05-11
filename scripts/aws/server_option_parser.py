@@ -31,7 +31,7 @@ Use-cases:
 ./launch_server.py --cnflist satcomp14 --s3folder norm
 
 # testing, using small instance to check (cheaper & faster)
-#./launch_server.py --cnflist test
+./launch_server.py --cnflist test
 
 # 2 clients, no preprocessing
 ./launch_server.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --s3folder no_preproc
@@ -42,7 +42,10 @@ Use-cases:
 # clause IDs so learning can be performed -- gzipped SQL output with clause IDs will be produced
 ./launch_server.py --stats --drat --s3folder learning
 
-# to upload features_to_reconf.cpp
+# to give options to the solver
+./launch_server.py --s3folder with_opts --opt \"--keepguess=1,--keepglue=4\""
+
+ # to upload features_to_reconf.cpp
 aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
 
 """

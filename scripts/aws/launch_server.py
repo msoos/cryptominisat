@@ -9,9 +9,6 @@ import subprocess
 import server_option_parser
 
 
-print("NOTE: you have to give options to cryptominisat as --opt \"--keepguess=1,--keepglue=4\"")
-
-
 def get_answer():
     yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
