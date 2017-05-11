@@ -179,7 +179,7 @@ class solverThread (threading.Thread):
 
         toexec = []
         toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))
-        toexec.append(self.indata["extra_opts"])
+        toexec.append(self.indata["extra_opts"].replace(",", " "))
         if "cryptominisat" in self.indata["solver"]:
             toexec.append("--printsol 0")
             if self.indata["stats"]:
