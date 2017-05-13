@@ -165,7 +165,7 @@ class solverThread (threading.Thread):
         return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_sqlite_fname(self):
-        return self.get_tmp_cnf_fname() + ".sqlite"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".sqlite"
 
     def get_lemmas_fname(self):
         return "%s/lemmas" % self.temp_space
@@ -185,6 +185,7 @@ class solverThread (threading.Thread):
             toexec.append("--printsol 0")
             if self.indata["stats"]:
                 toexec.append("--sql 2")
+                toexec.append("--sqlitedb %s" % self.get_sqlite_fname())
 
         toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
