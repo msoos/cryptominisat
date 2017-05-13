@@ -44,7 +44,8 @@ class RequestSpotClient:
 set -e
 
 apt-get update
-apt-get -y install git python-boto
+apt-get -y install git python-pip
+pip install awscli
 apt-get -y install cmake make g++ libboost-all-dev
 apt-get -y install libsqlite3-dev awscli unzip
 apt-get -y install linux-cloud-tools-generic linux-tools-generic

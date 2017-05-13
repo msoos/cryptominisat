@@ -76,7 +76,8 @@ if __name__ == "__main__":
 set -e
 
 apt-get update
-apt-get -y install git python-boto awscli
+apt-get -y install git python-pip
+pip install awscli
 
 cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
