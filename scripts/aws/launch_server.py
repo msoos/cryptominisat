@@ -55,7 +55,7 @@ if __name__ == "__main__":
         opt_is_on = True
         data += "--opt \""
 
-    if ("--git" not in data) and ("--solver" not in data):
+    if ("--git" not in data):
         revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         data += " --git %s" % revision
 
