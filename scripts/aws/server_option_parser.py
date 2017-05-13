@@ -25,6 +25,7 @@ To use other solvers, give:
 --solver glucose2016/simp/glucose_static_2016
 --solver MapleCOMSPS/simp/maplecomsps_static
 --solver cmsat-satcomp16/bin/cryptominisat4_simple
+--solver lingeling-bbc/build/lingeling/lingeling_bbc
 
 
 Use-cases:
