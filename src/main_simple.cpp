@@ -42,13 +42,6 @@ using std::endl;
 using namespace CMSat;
 std::ostream* dratf;
 
-#ifdef USE_ZLIB
-static int gz_read(void* buf, size_t num, size_t count, gzFile f)
-{
-    return gzread(f, buf, num*count);
-}
-#endif
-
 SATSolver* solver;
 bool zero_exit_status = false;
 static void SIGINT_handler(int) {
