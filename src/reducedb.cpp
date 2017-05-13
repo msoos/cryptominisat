@@ -273,6 +273,7 @@ void ReduceDB::remove_cl_from_lev2() {
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 2);
 
+        // check and move to lower (better) levels, if possible
         if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
             cl->stats.which_red_array = 0;
         }
@@ -281,13 +282,13 @@ void ReduceDB::remove_cl_from_lev2() {
             cl->stats.which_red_array = 1;
         }
 
-        if (cl->stats.which_red_array != 2) {
-            assert(cl->stats.which_red_array < 2);
+        if (cl->stats.which_red_array < 2) {
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
             continue;
         }
         assert(cl->stats.which_red_array == 2);
 
+        //Check if locked, or marked or ttl-ed
         if (cl->stats.marked_clause) {
             cl_marked++;
         } else if (cl->stats.ttl != 0) {

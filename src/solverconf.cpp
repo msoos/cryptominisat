@@ -39,7 +39,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , every_lev1_reduce(10000)
         , every_lev2_reduce(15000)
         , must_touch_lev1_within(30000)
-        , max_temp_lev2_learnt_clauses(30000)
+        , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , glue_put_lev0_if_below_or_eq(3)
