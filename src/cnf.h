@@ -101,6 +101,12 @@ public:
 
     //Clauses
     vector<ClOffset> longIrredCls;
+
+    /**
+    level 0 = never remove
+    level 1 = check rarely
+    level 2 = check often
+    **/
     vector<vector<ClOffset> > longRedCls;
     vector<Xor> xorclauses;
     BinTriStats binTri;

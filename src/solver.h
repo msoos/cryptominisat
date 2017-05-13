@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include "implcache.h"
 #include "propengine.h"
 #include "searcher.h"
-#include "cleaningstats.h"
 #include "clauseusagestats.h"
 #include "solvefeatures.h"
 #include "searchstats.h"

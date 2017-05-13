@@ -68,7 +68,6 @@ set(cryptoms_lib_files
     comphandler.cpp
     hyperengine.cpp
     subsumeimplicit.cpp
-    cleaningstats.cpp
     datasync.cpp
     reducedb.cpp
     clausedumper.cpp

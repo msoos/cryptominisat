@@ -25,7 +25,6 @@ THE SOFTWARE.
 
 #include "searcher.h"
 #include "clause.h"
-#include "cleaningstats.h"
 #include "clauseusagestats.h"
 
 namespace CMSat {
@@ -68,9 +67,9 @@ public:
     ) = 0;
 
     virtual void reduceDB(
-        const ClauseUsageStats& irredStats
-        , const ClauseUsageStats& redStats
-        , const CleaningStats& clean
+        uint64_t level
+        , uint64_t num_cleans
+        , uint64_t num_removed
         , const Solver* solver
     ) = 0;
 
