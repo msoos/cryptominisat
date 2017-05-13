@@ -124,7 +124,7 @@ void ReduceDB::handle_lev2()
     cl_marked = 0;
     cl_ttl = 0;
     cl_locked_solver = 0;
-    remove_cl_from_array();
+    remove_cl_from_lev2();
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset offset: delayed_clause_free) {
@@ -260,11 +260,10 @@ bool ReduceDB::cl_needs_removal(const Clause* cl, const ClOffset offset) const
     return !cl->used_in_xor()
          && !cl->stats.marked_clause
          && cl->stats.ttl == 0
-         && cl->stats.which_red_array > 0
          && !solver->clause_locked(*cl, offset);
 }
 
-void ReduceDB::remove_cl_from_array() {
+void ReduceDB::remove_cl_from_lev2() {
     size_t i, j;
     for (i = j = 0
         ; i < solver->longRedCls[2].size()
@@ -283,9 +282,11 @@ void ReduceDB::remove_cl_from_array() {
         }
 
         if (cl->stats.which_red_array != 2) {
+            assert(cl->stats.which_red_array < 2);
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
             continue;
         }
+        assert(cl->stats.which_red_array == 2);
 
         if (cl->stats.marked_clause) {
             cl_marked++;

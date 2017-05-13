@@ -34,7 +34,7 @@ class ReduceDB
 {
 public:
     ReduceDB(Solver* solver);
-    const double get_total_time() const {
+    const double get_total_time() {
         return total_time;
     }
     void handle_lev1();
@@ -56,7 +56,7 @@ private:
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
-    void remove_cl_from_array();
+    void remove_cl_from_lev2();
 
     void sort_red_cls(ClauseClean clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
