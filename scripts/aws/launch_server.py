@@ -77,7 +77,8 @@ set -e
 
 apt-get update
 apt-get -y install git python-pip
-pip install awscli
+pip install --force-reinstall --upgrade awscli
+pip install --force-reinstall --upgrade boto
 
 cd /home/ubuntu
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
