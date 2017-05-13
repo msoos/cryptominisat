@@ -80,7 +80,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
                       type=int
                       )
 
-    parser.add_option("--cnflist", default="satcomp14", dest="cnf_list",
+    parser.add_option("--cnflist", default="satcomp14_updated", dest="cnf_list",
                       type=str,
                       help="The list of CNF files to solve, first line the dir"
                       "[default: %default]",
