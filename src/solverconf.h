@@ -155,17 +155,18 @@ class DLL_PUBLIC SolverConf
         //if non-zero, we reduce at every X conflicts.
         //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
-        uint32_t must_touch_lev1_within;
 
+        uint32_t must_touch_lev1_within;
         unsigned  max_temp_lev2_learnt_clauses;
         double    inc_max_temp_lev2_red_cls;
 
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
-        double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
-        double    clause_decay;
-        unsigned  min_time_in_db_before_eligible_for_cleaning;
         unsigned glue_put_lev0_if_below_or_eq;
         unsigned glue_put_lev1_if_below_or_eq;
+        double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
+
+        double    clause_decay;
+        unsigned  min_time_in_db_before_eligible_for_cleaning;
 
         //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
         double   adjust_glue_if_too_many_low;
