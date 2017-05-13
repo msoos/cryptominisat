@@ -180,7 +180,7 @@ class solverThread (threading.Thread):
         toexec = []
         toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))
         toexec.append(self.indata["extra_opts"].replace(",", " "))
-        if "cryptominisat" in self.indata["solver"]:
+        if "cryptominisat5" in self.indata["solver"]:
             toexec.append("--printsol 0")
             if self.indata["stats"]:
                 toexec.append("--sql 2")
@@ -193,7 +193,7 @@ class solverThread (threading.Thread):
             toexec.append("--gluecut0 25")
             toexec.append("--otfsubsume 0")
         else:
-            if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+            if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
                 toexec.append("--sqlfull 0")
 
         return " ".join(toexec)
@@ -321,7 +321,7 @@ class solverThread (threading.Thread):
         toreturn.append([fname, fname_clean])
 
         # sqlite
-        if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+        if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
             os.system("gzip -f %s" % self.get_sqlite_fname())
             fname = s3_folder_and_fname + ".sqlite.gz-tmp"
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
@@ -335,7 +335,7 @@ class solverThread (threading.Thread):
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
-        if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+        if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
             os.unlink(self.get_sqlite_fname() + ".gz")
 
         return toreturn
@@ -514,7 +514,7 @@ def build_system():
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
-        if "cryptominisat" in indata["solver"]:
+        if "cryptominisat5" in indata["solver"]:
             build_cryptominisat(indata)
 
         built_system = True
