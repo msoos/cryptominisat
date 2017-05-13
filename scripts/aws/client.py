@@ -23,6 +23,7 @@ import fcntl
 import struct
 import logging
 import functools
+import string
 
 # for importing in systems where "." is not in the PATH
 import glob
@@ -284,6 +285,9 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
+    def rnd_id(self):
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+
     def copy_solution_to_s3(self):
         exists = boto_conn.lookup(self.indata["s3_bucket"])
         if not exists:
@@ -304,7 +308,7 @@ class solverThread (threading.Thread):
 
         # stdout
         os.system("gzip -f %s" % self.get_stdout_fname())
-        fname = s3_folder_and_fname + ".stdout.gz-tmp"
+        fname = s3_folder_and_fname + ".stdout.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
         k.key = fname
         boto_bucket.delete_key(k)
@@ -313,7 +317,7 @@ class solverThread (threading.Thread):
 
         # stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname = s3_folder_and_fname + ".stderr.gz-tmp"
+        fname = s3_folder_and_fname + ".stderr.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
         k.key = fname
         boto_bucket.delete_key(k)
@@ -323,7 +327,7 @@ class solverThread (threading.Thread):
         # sqlite
         if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
             os.system("gzip -f %s" % self.get_sqlite_fname())
-            fname = s3_folder_and_fname + ".sqlite.gz-tmp"
+            fname = s3_folder_and_fname + ".sqlite.gz-tmp" + self.rnd_id()
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
             k.key = fname
             boto_bucket.delete_key(k)
