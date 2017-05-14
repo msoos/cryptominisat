@@ -28,6 +28,7 @@ def push():
     ret = os.system("git push")
     if ret != 0:
         print("Oops, couldn't push, exiting before executing")
+        exit(-1)
 
     print("")
 
