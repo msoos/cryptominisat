@@ -1868,7 +1868,7 @@ void Searcher::reduce_db_if_needed()
             next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
         }
     } else {
-        if (longRedCls[1].size() > cur_max_temp_red_lev2_cls) {
+        if (longRedCls[2].size() > cur_max_temp_red_lev2_cls) {
             solver->reduceDB->handle_lev2();
             cur_max_temp_red_lev2_cls *= conf.inc_max_temp_lev2_red_cls;
             cl_alloc.consolidate(solver);
