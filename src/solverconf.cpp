@@ -43,7 +43,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , inc_max_temp_lev2_red_cls(1.0)
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , glue_put_lev0_if_below_or_eq(3)
-        , glue_put_lev1_if_below_or_eq(6)
+        , glue_put_lev1_if_below_or_eq(5)
 
 
         , clause_decay(0.999)
@@ -61,7 +61,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
         , maple(false)
-        , local_glue_multiplier(0.80)
+        , local_glue_multiplier(0.70)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , more_otf_shrink_with_cache(false)
@@ -268,7 +268,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , saved_state_file("savedstate.dat")
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-    ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
+    ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
 }
 
 
