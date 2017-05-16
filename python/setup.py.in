@@ -204,7 +204,6 @@ setup(
         "Topic :: Utilities",
     ],
     ext_modules = modules,
-    py_modules = ['pycryptosat'],
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
     long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
