@@ -126,7 +126,7 @@ cryptoms_lib_files = [
 modules = [
     Extension(
         "pycryptosat",
-        ["${CMAKE_CURRENT_BINARY_DIR}/bindings/pycryptosat.cpp"] + ['${CMAKE_CURRENT_BINARY_DIR}/src/' + fd for fd in cryptoms_lib_files],
+        ["${CMAKE_CURRENT_BINARY_DIR}/src/pycryptosat.cpp"] + ['${CMAKE_CURRENT_BINARY_DIR}/src/' + fd for fd in cryptoms_lib_files],
         language = "c++",
         include_dirs=['${CMAKE_CURRENT_BINARY_DIR}/src', '${CMAKE_CURRENT_BINARY_DIR}'],
         define_macros=[
