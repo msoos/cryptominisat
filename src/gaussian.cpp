@@ -232,7 +232,7 @@ uint32_t Gaussian::select_columnorder(
     origMat.col_is_set.resize(origMat.num_cols, false);
 
     origMat.col_to_var.clear();
-    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->activ_glue));
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
 
     for(uint32_t v : vars_needed) {
         assert(var_to_col[v] == unassigned_col - 1);
@@ -710,7 +710,7 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
      * TODO: try out on a cluster
      *
      * for(Lit l: tmp_clause) {
-        solver->bump_var_activity<false>(l.var());
+        solver->bump_vsids_var_act<false>(l.var());
     }*/
 
     #ifdef VERBOSE_DEBUG
@@ -766,8 +766,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_confl(
         //NOTE: No need to put this clause into some special struct
         //it will be immediately freed after calling solver->handle_conflict()
         Clause* cl = (Clause*)solver->cl_alloc.Clause_new(tmp_clause
+        , solver->sumConflicts
         #ifdef STATS_NEEDED
-        , 0
         , 1
         #endif
         );
@@ -978,8 +978,8 @@ Gaussian::gaussian_ret Gaussian::handle_matrix_prop(matrixset& m, const uint32_t
                 return unit_propagation;
             }
             Clause* x = solver->cl_alloc.Clause_new(tmp_clause
+            , solver->sumConflicts
             #ifdef STATS_NEEDED
-            , 0
             , 1
             #endif
             );
@@ -1175,7 +1175,7 @@ void Gaussian::print_stats() const
         }
         cout << endl;
     } else
-        cout << "c Gauss(" << matrix_no << ") not called.";
+        cout << "c Gauss(" << matrix_no << ") not called" << endl;
 }
 
 void Gaussian::print_matrix_stats() const

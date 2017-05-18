@@ -209,7 +209,14 @@ bool DimacsParser<C>::printHeader(C& in)
         }
     } else {
         std::cerr
-        << "PARSE ERROR! Unexpected char: '" << *in
+        << "PARSE ERROR! Unexpected char (hex: " << std::hex
+        << std::setw(2)
+        << std::setfill('0')
+        << "0x" << *in
+        << std::setfill(' ')
+        << std::dec
+        << ")"
+        << " At line " << lineNum+1
         << "' in the header, at line " << lineNum+1
         << please_read_dimacs
         << endl;
@@ -320,7 +327,9 @@ bool DimacsParser<C>::parseComments(C& in, const std::string& str)
             return false;
         }
     } else if (!debugLib.empty() && str.substr(0, 16) == "Solver::simplify") {
-        parse_solve_simp_comment(in, false);
+        if (!parse_solve_simp_comment(in, false)) {
+            return false;
+        }
     } else if (!debugLib.empty() && str == "Solver::new_var()") {
         solver->new_var();
 

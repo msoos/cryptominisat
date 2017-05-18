@@ -35,8 +35,7 @@ namespace CMSat {
 
 enum class ClauseClean {
     glue = 0
-    , size = 1
-    , activity = 2
+    , activity = 1
 };
 
 inline unsigned clean_to_int(ClauseClean t)
@@ -46,11 +45,8 @@ inline unsigned clean_to_int(ClauseClean t)
         case ClauseClean::glue:
             return 0;
 
-        case ClauseClean::size:
-            return 1;
-
         case ClauseClean::activity:
-            return 2;
+            return 1;
     }
 
     assert(false);
@@ -96,9 +92,6 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     switch(clauseCleaningType) {
         case ClauseClean::glue :
             return "glue";
-
-        case ClauseClean::size:
-            return "size";
 
         case ClauseClean::activity:
             return "activity";
@@ -153,21 +146,33 @@ class DLL_PUBLIC SolverConf
         PolarityMode polarity_mode;
 
         //Clause cleaning
-        unsigned  max_temporary_learnt_clauses;
-        unsigned  cur_max_temp_red_cls;
+
+        //if non-zero, we reduce at every X conflicts.
+        //Reduced according to whether it's been used recently
+        //Otherwise, we *never* reduce
+        unsigned every_lev1_reduce;
+
+        //if non-zero, we reduce at every X conflicts.
+        //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
+        unsigned every_lev2_reduce;
+
+        uint32_t must_touch_lev1_within;
+        unsigned  max_temp_lev2_learnt_clauses;
+        double    inc_max_temp_lev2_red_cls;
+
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
-        double    clean_confl_multiplier;
-        double    clean_prop_multiplier;
-        int       doPreClauseCleanPropAndConfl;
-        unsigned  long long preClauseCleanLimit;
-        double    ratio_keep_clauses[10]; ///< Remove this ratio of clauses at every database reduction round
-        double    inc_max_temp_red_cls;
+        unsigned glue_put_lev0_if_below_or_eq;
+        unsigned glue_put_lev1_if_below_or_eq;
+        double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
+
         double    clause_decay;
         unsigned  min_time_in_db_before_eligible_for_cleaning;
-        unsigned glue_must_keep_clause_if_below_or_eq;
+
+        //If too many (in percentage) low glues after min_num_confl_adjust_glue_cutoff, adjust glue lower
         double   adjust_glue_if_too_many_low;
+        uint64_t min_num_confl_adjust_glue_cutoff;
+
         int      guess_cl_effectiveness;
-        int      hash_relearn_check;
 
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
@@ -177,12 +182,13 @@ class DLL_PUBLIC SolverConf
         int       do_blocking_restart;
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
+        int      maple;
+
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
         int more_otf_shrink_with_cache;
         int more_otf_shrink_with_stamp;
-        int abort_searcher_solve_on_geom_phase;
 
         //Clause minimisation
         int doRecursiveMinim;
@@ -193,7 +199,6 @@ class DLL_PUBLIC SolverConf
         unsigned more_red_minim_limit_cache;
         unsigned more_red_minim_limit_binary;
         unsigned max_num_lits_more_red_min;
-        int extra_bump_var_activities_based_on_glue;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
@@ -222,6 +227,11 @@ class DLL_PUBLIC SolverConf
         bool      dump_individual_search_time;
         bool      dump_individual_restarts_and_clauses;
 
+        //Steps
+        double step_size = 0.40;
+        double step_size_dec = 0.000001;
+        double min_step_size = 0.06;
+
         //Var-elim
         int      doVarElim;          ///<Perform variable elimination
         uint64_t varelim_cutoff_too_many_clauses;
@@ -229,8 +239,8 @@ class DLL_PUBLIC SolverConf
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
         int      updateVarElimComplexityOTF;
-        unsigned updateVarElimComplexityOTF_limitvars;
-        int      updateVarElimComplexityOTF_limitavg;
+        uint64_t updateVarElimComplexityOTF_limitvars;
+        uint64_t updateVarElimComplexityOTF_limitavg;
         ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
         int      varElimCostEstimateStrategy;
         double    varElimRatioPerIter;
@@ -279,9 +289,6 @@ class DLL_PUBLIC SolverConf
         double sccFindPercent;
         int max_scc_depth;
 
-        //Propagation & searching
-        int      propBinFirst;
-
         //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)
         int      simplify_at_every_startup; //always simplify at startup, not only at 1st startup
@@ -323,8 +330,6 @@ class DLL_PUBLIC SolverConf
 
 
         //Misc Optimisations
-        int      doExtBinSubs;
-        int      doSortWatched;      ///<Sort watchlists according to size&type: binary, tertiary, normal (>3-long), xor clauses
         int      doStrSubImplicit;
         long long  subsume_implicit_time_limitM;
         long long  distill_implicit_with_implicit_time_limitM;
@@ -353,7 +358,6 @@ class DLL_PUBLIC SolverConf
         double global_multiplier_multiplier_max;
 
         //Misc
-        unsigned  maxDumpRedsSize; ///<When dumping the redundant clauses, this is the maximum clause size that should be dumped
         unsigned origSeed;
         unsigned long long sync_every_confl;
         unsigned reconfigure_val;

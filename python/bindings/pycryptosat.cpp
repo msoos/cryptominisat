@@ -27,15 +27,14 @@ THE SOFTWARE.
 #include <Python.h>
 #include <structmember.h>
 #include <limits>
-#include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
-#define PyUnicode_FromString  PyString_FromString
-#endif
+#define MODULE_NAME "pycryptosat"
+#define MODULE_DOC "CryptoSAT satisfiability solver."
 
+// Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
 #endif
@@ -56,8 +55,22 @@ using namespace CMSat;
         static PyObject *PyInit_ ## name(void)
 #endif
 
+// Mask "missing initializer for member" warnings in PyTypeObject
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+// Mask "deprecated conversion from string constant to ‘char*’" warnings in kwlist arrays
 #pragma GCC diagnostic ignored "-Wwrite-strings"
+
+// Support for old and end-of-life Python versions
+#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
+    #define PyUnicode_FromString  PyString_FromString
+
+    #define PyVarObject_HEAD_INIT(type, size) \
+    PyObject_HEAD_INIT(type) size,
+#endif
+#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 6
+    #define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#endif
+
 
 typedef struct {
     PyObject_HEAD
@@ -492,7 +505,7 @@ Solve the system of equations that have been added with add_clause();\n\
     is satisfiable. The second part is a tuple contains the solution,\n\
     preceded by None, so you can index into it with the variable number.\n\
     E.g. solution[1] returns the value for variabe 1.\n\
-:rtype: <list <tuple>>"
+:rtype: <tuple <tuple>>"
 );
 
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
@@ -708,22 +721,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
             if (current_nr_of_solutions < max_nr_of_solutions) {
 
                 std::vector<Lit> ban_solution;
-
-                // Old algorithm
-                //for (long var = 0; var != (long)self->cmsat->nVars(); var++) {
-                //    // Search var+1 in [var_lits.begin(), var_lits.end()[
-                //    // false : > 0; true : < 0 sign !!
-                //    it = std::find(var_lits.begin(), var_lits.end(), Lit(var, false));
-                //    //std::cout << var << " search " << Lit(var, false) << "; found ?" << (it != var_lits.end()) << std::endl;
-                //    // If selected vars have been found with the sign false (> 0)
-                //    if ((self->cmsat->get_model()[var] != l_Undef) && (it != var_lits.end())) {
-                //        ban_solution.push_back(
-                //            Lit(var, (self->cmsat->get_model()[var] == l_True) ? true : false)
-                //        );
-                //    }
-                //}
-
-
                 const std::vector<lbool> model = self->cmsat->get_model();
 
                 // Iterate on var_selected (instead of iterate on all vars in solver)
@@ -776,7 +773,7 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
-    {NULL, NULL, 0, NULL}     /* Sentinel - marks the end of this structure */
+    {NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
 };
 
 static PyMethodDef Solver_methods[] = {
@@ -788,18 +785,14 @@ static PyMethodDef Solver_methods[] = {
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
-    {NULL,        NULL}  /* sentinel */
+    {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
 static void
 Solver_dealloc(Solver* self)
 {
     delete self->cmsat;
-    #ifdef IS_PY3K
     Py_TYPE(self)->tp_free ((PyObject*) self);
-    #else
-    self->ob_type->tp_free((PyObject*)self);
-    #endif
 }
 
 static PyObject *
@@ -839,12 +832,7 @@ static PyMemberDef Solver_members[] = {
 };
 
 static PyTypeObject pycryptosat_SolverType = {
-    #ifndef IS_PY3K
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
-    #else
-    PyVarObject_HEAD_INIT(NULL, 0)
-    #endif
+    PyVarObject_HEAD_INIT(NULL, 0) /*ob_size*/
     "pycryptosat.Solver",       /*tp_name*/
     sizeof(Solver),             /*tp_basicsize*/
     0,                          /*tp_itemsize*/
@@ -898,16 +886,19 @@ MODULE_INIT_FUNC(pycryptosat)
     #ifdef IS_PY3K
     static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,  /* m_base */
-        "pycryptosat",          /* m_name */
-        NULL,                   /* m_doc */
+        MODULE_NAME,            /* m_name */
+        MODULE_DOC,             /* m_doc */
         -1,                     /* m_size */
-        module_methods          /* m_methods */
+        module_methods,         /* m_methods */
+        NULL,                   /* m_reload */
+        NULL,                   /* m_traverse */
+        NULL,                   /* m_clear */
+        NULL,                   /* m_free */
     };
 
     m = PyModule_Create(&moduledef);
     #else
-    m = Py_InitModule3("pycryptosat", module_methods,
-                       "Example module that creates an extension type.");
+    m = Py_InitModule3(MODULE_NAME, module_methods, MODULE_DOC);
     #endif
 
     // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro

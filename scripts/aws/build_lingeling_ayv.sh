@@ -8,7 +8,8 @@ aws s3 cp s3://msoos-solve-data/solvers/lingeling-ayv-86bf266-140429.zip . --reg
 unzip lingeling-ayv-86bf266-140429.zip
 ./build.sh
 
+mv /home/ubuntu/lingeling_ayv/binary/lingeling /home/ubuntu/lingeling_ayv/binary/lingeling_ayv
 #binary is now at:
-# --solver lingeling_ayv/binary/lingeling
+# --solver lingeling_ayv/binary/lingeling_ayv
 
 cd /home/ubuntu

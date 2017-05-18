@@ -25,7 +25,8 @@ THE SOFTWARE.
 #include "assert.h"
 
 c_Lit new_lit(uint32_t var, bool neg) {
-    c_Lit x = {(var << 1) | neg};
+    c_Lit x;
+    x.x = (var << 1) | neg;
     return x;
 }
 
@@ -36,7 +37,7 @@ int main(void) {
     cmsat_set_num_threads(solver, 4);
     cmsat_new_vars(solver, 3);
 
-    c_Lit clause[4] = {};
+    c_Lit clause[4];
     clause[0] = new_lit(0, false);
     cmsat_add_clause(solver, clause, 1);
 

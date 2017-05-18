@@ -40,6 +40,14 @@ THE SOFTWARE.
 #define __builtin_prefetch(x)
 #endif //__GNUC__
 
+//We shift stuff around in Watched, so not all of 32 bits are useable.
+#ifndef LARGE_OFFSETS
+#define BASE_DATA_TYPE uint32_t
+#define EFFECTIVELY_USEABLE_BITS 30
+#else
+#define BASE_DATA_TYPE uint64_t
+#define EFFECTIVELY_USEABLE_BITS 62
+#endif
 
 #if defined _WIN32
     #define DLL_PUBLIC __declspec(dllexport)

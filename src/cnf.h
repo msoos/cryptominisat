@@ -40,7 +40,6 @@ THE SOFTWARE.
 #include "xor.h"
 
 namespace CMSat {
-using namespace CMSat;
 
 class ClauseAllocator;
 
@@ -48,8 +47,6 @@ struct BinTriStats
 {
     uint64_t irredBins = 0;
     uint64_t redBins = 0;
-    uint64_t irredTris = 0;
-    uint64_t redTris = 0;
     uint64_t numNewBinsSinceSCC = 0;
 };
 
@@ -79,7 +76,7 @@ public:
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
 
-        longRedCls.resize(2);
+        longRedCls.resize(3);
     }
 
     virtual ~CNF()
@@ -93,14 +90,23 @@ public:
     bool ok = true;
     watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
     vector<VarData> varData;
+    bool VSIDS = true;
     vector<uint32_t> depth;
     Stamp stamp;
     ImplCache implCache;
     uint32_t minNumVars = 0;
     Drat* drat;
+    uint32_t sumConflicts = 0;
+    unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 
     //Clauses
     vector<ClOffset> longIrredCls;
+
+    /**
+    level 0 = never remove
+    level 1 = check rarely
+    level 2 = check often
+    **/
     vector<vector<ClOffset> > longRedCls;
     vector<Xor> xorclauses;
     BinTriStats binTri;
@@ -174,13 +180,6 @@ public:
         , Function func
         , int64_t* limit
     ) const;
-    void remove_tri_but_lit1(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-        , int64_t& timeAvailable
-    );
     uint32_t map_inter_to_outer(const uint32_t inter) const
     {
         return interToOuterMain[inter];
@@ -249,7 +248,10 @@ public:
     void find_all_attach(const vector<ClOffset>& cs) const;
     bool find_clause(const ClOffset offset) const;
     void test_all_clause_attached() const;
+    void test_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
+    void check_watchlist(watch_subarray_const ws) const;
+    bool satisfied_cl(const Clause* cl) const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
@@ -299,13 +301,6 @@ void CNF::for_each_lit(
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_tertiary_t:
-            *limit -= 3;
-            func(cl.lit);
-            func(cl.ws.lit2());
-            func(cl.ws.lit3());
-            break;
-
         case CMSat::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
@@ -333,12 +328,6 @@ void CNF::for_each_lit_except_watched(
             func(cl.ws.lit2());
             break;
 
-        case CMSat::watch_tertiary_t:
-            *limit -= 2;
-            func(cl.ws.lit2());
-            func(cl.ws.lit3());
-            break;
-
         case CMSat::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
             *limit -= clause.size();
@@ -364,6 +353,24 @@ struct ClauseSizeSorter
     bool operator () (const ClOffset x, const ClOffset y);
     const ClauseAllocator& cl_alloc;
 };
+
+inline bool CNF::redundant(const Watched& ws) const
+{
+    return (   (ws.isBin() && ws.red())
+            || (ws.isClause() && cl_alloc.ptr(ws.get_offset())->red())
+    );
+}
+
+inline bool CNF::redundant_or_removed(const Watched& ws) const
+{
+    if (ws.isBin()) {
+        return ws.red();
+    }
+
+   assert(ws.isClause());
+   const Clause* cl = cl_alloc.ptr(ws.get_offset());
+   return cl->red() || cl->getRemoved();
+}
 
 inline void CNF::clean_occur_from_removed_clauses()
 {
@@ -500,7 +507,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
     for(watch_subarray_const ws: watches) {
         for(const Watched& w: ws) {
             assert(!w.isIdx());
-            if (w.isBin() || w.isTri()) {
+            if (w.isBin()) {
                 continue;
             }
             assert(w.isClause());

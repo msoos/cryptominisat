@@ -52,14 +52,6 @@ THE SOFTWARE.
 #include "cryptominisat5/cryptominisat.h"
 #include "signalcode.h"
 
-#ifdef USE_ZLIB
-static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
-{
-    return gzread(f, buf, num*count);
-}
-#endif
-
-
 #include <boost/lexical_cast.hpp>
 using namespace CMSat;
 using boost::lexical_cast;
@@ -106,10 +98,6 @@ bool fileExists(const string& filename)
 Main::Main(int _argc, char** _argv) :
     argc(_argc)
     , argv(_argv)
-    , sqlServer ("localhost")
-    , sqlUser ("cmsat_solver")
-    , sqlPass ("")
-    , sqlDatabase("cmsat")
     , fileNamePresent (false)
 {
 }
@@ -122,10 +110,10 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     }
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -162,7 +150,7 @@ void Main::readInStandardInput(SATSolver* solver2)
     #ifndef USE_ZLIB
     FILE * in = stdin;
     #else
-    gzFile in = gzdopen(fileno(stdin), "rb");
+    gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
     #endif
 
     if (in == NULL) {
@@ -171,9 +159,9 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
     #else
-    DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
     if (!parser.parse_DIMACS(in)) {
@@ -274,8 +262,8 @@ void Main::add_supported_options()
         , "Stop solving after this much time (s)")
     ("maxconfl", po::value(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
         , "Stop solving after this many conflicts")
-    ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
-        , "Set as many variables in solution to UNDEF as possible if solution is SAT")
+//     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
+//         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
         , "Multiplier for all simplification cutoffs")
     ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
@@ -284,6 +272,8 @@ void Main::add_supported_options()
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when brancing. 'auto' -> selects last polarity used (also called 'caching')")
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
+    ("maple", po::value(&conf.maple)->default_value(conf.maple)
+        , "Use maple-type variable picking sometimes")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -305,34 +295,23 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many concflicts")
-    ("abortsearchgeomphase", po::value(&conf.abort_searcher_solve_on_geom_phase)->default_value(conf.abort_searcher_solve_on_geom_phase)
-        , "Abort Searcher:solve when geom would run out of its phase")
     ;
 
     std::ostringstream s_incclean;
-
-    std::ostringstream s_clean_confl_multiplier;
-    s_clean_confl_multiplier << std::setprecision(2) << conf.clean_confl_multiplier;
 
     std::ostringstream s_adjust_low;
     s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
 
     po::options_description reduceDBOptions("Red clause removal options");
     reduceDBOptions.add_options()
-    ("cleanconflmult", po::value(&conf.clean_confl_multiplier)->default_value(conf.clean_confl_multiplier, s_clean_confl_multiplier.str())
-        , "If prop&confl are used to clean, by what value should we multiply the conflicts relative to propagations (conflicts are much more rare, but maybe more useful)")
-    ("incclean", po::value(&conf.inc_max_temp_red_cls)->default_value(conf.inc_max_temp_red_cls, s_incclean.str())
-        , "Clean increment cleaning by this factor for next cleaning")
-    ("maxtemp", po::value(&conf.max_temporary_learnt_clauses)->default_value(conf.max_temporary_learnt_clauses)
-        , "Maximum number of temporary clauses of high glue")
-    ("keepglue", po::value(&conf.glue_must_keep_clause_if_below_or_eq)->default_value(conf.glue_must_keep_clause_if_below_or_eq)
-        , "Keep all clauses at or below this value")
+    ("gluecut0", po::value(&conf.glue_put_lev0_if_below_or_eq)->default_value(conf.glue_put_lev0_if_below_or_eq)
+        , "Glue value for lev 0 ('keep') cut")
+    ("gluecut1", po::value(&conf.glue_put_lev1_if_below_or_eq)->default_value(conf.glue_put_lev1_if_below_or_eq)
+        , "Glue value for lev 1 cut ('give another shot'")
     ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
         , "Keep all clauses at or below this value")
     ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Keep clauses that we guess to be good")
-    ("hash", po::value(&conf.hash_relearn_check)->default_value(conf.hash_relearn_check)
-        , "Hash clauses to check re-learning")
     ;
 
     std::ostringstream s_random_var_freq;
@@ -354,8 +333,6 @@ void Main::add_supported_options()
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and dividied by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
-    ("morebump", po::value(&conf.extra_bump_var_activities_based_on_glue)->default_value(conf.extra_bump_var_activities_based_on_glue)
-        , "Bump variables' activities based on the glue of red clauses there are in during UIP generation (as per Glucose)")
     ;
 
 
@@ -365,8 +342,6 @@ void Main::add_supported_options()
         , "Search for given amount of solutions")
     ("dumpred", po::value(&redDumpFname)
         , "If stopped dump redundant clauses here")
-    ("maxdump", po::value(&conf.maxDumpRedsSize)
-        , "Maximum length of redundant clause dumped")
     ("dumpirred", po::value(&irredDumpFname)
         , "If stopped, dump irred original problem here")
     ("debuglib", po::value<string>(&debugLib)
@@ -440,8 +415,6 @@ void Main::add_supported_options()
         , "BVA with 2-lit difference hack, too. Beware, this reduces the effectiveness of 1-lit diff")
     ("bvato", po::value(&conf.bva_time_limitM)->default_value(conf.bva_time_limitM)
         , "BVA time limit in bogoprops M")
-    ("noextbinsubs", po::value(&conf.doExtBinSubs)->default_value(conf.doExtBinSubs)
-        , "No extended subsumption with binary clauses")
     ("eratio", po::value(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
@@ -543,8 +516,6 @@ void Main::add_supported_options()
         , "Update glues while propagating")
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
-    ("binpri", po::value(&conf.propBinFirst)->default_value(conf.propBinFirst)
-        , "Propagated binary clauses strictly first")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
         , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
@@ -565,17 +536,9 @@ void Main::add_supported_options()
     po::options_description sqlOptions("SQL options");
     sqlOptions.add_options()
     ("sql", po::value(&sql)->default_value(0)
-        , "Write to SQL. 0 = no SQL, 1 = mysql, 2 = sqlite")
+        , "Write to SQL. 0 = no SQL, 1 or 2 = sqlite")
     ("sqlitedb", po::value(&sqlite_filename)
         , "Where to put the SQLite database")
-    ("sqluser", po::value(&sqlUser)->default_value(sqlUser)
-        , "SQL user to connect with")
-    ("sqlpass", po::value(&sqlPass)->default_value(sqlPass)
-        , "SQL user's pass to connect with")
-    ("sqldb", po::value(&sqlDatabase)->default_value(sqlDatabase)
-        , "SQL database name. Default is used by PHP system, so it's highly recommended")
-    ("sqlserver", po::value(&sqlServer)->default_value(sqlServer)
-        , "SQL server hostname/IP")
     ("sqlfull", po::value(&conf.dump_individual_restarts_and_clauses)->default_value(conf.dump_individual_restarts_and_clauses)
         , "Dump individual clause and restart statistics in FULL")
     ("sqlresttime", po::value(&conf.dump_individual_search_time)->default_value(conf.dump_individual_search_time)
@@ -618,8 +581,6 @@ void Main::add_supported_options()
         , "Enqueue lits from long clauses during distiallation N-by-N. 1 is slower, 2 is faster, etc.")
     ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
         , "Maximum number of Mega-bogoprops(~time) to spend on viviying long irred cls through watches, cache and stamps")
-    ("sortwatched", po::value(&conf.doSortWatched)->default_value(conf.doSortWatched)
-        , "Sort watches according to size")
     ("renumber", po::value(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
     ("savemem", po::value(&conf.doSaveMem)->default_value(conf.doSaveMem)
@@ -677,7 +638,7 @@ void Main::add_supported_options()
 
     help_options_complicated
     .add(generalOptions)
-    #if defined(USE_MYSQL) || defined(USE_SQLITE3)
+    #if defined(USE_SQLITE3)
     .add(sqlOptions)
     #endif
     .add(restartOptions)
@@ -946,7 +907,8 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess != 0) {
-        conf.varelim_time_limitM *= 3;
+        conf.varelim_time_limitM *= 5;
+        conf.varElimRatioPerIter = 2.0;
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
@@ -1164,7 +1126,7 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 
     if (thread_num > num_cores && conf.verbosity) {
-        std::cerr
+        std::cout
         << "c WARNING: Number of threads requested is more than the number of"
         << " cores reported by the system.\n"
         << "c WARNING: This is not a good idea in general. It's best to set the"
@@ -1203,12 +1165,7 @@ int Main::solve()
     }
     check_num_threads_sanity(num_threads);
     solver->set_num_threads(num_threads);
-    if (sql == 1) {
-        solver->set_mysql(sqlServer
-        , sqlUser
-        , sqlPass
-        , sqlDatabase);
-    } else if (sql == 2) {
+    if (sql != 0) {
         solver->set_sqlite(sqlite_filename);
     }
 

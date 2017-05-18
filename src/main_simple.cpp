@@ -42,13 +42,6 @@ using std::endl;
 using namespace CMSat;
 std::ostream* dratf;
 
-#ifdef USE_ZLIB
-static size_t gz_read(void* buf, size_t num, size_t count, gzFile f)
-{
-    return gzread(f, buf, num*count);
-}
-#endif
-
 SATSolver* solver;
 bool zero_exit_status = false;
 static void SIGINT_handler(int) {
@@ -215,10 +208,10 @@ int main(int argc, char** argv)
         printf("Reading from standard input... Use '-h' or '--help' for help.\n");
         #ifndef USE_ZLIB
         FILE* in = stdin;
-        DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, "", conf.verbosity);
         #else
-        gzFile in = gzdopen(fileno(stdin), "rb");
-        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
+        gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in)) {
@@ -249,9 +242,9 @@ int main(int argc, char** argv)
         }
 
         #ifndef USE_ZLIB
-        DimacsParser<StreamBuffer<FILE*, fread_op_norm, fread> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, "", conf.verbosity);
         #else
-        DimacsParser<StreamBuffer<gzFile, fread_op_zip, gz_read> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in)) {

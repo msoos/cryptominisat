@@ -35,11 +35,22 @@ int main(int argc, char** argv)
     );
     #endif
 
-    Main main(argc, argv);
-    main.conf.verbosity = 2;
-    main.conf.verbStats = 1;
-    main.parseCommandLine();
+    int ret = -1;
+    try {
+        Main main(argc, argv);
+        main.conf.verbosity = 2;
+        main.conf.verbStats = 1;
+        main.parseCommandLine();
 
-    signal(SIGINT, SIGINT_handler);
-    return main.solve();
+        signal(SIGINT, SIGINT_handler);
+        ret = main.solve();
+    } catch (CMSat::TooManyVarsError& e) {
+        std::cerr << "ERROR! Variable requested is far too large" << std::endl;
+        exit(-1);
+    } catch (CMSat::TooLongClauseError& e) {
+        std::cerr << "ERROR! Too long clause inserted" << std::endl;
+        exit(-1);
+    };
+
+    return ret;
 }

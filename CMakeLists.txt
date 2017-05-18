@@ -1,5 +1,39 @@
+# Copyright (c) 2017, Mate Soos
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 include (GenerateExportHeader)
+if (NOT WIN32)
+    include (GNUInstallDirs)
+    set(LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+    set(BINDIR "${CMAKE_INSTALL_BINDIR}")
+    set(INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+else()
+    set(BINDIR "bin")
+    set(LIBDIR "lib")
+    set(INCLUDEDIR "include")
+endif()
+
+message(STATUS "LIB directory is '${LIBDIR}'")
+message(STATUS "BIN directory is '${BINDIR}'")
+
 if(NOT (CMAKE_MAJOR_VERSION LESS 2))
     if(POLICY CMP0022)
         cmake_policy(SET CMP0022 OLD)
@@ -14,7 +48,7 @@ if(NOT (CMAKE_MAJOR_VERSION LESS 2))
     endif()
 
     if(POLICY CMP0026)
-        cmake_policy(SET CMP0026 OLD)
+        cmake_policy(SET CMP0026 NEW)
     endif()
 
     if(POLICY CMP0048)
@@ -52,8 +86,7 @@ foreach (build_config ${build_types})
         string(REGEX REPLACE "(^| )[/-]D *NDEBUG($| )"
                              " "
                              replacement
-                             "${${VAR_TO_MODIFY}}"
-              )
+                             "${${VAR_TO_MODIFY}}")
         #message("Original (${VAR_TO_MODIFY}) is ${${VAR_TO_MODIFY}} replacement is ${replacement}")
         set(${VAR_TO_MODIFY} "${replacement}" CACHE STRING "Default flags for ${build_config} configuration" FORCE)
     endforeach()
@@ -72,6 +105,11 @@ if (FEEDBACKFUZZ)
     SET (CMAKE_CXX_COMPILER "clang++")
     add_cxx_flag("-fsanitize=address")
     add_cxx_flag("-fsanitize-coverage=edge,indirect-calls,8bit-counters")
+endif()
+
+option(LARGEMEM "Allow memory usage to grow to Terabyte values -- uses 64b offsets. Slower, but allows the solver to run for much longer." OFF)
+if (LARGEMEM)
+    add_definitions(-DLARGE_OFFSETS)
 endif()
 
 option(SANITIZE "Use Clang sanitizers. This will force using clang++ as the compiler" OFF)
@@ -144,17 +182,59 @@ if (USE_PTHREADS)
 endif()
 
 # Note: O3 gives slight speed increase, 1 more solved from SAT Comp'14 @ 3600s
-if (NOT WIN32)
+if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
     if (USE_PTHREADS)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     endif()
-endif()
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -mtune=native")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g0 -DNDEBUG -mtune=native")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+else()
+    # see https://msdn.microsoft.com/en-us/library/fwkeyyhe.aspx for details
+    # /ZI = include debug info
+    # /Wall = all warnings
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Ox /ZI")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O3 /D NDEBUG /ZI")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od")
 
-if (NOT WIN32)
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -g0 -DNDEBUG -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-O0")
+    # We statically link to reduce dependencies
+    foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        if(${flag_var} MATCHES "/MD")
+            string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+        endif(${flag_var} MATCHES "/MD")
+        if(${flag_var} MATCHES "/MDd")
+            string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+        endif(${flag_var} MATCHES "/MDd")
+    endforeach(flag_var)
+
+    # buffers security check
+    add_compile_options(/GS)
+
+    # not too many warnings
+    add_compile_options(/W1)
+    # add_compile_options(/Wall)
+
+    # /Za = only ansi C98 & C++11
+    # /Za is not recommended for use, not tested, etc.
+    # see: http://stackoverflow.com/questions/5489326/za-compiler-directive-does-not-compile-system-headers-in-vs2010
+    # add_compile_options(/Za)
+
+    add_compile_options(/fp:precise)
+
+    # exception handling. s = The exception-handling model that catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" may throw an exception.
+    # exception handling. c = If used with s (/EHsc), catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" never throw a C++ exception.
+    add_compile_options(/EHsc)
+
+    # Creates a multithreaded executable (static) file using LIBCMT.lib.
+    add_compile_options(/MT)
+
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /PDBCOMPRESS")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:1572864")
+
+    #what does this do?
+    set(DEF_INSTALL_CMAKE_DIR CMake)
 endif()
 
 include(CheckCXXCompilerFlag)
@@ -202,50 +282,47 @@ endif()
 
 option(IPASIR "Also build IPASIR" OFF)
 
+option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
+if (LIMITMEM)
+    set(LIMITMEM "ON")
+endif()
+
 option(COVERAGE "Build with coverage check" OFF)
 if (COVERAGE)
     add_cxx_flag("--coverage")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
-endif()
-
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-option(STATICCOMPILE "Compile to static executable (only works on linux)" OFF)
+option(STATICCOMPILE "Compile to static executable" OFF)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
     if(STATICCOMPILE)
         MESSAGE(STATUS "Compiling for static library use")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -static ")
-        #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static ")
         SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-        set(NOMYSQL ON)
+
+        # removing -rdynamic that's automatically added
+        foreach (language CXX C)
+            set(VAR_TO_MODIFY "CMAKE_SHARED_LIBRARY_LINK_${language}_FLAGS")
+            string(REGEX REPLACE "(^| )-rdynamic($| )"
+                                 " "
+                                 replacement
+                                 "${${VAR_TO_MODIFY}}")
+            #message("Original (${VAR_TO_MODIFY}) is ${${VAR_TO_MODIFY}} replacement is ${replacement}")
+            set(${VAR_TO_MODIFY} "${replacement}" CACHE STRING "Default flags for ${build_config} configuration" FORCE)
+        endforeach()
     else()
         add_definitions(-DBOOST_TEST_DYN_LINK)
         MESSAGE(STATUS "Compiling for dynamic library use")
     endif()
 endif()
+if ((${CMAKE_SYSTEM_NAME} MATCHES "Windows") AND (STATICCOMPILE))
+    set(Boost_USE_STATIC_LIBS ON)
+endif()
 
-if(WIN32 AND NOT CYGWIN)
-    set(DEF_INSTALL_CMAKE_DIR CMake)
-#     add_compile_options($<$<CONFIG:Debug>:-DDEBUG>)
-#     add_compile_options($<$<CONFIG:Debug>:/Od>)
-#     add_compile_options($<$<CONFIG:Debug>:/Gm>)
-    add_compile_options(/DEBUG)
-    add_compile_options(/GS)
-    add_compile_options(/W1)
-    add_compile_options(/Zc:inline)
-    add_compile_options(/fp:precise)
-    add_compile_options(/EHsc)
-    add_compile_options(/MT)
-
-    # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /PDBCOMPRESS")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:1572864")
-else()
+if(NOT MSVC)
   set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 endif()
 
@@ -296,19 +373,6 @@ find_package (Threads REQUIRED)
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     add_definitions( -DSTATS_NEEDED )
-    if (NOT NOMYSQL)
-        find_package(MySQL)
-        IF (MYSQL_FOUND)
-            MESSAGE(STATUS "OK, Found MySQL!")
-            include_directories(${MySQL_INCLUDE_DIR})
-            link_directories(${MySQL_LIB_DIR})
-            add_definitions( -DUSE_MYSQL )
-            set(USING_MYSQL ON)
-        else ()
-            MESSAGE(STATUS "WARNING: Did not find MySQL, MySQL support will be disabled")
-        endif()
-    endif()
-
     if (NOT NOSQLITE)
         find_package(Sqlite3)
         IF (SQLITE3_FOUND)
@@ -329,10 +393,18 @@ ENDIF ()
 # -----------------------------------------------------------------------------
 option(NOZLIB "Don't use zlib" OFF)
 
-if (NOT NOZLIB)
+# cannot currently compile static zlib under Windows
+if (NOT NOZLIB AND NOT (STATICCOMPILE AND WIN32))
     find_package(ZLIB)
     IF (ZLIB_FOUND)
         MESSAGE(STATUS "OK, Found ZLIB!")
+        if(STATICCOMPILE AND WIN32)
+            # MESSAGE(STATUS "ZLIB library was set to be ${ZLIB_LIBRARY}")
+            # string(REPLACE "zlib.lib" "zlibstatic.lib" STATIC_ZLIB_LIBRARY ${ZLIB_LIBRARY})
+            # set(ZLIB_LIBRARY ${STATIC_ZLIB_LIBRARY})
+            # add_definitions( -DZLIB_WINAPI )
+            # MESSAGE(STATUS "Re-setting ZLIB library to be ${ZLIB_LIBRARY} for static compilation")
+        endif()
         include_directories(${ZLIB_INCLUDE_DIR})
         link_directories(${ZLIB_LIB_DIR})
         add_definitions( -DUSE_ZLIB )
@@ -407,14 +479,14 @@ if (STATICCOMPILE)
 endif()
 
 find_package (PythonInterp)
-# Force the use of the python libraries corresponding to the version of the interpreter
+# Force the use of the python libraries corresponding to the version of the current interpreter
 if (PYTHON_VERSION_MAJOR EQUAL "2")
     find_package (PythonLibs 2.7)
 else()
     find_package (PythonLibs 3.4)
 endif()
 
-if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIR AND NOT WIN32)
+if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIR)
     message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
     message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")
     message(STATUS "PYTHON_INCLUDE_DIR:FILEPATH=${PYTHON_INCLUDE_DIR}")
@@ -425,7 +497,7 @@ else()
     message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
 endif()
 
-if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK)
+if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK AND NOT STATICCOMPILE)
     message(STATUS "Building python interface")
     add_subdirectory(python pycryptosat)
 endif()
@@ -495,7 +567,6 @@ set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
 set(CRYPTOMINISAT5_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
-    ${MYSQL_LIB}
     ${M4RI_LIBRARIES}
 )
 

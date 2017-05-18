@@ -37,12 +37,12 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 
 void SolutionExtender::extend()
 {
+    assert(var_has_been_blocked.empty());
     var_has_been_blocked.resize(solver->nVarsOuter(), false);
-    //cout << "c [extend] start num unset: " << solver->count_num_unset_model() << endl;
+    //cout << "c [extend] start num unset: " << solver->count_num_unset_mode(l) << endl;
 
     //Extend variables already set
     solver->varReplacer->extend_model_already_set();
-    //cout << "aft varreplacer unset: " << count_num_unset_model() << endl;
 
     if (simplifier) {
         simplifier->extend_model(this);
@@ -56,6 +56,7 @@ void SolutionExtender::extend()
         if (solver->undef_must_set_vars[i]
             && solver->model_value(i) == l_Undef
         ) {
+            //any setting would work, let's set to l_False (MiniSat default)
             solver->model[i] = l_False;
         }
     }
@@ -78,8 +79,8 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
-    << "dummy blocked lit "
-    << solver->map_inter_to_outer(blockedOn)
+    << "dummy blocked lit (outer) "
+    << blockedOn
     << endl;
     #endif
 
@@ -108,6 +109,13 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
 {
+    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
+    cout
+    << "outer clause: "
+    << lits
+    << endl;
+    #endif
+
     #ifdef SLOW_DEBUG
     const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);

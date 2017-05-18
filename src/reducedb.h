@@ -23,7 +23,6 @@ THE SOFTWARE.
 #ifndef __REDUCEDB_H__
 #define __REDUCEDB_H__
 
-#include "cleaningstats.h"
 #include "clauseallocator.h"
 #include "clauseusagestats.h"
 
@@ -35,19 +34,18 @@ class ReduceDB
 {
 public:
     ReduceDB(Solver* solver);
-    void reduce_db_and_update_reset_stats();
-    const CleaningStats& get_stats() const;
-
-    uint64_t get_nbReduceDB() const
-    {
-        return nbReduceDB;
+    const double get_total_time() {
+        return total_time;
     }
-    uint64_t nbReduceDB = 0;
+    void handle_lev1();
+    void handle_lev2();
+    uint64_t nbReduceDB_lev1 = 0;
+    uint64_t nbReduceDB_lev2 = 0;
 
 private:
     Solver* solver;
     vector<ClOffset> delayed_clause_free;
-    CleaningStats cleaningStats;
+    double total_time = 0.0;
 
     unsigned cl_marked;
     unsigned cl_ttl;
@@ -58,25 +56,11 @@ private:
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 
     bool cl_needs_removal(const Clause* cl, const ClOffset offset) const;
-    void remove_cl_from_array_and_count_stats(
-        CleaningStats& tmpStats
-        , uint64_t sumConflicts
-    );
-
-    CleaningStats reduceDB();
-    void lock_most_UIP_used_clauses();
+    void remove_cl_from_lev2();
 
     void sort_red_cls(ClauseClean clean_type);
     void mark_top_N_clauses(const uint64_t keep_num);
-    ClauseUsageStats sumClauseData(
-        const vector<ClOffset>& toprint
-    ) const;
 };
-
-inline const CleaningStats& ReduceDB::get_stats() const
-{
-    return cleaningStats;
-}
 
 }
 

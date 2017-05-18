@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <stack>
 #include <set>
+#include <cmath>
 
 //#define ANIMATE3D
 
@@ -40,6 +41,7 @@ THE SOFTWARE.
 #include "clause.h"
 #include "boundedqueue.h"
 #include "cnf.h"
+#include "watchalgos.h"
 
 namespace CMSat {
 
@@ -100,6 +102,8 @@ public:
     template<bool update_bogoprops = true>
     void enqueue(const Lit p, const PropBy from = PropBy());
     void new_decision_level();
+    vector<double> var_act_vsids;
+    vector<double> var_act_maple;
 
 protected:
     int64_t simpDB_props = 0;
@@ -122,6 +126,24 @@ protected:
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
 
+
+    struct VarOrderLt { ///Order variables according to their activities
+        const vector<double>&  activities;
+        bool operator () (const uint32_t x, const uint32_t y) const
+        {
+            return activities[x] > activities[y];
+        }
+
+        VarOrderLt(const vector<double>& _activities) :
+            activities(_activities)
+        {}
+    };
+
+    ///activity-ordered heap of decision variables.
+    ///NOT VALID WHILE SIMPLIFYING
+    Heap<VarOrderLt> order_heap_vsids;
+    Heap<VarOrderLt> order_heap_maple;
+
     friend class Gaussian;
 
     template<bool update_bogoprops>
@@ -143,49 +165,47 @@ protected:
         , const Lit p
     );
     PropResult handle_normal_prop_fail(Clause& c, ClOffset offset, PropBy& confl);
-    PropResult handle_prop_tri_fail(
-        Watched* i
-        , Lit lit1
-        , PropBy& confl
-    );
 
     /////////////////
     // Operations on clauses:
     /////////////////
-    virtual void attachClause(
+    void attachClause(
         const Clause& c
         , const bool checkAttach = true
     );
-    virtual void detach_tri_clause(
-        Lit lit1
-        , Lit lit2
-        , Lit lit3
-        , bool red
-        , bool allow_empty_watch = false
-    );
-    virtual void detach_bin_clause(
+
+    void detach_bin_clause(
         Lit lit1
         , Lit lit2
         , bool red
         , bool allow_empty_watch = false
-    );
-    virtual void attach_bin_clause(
+        , bool allow_change_order = false
+    ) {
+        if (!allow_change_order) {
+            if (!(allow_empty_watch && watches[lit1].empty())) {
+                removeWBin(watches, lit1, lit2, red);
+            }
+            if (!(allow_empty_watch && watches[lit2].empty())) {
+                removeWBin(watches, lit2, lit1, red);
+            }
+        } else {
+            if (!(allow_empty_watch && watches[lit1].empty())) {
+                removeWBin_change_order(watches, lit1, lit2, red);
+            }
+            if (!(allow_empty_watch && watches[lit2].empty())) {
+                removeWBin_change_order(watches, lit2, lit1, red);
+            }
+        }
+    }
+    void attach_bin_clause(
         const Lit lit1
         , const Lit lit2
         , const bool red
         , const bool checkUnassignedFirst = true
     );
-    virtual void attach_tri_clause(
+    void detach_modified_clause(
         const Lit lit1
         , const Lit lit2
-        , const Lit lit3
-        , const bool red
-        , const bool checkUnassignedFirst = true
-    );
-    virtual void detach_modified_clause(
-        const Lit lit1
-        , const Lit lit2
-        , const uint32_t origSize
         , const Clause* address
     );
 
@@ -215,52 +235,15 @@ protected:
     }
 
 private:
-    bool propagate_tri_clause_occur(const Watched& ws);
     bool propagate_binary_clause_occur(const Watched& ws);
     bool propagate_long_clause_occur(const ClOffset offset);
-
     template<bool update_bogoprops = true>
     bool prop_bin_cl(
         const Watched* i
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
-
-    ///Propagate 3-long clause
-    PropResult propTriHelperSimple(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-    );
-    template<bool update_bogoprops = true>
-    void propTriHelperAnyOrder(
-        const Lit lit1
-        , const Lit lit2
-        , const Lit lit3
-        , const bool red
-    );
     void update_glue(Clause& c);
-
-    PropResult prop_tri_cl_strict_order (
-        Watched* i
-        , const Lit p
-        , PropBy& confl
-    );
-    template<bool update_bogoprops = true>
-    bool prop_tri_cl_any_order(
-        Watched* i
-        , const Lit lit1
-        , PropBy& confl
-    );
-
-    ///Propagate >3-long clause
-    PropResult prop_long_cl_strict_order(
-        Watched* i
-        , Watched*& j
-        , const Lit p
-        , PropBy& confl
-    );
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
         Watched* i
@@ -421,6 +404,21 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     assert(value(v) == l_Undef);
     if (!watches[~p].empty()) {
         watches.prefetch((~p).toInt());
+    }
+
+    if (!VSIDS) {
+        varData[v].picked = sumConflicts;
+        varData[v].conflicted = 0;
+        varData[v].almost_conflicted = 0;
+
+        assert(sumConflicts >= varData[v].cancelled);
+        uint32_t age = sumConflicts - varData[v].cancelled;
+        if (age > 0) {
+            double decay = std::pow(0.95, age);
+            var_act_maple[v] *= decay;
+            if (order_heap_maple.inHeap(v))
+                order_heap_maple.increase(v);
+        }
     }
 
     const bool sign = p.sign();

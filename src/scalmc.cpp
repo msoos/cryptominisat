@@ -1,25 +1,28 @@
 /*
- * CUSP and ScalMC
- *
- * Copyright (c) 2009-2015, Mate Soos. All rights reserved.
- * Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
- * Copyright (c) 2015, Supratik Chakraborty, Daniel J. Fremont,
- * Kuldeep S. Meel, Sanjit A. Seshia, Moshe Y. Vardi
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation
- * version 2.0 of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301  USA
+ CUSP and ScalMC
+
+ Copyright (c) 2009-2015, Mate Soos. All rights reserved.
+ Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
+ Copyright (c) 2015, Supratik Chakraborty, Daniel J. Fremont,
+ Kuldeep S. Meel, Sanjit A. Seshia, Moshe Y. Vardi
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
  */
 
 #if defined(__GNUC__) && defined(__linux__)
@@ -46,6 +49,7 @@
 #include <string.h>
 #include <list>
 #include <array>
+#include <cmath>
 
 #include "scalmc.h"
 #include "time_mem.h"
@@ -67,13 +71,13 @@ string binary(unsigned x, uint32_t length)
     do {
         s.push_back('0' + (x & 1));
     } while (x >>= 1);
-    for (uint32_t i = logSize; i < (uint32_t) length; i++) {
+
+    for (uint32_t i = logSize; i < length; i++) {
         s.push_back('0');
     }
     std::reverse(s.begin(), s.end());
 
     return s;
-
 }
 
 string CUSP::GenerateRandomBits(uint32_t size)
@@ -179,10 +183,10 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
 
         vars.clear();
         vars.push_back(act_var);
-        rhs = (randomBits[(independent_vars.size() + 1) * i] == 1);
+        rhs = (randomBits[(independent_vars.size() + 1) * i] == '1');
 
         for (uint32_t j = 0; j < independent_vars.size(); j++) {
-            if (randomBits[(independent_vars.size() + 1) * i + j] == '1') {
+            if (randomBits[(independent_vars.size() + 1) * i + j+1] == '1') {
                 vars.push_back(independent_vars[j]);
             }
         }

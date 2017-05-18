@@ -29,7 +29,6 @@ THE SOFTWARE.
 #include <vector>
 
 namespace CMSat {
-using namespace CMSat;
 using std::vector;
 
 typedef vec<Watched>& watch_subarray;

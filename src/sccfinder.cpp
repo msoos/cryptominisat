@@ -45,6 +45,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
     assert(binxors.empty());
     runStats.clear();
     runStats.numCalls = 1;
+    depth_warning_issued = false;
     const double myTime = cpuTime();
 
     globalIndex = 0;
@@ -93,8 +94,9 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
 void SCCFinder::tarjan(const uint32_t vertex)
 {
     depth++;
-    if (depth >= solver->conf.max_scc_depth) {
-        if (solver->conf.verbosity) {
+    if (depth >= (uint32_t)solver->conf.max_scc_depth) {
+        if (solver->conf.verbosity && !depth_warning_issued) {
+            depth_warning_issued = true;
             cout << "c [scc] WARNING: reached maximum depth of " << solver->conf.max_scc_depth << endl;
         }
         return;

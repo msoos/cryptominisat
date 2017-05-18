@@ -42,7 +42,6 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "constants.h"
 #include "solutionextender.h"
-#include "gatefinder.h"
 #include "varreplacer.h"
 #include "varupdatehelper.h"
 #include "completedetachreattacher.h"
@@ -92,7 +91,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     , toClear(solver->toClear)
     , velim_order(VarOrderLt(varElimComplexity))
     , topLevelGauss(NULL)
-    , gateFinder(NULL)
+    //, gateFinder(NULL)
     , anythingHasBeenBlocked(false)
     , blockedMapBuilt(false)
 {
@@ -105,7 +104,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     sub_str = new SubsumeStrengthen(this, solver);
 
     if (solver->conf.doGateFind) {
-        gateFinder = new GateFinder(this, solver);
+        //gateFinder = new GateFinder(this, solver);
     }
 }
 
@@ -114,7 +113,7 @@ OccSimplifier::~OccSimplifier()
     delete bva;
     delete topLevelGauss;
     delete sub_str;
-    delete gateFinder;
+    //delete gateFinder;
 }
 
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
@@ -134,8 +133,6 @@ void OccSimplifier::save_on_var_memory()
 
     touched.shrink_to_fit();
     resolvents.shrink_to_fit();
-    poss_gate_parts.shrink_to_fit();
-    negs_gate_parts.shrink_to_fit();
     blockedClauses.shrink_to_fit();;
 }
 
@@ -214,19 +211,22 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         if (it->dummy) {
             extender->dummyBlocked(it->blockedOn);
         } else {
+            //Check if clause can be removed, update literals to replaced literals
             for(Lit& l: it->lits) {
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
-                if (solver->model_value(l) == l_True) {
-                    goto next;
-                }
 
-                //Check if it can be removed
+                //Check if clause can be removed because it's set at dec level 0
                 Lit inter = solver->map_outer_to_inter(l);
                 if (solver->value(inter) == l_True
                     && solver->varData[inter.var()].level == 0
                 ) {
                     it->toRemove = true;
                     can_remove_blocked_clauses = true;
+                    goto next;
+                }
+
+                //Blocked clause can be skipped, it's satisfied
+                if (solver->model_value(l) == l_True) {
                     goto next;
                 }
             }
@@ -357,11 +357,6 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             unlink_clause(offset, false);
             return l_True;
 
-        case 3:
-            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
-            unlink_clause(offset, false);
-            return l_True;
-
         default:
             cl.setStrenghtened();
             cl.recalc_abst_if_needed();
@@ -374,7 +369,7 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
 bool OccSimplifier::complete_clean_clause(Clause& cl)
 {
     assert(!solver->drat->something_delayed());
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
     (*solver->drat) << deldelay << cl << fin;
 
     //Remove all lits from stats
@@ -422,10 +417,6 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
         case 2:
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
-            return false;
-
-        case 3:
-            solver->attach_tri_clause(cl[0], cl[1], cl[2], cl.red());
             return false;
 
         default:
@@ -597,7 +588,7 @@ void OccSimplifier::add_back_to_solver()
         assert(!cl->getRemoved());
 
         //All clauses are larger than 2-long
-        assert(cl->size() > 3);
+        assert(cl->size() > 2);
 
         if (check_varelim_when_adding_back_cl(cl)) {
             //The clause wasn't linked in but needs removal now
@@ -613,8 +604,10 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                if (cl->stats.glue <= solver->conf.glue_must_keep_clause_if_below_or_eq) {
+                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
+                } else if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq) {
+                    cl->stats.which_red_array = 1;
                 }
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {
@@ -641,7 +634,7 @@ void OccSimplifier::remove_all_longs_from_watches()
             if (i->isClause()) {
                 continue;
             } else {
-                assert(i->isBin() || i->isTri());
+                assert(i->isBin());
                 *j++ = *i;
             }
         }
@@ -658,11 +651,8 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-    size_t num = 0;
-    for(size_t var = solver->mtrand.randInt(solver->nVars())
-        ; num < solver->nVars()
-        && var < solver->nVars()
-        && *limit_to_decrease > 0
+    for(size_t var = solver->mtrand.randInt(solver->nVars()), num = 0
+        ; num < solver->nVars() && *limit_to_decrease > 0
         ; var = (var + 1) % solver->nVars(), num++
     ) {
         if (!can_eliminate_var(var))
@@ -775,7 +765,7 @@ bool OccSimplifier::eliminate_vars()
 
         for(uint32_t l: impl_sub_lits.getTouchedList()) {
             Lit lit = Lit::toLit(l);
-            if (!sub_str->backw_sub_str_with_bin_tris_watch(lit, true)) {
+            if (!sub_str->backw_sub_str_with_bins_watch(lit, true)) {
                 goto end;
             }
             if (*limit_to_decrease <= 0)
@@ -942,17 +932,15 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 eliminate_empty_resolvent_vars();
                 eliminate_vars();
             }
-        }
-        else if (token == "occ-bva") {
+        } else if (token == "occ-bva") {
             bva->bounded_var_addition();
-        } else if (token == "occ-gates") {
+        } /*else if (token == "occ-gates") {
             if (solver->conf.doCache
                 && solver->conf.doGateFind
             ) {
                 gateFinder->doAll();
             }
-        }
-        else if (token == "") {
+        }*/ else if (token == "") {
             //nothing, ignore empty token
         } else {
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
@@ -1020,7 +1008,7 @@ bool OccSimplifier::backward_sub_str()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-    if (!sub_str->backward_sub_str_with_bins_tris()) {
+    if (!sub_str->backward_sub_str_with_bins()) {
         goto end;
     }
     if (solver->must_interrupt_asap())
@@ -1039,8 +1027,6 @@ bool OccSimplifier::backward_sub_str()
     if (!sub_str->handle_sub_str_with()) {
         goto end;
     }
-
-    //TODO subsume tri with bin+tri, bin with bin.
 
     end:
     free_clauses_to_free();
@@ -1104,6 +1090,9 @@ bool OccSimplifier::fill_occur()
 //otherwise, uneliminated_vars_since_last_solve will be wrong
 bool OccSimplifier::uneliminate(uint32_t var)
 {
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout << "calling uneliminate() on var" << var+1 << endl;
+    #endif
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
@@ -1333,9 +1322,6 @@ void OccSimplifier::set_limits()
     strengthening_time_limit *= 2;
 
     varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
-    if (globalStats.numCalls > 0) {
-        varelim_num_limit = (double)varelim_num_limit * (globalStats.numCalls+0.5);
-    }
 
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
@@ -1395,21 +1381,18 @@ void OccSimplifier::cleanBlockedClauses()
 }
 
 size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
-    watch_subarray_const todo
+    watch_subarray todo
     , const Lit lit
 ) {
     blockedMapBuilt = false;
-    vector<Lit> lits;
     const size_t orig_blocked_cls_size = blockedClauses.size();
 
-    //Copy todo --> it will be manipulated below
-    vector<Watched> todo_copy;
-    for(Watched tmp: todo) {
-        todo_copy.push_back(tmp);
-    }
+    //Copy&clear i.e. MOVE
+    todo.moveTo(tmp_rem_cls_copy);
+    assert(solver->watches[lit].empty());
 
-    solver->watches[lit].clear();
-    for (const Watched watch :todo_copy) {
+    vector<Lit>& lits = tmp_rem_lits;
+    for (const Watched watch :tmp_rem_cls_copy) {
         lits.clear();
         bool red = false;
 
@@ -1470,42 +1453,9 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             }
 
             //Remove
-            *limit_to_decrease -= (long)solver->watches[lits[0]].size();
-            *limit_to_decrease -= (long)solver->watches[lits[1]].size();
-            solver->detach_bin_clause(lits[0], lits[1], red, true);
-        }
-
-        if (watch.isTri()) {
-
-            //Update stats
-            if (!watch.red()) {
-                bvestats.clauses_elimed_tri++;
-                bvestats.clauses_elimed_sumsize += 3;
-            } else {
-                red = true;
-                bvestats.triRedClRemThroughElim++;
-            }
-
-            //Put clause into blocked status
-            lits.resize(3);
-            lits[0] = lit;
-            lits[1] = watch.lit2();
-            lits[2] = watch.lit3();
-            if (!watch.red()) {
-                add_clause_to_blck(lit, lits);
-                touched.touch(lits[1]);
-                touched.touch(lits[2]);
-            } else {
-                //If redundant, delayed blocked-based DRAT deletion will not work
-                //so delete explicitly
-                (*solver->drat) << del << lits[0] << lits[1] << lits[2] << fin;
-            }
-
-            //Remove
-            *limit_to_decrease -= (long)solver->watches[lits[0]].size();
-            *limit_to_decrease -= (long)solver->watches[lits[1]].size();
-            *limit_to_decrease -= (long)solver->watches[lits[2]].size();
-            solver->detach_tri_clause(lits[0], lits[1], lits[2], watch.red(), true);
+            //*limit_to_decrease -= (long)solver->watches[lits[0]].size()/4; //This is zero
+            *limit_to_decrease -= (long)solver->watches[lits[1]].size()/4;
+            solver->detach_bin_clause(lits[0], lits[1], red, true, true);
         }
 
         if (solver->conf.verbosity >= 3 && !lits.empty()) {
@@ -1527,47 +1477,33 @@ void OccSimplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
     blockedClauses.push_back(BlockedClause(lit_outer, lits_outer));
 }
 
-bool OccSimplifier::find_gate(
+void OccSimplifier::find_gate(
     Lit elim_lit
     , watch_subarray_const a
     , watch_subarray_const b
 ) {
-    bool found_better = false;
     assert(toClear.empty());
     for(const Watched w: a) {
-        if (w.isBin()
-            && !w.red()
-        ) {
+        if (w.isBin() && !w.red()) {
             seen[(~w.lit2()).toInt()] = 1;
             toClear.push_back(~w.lit2());
         }
     }
 
+    //Have to find the corresponding gate. Finding one is good enough
     for(const Watched w: b) {
-        if (w.isBin()
-            || (w.isTri() && w.red())
-        ) {
+        if (w.isBin()) {
             continue;
         }
 
-        if (w.isTri() && gate_lits_of_elim_cls.size() < 2) {
-            gate_lits_of_elim_cls.clear();
-            assert(!w.red());
-            if (seen[w.lit2().toInt()] && seen[w.lit3().toInt()]) {
-                gate_lits_of_elim_cls.push_back(w.lit2());
-                gate_lits_of_elim_cls.push_back(w.lit3());
-                found_better = true;
-            }
-        }
-
         if (w.isClause()) {
-            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+            Clause* cl = solver->cl_alloc.ptr(w.get_offset());
             if (cl->getRemoved()) {
                 continue;
             }
 
-            assert(cl->size() > 3);
-            if (!cl->red() && cl->size()-1 > gate_lits_of_elim_cls.size()) {
+            assert(cl->size() > 2);
+            if (!cl->red()) {
                 bool OK = true;
                 for(const Lit lit: *cl) {
                     if (lit != ~elim_lit) {
@@ -1580,13 +1516,9 @@ bool OccSimplifier::find_gate(
 
                 //Found all lits inside
                 if (OK) {
-                    gate_lits_of_elim_cls.clear();
-                    for(const Lit lit: *cl) {
-                        if (lit != ~elim_lit) {
-                            gate_lits_of_elim_cls.push_back(lit);
-                        }
-                    }
-                    found_better = true;
+                    cl->stats.marked_clause = true;
+                    gate_varelim_clause = cl;
+                    break;
                 }
             }
         }
@@ -1596,8 +1528,6 @@ bool OccSimplifier::find_gate(
         seen[l.toInt()] = 0;
     }
     toClear.clear();
-
-    return found_better;
 }
 
 void OccSimplifier::mark_gate_in_poss_negs(
@@ -1605,120 +1535,22 @@ void OccSimplifier::mark_gate_in_poss_negs(
     , watch_subarray_const poss
     , watch_subarray_const negs
 ) {
-    gate_lits_of_elim_cls.clear();
-
-    //Either of the two is OK
+    //Either of the two is OK. Let's just find ONE, not the biggest one.
+    //We could find the biggest one, but it's expensive.
+    bool found_pos = false;
+    gate_varelim_clause = NULL;
     find_gate(elim_lit, poss, negs);
-    bool gate_found_elim_pos = find_gate(~elim_lit, negs, poss);
+    if (gate_varelim_clause == NULL) {
+        find_gate(~elim_lit, negs, poss);
+        found_pos = true;
+    }
 
-    if (!gate_lits_of_elim_cls.empty()
-        && solver->conf.verbosity >= 10
-    ) {
+    if (gate_varelim_clause != NULL && solver->conf.verbosity >= 10) {
         cout
         << "Lit: " << elim_lit
-        << " gate_lits_of_elim_cls.size():" << gate_lits_of_elim_cls << endl
-        << " gate_found_elim_pos:" << gate_found_elim_pos
+        << " gate_found_elim_pos:" << found_pos
         << endl;
     }
-    if (!gate_lits_of_elim_cls.empty()) {
-        gate_found_elim = true;
-        if (!gate_found_elim_pos) {
-            mark_gate_parts(elim_lit, poss, negs, poss_gate_parts, negs_gate_parts);
-        } else {
-            mark_gate_parts(~elim_lit, negs, poss, negs_gate_parts, poss_gate_parts);
-        }
-    }
-}
-
-void OccSimplifier::mark_gate_parts(
-    Lit elim_lit
-    , watch_subarray_const a
-    , watch_subarray_const b
-    , vector<char>& a_mark
-    , vector<char>& b_mark
-) {
-    a_mark.clear();
-    a_mark.resize(a.size(), 0);
-    b_mark.clear();
-    b_mark.resize(b.size(), 0);
-
-    for(Lit lit: gate_lits_of_elim_cls) {
-        seen[lit.toInt()] = 1;
-    }
-
-    size_t num_found = 0;
-    size_t at = 0;
-    for(Watched w: a) {
-        if (w.isBin()
-            && !w.red()
-            && seen[(~w.lit2()).toInt()]
-        ) {
-            num_found++;
-            a_mark[at] = 1;
-        }
-        at++;
-    }
-    assert(num_found >= gate_lits_of_elim_cls.size()
-        && "We have to find all, but there could be multiple that are the same"
-        //NOTE: this is not a precise check but it's better than nothing
-    );
-
-    at = 0;
-    num_found = 0;
-    for(Watched w: b) {
-        if (gate_lits_of_elim_cls.size() == 2
-            && w.isTri()
-            && !w.red()
-            && seen[w.lit2().toInt()]
-            && seen[w.lit3().toInt()]
-        ) {
-            b_mark[at] = 1;
-            num_found++;
-        }
-
-        if (gate_lits_of_elim_cls.size() >= 3
-            && w.isClause()
-        ) {
-            const Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-            if (cl->getRemoved()) {
-                continue;
-            }
-
-            if (!cl->red() && cl->size()-1 == gate_lits_of_elim_cls.size()) {
-                bool found_it = true;
-                for(const Lit lit: *cl) {
-                    if (lit != ~elim_lit) {
-                        if (!seen[lit.toInt()]) {
-                            found_it = false;
-                            break;
-                        }
-                    }
-                }
-                if (found_it) {
-                    b_mark[at] = 1;
-                    num_found++;
-                }
-            }
-        }
-        at++;
-    }
-    assert(num_found >= 1
-        && "We have to find the matching gate clause. But there could be multiple matching"
-    );
-
-    for(Lit lit: gate_lits_of_elim_cls) {
-        seen[lit.toInt()] = 0;
-    }
-}
-
-bool OccSimplifier::skip_resolution_thanks_to_gate(
-    const size_t at_poss
-    , const size_t at_negs
-) const {
-    if (!gate_found_elim)
-        return false;
-
-    return poss_gate_parts[at_poss] == negs_gate_parts[at_negs];
 }
 
 int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
@@ -1761,17 +1593,16 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         return std::numeric_limits<int>::max();
     }
 
-    gate_found_elim = false;
+    gate_varelim_clause = NULL;
     if (solver->conf.skip_some_bve_resolvents) {
-        //mark_gate_in_poss_negs(lit, poss, negs);
+        mark_gate_in_poss_negs(lit, poss, negs);
     }
 
     // Count clauses/literals after elimination
-    uint32_t before_clauses = pos.bin + pos.tri + pos.longer + neg.bin + neg.tri + neg.longer;
+    uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
     uint32_t after_clauses = 0;
     uint32_t after_long = 0;
     uint32_t after_bin = 0;
-    uint32_t after_tri = 0;
     uint32_t after_literals = 0;
 
     size_t at_poss = 0;
@@ -1792,16 +1623,6 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             if (solver->redundant_or_removed(*it2))
                 continue;
 
-            if (solver->conf.skip_some_bve_resolvents
-                && solver->conf.otfHyperbin
-                //Below: Always resolve binaries so that cache&stamps stay OK
-                && !(it->isBin() && it2->isBin())
-                //Real check
-                && skip_resolution_thanks_to_gate(at_poss, at_negs)
-            ) {
-                continue;
-            }
-
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
             if (tautological)
@@ -1814,10 +1635,8 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Update after-stats
             after_clauses++;
             after_literals += dummy.size();
-            if (dummy.size() > 3)
+            if (dummy.size() >= 3)
                 after_long++;
-            if (dummy.size() == 3)
-                after_tri++;
             if (dummy.size() == 2)
                 after_bin++;
 
@@ -1830,14 +1649,17 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 || *limit_to_decrease < -10LL*1000LL
 
             ) {
+                if (gate_varelim_clause) {
+                    gate_varelim_clause->stats.marked_clause = false;
+                }
                 return std::numeric_limits<int>::max();
             }
 
             //Calculate new clause stats
             ClauseStats stats;
-            if ((it->isBin() || it->isTri()) && it2->isClause())
+            if (it->isBin() && it2->isClause())
                 stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
-            else if ((it2->isBin() || it2->isTri()) && it->isClause())
+            else if (it2->isBin() && it->isClause())
                 stats = solver->cl_alloc.ptr(it->get_offset())->stats;
             else if (it->isClause() && it2->isClause())
                 stats = ClauseStats::combineStats(
@@ -1849,10 +1671,13 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         }
     }
 
+    if (gate_varelim_clause) {
+        gate_varelim_clause->stats.marked_clause = false;
+    }
+
     //Smaller value returned, the better
-    int cost = (int)after_long + (int)after_tri + (int)after_bin*(int)3
+    int cost = (int)after_long + (int)after_bin*(int)3
         - (int)pos.longer - (int)neg.longer
-        - (int)pos.tri - (int)neg.tri
         - (int)pos.bin*3 - (int)neg.bin*(int)3;
 
     return cost;
@@ -1867,16 +1692,6 @@ void OccSimplifier::printOccur(const Lit lit) const
             << "Bin   --> "
             << lit << ", "
             << w.lit2()
-            << "(red: " << w.red()
-            << ")"
-            << endl;
-        }
-
-        if (w.isTri()) {
-            cout
-            << "Tri   --> "
-            << lit << ", "
-            << w.lit2() << " , " << w.lit3()
             << "(red: " << w.red()
             << ")"
             << endl;
@@ -1912,78 +1727,12 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
     printOccur(~lit);
 }
 
-bool OccSimplifier::check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits_orig)
-{
-    assert(lits_orig.size() == 2);
-    Lit lits[2];
-    lits[0] = lits_orig[0];
-    lits[1] = lits_orig[1];
-    if (solver->watches[lits[0]].size() > solver->watches[lits[1]].size()) {
-        std::swap(lits[0], lits[1]);
-    }
-
-    bool already_inside = false;
-    *limit_to_decrease -= solver->watches[lits[0]].size()/2;
-    Watched* i = solver->watches[lits[0]].begin();
-    Watched* j = i;
-    for(Watched* end = solver->watches[lits[0]].end(); i != end; i++) {
-        const Watched& w = *i;
-
-        if (w.isBin()
-            && !w.red()
-            && w.lit2() == lits[1]
-        ) {
-            if (solver->conf.verbosity >= 6) {
-                cout
-                << "Not adding resolvd BIN, it's aready inside"
-                << " irred bin: "
-                << lits[0]
-                << ", " << w.lit2()
-                << endl;
-            }
-            already_inside = true;
-        }
-
-        if (w.isTri()
-            //&& w.red()
-            && (   w.lit2() == lits[1]
-                || w.lit3() == lits[1]
-            )
-        ) {
-            if (solver->conf.verbosity >= 6) {
-                cout
-                << "Removing tri-clause due to addition of"
-                << " irred bin: "
-                << lits[0]
-                << ", " << w.lit2()
-                << ", " << w.lit3()
-                << endl;
-            }
-            bvestats.subsumedByVE++;
-            solver->remove_tri_but_lit1(lits[0],w.lit2(), w.lit3(), w.red(), *limit_to_decrease);
-        } else {
-            *j++ = *i;
-        }
-    }
-    solver->watches[lits[0]].shrink(i-j);
-
-    return already_inside;
-}
-
 bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
 ) {
     bvestats.newClauses++;
     Clause* newCl = NULL;
-
-    //Check if a new 2-long would subsume a 3-long if we have time
-    if (finalLits.size() == 2 && *limit_to_decrease > 10LL*1000LL) {
-        bool already_inside = check_if_new_2_long_subsumes_3_long_return_already_inside(finalLits);
-        if (already_inside) {
-            goto subsume;
-        }
-    }
 
     if (solver->conf.verbosity >= 6) {
         cout
@@ -2010,8 +1759,7 @@ bool OccSimplifier::add_varelim_resolvent(
         SubsumeStrengthen::Sub1Ret ret = sub_str->strengthen_subsume_and_unlink_and_markirred(offset);
         bvestats.subsumedByVE += ret.sub;
 
-    } else if (finalLits.size() == 3 || finalLits.size() == 2) {
-        subsume:
+    } else if (finalLits.size() == 2) {
         std::sort(finalLits.begin(), finalLits.end());
         SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
         bvestats.subsumedByVE += ret.sub;
@@ -2037,10 +1785,10 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
     if (!solver->conf.updateVarElimComplexityOTF)
         return;
 
-    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars) {
+    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars
+        || time_spent_on_calc_otf_update > solver->conf.updateVarElimComplexityOTF_limitavg*100ULL*1000ULL
+    ) {
         const double avg = float_div(time_spent_on_calc_otf_update, num_otf_update_until_now);
-        //cout << "num_otf_update_until_now: " << num_otf_update_until_now << endl;
-        //cout << "avg: " << avg << endl;
 
         if (avg > solver->conf.updateVarElimComplexityOTF_limitavg) {
             solver->conf.updateVarElimComplexityOTF = false;
@@ -2052,7 +1800,6 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
             return;
         }
     }
-
 
     int64_t limit_before = *limit_to_decrease;
     num_otf_update_until_now++;
@@ -2149,19 +1896,12 @@ void OccSimplifier::add_pos_lits_to_dummy_and_seen(
     const Watched ps
     , const Lit posLit
 ) {
-    if (ps.isBin() || ps.isTri()) {
+    if (ps.isBin()) {
         *limit_to_decrease -= 1;
         assert(ps.lit2() != posLit);
 
         seen[ps.lit2().toInt()] = 1;
         dummy.push_back(ps.lit2());
-    }
-
-    if (ps.isTri()) {
-        assert(ps.lit2() < ps.lit3());
-
-        seen[ps.lit3().toInt()] = 1;
-        dummy.push_back(ps.lit3());
     }
 
     if (ps.isClause()) {
@@ -2180,7 +1920,7 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
     const Watched qs
     , const Lit posLit
 ) {
-    if (qs.isBin() || qs.isTri()) {
+    if (qs.isBin()) {
         *limit_to_decrease -= 1;
         assert(qs.lit2() != ~posLit);
 
@@ -2190,18 +1930,6 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
         if (!seen[qs.lit2().toInt()]) {
             dummy.push_back(qs.lit2());
             seen[qs.lit2().toInt()] = 1;
-        }
-    }
-
-    if (qs.isTri()) {
-        assert(qs.lit2() < qs.lit3());
-
-        if (seen[(~qs.lit3()).toInt()]) {
-            return true;
-        }
-        if (!seen[qs.lit3().toInt()]) {
-            dummy.push_back(qs.lit3());
-            seen[qs.lit3().toInt()] = 1;
         }
     }
 
@@ -2311,15 +2039,34 @@ bool OccSimplifier::resolve_clauses(
     , const bool aggressive
 ) {
     //If clause has already been freed, skip
-    if (ps.isClause()
-        && solver->cl_alloc.ptr(ps.get_offset())->freed()
-    ) {
-        return false;
+    Clause *cl1 = NULL;
+    if (ps.isClause()) {
+         cl1 = solver->cl_alloc.ptr(ps.get_offset());
+        if (cl1->freed()) {
+            return true;
+        }
     }
-    if (qs.isClause()
-        && solver->cl_alloc.ptr(qs.get_offset())->freed()
+
+    Clause *cl2 = NULL;
+    if (qs.isClause()) {
+         cl2 = solver->cl_alloc.ptr(qs.get_offset());
+        if (cl2->freed()) {
+            return true;
+        }
+    }
+    if (gate_varelim_clause
+        && cl1 && cl2
+        && !cl1->stats.marked_clause
+        && !cl2->stats.marked_clause
     ) {
-        return false;
+        //for G (U) R, we only neede to resolve to
+        // (Gx * R!x) (U) (G!x * Rx)
+        // So Rx * R!x is skipped
+        //
+        // Here: Both are long clauses, so only one could be in G. But neither
+        // are marked, hence neither are in G, so both are in R.
+        // see:  http://baldur.iti.kit.edu/sat/files/ex04.pdf
+        return true;
     }
 
     dummy.clear();
@@ -2363,44 +2110,6 @@ bool OccSimplifier::aggressiveCheck(
         if (it->isClause())
             continue;
 
-        //handle tri
-        if (it->isTri() && !it->red()) {
-
-            //See if any of the literals is in
-            Lit otherLit = lit_Undef;
-            unsigned inside = 0;
-            if (seen[it->lit2().toInt()]) {
-                otherLit = it->lit3();
-                inside++;
-            }
-
-            if (seen[it->lit3().toInt()]) {
-                otherLit = it->lit2();
-                inside++;
-            }
-
-            //Could subsume
-            if (inside == 2) {
-                retval = false;
-                return true;
-            }
-
-            //None is in, skip
-            if (inside == 0)
-                continue;
-
-            if (otherLit.var() == noPosLit.var())
-                continue;
-
-            //Extend clause
-            if (!seen[(~otherLit).toInt()]) {
-                toClear.push_back(~otherLit);
-                seen[(~otherLit).toInt()] = 1;
-            }
-
-            continue;
-        }
-
         //Handle binary
         if (it->isBin() && !it->red()) {
             const Lit otherLit = it->lit2();
@@ -2440,11 +2149,6 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
             case watch_binary_t:
                 ret.bin++;
                 ret.lit += 2;
-                break;
-
-            case CMSat::watch_tertiary_t:
-                ret.tri++;
-                ret.lit += 3;
                 break;
 
             case watch_clause_t: {
@@ -2552,36 +2256,6 @@ int OccSimplifier::check_empty_resolvent_action(
             continue;
         }
 
-        //Handle tertiary
-        if (ws.isTri()) {
-            //Only count irred
-            if (!ws.red()) {
-                *limit_to_decrease -= 4;
-                switch(action) {
-                    case ResolvCount::set:
-                        seen[ws.lit2().toInt()] |= at;
-                        seen[ws.lit3().toInt()] |= at;
-                        break;
-
-                    case ResolvCount::unset:
-                        seen[ws.lit2().toInt()] = 0;
-                        seen[ws.lit3().toInt()] = 0;
-                        break;
-
-                    case ResolvCount::count:
-                        uint16_t tmp = seen[(~ws.lit2()).toInt()] | seen[(~ws.lit3()).toInt()];
-                        int num = my_popcnt(tmp);
-                        assert(num <= otherSize);
-                        count += otherSize - num;
-                        break;
-                }
-                at <<= 1;
-                numCls++;
-            }
-
-            continue;
-        }
-
         if (ws.isClause()) {
             const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
             if (cl->getRemoved()) {
@@ -2657,8 +2331,8 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
     const HeuristicData neg = calc_data_for_heuristic(~lit);
 
     //Estimate cost
-    int posTotalLonger = pos.longer + pos.tri;
-    int negTotalLonger = neg.longer + neg.tri;
+    int posTotalLonger = pos.longer;
+    int negTotalLonger = neg.longer;
     int normCost;
     switch(solver->conf.varElimCostEstimateStrategy) {
         case 0:
@@ -2683,7 +2357,6 @@ pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
             << endl;
             std::exit(-1);
     }
-
 
     /*if ((pos.longer + pos.tri + pos.bin) <= 2
         && (neg.longer + neg.tri + neg.bin) <= 2
@@ -2789,9 +2462,6 @@ void OccSimplifier::check_elimed_vars_are_unassignedAndStats() const
 size_t OccSimplifier::mem_used() const
 {
     size_t b = 0;
-    b += poss_gate_parts.capacity()*sizeof(char);
-    b += negs_gate_parts.capacity()*sizeof(char);
-    b += gate_lits_of_elim_cls.capacity()*sizeof(Lit);
     b += dummy.capacity()*sizeof(char);
     b += sub_str_with.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
@@ -2844,7 +2514,7 @@ void OccSimplifier::freeXorMem()
 
 void OccSimplifier::linkInClause(Clause& cl)
 {
-    assert(cl.size() > 3);
+    assert(cl.size() > 2);
     ClOffset offset = solver->cl_alloc.get_offset(&cl);
     cl.recalc_abst_if_needed();
 
@@ -2859,12 +2529,12 @@ void OccSimplifier::linkInClause(Clause& cl)
 }
 
 
-void OccSimplifier::print_gatefinder_stats() const
+/*void OccSimplifier::print_gatefinder_stats() const
 {
     if (gateFinder) {
         gateFinder->get_stats().print(solver->nVarsOuter());
     }
-}
+}*/
 
 double OccSimplifier::Stats::total_time() const
 {
@@ -2901,7 +2571,6 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     clauses_elimed_bin += other.clauses_elimed_bin;
     clauses_elimed_sumsize += other.clauses_elimed_sumsize;
     longRedClRemThroughElim += other.longRedClRemThroughElim;
-    triRedClRemThroughElim += other.triRedClRemThroughElim;
     binRedClRemThroughElim += other.binRedClRemThroughElim;
     numRedBinVarRemAdded += other.numRedBinVarRemAdded;
     testedToElimVars += other.testedToElimVars;

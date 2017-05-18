@@ -148,11 +148,12 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     assert(solver->value(replaced_with) == l_Undef);
 
-    double orig_act = solver->activ_glue[orig];
-    double repl_with_act = solver->activ_glue[replaced_with];
+    double orig_act = solver->var_act_vsids[orig];
+    double repl_with_act = solver->var_act_vsids[replaced_with];
     if (orig_act + repl_with_act >= orig_act) {
-        solver->activ_glue[replaced_with] += orig_act;
+        solver->var_act_vsids[replaced_with] += orig_act;
     }
+    //TODO: should we do the above for maple too?
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
@@ -181,7 +182,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
 void VarReplacer::attach_delayed_attach()
 {
     for(Clause* c: delayed_attach_or_free) {
-        if (c->size() <= 3) {
+        if (c->size() <= 2) {
             solver->cl_alloc.clauseFree(c);
         } else {
             c->unset_removed();
@@ -318,125 +319,6 @@ void VarReplacer::newBinClause(
     }
 }
 
-inline void VarReplacer::updateTri(
-    Watched* i
-    , Watched*& j
-    , const Lit origLit1
-    , const Lit origLit2
-    , Lit lit1
-    , Lit lit2
-) {
-    Lit lit3 = i->lit3();
-    Lit origLit3 = lit3;
-    assert(origLit1.var() != origLit3.var());
-    assert(origLit2.var() != origLit3.var());
-    assert(origLit2 < origLit3);
-    assert(solver->value(origLit3) == l_Undef);
-
-    //Update lit3
-    if (get_lit_replaced_with_fast(lit3) != lit3) {
-        lit3 = get_lit_replaced_with_fast(lit3);
-        i->setLit3(lit3);
-        runStats.replacedLits++;
-    }
-
-    bool remove = false;
-
-    //Tautology, remove
-    if (lit1 == ~lit2
-        || lit1 == ~lit3
-        || lit2 == ~lit3
-    ) {
-        remove = true;
-    }
-
-    //All 3 lits are the same
-    if (!remove
-        && lit1 == lit2
-        && lit2 == lit3
-    ) {
-        delayedEnqueue.push_back(lit1);
-        (*solver->drat) << lit1 << fin;
-        remove = true;
-    }
-
-    //1st and 2nd lits are the same
-    if (!remove
-        && lit1 == lit2
-    ) {
-        newBinClause(origLit1, origLit2, origLit3, lit1, lit3, i->red());
-        remove = true;
-    }
-
-    //1st and 3rd lits  OR 2nd and 3rd lits are the same
-    if (!remove
-        && (lit1 == lit3 || (lit2 == lit3))
-    ) {
-        newBinClause(origLit1, origLit2, origLit3, lit1, lit2, i->red());
-        remove = true;
-    }
-
-    if (remove) {
-        impl_tmp_stats.remove(*i);
-
-        //Drat -- Only delete once
-        if (origLit1 < origLit2
-            && origLit2 < origLit3
-        ) {
-            (*solver->drat)
-            << del
-            << origLit1
-            << origLit2
-            << origLit3
-            << fin;
-        }
-
-        return;
-    }
-
-    //Order literals
-    orderLits(lit1, lit2, lit3);
-
-    //Now make into the order this TRI was in
-    if (origLit1 > origLit2
-        && origLit1 < origLit3
-    ) {
-        std::swap(lit1, lit2);
-    }
-    if (origLit1 > origLit2
-        && origLit1 > origLit3
-    ) {
-        std::swap(lit1, lit3);
-        std::swap(lit2, lit3);
-    }
-    i->setLit2(lit2);
-    i->setLit3(lit3);
-
-    //Drat
-    if (//Changed
-        (lit1 != origLit1
-            || lit2 != origLit2
-            || lit3 != origLit3
-        )
-        //Remove&attach only once
-        && (origLit1 < origLit2
-            && origLit2 < origLit3
-        )
-    ) {
-        (*solver->drat)
-        << lit1 << lit2 << lit3 << fin
-        << del << origLit1 << origLit2  << origLit3 << fin;
-    }
-
-    if (lit1 != origLit1) {
-        solver->watches[lit1].push(*i);
-    } else {
-        *j++ = *i;
-    }
-
-    return;
-}
-
 inline void VarReplacer::updateBin(
     Watched* i
     , Watched*& j
@@ -496,18 +378,11 @@ void VarReplacer::updateStatsFromImplStats()
     assert(impl_tmp_stats.removedIrredBin % 2 == 0);
     solver->binTri.irredBins -= impl_tmp_stats.removedIrredBin/2;
 
-    assert(impl_tmp_stats.removedRedTri % 3 == 0);
-    solver->binTri.redTris -= impl_tmp_stats.removedRedTri/3;
-
-    assert(impl_tmp_stats.removedIrredTri % 3 == 0);
-    solver->binTri.irredTris -= impl_tmp_stats.removedIrredTri/3;
-
     #ifdef DEBUG_IMPLICIT_STATS
     solver->check_implicit_stats();
     #endif
 
     runStats.removedBinClauses += impl_tmp_stats.removedRedBin/2 + impl_tmp_stats.removedIrredBin/2;
-    runStats.removedTriClauses += impl_tmp_stats.removedRedTri/3 + impl_tmp_stats.removedIrredTri/3;
 
     impl_tmp_stats.clear();
 }
@@ -552,9 +427,6 @@ bool VarReplacer::replaceImplicit()
                 lit1 = get_lit_replaced_with_fast(lit1);
                 runStats.replacedLits++;
                 solver->watches.smudge(origLit2);
-                if (i->isTri()) {
-                    solver->watches.smudge(i->lit3());
-                }
             }
 
             //Update lit2
@@ -565,12 +437,8 @@ bool VarReplacer::replaceImplicit()
                 runStats.replacedLits++;
             }
 
-            if (i->isTri()) {
-                updateTri(i, j, origLit1, origLit2, lit1, lit2);
-            } else {
-                assert(i->isBin());
-                updateBin(i, j, origLit1, origLit2, lit1, lit2);
-            }
+            assert(i->isBin());
+            updateBin(i, j, origLit1, origLit2, lit1, lit2);
         }
         ws.shrink_(i-j);
     }
@@ -605,7 +473,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
 
         Clause& c = *solver->cl_alloc.ptr(*i);
         assert(!c.getRemoved());
-        assert(c.size() > 3);
+        assert(c.size() > 2);
 
         bool changed = false;
         (*solver->drat) << deldelay << c << fin;
@@ -716,15 +584,6 @@ bool VarReplacer::handleUpdatedClause(
         solver->watches.smudge(origLit2);
 
         solver->attach_bin_clause(c[0], c[1], c.red());
-        runStats.removedLongLits += origSize;
-        return true;
-
-    case 3:
-        c.setRemoved();
-        solver->watches.smudge(origLit1);
-        solver->watches.smudge(origLit2);
-
-        solver->attach_tri_clause(c[0], c[1], c[2], c.red());
         runStats.removedLongLits += origSize;
         return true;
 
@@ -1178,10 +1037,6 @@ void VarReplacer::Stats::print(const size_t nVars) const
             , removedBinClauses
         );
 
-        print_stats_line("c tri cls removed"
-            , removedTriClauses
-        );
-
         print_stats_line("c long cls removed"
             , removedLongClauses
         );
@@ -1203,7 +1058,6 @@ void VarReplacer::Stats::print_short(const Solver* solver) const
     << " vars " << actuallyReplacedVars
     << " lits " << replacedLits
     << " rem-bin-cls " << removedBinClauses
-    << " rem-tri-cls " << removedTriClauses
     << " rem-long-cls " << removedLongClauses
     << " BP " << bogoprops/(1000*1000) << "M"
     << solver->conf.print_times(cpu_time)
@@ -1218,7 +1072,6 @@ VarReplacer::Stats& VarReplacer::Stats::operator+=(const Stats& other)
     zeroDepthAssigns += other.zeroDepthAssigns;
     actuallyReplacedVars += other.actuallyReplacedVars;
     removedBinClauses += other.removedBinClauses;
-    removedTriClauses += other.removedTriClauses;
     removedLongClauses += other.removedLongClauses;
     removedLongLits += other.removedLongLits;
     bogoprops += other.bogoprops;

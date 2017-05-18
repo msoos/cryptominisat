@@ -69,18 +69,12 @@ private:
         , const bool dumpIrred
         , const bool backnumber
     );
-    void dumpTriClauses(
-        const bool alsoRed
-        , const bool alsoIrred
-        , const bool backnumber
-    );
 
     void dumpEquivalentLits();
     void dumpUnitaryClauses();
-    void dumpRedClauses(const uint32_t maxSize);
+    void dumpRedClauses();
     void dump_clauses(
         const vector<ClOffset>& cls
-        , size_t max_size
         , const bool backnumber
     );
 

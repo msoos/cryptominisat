@@ -18,15 +18,45 @@ def parse_arguments():
 
     usage = """usage: %prog
 
-For the --solver options you can give:
-* SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static
-* lingeling_ayv/binary/lingeling"""
+To use other solvers, give:
+--solver SWDiA5BY.alt.vd.res.va2.15000.looseres.3tierC5/binary/SWDiA5BY_static.alt.vd
+--solver SWDiA5BY_A26/binary/SWDiA5BY_static_A26
+--solver lingeling_ayv/binary/lingeling_ayv
+--solver glucose2016/simp/glucose_static_2016
+--solver MapleCOMSPS/simp/maplecomsps_static
+--solver cmsat-satcomp16/bin/cryptominisat4_simple
+--solver lingeling-bbc/build/lingeling/lingeling_bbc
+
+
+Use-cases:
+# normal run
+./launch_server.py --cnflist satcomp14 --folder norm
+
+# testing, using small instance to check (cheaper & faster)
+./launch_server.py --cnflist test
+
+# 2 clients, no preprocessing
+./launch_server.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --folder no_preproc
+
+# gaussian elimination -- automatic detection, built with GAUSS
+./launch_server.py --cnflist satcomp14 --folder gauss
+
+# clause IDs so learning can be performed -- gzipped SQL output with clause IDs will be produced
+./launch_server.py --stats --drat --folder learning
+
+# to give options to the solver
+./launch_server.py --folder with_opts --opt \"--keepguess=1,--keepglue=4\""
+
+ # to upload features_to_reconf.cpp
+aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
+
+"""
     parser = optparse.OptionParser(usage=usage, formatter=PlainHelpFormatter())
     parser.add_option("--verbose", "-v", action="store_true",
                       default=False, dest="verbose", help="Be more verbose"
                       )
 
-    parser.add_option("--numclients", "-c", default=1, type=int,
+    parser.add_option("--numclients", "-c", default=None, type=int,
                       dest="client_count", help="Number of clients to launch"
                       )
 
@@ -34,7 +64,7 @@ For the --solver options you can give:
                       help="Port to listen on. [default: %default]", type="int"
                       )
 
-    parser.add_option("--tout", "-t", default=1500, dest="timeout_in_secs",
+    parser.add_option("--tout", "-t", default=3000, dest="timeout_in_secs",
                       help="Timeout for the file in seconds"
                       "[default: %default]",
                       type=int
@@ -52,14 +82,14 @@ For the --solver options you can give:
                       type=int
                       )
 
-    parser.add_option("--cnflist", default="satcomp14", dest="cnf_list",
+    parser.add_option("--cnflist", default="satcomp14_updated", dest="cnf_list",
                       type=str,
                       help="The list of CNF files to solve, first line the dir"
                       "[default: %default]",
                       )
 
     parser.add_option("--dir", default="/home/ubuntu/", dest="base_dir", type=str,
-                      help="The home dir of cryptominisat"
+                      help="The home dir of cryptominisat [default: %default]"
                       )
 
     parser.add_option("--solver",
@@ -76,7 +106,7 @@ For the --solver options you can give:
                       type=str
                       )
 
-    parser.add_option("--s3folder", default="results", dest="s3_folder",
+    parser.add_option("--folder", default="results", dest="given_folder",
                       help="S3 folder name to upload data"
                       "[default: %default]",
                       type=str
@@ -117,8 +147,13 @@ For the --solver options you can give:
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
     options.logfile_name = options.base_dir + options.logfile_name
-    options.s3_folder += "-" + time.strftime("%d-%B-%Y")
-    options.s3_folder += "-%s" % rnd_id()
+    options.given_folder += "-" + time.strftime("%d-%B-%Y")
+    options.given_folder += "-%s" % rnd_id()
+    options.given_folder += "-%s" % options.cnf_list
+
+    if options.drat and not options.stats:
+        print("ERROR: You must have --stats when you use --drat")
+        exit(-1)
 
     return options, args
 

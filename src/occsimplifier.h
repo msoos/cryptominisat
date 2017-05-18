@@ -53,7 +53,6 @@ using std::priority_queue;
 class ClauseCleaner;
 class SolutionExtender;
 class Solver;
-class GateFinder;
 class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
@@ -113,7 +112,6 @@ struct BVEStats
     uint64_t clauses_elimed_bin = 0;
     uint64_t clauses_elimed_sumsize = 0;
     uint64_t longRedClRemThroughElim = 0;
-    uint64_t triRedClRemThroughElim = 0;
     uint64_t binRedClRemThroughElim = 0;
     uint64_t numRedBinVarRemAdded = 0;
     uint64_t testedToElimVars = 0;
@@ -146,7 +144,6 @@ struct BVEStats
         << "c [occ-bve]"
         << " subs: "  << subsumedByVE
         << " red-bin rem: " << binRedClRemThroughElim
-        << " red-tri rem: " << triRedClRemThroughElim
         << " red-long rem: " << longRedClRemThroughElim
         << endl;
     }
@@ -180,9 +177,6 @@ struct BVEStats
 
         print_stats_line("c elim-bin-lt-cl"
             , binRedClRemThroughElim);
-
-        print_stats_line("c elim-tri-lt-cl"
-            , triRedClRemThroughElim);
 
         print_stats_line("c elim-long-lt-cl"
             , longRedClRemThroughElim);
@@ -312,7 +306,6 @@ private:
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()
-    vector<Lit>     gate_lits_of_elim_cls;
 
     //Limits
     uint64_t clause_lits_added;
@@ -371,9 +364,7 @@ private:
             if (second.isClause())
                 return true;
 
-            //BIN is better than TRI
-            if (first.isBin() && second.isTri()) return true;
-
+            //Both are bin
             return false;
         }
     };
@@ -403,7 +394,9 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    size_t      rem_cls_from_watch_due_to_varelim(watch_subarray_const todo, const Lit lit);
+    size_t      rem_cls_from_watch_due_to_varelim(watch_subarray todo, const Lit lit);
+    vector<Lit> tmp_rem_lits;
+    vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const uint32_t var, const Lit lit);
     bool        can_eliminate_var(const uint32_t var) const;
@@ -415,18 +408,9 @@ private:
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
-    void        mark_gate_parts(
-        Lit elim_lit
-        , watch_subarray_const a
-        , watch_subarray_const b
-        , vector<char>& a_mark
-        , vector<char>& b_mark
-    );
-    bool        find_gate(Lit elim_lit, watch_subarray_const a, watch_subarray_const b);
-    bool        skip_resolution_thanks_to_gate(const size_t at_poss, const size_t at_negs) const;
+    void        find_gate(Lit elim_lit, watch_subarray_const a, watch_subarray_const b);
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
-    bool        check_if_new_2_long_subsumes_3_long_return_already_inside(const vector<Lit>& lits);
     void        update_varelim_complexity_heap(const uint32_t var);
     void        print_var_elim_complexity_stats(const uint32_t var) const;
     struct Resolvent {
@@ -442,15 +426,12 @@ private:
         }
     };
     vector<Resolvent> resolvents;
-    vector<char> poss_gate_parts;
-    vector<char> negs_gate_parts;
-    bool gate_found_elim;
+    Clause* gate_varelim_clause;
 
     struct HeuristicData
     {
         HeuristicData() :
             bin(0)
-            , tri(0)
             , longer(0)
             , lit(0)
             , count(std::numeric_limits<uint32_t>::max())
@@ -458,11 +439,10 @@ private:
 
         uint32_t totalCls() const
         {
-            return bin + tri + longer;
+            return bin + longer;
         }
 
         uint32_t bin;
-        uint32_t tri;
         uint32_t longer;
         uint32_t lit;
         uint32_t count; //resolution count (if can be counted, otherwise MAX)
@@ -516,9 +496,9 @@ private:
     /////////////////////
     //Helpers
     friend class TopLevelGaussAbst;
-    friend class GateFinder;
+    //friend class GateFinder;
     TopLevelGaussAbst *topLevelGauss;
-    GateFinder *gateFinder;
+    //GateFinder *gateFinder;
 
     /////////////////////
     //Blocked clause elimination

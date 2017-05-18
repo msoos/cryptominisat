@@ -33,6 +33,11 @@ THE SOFTWARE.
 using std::thread;
 
 #define CACHE_SIZE 10ULL*1000ULL*1000UL
+#ifndef LIMITMEM
+#define MAX_VARS (1ULL<<28)
+#else
+#define MAX_VARS 3000
+#endif
 
 using namespace CMSat;
 
@@ -145,24 +150,22 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.inc_max_temp_red_cls = 1.02;
+            conf.inc_max_temp_lev2_red_cls = 1.02;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 2: {
             //Similar to old CMS except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
-            conf.glue_must_keep_clause_if_below_or_eq = 0;
-            conf.inc_max_temp_red_cls = 1.03;
+            conf.glue_put_lev0_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.03;
             break;
         }
         case 3: {
-            conf.max_temporary_learnt_clauses = 40000;
+            //conf.max_temporary_learnt_clauses = 40000;
             conf.var_decay_max = 0.80;
             break;
         }
@@ -171,16 +174,15 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 5: {
-            conf.max_temporary_learnt_clauses = 10000;
+            //conf.max_temporary_learnt_clauses = 10000;
             break;
         }
         case 6: {
             conf.do_bva = false;
-            conf.glue_must_keep_clause_if_below_or_eq = 2;
+            conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
-            conf.inc_max_temp_red_cls = 1.04;
+            conf.inc_max_temp_lev2_red_cls = 1.04;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.1;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0.1;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             break;
@@ -192,20 +194,22 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
-            conf.max_temporary_learnt_clauses = 10000;
+            //conf.max_temporary_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             break;
         }
         case 8: {
             //Different glue limit
-            conf.glue_must_keep_clause_if_below_or_eq = 4;
+            conf.glue_put_lev0_if_below_or_eq = 4;
+            //conf.glue_put_lev2_if_below_or_eq = 8;
             conf.max_num_lits_more_red_min = 3;
             conf.max_glue_more_minim = 4;
             break;
         }
         case 9: {
             //Different glue limit
-            conf.glue_must_keep_clause_if_below_or_eq = 2;
+            conf.glue_put_lev0_if_below_or_eq = 2;
+            conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 10: {
@@ -216,7 +220,8 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 11: {
-            conf.glue_must_keep_clause_if_below_or_eq = 3;
+            conf.glue_put_lev0_if_below_or_eq = 3;
+            conf.glue_put_lev1_if_below_or_eq = 5;
             conf.var_decay_max = 0.97;
             break;
         }
@@ -232,14 +237,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
 
-            conf.inc_max_temp_red_cls = 1.01;
+            conf.inc_max_temp_lev2_red_cls = 1.01;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::size)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             break;
         }
         case 15: {
-            conf.inc_max_temp_red_cls = 1.001;
+            conf.inc_max_temp_lev2_red_cls = 1.001;
             break;
         }
 
@@ -438,6 +442,7 @@ DLL_PUBLIC void SATSolver::set_no_bva()
 
 DLL_PUBLIC void SATSolver::set_greedy_undef()
 {
+    assert(false && "Currently greedy undef is not supported, broken");
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
         s.conf.greedy_undef = true;
@@ -550,9 +555,9 @@ struct OneThreadCalc
     {
         if (print_thread_start_and_finish) {
             start_time = cpuTime();
-            data_for_thread.update_mutex->lock();
+            //data_for_thread.update_mutex->lock();
             //cout << "c Starting thread " << tid << endl;
-            data_for_thread.update_mutex->unlock();
+            //data_for_thread.update_mutex->unlock();
         }
 
         OneThreadAddCls cls_adder(data_for_thread, tid);
@@ -567,10 +572,12 @@ struct OneThreadCalc
         if (print_thread_start_and_finish) {
             double end_time = cpuTime();
             data_for_thread.update_mutex->lock();
+            ios::fmtflags f(cout.flags());
             cout << "c Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
             << (end_time-start_time)
             << endl;
+            cout.flags(f);
             data_for_thread.update_mutex->unlock();
         }
 
@@ -692,11 +699,10 @@ DLL_PUBLIC void SATSolver::new_var()
 
 DLL_PUBLIC void SATSolver::new_vars(const size_t n)
 {
-    if (n >= 1ULL<<28
-        || (data->vars_to_add + n) >= 1ULL<<28
+    if (n >= MAX_VARS
+        || (data->vars_to_add + n) >= MAX_VARS
     ) {
-        cout << "ERROR! Variable requested is far too large" << endl;
-        throw std::runtime_error("ERROR! Variable requested is far too large");
+        throw CMSat::TooManyVarsError();
     }
 
     if (data->log) {
@@ -832,22 +838,3 @@ DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
     data->solvers[0]->set_sqlite(filename);
 }
 
-DLL_PUBLIC void SATSolver::set_mysql(
-    std::string sqlServer
-    , std::string sqlUser
-    , std::string sqlPass
-    , std::string sqlDatabase)
-{
-    if (data->solvers.size() > 1) {
-        std::cerr
-        << "Multithreaded solving and SQL cannot be specified at the same time"
-        << endl;
-        exit(-1);
-    }
-    data->sql = 2;
-    data->solvers[0]->set_mysql(
-        sqlServer
-        , sqlUser
-        , sqlPass
-        , sqlDatabase);
-}

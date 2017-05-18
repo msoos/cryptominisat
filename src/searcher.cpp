@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "watchalgos.h"
 #include "hasher.h"
+#include "solverconf.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -66,7 +67,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         , solver(_solver)
-        , order_heap_glue(VarOrderLt(activ_glue))
         , cla_inc(1)
 {
     var_decay = conf.var_decay_start;
@@ -75,46 +75,52 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
-    conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 }
 
 Searcher::~Searcher()
 {
     clear_gauss();
-    delete[] hits;
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
 {
     PropEngine::new_var(bva, orig_outer);
 
-    activ_glue.push_back(0);
-    insertVarOrder((int)nVars()-1);
+    var_act_vsids.push_back(0);
+    var_act_maple.push_back(0);
+    insert_var_order_all((int)nVars()-1);
 }
 
 void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
 
-    activ_glue.resize(activ_glue.size() + n, 0);
+    var_act_vsids.resize(var_act_vsids.size() + n, 0);
+    var_act_maple.resize(var_act_maple.size() + n, 0);
     for(int i = n-1; i >= 0; i--) {
-        insertVarOrder((int)nVars()-i-1);
+        insert_var_order_all((int)nVars()-i-1);
     }
 }
 
 void Searcher::save_on_var_memory()
 {
     PropEngine::save_on_var_memory();
-    activ_glue.resize(nVars());
-    activ_glue.shrink_to_fit();
+
+    var_act_vsids.resize(nVars());
+    var_act_maple.resize(nVars());
+
+    var_act_vsids.shrink_to_fit();
+    var_act_maple.shrink_to_fit();
+
 }
 
 void Searcher::updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter
 ) {
-    updateArray(activ_glue, interToOuter);
-    //activ_glue are not updated, they are taken from backup, which is updated
+    updateArray(var_act_vsids, interToOuter);
+    updateArray(var_act_maple, interToOuter);
 
     renumber_assumptions(outerToInter);
 }
@@ -133,7 +139,7 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    antec_data.vsids_all_incoming_vars.push(activ_glue[lit.var()]/var_inc);
+    antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc);
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -142,8 +148,11 @@ inline void Searcher::add_lit_to_learnt(
         return;
     }
 
-    //Update our state of going through the conflict
-    bump_var_activity<update_bogoprops>(var);
+    if (VSIDS) {
+        bump_vsids_var_act<update_bogoprops>(var, 0.5);
+    } else {
+        varData[var].conflicted++;
+    }
     seen[var] = 1;
     if (!update_bogoprops && conf.doOTFSubsume) {
         tmp_learnt_clause_size++;
@@ -165,10 +174,6 @@ inline void Searcher::add_lit_to_learnt(
                 && varData[var].reason.isRedStep()
             ) {
                 implied_by_learnts.push_back(std::make_pair(var, 2));
-            } else if (varData[var].reason.getType() == tertiary_t
-                && varData[var].reason.isRedStep()
-            ) {
-                implied_by_learnts.push_back(std::make_pair(var, 3));
             }
         }
     } else {
@@ -272,7 +277,7 @@ void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
     if (num_lits_from_cl != tmp_learnt_clause_size)
         return;
 
-    if (num_lits_from_cl <= 3) {
+    if (num_lits_from_cl <= 2) {
         create_otf_subsuming_implicit_clause(cl);
     } else {
         create_otf_subsuming_long_clause(cl, offset);
@@ -302,10 +307,6 @@ void Searcher::normalClMinim()
                 size = 1;
                 break;
 
-            case tertiary_t:
-                size = 2;
-                break;
-
             default:
                 release_assert(false);
                 std::exit(-1);
@@ -320,14 +321,6 @@ void Searcher::normalClMinim()
 
                 case binary_t:
                     p = reason.lit2();
-                    break;
-
-                case tertiary_t:
-                    if (k == 0) {
-                        p = reason.lit2();
-                    } else {
-                        p = reason.lit3();
-                    }
                     break;
 
                 default:
@@ -351,11 +344,6 @@ void Searcher::debug_print_resolving_clause(const PropBy confl) const
     (void) confl;
 #else
     switch(confl.getType()) {
-        case tertiary_t: {
-            cout << "resolv (tri): " << confl.lit2() << ", " << confl.lit3() << endl;
-            break;
-        }
-
         case binary_t: {
             cout << "resolv bin: " << confl.lit2() << endl;
             break;
@@ -387,13 +375,25 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     assert(cl->red());
     const unsigned new_glue = calc_glue(*cl);
 
-    if (new_glue + 1 < cl->stats.glue) {
-        cl->stats.glue = new_glue;
-
-        if (new_glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
+    if (new_glue < cl->stats.glue) {
+        if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
         }
-    }
+        cl->stats.glue = new_glue;
+
+        //move to lev0 if very low glue
+        if (new_glue <= conf.glue_put_lev0_if_below_or_eq
+            && cl->stats.which_red_array >= 1
+        ) {
+            cl->stats.which_red_array = 0;
+        }
+
+        //move to lev1 if low glue
+        if (new_glue <= conf.glue_put_lev1_if_below_or_eq
+            && cl->stats.which_red_array == 2) {
+            cl->stats.which_red_array = 1;
+        }
+     }
 }
 
 template<bool update_bogoprops>
@@ -407,17 +407,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
 
     Clause* cl = NULL;
     switch (confl.getType()) {
-        case tertiary_t : {
-            if (confl.isRedStep()) {
-                antec_data.triRed++;
-                stats.resolvs.triRed++;
-            } else {
-                antec_data.triIrred++;
-                stats.resolvs.triIrred++;
-            }
-            break;
-        }
-
         case binary_t : {
             if (confl.isRedStep()) {
                 antec_data.binRed++;
@@ -436,7 +425,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 #ifdef STATS_NEEDED
                 antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
                 antec_data.longRed++;
-                antec_data.age_long_reds.push(sumConflicts() - cl->stats.introduced_at_conflict);
+                antec_data.age_long_reds.push(sumConflicts - cl->stats.introduced_at_conflict);
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
@@ -448,21 +437,22 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             #ifdef STATS_NEEDED
             cl->stats.used_for_uip_creation++;
             #endif
-            if (!update_bogoprops
-                && cl->red()
-                && cl->stats.glue > conf.glue_must_keep_clause_if_below_or_eq
-                && cl->stats.ttl == 0
-            ) {
-                bumpClauseAct(cl);
-            }
 
             if (!update_bogoprops
-                && conf.update_glues_on_analyze
                 && cl->red()
-                && cl->stats.glue > conf.glue_must_keep_clause_if_below_or_eq
+                && cl->stats.which_red_array != 0
             ) {
-                update_clause_glue_from_analysis(cl);
+                if (conf.update_glues_on_analyze) {
+                    update_clause_glue_from_analysis(cl);
+                }
+
+                if (cl->stats.which_red_array == 1) {
+                    cl->stats.last_touched = sumConflicts;
+                } else if (cl->stats.which_red_array == 2) {
+                    bumpClauseAct(cl);
+                }
             }
+
             break;
         }
 
@@ -476,16 +466,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     Lit x = lit_Undef;
     while(cont) {
         switch (confl.getType()) {
-            case tertiary_t:
-                if (i == 0) {
-                    x = failBinLit;
-                } else if (i == 1) {
-                    x = confl.lit2();
-                } else {
-                    x = confl.lit3();
-                    cont = false;
-                }
-                break;
             case binary_t:
                 if (i == 0) {
                     x = failBinLit;
@@ -623,7 +603,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            antec_data.vsids_of_resolving_literals.push(activ_glue[p.var()]/var_inc);
+            antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc);
             if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
@@ -687,18 +667,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     return last_resolved_cl;
 }
 
-template<bool update_bogoprops>
-void Searcher::bump_var_activities_based_on_implied_by_learnts(const uint32_t glue)
-{
-    assert(!update_bogoprops);
-    for (const auto dat :implied_by_learnts) {
-        const uint32_t v_glue = dat.second;
-        if (v_glue < glue) {
-            bump_var_activity<update_bogoprops>(dat.first);
-        }
-    }
-}
-
 Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
 {
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
@@ -708,7 +676,7 @@ Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
         //Last was a lont clause
         || last_resolved_cl == NULL
         //Final clause will not be implicit
-        || learnt_clause.size() <= 3
+        || learnt_clause.size() <= 2
         //Larger or equivalent clauses cannot subsume the clause
         || learnt_clause.size() >= last_resolved_cl->size()
     ) {
@@ -771,21 +739,44 @@ Clause* Searcher::analyze_conflict(
     print_fully_minimized_learnt_clause();
 
     if (learnt_clause.size() > conf.max_size_more_minim
-        && glue <= conf.glue_must_keep_clause_if_below_or_eq
+        && glue <= conf.glue_put_lev0_if_below_or_eq
     ) {
         minimise_redundant_more(learnt_clause);
     }
 
     out_btlevel = find_backtrack_level_of_learnt();
-    if (!update_bogoprops
-        && conf.extra_bump_var_activities_based_on_glue
-    ) {
-        bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(glue);
+    if (!update_bogoprops) {
+        if (VSIDS) {
+            bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(glue);
+        } else {
+            assert(toClear.empty());
+            const Lit p = learnt_clause[0];
+            seen[p.var()] = true;
+            toClear.push_back(p);
+            for (int i = learnt_clause.size() - 1; i >= 0; i--) {
+                const uint32_t v = learnt_clause[i].var();
+                if (varData[v].reason.isClause()) {
+                    ClOffset offs = varData[v].reason.get_offset();
+                    Clause* cl = cl_alloc.ptr(offs);
+                    for (const Lit l: *cl) {
+                        if (!seen[l.var()]) {
+                            seen[l.var()] = true;
+                            varData[l.var()].almost_conflicted++;
+                            toClear.push_back(l);
+                        }
+                    }
+                }
+            }
+            for (Lit l: toClear) {
+                seen[l.var()] = 0;
+            }
+            toClear.clear();
+        }
     }
     implied_by_learnts.clear();
 
     for(const Lit l: learnt_clause) {
-        antec_data.vsids_vars.push(activ_glue[l.var()]/var_inc);
+        antec_data.vsids_vars.push(var_act_vsids[l.var()]/var_inc);
     }
 
     return otf_subsume_last_resolved_clause(last_resolved_cl);
@@ -826,10 +817,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
                 size = 1;
                 break;
 
-            case tertiary_t:
-                size = 2;
-                break;
-
             case null_clause_t:
             default:
                 release_assert(false);
@@ -847,14 +834,6 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 
                 case binary_t:
                     p2 = reason.lit2();
-                    break;
-
-                case tertiary_t:
-                    if (i == 0) {
-                        p2 = reason.lit2();
-                    } else {
-                        p2 = reason.lit3();
-                    }
                     break;
 
                 case null_clause_t:
@@ -952,13 +931,6 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
                         }
                         break;
                     }
-                    case PropByType::tertiary_t: {
-                        const Lit lit = reason.lit3();
-                        if (varData[lit.var()].level > 0) {
-                            seen[lit.var()] = 1;
-                        }
-                        //NO break!
-                    }
                     case PropByType::binary_t: {
                         const Lit lit = reason.lit2();
                         if (varData[lit.var()].level > 0) {
@@ -1013,7 +985,7 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
 void Searcher::check_blocking_restart()
 {
     if (conf.do_blocking_restart
-        && sumConflicts() > conf.lower_bound_for_blocking_restart
+        && sumConflicts > conf.lower_bound_for_blocking_restart
         && hist.glueHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
@@ -1073,7 +1045,6 @@ lbool Searcher::search()
                 hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
                 #endif
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
-                check_blocking_restart();
             }
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_sql(myTime);
@@ -1246,23 +1217,29 @@ void Searcher::check_need_restart()
         }
     }
 
-    if (params.rest_type == Restart::glue) {
+    assert(params.rest_type != Restart::glue_geom);
+
+    if (VSIDS
+        && params.rest_type == Restart::glue
+    ) {
+        check_blocking_restart();
         if (hist.glueHist.isvalid()
             && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
         ) {
             params.needToStopSearch = true;
         }
     }
-    if ((conf.restartType == Restart::glue_geom
-        || conf.restartType == Restart::geom
-        || conf.restartType == Restart::luby)
+    if (   (!VSIDS
+            || conf.restartType == Restart::glue_geom
+            || params.rest_type == Restart::geom
+            || params.rest_type == Restart::luby)
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;
     }
 
     //Conflict limit reached?
-    if (params.conflictsDoneThisRestart > params.conflictsToDo) {
+    if (params.conflictsDoneThisRestart > params.max_confl_to_do) {
         if (conf.verbosity >= 3) {
             cout
             << "c Over limit of conflicts for this restart"
@@ -1302,7 +1279,7 @@ void Searcher::add_otf_subsume_long_clauses()
                 break;
             }
         }
-        assert(cl.size() > 3);
+        assert(cl.size() > 2);
 
         if (at == 0) {
             //If none found, we have a propagating clause_t
@@ -1363,11 +1340,8 @@ void Searcher::add_otf_subsume_implicit_clause()
 
             //if decision level is non-zero, we have to be more careful
             if (decisionLevel() != 0) {
-                if (it->size == 2) {
-                    by = PropBy(it->lits[1], true);
-                } else {
-                    by = PropBy(it->lits[1], it->lits[2], true);
-                }
+                assert(it->size == 2);
+                by = PropBy(it->lits[1], true);
             }
 
             //Enqueue this literal, finally
@@ -1391,15 +1365,13 @@ void Searcher::add_otf_subsume_implicit_clause()
             if (it->size == 2) {
                 solver->datasync->signalNewBinClause(it->lits);
                 solver->attach_bin_clause(it->lits[0], it->lits[1], true);
-            } else {
-                solver->attach_tri_clause(it->lits[0], it->lits[1], it->lits[2], true);
             }
         }
     }
     otf_subsuming_short_cls.clear();
 }
 
-void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
+void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 {
     assert(decisionLevel() > 0);
 
@@ -1419,8 +1391,10 @@ void Searcher::update_history_stats(size_t backtrack_level, size_t glue)
     hist.conflSizeHistLT.push(learnt_clause.size());
 
     hist.trailDepthHistLT.push(trail.size());
-    if (params.rest_type == Restart::glue) {
-        hist.glueHistLT.push(glue);
+    if (params.rest_type == Restart::glue
+        && VSIDS
+    ) {
+        hist.glueHistLT.push(std::min<size_t>(glue, 50));
         hist.glueHist.push(glue);
     }
 }
@@ -1450,17 +1424,6 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
-            #endif
-            break;
-
-        case 3:
-            //3-long learnt
-            stats.learntTris++;
-            solver->attach_tri_clause(learnt_clause[0], learnt_clause[1], learnt_clause[2], true, enq);
-            if (enq) enqueue(learnt_clause[0], PropBy(learnt_clause[1], learnt_clause[2], true));
-
-            #ifdef STATS_NEEDED
-            propStats.propsTriRed++;
             #endif
             break;
 
@@ -1524,47 +1487,6 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
-bool Searcher::check_and_insert_into_hash_learnt_cl()
-{
-    if (!conf.hash_relearn_check) {
-        return false;
-    }
-
-    if (hits == NULL
-        && solver->get_num_long_irred_cls() > 30000 //TODO: MAGIC CONSTANT
-    ) {
-        hits = new uint32_t[hash_size];
-    }
-
-    //Don't do it for very large clauses, like 400 etc.
-    if (learnt_clause.size() > 40  //TODO MAGIC CONSTANT
-        || hits == NULL
-    ) {
-        return false;
-    }
-
-    learnt_clause_sorted.resize(learnt_clause.size());
-    std::copy(learnt_clause.begin(), learnt_clause.end()
-        , learnt_clause_sorted.begin());
-    std::sort(learnt_clause_sorted.begin(), learnt_clause_sorted.end());
-
-    uint64_t hash = clause_hash(learnt_clause_sorted);
-    uint32_t hash_i = hash & hash_mask;
-    uint32_t hash_j = (1UL << (hash >> hash_bits) ) & (8 * sizeof(hits[0]) - 1);
-
-    if (hits[hash_i] & hash_j) {
-        //It seems we've already learnt this clause before.
-        //Let's make sure we don't forget it this time.
-        hits[hash_i] &= ~hash_j;
-        return true;
-    } else {
-        //Even if we forget this learnt clause, we can still
-        //prevent us from unlearning it again in the future
-        hits[hash_i] |= hash_j;
-        return false;
-    }
-}
-
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
@@ -1572,7 +1494,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     backtrack_level
 ) {
     //Cannot make a non-implicit into an implicit
-    if (learnt_clause.size() <= 3) {
+    if (learnt_clause.size() <= 2) {
         *drat << learnt_clause << fin;
         return NULL;
     }
@@ -1580,19 +1502,25 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     //No on-the-fly subsumption
     if (cl == NULL || cl->gauss_temp_cl()) {
         cl = cl_alloc.Clause_new(learnt_clause
+        , sumConflicts
         #ifdef STATS_NEEDED
-        , sumConflicts()
         , clauseID
         #endif
         );
         cl->makeRed(glue);
         ClOffset offset = cl_alloc.get_offset(cl);
-        unsigned which_arr;
-        if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+        unsigned which_arr = 2;
+
+        if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
             which_arr = 0;
-        } else {
+        } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
+            && conf.glue_put_lev1_if_below_or_eq != 0
+        ){
             which_arr = 1;
+        } else {
+            which_arr = 2;
         }
+
         if (which_arr == 0) {
             stats.red_cl_in_which0++;
         }
@@ -1605,11 +1533,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
                 cl->stats.ttl = 1;
             }
         }
-        const bool inside_hash = check_and_insert_into_hash_learnt_cl();
-        if (inside_hash && which_arr > 0) {
-            which_arr = 0;
-            stats.cache_hit++;
-        }
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
@@ -1619,7 +1542,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (solver->sqlStats
             && drat
             && conf.dump_individual_restarts_and_clauses
-            && learnt_clause.size() > 3
+            && learnt_clause.size() > 2
         ) {
             dump_sql_clause_data(
                 glue
@@ -1632,7 +1555,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         return cl;
     }
 
-    assert(cl->size() > 3);
+    assert(cl->size() > 2);
     *drat << learnt_clause << fin;
     if (conf.verbosity >= 6) {
         cout
@@ -1668,6 +1591,11 @@ bool Searcher::handle_conflict(const PropBy confl)
     uint32_t glue;
     antec_data.clear();
     stats.conflStats.numConflicts++;
+    sumConflicts++;
+    if (sumConflicts == 100000 && longRedCls[0].size() < 100) { //TODO magic constant
+        conf.glue_put_lev0_if_below_or_eq = 5; //TODO magic constant
+    }
+
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
         create_graphviz_confl_graph(confl);
@@ -1681,7 +1609,6 @@ bool Searcher::handle_conflict(const PropBy confl)
         , glue             //return glue here
     );
     print_learnt_clause();
-
 
     //Add decision-based clause in case it's short
     decision_clause.clear();
@@ -1706,7 +1633,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
-    assert(learnt_clause.size() <= 3 || cl != NULL);
+    assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
     //Add decision-based clause
@@ -1728,7 +1655,9 @@ bool Searcher::handle_conflict(const PropBy confl)
     }
 
     if (!update_bogoprops) {
-        varDecayActivity();
+        if (VSIDS) {
+            varDecayActivity();
+        }
         decayClauseAct();
     }
 
@@ -1771,7 +1700,7 @@ lbool Searcher::burst_search()
 
     //Do burst
     params.clear();
-    params.conflictsToDo = conf.burst_search_len;
+    params.max_confl_to_do = conf.burst_search_len;
     params.rest_type = Restart::never;
     lbool status = search<true>();
 
@@ -1805,7 +1734,6 @@ void Searcher::print_restart_header() const
     << " " << std::setw(5) << "conf"
     << " " << std::setw(5) << "freevar"
     << " " << std::setw(5) << "IrrL"
-    << " " << std::setw(5) << "IrrT"
     << " " << std::setw(5) << "IrrB"
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC";
@@ -1814,7 +1742,7 @@ void Searcher::print_restart_header() const
         cout << " " << std::setw(4) << "RedL" << i;
     }
 
-    cout << " " << std::setw(5) << "RedT"
+    cout
     << " " << std::setw(5) << "RedB"
     << " " << std::setw(7) << "l/longC"
     << " " << std::setw(7) << "l/allC"
@@ -1841,12 +1769,12 @@ void Searcher::printBaseStats() const
     //<< omp_get_thread_num()
     << " " << std::setw(5) << sumRestarts();
 
-    if (sumConflicts() >  20000) {
+    if (sumConflicts >  20000) {
         cout
-        << " " << std::setw(4) << sumConflicts()/1000 << "K";
+        << " " << std::setw(4) << sumConflicts/1000 << "K";
     } else {
         cout
-        << " " << std::setw(5) << sumConflicts();
+        << " " << std::setw(5) << sumConflicts;
     }
 
     cout
@@ -1905,47 +1833,47 @@ void Searcher::print_restart_stat()
     //Print restart stat
     if (conf.verbosity
         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
-          < sumConflicts())
+          < sumConflicts)
     ) {
         //Print restart output header
         if (lastRestartPrintHeader == 0
-            ||(lastRestartPrintHeader + 20000) < sumConflicts()
+            ||(lastRestartPrintHeader + 20000) < sumConflicts
         ) {
             print_restart_header();
-            lastRestartPrintHeader = sumConflicts();
+            lastRestartPrintHeader = sumConflicts;
         }
         print_restart_stat_line();
-        lastRestartPrint = sumConflicts();
+        lastRestartPrint = sumConflicts;
     }
 }
 
 void Searcher::reset_temp_cl_num()
 {
-    conf.cur_max_temp_red_cls = conf.max_temporary_learnt_clauses;
+    cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 }
 
 void Searcher::reduce_db_if_needed()
 {
-    if (longRedCls[1].size() <= conf.cur_max_temp_red_cls) {
-        return;
+    if (conf.every_lev1_reduce != 0
+        && sumConflicts >= next_lev1_reduce
+    ) {
+        solver->reduceDB->handle_lev1();
+        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }
 
-    if (conf.verbosity >= 3) {
-        cout
-        << "c "
-        << " cleaning"
-        << " numConflicts : " << stats.conflStats.numConflicts
-        << " SumConfl: " << sumConflicts()
-        << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
-        << " Trail size: " << trail.size() << endl;
+    if (conf.every_lev2_reduce != 0) {
+        if (sumConflicts >= next_lev2_reduce) {
+            solver->reduceDB->handle_lev2();
+            cl_alloc.consolidate(solver);
+            next_lev2_reduce = sumConflicts + conf.every_lev2_reduce;
+        }
+    } else {
+        if (longRedCls[2].size() > cur_max_temp_red_lev2_cls) {
+            solver->reduceDB->handle_lev2();
+            cur_max_temp_red_lev2_cls *= conf.inc_max_temp_lev2_red_cls;
+            cl_alloc.consolidate(solver);
+        }
     }
-    solver->reduceDB->reduce_db_and_update_reset_stats();
-    if (conf.verbosity >= 3) {
-        watches.print_stat();
-    }
-
-    cl_alloc.consolidate(solver);
-    conf.cur_max_temp_red_cls *= conf.inc_max_temp_red_cls;
 }
 
 bool Searcher::clean_clauses_if_needed()
@@ -1977,15 +1905,16 @@ bool Searcher::clean_clauses_if_needed()
 
 void Searcher::rebuildOrderHeap()
 {
-    vec<uint32_t> vs;
+    vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
         if (varData[v].removed == Removed::none
             && value(v) == l_Undef
         ) {
-            vs.push(v);
+            vs.push_back(v);
         }
     }
-    order_heap_glue.build(vs);
+    order_heap_vsids.build(vs);
+    order_heap_maple.build(vs);
 }
 
 //NOTE: as per AWS check, doing this in Searcher::solve() loop is _detrimental_
@@ -2039,7 +1968,7 @@ bool Searcher::must_abort(const lbool status) {
             << "c Returned status of search() is non-l_Undef at loop "
             << loop_num
             << " confl:"
-            << sumConflicts()
+            << sumConflicts
             << endl;
         }
         return true;
@@ -2132,6 +2061,7 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
+    VSIDS = true;
 
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
@@ -2139,35 +2069,64 @@ lbool Searcher::solve(
         ; loop_num ++
     ) {
         #ifdef SLOW_DEBUG
-        assert(order_heap_glue.heap_property());
         assert(solver->check_order_heap_sanity());
         #endif
 
         assert(watches.get_smudged_list().empty());
         print_search_loop_num();
 
-        lastRestartConfl = sumConflicts();
+        lastRestartConfl = sumConflicts;
         params.clear();
-        params.conflictsToDo = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
-        if (params.rest_type == Restart::glue_geom) {
-            params.rest_type = Restart::geom;
-        }
+        params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
         status = search<false>();
+        if (status == l_Undef) {
+            adjust_phases_restarts();
+        }
 
-        if (conf.restartType == Restart::geom
-            && max_confl_this_phase <= 0
-        ) {
+        if (must_abort(status)) {
+            goto end;
+        }
+    }
+
+    end:
+    finish_up_solve(status);
+
+    return status;
+}
+
+void Searcher::adjust_phases_restarts()
+{
+    //Haven't finished the phase. Keep rolling.
+    if (max_confl_this_phase > 0)
+        return;
+
+    if (VSIDS && conf.maple) {
+        VSIDS = false;
+        max_confl_this_phase = 5000;
+        if (conf.verbosity >= 3) {
+            cout << "c doing NON-VSIDS" << endl;
+        }
+    } else {
+        VSIDS = true;
+        if (conf.verbosity >= 3) {
+            cout << "c doing VSIDS" << endl;
+        }
+        switch(conf.restartType) {
+        case Restart::never:
+        case Restart::glue:
+            //nothing special
+            break;
+        case Restart::geom:
             max_confl_phase *= conf.restart_inc;
             max_confl_this_phase = max_confl_phase;
-        }
+            break;
 
-        if (conf.restartType == Restart::luby) {
-            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num) * (double)conf.restart_first/2.0;
-        }
+        case Restart::luby:
+            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num)
+                                    * (double)conf.restart_first/2.0;
+            break;
 
-        if (conf.restartType == Restart::glue_geom
-            && max_confl_this_phase <= 0
-        ) {
+        case Restart::glue_geom:
             if (params.rest_type == Restart::geom) {
                 params.rest_type = Restart::glue;
             } else {
@@ -2187,32 +2146,14 @@ lbool Searcher::solve(
                     release_assert(false);
             }
             if (conf.verbosity >= 3) {
-                cout << "Phase is now " << std::setw(10) << getNameOfRestartType(params.rest_type)
+                cout << "Phase is now "
+                << std::setw(10) << getNameOfRestartType(params.rest_type)
                 << " this phase size: " << max_confl_this_phase
                 << " global phase size: " << max_confl_phase << endl;
             }
-
-            //don't go into the geom phase in case we would stop it due to simplification
-            if (conf.abort_searcher_solve_on_geom_phase
-                && params.rest_type  == Restart::geom
-                && max_confl_this_phase + stats.conflStats.numConflicts  > max_confl_per_search_solve_call
-            ) {
-                if (conf.verbosity) {
-                    cout << "c Returning from Searcher::solve() due to phase change and insufficient conflicts left" << endl;
-                }
-                goto end;
-            }
-        }
-
-        if (must_abort(status)) {
-            goto end;
+            break;
         }
     }
-
-    end:
-    finish_up_solve(status);
-
-    return status;
 }
 
 void Searcher::print_solution_varreplace_status() const
@@ -2261,6 +2202,7 @@ void Searcher::finish_up_solve(const lbool status)
         model = assigns;
         full_model = assigns;
         if (conf.greedy_undef) {
+            assert(false && "Currently greedy undef is not supported, broken");
             vector<uint32_t> trail_lim_vars;
             for(size_t i = 0; i < decisionLevel(); i++) {
                 uint32_t at = trail_lim[i];
@@ -2304,7 +2246,7 @@ void Searcher::finish_up_solve(const lbool status)
         cout << "c Searcher::solve() finished"
         << " status: " << status
         << " numConflicts : " << stats.conflStats.numConflicts
-        << " SumConfl: " << sumConflicts()
+        << " SumConfl: " << sumConflicts
         << " max_confl_per_search_solve_call:" << max_confl_per_search_solve_call
         << endl;
     }
@@ -2337,11 +2279,12 @@ Lit Searcher::pickBranchLit()
     Lit next = lit_Undef;
 
     // Random decision:
+    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
     if (conf.random_var_freq > 0) {
         double rand = mtrand.randDblExc();
         double frq = conf.random_var_freq;
-        if (rand < frq && !order_heap_glue.empty()) {
-            const uint32_t next_var = order_heap_glue.random_element(mtrand);
+        if (rand < frq && !order_heap.empty()) {
+            const uint32_t next_var = order_heap.random_element(mtrand);
 
             if (value(next_var) == l_Undef
                 && solver->varData[next_var].removed == Removed::none
@@ -2352,28 +2295,31 @@ Lit Searcher::pickBranchLit()
         }
     }
 
-    // Activity based decision:
     if (next == lit_Undef) {
-        uint32_t next_var = var_Undef;
-        while (next_var == var_Undef
-          || value(next_var) != l_Undef
-        ) {
+        uint32_t v = var_Undef;
+        while (v == var_Undef || value(v) != l_Undef) {
             //There is no more to branch on. Satisfying assignment found.
-            if (order_heap_glue.empty()) {
+            if (order_heap.empty()) {
                 return lit_Undef;
             }
-            next_var = order_heap_glue.removeMin();
-        }
-        next = Lit(next_var, !pickPolarity(next_var));
-    }
 
-    //Flip polaritiy if need be
-    /*if (mtrand.randInt(50) == 1
-        && next != lit_Undef
-    ) {
-        next ^= true;
-        stats.decisionFlippedPolar++;
-    }*/
+            if (!VSIDS) {
+                uint32_t v = order_heap[0];
+                uint32_t age = sumConflicts - varData[v].cancelled;
+                while (age > 0) {
+                    double decay = pow(0.95, age);
+                    var_act_maple[v] *= decay;
+                    if (order_heap.inHeap(v))
+                        order_heap.increase(v);
+                    varData[v].cancelled = sumConflicts;
+                    v = order_heap[0];
+                    age = sumConflicts - varData[v].cancelled;
+                }
+            }
+            v = order_heap.removeMin();
+        }
+        next = Lit(v, !pickPolarity(v));
+    }
 
     //No vars in heap: solution found
     #ifdef SLOW_DEBUG
@@ -2435,22 +2381,6 @@ void Searcher::binary_based_more_minim(vector<Lit>& cl)
                 if (seen[(~i->lit2()).toInt()]) {
                     stats.binTriShrinkedClause++;
                     seen[(~i->lit2()).toInt()] = 0;
-                }
-                continue;
-            }
-
-            if (i->isTri()) {
-                if (seen[i->lit3().toInt()]) {
-                    if (seen[(~i->lit2()).toInt()]) {
-                        stats.binTriShrinkedClause++;
-                        seen[(~i->lit2()).toInt()] = 0;
-                    }
-                }
-                if (seen[i->lit2().toInt()]) {
-                    if (seen[(~i->lit3()).toInt()]) {
-                        stats.binTriShrinkedClause++;
-                        seen[(~i->lit3()).toInt()] = 0;
-                    }
                 }
                 continue;
             }
@@ -2540,11 +2470,6 @@ void Searcher::stamp_based_more_minim(vector<Lit>& cl)
 bool Searcher::VarFilter::operator()(uint32_t var) const
 {
     return (cc->value(var) == l_Undef && solver->varData[var].removed == Removed::none);
-}
-
-uint64_t Searcher::sumConflicts() const
-{
-    return solver->sumSearchStats.conflStats.numConflicts + stats.conflStats.numConflicts;
 }
 
 uint64_t Searcher::sumRestarts() const
@@ -2841,7 +2766,7 @@ void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
     assert(!conflPart.isNULL());
 
     std::stringstream s;
-    s << "confls/" << "confl" << solver->sumConflicts() << ".dot";
+    s << "confls/" << "confl" << solver->sumConflicts << ".dot";
     std::string filename = s.str();
 
     std::ofstream file;
@@ -2906,11 +2831,7 @@ PropBy Searcher::propagate() {
     const size_t origTrailSize = trail.size();
 
     PropBy ret;
-    if (conf.propBinFirst) {
-        ret = propagate_strict_order();
-    } else {
-        ret = propagate_any_order<update_bogoprops>();
-    }
+    ret = propagate_any_order<update_bogoprops>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
     if (decisionLevel() == 0 && drat->enabled()) {
@@ -2940,8 +2861,10 @@ size_t Searcher::mem_used() const
     size_t mem = HyperEngine::mem_used();
     mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
     mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
-    mem += activ_glue.capacity()*sizeof(uint32_t);
-    mem += order_heap_glue.mem_used();
+    mem += var_act_vsids.capacity()*sizeof(uint32_t);
+    mem += var_act_maple.capacity()*sizeof(uint32_t);
+    mem += order_heap_vsids.mem_used();
+    mem += order_heap_maple.mem_used();
     mem += learnt_clause.capacity()*sizeof(Lit);
     mem += hist.mem_used();
     mem += conflict.capacity()*sizeof(Lit);
@@ -2977,13 +2900,13 @@ size_t Searcher::mem_used() const
         << endl;
 
         cout
-        << "c activ_glue bytes: "
-        << activ_glue.capacity()*sizeof(uint32_t)
+        << "c order_heap_vsids bytes: "
+        << order_heap_vsids.mem_used()
         << endl;
 
         cout
-        << "c order_heap_glue bytes: "
-        << order_heap_glue.mem_used()
+        << "c order_heap_maple bytes: "
+        << order_heap_maple.mem_used()
         << endl;
 
         cout
@@ -3049,9 +2972,25 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
 void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from)
 {
     if (unfill_from.empty()) {
-        return;
+        goto end;
     }
 
+    //First check -- can't unset at the same time since the same
+    //internal variable may be inside 'assumptions' -- in case the variables
+    //have been replaced with each other.
+    for(const AssumptionPair lit_pair: unfill_from) {
+        const Lit lit = lit_pair.lit_inter;
+        if (lit.var() < assumptionsSet.size()) {
+            #ifdef SLOW_DEBUG
+            if (!assumptionsSet[lit.var()]) {
+                cout << "ERROR: var " << lit.var() + 1 << " is in assumptions but not in assumptionsSet" << endl;
+            }
+            #endif
+            assert(assumptionsSet[lit.var()]);
+        }
+    }
+
+    //Then unset
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
@@ -3059,6 +2998,7 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
         }
     }
 
+    end:;
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
         assert(!x);
@@ -3069,43 +3009,6 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
 inline void Searcher::varDecayActivity()
 {
     var_inc *= (1.0 / var_decay);
-}
-
-template<bool update_bogoprops>
-inline void Searcher::bump_var_activity(uint32_t var)
-{
-    if (update_bogoprops) {
-        return;
-    }
-
-    activ_glue[var] += var_inc;
-
-    #ifdef SLOW_DEBUG
-    bool rescaled = false;
-    #endif
-    if (activ_glue[var] > 1e100) {
-        // Rescale:
-        for (double& act : activ_glue) {
-            act *= 1e-100;
-        }
-        #ifdef SLOW_DEBUG
-        rescaled = true;
-        #endif
-
-        //Reset var_inc
-        var_inc *= 1e-100;
-    }
-
-    // Update order_heap with respect to new activity:
-    if (order_heap_glue.inHeap(var)) {
-        order_heap_glue.decrease(var);
-    }
-
-    #ifdef SLOW_DEBUG
-    if (rescaled) {
-        assert(order_heap_glue.heap_property());
-    }
-    #endif
 }
 
 void Searcher::update_var_decay()
@@ -3146,7 +3049,7 @@ void Searcher::write_long_cls(
     for(ClOffset c: clauses)
     {
         Clause& cl = *cl_alloc.ptr(c);
-        assert(cl.size() > 3);
+        assert(cl.size() > 2);
         f.put_uint32_t(cl.size());
         for(const Lit l: cl)
         {
@@ -3181,8 +3084,8 @@ void Searcher::read_long_cls(
         }
 
         Clause* cl = cl_alloc.Clause_new(tmp_cl
+        , cl_stats.last_touched
         #ifdef STATS_NEEDED
-        , cl_stats.introduced_at_conflict
         , cl_stats.ID
         #endif
         );
@@ -3193,15 +3096,20 @@ void Searcher::read_long_cls(
         attachClause(*cl);
         const ClOffset offs = cl_alloc.get_offset(cl);
         if (red) {
-            if (cl->stats.glue <= conf.glue_must_keep_clause_if_below_or_eq) {
+            cl->stats.which_red_array = 2;
+            if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
                 cl->stats.which_red_array = 0;
-            } else{
+            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
+                && conf.glue_put_lev1_if_below_or_eq != 0
+            ) {
                 cl->stats.which_red_array = 1;
             }
 
             longRedCls[0].push_back(cl->stats.which_red_array);
+            litStats.redLits += cl->size();
         } else {
             longIrredCls.push_back(offs);
+            litStats.irredLits += cl->size();
         }
     }
 }
@@ -3274,38 +3182,7 @@ void Searcher::write_binary_cls(
     }
 }
 
-void Searcher::write_tri_cls(
-    SimpleOutFile& f
-    , bool red
-) const {
-    if (red) {
-        f.put_uint64_t(binTri.redTris);
-    } else {
-        f.put_uint64_t(binTri.irredTris);
-    }
-
-    size_t at = 0;
-    for(watch_subarray_const ws: watches)
-    {
-        Lit lit1 = Lit::toLit(at);
-        at++;
-        for(Watched w: ws)
-        {
-            if (w.isTri() && w.red() == red) {
-                if (lit1 < w.lit2()
-                    && w.lit2() < w.lit3()
-                ) {
-                    f.put_lit(lit1);
-                    f.put_lit(w.lit2());
-                    f.put_lit(w.lit3());
-                }
-            }
-        }
-    }
-}
-
-
-void Searcher::read_binary_cls(
+uint64_t Searcher::read_binary_cls(
     SimpleInFile& f
     , bool red
 ) {
@@ -3316,20 +3193,7 @@ void Searcher::read_binary_cls(
         const Lit lit2 = f.get_lit();
         attach_bin_clause(lit1, lit2, red);
     }
-}
-
-void Searcher::read_tri_cls(
-    SimpleInFile& f
-    , bool red
-) {
-    uint64_t num = f.get_uint64_t();
-    for(uint64_t i = 0; i < num; i++)
-    {
-        const Lit lit1 = f.get_lit();
-        const Lit lit2 = f.get_lit();
-        const Lit lit3 = f.get_lit();
-        attach_tri_clause(lit1, lit2, lit3, red);
-    }
+    return num;
 }
 
 void Searcher::save_state(SimpleOutFile& f, const lbool status) const
@@ -3337,7 +3201,8 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     assert(decisionLevel() == 0);
     PropEngine::save_state(f);
 
-    f.put_vector(activ_glue);
+    f.put_vector(var_act_vsids);
+    f.put_vector(var_act_maple);
     f.put_vector(model);
     f.put_vector(full_model);
     f.put_vector(conflict);
@@ -3346,8 +3211,6 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     if (status == l_Undef) {
         write_binary_cls(f, false);
         write_binary_cls(f, true);
-        write_tri_cls(f, false);
-        write_tri_cls(f, true);
         write_long_cls(longIrredCls, f, false);
         for(auto& lredcls: longRedCls) {
             write_long_cls(lredcls, f, true);
@@ -3360,12 +3223,13 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
     assert(decisionLevel() == 0);
     PropEngine::load_state(f);
 
-    f.get_vector(activ_glue);
+    f.get_vector(var_act_vsids);
+    f.get_vector(var_act_maple);
     for(size_t i = 0; i < nVars(); i++) {
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef
         ) {
-            insertVarOrder(i);
+            insert_var_order_all(i);
         }
     }
     f.get_vector(model);
@@ -3374,10 +3238,8 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
 
     //Clauses
     if (status == l_Undef) {
-        read_binary_cls(f, false);
-        read_binary_cls(f, true);
-        read_tri_cls(f, false);
-        read_tri_cls(f, true);
+        binTri.irredBins = read_binary_cls(f, false);
+        binTri.redBins =read_binary_cls(f, true);
         read_long_cls(f, false);
         for(size_t i = 0; i < longRedCls.size(); i++) {
             read_long_cls(f, true);
@@ -3391,7 +3253,7 @@ void Searcher::cancelUntil<true>(uint32_t level);
 template
 void Searcher::cancelUntil<false>(uint32_t level);
 
-template<bool also_insert_varorder>
+template<bool also_insert_var_order>
 void Searcher::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
@@ -3426,9 +3288,27 @@ void Searcher::cancelUntil(uint32_t level)
 
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
+
+             if (!VSIDS) {
+                assert(sumConflicts >= varData[var].picked);
+                uint32_t age = sumConflicts - varData[var].picked;
+                if (age > 0) {
+                    double adjusted_reward = ((double)(varData[var].conflicted + varData[var].almost_conflicted)) / ((double)age);
+                    double old_activity = var_act_maple[var];
+                    var_act_maple[var] = conf.step_size * adjusted_reward + ((1 - conf.step_size) * old_activity);
+                    if (order_heap_maple.inHeap(var)) {
+                        if (var_act_maple[var] > old_activity)
+                            order_heap_maple.decrease(var);
+                        else
+                            order_heap_maple.increase(var);
+                    }
+                }
+                varData[var].cancelled = sumConflicts;
+            }
+
             assigns[var] = l_Undef;
-            if (also_insert_varorder) {
-                insertVarOrder(var);
+            if (also_insert_var_order) {
+                insert_var_order(var);
             }
         }
         qhead = trail_lim[level];

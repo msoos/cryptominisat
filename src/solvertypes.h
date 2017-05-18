@@ -274,8 +274,6 @@ struct PropStats
         propsUnit += other.propsUnit;
         propsBinIrred += other.propsBinIrred;
         propsBinRed += other.propsBinRed;
-        propsTriIrred += other.propsTriIrred;
-        propsTriRed += other.propsTriRed;
         propsLongIrred += other.propsLongIrred;
         propsLongRed += other.propsLongRed;
 
@@ -298,8 +296,6 @@ struct PropStats
         propsUnit -= other.propsUnit;
         propsBinIrred -= other.propsBinIrred;
         propsBinRed -= other.propsBinRed;
-        propsTriIrred -= other.propsTriIrred;
-        propsTriRed -= other.propsTriRed;
         propsLongIrred -= other.propsLongIrred;
         propsLongRed -= other.propsLongRed;
 
@@ -360,16 +356,6 @@ struct PropStats
             , "% of propagations"
         );
 
-        print_stats_line("c propsTriIred", propsTriIrred
-            , stats_line_percent(propsTriIrred, propagations)
-            , "% of propagations"
-        );
-
-        print_stats_line("c propsTriRed", propsTriRed
-            , stats_line_percent(propsTriRed, propagations)
-            , "% of propagations"
-        );
-
         print_stats_line("c propsLongIrred", propsLongIrred
             , stats_line_percent(propsLongIrred, propagations)
             , "% of propagations"
@@ -408,8 +394,6 @@ struct PropStats
     uint64_t propsUnit = 0;
     uint64_t propsBinIrred = 0;
     uint64_t propsBinRed = 0;
-    uint64_t propsTriIrred = 0;
-    uint64_t propsTriRed = 0;
     uint64_t propsLongIrred = 0;
     uint64_t propsLongRed = 0;
 
@@ -425,8 +409,6 @@ enum class ConflCausedBy {
     , longred
     , binred
     , binirred
-    , triirred
-    , trired
 };
 
 struct ConflStats
@@ -441,8 +423,6 @@ struct ConflStats
     {
         conflsBinIrred += other.conflsBinIrred;
         conflsBinRed += other.conflsBinRed;
-        conflsTriIrred += other.conflsTriIrred;
-        conflsTriRed += other.conflsTriRed;
         conflsLongIrred += other.conflsLongIrred;
         conflsLongRed += other.conflsLongRed;
 
@@ -455,8 +435,6 @@ struct ConflStats
     {
         conflsBinIrred -= other.conflsBinIrred;
         conflsBinRed -= other.conflsBinRed;
-        conflsTriIrred -= other.conflsTriIrred;
-        conflsTriRed -= other.conflsTriRed;
         conflsLongIrred -= other.conflsLongIrred;
         conflsLongRed -= other.conflsLongRed;
 
@@ -473,12 +451,6 @@ struct ConflStats
                 break;
             case ConflCausedBy::binred :
                 conflsBinRed++;
-                break;
-            case ConflCausedBy::triirred :
-                conflsTriIrred++;
-                break;
-            case ConflCausedBy::trired :
-                conflsTriRed++;
                 break;
             case ConflCausedBy::longirred :
                 conflsLongIrred++;
@@ -516,16 +488,6 @@ struct ConflStats
             , "%"
         );
 
-        print_stats_line("c conflsTriIrred", conflsTriIrred
-            , stats_line_percent(conflsTriIrred, numConflicts)
-            , "%"
-        );
-
-        print_stats_line("c conflsTriIrred", conflsTriRed
-            , stats_line_percent(conflsTriRed, numConflicts)
-            , "%"
-        );
-
         print_stats_line("c conflsLongIrred" , conflsLongIrred
             , stats_line_percent(conflsLongIrred, numConflicts)
             , "%"
@@ -538,7 +500,6 @@ struct ConflStats
 
         long diff = (long)numConflicts
             - (long)(conflsBinIrred + (long)conflsBinRed
-                + (long)conflsTriIrred + (long)conflsTriRed
                 + (long)conflsLongIrred + (long)conflsLongRed
             );
 
@@ -547,10 +508,10 @@ struct ConflStats
             << "c DEBUG"
             << "((int)numConflicts - (int)(conflsBinIrred + conflsBinRed"
             << endl
-            << "c  + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)"
+            << "c  + conflsLongIrred + conflsLongRed)"
             << " = "
             << (((int)numConflicts - (int)(conflsBinIrred + conflsBinRed
-                + conflsTriIrred + conflsTriRed + conflsLongIrred + conflsLongRed)))
+                + conflsLongIrred + conflsLongRed)))
             << endl;
 
             //assert(diff == 0);
@@ -559,8 +520,6 @@ struct ConflStats
 
     uint64_t conflsBinIrred = 0;
     uint64_t conflsBinRed = 0;
-    uint64_t conflsTriIrred = 0;
-    uint64_t conflsTriRed = 0;
     uint64_t conflsLongIrred = 0;
     uint64_t conflsLongRed = 0;
 

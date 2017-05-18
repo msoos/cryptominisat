@@ -98,7 +98,6 @@ class Searcher : public HyperEngine
         void     print_restart_stat_line() const;
         void     printBaseStats() const;
         void     print_clause_stats() const;
-        uint64_t sumConflicts() const;
         uint64_t sumRestarts() const;
         const SearchHist& getHistory() const;
 
@@ -108,10 +107,9 @@ class Searcher : public HyperEngine
         {
             return assumptionsSet.at(var);
         }
-        template<bool also_insert_varorder = true>
+        template<bool also_insert_var_order = true>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
-        vector<double> activ_glue;
 
         //Gauss
         vector<Gaussian*> gauss_matrixes;
@@ -137,8 +135,10 @@ class Searcher : public HyperEngine
         void rebuildOrderHeap();
         void clear_order_heap()
         {
-            order_heap_glue.clear();
+            order_heap_vsids.clear();
+            order_heap_maple.clear();
         }
+        void bumpClauseAct(Clause* cl);
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -160,7 +160,7 @@ class Searcher : public HyperEngine
             SimpleInFile& f
             , const bool red
         );
-        void read_binary_cls(
+        uint64_t read_binary_cls(
             SimpleInFile& f
             , bool red
         );
@@ -168,14 +168,6 @@ class Searcher : public HyperEngine
             SimpleOutFile& f
             , bool red
         ) const;
-        void write_tri_cls(
-            SimpleOutFile& f
-            , bool red
-        ) const;
-        void read_tri_cls(
-            SimpleInFile& f
-            , bool red
-        );
 
         //Misc
         void update_var_decay();
@@ -204,7 +196,13 @@ class Searcher : public HyperEngine
         //we cannot eliminate / component-handle such vars
         //Needed so checking is fast
         vector<char> assumptionsSet;
-        vector<AssumptionPair> assumptions; ///< Current set of assumptions provided to solve by the user
+
+        //Note that this array can have the same internal variable more than
+        //once, in case one has been replaced with the other. So if var 1 =  var 2
+        //and var 1 was set to TRUE and var 2 to be FALSE, then we'll have var 1
+        //insided this array twice, once it needs to be set to TRUE and once FALSE
+        vector<AssumptionPair> assumptions;
+
         void update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict);
 
 
@@ -225,7 +223,7 @@ class Searcher : public HyperEngine
         lbool burst_search();
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
-        void  update_history_stats(size_t backtrack_level, size_t glue);
+        void  update_history_stats(size_t backtrack_level, uint32_t glue);
         void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
@@ -257,7 +255,7 @@ class Searcher : public HyperEngine
 
             bool needToStopSearch;
             uint64_t conflictsDoneThisRestart;
-            uint64_t conflictsToDo;
+            uint64_t max_confl_to_do;
             Restart rest_type = Restart::never;
         };
         SearchParams params;
@@ -303,7 +301,8 @@ class Searcher : public HyperEngine
         /////////////////
         // Variable activity
         double var_inc;
-        void              insertVarOrder(const uint32_t x);  ///< Insert a variable in heap
+        void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
+        void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
 
 
         uint64_t more_red_minim_limit_binary_actual;
@@ -314,6 +313,9 @@ class Searcher : public HyperEngine
         int64_t max_confl_phase;
         int64_t max_confl_this_phase;
 
+        uint64_t next_lev1_reduce;
+        uint64_t next_lev2_reduce;
+
     private:
         //////////////
         // Conflict minimisation
@@ -322,11 +324,6 @@ class Searcher : public HyperEngine
         void normalClMinim();
         MyStack<Lit> analyze_stack;
         uint32_t        abstractLevel(const uint32_t x) const;
-
-        //Cache for re-learnt clauses
-        bool check_and_insert_into_hash_learnt_cl();
-        uint32_t* hits = NULL;
-        vector<Lit> learnt_clause_sorted;
 
         //OTF subsumption during learning
         vector<ClOffset> otf_subsuming_long_cls;
@@ -350,6 +347,7 @@ class Searcher : public HyperEngine
         uint32_t num_search_called = 0;
         uint64_t lastRestartConfl;
         double luby(double y, int x);
+        void adjust_phases_restarts();
 
         void print_solution_varreplace_status() const;
         void dump_search_sql(const double myTime);
@@ -377,27 +375,11 @@ class Searcher : public HyperEngine
         void     varDecayActivity ();
         ///Increase a variable with the current 'bump' value.
         template<bool update_bogoprops>
-        void     bump_var_activity  (uint32_t v);
-        struct VarOrderLt { ///Order variables according to their activities
-            const vector<double>&  activities;
-            bool operator () (const uint32_t x, const uint32_t y) const
-            {
-                return activities[x] > activities[y];
-            }
-
-            VarOrderLt(const vector<double>& _activities) :
-                activities(_activities)
-            {}
-        };
-
-        ///activity-ordered heap of decision variables.
-        ///NOT VALID WHILE SIMPLIFYING
-        Heap<VarOrderLt> order_heap_glue;
+        void     bump_vsids_var_act(uint32_t v, double mult = 1.0);
 
         //Clause activites
         double cla_inc;
         void decayClauseAct();
-        void bumpClauseAct(Clause* cl);
         unsigned guess_clause_array(
             const uint32_t glue
             , const uint32_t backtrack_lev
@@ -458,19 +440,38 @@ inline void Searcher::add_in_partial_solving_stats()
     stats.cpu_time = cpuTime() - startTime;
 }
 
-inline void Searcher::insertVarOrder(const uint32_t x)
+inline void Searcher::insert_var_order(const uint32_t x)
 {
-    if (!order_heap_glue.inHeap(x)
-    ) {
+    Heap<VarOrderLt> &order_heap = VSIDS ? order_heap_vsids : order_heap_maple;
+    if (!order_heap.inHeap(x)) {
         #ifdef SLOW_DEUG
-        //All active varibles are decision variables
-        assert(varData[x].removed == Removed::none);
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
         #endif
 
-        order_heap_glue.insert(x);
+        order_heap.insert(x);
     }
 }
 
+inline void Searcher::insert_var_order_all(const uint32_t x)
+{
+    if (!order_heap_vsids.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_vsids.insert(x);
+    }
+    if (!order_heap_maple.inHeap(x)) {
+        #ifdef SLOW_DEUG
+        assert(varData[x].removed == Removed::none
+            && "All variables should be decision vars unless removed");
+        #endif
+
+        order_heap_maple.insert(x);
+    }
+}
 
 inline void Searcher::bumpClauseAct(Clause* cl)
 {
@@ -479,7 +480,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
     cl->stats.activity += cla_inc;
     if (cl->stats.activity > 1e20 ) {
         // Rescale
-        for(ClOffset offs: longRedCls[1]) {
+        for(ClOffset offs: longRedCls[2]) {
             cl_alloc.ptr(offs)->stats.activity *= 1e-20;
         }
         cla_inc *= 1e-20;
@@ -498,8 +499,15 @@ inline bool Searcher::check_order_heap_sanity() const
         if (varData[i].removed == Removed::none
             && value(i) == l_Undef)
         {
-            if (!order_heap_glue.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in heap."
+            if (!order_heap_vsids.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+            if (!order_heap_maple.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
                 << " value: " << value(i)
                 << " removed: " << removed_type_to_string(varData[i].removed)
                 << endl;
@@ -507,7 +515,8 @@ inline bool Searcher::check_order_heap_sanity() const
             }
         }
     }
-    assert(order_heap_glue.heap_property());
+    assert(order_heap_vsids.heap_property());
+    assert(order_heap_maple.heap_property());
 
     return true;
 }
@@ -532,6 +541,57 @@ inline bool Searcher::pickPolarity(const uint32_t var)
     }
 
     return true;
+}
+
+template<bool update_bogoprops>
+void Searcher::bump_var_activities_based_on_implied_by_learnts(
+    const uint32_t glue
+) {
+    assert(!update_bogoprops);
+
+    for (const auto dat :implied_by_learnts) {
+        const uint32_t v_glue = dat.second;
+        if (v_glue < glue) {
+            bump_vsids_var_act<update_bogoprops>(dat.first);
+        }
+    }
+}
+
+template<bool update_bogoprops>
+inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
+{
+    if (update_bogoprops) {
+        return;
+    }
+
+    var_act_vsids[var] += var_inc * mult;
+
+    #ifdef SLOW_DEBUG
+    bool rescaled = false;
+    #endif
+    if (var_act_vsids[var] > 1e100) {
+        // Rescale:
+        for (double& act : var_act_vsids) {
+            act *= 1e-100;
+        }
+        #ifdef SLOW_DEBUG
+        rescaled = true;
+        #endif
+
+        //Reset var_inc
+        var_inc *= 1e-100;
+    }
+
+    // Update order_heap with respect to new activity:
+    if (order_heap_vsids.inHeap(var)) {
+        order_heap_vsids.decrease(var);
+    }
+
+    #ifdef SLOW_DEBUG
+    if (rescaled) {
+        assert(order_heap_vsids.heap_property());
+    }
+    #endif
 }
 
 

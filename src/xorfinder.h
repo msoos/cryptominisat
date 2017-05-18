@@ -169,7 +169,6 @@ public:
 private:
     PossibleXor poss_xor;
     void add_found_xor(const Xor& found_xor);
-    void find_xors_based_on_short_clauses();
     void find_xors_based_on_long_clauses();
     void print_found_xors();
     bool xor_has_interesting_var(const Xor& x);
@@ -182,10 +181,7 @@ private:
     void findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst);
 
     ///Normal finding of matching clause for XOR
-    void findXorMatch(
-        watch_subarray_const occ
-        , const Lit lit
-    );
+    void findXorMatch(watch_subarray_const occ);
 
     OccSimplifier* occsimplifier;
     Solver *solver;

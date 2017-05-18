@@ -23,6 +23,7 @@ from __future__ import print_function
 from verifier import *
 import unittest
 
+
 class Map(dict):
     """
     Example:

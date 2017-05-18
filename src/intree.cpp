@@ -271,7 +271,7 @@ void InTree::tree_look()
                 if (tmp.var_reason_changed != var_Undef) {
                     solver->varData[tmp.var_reason_changed].reason = tmp.orig_propby;
                     if (solver->conf.verbosity >= 10) {
-                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to: " << tmp.orig_propby.lit2() << " red: " << (int)tmp.orig_propby.isRedStep() << endl;
+                        cout << "RESet reason for VAR " << tmp.var_reason_changed+1 << " to:  ????" << /*tmp.orig_propby.lit2() << */ " red: " << (int)tmp.orig_propby.isRedStep() << endl;
                     }
                 }
             }
@@ -349,7 +349,7 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
             depth_failed.back() = 1;
             failed.push_back(~lit);
             if (solver->conf.verbosity >= 10) {
-                cout << "Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
+                cout << "(timeout?) Failed :" << ~lit << " level: " << solver->decisionLevel() << endl;
             }
         } else {
             hyperbin_added += solver->hyper_bin_res_all(false);

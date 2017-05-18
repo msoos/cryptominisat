@@ -21,19 +21,14 @@ import sklearn.tree
 import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
-
-#for presentation (PDF)
-
-from sklearn.externals.six import StringIO
-import pydot
-from IPython.display import Image
+import math
 
 
 def mypow(to, base):
     return base**to
 
 
-class Query:
+class QueryHelper:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
@@ -70,7 +65,7 @@ class Query:
         return runID
 
 
-class Query2 (Query):
+class Query2 (QueryHelper):
     def create_indexes(self):
         print("Recreating indexes...")
         t = time.time()
@@ -130,10 +125,6 @@ class Query2 (Query):
             r = self.transform_rst_row(r[2:])
             X.append(r)
             y.append(perc)
-            #print("---<<<")
-            #print(r)
-            #print(perc)
-            #print("---")
 
         return X, y
 
@@ -150,21 +141,21 @@ class Query2 (Query):
 
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
+        and clauseStats.restarts > 1 -- to avoid history being invalid
 
         -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
         for row in self.c.execute(q):
-            #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(1)
+            y.append(1)  # GOOD clause
 
+        # BAD caluses
         q = """
         SELECT clauseStats.*
         -- , restart.*
@@ -176,25 +167,24 @@ class Query2 (Query):
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
+        and clauseStats.restarts > 1 -- to avoid history being invalid
 
         -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
         -- and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        -- and clauseStats.glue <= 20
         order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit)
         for row in self.c.execute(q):
-            #first 5 are not useful, such as restarts and clauseID
             r = self.transform_clstat_row(row)
             X.append(r)
-            y.append(0)
+            y.append(0)  # BAD clause
 
         return X, y
 
     def transform_rst_row(self, row):
-        row = list(row[5:])
+        row = self.reset_some_to_null(row)
 
         ret = []
         if options.add_pow2:
@@ -233,10 +223,9 @@ class Query2 (Query):
         self.clstats_names = names
         self.ntoc = {}
         for n, c in zip(names, xrange(10000)):
-            #print(n, ":", c)
             self.ntoc[n] = c
 
-    def transform_clstat_row(self, row):
+    def reset_some_to_null(self, row):
         set_to_null = [
             "clauseStats.runID",
             "clauseStats.simplifications",
@@ -244,36 +233,53 @@ class Query2 (Query):
             "clauseStats.conflicts",
             "clauseStats.clauseID",
             "clauseStats.conflicts_this_restart"]
-            #"restart.runID",
-            #"restart.simplifications",
-            #"restart.restarts",
-            #"restart.conflicts",
-            #"restart.runtime",
-            #"restart.clauseIDstartInclusive",
-            #"restart.clauseIDendExclusive"]
+
+        # set these too in case restarts are added
+        # "restart.runID",
+        # "restart.simplifications",
+        # "restart.restarts",
+        # "restart.conflicts",
+        # "restart.runtime",
+        # "restart.clauseIDstartInclusive",
+        # "restart.clauseIDendExclusive"]
 
         row2 = list(row)
         for e in set_to_null:
             row_to_reset = self.ntoc[e]
             row2[row_to_reset] = 0
 
-        row2[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
-        row2[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
-        row2[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_hist"]]
-        row2[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
-        row2[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
-        row2[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
-        row2[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
-
-        row2[self.ntoc["clauseStats.decision_level_hist"]] = 0
-        row2[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
-        row2[self.ntoc["clauseStats.trail_depth_hist"]] = 0
-        row2[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
-        row2[self.ntoc["clauseStats.size_hist"]] = 0
-        row2[self.ntoc["clauseStats.glue_hist"]] = 0
-        row2[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
-
         return row2
+
+    def transform_clstat_row(self, row):
+        row = self.reset_some_to_null(row)
+
+        if row[self.ntoc["clauseStats.decision_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.backtrack_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.trail_depth_level_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.vsids_vars_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.size_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.glue_hist"]] == 0 or \
+            row[self.ntoc["clauseStats.num_antecedents_hist"]] == 0:
+                print("ERROR: Data is in error:", row)
+                exit(-1)
+
+        row[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
+        row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
+        row[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_level_hist"]]
+        row[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
+        #row[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
+        #row[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
+        #row[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
+
+        row[self.ntoc["clauseStats.decision_level_hist"]] = 0
+        row[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
+        row[self.ntoc["clauseStats.trail_depth_level_hist"]] = 0
+        row[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
+        #row[self.ntoc["clauseStats.size_hist"]] = 0
+        #row[self.ntoc["clauseStats.glue_hist"]] = 0
+        #row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
+
+        return row
 
 
 class Data:
@@ -339,11 +345,10 @@ class Classify:
         with open(classifiername, "w") as f:
             pickle.dump(self.clf, f)
 
-    def output_to_pdf(self, clstats_names, fname):
+    def output_to_dot(self, clstats_names, fname):
         print("clstats_names len:", len(clstats_names))
         print("clstats_names: %s" % clstats_names)
 
-        #dot_data = StringIO()
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
                                      feature_names=clstats_names,
                                      class_names=["BAD", "GOOD"],
@@ -351,13 +356,8 @@ class Classify:
                                      special_characters=True,
                                      proportion=True
                                      )
-        #graph = pydot.graph_from_dot_data(dot_data.getvalue())
         print("Run dot:")
         print("dot -Tpng %s -o tree.png" % fname)
-        #Image(graph.create_png())
-
-        #graph.write_pdf(fname)
-        #print("Wrote final tree to %s" % fname)
 
 
 class Check:
@@ -414,11 +414,6 @@ if __name__ == "__main__":
             cl = get_one_file(dbfname)
         print("Read in data in %-5.2f secs" % (time.time()-t))
 
-        #print("cl x:")
-        #print(cl.X)
-        #print("cl data x:")
-        #print(cl_data.X)
-
         cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
 
         if options.check:
@@ -427,7 +422,7 @@ if __name__ == "__main__":
         else:
             clf = Classify()
             clf.learn(cl.X, cl.y, "%s.classifier" % cleanname)
-            clf.output_to_pdf(cl.colnames, "%s.tree.dot" % cleanname)
+            clf.output_to_dot(cl.colnames, "%s.tree.dot" % cleanname)
             if cl_data is None:
                 cl_data = cl
             else:
@@ -436,7 +431,12 @@ if __name__ == "__main__":
             with open("%s.cldata" % cleanname, "w") as f:
                 pickle.dump(cl, f)
 
-    if len(args) == 1 or options.check:
+    # intermediate predictor is final
+    if len(args) == 1:
+        exit(0)
+
+    # no need, we checked them all individually
+    if options.check:
         exit(0)
 
     print("----- FINAL predictor -------\n")
@@ -449,14 +449,7 @@ if __name__ == "__main__":
         print("Columns used were:")
         for i, name in zip(xrange(100), cl_data.colnames):
             print("%-3d  %s" % (i, name))
-        clf.output_to_pdf(cl_data.colnames, "final.dot")
+        clf.output_to_dot(cl_data.colnames, "final.dot")
 
         with open("final.cldata", "w") as f:
             pickle.dump(cl_data, f)
-
-
-
-
-
-
-

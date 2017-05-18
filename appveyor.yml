@@ -4,9 +4,14 @@ branches:
   only:
     - master
     - appveyor_debug
+    - multilevel_maple
 
-# Operating system (build VM template)
-os: Visual Studio 2015
+image:
+  - Visual Studio 2015
+  # if 2015 works, this should work too
+  # - Visual Studio 2017
+  # may or may not work, let's not try
+  #- Visual Studio 2013
 
 # scripts that are called at very beginning, before repo cloning
 init:
@@ -16,25 +21,94 @@ init:
 # clone directory
 clone_folder: c:\projects\cryptominisat
 
-platform: x64
-configuration: Release
+platform:
+  - x64
+#  - x86
 
-install:
-  # by default, all script lines are interpreted as batch
+environment:
+  global:
+    #PYTHON: "C:\\Python27-x64"
+    #PYTHON_ARCH: "x64"
+    PYTHON: "C:\\Python27"
+    PYTHON_ARCH: "x86"
+    PYTHON_VERSION: "2.7.13"
+    BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
+    #BOOST_INCLUDEDIR: C:/Libraries/boost_1_59_0
+    ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
+    BUILD_TYPE: Release
+    MSBUILD_FLAGS: /maxcpucount /nologo
+  matrix:
+  #- STATICCOMPILE_SETTING: OFF
+  #  BOOST_OPTIONS:
+  - STATICCOMPILE_SETTING: ON
+    BOOST_OPTIONS: runtime-link=static  link=static
 
-build:
-  project: INSTALL.vcxproj      # path to Visual Studio solution or project
+configuration:
+  - Release
 
-# scripts to run before build
-before_build:
+build_script:
+
+  - echo %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%
+  #- "%PYTHON%\python -c \"import platform; print(platform.architecture())\""
+  - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
+  - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
+  - echo %PLATFORM%
+  - echo %BOOST_LIBRARYDIR%
+  - echo %CMAKE_GENERATOR%
+  - echo %configuration%
+
+  # get "lit" from python pip
+  - "%PYTHON%/python -m pip install lit"
+
+  - echo %cd%
+  - cd c:\projects\cryptominisat
+  - mkdir boost_1_59_0_install
+
+  - ps: . .\scripts\appveyor.ps1
+  - cd boost_1_59_0
+  - echo "Building boost.."
+  - bootstrap.bat --with-libraries=program_options
+  - cat project-config.jam
+  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release %BOOST_OPTIONS% threading=multi  install --prefix="C:\projects\cryptominisat\boost_1_59_0_install" > boost_install.out
+
+  # zlib
+  # TODO check out http://stackoverflow.com/questions/10507893/libzip-with-visual-studio-2010
+  # below is C:\projects\cryptominisat
+  - echo %APPVEYOR_BUILD_FOLDER%
+  - cd C:\projects\cryptominisat
+  - git clone https://github.com/madler/zlib
+  - cd zlib
+  - git checkout v1.2.8
+  - echo %cd%
+  - mkdir build
+  - mkdir myinstall
+  - cd build
+  - cmake -G %CMAKE_GENERATOR% -DCMAKE_INSTALL_PREFIX=%ZLIB_ROOT% ..
+  - if %PLATFORM%==x86 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x86" zlib.sln
+  - if %PLATFORM%==x64 call msbuild %MSBUILD_FLAGS% /t:Build /p:Configuration=%CONFIGURATION% /p:Platform="x64" zlib.sln
+  - msbuild %MSBUILD_FLAGS% INSTALL.vcxproj
+
+  # build CMS
   - echo Running cmake...
   - cd c:\projects\cryptominisat
-  - cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON -DCMAKE_INSTALL_PREFIX=%P%
+  - git submodule update --init --recursive
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake -G %CMAKE_GENERATOR% library_speed_test -DENABLE_PYTHON_INTERFACE=ON -DENABLE_TESTING=ON  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% ..
+  - cmake --build . --config %CONFIGURATION%
+  - if %STATICCOMPILE_SETTING%==ON call ctest -V -C %CONFIGURATION%
+
+
+build:
+  # project: INSTALL.vcxproj      # path to Visual Studio solution or project
+  parallel: true
+  verbosity: minimal
+
 
 # scripts to run after build
 after_build:
-  - cd %P%
-  - 7z a c:\projects\cryptominisat\cryptominisat.zip * -tzip
+  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
   - cd c:\projects\cryptominisat
 
 artifacts:
@@ -45,6 +119,4 @@ deploy_script:
   #- cd c:\projects\cryptominisat
   #- curl -T cryptominisat.zip --user %ACCOUNT% https://someplace/
 
-on_finish:
-    # to connect over rdp after build finished
-    #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+test: off

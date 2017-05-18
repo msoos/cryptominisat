@@ -23,18 +23,6 @@ from common_aws import *
 import RequestSpotClient
 
 
-def get_revision():
-    _, solvername = os.path.split(options.base_dir + options.solver)
-    if solvername != "cryptominisat5":
-        return solvername
-
-    pwd = os.getcwd()
-    os.chdir(options.base_dir + "cryptominisat")
-    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    os.chdir(pwd)
-    return revision.strip()
-
-
 def get_n_bytes_from_connection(sock, MSGLEN):
     chunks = []
     bytes_recd = 0
@@ -75,16 +63,9 @@ class Server (threading.Thread):
         os.system("aws s3 cp s3://msoos-solve-data/solvers/%s . --region us-west-2" % options.cnf_list)
         fnames = open(options.cnf_list, "r")
         logging.info("CNF list is file %s", options.cnf_list)
-        start = True
         num = 0
         for fname in fnames:
             fname = fname.strip()
-            if start:
-                self.cnf_dir = fname
-                logging.info("CNF dir is %s", self.cnf_dir)
-                start = False
-                continue
-
             self.files[num] = ToSolve(num, fname)
             self.files_available.append(num)
             logging.info("File added: %s", fname)
@@ -188,11 +169,10 @@ class Server (threading.Thread):
         tosend["stats"] = options.stats
         tosend["gauss"] = options.gauss
         tosend["s3_bucket"] = options.s3_bucket
-        tosend["s3_folder"] = options.s3_folder
+        tosend["given_folder"] = options.given_folder
         tosend["timeout_in_secs"] = options.timeout_in_secs
         tosend["mem_limit_in_mb"] = options.mem_limit_in_mb
         tosend["noshutdown"] = options.noshutdown
-        tosend["cnf_dir"] = self.cnf_dir
         tosend["extra_opts"] = options.extra_opts
         tosend["drat"] = options.drat
 
@@ -309,10 +289,11 @@ class Listener (threading.Thread):
 
 class SpotManager (threading.Thread):
 
-    def __init__(self, noshutdown):
+    def __init__(self):
         threading.Thread.__init__(self)
         self.spot_creator = RequestSpotClient.RequestSpotClient(
-            options.cnf_list == "test", noshutdown=noshutdown,
+            options.git_rev,
+            ("test" in options.cnf_list), noshutdown=options.noshutdown,
             count=options.client_count)
 
     def run(self):
@@ -332,7 +313,7 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN")
 
-    #send email
+    # send email
     try:
         email_subject = "Server shutting down "
         if exitval == 0:
@@ -340,10 +321,12 @@ def shutdown(exitval=0):
         else:
             email_subject += "FAIL"
 
-        full_s3_folder = get_s3_folder(options.s3_folder,
-                                       options.git_rev,
-                                       options.timeout_in_secs,
-                                       options.mem_limit_in_mb)
+        full_s3_folder = get_s3_folder(
+            options.given_folder,
+            options.git_rev,
+            options.solver,
+            options.timeout_in_secs,
+            options.mem_limit_in_mb)
         text = """Server finished. Please download the final data:
 
 mkdir {0}
@@ -363,7 +346,7 @@ So long and thanks for all the fish!
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Cannot send email! Traceback: %s", the_trace)
 
-    #upload log
+    # upload log
     upload_log(options.s3_bucket,
                full_s3_folder,
                options.logfile_name,
@@ -405,12 +388,12 @@ if __name__ == "__main__":
                  pprint.pformat(options, indent=4).replace("\n", " || "))
 
     if not options.git_rev:
-        options.git_rev = get_revision()
+        options.git_rev = get_revision(options.base_dir + options.solver, options.base_dir)
         logging.info("Revision not given, taking HEAD: %s", options.git_rev)
 
     server = Server()
     listener = Listener()
-    spotmanager = SpotManager(options.noshutdown)
+    spotmanager = SpotManager()
     listener.setDaemon(True)
     server.setDaemon(True)
     spotmanager.setDaemon(True)

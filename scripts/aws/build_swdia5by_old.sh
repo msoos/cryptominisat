@@ -8,7 +8,8 @@ aws s3 cp s3://msoos-solve-data/solvers/SWDiA5BY_A26.zip . --region=us-west-2
 unzip SWDiA5BY_A26.zip
 ./build.sh
 
+mv /home/ubuntu/SWDiA5BY_A26/binary/SWDiA5BY_static /home/ubuntu/SWDiA5BY_A26/binary/SWDiA5BY_static_A26
 # binary is now at:
-# --solver SWDiA5BY_A26/binary/SWDiA5BY_static
+# --solver SWDiA5BY_A26/binary/SWDiA5BY_static_A26
 
 cd /home/ubuntu/

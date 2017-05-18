@@ -133,4 +133,20 @@ int ipasir_failed (void * solver, int lit);
  */
 void ipasir_set_terminate (void * solver, void * state, int (*terminate)(void * state));
 
+/**
+ * Set a callback function used to extract learned clauses up to a given lenght from the
+ * solver. The solver will call this function for each learned clause that satisfies
+ * the maximum length (literal count) condition. The ipasir_set_learn function can be called in any
+ * state of the solver, the state remains unchanged after the call.
+ * The callback function is of the form "void learn(void * state, int * clause)"
+ *   - the solver calls the callback function with the parameter "state"
+ *     having the value passed in the ipasir_set_terminate function (2nd parameter).
+ *   - the argument "clause" is a pointer to a null terminated integer array containing the learned clause.
+ *     the solver can change the data at the memory location that "clause" points to after the function call.
+ *
+ * Required state: INPUT or SAT or UNSAT
+ * State after: INPUT or SAT or UNSAT
+ */
+void ipasir_set_learn (void * solver, void * state, int max_length, void (*learn)(void * state, int * clause));
+
 #endif

@@ -62,10 +62,6 @@ class SolutionExtender
             Watched*& i
             , const Lit p
         );
-        bool prop_tri_cl_strict_order(
-            Watched*& i
-            , const Lit p
-        );
         bool satisfiedNorm(const vector<Lit>& lits) const;
         bool satisfiedXor(const vector<Lit>& lits, const bool rhs) const;
         Lit pickBranchLit();

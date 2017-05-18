@@ -23,6 +23,7 @@ import fcntl
 import struct
 import logging
 import functools
+import string
 
 # for importing in systems where "." is not in the PATH
 import glob
@@ -146,23 +147,25 @@ class solverThread (threading.Thread):
 
         return newdir
 
-    def get_cnf_fname(self):
+    def get_fname_no_dir(self):
+        fname = self.indata["cnf_filename"]
+        slash_at = fname.find("/")
+        return fname[slash_at+1:]
+
+    def get_tmp_cnf_fname(self):
         return "%s/%s" % (
             self.temp_space,
-            self.indata["cnf_filename"]
+            self.get_fname_no_dir()
         )
 
     def get_stdout_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stdout"
 
     def get_stderr_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
-
-    def get_perf_fname(self):
-        return self.get_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".perf"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".stderr"
 
     def get_sqlite_fname(self):
-        return self.get_cnf_fname() + ".sqlite"
+        return self.get_tmp_cnf_fname() + "-" + self.indata["uniq_cnt"] + ".sqlite"
 
     def get_lemmas_fname(self):
         return "%s/lemmas" % self.temp_space
@@ -171,27 +174,28 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        os.system("aws s3 cp s3://msoos-solve-data/%s/%s %s --region us-west-2" % (
-            self.indata["cnf_dir"], self.indata["cnf_filename"],
-            self.get_cnf_fname()))
+        os.system("aws s3 cp s3://msoos-solve-data/%s %s --region us-west-2" % (
+            self.indata["cnf_filename"],
+            self.get_tmp_cnf_fname()))
 
         toexec = []
         toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))
-        toexec.append(self.indata["extra_opts"])
-        if "cryptominisat" in self.indata["solver"]:
+        toexec.append(self.indata["extra_opts"].replace(",", " "))
+        if "cryptominisat5" in self.indata["solver"]:
             toexec.append("--printsol 0")
             if self.indata["stats"]:
                 toexec.append("--sql 2")
+                toexec.append("--sqlitedb %s" % self.get_sqlite_fname())
 
-        toexec.append(self.get_cnf_fname())
+        toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
             toexec.append(self.get_drat_fname())
             toexec.append("--clid")
             toexec.append("-n 1")
-            toexec.append("--keepglue 25")
+            toexec.append("--gluecut0 25")
             toexec.append("--otfsubsume 0")
         else:
-            if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+            if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
                 toexec.append("--sqlfull 0")
 
         return " ".join(toexec)
@@ -237,7 +241,7 @@ class solverThread (threading.Thread):
     def run_drat_trim(self):
         toexec = "%s/drat-trim/drat-trim2 %s %s -l %s" % (
             options.base_dir,
-            self.get_cnf_fname(),
+            self.get_tmp_cnf_fname(),
             self.get_drat_fname(),
             self.get_lemmas_fname())
         logging.info("Current working dir: %s", os.getcwd(), extra=self.logextra)
@@ -282,6 +286,9 @@ class solverThread (threading.Thread):
     def create_url(self, bucket, folder, key):
         return 'https://%s.s3.amazonaws.com/%s/%s' % (bucket, folder, key)
 
+    def rnd_id(self):
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+
     def copy_solution_to_s3(self):
         exists = boto_conn.lookup(self.indata["s3_bucket"])
         if not exists:
@@ -289,21 +296,20 @@ class solverThread (threading.Thread):
         boto_bucket = boto_conn.get_bucket(self.indata["s3_bucket"])
         k = boto.s3.key.Key(boto_bucket)
 
-        s3_folder = get_s3_folder(self.indata["s3_folder"],
+        s3_folder = get_s3_folder(self.indata["given_folder"],
                                   self.indata["git_rev"],
+                                  self.indata["solver"],
                                   self.indata["timeout_in_secs"],
                                   self.indata["mem_limit_in_mb"])
 
-        s3_folder_and_fname = s3_folder + "/" + self.indata[
-            "cnf_filename"] + "-" + self.indata["uniq_cnt"]
-        s3_folder_and_fname_clean = s3_folder + "/" + self.indata[
-            "cnf_filename"]
+        s3_folder_and_fname = s3_folder + "/" + self.get_fname_no_dir() + "-" + self.indata["uniq_cnt"]
+        s3_folder_and_fname_clean = s3_folder + "/" + self.get_fname_no_dir()
 
         toreturn = []
 
         # stdout
         os.system("gzip -f %s" % self.get_stdout_fname())
-        fname = s3_folder_and_fname + ".stdout.gz-tmp"
+        fname = s3_folder_and_fname + ".stdout.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
         k.key = fname
         boto_bucket.delete_key(k)
@@ -312,36 +318,29 @@ class solverThread (threading.Thread):
 
         # stderr
         os.system("gzip -f %s" % self.get_stderr_fname())
-        fname = s3_folder_and_fname + ".stderr.gz-tmp"
+        fname = s3_folder_and_fname + ".stderr.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
         k.key = fname
         boto_bucket.delete_key(k)
         k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
         toreturn.append([fname, fname_clean])
 
-        # perf
-        # os.system("gzip -f %s" % self.get_perf_fname())
-        # k.key = s3_folder_and_fname + ".perf.gz"
-        # boto_bucket.delete_key(k)
-        # k.set_contents_from_filename(self.get_perf_fname() + ".gz")
-
         # sqlite
-        if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+        if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
             os.system("gzip -f %s" % self.get_sqlite_fname())
-            fname = s3_folder_and_fname + ".sqlite.gz-tmp"
+            fname = s3_folder_and_fname + ".sqlite.gz-tmp" + self.rnd_id()
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
             k.key = fname
             boto_bucket.delete_key(k)
             k.set_contents_from_filename(self.get_sqlite_fname() + ".gz")
             toreturn.append([fname, fname_clean])
 
-        logging.info("Uploaded stdout+stderr+sqlite+perf files: %s",
+        logging.info("Uploaded stdout+stderr+sqlite files: %s",
                      toreturn, extra=self.logextra)
 
         os.unlink(self.get_stdout_fname() + ".gz")
         os.unlink(self.get_stderr_fname() + ".gz")
-        # os.unlink(self.get_perf_fname() + ".gz")
-        if "cryptominisat" in self.indata["solver"] and self.indata["stats"]:
+        if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
             os.unlink(self.get_sqlite_fname() + ".gz")
 
         return toreturn
@@ -398,7 +397,7 @@ class solverThread (threading.Thread):
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
                             self.get_sqlite_fname())
-                os.unlink(self.get_cnf_fname())
+                os.unlink(self.get_tmp_cnf_fname())
                 if self.indata["drat"]:
                     os.unlink(self.get_drat_fname())
                 files = self.copy_solution_to_s3()
@@ -480,8 +479,9 @@ def build_cryptominisat(indata):
                      " ".join(opts),
                      options.base_dir))
     global s3_folder
-    s3_folder = get_s3_folder(indata["s3_folder"],
+    s3_folder = get_s3_folder(indata["given_folder"],
                               indata["git_rev"],
+                              indata["solver"],
                               indata["timeout_in_secs"],
                               indata["mem_limit_in_mb"]
                               )
@@ -519,7 +519,7 @@ def build_system():
         options.noshutdown |= indata["noshutdown"]
         sock.close()
 
-        if "cryptominisat" in indata["solver"]:
+        if "cryptominisat5" in indata["solver"]:
             build_cryptominisat(indata)
 
         built_system = True
@@ -543,16 +543,19 @@ def shutdown(exitval=0):
     toexec = "sudo shutdown -h now"
     logging.info("SHUTTING DOWN", extra={"threadid": -1})
 
-    #signal error to master
+    # signal error to master
     if exitval != 0:
         try:
             signal_error_to_master()
         except:
             pass
 
-    #send email
-    if exitval == 0: reason = "OK"
-    else: reason ="FAIL"
+    # send email
+    if exitval == 0:
+        reason = "OK"
+    else:
+        reason = "FAIL"
+
     try:
         send_email("Client shutting down %s" % reason,
                    "Client finished.", options.logfile_name)
@@ -562,7 +565,7 @@ def shutdown(exitval=0):
         logging.error("Cannot send email! Traceback: %s", the_trace,
                       extra={"threadid": -1})
 
-    #upload log
+    # upload log
     global s3_bucket
     global s3_folder
     upload_log(s3_bucket,
@@ -620,7 +623,8 @@ def build_system_full():
 
 def start_threads():
     threads = []
-    options.num_threads = max(options.num_threads, 2) # for test
+    # we should test at least 2 threads, it's only used during testing anyway
+    options.num_threads = max(options.num_threads, 2)
     for i in range(options.num_threads):
         threads.append(solverThread(i))
 
@@ -757,7 +761,7 @@ if __name__ == "__main__":
     exitapp = False
     options.logfile_name = options.base_dir + options.logfile_name
 
-    #get host
+    # get host
     if options.host is None:
         for line in boto.utils.get_instance_userdata().split("\n"):
             if "DATA" in line:
@@ -781,7 +785,7 @@ if __name__ == "__main__":
         while threading.active_count() > 1:
             time.sleep(0.1)
 
-        #finish up
+        # finish up
         logging.info("Exiting Main Thread, shutting down", extra={"threadid": -1})
         v.delete_volume()
     except:

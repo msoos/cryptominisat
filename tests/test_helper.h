@@ -33,6 +33,8 @@ THE SOFTWARE.
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <functional>
+#include <cctype>
 #include <cassert>
 #include "src/solver.h"
 #include "src/stamp.h"
@@ -187,18 +189,6 @@ void add_impl_cls(
                 vector<Lit> cl;
                 cl.push_back(lit);
                 cl.push_back(ws.lit2());
-                ret.push_back(cl);
-            }
-
-            if (ws.isTri()
-                && lit < ws.lit2()
-                && lit < ws.lit3()
-                && ((add_irred && !ws.red()) || (add_red && ws.red()))
-            ) {
-                vector<Lit> cl;
-                cl.push_back(lit);
-                cl.push_back(ws.lit2());
-                cl.push_back(ws.lit3());
                 ret.push_back(cl);
             }
         }

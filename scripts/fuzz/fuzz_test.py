@@ -40,7 +40,7 @@ import glob
 from verifier import *
 from functools import partial
 
-print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")) )
+print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")))
 sys.path.append(os.getcwd())
 print("our sys.path is", sys.path)
 
@@ -82,6 +82,8 @@ parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
                   )
 parser.add_option("--novalgrind", dest="novalgrind", default=False,
                   action="store_true", help="No valgrind installed")
+parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
+                  default=10, help="1 out of X times valgrind will be used. Default: %default in 1")
 
 parser.add_option("--small", dest="small", default=False,
                   action="store_true",
@@ -93,6 +95,9 @@ parser.add_option("--sqlite", dest="sqlite", default=False,
 
 parser.add_option("--gauss", dest="test_gauss", default=False,
                   action="store_true", help="Test gauss too")
+
+parser.add_option("--maxthreads", dest="max_threads", default=100,
+                  type=int, help="Max number of threads")
 
 parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
                   help="Max time to run. Default: %default")
@@ -181,14 +186,17 @@ def file_exists(fname):
 
 def print_version():
     command = options.solver + " --version"
+    if options.verbose:
+        print("Executing: %s" % command)
     p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     consoleOutput, err = p.communicate()
     print("Version values: %s" % consoleOutput.strip())
 
 fuzzers_noxor = [
-    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --rounds 20",
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --attack preimage --zero --message-bits 400 --rounds 8 --hash-bits 60",
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --zero "
+        "--message-bits 400 --rounds 8 --hash-bits 60",
      "--seed"],
     # ["build/cnf-fuzz-nossum"],
     ["../../build/tests/cnf-utils/largefuzzer"],
@@ -248,8 +256,9 @@ class Tester:
         cmd = " --zero-exit-status "
 
         if random.choice([True, False]):
-            cmd += " --reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
-            cmd += " --undef %d " % random.choice([0, 1])
+            cmd += "--maple %d " % random.choice([0, 0, 0, 1])
+            cmd += "--reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
+            # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
             cmd += "--keepguess %s " % random.randint(0, 10)
@@ -272,10 +281,8 @@ class Tester:
             cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
             cmd += "--elimcplxupd %s " % random.randint(0, 1)
             cmd += "--occredmax %s " % random.randint(0, 100)
-            cmd += "--noextbinsubs %s " % random.randint(0, 1)
             cmd += "--extscc %s " % random.randint(0, 1)
             cmd += "--distill %s " % random.randint(0, 1)
-            cmd += "--sortwatched %s " % random.randint(0, 1)
             cmd += "--recur %s " % random.randint(0, 1)
             cmd += "--compsfrom %d " % random.randint(0, 2)
             cmd += "--compsvar %d " % random.randint(20000, 500000)
@@ -298,7 +305,7 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
-                    "binpri", "stamp", "cache", "otfsubsume",
+                    "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp",
                     "elimcoststrategy"]
@@ -336,7 +343,7 @@ class Tester:
         sched_opts += "sub-impl, intree-probe, probe,"
         sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva, occ-gates,"
+        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "check-cache-size, renumber"
 
         sched = ",".join(create_rnd_sched(sched_opts))
@@ -361,7 +368,7 @@ class Tester:
 
         # construct command
         command = ""
-        if not options.novalgrind and random.randint(0, 10) == 0:
+        if not options.novalgrind and random.randint(0, options.valgrind_freq) == 0:
             command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
         if rnd_opts is None:
@@ -369,7 +376,7 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
-        if options.verbose is False:
+        if not options.verbose:
             command += "--verb 0 "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
@@ -389,11 +396,12 @@ class Tester:
         err_fname = unique_file("%s_err" % fname, ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
-            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE, preexec_fn=partial(setlimits, options.maxtime))
+            command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
+            preexec_fn=partial(setlimits, options.maxtime))
 
         # print time limit after child startup
         if options.verbose:
-            print("CPU limit of parent (pid %d) after startup of child" %
+            print("CPU limit of parent (pid %d) after startup of child: %s secs" %
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         # Get solver output
@@ -415,7 +423,7 @@ class Tester:
         os.unlink(err_fname)
 
         if options.verbose:
-            print("CPU limit of parent (pid %d) after child finished executing" %
+            print("CPU limit of parent (pid %d) after child finished executing: %s" %
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         return consoleOutput, retcode
@@ -444,6 +452,9 @@ class Tester:
 
         print("Within time limit: %.2f s" % diff_time)
         print("filename: %s" % fname)
+
+        if options.verbose:
+            print(consoleOutput)
 
         # if library debug is set, check it
         if (self.needDebugLib):
@@ -507,9 +518,11 @@ class Tester:
             exit()
 
     def fuzz_test_one(self):
-        print("\n--- NORMAL TESTING ---")
+        print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
+        self.num_threads = min(options.max_threads, self.num_threads)
         self.drat = self.num_threads == 1 and random.choice([True, False])
+
         if self.drat:
             fuzzers = fuzzers_drat
         else:
@@ -558,7 +571,7 @@ class Tester:
             pass
 
     def fuzz_test_preproc(self):
-        print("\n--- PREPROC TESTING ---")
+        print("--- PREPROC TESTING ---")
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
@@ -645,7 +658,9 @@ while True:
     if options.small:
         toexec += " --small"
 
-    print("To re-create fuzz-test below: %s" % toexec)
+    print("")
+    print("")
+    print("--> To re-create fuzz-test below: %s" % toexec)
 
     random.seed(rnd_seed)
     if random.choice([True, False]):

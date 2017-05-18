@@ -1,12 +1,23 @@
-# -----------------------------------------------------------------------------
-# Check we can find Python and the lit tool
-# -----------------------------------------------------------------------------
-find_package(PythonInterp REQUIRED)
-mark_as_advanced(CLEAR PYTHON_EXECUTABLE) # Make visible in cmake-gui/ccmake
+# Copyright (c) 2017, Mate Soos
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-if(NOT PYTHONINTERP_FOUND)
-    message(FATAL_ERROR "Python cannot be found. Please install it or disable testing.")
-endif()
 
 find_program(LIT_TOOL
     lit
@@ -126,6 +137,7 @@ add_test (
 
 #google test harness
 set (MY_TESTS
+#     clause_alloc_test
     basic_test
     assump_test
     heap_test
@@ -136,14 +148,13 @@ set (MY_TESTS
     clause_cleaner_test
     probe_test
     distiller_all_with_all_test
-    str_impl_w_impl_stamp
     distill_long_with_implicit_test
     subsume_impl_test
     comp_find_test
     intree_test
     xorfinder_test
     comphandler_test
-    undefine_test
+#    undefine_test
 )
 
 if (USE_GAUSS)
@@ -167,15 +178,3 @@ foreach(F ${MY_TESTS})
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endforeach()
-
-
-# This test is not stable enough, depends on CPU speed
-# if (NOT SLOW_DEBUG)
-#     add_executable(library_speed_test
-#         library_speed_test.cpp
-#     )
-#
-#     target_link_libraries(library_speed_test
-#         libcryptominisat5
-#     )
-# endif()

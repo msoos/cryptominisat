@@ -54,7 +54,7 @@ struct AtecedentData
 
     uint64_t num() const
     {
-        return binRed + binIrred + triRed + triIrred + longIrred + longRed;
+        return binRed + binIrred + longIrred + longRed;
     }
 
     template<class T2>
@@ -62,8 +62,6 @@ struct AtecedentData
     {
         binRed += other.binRed;
         binIrred += other.binIrred;
-        triRed += other.triRed;
-        triIrred += other.triIrred;
         longIrred += other.longIrred;
         longRed += other.longRed;
 
@@ -80,8 +78,6 @@ struct AtecedentData
     {
         binRed -= other.binRed;
         binIrred -= other.binIrred;
-        triRed -= other.triRed;
-        triIrred -= other.triIrred;
         longIrred -= other.longIrred;
         longRed -= other.longRed;
 
@@ -98,8 +94,6 @@ struct AtecedentData
         uint32_t sum = 0;
         sum += binIrred*2;
         sum += binRed*2;
-        sum += triIrred*3;
-        sum += triRed*3;
         sum += size_longs.get_sum();
 
         return sum;
@@ -107,8 +101,6 @@ struct AtecedentData
 
     T binRed = 0;
     T binIrred = 0;
-    T triRed = 0;
-    T triIrred = 0;
     T longIrred = 0;
     T longRed = 0;
     AvgCalc<uint32_t> glue_long_reds;
@@ -128,11 +120,12 @@ struct ClauseStats
         #ifdef STATS_NEEDED
         ID = 1;
         #endif
-        which_red_array = 1;
+        which_red_array = 2;
         glue = 1000;
         activity = 0;
         ttl = 0;
         marked_clause = 0;
+        last_touched = 0;
     }
 
     //Stored data
@@ -141,6 +134,7 @@ struct ClauseStats
     uint32_t ttl:2;
     uint32_t which_red_array:2;
     float   activity = 0.0;
+    uint32_t last_touched;
     #ifdef STATS_NEEDED
     int64_t ID;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
@@ -227,15 +221,15 @@ public:
     uint32_t mySize;
 
     template<class V>
-    Clause(const V& ps
+    Clause(const V& ps, const uint32_t _introduced_at_conflict
         #ifdef STATS_NEEDED
-        , const uint32_t _introduced_at_conflict
         , const int64_t _ID
         #endif
         )
     {
         //assert(ps.size() > 2);
 
+        stats.last_touched = _introduced_at_conflict;
         #ifdef STATS_NEEDED
         stats.introduced_at_conflict = _introduced_at_conflict;
         stats.ID = _ID;

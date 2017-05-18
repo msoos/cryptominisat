@@ -663,7 +663,7 @@ TEST(error_throw, toomany_vars)
 
     EXPECT_THROW({
         s.new_vars(1ULL << 28);}
-        , std::runtime_error);
+        , CMSat::TooManyVarsError);
 }
 
 TEST(error_throw, toomany_vars2)
@@ -673,7 +673,7 @@ TEST(error_throw, toomany_vars2)
 
     EXPECT_THROW({
         s.new_vars(1ULL << 27);}
-        , std::runtime_error);
+        , CMSat::TooManyVarsError);
 }
 
 TEST(error_throw, toomany_vars_single)
@@ -683,7 +683,7 @@ TEST(error_throw, toomany_vars_single)
 
     EXPECT_THROW({
         s.new_var();}
-        , std::runtime_error);
+        , CMSat::TooManyVarsError);
 }
 
 TEST(no_error_throw, long_clause)

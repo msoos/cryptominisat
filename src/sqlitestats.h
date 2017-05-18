@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include <sqlite3.h>
 
-using namespace CMSat;
+namespace CMSat {
 
 
 class SQLiteStats: public SQLStats
@@ -43,9 +43,9 @@ public:
     ) override;
 
     void reduceDB(
-        const ClauseUsageStats& irredStats
-        , const ClauseUsageStats& redStats
-        , const CleaningStats& clean
+        uint64_t level
+        , uint64_t num_cleans
+        , uint64_t num_removed
         , const Solver* solver
     ) override;
 
@@ -112,3 +112,5 @@ private:
     bool setup_ok = false;
     const string filename;
 };
+
+}

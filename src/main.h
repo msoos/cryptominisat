@@ -115,10 +115,6 @@ class Main
         uint32_t max_nr_of_solutions = 1;
         int sql = 0;
         string sqlite_filename;
-        string sqlServer;
-        string sqlUser;
-        string sqlPass;
-        string sqlDatabase;
         vector<uint32_t> independent_vars;
 
         //Files to read & write

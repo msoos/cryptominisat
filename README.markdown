@@ -1,7 +1,6 @@
-[![release](https://img.shields.io/badge/Release-v5.0.0-blue.svg)](https://github.com/msoos/cryptominisat/releases/tag/cryptominisat-5.0.0)
-![licence](https://img.shields.io/badge/License-LGPLv2-brightgreen.svg)
-[![linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
-[![windows build](https://ci.appveyor.com/api/projects/status/github/gruntjs/grunt?branch=master&svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
+[![Windows build](https://ci.appveyor.com/api/projects/status/8d000iy63xu7eau5?svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
 <a href="https://scan.coverity.com/projects/507">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/507/badge.svg"/>
@@ -17,36 +16,25 @@ takes a [cnf](http://en.wikipedia.org/wiki/Conjunctive_normal_form) as an
 input in the [DIMACS](http://www.satcompetition.org/2009/format-benchmarks2009.html)
 format with the extension of XOR clauses. The C++ interface mimics this except
 that it allows for a more efficient system, with assumptions and multiple
-`solve()` calls. The python system is an interface to the C++ system that
-provides the best of both worlds: ease of use and a powerful interface.
+`solve()` calls. A C compatible wrapper is also provided. The python interface provides
+a high-level yet efficient API to use most of the C++ interface with ease.
 
-Prerequisites
+
+Building
 -----
 
-You need to have the following installed in case you use Debian or Ubuntu -- for
-other distros, the packages should be similarly named::
-```
-$ sudo apt-get install build-essential cmake
-```
+To build and install, issue:
 
-The following are not required but are useful::
 ```
-$ sudo apt-get install valgrind libm4ri-dev libmysqlclient-dev libsqlite3-dev
-```
-
-Compiling and installing under Linux
------
-
-You have to use cmake to compile and install. I suggest::
-```
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make -j4
-$ sudo make install
-$ sudo ldconfig
+sudo apt-get install build-essential cmake
+# not required but very useful
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+sudo ldconfig
 ```
 
 Once cryptominisat is installed, the binary is available under
@@ -58,19 +46,45 @@ both by executing `sudo make uninstall`.
 Compiling under Windows
 -----
 
+You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then you need to perform the following for Visual Studio 2015:
+
 ```
-$ unzip cryptominisat-version.zip
-$ cd cryptominisat-version
-$ cmake -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 14 2015 Win64" -DSTATICCOMPILE=ON
-$ msbuild INSTALL.vcxproj
+C:\> [ download cryptominisat-version.zip ]
+C:\> unzip cryptominisat-version.zip
+C:\> rename cryptominisat-version cms
+C:\> cd cms
+C:\cms> mkdir build
+C:\cms> cd build
+
+C:\cms\build> [ download http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.zip ]
+C:\cms\build> unzip boost_1_59_0.zip
+C:\cms\build> mkdir boost_1_59_0_install
+C:\cms\build> cd boost_1_59_0
+C:\cms\build\boost_1_59_0> bootstrap.bat --with-libraries=program_options
+C:\cms\build\boost_1_59_0> b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release link=static threading=multi runtime-link=static install --prefix="C:\cms\build\boost_1_59_0_install" > boost_install.out
+C:\cms\build\boost_1_59_0> cd ..
+
+C:\cms\build> git clone https://github.com/madler/zlib
+C:\cms\build> cd zlib
+C:\cms\build\zlib> git checkout v1.2.8
+C:\cms\build\zlib> mkdir build
+C:\cms\build\zlib> mkdir myinstall
+C:\cms\build\zlib> cd build
+C:\cms\build\zlib\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:\cms\build\zlib\myinstall ..
+C:\cms\build\zlib\build> msbuild /t:Build /p:Configuration=Release /p:Platform="x64" zlib.sln
+C:\cms\build\zlib\build> msbuild INSTALL.vcxproj
+C:\cms\build> cd ..\..
+
+C:\cms\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DSTATICCOMPILE=ON -DZLIB_ROOT=C:\cms\build\zlib\myinstall -DBOOST_ROOT=C:\cms\build\boost_1_59_0_install ..
+C:\cms\build> cmake --build --config Release .
 ```
 
-The `cryptominisat5_simple` binary should now be built. In case you have boost libraries installed, it may also detect it, and you may get the full `cryptominisat5` binary built too. The two binaries only differ in the number of options supported.
+This should build the static Windows binary under `C:\cms\build\Release\cryptominisat5.exe`.
 
 Command-line usage
 -----
 
-Let's take the file::
+Let's take the file:
 ```
 p cnf 2 3
 1 0
@@ -81,14 +95,14 @@ p cnf 2 3
 The files has 3 clauses and 2 variables, this is reflected in the header
 `p cnf 2 3`. Every clause is ended by '0'. The clauses say: 1 must be True, 2
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
-True. The only solution to this problem is::
+True. The only solution to this problem is:
 ```
-$ cryptominisat5 --verb 0 file.cnf
+cryptominisat5 --verb 0 file.cnf
 s SATISFIABLE
 v 1 -2 3 0
 ```
 
-If the file had contained::
+If the file had contained:
 ```
 p cnf 2 4
 1 0
@@ -101,9 +115,22 @@ Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 Python usage
 -----
+The python module must be compiled as per:
 
-The python module is under the directory `python`. You have to first compile
-and install this module, as explained above. You can then use it as::
+```
+sudo apt-get install build-essential cmake
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install python-setuptools python-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+sudo ldconfig
+
+```
+
+You can then use it as:
 
 ```
 >>> from pycryptosat import Solver
@@ -119,7 +146,7 @@ True
 (None, True, False, True)
 ```
 
-We can also try to assume any variable values for a single solver run::
+We can also try to assume any variable values for a single solver run:
 ```
 >>> sat, solution = s.solve([-3])
 >>> print sat
@@ -133,14 +160,14 @@ True
 (None, True, False, True)
 ```
 
-For more detailed instruction, please see the README.rst under the `python`
+For more detailed usage instructions, please see the README.rst under the `python`
 directory.
 
 Library usage
 -----
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
-such, the 1st CNF above would become::
+such, the 1st CNF above would become:
 
 ```
 #include <cryptominisat5/cryptominisat.h>
@@ -193,11 +220,11 @@ int main()
 ```
 
 The library usage also allows for assumptions. We can add these lines just
-before the `return 0;` above::
+before the `return 0;` above:
 ```
 vector<Lit> assumptions;
 assumptions.push_back(Lit(2, true));
-lbool ret = solver.solve(assumptions);
+lbool ret = solver.solve(&assumptions);
 assert(ret == l_False);
 
 lbool ret = solver.solve();
@@ -284,11 +311,13 @@ It is a good idea to put `renumber` as late as possible, as it renumbers the var
 
 Gaussian elimination
 -----
-For building with Gaussian Elimination, you need to perform:
+For building with Gaussian Elimination, you need to build as per:
 
 ```
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
+sudo apt-get install build-essential cmake
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
 mkdir build && cd build
 cmake -DUSE_GAUSS=ON ..
 make
@@ -314,25 +343,50 @@ Gauss options:
 
 Testing
 -----
-For testing you will need the GIT checkout and get the submodules:
+For testing you will need the GIT checkout and build as per:
 
 ```
+sudo apt-get install build-essential cmake
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install git python-pip python-setuptools python-dev
+pip install pip
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
-git submodule init
-git submodule update
-```
-
-Then you need to build with `-DENABLE_TESTING=ON`, build and run the tests:
-
-```
-mkdir build
-cd build
+git submodule update --init
+mkdir build && cd build
 cmake -DENABLE_TESTING=ON ..
 make -j4
 make test
+sudo make install
+sudo ldconfig
+```
+
+Fuzzing
+-----
+Build for test as per above, then:
+
+```
+sudo apt-get install valgrind
+cd ../../
+git clone https://github.com/msoos/drat-trim
+cd drat-trim
+make
+sudo cp drat-trim2 /usr/local/bin/drat-trim
+cd ..
+git clone https://github.com/msoos/lingeling-ala
+cd lingeling-ala
+./configure
+make
+sudo cp lingeling /usr/local/bin/
+cd ../cryptominisat/scripts/fuzz/
+./fuzz_test.py
+
 ```
 
 Web-based run explorer
 -----
 Please see under web/README.markdown for details. This is an experimental feature.
+
+C usage
+-----
+See src/cryptominisat_c.h.in for details. This is an experimental feature.

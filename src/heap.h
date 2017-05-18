@@ -24,9 +24,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Vec.h"
 #include "minisat_rnd.h"
 
-namespace CMSat{
-
-using namespace CMSat;
+namespace CMSat {
 
 //=================================================================================================
 // A heap implementation with support for decrease/increase key.
@@ -163,7 +161,8 @@ public:
 
 
     // Rebuild the heap from scratch, using the elements in 'ns':
-    void build(vec<uint32_t>& ns)
+    template<typename T>
+    void build(const T& ns)
     {
         for (int i = 0; i < (int)heap.size(); i++) {
             indices[heap[i]] = -1;

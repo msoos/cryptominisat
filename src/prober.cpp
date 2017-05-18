@@ -324,9 +324,10 @@ vector<uint32_t> Prober::randomize_possible_choices()
 
 bool Prober::probe(vector<uint32_t>* probe_order)
 {
+    assert(solver->ok);
+    assert(solver->qhead == solver->trail.size());
     assert(solver->decisionLevel() == 0);
     assert(solver->nVars() > 0);
-    solver->test_all_clause_attached();
 
     clean_clauses_before_probe();
     reset_stats_and_state();
@@ -418,7 +419,6 @@ end:
     check_if_must_disable_otf_hyperbin_and_tred(numPropsTodo);
     check_if_must_disable_cache_update();
 
-    solver->test_all_clause_attached();
     return solver->ok;
 }
 
