@@ -134,7 +134,7 @@ class create_fuzz:
             # sometimes just fuzz with all SAT problems
             fixed = random.getrandbits(1) == 1
 
-            for i in range(random.randrange(2, 4)):
+            for _ in range(random.randrange(2, 4)):
                 fname2 = unique_file("fuzzTest")
                 fnames_multi.append(fname2)
 
@@ -316,7 +316,7 @@ class Tester:
                     print("available schedule options: %s" % opts)
 
                 sched = []
-                for i in range(int(random.gammavariate(12, 0.7))):
+                for _ in range(int(random.gammavariate(12, 0.7))):
                     sched.append(random.choice(opts))
 
                 if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
