@@ -57,7 +57,6 @@ def setlimits(maxtime):
 class solution_parser:
     def __init__(self, options):
         self.options = options
-        pass
 
     @staticmethod
     def test_found_solution(solution, fname, debugLibPart=None):
