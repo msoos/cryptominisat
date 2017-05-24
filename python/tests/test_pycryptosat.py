@@ -164,7 +164,7 @@ class TestSolve(unittest.TestCase):
         self.assertRaises(ValueError, self.solver.add_clause, [1, 0])
 
     def test_no_clauses(self):
-        for n in range(7):
+        for _ in range(7):
             self.assertEqual(self.solver.solve([]), (True, (None,)))
 
     def test_cnf1(self):
@@ -194,7 +194,7 @@ class TestSolve(unittest.TestCase):
         self.assertTrue(check_solution(clauses3, solution))
 
     def test_cnf1_confl_limit(self):
-        for lim in range(1, 20):
+        for _ in range(1, 20):
             self.setUp()
             for cl in clauses1:
                 self.solver.add_clause(cl)
