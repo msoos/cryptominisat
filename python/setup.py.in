@@ -133,44 +133,14 @@ modules = [
             ('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')
         ],
         extra_compile_args=[
-            "-pthread",
+            #"-pthread",
             "-DUSE_PTHREADS",
-            "-flto",
+            #"-flto",
             "-std=c++11",
-            "-Wno-unused-variable",
-            "-Wno-unused-but-set-variable",
-
-            # Assume that signed arithmetic overflow of addition, subtraction
-            # and multiplication wraps around using twos-complement
-            # representation
-            "-fwrapv",
-
-            # Buffer Overflow protection (use both)
-            #"-D_FORTIFY_SOURCE=2",
-            #"-fstack-protector-strong",
-
-            # Allows GCC to generate code that may not run
-            # at all on processors other than the one indicated
-            # -march=cpu-type implies -mtune=cpu-type.
-            # See CPU type with:
-            # gcc -march=native -Q --help=target | grep march
-            "-march=native",
-            # Produce code optimized by enabling all
-            # instruction subsets supported by the local machine
-            # See CPU type with:
-            # gcc -mtune=native -Q --help=target | grep march
-            "-mtune=native",
-
-            # Release/Debug flags
-            "-Ofast",
-            #"-O3",
-            # "-g", # Not define NDEBUG macro => Debug build
-            "-DNDEBUG", # Force release build
-            #"-Wall",
         ],
         extra_link_args=[
-            "-Ofast",
-            "-flto",
+            #"-Ofast",
+            #"-flto",
         ]
     ),
 ]
