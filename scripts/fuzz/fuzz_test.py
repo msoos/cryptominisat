@@ -22,19 +22,12 @@ from __future__ import with_statement  # Required in 2.5
 from __future__ import print_function
 import subprocess
 import os
-import fnmatch
-import gzip
-import re
 import commands
-import getopt
 import sys
-import signal
 import time
-import struct
 import random
 from random import choice
-from subprocess import Popen, PIPE, STDOUT
-# from optparse import OptionParser
+from subprocess import Popen, STDOUT
 import optparse
 import glob
 from verifier import *
