@@ -19,7 +19,7 @@ zgrep "s UNSATISFIABLE" -- *stdout.gz | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sor
 zgrep "s SATISFIABLE" -- *stdout.gz   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT
 
 # 1500 cutoff
-zgrep "s.*SATISFIABLE" -- `cat solved_under_1500_full_list` | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solved1500
-zgrep "s UNSATISFIABLE" -- `cat solved_under_1500_full_list` | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedUNSAT1500
-zgrep "s SATISFIABLE" -- `cat solved_under_1500_full_list`   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT1500
+zgrep "s.*SATISFIABLE" -- $(cat solved_under_1500_full_list) | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solved1500
+zgrep "s UNSATISFIABLE" -- $(cat solved_under_1500_full_list) | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedUNSAT1500
+zgrep "s SATISFIABLE" -- $(cat solved_under_1500_full_list)   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT1500
 rm solved_under_1500_full_list
