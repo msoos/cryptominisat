@@ -478,8 +478,14 @@ if (STATICCOMPILE)
     set(ENABLE_PYTHON_INTERFACE OFF)
 endif()
 
-find_package (PythonInterp 2.7)
-find_package (PythonLibs 2.7)
+find_package (PythonInterp)
+# Force the use of the python libraries corresponding to the version of the current interpreter
+if (PYTHON_VERSION_MAJOR EQUAL "2")
+    find_package (PythonLibs 2.7)
+else()
+    find_package (PythonLibs 3.4)
+endif()
+
 if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIR)
     message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
     message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")

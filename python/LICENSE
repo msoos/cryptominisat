@@ -2,7 +2,8 @@ pycryptominisat (all of the python bindings, including makefile, test, etc)
 License: MIT
 ===========================
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
-              2014  Mate Soos
+              2014,  Mate Soos
+              2017, Pierre Vignet
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
