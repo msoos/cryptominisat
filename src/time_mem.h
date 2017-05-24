@@ -82,13 +82,12 @@ static inline double cpuTimeTotal(void)
 // On failure, returns 0.0, 0.0
 static inline uint64_t memUsedTotal(double& vm_usage)
 {
-   //double& vm_usage, double& resident_set
+   //double& vm_usage
    using std::ios_base;
    using std::ifstream;
    using std::string;
 
    vm_usage     = 0.0;
-   double resident_set = 0.0;
 
    // 'file' stat seems to give the most reliable results
    //
@@ -115,7 +114,7 @@ static inline uint64_t memUsedTotal(double& vm_usage)
 
    long page_size_kb = sysconf(_SC_PAGE_SIZE); // in case x86-64 is configured to use 2MB pages
    vm_usage     = vsize;
-   resident_set = (double)rss * (double)page_size_kb;
+   double resident_set = (double)rss * (double)page_size_kb;
 
    return resident_set;
 }
