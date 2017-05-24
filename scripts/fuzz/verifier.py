@@ -392,7 +392,6 @@ class solution_parser:
     @staticmethod
     def _check_regular_clause(line, solution):
         lits = line.split()
-        final = False
         for lit in lits:
             numlit = int(lit)
             if numlit == 0:
