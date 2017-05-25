@@ -10,14 +10,12 @@ import pickle
 import time
 import pprint
 import traceback
-import subprocess
 import Queue
 import threading
 import logging
 import server_option_parser
 
 # for importing in systems where "." is not in the PATH
-import glob
 sys.path.append(os.getcwd())
 from common_aws import *
 import RequestSpotClient

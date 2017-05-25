@@ -18,15 +18,11 @@ import traceback
 import boto
 import boto.utils
 import boto.ec2
-import socket
-import fcntl
-import struct
 import logging
 import functools
 import string
 
 # for importing in systems where "." is not in the PATH
-import glob
 sys.path.append(os.getcwd())
 from common_aws import *
 import add_lemma_ind as addlemm

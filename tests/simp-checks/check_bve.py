@@ -20,8 +20,6 @@
 
 from __future__ import print_function
 import os
-import glob
-import sys
 import optparse
 import subprocess
 import time
