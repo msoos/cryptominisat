@@ -70,7 +70,6 @@ if not os.access(cms4_exe, os.X_OK):
 
 
 def go_through_cnf(f):
-    maxvar = 0
     for line in f:
         line = line.strip()
         if len(line) == 0:
