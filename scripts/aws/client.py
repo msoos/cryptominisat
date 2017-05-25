@@ -78,7 +78,10 @@ def connect_client(threadID):
     return sock
 
 
-def send_command(sock, command, tosend={}):
+def send_command(sock, command, tosend=None):
+    # can't set tosend={} because of Python weirdness
+    tosend = tosend or {}
+
     tosend["command"] = command
     tosend = pickle.dumps(tosend)
     tosend = struct.pack('!q', len(tosend)) + tosend

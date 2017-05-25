@@ -34,7 +34,11 @@ def get_n_bytes_from_connection(sock, MSGLEN):
     return ''.join(chunks)
 
 
-def send_command(sock, command, tosend={}):
+def send_command(sock, command, tosend=None):
+    # note, this is a python issue, we can't set above tosend={}
+    # https://nedbatchelder.com/blog/200806/pylint.html
+    tosend = tosend or {}
+
     tosend["command"] = command
     tosend = pickle.dumps(tosend)
     tosend = struct.pack('!q', len(tosend)) + tosend
