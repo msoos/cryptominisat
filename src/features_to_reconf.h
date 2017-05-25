@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _FEATURES_TO_RECONF_H_
-#define _FEATURES_TO_RECONF_H_
+#ifndef FEATURES_TO_RECONF__H
+#define FEATURES_TO_RECONF__H
 
 #include "solvefeatures.h"
 
@@ -31,6 +31,6 @@ int get_reconf_from_features(const SolveFeatures& feat, const int verb);
 
 } //end namespace
 
-#endif //_FEATURES_TO_RECONF_H_
+#endif //FEATURES_TO_RECONF__H
 
 

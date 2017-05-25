@@ -69,9 +69,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _FEATURES_TO_RECONF_H_
-#define _FEATURES_TO_RECONF_H_
-
 #include "solvefeatures.h"
 #include <iostream>
 using std::cout;
@@ -216,8 +213,6 @@ for i in range(options.num):
 
 print """
 } //end namespace
-
-#endif //_FEATURES_TO_RECONF_H_
 
 """
 
