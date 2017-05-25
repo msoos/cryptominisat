@@ -110,6 +110,8 @@ class Server (threading.Thread):
             ret = os.system("aws s3 mv s3://%s/%s s3://%s/%s --region us-west-2" %
                             (options.s3_bucket, fnames[0], options.s3_bucket,
                              fnames[1]))
+            if ret:
+                logging.warn("Renaming file to final name failed!")
 
     def check_for_dead_files(self):
         this_time = time.time()
