@@ -92,14 +92,6 @@ class Watched {
         {
         }
 
-        void setNormOffset(const ClOffset offset)
-        {
-            #ifdef DEBUG_WATCHED
-            assert(type == watch_clause_t);
-            #endif
-            data2 = offset;
-        }
-
         /**
         @brief To update the blocked literal of a >3-long normal clause
         */

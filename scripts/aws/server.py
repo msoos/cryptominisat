@@ -254,7 +254,6 @@ class Listener (threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        pass
 
     def listen_to_connection(self):
         # Create a TCP/IP socket
@@ -356,7 +355,6 @@ So long and thanks for all the fish!
 
     if not options.noshutdown:
         os.system(toexec)
-        pass
 
     exit(exitval)
 

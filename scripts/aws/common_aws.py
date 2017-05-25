@@ -59,14 +59,7 @@ def get_ip_address(ifname):
 
 
 def get_revision(full_solver_path, base_dir):
-    _, solvername = os.path.split(full_solver_path)
-    #if solvername == "cryptominisat":
-    #    os.chdir('%s/cryptominisat' % base_dir)
-    #    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-    #else:
-    #    revision = solvername
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-
     return revision.strip()
 
 
