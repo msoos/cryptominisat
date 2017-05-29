@@ -22,8 +22,8 @@ THE SOFTWARE.
 
 #include "implcache.h"
 
-#ifndef __TRANSCACHE_H__
-#define __TRANSCACHE_H__
+#ifndef TRANSCACHE_H_
+#define TRANSCACHE_H_
 
 #include "solver.h"
 #include "varreplacer.h"
@@ -678,4 +678,4 @@ void ImplCache::TryBothStats::print_short(Solver* solver) const
 }
 
 
-#endif //__TRANSCACHE_H__
+#endif //TRANSCACHE_H_

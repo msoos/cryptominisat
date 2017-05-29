@@ -20,9 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef FEATURES_TO_RECONF__H
-#define FEATURES_TO_RECONF__H
-
 #include "solvefeatures.h"
 
 namespace CMSat {
@@ -30,7 +27,3 @@ namespace CMSat {
 int get_reconf_from_features(const SolveFeatures& feat, const int verb);
 
 } //end namespace
-
-#endif //FEATURES_TO_RECONF__H
-
-

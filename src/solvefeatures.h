@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef _SOLVE_FEATURES_H_
-#define _SOLVE_FEATURES_H_
+#ifndef SOLVE_FEATURES_H_
+#define SOLVE_FEATURES_H_
 
 #include <limits>
 #include <cstdint>
@@ -118,4 +118,4 @@ struct SolveFeatures
 
 }
 
-#endif //_SOLVE_FEATURES_H_
+#endif //SOLVE_FEATURES_H_
