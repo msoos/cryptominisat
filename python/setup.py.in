@@ -27,7 +27,7 @@ from distutils.core import setup, Extension
 from distutils.cmd import Command
 from distutils import sysconfig
 
-__PACKAGE_VERSION__ = "0.1.1"
+__PACKAGE_VERSION__ = "0.2.0"
 __LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
 
 
