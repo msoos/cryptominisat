@@ -69,7 +69,7 @@ function drawOneGraph(i)
             //strokePattern: [0.1, 0, 0, 0.5],
             strokeWidth: 0.5,
             highlightCircleSize: 3,
-            rollPeriod: (graph_data[i].tablename == "restart") ? 0: 0,
+            rollPeriod: (graph_data[i].tablename === "restart") ? 0: 0,
             legend: 'always',
             xlabel: false,
             labelsDiv: document.getElementById(graph_data[i].labelDivID),
