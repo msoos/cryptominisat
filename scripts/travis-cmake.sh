@@ -25,13 +25,13 @@ set -x
 
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
-NUM=`./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l`
+NUM=$(./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l)
 if [ "$NUM" != "0" ]; then
     echo "There are some files without license information!"
     exit -1
 fi
 
-NUM=`./utils/licensecheck/licensecheck.pl -m  ./tests | grep UNK | wc -l`
+NUM=$(./utils/licensecheck/licensecheck.pl -m  ./tests | grep UNK | wc -l)
 if [ "$NUM" != "0" ]; then
     echo "There are some files without license information!"
     exit -1
@@ -222,12 +222,12 @@ if [ "$CMS_CONFIG" == "NOTEST" ]; then
     exit 0
 fi
 
-echo `ldd ./cryptominisat5_simple`
+echo $(ldd ./cryptominisat5_simple)
 if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
      ldd ./cryptominisat5_simple  | grep "not a dynamic"
 fi
 
-echo `ldd ./cryptominisat5`
+echo $(ldd ./cryptominisat5)
 if [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
      ldd ./cryptominisat5  | grep "not a dynamic"
 fi
