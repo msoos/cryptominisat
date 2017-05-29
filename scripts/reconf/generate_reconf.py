@@ -67,7 +67,6 @@ for x in ignore.split(","):
     x = int(x)
     ignore_elems[x] = True
 
-#os.rm -f
 subprocess.call("rm outs/*", shell=True)
 toexec = "./reconf.py -n %d -i %s  -f outs/out  /home/soos/media/sat/out/large_fixed_adjust_guess-12-April-2016-MMEDX-13e1c9168-tout-1500-mout-1600/*stdout* /home/soos/media/sat/out/large_reconf7-14-April-2016-W2ZZ5-636d5f5dd-tout-1500-mout-1600/*stdout*" % (num, ignore)
 f = open("output", "w")
