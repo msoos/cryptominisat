@@ -89,16 +89,6 @@ struct AtecedentData
         return *this;
     }
 
-    uint32_t sum_size() const
-    {
-        uint32_t sum = 0;
-        sum += binIrred*2;
-        sum += binRed*2;
-        sum += size_longs.get_sum();
-
-        return sum;
-    }
-
     T binRed = 0;
     T binIrred = 0;
     T longIrred = 0;
