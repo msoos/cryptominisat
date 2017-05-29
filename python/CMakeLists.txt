@@ -34,8 +34,8 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tests" DESTINATION "${CMAKE_CURRENT_BINAR
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY_DIR}/MANIFEST.in")
 configure_file("${PROJECT_SOURCE_DIR}/src/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/GitSHA1.cpp" @ONLY)
-configure_file("${PROJECT_SOURCE_DIR}/src/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/src/cryptominisat.h" @ONLY)
-configure_file("${PROJECT_SOURCE_DIR}/src/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/src/solvertypesmini.h" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/src/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
 
 add_custom_target(mypylib
     COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
