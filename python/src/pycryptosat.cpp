@@ -283,11 +283,10 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 
     PyObject *clause;
     PyObject *arglist;
-    PyObject *ret;
     while ((clause = PyIter_Next(iterator)) != NULL) {
 
         arglist = Py_BuildValue("(O)", clause);
-        ret = add_clause(self, arglist, NULL);
+        PyObject *ret = add_clause(self, arglist, NULL);
         Py_DECREF(ret);
 
         /* release reference when done */
