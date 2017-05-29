@@ -2,13 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import boto
 import sys
 import ConfigParser
-import os
-import socket
-import pprint
-import boto.ec2
 from boto.ec2.connection import EC2Connection
 from common_aws import *
 import logging

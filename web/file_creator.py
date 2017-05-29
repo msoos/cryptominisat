@@ -3,7 +3,6 @@
 
 import MySQLdb as mdb
 import ntpath
-import os
 import subprocess
 import time
 

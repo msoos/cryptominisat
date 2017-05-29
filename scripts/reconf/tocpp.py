@@ -19,10 +19,8 @@
 # 02110-1301, USA.
 
 
+from __future__ import print_function
 import sys
-import gzip
-import re
-import ntpath
 
 from optparse import OptionParser
 parser = OptionParser()
@@ -43,10 +41,10 @@ if options.ignore:
         ignore[r] = True
 
 if options.num is None:
-    print "ERROR: You must give the number of reconfs"
+    print("ERROR: You must give the number of reconfs")
     exit(-1)
 
-print """
+print("""
 /******************************************
 Copyright (c) 2016, Mate Soos
 
@@ -75,25 +73,25 @@ using std::cout;
 using std::endl;
 
 namespace CMSat {
-"""
+""")
 
 for i in range(options.num):
     if i not in ignore:
-        print "double get_score%d(const SolveFeatures& feat, const int verb);" %i
+        print("double get_score%d(const SolveFeatures& feat, const int verb);" % i)
 
-print """
+print("""
 int get_reconf_from_features(const SolveFeatures& feat, const int verb)
 {
 \tdouble best_score = 0.0;
 \tint best_val = 0;
 \tdouble score;
-"""
+""")
 
 for i in range(options.num):
     if i in ignore:
         continue
 
-    print """
+    print("""
 \tscore = get_score%d(feat, verb);
 \tif (verb >= 2)
 \t\tcout << "c Score for reconf %d is " << score << endl;
@@ -101,15 +99,15 @@ for i in range(options.num):
 \t\tbest_score = score;
 \t\tbest_val = %d;
 \t}
-""" % (i, i, i)
+""" % (i, i, i))
 
-print """
+print("""
 \tif (verb >= 2)
 \t\tcout << "c Winning reconf is " << best_val << endl;
 \treturn best_val;
 }
 
-"""
+""")
 
 
 def read_one_reconf(reconf_num):
@@ -121,9 +119,9 @@ def read_one_reconf(reconf_num):
     rule_no = 0
     string = ""
 
-    print """
+    print("""
 double get_score%d(const SolveFeatures& feat, const int verb)
-{""" % reconf_num
+{""" % reconf_num)
     for line in f:
         if "id=" in line:
             continue
@@ -134,7 +132,6 @@ double get_score%d(const SolveFeatures& feat, const int verb)
         for elem in line:
             elems = elem.split("=")
             elems = [e.strip("\"") for e in elems]
-            # print "elems:", elems
             dat[elems[0]] = elems[1]
 
         if "conds" in dat:
@@ -154,29 +151,28 @@ double get_score%d(const SolveFeatures& feat, const int verb)
         if "default" in dat:
             default = dat["default"]
             if default == "+":
-                print "\tdouble default_val = %.2f;\n" % (1.0)
+                print("\tdouble default_val = %.2f;\n" % (1.0))
             else:
-                print "\tdouble default_val = %.2f;\n" % (0.0)
+                print("\tdouble default_val = %.2f;\n" % (0.0))
 
-            print "\tdouble total_plus = 0.0;"
-            print "\tdouble total_neg = 0.0;"
+            print("\tdouble total_plus = 0.0;")
+            print("\tdouble total_neg = 0.0;")
             continue
 
-        #process rules
+        # process rules
         if cond_no == 0:
             string = "\tif ("
         else:
             string += " &&\n\t\t"
 
-        # print "dat:", dat
         string += "(feat.%s %s %.5f)" % (dat["att"], dat["result"],
                                          float(dat["cut"]))
         cond_no += 1
 
-        #end rules
+        # end rules
         if cond_no == num_conds:
             string += ")\n\t{"
-            print string
+            print(string)
 
             string = ""
             if rule_class == "+":
@@ -184,18 +180,16 @@ double get_score%d(const SolveFeatures& feat, const int verb)
             else:
                 string += "\t\ttotal_neg += %.3f;" % confidence
 
-            print string
-            print "\t}"
+            print(string)
+            print("\t}")
             rule_no += 1
 
-        # print dat
-
-    print "\t// num_rules:", num_rules
-    print "\t// rule_no:", rule_no
+    print("\t// num_rules:", num_rules)
+    print("\t// rule_no:", rule_no)
     sys.stderr.write("num rules: %s rule_no: %s\n" % (num_rules, rule_no))
     assert num_rules == rule_no
-    print "\t// default is:", default
-    print """
+    print("\t// default is:", default)
+    print("""
 \tif (total_plus == 0.0 && total_neg == 0.0) {
 \t\treturn default_val;
 \t}
@@ -204,15 +198,14 @@ double get_score%d(const SolveFeatures& feat, const int verb)
 \t}
 \treturn total_plus - total_neg;
 }
-"""
+""")
 
 
 for i in range(options.num):
     if i not in ignore:
         read_one_reconf(i)
 
-print """
+print("""
 } //end namespace
 
-"""
-
+""")

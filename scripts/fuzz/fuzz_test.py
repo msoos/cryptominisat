@@ -27,7 +27,6 @@ import sys
 import time
 import random
 from random import choice
-from subprocess import Popen, STDOUT
 import optparse
 import glob
 from verifier import *

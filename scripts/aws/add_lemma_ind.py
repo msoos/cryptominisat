@@ -33,6 +33,7 @@ def parse_lemmas(lemmafname):
                 num_used = int(l[len(l)-1])
                 ret[myid].used_for_time = last_used - myid
                 if options.verbose:
+                    print("line %d" % lineno)
                     print("myid:", myid)
                     print("num used:", num_used)
                     print(ret[myid].num_used)

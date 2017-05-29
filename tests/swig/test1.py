@@ -18,19 +18,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from __future__ import print_function
 import sys
-import copy
-import random
 from os.path import basename
 import unittest
 import os
 import glob
 
-print "our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*"))
+print("our CWD is: %s files here: %s" % (os.getcwd(), glob.glob("*")))
 sys.path.append(os.getcwd())
-print "our sys.path is", sys.path
+print("our sys.path is", sys.path)
 
 import solver
+
 
 class TestSimple(unittest.TestCase):
 
