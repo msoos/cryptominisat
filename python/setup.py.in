@@ -41,7 +41,7 @@ __LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
 # through what you have to do to make that happen.
 d = sysconfig.get_config_vars()
 for k, v in d.items():
-    for unwanted in ('-DNDEBUG', '-flto'):
+    for unwanted in ('-DNDEBUG', '-flto', '-Wstrict-prototypes'):
         if str(v).find(unwanted) != -1:
             v = d[k] = str(v).replace(unwanted, ' ')
 
