@@ -278,7 +278,9 @@ void ReduceDB::remove_cl_from_lev2() {
             cl->stats.which_red_array = 0;
         }
 
-        if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq) {
+        if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
+            && solver->conf.glue_put_lev1_if_below_or_eq != 0
+        ) {
             cl->stats.which_red_array = 1;
         }
 
