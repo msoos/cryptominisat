@@ -165,8 +165,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 3: {
-            //conf.max_temporary_learnt_clauses = 40000;
-            conf.var_decay_max = 0.80;
+            //Similar to CMS 5.0
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.max_temp_lev2_learnt_clauses = 30000;
+            conf.glue_put_lev0_if_below_or_eq = 4;
+
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
         case 4: {
