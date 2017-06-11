@@ -156,7 +156,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
-            //Similar to old CMS except we look at learnt DB size insteead
+            //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
