@@ -474,10 +474,6 @@ endmacro()
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 
-if (STATICCOMPILE)
-    set(ENABLE_PYTHON_INTERFACE OFF)
-endif()
-
 find_package (PythonInterp)
 # Force the use of the python libraries corresponding to the version of the current interpreter
 if (PYTHON_VERSION_MAJOR EQUAL "2")
