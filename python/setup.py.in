@@ -132,12 +132,9 @@ modules = [
         extra_compile_args=[
             #"-pthread",
             "-DUSE_PTHREADS",
-            #"-flto",
             "-std=c++11",
         ],
         extra_link_args=[
-            #"-Ofast",
-            #"-flto",
         ]
     ),
 ]
