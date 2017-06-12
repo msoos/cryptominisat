@@ -497,7 +497,7 @@ else()
     message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
 endif()
 
-if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK AND NOT STATICCOMPILE)
+if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK)
     message(STATUS "Building python interface")
     add_subdirectory(python pycryptosat)
 endif()
