@@ -571,7 +571,10 @@ set(MY_TARGETS libcryptominisat5 cryptominisat5_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat5)
 endif()
-export(TARGETS ${MY_TARGETS} FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_TARGETS_FILENAME}")
+export(
+    TARGETS ${MY_TARGETS}
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_TARGETS_FILENAME}"
+)
 
 # Create cryptominisat5Config file
 set(EXPORT_TYPE "Build-tree")
@@ -596,7 +599,7 @@ install(FILES
 )
 
 # Install the export set for use with the install-tree
-install(EXPORT ${CRYPTOMINISAT5_EXPORT_NAME} DESTINATION
-    "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
+install(
+    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+    DESTINATION "${CRYPTOMINISAT5_INSTALL_CMAKE_DIR}"
 )
-
