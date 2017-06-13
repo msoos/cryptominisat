@@ -156,17 +156,15 @@ endif()
 if (IPASIR)
     if (NOT STATICCOMPILE)
         add_library(ipasircryptominisat5 SHARED
-            ${cryptoms_lib_files}
             ipasir.cpp
         )
     else()
         add_library(ipasircryptominisat5 STATIC
-            ${cryptoms_lib_files}
             ipasir.cpp
         )
     endif()
     target_link_libraries(ipasircryptominisat5
-        LINK_PUBLIC ${cryptoms_lib_link_libs}
+        LINK_PUBLIC ${cryptoms_lib_link_libs} libcryptominisat5
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
@@ -174,6 +172,13 @@ if (IPASIR)
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
+    install(TARGETS ipasircryptominisat5
+        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBDIR}"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_PREFIX}/${INCLUDEDIR}/cryptominisat5"
+    )
+
 endif()
 
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )

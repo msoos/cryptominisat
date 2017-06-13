@@ -280,7 +280,7 @@ if (NOT WIN32)
     #add_cxx_flag_if_supported("-fno-exceptions")
 endif()
 
-option(IPASIR "Also build IPASIR" OFF)
+option(IPASIR "Also build IPASIR" ON)
 
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
@@ -570,6 +570,9 @@ set(CRYPTOMINISAT5_STATIC_DEPS
 set(MY_TARGETS libcryptominisat5 cryptominisat5_simple)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat5)
+endif()
+if (IPASIR)
+    set(MY_TARGETS ${MY_TARGETS} ipasircryptominisat5)
 endif()
 export(
     TARGETS ${MY_TARGETS}
