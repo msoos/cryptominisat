@@ -49,7 +49,7 @@
 #include <string.h>
 #include <list>
 #include <array>
-#include <cmath>
+#include <complex>
 
 #include "scalmc.h"
 #include "time_mem.h"
@@ -555,7 +555,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
                 }
                 succRecord[hashCount] = 0;
                 countRecord[hashCount] = currentNumSolutions;
-                if (abs(hashCount-mPrev) <= 2 && mPrev != 0) {
+                if (std::abs(hashCount-mPrev) <= 2 && mPrev != 0) {
                     upperFib = hashCount;
                     hashCount--;
                 } else {
@@ -581,7 +581,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
                     break;
                 }
                 succRecord[hashCount] = 1;
-                if (abs(hashCount - mPrev) < 2 && mPrev!=0) {
+                if (std::abs(hashCount - mPrev) < 2 && mPrev!=0) {
                     lowerFib = hashCount;
                     hashCount ++;
                 } else if (lowerFib + (hashCount - lowerFib)*2 >= upperFib-1) {
