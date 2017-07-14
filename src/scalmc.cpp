@@ -555,7 +555,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
                 }
                 succRecord[hashCount] = 0;
                 countRecord[hashCount] = currentNumSolutions;
-                if (std::abs(hashCount-mPrev) <= 2 && mPrev != 0) {
+                if (std::abs<int64_t>((int64_t)hashCount - (int64_t)mPrev) <= 2 && mPrev != 0) {
                     upperFib = hashCount;
                     hashCount--;
                 } else {
@@ -581,7 +581,7 @@ bool CUSP::ScalApproxMC(SATCount& count)
                     break;
                 }
                 succRecord[hashCount] = 1;
-                if (std::abs(hashCount - mPrev) < 2 && mPrev!=0) {
+                if (std::abs<int64_t>((int64_t)hashCount - (int64_t)mPrev) < 2 && mPrev!=0) {
                     lowerFib = hashCount;
                     hashCount ++;
                 } else if (lowerFib + (hashCount - lowerFib)*2 >= upperFib-1) {
