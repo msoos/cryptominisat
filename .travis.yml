@@ -88,7 +88,7 @@ install:
   - git clone https://github.com/msoos/drat-trim
   - cd drat-trim
   - make
-  - sudo cp drat-trim /usr/local/bin/drat-trim
+  - sudo cp drat-trim2 /usr/local/bin/drat-trim
   - cd ..
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
