@@ -58,6 +58,11 @@ if(NOT (CMAKE_MAJOR_VERSION LESS 2))
 endif()
 
 # -----------------------------------------------------------------------------
+# Provide scripts dir for included cmakes to use
+# -----------------------------------------------------------------------------
+set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+
+# -----------------------------------------------------------------------------
 # Make RelWithDebInfo the default build type if otherwise not set
 # -----------------------------------------------------------------------------
 set(build_types Debug Release RelWithDebInfo MinSizeRel)
