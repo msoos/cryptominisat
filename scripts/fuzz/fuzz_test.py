@@ -473,7 +473,7 @@ class Tester:
 
         # it's UNSAT, let's check with DRAT
         if fname2:
-            toexec = "drat-trim %s %s" % (fname, fname2)
+            toexec = "../../build/tests/drat-trim/drat-trim2 %s %s" % (fname, fname2)
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
             consoleOutput2 = p.communicate()[0]
