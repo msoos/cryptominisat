@@ -7,6 +7,6 @@ cd drat-trim
 make
 
 #binary is now at:
-# drat-trim/drat-trim2
+# drat-trim/drat-trim
 
 cd /home/ubuntu
