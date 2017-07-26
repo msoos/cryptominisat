@@ -91,7 +91,7 @@ install:
   - cd build
   - cmake ..
   - sudo cp drat-trim2 /usr/local/bin/drat-trim
-  - cd ..
+  - cd ../..
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
   - sudo -H pip install --upgrade pip
