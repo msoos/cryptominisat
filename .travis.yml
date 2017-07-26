@@ -87,7 +87,9 @@ install:
 #drat
   - git clone https://github.com/msoos/drat-trim
   - cd drat-trim
-  - make
+  - mkdir build
+  - cd build
+  - cmake ..
   - sudo cp drat-trim2 /usr/local/bin/drat-trim
   - cd ..
 # lit
