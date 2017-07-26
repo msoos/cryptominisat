@@ -47,7 +47,7 @@ both by executing `sudo make uninstall`.
 Compiling under Windows
 -----
 
-You will need Vim for Windows to be installed, see the download website at http://www.vim.org/download.php/#pc This is because we need the "xxd" executable. Then you need to perform the following for Visual Studio 2015:
+You will need python installed. Then you need to perform the following for Visual Studio 2015:
 
 ```
 C:\> [ download cryptominisat-version.zip ]
