@@ -84,15 +84,6 @@ install:
   - make
   - sudo cp lingeling /usr/local/bin/
   - cd ..
-#drat
-  - git clone https://github.com/msoos/drat-trim
-  - cd drat-trim
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make
-  - sudo cp drat-trim /usr/local/bin/drat-trim
-  - cd ../..
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
   - sudo -H pip install --upgrade pip
