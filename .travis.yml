@@ -90,6 +90,7 @@ install:
   - mkdir build
   - cd build
   - cmake ..
+  - make
   - sudo cp drat-trim2 /usr/local/bin/drat-trim
   - cd ../..
 # lit
