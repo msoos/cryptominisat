@@ -19,3 +19,6 @@
 [submodule "scripts/build_scripts"]
 	path = scripts/build_scripts
 	url = https://github.com/msoos/cryptominisat_build.git
+[submodule "utils/drat-trim"]
+	path = utils/drat-trim
+	url = https://github.com/msoos/drat-trim.git
