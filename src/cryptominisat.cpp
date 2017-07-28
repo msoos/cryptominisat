@@ -65,14 +65,8 @@ namespace CMSat {
             delete log; //this will also close the file
             delete shared_data;
         }
-        CMSatPrivateData(CMSatPrivateData&) //copy should fail
-        {
-            std::exit(-1);
-        }
-        CMSatPrivateData(const CMSatPrivateData&) //copy should fail
-        {
-            std::exit(-1);
-        }
+        CMSatPrivateData(const CMSatPrivateData&) = delete;
+        CMSatPrivateData& operator=(const CMSatPrivateData&) = delete;
 
         vector<Solver*> solvers;
         SharedData *shared_data = NULL;
