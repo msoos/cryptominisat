@@ -34,7 +34,7 @@ class ReduceDB
 {
 public:
     ReduceDB(Solver* solver);
-    const double get_total_time() {
+    double get_total_time() const {
         return total_time;
     }
     void handle_lev1();
