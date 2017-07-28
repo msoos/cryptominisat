@@ -21,4 +21,4 @@
 	url = https://github.com/msoos/cryptominisat_build.git
 [submodule "utils/drat-trim"]
 	path = utils/drat-trim
-	url = https://github.com/msoos/drat-trim.git
+	url = https://github.com/msoos/drat-trim
