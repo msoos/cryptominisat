@@ -481,7 +481,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
     if (cl->stats.activity > 1e20 ) {
         // Rescale
         for(ClOffset offs: longRedCls[2]) {
-            cl_alloc.ptr(offs)->stats.activity *= 1e-20;
+            cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
         cla_inc *= 1e-20;
     }

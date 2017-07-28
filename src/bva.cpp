@@ -507,8 +507,8 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            Clause* cl = solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
-            assert(cl == NULL);
+            Clause* cl_check = solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            assert(cl_check == NULL);
             break;
         }
 

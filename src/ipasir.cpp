@@ -198,8 +198,8 @@ DLL_PUBLIC int ipasir_failed (void * solver, int lit)
     const vector<Lit>& confl = s->solver->get_conflict();
     const Lit tofind(std::abs(lit)-1, lit < 0);
 
-    for(const Lit lit: confl) {
-        if (lit == tofind) {
+    for(const Lit l: confl) {
+        if (l == tofind) {
             return true;
         }
     }
@@ -219,14 +219,14 @@ DLL_PUBLIC int ipasir_failed (void * solver, int lit)
  * Required state: INPUT or SAT or UNSAT
  * State after: INPUT or SAT or UNSAT
  */
-DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (*terminate)(void * state))
+DLL_PUBLIC void ipasir_set_terminate (void * /*solver*/, void * /*state*/, int (* /*terminate*/)(void * state))
 {
     //this is complicated.
 }
 
 }
 
-DLL_PUBLIC void ipasir_set_learn (void * solver, void * state, int max_length, void (*learn)(void * state, int * clause))
+DLL_PUBLIC void ipasir_set_learn (void * /*solver*/, void * /*state*/, int /*max_length*/, void (* /*learn*/)(void * state, int * clause))
 {
     //this is complicated
 }

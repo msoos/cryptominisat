@@ -3077,7 +3077,7 @@ void Searcher::read_long_cls(
         tmp_cl.clear();
 
         uint32_t sz = f.get_uint32_t();
-        for(size_t i = 0; i < sz; i++)
+        for(size_t j = 0; i < sz; i++)
         {
             tmp_cl.push_back(f.get_lit());
         }

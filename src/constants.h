@@ -27,6 +27,19 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <stdio.h>
 
+#if defined(_MSC_VER)
+#define release_assert(a) \
+    do { \
+    __pragma(warning(push)) \
+    __pragma(warning(disable:4127)) \
+        if (!(a)) {\
+    __pragma(warning(pop)) \
+            fprintf(stderr, "*** ASSERTION FAILURE in %s() [%s:%d]: %s\n", \
+            __FUNCTION__, __FILE__, __LINE__, #a); \
+            abort(); \
+        } \
+    } while (0)
+#else
 #define release_assert(a) \
     do { \
         if (!(a)) {\
@@ -35,9 +48,10 @@ THE SOFTWARE.
             abort(); \
         } \
     } while (0)
+#endif
 
 #if !defined(__GNUC__) && !defined(__clang__)
-#define __builtin_prefetch(x)
+#define __builtin_prefetch(x) (void)(x)
 #endif //__GNUC__
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.

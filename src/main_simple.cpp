@@ -39,6 +39,12 @@ using std::endl;
 #include "cryptominisat5/cryptominisat.h"
 #include "dimacsparser.h"
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4706) // Assignment within conditional expression
+                              // -- used in parsing args
+#endif
+
 using namespace CMSat;
 std::ostream* dratf;
 
@@ -285,3 +291,7 @@ int main(int argc, char** argv)
         return ret == l_True ? 10 : 20;
     }
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
