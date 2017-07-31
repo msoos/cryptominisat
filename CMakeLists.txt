@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 include (GenerateExportHeader)
 if (NOT WIN32)
     include (GNUInstallDirs)
@@ -34,27 +34,25 @@ endif()
 message(STATUS "LIB directory is '${LIBDIR}'")
 message(STATUS "BIN directory is '${BINDIR}'")
 
-if(NOT (CMAKE_MAJOR_VERSION LESS 2))
-    if(POLICY CMP0022)
-        cmake_policy(SET CMP0022 OLD)
-    endif()
+if(POLICY CMP0022)
+    cmake_policy(SET CMP0022 OLD)
+endif()
 
-    if(POLICY CMP0048)
-        cmake_policy(SET CMP0048 OLD)
-    endif()
+if(POLICY CMP0048)
+    cmake_policy(SET CMP0048 OLD)
+endif()
 
-    if(POLICY CMP0046)
-        cmake_policy(SET CMP0046 OLD)
-    endif()
+if(POLICY CMP0046)
+    cmake_policy(SET CMP0046 OLD)
+endif()
 
-    if(POLICY CMP0026)
-        cmake_policy(SET CMP0026 NEW)
-    endif()
+if(POLICY CMP0026)
+    cmake_policy(SET CMP0026 NEW)
+endif()
 
-    if(POLICY CMP0048)
-        #policy for VERSION in cmake 3.0
-        cmake_policy(SET CMP0048 OLD)
-    endif()
+if(POLICY CMP0048)
+    #policy for VERSION in cmake 3.0
+    cmake_policy(SET CMP0048 OLD)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -102,7 +100,7 @@ PROJECT(cryptominisat5)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+    add_compile_options( ${flagname} )
 endmacro()
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
@@ -155,7 +153,7 @@ macro(add_cxx_flag_if_supported flagname)
   check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
 
   if(HAVE_FLAG_${flagname})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+    add_compile_options( ${flagname} )
   endif()
 endmacro()
 
@@ -180,28 +178,36 @@ else()
     add_definitions(-D_FORTIFY_SOURCE=0)
 endif()
 
-option(USE_PTHREADS "Build with pthreads-based threads" ON)
-if (USE_PTHREADS)
-    add_definitions(-DUSE_PTHREADS)
-    message(STATUS "No pthread will be used")
-endif()
-
 # Note: O3 gives slight speed increase, 1 more solved from SAT Comp'14 @ 3600s
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
-    if (USE_PTHREADS)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    endif()
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -mtune=native")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g0 -DNDEBUG -mtune=native")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
+    add_compile_options( -g)
+    add_compile_options( -pthread )
+
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O3>")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-mtune=native>")
+
+    add_compile_options("$<$<CONFIG:RELEASE>:-O3>")
+    add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
+    add_compile_options("$<$<CONFIG:RELEASE>:-DNDEBUG>")
+    add_compile_options("$<$<CONFIG:RELEASE>:-mtune=native>")
+
+    add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
+
 else()
     # see https://msdn.microsoft.com/en-us/library/fwkeyyhe.aspx for details
     # /ZI = include debug info
     # /Wall = all warnings
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Ox /ZI")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O3 /D NDEBUG /ZI")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od")
+
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/Ox>")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/ZI>")
+
+    add_compile_options("$<$<CONFIG:RELEASE>:/O3>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/D>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/NDEBUG>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/ZI>")
+
+    add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
     # We statically link to reduce dependencies
     foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
@@ -247,7 +253,7 @@ macro(add_cxx_flag_if_supported flagname)
   check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
 
   if(HAVE_FLAG_${flagname})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}")
+    add_compile_options( ${flagname} )
     message(STATUS "flag ${flagname} supported")
   else()
     message(STATUS "flag ${flagname} NOT supported")
