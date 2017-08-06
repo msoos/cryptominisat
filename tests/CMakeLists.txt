@@ -136,6 +136,21 @@ add_test (
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+
+# IPASIR test
+add_executable(ipasir_test
+    ipasir_test.cpp
+)
+target_link_libraries(ipasir_test
+    ${GTEST_BOTH_LIBRARIES}
+    ipasircryptominisat5
+)
+add_test (
+    NAME ipasir_test
+    COMMAND ipasir_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 #google test harness
 set (MY_TESTS
 #     clause_alloc_test
