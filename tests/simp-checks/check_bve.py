@@ -141,11 +141,11 @@ class MyThread(threading.Thread):
             with open(cms_out_fname, "w") as f:
                 subprocess.check_call(" ".join(toexec), stdout=f, shell=True)
         except subprocess.CalledProcessError:
-            # memory out????
             toprint += "*** ERROR CryptoMiniSat errored out!\n"
             with print_lock:
                 print(toprint)
-            return 1
+            exit(-1)
+            return -1
         t_cms = time.time()-start
         num_vars_after_cms_preproc = find_num_vars(simp_fname)
 
@@ -157,12 +157,11 @@ class MyThread(threading.Thread):
             with open(minisat_out_fname, "w") as f:
                 subprocess.check_call(" ".join(toexec), stdout=f, shell=True)
         except subprocess.CalledProcessError:
-            # probably solved it
-            # can't really test.
             toprint += "** Minisat errored out...\n"
             with print_lock:
                 print(toprint)
-            return 0
+            exit(-1)
+            return -1
         t_msat = time.time()-start
 
         var_elimed = None
