@@ -67,10 +67,20 @@ addons:
 
 before_install:
   - sudo apt-get update
-
-install:
   - sudo apt-get install -y --force-yes libboost-test-dev
   - sudo apt-get install -y --force-yes cmake valgrind swig3.0
+
+install:
+#cmake
+  - wget http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz
+  - tar -xzf cmake-3.4.1.tar.gz
+  - cd cmake-3.4.1/
+  - ./configure
+  - make
+  - sudo make install
+  - sudo update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force
+  - cmake --version
+  - cd ..
 #coveralls
   - sudo pip install cpp-coveralls
   - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
