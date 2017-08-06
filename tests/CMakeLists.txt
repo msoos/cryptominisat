@@ -85,8 +85,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/drat-trim drat-trim)
 add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
 
 
-if (PYTHON_OK AND NOT STATS)
-    # add_subdirectory(swig)
+if (PYTHON_OK AND ZLIB_FOUND)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
+    add_subdirectory(simp-checks)
 endif()
 
 
