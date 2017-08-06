@@ -271,6 +271,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     cd "${BUILD_DIR}"
 
     # STP
+    cd "${BUILD_DIR}"
     git clone --depth 1 https://github.com/stp/stp.git
     cd stp
     mkdir -p build
