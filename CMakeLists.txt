@@ -485,18 +485,14 @@ endmacro()
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 
-find_package (PythonInterp)
-# Force the use of the python libraries corresponding to the version of the current interpreter
-if (PYTHON_VERSION_MAJOR EQUAL "2")
-    find_package (PythonLibs 2.7)
-else()
-    find_package (PythonLibs 3.4)
-endif()
+find_package (PythonInterp 2.7 REQUIRED)
+find_package(PythonLibs 2.7 REQUIRED)
+
+message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+message(STATUS "PYTHON_LIBRARY=${PYTHON_LIBRARY}")
+message(STATUS "PYTHON_INCLUDE_DIR=${PYTHON_INCLUDE_DIR}")
 
 if (PYTHON_EXECUTABLE AND PYTHON_LIBRARY AND PYTHON_INCLUDE_DIR)
-    message(STATUS "PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}")
-    message(STATUS "PYTHON_LIBRARY:FILEPATH=${PYTHON_LIBRARY}")
-    message(STATUS "PYTHON_INCLUDE_DIR:FILEPATH=${PYTHON_INCLUDE_DIR}")
     message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
     set(PYTHON_OK ON)
     message(STATUS "OK, found python interpreter, libs and header files")

@@ -22,3 +22,7 @@
 [submodule "utils/drat-trim"]
 	path = utils/drat-trim
 	url = https://github.com/msoos/drat-trim
+[submodule "utils/minisat_only_elim_and_subsume"]
+	path = utils/minisat_only_elim_and_subsume
+	url = https://github.com/msoos/minisat
+	branch = only_elim_and_subsume
