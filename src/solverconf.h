@@ -76,6 +76,9 @@ inline std::string getNameOfRestartType(Restart rest_type)
         case Restart::geom:
             return "geometric";
 
+        case Restart::glue_geom:
+            return "regularly switch between glue and geometric";
+
         case Restart::luby:
             return "luby";
 
@@ -83,7 +86,7 @@ inline std::string getNameOfRestartType(Restart rest_type)
             return "never";
 
         default:
-            release_assert(false && "Unknown clause cleaning type?");
+            assert(false && "Unknown clause cleaning type?");
     };
 }
 
