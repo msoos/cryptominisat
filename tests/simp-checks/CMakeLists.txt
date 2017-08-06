@@ -25,7 +25,7 @@ if (ENABLE_TESTING AND NOT MSVC)
             "${CMAKE_CURRENT_SOURCE_DIR}/check_bve.py"
             "--minisat" $<TARGET_FILE:minisatoeas_simp>
             "--cms" $<TARGET_FILE:cryptominisat5>
-            "${CMAKE_CURRENT_SOURCE_DIR}/simplify_testfiles/"
+            "${CMAKE_CURRENT_SOURCE_DIR}/simplifiy_testfiles/"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endif()
