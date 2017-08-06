@@ -45,9 +45,9 @@ struct MySolver {
         solver = new SATSolver;
     }
 
+    SATSolver* solver;
     vector<Lit> clause;
     vector<Lit> assumptions;
-    SATSolver* solver;
 };
 
 extern "C" {
