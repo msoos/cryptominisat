@@ -27,7 +27,71 @@ extern "C" {
 
 TEST(ipasir_interface, start)
 {
-    void* s = ipasir_init();;
+    void* s = ipasir_init();
+    ipasir_release(s);
+}
+
+TEST(ipasir_interface, sat)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 0);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
+    int val = ipasir_val(s, 1);
+    EXPECT_EQ(val, 1);
+
+    ipasir_release(s);
+}
+
+TEST(ipasir_interface, unsat)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 0);
+    ipasir_add(s, -1);
+    ipasir_add(s, 0);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+
+    ipasir_release(s);
+}
+
+
+TEST(ipasir_interface, assump)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -1);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+
+    int used = ipasir_failed(s, 1);
+    EXPECT_EQ(used, 1);
+
+    ipasir_release(s);
+}
+
+TEST(ipasir_interface, assump_clears)
+{
+    void* s = ipasir_init();
+    ipasir_add(s, 1);
+    ipasir_add(s, 0);
+
+    ipasir_assume(s, -1);
+
+    int ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 20);
+
+    ret = ipasir_solve(s);
+    EXPECT_EQ(ret, 10);
+
     ipasir_release(s);
 }
 
