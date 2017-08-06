@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from __future__ import with_statement  # Required in 2.5
+from __future__ import print_function
 import random
 
 
@@ -33,7 +35,7 @@ def get_max_var_from_clause(line):
         try:
             num = int(lit)
         except ValueError:
-            print "line '%s' contains a non-integer variable" % line2
+            print("line '%s' contains a non-integer variable" % line2)
 
         maxvar = max(maxvar, abs(num))
 
