@@ -145,7 +145,6 @@ if (SANITIZE)
     #add_cxx_flag("-Wsign-conversion")
     #add_cxx_flag("-Wconversion")
     add_cxx_flag("-Wdeprecated")
-    #set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -pie ")
 endif()
 
 include(CheckCXXCompilerFlag)
