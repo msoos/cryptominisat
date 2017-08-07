@@ -50,11 +50,6 @@ if(POLICY CMP0026)
     cmake_policy(SET CMP0026 NEW)
 endif()
 
-if(POLICY CMP0048)
-    #policy for VERSION in cmake 3.0
-    cmake_policy(SET CMP0048 OLD)
-endif()
-
 # -----------------------------------------------------------------------------
 # Provide scripts dir for included cmakes to use
 # -----------------------------------------------------------------------------
