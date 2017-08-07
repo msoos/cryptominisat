@@ -132,7 +132,7 @@ case $CMS_CONFIG in
 
     NOPYTHON)
         sudo apt-get install libboost-program-options-dev
-        sudo apt-get remove python2.7-dev python-dev
+        sudo apt-get remove -y python2.7-dev python-dev libpython-dev
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
