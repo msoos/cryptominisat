@@ -100,7 +100,7 @@ PROJECT(cryptominisat5)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
-    add_compile_options( ${flagname} )
+    add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
 endmacro()
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
@@ -152,7 +152,7 @@ macro(add_cxx_flag_if_supported flagname)
   check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
 
   if(HAVE_FLAG_${flagname})
-    add_compile_options( ${flagname} )
+    add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
   endif()
 endmacro()
 
