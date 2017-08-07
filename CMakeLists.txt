@@ -222,8 +222,14 @@ else()
     # buffers security check
     add_compile_options(/GS)
 
-    # not too many warnings
-    add_compile_options(/W1)
+    # Proper warning level
+    add_compile_options(/W4)
+    # Disable STL used in DLL-boundary warning
+    add_compile_options(/wd4251)
+    add_compile_options(/D_CRT_SECURE_NO_WARNINGS)
+
+    # Wall is MSVC's Weverything, so annoying unless used from the start
+    # and with judiciously used warning disables
     # add_compile_options(/Wall)
 
     # /Za = only ansi C98 & C++11

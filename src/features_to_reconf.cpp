@@ -31,7 +31,7 @@ namespace CMSat {
 double get_score0(const SolveFeatures& feat, const int verb);
 double get_score7(const SolveFeatures& feat, const int verb);
 
-int get_reconf_from_features(const SolveFeatures& feat, const int verb)
+int get_reconf_from_features(const SolveFeatures& /*feat*/, const int /*verb*/)
 {
 	return 0;
 }
