@@ -127,10 +127,6 @@ GENERATE_EXPORT_HEADER(libcryptominisat5
 
 add_dependencies(libcryptominisat5
     tablestruct
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
 
 # indicate that we depend on pthread, and compile in the actual library
