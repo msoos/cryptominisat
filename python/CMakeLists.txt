@@ -30,45 +30,34 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/README.rst" DESTINATION "${CMAKE_CURRENT_
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tests" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
 
-
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY_DIR}/MANIFEST.in")
-configure_file("${PROJECT_SOURCE_DIR}/src/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/GitSHA1.cpp" @ONLY)
-configure_file("${PROJECT_SOURCE_DIR}/src/cryptominisat.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h" @ONLY)
-configure_file("${PROJECT_SOURCE_DIR}/src/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
 
 add_custom_target(mypylib
     COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
 )
 
 add_dependencies(mypylib
-    tablestruct
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
+    libcryptominisat5
 )
 
-add_custom_target(python_interface ALL DEPENDS mypylib)
+add_custom_command(OUTPUT ${OUTPUT}/timestamp
+                   COMMAND ${PYTHON_EXECUTABLE}
+                   ARGS setup.py build_ext --inplace --rpath ../lib
+                   DEPENDS libcryptominisat5)
 
-# Install with Setuptools
+add_custom_target(python_interface
+                  ALL DEPENDS ${OUTPUT}/timestamp)
+
 add_custom_target(python_interface_install
                   COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)
+
 # Make a distribution source package
 add_custom_target(python_interface_dist_package
                   COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist)
-# Run unit tests
-add_custom_target(python_interface_test
-                  DEPENDS mypylib
-                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test)
 
-# Install with cmake
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)")
 
 if (ENABLE_TESTING)
-    add_test (NAME pytest
-              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-              COMMAND ${PYTHON_EXECUTABLE} "${SETUP_PY} test"
-    )
-
-    message(STATUS "Will run python test from ${CMAKE_CURRENT_BINARY_DIR} directory")
+    add_test(NAME python_interface_test
+             COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test)
 endif()

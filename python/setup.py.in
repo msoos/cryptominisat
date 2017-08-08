@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 #
 # CryptoMiniSat
 #
-# Original work Copyright (c) 2009-2014, Mate Soos. All rights reserved.
-# Modified work Copyright (c) 2017, Pierre Vignet
+# Copyright (c) 2009-2017, Mate Soos. All rights reserved.
+# Copyright (c) 2017, Pierre Vignet
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,38 +22,61 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+
+import sys
 from distutils.core import setup, Extension
-from distutils.cmd import Command
 from distutils import sysconfig
+from distutils.cmd import Command
 
 __PACKAGE_VERSION__ = "0.2.0"
 __LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
 
+cconf = """${PY_C_CONFIG}""".split(" ")
+ldconf = """${PY_LD_CONFIG}""".split(" ")
+is_apple = """${APPLE}"""
 
-# Delete unwanted flags for C compilation
-# Distutils has the lovely feature of providing all the same flags that
-# Python was compiled with. The result is that adding extra flags is easy,
-# but removing them is a total pain. Doing so involves subclassing the
-# compiler class, catching the arguments and manually removing the offending
-# flag from the argument list used by the compile function.
-# That's the theory anyway, the docs are too poor to actually guide you
-# through what you have to do to make that happen.
-d = sysconfig.get_config_vars()
-for k, v in d.items():
-    for unwanted in ('-Wp', '-DNDEBUG', '-flto', '-Wstrict-prototypes', '/C'):
-        if str(v).find(unwanted) != -1:
-            v = d[k] = str(v).replace(unwanted, ' ')
+def cleanup(dat):
+    ret = []
+    for elem in dat:
+        elem = elem.strip()
+        if elem != "":
+            ret.append(elem)
 
-################################################################################
+    if is_apple != "":
+        for x in ret:
+            if x == "-lpython" or x == "-lframework":
+                x = "-undefined dynamic_lookup"
+
+    return ret
+    # return []
+
+cconf = cleanup(cconf)
+ldconf = cleanup(ldconf)
+# print "Extra C flags from python-config:", cconf
+# print "Extra libraries from python-config:", ldconf
+
 
 def _init_posix(init):
+    """
+    Forces g++ instead of gcc on most systems
+    credits to eric jones (eric@enthought.com) (found at Google Groups)
+    """
     def wrapper():
         init()
+
         config_vars = sysconfig.get_config_vars()  # by reference
         if config_vars["MACHDEP"].startswith("sun"):
             # Sun needs forced gcc/g++ compilation
             config_vars['CC'] = 'gcc'
             config_vars['CXX'] = 'g++'
+
+        # FIXME raises hardening-no-fortify-functions lintian warning.
+        else:
+            # Non-Sun needs linkage with g++
+            config_vars['LDSHARED'] = 'g++ -shared -g -W -Wall -Wno-deprecated'
+
+        config_vars['CFLAGS'] = '-g -W -Wall -Wno-deprecated -std=c++11'
+        config_vars['OPT'] = '-g -W -Wall -Wno-deprecated -std=c++11'
 
     return wrapper
 
@@ -78,66 +100,18 @@ class TestCommand(Command):
         import tests as tp
         tp.run()
 
-################################################################################
+__version__ = '@PROJECT_VERSION@'
 
-# Source files
-cryptoms_lib_files = [
-    "cnf.cpp",
-    "propengine.cpp",
-    "varreplacer.cpp",
-    "clausecleaner.cpp",
-    "clauseusagestats.cpp",
-    "prober.cpp",
-    "occsimplifier.cpp",
-    "subsumestrengthen.cpp",
-    "clauseallocator.cpp",
-    "sccfinder.cpp",
-    "solverconf.cpp",
-    "distillerallwithall.cpp",
-    "distillerlongwithimpl.cpp",
-    "str_impl_w_impl_stamp.cpp",
-    "solutionextender.cpp",
-    "completedetachreattacher.cpp",
-    "searcher.cpp",
-    "solver.cpp",
-    "sqlstats.cpp",
-    "implcache.cpp",
-    "stamp.cpp",
-    "compfinder.cpp",
-    "comphandler.cpp",
-    "hyperengine.cpp",
-    "subsumeimplicit.cpp",
-    "datasync.cpp",
-    "reducedb.cpp",
-    "clausedumper.cpp",
-    "bva.cpp",
-    "intree.cpp",
-    "features_calc.cpp",
-    "features_to_reconf.cpp",
-    "solvefeatures.cpp",
-    "searchstats.cpp",
-    "xorfinder.cpp",
-    "cryptominisat.cpp",
-]
-
-modules = [
-    Extension(
-        "pycryptosat",
-        ["${CMAKE_CURRENT_BINARY_DIR}/src/GitSHA1.cpp"] + ["${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp"] + ['${PROJECT_SOURCE_DIR}/src/' + fd for fd in cryptoms_lib_files],
-        language = "c++",
-        include_dirs=['${CMAKE_CURRENT_BINARY_DIR}/src', '${CMAKE_CURRENT_BINARY_DIR}', '${PROJECT_SOURCE_DIR}'],
-        define_macros=[
-            ('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')
-        ],
-        extra_compile_args=[
-            #"-pthread",
-            "-DUSE_PTHREADS",
-            "-std=c++11",
-        ],
-        extra_link_args=[
-        ]
-    ),
-]
+modules = dict(
+    name = "pycryptosat",
+    sources = ["${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp"],
+    define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
+    extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
+    extra_link_args = ldconf,
+    language = "c++",
+    library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
+    libraries = ['cryptominisat5']
+)
 
 setup(
     name = "pycryptosat",
@@ -158,11 +132,13 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Topic :: Utilities",
     ],
-    ext_modules = modules,
+    ext_modules =  [Extension(**modules)],
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
+    py_modules = ['pycryptosat'],
     long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
     cmdclass={
         'test': TestCommand
     }
+
 )
