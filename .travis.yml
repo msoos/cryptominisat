@@ -74,7 +74,7 @@ before_install:
 
 install:
 #cmake
-  - wget http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz
+  - wget http://www.cmake.org/files/v3.5/cmake-3.5.2.tar.gz
   - tar -xzf cmake-3.4.1.tar.gz
   - cd cmake-3.4.1/
   - ./configure
