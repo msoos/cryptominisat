@@ -77,7 +77,7 @@ install:
   - wget http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz
   - tar -xzf cmake-3.4.1.tar.gz
   - cd cmake-3.4.1/
-  - ./configure
+  - ./configure > cmake_config_out.txt
   - make -j2 > cmake_build_out.txt
   - sudo make install > cmake_install_out.txt
   - sudo update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force
