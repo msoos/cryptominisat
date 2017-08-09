@@ -206,7 +206,7 @@ int main(int argc, char** argv)
 
     solver = &S;
     signal(SIGINT,SIGINT_handler);
-    #if !defined (_MSC_VER)
+    #if !defined (_WIN32)
     signal(SIGHUP,SIGINT_handler);
     #endif
 
