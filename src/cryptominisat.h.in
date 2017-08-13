@@ -89,6 +89,9 @@ namespace CMSat {
         static const char* get_version();
         static const char* get_version_sha1();
         static const char* get_compilation_env();
+        uint64_t get_sum_conflicts();
+        uint64_t get_sum_propagations();
+        uint64_t get_sum_decisions();
 
         void print_stats() const;
         void set_drat(std::ostream* os, bool set_ID);

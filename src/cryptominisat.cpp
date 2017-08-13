@@ -392,6 +392,7 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
+        s.conf.doRenumberVars = false;
         s.conf.simplify_at_startup = false;
         s.conf.simplify_at_every_startup = false;
         s.conf.full_simplify_at_startup = false;
@@ -838,3 +839,32 @@ DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
     data->solvers[0]->set_sqlite(filename);
 }
 
+DLL_PUBLIC uint64_t SATSolver::get_sum_conflicts()
+{
+    uint64_t conlf = 0;
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        conlf += s.sumConflicts;
+    }
+    return conlf;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_sum_propagations()
+{
+    uint64_t props = 0;
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        props += s.sumPropStats.propagations;
+    }
+    return props;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
+{
+    uint64_t dec = 0;
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        dec += s.sumSearchStats.decisions;
+    }
+    return dec;
+}

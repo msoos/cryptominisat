@@ -700,6 +700,51 @@ TEST(no_error_throw, long_clause)
     EXPECT_EQ(ret, l_True);
 }
 
+TEST(statistics, zero)
+{
+    SATSolver s;
+    s.set_no_simplify();
+    s.new_vars(10);
+
+    lbool ret = s.solve();
+    EXPECT_EQ(ret, l_True);;
+    EXPECT_EQ(s.get_sum_conflicts(), 0);
+    EXPECT_EQ(s.get_sum_propagations(), 10);
+    EXPECT_EQ(s.get_sum_decisions(), 10);
+}
+
+TEST(statistics, one_confl)
+{
+    SATSolver s;
+    s.set_no_simplify();
+    s.new_vars(10);
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+
+    lbool ret = s.solve();
+    EXPECT_EQ(ret, l_True);
+    EXPECT_EQ(s.get_sum_conflicts(), 1);
+    EXPECT_EQ(s.get_sum_propagations(), 11);
+}
+
+TEST(statistics, unsat)
+{
+    SATSolver s;
+    s.set_no_simplify();
+    s.new_vars(10);
+    s.set_verbosity(100);
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+
+    lbool ret = s.solve();
+    EXPECT_EQ(ret, l_False);
+    EXPECT_EQ(s.get_sum_conflicts(), 2);
+    EXPECT_EQ(s.get_sum_propagations(), 2);
+}
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
