@@ -132,7 +132,7 @@ add_dependencies(libcryptominisat5
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(libcryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
-    LINK_PUBLIC pthread
+    LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if (NOT WIN32)

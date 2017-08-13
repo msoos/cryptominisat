@@ -98,6 +98,7 @@ macro(add_cxx_flag flagname)
     add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
 endmacro()
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
