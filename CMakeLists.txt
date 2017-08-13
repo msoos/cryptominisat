@@ -485,14 +485,7 @@ message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
 find_package(PythonLibs 2.7)
 message(STATUS "PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-
-if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS)
-    message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
-    set(PYTHON_OK ON)
-    message(STATUS "OK, found python interpreter, libs and header files")
-else()
-    message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
-endif()
+message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
 
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)
@@ -551,9 +544,14 @@ else()
     message(WARNING "Testing is disabled")
 endif()
 
-if (ENABLE_PYTHON_INTERFACE AND PYTHON_OK)
-    message(STATUS "Building python interface")
-    add_subdirectory(python pycryptosat)
+if (ENABLE_PYTHON_INTERFACE)
+    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
+        message(STATUS "Found python interpreter, libs and header files")
+        message(STATUS "Building python interface")
+        add_subdirectory(python pycryptosat)
+    else()
+        message(WARNING "Cannot find python interpreter, libs and header files, cannot build python interface")
+    endif()
 endif()
 
 # -----------------------------------------------------------------------------
