@@ -733,7 +733,6 @@ TEST(statistics, unsat)
     SATSolver s;
     s.set_no_simplify();
     s.new_vars(10);
-    s.set_verbosity(100);
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
     s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
     s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
