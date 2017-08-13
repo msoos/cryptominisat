@@ -98,6 +98,8 @@ macro(add_cxx_flag flagname)
     add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
 endmacro()
 
+find_package (Threads REQUIRED)
+
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
     SET (CMAKE_CXX_COMPILER "clang++")
@@ -371,8 +373,6 @@ if (NOT ONLY_SIMPLE)
     set(boost_components ${boost_components} program_options)
     find_package( Boost 1.46 COMPONENTS ${boost_components})
 endif()
-
-find_package (Threads REQUIRED)
 
 option(STATS "Don't use statistics at all" OFF)
 if (STATS)
