@@ -78,6 +78,7 @@ case $CMS_CONFIG in
         sudo apt-get install libboost-program-options-dev
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCOVERAGE:BOOL=ON \
+                   -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 

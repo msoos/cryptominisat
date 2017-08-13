@@ -249,6 +249,11 @@ else()
 endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
+option(COVERAGE "Build with coverage check" OFF)
+option(STATICCOMPILE "Compile to static executable" OFF)
+if (COVERAGE AND NOT STATICCOMPILE)
+    MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
+endif()
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wall")
@@ -265,7 +270,7 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wstrict-aliasing")
     add_cxx_flag_if_supported("-Wpointer-arith")
     add_cxx_flag_if_supported("-Wheader-guard")
-    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT COVERAGE)
         add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_cxx_flag_if_supported("-Wpointer-arith")
@@ -279,6 +284,12 @@ if (NOT WIN32)
     #add_cxx_flag_if_supported("-fno-exceptions")
 endif()
 
+if (COVERAGE)
+    add_cxx_flag("--coverage")
+    SET(CMAKE_EXE_LINKER_FLAGS "--coverage")
+endif()
+
+
 option(IPASIR "Also build IPASIR" ON)
 
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
@@ -286,15 +297,9 @@ if (LIMITMEM)
     set(LIMITMEM "ON")
 endif()
 
-option(COVERAGE "Build with coverage check" OFF)
-if (COVERAGE)
-    add_cxx_flag("--coverage")
-endif()
-
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-option(STATICCOMPILE "Compile to static executable" OFF)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
     if(STATICCOMPILE)
