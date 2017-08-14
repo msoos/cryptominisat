@@ -380,6 +380,21 @@ cd ../cryptominisat/scripts/fuzz/
 
 ```
 
+Building a minimal library
+-----
+This builds a library that has nothing fancy, it's bare minimal:
+
+
+```
+sudo apt-get install build-essential cmake
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
+make
+sudo make install
+sudo ldconfig
+```
+
 Web-based run explorer
 -----
 Please see under web/README.markdown for details. This is an experimental feature.
