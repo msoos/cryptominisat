@@ -367,13 +367,9 @@ Fuzzing
 Build for test as per above, then:
 
 ```
+# you are currently in cryptomnisat/build
 sudo apt-get install valgrind
 cd ../../
-git clone https://github.com/msoos/drat-trim
-cd drat-trim
-make
-sudo cp drat-trim2 /usr/local/bin/drat-trim
-cd ..
 git clone https://github.com/msoos/lingeling-ala
 cd lingeling-ala
 ./configure
