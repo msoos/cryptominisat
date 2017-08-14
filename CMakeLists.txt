@@ -19,6 +19,9 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
+
 include (GenerateExportHeader)
 if (NOT WIN32)
     include (GNUInstallDirs)
@@ -95,7 +98,7 @@ PROJECT(cryptominisat5)
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake) #m4-extra contains some library search cmake stuff
 
 macro(add_cxx_flag flagname)
-    add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
+    add_compile_options( ${flagname} )
 endmacro()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -150,7 +153,7 @@ macro(add_cxx_flag_if_supported flagname)
   check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
 
   if(HAVE_FLAG_${flagname})
-    add_compile_options( $<$<COMPILE_LANGUAGE:CXX>:${flagname}> )
+    add_compile_options( ${flagname} )
   endif()
 endmacro()
 
@@ -177,7 +180,6 @@ endif()
 
 # Note: O3 gives slight speed increase, 1 more solved from SAT Comp'14 @ 3600s
 if (NOT MSVC)
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
     add_compile_options( -g)
     add_compile_options( -pthread )
 
