@@ -53,9 +53,9 @@ namespace CMSat {
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
         void new_var(); //add a new variable to the solver
         void new_vars(const size_t n); //and many new variables to the solver -- a LOT faster than calling new_var() one-by-one
-        lbool solve(const std::vector<Lit>* assumptions = 0); //simplify the prolbem, optionally with assumptions
+        lbool solve(const std::vector<Lit>* assumptions = 0); //simplify the problem, optionally with assumptions
         lbool simplify(const std::vector<Lit>* assumptions = 0); //solve the problem, optionally with  given assumptions
-        const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Omly makes sense if previous solve()/simplify() call was l_True
+        const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
         void log_to_file(std::string filename);
@@ -77,7 +77,7 @@ namespace CMSat {
         // -- all the time and hence exposing it to the outside world would
         // -- be very brittle.
 
-        void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses added
+        void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses are added
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
         void set_max_confl(int64_t max_confl); //max conflict to run to on next solve() call
         void set_verbosity(unsigned verbosity = 0); //default is 0, silent
