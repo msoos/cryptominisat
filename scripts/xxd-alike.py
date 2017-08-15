@@ -30,5 +30,7 @@ with open(output_path, 'w') as out:
             out.write('\n  ')
         out.write('0x{:02x}'.format(convert(byte)))
 
+    out.write(', 0x00')
     out.write('\n};\n')
-    out.write('unsigned int {}_len = {};\n'.format(output_name, len(contents)+1))
+
+    out.write('unsigned int {}_len = {};\n'.format(output_name, len(contents)))
