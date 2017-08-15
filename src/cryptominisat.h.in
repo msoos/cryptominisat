@@ -30,8 +30,8 @@ THE SOFTWARE.
 #include <vector>
 #include <iostream>
 #include <utility>
-#include <atomic>
 #include "cryptominisat5/solvertypesmini.h"
+#include <atomic>
 
 namespace CMSat {
     struct CMSatPrivateData;
