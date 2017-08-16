@@ -31,7 +31,7 @@ from distutils.cmd import Command
 
 __PACKAGE_VERSION__ = "0.2.0"
 __LIBRARY_VERSION__ = "${CMS_FULL_VERSION}"
-os.environ["CC"] = "${CMAKE_CXX_COMPILER}"
+os.environ["CC"] = "${CMAKE_C_COMPILER}"
 os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
 
 cconf = """${PY_C_CONFIG}""".split(" ")
