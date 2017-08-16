@@ -175,6 +175,7 @@ class Watched {
             assert(red());
             #endif
             assert(toSet == false);
+            (void) toSet;
             data2 &= (~(1U));
         }
 
