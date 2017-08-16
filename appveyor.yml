@@ -95,7 +95,9 @@ build_script:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% library_speed_test -DENABLE_PYTHON_INTERFACE=ON -DENABLE_TESTING=ON  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% ..
+  # AppVeyor is broken, its python was compiled with MSVC 9.0 which doesn't understand atomic
+  # so the python interface cannot work.
+  - cmake -G %CMAKE_GENERATOR% library_speed_test -DENABLE_PYTHON_INTERFACE=ON -DENABLE_TESTING=ON  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=OFF ..
   - cmake --build . --config %CONFIGURATION%
   - if %STATICCOMPILE_SETTING%==ON call ctest -V -C %CONFIGURATION%
 
