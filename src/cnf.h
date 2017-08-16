@@ -514,6 +514,7 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
             Clause& cl = *cl_alloc.ptr(w.get_offset());
             assert(!cl.getRemoved());
             assert(!cl.freed());
+            (void) cl;
         }
     }
 }
