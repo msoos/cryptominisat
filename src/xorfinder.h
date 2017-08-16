@@ -103,7 +103,7 @@ class PossibleXor
             }
 
             foundComb.clear();
-            foundComb.resize(1UL<<size, false);
+            foundComb.resize(1ULL<<size, false);
             foundComb[whichOne] = true;
         }
         uint32_t NumberOfSetBits(uint32_t i) const;
