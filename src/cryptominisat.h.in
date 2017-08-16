@@ -27,11 +27,11 @@ THE SOFTWARE.
 #define CRYPTOMINISAT_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define CRYPTOMINISAT_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
+#include <atomic>
 #include <vector>
 #include <iostream>
 #include <utility>
 #include "cryptominisat5/solvertypesmini.h"
-#include <atomic>
 
 namespace CMSat {
     struct CMSatPrivateData;
