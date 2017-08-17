@@ -222,7 +222,7 @@ else()
     add_compile_options(/GS)
 
     # Proper warning level
-    add_compile_options(/W4)
+    add_compile_options(/W1)
     # Disable STL used in DLL-boundary warning
     add_compile_options(/wd4251)
     add_compile_options(/D_CRT_SECURE_NO_WARNINGS)
