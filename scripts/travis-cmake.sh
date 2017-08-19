@@ -260,7 +260,7 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 fi
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
-    cd ../pycryptosat/
+    cd pycryptosat/tests/
     python2 test_pycryptosat.py
 fi
 
