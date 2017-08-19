@@ -255,7 +255,7 @@ fi
 ctest -V
 sudo make install
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    echo $(ldconfig)
+    echo $(sudo ldconfig)
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 fi
 
