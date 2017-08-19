@@ -50,9 +50,6 @@ add_custom_command(OUTPUT ${OUTPUT}/timestamp
 add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
-add_custom_target(python_interface_install
-                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)
-
 # Make a distribution source package
 add_custom_target(python_interface_dist_package
                   COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist)
