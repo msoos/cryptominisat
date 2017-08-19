@@ -47,27 +47,27 @@ BUILD_DIR=$(pwd)
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
     SLOW_DEBUG)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     LARGEMEM)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DLARGEMEM:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     LARGEMEM_GAUSS)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DLARGEMEM:BOOL=ON \
                    -DUSE_GAUSS=ON \
@@ -75,7 +75,7 @@ case $CMS_CONFIG in
     ;;
 
     COVERAGE)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCOVERAGE:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
@@ -83,7 +83,7 @@ case $CMS_CONFIG in
     ;;
 
     STATIC)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
@@ -103,37 +103,37 @@ case $CMS_CONFIG in
     ;;
 
     STATS)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATS:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     NOZLIB)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DNOZLIB:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     RELEASE)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCMAKE_BUILD_TYPE:STRING=Release \
                    "${SOURCE_DIR}"
     ;;
 
     NOSQLITE)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get remove libsqlite3-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get remove libsqlite3-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
 
     NOPYTHON)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get remove -y python2.7-dev python-dev libpython-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get remove -y python2.7-dev python-dev libpython-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
@@ -142,13 +142,13 @@ case $CMS_CONFIG in
         cd ..
         SOURCE_DIR=$(pwd)
         BUILD_DIR=$(pwd)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
     WEB)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
 
         cd "$SOURCE_DIR"
         #./cmsat_mysql_setup.sh
@@ -160,8 +160,8 @@ case $CMS_CONFIG in
     ;;
 
     SQLITE)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get install libsqlite3-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libsqlite3-dev; fi
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSTATS:BOOL=ON \
@@ -169,13 +169,13 @@ case $CMS_CONFIG in
     ;;
 
     NOTEST)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake "${SOURCE_DIR}"
     ;;
 
     GAUSS)
-        sudo apt-get install libboost-program-options-dev
-        sudo apt-get install libsqlite3-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libsqlite3-dev; fi
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DUSE_GAUSS=ON \
@@ -183,7 +183,7 @@ case $CMS_CONFIG in
     ;;
 
     M4RI)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
         tar xzvf m4ri-20140914.tar.gz
         cd m4ri-20140914/
@@ -197,7 +197,7 @@ case $CMS_CONFIG in
     ;;
 
     IPASIR_M4RI)
-        sudo apt-get install libboost-program-options-dev
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
         tar xzvf m4ri-20140914.tar.gz
         cd m4ri-20140914/
