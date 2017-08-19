@@ -82,6 +82,19 @@ C:\cms\build> cmake --build --config Release .
 
 This should build the static Windows binary under `C:\cms\build\Release\cryptominisat5.exe`.
 
+Compiling under OSX
+-----
+
+```
+brew install cmake boost zlib
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+```
+
+
 Command-line usage
 -----
 
