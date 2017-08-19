@@ -254,6 +254,15 @@ fi
 
 ctest -V
 sudo make install
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    echo $(ldconfig)
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+fi
+
+if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
+    cd ../pycryptosat/
+    python2 test_pycryptosat.py
+fi
 
 case $CMS_CONFIG in
     WEB)
