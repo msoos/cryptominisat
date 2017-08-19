@@ -57,7 +57,7 @@ add_custom_target(python_interface_dist_package
 
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)")
 
-if (ENABLE_TESTING)
+if (ENABLE_TESTING AND NOT APPLE)
     add_test(NAME python_interface_test
              COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test)
 endif()
