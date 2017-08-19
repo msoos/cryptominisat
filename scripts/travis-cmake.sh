@@ -223,14 +223,28 @@ if [ "$CMS_CONFIG" == "NOTEST" ]; then
     exit 0
 fi
 
-echo $(ldd ./cryptominisat5_simple)
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5_simple); fi
+if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5_simple); fi
 if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
-     ldd ./cryptominisat5_simple  | grep "not a dynamic"
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        ldd ./cryptominisat5_simple  | grep "not a dynamic";
+    fi
+
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        otool -L ./cryptominisat5_simple  | grep "not a dynamic";
+    fi
 fi
 
-echo $(ldd ./cryptominisat5)
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5); fi
+if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5); fi
 if [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
-     ldd ./cryptominisat5  | grep "not a dynamic"
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        ldd ./cryptominisat5  | grep "not a dynamic";
+    fi
+
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        otool -L ./cryptominisat5  | grep "not a dynamic";
+    fi
 fi
 
 ctest -V
