@@ -223,6 +223,11 @@ if [ "$CMS_CONFIG" == "NOTEST" ]; then
     exit 0
 fi
 
+echo $(ls lib)
+echo $(ls pycryptosat)
+echo $(otool -L pycryptosat/pycryptosat.so)
+echo $(ldd      pycryptosat/pycryptosat.so)
+
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5_simple); fi
 if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5_simple); fi
 if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
