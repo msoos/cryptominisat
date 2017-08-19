@@ -25,12 +25,6 @@ from __future__ import print_function
 import sys
 import unittest
 
-import os
-import glob
-print("our CWD is:", os.getcwd(), "files here: ", glob.glob("*"))
-sys.path.append(os.getcwd())
-print("our sys.path is", sys.path)
-
 
 import pycryptosat
 from pycryptosat import Solver

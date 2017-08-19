@@ -100,8 +100,20 @@ class TestCommand(Command):
 
     def run(self):
 
+        import os
+        import glob
+        print("our CWD is:", os.getcwd(), "files here: ", glob.glob("*"))
+        sys.path.append(os.getcwd())
+        path2 = os.path.join(os.getcwd(), "..")
+        path2 = os.path.join(path2, "lib")
+        path2 = os.path.normpath(path2)
+        print("path2 is:", path2)
+        sys.path.append(path2)
+        print("our sys.path is", sys.path)
+
         import tests as tp
         tp.run()
+
 
 __version__ = '@PROJECT_VERSION@'
 
