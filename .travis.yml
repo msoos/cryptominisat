@@ -44,7 +44,6 @@ matrix:
         - CMS_CONFIG=STATIC
         - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
-matrix:
   exclude:
     # COVERAGE scan should only run once
     - compiler: clang
