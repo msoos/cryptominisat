@@ -2,12 +2,36 @@ language: cpp
 cache: ccache
 
 compiler:
-#  - gcc
+  - gcc
   - clang
 
 os:
   - linux
+    matrix:
+        env:
+        - CMS_CONFIG=NORMAL
+        - CMS_CONFIG=LARGEMEM
+        - CMS_CONFIG=LARGEMEM_GAUSS
+        - CMS_CONFIG=ONLY_SIMPLE
+        - CMS_CONFIG=STATS
+        - CMS_CONFIG=NOZLIB
+        - CMS_CONFIG=RELEASE
+        - CMS_CONFIG=NOSQLITE
+        - CMS_CONFIG=NOPYTHON
+        - CMS_CONFIG=SQLITE
+        - CMS_CONFIG=M4RI
+        - CMS_CONFIG=IPASIR_M4RI
+    #    - CMS_CONFIG=WEB
+        - CMS_CONFIG=GAUSS
+        - CMS_CONFIG=COVERAGE
+        - CMS_CONFIG=SLOW_DEBUG
+        - CMS_CONFIG=INTREE_BUILD
+        - CMS_CONFIG=NOTEST
+        - CMS_CONFIG=STATIC
+        - CMS_CONFIG=ONLY_SIMPLE_STATIC
   - osx
+    env:
+        - CMS_CONFIG=NORMAL
 
 dist: trusty
 
@@ -18,27 +42,6 @@ env:
   global:
     - secure: SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I=
     - secure: "iWvQPW/6x5CM0rxK37gdbGBbjr2EhVeTPlWT9AfM9mXOnRz76ANq3O4xVmBw0KbfLExBOu8wNyzDf07NMBWzKNyyj0fBWzLVoToLF/R9PYkiiqYT2DWtT/iawf3uXhQKMUN9zfQNULtN6DrWIZXpBkHRDuQjNkNu6mXExkFdEcc="
-  matrix:
-    - CMS_CONFIG=NORMAL
-    - CMS_CONFIG=LARGEMEM
-    - CMS_CONFIG=LARGEMEM_GAUSS
-    - CMS_CONFIG=ONLY_SIMPLE
-    - CMS_CONFIG=STATS
-    - CMS_CONFIG=NOZLIB
-    - CMS_CONFIG=RELEASE
-    - CMS_CONFIG=NOSQLITE
-    - CMS_CONFIG=NOPYTHON
-    - CMS_CONFIG=SQLITE
-    - CMS_CONFIG=M4RI
-    - CMS_CONFIG=IPASIR_M4RI
-#    - CMS_CONFIG=WEB
-    - CMS_CONFIG=GAUSS
-    - CMS_CONFIG=COVERAGE
-    - CMS_CONFIG=SLOW_DEBUG
-    - CMS_CONFIG=INTREE_BUILD
-    - CMS_CONFIG=NOTEST
-    - CMS_CONFIG=STATIC
-    - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
 matrix:
   exclude:
