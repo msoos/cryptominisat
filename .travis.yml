@@ -6,7 +6,7 @@ compiler:
   - clang
 
 os:
-#  - linux
+  - linux
   - osx
 
 dist: trusty
@@ -41,17 +41,19 @@ env:
     - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
 matrix:
+  exclude:
+    # COVERAGE scan should only run once
+    - compiler: clang
+      env: CMS_CONFIG=COVERAGE
+
+    - os: osx
+      compiler: gcc
+
   include:
     # Covertiy scan should only run once
     - os: linux
       compiler: gcc
       env: COVERITY_SCAN=1 CMS_CONFIG=NORMAL
-
-  # COVERAGE scan should only run once
-  exclude:
-    - os: linux
-      compiler: clang
-      env: CMS_CONFIG=COVERAGE
 
   allow_failures:
     # Covertiy scan might fail
