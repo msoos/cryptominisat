@@ -18,8 +18,11 @@ env:
   global:
     - secure: SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I=
     - secure: "iWvQPW/6x5CM0rxK37gdbGBbjr2EhVeTPlWT9AfM9mXOnRz76ANq3O4xVmBw0KbfLExBOu8wNyzDf07NMBWzKNyyj0fBWzLVoToLF/R9PYkiiqYT2DWtT/iawf3uXhQKMUN9zfQNULtN6DrWIZXpBkHRDuQjNkNu6mXExkFdEcc="
-  os: linux
-    matrix:
+
+matrix:
+   os: linux
+   env:
+      matrix:
         - CMS_CONFIG=NORMAL
         - CMS_CONFIG=LARGEMEM
         - CMS_CONFIG=LARGEMEM_GAUSS
