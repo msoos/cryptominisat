@@ -216,7 +216,7 @@ case $CMS_CONFIG in
     ;;
 esac
 
-make -j2
+make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install
