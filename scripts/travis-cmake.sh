@@ -227,16 +227,20 @@ echo $(ls lib)
 echo $(ls pycryptosat)
 echo $(otool -L pycryptosat/pycryptosat.so)
 echo $(ldd      pycryptosat/pycryptosat.so)
+echo $(otool -L lib/libcryptominisat5.so.5.0)
+echo $(ldd      lib/libcryptominisat5.so.5.0)
 
-if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5_simple); fi
-if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5_simple); fi
 if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC" ] ; then
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        echo $(ldd ./cryptominisat5_simple)
         ldd ./cryptominisat5_simple  | grep "not a dynamic";
     fi
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        $(otool -L ./cryptominisat5_simple  | grep "libcryptominisat");
+        echo $(otool -L ./cryptominisat5_simple)
+        !$(otool -L ./cryptominisat5_simple  | grep "libcryptominisat");
+        !$(otool -L ./cryptominisat5_simple  | grep "libz");
+        !$(otool -L ./cryptominisat5_simple  | grep "libboost");
     fi
 fi
 
@@ -244,11 +248,15 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5); f
 if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5); fi
 if [ "$CMS_CONFIG" = "STATIC" ] ; then
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        echo $(ldd ./cryptominisat5)
         ldd ./cryptominisat5  | grep "not a dynamic";
     fi
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        $(otool -L ./cryptominisat5  | grep "libcryptominisat");
+        echo $(otool -L ./cryptominisat5)
+        !$(otool -L ./cryptominisat5  | grep "libcryptominisat");
+        !$(otool -L ./cryptominisat5  | grep "libz");
+        !$(otool -L ./cryptominisat5  | grep "libboost");
     fi
 fi
 
