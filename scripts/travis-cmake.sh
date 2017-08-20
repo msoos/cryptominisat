@@ -230,25 +230,25 @@ echo $(ldd      pycryptosat/pycryptosat.so)
 
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5_simple); fi
 if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5_simple); fi
-if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
+if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC" ] ; then
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         ldd ./cryptominisat5_simple  | grep "not a dynamic";
     fi
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        otool -L ./cryptominisat5_simple  | grep "not a dynamic";
+        $(otool -L ./cryptominisat5_simple  | grep "libcryptominisat");
     fi
 fi
 
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo $(ldd      ./cryptominisat5); fi
 if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then echo $(otool -L ./cryptominisat5); fi
-if [ "$CMS_CONFIG" = "STATIC_BIN" ] ; then
+if [ "$CMS_CONFIG" = "STATIC" ] ; then
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         ldd ./cryptominisat5  | grep "not a dynamic";
     fi
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        otool -L ./cryptominisat5  | grep "not a dynamic";
+        $(otool -L ./cryptominisat5  | grep "libcryptominisat");
     fi
 fi
 
