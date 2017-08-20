@@ -21,7 +21,7 @@ that it allows for a more efficient system, with assumptions and multiple
 a high-level yet efficient API to use most of the C++ interface with ease.
 
 
-Building
+Compiling in Linux
 -----
 
 To build and install, issue:
@@ -44,7 +44,7 @@ under `/usr/local/lib/libcryptominisat5.so` and the 3 header files are
 available under `/usr/local/include/cryptominisat5/`.You can uninstall
 both by executing `sudo make uninstall`.
 
-Compiling under Windows
+Compiling in Windows
 -----
 
 You will need python installed. Then you need to perform the following for Visual Studio 2015:
@@ -82,7 +82,7 @@ C:\cms\build> cmake --build --config Release .
 
 This should build the static Windows binary under `C:\cms\build\Release\cryptominisat5.exe`.
 
-Compiling under OSX
+Compiling in Mac OSX
 -----
 
 ```
