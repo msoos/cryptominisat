@@ -238,9 +238,9 @@ if [ "$CMS_CONFIG" = "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" = "STATIC" ] ; th
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         echo $(otool -L ./cryptominisat5_simple)
-        !$(otool -L ./cryptominisat5_simple  | grep "libcryptominisat");
-        !$(otool -L ./cryptominisat5_simple  | grep "libz");
-        !$(otool -L ./cryptominisat5_simple  | grep "libboost");
+        ! (otool -L ./cryptominisat5_simple  | grep "libcryptominisat");
+        ! (otool -L ./cryptominisat5_simple  | grep "libz");
+        ! (otool -L ./cryptominisat5_simple  | grep "libboost");
     fi
 fi
 
@@ -254,9 +254,9 @@ if [ "$CMS_CONFIG" = "STATIC" ] ; then
 
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         echo $(otool -L ./cryptominisat5)
-        !$(otool -L ./cryptominisat5  | grep "libcryptominisat");
-        !$(otool -L ./cryptominisat5  | grep "libz");
-        !$(otool -L ./cryptominisat5  | grep "libboost");
+        ! (otool -L ./cryptominisat5  | grep "libcryptominisat");
+        ! (otool -L ./cryptominisat5  | grep "libz");
+        ! (otool -L ./cryptominisat5  | grep "libboost");
     fi
 fi
 
