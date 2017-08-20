@@ -305,7 +305,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Uncomment these for static compilation under Linux (messes up Valgrind)
 # -----------------------------------------------------------------------------
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} -Wl,--discard-all -Wl,--build-id=sha1")
     if(STATICCOMPILE)
         MESSAGE(STATUS "Compiling for static library use")
