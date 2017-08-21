@@ -222,7 +222,6 @@ def test(extraopts):
 
     if exitnum == 0:
         print("ALL PASSED")
-        subprocess.check_call("rm *.out", shell=True)
     else:
         print("SOME CHECKS FAILED")
 
