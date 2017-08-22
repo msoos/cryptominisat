@@ -204,6 +204,7 @@ class MyThread(threading.Thread):
 
 
 def test(extraopts):
+    global exitnum
     exitnum = 0
     global todo
     assert os.path.isdir(args[0])
