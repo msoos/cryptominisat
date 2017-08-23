@@ -395,11 +395,10 @@ cd ../cryptominisat/scripts/fuzz/
 
 Building a minimal library
 -----
-This builds a library that has nothing fancy, it's bare minimal:
+The following builds a library that is bare minimal. It needs a compiler and clang, but nothing much else:
 
 
 ```
-sudo apt-get install build-essential cmake
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
