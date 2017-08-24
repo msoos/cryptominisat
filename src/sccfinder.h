@@ -33,7 +33,7 @@ class Solver;
 
 class SCCFinder {
     public:
-        SCCFinder(Solver* _solver);
+        explicit SCCFinder(Solver* _solver);
         bool performSCC(uint64_t* bogoprops_given = NULL);
         const std::set<BinaryXor>& get_binxors() const;
         size_t get_num_binxors_found() const;

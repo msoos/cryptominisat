@@ -30,7 +30,7 @@ class SQLiteStats: public SQLStats
 {
 public:
     ~SQLiteStats() override;
-    SQLiteStats(std::string _filename) :
+    explicit SQLiteStats(std::string _filename) :
         filename(_filename)
     {
     }
