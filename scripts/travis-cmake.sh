@@ -196,20 +196,6 @@ case $CMS_CONFIG in
             "${SOURCE_DIR}"
     ;;
 
-    IPASIR_M4RI)
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
-        wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz
-        tar xzvf m4ri-20140914.tar.gz
-        cd m4ri-20140914/
-        ./configure
-        make
-        sudo make install
-        cd ..
-
-        eval cmake -DENABLE_TESTING:BOOL=ON -DIPASIR=ON\
-            "${SOURCE_DIR}"
-    ;;
-
     *)
         echo "\"${CMS_CONFIG}\" configuration not recognised"
         exit 1

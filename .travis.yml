@@ -21,23 +21,26 @@ env:
 
   matrix:
     - CMS_CONFIG=NORMAL
-    - CMS_CONFIG=LARGEMEM
     - CMS_CONFIG=LARGEMEM_GAUSS
     - CMS_CONFIG=ONLY_SIMPLE
     - CMS_CONFIG=STATS
+      os: linux
+      compiler: gcc
     - CMS_CONFIG=NOZLIB
     - CMS_CONFIG=RELEASE
     - CMS_CONFIG=NOSQLITE
     - CMS_CONFIG=NOPYTHON
     - CMS_CONFIG=SQLITE
     - CMS_CONFIG=M4RI
-    - CMS_CONFIG=IPASIR_M4RI
-#    - CMS_CONFIG=WEB
     - CMS_CONFIG=GAUSS
     - CMS_CONFIG=COVERAGE
     - CMS_CONFIG=SLOW_DEBUG
+      os: linux
+      compiler: gcc
     - CMS_CONFIG=INTREE_BUILD
     - CMS_CONFIG=NOTEST
+      os: linux
+      compiler: gcc
     - CMS_CONFIG=STATIC
     - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
