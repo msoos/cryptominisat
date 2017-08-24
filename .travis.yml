@@ -54,6 +54,9 @@ matrix:
       env: CMS_CONFIG=SLOW_DEBUG
 
     - compiler: clang
+      env: CMS_CONFIG=NOPYTHON
+
+    - compiler: clang
       env: CMS_CONFIG=NOTEST
 
       #####
