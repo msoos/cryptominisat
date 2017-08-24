@@ -107,7 +107,7 @@ before_install:
   # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ trusty-updates"; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes libboost-test-dev; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3 fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3; fi
 
 install:
 #cmake
