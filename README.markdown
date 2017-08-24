@@ -393,18 +393,12 @@ cd ../cryptominisat/scripts/fuzz/
 
 ```
 
-Building a minimal library
+Configuring a build for a minimal binary&library
 -----
-The following builds a library that is bare minimal. It needs a compiler and clang, but nothing much else:
-
+The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
 
 ```
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
-make
-sudo make install
-sudo ldconfig
 ```
 
 Web-based run explorer
