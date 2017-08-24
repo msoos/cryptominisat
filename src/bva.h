@@ -158,7 +158,7 @@ private:
     vector<size_t> watch_irred_sizes;
     struct VarBVAOrder
     {
-        VarBVAOrder(vector<size_t>& _watch_irred_sizes) :
+        explicit VarBVAOrder(vector<size_t>& _watch_irred_sizes) :
             watch_irred_sizes(_watch_irred_sizes)
         {}
 
