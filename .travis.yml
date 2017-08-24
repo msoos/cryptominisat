@@ -24,8 +24,6 @@ env:
     - CMS_CONFIG=LARGEMEM_GAUSS
     - CMS_CONFIG=ONLY_SIMPLE
     - CMS_CONFIG=STATS
-      os: linux
-      compiler: gcc
     - CMS_CONFIG=NOZLIB
     - CMS_CONFIG=RELEASE
     - CMS_CONFIG=NOSQLITE
@@ -35,12 +33,8 @@ env:
     - CMS_CONFIG=GAUSS
     - CMS_CONFIG=COVERAGE
     - CMS_CONFIG=SLOW_DEBUG
-      os: linux
-      compiler: gcc
     - CMS_CONFIG=INTREE_BUILD
     - CMS_CONFIG=NOTEST
-      os: linux
-      compiler: gcc
     - CMS_CONFIG=STATIC
     - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
