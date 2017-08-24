@@ -426,7 +426,7 @@ public:
         return occurLinked;
     }
 
-    void set_occur_linked(bool toset)
+    void setOccurLinked(bool toset)
     {
         occurLinked = toset;
     }

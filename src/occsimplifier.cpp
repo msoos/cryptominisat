@@ -502,7 +502,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
             << " cl->size() < max_size: " << (cl->size() < max_size)
             << " link_in_lit_limit: " << link_in_lit_limit << endl;*/
             //assert(cl->red());
-            cl->set_occur_linked(false);
+            cl->setOccurLinked(false);
             link_in_data.cl_not_linked++;
             std::sort(cl->begin(), cl->end());
         }
@@ -2528,7 +2528,7 @@ void OccSimplifier::linkInClause(Clause& cl)
 
         ws.push(Watched(offset, cl.abst));
     }
-    cl.set_occur_linked(true);
+    cl.setOccurLinked(true);
 }
 
 
