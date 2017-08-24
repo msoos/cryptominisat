@@ -53,6 +53,38 @@ matrix:
     - os: osx
       compiler: gcc
 
+    - compiler: clang
+      env: CMS_CONFIG=STATS
+
+    - compiler: clang
+      env: CMS_CONFIG=SLOW_DEBUG
+
+    - compiler: clang
+      env: CMS_CONFIG=NOTEST
+
+      #####
+    - os: osx
+      env: CMS_CONFIG=STATS
+
+    - os: osx
+      env: CMS_CONFIG=SLOW_DEBUG
+
+    - os: osx
+      env: CMS_CONFIG=NOTEST
+
+    - os: osx
+      env: CMS_CONFIG=COVERAGE
+
+    - os: osx
+      env: CMS_CONFIG=NOSQLITE
+
+    - os: osx
+      env: CMS_CONFIG=NOZLIB
+
+    - os: osx
+      env: CMS_CONFIG=LARGEMEM_GAUSS
+
+
   include:
     # Covertiy scan should only run once
     - os: linux
