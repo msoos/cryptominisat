@@ -38,7 +38,7 @@ class Clause;
 
 class StrImplWImplStamp {
 public:
-    StrImplWImplStamp(Solver* _solver) :
+    explicit StrImplWImplStamp(Solver* _solver) :
         solver(_solver)
     {}
 

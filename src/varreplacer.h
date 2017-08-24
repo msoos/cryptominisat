@@ -48,7 +48,7 @@ class SCCFinder;
 class VarReplacer
 {
     public:
-        VarReplacer(Solver* solver);
+        explicit VarReplacer(Solver* solver);
         ~VarReplacer();
         void new_var(const uint32_t orig_outer);
         void new_vars(const size_t n);
