@@ -345,11 +345,11 @@ Gauss options:
                               effectively are moving the start to the last
                               column updated
   --maxmatrixrows arg (=3000) Set maximum no. of rows for gaussian matrix. Too
-                              large matrixesshould bee discarded for reasons of
+                              large matrixes should be discarded for reasons of
                               efficiency
   --autodisablegauss arg (=1) Automatically disable gauss when performing badly
   --minmatrixrows arg (=5)    Set minimum no. of rows for gaussian matrix.
-                              Normally, too smallmatrixes are discarded for
+                              Normally, too small matrixes are discarded for
                               reasons of efficiency
   --savematrix arg (=2)       Save matrix every Nth decision level
   --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
