@@ -201,7 +201,7 @@ else()
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/Ox>")
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/ZI>")
 
-    add_compile_options("$<$<CONFIG:RELEASE>:/O3>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/Ox>")
     add_compile_options("$<$<CONFIG:RELEASE>:/D>")
     add_compile_options("$<$<CONFIG:RELEASE>:/NDEBUG>")
     add_compile_options("$<$<CONFIG:RELEASE>:/ZI>")
