@@ -387,7 +387,7 @@ Clause* Solver::add_clause_int(
 
     //Make stats sane
     #ifdef STATS_NEEDED
-    stats.introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts, stats.introduced_at_conflict);
+    uint64_t introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts, stats.introduced_at_conflict);
     #endif
 
     vector<Lit> ps = lits;
@@ -459,6 +459,9 @@ Clause* Solver::add_clause_int(
                 c->makeRed(stats.glue);
             }
             c->stats = stats;
+            #ifdef STATS_NEEDED
+            c->stats.introduced_at_conflict = introduced_at_conflict;
+            #endif
 
             //In class 'OccSimplifier' we don't need to attach normall
             if (attach_long) {
