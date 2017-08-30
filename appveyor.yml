@@ -104,7 +104,7 @@ build_script:
   # Install&run CMS
   - ls
   - msbuild .\INSTALL.vcxproj
-  - cryptominisat5.exe --help
+  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
 
 
 build:
