@@ -101,9 +101,10 @@ build_script:
   - cmake --build . --config %CONFIGURATION%
   - if %STATICCOMPILE_SETTING%==ON call ctest -V -C %CONFIGURATION%
 
-  # Install CMS
+  # Install&run CMS
   - ls
   - msbuild .\INSTALL.vcxproj
+  - cryptominisat5.exe --help
 
 
 build:
