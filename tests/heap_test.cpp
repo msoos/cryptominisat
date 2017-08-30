@@ -78,7 +78,7 @@ TEST(heap_minim, empty_lots)
         heap.insert(99-i);
         EXPECT_EQ( heap.heap_property(), true);
     }
-    for(size_t i = 0; i < 100; i++) {
+    for(int i = 0; i < 100; i++) {
         EXPECT_EQ(heap.removeMin(), i);
         EXPECT_EQ(heap.heap_property(), true);
     }
