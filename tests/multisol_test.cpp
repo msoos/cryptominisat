@@ -28,7 +28,7 @@ THE SOFTWARE.
 // 5) run: ./readme_test
 
 #include <cryptominisat5/cryptominisat.h>
-#include <assert.h>
+#include <cassert>
 #include <vector>
 using std::vector;
 using namespace CMSat;
