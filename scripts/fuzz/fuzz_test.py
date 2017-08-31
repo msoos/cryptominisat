@@ -100,6 +100,10 @@ parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
 
 (options, args) = parser.parse_args()
 
+if options.valgrind_freq <= 0:
+    print("Valgrind Frequency must be at least 1")
+    exit(-1)
+
 
 def fuzzer_call_failed():
     print("OOps, fuzzer executable call failed!")
@@ -360,7 +364,7 @@ class Tester:
 
         # construct command
         command = ""
-        if not options.novalgrind and random.randint(0, options.valgrind_freq) == 0:
+        if not options.novalgrind and random.randint(1, options.valgrind_freq) == 1:
             command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
         if rnd_opts is None:
@@ -647,6 +651,8 @@ while True:
     toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
     if options.novalgrind:
         toexec += " --novalgrind"
+    if options.valgrind_freq:
+        toexec += " --valgrindfreq %d" % options.valgrind_freq
     if options.small:
         toexec += " --small"
 
