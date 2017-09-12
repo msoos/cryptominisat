@@ -372,7 +372,7 @@ and only internally
 Clause* Solver::add_clause_int(
     const vector<Lit>& lits
     , const bool red
-    , const ClauseStats& stats
+    , ClauseStats stats
     , const bool attach_long
     , vector<Lit>* finalLits
     , bool addDrat

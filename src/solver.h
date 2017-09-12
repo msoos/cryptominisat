@@ -211,7 +211,7 @@ class Solver : public Searcher
         Clause* add_clause_int(
             const vector<Lit>& lits
             , const bool red = false
-            , const ClauseStats& stats = ClauseStats()
+            , const ClauseStats stats = ClauseStats()
             , const bool attach = true
             , vector<Lit>* finalLits = NULL
             , bool addDrat = true
