@@ -202,6 +202,7 @@ int main(int argc, char** argv)
 
     if (conf.verbosity) {
         printVersionInfo();
+        cout << "c NOTE: this is a SIMPLIFIED executable. For the full experience, you need to compile/obtain/use the 'cryptominisat5' executable. To compile that, you need the boost libraries. Please read the README." << endl;
     }
     double cpu_time = cpuTime();
 
