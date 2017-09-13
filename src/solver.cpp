@@ -3362,6 +3362,7 @@ void Solver::add_sql_tag(const string& tagname, const string& tag)
 
 uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
 {
+    assert(undef == NULL);
     undef = new FindUndef;
     undef->trail_lim_vars = &trail_lim_vars;
     undef->can_be_unsetSum = 0;
@@ -3423,6 +3424,7 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
 
     int toret = undef->can_be_unsetSum;
     delete undef;
+    undef = NULL;
 
     verify_model();
     return toret;
