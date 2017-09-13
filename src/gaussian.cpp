@@ -178,7 +178,7 @@ void Gaussian::init()
 
 struct HeapSorter
 {
-    HeapSorter(vector<double>& _activities) :
+    explicit HeapSorter(vector<double>& _activities) :
         activities(_activities)
     {}
 

@@ -30,7 +30,7 @@ using namespace CMSat;
 
 struct SortRedClsGlue
 {
-    SortRedClsGlue(ClauseAllocator& _cl_alloc) :
+    explicit SortRedClsGlue(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
@@ -45,7 +45,7 @@ struct SortRedClsGlue
 
 struct SortRedClsSize
 {
-    SortRedClsSize(ClauseAllocator& _cl_alloc) :
+    explicit SortRedClsSize(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;
@@ -60,7 +60,7 @@ struct SortRedClsSize
 
 struct SortRedClsAct
 {
-    SortRedClsAct(ClauseAllocator& _cl_alloc) :
+    explicit SortRedClsAct(ClauseAllocator& _cl_alloc) :
         cl_alloc(_cl_alloc)
     {}
     ClauseAllocator& cl_alloc;

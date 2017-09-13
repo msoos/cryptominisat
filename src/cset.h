@@ -103,7 +103,7 @@ class CSet {
         class iterator
         {
             public:
-                iterator(vector<ClOffset>::iterator _it) :
+                explicit iterator(vector<ClOffset>::iterator _it) :
                 it(_it)
                 {}
 
@@ -136,7 +136,7 @@ class CSet {
         class const_iterator
         {
             public:
-                const_iterator(vector<ClOffset>::const_iterator _it) :
+                explicit const_iterator(vector<ClOffset>::const_iterator _it) :
                 it(_it)
                 {}
 

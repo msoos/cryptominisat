@@ -39,7 +39,7 @@ class Clause;
 
 class DistillerAllWithAll {
     public:
-        DistillerAllWithAll(Solver* solver);
+        explicit DistillerAllWithAll(Solver* solver);
         bool distill(uint32_t queueByBy = 2);
 
         struct Stats

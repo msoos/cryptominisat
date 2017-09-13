@@ -134,7 +134,7 @@ protected:
             return activities[x] > activities[y];
         }
 
-        VarOrderLt(const vector<double>& _activities) :
+        explicit VarOrderLt(const vector<double>& _activities) :
             activities(_activities)
         {}
     };

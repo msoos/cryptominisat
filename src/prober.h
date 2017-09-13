@@ -43,7 +43,7 @@ class Solver;
 
 class Prober {
     public:
-        Prober(Solver* _solver);
+        explicit Prober(Solver* _solver);
         bool probe(vector<uint32_t>* probe_order = NULL);
         int force_stamp = -1; // For testing. 1,2 = DFS (2=irred, 1=red), 0 = BFS, -1 = DONTCARE
 

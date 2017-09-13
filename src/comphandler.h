@@ -50,7 +50,7 @@ added back to the problem.
 class CompHandler
 {
     public:
-        CompHandler(Solver* solver);
+        explicit CompHandler(Solver* solver);
         ~CompHandler();
 
         struct RemovedClauses {

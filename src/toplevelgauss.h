@@ -37,7 +37,7 @@ class Solver;
 class TopLevelGauss: public TopLevelGaussAbst
 {
 public:
-    TopLevelGauss(Solver* _solver);
+    explicit TopLevelGauss(Solver* _solver);
     bool toplevelgauss(const vector<Xor>& _xors);
 
     struct Stats

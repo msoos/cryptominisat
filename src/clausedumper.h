@@ -38,7 +38,7 @@ class Solver;
 class ClauseDumper
 {
 public:
-    ClauseDumper(const Solver* _solver) :
+    explicit ClauseDumper(const Solver* _solver) :
         solver(_solver)
     {}
 

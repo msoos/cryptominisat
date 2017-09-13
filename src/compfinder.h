@@ -41,7 +41,7 @@ using std::pair;
 class CompFinder {
 
     public:
-        CompFinder(Solver* solver);
+        explicit CompFinder(Solver* solver);
         void find_components();
         bool getTimedOut() const;
 

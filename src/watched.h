@@ -92,7 +92,7 @@ class Watched {
         /**
         @brief Constructor for an Index value
         */
-        Watched(const uint32_t idx) :
+        explicit Watched(const uint32_t idx) :
             data1(idx)
             , type(watch_idx_t)
         {

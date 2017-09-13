@@ -47,7 +47,7 @@ A main use-case is the following:
 class CompleteDetachReatacher
 {
     public:
-        CompleteDetachReatacher(Solver* solver);
+        explicit CompleteDetachReatacher(Solver* solver);
         bool reattachLongs(bool removeStatsFrist = false);
         void detach_nonbins_nontris();
         void reattachLongsNoClean();

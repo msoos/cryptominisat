@@ -61,7 +61,7 @@ struct BlockedClause {
     BlockedClause()
     {}
 
-    BlockedClause(Lit dummyLit) :
+    explicit BlockedClause(Lit dummyLit) :
         blockedOn(dummyLit)
         , toRemove(false)
         , dummy(true)
@@ -216,7 +216,7 @@ class OccSimplifier
 public:
 
     //Construct-destruct
-    OccSimplifier(Solver* solver);
+    explicit OccSimplifier(Solver* solver);
     ~OccSimplifier();
 
     //Called from main
@@ -386,7 +386,7 @@ private:
             return varElimComplexity[x].second < varElimComplexity[y].second;
         }
 
-        VarOrderLt(
+        explicit VarOrderLt(
             const vector<pair<int,int> >& _varElimComplexity
         ) :
             varElimComplexity(_varElimComplexity)
