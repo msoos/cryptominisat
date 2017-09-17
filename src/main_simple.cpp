@@ -150,8 +150,8 @@ int main(int argc, char** argv)
 
     int i, j;
     long int num_threads = 1;
-    const char* value;
     for (i = j = 0; i < argc; i++){
+        const char* value;
         if ((value = hasPrefix(argv[i], "--drat="))){
             handle_drat_option(conf, value);
         }else if ((value = hasPrefix(argv[i], "--verb="))){
