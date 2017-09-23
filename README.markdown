@@ -90,12 +90,10 @@ You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 Docker usage
 -----
 
-```
-docker build -t cms .
-docker run --rm -v `pwd`/myfile.cnf.gz:/in cms in
-zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout cms
-echo "1 2 0" | docker run --rm -i -a stdin -a stdout cms
-```
+To pull the latest image: `docker pull msoos/cryptominisat`. To use it with
+a file in Linux: `docker run --rm -v \`pwd\`/myfile.cnf.gz:/in cms in` to run
+it from standard input: `echo "1 2 0" | docker run --rm -i -a stdin -a stdout cms`
+to run it with a file from standard input: `zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout cms`. To build: `docker build -t cms .`
 
 Command-line usage
 -----
