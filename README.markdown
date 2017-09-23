@@ -91,9 +91,9 @@ Docker usage
 -----
 
 To pull the latest image: `docker pull msoos/cryptominisat`. To use it with
-a file in Linux: `docker run --rm -v \`pwd\`/myfile.cnf.gz:/in cms in` to run
-it from standard input: `echo "1 2 0" | docker run --rm -i -a stdin -a stdout cms`
-to run it with a file from standard input: `zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout cms`. To build: `docker build -t cms .`
+a file in Linux: `docker run --rm -v \`pwd\`/myfile.cnf.gz:/in msoos/cryptominisat in` to run
+it from standard input: `echo "1 2 0" | docker run --rm -i -a stdin -a stdout msoos/cryptominisat`
+to run it with a file from standard input: `zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout msoos/cryptominisat`. To build: `docker build -t cms .`
 
 Command-line usage
 -----
