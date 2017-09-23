@@ -18,6 +18,30 @@ that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. A C compatible wrapper is also provided. The python interface provides
 a high-level yet efficient API to use most of the C++ interface with ease.
 
+Docker usage
+-----
+
+To run on file `myfile.cnf`
+
+```
+docker pull msoos/cryptominisat
+cat myfile | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
+```
+
+To run on a hand-written CNF:
+
+```
+docker pull msoos/cryptominisat
+echo "1 2 0" | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
+```
+
+To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
+
+```
+docker pull msoos/cryptominisat
+docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
+```
+
 
 Compiling in Linux
 -----
@@ -86,14 +110,6 @@ C:\cms\build> cmake --build --config Release .
 
 You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
-
-Docker usage
------
-
-To pull the latest image: `docker pull msoos/cryptominisat`. To use it with
-a file in Linux: `docker run --rm -v \`pwd\`/myfile.cnf.gz:/in msoos/cryptominisat in` to run
-it from standard input: `echo "1 2 0" | docker run --rm -i -a stdin -a stdout msoos/cryptominisat`
-to run it with a file from standard input: `zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout msoos/cryptominisat`. To build: `docker build -t cms .`
 
 Command-line usage
 -----
