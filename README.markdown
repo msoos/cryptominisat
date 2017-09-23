@@ -87,7 +87,7 @@ C:\cms\build> cmake --build --config Release .
 You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
 
-Builing and using through a Docker container
+Docker usage
 -----
 
 ```
