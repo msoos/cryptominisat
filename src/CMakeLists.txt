@@ -36,7 +36,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h.in" "${CMAKE_CURRE
 add_custom_command(
     OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+    COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
     DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
 )
 
