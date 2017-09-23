@@ -1,3 +1,0 @@
-sut:
-    build: .
-    command: echo "my test!"
