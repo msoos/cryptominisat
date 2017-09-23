@@ -33,17 +33,17 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h" @ONLY)
 
-add_custom_command(
-    OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
-    DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
-)
-
 if (SQLITE3_FOUND AND STATS)
     if (NOT PYTHON_EXECUTABLE)
         MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
     endif()
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${PYTHON_EXECUTABLE} ${CRYPTOMS_SCRIPTS_DIR}/xxd-alike.py cmsat_tablestructure.sql ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
+    )
     add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
 endif()
 
@@ -130,9 +130,11 @@ GENERATE_EXPORT_HEADER(libcryptominisat5
          #STATIC_DEFINE MyLibrary_BUILT_AS_STATIC
 )
 
-add_dependencies(libcryptominisat5
-    tablestruct
-)
+if (SQLITE3_FOUND AND STATS)
+    add_dependencies(libcryptominisat5
+        tablestruct
+    )
+endif()
 
 # indicate that we depend on pthread, and compile in the actual library
 target_link_libraries(libcryptominisat5
