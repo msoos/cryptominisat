@@ -25,18 +25,20 @@ RUN mkdir -p /home/solver/cms
 RUN chown -R solver:solver /home/solver
 
 # build CMS
-USER solver
+USER root
 COPY . /home/solver/cms
 WORKDIR /home/solver/cms
 RUN mkdir build
 WORKDIR /home/solver/cms/build
 RUN cmake .. \
     && make -j6 \
-    && rm -rf CMakeFiles cmsat5-src
+    && make install \
+    && rm -rf *
 
 # set up for running
-WORKDIR /home/solver/cms/build/
-ENTRYPOINT ["/home/solver/cms/build/cryptominisat5"]
+USER solver
+WORKDIR /home/solver/
+ENTRYPOINT ["cryptominisat5"]
 
 # --------------------
 # HOW TO USE
