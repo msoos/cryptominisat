@@ -40,7 +40,12 @@ add_custom_command(
     DEPENDS ${CMAKE_SOURCE_DIR}/cmsat_tablestructure.sql
 )
 
-add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
+if (SQLITE3_FOUND AND STATS)
+    if (NOT PYTHON_EXECUTABLE)
+        MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
+    endif()
+    add_custom_target(tablestruct ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp)
+endif()
 
 set(cryptoms_lib_files
     cnf.cpp
