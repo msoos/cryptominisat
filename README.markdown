@@ -8,22 +8,6 @@
 [![code coverage](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f043efa22ea64e9ba44fde0f3a4fb09f)](https://www.codacy.com/app/soos.mate/cryptominisat?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
 
-  - [Compiling in Linux](#compiling-in-linux)
-  - [Compiling in Mac OSX](#compiling-in-mac-osx)
-  - [Compiling in Windows](#compiling-in-windows)
-  - [Builing and using through a Docker container](#builing-and-using-through-a-docker-container)
-  - [Command-line usage](#command-line-usage)
-  - [Python usage](#python-usage)
-  - [Library usage](#library-usage)
-  - [Multiple solutions](#multiple-solutions)
-  - [Preprocessor usage](#preprocessor-usage)
-  - [Gaussian elimination](#gaussian-elimination)
-  - [Testing](#testing)
-  - [Fuzzing](#fuzzing)
-  - [Configuring a build for a minimal binary&library](#configuring-a-build-for-a-minimal-binarylibrary)
-  - [Web-based run explorer](#web-based-run-explorer)
-  - [C usage](#c-usage)
-
 
 CryptoMiniSat SAT solver
 ===========================================
