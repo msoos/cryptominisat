@@ -182,7 +182,7 @@ class MyThread(threading.Thread):
         toprint += "-> T-msat: %-4.2f free vars after: %-9d\n" % (t_msat, num_vars_after_ms_preproc)
         diff = num_vars_after_cms_preproc - num_vars_after_ms_preproc
         limit = float(orig_num_vars)*0.05
-        if diff < limit*8 and t_msat > t_cms*3 and t_msat > 20:
+        if diff < limit*8 and t_msat > t_cms*4 and t_msat > 20:
             toprint += " * MiniSat didn't timeout, but we did, acceptable difference.\n"
             return 0
 
