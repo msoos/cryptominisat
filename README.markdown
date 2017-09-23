@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [CryptoMiniSat SAT solver](#cryptominisat-sat-solver)
+  - [Compiling in Linux](#compiling-in-linux)
+  - [Compiling in Mac OSX](#compiling-in-mac-osx)
+  - [Compiling in Windows](#compiling-in-windows)
+  - [Builing and using through a Docker container](#builing-and-using-through-a-docker-container)
+  - [Command-line usage](#command-line-usage)
+  - [Python usage](#python-usage)
+  - [Library usage](#library-usage)
+  - [Multiple solutions](#multiple-solutions)
+  - [Preprocessor usage](#preprocessor-usage)
+  - [Gaussian elimination](#gaussian-elimination)
+  - [Testing](#testing)
+  - [Fuzzing](#fuzzing)
+  - [Configuring a build for a minimal binary&library](#configuring-a-build-for-a-minimal-binarylibrary)
+  - [Web-based run explorer](#web-based-run-explorer)
+  - [C usage](#c-usage)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 [![Windows build](https://ci.appveyor.com/api/projects/status/8d000iy63xu7eau5?svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
