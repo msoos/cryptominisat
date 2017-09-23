@@ -19,24 +19,24 @@ RUN ./configure \
     && make clean
 
 # set up build env
-RUN groupadd -r cryptoms -g 433
-RUN useradd -u 431 -r -g cryptoms -d /home/cryptoms -s /sbin/nologin -c "Docker image user" cryptoms
-RUN mkdir /home/cryptoms
-RUN chown -R cryptoms:cryptoms /home/cryptoms
+RUN groupadd -r solver -g 433
+RUN useradd -u 431 -r -g solver -d /home/solver -s /sbin/nologin -c "Docker image user" solver
+RUN mkdir -p /home/solver/cms
+RUN chown -R solver:solver /home/solver
 
 # build CMS
-USER cryptoms
-COPY . /home/cryptoms/
-WORKDIR /home/cryptoms/
+USER solver
+COPY . /home/solver/cms
+WORKDIR /home/solver/cms
 RUN mkdir build
-WORKDIR /home/cryptoms/build
+WORKDIR /home/solver/cms/build
 RUN cmake .. \
     && make -j6 \
     && rm -rf CMakeFiles cmsat5-src
 
 # set up for running
-WORKDIR /home/cryptoms/build/
-ENTRYPOINT ["/home/cryptoms/build/cryptominisat5"]
+WORKDIR /home/solver/cms/build/
+ENTRYPOINT ["/home/solver/cms/build/cryptominisat5"]
 
 # --------------------
 # HOW TO USE
