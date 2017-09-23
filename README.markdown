@@ -21,11 +21,11 @@ a high-level yet efficient API to use most of the C++ interface with ease.
 Docker usage
 -----
 
-To run on file `myfile.cnf`
+To run on file `myfile.cnf`:
 
 ```
 docker pull msoos/cryptominisat
-cat myfile | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
+cat myfile.cnf | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
 ```
 
 To run on a hand-written CNF:
