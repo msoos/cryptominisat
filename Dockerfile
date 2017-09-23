@@ -7,7 +7,7 @@ LABEL Description="An advanced SAT solver"
 # get curl, etc
 RUN apt-get update && apt-get install --no-install-recommends -y software-properties-common && rm -rf /var/lib/apt/lists/*
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install --no-install-recommends -y libboost-program-options-dev gcc g++ make cmake wget python zlib1g-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install --no-install-recommends -y libboost-program-options-dev gcc g++ make cmake zlib1g-dev wget && rm -rf /var/lib/apt/lists/*
 
 # get M4RI
 RUN wget https://bitbucket.org/malb/m4ri/downloads/m4ri-20140914.tar.gz \
