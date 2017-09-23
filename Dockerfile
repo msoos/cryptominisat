@@ -47,7 +47,7 @@ ENTRYPOINT ["cryptominisat5"]
 #    zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout cms
 
 # on a file:
-#    docker run --rm -v `pwd`/myfile.cnf.gz:/myfile.cnf.gz cms myfile.cnf.gz
+#    docker run --rm -v `pwd`/myfile.cnf.gz:/in cms in
 
 # echo through STDIN:
 #    echo "1 2 0" | docker run --rm -i -a stdin -a stdout cms

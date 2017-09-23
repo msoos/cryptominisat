@@ -38,16 +38,22 @@ sudo make install
 sudo ldconfig
 ```
 
-Once cryptominisat is installed, the binary is available under
-`/usr/local/bin/cryptominisat5`, the library shared library is available
-under `/usr/local/lib/libcryptominisat5.so` and the 3 header files are
-available under `/usr/local/include/cryptominisat5/`.You can uninstall
-both by executing `sudo make uninstall`.
+Compiling in Mac OSX
+-----
+
+```
+brew install cmake boost zlib
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cmake .
+make
+sudo make install
+```
 
 Compiling in Windows
 -----
 
-You will need python installed. Then you need to perform the following for Visual Studio 2015:
+You will need python installed, then for Visual Studio 2015:
 
 ```
 C:\> [ download cryptominisat-version.zip ]
@@ -80,20 +86,18 @@ C:\cms\build> cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release 
 C:\cms\build> cmake --build --config Release .
 ```
 
-This should build the static Windows binary under `C:\cms\build\Release\cryptominisat5.exe`.
+You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
-Compiling in Mac OSX
+
+Builing and using through a Docker container
 -----
 
 ```
-brew install cmake boost zlib
-tar xzvf cryptominisat-version.tar.gz
-cd cryptominisat-version
-cmake .
-make
-sudo make install
+docker build -t cms .
+docker run --rm -v `pwd`/myfile.cnf.gz:/in cms in
+zcat mizh-md5-47-3.cnf.gz | docker run --rm -i -a stdin -a stdout cms
+echo "1 2 0" | docker run --rm -i -a stdin -a stdout cms
 ```
-
 
 Command-line usage
 -----
