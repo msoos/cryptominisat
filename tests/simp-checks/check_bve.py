@@ -228,6 +228,7 @@ def test(extraopts):
 
     return exitnum
 
-test(["--preschedule", "occ-bve,must-renumber"])
-
-exit(exitnum)
+if __name__ == "__main__":
+    test(["--preschedule", "occ-bve,must-renumber"])
+    if exitnum != 0:
+        exit(exitnum)
