@@ -100,7 +100,7 @@ function fill_files_options()
             var filelist = data['filelist'];
             for(var i=0; i < filelist.length; i++) {
                 var d = filelist[i];
-                select.options.add(new Option(d.text, d.value));
+                select.options.add(new Option(d.fname, d.runID));
             }
             var v = document.getElementById("total_files_info");
             v.innerHTML = ""+data['numfiles']+" files";

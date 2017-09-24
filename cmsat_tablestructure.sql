@@ -111,7 +111,8 @@ CREATE TABLE `memused` (
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
   `runID` bigint(20) NOT NULL,
-  `runtime` bigint(20) NOT NULL
+  `runtime` bigint(20) NOT NULL,
+  `gitrev` varchar(100) NOT NULL
 );
 
 DROP TABLE IF EXISTS `startup`;

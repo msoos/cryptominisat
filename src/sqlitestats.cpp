@@ -124,9 +124,10 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, `runtime`) values ("
+    << "INSERT INTO solverRun (runID, `runtime`, `gitrev`) values ("
     << runID
     << ", " << time(NULL)
+    << ", '" << solver->get_version_sha1() << "'"
     << ");";
 
     //Inserting element into solverruns to get unique ID

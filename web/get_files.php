@@ -1,18 +1,18 @@
 <?php
-include "mysql_connect.php";
+include "connect.php";
 
 $unfinished = $_GET["unfinish"] == "true";
 $sat = $_GET["sat"] == "true";
 $unsat = $_GET["unsat"] == "true";
-// $version = 'dc65769cfcba9c2bb52ee81dbea39830ad28bb1b';
-// $unfinished = True;
-// $sat = True;
-// $unsat = True;
+$gitrev = 'f3fc12d8582dcada94802882c6108d10b3581cfa';
+$unfinished = True;
+$sat = True;
+$unsat = True;
 
 $json = array();
-function get_files_for_version($sat, $unsat, $unfinished)
+function get_files_for_gitrev($sat, $unsat, $unfinished)
 {
-    global $sql, $version, $json;
+    global $sql, $gitrev, $json;
 
     $toadd = "(";
     $num = 0;
@@ -36,35 +36,38 @@ function get_files_for_version($sat, $unsat, $unfinished)
     select solverRun.runID as runID, tags.tag as fname
     from tags, solverRun left join finishup on (finishup.runID = solverRun.runID)
     where solverRun.runID = tags.runID
+    and solverRun.gitrev = :gitrev
     and tags.tagname='filename'
     and $toadd
     order by tags.tag;";
 
+    #print $query;
+
     $stmt = $sql->prepare($query);
+    $stmt->bindValue(":gitrev", $gitrev);
     if (!$stmt) {
-        print "Error:".$sql->error;
+        print "Error:".$sql->lastErrorMsg();
         die("Cannot prepare statement");
     }
-    $stmt->execute();
-    $stmt->bind_result($runID, $fname);
+    $result = $stmt->execute();
 
     $numfiles = 0;
-    while($stmt->fetch())
+    while($arr=$result->fetchArray(SQLITE3_ASSOC))
     {
         $numfiles++;
-        //echo "{text: '".$row['tag']."', value: '".$row['runID']."'},";
         $data = array(
-            'text' => basename($fname),
-            'value' => $runID
+            'fname' => $arr["fname"],
+            'runID' => $arr["runID"]
         );
         array_push($json, $data);
+        # var_dump($arr);
     }
     $stmt->close();
 
     return $numfiles;
 }
 
-$numfiles = get_files_for_version($sat, $unsat, $unfinished);
+$numfiles = get_files_for_gitrev($sat, $unsat, $unfinished);
 
 $ret = array(
     'filelist' => $json,

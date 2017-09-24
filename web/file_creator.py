@@ -53,7 +53,7 @@ with con:
         #print row['diff'], row['runid'], ntpath.basename(row['fname'])
         toexec="""
         export QUERY_STRING="id=%d" ;
-        php -e -r 'parse_str($_SERVER["QUERY_STRING"], $_GET); include "getdata.php";'
+        php -e -r 'parse_str($_SERVER["QUERY_STRING"], $_GET); include "get_data.php";'
         """ % (row['runid'])
         into = open("dat/" + ntpath.basename(row['fname']) + ".dat", "w")
         subprocess.call(toexec, shell=True, stdout=into)

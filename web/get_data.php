@@ -1,11 +1,11 @@
 <?php
-include "mysql_connect.php";
+include "connect.php";
 $maxConfl = 50000000000;
 //display_startup_errors(1);
 //error_reporting(E_STRICT);
 
 $runID = $_GET["id"];
-#$runID = 11335226;
+$runID = 5796126;
 
 class MainDataGetter
 {
@@ -38,17 +38,18 @@ class MainDataGetter
 
         $query="
         SELECT max(conflicts) as mymax FROM `restart`
-        where conflicts < ?
-        and runID = ?";
+        where conflicts < :conflicts
+        and runID = :runID";
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
             die("Cannot prepare statement $query");
         }
-        $stmt->bind_param('ii', $maxConfl, $this->runID);
-        $stmt->execute();
-        $stmt->bind_result($max);
-        $stmt->fetch();
+        $stmt->bindValue(':conflicts', $maxConfl);
+        $stmt->bindValue(':runID', $this->runID);
+        $result = $stmt->execute();
+        $dat = $result->fetchArray();
+        $max = $dat["mymax"];
         $stmt->close();
         return $max;
     }
@@ -80,9 +81,8 @@ class MainDataGetter
         $i=0;
         $last_confl_for_everyn = 0.0;
         $time_start = microtime();
-        $this->data->data_seek(0);
         while ($i < $this->nrows) {
-            $row = $this->data->fetch_assoc();
+            $row = $this->data[$i];
             $confl = (int)$row["conflicts"];
             if ($confl -$last_confl_for_everyn < $this->everyn && $i < $this->nrows-1) {
                 $i++;
@@ -157,24 +157,27 @@ class MainDataGetter
     {
         $this->tablename = $table;
 
-        #NOT controllable by attacker, but sanitize it anyway
-        $table = $this->sql->real_escape_string($table);
-
         $query="
         SELECT *
         FROM `$table`
-        where `runID` = ?
-        and conflicts <= ?
+        where `runID` = :runID
+        and conflicts <= :maxconfl
         order by `conflicts`";
 
         $stmt = $this->sql->prepare($query);
         if (!$stmt) {
             die("Cannot prepare statement $query");
         }
-        $stmt->bind_param("ii", $this->runID, $this->max_confl);
-        $stmt->execute();
-        $this->data = $stmt->get_result();
-        $this->nrows = $this->data->num_rows;
+        $stmt->bindValue(":runID", $this->runID);
+        $stmt->bindValue(":maxconfl", $this->max_confl);
+        $result = $stmt->execute();
+
+        $this->data = array();
+        $this->nrows = 0;
+        while($row = $result->fetchArray(SQLITE3_ASSOC) ) {
+              array_push($this->data, $row);
+              $this->nrows+=1;
+       }
     }
 
     public function fill_data_tmp()
@@ -205,8 +208,6 @@ class MainDataGetter
             "unit cls"
             , "irred bin"
             , "red bin"
-            , "irred tri"
-            , "red tri"
             , "irred long"
             , "ired long"
             )
@@ -289,13 +290,11 @@ class MainDataGetter
             , array(
             "learntUnits"
             , "learntBins"
-            , "learntTris"
             , "learntLongs"
             )
             ,array(
             "unit"
             , "binary"
-            , "tertiary"
             , "long")
         );
 
@@ -303,11 +302,9 @@ class MainDataGetter
             "Propagation by %"
             , array(
             "propBinIrred", "propBinRed"
-            , "propTriIrred", "propTriRed"
             , "propLongIrred", "propLongRed"
             )
             ,array("bin irred", "bin red"
-            , "tri irred", "tri red"
             , "long irred", "long red"
             )
         );
@@ -317,16 +314,12 @@ class MainDataGetter
             , array(
             "conflBinIrred"
             , "conflBinRed"
-            , "conflTriIrred"
-            , "conflTriRed"
             , "conflLongIrred"
             , "conflLongRed"
             )
             ,array(
             "bin irred"
             , "bin red"
-            , "tri irred"
-            , "tri red"
             , "long irred"
             , "long red"
             )
@@ -336,13 +329,11 @@ class MainDataGetter
 //             "Resolutions used clause types %"
 //             , array(
 //               "resolBin"
-//             , "resolTri"
 //             , "resolLIrred"
 //             , "resolLRed"
 //             )
 //             ,array(
 //               "bin"
-//             , "tri"
 //             , "long irred"
 //             , "long red"
 //             )
@@ -369,56 +360,7 @@ class MainDataGetter
         print_one_graph("resolutionsSD", array("resolutionsSD")
             , array("std dev no. resolutions for 1UIP"));*/
 
-
         $this->runQuery("reduceDB");
-
-        $this->print_one_graph(
-            "Visited literals while propagating %"
-            , array(
-                "irredLitsVisited"
-                , "redLitsVisited"
-            )
-            ,array(
-                "irredundant"
-                , "redundant"
-            )
-        );
-
-        $this->print_one_graph(
-            "Cleaning removed learnt cls with resolutions %"
-            , array(
-                  "removedResolBinIrred"
-                , "removedResolBinRed"
-                , "removedResolTriIrred"
-                , "removedResolTriRed"
-                , "removedResolLIrred"
-                , "removedResolLRed"
-            )
-            ,array(
-                  "bin"
-                , "tri"
-                , "long irred"
-                , "long red"
-            )
-        );
-
-        $this->print_one_graph(
-            "After cleaning remaining learnt cls with resolutions %"
-            , array(
-                  "remainResolBinIrred"
-                , "remainResolBinRed"
-                , "remainResolTriIrred"
-                , "remainResolTriRed"
-                , "remainResolLIrred"
-                , "remainResolLRed"
-            )
-            ,array(
-                  "bin"
-                , "tri"
-                , "long irred"
-                , "long red"
-            )
-        );
 
         return array($this->columndivs, $this->data_tmp, $this->numberingScheme);
     }
@@ -442,7 +384,7 @@ class Simplifications
         $query="
         SELECT max(conflicts) as confl, simplifications as simpl
         FROM restart
-        where runID = ?
+        where runID = :runID
         group by simplifications
         order by simplifications";
 
@@ -450,115 +392,17 @@ class Simplifications
         if (!$stmt) {
             die("Cannot prepare statement $query");
         }
-        $stmt->bind_param("i", $this->runID);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->bindValue(":runID", $this->runID);
+        $result = $stmt->execute();
 
         $json_tmp = array();
         array_push($json_tmp, 0);
-        $i=0;
-        while ($row = $result->fetch_assoc()) {
+        while($arr=$result->fetchArray(SQLITE3_ASSOC))
+        {
             $confl = (int)$row["confl"];
             array_push($json_tmp, $confl);
-            $i++;
         }
         return $json_tmp;
-    }
-}
-
-class ClauseDistrib
-{
-    protected $rownum;
-    protected $runID;
-    protected $tablename;
-    protected $lookAt;
-    protected $maxConfl;
-    protected $columndivs;
-
-    public function __construct($mycolnum, $myrownum, $runID, $maxConfl, $tablename, $lookAt, $columndivs)
-    {
-        $this->rownum = $myrownum;
-        $this->runID = $runID;
-        $this->tablename = $tablename;
-        $this->lookAt = $lookAt;
-        $this->maxConfl = $maxConfl;
-        $this->columndivs = $columndivs;
-    }
-
-    public function fillClauseDistrib()
-    {
-        $json_tmparray = array();
-        $lookAt = $this->sql->real_escape_string($this->lookat);
-
-        $query = "
-        SELECT conflicts, num FROM ".$this->tablename."
-        where runID = ?
-        and conflicts <= ?
-        and `$lookAt` > 0
-        order by `conflicts`, `$lookAt`";
-
-        $stmt = $this->sql->prepare($query);
-        if (!$stmt) {
-            die("Cannot prepare statement $query");
-        }
-        $stmt->bind_param("ii", $this->runID, $this->maxConfl);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $nrows = $result->num_rows;
-        $result = $this->sql->store_result();
-
-        $rownum = 0;
-        $lastConfl = 0;
-        while($rownum < $nrows) {
-            $this->data->data_seek($rownum);
-            $row = $this->data->fetch_assoc();
-            $confl = (int)$row["conflicts"];
-
-            $json_tmp = array();
-            $json_tmp['conflStart'] = $lastConfl;
-            $json_tmp['conflEnd'] = $confl;
-            $json_darkness = array();
-            $lastConfl = $confl;
-            while($rownum < $nrows) {
-                $this->data->data_seek($rownum);
-                $row = $this->data->fetch_assoc();
-                $numberOfCl = (int)$row["num"];
-                array_push($json_darkness, $numberOfCl);
-
-                //More in this bracket?
-                $rownum++;
-                $this->data->data_seek($rownum);
-                $row = $this->data->fetch_assoc();
-                if ($rownum >= $nrows
-                    || $row["conflicts"] != $confl
-                ) {
-                    break;
-                }
-            }
-            $json_tmp['darkness'] = $json_darkness;
-            array_push($json_tmparray, $json_tmp);
-        }
-
-        $blockDivID = "distBlock".$this->rownum;
-        $dataDivID = "drawingPad".$this->rownum."-Parent";
-        $canvasID = "drawingPad".$this->rownum;
-        $labelDivID = "$blockDivID"."_labeldiv";
-
-        //Put into data
-        $json_onedata = array();
-        $json_onedata['data'] = $json_tmparray;
-        $json_onedata['blockDivID'] = $blockDivID;
-        $json_onedata['dataDivID'] = $dataDivID;
-        $json_onedata['canvasID'] = $canvasID;
-        $json_onedata['labelDivID'] = $labelDivID;
-        $json_onedata['lookAt'] = $this->lookAt;
-
-        //Put into columnDivs
-        $json_tmp = array();
-        $json_tmp['blockDivID'] = $blockDivID;
-        array_push($this->columndivs, $json_tmp);
-
-        return array($json_onedata, $this->columndivs);
     }
 }
 
@@ -567,51 +411,52 @@ function get_metadata($sql, $runID)
     $query="
     SELECT `startTime`
     FROM `startup`
-    where runID = ?";
+    where runID = :runID";
 
     $stmt = $sql->prepare($query);
     if (!$stmt) {
         print "Error:".$sql->error;
         die("Cannot prepare statement $query");
     }
-    $stmt->bind_param("i", $runID);
-    $stmt->execute();
-    $stmt->bind_result($starttime);
-    $stmt->fetch();
+    $stmt->bindValue(":runID", $runID);
+    $result = $stmt->execute();
+    $dat = $result->fetchArray();
+    $starttime = $dat["startTime"];
     $stmt->close();
 
     $query="
     SELECT `endTime`, `status`
     FROM `finishup`
-    where runID = ?";
+    where runID = :runID";
 
     $stmt = $sql->prepare($query);
     if (!$stmt) {
         print "Error:".$sql->error;
         die("Cannot prepare statement $query");
     }
-    $stmt->bind_param("i", $runID);
-    $stmt->execute();
-    $stmt->bind_result($endtime, $status);
-    $ok = $stmt->fetch();
+    $stmt->bindValue(":runID", $runID);
+    $result = $stmt->execute();
+    $dat = $result->fetchArray();
+    $endTime = $dat["endTime"];
+    $endTime = $dat["status"];
     $stmt->close();
 
     if ($ok) {
-    $query="
-        SELECT UNIX_TIMESTAMP(`endTime`)-UNIX_TIMESTAMP(`startTime`)
+        $query="
+        SELECT UNIX_TIMESTAMP(`endTime`)-UNIX_TIMESTAMP(`startTime`) as diffTime
         FROM `finishup`, `startup`
         where startup.runID = finishup.runID
-        and startup.runID = ?";
+        and startup.runID = :runID";
 
         $stmt = $sql->prepare($query);
         if (!$stmt) {
             print "Error:".$sql->error;
             die("Cannot prepare statement $query");
         }
-        $stmt->bind_param("i", $runID);
-        $stmt->execute();
-        $stmt->bind_result($difftime);
-        $stmt->fetch();
+        $stmt->bindValue(":runID", $runID);
+        $result = $stmt->execute();
+        $dat = $result->fetchArray();
+        $difftime = $dat["diffTime"];
         $stmt->close();
     } else {
         $difftime = 0;
@@ -635,11 +480,6 @@ $json_maxconflrestart = $main_data_getter->get_max_confl();
 $simps = new Simplifications($runID);
 $json_simplificationpoints = $simps->fillSimplificationPoints();
 
-///Clause distributions
-//$myDist = new ClauseDistrib($i, 0, $runID, $maxConfl, "clauseGlueDistrib", "glue", $json_columndivs);
-//list($json_cldistrib, $json_columndivs) = $myDist->fillClauseDistrib();
-$json_cldistrib = array();
-
 ///Metadata
 $metadata = get_metadata($sql, $runID);
 
@@ -647,7 +487,6 @@ $final_json = array();
 $final_json["metadata"] = $metadata;
 $final_json["columnDivs"] = $json_columndivs;
 $final_json["graph_data"] = $json_graph_data;
-$final_json["clDistrib"] = $json_cldistrib;
 $final_json["simplificationPoints"] = $json_simplificationpoints;
 $final_json["maxConflRestart"] = $json_maxconflrestart;
 $jsonstring = json_encode($final_json);
