@@ -4,7 +4,7 @@
 [![Coverity](https://scan.coverity.com/projects/507/badge.svg)](https://scan.coverity.com/projects/507)
 [![code coverage](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f043efa22ea64e9ba44fde0f3a4fb09f)](https://www.codacy.com/app/soos.mate/cryptominisat?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
-[![Docker Build Status](https://img.shields.io/docker/build/msoos/cryptominisat.svg)](https://cloud.docker.com/app/msoos/repository/docker/msoos/cryptominisat/general)
+[![Docker Build Status](https://img.shields.io/docker/build/msoos/cryptominisat.svg)](https://hub.docker.com/r/msoos/cryptominisat/)
 
 
 CryptoMiniSat SAT solver
