@@ -1,0 +1,47 @@
+FROM ubuntu:16.04
+
+LABEL maintainer="Mate Soos"
+LABEL version="5.0"
+LABEL Description="An advanced SAT solver"
+
+ENV LOCALE en_US.UTF-8
+EXPOSE 80
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y apache2 apache2-utils libapache2-mod-php php-sqlite3
+
+# && rm -rf /var/lib/apt/lists/*
+
+# Setup Apache
+RUN mkdir -p /var/run/apache2
+RUN chown -R www-data: /var/run/apache2
+
+# Enable apache mods.
+RUN a2enmod php7.0
+RUN a2enmod rewrite
+
+# Expose apache.
+EXPOSE 80
+
+# Manually set up the apache environment variables
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+# copy dirs
+COPY ./web/ /var/www/html/
+WORKDIR /etc/init.d/
+RUN ./apache2 start
+
+# VOLUME ["/var/log/apache2","/var/log/supervisor","/var/log/mysql","/var/lib/mysql"]
+# ENTRYPOINT ["/assets/bin/entrypoint"]
+
+# --------------------
+# HOW TO USE
+# --------------------
+# docker run --rm  -p 8080:80 -i -t cmsweb /bin/sh
+# will be accessible from host on 8080
+
+# docker run --rm  -p 8080:80 -i -t cmsweb /bin/sh
