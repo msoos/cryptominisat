@@ -4,11 +4,6 @@ var clDistrib = new Array();
 var simplificationPoints = new Array();
 var maxConflRestart = new Array();
 
-//while (true) {
-//setInterval(function(){myajax.makeGetRequest(500005960);}, 2000);
-//myajax.makeGetRequest(86533651);
-//}
-
 function selected_runID(runID) {
     console.log("getting runid " + runID);
     clear_everything();
