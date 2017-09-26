@@ -199,8 +199,6 @@ class MainDataGetter
             "set"
             , "numIrredBins"
             , "numRedBins"
-            , "numIrredTris"
-            , "numRedTris"
             , "numIrredLongs"
             , "numRedLongs"
             )
