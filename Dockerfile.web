@@ -8,9 +8,7 @@ ENV LOCALE en_US.UTF-8
 EXPOSE 80
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y apache2 apache2-utils libapache2-mod-php php-sqlite3
-
-# && rm -rf /var/lib/apt/lists/*
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y apache2 apache2-utils libapache2-mod-php php-sqlite3 && rm -rf /var/lib/apt/lists/*
 
 # Setup Apache
 RUN mkdir -p /var/run/apache2
@@ -33,7 +31,7 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 # copy dirs
 COPY ./web/ /var/www/html/
 WORKDIR /etc/init.d/
-RUN ./apache2 start
+CMD /usr/sbin/apache2ctl -D FOREGROUND
 
 # VOLUME ["/var/log/apache2","/var/log/supervisor","/var/log/mysql","/var/lib/mysql"]
 # ENTRYPOINT ["/assets/bin/entrypoint"]

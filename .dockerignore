@@ -27,4 +27,4 @@ sql_*
 tests
 .travis.yml
 utils
-web
+web/dygraphs/node_modules
