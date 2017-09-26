@@ -13,25 +13,6 @@
     <style>
     @import url(style.css);
     </style>
-
-    <!-- Start of StatCounter Code -->
-    <!--<script type="text/javascript">
-    var sc_project=6140803;
-    var sc_invisible=1;
-    var sc_security="26273f9f";
-    </script>
-
-    <script type="text/javascript"
-    src="http://www.statcounter.com/counter/counter.js">
-    </script>
-
-    <noscript><div class="statcounter"><a title="tumblr page counter"
-    href="http://statcounter.com/tumblr/" target="_blank">
-    <img class="statcounter" src="http://c.statcounter.com/6140803/0/26273f9f/1/"
-    alt="tumblr page counter"></a></div>
-    </noscript>-->
-    <!-- End of StatCounter Code -->
-
 </head>
 
 <body>

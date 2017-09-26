@@ -89,13 +89,13 @@ a {
   font-family: 'Yanone Kaffeesatz';
   font-style: normal;
   font-weight: 400;
-  src: local('Yanone Kaffeesatz Regular'), local('YanoneKaffeesatz-Regular'), url('YDAoLskQQ5MOAgvHUQCcLRTHiN2BPBirwIkMLKUspj4.woff') format('woff');
+  src: local('Yanone Kaffeesatz Regular'), local('YanoneKaffeesatz-Regular');
 }
 @font-face {
   font-family: 'Yanone Kaffeesatz';
   font-style: normal;
   font-weight: 700;
-  src: local('Yanone Kaffeesatz Bold'), local('YanoneKaffeesatz-Bold'), url('We_iSDqttE3etzfdfhuPRWwXwFHHZlCwprwJOQ-Se7k.woff') format('woff');
+  src: local('Yanone Kaffeesatz Bold'), local('YanoneKaffeesatz-Bold');
 }
 
 #plot-table-a
