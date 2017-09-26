@@ -11,14 +11,18 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y apache2 apache2-utils libapache2-mod-php php-sqlite3 && rm -rf /var/lib/apt/lists/*
 
 # Setup Apache
-RUN mkdir -p /var/run/apache2
-RUN chown -R www-data: /var/run/apache2
+RUN mkdir -p /var/www/site
+RUN chown -R www-data: /var/www/site
 
 # Enable apache mods.
 RUN a2enmod php7.0
 RUN a2enmod rewrite
 
-# Expose apache.
+# Update the PHP.ini file, enable <? ?> tags and quieten logging.
+RUN sed -i "s/short_open_tag = Off/short_open_tag = On/" /etc/php/7.0/apache2/php.ini
+RUN sed -i "s/error_reporting = .*$/error_reporting = E_ERROR | E_WARNING | E_PARSE/" /etc/php/7.0/apache2/php.ini
+
+# Expose apache
 EXPOSE 80
 
 # Manually set up the apache environment variables
@@ -29,17 +33,14 @@ ENV APACHE_LOCK_DIR /var/lock/apache2
 ENV APACHE_PID_FILE /var/run/apache2.pid
 
 # copy dirs
-COPY ./web/ /var/www/html/
-WORKDIR /etc/init.d/
+COPY ./web/ /var/www/site
+ADD ./web/apache-config.conf /etc/apache2/sites-enabled/000-default.conf
 CMD /usr/sbin/apache2ctl -D FOREGROUND
-
-# VOLUME ["/var/log/apache2","/var/log/supervisor","/var/log/mysql","/var/lib/mysql"]
-# ENTRYPOINT ["/assets/bin/entrypoint"]
 
 # --------------------
 # HOW TO USE
 # --------------------
-# docker run --rm  -p 8080:80 -i -t cmsweb /bin/sh
+# docker run --rm  -p 8080:80 -i -t cmsweb
 # will be accessible from host on 8080
 
-# docker run --rm  -p 8080:80 -i -t cmsweb /bin/sh
+# docker run --rm  -p 8080:80 -i -t cmsweb bash
