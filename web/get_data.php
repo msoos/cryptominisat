@@ -30,7 +30,7 @@ class MainDataGetter
         $this->max_confl = $this->sql_get_max_restart($maxConfl);
         $this->columndivs = array();
         $this->data_tmp = array();
-        $this->everyn = 1000;
+        $this->everyn = 200;
     }
 
     private function sql_get_max_restart($maxConfl)
