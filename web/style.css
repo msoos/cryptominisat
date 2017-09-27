@@ -19,6 +19,7 @@ div.full_selector {
 
 #labelW {
     width:20%;
+    vertical-align: middle;
 }
 
 div.draghandle.dygraph-label {
@@ -113,7 +114,6 @@ a {
 #plot-table-a td
 {
     padding: 0 0 0 0;
-    vertical-align:top;
     text-align:left;
     font-size:0.80em;
 }
