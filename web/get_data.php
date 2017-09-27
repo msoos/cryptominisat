@@ -185,10 +185,10 @@ class MainDataGetter
         $this->runQuery("restart");
 
         $this->print_one_graph(
-            "Restarts"
+            "Time"
             , array("runtime")
             , array("")
-            , True
+            , False
         );
 
         $this->print_one_graph(
@@ -213,49 +213,49 @@ class MainDataGetter
             "Avg. branch depth"
             , array("branchDepth")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. branch depth delta"
             , array("branchDepthDelta")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. trail depth"
             , array("trailDepth")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. trail depth delt"
             , array("trailDepthDelta")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. glue of newly learnt clauses"
             , array("glue")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. size of newly learnt clauses"
             , array("size")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
             "Avg. no. of resolutions carried out for 1st UIP"
             , array("resolutions")
             , array("")
-            , True
+            , False //set TRUE for standard deviation
         );
 
         $this->print_one_graph(
