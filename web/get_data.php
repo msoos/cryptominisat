@@ -184,30 +184,28 @@ class MainDataGetter
     {
         $this->runQuery("restart");
 
-//         $this->print_one_graph(
-//             "No. of restarts"
-//             , array("restarts")
-//             , array("")
-//         );
-
-        /*print_one_graph(array("propsPerDec")
-            , array("avg. no. propagations per decision"));*/
+        $this->print_one_graph(
+            "Restarts"
+            , array("runtime")
+            , array("")
+            , True
+        );
 
         $this->print_one_graph(
             "Distribution of clause types %"
             , array(
-            "set"
-            , "numIrredBins"
-            , "numRedBins"
-            , "numIrredLongs"
-            , "numRedLongs"
+                "set"
+                , "numIrredBins"
+                , "numRedBins"
+                , "numIrredLongs"
+                , "numRedLongs"
             )
             ,array(
-            "unit cls"
-            , "irred bin"
-            , "red bin"
-            , "irred long"
-            , "ired long"
+                "unit cls"
+                , "irred bin"
+                , "red bin"
+                , "irred long"
+                , "ired long"
             )
         );
 
@@ -322,20 +320,6 @@ class MainDataGetter
             , "long red"
             )
         );
-
-//         $this->print_one_graph(
-//             "Resolutions used clause types %"
-//             , array(
-//               "resolBin"
-//             , "resolLIrred"
-//             , "resolLRed"
-//             )
-//             ,array(
-//               "bin"
-//             , "long irred"
-//             , "long red"
-//             )
-//         );
 
         /*print_one_graph("branchDepthSD", array("branchDepthSD")
             , array("branch depth std dev"));
