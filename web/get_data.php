@@ -5,7 +5,7 @@ $maxConfl = 50000000000;
 //error_reporting(E_STRICT);
 
 $runID = $_GET["id"];
-$runID = 5796126;
+# $runID = 5796126;
 
 class MainDataGetter
 {
@@ -397,7 +397,7 @@ class Simplifications
         array_push($json_tmp, 0);
         while($arr=$result->fetchArray(SQLITE3_ASSOC))
         {
-            $confl = (int)$row["confl"];
+            $confl = (int)$arr["confl"];
             array_push($json_tmp, $confl);
         }
         return $json_tmp;
