@@ -122,22 +122,22 @@ function createHTMLforGraphs()
 {
     var datagraphs = document.getElementById("datagraphs");
     for (var i = 0; i < graph_data.length; i++) {
-        datagraphs.innerHTML += "\
-        <div id=\"" + graph_data[i].blockDivID + "\">\
-        <table id=\"plot-table-a\">\
+        datagraphs.innerHTML += '\
+        <div id="' + graph_data[i].blockDivID + '">\
+        <table id="plot-table-a">\
         <tr>\
-        <td><div id=\"" + graph_data[i].dataDivID + "\" class=\"myPlotData\"></div></td>\
-        <td id=\"labelW\">\
+        <td><div id="' + graph_data[i].dataDivID + '" class="myPlotData"></div></td>\
+        <td id="labelW">\
 \
-        <table id=\"plot-table-a\">\
+        <table id="plot-table-a">\
         <tr><td>"+ graph_data[i].title +"</td></tr>\
-        <tr><td><div id=\"" + graph_data[i].labelDivID + "\" class=\"draghandle\"></div></td></tr>\
+        <tr><td><div id="' + graph_data[i].labelDivID + '" class="draghandle"></div></td></tr>\
         </table>\
 \
         </td>\
         </tr>\
         </table>\
-        </div>";
+        </div>';
     }
 }
 
