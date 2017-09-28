@@ -46,14 +46,17 @@ docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
 To build and run locally:
 
 ```
+git submodule update --init
 docker build -t cms .
 cat myfile.cnf | docker run --rm -i -a stdin -a stdout cms
 ```
 
-To build the web interface:
+To build and run the web interface:
+
 ```
+git submodule update --init
 docker build -t cmsweb -f Dockerfile.web .
-cat myfile.cnf | docker run --rm -i -a stdin -a stdout -p 80:80 cmsweb
+docker run --rm -i -a stdin -a stdout -p 80:80 cmsweb
 ```
 
 

@@ -40,7 +40,11 @@ CMD /usr/sbin/apache2ctl -D FOREGROUND
 # --------------------
 # HOW TO USE
 # --------------------
-# docker run --rm  -p 8080:80 -i -t cmsweb
-# will be accessible from host on 8080
 
+# run normally:
+# docker run --rm  -p 8080:80 -i -t cmsweb
+# -> will be accessible from host on 8080
+
+# how to debug:
 # docker run --rm  -p 8080:80 -i -t cmsweb bash
+# -> will drop to shell
