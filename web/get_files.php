@@ -4,7 +4,7 @@ include "connect.php";
 $unfinished = $_GET["unfinish"] == "true";
 $sat = $_GET["sat"] == "true";
 $unsat = $_GET["unsat"] == "true";
-$gitrev = 'f3fc12d8582dcada94802882c6108d10b3581cfa';
+# $gitrev = 'f3fc12d8582dcada94802882c6108d10b3581cfa';
 $unfinished = True;
 $sat = True;
 $unsat = True;
@@ -12,7 +12,7 @@ $unsat = True;
 $json = array();
 function get_files_for_gitrev($sat, $unsat, $unfinished)
 {
-    global $sql, $gitrev, $json;
+    global $sql, $json;
 
     $toadd = "(";
     $num = 0;
@@ -33,10 +33,9 @@ function get_files_for_gitrev($sat, $unsat, $unfinished)
     $toadd .= ")";
 
     $query = "
-    select solverRun.runID as runID, tags.tag as fname
+    select solverRun.runID as runID, tags.tag as fname, solverRun.gitrev as mygitrev
     from tags, solverRun left join finishup on (finishup.runID = solverRun.runID)
     where solverRun.runID = tags.runID
-    and solverRun.gitrev = :gitrev
     and tags.tagname='filename'
     and $toadd
     order by tags.tag;";
@@ -44,7 +43,6 @@ function get_files_for_gitrev($sat, $unsat, $unfinished)
     #print $query;
 
     $stmt = $sql->prepare($query);
-    $stmt->bindValue(":gitrev", $gitrev);
     if (!$stmt) {
         print "Error:".$sql->lastErrorMsg();
         die("Cannot prepare statement");
@@ -57,7 +55,8 @@ function get_files_for_gitrev($sat, $unsat, $unfinished)
         $numfiles++;
         $data = array(
             'fname' => $arr["fname"],
-            'runID' => $arr["runID"]
+            'runID' => $arr["runID"],
+            'gitrev' => $arr["mygitrev"]
         );
         array_push($json, $data);
         # var_dump($arr);
