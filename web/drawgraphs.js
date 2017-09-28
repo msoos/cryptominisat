@@ -129,7 +129,7 @@ function createHTMLforGraphs()
         <td><div id="' + graph_data[i].dataDivID + '" class="myPlotData"></div></td>\
         <td id="labelW">\
             <table id="plot-table-a">\
-                <tr><td>"'+ graph_data[i].title +'"</td></tr>\
+                <tr><td>'+ graph_data[i].title +'</td></tr>\
                 <tr><td><div id="' + graph_data[i].labelDivID + '" class="draghandle"></div></td></tr>\
             </table>\
         </td>\
