@@ -10,6 +10,10 @@ EXPOSE 80
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y apache2 apache2-utils libapache2-mod-php php-sqlite3 && rm -rf /var/lib/apt/lists/*
 
+# generate dygraph & get nodejs
+# cd web
+# ./install_web.sh
+
 # Setup Apache
 RUN mkdir -p /var/www/site
 RUN chown -R www-data: /var/www/site
