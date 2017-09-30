@@ -2921,7 +2921,7 @@ SolveFeatures Solver::calculate_features() const
     SolveFeaturesCalc extract(this);
     SolveFeatures feat = extract.extract();
     feat.avg_confl_size = hist.conflSizeHistLT.avg();
-    feat.avg_confl_glue = hist.glueHistLT.avg();
+    feat.avg_confl_glue = hist.glueHistLTAll.avg();
     feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();
     feat.avg_trail_depth_delta = hist.trailDepthDeltaHist.avg();
     feat.avg_branch_depth = hist.branchDepthHist.avg();
@@ -2929,8 +2929,8 @@ SolveFeatures Solver::calculate_features() const
 
     feat.confl_size_min = hist.conflSizeHistLT.getMin();
     feat.confl_size_max = hist.conflSizeHistLT.getMax();
-    feat.confl_glue_min = hist.glueHistLT.getMin();
-    feat.confl_glue_max = hist.glueHistLT.getMax();
+    feat.confl_glue_min = hist.glueHistLTAll.getMin();
+    feat.confl_glue_max = hist.glueHistLTAll.getMax();
     feat.branch_depth_min = hist.branchDepthHist.getMin();
     feat.branch_depth_max = hist.branchDepthHist.getMax();
     feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();

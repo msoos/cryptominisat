@@ -69,6 +69,30 @@ inline std::string restart_type_to_string(const Restart type)
     return "Ooops, undefined!";
 }
 
+inline std::string restart_type_to_short_string(const Restart type)
+{
+    switch(type) {
+        case Restart::glue:
+            return "glue";
+
+        case Restart::geom:
+            return "geom";
+
+        case Restart::luby:
+            return "luby";
+
+        case Restart::glue_geom:
+            return "gl/geo";
+
+        case Restart::never:
+            return "never restart";
+    }
+
+        assert(false && "oops, one of the restart types has no string name");
+
+        return "Ooops, undefined!";
+}
+
 //Removed by which algorithm. NONE = not eliminated
 enum class Removed : unsigned char {
     none

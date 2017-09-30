@@ -1049,8 +1049,7 @@ lbool Searcher::search()
                 hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
             }
             if (!handle_conflict<update_bogoprops>(confl)) {
-                dump_search_sql(myTime);
-                dump_search_loop_stats();
+                dump_search_loop_stats(myTime);
                 return l_False;
             }
             reduce_db_if_needed();
@@ -1088,8 +1087,7 @@ lbool Searcher::search()
 
             dec_ret = new_decision();
             if (dec_ret != l_Undef) {
-                dump_search_sql(myTime);
-                dump_search_loop_stats();
+                dump_search_loop_stats(myTime);
                 return dec_ret;
             }
         }
@@ -1111,8 +1109,7 @@ lbool Searcher::search()
     if (!solver->datasync->syncData()) {
         return l_False;
     }
-    dump_search_sql(myTime);
-    dump_search_loop_stats();
+    dump_search_loop_stats(myTime);
 
     return l_Undef;
 }
@@ -1226,7 +1223,7 @@ void Searcher::check_need_restart()
     ) {
         check_blocking_restart();
         if (hist.glueHist.isvalid()
-            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLT.avg()
+            && conf.local_glue_multiplier * hist.glueHist.avg() > hist.glueHistLTLimited.avg()
         ) {
             params.needToStopSearch = true;
         }
@@ -1396,9 +1393,10 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     if (params.rest_type == Restart::glue
         && VSIDS
     ) {
-        hist.glueHistLT.push(std::min<size_t>(glue, 50));
-        hist.glueHist.push(glue);
+        hist.glueHistLTLimited.push(std::min<size_t>(glue, 50));
     }
+    hist.glueHistLTAll.push(glue);
+    hist.glueHist.push(glue);
 }
 
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
@@ -1729,32 +1727,40 @@ lbool Searcher::burst_search()
     return status;
 }
 
-void Searcher::print_restart_header() const
+void Searcher::print_restart_header()
 {
-    cout
-    << "c"
-    << " " << std::setw(5) << "rest"
-    << " " << std::setw(5) << "conf"
-    << " " << std::setw(5) << "freevar"
-    << " " << std::setw(5) << "IrrL"
-    << " " << std::setw(5) << "IrrB"
-    << " " << std::setw(7) << "l/longC"
-    << " " << std::setw(7) << "l/allC";
+    //Print restart output header
+    if (lastRestartPrintHeader == 0
+        ||(lastRestartPrintHeader + 20000) < sumConflicts
+    ) {
+        cout
+        << "c"
+        << " " << std::setw(6) << "type"
+        << " " << std::setw(5) << "VSIDS"
+        << " " << std::setw(5) << "rest"
+        << " " << std::setw(5) << "conf"
+        << " " << std::setw(5) << "freevar"
+        << " " << std::setw(5) << "IrrL"
+        << " " << std::setw(5) << "IrrB"
+        << " " << std::setw(7) << "l/longC"
+        << " " << std::setw(7) << "l/allC";
 
-    for(size_t i = 0; i < longRedCls.size(); i++) {
-        cout << " " << std::setw(4) << "RedL" << i;
+        for(size_t i = 0; i < longRedCls.size(); i++) {
+            cout << " " << std::setw(4) << "RedL" << i;
+        }
+
+        cout
+        << " " << std::setw(5) << "RedB"
+        << " " << std::setw(7) << "l/longC"
+        << " " << std::setw(7) << "l/allC"
+        << endl;
+        lastRestartPrintHeader = sumConflicts;
     }
-
-    cout
-    << " " << std::setw(5) << "RedB"
-    << " " << std::setw(7) << "l/longC"
-    << " " << std::setw(7) << "l/allC"
-    << endl;
 }
 
 void Searcher::print_restart_stat_line() const
 {
-    printBaseStats();
+    print_restart_stats_base();
     if (conf.print_full_restart_stat) {
         solver->print_clause_stats();
         hist.print();
@@ -1765,24 +1771,20 @@ void Searcher::print_restart_stat_line() const
     cout << endl;
 }
 
-void Searcher::printBaseStats() const
+void Searcher::print_restart_stats_base() const
 {
-    cout
-    << "c"
-    //<< omp_get_thread_num()
-    << " " << std::setw(5) << sumRestarts();
+    cout << "c"
+         << " " << std::setw(6) << restart_type_to_short_string(params.rest_type);
+    cout << " " << std::setw(5) << (int)VSIDS;
+    cout << " " << std::setw(5) << sumRestarts();
 
     if (sumConflicts >  20000) {
-        cout
-        << " " << std::setw(4) << sumConflicts/1000 << "K";
+        cout << " " << std::setw(4) << sumConflicts/1000 << "K";
     } else {
-        cout
-        << " " << std::setw(5) << sumConflicts;
+        cout << " " << std::setw(5) << sumConflicts;
     }
 
-    cout
-    << " " << std::setw(7) << solver->get_num_free_vars()
-    ;
+    cout << " " << std::setw(7) << solver->get_num_free_vars();
 }
 
 struct MyInvSorter {
@@ -1835,16 +1837,10 @@ void Searcher::print_restart_stat()
 {
     //Print restart stat
     if (conf.verbosity
+        && !conf.print_all_restarts
         && ((lastRestartPrint + conf.print_restart_line_every_n_confl)
           < sumConflicts)
     ) {
-        //Print restart output header
-        if (lastRestartPrintHeader == 0
-            ||(lastRestartPrintHeader + 20000) < sumConflicts
-        ) {
-            print_restart_header();
-            lastRestartPrintHeader = sumConflicts;
-        }
         print_restart_stat_line();
         lastRestartPrint = sumConflicts;
     }
@@ -1953,8 +1949,12 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
     return l_Undef;
 }
 
-inline void Searcher::dump_search_loop_stats()
+inline void Searcher::dump_search_loop_stats(double myTime)
 {
+    print_restart_header();
+    dump_search_sql(myTime);
+    if (conf.verbosity && conf.print_all_restarts)
+        print_restart_stat_line();
     #ifdef STATS_NEEDED
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses

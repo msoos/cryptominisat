@@ -74,7 +74,7 @@ class Searcher : public HyperEngine
         void reduce_db_if_needed();
         bool clean_clauses_if_needed();
         lbool perform_scc_and_varreplace_if_needed();
-        void dump_search_loop_stats();
+        void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
         void print_search_loop_num();
         uint64_t loop_num;
@@ -94,9 +94,9 @@ class Searcher : public HyperEngine
         uint64_t lastRestartPrintHeader = 0;
         void     print_restart_stat();
         void     print_iteration_solving_stats();
-        void     print_restart_header() const;
+        void     print_restart_header();
         void     print_restart_stat_line() const;
-        void     printBaseStats() const;
+        void     print_restart_stats_base() const;
         void     print_clause_stats() const;
         uint64_t sumRestarts() const;
         const SearchHist& getHistory() const;

@@ -208,6 +208,7 @@ class DLL_PUBLIC SolverConf
         int  doPrintGateDot; ///< Print DOT file of gates
         int  doPrintConflDot; ///< Print DOT file for each conflict
         int  print_full_restart_stat;
+        int  print_all_restarts;
         int  verbStats;
         int do_print_times; ///Print times during verbose output
         int print_restart_line_every_n_confl;

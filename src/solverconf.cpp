@@ -82,6 +82,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doPrintGateDot   (false)
         , doPrintConflDot  (false)
         , print_full_restart_stat   (false)
+        , print_all_restarts (false)
         , verbStats        (0)
         , do_print_times(1)
         , print_restart_line_every_n_confl(7000)
