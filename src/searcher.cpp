@@ -1604,7 +1604,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    Clause* cl = analyze_conflict<update_bogoprops>(
+    Clause* subsimed_cl = analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
@@ -1633,7 +1633,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    cl = handle_last_confl_otf_subsumption(cl, glue, backtrack_level);
+    Clause* cl = handle_last_confl_otf_subsumption(subsimed_cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
