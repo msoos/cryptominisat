@@ -194,15 +194,13 @@ class MainDataGetter
         $this->print_one_graph(
             "Distribution of clause types %"
             , array(
-                "set"
-                , "numIrredBins"
+                "numIrredBins"
                 , "numRedBins"
                 , "numIrredLongs"
                 , "numRedLongs"
             )
             ,array(
-                "unit cls"
-                , "irred bin"
+                "irred bin"
                 , "red bin"
                 , "irred long"
                 , "ired long"
