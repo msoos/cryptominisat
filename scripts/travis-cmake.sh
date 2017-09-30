@@ -313,12 +313,12 @@ if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC"
     ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
 
-cd ..
-pwd
-#we are now in the main dir, ./src dir is here
-
 case $CMS_CONFIG in
     WEB)
+        #we are now in the main dir, ./src dir is here
+        cd ..
+        pwd
+
         cd web
         sudo apt-get install python-software-properties
         sudo add-apt-repository -y ppa:chris-lea/node.js
@@ -327,23 +327,33 @@ case $CMS_CONFIG in
         ./install_web.sh
     ;;
 
+    STATS)
+        ln -s ../scripts/build-scripts/* .
+        ./test_id.sh
+    ;;
+
+    COVERAGE)
+        #we are now in the main dir, ./src dir is here
+        cd ..
+        pwd
+
+        # capture coverage info
+        lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
+
+        # filter out system and test code
+        lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
+
+        # debug before upload
+        lcov --list coverage.info
+
+        # only attempt upload if $COVERTOKEN is set
+        if [ -n "$COVERTOKEN" ]; then
+            coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
+        fi
+    ;;
+
     *)
         echo "\"${CMS_CONFIG}\" No further testing"
     ;;
 esac
 
-if [ "$CMS_CONFIG" = "COVERAGE" ]; then
-  # capture coverage info
-  lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
-
-  # filter out system and test code
-  lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
-
-  # debug before upload
-  lcov --list coverage.info
-
-  # only attempt upload if $COVERTOKEN is set
-  if [ -n "$COVERTOKEN" ]; then
-    coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
-  fi
-fi
