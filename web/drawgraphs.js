@@ -80,7 +80,7 @@ function drawOneGraph(i)
             strokeStyle: "black",
             errorBars: graph_data[i].minmax,
             customBars: graph_data[i].minmax,
-            colors: (graph_data[i].simple_line ? ['#000000'] : ['#ef1414', '#efab14', '#1f3da2', '#10bf10', '#1fad14', '#88109d', '#d0e913']),
+            colors: (graph_data[i].simple_line ? ['#000000'] : ['#ef1414', '#efab14', '#1f3da2', '#1fad14', '#88109d', '#d0e913']),
             fillAlpha: (graph_data[i].minmax ? 0.1 : 0.5),
             dateWindow: [0, maxConflRestart],
             drawCallback: function(me, initial) {
