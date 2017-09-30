@@ -158,7 +158,7 @@ public:
             ss << std::fixed << std::setprecision(prec) << std::setw(w) << std::left
             << avg();
         } else {
-            ss << std::setw(5) << "?";
+            ss << std::setw(w) << "?";
         }
 
         return ss.str();
