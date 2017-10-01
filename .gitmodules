@@ -13,6 +13,7 @@
 [submodule "web/dygraphs"]
 	path = web/dygraphs
 	url = https://github.com/danvk/dygraphs
+	ignore = dirty
 [submodule "utils/licensecheck"]
 	path = utils/licensecheck
 	url = https://github.com/msoos/licensecheck.git
