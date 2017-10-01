@@ -262,6 +262,10 @@ void Searcher::create_otf_subsuming_long_clause(
         cout
         << "New smaller clause OTF:" << cl << endl;
     }
+#ifdef STATS_NEEDED
+    cl.stats.ID = clauseID;
+    clauseID++;
+#endif
     *drat << cl << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
 }
@@ -1500,7 +1504,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     }
 
     //No on-the-fly subsumption
-    if (cl == NULL || cl->gauss_temp_cl()) {
+    if (cl == NULL || cl->gauss_temp_cl() || !conf.doOTFSubsume) {
         cl = cl_alloc.Clause_new(learnt_clause
         , sumConflicts
         #ifdef STATS_NEEDED
@@ -1557,17 +1561,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     }
 
     assert(cl->size() > 2);
-    *drat << learnt_clause << fin;
-    if (conf.verbosity >= 6) {
-        cout
-        << "Detaching OTF subsumed (LAST) clause:"
-        << *cl
-        << endl;
-    }
-    solver->detachClause(*cl);
-    assert(cl->size() > learnt_clause.size());
+#ifdef VERBOSE_DEBUG
+    cout << "Detaching OTF subsumed (LAST) clause:" << *cl << endl;
+#endif
+    *(solver->drat) << deldelay << *cl << fin;
+    solver->detachClause(*cl, false);
 
     //Shrink clause
+    assert(cl->size() > learnt_clause.size());
     for (uint32_t i = 0; i < learnt_clause.size(); i++) {
         (*cl)[i] = learnt_clause[i];
     }
@@ -1578,6 +1579,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (cl->red() && cl->stats.glue > glue) {
         cl->stats.glue = glue;
     }
+    #ifdef STATS_NEEDED
+        cl->stats.ID = clauseID;
+        clauseID++;
+    #endif
+    *(solver->drat) << *cl << fin << findelay;
+
     #ifdef STATS_NEEDED
     cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
     #endif
@@ -1604,7 +1611,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
-    Clause* subsimed_cl = analyze_conflict<update_bogoprops>(
+    Clause* subsumed_cl = analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
@@ -1633,7 +1640,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl_otf_subsumption(subsimed_cl, glue, backtrack_level);
+    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, backtrack_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 

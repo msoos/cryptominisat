@@ -7,30 +7,35 @@ import optparse
 
 
 class Data:
-    def __init__(self, cl, used_for_time=-1, num_used=0):
+    def __init__(self, used_for_time=-1, num_used=0):
         self.used_for_time = used_for_time
         self.num_used = num_used
-        self.cl = cl
 
 
 def parse_lemmas(lemmafname):
     """Takes the lemma file and returns map with clauses' IDs and data"""
 
-    # clause in lemmas: "CLAUSE 0 ID last_used num_used"
+    # clause in "lemmas" file layout:
+    # CLAUSE 0 ID last_used num_used
 
     ret = {}
     with open(lemmafname, "r") as f:
         for line, lineno in zip(f, xrange(1000*1000*1000)):
             l = line.strip().split(" ")
 
+            if len(l) == 1:
+                # empty clause, finished
+                continue
+
+            myid = int(l[len(l)-3])
+            last_used = int(l[len(l)-2])
+            num_used = int(l[len(l)-1])
+
             # checking that delete line is ok AND calculating used_for_time
             if line[0] == "d":
-                myid = int(l[len(l)-3])
                 if myid <= 1:
                     continue
 
-                last_used = int(l[len(l)-2])
-                num_used = int(l[len(l)-1])
                 ret[myid].used_for_time = last_used - myid
                 if options.verbose:
                     print("line %d" % lineno)
@@ -38,27 +43,12 @@ def parse_lemmas(lemmafname):
                     print("num used:", num_used)
                     print(ret[myid].num_used)
 
-                # self-subsuming resolution keeps the ID the same
-                cl = sorted(l[1:-4])
-                if ret[myid].cl != cl:
-                    if options.verbose:
-                        print("orig cl: ", ret[myid].cl)
-                        print("new cl : ", cl)
-                        print("Updated num used, id %d, num used orig %d add: %d"
-                              % (myid, ret[myid].num_used, num_used))
-                    ret[myid].num_used += num_used
                 continue
 
-            if len(l) == 1:
-                # empty clause, finished
-                continue
-
-            cl = sorted(l[:-4])
-            myid = int(l[len(l)-3])
-            num_used = int(l[len(l)-1])
+            #cl = sorted(l[:-4])
             used_for_time = 1000000  # used until the end
 
-            ret[myid] = Data(cl, used_for_time, num_used)
+            ret[myid] = Data(used_for_time, num_used)
 
     print("Parsed %d number of good lemmas" % len(ret))
     return ret
@@ -82,11 +72,13 @@ class Query:
         SELECT runID
         FROM startUp
         order by startTime desc
-        limit 1
         """
 
         runID = None
         for row in self.c.execute(q):
+            if runID != None:
+                print("ERROR: More than one RUN in the SQL, can't add lemmas!")
+                exit(-1)
             runID = int(row[0])
 
         print("runID: %d" % runID)
