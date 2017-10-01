@@ -67,6 +67,9 @@ class QueryHelper:
 
         runID = None
         for row in self.c.execute(q):
+            if runID is not None:
+                print("ERROR: More than one RUN IDs in file!")
+                exit(-1)
             runID = int(row[0])
 
         print("runID: %d" % runID)
