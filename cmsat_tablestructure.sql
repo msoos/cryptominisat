@@ -154,6 +154,7 @@ CREATE TABLE `clauseStats` (
 
   `vsids_vars_avg` double NOT NULL,
   `vsids_vars_var` double NOT NULL,
+  `vsids_vars_min` double NOT NULL,
   `vsids_vars_max` double NOT NULL,
 
   `antecedents_glue_long_reds_avg` float NOT NULL,
