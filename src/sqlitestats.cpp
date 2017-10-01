@@ -724,6 +724,7 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `vsids_vars_avg`,"
     << " `vsids_vars_var`,"
+    << " `vsids_vars_min`,"
     << " `vsids_vars_max`,"
 
     << " `antecedents_glue_long_reds_avg`,"
@@ -821,6 +822,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.var());
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.getMin());
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.getMax());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.age_long_reds.avg() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.age_long_reds.var() );
