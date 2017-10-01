@@ -36,10 +36,6 @@ import sklearn.ensemble
 import sklearn.metrics
 
 
-def mypow(to, base):
-    return base**to
-
-
 class QueryHelper:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
