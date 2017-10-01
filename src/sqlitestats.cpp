@@ -695,7 +695,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 45;
+    const size_t numElems = 46;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
