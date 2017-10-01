@@ -49,6 +49,10 @@ struct Drat
     {
     }
 
+    virtual bool get_conf_id() {
+        return false;
+    }
+
     virtual bool something_delayed()
     {
         return false;
@@ -86,6 +90,10 @@ struct DratFile: public Drat
     void setFile(std::ostream* _file) override
     {
         file = _file;
+    }
+
+    bool get_conf_id() {
+        return add_ID;
     }
 
     bool something_delayed() override
