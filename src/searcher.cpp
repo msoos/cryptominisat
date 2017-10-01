@@ -1737,8 +1737,8 @@ lbool Searcher::burst_search()
 void Searcher::print_restart_header()
 {
     //Print restart output header
-    if (lastRestartPrintHeader == 0
-        ||(lastRestartPrintHeader + 20000) < sumConflicts
+    if ((lastRestartPrintHeader == 0 || (lastRestartPrintHeader + 20000) < sumConflicts)
+        && conf.verbosity
     ) {
         cout
         << "c"
