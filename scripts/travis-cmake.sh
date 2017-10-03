@@ -329,7 +329,11 @@ case $CMS_CONFIG in
 
     STATS)
         ln -s ../scripts/build-scripts/* .
+        ln -s ../scripts/learn/* .
         ./test_id.sh
+        sudo apt-get install -y --force pip graphviz
+        sudo pip install sklearn
+        ./test-predict.sh
     ;;
 
     COVERAGE)
