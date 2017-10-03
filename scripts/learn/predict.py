@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2017  Mate Soos
@@ -28,7 +28,7 @@ import pickle
 import re
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 import sklearn.linear_model
 import sklearn.tree
 import sklearn.svm
@@ -143,24 +143,27 @@ class Query2 (QueryHelper):
         X = []
         y = []
 
+        comment = ""
+        if not options.restart_used:
+            comment = "--"
         q = """
         SELECT clauseStats.*
-        -- , restart.*
+        {comment} , restart.*
         FROM clauseStats, goodClauses
-        -- , restart
+        {comment} , restart
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         and clauseStats.restarts > 1 -- to avoid history being invalid
 
-        -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
-        -- and restart.clauseIDendExclusive > clauseStats.clauseID
+        {comment} and restart.clauseIDstartInclusive <= clauseStats.clauseID
+        {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
         order by RANDOM()
         limit {1}
-        """.format(self.runID, options.limit)
+        """.format(self.runID, options.limit, comment=comment)
         for row in self.c.execute(q):
             r = self.transform_clstat_row(row)
             X.append(r)
@@ -169,24 +172,24 @@ class Query2 (QueryHelper):
         # BAD caluses
         q = """
         SELECT clauseStats.*
-        -- , restart.*
+        {comment} , restart.*
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
-        -- , restart
+        {comment} , restart
         where
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
         and clauseStats.restarts > 1 -- to avoid history being invalid
 
-        -- and restart.clauseIDstartInclusive <= clauseStats.clauseID
-        -- and restart.clauseIDendExclusive > clauseStats.clauseID
+        {comment} and restart.clauseIDstartInclusive <= clauseStats.clauseID
+        {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
         order by RANDOM()
         limit {1}
-        """.format(self.runID, options.limit)
+        """.format(self.runID, options.limit, comment=comment)
         for row in self.c.execute(q):
             r = self.transform_clstat_row(row)
             X.append(r)
@@ -216,15 +219,16 @@ class Query2 (QueryHelper):
         for row in self.c.execute(q):
             names = list(map(lambda x: "clauseStats." + x[0], self.c.description))
 
-        q = """
-        select restart.*
-        from restart
-        limit 1
-        """
-        for row in self.c.execute(q):
-            names.extend(list(map(lambda x: "restart." + x[0], self.c.description)))
+        if options.restart_used:
+            q = """
+            select restart.*
+            from restart
+            limit 1
+            """
+            for row in self.c.execute(q):
+                names.extend(list(map(lambda x: "restart." + x[0], self.c.description)))
 
-        print(names)
+        print("Clause stat names: %s" % names)
 
         if options.add_pow2:
             orignames = copy.deepcopy(names)
@@ -233,7 +237,7 @@ class Query2 (QueryHelper):
 
         self.clstats_names = names
         self.ntoc = {}
-        for n, c in zip(names, xrange(10000)):
+        for n, c in zip(names, range(10000)):
             self.ntoc[n] = c
 
     def reset_some_to_null(self, row):
@@ -327,33 +331,33 @@ class Classify:
     def learn(self, X, y, classifiername="classifier"):
         print("number of features:", len(X[0]))
 
-        print("total samples: %5d   percentage of good ones %-3.2f" %
+        print("total samples: %5d   percentage of good ones %-3.4f" %
               (len(X), sum(y)/float(len(X))*100.0))
-        #X = StandardScaler().fit_transform(X)
+        # X = StandardScaler().fit_transform(X)
 
         print("Training....")
         t = time.time()
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=0)
 
-        #clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
-        #self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=5)
-        #self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-        #self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
+        # clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
+        # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
+        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=2)
+        # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
+        # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time()-t))
 
         print("Calculating scores....")
-
         t = time.time()
         y_pred = self.clf.predict(X_test)
         recall = sklearn.metrics.recall_score(y_test, y_pred)
         prec = sklearn.metrics.precision_score(y_test, y_pred)
         # avg_prec = self.clf.score(X, y)
-        print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
+        print("prec: %-3.4f  recall: %-3.4f T: %-3.2f" %
               (prec, recall, (time.time()-t)))
 
-        with open(classifiername, "w") as f:
+        with open(classifiername, "wb") as f:
             pickle.dump(self.clf, f)
 
     def output_to_dot(self, clstats_names, fname):
@@ -373,7 +377,7 @@ class Classify:
 
 class Check:
     def __init__(self, classf_fname):
-        with open(classf_fname, "r") as f:
+        with open(classf_fname, "rb") as f:
             self.clf = pickle.load(f)
 
     def check(self, X, y):
@@ -387,6 +391,7 @@ class Check:
         # avg_prec = self.clf.score(X, y)
         print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
               (prec, recall, (time.time()-t)))
+
 
 if __name__ == "__main__":
 
@@ -408,6 +413,9 @@ if __name__ == "__main__":
     parser.add_option("--data", "-d", action="store_true", default=False,
                       dest="data", help="Just get the dumped data")
 
+    parser.add_option("--restart", "-r", action="store_true", default=False,
+                      dest="restart_used", help="Help use restart stat about clause")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -419,7 +427,7 @@ if __name__ == "__main__":
         print("----- INTERMEDIATE predictor -------\n")
         t = time.time()
         if options.data:
-            with open(dbfname, "r") as f:
+            with open(dbfname, "rb") as f:
                 cl = pickle.load(f)
         else:
             cl = get_one_file(dbfname)
@@ -439,7 +447,7 @@ if __name__ == "__main__":
             else:
                 cl_data.add(cl)
 
-            with open("%s.cldata" % cleanname, "w") as f:
+            with open("%s.cldata" % cleanname, "wb") as f:
                 pickle.dump(cl, f)
 
     # intermediate predictor is final
@@ -458,9 +466,9 @@ if __name__ == "__main__":
         clf = Classify()
         clf.learn(cl_data.X, cl_data.y)
         print("Columns used were:")
-        for i, name in zip(xrange(100), cl_data.colnames):
+        for i, name in zip(range(100), cl_data.colnames):
             print("%-3d  %s" % (i, name))
         clf.output_to_dot(cl_data.colnames, "final.dot")
 
-        with open("final.cldata", "w") as f:
+        with open("final.cldata", "wb") as f:
             pickle.dump(cl_data, f)
