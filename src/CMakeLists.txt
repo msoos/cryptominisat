@@ -22,6 +22,22 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
 )
 
+if (NOT WIN32)
+    add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
+    #add_cxx_flag_if_supported("-Wduplicated-cond")
+    #add_cxx_flag_if_supported("-Wduplicated-branches")
+    add_cxx_flag_if_supported("-Wlogical-op")
+    add_cxx_flag_if_supported("-Wrestrict")
+    add_cxx_flag_if_supported("-Wnull-dereference")
+    add_cxx_flag_if_supported("-Wjump-misses-init")
+    add_cxx_flag_if_supported("-Wdouble-promotion")
+    add_cxx_flag_if_supported("-Wshadow")
+    add_cxx_flag_if_supported("-Wformat=2")
+    add_cxx_flag_if_supported("-Wextra-semi")
+    add_cxx_flag_if_supported("-pedantic")
+    #add_cxx_flag_if_supported("-Wdeprecated")
+endif()
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(Boost_FOUND)

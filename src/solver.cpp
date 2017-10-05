@@ -1075,15 +1075,15 @@ void Solver::check_model_for_assumptions() const
 
 void Solver::check_recursive_minimization_effectiveness(const lbool status)
 {
-    const SearchStats& stats = Searcher::get_stats();
+    const SearchStats& srch_stats = Searcher::get_stats();
     if (status == l_Undef
         && conf.doRecursiveMinim
-        && stats.recMinLitRem + stats.litsRedNonMin > 100000
+        && srch_stats.recMinLitRem + srch_stats.litsRedNonMin > 100000
     ) {
         double remPercent =
-            float_div(stats.recMinLitRem, stats.litsRedNonMin)*100.0;
+            float_div(srch_stats.recMinLitRem, srch_stats.litsRedNonMin)*100.0;
 
-        double costPerGained = float_div(stats.recMinimCost, remPercent);
+        double costPerGained = float_div(srch_stats.recMinimCost, remPercent);
         if (costPerGained > 200ULL*1000ULL*1000ULL) {
             conf.doRecursiveMinim = false;
             if (conf.verbosity) {
@@ -1851,27 +1851,27 @@ lbool Solver::simplify_problem(const bool startup)
 
 void Solver::print_prop_confl_stats(
     std::string name
-    , const vector<ClauseUsageStats>& stats
+    , const vector<ClauseUsageStats>& cl_usage_stats
 ) const {
-    for(size_t i = 0; i < stats.size(); i++) {
+    for(size_t i = 0; i < cl_usage_stats.size(); i++) {
         //Nothing to do here, no stats really
-        if (stats[i].num == 0)
+        if (cl_usage_stats[i].num == 0)
             continue;
 
         cout
         << name << " : " << std::setw(4) << i
         << " Avg. props: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << float_div(stats[i].sumProp, stats[i].num);
+        << float_div(cl_usage_stats[i].sumProp, cl_usage_stats[i].num);
 
         cout
         << name << " : " << std::setw(4) << i
         << " Avg. confls: " << std::setw(6) << std::fixed << std::setprecision(2)
-        << float_div(stats[i].sumConfl, stats[i].num);
+        << float_div(cl_usage_stats[i].sumConfl, cl_usage_stats[i].num);
 
-        if (stats[i].sumLookedAt > 0) {
+        if (cl_usage_stats[i].sumLookedAt > 0) {
             cout
             << " Props&confls/looked at: " << std::setw(6) << std::fixed << std::setprecision(2)
-            << float_div(stats[i].sumPropAndConfl(), stats[i].sumLookedAt);
+            << float_div(cl_usage_stats[i].sumPropAndConfl(), cl_usage_stats[i].sumLookedAt);
         }
 
         cout << endl;
