@@ -26,14 +26,14 @@ To run on file `myfile.cnf`:
 
 ```
 docker pull msoos/cryptominisat
-cat myfile.cnf | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
+cat myfile.cnf | docker run --rm -i msoos/cryptominisat
 ```
 
 To run on a hand-written CNF:
 
 ```
 docker pull msoos/cryptominisat
-echo "1 2 0" | docker run --rm -i -a stdin -a stdout msoos/cryptominisat
+echo "1 2 0" | docker run --rm -i msoos/cryptominisat
 ```
 
 To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
@@ -48,7 +48,7 @@ To build and run locally:
 ```
 git submodule update --init
 docker build -t cms .
-cat myfile.cnf | docker run --rm -i -a stdin -a stdout cms
+cat myfile.cnf | docker run --rm -i cms
 ```
 
 To build and run the web interface:
@@ -56,7 +56,7 @@ To build and run the web interface:
 ```
 git submodule update --init
 docker build -t cmsweb -f Dockerfile.web .
-docker run --rm -i -a stdin -a stdout -p 80:80 cmsweb
+docker run --rm -i -p 80:80 cmsweb
 ```
 
 

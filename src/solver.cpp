@@ -372,7 +372,7 @@ and only internally
 Clause* Solver::add_clause_int(
     const vector<Lit>& lits
     , const bool red
-    , ClauseStats stats
+    , ClauseStats cl_stats
     , const bool attach_long
     , vector<Lit>* finalLits
     , bool addDrat
@@ -385,9 +385,10 @@ Clause* Solver::add_clause_int(
     cout << "add_clause_int clause " << lits << endl;
     #endif //VERBOSE_DEBUG
 
-    //Make stats sane
+    //Make cl_stats sane
     #ifdef STATS_NEEDED
-    uint64_t introduced_at_conflict = std::min<uint64_t>(Searcher::sumConflicts, stats.introduced_at_conflict);
+    uint64_t introduced_at_conflict =
+        std::min<uint64_t>(Searcher::sumConflicts, cl_stats.introduced_at_conflict);
     #endif
 
     vector<Lit> ps = lits;
@@ -456,9 +457,9 @@ Clause* Solver::add_clause_int(
             #endif
             );
             if (red) {
-                c->makeRed(stats.glue);
+                c->makeRed(cl_stats.glue);
             }
-            c->stats = stats;
+            c->stats = cl_stats;
             #ifdef STATS_NEEDED
             c->stats.introduced_at_conflict = introduced_at_conflict;
             #endif
