@@ -25,7 +25,7 @@ rm -if ${OUTDIR}/*.sqlite
 echo "Predicting file $1"
 
 # running CNF
-./cryptominisat5 --verb 0 ${FNAME} --ml 0 --zero-exit-status --clid --sql 2 --sqlitedb ${OUTDIR}/data.sqlite ${OUTDIR}/drat_out
+./cryptominisat5 ${FNAME} --verb 0 --gluecut0 10000 --ml 0 --zero-exit-status --clid --sql 2 --sqlitedb ${OUTDIR}/data.sqlite ${OUTDIR}/drat_out
 
 # getting drat
 ./tests/drat-trim/drat-trim ${FNAME} ${OUTDIR}/drat_out -l ${OUTDIR}/lemmas
