@@ -23,15 +23,12 @@ import sqlite3
 import optparse
 import numpy
 import time
-import copy
 import pickle
 import re
+import pandas as pd
 
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-import sklearn.linear_model
 import sklearn.tree
-import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
 
@@ -41,8 +38,6 @@ class QueryHelper:
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
-        self.get_clausestats_names()
-        self.rststats_names = self.get_rststats_names()[5:]
 
     def get_rststats_names(self):
         names = None
@@ -92,7 +87,7 @@ class Query2 (QueryHelper):
         for l in q.split('\n'):
             self.c.execute(l)
 
-        print("indexes created %-3.2f" % (time.time()-t))
+        print("indexes created %-3.2f" % (time.time() - t))
 
     def get_max_clauseID(self):
         q = """
@@ -132,7 +127,7 @@ class Query2 (QueryHelper):
             r = list(row)
             good = r[0]
             total = r[1]
-            perc = float(good)/float(total)
+            perc = float(good) / float(total)
             r = self.transform_rst_row(r[2:])
             X.append(r)
             y.append(perc)
@@ -140,14 +135,11 @@ class Query2 (QueryHelper):
         return X, y
 
     def get_clstats(self):
-        X = []
-        y = []
-
         comment = ""
         if not options.restart_used:
             comment = "--"
         q = """
-        SELECT clauseStats.*
+        SELECT clauseStats.*, 1 as good
         {comment} , restart.*
         FROM clauseStats, goodClauses
         {comment} , restart
@@ -161,17 +153,14 @@ class Query2 (QueryHelper):
         {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit, comment=comment)
-        for row in self.c.execute(q):
-            r = self.transform_clstat_row(row)
-            X.append(r)
-            y.append(1)  # GOOD clause
+
+        df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
         q = """
-        SELECT clauseStats.*
+        SELECT clauseStats.*, 0 as good
         {comment} , restart.*
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
@@ -187,114 +176,11 @@ class Query2 (QueryHelper):
         {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
 
         and clauseStats.runID = {0}
-        order by RANDOM()
         limit {1}
         """.format(self.runID, options.limit, comment=comment)
-        for row in self.c.execute(q):
-            r = self.transform_clstat_row(row)
-            X.append(r)
-            y.append(0)  # BAD clause
+        df2 = pd.read_sql_query(q, self.conn)
 
-        return X, y
-
-    def transform_rst_row(self, row):
-        row = self.reset_some_to_null(row)
-
-        ret = []
-        if options.add_pow2:
-            for x in row:
-                ret.extend([x, x*x])
-
-            return ret
-        else:
-            return row
-
-    def get_clausestats_names(self):
-        q = """
-        select clauseStats.*
-        from clauseStats
-        limit 1
-        """
-        names = None
-        for row in self.c.execute(q):
-            names = list(map(lambda x: "clauseStats." + x[0], self.c.description))
-
-        if options.restart_used:
-            q = """
-            select restart.*
-            from restart
-            limit 1
-            """
-            for row in self.c.execute(q):
-                names.extend(list(map(lambda x: "restart." + x[0], self.c.description)))
-
-        print("Clause stat names: %s" % names)
-
-        if options.add_pow2:
-            orignames = copy.deepcopy(names)
-            for name in orignames:
-                names.append("%s**2" % name)
-
-        self.clstats_names = names
-        self.ntoc = {}
-        for n, c in zip(names, range(10000)):
-            self.ntoc[n] = c
-
-    def reset_some_to_null(self, row):
-        set_to_null = [
-            "clauseStats.runID",
-            "clauseStats.simplifications",
-            "clauseStats.restarts",
-            "clauseStats.conflicts",
-            "clauseStats.clauseID",
-            "clauseStats.conflicts_this_restart"]
-
-        # set these too in case restarts are added
-        # "restart.runID",
-        # "restart.simplifications",
-        # "restart.restarts",
-        # "restart.conflicts",
-        # "restart.runtime",
-        # "restart.clauseIDstartInclusive",
-        # "restart.clauseIDendExclusive"]
-
-        row2 = list(row)
-        for e in set_to_null:
-            row_to_reset = self.ntoc[e]
-            row2[row_to_reset] = 0
-
-        return row2
-
-    def transform_clstat_row(self, row):
-        row = self.reset_some_to_null(row)
-
-        if row[self.ntoc["clauseStats.decision_level_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.backtrack_level_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.trail_depth_level_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.vsids_vars_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.size_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.glue_hist"]] == 0 or \
-            row[self.ntoc["clauseStats.num_antecedents_hist"]] == 0:
-                print("ERROR: Data is in error:", row)
-                exit(-1)
-
-        row[self.ntoc["clauseStats.decision_level"]]   /= row[self.ntoc["clauseStats.decision_level_hist"]]
-        row[self.ntoc["clauseStats.backtrack_level"]]  /= row[self.ntoc["clauseStats.backtrack_level_hist"]]
-        row[self.ntoc["clauseStats.trail_depth_level"]]/= row[self.ntoc["clauseStats.trail_depth_level_hist"]]
-        row[self.ntoc["clauseStats.vsids_vars_avg"]]   /= row[self.ntoc["clauseStats.vsids_vars_hist"]]
-        #row[self.ntoc["clauseStats.size"]]             /= row[self.ntoc["clauseStats.size_hist"]]
-        #row[self.ntoc["clauseStats.glue"]]             /= row[self.ntoc["clauseStats.glue_hist"]]
-        #row[self.ntoc["clauseStats.num_antecedents"]]  /= row[self.ntoc["clauseStats.num_antecedents_hist"]]
-
-        row[self.ntoc["clauseStats.decision_level_hist"]] = 0
-        row[self.ntoc["clauseStats.backtrack_level_hist"]] = 0
-        row[self.ntoc["clauseStats.trail_depth_level_hist"]] = 0
-        row[self.ntoc["clauseStats.vsids_vars_hist"]] = 0
-        #row[self.ntoc["clauseStats.size_hist"]] = 0
-        #row[self.ntoc["clauseStats.glue_hist"]] = 0
-        #row[self.ntoc["clauseStats.num_antecedents_hist"]] = 0
-
-        return row
+        return pd.concat([df, df2])
 
 
 class Data:
@@ -314,58 +200,62 @@ class Data:
 
 def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
-    clstats_names = None
 
+    df = None
     with Query2(dbfname) as q:
-        q.create_indexes()
-        clstats_names = q.clstats_names
-        X, y = q.get_clstats()
-        assert len(X) == len(y)
+        if not options.no_recreate_indexes:
+            q.create_indexes()
+        df = q.get_clstats()
+        print(df.head())
 
-    cl_data = Data(X, y, clstats_names)
-
-    return cl_data
+    return df
 
 
 class Classify:
-    def learn(self, X, y, classifiername="classifier"):
-        print("number of features:", len(X[0]))
+    def __init__(self, df):
+        self.features = df.columns.values[:-1].flatten().tolist()
+
+        toremove = ["decision_level_hist", "backtrack_level_hist",
+                    "trail_depth_level_hist", "vsids_vars_hist", "runID"]
+
+        for t in toremove:
+            self.features.remove(t)
+        print("features:", self.features)
+
+    def learn(self, df, cleanname, classifiername="classifier"):
 
         print("total samples: %5d   percentage of good ones %-3.4f" %
-              (len(X), sum(y)/float(len(X))*100.0))
-        # X = StandardScaler().fit_transform(X)
+              (df.shape[0],
+               sum(df["good"]) / float(df.shape[0]) * 100.0))
 
         print("Training....")
         t = time.time()
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=0)
-
         # clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=2)
+        self.clf = sklearn.tree.DecisionTreeClassifier(
+            random_state=90, max_depth=2)
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        self.clf.fit(X_train, y_train)
-        print("Training finished. T: %-3.2f" % (time.time()-t))
+        train, test = train_test_split(df, test_size=0.2, random_state=90)
+        self.clf.fit(train[self.features], train["good"])
+
+        print("Training finished. T: %-3.2f" % (time.time() - t))
 
         print("Calculating scores....")
         t = time.time()
-        y_pred = self.clf.predict(X_test)
-        recall = sklearn.metrics.recall_score(y_test, y_pred)
-        prec = sklearn.metrics.precision_score(y_test, y_pred)
+        y_pred = self.clf.predict(test[self.features])
+        recall = sklearn.metrics.recall_score(test["good"], y_pred)
+        prec = sklearn.metrics.precision_score(test["good"], y_pred)
         # avg_prec = self.clf.score(X, y)
         print("prec: %-3.4f  recall: %-3.4f T: %-3.2f" %
-              (prec, recall, (time.time()-t)))
+              (prec, recall, (time.time() - t)))
 
         with open(classifiername, "wb") as f:
             pickle.dump(self.clf, f)
 
-    def output_to_dot(self, clstats_names, fname):
-        print("clstats_names len:", len(clstats_names))
-        print("clstats_names: %s" % clstats_names)
-
+    def output_to_dot(self, fname):
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
-                                     feature_names=clstats_names,
+                                     feature_names=self.features,
                                      class_names=["BAD", "GOOD"],
                                      filled=True, rounded=True,
                                      special_characters=True,
@@ -382,7 +272,7 @@ class Check:
 
     def check(self, X, y):
         print("total samples: %5d   percentage of good ones %-3.2f" %
-              (len(X), sum(y)/float(len(X))*100.0))
+              (len(X), sum(y) / float(len(X)) * 100.0))
 
         t = time.time()
         y_pred = self.clf.predict(X)
@@ -390,7 +280,95 @@ class Check:
         prec = sklearn.metrics.precision_score(y, y_pred)
         # avg_prec = self.clf.score(X, y)
         print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
-              (prec, recall, (time.time()-t)))
+              (prec, recall, (time.time() - t)))
+
+
+def transform_row():
+    row = self.reset_some_to_null(row)
+    return row
+
+    def reset_some_to_null(self, row):
+        set_to_null = [
+            "cl.runID"
+            #"cl.simplifications",
+            #"cl.restarts",
+            #"cl.conflicts",
+            #"cl.clauseID",
+            #"cl.conflicts_this_restart"
+        ]
+
+        if options.restart_used:
+            set_to_null.extend([
+                "restart.runID",
+                "restart.simplifications",
+                "restart.restarts",
+                "restart.conflicts",
+                "restart.runtime",
+                "restart.clauseIDstartInclusive",
+                "restart.clauseIDendExclusive"])
+
+        row2 = list(row)
+        for e in set_to_null:
+            row_to_reset = self.ntoc[e]
+            row2[row_to_reset] = 0
+
+        return row2
+
+    def transform_clstat_row(self, row):
+        row = self.reset_some_to_null(row)
+
+        if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
+                row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
+                row[self.ntoc["cl.trail_depth_level_hist"]] == 0 or \
+                row[self.ntoc["cl.vsids_vars_hist"]] == 0 or \
+                row[self.ntoc["cl.size_hist"]] == 0 or \
+                row[self.ntoc["cl.glue_hist"]] == 0 or \
+                row[self.ntoc["cl.num_antecedents_hist"]] == 0:
+            print("ERROR: Data is in error:", row)
+            exit(-1)
+
+        return row
+
+    row[self.ntoc["cl.size"]] /= row[self.ntoc["cl.size_hist"]]
+    row[self.ntoc["cl.glue"]] /= row[self.ntoc["cl.glue_hist"]]
+    row[self.ntoc["cl.num_antecedents"]
+        ] /= row[self.ntoc["cl.num_antecedents_hist"]]
+    row[self.ntoc["cl.decision_level"]] /= row[self.ntoc["cl.decision_level_hist"]]
+    row[self.ntoc["cl.backtrack_level"]
+        ] /= row[self.ntoc["cl.backtrack_level_hist"]]
+    row[self.ntoc["cl.trail_depth_level"]
+        ] /= row[self.ntoc["cl.trail_depth_level_hist"]]
+    row[self.ntoc["cl.vsids_vars_avg"]] /= row[self.ntoc["cl.vsids_vars_hist"]]
+
+    row[self.ntoc["cl.decision_level_hist"]] = 0
+    row[self.ntoc["cl.backtrack_level_hist"]] = 0
+    row[self.ntoc["cl.trail_depth_level_hist"]] = 0
+    row[self.ntoc["cl.vsids_vars_hist"]] = 0
+    #row[self.ntoc["cl.size_hist"]] = 0
+    #row[self.ntoc["cl.glue_hist"]] = 0
+    #row[self.ntoc["cl.num_antecedents_hist"]] = 0
+
+
+def one_predictor(dbfname, final_df):
+    t = time.time()
+    df = get_one_file(dbfname)
+    cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+    print("Read in data in %-5.2f secs" % (time.time() - t))
+
+    print(df.describe())
+    #df = transform(pddata);
+    if final_df is None:
+        final_df = df
+    else:
+        final_df = final_df.concat([df, final_df])
+
+    if options.check:
+        check = Check(options.check)
+        check.check(cl.X, cl.y)
+    else:
+        clf = Classify(df)
+        clf.learn(df, "%s.classifier" % cleanname)
+        clf.output_to_dot("%s.tree.dot" % cleanname)
 
 
 if __name__ == "__main__":
@@ -416,39 +394,19 @@ if __name__ == "__main__":
     parser.add_option("--restart", "-r", action="store_true", default=False,
                       dest="restart_used", help="Help use restart stat about clause")
 
+    parser.add_option("--noind", action="store_true", default=False,
+                      dest="no_recreate_indexes", help="Don't recreate indexes")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give at least one directory")
         exit(-1)
 
-    cl_data = None
+    final_df = None
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------\n")
-        t = time.time()
-        if options.data:
-            with open(dbfname, "rb") as f:
-                cl = pickle.load(f)
-        else:
-            cl = get_one_file(dbfname)
-        print("Read in data in %-5.2f secs" % (time.time()-t))
-
-        cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
-
-        if options.check:
-            check = Check(options.check)
-            check.check(cl.X, cl.y)
-        else:
-            clf = Classify()
-            clf.learn(cl.X, cl.y, "%s.classifier" % cleanname)
-            clf.output_to_dot(cl.colnames, "%s.tree.dot" % cleanname)
-            if cl_data is None:
-                cl_data = cl
-            else:
-                cl_data.add(cl)
-
-            with open("%s.cldata" % cleanname, "wb") as f:
-                pickle.dump(cl, f)
+        one_predictor(dbfname, final_df)
 
     # intermediate predictor is final
     if len(args) == 1:
@@ -463,12 +421,6 @@ if __name__ == "__main__":
         check = Check()
         check.check(cl.X, cl.y)
     else:
-        clf = Classify()
-        clf.learn(cl_data.X, cl_data.y)
-        print("Columns used were:")
-        for i, name in zip(range(100), cl_data.colnames):
-            print("%-3d  %s" % (i, name))
-        clf.output_to_dot(cl_data.colnames, "final.dot")
-
-        with open("final.cldata", "wb") as f:
-            pickle.dump(cl_data, f)
+        clf = Classify(final_df)
+        clf.learn(final_df, "final.classifier")
+        clf.output_to_dot("final.dot")
