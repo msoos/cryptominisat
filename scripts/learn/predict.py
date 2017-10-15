@@ -215,10 +215,34 @@ class Classify:
     def __init__(self, df):
         self.features = df.columns.values[:-1].flatten().tolist()
 
-        toremove = ["decision_level_hist", "backtrack_level_hist",
-                    "trail_depth_level_hist", "vsids_vars_hist", "runID"]
+        toremove = ["decision_level_hist",
+                    "backtrack_level_hist",
+                    "trail_depth_level_hist",
+                    "vsids_vars_hist",
+                    "runID",
+                    "simplifications",
+                    "restarts",
+                    "conflicts",
+                    "clauseID",
+                    "size_hist",
+                    "glue_hist",
+                    "num_antecedents_hist",
+                    "decision_level",
+                    "backtrack_level",
+                    "good"]
+ 
+        if options.restart_used:
+            toremove.extend([
+                "restart.runID",
+                "restart.simplifications",
+                "restart.restarts",
+                "restart.conflicts",
+                "restart.runtime",
+                "restart.clauseIDstartInclusive",
+                "restart.clauseIDendExclusive"])
 
         for t in toremove:
+            print("removing feature:", t)
             self.features.remove(t)
         print("features:", self.features)
 
@@ -233,7 +257,7 @@ class Classify:
         # clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
         self.clf = sklearn.tree.DecisionTreeClassifier(
-            random_state=90, max_depth=2)
+            random_state=90, max_depth=5)
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
         train, test = train_test_split(df, test_size=0.2, random_state=90)
@@ -283,71 +307,29 @@ class Check:
               (prec, recall, (time.time() - t)))
 
 
-def transform_row():
-    row = self.reset_some_to_null(row)
-    return row
-
-    def reset_some_to_null(self, row):
-        set_to_null = [
-            "cl.runID"
-            #"cl.simplifications",
-            #"cl.restarts",
-            #"cl.conflicts",
-            #"cl.clauseID",
-            #"cl.conflicts_this_restart"
-        ]
-
-        if options.restart_used:
-            set_to_null.extend([
-                "restart.runID",
-                "restart.simplifications",
-                "restart.restarts",
-                "restart.conflicts",
-                "restart.runtime",
-                "restart.clauseIDstartInclusive",
-                "restart.clauseIDendExclusive"])
-
-        row2 = list(row)
-        for e in set_to_null:
-            row_to_reset = self.ntoc[e]
-            row2[row_to_reset] = 0
-
-        return row2
-
-    def transform_clstat_row(self, row):
-        row = self.reset_some_to_null(row)
-
-        if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
-                row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
-                row[self.ntoc["cl.trail_depth_level_hist"]] == 0 or \
-                row[self.ntoc["cl.vsids_vars_hist"]] == 0 or \
-                row[self.ntoc["cl.size_hist"]] == 0 or \
-                row[self.ntoc["cl.glue_hist"]] == 0 or \
-                row[self.ntoc["cl.num_antecedents_hist"]] == 0:
+def transform(df):
+    def check_clstat_row(self, row):
+        if row[self.ntoc["decision_level_hist"]] == 0 or \
+                row[self.ntoc["backtrack_level_hist"]] == 0 or \
+                row[self.ntoc["trail_depth_level_hist"]] == 0 or \
+                row[self.ntoc["vsids_vars_hist"]] == 0 or \
+                row[self.ntoc["size_hist"]] == 0 or \
+                row[self.ntoc["glue_hist"]] == 0 or \
+                row[self.ntoc["num_antecedents_hist"]] == 0:
             print("ERROR: Data is in error:", row)
             exit(-1)
 
         return row
 
-    row[self.ntoc["cl.size"]] /= row[self.ntoc["cl.size_hist"]]
-    row[self.ntoc["cl.glue"]] /= row[self.ntoc["cl.glue_hist"]]
-    row[self.ntoc["cl.num_antecedents"]
-        ] /= row[self.ntoc["cl.num_antecedents_hist"]]
-    row[self.ntoc["cl.decision_level"]] /= row[self.ntoc["cl.decision_level_hist"]]
-    row[self.ntoc["cl.backtrack_level"]
-        ] /= row[self.ntoc["cl.backtrack_level_hist"]]
-    row[self.ntoc["cl.trail_depth_level"]
-        ] /= row[self.ntoc["cl.trail_depth_level_hist"]]
-    row[self.ntoc["cl.vsids_vars_avg"]] /= row[self.ntoc["cl.vsids_vars_hist"]]
+    df["cl.size_rel"] = df["size"]/df["size_hist"]
+    df["cl.glue_rel"] = df["glue"]/df["glue_hist"]
+    df["cl.num_antecedents_rel"] = df["num_antecedents"]/df["num_antecedents_hist"]
+    df["cl.decision_level_rel"] = df["decision_level"]/df["decision_level_hist"]
+    df["cl.backtrack_level_rel"] = df["backtrack_level"]/df["backtrack_level_hist"]
+    df["cl.trail_depth_level_rel"] = df["trail_depth_level"]/df["trail_depth_level_hist"]
+    df["cl.vsids_vars_rel"] = df["vsids_vars_avg"]/df["vsids_vars_hist"]
 
-    row[self.ntoc["cl.decision_level_hist"]] = 0
-    row[self.ntoc["cl.backtrack_level_hist"]] = 0
-    row[self.ntoc["cl.trail_depth_level_hist"]] = 0
-    row[self.ntoc["cl.vsids_vars_hist"]] = 0
-    #row[self.ntoc["cl.size_hist"]] = 0
-    #row[self.ntoc["cl.glue_hist"]] = 0
-    #row[self.ntoc["cl.num_antecedents_hist"]] = 0
-
+    return df
 
 def one_predictor(dbfname, final_df):
     t = time.time()
@@ -356,7 +338,8 @@ def one_predictor(dbfname, final_df):
     print("Read in data in %-5.2f secs" % (time.time() - t))
 
     print(df.describe())
-    #df = transform(pddata);
+    df = transform(df);
+    print(df.describe())
     if final_df is None:
         final_df = df
     else:
