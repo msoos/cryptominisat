@@ -381,12 +381,8 @@ class Searcher : public HyperEngine
         double cla_inc;
         void decayClauseAct();
         unsigned guess_clause_array(
-            const uint32_t glue
+            const ClauseStats& glue
             , const uint32_t backtrack_lev
-            , const double vsids_cutoff
-            , double backtrack_cutoff = 0.2
-            , const double offset_percent = 0.0
-            , bool count_antec_glue_long_reds = false
         ) const;
 
         //SQL

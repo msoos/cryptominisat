@@ -310,8 +310,8 @@ void Main::add_supported_options()
         , "Glue value for lev 1 cut ('give another shot'")
     ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
         , "Keep all clauses at or below this value")
-    ("keepguess", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
-        , "Keep clauses that we guess to be good")
+    ("ml", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
+        , "Use ML model to guess clause effectiveness")
     ;
 
     std::ostringstream s_random_var_freq;

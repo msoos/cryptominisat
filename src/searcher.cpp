@@ -1529,12 +1529,11 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (which_arr == 0) {
             stats.red_cl_in_which0++;
         }
+
         if (conf.guess_cl_effectiveness) {
-            unsigned guess = guess_clause_array(cl->stats.glue, backtrack_level, 7.5, 0.2);
-            if (guess < which_arr) {
+            unsigned lower_it = guess_clause_array(cl->stats, backtrack_level);
+            if (lower_it) {
                 stats.guess_different++;
-            }
-            if (guess == 0) {
                 cl->stats.ttl = 1;
             }
         }
@@ -3125,43 +3124,29 @@ void Searcher::read_long_cls(
 }
 
 unsigned Searcher::guess_clause_array(
-    const uint32_t /*glue*/
-    , const uint32_t backtrack_lev
-    , const double vsids_cutoff
-    , double backtrack_cutoff
-    , const double offset_percent
-    , bool count_antec_glue_long_reds
+    const ClauseStats& stats
+    , uint32_t backtrack_lev
 ) const {
     uint32_t votes = 0;
-    double perc_trail_depth = (double)trail.size()/hist.trailDepthHistLT.avg();
-    if (perc_trail_depth < (0.3-offset_percent)) {
+    //double trail_depth_rel = (double)trail.size()/hist.trailDepthHistLT.avg();
+    double dec_lev_rel = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
+    if (dec_lev_rel < 0.10) {
         votes++;
     }
 
-    double perc_dec_lev = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
-    if (perc_dec_lev < (0.3-offset_percent)) {
+    double backtrack_lev_rel = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
+    if (backtrack_lev_rel < 0.10) {
         votes++;
     }
 
-    double perc_backtrack_lev = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (perc_backtrack_lev < (backtrack_cutoff-offset_percent)) {
-        votes++;
-    }
-
-    if (count_antec_glue_long_reds) {
-        if (antec_data.glue_long_reds.avg() > 12) {
-            votes += 1;
-        }
-    }
-
-    if (antec_data.vsids_vars.avg() > vsids_cutoff) {
-        votes += 2;
+    if (antec_data.glue_long_reds.avg() > 12) {
+        votes += 1;
     }
 
     if (votes > 2) {
-        return 0;
+        return true;
     }
-    return 1;
+    return false;
 }
 
 void Searcher::write_binary_cls(
