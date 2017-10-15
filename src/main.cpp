@@ -309,7 +309,7 @@ void Main::add_supported_options()
     ("gluecut1", po::value(&conf.glue_put_lev1_if_below_or_eq)->default_value(conf.glue_put_lev1_if_below_or_eq)
         , "Glue value for lev 1 cut ('give another shot'")
     ("adjustglue", po::value(&conf.adjust_glue_if_too_many_low)->default_value(conf.adjust_glue_if_too_many_low, s_adjust_low.str())
-        , "Keep all clauses at or below this value")
+        , "If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again")
     ("ml", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Use ML model to guess clause effectiveness")
     ;
