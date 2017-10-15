@@ -42,7 +42,7 @@ TEST(scc_test, find_1)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 1);
+    EXPECT_EQ(scc.get_binxors().size(), 1U);
 }
 
 TEST(scc_test, find_2)
