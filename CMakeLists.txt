@@ -38,7 +38,7 @@ message(STATUS "LIB directory is '${LIBDIR}'")
 message(STATUS "BIN directory is '${BINDIR}'")
 
 if(POLICY CMP0022)
-    cmake_policy(SET CMP0022 OLD)
+    cmake_policy(SET CMP0022 NEW)
 endif()
 
 if(POLICY CMP0048)
