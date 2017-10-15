@@ -230,7 +230,7 @@ class Classify:
                     "decision_level",
                     "backtrack_level",
                     "good"]
- 
+
         if options.restart_used:
             toremove.extend([
                 "restart.runID",
@@ -321,15 +321,19 @@ def transform(df):
 
         return row
 
-    df["cl.size_rel"] = df["size"]/df["size_hist"]
-    df["cl.glue_rel"] = df["glue"]/df["glue_hist"]
-    df["cl.num_antecedents_rel"] = df["num_antecedents"]/df["num_antecedents_hist"]
-    df["cl.decision_level_rel"] = df["decision_level"]/df["decision_level_hist"]
-    df["cl.backtrack_level_rel"] = df["backtrack_level"]/df["backtrack_level_hist"]
-    df["cl.trail_depth_level_rel"] = df["trail_depth_level"]/df["trail_depth_level_hist"]
-    df["cl.vsids_vars_rel"] = df["vsids_vars_avg"]/df["vsids_vars_hist"]
+    df["cl.size_rel"] = df["size"] / df["size_hist"]
+    df["cl.glue_rel"] = df["glue"] / df["glue_hist"]
+    df["cl.num_antecedents_rel"] = df["num_antecedents"] / \
+        df["num_antecedents_hist"]
+    df["cl.decision_level_rel"] = df["decision_level"] / df["decision_level_hist"]
+    df["cl.backtrack_level_rel"] = df["backtrack_level"] / \
+        df["backtrack_level_hist"]
+    df["cl.trail_depth_level_rel"] = df["trail_depth_level"] / \
+        df["trail_depth_level_hist"]
+    df["cl.vsids_vars_rel"] = df["vsids_vars_avg"] / df["vsids_vars_hist"]
 
     return df
+
 
 def one_predictor(dbfname, final_df):
     t = time.time()
@@ -338,7 +342,7 @@ def one_predictor(dbfname, final_df):
     print("Read in data in %-5.2f secs" % (time.time() - t))
 
     print(df.describe())
-    df = transform(df);
+    df = transform(df)
     print(df.describe())
     if final_df is None:
         final_df = df
