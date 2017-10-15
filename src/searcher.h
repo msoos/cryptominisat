@@ -473,8 +473,9 @@ inline void Searcher::bumpClauseAct(Clause* cl)
 {
     assert(!cl->getRemoved());
 
-    cl->stats.activity += cla_inc;
-    if (cl->stats.activity > 1e20 ) {
+    double new_val = cla_inc + (double)cl->stats.activity;
+    cl->stats.activity = (float)new_val;
+    if (cl->stats.activity > 1e20F ) {
         // Rescale
         for(ClOffset offs: longRedCls[2]) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
