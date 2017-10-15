@@ -434,9 +434,14 @@ The following configures the system to build a bare minimal binary&library. It n
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
 
-Web-based run explorer
+DRAT and ID generation
 -----
-Please see under web/README.markdown for details. This is an experimental feature.
+
+```
+./cryptominisat5 6s153.cnf.gz  --sql 1 --sqlitedb test.db --sqlfull 1 --clid drat.out
+```
+
+
 
 C usage
 -----
