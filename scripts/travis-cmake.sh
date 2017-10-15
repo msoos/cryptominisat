@@ -333,6 +333,7 @@ case $CMS_CONFIG in
         ./test_id.sh
         sudo apt-get install -y --force pip graphviz
         sudo pip install sklearn
+        sudo pip install pandas
         ./test-predict.sh
     ;;
 
