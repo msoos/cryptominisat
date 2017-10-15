@@ -3124,7 +3124,7 @@ void Searcher::read_long_cls(
 }
 
 unsigned Searcher::guess_clause_array(
-    const ClauseStats& stats
+    const ClauseStats& cl_stats
     , uint32_t backtrack_lev
 ) const {
     uint32_t votes = 0;

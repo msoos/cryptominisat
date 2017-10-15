@@ -1073,8 +1073,8 @@ void Main::parseCommandLine()
 
     try {
         manually_parse_some_options();
-    } catch(WrongParam& p) {
-        cerr << "ERROR: " << p.getMsg() << endl;
+    } catch(WrongParam& wp) {
+        cerr << "ERROR: " << wp.getMsg() << endl;
         exit(-1);
     }
 }
