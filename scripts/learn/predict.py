@@ -233,17 +233,17 @@ class Classify:
 
         if True:
             toremove.extend(["vsids_vars_avg",
-                    "vsids_vars_var",
-                    "vsids_vars_min",
-                    "vsids_vars_max",
-                    "vsids_of_resolving_literals_avg",
-                    "vsids_of_resolving_literals_var",
-                    "vsids_of_resolving_literals_min",
-                    "vsids_of_resolving_literals_max",
-                    "vsids_of_all_incoming_lits_avg",
-                    "vsids_of_all_incoming_lits_var",
-                    "vsids_of_all_incoming_lits_min",
-                    "vsids_of_all_incoming_lits_max"])
+                             "vsids_vars_var",
+                             "vsids_vars_min",
+                             "vsids_vars_max",
+                             "vsids_of_resolving_literals_avg",
+                             "vsids_of_resolving_literals_var",
+                             "vsids_of_resolving_literals_min",
+                             "vsids_of_resolving_literals_max",
+                             "vsids_of_all_incoming_lits_avg",
+                             "vsids_of_all_incoming_lits_var",
+                             "vsids_of_all_incoming_lits_min",
+                             "vsids_of_all_incoming_lits_max"])
 
         if options.restart_used:
             toremove.extend([
