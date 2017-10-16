@@ -82,7 +82,8 @@ class Query2 (QueryHelper):
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
-        create index `idxclid3` on `restart` (`runID`,`clauseIDstartInclusive`, `clauseIDendExclusive`);
+        create index `idxclid3` on `restart` (`runID`,
+                    `clauseIDstartInclusive`, `clauseIDendExclusive`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
