@@ -185,21 +185,6 @@ class Query2 (QueryHelper):
         return pd.concat([df, df2])
 
 
-class Data:
-    def __init__(self, X, y, colnames):
-        self.X = numpy.array(X)
-        self.y = numpy.array(y)
-        self.colnames = colnames
-
-    def add(self, other):
-        self.X = numpy.append(self.X, other.X, 0)
-        self.y = numpy.append(self.y, other.y, 0)
-        if len(self.colnames) == 0:
-            self.colnames = other.colnames
-        else:
-            assert self.colnames == other.colnames
-
-
 def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
 
