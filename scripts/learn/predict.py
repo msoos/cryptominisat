@@ -271,7 +271,6 @@ class Classify:
         y_pred = self.clf.predict(test[self.features])
         recall = sklearn.metrics.recall_score(test["good"], y_pred)
         prec = sklearn.metrics.precision_score(test["good"], y_pred)
-        # avg_prec = self.clf.score(X, y)
         print("prec: %-3.4f  recall: %-3.4f T: %-3.2f" %
               (prec, recall, (time.time() - t)))
 
