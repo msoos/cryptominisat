@@ -31,6 +31,7 @@ from sklearn.model_selection import train_test_split
 import sklearn.tree
 import sklearn.ensemble
 import sklearn.metrics
+import matplotlib.pyplot as plt
 
 
 class QueryHelper:
@@ -372,6 +373,13 @@ def one_predictor(dbfname, final_df):
         final_df = df
     else:
         final_df = final_df.concat([df, final_df])
+
+    # display
+    pd.options.display.mpl_style = "default"
+    with open("pandasdata.dat", "wb") as f:
+        pickle.dump(df, f)
+    # df.hist()
+    # df.boxplot()
 
     if options.check:
         check = Check(options.check)
