@@ -331,6 +331,7 @@ def transform(df):
                 row[self.ntoc["glue_hist"]] == 0 or \
                 row[self.ntoc["num_antecedents_hist"]] == 0:
             print("ERROR: Data is in error:", row)
+            assert(False)
             exit(-1)
 
         return row
