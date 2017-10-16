@@ -347,6 +347,14 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["trail_depth_level"] / \
         df["trail_depth_level_hist"]
     df["cl.vsids_vars_rel"] = df["vsids_vars_avg"] / df["vsids_vars_hist"]
+    old = set(df.columns.values.flatten().tolist())
+    df = df.dropna(how="all")
+    new = set(df.columns.values.flatten().tolist())
+    if len(old - new) > 0:
+        print("ERROR: a NaN number turned up")
+        print("columns: ", (old - new))
+        assert(False)
+        exit(-1)
 
     return df
 
