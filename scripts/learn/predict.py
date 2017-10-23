@@ -102,57 +102,7 @@ class Query2 (QueryHelper):
         if not options.restart_used:
             comment = "--"
 
-        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/{comment} restart.`\1` as `rst.\1`,/' ../tmp.txt
-        q = """
-        SELECT
-        clauseStats.`runID` as `cl.runID`,
-        clauseStats.`simplifications` as `cl.simplifications`,
-        clauseStats.`restarts` as `cl.restarts`,
-        clauseStats.`prev_restart` as `cl.prev_restart`,
-        clauseStats.`conflicts` as `cl.conflicts`,
-        clauseStats.`clauseID` as `cl.clauseID`,
-        clauseStats.`glue` as `cl.glue`,
-        clauseStats.`size` as `cl.size`,
-        clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`,
-        clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`,
-        clauseStats.`num_antecedents` as `cl.num_antecedents`,
-        clauseStats.`antecedents_avg_size` as `cl.antecedents_avg_size`,
-        clauseStats.`backtrack_level` as `cl.backtrack_level`,
-        clauseStats.`decision_level` as `cl.decision_level`,
-        clauseStats.`trail_depth_level` as `cl.trail_depth_level`,
-        clauseStats.`atedecents_binIrred` as `cl.atedecents_binIrred`,
-        clauseStats.`atedecents_binRed` as `cl.atedecents_binRed`,
-        clauseStats.`atedecents_longIrred` as `cl.atedecents_longIrred`,
-        clauseStats.`atedecents_longRed` as `cl.atedecents_longRed`,
-        clauseStats.`vsids_vars_avg` as `cl.vsids_vars_avg`,
-        clauseStats.`vsids_vars_var` as `cl.vsids_vars_var`,
-        clauseStats.`vsids_vars_min` as `cl.vsids_vars_min`,
-        clauseStats.`vsids_vars_max` as `cl.vsids_vars_max`,
-        clauseStats.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`,
-        clauseStats.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`,
-        clauseStats.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`,
-        clauseStats.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`,
-        clauseStats.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`,
-        clauseStats.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`,
-        clauseStats.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`,
-        clauseStats.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`,
-        clauseStats.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`,
-        clauseStats.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`,
-        clauseStats.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`,
-        clauseStats.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`,
-        clauseStats.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`,
-        clauseStats.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`,
-        clauseStats.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`,
-        clauseStats.`decision_level_hist` as `cl.decision_level_hist`,
-        clauseStats.`backtrack_level_hist` as `cl.backtrack_level_hist`,
-        clauseStats.`trail_depth_level_hist` as `cl.trail_depth_level_hist`,
-        clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`,
-        clauseStats.`size_hist` as `cl.size_hist`,
-        clauseStats.`glue_hist` as `cl.glue_hist`,
-        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`,
-
-        1 as good,
-
+        restart_dat = """
         {comment} restart.`runID` as `rst.runID`,
         {comment} restart.`simplifications` as `rst.simplifications`,
         {comment} restart.`restarts` as `rst.restarts`,
@@ -218,6 +168,64 @@ class Query2 (QueryHelper):
         {comment} restart.`set` as `rst.set`,
         {comment} restart.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`,
         {comment} restart.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
+        """.format(comment=comment)
+
+        clause_dat = """
+        clauseStats.`runID` as `cl.runID`,
+        clauseStats.`simplifications` as `cl.simplifications`,
+        clauseStats.`restarts` as `cl.restarts`,
+        clauseStats.`prev_restart` as `cl.prev_restart`,
+        clauseStats.`conflicts` as `cl.conflicts`,
+        clauseStats.`clauseID` as `cl.clauseID`,
+        clauseStats.`glue` as `cl.glue`,
+        clauseStats.`size` as `cl.size`,
+        clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`,
+        clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`,
+        clauseStats.`num_antecedents` as `cl.num_antecedents`,
+        clauseStats.`antecedents_avg_size` as `cl.antecedents_avg_size`,
+        clauseStats.`backtrack_level` as `cl.backtrack_level`,
+        clauseStats.`decision_level` as `cl.decision_level`,
+        clauseStats.`trail_depth_level` as `cl.trail_depth_level`,
+        clauseStats.`atedecents_binIrred` as `cl.atedecents_binIrred`,
+        clauseStats.`atedecents_binRed` as `cl.atedecents_binRed`,
+        clauseStats.`atedecents_longIrred` as `cl.atedecents_longIrred`,
+        clauseStats.`atedecents_longRed` as `cl.atedecents_longRed`,
+        clauseStats.`vsids_vars_avg` as `cl.vsids_vars_avg`,
+        clauseStats.`vsids_vars_var` as `cl.vsids_vars_var`,
+        clauseStats.`vsids_vars_min` as `cl.vsids_vars_min`,
+        clauseStats.`vsids_vars_max` as `cl.vsids_vars_max`,
+        clauseStats.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`,
+        clauseStats.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`,
+        clauseStats.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`,
+        clauseStats.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`,
+        clauseStats.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`,
+        clauseStats.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`,
+        clauseStats.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`,
+        clauseStats.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`,
+        clauseStats.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`,
+        clauseStats.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`,
+        clauseStats.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`,
+        clauseStats.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`,
+        clauseStats.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`,
+        clauseStats.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`,
+        clauseStats.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`,
+        clauseStats.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`,
+        clauseStats.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`,
+        clauseStats.`decision_level_hist` as `cl.decision_level_hist`,
+        clauseStats.`backtrack_level_hist` as `cl.backtrack_level_hist`,
+        clauseStats.`trail_depth_level_hist` as `cl.trail_depth_level_hist`,
+        clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`,
+        clauseStats.`size_hist` as `cl.size_hist`,
+        clauseStats.`glue_hist` as `cl.glue_hist`,
+        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`,
+        """
+
+        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/{comment} restart.`\1` as `rst.\1`,/' ../tmp.txt
+        q = """
+        SELECT
+        {clause_dat}
+        1 as good,
+        {restart_dat}
 
         FROM clauseStats, goodClauses
         {comment} , restart
@@ -231,19 +239,22 @@ class Query2 (QueryHelper):
         {comment} and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment)
+        """.format(self.runID, options.limit, comment=comment, restart_dat=restart_dat, clause_dat=clause_dat)
 
         df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
         q = """
-        SELECT clauseStats.*, 0 as good
-        {comment} , restart.*
+        SELECT
+        {clause_dat}
+        0 as good,
+        {restart_dat}
+
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         {comment} , restart
-        where
+        WHERE
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
@@ -253,7 +264,7 @@ class Query2 (QueryHelper):
         {comment} and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment)
+        """.format(self.runID, options.limit, comment=comment, restart_dat=restart_dat, clause_dat=clause_dat)
         df2 = pd.read_sql_query(q, self.conn)
 
         return pd.concat([df, df2])
@@ -276,45 +287,45 @@ class Classify:
     def __init__(self, df):
         self.features = df.columns.values.flatten().tolist()
 
-        toremove = ["decision_level_hist",
-                    "backtrack_level_hist",
-                    "trail_depth_level_hist",
-                    "vsids_vars_hist",
-                    "runID",
-                    "simplifications",
-                    "restarts",
-                    "conflicts",
-                    "clauseID",
-                    "size_hist",
-                    "glue_hist",
-                    "num_antecedents_hist",
-                    "decision_level",
-                    "backtrack_level",
+        toremove = ["cl.decision_level_hist",
+                    "cl.backtrack_level_hist",
+                    "cl.trail_depth_level_hist",
+                    "cl.vsids_vars_hist",
+                    "cl.runID",
+                    "cl.simplifications",
+                    "cl.restarts",
+                    "cl.conflicts",
+                    "cl.clauseID",
+                    "cl.size_hist",
+                    "cl.glue_hist",
+                    "cl.num_antecedents_hist",
+                    "cl.decision_level",
+                    "cl.backtrack_level",
                     "good"]
 
         if True:
-            toremove.extend(["vsids_vars_avg",
-                             "vsids_vars_var",
-                             "vsids_vars_min",
-                             "vsids_vars_max",
-                             "vsids_of_resolving_literals_avg",
-                             "vsids_of_resolving_literals_var",
-                             "vsids_of_resolving_literals_min",
-                             "vsids_of_resolving_literals_max",
-                             "vsids_of_all_incoming_lits_avg",
-                             "vsids_of_all_incoming_lits_var",
-                             "vsids_of_all_incoming_lits_min",
-                             "vsids_of_all_incoming_lits_max"])
+            toremove.extend(["cl.vsids_vars_avg",
+                             "cl.vsids_vars_var",
+                             "cl.vsids_vars_min",
+                             "cl.vsids_vars_max",
+                             "cl.vsids_of_resolving_literals_avg",
+                             "cl.vsids_of_resolving_literals_var",
+                             "cl.vsids_of_resolving_literals_min",
+                             "cl.vsids_of_resolving_literals_max",
+                             "cl.vsids_of_all_incoming_lits_avg",
+                             "cl.vsids_of_all_incoming_lits_var",
+                             "cl.vsids_of_all_incoming_lits_min",
+                             "cl.vsids_of_all_incoming_lits_max"])
 
         if options.restart_used:
             toremove.extend([
-                "restart.runID",
-                "restart.simplifications",
-                "restart.restarts",
-                "restart.conflicts",
-                "restart.runtime",
-                "restart.clauseIDstartInclusive",
-                "restart.clauseIDendExclusive"])
+                "rst.runID",
+                "rst.simplifications",
+                "rst.restarts",
+                "rst.conflicts",
+                "rst.runtime",
+                "rst.clauseIDstartInclusive",
+                "rst.clauseIDendExclusive"])
 
         for t in toremove:
             print("removing feature:", t)
