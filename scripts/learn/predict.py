@@ -21,7 +21,6 @@
 from __future__ import print_function
 import sqlite3
 import optparse
-import numpy
 import time
 import pickle
 import re
@@ -31,7 +30,6 @@ from sklearn.model_selection import train_test_split
 import sklearn.tree
 import sklearn.ensemble
 import sklearn.metrics
-import matplotlib.pyplot as plt
 
 
 class QueryHelper:
