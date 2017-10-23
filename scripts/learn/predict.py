@@ -278,7 +278,9 @@ def get_one_file(dbfname):
         if not options.no_recreate_indexes:
             q.create_indexes()
         df = q.get_clstats()
+        print("Printing head:")
         print(df.head())
+        print("Print head done.")
 
     return df
 
@@ -435,9 +437,16 @@ def one_predictor(dbfname, final_df):
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
     print("Read in data in %-5.2f secs" % (time.time() - t))
 
+    print("Describing----")
     print(df.describe())
+    print("Describe done.---")
+    print("Features: ", df.columns.values.flatten().tolist())
     df = transform(df)
+
+    print("Describingi post-transform ----")
     print(df.describe())
+    print("Describe done.---")
+
     if final_df is None:
         final_df = df
     else:
@@ -488,7 +497,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
-        print("ERROR: You must give at least one directory")
+        print("ERROR: You must give at least one file")
         exit(-1)
 
     final_df = None
