@@ -461,7 +461,7 @@ def one_predictor(dbfname, final_df):
 
     if options.check:
         check = Check(options.check)
-        check.check(cl.X, cl.y)
+        check.check(df)
     else:
         clf = Classify(df)
         clf.learn(df, "%s.classifier" % cleanname)
@@ -516,7 +516,7 @@ if __name__ == "__main__":
     print("----- FINAL predictor -------\n")
     if options.check:
         check = Check()
-        check.check(cl.X, cl.y)
+        check.check(final_df)
     else:
         clf = Classify(final_df)
         clf.learn(final_df, "final.classifier")
