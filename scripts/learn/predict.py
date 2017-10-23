@@ -96,38 +96,6 @@ class Query2 (QueryHelper):
 
         return max_clID
 
-    def get_rststats(self):
-        q = """
-        select
-            numgood.cnt,
-            restart.clauseIDendExclusive-restart.clauseIDstartInclusive as total,
-            restart.*
-        from
-            restart,
-            (SELECT clauseStats.restarts as restarts, count(clauseStats.clauseID) as cnt
-            FROM ClauseStats, goodClauses
-            WHERE clauseStats.clauseID = goodClauses.clauseID
-            and clauseStats.runID = goodClauses.runID
-            and clauseStats.runID = {0}
-            group by clauseStats.restarts) as numgood
-        where
-            restart.runID = {0}
-            and restart.restarts = numgood.restarts
-        """.format(self.runID)
-
-        X = []
-        y = []
-        for row in self.c.execute(q):
-            r = list(row)
-            good = r[0]
-            total = r[1]
-            perc = float(good) / float(total)
-            r = self.transform_rst_row(r[2:])
-            X.append(r)
-            y.append(perc)
-
-        return X, y
-
     def get_clstats(self):
         comment = ""
         if not options.restart_used:
