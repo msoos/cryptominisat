@@ -38,12 +38,6 @@ class QueryHelper:
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
 
-    def get_rststats_names(self):
-        names = None
-        for row in self.c.execute("select * from restart limit 1"):
-            names = list(map(lambda x: x[0], self.c.description))
-        return names
-
     def __enter__(self):
         return self
 
