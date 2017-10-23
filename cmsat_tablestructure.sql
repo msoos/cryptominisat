@@ -133,6 +133,7 @@ CREATE TABLE `clauseStats` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
+  `prev_restart` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL,
 

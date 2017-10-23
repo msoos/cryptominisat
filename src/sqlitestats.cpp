@@ -695,7 +695,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 46;
+    const size_t numElems = 47;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -703,6 +703,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `runID`,"
     << " `simplifications`,"
     << " `restarts`,"
+    << " `prev_restart`,"
     << " `conflicts`,"
     << " `clauseID`,"
     << ""
@@ -795,6 +796,11 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
+    if (solver->sumRestarts() == 0) {
+        sqlite3_bind_int64(stmt_clause_stats, bindAt++, 0);
+    } else {
+        sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts()-1);
+    }
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
 

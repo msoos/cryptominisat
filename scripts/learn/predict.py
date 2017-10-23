@@ -150,11 +150,10 @@ class Query2 (QueryHelper):
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         and clauseStats.restarts > 1 -- to avoid history being invalid
-
-        {comment} and restart.clauseIDstartInclusive <= clauseStats.clauseID
-        {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
-
         and clauseStats.runID = {0}
+        {comment} and restart.restarts = clauseStats.prev_restart
+        {comment} and restart.runID = {0}
+
         limit {1}
         """.format(self.runID, options.limit, comment=comment)
 
@@ -173,11 +172,10 @@ class Query2 (QueryHelper):
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
         and clauseStats.restarts > 1 -- to avoid history being invalid
-
-        {comment} and restart.clauseIDstartInclusive <= clauseStats.clauseID
-        {comment} and restart.clauseIDendExclusive > clauseStats.clauseID
-
         and clauseStats.runID = {0}
+        {comment} and restart.restarts = clauseStats.prev_restart
+        {comment} and restart.runID = {0}
+
         limit {1}
         """.format(self.runID, options.limit, comment=comment)
         df2 = pd.read_sql_query(q, self.conn)
