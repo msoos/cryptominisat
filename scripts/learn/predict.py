@@ -72,11 +72,12 @@ class Query2 (QueryHelper):
         drop index if exists `idxclid`;
         drop index if exists `idxclid2`;
         drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
-        create index `idxclid2` on `goodClauses` (`runID`,`clauseID`);
-        create index `idxclid3` on `restart` (`runID`,
-                    `clauseIDstartInclusive`, `clauseIDendExclusive`);
+        create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
+        create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
+        create index `idxclid4` on `restart` (`runID`, `restarts`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -100,9 +101,124 @@ class Query2 (QueryHelper):
         comment = ""
         if not options.restart_used:
             comment = "--"
+
+        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/{comment} restart.`\1` as `rst.\1`,/' ../tmp.txt
         q = """
-        SELECT clauseStats.*, 1 as good
-        {comment} , restart.*
+        SELECT
+        clauseStats.`runID` as `cl.runID`,
+        clauseStats.`simplifications` as `cl.simplifications`,
+        clauseStats.`restarts` as `cl.restarts`,
+        clauseStats.`prev_restart` as `cl.prev_restart`,
+        clauseStats.`conflicts` as `cl.conflicts`,
+        clauseStats.`clauseID` as `cl.clauseID`,
+        clauseStats.`glue` as `cl.glue`,
+        clauseStats.`size` as `cl.size`,
+        clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`,
+        clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`,
+        clauseStats.`num_antecedents` as `cl.num_antecedents`,
+        clauseStats.`antecedents_avg_size` as `cl.antecedents_avg_size`,
+        clauseStats.`backtrack_level` as `cl.backtrack_level`,
+        clauseStats.`decision_level` as `cl.decision_level`,
+        clauseStats.`trail_depth_level` as `cl.trail_depth_level`,
+        clauseStats.`atedecents_binIrred` as `cl.atedecents_binIrred`,
+        clauseStats.`atedecents_binRed` as `cl.atedecents_binRed`,
+        clauseStats.`atedecents_longIrred` as `cl.atedecents_longIrred`,
+        clauseStats.`atedecents_longRed` as `cl.atedecents_longRed`,
+        clauseStats.`vsids_vars_avg` as `cl.vsids_vars_avg`,
+        clauseStats.`vsids_vars_var` as `cl.vsids_vars_var`,
+        clauseStats.`vsids_vars_min` as `cl.vsids_vars_min`,
+        clauseStats.`vsids_vars_max` as `cl.vsids_vars_max`,
+        clauseStats.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`,
+        clauseStats.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`,
+        clauseStats.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`,
+        clauseStats.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`,
+        clauseStats.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`,
+        clauseStats.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`,
+        clauseStats.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`,
+        clauseStats.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`,
+        clauseStats.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`,
+        clauseStats.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`,
+        clauseStats.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`,
+        clauseStats.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`,
+        clauseStats.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`,
+        clauseStats.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`,
+        clauseStats.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`,
+        clauseStats.`decision_level_hist` as `cl.decision_level_hist`,
+        clauseStats.`backtrack_level_hist` as `cl.backtrack_level_hist`,
+        clauseStats.`trail_depth_level_hist` as `cl.trail_depth_level_hist`,
+        clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`,
+        clauseStats.`size_hist` as `cl.size_hist`,
+        clauseStats.`glue_hist` as `cl.glue_hist`,
+        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`,
+
+        1 as good,
+
+        {comment} restart.`runID` as `rst.runID`,
+        {comment} restart.`simplifications` as `rst.simplifications`,
+        {comment} restart.`restarts` as `rst.restarts`,
+        {comment} restart.`conflicts` as `rst.conflicts`,
+        {comment} restart.`runtime` as `rst.runtime`,
+        {comment} restart.`numIrredBins` as `rst.numIrredBins`,
+        {comment} restart.`numIrredLongs` as `rst.numIrredLongs`,
+        {comment} restart.`numRedBins` as `rst.numRedBins`,
+        {comment} restart.`numRedLongs` as `rst.numRedLongs`,
+        {comment} restart.`numIrredLits` as `rst.numIrredLits`,
+        {comment} restart.`numredLits` as `rst.numredLits`,
+        {comment} restart.`glue` as `rst.glue`,
+        {comment} restart.`glueSD` as `rst.glueSD`,
+        {comment} restart.`glueMin` as `rst.glueMin`,
+        {comment} restart.`glueMax` as `rst.glueMax`,
+        {comment} restart.`size` as `rst.size`,
+        {comment} restart.`sizeSD` as `rst.sizeSD`,
+        {comment} restart.`sizeMin` as `rst.sizeMin`,
+        {comment} restart.`sizeMax` as `rst.sizeMax`,
+        {comment} restart.`resolutions` as `rst.resolutions`,
+        {comment} restart.`resolutionsSD` as `rst.resolutionsSD`,
+        {comment} restart.`resolutionsMin` as `rst.resolutionsMin`,
+        {comment} restart.`resolutionsMax` as `rst.resolutionsMax`,
+        {comment} restart.`branchDepth` as `rst.branchDepth`,
+        {comment} restart.`branchDepthSD` as `rst.branchDepthSD`,
+        {comment} restart.`branchDepthMin` as `rst.branchDepthMin`,
+        {comment} restart.`branchDepthMax` as `rst.branchDepthMax`,
+        {comment} restart.`branchDepthDelta` as `rst.branchDepthDelta`,
+        {comment} restart.`branchDepthDeltaSD` as `rst.branchDepthDeltaSD`,
+        {comment} restart.`branchDepthDeltaMin` as `rst.branchDepthDeltaMin`,
+        {comment} restart.`branchDepthDeltaMax` as `rst.branchDepthDeltaMax`,
+        {comment} restart.`trailDepth` as `rst.trailDepth`,
+        {comment} restart.`trailDepthSD` as `rst.trailDepthSD`,
+        {comment} restart.`trailDepthMin` as `rst.trailDepthMin`,
+        {comment} restart.`trailDepthMax` as `rst.trailDepthMax`,
+        {comment} restart.`trailDepthDelta` as `rst.trailDepthDelta`,
+        {comment} restart.`trailDepthDeltaSD` as `rst.trailDepthDeltaSD`,
+        {comment} restart.`trailDepthDeltaMin` as `rst.trailDepthDeltaMin`,
+        {comment} restart.`trailDepthDeltaMax` as `rst.trailDepthDeltaMax`,
+        {comment} restart.`propBinIrred` as `rst.propBinIrred`,
+        {comment} restart.`propBinRed` as `rst.propBinRed`,
+        {comment} restart.`propLongIrred` as `rst.propLongIrred`,
+        {comment} restart.`propLongRed` as `rst.propLongRed`,
+        {comment} restart.`conflBinIrred` as `rst.conflBinIrred`,
+        {comment} restart.`conflBinRed` as `rst.conflBinRed`,
+        {comment} restart.`conflLongIrred` as `rst.conflLongIrred`,
+        {comment} restart.`conflLongRed` as `rst.conflLongRed`,
+        {comment} restart.`learntUnits` as `rst.learntUnits`,
+        {comment} restart.`learntBins` as `rst.learntBins`,
+        {comment} restart.`learntLongs` as `rst.learntLongs`,
+        {comment} restart.`resolBinIrred` as `rst.resolBinIrred`,
+        {comment} restart.`resolBinRed` as `rst.resolBinRed`,
+        {comment} restart.`resolLIrred` as `rst.resolLIrred`,
+        {comment} restart.`resolLRed` as `rst.resolLRed`,
+        {comment} restart.`propagations` as `rst.propagations`,
+        {comment} restart.`decisions` as `rst.decisions`,
+        {comment} restart.`flipped` as `rst.flipped`,
+        {comment} restart.`varSetPos` as `rst.varSetPos`,
+        {comment} restart.`varSetNeg` as `rst.varSetNeg`,
+        {comment} restart.`free` as `rst.free`,
+        {comment} restart.`replaced` as `rst.replaced`,
+        {comment} restart.`eliminated` as `rst.eliminated`,
+        {comment} restart.`set` as `rst.set`,
+        {comment} restart.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`,
+        {comment} restart.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
+
         FROM clauseStats, goodClauses
         {comment} , restart
         WHERE
@@ -267,29 +383,29 @@ class Check:
 
 def transform(df):
     def check_clstat_row(self, row):
-        if row[self.ntoc["decision_level_hist"]] == 0 or \
-                row[self.ntoc["backtrack_level_hist"]] == 0 or \
-                row[self.ntoc["trail_depth_level_hist"]] == 0 or \
-                row[self.ntoc["vsids_vars_hist"]] == 0 or \
-                row[self.ntoc["size_hist"]] == 0 or \
-                row[self.ntoc["glue_hist"]] == 0 or \
-                row[self.ntoc["num_antecedents_hist"]] == 0:
+        if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
+                row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
+                row[self.ntoc["cl.trail_depth_level_hist"]] == 0 or \
+                row[self.ntoc["cl.vsids_vars_hist"]] == 0 or \
+                row[self.ntoc["cl.size_hist"]] == 0 or \
+                row[self.ntoc["cl.glue_hist"]] == 0 or \
+                row[self.ntoc["cl.num_antecedents_hist"]] == 0:
             print("ERROR: Data is in error:", row)
             assert(False)
             exit(-1)
 
         return row
 
-    df["cl.size_rel"] = df["size"] / df["size_hist"]
-    df["cl.glue_rel"] = df["glue"] / df["glue_hist"]
-    df["cl.num_antecedents_rel"] = df["num_antecedents"] / \
-        df["num_antecedents_hist"]
-    df["cl.decision_level_rel"] = df["decision_level"] / df["decision_level_hist"]
-    df["cl.backtrack_level_rel"] = df["backtrack_level"] / \
-        df["backtrack_level_hist"]
-    df["cl.trail_depth_level_rel"] = df["trail_depth_level"] / \
-        df["trail_depth_level_hist"]
-    df["cl.vsids_vars_rel"] = df["vsids_vars_avg"] / df["vsids_vars_hist"]
+    df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
+    df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
+    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / \
+        df["cl.num_antecedents_hist"]
+    df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
+    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / \
+        df["cl.backtrack_level_hist"]
+    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
+        df["cl.trail_depth_level_hist"]
+    df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
     new = set(df.columns.values.flatten().tolist())
