@@ -307,7 +307,7 @@ void SolveFeaturesCalc::calculate_cl_distributions(
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_var += std::pow(size_mean-cl.size(), 2);
         glue_var += std::pow(glue_mean-cl.stats.glue, 2);
-        activity_var += std::pow(activity_mean-cl.stats.activity/cla_inc, 2);
+        activity_var += std::pow(activity_mean-(double)cl.stats.activity/cla_inc, 2);
     }
     size_var /= clauses.size();
     glue_var /= clauses.size();
