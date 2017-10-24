@@ -293,7 +293,8 @@ class Query2 (QueryHelper):
         SELECT
         {clause_dat},
         1 as good,
-        {restart_dat},
+        {restart_dat}
+        {comment},
         {feat_dat}
 
         FROM clauseStats, goodClauses
@@ -320,7 +321,8 @@ class Query2 (QueryHelper):
         SELECT
         {clause_dat},
         0 as good,
-        {restart_dat},
+        {restart_dat}
+        {comment},
         {feat_dat}
 
         FROM clauseStats left join goodClauses
