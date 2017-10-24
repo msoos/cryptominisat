@@ -237,6 +237,7 @@ class Solver : public Searcher
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
         SolveFeatures calculate_features() const;
+        void check_reconfigure(const SolveFeatures& feat);
         void reconfigure(int val);
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 

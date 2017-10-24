@@ -1305,6 +1305,11 @@ lbool Solver::solve_with_assumptions(
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
+    if (status == l_Undef) {
+        SolveFeatures feat = calculate_features();
+        check_reconfigure(feat);
+    }
+
     if (status == l_Undef
         && conf.preprocess == 0
     ) {
@@ -1354,6 +1359,23 @@ lbool Solver::solve_with_assumptions(
     conf.maxConfl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     return status;
+}
+
+void Solver::check_reconfigure(const SolveFeatures& feat)
+{
+    if (nVars() > 2
+        && (longIrredCls.size() > 1 || (binTri.irredBins + binTri.redBins))
+    ) {
+        if (solveStats.numSimplify == conf.reconfigure_at) {
+            if (conf.reconfigure_val == 100) {
+                conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
+            }
+            if (conf.reconfigure_val != 0) {
+                reconfigure(conf.reconfigure_val);
+            }
+        }
+    }
+
 }
 
 void Solver::dump_memory_stats_to_sql()
@@ -1555,6 +1577,10 @@ lbool Solver::iterate_until_solved()
 
         if (conf.do_simplify_problem) {
             status = simplify_problem(false);
+        }
+        if (status == l_Undef) {
+            SolveFeatures feat = calculate_features();
+            check_reconfigure(feat);
         }
     }
 
@@ -1818,21 +1844,6 @@ lbool Solver::simplify_problem(const bool startup)
         std::min(
             conf.global_timeout_multiplier, conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
-
-    //Reconfigure
-    if (nVars() > 2
-        && (longIrredCls.size() > 1 || (binTri.irredBins + binTri.redBins))
-    ) {
-        if (solveStats.numSimplify == conf.reconfigure_at) {
-            SolveFeatures feat = calculate_features();
-            if (conf.reconfigure_val == 100) {
-                conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
-            }
-            if (conf.reconfigure_val != 0) {
-                reconfigure(conf.reconfigure_val);
-            }
-        }
-    }
 
     solveStats.numSimplify++;
 
