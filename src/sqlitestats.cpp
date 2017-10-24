@@ -53,6 +53,11 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmtFeat);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
     ret = sqlite3_finalize(stmtReduceDB);
     if (ret != SQLITE_OK) {
         cout << "Error closing prepared statement" << endl;
@@ -94,6 +99,7 @@ bool SQLiteStats::setup(const Solver* solver)
     initReduceDBSTMT();
     initTimePassedSTMT();
     initMemUsedSTMT();
+    init_features();
     init_clause_stats_STMT();
 
     return true;
@@ -427,6 +433,111 @@ void SQLiteStats::time_passed_min(
     }
 }
 
+void SQLiteStats::init_features() {
+    const size_t numElems = 66;
+
+    std::stringstream ss;
+    ss << "insert into `features`"
+    << "("
+    //Position
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`"
+
+    //Base data
+    << ", `numVars`"
+    << ", `numClauses`"
+    << ", `var_cl_ratio`"
+
+    //Clause distribution
+    << ", `binary`"
+    << ", `horn`"
+    << ", `horn_mean`"
+    << ", `horn_std`"
+    << ", `horn_min`"
+    << ", `horn_max`"
+    << ", `horn_spread`"
+//14
+    << ", `vcg_var_mean`"
+    << ", `vcg_var_std`"
+    << ", `vcg_var_min`"
+    << ", `vcg_var_max`"
+    << ", `vcg_var_spread`"
+
+    << ", `vcg_cls_mean`"
+    << ", `vcg_cls_std`"
+    << ", `vcg_cls_min`"
+    << ", `vcg_cls_max`"
+    << ", `vcg_cls_spread`"
+
+    << ", `pnr_var_mean`"
+    << ", `pnr_var_std`"
+    << ", `pnr_var_min`"
+    << ", `pnr_var_max`"
+    << ", `pnr_var_spread`"
+
+    << ", `pnr_cls_mean`"
+    << ", `pnr_cls_std`"
+    << ", `pnr_cls_min`"
+    << ", `pnr_cls_max`"
+    << ", `pnr_cls_spread`"
+//34
+    //Conflict clauses
+    << ", `avg_confl_size`"
+    << ", `confl_size_min`"
+    << ", `confl_size_max`"
+    << ", `avg_confl_glue`"
+    << ", `confl_glue_min`"
+    << ", `confl_glue_max`"
+    << ", `avg_num_resolutions`"
+    << ", `num_resolutions_min`"
+    << ", `num_resolutions_max`"
+    << ", `learnt_bins_per_confl`"
+//44
+    //Search
+    << ", `avg_branch_depth`"
+    << ", `branch_depth_min`"
+    << ", `branch_depth_max`"
+    << ", `avg_trail_depth_delta`"
+    << ", `trail_depth_delta_min`"
+    << ", `trail_depth_delta_max`"
+    << ", `avg_branch_depth_delta`"
+    << ", `props_per_confl`"
+    << ", `confl_per_restart`"
+    << ", `decisions_per_conflict`"
+//54
+    //clause distributions
+    << ", `red_glue_distr_mean`"
+    << ", `red_glue_distr_var`"
+    << ", `red_size_distr_mean`"
+    << ", `red_size_distr_var`"
+    << ", `red_activity_distr_mean`"
+    << ", `red_activity_distr_var`"
+//60
+    << ", `irred_glue_distr_mean`"
+    << ", `irred_glue_distr_var`"
+    << ", `irred_size_distr_mean`"
+    << ", `irred_size_distr_var`"
+    << ", `irred_activity_distr_mean`"
+    << ", `irred_activity_distr_var`"
+//66
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    if (sqlite3_prepare(db, ss.str().c_str(), -1, &stmtFeat, NULL)) {
+        cerr << "ERROR in sqlite_stmt_prepare(), INSERT failed"
+        << endl
+        << sqlite3_errmsg(db)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+}
+
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
@@ -489,6 +600,115 @@ void SQLiteStats::initRestartSTMT()
         << endl
         << "Query was: " << ss.str()
         << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::features(
+    const Solver* solver
+    , const Searcher* search
+    , const SolveFeatures& feat
+) {
+    int bindAt = 1;
+    sqlite3_bind_int64(stmtFeat, bindAt++, runID);
+    sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
+    sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
+
+    sqlite3_bind_int64(stmtFeat, bindAt++, feat.numVars);
+    sqlite3_bind_int64(stmtFeat, bindAt++, feat.numClauses);
+    sqlite3_bind_int64(stmtFeat, bindAt++, feat.var_cl_ratio);
+
+    //Clause distribution
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.binary);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_spread);
+
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_spread);
+
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_spread);
+
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_spread);
+
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_spread);
+
+    //Conflict clauses
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_confl_size);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_size_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_size_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_confl_glue);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_glue_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_glue_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_num_resolutions);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.num_resolutions_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.num_resolutions_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.learnt_bins_per_confl);
+
+    //Search
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_branch_depth);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.branch_depth_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.branch_depth_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_trail_depth_delta);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.trail_depth_delta_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.trail_depth_delta_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_branch_depth_delta);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.props_per_confl);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_per_restart);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.decisions_per_conflict);
+
+    //red stats
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.glue_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.glue_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.size_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.size_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.activity_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.activity_distr_var);
+
+    //irred stats
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.glue_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.glue_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.size_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.size_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.activity_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.activity_distr_var);
+
+    int rc = sqlite3_step(stmtFeat);
+    if (rc != SQLITE_DONE) {
+        cerr << "ERROR  while executing restart insertion SQLite prepared statement"
+        << endl
+        << "Error from sqlite: "
+        << sqlite3_errmsg(db)
+        << endl;
+
+        std::exit(-1);
+    }
+
+    if (sqlite3_reset(stmtFeat)) {
+        cerr << "Error calling sqlite3_reset on stmtFeat" << endl;
+        std::exit(-1);
+    }
+    if (sqlite3_clear_bindings(stmtFeat)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmtFeat" << endl;
         std::exit(-1);
     }
 }

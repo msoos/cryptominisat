@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <utility>
 #include "solvefeatures.h"
 #include "cloffset.h"
+#include "watched.h"
 using std::vector;
 using std::pair;
 using std::make_pair;

@@ -2956,6 +2956,10 @@ SolveFeatures Solver::calculate_features() const
         feat.print_stats();
     }
 
+    if (sqlStats) {
+        sqlStats->features(this, this, feat);
+    }
+
     return feat;
 }
 

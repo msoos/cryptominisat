@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "clause.h"
 #include "clauseusagestats.h"
+#include "solvefeatures.h"
 
 namespace CMSat {
 
@@ -59,7 +60,13 @@ public:
         , double time_passed
     ) = 0;
 
-     virtual void mem_used(
+    virtual void features(
+        const Solver* solver
+        , const Searcher* search
+        , const SolveFeatures& feat
+    ) = 0;
+
+    virtual void mem_used(
         const Solver* solver
         , const string& name
         , const double given_time

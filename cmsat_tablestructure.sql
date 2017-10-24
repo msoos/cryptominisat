@@ -189,6 +189,90 @@ CREATE TABLE `clauseStats` (
   `num_antecedents_hist` float NOT NULL
 );
 
+DROP TABLE IF EXISTS `features`;
+CREATE TABLE `features` (
+  `runID` bigint(20) NOT NULL,
+  `simplifications` int(20) NOT NULL,
+  `restarts` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
+
+  `numVars` int(20) NOT NULL,
+  `numClauses` int(20) NOT NULL,
+  `var_cl_ratio` double NOT NULL,
+
+  -- Clause distribution
+  `binary` double NOT NULL,
+  `horn` double NOT NULL,
+  `horn_mean` double NOT NULL,
+  `horn_std` double NOT NULL,
+  `horn_min` double NOT NULL,
+  `horn_max` double NOT NULL,
+  `horn_spread` double NOT NULL,
+
+  `vcg_var_mean` double NOT NULL,
+  `vcg_var_std` double NOT NULL,
+  `vcg_var_min` double NOT NULL,
+  `vcg_var_max` double NOT NULL,
+  `vcg_var_spread` double NOT NULL,
+
+  `vcg_cls_mean` double NOT NULL,
+  `vcg_cls_std` double NOT NULL,
+  `vcg_cls_min` double NOT NULL,
+  `vcg_cls_max` double NOT NULL,
+  `vcg_cls_spread` double NOT NULL,
+
+  `pnr_var_mean` double NOT NULL,
+  `pnr_var_std` double NOT NULL,
+  `pnr_var_min` double NOT NULL,
+  `pnr_var_max` double NOT NULL,
+  `pnr_var_spread` double NOT NULL,
+
+  `pnr_cls_mean` double NOT NULL,
+  `pnr_cls_std` double NOT NULL,
+  `pnr_cls_min` double NOT NULL,
+  `pnr_cls_max` double NOT NULL,
+  `pnr_cls_spread` double NOT NULL,
+
+  -- Conflict clauses
+  `avg_confl_size` double NOT NULL,
+  `confl_size_min` double NOT NULL,
+  `confl_size_max` double NOT NULL,
+  `avg_confl_glue` double NOT NULL,
+  `confl_glue_min` double NOT NULL,
+  `confl_glue_max` double NOT NULL,
+  `avg_num_resolutions` double NOT NULL,
+  `num_resolutions_min` double NOT NULL,
+  `num_resolutions_max` double NOT NULL,
+  `learnt_bins_per_confl` double NOT NULL,
+
+  -- Search
+  `avg_branch_depth` double NOT NULL,
+  `branch_depth_min` double NOT NULL,
+  `branch_depth_max` double NOT NULL,
+  `avg_trail_depth_delta` double NOT NULL,
+  `trail_depth_delta_min` double NOT NULL,
+  `trail_depth_delta_max` double NOT NULL,
+  `avg_branch_depth_delta` double NOT NULL,
+  `props_per_confl` double NOT NULL,
+  `confl_per_restart` double NOT NULL,
+  `decisions_per_conflict` double NOT NULL,
+
+    -- clause distributions
+  `red_glue_distr_mean` double NOT NULL,
+  `red_glue_distr_var` double NOT NULL,
+  `red_size_distr_mean` double NOT NULL,
+  `red_size_distr_var` double NOT NULL,
+  `red_activity_distr_mean` double NOT NULL,
+  `red_activity_distr_var` double NOT NULL,
+
+  `irred_glue_distr_mean` double NOT NULL,
+  `irred_glue_distr_var` double NOT NULL,
+  `irred_size_distr_mean` double NOT NULL,
+  `irred_size_distr_var` double NOT NULL,
+  `irred_activity_distr_mean` double NOT NULL,
+  `irred_activity_distr_var` double NOT NULL
+);
+
 DROP TABLE IF EXISTS `goodClauses`;
 create table `goodClauses` (
     `runID` bigint(20) NOT NULL,
