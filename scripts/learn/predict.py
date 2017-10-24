@@ -419,6 +419,7 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
         df["cl.trail_depth_level_hist"]
     df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
+
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
     new = set(df.columns.values.flatten().tolist())
