@@ -217,54 +217,131 @@ class Query2 (QueryHelper):
         clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`,
         clauseStats.`size_hist` as `cl.size_hist`,
         clauseStats.`glue_hist` as `cl.glue_hist`,
-        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`,
+        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`
+        """
+
+        feat_dat="""
+        features.`simplifications` as `feat.simplifications`,
+        features.`restarts` as `feat.restarts`,
+        features.`conflicts` as `feat.conflicts`,
+        features.`numVars` as `feat.numVars`,
+        features.`numClauses` as `feat.numClauses`,
+        features.`var_cl_ratio` as `feat.var_cl_ratio`,
+        features.`binary` as `feat.binary`,
+        features.`horn` as `feat.horn`,
+        features.`horn_mean` as `feat.horn_mean`,
+        features.`horn_std` as `feat.horn_std`,
+        features.`horn_min` as `feat.horn_min`,
+        features.`horn_max` as `feat.horn_max`,
+        features.`horn_spread` as `feat.horn_spread`,
+        features.`vcg_var_mean` as `feat.vcg_var_mean`,
+        features.`vcg_var_std` as `feat.vcg_var_std`,
+        features.`vcg_var_min` as `feat.vcg_var_min`,
+        features.`vcg_var_max` as `feat.vcg_var_max`,
+        features.`vcg_var_spread` as `feat.vcg_var_spread`,
+        features.`vcg_cls_mean` as `feat.vcg_cls_mean`,
+        features.`vcg_cls_std` as `feat.vcg_cls_std`,
+        features.`vcg_cls_min` as `feat.vcg_cls_min`,
+        features.`vcg_cls_max` as `feat.vcg_cls_max`,
+        features.`vcg_cls_spread` as `feat.vcg_cls_spread`,
+        features.`pnr_var_mean` as `feat.pnr_var_mean`,
+        features.`pnr_var_std` as `feat.pnr_var_std`,
+        features.`pnr_var_min` as `feat.pnr_var_min`,
+        features.`pnr_var_max` as `feat.pnr_var_max`,
+        features.`pnr_var_spread` as `feat.pnr_var_spread`,
+        features.`pnr_cls_mean` as `feat.pnr_cls_mean`,
+        features.`pnr_cls_std` as `feat.pnr_cls_std`,
+        features.`pnr_cls_min` as `feat.pnr_cls_min`,
+        features.`pnr_cls_max` as `feat.pnr_cls_max`,
+        features.`pnr_cls_spread` as `feat.pnr_cls_spread`,
+        features.`avg_confl_size` as `feat.avg_confl_size`,
+        features.`confl_size_min` as `feat.confl_size_min`,
+        features.`confl_size_max` as `feat.confl_size_max`,
+        features.`avg_confl_glue` as `feat.avg_confl_glue`,
+        features.`confl_glue_min` as `feat.confl_glue_min`,
+        features.`confl_glue_max` as `feat.confl_glue_max`,
+        features.`avg_num_resolutions` as `feat.avg_num_resolutions`,
+        features.`num_resolutions_min` as `feat.num_resolutions_min`,
+        features.`num_resolutions_max` as `feat.num_resolutions_max`,
+        features.`learnt_bins_per_confl` as `feat.learnt_bins_per_confl`,
+        features.`avg_branch_depth` as `feat.avg_branch_depth`,
+        features.`branch_depth_min` as `feat.branch_depth_min`,
+        features.`branch_depth_max` as `feat.branch_depth_max`,
+        features.`avg_trail_depth_delta` as `feat.avg_trail_depth_delta`,
+        features.`trail_depth_delta_min` as `feat.trail_depth_delta_min`,
+        features.`trail_depth_delta_max` as `feat.trail_depth_delta_max`,
+        features.`avg_branch_depth_delta` as `feat.avg_branch_depth_delta`,
+        features.`props_per_confl` as `feat.props_per_confl`,
+        features.`confl_per_restart` as `feat.confl_per_restart`,
+        features.`decisions_per_conflict` as `feat.decisions_per_conflict`,
+        features.`red_glue_distr_mean` as `feat.red_glue_distr_mean`,
+        features.`red_glue_distr_var` as `feat.red_glue_distr_var`,
+        features.`red_size_distr_mean` as `feat.red_size_distr_mean`,
+        features.`red_size_distr_var` as `feat.red_size_distr_var`,
+        features.`red_activity_distr_mean` as `feat.red_activity_distr_mean`,
+        features.`red_activity_distr_var` as `feat.red_activity_distr_var`,
+        features.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`,
+        features.`irred_glue_distr_var` as `feat.irred_glue_distr_var`,
+        features.`irred_size_distr_mean` as `feat.irred_size_distr_mean`,
+        features.`irred_size_distr_var` as `feat.irred_size_distr_var`,
+        features.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`,
+        features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/{comment} restart.`\1` as `rst.\1`,/' ../tmp.txt
         q = """
         SELECT
-        {clause_dat}
+        {clause_dat},
         1 as good,
-        {restart_dat}
+        {restart_dat},
+        {feat_dat}
 
         FROM clauseStats, goodClauses
         {comment} , restart
+        , features
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         and clauseStats.restarts > 1 -- to avoid history being invalid
         and clauseStats.runID = {0}
+        and features.runID = {0}
+        and features.simplifications = clauseStats.simplifications
         {comment} and restart.restarts = clauseStats.prev_restart
         {comment} and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment, restart_dat=restart_dat, clause_dat=clause_dat)
-
+        """.format(self.runID, options.limit, comment=comment,
+                   restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
         df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
         q = """
         SELECT
-        {clause_dat}
+        {clause_dat},
         0 as good,
-        {restart_dat}
+        {restart_dat},
+        {feat_dat}
 
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         {comment} , restart
+        , features
         WHERE
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
         and clauseStats.restarts > 1 -- to avoid history being invalid
         and clauseStats.runID = {0}
+        and features.runID = {0}
+        and features.simplifications = clauseStats.simplifications
         {comment} and restart.restarts = clauseStats.prev_restart
         {comment} and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment, restart_dat=restart_dat, clause_dat=clause_dat)
+        """.format(self.runID, options.limit, comment=comment,
+                   restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
         df2 = pd.read_sql_query(q, self.conn)
 
         return pd.concat([df, df2])
