@@ -337,14 +337,16 @@ SolveFeatures SolveFeaturesCalc::extract()
         feat.var_cl_ratio = (double)feat.numVars/ (double)feat.numClauses;
     }
 
-    calculate_clause_stats();
-    calculate_variable_stats();
+    if (feat.numClauses > 0 && feat.numVars > 0) {
+        calculate_clause_stats();
+        calculate_variable_stats();
 
-    calculate_extra_clause_stats();
-    calculate_extra_var_stats();
+        calculate_extra_clause_stats();
+        calculate_extra_var_stats();
 
-    calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
-    calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
+        calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
+        calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
+    }
 
     if (solver->conf.verbosity) {
         cout << "c [features] extracted"
