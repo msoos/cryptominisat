@@ -113,7 +113,7 @@ class solution_parser:
         tmpfname = unique_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname)
         # execute with the other solver
-        toexec = "lingeling -f %s" % tmpfname
+        toexec = "../../build/tests/minisat/minisat -verb=0 %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
@@ -121,7 +121,7 @@ class solution_parser:
                                  stdout=subprocess.PIPE,
                                  preexec_fn=partial(setlimits, self.options.maxtime))
         except OSError:
-            print("ERROR: Probably you don't have lingeling installed!")
+            print("ERROR: Minisat didn't run... weird, it's included as a submodule")
             raise
 
         consoleOutput2 = p.communicate()[0]
