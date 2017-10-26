@@ -32,5 +32,5 @@
 	url = https://github.com/msoos/simplifiy_testfiles
 [submodule "minisat-fuzz"]
 	path = utils/minisat
-	url = git@github.com:msoos/minisat.git
+	url = https://github.com/msoos/minisat
 	branch = fuzzer
