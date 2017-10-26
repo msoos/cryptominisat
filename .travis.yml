@@ -114,13 +114,6 @@ install:
   #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./scripts/travis-install-cmake.sh; fi
 #coveralls
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
-#lingeling
-  - git clone https://github.com/msoos/lingeling-ala
-  - cd lingeling-ala
-  - ./configure
-  - make
-  - sudo cp lingeling /usr/local/bin/
-  - cd ..
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
   - sudo -H pip install --upgrade pip
