@@ -389,7 +389,7 @@ class Tester:
             print("CPU limit of parent (pid %d)" % os.getpid(), resource.getrlimit(resource.RLIMIT_CPU))
 
         # if need time limit, then limit
-        err_fname = unique_file("%s_err" % fname, ".out")
+        err_fname = unique_file("err", ".out")
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
