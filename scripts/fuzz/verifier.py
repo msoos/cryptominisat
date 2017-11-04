@@ -36,7 +36,7 @@ from functools import partial
 def unique_file(fname_begin, fname_end=".cnf"):
         counter = 1
         while 1:
-            fname = fname_begin + '_' + str(counter) + fname_end
+            fname = "out/" + fname_begin + '_' + str(counter) + fname_end
             try:
                 fd = os.open(
                     fname, os.O_CREAT | os.O_EXCL, stat.S_IREAD | stat.S_IWRITE)
