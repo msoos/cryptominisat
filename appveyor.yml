@@ -105,20 +105,17 @@ before_build:
 after_build:
   # Install&run CMS
   - call ctest -V -C %CONFIGURATION%
-  - msbuild .\INSTALL.vcxproj
+  #- msbuild .\INSTALL.vcxproj
   - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
+  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
+  - cd c:\projects\cryptominisat
 
 
 build:
-  # project: INSTALL.vcxproj      # path to Visual Studio solution or project
+  project: INSTALL.vcxproj      # path to Visual Studio solution or project
   parallel: true
   verbosity: minimal
 
-
-# scripts to run after build
-after_build:
-  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
-  - cd c:\projects\cryptominisat
 
 artifacts:
   - path: cryptominisat.zip
