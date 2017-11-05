@@ -29,6 +29,7 @@ import random
 from random import choice
 import optparse
 import glob
+import resource
 from verifier import *
 from functools import partial
 
