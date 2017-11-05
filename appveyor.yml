@@ -103,7 +103,7 @@ before_build:
   - ls
 
 after_build:
-  - call ctest -V
+  - call ctest -V -C %CONFIGURATION%
   - cmake --build . --install
   - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
   - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
