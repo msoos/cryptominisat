@@ -48,62 +48,60 @@ class PlainHelpFormatter(optparse.IndentedHelpFormatter):
         else:
             return ""
 
+
 usage = "usage: %prog [options] --fuzz/--regtest/--checkdir/filetocheck"
 desc = """Fuzz the solver with fuzz-generator: ./fuzz_test.py
 """
 
-parser = optparse.OptionParser(usage=usage, description=desc,
-                               formatter=PlainHelpFormatter())
-parser.add_option("--exec", metavar="SOLVER", dest="solver",
-                  default="../../build/cryptominisat5",
-                  help="SAT solver executable. Default: %default")
 
-parser.add_option("--extraopts", "-e", metavar="OPTS",
-                  dest="extra_options", default="",
-                  help="Extra options to give to SAT solver")
+def set_up_parser():
+    parser = optparse.OptionParser(usage=usage, description=desc,
+                                   formatter=PlainHelpFormatter())
+    parser.add_option("--exec", metavar="SOLVER", dest="solver",
+                      default="../../build/cryptominisat5",
+                      help="SAT solver executable. Default: %default")
 
-parser.add_option("--verbose", "-v", action="store_true", default=False,
-                  dest="verbose", help="Print more output")
+    parser.add_option("--extraopts", "-e", metavar="OPTS",
+                      dest="extra_options", default="",
+                      help="Extra options to give to SAT solver")
 
-# for fuzz-testing
-parser.add_option("--seed", dest="fuzz_seed_start",
-                  help="Fuzz test start seed. Otherwise, random seed is picked"
-                  " (printed to console)", type=int)
+    parser.add_option("--verbose", "-v", action="store_true", default=False,
+                      dest="verbose", help="Print more output")
 
-parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
-                  help="Number of fuzz tests to run"
-                  )
-parser.add_option("--novalgrind", dest="novalgrind", default=False,
-                  action="store_true", help="No valgrind installed")
-parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
-                  default=10, help="1 out of X times valgrind will be used. Default: %default in 1")
+    # for fuzz-testing
+    parser.add_option("--seed", dest="fuzz_seed_start",
+                      help="Fuzz test start seed. Otherwise, random seed is picked"
+                      " (printed to console)", type=int)
 
-parser.add_option("--small", dest="small", default=False,
-                  action="store_true",
-                  help="Don't run 'large' fuzzer"
-                  " (may mem-out on smaller systems)")
+    parser.add_option("--fuzzlim", dest="fuzz_test_lim", type=int,
+                      help="Number of fuzz tests to run"
+                      )
+    parser.add_option("--novalgrind", dest="novalgrind", default=False,
+                      action="store_true", help="No valgrind installed")
+    parser.add_option("--valgrindfreq", dest="valgrind_freq", type=int,
+                      default=10, help="1 out of X times valgrind will be used. Default: %default in 1")
 
-parser.add_option("--sqlite", dest="sqlite", default=False,
-                  action="store_true", help="Test SQLite dumping")
+    parser.add_option("--small", dest="small", default=False,
+                      action="store_true",
+                      help="Don't run 'large' fuzzer"
+                      " (may mem-out on smaller systems)")
 
-parser.add_option("--gauss", dest="test_gauss", default=False,
-                  action="store_true", help="Test gauss too")
+    parser.add_option("--sqlite", dest="sqlite", default=False,
+                      action="store_true", help="Test SQLite dumping")
 
-parser.add_option("--maxthreads", dest="max_threads", default=100,
-                  type=int, help="Max number of threads")
+    parser.add_option("--gauss", dest="test_gauss", default=False,
+                      action="store_true", help="Test gauss too")
 
-parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
-                  help="Max time to run. Default: %default")
+    parser.add_option("--maxthreads", dest="max_threads", default=100,
+                      type=int, help="Max number of threads")
 
-parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
-                  help="Extra time on top of timeout for processing."
-                  " Default: %default")
+    parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
+                      help="Max time to run. Default: %default")
 
-(options, args) = parser.parse_args()
-
-if options.valgrind_freq <= 0:
-    print("Valgrind Frequency must be at least 1")
-    exit(-1)
+    parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
+                      help="Extra time on top of timeout for processing."
+                      " Default: %default")
+    return parser
 
 
 def fuzzer_call_failed():
@@ -188,35 +186,6 @@ def print_version():
     p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     consoleOutput, err = p.communicate()
     print("Version values: %s" % consoleOutput.strip())
-
-fuzzers_noxor = [
-    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
-     "--hash-bits", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --zero "
-        "--message-bits 400 --rounds 8 --hash-bits 60",
-     "--seed"],
-    # ["build/cnf-fuzz-nossum"],
-    ["../../build/tests/cnf-utils/largefuzzer"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
-    ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
-    ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
-    ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
-    ["../../utils/cnf-utils/multipart.py", "special"]
-]
-fuzzers_xor = [
-    ["../../utils/cnf-utils/xortester.py", "--seed"],
-    ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
-     "--hash-bits", "--seed"],
-]
 
 
 class Tester:
@@ -632,41 +601,85 @@ def filter_large_fuzzer(dat):
 
     return f
 
-global fuzzers_drat
-global fuzzers_nodrat
-fuzzers_drat = fuzzers_noxor
-fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
-if options.small:
-    fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
-    fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
+fuzzers_noxor = [
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
+     "--hash-bits", "--seed"],
+    ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --zero "
+        "--message-bits 400 --rounds 8 --hash-bits 60",
+     "--seed"],
+    # ["build/cnf-fuzz-nossum"],
+    ["../../build/tests/cnf-utils/largefuzzer"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
+    ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
+    ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
+    ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
+    ["../../utils/cnf-utils/multipart.py", "special"]
+]
+fuzzers_xor = [
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
+     "--hash-bits", "--seed"],
+]
 
-print_version()
-tester = Tester()
-tester.needDebugLib = False
-num = 0
-rnd_seed = options.fuzz_seed_start
-if rnd_seed is None:
-    rnd_seed = random.randint(0, 1000*1000*100)
 
-while True:
-    toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
-    if options.novalgrind:
-        toexec += " --novalgrind"
-    if options.valgrind_freq:
-        toexec += " --valgrindfreq %d" % options.valgrind_freq
+if __name__ =="__main__":
+    global options
+    global args
+    global fuzzers_drat
+    global fuzzers_nodrat
+    if not os.path.isdir("out"):
+        print("Directory for outputs, 'out' not present, creating it.")
+        os.mkdir("out")
+
+    # parse options
+    parser = set_up_parser()
+    (options, args) = parser.parse_args()
+    if options.valgrind_freq <= 0:
+        print("Valgrind Frequency must be at least 1")
+        exit(-1)
+
+    fuzzers_drat = fuzzers_noxor
+    fuzzers_nodrat = fuzzers_noxor + fuzzers_xor
     if options.small:
-        toexec += " --small"
+        fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
+        fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
 
-    print("")
-    print("")
-    print("--> To re-create fuzz-test below: %s" % toexec)
+    print_version()
+    tester = Tester()
+    tester.needDebugLib = False
+    num = 0
+    rnd_seed = options.fuzz_seed_start
+    if rnd_seed is None:
+        rnd_seed = random.randint(0, 1000*1000*100)
 
-    random.seed(rnd_seed)
-    if random.choice([True, False]):
-        tester.fuzz_test_preproc()
-    else:
-        tester.fuzz_test_one()
-    rnd_seed += 1
-    num += 1
-    if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
-        exit(0)
+    while True:
+        toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
+        if options.novalgrind:
+            toexec += " --novalgrind"
+        if options.valgrind_freq:
+            toexec += " --valgrindfreq %d" % options.valgrind_freq
+        if options.small:
+            toexec += " --small"
+
+        print("")
+        print("")
+        print("--> To re-create fuzz-test below: %s" % toexec)
+
+        random.seed(rnd_seed)
+        if random.choice([True, False]):
+            tester.fuzz_test_preproc()
+        else:
+            tester.fuzz_test_one()
+        rnd_seed += 1
+        num += 1
+        if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
+            exit(0)
