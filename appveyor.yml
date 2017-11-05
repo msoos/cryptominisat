@@ -101,6 +101,7 @@ before_build:
   # so the python interface cannot work.
   - cmake -G %CMAKE_GENERATOR% library_speed_test -DENABLE_PYTHON_INTERFACE=ON -DENABLE_TESTING=ON  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=OFF ..
   #- cmake --build . --config %CONFIGURATION%
+  - ls
 
 after_build:
   # Install&run CMS
