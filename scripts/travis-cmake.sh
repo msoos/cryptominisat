@@ -338,6 +338,7 @@ case $CMS_CONFIG in
     STATS)
         ln -s ../scripts/build_scripts/* .
         ln -s ../scripts/learn/* .
+        ln -s ../build_scripts/* .
         ./test_id.sh
         sudo apt-get install -y --force-yes graphviz
         sudo pip install sklearn
