@@ -340,8 +340,8 @@ case $CMS_CONFIG in
         ln -s ../scripts/learn/* .
         ./test_id.sh
         sudo apt-get install -y --force-yes graphviz
-        sudo pip install sklearn
-        sudo pip install pandas
+        sudo pip3 install sklearn
+        sudo pip3 install pandas
         ./test_predict.sh
     ;;
 
