@@ -98,207 +98,205 @@ class Query2 (QueryHelper):
         return max_clID
 
     def get_clstats(self):
-        comment = ""
-        if not options.restart_used:
-            comment = "--"
 
+        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
         restart_dat = """
-        {comment} restart.`runID` as `rst.runID`,
-        {comment} restart.`simplifications` as `rst.simplifications`,
-        {comment} restart.`restarts` as `rst.restarts`,
-        {comment} restart.`conflicts` as `rst.conflicts`,
-        {comment} restart.`runtime` as `rst.runtime`,
-        {comment} restart.`numIrredBins` as `rst.numIrredBins`,
-        {comment} restart.`numIrredLongs` as `rst.numIrredLongs`,
-        {comment} restart.`numRedBins` as `rst.numRedBins`,
-        {comment} restart.`numRedLongs` as `rst.numRedLongs`,
-        {comment} restart.`numIrredLits` as `rst.numIrredLits`,
-        {comment} restart.`numredLits` as `rst.numredLits`,
-        {comment} restart.`glue` as `rst.glue`,
-        {comment} restart.`glueSD` as `rst.glueSD`,
-        {comment} restart.`glueMin` as `rst.glueMin`,
-        {comment} restart.`glueMax` as `rst.glueMax`,
-        {comment} restart.`size` as `rst.size`,
-        {comment} restart.`sizeSD` as `rst.sizeSD`,
-        {comment} restart.`sizeMin` as `rst.sizeMin`,
-        {comment} restart.`sizeMax` as `rst.sizeMax`,
-        {comment} restart.`resolutions` as `rst.resolutions`,
-        {comment} restart.`resolutionsSD` as `rst.resolutionsSD`,
-        {comment} restart.`resolutionsMin` as `rst.resolutionsMin`,
-        {comment} restart.`resolutionsMax` as `rst.resolutionsMax`,
-        {comment} restart.`branchDepth` as `rst.branchDepth`,
-        {comment} restart.`branchDepthSD` as `rst.branchDepthSD`,
-        {comment} restart.`branchDepthMin` as `rst.branchDepthMin`,
-        {comment} restart.`branchDepthMax` as `rst.branchDepthMax`,
-        {comment} restart.`branchDepthDelta` as `rst.branchDepthDelta`,
-        {comment} restart.`branchDepthDeltaSD` as `rst.branchDepthDeltaSD`,
-        {comment} restart.`branchDepthDeltaMin` as `rst.branchDepthDeltaMin`,
-        {comment} restart.`branchDepthDeltaMax` as `rst.branchDepthDeltaMax`,
-        {comment} restart.`trailDepth` as `rst.trailDepth`,
-        {comment} restart.`trailDepthSD` as `rst.trailDepthSD`,
-        {comment} restart.`trailDepthMin` as `rst.trailDepthMin`,
-        {comment} restart.`trailDepthMax` as `rst.trailDepthMax`,
-        {comment} restart.`trailDepthDelta` as `rst.trailDepthDelta`,
-        {comment} restart.`trailDepthDeltaSD` as `rst.trailDepthDeltaSD`,
-        {comment} restart.`trailDepthDeltaMin` as `rst.trailDepthDeltaMin`,
-        {comment} restart.`trailDepthDeltaMax` as `rst.trailDepthDeltaMax`,
-        {comment} restart.`propBinIrred` as `rst.propBinIrred`,
-        {comment} restart.`propBinRed` as `rst.propBinRed`,
-        {comment} restart.`propLongIrred` as `rst.propLongIrred`,
-        {comment} restart.`propLongRed` as `rst.propLongRed`,
-        {comment} restart.`conflBinIrred` as `rst.conflBinIrred`,
-        {comment} restart.`conflBinRed` as `rst.conflBinRed`,
-        {comment} restart.`conflLongIrred` as `rst.conflLongIrred`,
-        {comment} restart.`conflLongRed` as `rst.conflLongRed`,
-        {comment} restart.`learntUnits` as `rst.learntUnits`,
-        {comment} restart.`learntBins` as `rst.learntBins`,
-        {comment} restart.`learntLongs` as `rst.learntLongs`,
-        {comment} restart.`resolBinIrred` as `rst.resolBinIrred`,
-        {comment} restart.`resolBinRed` as `rst.resolBinRed`,
-        {comment} restart.`resolLIrred` as `rst.resolLIrred`,
-        {comment} restart.`resolLRed` as `rst.resolLRed`,
-        {comment} restart.`propagations` as `rst.propagations`,
-        {comment} restart.`decisions` as `rst.decisions`,
-        {comment} restart.`flipped` as `rst.flipped`,
-        {comment} restart.`varSetPos` as `rst.varSetPos`,
-        {comment} restart.`varSetNeg` as `rst.varSetNeg`,
-        {comment} restart.`free` as `rst.free`,
-        {comment} restart.`replaced` as `rst.replaced`,
-        {comment} restart.`eliminated` as `rst.eliminated`,
-        {comment} restart.`set` as `rst.set`,
-        {comment} restart.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`,
-        {comment} restart.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
-        """.format(comment=comment)
+        restart.`runID` as `rst.runID`
+        , restart.`simplifications` as `rst.simplifications`
+        , restart.`restarts` as `rst.restarts`
+        , restart.`conflicts` as `rst.conflicts`
+        , restart.`runtime` as `rst.runtime`
+        , restart.`numIrredBins` as `rst.numIrredBins`
+        , restart.`numIrredLongs` as `rst.numIrredLongs`
+        , restart.`numRedBins` as `rst.numRedBins`
+        , restart.`numRedLongs` as `rst.numRedLongs`
+        , restart.`numIrredLits` as `rst.numIrredLits`
+        , restart.`numredLits` as `rst.numredLits`
+        , restart.`glue` as `rst.glue`
+        , restart.`glueSD` as `rst.glueSD`
+        , restart.`glueMin` as `rst.glueMin`
+        , restart.`glueMax` as `rst.glueMax`
+        , restart.`size` as `rst.size`
+        , restart.`sizeSD` as `rst.sizeSD`
+        , restart.`sizeMin` as `rst.sizeMin`
+        , restart.`sizeMax` as `rst.sizeMax`
+        , restart.`resolutions` as `rst.resolutions`
+        , restart.`resolutionsSD` as `rst.resolutionsSD`
+        , restart.`resolutionsMin` as `rst.resolutionsMin`
+        , restart.`resolutionsMax` as `rst.resolutionsMax`
+        , restart.`branchDepth` as `rst.branchDepth`
+        , restart.`branchDepthSD` as `rst.branchDepthSD`
+        , restart.`branchDepthMin` as `rst.branchDepthMin`
+        , restart.`branchDepthMax` as `rst.branchDepthMax`
+        , restart.`branchDepthDelta` as `rst.branchDepthDelta`
+        , restart.`branchDepthDeltaSD` as `rst.branchDepthDeltaSD`
+        , restart.`branchDepthDeltaMin` as `rst.branchDepthDeltaMin`
+        , restart.`branchDepthDeltaMax` as `rst.branchDepthDeltaMax`
+        , restart.`trailDepth` as `rst.trailDepth`
+        , restart.`trailDepthSD` as `rst.trailDepthSD`
+        , restart.`trailDepthMin` as `rst.trailDepthMin`
+        , restart.`trailDepthMax` as `rst.trailDepthMax`
+        , restart.`trailDepthDelta` as `rst.trailDepthDelta`
+        , restart.`trailDepthDeltaSD` as `rst.trailDepthDeltaSD`
+        , restart.`trailDepthDeltaMin` as `rst.trailDepthDeltaMin`
+        , restart.`trailDepthDeltaMax` as `rst.trailDepthDeltaMax`
+        , restart.`propBinIrred` as `rst.propBinIrred`
+        , restart.`propBinRed` as `rst.propBinRed`
+        , restart.`propLongIrred` as `rst.propLongIrred`
+        , restart.`propLongRed` as `rst.propLongRed`
+        , restart.`conflBinIrred` as `rst.conflBinIrred`
+        , restart.`conflBinRed` as `rst.conflBinRed`
+        , restart.`conflLongIrred` as `rst.conflLongIrred`
+        , restart.`conflLongRed` as `rst.conflLongRed`
+        , restart.`learntUnits` as `rst.learntUnits`
+        , restart.`learntBins` as `rst.learntBins`
+        , restart.`learntLongs` as `rst.learntLongs`
+        , restart.`resolBinIrred` as `rst.resolBinIrred`
+        , restart.`resolBinRed` as `rst.resolBinRed`
+        , restart.`resolLIrred` as `rst.resolLIrred`
+        , restart.`resolLRed` as `rst.resolLRed`
+        , restart.`propagations` as `rst.propagations`
+        , restart.`decisions` as `rst.decisions`
+        , restart.`flipped` as `rst.flipped`
+        , restart.`varSetPos` as `rst.varSetPos`
+        , restart.`varSetNeg` as `rst.varSetNeg`
+        , restart.`free` as `rst.free`
+        , restart.`replaced` as `rst.replaced`
+        , restart.`eliminated` as `rst.eliminated`
+        , restart.`set` as `rst.set`
+        -- , restart.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`
+        -- , restart.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
+        """
 
         clause_dat = """
-        clauseStats.`runID` as `cl.runID`,
-        clauseStats.`simplifications` as `cl.simplifications`,
-        clauseStats.`restarts` as `cl.restarts`,
-        clauseStats.`prev_restart` as `cl.prev_restart`,
-        clauseStats.`conflicts` as `cl.conflicts`,
-        clauseStats.`clauseID` as `cl.clauseID`,
-        clauseStats.`glue` as `cl.glue`,
-        clauseStats.`size` as `cl.size`,
-        clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`,
-        clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`,
-        clauseStats.`num_antecedents` as `cl.num_antecedents`,
-        clauseStats.`antecedents_avg_size` as `cl.antecedents_avg_size`,
-        clauseStats.`backtrack_level` as `cl.backtrack_level`,
-        clauseStats.`decision_level` as `cl.decision_level`,
-        clauseStats.`trail_depth_level` as `cl.trail_depth_level`,
-        clauseStats.`atedecents_binIrred` as `cl.atedecents_binIrred`,
-        clauseStats.`atedecents_binRed` as `cl.atedecents_binRed`,
-        clauseStats.`atedecents_longIrred` as `cl.atedecents_longIrred`,
-        clauseStats.`atedecents_longRed` as `cl.atedecents_longRed`,
-        clauseStats.`vsids_vars_avg` as `cl.vsids_vars_avg`,
-        clauseStats.`vsids_vars_var` as `cl.vsids_vars_var`,
-        clauseStats.`vsids_vars_min` as `cl.vsids_vars_min`,
-        clauseStats.`vsids_vars_max` as `cl.vsids_vars_max`,
-        clauseStats.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`,
-        clauseStats.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`,
-        clauseStats.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`,
-        clauseStats.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`,
-        clauseStats.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`,
-        clauseStats.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`,
-        clauseStats.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`,
-        clauseStats.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`,
-        clauseStats.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`,
-        clauseStats.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`,
-        clauseStats.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`,
-        clauseStats.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`,
-        clauseStats.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`,
-        clauseStats.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`,
-        clauseStats.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`,
-        clauseStats.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`,
-        clauseStats.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`,
-        clauseStats.`decision_level_hist` as `cl.decision_level_hist`,
-        clauseStats.`backtrack_level_hist` as `cl.backtrack_level_hist`,
-        clauseStats.`trail_depth_level_hist` as `cl.trail_depth_level_hist`,
-        clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`,
-        clauseStats.`size_hist` as `cl.size_hist`,
-        clauseStats.`glue_hist` as `cl.glue_hist`,
-        clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`
+        clauseStats.`runID` as `cl.runID`
+        , clauseStats.`simplifications` as `cl.simplifications`
+        , clauseStats.`restarts` as `cl.restarts`
+        , clauseStats.`prev_restart` as `cl.prev_restart`
+        , clauseStats.`conflicts` as `cl.conflicts`
+        , clauseStats.`clauseID` as `cl.clauseID`
+        , clauseStats.`glue` as `cl.glue`
+        , clauseStats.`size` as `cl.size`
+        , clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`
+        , clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`
+        , clauseStats.`num_antecedents` as `cl.num_antecedents`
+        , clauseStats.`antecedents_avg_size` as `cl.antecedents_avg_size`
+        , clauseStats.`backtrack_level` as `cl.backtrack_level`
+        , clauseStats.`decision_level` as `cl.decision_level`
+        , clauseStats.`trail_depth_level` as `cl.trail_depth_level`
+        , clauseStats.`atedecents_binIrred` as `cl.atedecents_binIrred`
+        , clauseStats.`atedecents_binRed` as `cl.atedecents_binRed`
+        , clauseStats.`atedecents_longIrred` as `cl.atedecents_longIrred`
+        , clauseStats.`atedecents_longRed` as `cl.atedecents_longRed`
+        , clauseStats.`vsids_vars_avg` as `cl.vsids_vars_avg`
+        , clauseStats.`vsids_vars_var` as `cl.vsids_vars_var`
+        , clauseStats.`vsids_vars_min` as `cl.vsids_vars_min`
+        , clauseStats.`vsids_vars_max` as `cl.vsids_vars_max`
+        , clauseStats.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`
+        , clauseStats.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`
+        , clauseStats.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`
+        , clauseStats.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`
+        , clauseStats.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`
+        , clauseStats.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`
+        , clauseStats.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`
+        , clauseStats.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`
+        , clauseStats.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`
+        , clauseStats.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`
+        , clauseStats.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`
+        , clauseStats.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`
+        , clauseStats.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`
+        , clauseStats.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`
+        , clauseStats.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`
+        , clauseStats.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
+        , clauseStats.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
+        , clauseStats.`decision_level_hist` as `cl.decision_level_hist`
+        , clauseStats.`backtrack_level_hist` as `cl.backtrack_level_hist`
+        , clauseStats.`trail_depth_level_hist` as `cl.trail_depth_level_hist`
+        , clauseStats.`vsids_vars_hist` as `cl.vsids_vars_hist`
+        , clauseStats.`size_hist` as `cl.size_hist`
+        , clauseStats.`glue_hist` as `cl.glue_hist`
+        , clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`
         """
 
         feat_dat="""
-        features.`simplifications` as `feat.simplifications`,
-        features.`restarts` as `feat.restarts`,
-        features.`conflicts` as `feat.conflicts`,
-        features.`numVars` as `feat.numVars`,
-        features.`numClauses` as `feat.numClauses`,
-        features.`var_cl_ratio` as `feat.var_cl_ratio`,
-        features.`binary` as `feat.binary`,
-        features.`horn` as `feat.horn`,
-        features.`horn_mean` as `feat.horn_mean`,
-        features.`horn_std` as `feat.horn_std`,
-        features.`horn_min` as `feat.horn_min`,
-        features.`horn_max` as `feat.horn_max`,
-        features.`horn_spread` as `feat.horn_spread`,
-        features.`vcg_var_mean` as `feat.vcg_var_mean`,
-        features.`vcg_var_std` as `feat.vcg_var_std`,
-        features.`vcg_var_min` as `feat.vcg_var_min`,
-        features.`vcg_var_max` as `feat.vcg_var_max`,
-        features.`vcg_var_spread` as `feat.vcg_var_spread`,
-        features.`vcg_cls_mean` as `feat.vcg_cls_mean`,
-        features.`vcg_cls_std` as `feat.vcg_cls_std`,
-        features.`vcg_cls_min` as `feat.vcg_cls_min`,
-        features.`vcg_cls_max` as `feat.vcg_cls_max`,
-        features.`vcg_cls_spread` as `feat.vcg_cls_spread`,
-        features.`pnr_var_mean` as `feat.pnr_var_mean`,
-        features.`pnr_var_std` as `feat.pnr_var_std`,
-        features.`pnr_var_min` as `feat.pnr_var_min`,
-        features.`pnr_var_max` as `feat.pnr_var_max`,
-        features.`pnr_var_spread` as `feat.pnr_var_spread`,
-        features.`pnr_cls_mean` as `feat.pnr_cls_mean`,
-        features.`pnr_cls_std` as `feat.pnr_cls_std`,
-        features.`pnr_cls_min` as `feat.pnr_cls_min`,
-        features.`pnr_cls_max` as `feat.pnr_cls_max`,
-        features.`pnr_cls_spread` as `feat.pnr_cls_spread`,
-        features.`avg_confl_size` as `feat.avg_confl_size`,
-        features.`confl_size_min` as `feat.confl_size_min`,
-        features.`confl_size_max` as `feat.confl_size_max`,
-        features.`avg_confl_glue` as `feat.avg_confl_glue`,
-        features.`confl_glue_min` as `feat.confl_glue_min`,
-        features.`confl_glue_max` as `feat.confl_glue_max`,
-        features.`avg_num_resolutions` as `feat.avg_num_resolutions`,
-        features.`num_resolutions_min` as `feat.num_resolutions_min`,
-        features.`num_resolutions_max` as `feat.num_resolutions_max`,
-        features.`learnt_bins_per_confl` as `feat.learnt_bins_per_confl`,
-        features.`avg_branch_depth` as `feat.avg_branch_depth`,
-        features.`branch_depth_min` as `feat.branch_depth_min`,
-        features.`branch_depth_max` as `feat.branch_depth_max`,
-        features.`avg_trail_depth_delta` as `feat.avg_trail_depth_delta`,
-        features.`trail_depth_delta_min` as `feat.trail_depth_delta_min`,
-        features.`trail_depth_delta_max` as `feat.trail_depth_delta_max`,
-        features.`avg_branch_depth_delta` as `feat.avg_branch_depth_delta`,
-        features.`props_per_confl` as `feat.props_per_confl`,
-        features.`confl_per_restart` as `feat.confl_per_restart`,
-        features.`decisions_per_conflict` as `feat.decisions_per_conflict`,
-        features.`red_glue_distr_mean` as `feat.red_glue_distr_mean`,
-        features.`red_glue_distr_var` as `feat.red_glue_distr_var`,
-        features.`red_size_distr_mean` as `feat.red_size_distr_mean`,
-        features.`red_size_distr_var` as `feat.red_size_distr_var`,
-        features.`red_activity_distr_mean` as `feat.red_activity_distr_mean`,
-        features.`red_activity_distr_var` as `feat.red_activity_distr_var`,
-        features.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`,
-        features.`irred_glue_distr_var` as `feat.irred_glue_distr_var`,
-        features.`irred_size_distr_mean` as `feat.irred_size_distr_mean`,
-        features.`irred_size_distr_var` as `feat.irred_size_distr_var`,
-        features.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`,
-        features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
+        features.`simplifications` as `feat.simplifications`
+        , features.`restarts` as `feat.restarts`
+        , features.`conflicts` as `feat.conflicts`
+        , features.`numVars` as `feat.numVars`
+        , features.`numClauses` as `feat.numClauses`
+        , features.`var_cl_ratio` as `feat.var_cl_ratio`
+        , features.`binary` as `feat.binary`
+        , features.`horn` as `feat.horn`
+        , features.`horn_mean` as `feat.horn_mean`
+        , features.`horn_std` as `feat.horn_std`
+        , features.`horn_min` as `feat.horn_min`
+        , features.`horn_max` as `feat.horn_max`
+        , features.`horn_spread` as `feat.horn_spread`
+        , features.`vcg_var_mean` as `feat.vcg_var_mean`
+        , features.`vcg_var_std` as `feat.vcg_var_std`
+        , features.`vcg_var_min` as `feat.vcg_var_min`
+        , features.`vcg_var_max` as `feat.vcg_var_max`
+        , features.`vcg_var_spread` as `feat.vcg_var_spread`
+        , features.`vcg_cls_mean` as `feat.vcg_cls_mean`
+        , features.`vcg_cls_std` as `feat.vcg_cls_std`
+        , features.`vcg_cls_min` as `feat.vcg_cls_min`
+        , features.`vcg_cls_max` as `feat.vcg_cls_max`
+        , features.`vcg_cls_spread` as `feat.vcg_cls_spread`
+        , features.`pnr_var_mean` as `feat.pnr_var_mean`
+        , features.`pnr_var_std` as `feat.pnr_var_std`
+        , features.`pnr_var_min` as `feat.pnr_var_min`
+        , features.`pnr_var_max` as `feat.pnr_var_max`
+        , features.`pnr_var_spread` as `feat.pnr_var_spread`
+        , features.`pnr_cls_mean` as `feat.pnr_cls_mean`
+        , features.`pnr_cls_std` as `feat.pnr_cls_std`
+        , features.`pnr_cls_min` as `feat.pnr_cls_min`
+        , features.`pnr_cls_max` as `feat.pnr_cls_max`
+        , features.`pnr_cls_spread` as `feat.pnr_cls_spread`
+        , features.`avg_confl_size` as `feat.avg_confl_size`
+        , features.`confl_size_min` as `feat.confl_size_min`
+        , features.`confl_size_max` as `feat.confl_size_max`
+        , features.`avg_confl_glue` as `feat.avg_confl_glue`
+        , features.`confl_glue_min` as `feat.confl_glue_min`
+        , features.`confl_glue_max` as `feat.confl_glue_max`
+        , features.`avg_num_resolutions` as `feat.avg_num_resolutions`
+        , features.`num_resolutions_min` as `feat.num_resolutions_min`
+        , features.`num_resolutions_max` as `feat.num_resolutions_max`
+        , features.`learnt_bins_per_confl` as `feat.learnt_bins_per_confl`
+        , features.`avg_branch_depth` as `feat.avg_branch_depth`
+        , features.`branch_depth_min` as `feat.branch_depth_min`
+        , features.`branch_depth_max` as `feat.branch_depth_max`
+        , features.`avg_trail_depth_delta` as `feat.avg_trail_depth_delta`
+        , features.`trail_depth_delta_min` as `feat.trail_depth_delta_min`
+        , features.`trail_depth_delta_max` as `feat.trail_depth_delta_max`
+        , features.`avg_branch_depth_delta` as `feat.avg_branch_depth_delta`
+        , features.`props_per_confl` as `feat.props_per_confl`
+        , features.`confl_per_restart` as `feat.confl_per_restart`
+        , features.`decisions_per_conflict` as `feat.decisions_per_conflict`
+        , features.`red_glue_distr_mean` as `feat.red_glue_distr_mean`
+        , features.`red_glue_distr_var` as `feat.red_glue_distr_var`
+        , features.`red_size_distr_mean` as `feat.red_size_distr_mean`
+        , features.`red_size_distr_var` as `feat.red_size_distr_var`
+        , features.`red_activity_distr_mean` as `feat.red_activity_distr_mean`
+        , features.`red_activity_distr_var` as `feat.red_activity_distr_var`
+        , features.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`
+        , features.`irred_glue_distr_var` as `feat.irred_glue_distr_var`
+        , features.`irred_size_distr_mean` as `feat.irred_size_distr_mean`
+        , features.`irred_size_distr_var` as `feat.irred_size_distr_var`
+        , features.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`
+        , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
-        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/{comment} restart.`\1` as `rst.\1`,/' ../tmp.txt
         q = """
         SELECT
-        {clause_dat},
-        1 as good,
-        {restart_dat}
-        {comment},
-        {feat_dat}
+        {clause_dat}
+        , 1 as good
+        , {restart_dat}
+        , {feat_dat}
 
-        FROM clauseStats, goodClauses
-        {comment} , restart
+        FROM
+        clauseStats
+        , goodClauses
+        , restart
         , features
         WHERE
 
@@ -308,27 +306,26 @@ class Query2 (QueryHelper):
         and clauseStats.runID = {0}
         and features.runID = {0}
         and features.simplifications = clauseStats.simplifications
-        {comment} and restart.restarts = clauseStats.prev_restart
-        {comment} and restart.runID = {0}
+        and restart.restarts = clauseStats.prev_restart
+        and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment,
+        """.format(self.runID, options.limit,
                    restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
         df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
         q = """
         SELECT
-        {clause_dat},
-        0 as good,
-        {restart_dat}
-        {comment},
-        {feat_dat}
+        {clause_dat}
+        , 0 as good
+        , {restart_dat}
+        , {feat_dat}
 
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
-        {comment} , restart
+        , restart
         , features
         WHERE
 
@@ -338,11 +335,11 @@ class Query2 (QueryHelper):
         and clauseStats.runID = {0}
         and features.runID = {0}
         and features.simplifications = clauseStats.simplifications
-        {comment} and restart.restarts = clauseStats.prev_restart
-        {comment} and restart.runID = {0}
+        and restart.restarts = clauseStats.prev_restart
+        and restart.runID = {0}
 
         limit {1}
-        """.format(self.runID, options.limit, comment=comment,
+        """.format(self.runID, options.limit,
                    restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
         df2 = pd.read_sql_query(q, self.conn)
 
@@ -404,9 +401,7 @@ class Classify:
                 "rst.simplifications",
                 "rst.restarts",
                 "rst.conflicts",
-                "rst.runtime",
-                "rst.clauseIDstartInclusive",
-                "rst.clauseIDendExclusive"])
+                "rst.runtime"])
 
         for t in toremove:
             print("removing feature:", t)
