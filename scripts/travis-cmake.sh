@@ -321,7 +321,8 @@ if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC"
     ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
 
-case $CMS_CONFIG in
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    case $CMS_CONFIG in
     WEB)
         #we are now in the main dir, ./src dir is here
         cd ..
@@ -371,5 +372,6 @@ case $CMS_CONFIG in
     *)
         echo "\"${CMS_CONFIG}\" No further testing"
     ;;
-esac
+    esac
+fi
 
