@@ -340,6 +340,7 @@ case $CMS_CONFIG in
         ln -s ../scripts/learn/* .
         ./test_id.sh
         sudo apt-get install -y --force-yes graphviz
+        sudo apt-get install -y --force-yes blas
         sudo pip3 install numpy
         sudo pip3 install scipy
         sudo pip3 install sklearn
