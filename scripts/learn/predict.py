@@ -561,7 +561,7 @@ def one_predictor(dbfname, final_df):
 
 if __name__ == "__main__":
 
-    usage = "usage: %prog [options] dir1 [dir2...]"
+    usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
