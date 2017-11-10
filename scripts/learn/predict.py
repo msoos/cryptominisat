@@ -399,27 +399,25 @@ class Classify:
                     "cl.backtrack_level",
                     "good"]
 
-        if True:
-            toremove.extend(["cl.vsids_vars_avg",
-                             "cl.vsids_vars_var",
-                             "cl.vsids_vars_min",
-                             "cl.vsids_vars_max",
-                             "cl.vsids_of_resolving_literals_avg",
-                             "cl.vsids_of_resolving_literals_var",
-                             "cl.vsids_of_resolving_literals_min",
-                             "cl.vsids_of_resolving_literals_max",
-                             "cl.vsids_of_all_incoming_lits_avg",
-                             "cl.vsids_of_all_incoming_lits_var",
-                             "cl.vsids_of_all_incoming_lits_min",
-                             "cl.vsids_of_all_incoming_lits_max"])
+        toremove.extend(["cl.vsids_vars_avg",
+                         "cl.vsids_vars_var",
+                         "cl.vsids_vars_min",
+                         "cl.vsids_vars_max",
+                         "cl.vsids_of_resolving_literals_avg",
+                         "cl.vsids_of_resolving_literals_var",
+                         "cl.vsids_of_resolving_literals_min",
+                         "cl.vsids_of_resolving_literals_max",
+                         "cl.vsids_of_all_incoming_lits_avg",
+                         "cl.vsids_of_all_incoming_lits_var",
+                         "cl.vsids_of_all_incoming_lits_min",
+                         "cl.vsids_of_all_incoming_lits_max"])
 
-        if options.restart_used:
-            toremove.extend([
-                "rst.runID",
-                "rst.simplifications",
-                "rst.restarts",
-                "rst.conflicts",
-                "rst.runtime"])
+        toremove.extend([
+            "rst.runID",
+            "rst.simplifications",
+            "rst.restarts",
+            "rst.conflicts",
+            "rst.runtime"])
 
         for t in toremove:
             print("removing feature:", t)
