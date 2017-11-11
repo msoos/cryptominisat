@@ -128,6 +128,9 @@ public:
 
     T getMax() const
     {
+        if (max == std::numeric_limits<T>::min())
+            return 0;
+
         return max;
     }
     #endif
