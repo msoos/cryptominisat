@@ -295,7 +295,9 @@ void SolveFeaturesCalc::calculate_cl_distributions(
         const Clause& cl = *solver->cl_alloc.ptr(off);
         size_mean += cl.size();
         glue_mean += cl.stats.glue;
-        activity_mean += (double)cl.stats.activity/cla_inc;
+        if (cl.learnt_clause) {
+            activity_mean += (double)cl.stats.activity/cla_inc;
+        }
     }
     size_mean /= clauses.size();
     glue_mean /= clauses.size();
