@@ -341,12 +341,12 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         ln -s ../scripts/learn/* .
         ./test_id.sh
         sudo apt-get install -y --force-yes graphviz
-        sudo apt-get install -y --force-yes blas
-        sudo pip3 install numpy
-        sudo pip3 install scipy
-        sudo pip3 install sklearn
-        sudo pip3 install pandas
-        ./test_predict.sh
+        # sudo apt-get install -y --force-yes blas
+        # sudo pip3 install numpy
+        # sudo pip3 install scipy
+        # sudo pip3 install sklearn
+        # sudo pip3 install pandas
+        # ./test_predict.sh
     ;;
 
     COVERAGE)
