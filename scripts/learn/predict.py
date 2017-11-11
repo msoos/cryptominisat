@@ -116,14 +116,16 @@ class Query2 (QueryHelper):
         return max_clID
 
     def get_clstats(self):
+        toremove = ["good"]
+
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
         restart_dat = """
-        restart.`runID` as `rst.runID`
-        , restart.`simplifications` as `rst.simplifications`
-        , restart.`restarts` as `rst.restarts`
-        , restart.`conflicts` as `rst.conflicts`
-        , restart.`runtime` as `rst.runtime`
+        -- restart.`runID` as `rst.runID`
+        -- , restart.`simplifications` as `rst.simplifications`
+        -- , restart.`restarts` as `rst.restarts`
+        -- , restart.`conflicts` as `rst.conflicts`
+        -- restart.`runtime` as `rst.runtime`
         , restart.`numIrredBins` as `rst.numIrredBins`
         , restart.`numIrredLongs` as `rst.numIrredLongs`
         , restart.`numRedBins` as `rst.numRedBins`
@@ -173,27 +175,27 @@ class Query2 (QueryHelper):
         , restart.`resolBinRed` as `rst.resolBinRed`
         , restart.`resolLIrred` as `rst.resolLIrred`
         , restart.`resolLRed` as `rst.resolLRed`
-        , restart.`propagations` as `rst.propagations`
-        , restart.`decisions` as `rst.decisions`
-        , restart.`flipped` as `rst.flipped`
-        , restart.`varSetPos` as `rst.varSetPos`
-        , restart.`varSetNeg` as `rst.varSetNeg`
-        , restart.`free` as `rst.free`
-        , restart.`replaced` as `rst.replaced`
-        , restart.`eliminated` as `rst.eliminated`
-        , restart.`set` as `rst.set`
+        -- , restart.`propagations` as `rst.propagations`
+        -- , restart.`decisions` as `rst.decisions`
+        -- , restart.`flipped` as `rst.flipped`
+        -- , restart.`varSetPos` as `rst.varSetPos`
+        -- , restart.`varSetNeg` as `rst.varSetNeg`
+        -- , restart.`free` as `rst.free`
+        -- , restart.`replaced` as `rst.replaced`
+        -- , restart.`eliminated` as `rst.eliminated`
+        -- , restart.`set` as `rst.set`
         -- , restart.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`
         -- , restart.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
         """
 
         clause_dat = """
-        clauseStats.`runID` as `cl.runID`
-        , clauseStats.`simplifications` as `cl.simplifications`
-        , clauseStats.`restarts` as `cl.restarts`
-        , clauseStats.`prev_restart` as `cl.prev_restart`
-        , clauseStats.`conflicts` as `cl.conflicts`
-        , clauseStats.`clauseID` as `cl.clauseID`
-        , clauseStats.`glue` as `cl.glue`
+        -- clauseStats.`runID` as `cl.runID`
+        -- , clauseStats.`simplifications` as `cl.simplifications`
+        -- , clauseStats.`restarts` as `cl.restarts`
+        -- , clauseStats.`prev_restart` as `cl.prev_restart`
+        -- , clauseStats.`conflicts` as `cl.conflicts`
+        -- , clauseStats.`clauseID` as `cl.clauseID`
+        clauseStats.`glue` as `cl.glue`
         , clauseStats.`size` as `cl.size`
         , clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`
         , clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`
@@ -237,9 +239,9 @@ class Query2 (QueryHelper):
         """
 
         feat_dat="""
-        features.`simplifications` as `feat.simplifications`
-        , features.`restarts` as `feat.restarts`
-        , features.`conflicts` as `feat.conflicts`
+        -- features.`simplifications` as `feat.simplifications`
+        -- , features.`restarts` as `feat.restarts`
+        features.`conflicts` as `feat.conflicts`
         , features.`numVars` as `feat.numVars`
         , features.`numClauses` as `feat.numClauses`
         , features.`var_cl_ratio` as `feat.var_cl_ratio`
@@ -294,20 +296,20 @@ class Query2 (QueryHelper):
         , features.`red_glue_distr_var` as `feat.red_glue_distr_var`
         , features.`red_size_distr_mean` as `feat.red_size_distr_mean`
         , features.`red_size_distr_var` as `feat.red_size_distr_var`
-        , features.`red_activity_distr_mean` as `feat.red_activity_distr_mean`
-        , features.`red_activity_distr_var` as `feat.red_activity_distr_var`
-        , features.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`
-        , features.`irred_glue_distr_var` as `feat.irred_glue_distr_var`
+        -- , features.`red_activity_distr_mean` as `feat.red_activity_distr_mean`
+        -- , features.`red_activity_distr_var` as `feat.red_activity_distr_var`
+        -- , features.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`
+        -- , features.`irred_glue_distr_var` as `feat.irred_glue_distr_var`
         , features.`irred_size_distr_mean` as `feat.irred_size_distr_mean`
         , features.`irred_size_distr_var` as `feat.irred_size_distr_var`
-        , features.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`
-        , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
+        -- , features.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`
+        -- , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
         q = """
         SELECT
-        {clause_dat}
-        , 1 as good
+        "OK" as good
+        , {clause_dat}
         , {restart_dat}
         , {feat_dat}
 
@@ -330,13 +332,16 @@ class Query2 (QueryHelper):
         limit {1}
         """.format(self.runID, options.limit,
                    restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
+        print("-- query starts --")
+        print(q)
+        print("-- query ends --")
         df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
         q = """
         SELECT
-        {clause_dat}
-        , 0 as good
+        "BAD" as good
+        , {clause_dat}
         , {restart_dat}
         , {feat_dat}
 
@@ -387,11 +392,7 @@ class Classify:
                     "cl.backtrack_level_hist",
                     "cl.trail_depth_level_hist",
                     "cl.vsids_vars_hist",
-                    "cl.runID",
                     "cl.simplifications",
-                    "cl.restarts",
-                    "cl.conflicts",
-                    "cl.clauseID",
                     "cl.size_hist",
                     "cl.glue_hist",
                     "cl.num_antecedents_hist",
@@ -412,12 +413,6 @@ class Classify:
                          "cl.vsids_of_all_incoming_lits_min",
                          "cl.vsids_of_all_incoming_lits_max"])
 
-        toremove.extend([
-            "rst.runID",
-            "rst.simplifications",
-            "rst.restarts",
-            "rst.conflicts",
-            "rst.runtime"])
 
         for t in toremove:
             print("removing feature:", t)
