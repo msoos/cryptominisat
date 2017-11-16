@@ -285,6 +285,19 @@ case $CMS_CONFIG in
     ;;
 esac
 
+if [ "$CMS_CONFIG" == "NORMAL" ] ; then
+    BACKUP=`pwd`
+    cd
+    python -c "
+import pycryptosat
+a = pycryptosat.Solver()
+a.add_clause([1,2,3])
+print(a.solve())"
+    cd $BACKUP
+fi
+
+
+
 # elimination checks
 # NOTE: minisat doesn't build with clang
 if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then

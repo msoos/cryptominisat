@@ -85,7 +85,6 @@ def _init_posix(init):
 
 sysconfig._init_posix = _init_posix(sysconfig._init_posix)
 
-################################################################################
 
 class TestCommand(Command):
     """Call tests with the custom 'python setup.py test' command."""
@@ -125,6 +124,7 @@ modules = dict(
     extra_link_args = ldconf,
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
+    runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
     libraries = ['cryptominisat5']
 )
 
@@ -150,7 +150,7 @@ setup(
     ext_modules =  [Extension(**modules)],
     description = "Bindings to CryptoMiniSat {} (a SAT solver)".\
         format(__LIBRARY_VERSION__),
-    py_modules = ['pycryptosat'],
+#    py_modules = ['pycryptosat'],
     long_description = open('${CMAKE_CURRENT_SOURCE_DIR}/README.rst').read(),
     cmdclass={
         'test': TestCommand

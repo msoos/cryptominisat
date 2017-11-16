@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016  Mate Soos
@@ -33,7 +33,7 @@ class Map(dict):
         super(Map, self).__init__(*args, **kwargs)
         for arg in args:
             if isinstance(arg, dict):
-                for k, v in arg.iteritems():
+                for k, v in arg.items():
                     self[k] = v
 
         if kwargs:

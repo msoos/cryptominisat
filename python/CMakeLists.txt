@@ -53,11 +53,16 @@ add_custom_target(python_interface
 # Make a distribution source package
 # not really working -- only adds the .py files, and the test
 add_custom_target(python_interface_dist_package
-                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist)
+                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt)")
+install(CODE "execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
+)
 
 if (ENABLE_TESTING AND NOT APPLE)
     add_test(NAME python_interface_test
-             COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test)
+             COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test
+             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
