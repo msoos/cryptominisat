@@ -121,7 +121,7 @@ class Query2 (QueryHelper):
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
         restart_dat = """
-        -- restart.`runID` as `rst.runID`
+        -- , restart.`runID` as `rst.runID`
         -- , restart.`simplifications` as `rst.simplifications`
         -- , restart.`restarts` as `rst.restarts`
         -- , restart.`conflicts` as `rst.conflicts`
@@ -189,13 +189,13 @@ class Query2 (QueryHelper):
         """
 
         clause_dat = """
-        -- clauseStats.`runID` as `cl.runID`
+        -- , clauseStats.`runID` as `cl.runID`
         -- , clauseStats.`simplifications` as `cl.simplifications`
         -- , clauseStats.`restarts` as `cl.restarts`
         -- , clauseStats.`prev_restart` as `cl.prev_restart`
         -- , clauseStats.`conflicts` as `cl.conflicts`
         -- , clauseStats.`clauseID` as `cl.clauseID`
-        clauseStats.`glue` as `cl.glue`
+        , clauseStats.`glue` as `cl.glue`
         , clauseStats.`size` as `cl.size`
         , clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`
         , clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`
@@ -239,9 +239,9 @@ class Query2 (QueryHelper):
         """
 
         feat_dat="""
-        -- features.`simplifications` as `feat.simplifications`
+        -- , features.`simplifications` as `feat.simplifications`
         -- , features.`restarts` as `feat.restarts`
-        features.`conflicts` as `feat.conflicts`
+        , features.`conflicts` as `feat.conflicts`
         , features.`numVars` as `feat.numVars`
         , features.`numClauses` as `feat.numClauses`
         , features.`var_cl_ratio` as `feat.var_cl_ratio`
@@ -309,9 +309,9 @@ class Query2 (QueryHelper):
         q = """
         SELECT
         "OK" as good
-        , {clause_dat}
-        , {restart_dat}
-        , {feat_dat}
+        {clause_dat}
+        {restart_dat}
+        {feat_dat}
 
         FROM
         clauseStats
@@ -341,9 +341,9 @@ class Query2 (QueryHelper):
         q = """
         SELECT
         "BAD" as good
-        , {clause_dat}
-        , {restart_dat}
-        , {feat_dat}
+        {clause_dat}
+        {restart_dat}
+        {feat_dat}
 
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
