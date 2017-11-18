@@ -71,7 +71,8 @@ sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
-cmake .
+mkdir build && cd build
+cmake ..
 make
 sudo make install
 sudo ldconfig
@@ -84,7 +85,8 @@ Compiling in Mac OSX
 brew install cmake boost zlib
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
-cmake .
+mkdir build && cd build
+cmake ..
 make
 sudo make install
 ```
@@ -170,7 +172,8 @@ sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqli
 sudo apt-get install python-setuptools python-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
-cmake .
+mkdir build && cd build
+cmake ..
 make
 sudo make install
 sudo ldconfig
@@ -413,14 +416,6 @@ Fuzzing
 Build for test as per above, then:
 
 ```
-# you are currently in cryptomnisat/build
-sudo apt-get install valgrind
-cd ../../
-git clone https://github.com/msoos/lingeling-ala
-cd lingeling-ala
-./configure
-make
-sudo cp lingeling /usr/local/bin/
 cd ../cryptominisat/scripts/fuzz/
 ./fuzz_test.py
 
