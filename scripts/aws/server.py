@@ -63,7 +63,7 @@ class Server (threading.Thread):
         self.files = {}
 
         os.system("aws s3 cp s3://msoos-solve-data/solvers/{cnf_list} . --region {region}".format(
-            cnf_list=options.cnf_list, region=options.region)
+            cnf_list=options.cnf_list, region=options.region))
         fnames = open(options.cnf_list, "r")
         logging.info("CNF list is file %s", options.cnf_list)
         num = 0
@@ -108,10 +108,10 @@ class Server (threading.Thread):
         for fnames in files:
             logging.info("Renaming file %s to %s", fnames[0], fnames[1])
             ret = os.system("aws s3 mv s3://{bucket}/{origname} s3://{bucket}/{toname} --region {region}".format(
-                            (bucket=options.s3_bucket,
-                                origname=fnames[0],
-                                toname=fnames[1],
-                                region=options.region))
+                bucket=options.s3_bucket,
+                origname=fnames[0],
+                toname=fnames[1],
+                region=options.region))
             if ret:
                 logging.warn("Renaming file to final name failed!")
 
