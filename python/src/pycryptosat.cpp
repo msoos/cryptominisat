@@ -340,12 +340,7 @@ static PyObject* get_solution(SATSolver *cmsat)
     }
 
     Py_INCREF(Py_None);
-    // no error checking
-    if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)0, Py_None) < 0) {
-        PyErr_SetString(PyExc_SystemError, "failed to add 1st element to tuple");
-        Py_DECREF(tuple);
-        return NULL;
-    }
+    PyTuple_SET_ITEM(tuple, (Py_ssize_t)0, Py_None);
 
     PyObject *py_value = NULL;
     lbool v;
@@ -363,13 +358,7 @@ static PyObject* get_solution(SATSolver *cmsat)
             assert((v == l_False) || (v == l_True) || (v == l_Undef));
         }
         Py_INCREF(py_value);
-
-        // no error checking
-        if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)i+1, py_value) < 0) {
-            PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
-            Py_DECREF(tuple);
-            return NULL;
-        }
+        PyTuple_SET_ITEM(tuple, (Py_ssize_t)i+1, py_value);
     }
     return tuple;
 }
@@ -399,12 +388,7 @@ static PyObject* get_raw_solution(SATSolver *cmsat) {
             py_value = PyInt_FromLong((var + 1) * sign);
             #endif
 
-            // no error checking
-            if (PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value) < 0) {
-                PyErr_SetString(PyExc_SystemError, "failed to add to tuple");
-                Py_DECREF(tuple);
-                return NULL;
-            }
+            PyTuple_SET_ITEM(tuple, (Py_ssize_t)var, py_value);
         }
     }
     return tuple;
@@ -541,7 +525,6 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         }
         Py_INCREF(Py_True);
 
-        // no error checking
         PyTuple_SET_ITEM(result, 0, Py_True);
         PyTuple_SET_ITEM(result, 1, solution);
 
@@ -549,7 +532,6 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         Py_INCREF(Py_False);
         Py_INCREF(Py_None);
 
-        // no error checking
         PyTuple_SET_ITEM(result, 0, Py_False);
         PyTuple_SET_ITEM(result, 1, Py_None);
 
