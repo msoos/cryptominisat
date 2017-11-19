@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 import sys
-import ConfigParser
+import configparser
 from boto.ec2.connection import EC2Connection
 from common_aws import *
 import logging
@@ -11,7 +11,7 @@ import logging
 
 class RequestSpotClient:
     def __init__(self, revision, test, noshutdown=False, count=1):
-        self.conf = ConfigParser.ConfigParser()
+        self.conf = configparser.ConfigParser()
         self.count = count
         if test:
             self.conf.read('ec2-spot-instance-test.cfg')
