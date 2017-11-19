@@ -263,7 +263,7 @@ fi
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
     cd pycryptosat/tests/
-    python2 test_pycryptosat.py
+    python test_pycryptosat.py
     cd ../..
 fi
 
