@@ -23,7 +23,7 @@ import functools
 import string
 
 # for importing in systems where "." is not in the PATH
-sys.path.append(os.getcwd()+"/script/learn/")
+sys.path.append(os.getcwd()+"/scripts/learn/")
 from common_aws import *
 import add_lemma_ind as addlemm
 
