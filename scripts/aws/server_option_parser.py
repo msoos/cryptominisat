@@ -149,7 +149,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
         conf.read('ec2-spot-instance.cfg')
 
     if options.s3_bucket is None:
-        options.s3_bucket = conf.result_bucket
+        options.s3_bucket = conf.get("ec2", "result_bucket")
 
     def rnd_id():
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
