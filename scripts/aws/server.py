@@ -356,7 +356,7 @@ So long and thanks for all the fish!
     upload_log(options.s3_bucket,
                full_s3_folder,
                options.logfile_name,
-               "server-%s" % get_ip_address("eth0"))
+               "server")
 
     if not options.noshutdown:
         os.system(toexec)
