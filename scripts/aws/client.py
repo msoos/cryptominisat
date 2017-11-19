@@ -491,6 +491,7 @@ def build_cryptominisat(indata):
                               )
     global s3_bucket
     s3_bucket = indata["s3_bucket"]
+    logging.warn("s3 bucket: %, s3 folder: %", s3_bucket, s3_folder, extra={"threadid": "-1"})
     upload_log(s3_bucket,
                s3_folder,
                "%s/build.log" % options.base_dir,
