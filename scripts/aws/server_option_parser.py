@@ -165,6 +165,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
 
     return options, args
 
+
 if __name__ == "__main__":
     options, args = parse_arguments()
     print("Options are:", options)
