@@ -78,7 +78,7 @@ cd /home/ubuntu/cryptominisat
 sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py {extra_args} > /home/ubuntu/log.txt  2>&1' &
 
 DATA="{ip}"
-""".format(revision=revision, extra_args=extra_args, ip=get_ip_address("eth0"), region=self.conf.get("ec2", "region")
+""".format(revision=revision, extra_args=extra_args, ip=get_ip_address("eth0"), region=self.conf.get("ec2", "region"))
 
         return user_data
 
