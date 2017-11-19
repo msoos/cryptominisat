@@ -44,8 +44,8 @@ pip install --force-reinstall --upgrade awscli
 pip install --force-reinstall --upgrade boto
 apt-get -y install cmake make g++ libboost-all-dev
 apt-get -y install libsqlite3-dev awscli unzip
-apt-get -y install linux-cloud-tools-generic linux-tools-generic
-apt-get -y install linux-cloud-tools-3.13.0-53-generic linux-tools-3.13.0-53-generic
+# apt-get -y install linux-cloud-tools-generic linux-tools-generic
+# apt-get -y install linux-cloud-tools-3.13.0-53-generic linux-tools-3.13.0-53-generic
 
 # Get CMS
 cd /home/ubuntu/
