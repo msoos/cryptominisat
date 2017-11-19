@@ -101,11 +101,6 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
                       type=str
                       )
 
-    parser.add_option("--s3bucket",
-                      dest="s3_bucket", help="S3 Bucket to upload finished data",
-                      type=str
-                      )
-
     parser.add_option("--folder", default="results", dest="given_folder",
                       help="S3 folder name to upload data"
                       "[default: %default]",
@@ -148,8 +143,12 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
     else:
         conf.read('ec2-spot-instance.cfg')
 
-    if options.s3_bucket is None:
-        options.s3_bucket = conf.get("ec2", "result_bucket")
+    options.s3_bucket = conf.get("ec2", "result_bucket")
+    options.key_name = conf.get("ec2", "key_name")
+    options.security_group_server = conf.get("ec2", "security_group_server")
+    options.subnet_id = conf.get("ec2", "subnet_id")
+    options.ami_id = conf.get("ec2", "ami_id")
+    options.region = conf.get("ec2", "region")
 
     def rnd_id():
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))

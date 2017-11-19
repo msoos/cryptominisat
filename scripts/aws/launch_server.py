@@ -57,8 +57,8 @@ if __name__ == "__main__":
         data += "--opt \""
 
     if ("--git" not in data):
-        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-        data += " --git %s" % revision
+        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode("utf-8")
+        data += " --git '{revision}'".format(revision=revision)
 
     if len(sys.argv) > 1:
         print("Launching with data: %s" % data)
@@ -87,24 +87,24 @@ sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptom
 
 # Get credentials
 cd /home/ubuntu
-sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region=us-west-2'
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region={region}'
 
 # Start server
 cd /home/ubuntu/cryptominisat
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/pre-server.py > /home/ubuntu/pre_server_log.txt  2>&1 &'
 
-DATA="%s"
-    """ % data
+DATA="{data}"
+    """.format(region=options.region, data=data)
 
-    conn = boto.ec2.connect_to_region("us-west-2")
+    conn = boto.ec2.connect_to_region(options.region)
     conn.run_instances(
         min_count=1,
         max_count=1,
-        image_id='ami-a9e2da99',  # Unbuntu 14.04 US-west (Oregon)
-        subnet_id="subnet-88ab16ed",
+        image_id=options.ami_id,
+        subnet_id=options.subnet_id,
         instance_type='t2.micro',
         instance_profile_arn='arn:aws:iam::907572138573:instance-profile/server',
         user_data=cloud_init,
-        key_name='controlkey',
-        security_group_ids=['sg-507b3f35'],
+        key_name=options.key_name
+        security_group_ids=[options.security_group_server],
         instance_initiated_shutdown_behavior='terminate')
