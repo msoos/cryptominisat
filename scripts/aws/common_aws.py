@@ -41,7 +41,7 @@ def send_email(subject, text, fname=None):
     email_login = config.get("email", "login")
     email_pass = config.get("email", "pass")
 
-    smtp = smtplib.SMTP_SSL("email-smtp.us-west-2.amazonaws.com".format(region=region))
+    smtp = smtplib.SMTP_SSL("email-smtp.us-west-2.amazonaws.com")
     smtp.login(email_login, email_pass)
 
     # Send email

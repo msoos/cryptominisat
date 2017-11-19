@@ -105,6 +105,6 @@ DATA="{data}"
         instance_type='t2.micro',
         instance_profile_arn='arn:aws:iam::907572138573:instance-profile/server',
         user_data=cloud_init,
-        key_name=options.key_name
+        key_name=options.key_name,
         security_group_ids=[options.security_group_server],
         instance_initiated_shutdown_behavior='terminate')
