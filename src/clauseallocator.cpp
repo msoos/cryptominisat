@@ -96,15 +96,19 @@ void* ClauseAllocator::allocEnough(
         //Oops, not enough space anyway
         if (newcapacity < size + needed) {
             std::cerr
-            << "ERROR: memory manager can't handle the load"
+            << "ERROR: memory manager can't handle the load."
+#ifndef LARGE_OFFSETS
             << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
+#endif
             << " size: " << size
             << " needed: " << needed
             << " newcapacity: " << newcapacity
             << endl;
             std::cout
-            << "ERROR: memory manager can't handle the load"
+            << "ERROR: memory manager can't handle the load."
+#ifndef LARGE_OFFSETS
             << " **PLEASE RECOMPILE WITH -DLARGEMEM=ON**"
+#endif
             << " size: " << size
             << " needed: " << needed
             << " newcapacity: " << newcapacity
