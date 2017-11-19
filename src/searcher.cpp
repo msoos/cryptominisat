@@ -2314,16 +2314,16 @@ Lit Searcher::pickBranchLit()
             }
 
             if (!VSIDS) {
-                uint32_t v = order_heap[0];
-                uint32_t age = sumConflicts - varData[v].cancelled;
+                uint32_t v2 = order_heap[0];
+                uint32_t age = sumConflicts - varData[v2].cancelled;
                 while (age > 0) {
                     double decay = pow(0.95, age);
-                    var_act_maple[v] *= decay;
-                    if (order_heap.inHeap(v))
-                        order_heap.increase(v);
-                    varData[v].cancelled = sumConflicts;
-                    v = order_heap[0];
-                    age = sumConflicts - varData[v].cancelled;
+                    var_act_maple[v2] *= decay;
+                    if (order_heap.inHeap(v2))
+                        order_heap.increase(v2);
+                    varData[v2].cancelled = sumConflicts;
+                    v2 = order_heap[0];
+                    age = sumConflicts - varData[v2].cancelled;
                 }
             }
             v = order_heap.removeMin();
