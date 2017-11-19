@@ -141,7 +141,7 @@ case $CMS_CONFIG in
 
     NOPYTHON)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get remove -y python2.7-dev python-dev libpython-dev; fi
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get remove -y python3-dev python2.7-dev python-dev libpython-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
