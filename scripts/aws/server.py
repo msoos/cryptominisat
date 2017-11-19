@@ -117,7 +117,7 @@ class Server (threading.Thread):
     def check_for_dead_files(self):
         this_time = time.time()
         files_to_remove_from_files_running = []
-        for file_num, starttime in self.files_running.iteritems():
+        for file_num, starttime in self.files_running.items():
             duration = this_time - starttime
             # print("* death check. running:" , file_num, " duration: ",
             # duration)

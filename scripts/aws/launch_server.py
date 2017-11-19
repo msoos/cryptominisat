@@ -36,7 +36,7 @@ def push():
 if __name__ == "__main__":
     options, args = server_option_parser.parse_arguments()
     print("Options are:")
-    for a, b in options.__dict__.iteritems():
+    for a, b in options.__dict__.items():
         print("-- %-30s : %s" % (a, b))
     assert args == []
 

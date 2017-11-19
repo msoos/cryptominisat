@@ -18,5 +18,5 @@ for a in range(len(sys.argv)-1):
             fname = l[l.find("/")+1:]
             files[fname] = l
 
-for a,b in files.iteritems():
+for a,b in files.items():
     print(b)

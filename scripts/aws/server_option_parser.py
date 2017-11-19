@@ -5,7 +5,7 @@ import optparse
 import random
 import time
 import string
-import ConfigParser
+import configparser
 
 
 def parse_arguments():
@@ -142,7 +142,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
 
     # parse options
     options, args = parser.parse_args()
-    conf = ConfigParser.ConfigParser()
+    conf = configparser.ConfigParser()
     if options.cnf_list == "test":
         conf.read('ec2-spot-instance-test.cfg')
     else:
