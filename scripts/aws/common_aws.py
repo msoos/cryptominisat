@@ -40,9 +40,8 @@ def send_email(subject, text, fname=None):
     # Connect to STMP server
     email_login = config.get("email", "login")
     email_pass = config.get("email", "pass")
-    region = config.get("email", "region")
 
-    smtp = smtplib.SMTP_SSL("email-smtp.{region}.amazonaws.com".format(region=region))
+    smtp = smtplib.SMTP_SSL("email-smtp.us-west-2.amazonaws.com".format(region=region))
     smtp.login(email_login, email_pass)
 
     # Send email
