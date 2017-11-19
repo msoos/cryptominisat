@@ -393,8 +393,8 @@ void XorFinder::xor_together_xors()
         vector<uint32_t> vars = xor_two(x[0], x[1]);
         Xor x_new(vars, x[0].rhs ^ x[1].rhs);
         xors.push_back(x_new);
-        for(uint32_t v: x_new) {
-            Lit l(v, false);
+        for(uint32_t v2: x_new) {
+            Lit l(v2, false);
             solver->watches[l].push(Watched(xors.size()-1));
             solver->watches.smudge(l);
         }
