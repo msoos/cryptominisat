@@ -106,11 +106,12 @@ class Server (threading.Thread):
 
     def rename_files_to_final(self, files):
         for fnames in files:
-            logging.info("Renaming file %s to %s",
-                         fnames[0], fnames[1])
-            ret = os.system("aws s3 mv s3://%s/%s s3://%s/%s --region us-west-2" %
-                            (options.s3_bucket, fnames[0], options.s3_bucket,
-                             fnames[1]))
+            logging.info("Renaming file %s to %s", fnames[0], fnames[1])
+            ret = os.system("aws s3 mv s3://{bucket}/{origname} s3://{bucket}/{toname} --region {region}".format(
+                            (bucket=options.s3_bucket,
+                                origname=fnames[0],
+                                toname=fnames[1],
+                                region=options.region))
             if ret:
                 logging.warn("Renaming file to final name failed!")
 
