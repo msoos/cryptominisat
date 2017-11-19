@@ -191,10 +191,6 @@ class MyThread(threading.Thread):
             toprint += "of original no. of vars, %d\n" % limit
             return 1
 
-        if t_cms > (t_msat*2 + 8):
-            toprint += "*** ERROR: Time difference %d is too big!\n" % (t_cms-t_msat)
-            return 1
-
         toprint += "------------------[ thread %d ]------------------------" % self.threadID
 
         with print_lock:
