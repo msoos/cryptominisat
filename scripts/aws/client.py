@@ -173,9 +173,14 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        os.system("aws s3 cp s3://msoos-solve-data/%s %s --region us-west-2" % (
-            self.indata["cnf_filename"],
-            self.get_tmp_cnf_fname()))
+        logging.warn("Getting file to solve {cnf}".format(cnf=self.indata["cnf_filename"))
+        ret = os.system("aws s3 cp s3://msoos-solve-data/{cnf} {tmp_fname} --region {region}".format(
+            cnf=self.indata["cnf_filename"],
+            tmp_fname=self.get_tmp_cnf_fname(),
+            region=self.indata["region"]
+
+        if ret:
+            logging.warn("Getting CNF failed!")
 
         toexec = []
         toexec.append("%s/%s" % (options.base_dir, self.indata["solver"]))

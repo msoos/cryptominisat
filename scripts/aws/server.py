@@ -180,6 +180,7 @@ class Server (threading.Thread):
         tosend["noshutdown"] = options.noshutdown
         tosend["extra_opts"] = options.extra_opts
         tosend["drat"] = options.drat
+        tosend["region"] = options.region
 
         return tosend
 
