@@ -13,7 +13,7 @@ def get_answer():
     yes = set(['yes', 'y', 'ye'])
     no = set(['no', 'n'])
 
-    choice = raw_input().lower()
+    choice = input().lower()
     if choice in yes:
         return True
     elif choice in no:
