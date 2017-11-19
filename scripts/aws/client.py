@@ -715,9 +715,7 @@ def parse_command_line():
                       )
 
     parser.add_option("--host", dest="host",
-                      help="Host to connect to as a client"
-                      " [default: IP of eth0]",
-                      )
+                      help="Host to connect to as a client")
     parser.add_option("--port", "-p", default=10000, dest="port",
                       type="int", help="Port to use"
                       " [default: %default]",
@@ -736,7 +734,7 @@ def parse_command_line():
                       help="The home dir of cryptominisat"
                       " [default: %default]",
                       )
-    parser.add_option("--net", default="eth0", dest="network_device", type=str,
+    parser.add_option("--net", default="ens3", dest="network_device", type=str,
                       help="The network device we will be using"
                       " [default: %default]",
                       )
