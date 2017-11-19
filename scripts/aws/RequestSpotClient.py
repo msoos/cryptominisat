@@ -52,15 +52,15 @@ cd /home/ubuntu/
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c 'git checkout %s'
+sudo -H -u ubuntu bash -c 'git checkout {revision}'
 sudo -H -u ubuntu bash -c 'git submodule init'
 sudo -H -u ubuntu bash -c 'git submodule update'
 cd /home/ubuntu/
-# sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/features_to_reconf.cpp /home/ubuntu/cryptominisat/src/ --region=us-west-2'
+# sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/features_to_reconf.cpp /home/ubuntu/cryptominisat/src/ --region={region}'
 
 # Get credentials
 cd /home/ubuntu/
-sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region=us-west-2'
+sudo -H -u ubuntu bash -c 'aws s3 cp s3://msoos-solve-data/solvers/email.conf . --region={region}'
 
 # build solvers
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_maplecomsps_drup.sh >> /home/ubuntu/build.log'
@@ -74,10 +74,10 @@ sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_lingelin
 
 # Start client
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py %s > /home/ubuntu/log.txt  2>&1' &
+sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py {extra_args} > /home/ubuntu/log.txt  2>&1' &
 
-DATA="%s"
-""" % (revision, extra_args, get_ip_address("eth0"))
+DATA="{ip}"
+""".format(revision=revision, extra_args=extra_args, ip=get_ip_address("eth0"), region=self.conf.get("ec2", "region")
 
         return user_data
 
