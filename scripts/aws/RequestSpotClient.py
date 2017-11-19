@@ -42,6 +42,7 @@ apt-get update
 apt-get -y install git python-pip
 pip install --force-reinstall --upgrade awscli
 pip install --force-reinstall --upgrade boto
+pip install configparser
 apt-get -y install cmake make g++ libboost-all-dev
 apt-get -y install libsqlite3-dev awscli unzip
 # apt-get -y install linux-cloud-tools-generic linux-tools-generic
