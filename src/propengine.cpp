@@ -428,60 +428,6 @@ PropBy PropEngine::propagate_any_order()
 template PropBy PropEngine::propagate_any_order<true>();
 template PropBy PropEngine::propagate_any_order<false>();
 
-void PropEngine::sortWatched()
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Sorting watchlists:" << endl;
-    #endif
-
-    const double myTime = cpuTime();
-    for (size_t i = 0
-        ; i < watches.watches.size()
-        ; ++i
-    ) {
-        vec<Watched>& ws = watches.watches[i];
-        if (ws.size() <= 1)
-            continue;
-
-        #ifdef VERBOSE_DEBUG
-        cout << "Before sorting: ";
-        for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isClause()) cout << "Normal,";
-        }
-        cout << endl;
-        #endif //VERBOSE_DEBUG
-
-        vec<Watched> sorted;
-        for(Watched& w: ws) {
-            if (w.isBin()) {
-                sorted.push(w);
-            }
-        }
-        for(Watched& w: ws) {
-            if (!w.isBin()) {
-                sorted.push(w);
-            }
-        }
-        sorted.swap(ws);
-
-        #ifdef VERBOSE_DEBUG
-        cout << "After sorting : ";
-        for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isClause()) cout << "Normal,";
-        }
-        cout << endl;
-        cout << " -- " << endl;
-        #endif //VERBOSE_DEBUG
-    }
-
-    if (conf.verbosity) {
-        cout << "c [w-sort] "
-        << conf.print_times(cpuTime()-myTime)
-        << endl;
-    }
-}
 
 void PropEngine::printWatchList(const Lit lit) const
 {

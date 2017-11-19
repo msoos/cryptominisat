@@ -216,7 +216,6 @@ protected:
     void     print_trail();
 
     //Var selection, activity, etc.
-    void sortWatched();
     void updateVars(
         const vector<uint32_t>& outerToInter
         , const vector<uint32_t>& interToOuter
