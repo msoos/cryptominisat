@@ -62,8 +62,10 @@ class Server (threading.Thread):
         self.files_finished = []
         self.files = {}
 
-        os.system("aws s3 cp s3://msoos-solve-data/solvers/{cnf_list} . --region {region}".format(
-            cnf_list=options.cnf_list, region=options.region))
+        logging.info("Getting list of files %s", options.cnf_list)
+        key = boto.connect_s3().get_bucket("msoos-solve-data").get_key("solvers/" + options.cnf_list)
+        key.get_contents_to_filename(options.cnf_list)
+
         fnames = open(options.cnf_list, "r")
         logging.info("CNF list is file %s", options.cnf_list)
         num = 0
