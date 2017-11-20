@@ -263,6 +263,7 @@ fi
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
     cd pycryptosat/tests/
+    python --version
     python test_pycryptosat.py
     cd ../..
 fi
@@ -288,6 +289,7 @@ esac
 if [ "$CMS_CONFIG" == "NORMAL" ] ; then
     BACKUP=`pwd`
     cd
+    python --version
     python -c "
 import pycryptosat
 a = pycryptosat.Solver()
