@@ -261,10 +261,14 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 fi
 
+python --version
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MYPYTHON=python3 fi
+if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export MYPYTHON=python fi
+echo "MYPYTHON is '${MYPYTHON}'"
+
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
     cd pycryptosat/tests/
-    python --version
-    python test_pycryptosat.py
+    ${MYPYTHON} test_pycryptosat.py
     cd ../..
 fi
 
@@ -289,8 +293,7 @@ esac
 if [ "$CMS_CONFIG" == "NORMAL" ] ; then
     BACKUP=`pwd`
     cd
-    python --version
-    python -c "
+    ${MYPYTHON} -c "
 import pycryptosat
 a = pycryptosat.Solver()
 a.add_clause([1,2,3])
