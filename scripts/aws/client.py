@@ -173,8 +173,8 @@ class solverThread (threading.Thread):
         return "%s/drat" % self.temp_space
 
     def get_toexec(self):
-        logging.info("Getting file to solve {cnf}".format(cnf=self.indata["cnf_filename"],
-            extra=self.logextra))
+        logging.info("Getting file to solve {cnf}".format(cnf=self.indata["cnf_filename"]),
+                extra=self.logextra)
 
         key = boto.connect_s3().get_bucket("msoos-solve-data").get_key(self.indata["cnf_filename"])
         key.get_contents_to_filename(self.get_tmp_cnf_fname())
