@@ -34,7 +34,7 @@ Use-cases:
 ./launch_server.py --cnflist satcomp14 --folder norm
 
 # testing, using small instance to check (cheaper & faster)
-./launch_server.py --cnflist test
+./launch_server.py --cnflist test_updated
 
 # 2 clients, no preprocessing
 ./launch_server.py --cnflist satcomp14 -c 2 --opt "--preproc 0" --folder no_preproc
