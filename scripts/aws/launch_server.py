@@ -77,7 +77,7 @@ if __name__ == "__main__":
 set -e
 
 apt-get update
-apt-get install python
+apt-get install -y python
 apt-get -y install git python-pip
 pip install --force-reinstall --upgrade awscli
 pip install --force-reinstall --upgrade boto
