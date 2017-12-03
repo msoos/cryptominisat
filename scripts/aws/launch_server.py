@@ -89,7 +89,7 @@ curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setu
 python ./awslogs-agent-setup.py --region {region}
 
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
-sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptominisat.git'
+sudo -H -u ubuntu bash -c 'git clone --depth 50 https://github.com/msoos/cryptominisat.git'
 
 # Get credentials
 cd /home/ubuntu
