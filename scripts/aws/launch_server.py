@@ -85,6 +85,17 @@ pip install configparser
 
 # Get AWS log agent
 cd /home/ubuntu/
+
+cat > aws-logs-server.conf << EOF
+[general]
+state_file = /home/ubuntu/cloudwatch.state
+
+[logstream1]
+log_group_name = cyrptominisat-perftest
+log_stream_name = server
+file = /home/ubuntu/*.log
+EOF
+
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
 aws s3 cp s3://msoos-solve/data/solvers/aws-logs-server.conf
 python ./awslogs-agent-setup.py --region {region} -c aws-logs-server.conf -n
