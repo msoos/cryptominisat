@@ -133,7 +133,7 @@ aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/
                       )
 
     parser.add_option("--logfile", dest="logfile_name", type=str,
-                      default="python_server_log.txt", help="Name of LOG file")
+                      default="python_server_log.log", help="Name of LOG file")
 
     # parse options
     options, args = parser.parse_args()

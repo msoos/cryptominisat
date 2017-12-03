@@ -82,7 +82,7 @@ sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_lingelin
 
 # Start client
 cd /home/ubuntu/cryptominisat
-sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py {extra_args} > /home/ubuntu/python_log.txt  2>&1' &
+sudo -H -u ubuntu bash -c 'nohup /home/ubuntu/cryptominisat/scripts/aws/client.py {extra_args} > /home/ubuntu/python_log.log 2>&1' &
 
 DATA="{ip}"
 """.format(revision=revision, extra_args=extra_args, ip=get_ip_address("eth0"), region=self.conf.get("ec2", "region"))

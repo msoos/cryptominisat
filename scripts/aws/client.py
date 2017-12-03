@@ -492,7 +492,7 @@ def build_cryptominisat(indata):
     upload_log(s3_bucket,
                s3_folder,
                "%s/build.log" % options.base_dir,
-               "cli-build-%s.txt" % get_ip_address("ens3"))
+               "cli-build-%s.log" % get_ip_address("ens3"))
     if ret != 0:
         logging.error("Error building cryptominisat, shutting down!",
                       extra={"threadid": -1}
@@ -573,7 +573,7 @@ def shutdown(exitval=0):
     upload_log(s3_bucket,
                s3_folder,
                options.logfile_name,
-               "cli-%s.txt" % get_ip_address("ens3"))
+               "cli-%s.log" % get_ip_address("ens3"))
 
     if not options.noshutdown:
         os.system(toexec)
@@ -744,7 +744,7 @@ def parse_command_line():
                       help="Device name")
 
     parser.add_option("--logfile", dest="logfile_name", type=str,
-                      default="python_log.txt", help="Name of LOG file")
+                      default="python_log.log", help="Name of LOG file")
 
     (options, args) = parser.parse_args()
 
