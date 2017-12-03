@@ -81,6 +81,8 @@ sudo ldconfig
 Compiling in Mac OSX
 -----
 
+First, you must get Homebew from https://brew.sh/ then:
+
 ```
 brew install cmake boost zlib
 tar xzvf cryptominisat-version.tar.gz
