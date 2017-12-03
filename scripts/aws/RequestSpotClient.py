@@ -53,8 +53,8 @@ apt-get install zlib1g-dev
 # Get AWS log agent
 cd /home/ubuntu/
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
-python ./awslogs-agent-setup.py --region {region}
-
+aws s3 cp s3://msoos-solve/data/solvers/aws-logs-client.conf
+python ./awslogs-agent-setup.py --region {region} -c aws-logs-client.conf -n
 
 # Get CMS
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
