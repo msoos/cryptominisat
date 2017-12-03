@@ -77,12 +77,17 @@ if __name__ == "__main__":
 set -e
 
 apt-get update
+apt-get install python
 apt-get -y install git python-pip
 pip install --force-reinstall --upgrade awscli
 pip install --force-reinstall --upgrade boto
 pip install configparser
 
-cd /home/ubuntu
+# Get AWS log agent
+cd /home/ubuntu/
+curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
+python ./awslogs-agent-setup.py --region {region}
+
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --depth 20 https://github.com/msoos/cryptominisat.git'
 

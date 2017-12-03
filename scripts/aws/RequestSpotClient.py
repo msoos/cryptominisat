@@ -38,7 +38,8 @@ class RequestSpotClient:
         user_data = """#!/bin/bash
 set -e
 
-apt-get update
+apt-get update -y
+apt-get install python
 apt-get -y install git python-pip
 pip install --force-reinstall --upgrade awscli
 pip install --force-reinstall --upgrade boto
@@ -49,8 +50,13 @@ apt-get install zlib1g-dev
 # apt-get -y install linux-cloud-tools-generic linux-tools-generic
 # apt-get -y install linux-cloud-tools-3.13.0-53-generic linux-tools-3.13.0-53-generic
 
-# Get CMS
+# Get AWS log agent
 cd /home/ubuntu/
+curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
+python ./awslogs-agent-setup.py --region {region}
+
+
+# Get CMS
 sudo -H -u ubuntu bash -c 'ssh-keyscan github.com >> ~/.ssh/known_hosts'
 sudo -H -u ubuntu bash -c 'git clone --no-single-branch --depth 50 https://github.com/msoos/cryptominisat.git'
 cd /home/ubuntu/cryptominisat
