@@ -262,8 +262,8 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 fi
 
 python --version
-if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MYPYTHON=python3 fi
-if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export MYPYTHON=python fi
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MYPYTHON=python3; fi
+if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export MYPYTHON=python; fi
 echo "MYPYTHON is '${MYPYTHON}'"
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
