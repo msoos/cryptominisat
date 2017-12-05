@@ -485,7 +485,6 @@ message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
 if(NOT Boost_FOUND)
     set(ONLY_SIMPLE ON)
     message(STATUS "Only building executable with few command-line options because the boost program_options library were not available")
-    set(ENABLE_TESTING OFF)
 endif()
 
 # -----------------------------------------------------------------------------

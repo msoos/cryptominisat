@@ -73,7 +73,7 @@ option(TEST_CNF_FILES
        ON
       )
 
-if(TEST_CNF_FILES)
+if(TEST_CNF_FILES AND NOT ONLY_SIMPLE)
     add_subdirectory(${PROJECT_SOURCE_DIR}/tests/cnf-files)
 endif()
 
@@ -86,7 +86,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
 add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 
 
-if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED)
+if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
     add_subdirectory(simp-checks)
 endif()
