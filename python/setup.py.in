@@ -25,6 +25,7 @@
 
 import sys
 import os
+import platform
 from distutils.core import setup, Extension
 from distutils import sysconfig
 from distutils.cmd import Command
@@ -116,12 +117,17 @@ class TestCommand(Command):
 
 __version__ = '@PROJECT_VERSION@'
 
+# needed because Mac doesn't make use of runtime_library_dirs
+extra_link_args = list(ldconf)
+if platform.system() == 'Darwin':
+    extra_link_args.append('-Wl,-rpath,'+lib_path"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
 modules = dict(
     name = "pycryptosat",
     sources = ["${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp"],
     define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
     extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
-    extra_link_args = ldconf,
+    extra_link_args = extra_link_args,
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
     runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
