@@ -9,7 +9,7 @@ branches:
 image:
   - Visual Studio 2015
   # if 2015 works, this should work too
-  # - Visual Studio 2017
+  - Visual Studio 2017
   # may or may not work, let's not try
   #- Visual Studio 2013
 
@@ -41,8 +41,8 @@ environment:
     # https://stackoverflow.com/questions/1023858/how-to-suppress-specific-msbuild-warning
     MSBUILD_FLAGS: /maxcpucount /nologo /property:WarningLevel=1
   matrix:
-  #- STATICCOMPILE_SETTING: OFF
-  #  BOOST_OPTIONS:
+  - STATICCOMPILE_SETTING: OFF
+    BOOST_OPTIONS:
   - STATICCOMPILE_SETTING: ON
     BOOST_OPTIONS: runtime-link=static  link=static
 
