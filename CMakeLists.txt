@@ -513,7 +513,6 @@ add_custom_target(uninstall
 if (ENABLE_TESTING)
     enable_testing()
 
-
     #use valgrind
     find_program(MEMORYCHECK_COMMAND valgrind)
     if(MEMORYCHECK_COMMAND-NOTFOUND)
