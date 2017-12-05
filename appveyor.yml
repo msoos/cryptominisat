@@ -104,7 +104,8 @@ before_build:
 
 after_build:
   - call ctest -V -C %CONFIGURATION%
-  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
+  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
+  - if %STATICCOMPILE_SETTING%==ON call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
   - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
   - cd c:\projects\cryptominisat
 
