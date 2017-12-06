@@ -393,7 +393,6 @@ class Classify:
                     "cl.backtrack_level_hist",
                     "cl.trail_depth_level_hist",
                     "cl.vsids_vars_hist",
-                    "cl.simplifications",
                     "cl.size_hist",
                     "cl.glue_hist",
                     "cl.num_antecedents_hist",
