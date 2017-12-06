@@ -321,6 +321,7 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Dar
         MESSAGE(STATUS "Compiling for dynamic library use")
     endif()
 endif()
+
 if ((${CMAKE_SYSTEM_NAME} MATCHES "Windows") AND (STATICCOMPILE))
     set(Boost_USE_STATIC_LIBS ON)
 endif()
