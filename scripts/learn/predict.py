@@ -126,6 +126,7 @@ class Query2 (QueryHelper):
         -- , restart.`simplifications` as `rst.simplifications`
         -- , restart.`restarts` as `rst.restarts`
         -- , restart.`conflicts` as `rst.conflicts`
+        -- , restart.`latest_feature_calc` as `restart.latest_feature_calc`
         -- restart.`runtime` as `rst.runtime`
         , restart.`numIrredBins` as `rst.numIrredBins`
         , restart.`numIrredLongs` as `rst.numIrredLongs`
@@ -195,6 +196,7 @@ class Query2 (QueryHelper):
         -- , clauseStats.`restarts` as `cl.restarts`
         -- , clauseStats.`prev_restart` as `cl.prev_restart`
         -- , clauseStats.`conflicts` as `cl.conflicts`
+        -- , clauseStats.`latest_feature_calc` as `clauseStats.latest_feature_calc`
         -- , clauseStats.`clauseID` as `cl.clauseID`
         , clauseStats.`glue` as `cl.glue`
         , clauseStats.`size` as `cl.size`
@@ -243,6 +245,7 @@ class Query2 (QueryHelper):
         -- , features.`simplifications` as `feat.simplifications`
         -- , features.`restarts` as `feat.restarts`
         , features.`conflicts` as `feat.conflicts`
+        -- , features.`latest_feature_calc` as `feat.latest_feature_calc`
         , features.`numVars` as `feat.numVars`
         , features.`numClauses` as `feat.numClauses`
         , features.`var_cl_ratio` as `feat.var_cl_ratio`
@@ -326,7 +329,7 @@ class Query2 (QueryHelper):
         and clauseStats.restarts > 1 -- to avoid history being invalid
         and clauseStats.runID = {0}
         and features.runID = {0}
-        and features.simplifications = clauseStats.simplifications
+        and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
         and restart.runID = {0}
 
@@ -358,7 +361,7 @@ class Query2 (QueryHelper):
         and clauseStats.restarts > 1 -- to avoid history being invalid
         and clauseStats.runID = {0}
         and features.runID = {0}
-        and features.simplifications = clauseStats.simplifications
+        and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
         and restart.runID = {0}
 

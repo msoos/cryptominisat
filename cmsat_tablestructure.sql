@@ -23,6 +23,7 @@ CREATE TABLE `restart` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
+  `latest_feature_calc` int(20) NOT NULL,
   `runtime` float NOT NULL,
   `numIrredBins` int(20) NOT NULL,
   `numIrredLongs` int(20) NOT NULL,
@@ -135,6 +136,7 @@ CREATE TABLE `clauseStats` (
   `restarts` bigint(20) NOT NULL,
   `prev_restart` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
+  `latest_feature_calc` int(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL,
 
   `glue` int(20) NOT NULL,
@@ -195,6 +197,7 @@ CREATE TABLE `features` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
+  `latest_feature_calc` int(20) NOT NULL,
 
   `numVars` int(20) NOT NULL,
   `numClauses` int(20) NOT NULL,

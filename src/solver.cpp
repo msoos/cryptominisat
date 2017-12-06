@@ -1307,7 +1307,6 @@ lbool Solver::solve_with_assumptions(
 
     if (status == l_Undef) {
         SolveFeatures feat = calculate_features();
-        check_reconfigure(feat);
     }
 
     if (status == l_Undef
@@ -1361,12 +1360,13 @@ lbool Solver::solve_with_assumptions(
     return status;
 }
 
-void Solver::check_reconfigure(const SolveFeatures& feat)
+void Solver::check_reconfigure()
 {
     if (nVars() > 2
         && (longIrredCls.size() > 1 || (binTri.irredBins + binTri.redBins))
     ) {
         if (solveStats.numSimplify == conf.reconfigure_at) {
+            SolveFeatures feat = calculate_features();
             if (conf.reconfigure_val == 100) {
                 conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
             }
@@ -1579,7 +1579,6 @@ lbool Solver::iterate_until_solved()
             status = simplify_problem(false);
         }
         if (status == l_Undef) {
-            SolveFeatures feat = calculate_features();
             check_reconfigure(feat);
         }
     }
@@ -2928,8 +2927,9 @@ uint32_t Solver::num_active_vars() const
     return numActive;
 }
 
-SolveFeatures Solver::calculate_features() const
+SolveFeatures Solver::calculate_features()
 {
+    latest_feature_calc++;
     SolveFeaturesCalc extract(this);
     SolveFeatures feat = extract.extract();
     feat.avg_confl_size = hist.conflSizeHistLT.avg();

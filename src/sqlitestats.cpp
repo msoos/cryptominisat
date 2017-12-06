@@ -434,13 +434,13 @@ void SQLiteStats::time_passed_min(
 }
 
 void SQLiteStats::init_features() {
-    const size_t numElems = 66;
+    const size_t numElems = 67;
 
     std::stringstream ss;
     ss << "insert into `features`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_feature_calc`"
 
     //Base data
     << ", `numVars`"
@@ -541,13 +541,13 @@ void SQLiteStats::init_features() {
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 65;
+    const size_t numElems = 66;
 
     std::stringstream ss;
     ss << "insert into `restart`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`, `latest_feature_calc`"
 
     //Clause stats
     << ", numIrredBins, numIrredLongs"
@@ -614,6 +614,7 @@ void SQLiteStats::features(
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_feature_calc);
 
     sqlite3_bind_int64(stmtFeat, bindAt++, feat.numVars);
     sqlite3_bind_int64(stmtFeat, bindAt++, feat.numClauses);
@@ -727,6 +728,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int(stmtRst, bindAt++, solver->latest_feature_calc);
     sqlite3_bind_double(stmtRst, bindAt++, cpuTime());
 
 
@@ -915,7 +917,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 47;
+    const size_t numElems = 48;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -925,6 +927,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `restarts`,"
     << " `prev_restart`,"
     << " `conflicts`,"
+    << " `latest_feature_calc`,"
     << " `clauseID`,"
     << ""
     << " `glue`,"
@@ -1022,6 +1025,7 @@ void SQLiteStats::dump_clause_stats(
         sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts()-1);
     }
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, solver->latest_feature_calc);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
