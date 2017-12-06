@@ -12,7 +12,7 @@ class Data:
         self.num_used = num_used
 
 
-def parse_lemmas(lemmafname):
+def parse_lemmas(lemmafname, verbose=False):
     """Takes the lemma file and returns map with clauses' IDs and data"""
 
     # clause in "lemmas" file layout:
@@ -37,7 +37,7 @@ def parse_lemmas(lemmafname):
                     continue
 
                 ret[myid].used_for_time = last_used - myid
-                if options.verbose:
+                if verbose:
                     print("line %d" % lineno)
                     print("myid:", myid)
                     print("num used:", num_used)
@@ -76,7 +76,7 @@ class Query:
 
         runID = None
         for row in self.c.execute(q):
-            if runID != None:
+            if runID is not None:
                 print("ERROR: More than one RUN in the SQL, can't add lemmas!")
                 exit(-1)
             runID = int(row[0])
@@ -119,7 +119,7 @@ it was good or not."""
     print("Using lemma file %s" % lemmafname)
 
     with Query(dbfname) as q:
-        useful_lemma_ids = parse_lemmas(lemmafname)
+        useful_lemma_ids = parse_lemmas(lemmafname, options.verbose)
         print("Num good IDs: %d" % len(useful_lemma_ids))
         q.add_goods(useful_lemma_ids)
 
