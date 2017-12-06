@@ -354,12 +354,6 @@ So long and thanks for all the fish!
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Cannot send email! Traceback: %s", the_trace)
 
-    # upload log
-    upload_log(options.s3_bucket,
-               full_s3_folder,
-               options.logfile_name,
-               "server")
-
     if not options.noshutdown:
         os.system(toexec)
 

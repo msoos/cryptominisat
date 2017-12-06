@@ -489,10 +489,6 @@ def build_cryptominisat(indata):
     global s3_bucket
     s3_bucket = indata["s3_bucket"]
     logging.info("s3 bucket: %, s3 folder: %", s3_bucket, s3_folder, extra={"threadid": "-1"})
-    upload_log(s3_bucket,
-               s3_folder,
-               "%s/build.log" % options.base_dir,
-               "cli-build-%s.log" % get_ip_address("ens3"))
     if ret != 0:
         logging.error("Error building cryptominisat, shutting down!",
                       extra={"threadid": -1}
@@ -566,14 +562,6 @@ def shutdown(exitval=0):
         the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
         logging.error("Cannot send email! Traceback: %s", the_trace,
                       extra={"threadid": -1})
-
-    # upload log
-    global s3_bucket
-    global s3_folder
-    upload_log(s3_bucket,
-               s3_folder,
-               options.logfile_name,
-               "cli-%s.log" % get_ip_address("ens3"))
 
     if not options.noshutdown:
         os.system(toexec)

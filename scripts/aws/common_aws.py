@@ -62,22 +62,6 @@ def get_revision(full_solver_path, base_dir):
     return revision.strip()
 
 
-def upload_log(bucket, folder, logfile_name, fname):
-    try:
-        boto_conn = boto.connect_s3()
-        boto_bucket = boto_conn.get_bucket(bucket)
-        k = boto.s3.key.Key(boto_bucket)
-
-        k.key = folder + "/" + "logs/" + fname
-        boto_bucket.delete_key(k)
-        k.set_contents_from_filename(logfile_name)
-
-    except:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        the_trace = traceback.format_exc().rstrip().replace("\n", " || ")
-        print("traceback for boto issue: %s" % the_trace)
-
-
 def get_s3_folder(folder, rev, solver, timeout, memout):
     print("folder: %s rev: %s tout: %s memout %s" % (folder, rev, timeout, memout))
     solver_exe = solver[solver.rfind("/")+1:]
