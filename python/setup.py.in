@@ -120,7 +120,7 @@ __version__ = '@PROJECT_VERSION@'
 # needed because Mac doesn't make use of runtime_library_dirs
 extra_link_args = list(ldconf)
 if platform.system() == 'Darwin':
-    extra_link_args.append('-Wl,-rpath,'+lib_path"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 modules = dict(
     name = "pycryptosat",
