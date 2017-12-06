@@ -192,8 +192,10 @@ class solverThread (threading.Thread):
         if self.indata["drat"]:
             toexec.append(self.get_drat_fname())
             toexec.append("--clid")
+            # never stop search() to simplify anything
             toexec.append("-n 1")
-            toexec.append("--gluecut0 25")
+            toexec.append("-ml 0")
+            toexec.append("--gluecut0 50")
             toexec.append("--otfsubsume 0")
         else:
             if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
