@@ -64,7 +64,6 @@ file = /home/ubuntu/*.log
 EOF
 
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
-aws s3 cp s3://msoos-solve/data/solvers/aws-logs-client.conf
 python ./awslogs-agent-setup.py --region {region} -c aws-logs-client.conf -n
 
 # Get CMS
