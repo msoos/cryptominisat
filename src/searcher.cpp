@@ -1734,6 +1734,19 @@ lbool Searcher::burst_search()
     return status;
 }
 
+void Searcher::check_calc_features()
+{
+    if (last_feature_calc_confl == 0 || (last_feature_calc_confl + 100000) < sumConflicts) {
+        last_feature_calc_confl = sumConflicts;
+        if (nVars() > 2
+            && longIrredCls.size() > 1
+            && (binTri.irredBins + binTri.redBins) > 1
+        ) {
+            solver->calculate_features();
+        }
+    }
+ }
+
 void Searcher::print_restart_header()
 {
     //Print restart output header
@@ -1958,6 +1971,7 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
+    check_calc_features();
     print_restart_header();
     dump_search_sql(myTime);
     if (conf.verbosity && conf.print_all_restarts)

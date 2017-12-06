@@ -223,6 +223,7 @@ class Solver : public Searcher
         void set_sqlite(string filename);
         //Not Private for testing (maybe could be called from outside)
         void renumber_variables(bool must_renumber = true);
+        SolveFeatures calculate_features();
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 
@@ -236,7 +237,6 @@ class Solver : public Searcher
         friend class ClauseDumper;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
-        SolveFeatures calculate_features() const;
         void check_reconfigure();
         void reconfigure(int val);
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;

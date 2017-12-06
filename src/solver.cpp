@@ -1305,10 +1305,6 @@ lbool Solver::solve_with_assumptions(
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
 
-    if (status == l_Undef) {
-        SolveFeatures feat = calculate_features();
-    }
-
     if (status == l_Undef
         && conf.preprocess == 0
     ) {
@@ -1363,7 +1359,8 @@ lbool Solver::solve_with_assumptions(
 void Solver::check_reconfigure()
 {
     if (nVars() > 2
-        && (longIrredCls.size() > 1 || (binTri.irredBins + binTri.redBins))
+        && longIrredCls.size() > 1
+        && (binTri.irredBins + binTri.redBins) > 1
     ) {
         if (solveStats.numSimplify == conf.reconfigure_at) {
             SolveFeatures feat = calculate_features();
@@ -1579,7 +1576,7 @@ lbool Solver::iterate_until_solved()
             status = simplify_problem(false);
         }
         if (status == l_Undef) {
-            check_reconfigure(feat);
+            check_reconfigure();
         }
     }
 
