@@ -547,7 +547,8 @@ void SQLiteStats::initRestartSTMT()
     ss << "insert into `restart`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`, `latest_feature_calc`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_feature_calc`"
+    << ", `runtime` "
 
     //Clause stats
     << ", numIrredBins, numIrredLongs"
