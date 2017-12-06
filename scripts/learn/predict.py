@@ -559,14 +559,16 @@ def one_predictor(dbfname, final_df):
     print("Read in data in %-5.2f secs" % (time.time() - t))
 
     print("Describing----")
-    print(df.describe())
+    dat = df.describe()
+    print(dat)
     print("Describe done.---")
     print("Features: ", df.columns.values.flatten().tolist())
     df = transform(df)
 
-    print("Describingi post-transform ----")
+    print("Describing post-transform ----")
     print(df.describe())
     print("Describe done.---")
+    df.to_csv("%s.csv" % cleanname, index=False)
 
     if final_df is None:
         final_df = df
