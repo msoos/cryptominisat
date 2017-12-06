@@ -324,6 +324,34 @@ void SolveFeaturesCalc::calculate_cl_distributions(
     distrib_data.activity_distr_var = activity_var;
 }
 
+void SolveFeaturesCalc::normalise_values()
+{
+    if (feat.vcg_var_min == std::numeric_limits<double>::max())
+        feat.vcg_var_min = -1;
+    if (feat.vcg_var_max == std::numeric_limits<double>::min())
+        feat.vcg_var_max = -1;
+
+    if (feat.vcg_cls_min  == std::numeric_limits<double>::max())
+        feat.vcg_cls_min = -1;
+    if (feat.vcg_cls_max == std::numeric_limits<double>::min())
+        feat.vcg_cls_max = -1;
+
+    if (feat.pnr_var_min == std::numeric_limits<double>::max())
+        feat.pnr_var_min = -1;
+    if (feat.pnr_var_max == std::numeric_limits<double>::min())
+        feat.pnr_var_max = -1;
+
+    if (feat.horn_min == std::numeric_limits<double>::max())
+        feat.horn_min = -1;
+    if (feat.horn_max == std::numeric_limits<double>::min())
+        feat.horn_max = -1;
+
+    if (feat.pnr_cls_min == std::numeric_limits<double>::max())
+        feat.pnr_cls_min = -1;
+    if (feat.pnr_cls_max == std::numeric_limits<double>::min())
+        feat.pnr_cls_max = -1;
+}
+
 SolveFeatures SolveFeaturesCalc::extract()
 {
     double start_time = cpuTime();
@@ -349,6 +377,7 @@ SolveFeatures SolveFeaturesCalc::extract()
         calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
         calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
     }
+    normalise_values();
 
     if (solver->conf.verbosity) {
         cout << "c [features] extracted"

@@ -50,6 +50,7 @@ private:
     void calculate_variable_stats();
     void calculate_extra_var_stats();
     void calculate_extra_clause_stats();
+    void normalise_values();
     void calculate_cl_distributions(
         const vector<ClOffset>& clauses
         , struct SolveFeatures::Distrib& distrib_data
