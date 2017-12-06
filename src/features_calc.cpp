@@ -145,7 +145,7 @@ void SolveFeaturesCalc::calculate_clause_stats()
 
         double _pnr = 0.5 + ((2.0 * (double)pos_vars - (double)size) / (2.0 * (double)size));
         feat.pnr_cls_min = std::min(feat.pnr_cls_min, _pnr);
-        feat.pnr_cls_max = std::min(feat.pnr_cls_max, _pnr);
+        feat.pnr_cls_max = std::max(feat.pnr_cls_max, _pnr);
         feat.pnr_cls_mean += _pnr;
     };
     for_all_clauses(func_each_cl, empty_func);
@@ -171,18 +171,18 @@ void SolveFeaturesCalc::calculate_variable_stats()
 
         double _size = myVars[vv].size / (double)feat.numClauses;
         feat.vcg_var_min = std::min(feat.vcg_var_min, _size);
-        feat.vcg_var_max = std::min(feat.vcg_var_max, _size);
+        feat.vcg_var_max = std::max(feat.vcg_var_max, _size);
         feat.vcg_var_mean += _size;
 
         double _pnr = 0.5 + ((2.0 * myVars[vv].numPos - myVars[vv].size)
                              / (2.0 * myVars[vv].size));
         feat.pnr_var_min = std::min(feat.pnr_var_min, _pnr);
-        feat.pnr_var_max = std::min(feat.pnr_var_max, _pnr);
+        feat.pnr_var_max = std::max(feat.pnr_var_max, _pnr);
         feat.pnr_var_mean += _pnr;
 
         double _horn = myVars[vv].horn / (double)feat.numClauses;
-        feat.horn_min = std::min(feat.horn_max, _horn);
-        feat.horn_max = std::min(feat.horn_max, _horn);
+        feat.horn_min = std::min(feat.horn_min, _horn);
+        feat.horn_max = std::max(feat.horn_max, _horn);
         feat.horn_mean += _horn;
     }
 
