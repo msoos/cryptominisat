@@ -25,6 +25,7 @@ import time
 import pickle
 import re
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 import sklearn.tree
@@ -421,30 +422,65 @@ class Classify:
 
     def learn(self, df, cleanname, classifiername="classifier"):
 
-        print("total samples: %5d   percentage of good ones %-3.4f" %
-              (df.shape[0],
-               sum(df["good"]) / float(df.shape[0]) * 100.0))
+        print("total samples: %5d" % df.shape[0])
+
+        num_ok = df.loc[df['good'] == "OK"].shape[0]
+        num_bad = df.loc[df['good'] == "BAD"].shape[0]
+        if df.shape[0] > 0:
+            perc_good = "%-3.4f" % (float(num_ok) / float(df.shape[0]) * 100.0)
+        else:
+            perc_good = "NaN"
+        print("percentage of good ones: %s" % perc_good)
+
+        if df.shape[0] == 0:
+            return
+
+        train, test = train_test_split(df, test_size=0.2, random_state=90)
+        X_train = train[self.features]
+        y_train = train["good"]
+        X_test = test[self.features]
+        y_test = test["good"]
 
         print("Training....")
         t = time.time()
-        # clf = KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
+        # self.clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        self.clf = sklearn.tree.DecisionTreeClassifier(
-            random_state=90, max_depth=5)
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        train, test = train_test_split(df, test_size=0.2, random_state=90)
-        self.clf.fit(train[self.features], train["good"])
-
+        self.clf = sklearn.tree.DecisionTreeClassifier(random_state=90, max_depth=5)
+        self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         print("Calculating scores....")
         t = time.time()
-        y_pred = self.clf.predict(test[self.features])
-        recall = sklearn.metrics.recall_score(test["good"], y_pred)
-        prec = sklearn.metrics.precision_score(test["good"], y_pred)
-        print("prec: %-3.4f  recall: %-3.4f T: %-3.2f" %
-              (prec, recall, (time.time() - t)))
+        y_pred = self.clf.predict(X_test)
+
+        # binarize the label OK/BAD
+        lb = sklearn.preprocessing.LabelBinarizer()
+        y_train = np.array([x[0] for x in lb.fit_transform(y_train)])
+        y_test = np.array([x[0] for x in lb.fit_transform(y_test)])
+        y_pred = np.array([x[0] for x in lb.fit_transform(y_pred)])
+
+        # calculate accuracy/prec/recall for TEST
+        accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
+        precision = sklearn.metrics.precision_score(y_test, y_pred)
+        recall = sklearn.metrics.recall_score(y_test, y_pred)
+        print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" %
+              (precision, recall, accuracy, (time.time() - t)))
+
+        # calculate accuracy/prec/recall for cross-validation
+        accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
+        precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
+        recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
+        print("cv-accuracy:", accuracy)
+        print("cv-precision:", precision)
+        print("cv-recall:", recall)
+        accuracy = np.mean(accuracy)
+        precision = np.mean(precision)
+        recall = np.mean(recall)
+
+        print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
+              (precision, recall, accuracy, (time.time() - t)))
 
         with open(classifiername, "wb") as f:
             pickle.dump(self.clf, f)
@@ -452,7 +488,7 @@ class Classify:
     def output_to_dot(self, fname):
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
                                      feature_names=self.features,
-                                     class_names=["BAD", "GOOD"],
+                                     class_names=["BAD", "OK"],
                                      filled=True, rounded=True,
                                      special_characters=True,
                                      proportion=True
