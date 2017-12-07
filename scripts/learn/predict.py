@@ -634,7 +634,7 @@ if __name__ == "__main__":
 
     final_df = None
     for dbfname in args:
-        print("----- INTERMEDIATE predictor -------\n")
+        print("----- INTERMEDIATE predictor -------")
         one_predictor(dbfname, final_df)
 
     # intermediate predictor is final
@@ -645,7 +645,7 @@ if __name__ == "__main__":
     if options.check:
         exit(0)
 
-    print("----- FINAL predictor -------\n")
+    print("----- FINAL predictor -------")
     if options.check:
         check = Check()
         check.check(final_df)
