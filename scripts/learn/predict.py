@@ -101,7 +101,7 @@ class Query2 (QueryHelper):
         for l in q.split('\n'):
             self.c.execute(l)
 
-        print("indexes created %-3.2f" % (time.time() - t))
+        print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def get_max_clauseID(self):
         q = """
@@ -239,7 +239,7 @@ class Query2 (QueryHelper):
         , clauseStats.`num_antecedents_hist` as `cl.num_antecedents_hist`
         """
 
-        feat_dat="""
+        feat_dat = """
         -- , features.`simplifications` as `feat.simplifications`
         -- , features.`restarts` as `feat.restarts`
         , features.`conflicts` as `feat.conflicts`
@@ -308,13 +308,16 @@ class Query2 (QueryHelper):
         -- , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
-        q = """
+        q_count = "SELECT count(*)"
+        q_ok1 = """
         SELECT
         "OK" as good
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        """
 
+        q_ok2 = """
         FROM
         clauseStats
         , goodClauses
@@ -325,29 +328,27 @@ class Query2 (QueryHelper):
         clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
         and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {0}
-        and features.runID = {0}
+        and clauseStats.runID = {runid}
+        and features.runID = {runid}
         and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {0}
+        and restart.runID = {runid}
 
-        limit {1}
-        """.format(self.runID, options.limit,
-                   restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
-        if options.dump_sql:
-            print("-- query starts --")
-            print(q)
-            print("-- query ends --")
-        df = pd.read_sql_query(q, self.conn)
+        order by random()
+        limit {limit}
+        """
+
 
         # BAD caluses
-        q = """
+        q_bad1 = """
         SELECT
         "BAD" as good
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        """
 
+        q_bad2 = """
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
@@ -358,16 +359,66 @@ class Query2 (QueryHelper):
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
         and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {0}
-        and features.runID = {0}
+        and clauseStats.runID = {runid}
+        and features.runID = {runid}
         and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {0}
+        and restart.runID = {runid}
 
-        limit {1}
-        """.format(self.runID, options.limit,
-                   restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
+        order by random()
+        limit {limit}
+        """
+        myformat = {"runid" : self.runID,
+                "limit" : 1000*1000*1000,
+                "restart_dat" : restart_dat,
+                "clause_dat" : clause_dat,
+                "feat_dat" : feat_dat}
+
+        t = time.time()
+
+        q = q_count + q_ok2
+        q = q.format(**myformat)
+        cur = self.conn.execute(q.format(**myformat))
+        num_lines_ok = cur.fetchone()[0]
+        print("Num lines OK:", num_lines_ok)
+
+        q = q_count + q_bad2
+        q = q.format(**myformat)
+        cur = self.conn.execute(q.format(**myformat))
+        num_lines_bad = cur.fetchone()[0]
+        print("Num lines BAD:", num_lines_bad)
+
+        total_lines = num_lines_ok + num_lines_bad
+        print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
+
+        print("Total number of lines:", total_lines)
+        if options.fixed_num_elements != -1:
+            if options.fixed_num_elements > total_lines:
+                print("Your fixed num elements is too high")
+                exit(-1)
+
+        q = q_ok1 + q_ok2
+        if options.fixed_num_elements != -1:
+            myformat["limit"] = int(options.fixed_num_elements * num_lines_ok/float(total_lines))
+        print("limit for OK:", myformat["limit"])
+        q = q.format(**myformat)
+        print("Running query for OK...")
+        df = pd.read_sql_query(q, self.conn)
+
+        print("Running query for BAD...")
+        q = q_bad1 + q_bad2
+        if options.fixed_num_elements != -1:
+            myformat["limit"] = int(options.fixed_num_elements * num_lines_bad/float(total_lines))
+        print("limit for bad:", myformat["limit"])
+        q = q.format(**myformat)
         df2 = pd.read_sql_query(q, self.conn)
+        print("Queries finished. T: %-3.2f" % (time.time() - t))
+
+        if options.dump_sql:
+            print("-- query starts --")
+            print(q)
+            print("-- query ends --")
+
 
         return pd.concat([df, df2])
 
@@ -617,8 +668,8 @@ if __name__ == "__main__":
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL query")
 
-    parser.add_option("--limit", "-l", default=10**9, type=int,
-                      dest="limit", help="Max number of good/bad clauses")
+    parser.add_option("--fixed", default=-1, type=int,
+                      dest="fixed_num_elements", help="Exact number of examples to take")
 
     parser.add_option("--check", "-c", type=str,
                       dest="check", help="Check classifier")
