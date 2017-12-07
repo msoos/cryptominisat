@@ -471,7 +471,10 @@ class Classify:
             if options.verbose:
                 print("removing feature:", t)
             self.features.remove(t)
-        print("features:", self.features)
+
+        if options.verbose:
+            print("features:", self.features)
+        print("Number of features:", len(self.features))
 
     def learn(self, df, cleanname, classifiername="classifier"):
 
@@ -611,10 +614,9 @@ def one_predictor(dbfname, final_df):
     t = time.time()
     df = get_one_file(dbfname)
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
-    print("Read in data in %-5.2f secs" % (time.time() - t))
 
-    print("Describing----")
     if options.verbose:
+        print("Describing----")
         dat = df.describe()
         print(dat)
         print("Describe done.---")
