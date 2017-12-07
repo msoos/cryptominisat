@@ -196,21 +196,32 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    # We statically link to reduce dependencies
-    foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-        if(${flag_var} MATCHES "/MD")
-            string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-        endif(${flag_var} MATCHES "/MD")
-        if(${flag_var} MATCHES "/MDd")
-            string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
-        endif(${flag_var} MATCHES "/MDd")
-    endforeach(flag_var)
+    if (NOT STATICCOMPILE)
+        # We statically link to reduce dependencies
+        foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+            # /MD -- Causes the application to use the multithread-specific and DLL-specific version of the run-time library.
+            #        Defines _MT and _DLL and causes the compiler to place the library name MSVCRT.lib into the .obj file.
+            if(${flag_var} MATCHES "/MD")
+                string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+            endif(${flag_var} MATCHES "/MD")
+
+            # /MDd	-- Defines _DEBUG, _MT, and _DLL and causes the application to use the debug multithread-specific and DLL-specific version of the run-time library.
+            #          It also causes the compiler to place the library name MSVCRTD.lib into the .obj file.
+            if(${flag_var} MATCHES "/MDd")
+                string(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+            endif(${flag_var} MATCHES "/MDd")
+        endforeach(flag_var)
+
+        # Creates a multithreaded executable (static) file using LIBCMT.lib.
+        add_compile_options(/MT)
+    endif()
 
     # buffers security check
     add_compile_options(/GS)
 
     # Proper warning level
     add_compile_options(/W1)
+
     # Disable STL used in DLL-boundary warning
     add_compile_options(/wd4251)
     add_compile_options(/D_CRT_SECURE_NO_WARNINGS)
@@ -230,8 +241,6 @@ else()
     # exception handling. c = If used with s (/EHsc), catches C++ exceptions only and tells the compiler to assume that functions declared as extern "C" never throw a C++ exception.
     add_compile_options(/EHsc)
 
-    # Creates a multithreaded executable (static) file using LIBCMT.lib.
-    add_compile_options(/MT)
 
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /INCREMENTAL:NO")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /PDBCOMPRESS")
