@@ -623,12 +623,6 @@ if __name__ == "__main__":
     parser.add_option("--check", "-c", type=str,
                       dest="check", help="Check classifier")
 
-    parser.add_option("--data", "-d", action="store_true", default=False,
-                      dest="data", help="Just get the dumped data")
-
-    parser.add_option("--restart", "-r", action="store_true", default=False,
-                      dest="restart_used", help="Help use restart stat about clause")
-
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
 
