@@ -40,6 +40,10 @@ if __name__ == "__main__":
         print("-- %-30s : %s" % (a, b))
     assert args == []
 
+    if options.mem_limit_in_mb < 10000 and options.drat:
+        print("******* WARNING ********")
+        print("Beware: your memory is WAY too low for DRAT and learning stuff")
+
     push()
     data = ""
     opt_is_on = False
