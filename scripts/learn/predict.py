@@ -417,7 +417,8 @@ class Classify:
                          "cl.vsids_of_all_incoming_lits_max"])
 
         for t in toremove:
-            print("removing feature:", t)
+            if options.verbose:
+                print("removing feature:", t)
             self.features.remove(t)
         print("features:", self.features)
 
