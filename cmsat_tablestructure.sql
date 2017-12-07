@@ -31,7 +31,7 @@ CREATE TABLE `restart` (
   `numRedLongs` int(20) NOT NULL,
   `numIrredLits` bigint(20) NOT NULL,
   `numredLits` bigint(20) NOT NULL,
-  `restart_type` varchar(100) NOT NULL
+  `restart_type` varchar(100) NOT NULL,
   `glue` float NOT NULL,
   `glueSD` float NOT NULL,
   `glueMin` int(20) NOT NULL,
