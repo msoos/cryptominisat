@@ -92,7 +92,7 @@ struct DratFile: public Drat
         file = _file;
     }
 
-    bool get_conf_id() {
+    bool get_conf_id() override {
         return add_ID;
     }
 
