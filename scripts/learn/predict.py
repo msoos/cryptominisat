@@ -117,8 +117,6 @@ class Query2 (QueryHelper):
         return max_clID
 
     def get_clstats(self):
-        toremove = ["good"]
-
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
         restart_dat = """
