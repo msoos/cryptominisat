@@ -630,12 +630,20 @@ def one_predictor(dbfname, final_df):
         print("Describe done.---")
 
     if options.dump_csv:
-        df.to_csv("%s.csv" % cleanname, index=False)
+        fname = "%s.csv" % cleanname
+        print("Dumping CSV data to:", fname)
+        df.to_csv(fname, index=False)
 
     if final_df is None:
         final_df = df
     else:
         final_df = final_df.concat([df, final_df])
+
+    if options.dump_csv:
+        fname ="pandasdata.dat"
+        print("Dumping pandas data to:", fname)
+        with open(fname, "wb") as f:
+            pickle.dump(df, f)
 
     # display
     pd.options.display.mpl_style = "default"
