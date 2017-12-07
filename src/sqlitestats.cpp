@@ -541,7 +541,7 @@ void SQLiteStats::init_features() {
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 66;
+    const size_t numElems = 67;
 
     std::stringstream ss;
     ss << "insert into `restart`"
@@ -556,6 +556,7 @@ void SQLiteStats::initRestartSTMT()
     << ", numIrredLits, numRedLits"
 
     //Conflict stats
+    << ", `restart_type`"
     << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
     << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
     << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
@@ -716,7 +717,8 @@ void SQLiteStats::features(
 }
 
 void SQLiteStats::restart(
-    const PropStats& thisPropStats
+    const std::string& restart_type
+    , const PropStats& thisPropStats
     , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
@@ -743,6 +745,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.redLits);
 
     //Conflict stats
+    sqlite3_bind_text(stmtRst, bindAt++, restart_type.c_str(), -1, NULL);
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.glueHist.getLongtTerm().avg());
     sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
     sqlite3_bind_double(stmtRst, bindAt++, searchHist.glueHist.getLongtTerm().getMin());

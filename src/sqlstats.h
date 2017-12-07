@@ -40,7 +40,8 @@ public:
     {}
 
     virtual void restart(
-        const PropStats& thisPropStats
+        const std::string& restart_type
+        , const PropStats& thisPropStats
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher

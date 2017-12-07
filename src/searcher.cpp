@@ -1842,7 +1842,8 @@ inline void Searcher::dump_restart_sql()
     thisStats.clauseID_at_end_exclusive = clauseID;
 
     solver->sqlStats->restart(
-        thisPropStats
+        restart_type_to_short_string(params.rest_type)
+        , thisPropStats
         , thisStats
         , solver
         , this
