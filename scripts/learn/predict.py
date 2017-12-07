@@ -389,14 +389,18 @@ class Query2 (QueryHelper):
         print("Num lines BAD:", num_lines_bad)
 
         total_lines = num_lines_ok + num_lines_bad
-        print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-
         print("Total number of lines:", total_lines)
         if options.fixed_num_elements != -1:
             if options.fixed_num_elements > total_lines:
-                print("Your fixed num elements is too high")
-                exit(-1)
+                print("WARNING -- Your fixed num elements is too high:", options.fixed_num_elements)
+                print("WARNING -- We only have:", total_lines)
+                return False, None
 
+        if total_lines == 0:
+            print("WARNING: Total number of elements is 0, something is wrong or empty")
+            return False, None
+
+        print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
         q = q_ok1 + q_ok2
         if options.fixed_num_elements != -1:
             myformat["limit"] = int(options.fixed_num_elements * num_lines_ok/float(total_lines))
@@ -420,7 +424,7 @@ class Query2 (QueryHelper):
             print("-- query ends --")
 
 
-        return pd.concat([df, df2])
+        return True, pd.concat([df, df2])
 
 
 def get_one_file(dbfname):
@@ -430,13 +434,16 @@ def get_one_file(dbfname):
     with Query2(dbfname) as q:
         if not options.no_recreate_indexes:
             q.create_indexes()
-        df = q.get_clstats()
+        ok, df = q.get_clstats()
+        if not ok:
+            return False, None
+
         if options.verbose:
             print("Printing head:")
             print(df.head())
             print("Print head done.")
 
-    return df
+    return True, df
 
 
 class Classify:
@@ -551,7 +558,7 @@ class Classify:
                                      proportion=True
                                      )
         print("Run dot:")
-        print("dot -Tpng %s -o tree.png" % fname)
+        print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
 
 
 class Check:
@@ -612,7 +619,10 @@ def transform(df):
 
 def one_predictor(dbfname, final_df):
     t = time.time()
-    df = get_one_file(dbfname)
+    ok, df = get_one_file(dbfname)
+    if not ok:
+        return False, final_df
+
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
 
     if options.verbose:
@@ -637,7 +647,7 @@ def one_predictor(dbfname, final_df):
     if final_df is None:
         final_df = df
     else:
-        final_df = final_df.concat([df, final_df])
+        final_df = pd.concat([final_df, df])
 
     if options.dump_csv:
         fname ="pandasdata.dat"
@@ -658,6 +668,8 @@ def one_predictor(dbfname, final_df):
         clf = Classify(df)
         clf.learn(df, "%s.classifier" % cleanname)
         clf.output_to_dot("%s.tree.dot" % cleanname)
+
+    return True, final_df
 
 
 if __name__ == "__main__":
@@ -695,7 +707,7 @@ if __name__ == "__main__":
     final_df = None
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------")
-        one_predictor(dbfname, final_df)
+        ok, final_df = one_predictor(dbfname, final_df)
 
     # intermediate predictor is final
     if len(args) == 1:
