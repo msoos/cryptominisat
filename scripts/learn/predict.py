@@ -334,9 +334,10 @@ class Query2 (QueryHelper):
         limit {1}
         """.format(self.runID, options.limit,
                    restart_dat=restart_dat, clause_dat=clause_dat, feat_dat=feat_dat)
-        print("-- query starts --")
-        print(q)
-        print("-- query ends --")
+        if options.dump_sql:
+            print("-- query starts --")
+            print(q)
+            print("-- query ends --")
         df = pd.read_sql_query(q, self.conn)
 
         # BAD caluses
@@ -379,9 +380,10 @@ def get_one_file(dbfname):
         if not options.no_recreate_indexes:
             q.create_indexes()
         df = q.get_clstats()
-        print("Printing head:")
-        print(df.head())
-        print("Print head done.")
+        if options.verbose:
+            print("Printing head:")
+            print(df.head())
+            print("Print head done.")
 
     return df
 
@@ -469,21 +471,22 @@ class Classify:
               (precision, recall, accuracy, (time.time() - t)))
 
         # calculate accuracy/prec/recall for cross-validation
-        accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
-        precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
-        recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
-        print("cv-accuracy:", accuracy)
-        print("cv-precision:", precision)
-        print("cv-recall:", recall)
-        accuracy = np.mean(accuracy)
-        precision = np.mean(precision)
-        recall = np.mean(recall)
+        if options.cross_validate:
+            accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
+            precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
+            recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
+            print("cv-accuracy:", accuracy)
+            print("cv-precision:", precision)
+            print("cv-recall:", recall)
+            accuracy = np.mean(accuracy)
+            precision = np.mean(precision)
+            recall = np.mean(recall)
+            print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
+                  (precision, recall, accuracy, (time.time() - t)))
 
-        print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
-              (precision, recall, accuracy, (time.time() - t)))
-
-        with open(classifiername, "wb") as f:
-            pickle.dump(self.clf, f)
+        if options.dump_csv:
+            with open(classifiername, "wb") as f:
+                pickle.dump(self.clf, f)
 
     def output_to_dot(self, fname):
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
@@ -600,8 +603,14 @@ if __name__ == "__main__":
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
-    parser.add_option("--pow2", "-p", action="store_true", default=False,
-                      dest="add_pow2", help="Add power of 2 of all data")
+    parser.add_option("--csv", action="store_true", default=False,
+                      dest="dump_csv", help="Dump CSV (for weka)")
+
+    parser.add_option("--cross", action="store_true", default=False,
+                      dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
+
+    parser.add_option("--sql", action="store_true", default=False,
+                      dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--limit", "-l", default=10**9, type=int,
                       dest="limit", help="Max number of good/bad clauses")
