@@ -80,7 +80,7 @@ class Main
         //Options
         po::variables_map vm;
         virtual void add_supported_options();
-        virtual void call_after_parse() {};
+        virtual void call_after_parse() {}
 
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
