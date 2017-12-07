@@ -483,9 +483,9 @@ class Classify:
             print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
                   (precision, recall, accuracy, (time.time() - t)))
 
-        if options.dump_csv:
-            with open(classifiername, "wb") as f:
-                pickle.dump(self.clf, f)
+        # dump the classifier
+        with open(classifiername, "wb") as f:
+            pickle.dump(self.clf, f)
 
     def output_to_dot(self, fname):
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
