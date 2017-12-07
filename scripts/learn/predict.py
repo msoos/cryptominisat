@@ -646,11 +646,10 @@ def one_predictor(dbfname, final_df):
             pickle.dump(df, f)
 
     # display
-    pd.options.display.mpl_style = "default"
-    with open("pandasdata.dat", "wb") as f:
-        pickle.dump(df, f)
-    # df.hist()
-    # df.boxplot()
+    if False:
+        pd.options.display.mpl_style = "default"
+        df.hist()
+        df.boxplot()
 
     if options.check:
         check = Check(options.check)
