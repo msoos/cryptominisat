@@ -61,6 +61,11 @@ state_file = /home/ubuntu/cloudwatch.state
 log_group_name = cyrptominisat-perftest
 log_stream_name = client
 file = /home/ubuntu/*.log
+
+[messages]
+log_group_name = cyrptominisat-perftest
+log_stream_name = client
+file = /var/log/messages
 EOF
 
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
