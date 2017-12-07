@@ -563,7 +563,7 @@ def one_predictor(dbfname, final_df):
     print("Read in data in %-5.2f secs" % (time.time() - t))
 
     print("Describing----")
-    if options.describe:
+    if options.verbose:
         dat = df.describe()
         print(dat)
         print("Describe done.---")
@@ -571,7 +571,7 @@ def one_predictor(dbfname, final_df):
 
     df = transform(df)
 
-    if options.describe:
+    if options.verbose:
         print("Describing post-transform ----")
         print(df.describe())
         print("Describe done.---")
