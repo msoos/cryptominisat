@@ -85,12 +85,12 @@ inline std::string restart_type_to_short_string(const Restart type)
             return "gl/geo";
 
         case Restart::never:
-            return "never restart";
+            return "never";
     }
 
         assert(false && "oops, one of the restart types has no string name");
 
-        return "Ooops, undefined!";
+        return "ERR: undefined!";
 }
 
 //Removed by which algorithm. NONE = not eliminated
