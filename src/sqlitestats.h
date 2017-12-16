@@ -90,7 +90,6 @@ public:
         , size_t trail_depth
         , uint64_t conflicts_this_restart
         , const std::string& rest_type
-        , const SearchStats& stats
         , const SearchHist& hist
     ) override;
 

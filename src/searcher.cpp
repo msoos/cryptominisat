@@ -1487,7 +1487,6 @@ void Searcher::dump_sql_clause_data(
         , trail.size()
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
-        , stats
         , hist
     );
 }
