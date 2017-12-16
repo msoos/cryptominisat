@@ -348,7 +348,7 @@ DistillerAllWithAll::Stats& DistillerAllWithAll::Stats::operator+=(const Stats& 
     return *this;
 }
 
-void DistillerAllWithAll::Stats::print_short(const Solver* solver) const
+void DistillerAllWithAll::Stats::print_short(const Solver* _solver) const
 {
     cout
     << "c [distill] tri+long"
@@ -356,7 +356,7 @@ void DistillerAllWithAll::Stats::print_short(const Solver* solver) const
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
     << " 0-depth-assigns: " << zeroDepthAssigns
-    << solver->conf.print_times(time_used, timeOut)
+    << _solver->conf.print_times(time_used, timeOut)
     << endl;
 }
 
