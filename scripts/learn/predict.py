@@ -389,21 +389,21 @@ class Query2 (QueryHelper):
         print("Num lines BAD:", num_lines_bad)
 
         total_lines = num_lines_ok + num_lines_bad
-        print("Total number of lines:", total_lines)
-        if options.fixed_num_elements != -1:
-            if options.fixed_num_elements > total_lines:
-                print("WARNING -- Your fixed num elements is too high:", options.fixed_num_elements)
+        print("Total number of datapoints (K): %-3.2f" % total_lines/1000.0)
+        if options.fixed_num_datapoints != -1:
+            if options.fixed_num_datapoints > total_lines:
+                print("WARNING -- Your fixed num datapoints is too high:", options.fixed_num_datapoints)
                 print("WARNING -- We only have:", total_lines)
                 return False, None
 
         if total_lines == 0:
-            print("WARNING: Total number of elements is 0, something is wrong or empty")
+            print("WARNING: Total number of datapoints is 0, something is wrong or empty")
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
         q = q_ok1 + q_ok2
-        if options.fixed_num_elements != -1:
-            myformat["limit"] = int(options.fixed_num_elements * num_lines_ok/float(total_lines))
+        if options.fixed_num_datapoints != -1:
+            myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
         print("limit for OK:", myformat["limit"])
         q = q.format(**myformat)
         print("Running query for OK...")
@@ -411,8 +411,8 @@ class Query2 (QueryHelper):
 
         print("Running query for BAD...")
         q = q_bad1 + q_bad2
-        if options.fixed_num_elements != -1:
-            myformat["limit"] = int(options.fixed_num_elements * num_lines_bad/float(total_lines))
+        if options.fixed_num_datapoints != -1:
+            myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
         print("limit for bad:", myformat["limit"])
         q = q.format(**myformat)
         df2 = pd.read_sql_query(q, self.conn)
@@ -690,7 +690,7 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
-                      dest="fixed_num_elements", help="Exact number of examples to take")
+                      dest="fixed_num_datapoints", help="Exact number of examples to take")
 
     parser.add_option("--check", "-c", type=str,
                       dest="check", help="Check classifier")
