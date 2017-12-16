@@ -53,7 +53,6 @@ before_build:
   - IF "%PLATFORM%" == "x86" ( SET CMAKE_GENERATOR="Visual Studio 14 2015")
   - IF "%PLATFORM%" == "x64" ( SET CMAKE_GENERATOR="Visual Studio 14 2015 Win64")
   - echo %PLATFORM%
-  - echo %BOOST_LIBRARYDIR%
   - echo %CMAKE_GENERATOR%
   - echo %configuration%
 
