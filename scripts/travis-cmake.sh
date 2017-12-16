@@ -30,7 +30,7 @@ shopt -s extglob
 NUM="${NUM##*( )}"
 NUM="${NUM%%*( )}"
 shopt -u extglob
-if [ $(("$NUM")) != $(("0")) ]; then
+if [ "$NUM" -ne 0 ]; then
     echo "There are some files without license information!"
     exit -1
 fi
@@ -40,7 +40,7 @@ shopt -s extglob
 NUM="${NUM##*( )}"
 NUM="${NUM%%*( )}"
 shopt -u extglob
-if [ $(("$NUM")) != $(("0")) ]; then
+if [ "$NUM" -ne 0 ]; then
     echo "There are some files without license information!"
     exit -1
 fi
