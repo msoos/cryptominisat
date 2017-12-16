@@ -99,8 +99,8 @@ before_build:
 
 after_build:
   - call ctest -V -C %CONFIGURATION%
-  - call "DUMPBIN" C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe /ALL
-  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
+    # - call DUMPBIN C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe /ALL
+    # - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
   - if %STATICCOMPILE_SETTING%==ON call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
   - echo %APPVEYOR_BUILD_FOLDER%
   - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
