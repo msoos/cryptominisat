@@ -944,6 +944,8 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `backtrack_level`,"
     << " `decision_level`,"
     << " `trail_depth_level`,"
+    << " `cur_restart_type` ,"
+    << " `cur_confl_in_restart` ,"
 
     << " `atedecents_binIrred`,"
     << " `atedecents_binRed`,"
@@ -1015,6 +1017,8 @@ void SQLiteStats::dump_clause_stats(
     , size_t decision_level
     , size_t trail_depth
     , uint64_t conflicts_this_restart
+    , const std::string& restart_type
+    , const SearchStats& stats
     , const SearchHist& hist
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
@@ -1042,6 +1046,8 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, trail_depth);
+    sqlite3_bind_text(stmt_clause_stats, bindAt++,  restart_type.c_str(), -1, NULL);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, stats.conflStats.numConflicts);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.binRed);

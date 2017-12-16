@@ -150,6 +150,8 @@ CREATE TABLE `clauseStats` (
   `backtrack_level` int(20) NOT NULL,
   `decision_level` int(20) NOT NULL,
   `trail_depth_level` int(20) NOT NULL,
+  `cur_restart_type` char(20) NOT NULL,
+  `cur_confl_in_restart` int(20) NOT NULL,
 
   `atedecents_binIrred` int(20) NOT NULL,
   `atedecents_binRed` int(20) NOT NULL,
