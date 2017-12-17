@@ -38,4 +38,4 @@ echo "Predicting file $1"
 
 # generate DOT and display it
 dot -Tpng ${OUTDIR}/data.sqlite.tree.dot -o tree.png
-okular tree.png
+display tree.png
