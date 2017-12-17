@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -20,7 +20,7 @@ def parse_lemmas(lemmafname, verbose=False):
 
     ret = {}
     with open(lemmafname, "r") as f:
-        for line, lineno in zip(f, xrange(1000*1000*1000)):
+        for line, lineno in zip(f, range(1000*1000*1000)):
             l = line.strip().split(" ")
 
             if len(l) == 1:
@@ -88,7 +88,7 @@ class Query:
         self.c.execute('delete from goodClauses;')
 
         id_b = [(self.runID, ID, x.num_used, x.used_for_time) for ID,
-                x in ids.iteritems()]
+                x in ids.items()]
         self.c.executemany("""
             INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`,
                 `usedForTime`)
