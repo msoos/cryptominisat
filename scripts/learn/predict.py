@@ -379,17 +379,17 @@ class Query2 (QueryHelper):
         q = q_count + q_ok2
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
-        num_lines_ok = cur.fetchone()[0]
-        print("Num lines OK:", num_lines_ok)
+        num_lines_ok = int(cur.fetchone()[0])
+        print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
 
         q = q_count + q_bad2
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
-        num_lines_bad = cur.fetchone()[0]
-        print("Num lines BAD:", num_lines_bad)
+        num_lines_bad = int(cur.fetchone()[0])
+        print("Num datpoints BAD (K): %-3.5f" % (num_lines_bad/1000.0))
 
         total_lines = num_lines_ok + num_lines_bad
-        print("Total number of datapoints (K): %-3.2f" % total_lines/1000.0)
+        print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
         if options.fixed_num_datapoints != -1:
             if options.fixed_num_datapoints > total_lines:
                 print("WARNING -- Your fixed num datapoints is too high:", options.fixed_num_datapoints)
