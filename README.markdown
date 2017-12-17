@@ -450,7 +450,7 @@ cd cryptominisat
 git submodule update --init
 mkdir build && cd build
 ln -s ../scripts/build_scripts/* .
-ln -s ../scripts/learnt/* .
+ln -s ../scripts/learn/* .
 /build_stats.sh
 sudo make install
 sudo ldconfig
