@@ -404,6 +404,7 @@ sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python-pip python-setuptools python-dev
 pip install pip
+pip install lit
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
@@ -442,6 +443,7 @@ sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python-pip python-setuptools python-dev
 pip install pip
+pip install lit
 pip install scikit-learn
 pip install pandas
 pip install numpy
