@@ -431,13 +431,33 @@ The following configures the system to build a bare minimal binary&library. It n
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
 
-DRAT and ID generation
+Using the Machine Learning System
 -----
 
+
 ```
-./cryptominisat5 6s153.cnf.gz  --sql 1 --sqlitedb test.db --sqlfull 1 --clid drat.out
+sudo apt-get install build-essential cmake
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install git python-pip python-setuptools python-dev
+pip install pip
+pip install sqlite3
+pip install sklearn
+pip install pandas
+pip install optparse
+pip install numpy
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
+git submodule update --init
+mkdir build && cd build
+ln -s ../scripts/build_scripts/* .
+ln -s ../scripts/learnt/* .
+/build_stats.sh
+sudo make install
+sudo ldconfig
+./predict_one.sh
 ```
 
+The prediction datas are now written to the directory build/test_predict. You can use e.g. Weka to examine the CSV. Please note that this is under *heavy* development
 
 
 C usage
