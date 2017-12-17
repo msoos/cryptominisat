@@ -609,6 +609,7 @@ def filter_large_fuzzer(dat):
 
     return f
 
+
 fuzzers_noxor = [
     ["../../build/tests/sha1-sat/sha1-gen --nocomment --attack preimage --rounds 20",
      "--hash-bits", "--seed"],
@@ -639,7 +640,7 @@ fuzzers_xor = [
 ]
 
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     global options
     global args
     global fuzzers_drat
