@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016  Mate Soos
@@ -30,6 +30,7 @@ import os
 import stat
 import time
 import resource
+import locale
 from functools import partial
 
 
@@ -122,7 +123,8 @@ class solution_parser:
         try:
             p = subprocess.Popen(toexec.rsplit(),
                                  stdout=subprocess.PIPE,
-                                 preexec_fn=partial(setlimits, self.options.maxtime))
+                                 preexec_fn=partial(setlimits, self.options.maxtime),
+                                 encoding=locale.getpreferredencoding())
         except OSError:
             print("ERROR: Minisat didn't run... weird, it's included as a submodule")
             raise

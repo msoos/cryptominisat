@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2014  Mate Soos
@@ -22,7 +22,6 @@ from __future__ import with_statement  # Required in 2.5
 from __future__ import print_function
 import subprocess
 import os
-import commands
 import sys
 import time
 import random
@@ -30,6 +29,7 @@ from random import choice
 import optparse
 import glob
 import resource
+import locale
 from verifier import *
 from functools import partial
 
@@ -152,7 +152,7 @@ class create_fuzz:
                 print("fuzzer2 used: %s" % fuzzer2)
                 call = self.call_from_fuzzer(fuzzer2, fname2)
                 print("calling sub-fuzzer: %s" % call)
-                status, _ = commands.getstatusoutput(call)
+                status = subprocess.call(call, shell=True)
                 if status != 0:
                     fuzzer_call_failed()
 
@@ -183,7 +183,9 @@ def print_version():
     command = options.solver + " --version"
     if options.verbose:
         print("Executing: %s" % command)
-    p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE, encoding=locale.getpreferredencoding())
+
     consoleOutput, err = p.communicate()
     print("Version values: %s" % consoleOutput.strip())
 
@@ -208,7 +210,9 @@ class Tester:
         command = options.solver
         command += " --hhelp"
         p = subprocess.Popen(
-            command.rsplit(), stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            command.rsplit(), stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE, encoding=locale.getpreferredencoding())
+
         consoleOutput, err = p.communicate()
 
         for l in consoleOutput.split("\n"):
@@ -363,7 +367,8 @@ class Tester:
         err_file = open(err_fname, "w")
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
-            preexec_fn=partial(setlimits, options.maxtime))
+            preexec_fn=partial(setlimits, options.maxtime),
+            encoding=locale.getpreferredencoding())
 
         # print time limit after child startup
         if options.verbose:
@@ -449,7 +454,10 @@ class Tester:
         if fname2:
             toexec = "../../build/tests/drat-trim/drat-trim %s %s" % (fname, fname2)
             print("Checking DRAT...: ", toexec)
-            p = subprocess.Popen(toexec.rsplit(), stdout=subprocess.PIPE)
+            p = subprocess.Popen(toexec.rsplit(),
+                    stdout=subprocess.PIPE,
+                    encoding=locale.getpreferredencoding())
+
             consoleOutput2 = p.communicate()[0]
             diff_time = time.time() - curr_time
 
@@ -504,7 +512,7 @@ class Tester:
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers, fname)
         print("calling %s" % call)
-        status, _ = commands.getstatusoutput(call)
+        status = subprocess.call(call, shell=True)
         if status != 0:
             fuzzer_call_failed()
 
@@ -548,7 +556,7 @@ class Tester:
         cf = create_fuzz()
         call, todel = cf.create_fuzz_file(fuzzer, fuzzers_nodrat, fname)
         print("calling %s : %s" % (fuzzer, call))
-        status, _ = commands.getstatusoutput(call)
+        status = subprocess.call(call, shell=True)
         if status != 0:
             fuzzer_call_failed()
 
