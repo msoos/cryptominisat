@@ -442,10 +442,8 @@ sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python-pip python-setuptools python-dev
 pip install pip
-pip install sqlite3
-pip install sklearn
+pip install scikit-learn
 pip install pandas
-pip install optparse
 pip install numpy
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
