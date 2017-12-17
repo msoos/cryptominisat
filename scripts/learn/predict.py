@@ -617,6 +617,18 @@ def transform(df):
     return df
 
 
+def dump_dataframe(df, name):
+    if options.dump_csv:
+        fname = "%s.csv" % name
+        print("Dumping CSV data to:", fname)
+        df.to_csv(fname, index=False)
+
+        fname ="%s-pandasdata.dat" % name
+        print("Dumping pandas data to:", fname)
+        with open(fname, "wb") as f:
+            pickle.dump(df, f)
+
+
 def one_predictor(dbfname, final_df):
     t = time.time()
     ok, df = get_one_file(dbfname)
@@ -639,21 +651,12 @@ def one_predictor(dbfname, final_df):
         print(df.describe())
         print("Describe done.---")
 
-    if options.dump_csv:
-        fname = "%s.csv" % cleanname
-        print("Dumping CSV data to:", fname)
-        df.to_csv(fname, index=False)
-
     if final_df is None:
         final_df = df
     else:
         final_df = pd.concat([final_df, df])
 
-    if options.dump_csv:
-        fname ="pandasdata.dat"
-        print("Dumping pandas data to:", fname)
-        with open(fname, "wb") as f:
-            pickle.dump(df, f)
+    dump_dataframe(df, cleanname)
 
     # display
     if False:
@@ -728,3 +731,5 @@ if __name__ == "__main__":
         clf = Classify(final_df)
         clf.learn(final_df, "final.classifier")
         clf.output_to_dot("final.dot")
+
+    dump_dataframe(final_df, "final")
