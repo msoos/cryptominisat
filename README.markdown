@@ -170,12 +170,12 @@ Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 Python usage
 -----
-The python module must be compiled as per:
+The python3 module must be compiled as per:
 
 ```
 sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
-sudo apt-get install python-setuptools python-dev
+sudo apt-get install python3-setuptools python3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
