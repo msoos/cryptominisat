@@ -404,9 +404,9 @@ For testing you will need the GIT checkout and build as per:
 ```
 sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
-sudo apt-get install git python-pip python-setuptools python-dev
-pip install pip
-pip install lit
+sudo apt-get install git python3-pip python3-setuptools python3-dev
+pip3 install pip
+pip3 install lit
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
@@ -443,13 +443,13 @@ Using the Machine Learning System
 ```
 sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
-sudo apt-get install git python-pip python-setuptools python-dev
 sudo apt-get install graphviz
-pip install pip
-pip install lit
-pip install scikit-learn
-pip install pandas
-pip install numpy
+sudo apt-get install git python3-pip python3-setuptools python3-dev
+sudo apt-get install git python3-numpy
+pip3 install pip
+pip3 install lit
+pip3 install scikit-learn
+pip3 install pandas
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
