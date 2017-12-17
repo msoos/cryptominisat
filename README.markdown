@@ -46,6 +46,8 @@ docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
 To build and run locally:
 
 ```
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
 git submodule update --init
 docker build -t cms .
 cat myfile.cnf | docker run --rm -i cms
