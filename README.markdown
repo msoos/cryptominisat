@@ -456,7 +456,7 @@ ln -s ../scripts/learn/* .
 /build_stats.sh
 sudo make install
 sudo ldconfig
-./predict_one.sh
+./test_predict.sh
 ```
 
 The prediction datas are now written to the directory build/test_predict. You can use e.g. Weka to examine the CSV. Please note that this is under *heavy* development
