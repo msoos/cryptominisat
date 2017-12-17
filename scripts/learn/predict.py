@@ -196,7 +196,7 @@ class Query2 (QueryHelper):
         -- , clauseStats.`conflicts` as `cl.conflicts`
         -- , clauseStats.`latest_feature_calc` as `clauseStats.latest_feature_calc`
         -- , clauseStats.`clauseID` as `cl.clauseID`
-        , clauseStats.`glue` as `cl.glue`
+        clauseStats.`glue` as `cl.glue`
         , clauseStats.`size` as `cl.size`
         , clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`
         , clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`
@@ -311,10 +311,10 @@ class Query2 (QueryHelper):
         q_count = "SELECT count(*)"
         q_ok1 = """
         SELECT
-        "OK" as good
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        , "OK" as good
         """
 
         q_ok2 = """
@@ -342,10 +342,10 @@ class Query2 (QueryHelper):
         # BAD caluses
         q_bad1 = """
         SELECT
-        "BAD" as good
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        , "BAD" as good
         """
 
         q_bad2 = """
