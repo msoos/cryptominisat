@@ -510,7 +510,7 @@ class Classify:
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        self.clf = sklearn.tree.DecisionTreeClassifier(random_state=90, max_depth=5)
+        self.clf = sklearn.tree.DecisionTreeClassifier(random_state=90, max_depth=options.tree_depth)
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -691,6 +691,9 @@ if __name__ == "__main__":
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed_num_datapoints", help="Exact number of examples to take")
+
+    parser.add_option("--depth", default=5, type=int,
+                      dest="tree_depth", help="Depth of the tree to create")
 
     parser.add_option("--check", "-c", type=str,
                       dest="check", help="Check classifier")
