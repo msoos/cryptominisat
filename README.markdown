@@ -56,6 +56,8 @@ cat myfile.cnf | docker run --rm -i cms
 To build and run the web interface:
 
 ```
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
 git submodule update --init
 docker build -t cmsweb -f Dockerfile.web .
 docker run --rm -i -p 80:80 cmsweb
@@ -442,6 +444,7 @@ Using the Machine Learning System
 sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python-pip python-setuptools python-dev
+sudo apt-get install graphviz
 pip install pip
 pip install lit
 pip install scikit-learn
