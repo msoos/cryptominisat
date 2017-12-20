@@ -184,7 +184,7 @@ def print_version():
     if options.verbose:
         print("Executing: %s" % command)
     p = subprocess.Popen(command.rsplit(), stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE, encoding=locale.getpreferredencoding())
+            stdout=subprocess.PIPE, universal_newlines=True)
 
     consoleOutput, err = p.communicate()
     print("Version values: %s" % consoleOutput.strip())
@@ -211,7 +211,8 @@ class Tester:
         command += " --hhelp"
         p = subprocess.Popen(
             command.rsplit(), stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE, encoding=locale.getpreferredencoding())
+            stdout=subprocess.PIPE,
+            universal_newlines=True)
 
         consoleOutput, err = p.communicate()
 
@@ -368,7 +369,7 @@ class Tester:
         p = subprocess.Popen(
             command.rsplit(), stderr=err_file, stdout=subprocess.PIPE,
             preexec_fn=partial(setlimits, options.maxtime),
-            encoding=locale.getpreferredencoding())
+            universal_newlines=True)
 
         # print time limit after child startup
         if options.verbose:
@@ -456,7 +457,7 @@ class Tester:
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
                     stdout=subprocess.PIPE,
-                    encoding=locale.getpreferredencoding())
+                    universal_newlines=True)
 
             consoleOutput2 = p.communicate()[0]
             diff_time = time.time() - curr_time

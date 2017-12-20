@@ -124,7 +124,7 @@ class solution_parser:
             p = subprocess.Popen(toexec.rsplit(),
                                  stdout=subprocess.PIPE,
                                  preexec_fn=partial(setlimits, self.options.maxtime),
-                                 encoding=locale.getpreferredencoding())
+                                 universal_newlines=True)
         except OSError:
             print("ERROR: Minisat didn't run... weird, it's included as a submodule")
             raise
