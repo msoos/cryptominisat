@@ -23,6 +23,9 @@
 set -e
 set -x
 
+# fix TravisCI issue --> https://github.com/travis-ci/travis-ci/issues/8920
+python -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
+
 #license check -- first print and then fail in case of problems
 ./utils/licensecheck/licensecheck.pl -m  ./src
 NUM=$(./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l)
