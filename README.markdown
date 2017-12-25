@@ -157,7 +157,7 @@ s SATISFIABLE
 v 1 -2 3 0
 ```
 
-If the file had contained:
+Which means, that setting variable 1 True, variable 2 False and variable 3 True satisfies the set of constraints (clauses) in the CNF. If the file had contained:
 ```
 p cnf 2 4
 1 0
