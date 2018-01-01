@@ -233,7 +233,7 @@ class Searcher : public HyperEngine
         Clause* handle_last_confl_otf_subsumption(
             Clause* cl
             , const uint32_t glue
-            , const uint32_t backtrack_level
+            , const uint32_t old_decision_level
         );
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
@@ -393,7 +393,7 @@ class Searcher : public HyperEngine
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(
             const uint32_t glue
-            , const uint32_t backtrack_level
+            , const uint32_t old_decision_level
         );
         #endif
 

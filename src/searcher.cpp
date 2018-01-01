@@ -1474,16 +1474,16 @@ void Searcher::print_learnt_clause() const
 #ifdef STATS_NEEDED
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
-    , const uint32_t backtrack_level
+    , const uint32_t old_decision_level
 ) {
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
         , glue
-        , backtrack_level
+        , decisionLevel()
         , learnt_clause.size()
         , antec_data
-        , decisionLevel()
+        , old_decision_level
         , trail.size()
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
@@ -1495,8 +1495,7 @@ void Searcher::dump_sql_clause_data(
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
-    , const uint32_t
-    backtrack_level
+    , const uint32_t old_decision_level
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 2) {
@@ -1533,7 +1532,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         }
 
         if (conf.guess_cl_effectiveness) {
-            unsigned lower_it = guess_clause_array(cl->stats, backtrack_level);
+            unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
             if (lower_it) {
                 stats.guess_different++;
                 cl->stats.ttl = 1;
@@ -1552,7 +1551,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ) {
             dump_sql_clause_data(
                 glue
-                , backtrack_level
+                , old_decision_level
             );
         }
         #endif
@@ -1634,6 +1633,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (!update_bogoprops) {
         update_history_stats(backtrack_level, glue);
     }
+    uint32_t old_decision_level = decisionLevel();
     cancelUntil(backtrack_level);
 
     add_otf_subsume_long_clauses();
@@ -1641,7 +1641,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, backtrack_level);
+    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_decision_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause(cl);
 
