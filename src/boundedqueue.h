@@ -104,6 +104,28 @@ public:
     {
         return longTermAvg;
     }
+
+    T prev(int32_t p) const
+    {
+        if (p > queuesize)
+            return 0;
+
+        uint32_t e;
+        if (first > 0) {
+            e = first-1;
+        } else {
+            e = maxsize-1;
+        }
+
+        while(p-- > 0) {
+            if (e == 0) {
+                e = maxsize-1;
+            } else {
+                e--;
+            }
+        }
+        return elems[e];
+    }
     #endif
 
     std::string getAvgPrint(size_t prec, size_t w) const

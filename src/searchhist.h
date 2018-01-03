@@ -58,6 +58,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #ifdef STATS_NEEDED
+    bqueue<uint32_t>    branchDepthHistQueue;
     bqueue<uint32_t>    trailDepthHist;
     #endif
 
@@ -69,6 +70,10 @@ struct SearchHist {
         used += sizeof(AvgCalc<size_t>)*2;
         used += sizeof(AvgCalc<double, double>)*2;
         used += glueHist.usedMem();
+        used += trailDepthHistLonger.usedMem();
+        #ifdef STATS_NEEDED
+        used += branchDepthHistQueue.usedMem();
+        #endif
 
         return used;
     }
@@ -87,6 +92,7 @@ struct SearchHist {
 
         #ifdef STATS_NEEDED
         trailDepthHist.clear();
+        branchDepthHistQueue.clear();
         #endif
     }
 
@@ -95,6 +101,7 @@ struct SearchHist {
         glueHist.clearAndResize(shortTermHistorySize);
         #ifdef STATS_NEEDED
         trailDepthHist.clearAndResize(shortTermHistorySize);
+        branchDepthHistQueue.clearAndResize(shortTermHistorySize);
         #endif
     }
 
@@ -104,6 +111,7 @@ struct SearchHist {
         trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
         #ifdef STATS_NEEDED
         trailDepthHist.clearAndResize(shortTermHistorySize);
+        branchDepthHistQueue.clearAndResize(shortTermHistorySize);
         #endif
     }
 

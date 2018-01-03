@@ -921,7 +921,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 49;
+    const size_t numElems = 51;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -943,6 +943,8 @@ void SQLiteStats::init_clause_stats_STMT()
 
     << " `backtrack_level`,"
     << " `decision_level`,"
+    << " `decision_level_pre1`,"
+    << " `decision_level_pre2`,"
     << " `trail_depth_level`,"
     << " `cur_restart_type` ,"
 
@@ -1043,6 +1045,8 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(1));
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.prev(2));
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, trail_depth);
     sqlite3_bind_text(stmt_clause_stats, bindAt++,  restart_type.c_str(), -1, NULL);
 
