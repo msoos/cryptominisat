@@ -1380,7 +1380,9 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 
     //short-term averages
     hist.branchDepthHist.push(decisionLevel());
+    #ifdef STATS_NEEDED
     hist.branchDepthHistQueue.push(decisionLevel());
+    #endif
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
     hist.conflSizeHist.push(learnt_clause.size());
     hist.numResolutionsHist.push(antec_data.num());
