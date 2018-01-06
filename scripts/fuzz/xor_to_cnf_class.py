@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright (C) 2014  Mate Soos
 #
 # This program is free software; you can redistribute it and/or
