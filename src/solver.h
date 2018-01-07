@@ -224,6 +224,7 @@ class Solver : public Searcher
         //Not Private for testing (maybe could be called from outside)
         void renumber_variables(bool must_renumber = true);
         SolveFeatures calculate_features();
+        SolveFeatures last_solve_feature;
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
 

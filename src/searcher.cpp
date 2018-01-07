@@ -1741,12 +1741,12 @@ lbool Searcher::burst_search()
 void Searcher::check_calc_features()
 {
     if (last_feature_calc_confl == 0 || (last_feature_calc_confl + 100000) < sumConflicts) {
-        last_feature_calc_confl = sumConflicts;
+        last_feature_calc_confl = sumConflicts+1;
         if (nVars() > 2
             && longIrredCls.size() > 1
             && (binTri.irredBins + binTri.redBins) > 1
         ) {
-            solver->calculate_features();
+            solver->last_solve_feature = solver->calculate_features();
         }
     }
  }

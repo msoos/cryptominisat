@@ -1295,6 +1295,10 @@ lbool Solver::solve_with_assumptions(
         }
     }
 
+    if (status == l_Undef) {
+        check_reconfigure();
+    }
+
     //If still unknown, simplify
     if (status == l_Undef
         && nVars() > 0
@@ -1363,9 +1367,9 @@ void Solver::check_reconfigure()
         && (binTri.irredBins + binTri.redBins) > 1
     ) {
         if (solveStats.numSimplify == conf.reconfigure_at) {
-            SolveFeatures feat = calculate_features();
+            check_calc_features();
             if (conf.reconfigure_val == 100) {
-                conf.reconfigure_val = get_reconf_from_features(feat, conf.verbosity);
+                conf.reconfigure_val = get_reconf_from_features(last_solve_feature, conf.verbosity);
             }
             if (conf.reconfigure_val != 0) {
                 reconfigure(conf.reconfigure_val);
