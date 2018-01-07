@@ -46,10 +46,10 @@ def cleanup(dat):
         if elem != "":
             ret.append(elem)
 
-    if is_apple != "":
-        for x in ret:
-            if x == "-lpython" or x == "-lframework":
-                x = "-undefined dynamic_lookup"
+#    if is_apple != "":
+#        for x in ret:
+#            if x == "-lpython" or x == "-lframework":
+#                x = "-undefined dynamic_lookup"
 
     return ret
     # return []
