@@ -379,7 +379,7 @@ SolveFeatures SolveFeaturesCalc::extract()
     }
     normalise_values();
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity > 5) {
         cout << "c [features] extracted"
         << solver->conf.print_times(cpuTime() - start_time)
         << endl;
