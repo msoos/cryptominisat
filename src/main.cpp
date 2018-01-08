@@ -570,7 +570,7 @@ void Main::add_supported_options()
     ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
         , "Limit how much time is spent in component-finding");
 
-    po::options_description miscOptions("Simplification options");
+    po::options_description miscOptions("Misc options");
     miscOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
