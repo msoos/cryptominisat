@@ -19,8 +19,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-execute_process(COMMAND python-config --cflags OUTPUT_VARIABLE PY_C_CONFIG)
-execute_process(COMMAND python-config --ldflags OUTPUT_VARIABLE PY_LD_CONFIG)
+execute_process(COMMAND "${PYTHON_EXECUTABLE}-config" --cflags OUTPUT_VARIABLE PY_C_CONFIG)
+execute_process(COMMAND "${PYTHON_EXECUTABLE}-config" --ldflags OUTPUT_VARIABLE PY_LD_CONFIG)
+string(REPLACE "\n" " " PY_C_CONFIG ${PY_C_CONFIG})
+string(REPLACE "\n" " " PY_LC_CONFIG ${PY_LD_CONFIG})
+
+message(STATUS "Python CFLAGS:  '${PY_C_CONFIG}'")
+message(STATUS "Python LDFLAGS: '${PY_LD_CONFIG}'")
+
 
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
 set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build")
