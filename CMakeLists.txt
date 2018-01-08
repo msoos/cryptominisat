@@ -477,14 +477,8 @@ endmacro()
 # Look for python
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
-
-find_package (PythonInterp 3)
+find_package(PythonInterp 3)
 find_package(PythonLibs 3)
-
-if (NOT PYTHON_EXECUTABLE OR NOT PYTHON_LIBRARIES OR NOT PYTHON_INCLUDE_DIRS)
-    find_package (PythonInterp 2.7)
-    find_package(PythonLibs 2.7)
-endif()
 
 message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
 message(STATUS "PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
