@@ -1,4 +1,4 @@
-c RUN: %solver --reconfat 0 --reconf 15 --presimp 0 %s | %OutputCheck %s
+c RUN: %solver --reconfat 0 --reconf 15 %s | %OutputCheck %s
 1 2 0
 -1 2 0
 3 4 0
