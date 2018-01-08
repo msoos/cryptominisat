@@ -438,7 +438,7 @@ cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENA
 
 Using the Machine Learning System
 -----
-
+This is experimental but should work relatively well:
 
 ```
 sudo apt-get install build-essential cmake
@@ -462,8 +462,20 @@ sudo ldconfig
 ./test_predict.sh
 ```
 
-The prediction datas are now written to the directory build/test_predict. You can use e.g. Weka to examine the CSV. Please note that this is under *heavy* development
+The prediction datas are now written to the directory `build/test_predict/`. You can use e.g. Weka to examine the CSV found there. Please note that this is under *heavy* development
 
+Trying different configurations
+-----
+Try solving using different reconfiguration values between 1..15 as per:
+
+```
+./cryptominisat5 --reconfat 0 --reconf 1 my_hard_problem.cnf
+./cryptominisat5 --reconfat 0 --reconf 2 my_hard_problem.cnf
+...
+./cryptominisat5 --reconfat 0 --reconf 15 my_hard_problem.cnf
+```
+
+These configurations are designed to be relatively orthogonal. Check if any of them solve a lot faster. If it does, try using that for similar problems going forward. Please do come back to the author with what you have found to work best for you.
 
 C usage
 -----
