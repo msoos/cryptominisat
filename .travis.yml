@@ -83,6 +83,9 @@ matrix:
     - os: osx
       env: CMS_CONFIG=LARGEMEM_GAUSS
 
+    - os: osx
+      env: CMS_CONFIG=NOPYTHON
+
 
   include:
     # Covertiy scan should only run once
