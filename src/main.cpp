@@ -597,6 +597,14 @@ void Main::add_supported_options()
         , "Number of conflicts to do in burst search")
     ;
 
+    po::options_description reconfOptions("Reconf options");
+    reconfOptions.add_options()
+    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
+        , "Reconfigure after this many simplifications")
+    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
+        , "Reconfigure after some time to this solver configuration [0..15]")
+    ;
+
     hiddenOptions.add_options()
     ("dratdebug", po::bool_switch(&dratDebug)
         , "Output DRAT verification into the console. Helpful to see where DRAT fails -- use in conjunction with --verb 20")
@@ -605,14 +613,10 @@ void Main::add_supported_options()
     ("zero-exit-status", po::bool_switch(&zero_exit_status)
         , "Exit with status zero in case the solving has finished without an issue")
     ("input", po::value< vector<string> >(), "file(s) to read")
-    ("reconfat", po::value(&conf.reconfigure_at)->default_value(conf.reconfigure_at)
-        , "Reconfigure after this many simplifications")
     ("printtimes", po::value(&conf.do_print_times)->default_value(conf.do_print_times)
         , "Print time it took for each simplification run. If set to 0, logs are easier to compare")
     ("drat,d", po::value(&dratfilname)
         , "Put DRAT verification information into this file")
-    ("reconf", po::value(&conf.reconfigure_val)->default_value(conf.reconfigure_val)
-        , "Reconfigure after some time to this solver configuration [0..13]")
     ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
         , "The file to save the saved state of the solver")
     ;
@@ -664,6 +668,7 @@ void Main::add_supported_options()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    .add(reconfOptions)
     .add(miscOptions)
     ;
 }
