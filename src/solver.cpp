@@ -3087,7 +3087,7 @@ void Solver::reconfigure(int val)
         }
 
         default: {
-            cout << "ERROR: You must give a value for reconfigure that is lower" << endl;
+            cout << "ERROR: Only reconfigure values of 3,4,67,12,13,14,15 are supported" << endl;
             exit(-1);
         }
     }
