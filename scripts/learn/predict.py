@@ -31,6 +31,7 @@ from sklearn.model_selection import train_test_split
 import sklearn.tree
 import sklearn.ensemble
 import sklearn.metrics
+from sklearn.preprocessing import LabelEncoder
 
 
 ##############
@@ -92,11 +93,13 @@ class Query2 (QueryHelper):
         drop index if exists `idxclid2`;
         drop index if exists `idxclid3`;
         drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
         create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
         create index `idxclid4` on `restart` (`runID`, `restarts`);
+        create index `idxclid5` on `tags` (`runID`, `tagname`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -196,7 +199,7 @@ class Query2 (QueryHelper):
         -- , clauseStats.`conflicts` as `cl.conflicts`
         -- , clauseStats.`latest_feature_calc` as `clauseStats.latest_feature_calc`
         -- , clauseStats.`clauseID` as `cl.clauseID`
-        clauseStats.`glue` as `cl.glue`
+        , clauseStats.`glue` as `cl.glue`
         , clauseStats.`size` as `cl.size`
         , clauseStats.`conflicts_this_restart` as `cl.conflicts_this_restart`
         , clauseStats.`num_overlap_literals` as `cl.num_overlap_literals`
@@ -311,10 +314,11 @@ class Query2 (QueryHelper):
         q_count = "SELECT count(*)"
         q_ok1 = """
         SELECT
+        tags.tag as "fname"
         {clause_dat}
         {restart_dat}
         {feat_dat}
-        , "OK" as good
+        , "OK" as `class`
         """
 
         q_ok2 = """
@@ -323,6 +327,7 @@ class Query2 (QueryHelper):
         , goodClauses
         , restart
         , features
+        , tags
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
@@ -333,6 +338,8 @@ class Query2 (QueryHelper):
         and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
         and restart.runID = {runid}
+        and tags.tagname = "filename"
+        and tags.runID = {runid}
 
         order by random()
         limit {limit}
@@ -342,10 +349,11 @@ class Query2 (QueryHelper):
         # BAD caluses
         q_bad1 = """
         SELECT
+        tags.tag as "fname"
         {clause_dat}
         {restart_dat}
         {feat_dat}
-        , "BAD" as good
+        , "BAD" as `class`
         """
 
         q_bad2 = """
@@ -354,6 +362,7 @@ class Query2 (QueryHelper):
         and clauseStats.runID = goodClauses.runID
         , restart
         , features
+        , tags
         WHERE
 
         goodClauses.clauseID is NULL
@@ -364,6 +373,8 @@ class Query2 (QueryHelper):
         and features.latest_feature_calc = clauseStats.latest_feature_calc
         and restart.restarts = clauseStats.prev_restart
         and restart.runID = {runid}
+        and tags.tagname = "filename"
+        and tags.runID = {runid}
 
         order by random()
         limit {limit}
@@ -459,7 +470,7 @@ class Classify:
                     "cl.num_antecedents_hist",
                     "cl.decision_level",
                     "cl.backtrack_level",
-                    "good"]
+                    "class"]
 
         toremove.extend(["cl.vsids_vars_avg",
                          "cl.vsids_vars_var",
@@ -487,8 +498,8 @@ class Classify:
 
         print("total samples: %5d" % df.shape[0])
 
-        num_ok = df.loc[df['good'] == "OK"].shape[0]
-        num_bad = df.loc[df['good'] == "BAD"].shape[0]
+        num_ok = df.loc[df['class'] == "OK"].shape[0]
+        num_bad = df.loc[df['class'] == "BAD"].shape[0]
         if df.shape[0] > 0:
             perc_good = "%-3.4f" % (float(num_ok) / float(df.shape[0]) * 100.0)
         else:
@@ -498,11 +509,12 @@ class Classify:
         if df.shape[0] == 0:
             return
 
+        df["fname"] = LabelEncoder().fit_transform(df["fname"])
         train, test = train_test_split(df, test_size=0.2, random_state=90)
         X_train = train[self.features]
-        y_train = train["good"]
+        y_train = train["class"]
         X_test = test[self.features]
-        y_test = test["good"]
+        y_test = test["class"]
 
         print("Training....")
         t = time.time()
