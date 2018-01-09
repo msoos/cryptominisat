@@ -21,8 +21,24 @@
 
 SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}.${PYTHON_VERSION_MINOR}-config")
 message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
-execute_process(COMMAND ${PY_CONFIG_EXE} --cflags OUTPUT_VARIABLE PY_C_CONFIG)
-execute_process(COMMAND ${PY_CONFIG_EXE} --ldflags OUTPUT_VARIABLE PY_LD_CONFIG)
+execute_process(
+    COMMAND ${PY_CONFIG_EXE} --help
+    OUTPUT_VARIABLE PY_CONF_OPTIONS
+    RESULT_VARIABLE RES_VAR)
+
+if(NOT ${RES_VAR} MATCHES "0")
+    message(WARNING "That python config did not work, trying another one...")
+    SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}-config")
+    message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
+endif()
+
+execute_process(
+    COMMAND ${PY_CONFIG_EXE} --cflags
+    OUTPUT_VARIABLE PY_C_CONFIG)
+execute_process(
+    COMMAND ${PY_CONFIG_EXE} --ldflags
+    OUTPUT_VARIABLE PY_LD_CONFIG)
+
 string(REPLACE "\n" " " PY_C_CONFIG ${PY_C_CONFIG})
 string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})
 
