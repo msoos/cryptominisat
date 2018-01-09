@@ -626,6 +626,12 @@ def transform(df):
         assert(False)
         exit(-1)
 
+
+    # making sure "class" is the last one
+    new_no_class = list(new)
+    new_no_class.remove("class")
+    df = df[new_no_class + ["class"]]
+
     return df
 
 
