@@ -541,7 +541,30 @@ else()
 endif()
 
 if (ENABLE_PYTHON_INTERFACE)
+    # check python-config
     if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
+        SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}.${PYTHON_VERSION_MINOR}-config")
+        message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
+        execute_process(
+            COMMAND ${PY_CONFIG_EXE} --help
+            OUTPUT_VARIABLE PY_CONF_OPTIONS
+            RESULT_VARIABLE RES_VAR)
+
+        if(NOT ${RES_VAR} MATCHES "0")
+            message(WARNING "That python config did not work, trying another one...")
+            SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}-config")
+            message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
+            execute_process(
+                COMMAND ${PY_CONFIG_EXE} --help
+                OUTPUT_VARIABLE PY_CONF_OPTIONS
+                RESULT_VARIABLE RES_VAR)
+            if(NOT ${RES_VAR} MATCHES "0")
+                UNSET(PY_CONFIG_EXE)
+            endif()
+        endif()
+    endif()
+
+    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND PY_CONFIG_EXE AND NOT COVERAGE)
         message(STATUS "Found python interpreter, libs and header files")
         message(STATUS "Building python interface")
         add_subdirectory(python pycryptosat)
