@@ -64,7 +64,7 @@ if len(args) < 1:
 
 def go_through_cnf(f):
     for line in f:
-        line = line.strip()
+        line = line.decode('ascii').strip()
         if len(line) == 0:
             continue
         if line[0] == "p":
