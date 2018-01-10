@@ -130,8 +130,6 @@ class XorToCNF:
         assert self.cutsize > 2
 
         lits = self.parse_xor(xorclause)
-        assert len(lits) > 4
-
         xors = []
 
         # xor clause that doesn't need to be cut up
