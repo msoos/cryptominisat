@@ -1494,6 +1494,21 @@ void Searcher::dump_sql_clause_data(
     while(last_dec_var_act.size() < 2)
         last_dec_var_act.push_back(0);
 
+    vector<double> first_dec_var_act;
+    for(size_t i = 0; i < decisionLevel(); i++) {
+        uint32_t at = trail_lim[i];
+        if (at < trail.size()) {
+            uint32_t v = trail[at].var();
+            double act_rel = var_act_vsids[v]/var_inc;
+            first_dec_var_act.push_back(act_rel);
+            if (first_dec_var_act.size() >= 2)
+                break;
+        }
+    }
+
+    while(first_dec_var_act.size() < 2)
+        first_dec_var_act.push_back(0);
+
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
@@ -1508,6 +1523,8 @@ void Searcher::dump_sql_clause_data(
         , hist
         , last_dec_var_act[0]
         , last_dec_var_act[1]
+        , first_dec_var_act[0]
+        , first_dec_var_act[1]
     );
 }
 #endif

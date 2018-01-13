@@ -93,6 +93,8 @@ public:
         , const SearchHist& hist
         , const double last_dec_var_act_0
         , const double last_dec_var_act_1
+        , const double first_dec_var_act_0
+        , const double first_dec_var_act_1
     ) override;
 
     bool setup(const Solver* solver) override;
