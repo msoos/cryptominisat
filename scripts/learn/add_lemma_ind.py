@@ -14,7 +14,7 @@ def parse_lemmas(lemmafname, runID, verbose=False):
 
     ret = []
     with open(lemmafname, "r") as f:
-        for line, lineno in zip(f, range(1000*1000*1000)):
+        for line in f:
             l = line.strip().split(" ")
 
             # checking that delete line is ok
