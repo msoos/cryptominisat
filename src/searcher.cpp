@@ -1480,7 +1480,7 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_decision_level
 ) {
     vector<double> last_dec_var_act;
-    for(int i = decisionLevel(); i >= 0 ; i--) {
+    for(int i = (int)decisionLevel()-1; i >= 0; i--) {
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
             uint32_t v = trail[at].var();
