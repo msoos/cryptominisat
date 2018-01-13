@@ -195,7 +195,7 @@ class solverThread (threading.Thread):
             # never stop search() to simplify anything
             toexec.append("-n 1")
             toexec.append("--ml 0")
-            toexec.append("--gluecut0 50")
+            toexec.append("--gluecut0 100")
             toexec.append("--otfsubsume 0")
         else:
             if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
