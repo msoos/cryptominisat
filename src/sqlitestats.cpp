@@ -921,7 +921,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 51;
+    const size_t numElems = 53;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -940,6 +940,9 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `num_overlap_literals`,"
     << " `num_antecedents`,"
     << " `antecedents_avg_size`,"
+
+    << " `last_dec_var_act_0`,"
+    << " `last_dec_var_act_1`,"
 
     << " `backtrack_level`,"
     << " `decision_level`,"
@@ -1020,6 +1023,8 @@ void SQLiteStats::dump_clause_stats(
     , uint64_t conflicts_this_restart
     , const std::string& restart_type
     , const SearchHist& hist
+    , const double last_dec_var_act_0
+    , const double last_dec_var_act_1
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
@@ -1042,6 +1047,8 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.num());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_0);
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_1);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
