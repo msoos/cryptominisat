@@ -278,7 +278,7 @@ class solverThread (threading.Thread):
 
         useful_lemma_ids = []
         with addlemm.Query(dbfname) as q:
-            useful_lemma_ids = addlemm.parse_lemmas(q.runID, lemmafname)
+            useful_lemma_ids = addlemm.parse_lemmas(lemmafname, q.runID)
             q.add_goods(useful_lemma_ids)
 
         logging.info("Num good IDs: %d",
