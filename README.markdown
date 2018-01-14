@@ -402,7 +402,7 @@ Testing
 For testing you will need the GIT checkout and build as per:
 
 ```
-sudo apt-get install build-essential cmake
+sudo apt-get install build-essential cmake git
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo pip3 install --upgrade pip
@@ -441,11 +441,11 @@ Using the Machine Learning System
 This is experimental but should work relatively well:
 
 ```
-sudo apt-get install build-essential cmake
+sudo apt-get install build-essential cmake git
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install graphviz
-sudo apt-get install git python3-pip python3-setuptools python3-dev
-sudo apt-get install git python3-numpy
+sudo apt-get install python3-pip python3-setuptools python3-dev
+sudo apt-get install python3-numpy
 sudo pip3 install --upgrade pip
 sudo pip3 install lit
 sudo pip3 install scikit-learn pandas scipy
