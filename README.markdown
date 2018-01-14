@@ -428,7 +428,6 @@ Build for test as per above, then:
 ```
 cd ../cryptominisat/scripts/fuzz/
 ./fuzz_test.py
-
 ```
 
 Configuring a build for a minimal binary&library
