@@ -405,8 +405,8 @@ For testing you will need the GIT checkout and build as per:
 sudo apt-get install build-essential cmake
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
-pip3 install pip
-pip3 install lit
+sudo pip3 install --upgrade pip
+sudo pip3 install lit
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
@@ -446,17 +446,16 @@ sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqli
 sudo apt-get install graphviz
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo apt-get install git python3-numpy
-pip3 install pip
-pip3 install lit
-pip3 install scikit-learn
-pip3 install pandas
+sudo pip3 install --upgrade pip
+sudo pip3 install lit
+sudo pip3 install scikit-learn pandas scipy
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
 mkdir build && cd build
 ln -s ../scripts/build_scripts/* .
 ln -s ../scripts/learn/* .
-/build_stats.sh
+./build_stats.sh
 sudo make install
 sudo ldconfig
 ./test_predict.sh
