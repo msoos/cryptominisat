@@ -509,7 +509,7 @@ class Classify:
         if df.shape[0] == 0:
             return
 
-        df["fname"] = LabelEncoder().fit_transform(df["fname"])
+        # df["fname"] = LabelEncoder().fit_transform(df["fname"])
         train, test = train_test_split(df, test_size=0.2, random_state=90)
         X_train = train[self.features]
         y_train = train["class"]
