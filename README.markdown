@@ -377,6 +377,7 @@ cd cryptominisat-version
 mkdir build && cd build
 cmake -DUSE_GAUSS=ON ..
 make
+sudo make install
 ```
 
 To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
@@ -396,6 +397,8 @@ Gauss options:
   --savematrix arg (=2)       Save matrix every Nth decision level
   --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
 ```
+
+If any of these options seem to be non-existent, then either you forgot to compile the SAT solver with the above options, or you forgot to re-install it with `sudo make install`.
 
 Testing
 -----
