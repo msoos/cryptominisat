@@ -707,7 +707,7 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
-                      dest="fixed_num_datapoints", help="Exact number of examples to take")
+                      dest="fixed_num_datapoints", help="Exact number of examples to take. Default: %default")
 
     parser.add_option("--depth", default=5, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
