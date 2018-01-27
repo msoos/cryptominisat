@@ -647,11 +647,12 @@ def dump_dataframe(df, name):
             pickle.dump(df, f)
 
 
-def one_predictor(dbfname, final_df):
+def one_predictor(dbfname):
     t = time.time()
     ok, df = get_one_file(dbfname)
     if not ok:
-        return False, final_df
+        print("get_one_file returned False")
+        return False, None
 
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
 
@@ -669,11 +670,6 @@ def one_predictor(dbfname, final_df):
         print(df.describe())
         print("Describe done.---")
 
-    if final_df is None:
-        final_df = df
-    else:
-        final_df = pd.concat([final_df, df])
-
     dump_dataframe(df, cleanname)
 
     # display
@@ -687,10 +683,10 @@ def one_predictor(dbfname, final_df):
         check.check(df)
     else:
         clf = Classify(df)
-        clf.learn(df, "%s.classifier" % cleanname)
-        clf.output_to_dot("%s.tree.dot" % cleanname)
+        # clf.learn(df, "%s.classifier" % cleanname)
+        # clf.output_to_dot("%s.tree.dot" % cleanname)
 
-    return True, final_df
+    return True, df
 
 
 if __name__ == "__main__":
@@ -728,10 +724,12 @@ if __name__ == "__main__":
         print("ERROR: You must give at least one file")
         exit(-1)
 
-    final_df = None
+    dfs = []
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------")
-        ok, final_df = one_predictor(dbfname, final_df)
+        ok, df = one_predictor(dbfname)
+        if ok:
+            dfs.append(df)
 
     # intermediate predictor is final
     if len(args) == 1:
@@ -742,12 +740,17 @@ if __name__ == "__main__":
         exit(0)
 
     print("----- FINAL predictor -------")
+    if len(dfs) == 0:
+        print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
+        exit(0)
+
+    final_df = pd.concat(dfs)
+    dump_dataframe(final_df, "final")
     if options.check:
         check = Check()
         check.check(final_df)
     else:
         clf = Classify(final_df)
-        clf.learn(final_df, "final.classifier")
-        clf.output_to_dot("final.dot")
+        # clf.learn(final_df, "final.classifier")
+        # clf.output_to_dot("final.dot")
 
-    dump_dataframe(final_df, "final")
