@@ -106,19 +106,6 @@ class Query2 (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def get_max_clauseID(self):
-        q = """
-        SELECT max(clauseID)
-        FROM clauseStats
-        WHERE runID = %d
-        """ % self.runID
-
-        max_clID = None
-        for row in self.c.execute(q):
-            max_clID = int(row[0])
-
-        return max_clID
-
     def get_clstats(self):
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
@@ -311,8 +298,23 @@ class Query2 (QueryHelper):
         -- , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
+        common_restrictions = """
+        and clauseStats.restarts > 1 -- to avoid history being invalid
+        and clauseStats.runID = {runid}
+        and features.runID = {runid}
+        and features.latest_feature_calc = clauseStats.latest_feature_calc
+        and restart.restarts = clauseStats.prev_restart
+        and restart.runID = {runid}
+        and tags.tagname = "filename"
+        and tags.runID = {runid}
+        """
+        common_limits = """
+        order by random()
+        limit {limit}
+        """
+
         q_count = "SELECT count(*)"
-        q_ok1 = """
+        q_ok_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -321,7 +323,7 @@ class Query2 (QueryHelper):
         , "OK" as `class`
         """
 
-        q_ok2 = """
+        q_ok = """
         FROM
         clauseStats
         , goodClauses
@@ -331,23 +333,11 @@ class Query2 (QueryHelper):
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
-        and clauseStats.runID = goodClauses.runID
-        and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {runid}
-        and features.runID = {runid}
-        and features.latest_feature_calc = clauseStats.latest_feature_calc
-        and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {runid}
-        and tags.tagname = "filename"
-        and tags.runID = {runid}
-
-        order by random()
-        limit {limit}
-        """
-
+        and clauseStats.runID = goodClauses.runID"""
+        q_ok += common_restrictions
 
         # BAD caluses
-        q_bad1 = """
+        q_bad_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -356,7 +346,7 @@ class Query2 (QueryHelper):
         , "BAD" as `class`
         """
 
-        q_bad2 = """
+        q_bad = """
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
@@ -366,34 +356,24 @@ class Query2 (QueryHelper):
         WHERE
 
         goodClauses.clauseID is NULL
-        and goodClauses.runID is NULL
-        and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {runid}
-        and features.runID = {runid}
-        and features.latest_feature_calc = clauseStats.latest_feature_calc
-        and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {runid}
-        and tags.tagname = "filename"
-        and tags.runID = {runid}
+        and goodClauses.runID is NULL"""
+        q_bad += common_restrictions
 
-        order by random()
-        limit {limit}
-        """
         myformat = {"runid" : self.runID,
                 "limit" : 1000*1000*1000,
-                "restart_dat" : restart_dat,
-                "clause_dat" : clause_dat,
-                "feat_dat" : feat_dat}
+                "restart_dat": restart_dat,
+                "clause_dat": clause_dat,
+                "feat_dat": feat_dat}
 
         t = time.time()
 
-        q = q_count + q_ok2
+        q = q_count + q_ok + common_limits
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_ok = int(cur.fetchone()[0])
         print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
 
-        q = q_count + q_bad2
+        q = q_count + q_bad + common_limits
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_bad = int(cur.fetchone()[0])
@@ -412,7 +392,7 @@ class Query2 (QueryHelper):
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-        q = q_ok1 + q_ok2
+        q = q_ok_select + q_ok
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
         print("limit for OK:", myformat["limit"])
@@ -421,7 +401,7 @@ class Query2 (QueryHelper):
         df = pd.read_sql_query(q, self.conn)
 
         print("Running query for BAD...")
-        q = q_bad1 + q_bad2
+        q = q_bad_select + q_bad
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
         print("limit for bad:", myformat["limit"])
