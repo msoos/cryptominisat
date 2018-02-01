@@ -488,8 +488,9 @@ class Classify:
         if df.shape[0] == 0:
             return
 
-        # df["fname"] = LabelEncoder().fit_transform(df["fname"])
-        train, test = train_test_split(df, test_size=0.2, random_state=90)
+        df_lab = df.copy()
+        df_lab["fname"] = LabelEncoder().fit_transform(df_lab["fname"])
+        train, test = train_test_split(df_lab, test_size=0.2, random_state=90)
         X_train = train[self.features]
         y_train = train["class"]
         X_test = test[self.features]
@@ -660,8 +661,8 @@ def one_predictor(dbfname):
         check.check(df)
     else:
         clf = Classify(df)
-        # clf.learn(df, "%s.classifier" % cleanname)
-        # clf.output_to_dot("%s.tree.dot" % cleanname)
+        clf.learn(df, "%s.classifier" % cleanname)
+        clf.output_to_dot("%s.tree.dot" % cleanname)
 
     return True, df
 
@@ -728,6 +729,5 @@ if __name__ == "__main__":
         check.check(final_df)
     else:
         clf = Classify(final_df)
-        # clf.learn(final_df, "final.classifier")
-        # clf.output_to_dot("final.dot")
-
+        clf.learn(final_df, "final.classifier")
+        clf.output_to_dot("final.dot")
