@@ -623,10 +623,10 @@ def dump_dataframe(df, name):
         print("Dumping CSV data to:", fname)
         df.to_csv(fname, index=False)
 
-        fname = "%s-pandasdata.dat" % name
-        print("Dumping pandas data to:", fname)
-        with open(fname, "wb") as f:
-            pickle.dump(df, f)
+        # fname = "%s-pandasdata.dat" % name
+        # print("Dumping pandas data to:", fname)
+        # with open(fname, "wb") as f:
+        #     pickle.dump(df, f)
 
 
 def one_predictor(dbfname):
