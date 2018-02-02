@@ -663,8 +663,9 @@ def one_predictor(dbfname):
         check.check(df)
     else:
         clf = Classify(df)
-        clf.learn(df, "%s.classifier" % cleanname)
-        clf.output_to_dot("%s.tree.dot" % cleanname)
+        if not options.no_predict:
+            clf.learn(df, "%s.classifier" % cleanname)
+            clf.output_to_dot("%s.tree.dot" % cleanname)
 
     return True, df
 
@@ -700,6 +701,9 @@ if __name__ == "__main__":
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
 
+    parser.add_option("--nopredict", action="store_true", default=False,
+                      dest="no_predict", help="Don't create predictive model")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -733,5 +737,6 @@ if __name__ == "__main__":
         check.check(final_df)
     else:
         clf = Classify(final_df)
-        clf.learn(final_df, "final.classifier")
-        clf.output_to_dot("final.dot")
+        if not options.no_predict:
+            clf.learn(final_df, "final.classifier")
+            clf.output_to_dot("final.dot")
