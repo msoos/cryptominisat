@@ -388,10 +388,11 @@ class Query2 (QueryHelper):
             if options.fixed_num_datapoints > total_lines:
                 print("WARNING -- Your fixed num datapoints is too high:", options.fixed_num_datapoints)
                 print("WARNING -- We only have:", total_lines)
+                print("WARNING --> Not returning data.")
                 return False, None
 
         if total_lines == 0:
-            print("WARNING: Total number of datapoints is 0, something is wrong or empty")
+            print("WARNING: Total number of datapoints is 0: minimum conflict too high, no conflicts in SQL, or something went wrong!!")
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
@@ -632,7 +633,6 @@ def dump_dataframe(df, name):
 def one_predictor(dbfname):
     ok, df = get_one_file(dbfname)
     if not ok:
-        print("get_one_file returned False")
         return False, None
 
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
