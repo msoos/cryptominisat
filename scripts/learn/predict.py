@@ -400,12 +400,12 @@ class Query2 (QueryHelper):
         print("Running query for OK...")
         df = pd.read_sql_query(q, self.conn)
 
-        print("Running query for BAD...")
-        q = q_bad_select + q_bad
+        q = q_bad_select + q_bad + common_limits
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
         print("limit for bad:", myformat["limit"])
         q = q.format(**myformat)
+        print("Running query for BAD...")
         df2 = pd.read_sql_query(q, self.conn)
         print("Queries finished. T: %-3.2f" % (time.time() - t))
 
