@@ -367,13 +367,13 @@ class Query2 (QueryHelper):
 
         t = time.time()
 
-        q = q_count + q_ok + common_limits
+        q = q_count + q_ok
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_ok = int(cur.fetchone()[0])
         print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
 
-        q = q_count + q_bad + common_limits
+        q = q_count + q_bad
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_bad = int(cur.fetchone()[0])
@@ -392,7 +392,7 @@ class Query2 (QueryHelper):
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-        q = q_ok_select + q_ok
+        q = q_ok_select + q_ok + common_limits
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
         print("limit for OK:", myformat["limit"])
