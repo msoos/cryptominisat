@@ -307,7 +307,9 @@ class Query2 (QueryHelper):
         and restart.runID = {runid}
         and tags.tagname = "filename"
         and tags.runID = {runid}
+        and clauseStats.conflicts > {start_confl}
         """
+
         common_limits = """
         order by random()
         limit {limit}
@@ -363,7 +365,8 @@ class Query2 (QueryHelper):
                 "limit" : 1000*1000*1000,
                 "restart_dat": restart_dat,
                 "clause_dat": clause_dat,
-                "feat_dat": feat_dat}
+                "feat_dat": feat_dat,
+                "start_confl": options.start_conflicts}
 
         t = time.time()
 
@@ -686,6 +689,9 @@ if __name__ == "__main__":
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed_num_datapoints", help="Exact number of examples to take. Default: %default")
+    parser.add_option("--start", default=-1, type=int,
+                      dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
+
 
     parser.add_option("--depth", default=5, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
