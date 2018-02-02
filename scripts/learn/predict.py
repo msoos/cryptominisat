@@ -478,7 +478,6 @@ class Classify:
         print("Number of features:", len(self.features))
 
     def learn(self, df, cleanname, classifiername="classifier"):
-
         print("total samples: %5d" % df.shape[0])
 
         num_ok = df.loc[df['class'] == "OK"].shape[0]
@@ -671,7 +670,6 @@ def one_predictor(dbfname):
 
 
 if __name__ == "__main__":
-
     usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
     parser = optparse.OptionParser(usage=usage)
 
