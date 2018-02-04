@@ -107,6 +107,7 @@ namespace CMSat {
 
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+		uint64_t get_solvers_size() const; //get size of the solvers field
     private:
         CMSatPrivateData *data;
     };

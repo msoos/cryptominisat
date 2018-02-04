@@ -76,12 +76,13 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
+	uint64_t nb_clauses;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
 
 static const char solver_create_docstring[] = \
-"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1)\n\
+"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0)\n\
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
@@ -90,16 +91,18 @@ Create Solver object.\n\
 :param threads: Number of threads to use.\n\
 :type verbose: <int>\n\
 :type confl_limit: <int>\n\
-:type threads: <int>";
+:type threads: <int>\n\
+:type cnf: <str>";
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
 
     int verbose = 0;
     int num_threads = 1;
+	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads, cnf)) {
         return NULL;
     }
     if (verbose < 0) {
@@ -119,7 +122,11 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     cmsat->set_max_confl(confl_limit);
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
-
+	/*if (cnf != NULL) {
+		std::ofstream* cnfTmp = new std::ofstream;
+		cnfTmp.open(cnf, std::ofstream::out);
+		cmsat->set_drat(cnfTmp, false);
+		}*/
     return cmsat;
 }
 
@@ -253,6 +260,8 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
     self->cmsat->add_clause(lits);
 
+	self->nb_clauses += 1;
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -324,6 +333,8 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     self->cmsat->add_xor_clause(vars, real_rhs);
+
+	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -411,12 +422,31 @@ static PyObject* nb_vars(Solver *self)
     #endif
 }
 
-/*
+PyDoc_STRVAR(nb_clauses_doc,
+"nb_clauses()\n\
+Return the number of clauses in the solver.\n\
+\n\
+:return: Number of clauses\n\
+:rtype: <int>"
+);
+
+// A REVOIR ! Renvoie le nombre de thread et non le nombre de clauses
 static PyObject* nb_clauses(Solver *self)
 {
-    // Private attribute => need to make a public method
-    return PyInt_FromLong(self->cmsat->data->solvers.size());
-}*/
+	return PyLong_FromLong(self->nb_clauses);
+}
+
+PyDoc_STRVAR(write_cnf_file_doc,
+"write_cnf_file()\n\
+Write clauses in the file.\n"
+);
+
+static PyObject* write_cnf_file(Solver *self, std::string fname)
+{
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
@@ -763,9 +793,10 @@ static PyMethodDef Solver_methods[] = {
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
     {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
-    //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
+    {"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
+	{"write_cnf_file", (PyCFunction) write_cnf_file, METH_VARARGS | METH_KEYWORDS, write_cnf_file_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 

@@ -868,3 +868,8 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
     }
     return dec;
 }
+
+DLL_PUBLIC uint64_t SATSolver::get_solvers_size() const
+{
+  return data->solvers.size();
+}
