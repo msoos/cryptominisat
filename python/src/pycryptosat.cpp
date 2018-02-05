@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 #include <cassert>
+#include <fstream>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
@@ -77,6 +78,7 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
 	uint64_t nb_clauses;
+	std::ofstream* cnf_file;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
@@ -89,12 +91,13 @@ Create Solver object.\n\
 :param confl_limit: Propagation limit: abort after this many conflicts.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
+:param cnf: CNF file to write.\n\
 :type verbose: <int>\n\
 :type confl_limit: <int>\n\
 :type threads: <int>\n\
 :type cnf: <str>";
 
-static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
+static Solver* setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
 	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
 
@@ -102,7 +105,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     int num_threads = 1;
 	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads, cnf)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
         return NULL;
     }
     if (verbose < 0) {
@@ -122,12 +125,15 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     cmsat->set_max_confl(confl_limit);
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
-	/*if (cnf != NULL) {
-		std::ofstream* cnfTmp = new std::ofstream;
-		cnfTmp.open(cnf, std::ofstream::out);
-		cmsat->set_drat(cnfTmp, false);
-		}*/
-    return cmsat;
+	std::ofstream* cnfTmp = new std::ofstream;
+	if (cnf != NULL) {
+		cnfTmp->open(cnf, std::ofstream::out);
+	}
+	else cnfTmp = NULL;
+	self->cmsat = cmsat;
+	self->nb_clauses = 0;
+	self->cnf_file = cnfTmp;
+    return self;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -236,6 +242,30 @@ static int parse_xor_clause(
     return 1;
 }
 
+static void write_cnf_file(Solver *self, std::vector<Lit> lits)
+{
+	if (self->cnf_file->is_open()) {
+		for (unsigned i = 0; i < lits.size(); i++) {
+			long var;
+			bool sign;
+
+            #ifdef IS_PY3K
+			PyObject *lit = PyLong_FromUnsignedLong(lits[i].toInt());
+            #else
+			PyObject *lit = PyInt_FromUnsignedLong(lits[i].toInt());
+            #endif
+
+			int ret = convert_lit_to_sign_and_var(lit, var, sign);
+			*(self->cnf_file) << ret << " ";
+		}
+		*(self->cnf_file) << "0\n";
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "Error when trying to open cnf file.");
+		exit(-1);
+	}
+}
+
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
@@ -249,7 +279,7 @@ Add a clause to the solver.\n\
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
-    PyObject *clause;
+	PyObject* clause;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
         return NULL;
     }
@@ -260,6 +290,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
     self->cmsat->add_clause(lits);
 
+    write_cnf_file(self, lits);
 	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
@@ -440,13 +471,6 @@ PyDoc_STRVAR(write_cnf_file_doc,
 "write_cnf_file()\n\
 Write clauses in the file.\n"
 );
-
-static PyObject* write_cnf_file(Solver *self, std::string fname)
-{
-
-	Py_INCREF(Py_None);
-	return Py_None;
-}
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
@@ -814,7 +838,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->cmsat = setup_solver(args, kwds);
+        self = setup_solver(self, args, kwds);
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -826,7 +850,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
-    self->cmsat = setup_solver(args, kwds);
+    self = setup_solver(self, args, kwds);
     if (!self->cmsat) {
         return -1;
     }
