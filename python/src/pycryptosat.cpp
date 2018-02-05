@@ -97,7 +97,7 @@ Create Solver object.\n\
 :type threads: <int>\n\
 :type cnf: <str>";
 
-static Solver* setup_solver(Solver *self, PyObject *args, PyObject *kwds)
+static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
 	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
 
@@ -106,19 +106,19 @@ static Solver* setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
-        return NULL;
+	  return;
     }
     if (verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
-        return NULL;
+        return;
     }
     if (confl_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
-        return NULL;
+        return;
     }
     if (num_threads <= 0) {
         PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
-        return NULL;
+        return;
     }
 
     SATSolver *cmsat = new SATSolver;
@@ -133,7 +133,6 @@ static Solver* setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	self->cmsat = cmsat;
 	self->nb_clauses = 0;
 	self->cnf_file = cnfTmp;
-    return self;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -245,7 +244,7 @@ static int parse_xor_clause(
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
 	if (self->cnf_file->is_open()) {
-		for (unsigned i = 0; i < lits.size(); i++) {
+		for (unsigned i = 1; i < lits.size(); i++) {
 			long var;
 			bool sign;
 
@@ -838,7 +837,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self = setup_solver(self, args, kwds);
+        setup_solver(self, args, kwds);
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -850,7 +849,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
-    self = setup_solver(self, args, kwds);
+    setup_solver(self, args, kwds);
     if (!self->cmsat) {
         return -1;
     }
