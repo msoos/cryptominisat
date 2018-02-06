@@ -78,7 +78,7 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
 	uint64_t nb_clauses;
-	std::ofstream* cnf_file;
+	char* cnf_file_name;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
@@ -106,7 +106,7 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
-	  return;
+		return;
     }
     if (verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
@@ -125,14 +125,10 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
     cmsat->set_max_confl(confl_limit);
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
-	std::ofstream* cnfTmp = new std::ofstream;
-	if (cnf != NULL) {
-		cnfTmp->open(cnf, std::ofstream::out);
-	}
-	else cnfTmp = NULL;
+
 	self->cmsat = cmsat;
 	self->nb_clauses = 0;
-	self->cnf_file = cnfTmp;
+	self->cnf_file_name = cnf;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -243,25 +239,27 @@ static int parse_xor_clause(
 
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
-	if (self->cnf_file->is_open()) {
+	PyErr_SetString(PyExc_ValueError, self->cnf_file_name);
+
+	std::ofstream cnf_file(self->cnf_file_name);
+	if (cnf_file.is_open()) {
 		for (unsigned i = 1; i < lits.size(); i++) {
 			long var;
 			bool sign;
 
             #ifdef IS_PY3K
-			PyObject *lit = PyLong_FromUnsignedLong(lits[i].toInt());
+			PyObject *lit = PyLong_FromLong(lits[i].toInt());
             #else
-			PyObject *lit = PyInt_FromUnsignedLong(lits[i].toInt());
+			PyObject *lit = PyInt_FromLong(lits[i].toInt());
             #endif
 
 			int ret = convert_lit_to_sign_and_var(lit, var, sign);
-			*(self->cnf_file) << ret << " ";
+			cnf_file << ret << " ";
 		}
-		*(self->cnf_file) << "0\n";
+		cnf_file << "0" << "\n";
+		cnf_file.close();
 	}
 	else {
-		PyErr_SetString(PyExc_ValueError, "Error when trying to open cnf file.");
-		exit(-1);
 	}
 }
 
