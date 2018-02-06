@@ -34,6 +34,7 @@ using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
 #define MODULE_DOC "CryptoSAT satisfiability solver."
+#define DIMACS_file "DIMACS.cnf"
 
 // Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3
@@ -99,13 +100,15 @@ Create Solver object.\n\
 
 static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
-	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
+	//static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
+    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
 	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
+    //if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads)) {
 		return;
     }
     if (verbose < 0) {
@@ -128,7 +131,8 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 
 	self->cmsat = cmsat;
 	self->nb_clauses = 0;
-	self->cnf_file_name = cnf;
+	//self->cnf_file_name = cnf;
+    //std::cout << "cnf_file_name : " << self->cnf_file_name << '\n';
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -237,15 +241,27 @@ static int parse_xor_clause(
     return 1;
 }
 
+static long convert_from_lit_to_int(uint32_t i)
+{
+    if ((i % 2) == 0) {
+        return ((i / 2) + 1);
+    }
+    else {
+        return -((i + 1) / 2);
+    }
+}
+
+PyDoc_STRVAR(write_cnf_file_doc,
+"write_cnf_file()\n\
+Write clauses in the file.\n"
+);
+
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
-	PyErr_SetString(PyExc_ValueError, self->cnf_file_name);
-
-	std::ofstream cnf_file(self->cnf_file_name);
+    std::ofstream cnf_file(DIMACS_file, std::ios_base::app);
 	if (cnf_file.is_open()) {
-		for (unsigned i = 1; i < lits.size(); i++) {
-			long var;
-			bool sign;
+        std::cout << "lits.size() : " << lits.size() << '\n';
+		for (unsigned i = 0; i < lits.size(); i++) {
 
             #ifdef IS_PY3K
 			PyObject *lit = PyLong_FromLong(lits[i].toInt());
@@ -253,13 +269,13 @@ static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 			PyObject *lit = PyInt_FromLong(lits[i].toInt());
             #endif
 
-			int ret = convert_lit_to_sign_and_var(lit, var, sign);
-			cnf_file << ret << " ";
+            std::cout << "lits[i] : " << convert_from_lit_to_int(lits[i].toInt()) << '\n';
 		}
 		cnf_file << "0" << "\n";
 		cnf_file.close();
 	}
 	else {
+        PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
 	}
 }
 
@@ -463,11 +479,6 @@ static PyObject* nb_clauses(Solver *self)
 {
 	return PyLong_FromLong(self->nb_clauses);
 }
-
-PyDoc_STRVAR(write_cnf_file_doc,
-"write_cnf_file()\n\
-Write clauses in the file.\n"
-);
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
