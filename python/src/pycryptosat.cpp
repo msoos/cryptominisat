@@ -260,7 +260,6 @@ static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
     std::ofstream cnf_file(DIMACS_file, std::ios_base::app);
 	if (cnf_file.is_open()) {
-        std::cout << "lits.size() : " << lits.size() << '\n';
 		for (unsigned i = 0; i < lits.size(); i++) {
 
             #ifdef IS_PY3K
@@ -269,7 +268,7 @@ static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 			PyObject *lit = PyInt_FromLong(lits[i].toInt());
             #endif
 
-            std::cout << "lits[i] : " << convert_from_lit_to_int(lits[i].toInt()) << '\n';
+            cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
 		}
 		cnf_file << "0" << "\n";
 		cnf_file.close();
