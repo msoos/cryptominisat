@@ -105,10 +105,9 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 
     int verbose = 0;
     int num_threads = 1;
-	char* cnf = NULL;
     long confl_limit = std::numeric_limits<long>::max();
     //if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
 		return;
     }
     if (verbose < 0) {
@@ -251,23 +250,11 @@ static long convert_from_lit_to_int(uint32_t i)
     }
 }
 
-PyDoc_STRVAR(write_cnf_file_doc,
-"write_cnf_file()\n\
-Write clauses in the file.\n"
-);
-
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
     std::ofstream cnf_file(DIMACS_file, std::ios_base::app);
 	if (cnf_file.is_open()) {
 		for (unsigned i = 0; i < lits.size(); i++) {
-
-            #ifdef IS_PY3K
-			PyObject *lit = PyLong_FromLong(lits[i].toInt());
-            #else
-			PyObject *lit = PyInt_FromLong(lits[i].toInt());
-            #endif
-
             cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
 		}
 		cnf_file << "0" << "\n";
@@ -824,10 +811,9 @@ static PyMethodDef Solver_methods[] = {
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
     {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
-    {"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
+    {"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, nb_clauses_doc},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
-	{"write_cnf_file", (PyCFunction) write_cnf_file, METH_VARARGS | METH_KEYWORDS, write_cnf_file_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
