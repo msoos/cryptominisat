@@ -34,8 +34,8 @@ using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
 #define MODULE_DOC "CryptoSAT satisfiability solver."
-#define DIMACS_file "tmp.cnf"
-#define DIMACS_header_file "DIMACS.cnf"
+//#define self->tmp_file_name "tmp.cnf"
+//#define self->cnf_file_name "DIMACS.cnf"
 
 // Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3
@@ -80,7 +80,8 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
 	uint64_t nb_clauses;
-	char* cnf_file_name;
+	std::string cnf_file_name;
+    std::string tmp_file_name;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
@@ -101,14 +102,13 @@ Create Solver object.\n\
 
 static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
-	//static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
-    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
-    //if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+    char* cnf = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
 		return;
     }
     if (verbose < 0) {
@@ -131,13 +131,20 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 
 	self->cmsat = cmsat;
 	self->nb_clauses = 0;
-	//self->cnf_file_name = cnf;
-    //std::cout << "cnf_file_name : " << self->cnf_file_name << '\n';
+	if (cnf != NULL) {
+        self->cnf_file_name = cnf;
+        self->tmp_file_name = std::string("tmp_") + self->cnf_file_name;
+    }
 
-    std::ofstream cnf_file(DIMACS_file, std::fstream::out | std::fstream::trunc);
+    remove(self->tmp_file_name.c_str());
+    std::ofstream cnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
+    if (cnf_file.is_open()) {
+        cnf_file << "p cnf 0 0" << "\n";
+    }
+    else {
+        std::cout << "Error opening/creating DIMACS file" << '\n';
+    }
     cnf_file.close();
-    std::ofstream header_file(DIMACS_header_file, std::fstream::out | std::fstream::trunc);
-    header_file.close();
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -256,23 +263,32 @@ static long convert_from_lit_to_int(uint32_t i)
     }
 }
 
-static PyObject* nb_vars(Solver *self);
-
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
-    std::ofstream cnf_file(DIMACS_file, std::ios_base::app);
+    // Adding clause to the file
+    std::ofstream cnf_file(self->cnf_file_name, std::ios_base::app);
 	if (cnf_file.is_open()) {
 		for (unsigned i = 0; i < lits.size(); i++) {
             cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
 		}
 		cnf_file << "0" << "\n";
         cnf_file.close();
-        std::ifstream cnf_file(DIMACS_file, std::ios::in);
-        std::ofstream header_file(DIMACS_header_file, std::fstream::out | std::fstream::trunc);
-        header_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
-        header_file << cnf_file.rdbuf();
-        header_file.close();
+        // Copying file into temporary file
+        std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
+        std::ofstream tmp_file(self->tmp_file_name, std::fstream::out | std::fstream::trunc);
+        tmp_file << cnf_file.rdbuf();
         cnf_file.close();
+        tmp_file.close();
+        // Writing DIMACS header then writing clauses
+        std::ifstream rtmp_file(self->tmp_file_name, std::ios::in);
+        std::ofstream wcnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
+        wcnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
+        std::string garbage;
+        getline(rtmp_file, garbage);
+        wcnf_file << rtmp_file.rdbuf();
+        rtmp_file.close();
+        wcnf_file.close();
+        remove(self->tmp_file_name.c_str());
 	}
 	else {
         PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
@@ -302,8 +318,8 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
     self->cmsat->add_clause(lits);
-
-    write_cnf_file(self, lits);
+    if (!self->cnf_file_name.empty())
+        write_cnf_file(self, lits);
 	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
