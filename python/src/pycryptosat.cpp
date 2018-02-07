@@ -34,7 +34,8 @@ using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
 #define MODULE_DOC "CryptoSAT satisfiability solver."
-#define DIMACS_file "DIMACS.cnf"
+#define DIMACS_file "tmp.cnf"
+#define DIMACS_header_file "DIMACS.cnf"
 
 // Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3
@@ -132,6 +133,11 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	self->nb_clauses = 0;
 	//self->cnf_file_name = cnf;
     //std::cout << "cnf_file_name : " << self->cnf_file_name << '\n';
+
+    std::ofstream cnf_file(DIMACS_file, std::fstream::out | std::fstream::trunc);
+    cnf_file.close();
+    std::ofstream header_file(DIMACS_header_file, std::fstream::out | std::fstream::trunc);
+    header_file.close();
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -250,6 +256,8 @@ static long convert_from_lit_to_int(uint32_t i)
     }
 }
 
+static PyObject* nb_vars(Solver *self);
+
 static void write_cnf_file(Solver *self, std::vector<Lit> lits)
 {
     std::ofstream cnf_file(DIMACS_file, std::ios_base::app);
@@ -258,7 +266,13 @@ static void write_cnf_file(Solver *self, std::vector<Lit> lits)
             cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
 		}
 		cnf_file << "0" << "\n";
-		cnf_file.close();
+        cnf_file.close();
+        std::ifstream cnf_file(DIMACS_file, std::ios::in);
+        std::ofstream header_file(DIMACS_header_file, std::fstream::out | std::fstream::trunc);
+        header_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
+        header_file << cnf_file.rdbuf();
+        header_file.close();
+        cnf_file.close();
 	}
 	else {
         PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
