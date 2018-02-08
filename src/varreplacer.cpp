@@ -84,7 +84,7 @@ void VarReplacer::check_no_replaced_var_set() const
 void VarReplacer::new_vars(const size_t n)
 {
     size_t oldsize = table.size();
-    table.resize(table.size()+n, lit_Undef);
+    table.insert(table.end(), n, lit_Undef);
     for(size_t i = oldsize; i < table.size(); i++) {
         table[i] = Lit(i, false);
     }

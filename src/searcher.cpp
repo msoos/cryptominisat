@@ -96,8 +96,8 @@ void Searcher::new_vars(size_t n)
 {
     PropEngine::new_vars(n);
 
-    var_act_vsids.resize(var_act_vsids.size() + n, 0);
-    var_act_maple.resize(var_act_maple.size() + n, 0);
+    var_act_vsids.insert(var_act_vsids.end(), n, 0);
+    var_act_maple.insert(var_act_maple.end(), n, 0);
     for(int i = n-1; i >= 0; i--) {
         insert_var_order_all((int)nVars()-i-1);
     }

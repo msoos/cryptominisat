@@ -64,7 +64,7 @@ void CompHandler::new_var(const uint32_t orig_outer)
 
 void CompHandler::new_vars(size_t n)
 {
-    savedState.resize(savedState.size()+n, l_Undef);
+    savedState.insert(savedState.size(), n, l_Undef);
     assert(savedState.size() == solver->nVarsOuter());
 }
 

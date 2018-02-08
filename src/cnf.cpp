@@ -110,29 +110,31 @@ void CNF::new_vars(const size_t n)
     enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
-    uint64_t f = interToOuterMain.size() + n;
-    f += 0xfff - (f&0xfff);
-    interToOuterMain.reserve(f);
-    outerToInterMain.reserve(f);
-    uint64_t g = outer_to_with_bva_map.size() + n;
-    g += 0xfff - (g&0xfff);
-    outer_to_with_bva_map.reserve(g);
+    size_t inter_at = interToOuterMain.size();
+    interToOuterMain.insert(interToOuterMain.end(), n, 0);
+
+    size_t outer_at = outerToInterMain.size();
+    outerToInterMain.insert(outerToInterMain.end(), n, 0);
+
+    size_t outer_to_with_bva_at = outer_to_with_bva_map.size();
+    outer_to_with_bva_map.insert(outer_to_with_bva_map.end(), n, 0);
+
     for(int i = n-1; i >= 0; i--) {
         const uint32_t minVar = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
 
-        interToOuterMain.push_back(maxVar);
+        interToOuterMain[inter_at++] = maxVar;
         const uint32_t x = interToOuterMain[minVar];
         interToOuterMain[minVar] = maxVar;
         interToOuterMain[maxVar] = x;
 
-        outerToInterMain.push_back(maxVar);
+        outerToInterMain[outer_at++] = maxVar;
         outerToInterMain[maxVar] = minVar;
         outerToInterMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
-        outer_to_with_bva_map.push_back(nVarsOuter()-i-1);
+        outer_to_with_bva_map[outer_to_with_bva_at++] = nVarsOuter()-i-1;
     }
 
     #ifdef SLOW_DEBUG
@@ -148,9 +150,9 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
-    assigns.resize(assigns.size() + n, l_Undef);
-    varData.resize(varData.size() + n, VarData());
-    depth.resize(depth.size() + n);
+    assigns.insert(assigns.end(), n, l_Undef);
+    varData.insert(varData.end(), n, VarData());
+    depth.insert(depth.end(), n, 0);
 }
 
 void CNF::enlarge_minimal_datastructs(size_t n)
