@@ -596,6 +596,10 @@ def transform(df):
     df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / \
         df["cl.backtrack_level_hist"]
+    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < \
+        df["cl.backtrack_level_hist"]
+    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < \
+        df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
         df["cl.trail_depth_level_hist"]
     df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
