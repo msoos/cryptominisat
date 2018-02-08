@@ -82,6 +82,7 @@ typedef struct {
 	uint64_t nb_clauses;
 	std::string cnf_file_name;
     std::string tmp_file_name;
+    std::string drat_file_name;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
@@ -134,9 +135,11 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	if (cnf != NULL) {
         self->cnf_file_name = cnf;
         self->tmp_file_name = std::string("tmp_") + self->cnf_file_name;
+        self->drat_file_name = self->cnf_file_name +  std::string(".drat");
     }
 
     remove(self->tmp_file_name.c_str());
+    remove(self->drat_file_name.c_str());
     std::ofstream cnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
     if (cnf_file.is_open()) {
         cnf_file << "p cnf 0 0" << "\n";
@@ -590,6 +593,12 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    std::ofstream drat_file;
+    if (!self->cnf_file_name.empty()) {
+        drat_file.open(self->drat_file_name, std::fstream::out);
+        self->cmsat->set_drat(&drat_file, false);
+    }
+
     lbool res;
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
@@ -621,6 +630,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         assert((res == l_False) || (res == l_True) || (res == l_Undef));
         Py_DECREF(result);
         return NULL;
+    }
+
+    if (drat_file.is_open()) {
+        drat_file.close();
     }
 
     return result;
