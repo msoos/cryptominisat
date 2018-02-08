@@ -666,8 +666,8 @@ def one_predictor(dbfname):
         check = Check(options.check)
         check.check(df)
     else:
-        clf = Classify(df)
         if not options.no_predict:
+            clf = Classify(df)
             clf.learn(df, "%s.classifier" % cleanname)
             clf.output_to_dot("%s.tree.dot" % cleanname)
 
