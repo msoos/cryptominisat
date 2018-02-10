@@ -604,6 +604,27 @@ TEST(xor_interface, abort_early)
     EXPECT_EQ( ret, l_Undef);
 }
 
+TEST(xor_interface, abort_once_continue_next)
+{
+    SATSolver s;
+    s.set_no_simplify();
+    s.set_no_equivalent_lit_replacement();
+
+    s.set_num_threads(2);
+    s.set_max_confl(0);
+    s.new_vars(2);
+
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+
+    lbool ret = s.solve();
+    EXPECT_EQ( ret, l_Undef);
+    lbool ret2 = s.solve();
+    EXPECT_EQ( ret2, l_False);
+}
+
 TEST(xor_interface, xor3)
 {
     SolverConf conf;
