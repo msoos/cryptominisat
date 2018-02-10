@@ -2077,12 +2077,12 @@ void Searcher::print_search_loop_num()
 }
 
 lbool Searcher::solve(
-    const uint64_t _maxConfls
+    const uint64_t _max_confls
     , const unsigned upper_level_iteration_num
 ) {
     assert(ok);
     assert(qhead == trail.size());
-    max_confl_per_search_solve_call = _maxConfls;
+    max_confl_per_search_solve_call = _max_confls;
     num_search_called++;
     #ifdef SLOW_DEBUG
     //When asking for a lot of simple soluitons, search() gets called a lot

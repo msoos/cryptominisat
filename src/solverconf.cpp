@@ -89,7 +89,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())
-        , maxConfl         (std::numeric_limits<long>::max())
+        , max_confl         (std::numeric_limits<long>::max())
 
         //Glues
         , update_glues_on_prop(false)

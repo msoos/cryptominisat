@@ -215,7 +215,7 @@ class DLL_PUBLIC SolverConf
 
         //Limits
         double   maxTime;
-        long maxConfl;
+        long max_confl;
 
         //Glues
         int       update_glues_on_prop;
