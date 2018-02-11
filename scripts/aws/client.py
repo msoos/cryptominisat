@@ -191,12 +191,14 @@ class solverThread (threading.Thread):
         toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
             toexec.append(self.get_drat_fname())
-            toexec.append("--clid")
-            # never stop search() to simplify anything
-            toexec.append("-n 1")
-            toexec.append("--ml 0")
-            toexec.append("--gluecut0 100")
-            toexec.append("--otfsubsume 0")
+            if "cryptominisat5" in self.indata["solver"]:
+                # never stop search() to simplify anything
+                # toexec.append("-n 1")
+                # toexec.append("--ml 0")
+                # toexec.append("--gluecut0 100")
+                # toexec.append("--otfsubsume 0")
+                if self.indata["stats"]:
+                    toexec.append("--clid")
         else:
             if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
                 toexec.append("--sqlfull 0")
@@ -395,7 +397,7 @@ class solverThread (threading.Thread):
             # handle 'solve'
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
-                if returncode == 20 and self.indata["drat"]:
+                if returncode == 20 and self.indata["drat"] and self.indata["stats"]:
                     if self.run_drat_trim() == 0:
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),
