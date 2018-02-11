@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef GAUSSIANCONFIG_H
 #define GAUSSIANCONFIG_H
 
+#include <cstdint>
 #include "constants.h"
 
 namespace CMSat
