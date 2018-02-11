@@ -218,14 +218,14 @@ class Prober {
         void checkOTFRatio();
         uint64_t limit_used() const;
         void reset_stats_and_state();
-        uint64_t calc_numpropstodo();
+        uint64_t calc_num_props_limit();
         void clean_clauses_before_probe();
-        uint64_t update_numpropstodo_based_on_prev_performance(uint64_t numPropsTodo);
+        uint64_t update_num_props_limit_based_on_prev_perf(uint64_t num_props_limit);
         void clean_clauses_after_probe();
-        void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo);
+        void check_if_must_disable_otf_hyperbin_and_tred(const uint64_t num_props_limit);
         void check_if_must_disable_cache_update();
         vector<uint32_t> randomize_possible_choices();
-        void update_and_print_stats(const double myTime, const uint64_t numPropsTodo);
+        void update_and_print_stats(const double myTime, const uint64_t num_props_limit);
         bool check_timeout_due_to_hyperbin();
 
         //For bothprop

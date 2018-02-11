@@ -115,29 +115,30 @@ void Prober::reset_stats_and_state()
     propValue.resize(solver->nVars());
 }
 
-uint64_t Prober::calc_numpropstodo()
+uint64_t Prober::calc_num_props_limit()
 {
-    uint64_t numPropsTodo = solver->conf.probe_bogoprops_time_limitM*1000ULL*1000ULL;
+    uint64_t num_props_limit = solver->conf.probe_bogoprops_time_limitM
+        *1000ULL*1000ULL;
 
     //Bogoprops for hyper-bin is MUCH more precise, so if no propagateFull???
     //then mush less bogoProps will lead to the same amount of time
     if (!solver->conf.otfHyperbin) {
-        numPropsTodo /= 4;
+        num_props_limit /= 4;
     }
 
     //Account for cache being too small
     const size_t num_active_vars = solver->num_active_vars();
     if (num_active_vars < 50LL*1000LL) {
-        numPropsTodo *= 1.2;
+        num_props_limit *= 1.2;
     }
     if (solver->litStats.redLits + solver->litStats.irredLits  < 2LL*1000LL*1000LL) {
-        numPropsTodo *= 1.2;
+        num_props_limit *= 1.2;
     }
     if (num_active_vars > 600LL*1000LL) {
-        numPropsTodo *= 0.8;
+        num_props_limit *= 0.8;
     }
     if (solver->litStats.redLits + solver->litStats.irredLits > 20LL*1000LL*1000LL) {
-        numPropsTodo *= 0.8;
+        num_props_limit *= 0.8;
     }
 
     runStats.origNumFreeVars = num_active_vars;
@@ -149,11 +150,11 @@ uint64_t Prober::calc_numpropstodo()
         << " act vars: "
         << std::setprecision(2) << (double)num_active_vars/1000.0 << "K"
         << " BP+HP todo: "
-        << std::setprecision(2) << (double)numPropsTodo/(1000.0*1000.0) << "M"
+        << std::setprecision(2) << (double)num_props_limit/(1000.0*1000.0) << "M"
         << endl;
     }
 
-    return numPropsTodo;
+    return num_props_limit;
 }
 
 void Prober::clean_clauses_before_probe()
@@ -167,7 +168,7 @@ void Prober::clean_clauses_before_probe()
     }
 }
 
-uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numPropsTodo)
+uint64_t Prober::update_num_props_limit_based_on_prev_perf(uint64_t num_props_limit)
 {
      //If failed var searching is going good, do successively more and more of it
     const double percentEffectLast =
@@ -193,22 +194,22 @@ uint64_t Prober::update_numpropstodo_based_on_prev_performance(uint64_t numProps
         numPropsMultiplier = 1.0;
     }
 
-    numPropsTodo = (double)numPropsTodo * numPropsMultiplier;
-    const size_t numPropsTodoAftPerf = numPropsTodo;
-    numPropsTodo = (double)numPropsTodo * std::pow((double)(globalStats.numCalls+1), 0.3);
+    num_props_limit = (double)num_props_limit * numPropsMultiplier;
+    const size_t num_props_limitAftPerf = num_props_limit;
+    num_props_limit = (double)num_props_limit * std::pow((double)(globalStats.numCalls+1), 0.3);
 
     if (solver->conf.verbosity >=2 ) {
         cout
         << "c [probe] NumProps after perf multi: "
-        << std::setprecision(2) << (double)numPropsTodoAftPerf/(1000.0*1000.0)
+        << std::setprecision(2) << (double)num_props_limitAftPerf/(1000.0*1000.0)
         << "M"
         << " after numcall multi: "
-        << std::setprecision(2) << (double)numPropsTodo/(1000.0*1000.0)
+        << std::setprecision(2) << (double)num_props_limit/(1000.0*1000.0)
         << "M (<- final)"
         << endl;
     }
 
-    return numPropsTodo;
+    return num_props_limit;
 }
 
 void Prober::clean_clauses_after_probe()
@@ -247,11 +248,11 @@ void Prober::clean_clauses_after_probe()
     }
 }
 
-void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t numPropsTodo)
+void Prober::check_if_must_disable_otf_hyperbin_and_tred(const uint64_t num_props_limit)
 {
     const double ratioUsedTime = float_div(
         solver->propStats.bogoProps + solver->propStats.otfHyperTime + extraTime
-        , numPropsTodo);
+        , num_props_limit);
     if (solver->conf.otfHyperbin
         //Visited less than half
         && float_div(runStats.numVisited, runStats.origNumFreeVars) < 0.8
@@ -331,11 +332,11 @@ bool Prober::probe(vector<uint32_t>* probe_order)
 
     clean_clauses_before_probe();
     reset_stats_and_state();
-    uint64_t numPropsTodo = calc_numpropstodo();
+    uint64_t num_props_limit = calc_num_props_limit();
 
     const double myTime = cpuTime();
     const size_t origTrailSize = solver->trail_size();
-    numPropsTodo = update_numpropstodo_based_on_prev_performance(numPropsTodo);
+    num_props_limit = update_num_props_limit_based_on_prev_perf(num_props_limit);
 
     if (probe_order == NULL) {
         randomize_possible_choices();
@@ -353,11 +354,11 @@ bool Prober::probe(vector<uint32_t>* probe_order)
 
     assert(solver->propStats.bogoProps == 0);
     assert(solver->propStats.otfHyperTime == 0);
-    single_prop_tout = (double)numPropsTodo *solver->conf.single_probe_time_limit_perc;
+    single_prop_tout = (double)num_props_limit *solver->conf.single_probe_time_limit_perc;
 
     for(size_t i = 0
         ; i < vars_to_probe.size()
-        && limit_used() < numPropsTodo
+        && limit_used() < num_props_limit
         && !solver->must_interrupt_asap()
         ; i++
     ) {
@@ -400,7 +401,7 @@ end:
         cout << "c main loop for " << __func__
         << " finished: "
         << " must_interrupt? " << solver->must_interrupt_asap()
-        << " limit_used? " << (limit_used() >= numPropsTodo)
+        << " limit_used? " << (limit_used() >= num_props_limit)
         << endl;
     }
 
@@ -415,14 +416,14 @@ end:
         clean_clauses_after_probe();
     }
 
-    update_and_print_stats(myTime, numPropsTodo);
-    check_if_must_disable_otf_hyperbin_and_tred(numPropsTodo);
+    update_and_print_stats(myTime, num_props_limit);
+    check_if_must_disable_otf_hyperbin_and_tred(num_props_limit);
     check_if_must_disable_cache_update();
 
     return solver->ok;
 }
 
-void Prober::update_and_print_stats(const double myTime, const uint64_t numPropsTodo)
+void Prober::update_and_print_stats(const double myTime, const uint64_t num_props_limit)
 {
     for(size_t i = 0; i < visitedAlready.size(); i++) {
         if (visitedAlready[i])
@@ -430,11 +431,11 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t numProps
     }
     lastTimeZeroDepthAssings = runStats.zeroDepthAssigns;
     const double time_used = cpuTime() - myTime;
-    const bool time_out = (limit_used() > numPropsTodo);
-    const double time_remain = float_div((int64_t)numPropsTodo-(int64_t)limit_used(), numPropsTodo);
+    const bool time_out = (limit_used() > num_props_limit);
+    const double time_remain = float_div((int64_t)num_props_limit-(int64_t)limit_used(), num_props_limit);
     runStats.cpu_time = time_used;
     runStats.propStats = solver->propStats;
-    runStats.timeAllocated += numPropsTodo;
+    runStats.timeAllocated += num_props_limit;
     runStats.numCalls = 1;
     globalStats += runStats;
 
