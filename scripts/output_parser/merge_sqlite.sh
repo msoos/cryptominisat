@@ -5,7 +5,7 @@ set -x
 rm -f mergeddata.sqlite
 FNAME=todo
 rm -f $FNAME
-echo ".read /home/soos/development/cryptominisat/cmsat_tablestructure.sql" >> $FNAME
+echo ".read /home/soos/development/sat_solvers/cryptominisat/cmsat_tablestructure.sql" >> $FNAME
 for FILE in *sqlite*; do
 	echo "attach '${FILE}' as tomerge;" >> $FNAME
 	myarray=( tags timepassed memused reduceDB finishup )
