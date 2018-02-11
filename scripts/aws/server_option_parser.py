@@ -32,7 +32,7 @@ To use other solvers, give:
 
 Use-cases:
 # normal run
-./launch_server.py --cnflist satcomp17_updated --folder norm
+./launch_server.py --cnflist satcomp17_updated
 
 # stats run
 ./launch_server.py --cnf test_updated --stats --drat --tout 600 --memlimit 10000
