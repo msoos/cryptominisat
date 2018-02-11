@@ -1953,7 +1953,6 @@ bool Searcher::clean_clauses_if_needed()
 
         cl_alloc.consolidate(solver);
         rebuildOrderHeap(); //TODO only filter is needed!
-        sortWatched();
         simpDB_props = (litStats.redLits + litStats.irredLits)<<5;
     }
 
@@ -3400,69 +3399,3 @@ void Searcher::clear_gauss()
     gauss_matrixes.clear();
 }
 #endif
-
-void Searcher::sortWatched()
-{
-    #ifdef VERBOSE_DEBUG
-    cout << "Sorting watchlists:" << endl;
-    #endif
-
-    vec<Watched> sorted;
-    const double myTime = cpuTime();
-    for (size_t i = 0
-        ; i < watches.watches.size()
-        ; ++i
-    ) {
-        vec<Watched>& ws = watches.watches[i];
-        if ((ws.size() <= 1) || (ws.size() > 20)) {
-            continue;
-        }
-
-        #ifdef VERBOSE_DEBUG
-        cout << "Before sorting: ";
-        for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isClause()) cout << "Normal,";
-        }
-        cout << endl;
-        #endif //VERBOSE_DEBUG
-
-        sorted.clear();
-        for(Watched& w: ws) {
-            if (w.isBin()) {
-                sorted.push(w);
-            }
-        }
-        for(Watched& w: ws) {
-            if (!w.isBin()) {
-                sorted.push(w);
-            }
-        }
-        sorted.swap(ws);
-
-        #ifdef VERBOSE_DEBUG
-        cout << "After sorting : ";
-        for (uint32_t i2 = 0; i2 < ws.size(); i2++) {
-            if (ws[i2].isBin()) cout << "Binary,";
-            if (ws[i2].isClause()) cout << "Normal,";
-        }
-        cout << endl;
-        cout << " -- " << endl;
-        #endif //VERBOSE_DEBUG
-    }
-
-    if (conf.verbosity) {
-        cout << "c [w-sort] "
-        << conf.print_times(cpuTime()-myTime)
-        << endl;
-    }
-
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed_min(
-            solver
-            , "sortwatched"
-            , cpuTime()-myTime
-        );
-    }
-}
-
