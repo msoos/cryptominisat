@@ -762,7 +762,11 @@ bool OccSimplifier::eliminate_vars()
                 goto end;
         }
         double after_sub_time = cpuTime();
-        if (!sub_str->handle_sub_str_with(20ULL*1000ULL*1000ULL)) {
+        uint64_t varelim_sub_str_limit = solver->conf.varelim_sub_str_limit
+            *1000ULL*1000ULL
+            *solver->conf.global_timeout_multiplier;
+
+        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit)) {
             goto end;
         }
 

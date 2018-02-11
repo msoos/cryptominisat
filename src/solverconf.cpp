@@ -111,6 +111,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(350)
+        , varelim_sub_str_limit(20)
         , updateVarElimComplexityOTF(true)
         , updateVarElimComplexityOTF_limitvars(200)
         , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
