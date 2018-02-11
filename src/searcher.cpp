@@ -1186,11 +1186,14 @@ lbool Searcher::new_decision()
 
 double Searcher::luby(double y, int x)
 {
-    int size, seq;
-    for (size = 1, seq = 0
+    int size = 1;
+    int seq;
+    for (seq = 0
         ; size < x + 1
-        ; seq++, size = 2 * size + 1
-    );
+        ; seq++
+    ) {
+        size = 2 * size + 1;
+    }
 
     while (size - 1 != x) {
         size = (size - 1) >> 1;
