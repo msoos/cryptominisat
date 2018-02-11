@@ -124,7 +124,7 @@ DATA="{ip}"
             instance_profile_arn=self.conf.get('ec2', 'instance_profile_arn'),
             user_data=self.user_data,
             key_name=self.conf.get('ec2', 'key_name'),
-            security_group_ids=[self.conf.get('ec2', 'security_group')])
+            security_group_ids=[self.conf.get('ec2', 'security_group_client')])
 
         logging.info("Request created, got back IDs %s" % [r.id for r in reqs])
         return reqs
