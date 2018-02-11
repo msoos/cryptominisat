@@ -46,10 +46,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-#ifdef USE_OMP
-#include <omp.h>
-#endif
-
 //#define VERBOSE_DEBUG_GEN_CONFL_DOT
 
 #ifdef VERBOSE_DEBUG
