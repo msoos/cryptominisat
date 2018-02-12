@@ -96,9 +96,9 @@ namespace CMSat {
         static const char* get_compilation_env(); //get compilation environment string
 
         //Get info about only the last solve() OR simplify() call -- summed for all threads
-        uint64_t get_last_sum_thread_conflicts(); //get total number of conflicts of last solve() or simplify() call of all threads
-        uint64_t get_last_sum_thread_propagations();  //get total number of propagations of last solve() or simplify() call made by all threads
-        uint64_t get_last_sum_thread_decisions(); //get total number of decisions of last solve() or simplify() call made by all threads
+        uint64_t get_last_conflicts(); //get total number of conflicts of last solve() or simplify() call of all threads
+        uint64_t get_last_propagations();  //get total number of propagations of last solve() or simplify() call made by all threads
+        uint64_t get_last_decisions(); //get total number of decisions of last solve() or simplify() call made by all threads
 
         //Get info about total sum of all time of all threads
         uint64_t get_sum_conflicts(); //get total number of conflicts of all time of all threads

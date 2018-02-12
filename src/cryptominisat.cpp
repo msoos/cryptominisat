@@ -883,17 +883,17 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
     return dec;
 }
 
-DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_conflicts()
+DLL_PUBLIC uint64_t SATSolver::get_last_conflicts()
 {
     return get_sum_conflicts() - data->previous_sum_conflicts;
 }
 
-DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_propagations()
+DLL_PUBLIC uint64_t SATSolver::get_last_propagations()
 {
     return get_sum_propagations() - data->previous_sum_propagations;
 }
 
-DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_decisions()
+DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 {
     return get_sum_decisions() - data->previous_sum_decisions;
 }
