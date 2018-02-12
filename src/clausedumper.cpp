@@ -81,7 +81,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname
         if (!solver->okay()) {
             write_unsat_file();
         } else {
-            dumpIrredClauses();
+            dump_irred_clauses_all();
         }
     } catch (std::ifstream::failure& e) {
         cout
@@ -285,7 +285,7 @@ void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
     dump_clauses(solver->longIrredCls, backnumber);
 }
 
-void ClauseDumper::dumpIrredClauses()
+void ClauseDumper::dump_irred_clauses_all()
 {
     if (solver->get_num_bva_vars() > 0) {
         std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;

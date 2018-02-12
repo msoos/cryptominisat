@@ -80,7 +80,7 @@ private:
 
     void dump_blocked_clauses();
     void dump_component_clauses();
-    void dumpIrredClauses();
+    void dump_irred_clauses_all();
 
     vector<Lit> tmpCl;
 
