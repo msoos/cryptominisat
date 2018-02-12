@@ -80,6 +80,10 @@ namespace CMSat {
         std::ofstream* log = NULL;
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
+
+        uint64_t previous_sum_conflicts = 0;
+        uint64_t previous_sum_propagations = 0;
+        uint64_t previous_sum_decisions = 0;
     };
 }
 
@@ -669,11 +673,21 @@ lbool calc(const vector< Lit >* assumptions, bool solve, CMSatPrivateData *data)
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions)
 {
+    //set information data (props, confl, dec)
+    data->previous_sum_conflicts = get_sum_conflicts();
+    data->previous_sum_propagations = get_sum_propagations();
+    data->previous_sum_decisions = get_sum_decisions();
+
     return calc(assumptions, true, data);
 }
 
 DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
 {
+    //set information data (props, confl, dec)
+    data->previous_sum_conflicts = get_sum_conflicts();
+    data->previous_sum_propagations = get_sum_propagations();
+    data->previous_sum_decisions = get_sum_decisions();
+
     return calc(assumptions, false, data);
 }
 
@@ -867,4 +881,19 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
         dec += s.sumSearchStats.decisions;
     }
     return dec;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_conflicts()
+{
+    return get_sum_conflicts() - data->previous_sum_conflicts;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_propagations()
+{
+    return get_sum_propagations() - data->previous_sum_propagations;
+}
+
+DLL_PUBLIC uint64_t SATSolver::get_last_sum_thread_decisions()
+{
+    return get_sum_decisions() - data->previous_sum_decisions;
 }
