@@ -71,7 +71,7 @@ private:
     );
 
     void dumpEquivalentLits();
-    void dumpUnitaryClauses();
+    void dumpUnitaryClauses(const bool backnumber);
     void dumpRedClauses();
     void dump_clauses(
         const vector<ClOffset>& cls

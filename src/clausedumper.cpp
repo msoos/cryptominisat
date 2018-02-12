@@ -104,6 +104,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
             size_t num_cls = 0;
             num_cls += solver->longIrredCls.size();
             num_cls += solver->binTri.irredBins;
+            num_cls += solver->trail.size();
 
             *outfile
             << "p cnf " << solver->nVars() << " " << num_cls << "\n";
@@ -196,7 +197,7 @@ void ClauseDumper::dumpEquivalentLits()
     solver->varReplacer->print_equivalent_literals(outfile);
 }
 
-void ClauseDumper::dumpUnitaryClauses()
+void ClauseDumper::dumpUnitaryClauses(const bool backnumber)
 {
     *outfile
     << "c " << endl
@@ -206,7 +207,10 @@ void ClauseDumper::dumpUnitaryClauses()
 
     //'trail' cannot be trusted between 0....size()
     vector<Lit> lits = solver->get_zero_assigned_lits();
-    for(const Lit lit: lits) {
+    for(Lit lit: lits) {
+        if (backnumber) {
+            lit = solver->map_inter_to_outer(lit);
+        }
         *outfile << lit << " 0\n";
     }
 }
@@ -217,7 +221,7 @@ void ClauseDumper::dumpRedClauses() {
         exit(-1);
     }
 
-    dumpUnitaryClauses();
+    dumpUnitaryClauses(true);
 
     *outfile
     << "c " << endl
@@ -273,6 +277,13 @@ void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
     *outfile
     << "c " << endl
     << "c ---------------" << endl
+    << "c unit clauses" << endl
+    << "c ---------------" << endl;
+    dumpUnitaryClauses(backnumber);
+
+    *outfile
+    << "c " << endl
+    << "c ---------------" << endl
     << "c binary clauses" << endl
     << "c ---------------" << endl;
     dumpBinClauses(false, true, backnumber);
@@ -292,7 +303,6 @@ void ClauseDumper::dump_irred_clauses_all()
         exit(-1);
     }
 
-    dumpUnitaryClauses();
     dumpEquivalentLits();
 
     dump_irred_cls_for_preprocessor(true);
