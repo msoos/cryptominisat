@@ -202,7 +202,7 @@ void ClauseDumper::dumpUnitaryClauses(const bool backnumber)
     *outfile
     << "c " << endl
     << "c ---------" << endl
-    << "c unitaries" << endl
+    << "c unit clauses" << endl
     << "c ---------" << endl;
 
     //'trail' cannot be trusted between 0....size()
@@ -271,11 +271,6 @@ void ClauseDumper::dump_component_clauses()
 
 void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
 {
-    *outfile
-    << "c " << endl
-    << "c ---------------" << endl
-    << "c unit clauses" << endl
-    << "c ---------------" << endl;
     dumpUnitaryClauses(backnumber);
 
     *outfile

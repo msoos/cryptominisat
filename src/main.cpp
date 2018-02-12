@@ -125,7 +125,8 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         std::exit(1);
     }
 
-    if (!parser.parse_DIMACS(in)) {
+    bool strict_header = conf.preprocess;
+    if (!parser.parse_DIMACS(in, strict_header)) {
         exit(-1);
     }
 
@@ -164,7 +165,7 @@ void Main::readInStandardInput(SATSolver* solver2)
     DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
     #endif
 
-    if (!parser.parse_DIMACS(in)) {
+    if (!parser.parse_DIMACS(in, false)) {
         exit(-1);
     }
 
@@ -345,7 +346,7 @@ void Main::add_supported_options()
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
-        , "Write result(s) to this file")
+        , "Write solution(s) to this file")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -1008,7 +1009,9 @@ void Main::manually_parse_some_options()
 
         vector<string> solution = vm["input"].as<vector<string> >();
         if (solution.size() > 1) {
-            cout << "ERROR: When post-processing you must give only the solution as the positional argument"
+            cout << "ERROR: When post-processing you must give only the solution as the positional argument."
+            << endl
+            << "The saved state must be given as the argument '--savedsate X'"
             << endl;
             std::exit(-1);
         }

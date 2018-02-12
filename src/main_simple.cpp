@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
-        if (!parser.parse_DIMACS(in)) {
+        if (!parser.parse_DIMACS(in, false)) {
             exit(-1);
         }
 
@@ -255,7 +255,7 @@ int main(int argc, char** argv)
         DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
         #endif
 
-        if (!parser.parse_DIMACS(in)) {
+        if (!parser.parse_DIMACS(in, false)) {
             exit(-1);
         }
 
