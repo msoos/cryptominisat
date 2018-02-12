@@ -2378,18 +2378,30 @@ void Solver::print_clause_size_distrib()
 }
 
 
-vector<Lit> Solver::get_zero_assigned_lits() const
+vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
+                                           const bool only_nvars) const
 {
     vector<Lit> lits;
     assert(decisionLevel() == 0);
-    for(size_t i = 0; i < assigns.size(); i++) {
+    size_t until;
+    if (only_nvars) {
+        until = nVars();
+    } else {
+        until = assigns.size();
+    }
+    for(size_t i = 0; i < until; i++) {
         if (assigns[i] != l_Undef) {
             Lit lit(i, assigns[i] == l_False);
 
             //Update to higher-up
             lit = varReplacer->get_lit_replaced_with(lit);
             if (varData[lit.var()].is_bva == false) {
-                lits.push_back(map_inter_to_outer(lit));
+                if (backnumber) {
+                    lits.push_back(map_inter_to_outer(lit));
+                } else {
+                    lits.push_back(lit);
+                }
+
             }
 
             //Everything it repaces has also been set
@@ -2405,7 +2417,11 @@ vector<Lit> Solver::get_zero_assigned_lits() const
                 }
                 assert(lit == varReplacer->get_lit_replaced_with(tmp_lit));
 
-                lits.push_back(map_inter_to_outer(tmp_lit));
+                if (backnumber) {
+                    lits.push_back(map_inter_to_outer(tmp_lit));
+                } else {
+                    lits.push_back(tmp_lit);
+                }
             }
         }
     }

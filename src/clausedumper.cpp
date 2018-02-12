@@ -104,7 +104,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
             size_t num_cls = 0;
             num_cls += solver->longIrredCls.size();
             num_cls += solver->binTri.irredBins;
-            num_cls += solver->trail.size();
+            num_cls += solver->get_zero_assigned_lits(false, true).size();
 
             *outfile
             << "p cnf " << solver->nVars() << " " << num_cls << "\n";
@@ -206,11 +206,8 @@ void ClauseDumper::dumpUnitaryClauses(const bool backnumber)
     << "c ---------" << endl;
 
     //'trail' cannot be trusted between 0....size()
-    vector<Lit> lits = solver->get_zero_assigned_lits();
+    vector<Lit> lits = solver->get_zero_assigned_lits(backnumber, true);
     for(Lit lit: lits) {
-        if (backnumber) {
-            lit = solver->map_inter_to_outer(lit);
-        }
         *outfile << lit << " 0\n";
     }
 }
