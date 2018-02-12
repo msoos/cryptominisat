@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <limits>
 #include <cassert>
 #include <fstream>
+#include <sstream>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
@@ -634,6 +635,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
     if (drat_file.is_open()) {
         drat_file.close();
+        std::stringstream cmdstream;
+        cmdstream << "../../drat-trim-master/drat-trim " << self->cnf_file_name << " " << self->drat_file_name;
+        const char * cmd = cmdstream.str().c_str();
+        system(cmd);
     }
 
     return result;
