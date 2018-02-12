@@ -81,22 +81,21 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
 	uint64_t nb_clauses;
+    std::vector<std::vector<Lit>> clauses;
 	std::string cnf_file_name;
-    std::string tmp_file_name;
-    std::string drat_file_name;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
 
 static const char solver_create_docstring[] = \
-"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0)\n\
+"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0, drat=0)\n\
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
 :param confl_limit: Propagation limit: abort after this many conflicts.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
-:param cnf: CNF file to write.\n\
+:param cnf: cnf file to write.\n\
 :type verbose: <int>\n\
 :type confl_limit: <int>\n\
 :type threads: <int>\n\
@@ -110,6 +109,7 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
     char* cnf = NULL;
+
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
 		return;
     }
@@ -135,20 +135,7 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 	self->nb_clauses = 0;
 	if (cnf != NULL) {
         self->cnf_file_name = cnf;
-        self->tmp_file_name = std::string("tmp_") + self->cnf_file_name;
-        self->drat_file_name = self->cnf_file_name +  std::string(".drat");
     }
-
-    remove(self->tmp_file_name.c_str());
-    remove(self->drat_file_name.c_str());
-    std::ofstream cnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
-    if (cnf_file.is_open()) {
-        cnf_file << "p cnf 0 0" << "\n";
-    }
-    else {
-        std::cout << "Error opening/creating DIMACS file" << '\n';
-    }
-    cnf_file.close();
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -181,6 +168,41 @@ static int parse_clause(
     , PyObject *clause
     , std::vector<Lit>& lits
 ) {
+    PyObject *iterator = PyObject_GetIter(clause);
+    if (iterator == NULL) {
+        PyErr_SetString(PyExc_TypeError, "iterable object expected");
+        return 0;
+    }
+
+    PyObject *lit;
+    while ((lit = PyIter_Next(iterator)) != NULL) {
+        long var;
+        bool sign;
+        int ret = convert_lit_to_sign_and_var(lit, var, sign);
+        Py_DECREF(lit);
+        if (!ret) {
+            Py_DECREF(iterator);
+            return 0;
+        }
+
+        if (var >= self->cmsat->nVars()) {
+            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+                self->cmsat->new_var();
+            }
+        }
+
+        lits.push_back(Lit(var, sign));
+    }
+    Py_DECREF(iterator);
+    if (PyErr_Occurred()) {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int parse_clause(Solver *self, PyObject *clause, std::vector<Lit>& lits)
+{
     PyObject *iterator = PyObject_GetIter(clause);
     if (iterator == NULL) {
         PyErr_SetString(PyExc_TypeError, "iterable object expected");
@@ -267,37 +289,37 @@ static long convert_from_lit_to_int(uint32_t i)
     }
 }
 
-static void write_cnf_file(Solver *self, std::vector<Lit> lits)
-{
-    // Adding clause to the file
-    std::ofstream cnf_file(self->cnf_file_name, std::ios_base::app);
-	if (cnf_file.is_open()) {
-		for (unsigned i = 0; i < lits.size(); i++) {
-            cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
-		}
-		cnf_file << "0" << "\n";
-        cnf_file.close();
-        // Copying file into temporary file
-        std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
-        std::ofstream tmp_file(self->tmp_file_name, std::fstream::out | std::fstream::trunc);
-        tmp_file << cnf_file.rdbuf();
-        cnf_file.close();
-        tmp_file.close();
-        // Writing DIMACS header then writing clauses
-        std::ifstream rtmp_file(self->tmp_file_name, std::ios::in);
-        std::ofstream wcnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
-        wcnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
-        std::string garbage;
-        getline(rtmp_file, garbage);
-        wcnf_file << rtmp_file.rdbuf();
-        rtmp_file.close();
-        wcnf_file.close();
-        remove(self->tmp_file_name.c_str());
-	}
-	else {
-        PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
-	}
-}
+// static void write_cnf_file(Solver *self, std::vector<Lit> lits)
+// {
+//     // Adding clause to the file
+//     std::ofstream cnf_file(self->cnf_file_name, std::ios_base::app);
+// 	if (cnf_file.is_open()) {
+// 		for (unsigned i = 0; i < lits.size(); i++) {
+//             cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
+// 		}
+// 		cnf_file << "0" << "\n";
+//         cnf_file.close();
+//         // Copying file into temporary file
+//         std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
+//         std::ofstream tmp_file(self->tmp_file_name, std::fstream::out | std::fstream::trunc);
+//         tmp_file << cnf_file.rdbuf();
+//         cnf_file.close();
+//         tmp_file.close();
+//         // Writing DIMACS header then writing clauses
+//         std::ifstream rtmp_file(self->tmp_file_name, std::ios::in);
+//         std::ofstream wcnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
+//         wcnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
+//         std::string garbage;
+//         getline(rtmp_file, garbage);
+//         wcnf_file << rtmp_file.rdbuf();
+//         rtmp_file.close();
+//         wcnf_file.close();
+//         remove(self->tmp_file_name.c_str());
+// 	}
+// 	else {
+//         PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
+// 	}
+// }
 
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
@@ -322,8 +344,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
     self->cmsat->add_clause(lits);
-    if (!self->cnf_file_name.empty())
-        write_cnf_file(self, lits);
+    self->clauses.push_back(lits);
 	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
@@ -398,6 +419,54 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
     self->cmsat->add_xor_clause(vars, real_rhs);
 
+	self->nb_clauses += 1;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyDoc_STRVAR(load_doc,
+"load(cnf)\n\
+Parse DIMACS file to add clauses to the solver.\n\
+\n\
+:param arg1: A DIMACS filename.\n\
+:return: None\n\
+:type arg1: <String>\n\
+:rtype: <None>"
+);
+
+static PyObject* load(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"cnf", NULL};
+	char* cnf = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
+        return NULL;
+    }
+
+    std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
+    if (cnf_file.is_open()) {
+        std::string line;
+        std::getline(cnf_file, line)
+        while (std::getline(cnf_file, line)) {
+            std::string buf;
+            std::stringstream ss(line);
+            vector<int> tokens;
+            while (ss >> buf) {
+                tokens.push_back(atoi(buf));
+            }
+
+        }
+    }
+    else {
+        std::cout << "Error opening cnf_file" << '\n';
+    }
+
+    std::vector<Lit> lits;
+    if (!parse_clause(self, clause, lits)) {
+        return 0;
+    }
+    self->cmsat->add_clause(lits);
+    self->clauses.push_back(lits);
 	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
@@ -535,6 +604,101 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
     return 1;
 }
 
+// PyDoc_STRVAR(solve_doc,
+// "solve(assumptions=None)\n\
+// Solve the system of equations that have been added with add_clause();\n\
+// \n\
+// .. example:: \n\
+//     from pycryptosat import Solver\n\
+//     >>> s = Solver()\n\
+//     >>> s.add_clause([1])\n\
+//     >>> s.add_clause([-2])\n\
+//     >>> s.add_clause([3])\n\
+//     >>> s.add_clause([-1, 2, 3])\n\
+//     >>> sat, solution = s.solve()\n\
+//     >>> print sat\n\
+//     True\n\
+//     >>> print solution\n\
+//     (None, True, False, True)\n\
+//     \n\
+//     We can also try to assume any variable values for a single solver run:\n\
+//     \n\
+//     sat, solution = s.solve([-3])\n\
+//     >>> print sat\n\
+//     False\n\
+//     >>> print solution\n\
+//     None\n\
+// \n\
+// :param arg1: (Optional) Allows the user to set values to specific variables\n\
+//     in the solver in a temporary fashion. This means that in case the problem\n\
+//     is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
+//     solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
+//     still return a solution.\n\
+// :type arg1: <list>\n\
+// :return: A tuple. First part of the tuple indicates whether the problem\n\
+//     is satisfiable. The second part is a tuple contains the solution,\n\
+//     preceded by None, so you can index into it with the variable number.\n\
+//     E.g. solution[1] returns the value for variabe 1.\n\
+// :rtype: <tuple <tuple>>"
+// );
+//
+// static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
+// {
+//     PyObject* assumptions = NULL;
+//     static char* kwlist[] = {"assumptions", NULL};
+//     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+//         return NULL;
+//     }
+//
+//     std::vector<Lit> assumption_lits;
+//     if (assumptions) {
+//         if (!parse_assumption_lits(assumptions, self->cmsat, assumption_lits)) {
+//             return 0;
+//         }
+//     }
+//
+//     PyObject *result = PyTuple_New((Py_ssize_t) 2);
+//     if (result == NULL) {
+//         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
+//         return NULL;
+//     }
+//
+//     lbool res;
+//     Py_BEGIN_ALLOW_THREADS      /* release GIL */
+//     res = self->cmsat->solve(&assumption_lits);
+//     Py_END_ALLOW_THREADS
+//
+//     if (res == l_True) {
+//         PyObject* solution = get_solution(self->cmsat);
+//         if (!solution) {
+//             Py_DECREF(result);
+//             return NULL;
+//         }
+//         Py_INCREF(Py_True);
+//
+//         PyTuple_SET_ITEM(result, 0, Py_True);
+//         PyTuple_SET_ITEM(result, 1, solution);
+//
+//     } else if (res == l_False) {
+//         Py_INCREF(Py_False);
+//         Py_INCREF(Py_None);
+//
+//         PyTuple_SET_ITEM(result, 0, Py_False);
+//         PyTuple_SET_ITEM(result, 1, Py_None);
+//
+//     } else if (res == l_Undef) {
+//         Py_DECREF(result);
+//         return PyErr_SetFromErrno(outofconflerr);
+//     } else {
+//         // res can only be l_False, l_True, l_Undef
+//         assert((res == l_False) || (res == l_True) || (res == l_Undef));
+//         Py_DECREF(result);
+//         return NULL;
+//     }
+//
+//     return result;
+// }
+
 PyDoc_STRVAR(solve_doc,
 "solve(assumptions=None)\n\
 Solve the system of equations that have been added with add_clause();\n\
@@ -565,7 +729,9 @@ Solve the system of equations that have been added with add_clause();\n\
     is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
     solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
     still return a solution.\n\
+:param arg2: (Optional) To ask pycryptosat to create specified DRAT file.\n\
 :type arg1: <list>\n\
+:type arg2: <String>\n\
 :return: A tuple. First part of the tuple indicates whether the problem\n\
     is satisfiable. The second part is a tuple contains the solution,\n\
     preceded by None, so you can index into it with the variable number.\n\
@@ -576,9 +742,15 @@ Solve the system of equations that have been added with add_clause();\n\
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    static char* kwlist[] = {"assumptions", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+    char* drat = NULL;
+    static char* kwlist[] = {"assumptions", "drat", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Os", kwlist, &assumptions, &drat)) {
         return NULL;
+    }
+
+    std::string drat_file_name;
+    if (drat != NULL) {
+        drat_file_name = drat;
     }
 
     std::vector<Lit> assumption_lits;
@@ -595,8 +767,8 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     std::ofstream drat_file;
-    if (!self->cnf_file_name.empty()) {
-        drat_file.open(self->drat_file_name, std::fstream::out);
+    if (!drat_file_name.empty()) {
+        drat_file.open(drat_file_name, std::fstream::out);
         self->cmsat->set_drat(&drat_file, false);
     }
 
@@ -635,10 +807,6 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
     if (drat_file.is_open()) {
         drat_file.close();
-        std::stringstream cmdstream;
-        cmdstream << "../../drat-trim-master/drat-trim " << self->cnf_file_name << " " << self->drat_file_name;
-        const char * cmd = cmdstream.str().c_str();
-        system(cmd);
     }
 
     return result;
