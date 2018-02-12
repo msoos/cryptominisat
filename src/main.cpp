@@ -917,7 +917,6 @@ void Main::manually_parse_some_options()
 
     if (conf.preprocess != 0) {
         conf.varelim_time_limitM *= 5;
-        conf.varElimRatioPerIter = 2.0;
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
@@ -945,8 +944,8 @@ void Main::manually_parse_some_options()
         }
 
         if (!filesToRead.empty()) {
-            std::cerr << "ERROR: reading in CNF file(s) make no sense with preprocessing. Exiting." << endl;
-            std::exit(-1);
+            assert(false && "we should never reach this place, filesToRead has not been populated yet");
+            exit(-1);
         }
 
         if (!debugLib.empty()) {
@@ -969,7 +968,7 @@ void Main::manually_parse_some_options()
         }
 
         if (!vm.count("eratio")) {
-            conf.varElimRatioPerIter = 1.0;
+            conf.varElimRatioPerIter = 2.0;
         }
     }
 
