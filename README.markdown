@@ -470,8 +470,8 @@ x 3 4 5 0
 6 7 8 0
 
 
-$ ./cryptominisat5 --preproc 1 --presimp 0 input.cnf output.cnf  --verb 0
-Wrote solver state to file savedstate.dat and simplified CNF to file output.cnf
+$ ./cryptominisat5 --preproc 1 --presimp 0 input.cnf output.cnf
+[...]
 s INDETERMINATE
 
 $ cat output.cnf
