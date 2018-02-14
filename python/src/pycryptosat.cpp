@@ -196,31 +196,6 @@ static int parse_clause(
     return 1;
 }
 
-/*static int parse_vector_clause(Solver *self, std::vector<int> clause, std::vector<Lit>& lits)
-{
-    PyObject *lit;
-    for (std::vector<int>::iterator it = clause.begin(); it !=clause.end(); ++it) {
-        lit = it;
-        long var;
-        bool sign;
-        int ret = convert_lit_to_sign_and_var(lit, var, sign);
-        Py_DECREF(lit);
-        if (!ret) {
-            return 0;
-        }
-
-        if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
-                self->cmsat->new_var();
-            }
-        }
-
-        lits.push_back(Lit(var, sign));
-    }
-
-    return 1;
-}*/
-
 static int parse_xor_clause(
     Solver *self
     , PyObject *clause
@@ -482,6 +457,49 @@ static PyObject* load(Solver *self, PyObject *args, PyObject *kwds)
     return load_file(self, cnf_file_name);
 }
 
+static PyObject* save_file(Solver *self, std::string cnf)
+{
+    std::ofstream cnf_file(cnf, std::fstream::out | std::fstream::trunc);
+    if (cnf_file.is_open()) {
+        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses << "\n";
+        for(std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
+            for (std::vector<Lit>::iterator jt = it->begin(); jt != it->end(); ++jt) {
+                cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << ' ';
+    		}
+    		cnf_file << "0" << "\n";
+        }
+        cnf_file.close();
+    }
+    else {
+        std::cout << "Error opening cnf_file" << '\n';
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyDoc_STRVAR(save_doc,
+"save(cnf)\n\
+save clauses as a DIMACS file.\n\
+\n\
+:param arg1: A DIMACS filename.\n\
+:return: None\n\
+:type arg1: <String>\n\
+:rtype: <None>"
+);
+
+static PyObject* save(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"cnf", NULL};
+	char* cnf = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
+        return NULL;
+    }
+
+    std::string cnf_file_name = cnf;
+    return save_file(self, cnf_file_name);
+}
+
 static PyObject* get_solution(SATSolver *cmsat)
 {
     // Create tuple with the size of number of variables in model
@@ -612,101 +630,6 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 
     return 1;
 }
-
-// PyDoc_STRVAR(solve_doc,
-// "solve(assumptions=None)\n\
-// Solve the system of equations that have been added with add_clause();\n\
-// \n\
-// .. example:: \n\
-//     from pycryptosat import Solver\n\
-//     >>> s = Solver()\n\
-//     >>> s.add_clause([1])\n\
-//     >>> s.add_clause([-2])\n\
-//     >>> s.add_clause([3])\n\
-//     >>> s.add_clause([-1, 2, 3])\n\
-//     >>> sat, solution = s.solve()\n\
-//     >>> print sat\n\
-//     True\n\
-//     >>> print solution\n\
-//     (None, True, False, True)\n\
-//     \n\
-//     We can also try to assume any variable values for a single solver run:\n\
-//     \n\
-//     sat, solution = s.solve([-3])\n\
-//     >>> print sat\n\
-//     False\n\
-//     >>> print solution\n\
-//     None\n\
-// \n\
-// :param arg1: (Optional) Allows the user to set values to specific variables\n\
-//     in the solver in a temporary fashion. This means that in case the problem\n\
-//     is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
-//     solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
-//     still return a solution.\n\
-// :type arg1: <list>\n\
-// :return: A tuple. First part of the tuple indicates whether the problem\n\
-//     is satisfiable. The second part is a tuple contains the solution,\n\
-//     preceded by None, so you can index into it with the variable number.\n\
-//     E.g. solution[1] returns the value for variabe 1.\n\
-// :rtype: <tuple <tuple>>"
-// );
-//
-// static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
-// {
-//     PyObject* assumptions = NULL;
-//     static char* kwlist[] = {"assumptions", NULL};
-//     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
-//         return NULL;
-//     }
-//
-//     std::vector<Lit> assumption_lits;
-//     if (assumptions) {
-//         if (!parse_assumption_lits(assumptions, self->cmsat, assumption_lits)) {
-//             return 0;
-//         }
-//     }
-//
-//     PyObject *result = PyTuple_New((Py_ssize_t) 2);
-//     if (result == NULL) {
-//         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
-//         return NULL;
-//     }
-//
-//     lbool res;
-//     Py_BEGIN_ALLOW_THREADS      /* release GIL */
-//     res = self->cmsat->solve(&assumption_lits);
-//     Py_END_ALLOW_THREADS
-//
-//     if (res == l_True) {
-//         PyObject* solution = get_solution(self->cmsat);
-//         if (!solution) {
-//             Py_DECREF(result);
-//             return NULL;
-//         }
-//         Py_INCREF(Py_True);
-//
-//         PyTuple_SET_ITEM(result, 0, Py_True);
-//         PyTuple_SET_ITEM(result, 1, solution);
-//
-//     } else if (res == l_False) {
-//         Py_INCREF(Py_False);
-//         Py_INCREF(Py_None);
-//
-//         PyTuple_SET_ITEM(result, 0, Py_False);
-//         PyTuple_SET_ITEM(result, 1, Py_None);
-//
-//     } else if (res == l_Undef) {
-//         Py_DECREF(result);
-//         return PyErr_SetFromErrno(outofconflerr);
-//     } else {
-//         // res can only be l_False, l_True, l_Undef
-//         assert((res == l_False) || (res == l_True) || (res == l_Undef));
-//         Py_DECREF(result);
-//         return NULL;
-//     }
-//
-//     return result;
-// }
 
 PyDoc_STRVAR(solve_doc,
 "solve(assumptions=None)\n\
@@ -1040,6 +963,7 @@ static PyMethodDef Solver_methods[] = {
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
     {"load", (PyCFunction) load, METH_VARARGS | METH_KEYWORDS, load_doc},
+    {"save", (PyCFunction) save, METH_VARARGS | METH_KEYWORDS, save_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
