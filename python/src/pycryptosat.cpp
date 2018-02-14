@@ -35,8 +35,6 @@ using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
 #define MODULE_DOC "CryptoSAT satisfiability solver."
-//#define self->tmp_file_name "tmp.cnf"
-//#define self->cnf_file_name "DIMACS.cnf"
 
 // Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3
@@ -82,10 +80,11 @@ typedef struct {
     SATSolver* cmsat;
 	uint64_t nb_clauses;
     std::vector<std::vector<Lit>> clauses;
-	std::string cnf_file_name;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
+
+static PyObject* load_file(Solver *self, std::string cnf);
 
 static const char solver_create_docstring[] = \
 "Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0, drat=0)\n\
@@ -103,14 +102,13 @@ Create Solver object.\n\
 
 static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
-	static char* kwlist[] = {"verbose", "confl_limit", "threads", "cnf", NULL};
+	static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
-    char* cnf = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ilis", kwlist, &verbose, &confl_limit, &num_threads, &cnf)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
 		return;
     }
     if (verbose < 0) {
@@ -133,9 +131,6 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 
 	self->cmsat = cmsat;
 	self->nb_clauses = 0;
-	if (cnf != NULL) {
-        self->cnf_file_name = cnf;
-    }
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -201,22 +196,16 @@ static int parse_clause(
     return 1;
 }
 
-static int parse_clause(Solver *self, PyObject *clause, std::vector<Lit>& lits)
+/*static int parse_vector_clause(Solver *self, std::vector<int> clause, std::vector<Lit>& lits)
 {
-    PyObject *iterator = PyObject_GetIter(clause);
-    if (iterator == NULL) {
-        PyErr_SetString(PyExc_TypeError, "iterable object expected");
-        return 0;
-    }
-
     PyObject *lit;
-    while ((lit = PyIter_Next(iterator)) != NULL) {
+    for (std::vector<int>::iterator it = clause.begin(); it !=clause.end(); ++it) {
+        lit = it;
         long var;
         bool sign;
         int ret = convert_lit_to_sign_and_var(lit, var, sign);
         Py_DECREF(lit);
         if (!ret) {
-            Py_DECREF(iterator);
             return 0;
         }
 
@@ -228,13 +217,9 @@ static int parse_clause(Solver *self, PyObject *clause, std::vector<Lit>& lits)
 
         lits.push_back(Lit(var, sign));
     }
-    Py_DECREF(iterator);
-    if (PyErr_Occurred()) {
-        return 0;
-    }
 
     return 1;
-}
+}*/
 
 static int parse_xor_clause(
     Solver *self
@@ -425,6 +410,56 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+PyObject* int_vector_to_list(const std::vector<int> &data) {
+  PyObject* listObj = PyList_New(data.size());
+	if (!listObj) std::cout << "Unable to allocate memory for Python list/" << '\n';
+	for (unsigned int i = 0 ; i < data.size() ; i++) {
+		PyObject *num = PyLong_FromLong((long) data[i]);
+		if (!num) {
+			Py_DECREF(listObj);
+			std::cout << "Unable to allocate memory for Python list/" << '\n';
+		}
+		PyList_SET_ITEM(listObj, i, num);
+	}
+	return listObj;
+}
+
+static PyObject* load_file(Solver *self, std::string cnf)
+{
+    std::ifstream cnf_file(cnf, std::ios::in);
+    if (cnf_file.is_open()) {
+        std::string line;
+        std::getline(cnf_file, line);
+        while (std::getline(cnf_file, line)) {
+            if (line.substr(0,1) != std::string("c")) { // ignoring comments in DIMACS
+                std::string buf;
+                std::stringstream ss(line);
+                std::vector<int> tokens;
+                while (ss >> buf) {
+                    int tok = stoi(buf);
+                    if (tok != 0) {
+                        tokens.push_back(tok);
+                    }
+                }
+                PyObject* clause = int_vector_to_list(tokens);
+                std::vector<Lit> lits;
+                if (!parse_clause(self, clause, lits)) {
+                    return 0;
+                }
+                self->cmsat->add_clause(lits);
+                self->clauses.push_back(lits);
+            	self->nb_clauses += 1;
+            }
+        }
+    }
+    else {
+        std::cout << "Error opening cnf_file" << '\n';
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 PyDoc_STRVAR(load_doc,
 "load(cnf)\n\
 Parse DIMACS file to add clauses to the solver.\n\
@@ -443,34 +478,8 @@ static PyObject* load(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
-    if (cnf_file.is_open()) {
-        std::string line;
-        std::getline(cnf_file, line)
-        while (std::getline(cnf_file, line)) {
-            std::string buf;
-            std::stringstream ss(line);
-            vector<int> tokens;
-            while (ss >> buf) {
-                tokens.push_back(atoi(buf));
-            }
-
-        }
-    }
-    else {
-        std::cout << "Error opening cnf_file" << '\n';
-    }
-
-    std::vector<Lit> lits;
-    if (!parse_clause(self, clause, lits)) {
-        return 0;
-    }
-    self->cmsat->add_clause(lits);
-    self->clauses.push_back(lits);
-	self->nb_clauses += 1;
-
-    Py_INCREF(Py_None);
-    return Py_None;
+    std::string cnf_file_name = cnf;
+    return load_file(self, cnf_file_name);
 }
 
 static PyObject* get_solution(SATSolver *cmsat)
@@ -1030,6 +1039,7 @@ static PyMethodDef Solver_methods[] = {
     {"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, nb_clauses_doc},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
+    {"load", (PyCFunction) load, METH_VARARGS | METH_KEYWORDS, load_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
