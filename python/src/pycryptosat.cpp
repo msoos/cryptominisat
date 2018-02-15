@@ -78,7 +78,6 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
-	uint64_t nb_clauses;
     std::vector<std::vector<Lit>> clauses;
 } Solver;
 
@@ -130,7 +129,6 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
     cmsat->set_num_threads(num_threads);
 
 	self->cmsat = cmsat;
-	self->nb_clauses = 0;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -249,38 +247,6 @@ static long convert_from_lit_to_int(uint32_t i)
     }
 }
 
-// static void write_cnf_file(Solver *self, std::vector<Lit> lits)
-// {
-//     // Adding clause to the file
-//     std::ofstream cnf_file(self->cnf_file_name, std::ios_base::app);
-// 	if (cnf_file.is_open()) {
-// 		for (unsigned i = 0; i < lits.size(); i++) {
-//             cnf_file << static_cast<int>(convert_from_lit_to_int(lits[i].toInt())) << ' ';
-// 		}
-// 		cnf_file << "0" << "\n";
-//         cnf_file.close();
-//         // Copying file into temporary file
-//         std::ifstream cnf_file(self->cnf_file_name, std::ios::in);
-//         std::ofstream tmp_file(self->tmp_file_name, std::fstream::out | std::fstream::trunc);
-//         tmp_file << cnf_file.rdbuf();
-//         cnf_file.close();
-//         tmp_file.close();
-//         // Writing DIMACS header then writing clauses
-//         std::ifstream rtmp_file(self->tmp_file_name, std::ios::in);
-//         std::ofstream wcnf_file(self->cnf_file_name, std::fstream::out | std::fstream::trunc);
-//         wcnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses+1 << "\n";
-//         std::string garbage;
-//         getline(rtmp_file, garbage);
-//         wcnf_file << rtmp_file.rdbuf();
-//         rtmp_file.close();
-//         wcnf_file.close();
-//         remove(self->tmp_file_name.c_str());
-// 	}
-// 	else {
-//         PyErr_SetString(PyExc_ValueError, "Error opening DIMACS file");
-// 	}
-// }
-
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
@@ -305,7 +271,6 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
     self->cmsat->add_clause(lits);
     self->clauses.push_back(lits);
-	self->nb_clauses += 1;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -379,20 +344,18 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
     self->cmsat->add_xor_clause(vars, real_rhs);
 
-	self->nb_clauses += 1;
-
     Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* int_vector_to_list(const std::vector<int> &data) {
   PyObject* listObj = PyList_New(data.size());
-	if (!listObj) std::cout << "Unable to allocate memory for Python list/" << '\n';
+	if (!listObj) PyErr_SetString(PyExc_SystemError, "Unable to allocate memory for Python list/");
 	for (unsigned int i = 0 ; i < data.size() ; i++) {
 		PyObject *num = PyLong_FromLong((long) data[i]);
 		if (!num) {
 			Py_DECREF(listObj);
-			std::cout << "Unable to allocate memory for Python list/" << '\n';
+			PyErr_SetString(PyExc_SystemError, "Unable to allocate memory for Python list/");
 		}
 		PyList_SET_ITEM(listObj, i, num);
 	}
@@ -423,12 +386,11 @@ static PyObject* load_file(Solver *self, std::string cnf)
                 }
                 self->cmsat->add_clause(lits);
                 self->clauses.push_back(lits);
-            	self->nb_clauses += 1;
             }
         }
     }
     else {
-        std::cout << "Error opening cnf_file" << '\n';
+        PyErr_SetString(PyExc_SystemError, "Error opening cnf_file");
     }
 
     Py_INCREF(Py_None);
@@ -461,7 +423,7 @@ static PyObject* save_file(Solver *self, std::string cnf)
 {
     std::ofstream cnf_file(cnf, std::fstream::out | std::fstream::trunc);
     if (cnf_file.is_open()) {
-        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->nb_clauses << "\n";
+        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->clauses.size() << "\n";
         for(std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
             for (std::vector<Lit>::iterator jt = it->begin(); jt != it->end(); ++jt) {
                 cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << ' ';
@@ -471,7 +433,7 @@ static PyObject* save_file(Solver *self, std::string cnf)
         cnf_file.close();
     }
     else {
-        std::cout << "Error opening cnf_file" << '\n';
+        PyErr_SetString(PyExc_SystemError, "Error opening cnf_file");
     }
 
     Py_INCREF(Py_None);
@@ -590,10 +552,9 @@ Return the number of clauses in the solver.\n\
 :rtype: <int>"
 );
 
-// A REVOIR ! Renvoie le nombre de thread et non le nombre de clauses
 static PyObject* nb_clauses(Solver *self)
 {
-	return PyLong_FromLong(self->nb_clauses);
+	return PyLong_FromLong(self->clauses.size());
 }
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
