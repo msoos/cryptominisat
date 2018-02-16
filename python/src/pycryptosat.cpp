@@ -83,8 +83,6 @@ typedef struct {
 
 static PyObject *outofconflerr = NULL;
 
-static PyObject* load_file(Solver *self, std::string cnf);
-
 static const char solver_create_docstring[] = \
 "Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0, drat=0)\n\
 Create Solver object.\n\
@@ -367,14 +365,19 @@ static PyObject* load_file(Solver *self, std::string cnf)
     std::ifstream cnf_file(cnf, std::ios::in);
     if (cnf_file.is_open()) {
         std::string line;
-        std::getline(cnf_file, line);
         while (std::getline(cnf_file, line)) {
-            if (line.substr(0,1) != std::string("c")) { // ignoring comments in DIMACS
+            if ((line.substr(0,1) != std::string("c")) && (line.substr(0,1) != std::string("p"))) { // ignoring comments in DIMACS
                 std::string buf;
                 std::stringstream ss(line);
                 std::vector<int> tokens;
                 while (ss >> buf) {
-                    int tok = stoi(buf);
+                    int tok;
+                    try {
+                        tok = stoi(buf);
+                    }
+                    catch(std::invalid_argument& e){
+                        PyErr_SetString(PyExc_ValueError, "Invalid character in DIMACS file (not an integer)");
+                    }
                     if (tok != 0) {
                         tokens.push_back(tok);
                     }
