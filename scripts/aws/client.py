@@ -190,7 +190,7 @@ class solverThread (threading.Thread):
 
         toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
-            toexec.append(self.get_drat_fname())
+            toexec.extend(["--drat", self.get_drat_fname()])
             if "cryptominisat5" in self.indata["solver"]:
                 # never stop search() to simplify anything
                 # toexec.append("-n 1")
