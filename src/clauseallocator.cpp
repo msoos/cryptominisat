@@ -89,9 +89,12 @@ void* ClauseAllocator::allocEnough(
     if (size + needed > capacity) {
         //Grow by default, but don't go under or over the limits
         uint64_t newcapacity = capacity * ALLOC_GROW_MULT;
-        newcapacity = std::max<size_t>(newcapacity, size+needed);
-        newcapacity = std::min<size_t>(newcapacity, MAXSIZE);
         newcapacity = std::max<size_t>(newcapacity, MIN_LIST_SIZE);
+        while (newcapacity < size+needed) {
+            newcapacity *= ALLOC_GROW_MULT;
+        }
+        assert(newcapacity >= size+needed);
+        newcapacity = std::min<size_t>(newcapacity, MAXSIZE);
 
         //Oops, not enough space anyway
         if (newcapacity < size + needed) {
