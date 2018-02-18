@@ -446,6 +446,30 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     #endif
 }
 
+inline void PropEngine::attach_bin_clause(
+    const Lit lit1
+    , const Lit lit2
+    , const bool red
+    , const bool
+    #ifdef DEBUG_ATTACH
+    checkUnassignedFirst
+    #endif
+) {
+    #ifdef DEBUG_ATTACH
+    assert(lit1.var() != lit2.var());
+    if (checkUnassignedFirst) {
+        assert(value(lit1.var()) == l_Undef);
+        assert(value(lit2) == l_Undef || value(lit2) == l_False);
+    }
+
+    assert(varData[lit1.var()].removed == Removed::none);
+    assert(varData[lit2.var()].removed == Removed::none);
+    #endif //DEBUG_ATTACH
+
+    watches[lit1].push(Watched(lit2, red));
+    watches[lit2].push(Watched(lit1, red));
+}
+
 } //end namespace
 
 #endif //__PROPENGINE_H__
