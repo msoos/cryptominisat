@@ -542,7 +542,7 @@ else()
 endif()
 
 if (ENABLE_PYTHON_INTERFACE)
-    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND PY_CONFIG_EXE AND NOT COVERAGE)
+    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
         message(STATUS "Found python interpreter, libs and header files")
         message(STATUS "Building python interface")
         add_subdirectory(python pycryptosat)
