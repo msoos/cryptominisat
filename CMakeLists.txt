@@ -397,7 +397,7 @@ if (STATS)
         endif ()
     endif()
 ELSE ()
-    MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
+    MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
 
 # -----------------------------------------------------------------------------
