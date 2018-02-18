@@ -1947,7 +1947,11 @@ bool Searcher::clean_clauses_if_needed()
         && newZeroDepthAss > ((double)nVars()*0.05)
     ) {
         if (conf.verbosity) {
-            cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
+            cout << "c newZeroDepthAss : " << newZeroDepthAss
+            << " -- "
+            << (double)newZeroDepthAss/(double)nVars()*100.0
+            << " % of active vars"
+            << endl;
         }
         lastCleanZeroDepthAssigns = trail.size();
         solver->clauseCleaner->remove_and_clean_all();
