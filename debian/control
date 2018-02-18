@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Mate Soos <soos.mate@gmail.com>
 Build-Depends: debhelper (>= 8.0.0), cmake (>=3.3), libboost-program-options-dev (>= 1.54), zlib1g-dev (>= 1.1), python3
 Standards-Version: 3.9.6
-Homepage: http://msoos.org
+Homepage: https://www.msoos.org
 Vcs-Git: git://github.com/msoos/cryptominisat.git
 Vcs-Browser: git://github.com/msoos/cryptominisat.git
 
