@@ -699,7 +699,7 @@ void Main::check_options_correctness()
             cout << "Default schedule: " << conf.simplify_schedule_nonstartup << endl<< endl;
             cout << "Default schedule at startup: " << conf.simplify_schedule_startup << endl << endl;
 
-            cout << "PREPROC RUN SCHEDULES" << endl;
+            cout << "PREPROC RUN SCHEDULE" << endl;
             cout << "--------------------" << endl;
             cout << "Default schedule: " << conf.simplify_schedule_preproc<< endl;
             std::exit(0);

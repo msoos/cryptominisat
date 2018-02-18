@@ -1944,6 +1944,7 @@ bool Searcher::clean_clauses_if_needed()
     const size_t newZeroDepthAss = trail.size() - lastCleanZeroDepthAssigns;
     if (newZeroDepthAss > 0
         && simpDB_props < 0
+        && newZeroDepthAss > ((double)nVars()*0.05)
     ) {
         if (conf.verbosity) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss  << endl;
