@@ -242,7 +242,6 @@ private:
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
-    void update_glue(Clause& c);
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
         Watched* i

@@ -218,7 +218,6 @@ class DLL_PUBLIC SolverConf
         long max_confl;
 
         //Glues
-        int       update_glues_on_prop;
         int       update_glues_on_analyze;
 
         //OTF stuff

@@ -166,22 +166,6 @@ inline bool PropEngine::prop_bin_cl(
     return true;
 }
 
-inline void PropEngine::update_glue(Clause& c)
-{
-    if (conf.update_glues_on_prop
-        && c.red()
-        && c.stats.glue > conf.glue_put_lev0_if_below_or_eq
-    ) {
-        const uint32_t new_glue = calc_glue(c);
-        if (new_glue < c.stats.glue
-            && new_glue < conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn
-        ) {
-            c.stats.ttl = 1;
-        }
-        c.stats.glue = std::min(c.stats.glue, new_glue);
-    }
-}
-
 template<bool update_bogoprops>
 inline
 bool PropEngine::prop_long_cl_any_order(
@@ -225,9 +209,6 @@ bool PropEngine::prop_long_cl_any_order(
         #endif
 
         enqueue<update_bogoprops>(c[0], PropBy(offset));
-        if (!update_bogoprops) {
-            update_glue(c);
-        }
     }
 
     return true;
@@ -334,7 +315,6 @@ PropBy PropEngine::propagate_any_order_fast()
                 qhead = trail.size();
             } else {
                 enqueue<false>(c[0], PropBy(offset));
-                update_glue(c);
             }
 
             nextClause:;
