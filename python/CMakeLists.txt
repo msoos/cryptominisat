@@ -28,7 +28,7 @@ print(sysconfig.get_config_var('CFLAGS'), end = '')"
 execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
 from __future__ import print_function;
 import sysconfig;
-print(sysconfig.get_config_var('LDSHARED').split(maxsplit=1)[1], end = '')"
+print(sysconfig.get_config_var('SHLIBS'), end = '')"
     OUTPUT_VARIABLE PY_LD_CONFIG)
 
 

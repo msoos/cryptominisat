@@ -478,13 +478,26 @@ endmacro()
 # Look for python
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
-find_package(PythonInterp)
-find_package(PythonLibs)
+option(FORCE_PYTHON2 OFF)
+if (NOT FORCE_PYTHON2)
+    find_package(PythonInterp 3)
+    find_package(PythonLibs 3)
+    message(STATUS "Python 3 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    message(STATUS "Python 3 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+    message(STATUS "Python 3 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+    message(STATUS "Python 3 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+endif()
 
-message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-message(STATUS "PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-message(STATUS "PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+if (NOT (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS))
+    message(STATUS "Python 3 not fully found, trying Python 3")
+    find_package(PythonInterp 2)
+    find_package(PythonLibs 2)
+
+    message(STATUS "Python 2 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    message(STATUS "Python 2 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+    message(STATUS "Python 2 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+    message(STATUS "Python 2 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+endif()
 
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)
