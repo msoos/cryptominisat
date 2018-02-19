@@ -19,10 +19,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('CFLAGS'), end='')"
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+from __future__ import print_function;
+import sysconfig;
+print(sysconfig.get_config_var('CFLAGS'), end = '')"
     OUTPUT_VARIABLE PY_C_CONFIG)
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').split(maxsplit=1)[1], end='')"
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+from __future__ import print_function;
+import sysconfig;
+print(sysconfig.get_config_var('LDSHARED').split(maxsplit=1)[1], end = '')"
     OUTPUT_VARIABLE PY_LD_CONFIG)
 
 
