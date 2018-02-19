@@ -325,6 +325,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     return remove_or_shrink_clause(cl, offset);
 }
 
+//returns FALSE in case clause is shortened, and TRUE in case it is removed
 bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
 {
     //Remove or shrink clause
