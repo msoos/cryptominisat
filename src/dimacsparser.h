@@ -164,7 +164,7 @@ bool DimacsParser<C>::readClause(C& in)
             return false;
         }
 
-        if (var >= num_header_vars && strict_header) {
+        if ((int)var >= num_header_vars && strict_header) {
             std::cerr
             << "ERROR! "
             << "Variable requested is larger than the header told us." << endl
