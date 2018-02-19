@@ -407,7 +407,11 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
     tmpStats.numCalled = 1;
     cache_based_data.clear();
     bool need_to_finish = false;
-    randomise_order_of_clauses(clauses);
+
+    //don't randomise if it's too large.
+    if (clauses.size() < 100*10000*1000) {
+        randomise_order_of_clauses(clauses);
+    }
 
     size_t i = 0;
     size_t j = i;
