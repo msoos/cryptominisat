@@ -43,7 +43,7 @@ def cleanup(dat):
     ret = []
     for elem in dat:
         elem = elem.strip()
-        if elem != "":
+        if elem != "" and not "flto" in elem:
             ret.append(elem)
 
 #    if is_apple != "":
