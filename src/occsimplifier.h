@@ -372,22 +372,17 @@ private:
     /////////////////////
     //Variable elimination
 
-    vector<pair<int, int> > varElimComplexity;
+    vector<uint32_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
-        const vector<pair<int, int> >&  varElimComplexity;
+        const vector<uint32_t>&  varElimComplexity;
         bool operator () (const size_t x, const size_t y) const
         {
-            //Smallest cost first
-            if (varElimComplexity[x].first != varElimComplexity[y].first)
-                return varElimComplexity[x].first < varElimComplexity[y].first;
-
-            //Smallest cost first
-            return varElimComplexity[x].second < varElimComplexity[y].second;
+            return varElimComplexity[x] < varElimComplexity[y];
         }
 
         explicit VarOrderLt(
-            const vector<pair<int,int> >& _varElimComplexity
+            const vector<uint32_t>& _varElimComplexity
         ) :
             varElimComplexity(_varElimComplexity)
         {}
@@ -433,8 +428,6 @@ private:
         HeuristicData() :
             bin(0)
             , longer(0)
-            , lit(0)
-            , count(std::numeric_limits<uint32_t>::max())
         {}
 
         uint32_t totalCls() const
@@ -444,11 +437,8 @@ private:
 
         uint32_t bin;
         uint32_t longer;
-        uint32_t lit;
-        uint32_t count; //resolution count (if can be counted, otherwise MAX)
     };
     HeuristicData calc_data_for_heuristic(const Lit lit);
-    std::pair<int, int> strategyCalcVarElimScore(const uint32_t var);
     uint64_t time_spent_on_calc_otf_update;
     uint64_t num_otf_update_until_now;
 
@@ -461,7 +451,7 @@ private:
         , int otherSize
     );
 
-    pair<int, int>  heuristicCalcVarElimScore(const uint32_t var);
+    uint32_t heuristicCalcVarElimScore(const uint32_t var);
     bool resolve_clauses(
         const Watched ps
         , const Watched qs

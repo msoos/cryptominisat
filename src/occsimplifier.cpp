@@ -787,7 +787,7 @@ bool OccSimplifier::eliminate_vars()
             if (!velim_order.inHeap(lit.var())
                 && can_eliminate_var(lit.var())
             ) {
-                varElimComplexity[lit.var()] = strategyCalcVarElimScore(lit.var());
+                varElimComplexity[lit.var()] = heuristicCalcVarElimScore(lit.var());
                 velim_order.insert(lit.var());
             }
         }
@@ -1817,7 +1817,7 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
             continue;
         }
 
-        varElimComplexity[var] = strategyCalcVarElimScore(var);
+        varElimComplexity[var] = heuristicCalcVarElimScore(var);
         velim_order.update(var);
     }
     time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
@@ -2151,7 +2151,6 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
         switch(ws.getType()) {
             case watch_binary_t:
                 ret.bin++;
-                ret.lit += 2;
                 break;
 
             case watch_clause_t: {
@@ -2159,7 +2158,6 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
                 if (!cl->getRemoved()) {
                     assert(!cl->freed() && "Inside occur, so cannot be freed");
                     ret.longer++;
-                    ret.lit += cl->size();
                 }
                 break;
             }
@@ -2327,65 +2325,19 @@ int OccSimplifier::check_empty_resolvent_action(
 
 
 
-pair<int, int> OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
+uint32_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 {
     const Lit lit(var, false);
     const HeuristicData pos = calc_data_for_heuristic(lit);
     const HeuristicData neg = calc_data_for_heuristic(~lit);
-
-    //Estimate cost
-    int posTotalLonger = pos.longer;
-    int negTotalLonger = neg.longer;
-    int normCost;
-    switch(solver->conf.varElimCostEstimateStrategy) {
-        case 0:
-            normCost =
-                  posTotalLonger + negTotalLonger + pos.bin + neg.bin;
-            break;
-
-        case 1:
-            normCost =  posTotalLonger*negTotalLonger
-                + pos.bin*negTotalLonger*2
-                + neg.bin*posTotalLonger*2
-                + pos.bin*neg.bin*3;
-            break;
-
-        case 2:
-            normCost =  pos.totalCls() * neg.totalCls();
-            break;
-
-        default:
-            std::cerr
-            << "ERROR: Invalid var-elim cost estimation strategy"
-            << endl;
-            std::exit(-1);
-    }
-
-    /*if ((pos.longer + pos.tri + pos.bin) <= 2
-        && (neg.longer + neg.tri + neg.bin) <= 2
-    ) {
-        normCost /= 2;
-    }*/
-
-    if (pos.totalCls() == 0
-        || neg.totalCls() == 0
-    ) {
-        normCost = 0;
-    }
-
-    int litCost = pos.lit * neg.lit;
-
-    return std::make_pair(normCost, litCost);
+    return  pos.totalCls() * neg.totalCls();
 }
 
 void OccSimplifier::order_vars_for_elim()
 {
     velim_order.clear();
     varElimComplexity.clear();
-    varElimComplexity.resize(
-        solver->nVars()
-        , std::make_pair<int, int>(1000, 1000)
-    );
+    varElimComplexity.resize(solver->nVars(), 1000);
 
     //Go through all vars
     for (
@@ -2398,7 +2350,7 @@ void OccSimplifier::order_vars_for_elim()
 
         *limit_to_decrease -= 50;
         assert(!velim_order.inHeap(var));
-        varElimComplexity[var] = strategyCalcVarElimScore(var);
+        varElimComplexity[var] = heuristicCalcVarElimScore(var);
         velim_order.insert(var);
     }
     assert(velim_order.heap_property());
@@ -2415,21 +2367,6 @@ void OccSimplifier::order_vars_for_elim()
         << endl;
     }*/
     #endif
-}
-
-std::pair<int, int> OccSimplifier::strategyCalcVarElimScore(const uint32_t var)
-{
-    std::pair<int, int> cost;
-    if (solver->conf.var_elim_strategy == ElimStrategy::heuristic) {
-        cost = heuristicCalcVarElimScore(var);
-    } else {
-        int ret = test_elim_and_fill_resolvents(var);
-
-        cost.first = ret;
-        cost.second = 0;
-    }
-
-    return cost;
 }
 
 void OccSimplifier::check_elimed_vars_are_unassigned() const

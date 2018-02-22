@@ -66,7 +66,6 @@ class Main
         string dratfilname;
         void check_options_correctness();
         void manually_parse_some_options();
-        void parse_var_elim_strategy();
         void handle_drat_option();
         void parse_restart_type();
         void parse_polarity_type();

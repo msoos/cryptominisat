@@ -398,12 +398,6 @@ void Main::add_supported_options()
         , "Var elimination bogoprops M time limit")
     ("emptyelim", po::value(&conf.do_empty_varelim)->default_value(conf.do_empty_varelim)
         , "Perform empty resolvent elimination using bit-map trick")
-    ("elimstrgy", po::value(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.var_elim_strategy))
-        , "Sort variable elimination order by intelligent guessing ('heuristic') or by exact calculation ('calculate')")
-    ("elimcplxupd", po::value(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
-        , "Update estimated elimination complexity on-the-fly while eliminating")
-    ("elimcoststrategy", po::value(&conf.varElimCostEstimateStrategy)->default_value(conf.varElimCostEstimateStrategy)
-        , "How simple strategy (guessing, above) is calculated. Valid values: 0, 1")
     ("strengthen", po::value(&conf.do_strengthen_with_occur)->default_value(conf.do_strengthen_with_occur)
         , "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system")
     ("bva", po::value(&conf.do_bva)->default_value(conf.do_bva)
@@ -860,22 +854,6 @@ void Main::handle_drat_option()
     }
 }
 
-void Main::parse_var_elim_strategy()
-{
-    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
-        conf.var_elim_strategy = ElimStrategy::heuristic;
-    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
-        conf.var_elim_strategy = ElimStrategy::calculate_exactly;
-    } else {
-        std::cerr
-        << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"
-        << var_elim_strategy << "'" << " but that none of the possiblities listed."
-        << endl;
-
-        std::exit(-1);
-    }
-}
-
 void Main::parse_restart_type()
 {
     if (vm.count("restart")) {
@@ -996,7 +974,6 @@ void Main::manually_parse_some_options()
     }
 
     parse_restart_type();
-    parse_var_elim_strategy();
 
     if (conf.preprocess == 2) {
         if (vm.count("input") == 0) {
