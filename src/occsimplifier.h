@@ -116,7 +116,6 @@ struct BVEStats
     uint64_t numRedBinVarRemAdded = 0;
     uint64_t testedToElimVars = 0;
     uint64_t triedToElimVars = 0;
-    uint64_t usedAggressiveCheckToELim = 0;
     uint64_t newClauses = 0;
     uint64_t subsumedByVE = 0;
 
@@ -135,9 +134,6 @@ struct BVEStats
         << " cl-new: " << newClauses
         << " tried: " << triedToElimVars
         << " tested: " << testedToElimVars
-        << " ("
-        << stats_line_percent(usedAggressiveCheckToELim, testedToElimVars)
-        << " % aggressive)"
         << endl;
 
         cout
@@ -171,8 +167,6 @@ struct BVEStats
 
         print_stats_line("c tried to elim"
             , triedToElimVars
-            , stats_line_percent(usedAggressiveCheckToELim, triedToElimVars)
-            , "% aggressively"
         );
 
         print_stats_line("c elim-bin-lt-cl"
@@ -314,7 +308,6 @@ private:
     int64_t  norm_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
-    int64_t  aggressive_elim_time_limit;
     int64_t* limit_to_decrease;
 
     //Start-up
@@ -456,7 +449,6 @@ private:
         const Watched ps
         , const Watched qs
         , const Lit noPosLit
-        , const bool useCache
     );
     void add_pos_lits_to_dummy_and_seen(
         const Watched ps
@@ -465,20 +457,6 @@ private:
     bool add_neg_lits_to_dummy_and_seen(
         const Watched qs
         , const Lit posLit
-    );
-    bool reverse_distillation_of_dummy(
-        const Watched ps
-        , const Watched qs
-        , const Lit posLit
-    );
-    bool subsume_dummy_through_stamping(
-       const Watched ps
-        , const Watched qs
-    );
-    bool aggressiveCheck(
-        const Lit lit
-        , const Lit noPosLit
-        , bool& retval
     );
     bool eliminate_vars();
     void eliminate_empty_resolvent_vars();

@@ -1309,8 +1309,6 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
-    aggressive_elim_time_limit = 300LL *1000LL*solver->conf.aggressive_elim_time_limitM
-        *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
@@ -1575,10 +1573,6 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         return std::numeric_limits<int>::max();
     }
 
-    //Check if we should do aggressive check or not
-    const bool aggressive = (aggressive_elim_time_limit > 0 && !startup);
-    bvestats.usedAggressiveCheckToELim += aggressive;
-
     //set-up
     const Lit lit = Lit(var, false);
     watch_subarray poss = solver->watches[lit];
@@ -1631,7 +1625,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 continue;
 
             //Resolve the two clauses
-            bool tautological = resolve_clauses(*it, *it2, lit, aggressive);
+            bool tautological = resolve_clauses(*it, *it2, lit);
             if (tautological)
                 continue;
 
@@ -1644,7 +1638,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             after_literals += dummy.size();
             if (dummy.size() >= 3)
                 after_long++;
-            if (dummy.size() == 2)
+            else
                 after_bin++;
 
             //Early-abort or over time
@@ -1957,89 +1951,10 @@ bool OccSimplifier::add_neg_lits_to_dummy_and_seen(
     return false;
 }
 
-bool OccSimplifier::reverse_distillation_of_dummy(
-    const Watched ps
-    , const Watched qs
-    , const Lit posLit
-) {
-    /*
-    //TODO
-    //Use watchlists
-    if (numMaxVarElimAggressiveCheck > 0) {
-        if (aggressiveCheck(lit, noPosLit, retval))
-            goto end;
-    }*/
-
-    //Cache can only be used if none are binary
-    if (ps.isBin()
-        || qs.isBin()
-        || !solver->conf.doCache
-        || (!solver->conf.otfHyperbin && solver->drat->enabled())
-    ) {
-        return false;
-    }
-
-    for (size_t i = 0
-        ; i < toClear.size() && aggressive_elim_time_limit > 0
-        ; i++
-    ) {
-        aggressive_elim_time_limit -= 3;
-        const Lit lit = toClear[i];
-        assert(lit.var() != posLit.var());
-
-        //Use cache
-        const vector<LitExtra>& cache = solver->implCache[lit].lits;
-        aggressive_elim_time_limit -= (int64_t)cache.size()/3;
-        for(const LitExtra litextra: cache) {
-            //If redundant, that doesn't help
-            if (!litextra.getOnlyIrredBin())
-                continue;
-
-            const Lit otherLit = litextra.getLit();
-            if (otherLit.var() == posLit.var())
-                continue;
-
-            //If (a) was in original clause
-            //then (a V b) means -b can be put inside
-            if (!seen[(~otherLit).toInt()]) {
-                toClear.push_back(~otherLit);
-                seen[(~otherLit).toInt()] = 1;
-            }
-
-            //If (a V b) is irred in the clause, then done
-            if (seen[otherLit.toInt()]) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool OccSimplifier::subsume_dummy_through_stamping(
-    const Watched ps
-    , const Watched qs
-) {
-    //only if none of the clauses were binary
-    //Otherwise we cannot tell if the value in the cache is dependent
-    //on the binary clause itself, so that would cause a circular de-
-    //pendency
-
-    if (!ps.isBin() && !qs.isBin()) {
-        aggressive_elim_time_limit -= (int64_t)toClear.size()*5;
-        if (solver->stamp.stampBasedClRem(toClear)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool OccSimplifier::resolve_clauses(
     const Watched ps
     , const Watched qs
     , const Lit posLit
-    , const bool aggressive
 ) {
     //If clause has already been freed, skip
     Clause *cl1 = NULL;
@@ -2073,68 +1988,15 @@ bool OccSimplifier::resolve_clauses(
     }
 
     dummy.clear();
-    assert(toClear.empty());
     add_pos_lits_to_dummy_and_seen(ps, posLit);
     bool tautological = add_neg_lits_to_dummy_and_seen(qs, posLit);
-    toClear = dummy;
 
-    if (!tautological && aggressive) {
-        tautological = reverse_distillation_of_dummy(ps, qs, posLit);
-    }
-
-    if (!tautological && aggressive
-        && solver->conf.doStamp
-        && solver->conf.otfHyperbin
-    ) {
-        tautological = subsume_dummy_through_stamping(ps, qs);
-    }
-
-    *limit_to_decrease -= (long)toClear.size()/2 + 1;
-    for (const Lit lit: toClear) {
+    *limit_to_decrease -= (long)dummy.size()/2 + 1;
+    for (const Lit lit: dummy) {
         seen[lit.toInt()] = 0;
     }
-    toClear.clear();
 
     return tautological;
-}
-
-bool OccSimplifier::aggressiveCheck(
-    const Lit lit
-    , const Lit noPosLit
-    , bool& retval
-) {
-    watch_subarray_const ws = solver->watches[lit];
-    aggressive_elim_time_limit -= (int64_t)ws.size()/3 + 2;
-    for(const Watched* it = ws.begin(), *end = ws.end()
-        ; it != end
-        ; ++it
-    ) {
-        //Can't do much with clauses, too expensive
-        if (it->isClause())
-            continue;
-
-        //Handle binary
-        if (it->isBin() && !it->red()) {
-            const Lit otherLit = it->lit2();
-            if (otherLit.var() == noPosLit.var())
-                continue;
-
-            //If (a V b) is irred, and in the clause, then we can remove
-            if (seen[otherLit.toInt()]) {
-                retval = false;
-                return true;
-            }
-
-            //If (a) is in clause
-            //then (a V b) means -b can be put inside
-            if (!seen[(~otherLit).toInt()]) {
-                toClear.push_back(~otherLit);
-                seen[(~otherLit).toInt()] = 1;
-            }
-        }
-    }
-
-    return false;
 }
 
 OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit lit)
@@ -2515,7 +2377,6 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     numRedBinVarRemAdded += other.numRedBinVarRemAdded;
     testedToElimVars += other.testedToElimVars;
     triedToElimVars += other.triedToElimVars;
-    usedAggressiveCheckToELim += other.usedAggressiveCheckToELim;
     newClauses += other.newClauses;
     subsumedByVE  += other.subsumedByVE;
 
