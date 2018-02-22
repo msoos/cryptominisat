@@ -158,8 +158,6 @@ private:
     size_t tried_bin_tri = 0;
     uint64_t subsumedBin = 0;
     uint64_t strBin = 0;
-    uint64_t subsumedTri = 0;
-    uint64_t strTri = 0;
 };
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const

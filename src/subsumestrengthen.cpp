@@ -912,16 +912,15 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     size_t strSucceed = 0;
 
     //Stats
-    int64_t time_limit = 2LL*1000LL*1000LL*1000LL;
+    int64_t time_limit = 2LL*1000LL*1000LL*1000LL
+        *solver->conf.global_timeout_multiplier;
     uint64_t orig_time_limit = time_limit;
     simplifier->limit_to_decrease = &time_limit;
 
     const size_t origTrailSize = solver->trail_size();
     double myTime = cpuTime();
     subsumedBin = 0;
-    subsumedTri = 0;
     strBin = 0;
-    strTri = 0;
 
     //Randomize start in the watchlist
     size_t upI;
@@ -947,8 +946,6 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
         << " upI: " << upI
         << " subs w bin: " << subsumedBin
         << " str w bin: " << strBin
-        << " subs w tri: " << subsumedTri
-        << " str w tri: " << strTri
         << " tried: " << tried_bin_tri
         << " str: " << strSucceed
         //<< " toDecrease: " << *simplifier->limit_to_decrease
