@@ -679,7 +679,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
     const double time_remain =  float_div(*limit_to_decrease, orig_empty_varelim_time_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c Empty resolvent elimed: " << var_elimed
+        << "c [occ-empty-res] Empty resolvent elimed: " << var_elimed
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
@@ -1825,13 +1825,9 @@ void OccSimplifier::update_varelim_complexity_heap(const uint32_t elimed_var)
 
 void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const
 {
-    if (solver->conf.verbosity < 5)
-        return;
-
-    cout << "trying complexity: "
-    << varElimComplexity[var].first
-    << ", " << varElimComplexity[var].second
-    << endl;
+    if (solver->conf.verbosity >= 5) {
+        cout << "trying complexity: " << varElimComplexity[var] << endl;
+    }
 }
 
 void OccSimplifier::set_var_as_eliminated(const uint32_t var, const Lit lit)

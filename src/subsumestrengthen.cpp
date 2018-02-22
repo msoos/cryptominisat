@@ -246,7 +246,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [sub] rem cl: " << subsumed
+        << "c [occ-sub] rem cl: " << subsumed
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " (" << std::setprecision(1) << std::fixed
         << stats_line_percent(wenThrough, simplifier->clauses.size())
@@ -312,7 +312,7 @@ bool SubsumeStrengthen::backward_strengthen_long_with_long()
 
     if (solver->conf.verbosity) {
         cout
-        << "c [str] sub: " << ret.sub
+        << "c [occ-str] sub: " << ret.sub
         << " str: " << ret.str
         << " tried: " << wenThrough << "/" << simplifier->clauses.size()
         << " ("
@@ -943,7 +943,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [sub] tri"
+        << "c [occ-sub] tri"
         << " upI: " << upI
         << " subs w bin: " << subsumedBin
         << " str w bin: " << strBin
