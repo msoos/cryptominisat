@@ -873,6 +873,25 @@ TEST(propagate, prop_many)
     EXPECT_EQ(lits.size(), 10*2);
 }
 
+TEST(propagate, prop_complex)
+{
+    SATSolver s;
+    s.new_vars(30);
+
+    s.add_clause(str_to_cl("-1"));
+    s.add_clause(str_to_cl("1, 2"));
+
+    s.add_clause(str_to_cl("-5, 6"));
+    s.add_clause(str_to_cl("5"));
+
+    s.add_clause(str_to_cl("1, -2, -5, -6, 7"));
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    vector<Lit>::iterator it;
+    it = std::find(lits.begin(), lits.end(), Lit(6, true));
+    EXPECT_EQ(lits.size(), 5);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
