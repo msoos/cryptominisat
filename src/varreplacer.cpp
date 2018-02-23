@@ -276,7 +276,7 @@ end:
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     globalStats += runStats;
-    if (solver->conf.verbosity  >= 1) {
+    if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
