@@ -789,6 +789,89 @@ TEST(statistics, last_vs_sum_conflicts)
     EXPECT_EQ(s.get_last_conflicts(), 2);
 }
 
+TEST(propagate, trivial_1)
+{
+    SATSolver s;
+    s.new_vars(10);
+    s.add_clause(str_to_cl("-1"));
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    vector<Lit>::iterator it;
+    it = std::find(lits.begin(), lits.end(), Lit(0, true));
+    EXPECT_NE(it, lits.end());
+    EXPECT_EQ(lits.size(), 1);
+}
+
+TEST(propagate, trivial_2)
+{
+    SATSolver s;
+    s.new_vars(10);
+    s.add_clause(str_to_cl("-1"));
+    s.add_clause(str_to_cl("-2"));
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    vector<Lit>::iterator it;
+    it = std::find(lits.begin(), lits.end(), Lit(0, true));
+    EXPECT_NE(it, lits.end());
+    it = std::find(lits.begin(), lits.end(), Lit(1, true));
+    EXPECT_NE(it, lits.end());
+
+    EXPECT_EQ(lits.size(), 2);
+}
+
+TEST(propagate, prop_1)
+{
+    SATSolver s;
+    s.new_vars(10);
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("-1"));
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    vector<Lit>::iterator it;
+    it = std::find(lits.begin(), lits.end(), Lit(0, true));
+    EXPECT_NE(it, lits.end());
+    it = std::find(lits.begin(), lits.end(), Lit(1, false));
+    EXPECT_NE(it, lits.end());
+
+    EXPECT_EQ(lits.size(), 2);
+}
+
+TEST(propagate, prop_1_alter)
+{
+    SATSolver s;
+    s.new_vars(10);
+    s.add_clause(str_to_cl("-1"));
+    s.add_clause(str_to_cl("1, 2"));
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    vector<Lit>::iterator it;
+    it = std::find(lits.begin(), lits.end(), Lit(0, true));
+    EXPECT_NE(it, lits.end());
+    it = std::find(lits.begin(), lits.end(), Lit(1, false));
+    EXPECT_NE(it, lits.end());
+    EXPECT_EQ(lits.size(), 2);
+}
+
+TEST(propagate, prop_many)
+{
+    SATSolver s;
+    s.new_vars(30);
+    for(unsigned i = 0; i < 10; i++) {
+        s.add_clause(vector<Lit>{Lit(i*2, true), Lit(i*2+1, true)});
+        s.add_clause(vector<Lit>{Lit(i*2, false)});
+    }
+
+    vector<Lit> lits = s.get_zero_assigned_lits();
+    for(unsigned i = 0; i < 10; i++) {
+        vector<Lit>::iterator it;
+        it = std::find(lits.begin(), lits.end(), Lit(i*2, false));
+        EXPECT_NE(it, lits.end());
+        it = std::find(lits.begin(), lits.end(), Lit(i*2+1, true));
+        EXPECT_NE(it, lits.end());
+    }
+
+    EXPECT_EQ(lits.size(), 10*2);
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
