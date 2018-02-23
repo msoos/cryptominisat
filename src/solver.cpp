@@ -2428,9 +2428,8 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
 
     //Remove duplicates. Because of above replacing-mimicing algo
     //multipe occurrences of literals can be inside
-    vector<Lit>::iterator it;
     std::sort(lits.begin(), lits.end());
-    it = std::unique (lits.begin(), lits.end());
+    vector<Lit>::iterator it = std::unique (lits.begin(), lits.end());
     lits.resize( std::distance(lits.begin(),it) );
 
     //Update to outer without BVA

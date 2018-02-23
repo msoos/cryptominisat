@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include "cryptominisat5/cryptominisat.h"
 #include "src/solverconf.h"
+#include "test_helper.h"
 using namespace CMSat;
 #include <vector>
 using std::vector;
@@ -43,7 +44,7 @@ TEST(normal_interface, onelit)
 {
     SATSolver s;
     s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(str_to_cl("1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
     EXPECT_EQ( s.okay(), true);
@@ -53,8 +54,8 @@ TEST(normal_interface, twolit)
 {
     SATSolver s;
     s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_clause(vector<Lit>{Lit(0, true)});
+    s.add_clause(str_to_cl("1"));
+    s.add_clause(str_to_cl("-1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
@@ -64,8 +65,8 @@ TEST(normal_interface, multi_solve_unsat)
 {
     SATSolver s;
     s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_clause(vector<Lit>{Lit(0, true)});
+    s.add_clause(str_to_cl("1"));
+    s.add_clause(str_to_cl("-1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
@@ -81,8 +82,8 @@ TEST(normal_interface, multi_solve_unsat_multi_thread)
     SATSolver s;
     s.set_num_threads(2);
     s.new_var();
-    s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_clause(vector<Lit>{Lit(0, true)});
+    s.add_clause(str_to_cl("1"));
+    s.add_clause(str_to_cl("-1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_False);
     EXPECT_EQ( s.okay(), false);
@@ -98,11 +99,11 @@ TEST(normal_interface, solve_multi_thread)
     SATSolver s;
     s.set_num_threads(2);
     s.new_vars(2);
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s.add_clause(str_to_cl("1, 2"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
 
-    s.add_clause(vector<Lit>{Lit(0, true)});
+    s.add_clause(str_to_cl("-1"));
     ret = s.solve();
     EXPECT_EQ( ret, l_True);
     EXPECT_EQ(s.get_model()[0], l_False);
@@ -114,7 +115,7 @@ TEST(normal_interface, logfile)
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
     s->new_vars(2);
-    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s->add_clause(str_to_cl("1, 2"));
     lbool ret = s->solve();
     EXPECT_EQ( ret, l_True);
     delete s;
@@ -134,8 +135,8 @@ TEST(normal_interface, logfile2)
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
     s->new_vars(2);
-    s->add_clause(vector<Lit>{Lit(0, false)});
-    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s->add_clause(str_to_cl("1"));
+    s->add_clause(str_to_cl("1, 2"));
     lbool ret = s->solve();
     s->add_clause(vector<Lit>{Lit(1, false)});
     ret = s->solve();
@@ -162,8 +163,8 @@ TEST(normal_interface, logfile2_assumps)
     SATSolver* s = new SATSolver();
     s->log_to_file("testfile");
     s->new_vars(2);
-    s->add_clause(vector<Lit>{Lit(0, false)});
-    s->add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
+    s->add_clause(str_to_cl("1"));
+    s->add_clause(str_to_cl("1, 2"));
     std::vector<Lit> assumps {Lit(0, false), Lit(1, true)};
     lbool ret = s->solve(&assumps);
     s->add_clause(vector<Lit>{Lit(1, false)});
@@ -493,7 +494,7 @@ TEST(xor_interface, xor_norm_mix_unsat_multi_thread)
     SATSolver s;
     //s.set_num_threads(3);
     s.new_vars(3);
-    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(str_to_cl("1"));
     s.add_xor_clause(vector<uint32_t>{0U, 1U, 2U}, false);
     s.add_clause(vector<Lit>{Lit(1, false)});
     s.add_clause(vector<Lit>{Lit(2, false)});
@@ -506,7 +507,7 @@ TEST(xor_interface, unit)
 {
     SATSolver s;
     s.new_vars(3);
-    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(str_to_cl("1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
 
@@ -519,7 +520,7 @@ TEST(xor_interface, unit2)
 {
     SATSolver s;
     s.new_vars(3);
-    s.add_clause(vector<Lit>{Lit(0, false)});
+    s.add_clause(str_to_cl("1"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
 
@@ -541,8 +542,8 @@ TEST(xor_interface, unit3)
 {
     SATSolver s;
     s.new_vars(3);
-    s.add_clause(vector<Lit>{Lit(0, false)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    s.add_clause(str_to_cl("1"));
+    s.add_clause(str_to_cl("-1, -2"));
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_True);
 
@@ -595,10 +596,10 @@ TEST(xor_interface, abort_early)
     s.set_max_confl(0);
     s.new_vars(2);
 
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("1, -2"));
+    s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_Undef);
@@ -614,10 +615,10 @@ TEST(xor_interface, abort_once_continue_next)
     s.set_max_confl(0);
     s.new_vars(2);
 
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("1, -2"));
+    s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     lbool ret = s.solve();
     EXPECT_EQ( ret, l_Undef);
@@ -739,9 +740,9 @@ TEST(statistics, one_confl)
     SATSolver s;
     s.set_no_simplify();
     s.new_vars(10);
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("1, -2"));
+    s.add_clause(str_to_cl("-1, 2"));
 
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_True);
@@ -754,10 +755,10 @@ TEST(statistics, unsat)
     SATSolver s;
     s.set_no_simplify();
     s.new_vars(10);
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("1, -2"));
+    s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     lbool ret = s.solve();
     EXPECT_EQ(ret, l_False);
@@ -770,10 +771,10 @@ TEST(statistics, last_vs_sum_conflicts)
     SATSolver s;
     s.set_no_simplify();
     s.new_vars(10);
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, false), Lit(1, true)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, false)});
-    s.add_clause(vector<Lit>{Lit(0, true), Lit(1, true)});
+    s.add_clause(str_to_cl("1, 2"));
+    s.add_clause(str_to_cl("1, -2"));
+    s.add_clause(str_to_cl("-1, 2"));
+    s.add_clause(str_to_cl("-1, -2"));
 
     s.set_max_confl(0);
     lbool ret = s.solve();
