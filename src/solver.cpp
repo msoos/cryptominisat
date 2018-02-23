@@ -1661,10 +1661,6 @@ bool Solver::execute_inprocess_strategy(
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
-            cout << "c --> Executing strategy token: " << token << '\n';
-        }
-
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
             if (conf.perform_occur_based_simp
                 && occsimplifier
@@ -1694,6 +1690,10 @@ bool Solver::execute_inprocess_strategy(
             #ifdef SLOW_DEBUG
             solver->check_stats();
             #endif
+        }
+
+        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
+            cout << "c --> Executing strategy token: " << token << '\n';
         }
 
         if (token == "find-comps") {
