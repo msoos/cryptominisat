@@ -249,8 +249,6 @@ class Tester:
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--cachesize %s " % random.randint(10, 100)
             cmd += "--cachecutoff %s " % random.randint(0, 2000)
-            cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
-            cmd += "--elimcplxupd %s " % random.randint(0, 1)
             cmd += "--occredmax %s " % random.randint(0, 100)
             cmd += "--extscc %s " % random.randint(0, 1)
             cmd += "--distill %s " % random.randint(0, 1)
@@ -278,8 +276,7 @@ class Tester:
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp",
-                    "elimcoststrategy"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
             opts.extend(self.extra_options_if_supported)
 
