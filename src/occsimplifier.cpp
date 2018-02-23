@@ -788,7 +788,8 @@ bool OccSimplifier::eliminate_vars()
             *1000ULL*1000ULL
             *solver->conf.global_timeout_multiplier;
 
-        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit)) {
+        //only subsume -- it seems to allow for more varelim
+        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit, true)) {
             goto end;
         }
 

@@ -57,6 +57,7 @@ public:
                              bool only_subsume = false);
 
     struct Sub0Ret {
+        ClauseStats stats;
         bool subsumedIrred = 0;
         uint32_t numSubsumed = 0;
     };
