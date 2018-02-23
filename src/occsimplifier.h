@@ -288,10 +288,6 @@ private:
     //debug
     bool subsetReverse(const Clause& B) const;
 
-    bool fill_occur();
-    bool fill_occur_and_print_stats();
-    void finishUp(size_t origTrailSize);
-
     //Persistent data
     Solver*  solver;              ///<The solver this simplifier is connected to
     vector<uint16_t>& seen;
@@ -311,6 +307,9 @@ private:
     int64_t* limit_to_decrease;
 
     //Start-up
+    bool fill_occur();
+    bool fill_occur_and_print_stats();
+    void finishUp(size_t origTrailSize);
     struct LinkInData
     {
         LinkInData()
@@ -347,6 +346,7 @@ private:
     lbool       clean_clause(ClOffset c);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
+    uint32_t    sum_irred_cls() const;
 
     struct watch_sort_smallest_first {
         bool operator()(const Watched& first, const Watched& second)
@@ -364,7 +364,7 @@ private:
 
     /////////////////////
     //Variable elimination
-
+    uint32_t grow = 0; /// maximum grow rate for clauses
     vector<uint32_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {

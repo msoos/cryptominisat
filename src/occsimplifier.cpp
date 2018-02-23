@@ -707,6 +707,20 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     return true;
 }
 
+uint32_t OccSimplifier::sum_irred_cls() const
+{
+    uint32_t sum = 0;
+    for (ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->freed() || cl->getRemoved() || cl->red())
+            continue;
+
+        assert(cl->size() > 2);
+        sum++;
+    }
+    return sum + solver->binTri.irredBins;
+}
+
 bool OccSimplifier::eliminate_vars()
 {
     //Set-up
@@ -725,11 +739,19 @@ bool OccSimplifier::eliminate_vars()
 
     //Go through the ordered list of variables to eliminate
     int64_t last_elimed = 1;
+    grow = 0;
+    uint32_t n_cls_last  = sum_irred_cls();
+    uint32_t n_cls_init = n_cls_last;
+    uint32_t n_vars_last = solver->get_num_free_vars();
     while(last_elimed > 0
         && varelim_num_limit > 0
         && *limit_to_decrease > 0
+        && grow < 1000
     ) {
         last_elimed = 0;
+        solver->clean_occur_from_removed_clauses_only_smudged();
+        limit_to_decrease = &norm_varelim_time_limit;
+
         while(!velim_order.empty()
             && *limit_to_decrease > 0
             && varelim_num_limit > 0
@@ -793,6 +815,17 @@ bool OccSimplifier::eliminate_vars()
         }
 
         impl_sub_lits.clear();
+
+        uint32_t n_cls_now   = sum_irred_cls();
+        uint32_t n_vars_now  = solver->get_num_free_vars();
+        double cl_inc_rate = 2.0;
+        if (n_cls_last != 0) {
+          cl_inc_rate = (double)n_cls_now   / n_cls_last;
+        }
+        double var_dec_rate = 1.0;
+        if (n_vars_now != 0) {
+            var_dec_rate = (double)n_vars_last / n_vars_now;
+        }
         if (solver->conf.verbosity) {
             double time_used = cpuTime() - after_sub_time;
             cout << "c [occ-bve] process impls_sub_lits "
@@ -800,6 +833,25 @@ bool OccSimplifier::eliminate_vars()
             << endl;
 
             cout << "c [occ-bve] iter v-elim " << last_elimed << endl;
+            cout << "c cl_inc_rate: " << cl_inc_rate
+            << " var_dec_rate: " << var_dec_rate
+            << " grow: " << grow << endl;
+        }
+
+        if (n_cls_now > n_cls_init || cl_inc_rate > (var_dec_rate*0.95)) {
+            break;
+        }
+        n_cls_last = n_cls_now;
+        n_vars_last = n_vars_now;
+
+        if (grow == 0) {
+            if (n_vars_now > 500ULL*1000ULL) {
+                grow = 8;
+            } else {
+                grow = 4;
+            }
+        } else {
+            grow *= 2;
         }
     }
 
@@ -907,6 +959,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
+        } else if (token == "occ-backw-sub-long") {
+            sub_str->backward_subsumption_long_with_long();
+            free_clauses_to_free();
+            solver->clean_occur_from_removed_clauses_only_smudged();
         } else if (token == "occ-xor") {
             #ifdef USE_M4RI
             if (solver->conf.doFindXors
@@ -1642,7 +1698,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 after_bin++;
 
             //Early-abort or over time
-            if (after_clauses > before_clauses
+            if (after_clauses > (before_clauses + grow)
                 //Too long resolvent
                 || (solver->conf.velim_resolvent_too_large != -1
                     && ((int)dummy.size() > solver->conf.velim_resolvent_too_large))
@@ -1757,13 +1813,11 @@ bool OccSimplifier::add_varelim_resolvent(
         linkInClause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
-        SubsumeStrengthen::Sub1Ret ret = sub_str->strengthen_subsume_and_unlink_and_markirred(offset);
-        bvestats.subsumedByVE += ret.sub;
+        bvestats.subsumedByVE += sub_str->subsume_and_unlink_and_markirred(offset);
 
     } else if (finalLits.size() == 2) {
         std::sort(finalLits.begin(), finalLits.end());
-        SubsumeStrengthen::Sub1Ret ret = sub_str->sub_str_with_implicit(finalLits);
-        bvestats.subsumedByVE += ret.sub;
+        bvestats.subsumedByVE +=sub_str->backw_sub_with_implicit(finalLits);
         if (!solver->ok) {
             return false;
         }

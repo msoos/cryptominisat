@@ -83,6 +83,18 @@ template SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     , const bool removeImplicit
 );
 
+uint32_t SubsumeStrengthen::backw_sub_with_implicit(
+    const vector<Lit>& lits
+) {
+    Sub0Ret ret = subsume_and_unlink(
+        CL_OFFSET_MAX
+        , lits
+        , calcAbstraction(lits)
+        , false
+    );
+    return ret.numSubsumed;
+}
+
 /**
 @brief Backward-subsumption using given clause
 */
@@ -440,7 +452,8 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
-bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
+bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit,
+                                            const bool only_subsume)
 {
     orig_limit *= solver->conf.global_timeout_multiplier;
     int64_t* orig_limit_ptr = simplifier->limit_to_decrease;
@@ -459,8 +472,12 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit)
         if (cl->freed() || cl->getRemoved())
             continue;
 
-        auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
-        stat += ret;
+        if (only_subsume) {
+            stat.sub += subsume_and_unlink_and_markirred(offs);
+        } else {
+            auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
+            stat += ret;
+        }
         if (!solver->ok) {
             goto end;
         }
@@ -804,7 +821,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
     return *this;
 }
 
-SubsumeStrengthen::Sub1Ret SubsumeStrengthen::sub_str_with_implicit(
+SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_with_implicit(
     const vector<Lit>& lits
 ) {
     subs.clear();
@@ -882,7 +899,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bins_watch(
             tmpLits[1] = ws[i].lit2();
             std::sort(tmpLits.begin(), tmpLits.end());
 
-            Sub1Ret ret = sub_str_with_implicit(tmpLits);
+            Sub1Ret ret = backw_sub_str_with_implicit(tmpLits);
             subsumedBin += ret.sub;
             strBin += ret.str;
             if (!solver->ok)

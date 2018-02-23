@@ -48,15 +48,16 @@ public:
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
+    uint32_t backw_sub_with_implicit(const vector<Lit>& lits);
     bool backw_sub_str_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
     );
-    bool handle_sub_str_with(size_t orig_limit = 400ULL*1000ULL*1000ULL);
+    bool handle_sub_str_with(size_t orig_limit = 400ULL*1000ULL*1000ULL,
+                             bool only_subsume = false);
 
     struct Sub0Ret {
         bool subsumedIrred = 0;
-        ClauseStats stats;
         uint32_t numSubsumed = 0;
     };
 
@@ -74,7 +75,7 @@ public:
         bool subsumedIrred = false;
     };
 
-    Sub1Ret sub_str_with_implicit(const vector<Lit>& lits);
+    Sub1Ret backw_sub_str_with_implicit(const vector<Lit>& lits);
     Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     struct Stats

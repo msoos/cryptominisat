@@ -171,7 +171,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc_max(3)
         , simplify_schedule_startup(
             "sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
+            "occ-clean-implicit, occ-backw-sub-long, occ-bve, occ-backw-sub-str, "
             "scc-vrepl,"
             "sub-str-cls-with-bin,"
             #ifdef USE_GAUSS
@@ -214,7 +214,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurIrredMB  (800)
         , maxOccurRedMB    (800)
         , maxOccurRedLitLinkedM(50)
-        , subsume_gothrough_multip(10.0)
+        , subsume_gothrough_multip(2.0)
 
         //Distillation
         , distill_queue_by(2)
