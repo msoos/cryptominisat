@@ -482,6 +482,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
         cla_inc *= 1e-20;
+        assert(cla_inc != 0);
     }
 }
 

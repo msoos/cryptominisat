@@ -3156,7 +3156,7 @@ void Searcher::read_long_cls(
         #endif
         );
         if (red) {
-            cl->makeRed(cl_stats.glue);
+            cl->makeRed(cl_stats.glue, cla_inc);
         }
         cl->stats = cl_stats;
         attachClause(*cl);

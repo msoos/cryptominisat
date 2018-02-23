@@ -122,7 +122,7 @@ struct ClauseStats
         #endif
         which_red_array = 2;
         glue = 1000;
-        activity = 0;
+        activity = 1;
         ttl = 0;
         marked_clause = 0;
         last_touched = 0;
@@ -133,7 +133,7 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:2;
-    float   activity = 0.0;
+    float   activity = 1.0;
     uint32_t last_touched;
     #ifdef STATS_NEEDED
     int64_t ID;
@@ -339,9 +339,10 @@ public:
         isRed = false;
     }
 
-    void makeRed(const uint32_t newGlue)
+    void makeRed(const uint32_t newGlue, const double init_activity = 1.0)
     {
         stats.glue = newGlue;
+        stats.activity = init_activity;
         isRed = true;
     }
 
