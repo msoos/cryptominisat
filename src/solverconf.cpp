@@ -254,7 +254,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Timeouts
         , orig_global_timeout_multiplier(2.0)
-        , global_timeout_multiplier(1.0)
+        , global_timeout_multiplier(1.0) // WILL BE UNSET, NOT RELEVANT
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
 
