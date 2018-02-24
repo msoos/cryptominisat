@@ -846,11 +846,7 @@ bool OccSimplifier::eliminate_vars()
         n_vars_last = n_vars_now;
 
         if (grow == 0) {
-            if (n_vars_now > 500ULL*1000ULL) {
-                grow = 8;
-            } else {
-                grow = 4;
-            }
+            grow = 8;
         } else {
             grow *= 2;
         }
