@@ -2433,10 +2433,12 @@ vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
     lits.resize( std::distance(lits.begin(),it) );
 
     //Update to outer without BVA
-    vector<uint32_t> my_map = build_outer_to_without_bva_map();
-    updateLitsMap(lits, my_map);
-    for(const Lit lit: lits) {
-        assert(lit.var() < nVarsOutside());
+    if (backnumber) {
+        vector<uint32_t> my_map = build_outer_to_without_bva_map();
+        updateLitsMap(lits, my_map);
+        for(const Lit lit: lits) {
+            assert(lit.var() < nVarsOutside());
+        }
     }
 
     return lits;
