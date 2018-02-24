@@ -54,8 +54,10 @@ bool BVA::bounded_var_addition()
         cout << "c [occ-bva] Running BVA" << endl;
     }
 
-    if (!solver->propagate_occur())
+    if (!solver->propagate_occur()) {
+        solver->ok = false;
         return false;
+    }
 
     simplifier->limit_to_decrease = &bounded_var_elim_time_limit;
     int64_t limit_orig = *simplifier->limit_to_decrease;

@@ -493,10 +493,7 @@ void PropEngine::print_trail()
 
 bool PropEngine::propagate_occur()
 {
-    if (!ok)
-        return false;
-
-    assert(decisionLevel() == 0);
+    assert(ok);
 
     while (qhead < trail_size()) {
         const Lit p = trail[qhead];
@@ -527,7 +524,6 @@ bool PropEngine::propagate_binary_clause_occur(const Watched& ws)
 {
     const lbool val = value(ws.lit2());
     if (val == l_False) {
-        ok = false;
         return false;
     }
 
@@ -569,7 +565,6 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
 
     //Problem is UNSAT
     if (numUndef == 0) {
-        ok = false;
         return false;
     }
 

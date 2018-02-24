@@ -949,6 +949,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         solver->check_implicit_stats(true);
         #endif
         if (!solver->propagate_occur()) {
+            solver->ok = false;
             return false;
         }
         set_limits();
@@ -1272,7 +1273,9 @@ void OccSimplifier::finishUp(
     const double myTime = cpuTime();
 
     //Add back clauses to solver
-    solver->propagate_occur();
+    if (solver->ok) {
+        solver->propagate_occur();
+    }
     remove_all_longs_from_watches();
     add_back_to_solver();
 
