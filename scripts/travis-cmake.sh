@@ -70,6 +70,12 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
+    NORMAL_PYTHON2)
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        eval cmake -FORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
+                   "${SOURCE_DIR}"
+    ;;
+
     LARGEMEM)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
@@ -265,7 +271,11 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 fi
 
 python --version
-export MYPYTHON=python3
+if [ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]; then
+    export MYPYTHON=python2
+else
+    export MYPYTHON=python3
+fi
 echo "MYPYTHON is '${MYPYTHON}'"
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
