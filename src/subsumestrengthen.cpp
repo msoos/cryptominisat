@@ -959,7 +959,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-sub] tri"
+        << "c [occ-sub]"
         << " upI: " << upI
         << " subs w bin: " << subsumedBin
         << " str w bin: " << strBin
@@ -974,7 +974,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "occ-bckw-sub-str-w-bin-tri"
+            , "occ-bckw-sub-str-w-bin"
             , time_used
             , time_out
             , time_remain
