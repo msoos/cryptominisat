@@ -1903,6 +1903,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     assert(solver->ok);
     print_var_elim_complexity_stats(var);
     bvestats.testedToElimVars++;
+    const Lit lit = Lit(var, false);
 
     //Heuristic says no, or we ran out of time
     if (test_elim_and_fill_resolvents(var) == std::numeric_limits<int>::max()
@@ -1912,7 +1913,6 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     }
     bvestats.triedToElimVars++;
 
-    const Lit lit = Lit(var, false);
     print_var_eliminate_stat(lit);
 
     //Remove clauses
