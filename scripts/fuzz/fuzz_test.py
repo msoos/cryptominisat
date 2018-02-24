@@ -223,6 +223,43 @@ class Tester:
 
         return False
 
+    def create_rnd_sched(self, string_list):
+        opts = string_list.split(",")
+        opts = [a.strip(" ") for a in opts]
+        opts = sorted(list(set(opts)))
+        if options.verbose:
+            print("available schedule options: %s" % opts)
+
+        sched = []
+        for _ in range(int(random.gammavariate(12, 0.7))):
+            sched.append(random.choice(opts))
+
+        if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
+            sched.append("occ-gauss")
+
+        return sched
+
+    def rnd_schedule_all(self, preproc):
+        sched_opts = "handle-comps,"
+        sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
+        sched_opts += "sub-impl, intree-probe, probe,"
+        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
+        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+        sched_opts += "check-cache-size, renumber"
+
+        # type of schedule
+        cmd = ""
+        sched = ",".join(self.create_rnd_sched(sched_opts))
+        if sched != "" and not preproc:
+            cmd += "--schedule %s " % sched
+
+        sched = ",".join(self.create_rnd_sched(sched_opts))
+        if sched != "":
+            cmd += "--preschedule %s " % sched
+
+        return cmd
+
     def random_options(self, preproc=False):
         cmd = " --zero-exit-status "
 
@@ -283,44 +320,7 @@ class Tester:
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
 
-            def create_rnd_sched(string_list):
-                opts = string_list.split(",")
-                opts = [a.strip(" ") for a in opts]
-                opts = list(set(opts))
-                if options.verbose:
-                    print("available schedule options: %s" % opts)
-
-                sched = []
-                for _ in range(int(random.gammavariate(12, 0.7))):
-                    sched.append(random.choice(opts))
-
-                if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
-                    sched.append("occ-gauss")
-
-                return sched
-
-            cmd += self.add_schedule_options(create_rnd_sched, preproc)
-
-        return cmd
-
-    def add_schedule_options(self, create_rnd_sched, preproc):
-        cmd = ""
-
-        sched_opts = "handle-comps,"
-        sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
-        sched_opts += "sub-impl, intree-probe, probe,"
-        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
-        sched_opts += "check-cache-size, renumber"
-
-        sched = ",".join(create_rnd_sched(sched_opts))
-        if sched != "" and not preproc:
-            cmd += "--schedule %s " % sched
-
-        sched = ",".join(create_rnd_sched(sched_opts))
-        if sched != "":
-            cmd += "--preschedule %s " % sched
+            cmd += self.rnd_schedule_all(preproc)
 
         return cmd
 
