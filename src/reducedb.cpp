@@ -136,7 +136,7 @@ void ReduceDB::handle_lev2()
     solver->check_no_removed_or_freed_cl_in_watch();
     #endif
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev2]"
         << " marked: " << cl_marked
         << " ttl:" << cl_ttl
@@ -197,7 +197,7 @@ void ReduceDB::handle_lev1()
     }
     solver->longRedCls[1].resize(j);
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev1]"
         << " used recently: " << used_recently
         << " not used recently: " << non_recent_use

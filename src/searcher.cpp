@@ -1787,7 +1787,7 @@ void Searcher::check_calc_features()
 void Searcher::print_restart_header()
 {
     //Print restart output header
-    if ((lastRestartPrintHeader == 0 || (lastRestartPrintHeader + 20000) < sumConflicts)
+    if ((lastRestartPrintHeader == 0 || (lastRestartPrintHeader + 1600000) < sumConflicts)
         && conf.verbosity
     ) {
         cout
