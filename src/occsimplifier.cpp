@@ -1274,7 +1274,7 @@ void OccSimplifier::finishUp(
 
     //Add back clauses to solver
     if (solver->ok) {
-        solver->propagate_occur();
+        solver-> ok = solver->propagate_occur();
     }
     remove_all_longs_from_watches();
     add_back_to_solver();
