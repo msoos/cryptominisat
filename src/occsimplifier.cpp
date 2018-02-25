@@ -1656,11 +1656,8 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     }
 
     // Count clauses/literals after elimination
-    uint32_t before_clauses = pos.bin + pos.longer + neg.bin + neg.longer;
+    uint32_t before_clauses = pos.totalCls() + neg.totalCls();
     uint32_t after_clauses = 0;
-    uint32_t after_long = 0;
-    uint32_t after_bin = 0;
-    uint32_t after_literals = 0;
 
     size_t at_poss = 0;
     for (const Watched* it = poss.begin(), *end = poss.end()
@@ -1689,14 +1686,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
 
-            //Update after-stats
             after_clauses++;
-            after_literals += dummy.size();
-            if (dummy.size() >= 3)
-                after_long++;
-            else
-                after_bin++;
-
             //Early-abort or over time
             if (after_clauses > (before_clauses + grow)
                 //Too long resolvent
@@ -1732,12 +1722,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
         gate_varelim_clause->stats.marked_clause = false;
     }
 
-    //Smaller value returned, the better
-    int cost = (int)after_long + (int)after_bin*(int)3
-        - (int)pos.longer - (int)neg.longer
-        - (int)pos.bin*3 - (int)neg.bin*(int)3;
-
-    return cost;
+    return -1;
 }
 
 void OccSimplifier::printOccur(const Lit lit) const
