@@ -1946,7 +1946,7 @@ bool Searcher::clean_clauses_if_needed()
         && simpDB_props < 0
         && newZeroDepthAss > ((double)nVars()*0.05)
     ) {
-        if (conf.verbosity) {
+        if (conf.verbosity >= 2) {
             cout << "c newZeroDepthAss : " << newZeroDepthAss
             << " -- "
             << (double)newZeroDepthAss/(double)nVars()*100.0
