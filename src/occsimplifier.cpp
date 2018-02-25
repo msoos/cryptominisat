@@ -972,7 +972,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
         } else if (token == "occ-backw-sub-long") {
-            sub_str->backward_subsumption_long_with_long();
+            sub_str->backw_sub_long_with_long();
             free_clauses_to_free();
             solver->clean_occur_from_removed_clauses_only_smudged();
         } else if (token == "occ-xor") {
@@ -1083,23 +1083,25 @@ bool OccSimplifier::backward_sub_str()
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
-    if (!sub_str->backward_sub_str_with_bins()) {
+    if (!sub_str->backw_sub_str_long_with_bins()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
+
+    sub_str->backw_sub_long_with_long();
     if (solver->must_interrupt_asap())
         goto end;
 
-    sub_str->backward_subsumption_long_with_long();
-    if (solver->must_interrupt_asap())
-        goto end;
-
-    if (!sub_str->backward_strengthen_long_with_long()) {
+    if (!sub_str->backw_str_long_with_long()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
-    if (solver->must_interrupt_asap())
-        goto end;
 
-    if (!sub_str->handle_sub_str_with()) {
+    if (!sub_str->handle_sub_str_with()
+        || solver->must_interrupt_asap()
+    ) {
         goto end;
     }
 

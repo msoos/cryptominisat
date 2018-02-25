@@ -42,13 +42,13 @@ public:
     SubsumeStrengthen(OccSimplifier* simplifier, Solver* solver);
     size_t mem_used() const;
 
-    void backward_subsumption_long_with_long();
-    bool backward_strengthen_long_with_long();
-    bool backward_sub_str_with_bins();
+    void backw_sub_long_with_long();
+    bool backw_str_long_with_long();
+    bool backw_sub_str_long_with_bins();
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
-    uint32_t backw_sub_with_implicit(const vector<Lit>& lits);
+    uint32_t backw_sub_long_with_implicit(const vector<Lit>& lits);
     bool backw_sub_str_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
@@ -76,7 +76,7 @@ public:
         bool subsumedIrred = false;
     };
 
-    Sub1Ret backw_sub_str_with_implicit(const vector<Lit>& lits);
+    Sub1Ret backw_sub_str_long_with_implicit(const vector<Lit>& lits);
     Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     struct Stats

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "solver.h"
 #include "solvertypes.h"
+#include "subsumeimplicit.h"
 #include <array>
 
 //#define VERBOSE_DEBUG
@@ -83,7 +84,7 @@ template SubsumeStrengthen::Sub0Ret SubsumeStrengthen::subsume_and_unlink(
     , const bool removeImplicit
 );
 
-uint32_t SubsumeStrengthen::backw_sub_with_implicit(
+uint32_t SubsumeStrengthen::backw_sub_long_with_implicit(
     const vector<Lit>& lits
 ) {
     Sub0Ret ret = subsume_and_unlink(
@@ -214,7 +215,7 @@ void SubsumeStrengthen::randomise_clauses_order()
     }
 }
 
-void SubsumeStrengthen::backward_subsumption_long_with_long()
+void SubsumeStrengthen::backw_sub_long_with_long()
 {
     //If clauses are empty, the system below segfaults
     if (simplifier->clauses.empty())
@@ -281,7 +282,7 @@ void SubsumeStrengthen::backward_subsumption_long_with_long()
     runStats.subsumeTime += cpuTime() - myTime;
 }
 
-bool SubsumeStrengthen::backward_strengthen_long_with_long()
+bool SubsumeStrengthen::backw_str_long_with_long()
 {
     assert(solver->ok);
 
@@ -821,7 +822,7 @@ SubsumeStrengthen::Stats& SubsumeStrengthen::Stats::operator+=(const Stats& othe
     return *this;
 }
 
-SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_with_implicit(
+SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
     const vector<Lit>& lits
 ) {
     subs.clear();
@@ -899,7 +900,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bins_watch(
             tmpLits[1] = ws[i].lit2();
             std::sort(tmpLits.begin(), tmpLits.end());
 
-            Sub1Ret ret = backw_sub_str_with_implicit(tmpLits);
+            Sub1Ret ret = backw_sub_str_long_with_implicit(tmpLits);
             subsumedBin += ret.sub;
             strBin += ret.str;
             if (!solver->ok)
@@ -924,7 +925,7 @@ bool SubsumeStrengthen::backw_sub_str_with_bins_watch(
     return true;
 }
 
-bool SubsumeStrengthen::backward_sub_str_with_bins()
+bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 {
     size_t strSucceed = 0;
 
@@ -959,7 +960,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     const double time_remain = float_div(*simplifier->limit_to_decrease, orig_time_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-sub]"
+        << "c [occ-backw-sub-str-long-w-bins]"
         << " upI: " << upI
         << " subs w bin: " << subsumedBin
         << " str w bin: " << strBin
@@ -974,7 +975,7 @@ bool SubsumeStrengthen::backward_sub_str_with_bins()
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "occ-bckw-sub-str-w-bin"
+            , "occ-backw-sub-str-long-w-bins"
             , time_used
             , time_out
             , time_remain

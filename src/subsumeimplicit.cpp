@@ -43,6 +43,8 @@ void SubsumeImplicit::try_subsume_bin(
     const Lit lit
     , Watched* i
     , Watched*& j
+    , int64_t *timeAvail
+    , TouchList* touched
 ) {
     //Subsume bin with bin
     if (i->lit2() == lastLit2) {
@@ -52,9 +54,12 @@ void SubsumeImplicit::try_subsume_bin(
 
         runStats.remBins++;
         assert(i->lit2().var() != lit.var());
-        timeAvailable -= 30;
-        timeAvailable -= solver->watches[i->lit2()].size();
+        *timeAvail -= 30;
+        *timeAvail -= solver->watches[i->lit2()].size();
         removeWBin(solver->watches, i->lit2(), lit, i->red());
+        if (touched) {
+            touched->touch(i->lit2());
+        }
         if (i->red()) {
             solver->binTri.redBins--;
         } else {
@@ -69,6 +74,49 @@ void SubsumeImplicit::try_subsume_bin(
         lastRed = i->red();
         *j++ = *i;
     }
+}
+
+uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
+                                           int64_t* timeAvail,
+                                           TouchList* touched)
+{
+    runStats.numWatchesLooked++;
+    const Lit lit = Lit::toLit(at);
+    watch_subarray ws = solver->watches[lit];
+
+    if (ws.size() > 1) {
+        *timeAvail -= (int64_t)(ws.size()*std::ceil(std::log((double)ws.size())) + 20);
+        std::sort(ws.begin(), ws.end(), WatchSorterBinTriLong());
+    }
+    /*cout << "---> Before" << endl;
+    print_watch_list(ws, lit);*/
+
+    Watched* i = ws.begin();
+    Watched* j = i;
+    clear();
+
+    for (Watched* end = ws.end(); i != end; i++) {
+        if (*timeAvail < 0) {
+            *j++ = *i;
+            continue;
+        }
+
+        switch(i->getType()) {
+            case CMSat::watch_clause_t:
+                *j++ = *i;
+                break;
+
+            case CMSat::watch_binary_t:
+                try_subsume_bin(lit, i, j, timeAvail, touched);
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
+    }
+    ws.shrink(i-j);
+    return i-j;
 }
 
 void SubsumeImplicit::subsume_implicit(const bool check_stats)
@@ -93,42 +141,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
          ;numDone++
     ) {
         const size_t at = (rnd_start + numDone)  % solver->watches.size();
-        runStats.numWatchesLooked++;
-        const Lit lit = Lit::toLit(at);
-        watch_subarray ws = solver->watches[lit];
-
-        if (ws.size() > 1) {
-            timeAvailable -= ws.size()*std::ceil(std::log((double)ws.size())) + 20;
-            std::sort(ws.begin(), ws.end(), WatchSorterBinTriLong());
-        }
-        /*cout << "---> Before" << endl;
-        print_watch_list(ws, lit);*/
-
-        Watched* i = ws.begin();
-        Watched* j = i;
-        clear();
-
-        for (Watched* end = ws.end(); i != end; i++) {
-            if (timeAvailable < 0) {
-                *j++ = *i;
-                continue;
-            }
-
-            switch(i->getType()) {
-                case CMSat::watch_clause_t:
-                    *j++ = *i;
-                    break;
-
-                case CMSat::watch_binary_t:
-                    try_subsume_bin(lit, i, j);
-                    break;
-
-                default:
-                    assert(false);
-                    break;
-            }
-        }
-        ws.shrink(i-j);
+        subsume_at_watch(at, &timeAvailable);
     }
 
     const double time_used = cpuTime() - myTime;
