@@ -879,12 +879,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
     , const bool redundant_too
 ) {
     watch_subarray ws = solver->watches[lit];
-
-    //Must re-order so that TRI-s are first
-    //Otherwise we might re-order list while looking through.. very messy
-    //WatchedSorterNoClSize sorter;
-    //std::sort(ws.begin(), ws.end(), sorter);
-
     for (size_t i = 0
         ; i < ws.size() && *simplifier->limit_to_decrease > 0
         ; i++
