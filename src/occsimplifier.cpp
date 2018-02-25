@@ -777,7 +777,7 @@ bool OccSimplifier::eliminate_vars()
     uint32_t n_vars_last = solver->get_num_free_vars();
     while(varelim_num_limit > 0
         && *limit_to_decrease > 0
-        && grow < 1000
+        && grow <= 16
     ) {
         last_elimed = 0;
         solver->ok = solver->propagate_occur();
