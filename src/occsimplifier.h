@@ -320,9 +320,18 @@ private:
             , cl_not_linked(_cl_not_linked)
         {}
 
+        LinkInData& combine(const LinkInData& other)
+        {
+            cl_linked += other.cl_linked;
+            cl_not_linked += other.cl_not_linked;
+            return *this;
+        }
+
         uint64_t cl_linked = 0;
         uint64_t cl_not_linked = 0;
     };
+    LinkInData link_in_data_irred;
+    LinkInData link_in_data_red;
     uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
     void     print_mem_usage_of_occur(uint64_t memUsage) const;
     void     print_linkin_data(const LinkInData link_in_data) const;

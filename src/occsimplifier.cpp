@@ -1128,14 +1128,14 @@ bool OccSimplifier::fill_occur()
         return false;
     }
 
-    LinkInData link_in_data = link_in_clauses(
+    link_in_data_irred = link_in_clauses(
         solver->longIrredCls
         , true //add to occur list
         , std::numeric_limits<uint32_t>::max()
         , std::numeric_limits<int64_t>::max()
     );
     solver->longIrredCls.clear();
-    print_linkin_data(link_in_data);
+    print_linkin_data(link_in_data_irred);
 
     //Add redundant to occur
     memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
@@ -1148,7 +1148,7 @@ bool OccSimplifier::fill_occur()
     std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end()
         , ClauseSizeSorter(solver->cl_alloc));
 
-    link_in_data = link_in_clauses(
+    link_in_data_red = link_in_clauses(
         solver->longRedCls[0]
         , linkin
         , solver->conf.maxRedLinkInSize
@@ -1163,7 +1163,10 @@ bool OccSimplifier::fill_occur()
     for(auto& lredcls: solver->longRedCls) {
         lredcls.clear();
     }
-    print_linkin_data(link_in_data);
+
+    LinkInData combined(link_in_data_irred);
+    combined.combine(link_in_data_red);
+    print_linkin_data(combined);
 
     return true;
 }
@@ -2066,6 +2069,11 @@ OccSimplifier::HeuristicData OccSimplifier::calc_data_for_heuristic(const Lit li
     HeuristicData ret;
 
     watch_subarray_const ws_list = solver->watches[lit];
+    if (link_in_data_red.cl_linked < 100) {
+        ret.longer = ws_list.size();
+        return ret;
+    }
+
     *limit_to_decrease -= (long)ws_list.size()*3 + 100;
     for (const Watched ws: ws_list) {
         //Skip redundant clauses
