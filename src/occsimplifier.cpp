@@ -1413,15 +1413,16 @@ void OccSimplifier::set_limits()
     }
 
     //For debugging
-
-    //numMaxSubsume0 = 0;
-    //numMaxSubsume1 = 0;
-    //numMaxElimVars = 0;
-    //numMaxElim = 0;
-    //numMaxSubsume0 = std::numeric_limits<int64_t>::max();
-    //numMaxSubsume1 = std::numeric_limits<int64_t>::max();
-    //numMaxElimVars = std::numeric_limits<int32_t>::max();
-    //numMaxElim     = std::numeric_limits<int64_t>::max();
+//     subsumption_time_limit = 0;
+//     strengthening_time_limit = 0;
+//     norm_varelim_time_limit = 0;
+//     empty_varelim_time_limit = 0;
+//     varelim_num_limit = 0;
+//     subsumption_time_limit   = std::numeric_limits<int64_t>::max();
+//     strengthening_time_limit = std::numeric_limits<int64_t>::max();
+//     norm_varelim_time_limit  = std::numeric_limits<int64_t>::max();
+//     empty_varelim_time_limit = std::numeric_limits<int64_t>::max();
+//     varelim_num_limit        = std::numeric_limits<int64_t>::max();
 }
 
 void OccSimplifier::cleanBlockedClausesIfDirty()
