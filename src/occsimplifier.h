@@ -394,6 +394,7 @@ private:
     TouchList   touched;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
+    bool        deal_with_impl_sub_lits();
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);

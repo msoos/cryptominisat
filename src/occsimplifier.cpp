@@ -735,6 +735,24 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
     return sum;
 }
 
+bool OccSimplifier::deal_with_impl_sub_lits()
+{
+    for(uint32_t l: impl_sub_lits.getTouchedList()) {
+        Lit lit = Lit::toLit(l);
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
+            return false;
+        }
+        solver->subsumeImplicit->subsume_at_watch(
+            lit.toInt(), &subsumption_time_limit, &touched);
+        if (*limit_to_decrease <= 0)
+            break;
+    }
+
+    impl_sub_lits.clear();
+
+    return true;
+}
+
 bool OccSimplifier::eliminate_vars()
 {
     //Set-up
@@ -768,7 +786,9 @@ bool OccSimplifier::eliminate_vars()
         }
         solver->clauseCleaner->clean_implicit_clauses();
         solver->clean_occur_from_removed_clauses_only_smudged();
+
         limit_to_decrease = &norm_varelim_time_limit;
+        order_vars_for_elim();
 
         while(!velim_order.empty()
             && *limit_to_decrease > 0
@@ -800,6 +820,9 @@ bool OccSimplifier::eliminate_vars()
             }
             if (!solver->ok)
                 goto end;
+
+            if (!deal_with_impl_sub_lits())
+                goto end;
         }
         double after_sub_time = cpuTime();
         uint64_t varelim_sub_str_limit = solver->conf.varelim_sub_str_limit
@@ -810,29 +833,8 @@ bool OccSimplifier::eliminate_vars()
             goto end;
         }
 
-        for(uint32_t l: impl_sub_lits.getTouchedList()) {
-            Lit lit = Lit::toLit(l);
-            if (!sub_str->backw_sub_str_with_bins_watch(lit, true)) {
-                goto end;
-            }
-            if (*limit_to_decrease <= 0)
-                break;
-        }
-
-        for(uint32_t l: impl_sub_lits.getTouchedList()) {
-            if (*limit_to_decrease <= 0)
-                break;
-
-            Lit lit = Lit::toLit(l);
-            if (!velim_order.inHeap(lit.var())
-                && can_eliminate_var(lit.var())
-            ) {
-                varElimComplexity[lit.var()] = heuristicCalcVarElimScore(lit.var());
-                velim_order.insert(lit.var());
-            }
-        }
-
-        impl_sub_lits.clear();
+        if (!deal_with_impl_sub_lits())
+            goto end;
 
         uint32_t n_cls_now   = sum_irred_cls();
         uint32_t n_vars_now  = solver->get_num_free_vars();
