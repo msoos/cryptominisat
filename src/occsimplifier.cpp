@@ -757,8 +757,7 @@ bool OccSimplifier::eliminate_vars()
     uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
-    while(last_elimed > 0
-        && varelim_num_limit > 0
+    while(varelim_num_limit > 0
         && *limit_to_decrease > 0
         && grow < 1000
     ) {
