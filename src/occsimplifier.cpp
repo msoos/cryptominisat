@@ -759,7 +759,6 @@ bool OccSimplifier::deal_with_impl_sub_lits()
         if (*limit_to_decrease <= 0)
             break;
     }
-
     impl_sub_lits.clear();
 
     //NOTE: impl_str CAN CHANGE while this is running!!
