@@ -751,6 +751,7 @@ bool OccSimplifier::deal_with_impl_sub_lits()
 
     for(uint32_t l: impl_sub_lits.getTouchedList()) {
         Lit lit = Lit::toLit(l);
+        //BUG really expensive and should not be needed...
         if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
             return false;
         }
