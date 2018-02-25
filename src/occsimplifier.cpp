@@ -762,6 +762,11 @@ bool OccSimplifier::eliminate_vars()
         && grow < 1000
     ) {
         last_elimed = 0;
+        solver->ok = solver->propagate_occur();
+        if (!solver->okay()) {
+            goto end;
+        }
+        solver->clauseCleaner->clean_implicit_clauses();
         solver->clean_occur_from_removed_clauses_only_smudged();
         limit_to_decrease = &norm_varelim_time_limit;
 
