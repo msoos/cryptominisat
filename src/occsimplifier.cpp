@@ -707,7 +707,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     return true;
 }
 
-uint32_t OccSimplifier::sum_irred_cls() const
+uint32_t OccSimplifier::sum_irred_cls_longs() const
 {
     uint32_t sum = 0;
     for (ClOffset offs: clauses) {
@@ -718,7 +718,21 @@ uint32_t OccSimplifier::sum_irred_cls() const
         assert(cl->size() > 2);
         sum++;
     }
-    return sum + solver->binTri.irredBins;
+    return sum;
+}
+
+uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
+{
+    uint32_t sum = 0;
+    for (ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->freed() || cl->getRemoved() || cl->red())
+            continue;
+
+        assert(cl->size() > 2);
+        sum += cl->size();
+    }
+    return sum;
 }
 
 bool OccSimplifier::eliminate_vars()

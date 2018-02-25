@@ -346,7 +346,8 @@ private:
     lbool       clean_clause(ClOffset c);
     void        linkInClause(Clause& cl);
     bool        handleUpdatedClause(ClOffset c);
-    uint32_t    sum_irred_cls() const;
+    uint32_t    sum_irred_cls_longs() const;
+    uint32_t    sum_irred_cls_longs_lits() const;
 
     struct watch_sort_smallest_first {
         bool operator()(const Watched& first, const Watched& second)
