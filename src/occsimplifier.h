@@ -266,6 +266,7 @@ public:
     void load_state(SimpleInFile& f);
     vector<ClOffset> sub_str_with;
     TouchListLit impl_sub_lits;
+    vector<std::pair<Lit, Lit> > impl_str;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
@@ -304,6 +305,7 @@ private:
     int64_t  norm_varelim_time_limit;
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
+    int64_t  varelim_sub_str_limit;
     int64_t* limit_to_decrease;
 
     //Start-up
@@ -404,6 +406,7 @@ private:
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
     bool        deal_with_impl_sub_lits();
+    vector<Lit> impl_sub_lits_tmp;
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);

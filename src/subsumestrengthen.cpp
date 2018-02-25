@@ -453,14 +453,10 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
-bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit,
-                                            const bool only_subsume)
+bool SubsumeStrengthen::handle_sub_str_with(int64_t* limit_to_decrease, const bool only_subsume)
 {
-    orig_limit *= solver->conf.global_timeout_multiplier;
-    int64_t* orig_limit_ptr = simplifier->limit_to_decrease;
+    int64_t orig_limit = *limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
-    int64_t limit_to_handle_sub_str_with = orig_limit;
-    simplifier->limit_to_decrease = &limit_to_handle_sub_str_with;
     const double start_time = cpuTime();
     Sub1Ret stat;
     for(size_t i = 0
@@ -493,10 +489,10 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit,
     end:
     simplifier->sub_str_with.clear();
 
-    const bool time_out =  limit_to_handle_sub_str_with <= 0;
+    const bool time_out =  *limit_to_decrease <= 0;
     const double time_used = cpuTime() - start_time;
-    const double time_remain = float_div(limit_to_handle_sub_str_with, orig_limit);
-    if (solver->conf.verbosity) {
+    const double time_remain = float_div(*limit_to_decrease, orig_limit);
+    if (solver->conf.verbosity >= 5) {
         cout
         << "c [occ-substr] sub_str_with"
         << " sub: " << stat.sub
@@ -515,7 +511,6 @@ bool SubsumeStrengthen::handle_sub_str_with(size_t orig_limit,
         );
     }
 
-    simplifier->limit_to_decrease =  orig_limit_ptr;
     return solver->ok;
 }
 
@@ -944,7 +939,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
     ) {
         Lit lit = Lit::toLit(upI);
-        if (!backw_sub_str_long_with_bins_watch(lit)) {
+        if (!backw_sub_str_long_with_bins_watch(lit, true)) {
             break;
         }
     }

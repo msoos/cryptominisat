@@ -106,6 +106,7 @@ OccSimplifier::OccSimplifier(Solver* _solver):
     if (solver->conf.doGateFind) {
         //gateFinder = new GateFinder(this, solver);
     }
+    impl_sub_lits_tmp.resize(2);
 }
 
 OccSimplifier::~OccSimplifier()
@@ -352,11 +353,15 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             unlink_clause(offset, false);
             return l_True;
 
-        case 2:
+        case 2: {
             solver->attach_bin_clause(cl[0], cl[1], cl.red());
+            if (!cl.red()) {
+                std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
+                impl_str.push_back(tmp);
+            }
             unlink_clause(offset, false);
             return l_True;
-
+        }
         default:
             cl.setStrenghtened();
             cl.recalc_abst_if_needed();
@@ -737,9 +742,16 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
 
 bool OccSimplifier::deal_with_impl_sub_lits()
 {
+    int64_t* orig_limit_ptr = limit_to_decrease;
+    limit_to_decrease = &varelim_sub_str_limit;
+
+    if (!sub_str->handle_sub_str_with(limit_to_decrease, false)) {
+        return false;
+    }
+
     for(uint32_t l: impl_sub_lits.getTouchedList()) {
         Lit lit = Lit::toLit(l);
-        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, true)) {
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
             return false;
         }
         solver->subsumeImplicit->subsume_at_watch(
@@ -750,6 +762,19 @@ bool OccSimplifier::deal_with_impl_sub_lits()
 
     impl_sub_lits.clear();
 
+    //NOTE: impl_str CAN CHANGE while this is running!!
+    for (size_t i = 0; i < impl_str.size(); i++) {
+        impl_sub_lits_tmp[0] = impl_str[i].first;
+        impl_sub_lits_tmp[1] = impl_str[i].second;
+
+        sub_str->backw_sub_str_long_with_implicit(impl_sub_lits_tmp);
+        if (!solver->okay()) {
+            return false;
+        }
+    }
+    impl_str.clear();
+
+    limit_to_decrease = orig_limit_ptr;
     return true;
 }
 
@@ -824,24 +849,17 @@ bool OccSimplifier::eliminate_vars()
             if (!deal_with_impl_sub_lits())
                 goto end;
         }
-        double after_sub_time = cpuTime();
-        uint64_t varelim_sub_str_limit = solver->conf.varelim_sub_str_limit
-            *1000ULL*1000ULL
-            *solver->conf.global_timeout_multiplier;
 
-        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit, false)) {
-            goto end;
-        }
+         if (!deal_with_impl_sub_lits())
+                goto end;
 
-        if (!deal_with_impl_sub_lits())
-            goto end;
-
-        uint32_t n_cls_now   = sum_irred_cls();
+        uint32_t n_cls_now   = sum_irred_cls_longs() + solver->binTri.irredBins;
         uint32_t n_vars_now  = solver->get_num_free_vars();
         double cl_inc_rate = 2.0;
         if (n_cls_last != 0) {
           cl_inc_rate = (double)n_cls_now   / n_cls_last;
         }
+
         double var_dec_rate = 1.0;
         if (n_vars_now != 0) {
             var_dec_rate = (double)n_vars_last / n_vars_now;
@@ -1036,6 +1054,8 @@ bool OccSimplifier::setup()
     assert(solver->okay());
     assert(toClear.empty());
     sub_str_with.clear();
+    impl_str.clear();
+    impl_sub_lits.clear();
 
     //Test & debug
     solver->test_all_clause_attached();
@@ -1104,7 +1124,7 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
-    if (!sub_str->handle_sub_str_with()
+    if (!sub_str->handle_sub_str_with(&strengthening_time_limit, false)
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -1389,6 +1409,8 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
+    varelim_sub_str_limit      = 1000ULL*1000ULL*solver->conf.varelim_sub_str_limit
+        *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0
@@ -1423,6 +1445,7 @@ void OccSimplifier::set_limits()
 //     norm_varelim_time_limit  = std::numeric_limits<int64_t>::max();
 //     empty_varelim_time_limit = std::numeric_limits<int64_t>::max();
 //     varelim_num_limit        = std::numeric_limits<int64_t>::max();
+//     varelim_sub_str_limit    = std::numeric_limits<int64_t>::max();
 }
 
 void OccSimplifier::cleanBlockedClausesIfDirty()
@@ -1827,9 +1850,10 @@ bool OccSimplifier::add_varelim_resolvent(
         bvestats.subsumedByVE += sub_str->strengthen_subsume_and_unlink_and_markirred(offset).sub;
 
     } else if (finalLits.size() == 2) {
-        std::sort(finalLits.begin(), finalLits.end());
+        //std::sort(finalLits.begin(), finalLits.end());
         //bvestats.subsumedByVE +=sub_str->backw_sub_long_with_implicit(finalLits);
-        bvestats.subsumedByVE +=sub_str->backw_sub_str_long_with_implicit(finalLits).sub;
+        //bvestats.subsumedByVE +=sub_str->backw_sub_str_long_with_implicit(finalLits).sub;
+        impl_str.push_back(std::make_pair(finalLits[0], finalLits[1]));
         if (!solver->ok) {
             return false;
         }
