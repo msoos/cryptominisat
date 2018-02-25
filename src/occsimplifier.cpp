@@ -801,8 +801,7 @@ bool OccSimplifier::eliminate_vars()
             *1000ULL*1000ULL
             *solver->conf.global_timeout_multiplier;
 
-        //only subsume -- it seems to allow for more varelim
-        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit, true)) {
+        if (!sub_str->handle_sub_str_with(varelim_sub_str_limit, false)) {
             goto end;
         }
 
@@ -1813,11 +1812,13 @@ bool OccSimplifier::add_varelim_resolvent(
         linkInClause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
-        bvestats.subsumedByVE += sub_str->subsume_and_unlink_and_markirred(offset);
+        //bvestats.subsumedByVE += sub_str->subsume_and_unlink_and_markirred(offset);
+        bvestats.subsumedByVE += sub_str->strengthen_subsume_and_unlink_and_markirred(offset).sub;
 
     } else if (finalLits.size() == 2) {
         std::sort(finalLits.begin(), finalLits.end());
-        bvestats.subsumedByVE +=sub_str->backw_sub_with_implicit(finalLits);
+        //bvestats.subsumedByVE +=sub_str->backw_sub_long_with_implicit(finalLits);
+        bvestats.subsumedByVE +=sub_str->backw_sub_str_long_with_implicit(finalLits).sub;
         if (!solver->ok) {
             return false;
         }
