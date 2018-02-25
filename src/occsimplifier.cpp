@@ -754,7 +754,7 @@ bool OccSimplifier::eliminate_vars()
     //Go through the ordered list of variables to eliminate
     int64_t last_elimed = 1;
     grow = 0;
-    uint32_t n_cls_last  = sum_irred_cls();
+    uint32_t n_cls_last  = sum_irred_cls_longs() + solver->binTri.irredBins;
     uint32_t n_cls_init = n_cls_last;
     uint32_t n_vars_last = solver->get_num_free_vars();
     while(last_elimed > 0
