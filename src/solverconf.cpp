@@ -124,7 +124,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , aggressive_elim_time_limitM(300)
 
         //Bounded variable addition
-        , do_bva(true)
+        , do_bva(false)
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
