@@ -544,6 +544,8 @@ bool PropEngine::propagate_long_clause_occur(const ClOffset offset)
 {
     const Clause& cl = *cl_alloc.ptr(offset);
     assert(!cl.freed() && "Cannot be already removed in occur");
+    if (cl.getRemoved())
+        return true;
 
     Lit lastUndef = lit_Undef;
     uint32_t numUndef = 0;

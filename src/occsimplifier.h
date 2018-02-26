@@ -264,9 +264,9 @@ public:
     void freeXorMem();
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
-    vector<ClOffset> sub_str_with;
-    TouchListLit impl_sub_lits;
-    vector<std::pair<Lit, Lit> > impl_str;
+    vector<ClOffset> added_long_cl;
+    TouchListLit added_cl_to_lit;
+    vector<std::pair<Lit, Lit> > added_bin_cl;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
     void unlink_clause(ClOffset cc
@@ -405,15 +405,15 @@ private:
     TouchList   touched;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
-    bool        deal_with_impl_sub_lits();
-    vector<Lit> impl_sub_lits_tmp;
+    bool        deal_with_added_cl_to_lit();
+    vector<Lit> tmp_bin_cl;
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
     void        mark_gate_in_poss_negs(Lit elim_lit, watch_subarray_const poss, watch_subarray_const negs);
     void        find_gate(Lit elim_lit, watch_subarray_const a, watch_subarray_const b);
     void        print_var_eliminate_stat(Lit lit) const;
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
-    void        update_varelim_complexity_heap(const uint32_t var);
+    void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
     struct Resolvent {
         Resolvent(const vector<Lit>& _lits, const ClauseStats _stats) :

@@ -453,18 +453,21 @@ void SubsumeStrengthen::findStrengthened(
     fillSubs(offset, cl, abs, out_subsumed, out_lits, Lit(minVar, false));
 }
 
-bool SubsumeStrengthen::handle_sub_str_with(int64_t* limit_to_decrease, const bool only_subsume)
+bool SubsumeStrengthen::handle_added_long_cl(
+    int64_t* limit_to_decrease, const bool main_run, const bool only_subsume)
 {
     int64_t orig_limit = *limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
     const double start_time = cpuTime();
     Sub1Ret stat;
+
+    //NOTE added_long_cl CAN CHANGE while the below is running!
     for(size_t i = 0
-        ; i < simplifier->sub_str_with.size()
+        ; i < simplifier->added_long_cl.size()
         && *simplifier->limit_to_decrease >= 0
         ; i++
     ) {
-        const ClOffset offs = simplifier->sub_str_with[i];
+        const ClOffset offs = simplifier->added_long_cl[i];
         Clause* cl = solver->cl_alloc.ptr(offs);
         if (cl->freed() || cl->getRemoved())
             continue;
@@ -479,7 +482,7 @@ bool SubsumeStrengthen::handle_sub_str_with(int64_t* limit_to_decrease, const bo
             goto end;
         }
 
-        if ((i&0xff) == 0xff
+        if ((i&0xfff) == 0xfff
             && solver->must_interrupt_asap()
         ) {
             goto end;
@@ -487,28 +490,29 @@ bool SubsumeStrengthen::handle_sub_str_with(int64_t* limit_to_decrease, const bo
     }
 
     end:
-    simplifier->sub_str_with.clear();
 
-    const bool time_out =  *limit_to_decrease <= 0;
-    const double time_used = cpuTime() - start_time;
-    const double time_remain = float_div(*limit_to_decrease, orig_limit);
-    if (solver->conf.verbosity >= 5) {
-        cout
-        << "c [occ-substr] sub_str_with"
-        << " sub: " << stat.sub
-        << " str: " << stat.str
-        << " 0-depth ass: " << solver->trail_size() - origTrailSize
-        << solver->conf.print_times(time_used, time_out, time_remain)
-        << endl;
-    }
-    if (solver->sqlStats) {
-        solver->sqlStats->time_passed(
-            solver
-            , "sub_str_with"
-            , time_used
-            , time_out
-            , time_remain
-        );
+    if (main_run) {
+        const bool time_out =  *limit_to_decrease <= 0;
+        const double time_used = cpuTime() - start_time;
+        const double time_remain = float_div(*limit_to_decrease, orig_limit);
+        if (solver->conf.verbosity >= 5) {
+            cout
+            << "c [occ-substr] added_long_cl"
+            << " sub: " << stat.sub
+            << " str: " << stat.str
+            << " 0-depth ass: " << solver->trail_size() - origTrailSize
+            << solver->conf.print_times(time_used, time_out, time_remain)
+            << endl;
+        }
+        if (solver->sqlStats) {
+            solver->sqlStats->time_passed(
+                solver
+                , "added_long_cl"
+                , time_used
+                , time_out
+                , time_remain
+            );
+        }
     }
 
     return solver->ok;

@@ -53,7 +53,8 @@ public:
         const Lit lit
         , const bool redundant_too = false
     );
-    bool handle_sub_str_with(int64_t* limit,
+    bool handle_added_long_cl(int64_t* limit,
+                             const bool main_run,
                              bool only_subsume = false);
 
     struct Sub0Ret {
