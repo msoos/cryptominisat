@@ -535,7 +535,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit], offset);
-    simplifier->touched.touch(toRemoveLit);
+    simplifier->elim_calc_need_update.touch(toRemoveLit);
     if (cl.red())
         solver->litStats.redLits--;
     else

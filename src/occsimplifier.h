@@ -266,6 +266,7 @@ public:
     void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;
     TouchListLit added_cl_to_lit;
+    TouchListLit removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_bin_cl;
     vector<ClOffset> clauses;
     void check_elimed_vars_are_unassignedAndStats() const;
@@ -402,10 +403,10 @@ private:
     bool        can_eliminate_var(const uint32_t var) const;
 
 
-    TouchList   touched;
+    TouchList   elim_calc_need_update;
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
-    bool        deal_with_added_cl_to_lit();
+    bool        deal_with_added_long_and_bin();
     vector<Lit> tmp_bin_cl;
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
@@ -429,23 +430,7 @@ private:
     };
     vector<Resolvent> resolvents;
     Clause* gate_varelim_clause;
-
-    struct HeuristicData
-    {
-        HeuristicData() :
-            bin(0)
-            , longer(0)
-        {}
-
-        uint32_t totalCls() const
-        {
-            return bin + longer;
-        }
-
-        uint32_t bin;
-        uint32_t longer;
-    };
-    HeuristicData calc_data_for_heuristic(const Lit lit);
+    uint32_t calc_data_for_heuristic(const Lit lit);
     uint64_t time_spent_on_calc_otf_update;
     uint64_t num_otf_update_until_now;
 
