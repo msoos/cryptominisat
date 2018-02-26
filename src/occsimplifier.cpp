@@ -821,10 +821,10 @@ bool OccSimplifier::eliminate_vars()
         && *limit_to_decrease > 0
         && grow <= 16
     ) {
-        cout << "x n vars       : " << solver->get_num_free_vars() << endl;
-        cout << "x cls long     : " << sum_irred_cls_longs() << endl;
-        cout << "x cls bin      : " << solver->binTri.irredBins << endl;
-        cout << "x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+        cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+        cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
+        cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
+        cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
 
         last_elimed = 0;
         solver->ok = solver->propagate_occur();
@@ -884,8 +884,8 @@ bool OccSimplifier::eliminate_vars()
 
             limit_to_decrease = &norm_varelim_time_limit;
 
-            cout <<"size of added_cl_to_lit    : " << added_cl_to_lit.getTouchedList().size() << endl;
-            cout <<"size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
+            cout <<"c size of added_cl_to_lit    : " << added_cl_to_lit.getTouchedList().size() << endl;
+            cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
             for(uint32_t l: added_cl_to_lit.getTouchedList()) {
                 Lit lit = Lit::toLit(l);
                 //needed for FORWARD subsumption... pain in the back
@@ -924,11 +924,11 @@ bool OccSimplifier::eliminate_vars()
             clauses.resize(j);
             solver->clean_occur_from_removed_clauses_only_smudged();
 
-            cout << "x n vars       : " << solver->get_num_free_vars() << endl;
-            cout << "x cls long     : " << sum_irred_cls_longs() << endl;
-            cout << "x cls bin      : " << solver->binTri.irredBins << endl;
-            cout << "x long cls lits: " << sum_irred_cls_longs_lits() << endl;
-            cout << "another run ?"<< endl;
+            cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+            cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
+            cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
+            cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+            cout << "c another run ?"<< endl;
         }
         cout << "finished here" << endl;
 
@@ -954,8 +954,8 @@ bool OccSimplifier::eliminate_vars()
             var_dec_rate = (double)n_vars_last / n_vars_now;
         }
         if (solver->conf.verbosity) {
-            cout << "x c [occ-bve] iter v-elim " << last_elimed << endl;
-            cout << "x c cl_inc_rate=" << cl_inc_rate
+            cout << "c x c [occ-bve] iter v-elim " << last_elimed << endl;
+            cout << "c x c cl_inc_rate=" << cl_inc_rate
             << ", var_dec_rate=" << var_dec_rate
             << " (grow=" << grow << ")" << endl;
         }
@@ -976,10 +976,10 @@ bool OccSimplifier::eliminate_vars()
             grow *= 2;
         }
     }
-    cout << "x n vars       : " << solver->get_num_free_vars() << endl;
-    cout << "x cls long     : " << sum_irred_cls_longs() << endl;
-    cout << "x cls bin      : " << solver->binTri.irredBins << endl;
-    cout << "x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+    cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+    cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
+    cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
+    cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
 
 end:
     free_clauses_to_free();
