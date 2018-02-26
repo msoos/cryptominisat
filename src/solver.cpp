@@ -3189,7 +3189,7 @@ lbool Solver::load_solution_from_file(const string& fname)
                     status = l_Undef;
                     goto end;
                 } else {
-                    std::cerr << "ERROR: Cannot parse solution line startig with 's'"
+                    std::cerr << "ERROR: Cannot parse solution line starting with 's'"
                     << endl;
                     std::exit(-1);
                 }
