@@ -1019,6 +1019,7 @@ end:
     bvestats.timeUsed = cpuTime() - myTime;
     bvestats_global += bvestats;
 
+    //exit(0);
     return solver->ok;
 }
 
