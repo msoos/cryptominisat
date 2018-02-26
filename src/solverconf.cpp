@@ -171,7 +171,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc_max(4)
         , simplify_schedule_startup(
             "sub-impl,"
-            "occ-clean-implicit, occ-backw-sub-long, occ-bve, occ-backw-sub-str, "
+            "occ-backw-sub-long, occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-backw-sub-str, "
             "scc-vrepl,"
             "sub-str-cls-with-bin,"
             #ifdef USE_GAUSS
