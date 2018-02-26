@@ -914,12 +914,15 @@ bool OccSimplifier::eliminate_vars()
                 if (cl->getRemoved() || cl->freed())
                     continue;
 
-                lbool ret = clean_clause(offs);
-                if (ret == l_False) {
-                    goto end;
-                } else if (ret == l_Undef) {
-                    clauses[j++] = offs;
+                if (cl->getOccurLinked()) {
+                    lbool ret = clean_clause(offs);
+                    if (ret == l_False) {
+                        goto end;
+                    } else if (ret == l_True) {
+                        continue;
+                    }
                 }
+                clauses[j++] = offs;
             }
             clauses.resize(j);
             solver->clean_occur_from_removed_clauses_only_smudged();
