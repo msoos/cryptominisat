@@ -2205,7 +2205,7 @@ void Searcher::adjust_phases_restarts()
                     break;
 
                 case Restart::glue:
-                    max_confl_this_phase = 2*max_confl_phase;
+                    max_confl_this_phase = 4*max_confl_phase;
                     break;
 
                 default:
