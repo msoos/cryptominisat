@@ -827,7 +827,7 @@ bool OccSimplifier::eliminate_vars()
 
     while(varelim_num_limit > 0
         && *limit_to_decrease > 0
-        && grow <= 16
+        && grow < solver->conf.min_bva_gain
     ) {
         if (solver->conf.verbosity) {
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;

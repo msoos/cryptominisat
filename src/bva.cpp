@@ -646,10 +646,10 @@ bool BVA::simplifies_system(const size_t num_occur) const
     int orig_num_red = simplification_size(m_lits.size(), m_cls.size());
     int new_num_red = simplification_size(m_lits.size()+1, num_occur);
 
-    if (new_num_red <= 0)
+    if (new_num_red <= solver->conf.min_bva_gain)
         return false;
 
-    if (new_num_red < orig_num_red)
+    if (new_num_red < (orig_num_red+solver->conf.min_bva_gain))
         return false;
 
     return true;
