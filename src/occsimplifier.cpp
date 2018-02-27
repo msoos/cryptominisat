@@ -121,10 +121,12 @@ OccSimplifier::~OccSimplifier()
 
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
+    n_occurs.insert(n_occurs.end(), 2, 0);
 }
 
-void OccSimplifier::new_vars(size_t)
+void OccSimplifier::new_vars(size_t n)
 {
+    n_occurs.insert(n_occurs.end(), n*2ULL, 0);
 }
 
 void OccSimplifier::save_on_var_memory()
