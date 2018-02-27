@@ -909,7 +909,7 @@ bool OccSimplifier::eliminate_vars()
                 velim_order.update(var);
             }
 
-            uint32_t i = 0;
+            /*uint32_t i = 0;
             uint32_t j = 0;
             for(; i < clauses.size(); i++) {
                 ClOffset offs = clauses[i];
@@ -928,7 +928,7 @@ bool OccSimplifier::eliminate_vars()
                 clauses[j++] = offs;
             }
             clauses.resize(j);
-            solver->clean_occur_from_removed_clauses_only_smudged();
+            solver->clean_occur_from_removed_clauses_only_smudged();*/
 
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
             cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
