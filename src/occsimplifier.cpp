@@ -84,6 +84,7 @@ using std::endl;
 //#define VERBOSE_DEBUG_ASYMTE
 //#define VERBOSE_GATE_REMOVAL
 //#define VERBOSE_XORGATE_MIX
+//#define CHECK_N_OCCUR
 
 OccSimplifier::OccSimplifier(Solver* _solver):
     solver(_solver)
@@ -134,7 +135,6 @@ void OccSimplifier::save_on_var_memory()
     cl_to_free_later.shrink_to_fit();
 
     elim_calc_need_update.shrink_to_fit();
-    resolvents.shrink_to_fit();
     blockedClauses.shrink_to_fit();;
 }
 
@@ -1811,10 +1811,12 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     assert(solver->value(var) == l_Undef);
 
     //Gather data
+    #ifdef CHECK_N_OCCUR
     assert(n_occurs[Lit(var, false).toInt()] == calc_data_for_heuristic(Lit(var, false)));
     assert(n_occurs[Lit(var, true).toInt()] == calc_data_for_heuristic(Lit(var, true)));
-    const uint32_t pos = calc_data_for_heuristic(Lit(var, false));
-    const uint32_t neg = calc_data_for_heuristic(Lit(var, true));
+    #endif
+    const uint32_t pos = n_occurs[Lit(var, false).toInt()];
+    const uint32_t neg = n_occurs[Lit(var, true).toInt()];
 
     //Heuristic calculation took too much time
     if (*limit_to_decrease < 0) {
@@ -1906,7 +1908,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                     , solver->cl_alloc.ptr(it2->get_offset())->stats
             );
 
-            resolvents.push_back(Resolvent(dummy, stats));
+            resolvents.add_resolvent(dummy, stats);
         }
     }
 
@@ -2084,10 +2086,11 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     rem_cls_from_watch_due_to_varelim(solver->watches[~lit], ~lit);
 
     //Add resolvents
-    for(Resolvent& resolvent: resolvents) {
-        if (!add_varelim_resolvent(resolvent.lits, resolvent.stats)) {
+    while(!resolvents.empty()) {
+        if (!add_varelim_resolvent(resolvents.back_lits(), resolvents.back_stats())) {
             goto end;
         }
+        resolvents.pop();
     }
     limit_to_decrease = &norm_varelim_time_limit;
 

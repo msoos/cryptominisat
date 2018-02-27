@@ -417,19 +417,39 @@ private:
     bool        add_varelim_resolvent(vector<Lit>& finalLits, const ClauseStats& stats);
     void        update_varelim_complexity_heap();
     void        print_var_elim_complexity_stats(const uint32_t var) const;
-    struct Resolvent {
-        Resolvent(const vector<Lit>& _lits, const ClauseStats _stats) :
-            lits(_lits)
-            , stats(_stats)
-        {}
-        vector<Lit> lits;
-        ClauseStats stats;
-        bool operator<(const Resolvent& other) const
-        {
-            return lits.size() > other.lits.size();
+    struct Resolvents {
+        uint32_t at = 0;
+        vector<vector<Lit>> resolvents_lits;
+        vector<ClauseStats> resolvents_stats;
+        void clear() {
+            at = 0;
+        }
+        void add_resolvent(const vector<Lit>& res, const ClauseStats& stats) {
+            if (resolvents_lits.size() < at+1) {
+                resolvents_lits.resize(at+1);
+                resolvents_stats.resize(at+1);
+            }
+
+            resolvents_lits[at] = res;
+            resolvents_stats[at] = stats;
+            at++;
+        }
+        vector<Lit>& back_lits() {
+            assert(at > 0);
+            return resolvents_lits[at-1];
+        }
+        const ClauseStats& back_stats() {
+            assert(at > 0);
+            return resolvents_stats[at-1];
+        }
+        vector<Lit>& pop() {
+            at--;
+        }
+        bool empty() const {
+            return at == 0;
         }
     };
-    vector<Resolvent> resolvents;
+    Resolvents resolvents;
     Clause* gate_varelim_clause;
     uint32_t calc_data_for_heuristic(const Lit lit);
     uint64_t time_spent_on_calc_otf_update;
