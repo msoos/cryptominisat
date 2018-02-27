@@ -839,7 +839,10 @@ bool OccSimplifier::eliminate_vars()
 
         added_cl_to_lit.clear();
         removed_cl_with_var.touch(Lit(0, false));
-        while(!removed_cl_with_var.getTouchedList().empty()) {
+        while(!removed_cl_with_var.getTouchedList().empty()
+            && *limit_to_decrease > 0
+            && !solver->must_interrupt_asap()
+        ) {
             removed_cl_with_var.clear();
             while(!velim_order.empty()
                 && *limit_to_decrease > 0
