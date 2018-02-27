@@ -393,6 +393,9 @@ Clause* Solver::add_clause_int(
 
     vector<Lit> ps = lits;
     if (!sort_and_clean_clause(ps, lits, red)) {
+        if (finalLits) {
+            finalLits->clear();
+        }
         return NULL;
     }
 

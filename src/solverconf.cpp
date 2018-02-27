@@ -111,9 +111,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , empty_varelim_time_limitM(300LL)
         , varelim_time_limitM(350)
         , varelim_sub_str_limit(200)
-        , updateVarElimComplexityOTF(true)
-        , updateVarElimComplexityOTF_limitvars(200)
-        , updateVarElimComplexityOTF_limitavg(40ULL*1000ULL)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
         , velim_resolvent_too_large(20)

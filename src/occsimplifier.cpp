@@ -69,6 +69,7 @@ THE SOFTWARE.
 #define VERBOSE_XORGATE_MIX
 #define VERBOSE_DEBUG_XOR_FINDER
 #define VERBOSE_DEBUG_VARELIM
+#define CHECK_N_OCCUR
 #endif
 
 using namespace CMSat;
@@ -253,7 +254,8 @@ void OccSimplifier::unlink_clause(
 
     if (!cl.red()) {
         for (const Lit lit: cl) {
-            elim_calc_need_update.touch(lit);
+            elim_calc_need_update.touch(lit.var());
+            n_occurs[lit.toInt()]--;
             removed_cl_with_var.touch(lit.var());
         }
     }
@@ -312,7 +314,10 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
         ) {
             removed_cl_with_var.touch(i->var());
             removeWCl(solver->watches[*i], offset);
-            elim_calc_need_update.touch(*i);
+            if (!cl.red()) {
+                elim_calc_need_update.touch(i->var());
+                n_occurs[i->toInt()]--;
+            }
         }
     }
     cl.shrink(i-j);
@@ -360,6 +365,8 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
             if (!cl.red()) {
                 std::pair<Lit, Lit> tmp = {cl[0], cl[1]};
                 added_bin_cl.push_back(tmp);
+                n_occurs[tmp.first.toInt()]++;
+                n_occurs[tmp.second.toInt()]++;
             }
             unlink_clause(offset, false);
             return l_True;
@@ -786,7 +793,6 @@ bool OccSimplifier::eliminate_vars()
     limit_to_decrease = &norm_varelim_time_limit;
     cl_to_free_later.clear();
     assert(solver->watches.get_smudged_list().empty());
-    order_vars_for_elim();
     bvestats.clear();
     bvestats.numCalls = 1;
 
@@ -1165,6 +1171,8 @@ bool OccSimplifier::setup()
     added_long_cl.clear();
     added_bin_cl.clear();
     added_cl_to_lit.clear();
+    n_occurs.clear();
+    n_occurs.resize(solver->nVars()*2, 0);
 
     //Test & debug
     solver->test_all_clause_attached();
@@ -1249,6 +1257,26 @@ bool OccSimplifier::backward_sub_str()
 
 bool OccSimplifier::fill_occur()
 {
+    //Calculate binary clauses' contribution to n_occurs
+    size_t wsLit = 0;
+    for (watch_array::const_iterator
+        it = solver->watches.begin(), end = solver->watches.end()
+        ; it != end
+        ; ++it, wsLit++
+    ) {
+        Lit lit = Lit::toLit(wsLit);
+        watch_subarray_const ws = *it;
+        for (const Watched* it2 = ws.begin(), *end2 = ws.end()
+            ; it2 != end2
+            ; it2++
+        ) {
+            if (it2->isBin() && !it2->red() && lit < it2->lit2()) {
+                n_occurs[lit.toInt()]++;
+                n_occurs[it2->lit2().toInt()]++;
+            }
+        }
+    }
+
     //Add irredundant to occur
     uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
     print_mem_usage_of_occur(memUsage);
@@ -1621,6 +1649,7 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             if (cl.getRemoved()) {
                 continue;
             }
+            assert(!cl.freed());
 
             //Update stats
             if (!cl.red()) {
@@ -1657,6 +1686,8 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             lits[1] = watch.lit2();
             if (!watch.red()) {
                 add_clause_to_blck(lit, lits);
+                n_occurs[lits[0].toInt()]--;
+                n_occurs[lits[1].toInt()]--;
             } else {
                 //If redundant, delayed blocked-based DRAT deletion will not work
                 //so delete explicitly
@@ -1780,6 +1811,8 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
     assert(solver->value(var) == l_Undef);
 
     //Gather data
+    assert(n_occurs[Lit(var, false).toInt()] == calc_data_for_heuristic(Lit(var, false)));
+    assert(n_occurs[Lit(var, true).toInt()] == calc_data_for_heuristic(Lit(var, true)));
     const uint32_t pos = calc_data_for_heuristic(Lit(var, false));
     const uint32_t neg = calc_data_for_heuristic(Lit(var, true));
 
@@ -1960,6 +1993,8 @@ bool OccSimplifier::add_varelim_resolvent(
         added_long_cl.push_back(offset);
     } else if (finalLits.size() == 2) {
         added_bin_cl.push_back(std::make_pair(finalLits[0], finalLits[1]));
+        n_occurs[finalLits[0].toInt()]++;
+        n_occurs[finalLits[1].toInt()]++;
         if (!solver->ok) {
             return false;
         }
@@ -1968,7 +2003,16 @@ bool OccSimplifier::add_varelim_resolvent(
     //Touch every var of the new clause, so we re-estimate
     //elimination complexity for this var
     for(Lit lit: finalLits) {
-        elim_calc_need_update.touch(lit);
+        #ifdef CHECK_N_OCCUR
+        if(n_occurs[lit.toInt()] != calc_data_for_heuristic(lit)) {
+            cout << "n_occurs[lit.toInt()]:" << n_occurs[lit.toInt()] << endl;
+            cout << "calc_data_for_heuristic(lit): " << calc_data_for_heuristic(lit) << endl;
+            cout << "cl: " << finalLits << endl;
+            cout << "lit: " << lit << endl;
+            assert(false);
+        }
+        #endif
+        elim_calc_need_update.touch(lit.var());
         added_cl_to_lit.touch(lit);
     }
 
@@ -1977,27 +2021,6 @@ bool OccSimplifier::add_varelim_resolvent(
 
 void OccSimplifier::update_varelim_complexity_heap()
 {
-    //Update var elim complexity heap
-    if (!solver->conf.updateVarElimComplexityOTF)
-        return;
-
-    if (num_otf_update_until_now > solver->conf.updateVarElimComplexityOTF_limitvars
-        || time_spent_on_calc_otf_update > solver->conf.updateVarElimComplexityOTF_limitavg*100ULL*1000ULL
-    ) {
-        const double avg = float_div(time_spent_on_calc_otf_update, num_otf_update_until_now);
-
-        if (avg > solver->conf.updateVarElimComplexityOTF_limitavg) {
-            solver->conf.updateVarElimComplexityOTF = false;
-            if (solver->conf.verbosity) {
-                cout
-                << "c [occ-bve] Turning off OTF complexity update, it's too expensive"
-                << endl;
-            }
-            return;
-        }
-    }
-
-    int64_t limit_before = *limit_to_decrease;
     num_otf_update_until_now++;
     for(uint32_t var: elim_calc_need_update.getTouchedList()) {
         //No point in updating the score of this var
@@ -2005,10 +2028,10 @@ void OccSimplifier::update_varelim_complexity_heap()
             continue;
         }
 
+        //cout << "updating var " << var+1 << endl;
         varElimComplexity[var] = heuristicCalcVarElimScore(var);
         velim_order.update(var);
     }
-    time_spent_on_calc_otf_update += limit_before - *limit_to_decrease;
 }
 
 void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const
@@ -2059,10 +2082,6 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     create_dummy_blocked_clause(lit);
     rem_cls_from_watch_due_to_varelim(solver->watches[lit], lit);
     rem_cls_from_watch_due_to_varelim(solver->watches[~lit], ~lit);
-
-    //It's best to add resolvents with largest first. Then later, the smaller ones
-    //can subsume the larger ones. While adding, we do subsumption check.
-    std::sort(resolvents.begin(), resolvents.end());
 
     //Add resolvents
     for(Resolvent& resolvent: resolvents) {
@@ -2381,14 +2400,26 @@ int OccSimplifier::check_empty_resolvent_action(
     return std::numeric_limits<int>::max();
 }
 
-
-
 uint32_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 {
     const Lit lit(var, false);
+    #ifdef CHECK_N_OCCUR
     const uint32_t pos = calc_data_for_heuristic(lit);
+    if (pos != n_occurs[lit.toInt()]) {
+        cout << "Wrong, pos is: " << pos
+        << " n_occurs is:" << n_occurs[lit.toInt()] << endl;
+        assert(false);
+    }
+
     const uint32_t neg = calc_data_for_heuristic(~lit);
-    return  pos * neg;
+    if (neg != n_occurs[(~lit).toInt()]) {
+        cout << "Wrong, neg is: " << neg
+        << " n_occurs is:" << n_occurs[(~lit).toInt()] << endl;
+        assert(false);
+    }
+    #endif
+
+    return  n_occurs[lit.toInt()] * n_occurs[(~lit).toInt()];
 }
 
 void OccSimplifier::order_vars_for_elim()
@@ -2396,6 +2427,7 @@ void OccSimplifier::order_vars_for_elim()
     velim_order.clear();
     varElimComplexity.clear();
     varElimComplexity.resize(solver->nVars(), 1000);
+    elim_calc_need_update.clear();
 
     //Go through all vars
     for (
@@ -2515,12 +2547,15 @@ void OccSimplifier::linkInClause(Clause& cl)
     assert(cl.size() > 2);
     ClOffset offset = solver->cl_alloc.get_offset(&cl);
     cl.recalc_abst_if_needed();
+    if (!cl.red()) {
+        for(const Lit l: cl){
+            n_occurs[l.toInt()]++;
+        }
+    }
 
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
         watch_subarray ws = solver->watches[lit];
-        *limit_to_decrease -= (long)ws.size();
-
         ws.push(Watched(offset, cl.abst));
     }
     cl.setOccurLinked(true);

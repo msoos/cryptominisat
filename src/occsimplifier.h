@@ -266,6 +266,7 @@ public:
     void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;
     TouchListLit added_cl_to_lit;
+    vector<uint32_t> n_occurs;
     TouchListLit removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_bin_cl;
     vector<ClOffset> clauses;

@@ -69,6 +69,10 @@ uint32_t SubsumeStrengthen::subsume_and_unlink_and_markirred(const ClOffset offs
         solver->litStats.irredLits += cl.size();
         if (!cl.getOccurLinked()) {
             simplifier->linkInClause(cl);
+        } else {
+            for(const Lit l: cl) {
+                simplifier->n_occurs[l.toInt()]++;
+            }
         }
     }
 
@@ -174,6 +178,10 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
                 solver->litStats.irredLits += cl.size();
                 if (!cl.getOccurLinked()) {
                     simplifier->linkInClause(cl);
+                } else {
+                    for(const Lit l: cl) {
+                        simplifier->n_occurs[l.toInt()]++;
+                    }
                 }
             }
 
@@ -532,10 +540,13 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
     cl.strengthen(toRemoveLit);
     cl.recalc_abst_if_needed();
     (*solver->drat) << cl << fin << findelay;
+    if (!cl.red()) {
+        simplifier->n_occurs[toRemoveLit.toInt()]--;
+        simplifier->elim_calc_need_update.touch(toRemoveLit.var());
+    }
 
     runStats.litsRemStrengthen++;
     removeWCl(solver->watches[toRemoveLit], offset);
-    simplifier->elim_calc_need_update.touch(toRemoveLit);
     if (cl.red())
         solver->litStats.redLits--;
     else
@@ -904,6 +915,8 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
             ) {
                 solver->binTri.redBins--;
                 solver->binTri.irredBins++;
+                simplifier->n_occurs[tmpLits[0].toInt()]++;
+                simplifier->n_occurs[tmpLits[1].toInt()]++;
                 findWatchedOfBin(solver->watches, tmpLits[1], tmpLits[0], true).setRed(false);
                 findWatchedOfBin(solver->watches, tmpLits[0], tmpLits[1], true).setRed(false);
             }
