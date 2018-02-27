@@ -927,8 +927,7 @@ bool OccSimplifier::eliminate_vars()
                 }
                 clauses[j++] = offs;
             }
-            clauses.resize(j);
-            solver->clean_occur_from_removed_clauses_only_smudged();*/
+            clauses.resize(j);*/
 
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
             cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
@@ -937,11 +936,11 @@ bool OccSimplifier::eliminate_vars()
             cout << "c another run ?"<< endl;
         }
         cout << "finished here" << endl;
+        solver->clean_occur_from_removed_clauses_only_smudged();
 
         //For debug ONLY
         ///////////////
 //         free_clauses_to_free();
-//         solver->clean_occur_from_removed_clauses_only_smudged();
 // //         backward_sub_str();
 // //         limit_to_decrease = &norm_varelim_time_limit;
 //         solver->clauseCleaner->clean_implicit_clauses();
