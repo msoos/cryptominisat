@@ -109,7 +109,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
-        , varelim_time_limitM(120)
+        , varelim_time_limitM(350)
         , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
