@@ -1232,7 +1232,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #endif
             }
         } else if (token == "occ-clean-implicit") {
-            solver->clauseCleaner->clean_implicit_clauses();
+            //BUG TODO
+            //solver->clauseCleaner->clean_implicit_clauses();
         } else if (token == "occ-bve") {
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
                 solver->xorclauses.clear();
