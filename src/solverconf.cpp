@@ -209,8 +209,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)
-        , maxOccurIrredMB  (800)
-        , maxOccurRedMB    (800)
+        , maxOccurIrredMB  (1800)
+        , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(2.0)
 
