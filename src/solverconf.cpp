@@ -109,8 +109,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varelim_cutoff_too_many_clauses(2000)
         , do_empty_varelim (true)
         , empty_varelim_time_limitM(300LL)
-        , varelim_time_limitM(350)
-        , varelim_sub_str_limit(200)
+        , varelim_time_limitM(120)
+        , varelim_sub_str_limit(600)
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
         , velim_resolvent_too_large(20)
@@ -209,7 +209,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , perform_occur_based_simp(true)
         , do_strengthen_with_occur       (true)
         , maxRedLinkInSize (200)
-        , maxOccurIrredMB  (1800)
+        , maxOccurIrredMB  (2500)
         , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(2.0)
@@ -233,7 +233,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Misc optimisations
         , doStrSubImplicit (true)
-        , subsume_implicit_time_limitM(30LL)
+        , subsume_implicit_time_limitM(100LL)
         , distill_implicit_with_implicit_time_limitM(200LL)
 
         //Gates
