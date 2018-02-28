@@ -1211,10 +1211,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
-        } else if (token == "occ-backw-sub-long") {
-            sub_str->backw_sub_long_with_long();
-            free_clauses_to_free();
-            solver->clean_occur_from_removed_clauses_only_smudged();
         } else if (token == "occ-xor") {
             #ifdef USE_M4RI
             if (solver->conf.doFindXors
