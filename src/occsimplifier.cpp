@@ -316,9 +316,9 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
         if (solver->value(*i) == l_True
             || solver->value(*i) == l_False
         ) {
-            removed_cl_with_var.touch(i->var());
             removeWCl(solver->watches[*i], offset);
             if (!cl.red()) {
+                removed_cl_with_var.touch(i->var());
                 elim_calc_need_update.touch(i->var());
                 n_occurs[i->toInt()]--;
             }
