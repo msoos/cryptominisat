@@ -1388,6 +1388,9 @@ bool OccSimplifier::fill_occur()
     uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
     print_mem_usage_of_occur(memUsage);
     if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL) {
+        if (solver->conf.verbosity) {
+            cout << "c [occ] Memory usage of occur is too high, unlinking and skipping occur" << endl;
+        }
         CompleteDetachReatacher detRet(solver);
         detRet.reattachLongs(true);
         return false;
