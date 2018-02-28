@@ -952,9 +952,11 @@ bool OccSimplifier::eliminate_vars()
     ) {
         if (solver->conf.verbosity) {
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+            #ifdef DEBUG_VARELIM
             cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
             cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
             cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+            #endif
         }
 
         last_elimed = 0;
@@ -1037,9 +1039,11 @@ bool OccSimplifier::eliminate_vars()
 
             if (solver->conf.verbosity) {
                 cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+                #ifdef DEBUG_VARELIM
                 cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
                 cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
                 cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+                #endif
                 cout << "c another run ?"<< endl;
             }
         }
@@ -1069,8 +1073,8 @@ bool OccSimplifier::eliminate_vars()
             var_dec_rate = (double)n_vars_last / n_vars_now;
         }
         if (solver->conf.verbosity) {
-            cout << "c x c [occ-bve] iter v-elim " << last_elimed << endl;
-            cout << "c x c cl_inc_rate=" << cl_inc_rate
+            cout << "c [occ-bve] iter v-elim " << last_elimed << endl;
+            cout << "c cl_inc_rate=" << cl_inc_rate
             << ", var_dec_rate=" << var_dec_rate
             << " (grow=" << grow << ")" << endl;
 
@@ -1095,9 +1099,11 @@ bool OccSimplifier::eliminate_vars()
 
     if (solver->conf.verbosity) {
         cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
+        #ifdef DEBUG_VARELIM
         cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
         cout << "c x cls bin      : " << solver->binTri.irredBins << endl;
         cout << "c x long cls lits: " << sum_irred_cls_longs_lits() << endl;
+        #endif
     }
 
 end:
@@ -2000,6 +2006,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             }
 
             //Calculate new clause stats
+            #ifdef STATS_NEEDED
             ClauseStats stats;
             if (it->isBin() && it2->isClause())
                 stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
@@ -2010,8 +2017,10 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                     solver->cl_alloc.ptr(it->get_offset())->stats
                     , solver->cl_alloc.ptr(it2->get_offset())->stats
             );
-
             resolvents.add_resolvent(dummy, stats);
+            #else
+            resolvents.add_resolvent(dummy, ClauseStats());
+            #endif
         }
     }
 
