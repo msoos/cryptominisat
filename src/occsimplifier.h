@@ -404,6 +404,7 @@ private:
     bool        can_eliminate_var(const uint32_t var) const;
     bool        clear_vars_from_cls_that_have_been_set(size_t& last_trail);
     bool        deal_with_added_cl_to_var_lit(const Lit lit);
+    bool        simulate_frw_sub_str_with_added_cl_to_var();
 
 
     TouchList   elim_calc_need_update;

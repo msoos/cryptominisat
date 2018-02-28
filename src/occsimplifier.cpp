@@ -853,6 +853,41 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
     return true;
 }
 
+bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
+{
+    limit_to_decrease = &varelim_sub_str_limit;
+    for(uint32_t i = 0
+        ; i < added_cl_to_var.getTouchedList().size()
+        && *limit_to_decrease > 0
+        && !solver->must_interrupt_asap()
+        ; i++
+    ) {
+        uint32_t var = added_cl_to_var.getTouchedList()[i];
+        Lit lit = Lit(var, true);
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
+            return false;
+        }
+        if (!deal_with_added_cl_to_var_lit(lit)) {
+            return false;
+        }
+
+        lit = ~lit;
+        if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
+            return false;
+        }
+        if (!deal_with_added_cl_to_var_lit(lit)) {
+            return false;
+        }
+    }
+    added_cl_to_var.clear();
+    if (!sub_str->handle_added_long_cl(&varelim_sub_str_limit, true)) {
+        return false;
+    }
+    limit_to_decrease = &norm_varelim_time_limit;
+
+    return true;
+}
+
 bool OccSimplifier::eliminate_vars()
 {
     //solver->conf.verbosity = 1;
@@ -985,37 +1020,15 @@ bool OccSimplifier::eliminate_vars()
             solver->clean_occur_from_removed_clauses_only_smudged();
             update_varelim_complexity_heap();
 
-            limit_to_decrease = &norm_varelim_time_limit;
 
             if (solver->conf.verbosity) {
                 cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
             }
-            for(uint32_t i = 0; i < added_cl_to_var.getTouchedList().size(); i++) {
-                uint32_t var = added_cl_to_var.getTouchedList()[i];
-                Lit lit = Lit(var, true);
-                if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
-                    goto end;
-                }
-                if (!deal_with_added_cl_to_var_lit(lit)) {
-                    goto end;
-                }
 
-                lit = ~lit;
-                if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
-                    goto end;
-                }
-                if (!deal_with_added_cl_to_var_lit(lit)) {
-                    goto end;
-                }
-                if (*limit_to_decrease <= 0)
-                    break;
-            }
-            added_cl_to_var.clear();
-            if (!sub_str->handle_added_long_cl(&strengthening_time_limit, true)) {
+            if (!simulate_frw_sub_str_with_added_cl_to_var()) {
                 goto end;
             }
-            limit_to_decrease = &norm_varelim_time_limit;
 
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
                 if (!can_eliminate_var(var)) {
