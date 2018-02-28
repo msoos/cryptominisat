@@ -85,6 +85,7 @@ using std::endl;
 //#define VERBOSE_GATE_REMOVAL
 //#define VERBOSE_XORGATE_MIX
 //#define CHECK_N_OCCUR
+//#define DEBUG_VARELIM
 
 OccSimplifier::OccSimplifier(Solver* _solver):
     solver(_solver)
