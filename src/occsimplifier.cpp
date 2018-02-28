@@ -1281,9 +1281,12 @@ bool OccSimplifier::setup()
     solver->clauseCleaner->remove_and_clean_all();
 
     //If too many clauses, don't do it
-    if (solver->getNumLongClauses() > 10ULL*1000ULL*1000ULL
-        || solver->litStats.irredLits > 50ULL*1000ULL*1000ULL
+    if (solver->getNumLongClauses() > 30ULL*1000ULL*1000ULL
+        || solver->litStats.irredLits > 70ULL*1000ULL*1000ULL
     ) {
+        if (solver->conf.verbosity) {
+            cout << "[occ] will not link in occur, CNF has too many clauses/irred lits" << endl;
+        }
         return false;
     }
 
