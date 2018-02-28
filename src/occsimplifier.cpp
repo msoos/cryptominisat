@@ -1047,7 +1047,7 @@ bool OccSimplifier::eliminate_vars()
             }
         }
         if (solver->conf.verbosity) {
-            cout << "finished here" << endl;
+            cout << "c finished here" << endl;
         }
         solver->clean_occur_from_removed_clauses_only_smudged();
 
