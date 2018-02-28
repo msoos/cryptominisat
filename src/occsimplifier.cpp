@@ -757,9 +757,6 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
 
 bool OccSimplifier::deal_with_added_long_and_bin()
 {
-    int64_t* orig_limit_ptr = limit_to_decrease;
-    limit_to_decrease = &varelim_sub_str_limit;
-
     while (!added_long_cl.empty() && !added_bin_cl.empty())
     {
         if (!sub_str->handle_added_long_cl(limit_to_decrease, false)) {
@@ -779,8 +776,6 @@ bool OccSimplifier::deal_with_added_long_and_bin()
         }
         added_bin_cl.clear();
     }
-
-    limit_to_decrease = orig_limit_ptr;
     return true;
 }
 
@@ -999,8 +994,10 @@ bool OccSimplifier::eliminate_vars()
                     goto end;
 
                 //SUB and STR for long and short
+                limit_to_decrease = &varelim_sub_str_limit;
                 if (!deal_with_added_long_and_bin())
                     goto end;
+                limit_to_decrease = &norm_varelim_time_limit;
 
                 solver->ok = solver->propagate_occur();
                 if (!solver->okay()) {
@@ -1321,6 +1318,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
 bool OccSimplifier::backward_sub_str()
 {
+    limit_to_decrease = &subsumption_time_limit;
     assert(cl_to_free_later.empty());
     assert(solver->watches.get_smudged_list().empty());
 
@@ -1334,6 +1332,7 @@ bool OccSimplifier::backward_sub_str()
     if (solver->must_interrupt_asap())
         goto end;
 
+    limit_to_decrease = &strengthening_time_limit;
     if (!sub_str->backw_str_long_with_long()
         || solver->must_interrupt_asap()
     ) {

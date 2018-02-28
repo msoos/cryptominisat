@@ -233,8 +233,6 @@ void SubsumeStrengthen::backw_sub_long_with_long()
     size_t wenThrough = 0;
     size_t subsumed = 0;
     const int64_t orig_limit = simplifier->subsumption_time_limit;
-    simplifier->limit_to_decrease = &simplifier->subsumption_time_limit;
-
     randomise_clauses_order();
     while (*simplifier->limit_to_decrease > 0
         && (double)wenThrough < solver->conf.subsume_gothrough_multip*(double)simplifier->clauses.size()
@@ -296,8 +294,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
 
     double myTime = cpuTime();
     size_t wenThrough = 0;
-    const int64_t orig_limit = simplifier->strengthening_time_limit;
-    simplifier->limit_to_decrease = &simplifier->strengthening_time_limit;
+    const int64_t orig_limit = *simplifier->limit_to_decrease;
     Sub1Ret ret;
 
     randomise_clauses_order();
@@ -541,6 +538,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
     if (!cl.red()) {
         simplifier->n_occurs[toRemoveLit.toInt()]--;
         simplifier->elim_calc_need_update.touch(toRemoveLit.var());
+        simplifier->removed_cl_with_var.touch(toRemoveLit.var());
     }
 
     runStats.litsRemStrengthen++;
@@ -934,11 +932,7 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     size_t strSucceed = 0;
 
     //Stats
-    int64_t time_limit = 2LL*1000LL*1000LL*1000LL
-        *solver->conf.global_timeout_multiplier;
-    uint64_t orig_time_limit = time_limit;
-    simplifier->limit_to_decrease = &time_limit;
-
+    int64_t orig_time_limit = *simplifier->limit_to_decrease;
     const size_t origTrailSize = solver->trail_size();
     double myTime = cpuTime();
     subsumedBin = 0;
