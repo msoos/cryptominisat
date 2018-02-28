@@ -1048,9 +1048,11 @@ bool OccSimplifier::eliminate_vars()
                 cout << "c another run ?"<< endl;
             }
         }
+        #ifdef DEBUG_VARELIM
         if (solver->conf.verbosity) {
             cout << "c finished here" << endl;
         }
+        #endif
         solver->clean_occur_from_removed_clauses_only_smudged();
 
         //For debug ONLY
