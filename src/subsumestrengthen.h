@@ -53,9 +53,7 @@ public:
         const Lit lit
         , const bool redundant_too = false
     );
-    bool handle_added_long_cl(int64_t* limit,
-                             const bool main_run,
-                             bool only_subsume = false);
+    bool handle_added_long_cl(int64_t* limit, const bool main_run);
 
     struct Sub0Ret {
         ClauseStats stats;

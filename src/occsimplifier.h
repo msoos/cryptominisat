@@ -265,7 +265,7 @@ public:
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;
-    TouchListLit added_cl_to_lit;
+    TouchListLit added_cl_to_var;
     vector<uint32_t> n_occurs;
     TouchListLit removed_cl_with_var;
     vector<std::pair<Lit, Lit> > added_bin_cl;
@@ -402,6 +402,8 @@ private:
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
     void        set_var_as_eliminated(const uint32_t var, const Lit lit);
     bool        can_eliminate_var(const uint32_t var) const;
+    bool        clear_vars_from_cls_that_have_been_set(size_t& last_trail);
+    bool        deal_with_added_cl_to_var_lit(const Lit lit);
 
 
     TouchList   elim_calc_need_update;
@@ -442,7 +444,7 @@ private:
             assert(at > 0);
             return resolvents_stats[at-1];
         }
-        vector<Lit>& pop() {
+        void pop() {
             at--;
         }
         bool empty() const {

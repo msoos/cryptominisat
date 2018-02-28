@@ -304,6 +304,8 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     *limit_to_decrease -= (long)cl.size();
     for(; i != end; i++) {
         if (solver->value(*i) == l_Undef) {
+            //clean_clause() is called when the clause changed, so this is relevant
+            added_cl_to_var.touch(i->var());
             *j++ = *i;
             continue;
         }
@@ -760,7 +762,7 @@ bool OccSimplifier::deal_with_added_long_and_bin()
 
     while (!added_long_cl.empty() && !added_bin_cl.empty())
     {
-        if (!sub_str->handle_added_long_cl(limit_to_decrease, false, false)) {
+        if (!sub_str->handle_added_long_cl(limit_to_decrease, false)) {
             return false;
         }
         added_long_cl.clear();
@@ -782,10 +784,80 @@ bool OccSimplifier::deal_with_added_long_and_bin()
     return true;
 }
 
+bool OccSimplifier::clear_vars_from_cls_that_have_been_set(size_t& last_trail)
+{
+    //BUG TODO
+    //solver->clauseCleaner->clean_implicit_clauses();
+
+    vector<ClOffset> cls_to_clean;
+    while(last_trail < solver->trail_size()) {
+        Lit l = solver->trail_at(last_trail++);
+        watch_subarray ws = solver->watches[l];
+        for (Watched& w: ws) {
+            if (w.isClause()) {
+                ClOffset offs = w.get_offset();
+                Clause* cl = solver->cl_alloc.ptr(offs);
+                if (cl->getRemoved() || cl->freed()) {
+                    continue;
+                }
+                cls_to_clean.push_back(offs);
+            }
+        }
+
+        l = ~l;
+        watch_subarray ws2 = solver->watches[l];
+        for(Watched& w: ws2) {
+            if (w.isClause()) {
+                ClOffset offs = w.get_offset();
+                Clause* cl = solver->cl_alloc.ptr(offs);
+                if (cl->getRemoved() || cl->freed()) {
+                    continue;
+                }
+                cls_to_clean.push_back(offs);
+            }
+        }
+    }
+    for(ClOffset offs: cls_to_clean) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (!cl->getRemoved() && !cl->freed()) {
+            lbool ret = clean_clause(offs);
+            if (ret == l_False) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
+{
+    watch_subarray_const cs = solver->watches[lit];
+    *limit_to_decrease -= (long)cs.size()*2+ 40;
+    for (const Watched *it = cs.begin(), *end = cs.end()
+        ; it != end
+        ; ++it
+    ) {
+        if (it->isClause()) {
+            ClOffset offs = it->get_offset();
+            Clause* cl = solver->cl_alloc.ptr(offs);
+
+            //Has already been removed
+            if (cl->freed() || cl->getRemoved() || cl->marked)
+                continue;
+
+            cl->marked = 1;
+            added_long_cl.push_back(offs);
+        }
+    }
+    return true;
+}
+
 bool OccSimplifier::eliminate_vars()
 {
     //solver->conf.verbosity = 1;
     //Set-up
+    size_t last_trail = solver->trail_size();
     double myTime = cpuTime();
     size_t vars_elimed = 0;
     size_t wenThrough = 0;
@@ -825,6 +897,25 @@ bool OccSimplifier::eliminate_vars()
 //     }
     //
 
+    solver->ok = solver->propagate_occur();
+    if (!solver->okay()) {
+        goto end;
+    }
+
+    //BUG TODO
+    //solver->clauseCleaner->clean_implicit_clauses();
+    for(ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (!cl->getRemoved() && !cl->freed()) {
+            lbool ret = clean_clause(offs);
+            if (ret == l_False) {
+                goto end;
+            }
+        }
+    }
+    last_trail = solver->trail_size();
+    solver->clean_occur_from_removed_clauses_only_smudged();
+
     while(varelim_num_limit > 0
         && *limit_to_decrease > 0
         && grow < solver->conf.min_bva_gain
@@ -837,17 +928,10 @@ bool OccSimplifier::eliminate_vars()
         }
 
         last_elimed = 0;
-        solver->ok = solver->propagate_occur();
-        if (!solver->okay()) {
-            goto end;
-        }
-        solver->clauseCleaner->clean_implicit_clauses();
-        solver->clean_occur_from_removed_clauses_only_smudged();
-
         limit_to_decrease = &norm_varelim_time_limit;
         order_vars_for_elim();
 
-        added_cl_to_lit.clear();
+        added_cl_to_var.clear();
         removed_cl_with_var.touch(Lit(0, false));
         while(!removed_cl_with_var.getTouchedList().empty()
             && *limit_to_decrease > 0
@@ -891,27 +975,47 @@ bool OccSimplifier::eliminate_vars()
                 update_varelim_complexity_heap();
             }
 
-            //TODO BUG MUST BE FIXED
-            // We should do this a better way
-//             sub_str->backw_sub_long_with_long();
+            //Clean clauses that have vars that have been set
+            if (last_trail != solver->trail_size()) {
+                if (!clear_vars_from_cls_that_have_been_set(last_trail)) {
+                    goto end;
+                }
+            }
+
+            solver->clean_occur_from_removed_clauses_only_smudged();
+            update_varelim_complexity_heap();
 
             limit_to_decrease = &norm_varelim_time_limit;
 
             if (solver->conf.verbosity) {
-                cout <<"c size of added_cl_to_lit    : " << added_cl_to_lit.getTouchedList().size() << endl;
+                cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
             }
-            for(uint32_t l: added_cl_to_lit.getTouchedList()) {
-                Lit lit = Lit::toLit(l);
-                //needed for FORWARD subsumption... pain in the back
-                //BUG really expensive and should not be needed...
+            for(uint32_t i = 0; i < added_cl_to_var.getTouchedList().size(); i++) {
+                uint32_t var = added_cl_to_var.getTouchedList()[i];
+                Lit lit = Lit(var, true);
                 if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
-                    return false;
+                    goto end;
+                }
+                if (!deal_with_added_cl_to_var_lit(lit)) {
+                    goto end;
+                }
+
+                lit = ~lit;
+                if (!sub_str->backw_sub_str_long_with_bins_watch(lit, false)) {
+                    goto end;
+                }
+                if (!deal_with_added_cl_to_var_lit(lit)) {
+                    goto end;
                 }
                 if (*limit_to_decrease <= 0)
                     break;
             }
-            added_cl_to_lit.clear();
+            added_cl_to_var.clear();
+            if (!sub_str->handle_added_long_cl(&strengthening_time_limit, true)) {
+                goto end;
+            }
+            limit_to_decrease = &norm_varelim_time_limit;
 
             for(uint32_t var: removed_cl_with_var.getTouchedList()) {
                 if (!can_eliminate_var(var)) {
@@ -920,26 +1024,6 @@ bool OccSimplifier::eliminate_vars()
                 varElimComplexity[var] = heuristicCalcVarElimScore(var);
                 velim_order.update(var);
             }
-
-            /*uint32_t i = 0;
-            uint32_t j = 0;
-            for(; i < clauses.size(); i++) {
-                ClOffset offs = clauses[i];
-                Clause* cl = solver->cl_alloc.ptr(offs);
-                if (cl->getRemoved() || cl->freed())
-                    continue;
-
-                if (cl->getOccurLinked()) {
-                    lbool ret = clean_clause(offs);
-                    if (ret == l_False) {
-                        goto end;
-                    } else if (ret == l_True) {
-                        continue;
-                    }
-                }
-                clauses[j++] = offs;
-            }
-            clauses.resize(j);*/
 
             if (solver->conf.verbosity) {
                 cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
@@ -1172,7 +1256,7 @@ bool OccSimplifier::setup()
     assert(toClear.empty());
     added_long_cl.clear();
     added_bin_cl.clear();
-    added_cl_to_lit.clear();
+    added_cl_to_var.clear();
     n_occurs.clear();
     n_occurs.resize(solver->nVars()*2, 0);
 
@@ -1243,7 +1327,7 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
-    if (!sub_str->handle_added_long_cl(&strengthening_time_limit, true, false)
+    if (!deal_with_added_long_and_bin()
         || solver->must_interrupt_asap()
     ) {
         goto end;
@@ -1878,6 +1962,10 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             if (tautological)
                 continue;
 
+            if (solver->satisfied_cl(dummy)) {
+                continue;
+            }
+
             #ifdef VERBOSE_DEBUG_VARELIM
             cout << "Adding new clause due to varelim: " << dummy << endl;
             #endif
@@ -2017,7 +2105,7 @@ bool OccSimplifier::add_varelim_resolvent(
         }
         #endif
         elim_calc_need_update.touch(lit.var());
-        added_cl_to_lit.touch(lit);
+        added_cl_to_var.touch(lit.var());
     }
 
     return true;
@@ -2555,8 +2643,10 @@ void OccSimplifier::linkInClause(Clause& cl)
     if (!cl.red()) {
         for(const Lit l: cl){
             n_occurs[l.toInt()]++;
+            added_cl_to_var.touch(l.var());
         }
     }
+    cl.marked = 0;
 
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {

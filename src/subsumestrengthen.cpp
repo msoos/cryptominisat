@@ -462,7 +462,7 @@ void SubsumeStrengthen::findStrengthened(
 }
 
 bool SubsumeStrengthen::handle_added_long_cl(
-    int64_t* limit_to_decrease, const bool main_run, const bool only_subsume)
+    int64_t* limit_to_decrease, const bool main_run)
 {
     int64_t orig_limit = *limit_to_decrease;
     size_t origTrailSize = solver->trail_size();
@@ -480,12 +480,9 @@ bool SubsumeStrengthen::handle_added_long_cl(
         if (cl->freed() || cl->getRemoved())
             continue;
 
-        if (only_subsume) {
-            stat.sub += subsume_and_unlink_and_markirred(offs);
-        } else {
-            auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
-            stat += ret;
-        }
+        cl->marked = 0;
+        auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
+        stat += ret;
         if (!solver->ok) {
             goto end;
         }
@@ -503,7 +500,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
         const bool time_out =  *limit_to_decrease <= 0;
         const double time_used = cpuTime() - start_time;
         const double time_remain = float_div(*limit_to_decrease, orig_limit);
-        if (solver->conf.verbosity >= 5) {
+        if (solver->conf.verbosity) {
             cout
             << "c [occ-substr] added_long_cl"
             << " sub: " << stat.sub
@@ -538,6 +535,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
 
     (*solver->drat) << deldelay << cl << fin;
     cl.strengthen(toRemoveLit);
+    simplifier->added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
     (*solver->drat) << cl << fin << findelay;
     if (!cl.red()) {

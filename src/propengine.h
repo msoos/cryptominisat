@@ -97,6 +97,9 @@ public:
     size_t trail_size() const {
         return trail.size();
     }
+    Lit trail_at(size_t at) const {
+        return trail[at];
+    }
     bool propagate_occur();
     PropStats propStats;
     template<bool update_bogoprops = true>

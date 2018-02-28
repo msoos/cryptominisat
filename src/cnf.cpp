@@ -426,7 +426,7 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
 
-    bool satisfied = satisfied_cl(&cl);
+    bool satisfied = satisfied_cl(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
     num_false2 += value(cl[1]) == l_False;
@@ -582,15 +582,6 @@ void CNF::check_wrong_attach() const
 #endif
 }
 
-bool CNF::satisfied_cl(const Clause* cl) const {
-    for(Lit lit: *cl) {
-        if (value(lit) == l_True) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void CNF::check_watchlist(watch_subarray_const ws) const
 {
     for(const Watched& w: ws) {
@@ -610,7 +601,7 @@ void CNF::check_watchlist(watch_subarray_const ws) const
         if (varData[blockedLit.var()].removed == Removed::none
             //0-level FALSE --> clause cleaner removed it from clause, that's OK
             && value(blockedLit) != l_False
-            && !satisfied_cl(&c)
+            && !satisfied_cl(c)
         ) {
             bool found = false;
             for(Lit l: c) {

@@ -253,7 +253,8 @@ public:
     void test_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
-    bool satisfied_cl(const Clause* cl) const;
+    template<class T>
+    bool satisfied_cl(const T& cl) const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
@@ -518,6 +519,16 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
             assert(!cl.freed());
         }
     }
+}
+
+template<class T>
+bool CNF::satisfied_cl(const T& cl) const {
+    for(Lit lit: cl) {
+        if (value(lit) == l_True) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }
