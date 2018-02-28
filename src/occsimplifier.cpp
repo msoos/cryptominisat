@@ -467,7 +467,7 @@ void OccSimplifier::print_mem_usage_of_occur(uint64_t memUsage) const
 {
     if (solver->conf.verbosity) {
         cout
-        << "c [simp] mem usage for occur "
+        << "c [occ] mem usage for occur "
         << std::setw(6) << memUsage/(1024ULL*1024ULL) << " MB"
         << endl;
     }
@@ -486,7 +486,7 @@ void OccSimplifier::print_linkin_data(const LinkInData link_in_data) const
     }
 
     cout
-    << "c [simp] Not linked in "
+    << "c [occ] Not linked in "
     << link_in_data.cl_not_linked << "/"
     << (link_in_data.cl_linked + link_in_data.cl_not_linked)
     << " ("
