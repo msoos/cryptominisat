@@ -274,8 +274,8 @@ void OccSimplifier::unlink_clause(
         for (const Lit lit: cl) {
             solver->watches.smudge(lit);
         }
-        cl.setRemoved();
     }
+    cl.setRemoved();
 
     if (cl.red()) {
         solver->litStats.redLits -= cl.size();
