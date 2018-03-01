@@ -330,7 +330,7 @@ bool BVA::bva_simplify_system()
     const uint32_t newvar = solver->nVars()-1;
     const Lit new_lit(newvar, false);
 
-    //Binary/Tertiary clauses
+    //Binary clauses
     for(const lit_pair m_lit: m_lits) {
         bva_tmp_lits.clear();
         bva_tmp_lits.push_back(m_lit.lit1);
@@ -338,11 +338,24 @@ bool BVA::bva_simplify_system()
             bva_tmp_lits.push_back(m_lit.lit2);
         }
         bva_tmp_lits.push_back(new_lit);
-        Clause* newCl = solver->add_clause_int(bva_tmp_lits, false, ClauseStats(), false, &bva_tmp_lits, true, new_lit);
+        Clause* newCl = solver->add_clause_int(
+            bva_tmp_lits, //lits to add
+            false, //redundant?
+            ClauseStats(), //stats
+            false, //attach if long?
+            &bva_tmp_lits, //put final lits back here
+            true, //add DRAT
+            new_lit //the first literal in DRAT
+        );
+
         if (newCl != NULL) {
             simplifier->linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             simplifier->clauses.push_back(offset);
+        } else {
+            for(Lit l: bva_tmp_lits) {
+                simplifier->n_occurs[l.toInt()]++;
+            }
         }
         touched.touch(bva_tmp_lits);
     }
@@ -444,9 +457,10 @@ void BVA::remove_matching_clause(
     switch(to_remove.size()) {
         case 2: {
             *simplifier->limit_to_decrease -= 2*solver->watches[to_remove[0]].size();
-            bool red = false;
             *(solver->drat) << del << to_remove << fin;
-            solver->detach_bin_clause(to_remove[0], to_remove[1], red);
+            solver->detach_bin_clause(to_remove[0], to_remove[1], false);
+            simplifier->n_occurs[to_remove[0].toInt()]--;
+            simplifier->n_occurs[to_remove[1].toInt()]--;
             break;
         }
 
@@ -509,7 +523,18 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
             lits.resize(2);
             lits[0] = new_lit;
             lits[1] = cl.ws.lit2();
-            Clause* cl_check = solver->add_clause_int(lits, false, ClauseStats(), false, &lits, true, new_lit);
+            Clause* cl_check = solver->add_clause_int(
+                lits, //lits to attach
+                false, //redundant?
+                ClauseStats(),
+                false, //attach?
+                &lits, //put back cls here
+                true, //DRAT?
+                new_lit //first DRAT literal
+            );
+            for(Lit l: lits) {
+                simplifier->n_occurs[l.toInt()]++;
+            }
             assert(cl_check == NULL);
             break;
         }
@@ -524,11 +549,23 @@ bool BVA::add_longer_clause(const Lit new_lit, const OccurClause& cl)
                     lits[i] = orig_cl[i];
                 }
             }
-            Clause* newCl = solver->add_clause_int(lits, false, orig_cl.stats, false, &lits, true, new_lit);
+            Clause* newCl = solver->add_clause_int(
+                lits, //lits to add
+                false, //redundant?
+                orig_cl.stats,
+                false, //attach?
+                &lits, //put back final lits here
+                true, //DRAT
+                new_lit //first DRAT literal
+            );
             if (newCl != NULL) {
                 simplifier->linkInClause(*newCl);
                 ClOffset offset = solver->cl_alloc.get_offset(newCl);
                 simplifier->clauses.push_back(offset);
+            } else {
+                for(Lit l: lits) {
+                    simplifier->n_occurs[l.toInt()]++;
+                }
             }
             break;
         }
