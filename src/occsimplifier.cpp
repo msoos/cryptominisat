@@ -869,8 +869,7 @@ bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
     //solver->clauseCleaner->clean_implicit_clauses();
 
     solver->clean_occur_from_removed_clauses_only_smudged();
-
-    return false;
+    return true;
 }
 
 bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
