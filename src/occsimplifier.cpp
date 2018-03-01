@@ -2193,7 +2193,7 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
     const Lit lit = Lit(var, false);
 
     //Heuristic says no, or we ran out of time
-    if (test_elim_and_fill_resolvents(var) == std::numeric_limits<int>::max()
+    if (test_elim_and_fill_resolvents(var) > 0
         || *limit_to_decrease < 0
     ) {
         return false;  //didn't eliminate :(
