@@ -69,7 +69,6 @@ THE SOFTWARE.
 #define VERBOSE_XORGATE_MIX
 #define VERBOSE_DEBUG_XOR_FINDER
 #define VERBOSE_DEBUG_VARELIM
-#define CHECK_N_OCCUR
 #endif
 
 using namespace CMSat;

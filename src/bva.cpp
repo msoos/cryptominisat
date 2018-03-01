@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include <cmath>
 #include <functional>
 
+//#define CHECK_N_OCCUR
+
 using namespace CMSat;
 
 BVA::BVA(Solver* _solver, OccSimplifier* _simplifier) :
