@@ -1985,8 +1985,9 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
             //Resolve the two clauses
             bool tautological = resolve_clauses(*it, *it2, lit);
-            if (tautological)
+            if (tautological) {
                 continue;
+            }
 
             if (solver->satisfied_cl(dummy)) {
                 continue;
