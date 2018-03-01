@@ -849,6 +849,31 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
     return true;
 }
 
+bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
+{
+    solver->ok = solver->propagate_occur();
+    if (!solver->okay()) {
+        return false;
+    }
+
+    for(ClOffset offs: clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (!cl->getRemoved() && !cl->freed()) {
+            lbool ret = clean_clause(offs);
+            if (ret == l_False) {
+                return false;
+            }
+        }
+    }
+
+    //BUG TODO
+    //solver->clauseCleaner->clean_implicit_clauses();
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+
+    return false;
+}
+
 bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 {
     limit_to_decrease = &varelim_sub_str_limit;
@@ -928,24 +953,10 @@ bool OccSimplifier::eliminate_vars()
 //     }
     //
 
-    solver->ok = solver->propagate_occur();
-    if (!solver->okay()) {
+    if (!prop_and_clean_long_and_impl_clauses()) {
         goto end;
     }
-
-    //BUG TODO
-    //solver->clauseCleaner->clean_implicit_clauses();
-    for(ClOffset offs: clauses) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->getRemoved() && !cl->freed()) {
-            lbool ret = clean_clause(offs);
-            if (ret == l_False) {
-                goto end;
-            }
-        }
-    }
     last_trail = solver->trail_size();
-    solver->clean_occur_from_removed_clauses_only_smudged();
 
     while(varelim_num_limit > 0
         && *limit_to_decrease > 0
@@ -1924,8 +1935,18 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
 
     //Gather data
     #ifdef CHECK_N_OCCUR
-    assert(n_occurs[Lit(var, false).toInt()] == calc_data_for_heuristic(Lit(var, false)));
-    assert(n_occurs[Lit(var, true).toInt()] == calc_data_for_heuristic(Lit(var, true)));
+    if (n_occurs[Lit(var, false).toInt()] != calc_data_for_heuristic(Lit(var, false))) {
+        cout << "lit " << Lit(var, false) << endl;
+        cout << "n_occ is: " << n_occurs[Lit(var, false).toInt()] << endl;
+        cout << "calc is: " << calc_data_for_heuristic(Lit(var, false)) << endl;
+        assert(false);
+    }
+
+    if (n_occurs[Lit(var, true).toInt()] != calc_data_for_heuristic(Lit(var, true))) {
+        cout << "lit " << Lit(var, true) << endl;
+        cout << "n_occ is: " << n_occurs[Lit(var, true).toInt()] << endl;
+        cout << "calc is: " << calc_data_for_heuristic(Lit(var, true)) << endl;
+    }
     #endif
     const uint32_t pos = n_occurs[Lit(var, false).toInt()];
     const uint32_t neg = n_occurs[Lit(var, true).toInt()];
@@ -2531,14 +2552,16 @@ uint32_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
     #ifdef CHECK_N_OCCUR
     const uint32_t pos = calc_data_for_heuristic(lit);
     if (pos != n_occurs[lit.toInt()]) {
-        cout << "Wrong, pos is: " << pos
+        cout << "for lit: " << lit << endl;
+        cout << "pos is: " << pos
         << " n_occurs is:" << n_occurs[lit.toInt()] << endl;
         assert(false);
     }
 
     const uint32_t neg = calc_data_for_heuristic(~lit);
     if (neg != n_occurs[(~lit).toInt()]) {
-        cout << "Wrong, neg is: " << neg
+        cout << "for lit: " << lit << endl;
+        cout << "neg is: " << neg
         << " n_occurs is:" << n_occurs[(~lit).toInt()] << endl;
         assert(false);
     }

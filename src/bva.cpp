@@ -54,16 +54,10 @@ bool BVA::bounded_var_addition()
         cout << "c [occ-bva] Running BVA" << endl;
     }
 
-    if (!solver->propagate_occur()) {
-        solver->ok = false;
-        return false;
-    }
-
     simplifier->limit_to_decrease = &bounded_var_elim_time_limit;
     int64_t limit_orig = *simplifier->limit_to_decrease;
-    solver->clauseCleaner->clean_implicit_clauses();
-    if (solver->conf.doStrSubImplicit) {
-        solver->subsumeImplicit->subsume_implicit(false);
+    if (!simplifier->prop_and_clean_long_and_impl_clauses()) {
+        return solver->okay();
     }
 
     bva_worked = 0;
@@ -808,6 +802,7 @@ void BVA::calc_watch_irred_sizes()
 
 size_t BVA::calc_watch_irred_size(const Lit lit) const
 {
+#ifdef CHECK_N_OCCUR
     size_t num = 0;
     watch_subarray_const ws = solver->watches[lit];
     for(const Watched w: ws) {
@@ -818,10 +813,19 @@ size_t BVA::calc_watch_irred_size(const Lit lit) const
 
         assert(w.isClause());
         const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+        assert(!cl.freed());
+        assert(!cl.getRemoved());
         num += !cl.red();
     }
+    if (num != simplifier->n_occurs[lit.toInt()]) {
+        cout << "for lit "<< lit << endl;
+        cout << "n occ: "<< simplifier->n_occurs[lit.toInt()] << endl;
+        cout << "our count: "<< num << endl;
+        assert(false);
+    }
+#endif
 
-    return num;
+    return simplifier->n_occurs[lit.toInt()];
 }
 
 size_t BVA::mem_used() const

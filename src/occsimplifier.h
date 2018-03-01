@@ -411,6 +411,7 @@ private:
     vector<ClOffset> cl_to_free_later;
     bool        maybe_eliminate(const uint32_t x);
     bool        deal_with_added_long_and_bin();
+    bool        prop_and_clean_long_and_impl_clauses();
     vector<Lit> tmp_bin_cl;
     void        create_dummy_blocked_clause(const Lit lit);
     int         test_elim_and_fill_resolvents(uint32_t var);
