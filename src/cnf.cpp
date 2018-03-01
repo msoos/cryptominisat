@@ -471,7 +471,7 @@ void CNF::find_all_attach() const
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
 
-            bool satisfied = satisfied_cl(cl);
+            bool satisfied = satisfied_cl(*cl);
             if (!satisfied) {
                 if (value(w.getBlockedLit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
