@@ -2059,6 +2059,8 @@ void OccSimplifier::printOccur(const Lit lit) const
             << *solver->cl_alloc.ptr(w.get_offset())
             << "(red: " << solver->cl_alloc.ptr(w.get_offset())->red()
             << ")"
+            << "(rem: " << solver->cl_alloc.ptr(w.get_offset())->getRemoved()
+            << ")"
             << endl;
         }
     }
@@ -2090,7 +2092,7 @@ bool OccSimplifier::add_varelim_resolvent(
     bvestats.newClauses++;
     Clause* newCl = NULL;
 
-    if (solver->conf.verbosity >= 6) {
+    if (solver->conf.verbosity >= 5) {
         cout
         << "adding v-elim resolvent: "
         << finalLits
@@ -2159,7 +2161,7 @@ void OccSimplifier::update_varelim_complexity_heap()
 void OccSimplifier::print_var_elim_complexity_stats(const uint32_t var) const
 {
     if (solver->conf.verbosity >= 5) {
-        cout << "trying complexity: " << varElimComplexity[var] << endl;
+        cout << "var " << var +1 << " trying complexity: " << varElimComplexity[var] << endl;
     }
 }
 

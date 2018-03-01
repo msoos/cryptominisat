@@ -451,6 +451,9 @@ private:
         bool empty() const {
             return at == 0;
         }
+        uint32_t size() const {
+            return at;
+        }
     };
     Resolvents resolvents;
     Clause* gate_varelim_clause;
