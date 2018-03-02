@@ -465,6 +465,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
     size_t origTrailSize = solver->trail_size();
     const double start_time = cpuTime();
     Sub1Ret stat;
+    bool interrupted = false;
 
     //NOTE added_long_cl CAN CHANGE while the below is running!
     for(size_t i = 0
@@ -477,7 +478,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
         if (cl->freed() || cl->getRemoved())
             continue;
 
-        cl->marked = 0;
+        cl->stats.marked_clause = 0;
         auto ret = strengthen_subsume_and_unlink_and_markirred(offs);
         stat += ret;
         if (!solver->ok) {
@@ -487,11 +488,26 @@ bool SubsumeStrengthen::handle_added_long_cl(
         if ((i&0xfff) == 0xfff
             && solver->must_interrupt_asap()
         ) {
+            interrupted = true;
             goto end;
         }
     }
+    if (*simplifier->limit_to_decrease < 0) {
+        interrupted = true;
+    }
 
     end:
+
+    //we still have to clear the marks
+    if (interrupted) {
+        for(const ClOffset offs: simplifier->added_long_cl) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            if (cl->freed() || cl->getRemoved())
+                continue;
+
+            cl->stats.marked_clause = 0;
+        }
+    }
 
     if (main_run) {
         const bool time_out =  *limit_to_decrease <= 0;

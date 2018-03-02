@@ -203,7 +203,6 @@ public:
     uint16_t _used_in_xor:1;
     uint16_t _gauss_temp_cl:1; ///Used ONLY by Gaussian elimination to incicate where a proagation is coming from
     uint16_t reloced:1;
-    uint16_t marked:1;
 
 
     Lit* getData()

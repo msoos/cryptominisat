@@ -838,10 +838,10 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
             Clause* cl = solver->cl_alloc.ptr(offs);
 
             //Has already been removed
-            if (cl->freed() || cl->getRemoved() || cl->marked)
+            if (cl->freed() || cl->getRemoved() || cl->stats.marked_clause)
                 continue;
 
-            cl->marked = 1;
+            cl->stats.marked_clause = 1;
             added_long_cl.push_back(offs);
         }
     }
@@ -875,6 +875,9 @@ bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
 bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
 {
     limit_to_decrease = &varelim_sub_str_limit;
+
+    //during the deal_with_added_cl_to_var_lit() below, we mark the clauses
+    //so we don't add the same clause twice
     for(uint32_t i = 0
         ; i < added_cl_to_var.getTouchedList().size()
         && *limit_to_decrease > 0
@@ -899,6 +902,8 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
         }
     }
     added_cl_to_var.clear();
+
+    //here, we clean the marks on the clauses, even in case of timeout/abort
     if (!sub_str->handle_added_long_cl(&varelim_sub_str_limit, true)) {
         return false;
     }
