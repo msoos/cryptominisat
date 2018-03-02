@@ -345,8 +345,9 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     #endif
 
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
-    solver->detachClause(offset);
+    solver->detachClause(offset, false);
     Clause& cl = *solver->cl_alloc.ptr(offset);
+    (*solver->drat) << deldelay << cl << fin;
 
     uint32_t orig_size = cl.size();
     uint32_t i = 0;
@@ -392,6 +393,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     if (j == orig_size && !True_confl && confl.isNULL()) {
         solver->cancelUntil<false>(0);
         solver->attachClause(cl);
+        solver->drat->forget_delay();
         return offset;
     }
 
@@ -442,6 +444,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         std::copy(cl.begin(), cl.end(), lits.begin());
     }
     Clause *cl2 = solver->add_clause_int(lits, red, stats);
+    (*solver->drat) << findelay;
 
     if (cl2 != NULL) {
         cl2->set_distilled(true);
