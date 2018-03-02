@@ -165,8 +165,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , full_simplify_at_startup(false)
         , never_stop_search(false)
         , num_conflicts_of_search(70ULL*1000ULL)
-        , num_conflicts_of_search_inc(1.4)
-        , num_conflicts_of_search_inc_max(4)
+        , num_conflicts_of_search_inc(2)
+        , num_conflicts_of_search_inc_max(400)
         , simplify_schedule_startup(
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-backw-sub-str, "
