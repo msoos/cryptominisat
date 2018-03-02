@@ -1744,6 +1744,11 @@ bool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 dist_long_with_impl->distill_long_with_implicit(true);
             }
+        } else if (token == "sub-cls-with-bin") {
+            //Subsumes and strengthens long clauses with binary clauses
+            if (conf.do_distill_clauses) {
+                dist_long_with_impl->distill_long_with_implicit(false);
+            }
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
