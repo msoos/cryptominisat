@@ -69,28 +69,6 @@ end:
     return solver->ok;
 }
 
-struct ClauseSizeSorter
-{
-    ClauseSizeSorter(const ClauseAllocator& _cl_alloc, const bool _invert = false) :
-        cl_alloc(_cl_alloc)
-        , invert(_invert)
-    {}
-
-    const ClauseAllocator& cl_alloc;
-    const bool invert;
-
-    bool operator()(const ClOffset off1, const ClOffset off2) const
-    {
-        const Clause* cl1 = cl_alloc.ptr(off1);
-        const Clause* cl2 = cl_alloc.ptr(off2);
-
-        if (!invert)
-            return cl1->size() > cl2->size();
-        else
-            return cl1->size() < cl2->size();
-    }
-};
-
 bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 {
     assert(solver->ok);
