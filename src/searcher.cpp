@@ -670,6 +670,75 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     return last_resolved_cl;
 }
 
+void Searcher::simple_create_learnt_clause(
+    PropBy confl,
+    vector<Lit>& out_learnt,
+    bool True_confl
+) {
+    int until = -1;
+    int mypathC = 0;
+    Lit p = lit_Undef;
+    int index = trail.size() - 1;
+    assert(decisionLevel() == 1);
+
+    do {
+        if (!confl.isNULL()) {
+            if (confl.getType() == binary_t) {
+                if (p == lit_Undef && True_confl == false) {
+                    Lit q = failBinLit;
+                    if (!seen[q.var()]) {
+                        seen[q.var()] = 1;
+                        mypathC++;
+                    }
+                }
+                Lit q = confl.lit2();
+                if (!seen[q.var()]) {
+                    seen[q.var()] = 1;
+                    mypathC++;
+                }
+            } else {
+                Clause& c = *solver->cl_alloc.ptr(confl.get_offset());
+                //special cause for binary here...
+
+                // if True_confl==true, then choose p begin with the 1th index of c;
+                for (uint32_t j = (p == lit_Undef && True_confl == false) ? 0 : 1
+                    ; j < c.size()
+                    ; j++
+                ) {
+                    Lit q = c[j];
+                    if (!seen[q.var()]) {
+                        seen[q.var()] = 1;
+                        mypathC++;
+                    }
+                }
+            }
+        } else {
+            assert(confl.isNULL());
+            out_learnt.push_back(~p);
+        }
+        // if not break, while() will come to the index of trail blow 0, and fatal error occur;
+        if (mypathC == 0) {
+            break;
+        }
+        // Select next clause to look at:
+        while (!seen[trail[index--].var()]);
+        // if the reason cr from the 0-level assigned var, we must break avoid move forth further;
+        // but attention that maybe seen[x]=1 and never be clear. However makes no matter;
+        if ((int)trail_lim[0] > index + 1
+            && until == -1
+        ) {
+            until = out_learnt.size();
+        }
+        p = trail[index + 1];
+        confl = varData[p.var()].reason;
+        seen[p.var()] = 0;
+        mypathC--;
+    } while (mypathC >= 0);
+
+    if (until != -1)
+        out_learnt.resize(until);
+}
+
 Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
 {
     //We can only on-the-fly subsume with clauses that are not 2- or 3-long
@@ -2157,11 +2226,12 @@ lbool Searcher::solve(
         if (status == l_Undef &&
             sumConflicts > next_distill
         ) {
-            if (!solver->distill_long_cls->distill(1)) {
+            if (!solver->distill_long_cls->distill(true)) {
                 status = l_False;
                 goto end;
             }
-            next_distill += 20ULL*1000ULL;
+            next_distill = std::min<double>(sumConflicts * 0.2 + sumConflicts + 3000,
+                                    sumConflicts + 50000);
         }
     }
 

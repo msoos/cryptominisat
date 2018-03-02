@@ -141,6 +141,11 @@ class Searcher : public HyperEngine
             order_heap_maple.clear();
         }
         void bumpClauseAct(Clause* cl);
+        void simple_create_learnt_clause(
+            PropBy confl,
+            vector<Lit>& out_learnt,
+            bool True_confl
+        );
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;

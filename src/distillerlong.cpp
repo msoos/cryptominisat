@@ -45,25 +45,29 @@ DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
-bool DistillerLong::distill(uint32_t _queueByBy)
+bool DistillerLong::distill(const bool red)
 {
     assert(solver->ok);
     numCalls++;
-    queueByBy = _queueByBy;
     Stats other;
 
 
-    runStats.clear();
-    //solver->clauseCleaner->clean_clauses(solver->longIrredCls);
-    if (!distill_long_cls_all(solver->longIrredCls)) {
-        goto end;
-    }
-    other = runStats;
-
-    runStats.clear();
-    //solver->clauseCleaner->clean_clauses(solver->longRedCls[0]);
-    if (!distill_long_cls_all(solver->longRedCls[0])) {
-        goto end;
+    if (!red) {
+        runStats.clear();
+        //solver->clauseCleaner->clean_clauses(solver->longIrredCls);
+        if (!distill_long_cls_all(solver->longIrredCls, 1)) {
+            goto end;
+        }
+        other = runStats;
+    } else {
+        runStats.clear();
+        //solver->clauseCleaner->clean_clauses(solver->longRedCls[0]);
+        if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
+            goto end;
+        }
+//         if (!distill_long_cls_all(solver->longRedCls[1], 10.0)) {
+//             goto end;
+//         }
     }
 
 end:
@@ -114,7 +118,7 @@ bool DistillerLong::go_through_clauses(
         }
 
         //if done enough, stop doing it
-        if (solver->propStats.bogoProps-oldBogoProps + extraTime >= maxNumProps
+        if ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps >= maxNumProps
             || solver->must_interrupt_asap()
         ) {
             if (solver->conf.verbosity >= 3) {
@@ -130,7 +134,7 @@ bool DistillerLong::go_through_clauses(
         ClOffset offset = *i;
         Clause& cl = *solver->cl_alloc.ptr(offset);
         //Time to dereference
-        extraTime += 5;
+        maxNumProps -= 5;
 
         //If we already tried this clause, then move to next
         if (cl.getdistilled()) {
@@ -138,17 +142,19 @@ bool DistillerLong::go_through_clauses(
             continue;
         };
         cl.set_distilled(true);
-
-        extraTime += cl.size();
         runStats.checkedClauses++;
-
-        //Sanity check
         assert(cl.size() > 2);
-        //assert(!cl.red());
 
-        //Copy literals
-        lits.resize(cl.size());
-        std::copy(cl.begin(), cl.end(), lits.begin());
+        //we will detach the clause no matter what
+        maxNumProps -= solver->watches[cl[0]].size();
+        maxNumProps -= solver->watches[cl[1]].size();
+
+        maxNumProps -= cl.size();
+        if (solver->satisfied_cl(cl)) {
+            solver->detachClause(cl);
+            solver->cl_alloc.clauseFree(&cl);
+            continue;
+        }
 
         //Try to distill clause
         ClOffset offset2 = try_distill_clause_and_return_new(
@@ -163,23 +169,13 @@ bool DistillerLong::go_through_clauses(
     }
     cls.resize(cls.size()- (i-j));
 
-    //Didn't time out, so it went through the whole list. Reset distill for all.
-//     if (!time_out) {
-//         for (vector<ClOffset>::const_iterator
-//             it = cls.begin(), end = cls.end()
-//             ; it != end
-//             ; ++it
-//         ) {
-//             Clause* cl = solver->cl_alloc.ptr(*it);
-//             cl->set_distilled(false);
-//         }
-//     }
-
     return time_out;
 }
 
-bool DistillerLong::distill_long_cls_all(vector<ClOffset>& offs)
-{
+bool DistillerLong::distill_long_cls_all(
+    vector<ClOffset>& offs
+    , double time_mult
+) {
     assert(solver->ok);
     if (solver->conf.verbosity >= 6) {
         cout
@@ -197,21 +193,13 @@ bool DistillerLong::distill_long_cls_all(vector<ClOffset>& offs)
 
     if (solver->litStats.irredLits + solver->litStats.redLits < (500ULL*1000ULL))
         maxNumProps *=2;
-
-    if (numCalls > 8
-        && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
-        //&& (solver->longIrredCls.size() < 50000)
-    ) {
-        queueByBy = 1;
-    }
+    maxNumProps *= time_mult;
+    orig_maxNumProps = maxNumProps;
 
     //stats setup
-    extraTime = 0;
     oldBogoProps = solver->propStats.bogoProps;
     runStats.potentialClauses += offs.size();
     runStats.numCalled += 1;
-    uint64_t origLitRem = runStats.numLitsRem;
-    uint64_t origClShorten = runStats.numClShorten;
 
     /*std::sort(offs.begin()
         , offs.end()
@@ -221,12 +209,14 @@ bool DistillerLong::distill_long_cls_all(vector<ClOffset>& offs)
     bool time_out = go_through_clauses(offs);
 
     const double time_used = cpuTime() - myTime;
-    const double time_remain = float_div(solver->propStats.bogoProps-oldBogoProps + extraTime, maxNumProps);
+    const double time_remain = float_div(
+        maxNumProps - ((int64_t)solver->propStats.bogoProps-(int64_t)oldBogoProps),
+        orig_maxNumProps);
     if (solver->conf.verbosity) {
         cout << "c [distill] long cls"
         << " tried: " << runStats.checkedClauses << "/" << offs.size()
-        << " cl-r:" << runStats.numClShorten- origClShorten
-        << " lit-r:" << runStats.numLitsRem - origLitRem
+        << " cl-short:" << runStats.numClShorten
+        << " lit-r:" << runStats.numLitsRem
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -247,7 +237,7 @@ bool DistillerLong::distill_long_cls_all(vector<ClOffset>& offs)
     return solver->ok;
 }
 
-ClOffset DistillerLong::try_distill_clause_and_return_new(
+/*ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
     , const ClauseStats& stats
@@ -257,6 +247,10 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         cout << "Trying to distill clause:" << lits << endl;
     }
     #endif
+
+    Clause& cl = *solver->cl_alloc.ptr(offset);
+    lits.resize(cl.size());
+    std::copy(cl.begin(), cl.end(), lits.begin());
 
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
     uint32_t new_sz = 0;
@@ -269,7 +263,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             solver->enqueue(~lit);
             new_sz++;
 
-            extraTime += 5;
+            maxNumProps -= 5;
             if (!solver->propagate<true>().isNULL()) {
                 early_abort = true;
                 break;
@@ -281,6 +275,8 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         } else {
             //val is l_True --> can't do much
             new_sz++;
+            early_abort = true;
+            break;
         }
     }
     solver->cancelUntil<false>(0);
@@ -291,7 +287,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     if (new_sz < lits.size()) {
         runStats.numClShorten++;
-        extraTime += 20;
+        maxNumProps -= 20;
         runStats.numLitsRem += lits.size() - new_sz;
         if (solver->conf.verbosity >= 5) {
             cout
@@ -334,6 +330,125 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     } else {
         //couldn't simplify the clause
         return offset;
+    }
+}*/
+
+ClOffset DistillerLong::try_distill_clause_and_return_new(
+    ClOffset offset
+    , const bool red
+    , const ClauseStats& stats
+) {
+    #ifdef DRAT_DEBUG
+    if (solver->conf.verbosity >= 6) {
+        cout << "Trying to distill clause:" << lits << endl;
+    }
+    #endif
+
+    //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
+    solver->detachClause(offset);
+    Clause& cl = *solver->cl_alloc.ptr(offset);
+
+    uint32_t orig_size = cl.size();
+    uint32_t i = 0;
+    uint32_t j = 0;
+    for (uint32_t sz = cl.size(); i < sz; i++) {
+        if (solver->value(cl[i]) != l_False) {
+            cl[j++] = cl[i];
+        }
+    }
+    cl.resize(j);
+
+    solver->new_decision_level();
+    bool True_confl = false;
+    PropBy confl;
+    i = 0;
+    j = 0;
+    for (uint32_t sz = cl.size(); i < sz; i++) {
+        const Lit lit = cl[i];
+        lbool val = solver->value(lit);
+        if (val == l_Undef) {
+            solver->enqueue(~lit);
+            cl[j++] = cl[i];
+
+            maxNumProps -= 5;
+            confl = solver->propagate<true>();
+            if (!confl.isNULL()) {
+                break;
+            }
+        } else if (val == l_False) {
+            // skip
+        } else {
+            assert(val == l_True);
+            cl[j++] = cl[i];
+            True_confl = true;
+            confl = solver->varData[cl[i].var()].reason;
+            break;
+        }
+    }
+    assert(solver->ok);
+    cl.resize(j);
+
+    //Couldn't simplify the clause
+    if (j == orig_size && !True_confl && confl.isNULL()) {
+        solver->cancelUntil<false>(0);
+        solver->attachClause(cl);
+        return offset;
+    }
+
+    #ifdef VERBOSE_DEBUG
+    if (j < i && solver->conf.verbosity >= 5) {
+        cout
+        << "c Distillation branch effective." << endl
+        << "c --> shortened cl:" << cl<< endl
+        << "c --> orig size:" << orig_size << endl
+        << "c --> new size:" << j << endl;
+    }
+    #endif
+
+    bool lits_set = false;
+    if (red && j > 1 && (!confl.isNULL() || True_confl)) {
+        #ifdef VERBOSE_DEBUG
+        if (solver->conf.verbosity >= 5) {
+            cout
+            << "c Distillation even more effective." << endl
+            << "c --> orig shortened cl:" << cl << endl;
+        }
+        #endif
+        runStats.numClShorten++;
+        maxNumProps -= 20;
+        lits.clear();
+        if (True_confl) {
+            lits.push_back(cl[cl.size()-1]);
+        }
+        solver->simple_create_learnt_clause(confl, lits, True_confl);
+        if (lits.size() < cl.size()) {
+            #ifdef VERBOSE_DEBUG
+            if (solver->conf.verbosity >= 5) {
+                cout
+                << "c --> more shortened cl:" << lits << endl;
+            }
+            #endif
+            lits_set = true;
+        }
+    }
+    solver->cancelUntil<false>(0);
+    runStats.numLitsRem += orig_size - cl.size();
+    runStats.numClShorten++;
+
+    //Make new clause
+    solver->cl_alloc.clauseFree(offset);
+    if (!lits_set) {
+        lits.resize(cl.size());
+        std::copy(cl.begin(), cl.end(), lits.begin());
+    }
+    Clause *cl2 = solver->add_clause_int(lits, red, stats);
+
+    if (cl2 != NULL) {
+        cl2->set_distilled(true);
+        return solver->cl_alloc.get_offset(cl2);
+    } else {
+        //it became a bin/unit/zero
+        return CL_OFFSET_MAX;
     }
 }
 

@@ -293,7 +293,6 @@ class DLL_PUBLIC SolverConf
         double   subsume_gothrough_multip;
 
         //Distillation
-        uint32_t distill_queue_by;
         int      do_distill_clauses;
         unsigned long long distill_long_cls_time_limitM;
         long watch_cache_stamp_based_str_time_limitM;

@@ -40,7 +40,7 @@ class Clause;
 class DistillerLong {
     public:
         explicit DistillerLong(Solver* solver);
-        bool distill(uint32_t queueByBy = 2);
+        bool distill(const bool red);
 
         struct Stats
         {
@@ -74,7 +74,12 @@ class DistillerLong {
             , const bool red
             , const ClauseStats& stats
         );
-        bool distill_long_cls_all(vector<ClOffset>& offs);
+        ClOffset try_distill_clause_and_return_new_slow(
+            ClOffset offset
+            , const bool red
+            , const ClauseStats& stats
+        );
+        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult);
 
         //Actual algorithms used
         bool distill_long_irred_cls();
@@ -83,10 +88,9 @@ class DistillerLong {
 
         //For distill
         vector<Lit> lits;
-        uint64_t extraTime;
         uint64_t oldBogoProps;
-        uint64_t maxNumProps;
-        uint32_t queueByBy;
+        int64_t maxNumProps;
+        int64_t orig_maxNumProps;
 
         //Global status
         Stats runStats;

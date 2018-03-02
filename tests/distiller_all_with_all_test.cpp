@@ -58,7 +58,7 @@ TEST_F(distill_test, long_by1)
     s->add_clause_outer(str_to_cl("1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distill_long_cls->distill(1);
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 3, 4");
 }
 
@@ -69,7 +69,7 @@ TEST_F(distill_test, long_by1_transitive)
     s->add_clause_outer(str_to_cl("5, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distill_long_cls->distill(1);
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 3, 4");
 }
 
@@ -79,7 +79,7 @@ TEST_F(distill_test, long_by1_2)
     s->add_clause_outer(str_to_cl("2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distill_long_cls->distill(1);
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 4");
 }
 
@@ -90,7 +90,7 @@ TEST_F(distill_test, long_by1_nodistill
     s->add_clause_outer(str_to_cl("-1, 3"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distill_long_cls->distill(1);
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
 
@@ -101,34 +101,9 @@ TEST_F(distill_test, long_by1_nodistill2
     s->add_clause_outer(str_to_cl("-1, -2"));
     s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
 
-    distill_long_cls->distill(1);
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2, 3, 4");
 }
-
-//BY-BY 2
-
-TEST_F(distill_test, long_by2_2)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("2, 3, 4, -5"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4, 5"));
-
-    distill_long_cls->distill(2);
-    check_irred_cls_contains(s, "1, 2, 3, 4");
-}
-
-TEST_F(distill_test, long_by2_nodistill
-)
-{
-    s->new_vars(5);
-    s->add_clause_outer(str_to_cl("1, -2"));
-    s->add_clause_outer(str_to_cl("1, 2, 3, 4"));
-
-    distill_long_cls->distill(2);
-    check_irred_cls_contains(s, "1, 2, 3, 4");
-}
-
-//Tri -- always 2-by-2
 
 TEST_F(distill_test, tri)
 {
@@ -136,7 +111,7 @@ TEST_F(distill_test, tri)
     s->add_clause_outer(str_to_cl("1, 2, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3"));
 
-    distill_long_cls->distill();
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2");
 }
 
@@ -147,7 +122,7 @@ TEST_F(distill_test, tri_transitive)
     s->add_clause_outer(str_to_cl("-4, -3"));
     s->add_clause_outer(str_to_cl("1, 2, 3"));
 
-    distill_long_cls->distill();
+    distill_long_cls->distill(false);
     check_irred_cls_contains(s, "1, 2");
 }
 
