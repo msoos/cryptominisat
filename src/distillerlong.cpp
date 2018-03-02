@@ -102,7 +102,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
     uint64_t maxNumProps =
         solver->conf.distill_long_irred_cls_time_limitM*1000LL*1000ULL
         *solver->conf.global_timeout_multiplier;
-    if (solver->litStats.irredLits + solver->litStats.redLits < 500000)
+    if (solver->litStats.irredLits + solver->litStats.redLits < (500ULL*1000ULL))
         maxNumProps *=2;
 
     extraTime = 0;
