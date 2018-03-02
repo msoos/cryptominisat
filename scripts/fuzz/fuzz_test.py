@@ -301,7 +301,7 @@ class Tester:
             cmd += "--skipresol %d " % random.choice([1, 1, 1, 0])
             cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
-            cmd += "-m %0.12f " % random.gammavariate(0.4, 2.0)
+            cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
             # gammavariate gives us sometimes very low values, sometimes large
 
             if options.sqlite:
