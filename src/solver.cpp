@@ -38,7 +38,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "occsimplifier.h"
 #include "prober.h"
-#include "distillerallwithall.h"
+#include "distillerlong.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"

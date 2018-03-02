@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "distillerallwithall.h"
+#include "distillerlong.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "solver.h"

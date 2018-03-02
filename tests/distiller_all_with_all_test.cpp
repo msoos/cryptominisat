@@ -26,7 +26,7 @@ THE SOFTWARE.
 using std::set;
 
 #include "src/solver.h"
-#include "src/distillerallwithall.h"
+#include "src/distillerlong.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"

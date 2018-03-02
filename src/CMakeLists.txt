@@ -75,7 +75,7 @@ set(cryptoms_lib_files
     clauseallocator.cpp
     sccfinder.cpp
     solverconf.cpp
-    distillerallwithall.cpp
+    distillerlong.cpp
     distillerlongwithimpl.cpp
     str_impl_w_impl_stamp.cpp
     solutionextender.cpp
