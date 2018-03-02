@@ -39,6 +39,7 @@ class Solver;
 class SQLStats;
 class VarReplacer;
 class Gaussian;
+class DistillerLong;
 
 using std::string;
 using std::cout;
@@ -370,6 +371,7 @@ class Searcher : public HyperEngine
             bool operator()(uint32_t var) const;
         };
         friend class Gaussian;
+        friend class DistillerLong;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
@@ -401,6 +403,7 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
+        uint64_t next_distill = 0;
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);

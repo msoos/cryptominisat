@@ -2153,6 +2153,16 @@ lbool Searcher::solve(
         if (must_abort(status)) {
             goto end;
         }
+
+        if (status == l_Undef &&
+            sumConflicts > next_distill
+        ) {
+            if (!solver->distill_long_cls->distill(1)) {
+                status = l_False;
+                goto end;
+            }
+            next_distill += 20ULL*1000ULL;
+        }
     }
 
     end:
