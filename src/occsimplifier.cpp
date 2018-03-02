@@ -2708,7 +2708,7 @@ void OccSimplifier::linkInClause(Clause& cl)
             added_cl_to_var.touch(l.var());
         }
     }
-    cl.marked = 0;
+    assert(cl.stats.marked_clause == 0 && "marks must always be zero at linkin");
 
     std::sort(cl.begin(), cl.end());
     for (const Lit lit: cl) {
