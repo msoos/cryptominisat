@@ -351,7 +351,6 @@ class Searcher : public HyperEngine
         void adjust_phases_restarts();
 
         void print_solution_varreplace_status() const;
-        void dump_search_sql(const double myTime);
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
@@ -387,6 +386,7 @@ class Searcher : public HyperEngine
         ) const;
 
         //SQL
+        void dump_search_sql(const double myTime);
         #ifdef STATS_NEEDED
         void dump_restart_sql();
         PropStats lastSQLPropStats;
