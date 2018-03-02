@@ -41,22 +41,33 @@ using std::endl;
 
 //#define VERBOSE_SUBSUME_NONEXIST
 
-DistillerAllWithAll::DistillerAllWithAll(Solver* _solver) :
+DistillerLong::DistillerLong(Solver* _solver) :
     solver(_solver)
 {}
 
-bool DistillerAllWithAll::distill(uint32_t queueByBy)
+bool DistillerLong::distill(uint32_t _queueByBy)
 {
     assert(solver->ok);
     numCalls++;
+    queueByBy = _queueByBy;
+    Stats other;
 
-    solver->clauseCleaner->clean_clauses(solver->longIrredCls);
 
-    if (!distill_long_irred_cls(queueByBy)) {
+    runStats.clear();
+    //solver->clauseCleaner->clean_clauses(solver->longIrredCls);
+    if (!distill_long_cls_all(solver->longIrredCls)) {
+        goto end;
+    }
+    other = runStats;
+
+    runStats.clear();
+    //solver->clauseCleaner->clean_clauses(solver->longRedCls[0]);
+    if (!distill_long_cls_all(solver->longRedCls[0])) {
         goto end;
     }
 
 end:
+    runStats += other;
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
@@ -86,49 +97,13 @@ struct ClauseSizeSorterInv
     }
 };
 
-bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
-{
-    assert(solver->ok);
-    if (solver->conf.verbosity >= 6) {
-        cout
-        << "c Doing distillation branch for long irred clauses"
-        << endl;
-    }
-
-    double myTime = cpuTime();
-    const size_t origTrailSize = solver->trail_size();
-
-    //Time-limiting
-    uint64_t maxNumProps =
-        solver->conf.distill_long_irred_cls_time_limitM*1000LL*1000ULL
-        *solver->conf.global_timeout_multiplier;
-    if (solver->litStats.irredLits + solver->litStats.redLits < (500ULL*1000ULL))
-        maxNumProps *=2;
-
-    extraTime = 0;
-    uint64_t oldBogoProps = solver->propStats.bogoProps;
+bool DistillerLong::go_through_clauses(
+    vector<ClOffset>& cls
+) {
     bool time_out = false;
-    runStats.potentialClauses = solver->longIrredCls.size();
-    runStats.numCalled = 1;
-
-    std::sort(solver->longIrredCls.begin()
-        , solver->longIrredCls.end()
-        , ClauseSizeSorterInv(solver->cl_alloc)
-    );
-    uint64_t origLitRem = runStats.numLitsRem;
-    uint64_t origClShorten = runStats.numClShorten;
-
-    //Make queueByBy = 1 in case we are late in the search
-    if (numCalls > 8
-        && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
-        && (solver->longIrredCls.size() < 50000)
-    ) {
-        queueByBy = 1;
-    }
-
     vector<ClOffset>::iterator i, j;
-    i = j = solver->longIrredCls.begin();
-    for (vector<ClOffset>::iterator end = solver->longIrredCls.end()
+    i = j = cls.begin();
+    for (vector<ClOffset>::iterator end = cls.end()
         ; i != end
         ; i++
     ) {
@@ -161,20 +136,17 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
         if (cl.getdistilled()) {
             *j++ = *i;
             continue;
-        } else {
-            //Otherwise, this clause has been tried for sure
-            cl.set_distilled(true);
-        }
+        };
+        cl.set_distilled(true);
 
         extraTime += cl.size();
         runStats.checkedClauses++;
 
         //Sanity check
         assert(cl.size() > 2);
-        assert(!cl.red());
+        //assert(!cl.red());
 
         //Copy literals
-        uselessLits.clear();
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
 
@@ -182,33 +154,77 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
         ClOffset offset2 = try_distill_clause_and_return_new(
             offset
             , cl.red()
-            , &cl.stats
-            , queueByBy
+            , cl.stats
         );
 
         if (offset2 != CL_OFFSET_MAX) {
             *j++ = offset2;
         }
     }
-    solver->longIrredCls.resize(solver->longIrredCls.size()- (i-j));
+    cls.resize(cls.size()- (i-j));
 
     //Didn't time out, so it went through the whole list. Reset distill for all.
-    if (!time_out) {
-        for (vector<ClOffset>::const_iterator
-            it = solver->longIrredCls.begin(), end = solver->longIrredCls.end()
-            ; it != end
-            ; ++it
-        ) {
-            Clause* cl = solver->cl_alloc.ptr(*it);
-            cl->set_distilled(false);
-        }
+//     if (!time_out) {
+//         for (vector<ClOffset>::const_iterator
+//             it = cls.begin(), end = cls.end()
+//             ; it != end
+//             ; ++it
+//         ) {
+//             Clause* cl = solver->cl_alloc.ptr(*it);
+//             cl->set_distilled(false);
+//         }
+//     }
+
+    return time_out;
+}
+
+bool DistillerLong::distill_long_cls_all(vector<ClOffset>& offs)
+{
+    assert(solver->ok);
+    if (solver->conf.verbosity >= 6) {
+        cout
+        << "c Doing distillation branch for long clauses"
+        << endl;
     }
+
+    double myTime = cpuTime();
+    const size_t origTrailSize = solver->trail_size();
+
+    //Time-limiting
+    maxNumProps =
+        solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
+        *solver->conf.global_timeout_multiplier;
+
+    if (solver->litStats.irredLits + solver->litStats.redLits < (500ULL*1000ULL))
+        maxNumProps *=2;
+
+    if (numCalls > 8
+        && (solver->litStats.irredLits + solver->litStats.redLits < 4000000)
+        //&& (solver->longIrredCls.size() < 50000)
+    ) {
+        queueByBy = 1;
+    }
+
+    //stats setup
+    extraTime = 0;
+    oldBogoProps = solver->propStats.bogoProps;
+    runStats.potentialClauses += offs.size();
+    runStats.numCalled += 1;
+    uint64_t origLitRem = runStats.numLitsRem;
+    uint64_t origClShorten = runStats.numClShorten;
+
+    /*std::sort(offs.begin()
+        , offs.end()
+        , ClauseSizeSorterInv(solver->cl_alloc)
+    );*/
+
+    bool time_out = go_through_clauses(offs);
 
     const double time_used = cpuTime() - myTime;
     const double time_remain = float_div(solver->propStats.bogoProps-oldBogoProps + extraTime, maxNumProps);
     if (solver->conf.verbosity) {
-        cout << "c [distill] longirred"
-        << " tried: " << runStats.checkedClauses << "/" << solver->longIrredCls.size()
+        cout << "c [distill] long cls"
+        << " tried: " << runStats.checkedClauses << "/" << offs.size()
         << " cl-r:" << runStats.numClShorten- origClShorten
         << " lit-r:" << runStats.numLitsRem - origLitRem
         << solver->conf.print_times(time_used, time_out, time_remain)
@@ -217,7 +233,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "distill long irred"
+            , "distill long cls"
             , time_used
             , time_out
             , time_remain
@@ -225,17 +241,16 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
     }
 
     //Update stats
-    runStats.time_used = cpuTime() - myTime;
-    runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
+    runStats.time_used += cpuTime() - myTime;
+    runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
     return solver->ok;
 }
 
-ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
+ClOffset DistillerLong::try_distill_clause_and_return_new(
     ClOffset offset
     , const bool red
-    , const ClauseStats* stats
-    , const uint32_t queueByBy
+    , const ClauseStats& stats
 ) {
     #ifdef DRAT_DEBUG
     if (solver->conf.verbosity >= 6) {
@@ -244,92 +259,85 @@ ClOffset DistillerAllWithAll::try_distill_clause_and_return_new(
     #endif
 
     //Try to enqueue the literals in 'queueByBy' amounts and see if we fail
-    bool failed = false;
-    uint32_t done = 0;
+    uint32_t new_sz = 0;
     solver->new_decision_level();
-    for (; done < lits.size();) {
-        uint32_t i2 = 0;
-        for (; (i2 < queueByBy) && ((done+i2) < lits.size()); i2++) {
-            lbool val = solver->value(lits[done+i2]);
-            if (val == l_Undef) {
-                solver->enqueue(~lits[done+i2]);
-            } else if (val == l_False) {
-                //Record that there is no use for this literal
-                uselessLits.push_back(lits[done+i2]);
+    bool early_abort = false;
+    for (size_t i = 0, sz = lits.size()-1; i < sz; i++) {
+        const Lit lit = lits[i];
+        lbool val = solver->value(lit);
+        if (val == l_Undef) {
+            solver->enqueue(~lit);
+            new_sz++;
+
+            extraTime += 5;
+            if (!solver->propagate<true>().isNULL()) {
+                early_abort = true;
+                break;
             }
-        }
-        done += i2;
-        extraTime += 5;
-        failed = (!solver->propagate<true>().isNULL());
-        if (failed) {
-            break;
+        } else if (val == l_False) {
+            //Record that there is no use for this literal
+            solver->seen[lit.toInt()] = 1;
+            //new_sz++;
+        } else {
+            //val is l_True --> can't do much
+            new_sz++;
         }
     }
     solver->cancelUntil<false>(0);
     assert(solver->ok);
+    if (!early_abort) {
+        new_sz++;
+    }
 
-    if (uselessLits.size() > 0 || (failed && done < lits.size())) {
-        //Stats
+    if (new_sz < lits.size()) {
         runStats.numClShorten++;
         extraTime += 20;
-        const uint32_t origSize = lits.size();
-
-        //Remove useless literals from 'lits'
-        lits.resize(done);
-        for (uint32_t i2 = 0; i2 < uselessLits.size(); i2++) {
-            remove(lits, uselessLits[i2]);
-        }
-
-        //Make new clause
-        Clause *cl2;
-        if (stats) {
-            cl2 = solver->add_clause_int(lits, red, *stats);
-        } else {
-            cl2 = solver->add_clause_int(lits, red);
-        }
-
-        //Print results
+        runStats.numLitsRem += lits.size() - new_sz;
         if (solver->conf.verbosity >= 5) {
             cout
-            << "c Distillation branch effective." << endl;
-            if (offset != CL_OFFSET_MAX) {
-                cout
-                << "c --> orig clause:" <<
-                 *solver->cl_alloc.ptr(offset)
-                 << endl;
-            } else {
-                cout
-                << "c --> orig clause: TRI/BIN" << endl;
-            }
-            cout
-            << "c --> orig size:" << origSize << endl
-            << "c --> new size:" << (cl2 == NULL ? 0 : cl2->size()) << endl
-            << "c --> removing lits from end:" << origSize - done << endl
-            << "c --> useless lits in middle:" << uselessLits.size()
-            << endl;
+            << "c Distillation branch effective." << endl
+            << "c --> orig clause:" << *solver->cl_alloc.ptr(offset) << endl
+            << "c --> orig size:" << lits.size() << endl
+            << "c --> new size:" << new_sz << endl;
         }
+
+        //Remove useless literals from 'lits'
+        vector<Lit>::iterator i = lits.begin();
+        vector<Lit>::iterator j = lits.begin();
+        for(vector<Lit>::iterator end = lits.end()
+            ; i != end
+            ; i++
+        ) {
+            if (solver->seen[i->toInt()] == 0) {
+                *j++ = *i;
+            } else {
+                //zero out 'seen'
+                solver->seen[i->toInt()] = 0;
+            }
+        }
+        lits.resize(new_sz);
+
+        //Make new clause
+        Clause *cl2 = solver->add_clause_int(lits, red, stats);
 
         //Detach and free old clause
-        if (offset != CL_OFFSET_MAX) {
-            solver->detachClause(offset);
-            solver->cl_alloc.clauseFree(offset);
-        }
-
-        runStats.numLitsRem += origSize - lits.size();
+        solver->detachClause(offset);
+        solver->cl_alloc.clauseFree(offset);
 
         if (cl2 != NULL) {
             cl2->set_distilled(true);
-
             return solver->cl_alloc.get_offset(cl2);
         } else {
+            //it became a bin/unit/zero
             return CL_OFFSET_MAX;
         }
     } else {
+        //couldn't simplify the clause
         return offset;
     }
 }
 
-DistillerAllWithAll::Stats& DistillerAllWithAll::Stats::operator+=(const Stats& other)
+DistillerLong::Stats& DistillerLong::Stats::operator+=(const Stats& other)
 {
     time_used += other.time_used;
     timeOut += other.timeOut;
@@ -343,10 +351,10 @@ DistillerAllWithAll::Stats& DistillerAllWithAll::Stats::operator+=(const Stats& 
     return *this;
 }
 
-void DistillerAllWithAll::Stats::print_short(const Solver* _solver) const
+void DistillerLong::Stats::print_short(const Solver* _solver) const
 {
     cout
-    << "c [distill] tri+long"
+    << "c [distill] long"
     << " useful: "<< numClShorten
     << "/" << checkedClauses << "/" << potentialClauses
     << " lits-rem: " << numLitsRem
@@ -355,7 +363,7 @@ void DistillerAllWithAll::Stats::print_short(const Solver* _solver) const
     << endl;
 }
 
-void DistillerAllWithAll::Stats::print(const size_t nVars) const
+void DistillerLong::Stats::print(const size_t nVars) const
 {
     cout << "c -------- DISTILL STATS --------" << endl;
     print_stats_line("c time"
@@ -387,10 +395,9 @@ void DistillerAllWithAll::Stats::print(const size_t nVars) const
     cout << "c -------- DISTILL STATS END --------" << endl;
 }
 
-double DistillerAllWithAll::mem_used() const
+double DistillerLong::mem_used() const
 {
-    double mem_used = sizeof(DistillerAllWithAll);
+    double mem_used = sizeof(DistillerLong);
     mem_used += lits.size()*sizeof(Lit);
-    mem_used += uselessLits.size()*sizeof(Lit);
     return mem_used;
 }

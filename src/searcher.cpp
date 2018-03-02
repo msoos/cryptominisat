@@ -40,6 +40,7 @@ THE SOFTWARE.
 #include "watchalgos.h"
 #include "hasher.h"
 #include "solverconf.h"
+#include "distillerlong.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;

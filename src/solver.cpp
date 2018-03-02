@@ -96,7 +96,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
     }
-    distill_all_with_all = new DistillerAllWithAll(this);
+    distill_long_cls = new DistillerLong(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
     dist_impl_with_impl = new StrImplWImplStamp(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -123,7 +123,7 @@ Solver::~Solver()
     delete prober;
     delete intree;
     delete occsimplifier;
-    delete distill_all_with_all;
+    delete distill_long_cls;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
     delete clauseCleaner;
@@ -1747,7 +1747,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_all_with_all->distill(conf.distill_queue_by);
+                distill_long_cls->distill(conf.distill_queue_by);
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
@@ -1952,8 +1952,8 @@ void Solver::print_min_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2037,8 +2037,8 @@ void Solver::print_norm_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2131,10 +2131,10 @@ void Solver::print_full_restart_stat(const double cpu_time) const
 
     //DistillerAllWithAll stats
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
-    distill_all_with_all->get_stats().print(nVars());
+    distill_long_cls->get_stats().print(nVars());
 
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
@@ -2307,7 +2307,7 @@ void Solver::print_mem_stats() const
     }
 
 
-    mem = distill_all_with_all->mem_used();
+    mem = distill_long_cls->mem_used();
     mem += dist_long_with_impl->mem_used();
     mem += dist_impl_with_impl->mem_used();
     print_stats_line("c Mem for 3 distills"
