@@ -69,6 +69,23 @@ end:
     return solver->ok;
 }
 
+struct ClauseSizeSorterInv
+{
+    ClauseSizeSorterInv(const ClauseAllocator& _cl_alloc) :
+        cl_alloc(_cl_alloc)
+    {}
+
+    const ClauseAllocator& cl_alloc;
+
+    bool operator()(const ClOffset off1, const ClOffset off2) const
+    {
+        const Clause* cl1 = cl_alloc.ptr(off1);
+        const Clause* cl2 = cl_alloc.ptr(off2);
+
+        return cl1->size() > cl2->size();
+    }
+};
+
 bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 {
     assert(solver->ok);
@@ -96,7 +113,7 @@ bool DistillerAllWithAll::distill_long_irred_cls(uint32_t queueByBy)
 
     std::sort(solver->longIrredCls.begin()
         , solver->longIrredCls.end()
-        , ClauseSizeSorter(solver->cl_alloc)
+        , ClauseSizeSorterInv(solver->cl_alloc)
     );
     uint64_t origLitRem = runStats.numLitsRem;
     uint64_t origClShorten = runStats.numClShorten;
