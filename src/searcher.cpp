@@ -793,6 +793,7 @@ Clause* Searcher::analyze_conflict(
     , uint32_t& glue
 ) {
     //Set up environment
+    antec_data.clear();
     learnt_clause.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
@@ -1707,9 +1708,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 template<bool update_bogoprops>
 bool Searcher::handle_conflict(const PropBy confl)
 {
-    uint32_t backtrack_level;
-    uint32_t glue;
-    antec_data.clear();
     stats.conflStats.numConflicts++;
     sumConflicts++;
     if (sumConflicts == 100000 && longRedCls[0].size() < 100) { //TODO magic constant
@@ -1723,6 +1721,8 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (decisionLevel() == 0)
         return false;
 
+    uint32_t backtrack_level;
+    uint32_t glue;
     Clause* subsumed_cl = analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
