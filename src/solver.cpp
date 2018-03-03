@@ -1264,6 +1264,7 @@ lbool Solver::solve_with_assumptions(
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
     VSIDS = true;
+    var_decay = conf.var_decay_start;
     step_size = conf.orig_step_size;
     params.rest_type = conf.restartType;
     if (params.rest_type == Restart::glue_geom) {

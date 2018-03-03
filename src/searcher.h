@@ -323,6 +323,7 @@ class Searcher : public HyperEngine
 
         uint64_t next_lev1_reduce;
         uint64_t next_lev2_reduce;
+        double   var_decay;
 
     private:
         //////////////
@@ -423,7 +424,6 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         SearchStats stats;
-        double   var_decay;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
