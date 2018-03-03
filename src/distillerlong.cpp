@@ -438,11 +438,11 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
     runStats.numClShorten++;
 
     //Make new clause
-    solver->cl_alloc.clauseFree(offset);
     if (!lits_set) {
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
     }
+    solver->cl_alloc.clauseFree(offset);
     Clause *cl2 = solver->add_clause_int(lits, red, stats);
     (*solver->drat) << findelay;
 
