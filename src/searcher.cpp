@@ -1710,8 +1710,13 @@ bool Searcher::handle_conflict(const PropBy confl)
 {
     stats.conflStats.numConflicts++;
     sumConflicts++;
-    if (sumConflicts == 100000 && longRedCls[0].size() < 100) { //TODO magic constant
-        conf.glue_put_lev0_if_below_or_eq = 5; //TODO magic constant
+    if (sumConflicts == 100000 && //TODO magic constant
+        longRedCls[0].size() < 100 &&
+        //so that in case of some "standard-minisat behavriour" config
+        //we don't override it
+        conf.glue_put_lev0_if_below_or_eq != 0
+    ) {
+        conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
 
     params.conflictsDoneThisRestart++;
