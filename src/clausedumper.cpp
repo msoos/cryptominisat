@@ -104,7 +104,6 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
             size_t num_cls = 0;
             num_cls += solver->longIrredCls.size();
             num_cls += solver->binTri.irredBins;
-            num_cls += solver->get_zero_assigned_lits(false, true).size();
 
             *outfile
             << "p cnf " << solver->nVars() << " " << num_cls << "\n";
@@ -218,8 +217,6 @@ void ClauseDumper::dumpRedClauses() {
         exit(-1);
     }
 
-    dumpUnitaryClauses(true);
-
     *outfile
     << "c " << endl
     << "c ---------------------------------" << endl
@@ -271,8 +268,6 @@ void ClauseDumper::dump_component_clauses()
 
 void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
 {
-    dumpUnitaryClauses(backnumber);
-
     *outfile
     << "c " << endl
     << "c ---------------" << endl
@@ -294,6 +289,8 @@ void ClauseDumper::dump_irred_clauses_all()
         std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
+
+    dumpUnitaryClauses(true);
 
     dumpEquivalentLits();
 

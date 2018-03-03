@@ -457,46 +457,6 @@ sudo ldconfig
 
 The prediction datas are now written to the directory `build/test_predict/`. You can use e.g. Weka to examine the CSV found there. Please note that this is under *heavy* development
 
-XOR-CNF to CNF translation
------
-You can use CryptoMiniSat to translate XOR-CNF into CNF as per:
-
-```
-$ cat input.cnf
-p cnf 8 5
-x1 2 0
-3 0
-x 3 4 5 0
-6 7 8 0
-
-
-$ ./cryptominisat5 --preproc 1 --presimp 0 input.cnf output.cnf
-[...]
-s INDETERMINATE
-
-$ cat output.cnf
-p cnf 8 6
-c
-c ---------
-c unit clauses
-c ---------
-3 0
-c
-c ---------------
-c binary clauses
-c ---------------
-1 2 0
--1 -2 0
-4 -5 0
--4 5 0
-c
-c ---------------
-c long clauses
-c ---------------
-6 7 8 0
-```
-
-
 Configuring a build for a minimal binary&library
 -----
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
