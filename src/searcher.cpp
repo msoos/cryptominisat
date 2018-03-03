@@ -2224,6 +2224,7 @@ lbool Searcher::solve(
         }
 
         if (status == l_Undef &&
+            solver->conf.do_distill_clauses &&
             sumConflicts > next_distill
         ) {
             if (!solver->distill_long_cls->distill(true)) {
