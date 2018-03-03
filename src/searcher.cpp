@@ -1105,6 +1105,7 @@ lbool Searcher::search()
     ) {
         if (!confl.isNULL()) {
             if (!update_bogoprops &&
+                VSIDS &&
                 ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
                 var_decay < conf.var_decay_max
             ) {
