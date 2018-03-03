@@ -3252,7 +3252,7 @@ void Solver::parse_v_line(A* in, const size_t lineNum)
         if (var >= nVars()) {
             std::cerr
             << "ERROR! "
-            << "Variable in solution is too large: " << var << endl
+            << "Variable in solution is too large: " << var +1 << endl
             << "--> At line " << lineNum+1
             << endl;
             std::exit(-1);
