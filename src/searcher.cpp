@@ -731,6 +731,12 @@ void Searcher::simple_create_learnt_clause(
         }
         p = trail[index + 1];
         confl = varData[p.var()].reason;
+
+        //under normal circumstances this does not happen, but here, it can
+        //reason is undefined for level 0
+        if (varData[p.var()].level == 0) {
+            confl = PropBy();
+        }
         seen[p.var()] = 0;
         mypathC--;
     } while (mypathC >= 0);
