@@ -1104,9 +1104,9 @@ lbool Searcher::search()
         || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
-            if (((stats.conflStats.numConflicts & 0xfff) == 0xfff)
-                && var_decay < conf.var_decay_max
-                && !update_bogoprops
+            if (!update_bogoprops &&
+                ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
+                var_decay < conf.var_decay_max
             ) {
                 var_decay += 0.01;
             }
