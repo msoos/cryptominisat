@@ -73,6 +73,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+    step_size = solver->conf.orig_step_size;
 }
 
 Searcher::~Searcher()
@@ -1110,6 +1111,9 @@ lbool Searcher::search()
                 var_decay < conf.var_decay_max
             ) {
                 var_decay += 0.01;
+            }
+            if (!VSIDS && step_size > solver->conf.min_step_size) {
+                step_size -= solver->conf.step_size_dec;
             }
 
             #ifdef STATS_NEEDED
@@ -3441,7 +3445,7 @@ void Searcher::cancelUntil(uint32_t level)
                 if (age > 0) {
                     double adjusted_reward = ((double)(varData[var].conflicted + varData[var].almost_conflicted)) / ((double)age);
                     double old_activity = var_act_maple[var];
-                    var_act_maple[var] = conf.step_size * adjusted_reward + ((1 - conf.step_size) * old_activity);
+                    var_act_maple[var] = step_size * adjusted_reward + ((1 - step_size) * old_activity);
                     if (order_heap_maple.inHeap(var)) {
                         if (var_act_maple[var] > old_activity)
                             order_heap_maple.decrease(var);

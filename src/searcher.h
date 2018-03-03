@@ -221,6 +221,7 @@ class Searcher : public HyperEngine
         /////////////////
         //Settings
         Solver*   solver;          ///< Thread control class
+        uint32_t step_size;
 
         /////////////////
         // Searching

@@ -212,7 +212,7 @@ class DLL_PUBLIC SolverConf
         bool      dump_individual_restarts_and_clauses;
 
         //Steps
-        double step_size = 0.40;
+        double orig_step_size = 0.40;
         double step_size_dec = 0.000001;
         double min_step_size = 0.06;
 
