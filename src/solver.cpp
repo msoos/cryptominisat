@@ -1118,9 +1118,9 @@ void Solver::check_minimization_effectiveness(const lbool status)
         && conf.doMinimRedMore
         && search_stats.moreMinimLitsStart > 100000
     ) {
-        double remPercent =
-            (double)(search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd)/
-                (double)(search_stats.moreMinimLitsStart)*100.0;
+        double remPercent = float_div(
+            search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd,
+            search_stats.moreMinimLitsStart)*100.0;
 
         //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
@@ -1130,26 +1130,6 @@ void Solver::check_minimization_effectiveness(const lbool status)
                 << "c more minimization effectiveness low: "
                 << std::fixed << std::setprecision(2) << remPercent
                 << " % lits removed --> disabling"
-                << endl;
-            }
-        } else if (remPercent > 7.0) {
-            more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = 3*conf.more_red_minim_limit_cache;
-            if (conf.verbosity) {
-                cout
-                << "c more minimization effectiveness good: "
-                << std::fixed << std::setprecision(2) << remPercent
-                << " % --> increasing limit to 3x"
-                << endl;
-            }
-        } else {
-            more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = conf.more_red_minim_limit_cache;
-            if (conf.verbosity) {
-                cout
-                << "c more minimization effectiveness OK: "
-                << std::fixed << std::setprecision(2) << remPercent
-                << " % --> setting limit to norm"
                 << endl;
             }
         }
@@ -3079,9 +3059,6 @@ void Solver::reconfigure(int val)
             conf.global_multiplier_multiplier_max = 5;
 
             conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
-            conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_red_min = 20;
             conf.max_temp_lev2_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             update_var_decay();

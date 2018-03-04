@@ -64,8 +64,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , local_glue_multiplier(0.70)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
-        , more_otf_shrink_with_cache(false)
-        , more_otf_shrink_with_stamp(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)
@@ -73,9 +71,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doAlwaysFMinim   (false)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
-        , more_red_minim_limit_cache(400)
-        , more_red_minim_limit_binary(200)
-        , max_num_lits_more_red_min(1)
 
         //Verbosity
         , verbosity        (0)

@@ -171,8 +171,6 @@ class DLL_PUBLIC SolverConf
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
-        int more_otf_shrink_with_cache;
-        int more_otf_shrink_with_stamp;
 
         //Clause minimisation
         int doRecursiveMinim;
@@ -180,9 +178,6 @@ class DLL_PUBLIC SolverConf
         int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
-        unsigned more_red_minim_limit_cache;
-        unsigned more_red_minim_limit_binary;
-        unsigned max_num_lits_more_red_min;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])

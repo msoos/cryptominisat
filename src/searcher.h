@@ -360,13 +360,6 @@ class Searcher : public HyperEngine
 
         void print_solution_varreplace_status() const;
 
-        ////////////
-        // Transitive on-the-fly self-subsuming resolution
-        void   minimise_redundant_more(vector<Lit>& cl);
-        void   binary_based_more_minim(vector<Lit>& cl);
-        void   cache_based_more_minim(vector<Lit>& cl);
-        void   stamp_based_more_minim(vector<Lit>& cl);
-
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
             const Searcher* cc;
