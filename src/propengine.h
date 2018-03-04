@@ -407,7 +407,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         watches.prefetch((~p).toInt());
     }
 
-    if (!VSIDS) {
+    if (!update_bogoprops && !VSIDS) {
         varData[v].picked = sumConflicts;
         varData[v].conflicted = 0;
         varData[v].almost_conflicted = 0;

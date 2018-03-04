@@ -109,7 +109,7 @@ class Searcher : public HyperEngine
         {
             return assumptionsSet.at(var);
         }
-        template<bool also_insert_var_order = true>
+        template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
 

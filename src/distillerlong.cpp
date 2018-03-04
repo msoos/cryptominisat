@@ -279,7 +279,7 @@ bool DistillerLong::distill_long_cls_all(
             break;
         }
     }
-    solver->cancelUntil<false>(0);
+    solver->cancelUntil<false, true>(0);
     assert(solver->ok);
     if (!early_abort) {
         new_sz++;
@@ -391,7 +391,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
 
     //Couldn't simplify the clause
     if (j == orig_size && !True_confl && confl.isNULL()) {
-        solver->cancelUntil<false>(0);
+        solver->cancelUntil<false, true>(0);
         solver->attachClause(cl);
         solver->drat->forget_delay();
         return offset;
@@ -433,7 +433,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             lits_set = true;
         }
     }
-    solver->cancelUntil<false>(0);
+    solver->cancelUntil<false, true>(0);
     runStats.numLitsRem += orig_size - cl.size();
     runStats.numClShorten++;
 

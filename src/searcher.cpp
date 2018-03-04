@@ -1188,7 +1188,7 @@ lbool Searcher::search()
     }
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 
-    cancelUntil(0);
+    cancelUntil<true, update_bogoprops>(0);
     assert(solver->prop_at_head());
     if (!solver->datasync->syncData()) {
         return l_False;
@@ -1760,7 +1760,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         update_history_stats(backtrack_level, glue);
     }
     uint32_t old_decision_level = decisionLevel();
-    cancelUntil(backtrack_level);
+    cancelUntil<true, update_bogoprops>(backtrack_level);
 
     add_otf_subsume_long_clauses();
     add_otf_subsume_implicit_clause();
@@ -2217,7 +2217,6 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
-    VSIDS = true;
 
     assert(solver->check_order_heap_sanity());
     for(loop_num = 0
@@ -3266,12 +3265,19 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
 }
 
 
+//Normal running
 template
-void Searcher::cancelUntil<true>(uint32_t level);
-template
-void Searcher::cancelUntil<false>(uint32_t level);
+void Searcher::cancelUntil<true, false>(uint32_t level);
 
-template<bool also_insert_var_order>
+//During inprocessing, dont update anyting really (probing, distilling)
+template
+void Searcher::cancelUntil<false, true>(uint32_t level);
+
+//During bursting, we need to insert var_order but not update other stats
+template
+void Searcher::cancelUntil<true, true>(uint32_t level);
+
+template<bool do_insert_var_order, bool update_bogoprops>
 void Searcher::cancelUntil(uint32_t level)
 {
     #ifdef VERBOSE_DEBUG
@@ -3307,7 +3313,7 @@ void Searcher::cancelUntil(uint32_t level)
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
 
-             if (!VSIDS) {
+             if (!update_bogoprops && !VSIDS) {
                 assert(sumConflicts >= varData[var].picked);
                 uint32_t age = sumConflicts - varData[var].picked;
                 if (age > 0) {
@@ -3325,7 +3331,7 @@ void Searcher::cancelUntil(uint32_t level)
             }
 
             assigns[var] = l_Undef;
-            if (also_insert_var_order) {
+            if (do_insert_var_order) {
                 insert_var_order(var);
             }
         }

@@ -584,7 +584,7 @@ bool Prober::check_timeout_due_to_hyperbin()
         }
 
         solver->conf.otfHyperbin = false;
-        solver->cancelUntil<false>(0);
+        solver->cancelUntil<false, true>(0);
 
         runStats.addedBin += solver->hyper_bin_res_all();
         std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
@@ -659,7 +659,7 @@ bool Prober::try_this(const Lit lit, const bool first)
         }
     }
 
-    solver->cancelUntil<false>(0);
+    solver->cancelUntil<false, true>(0);
     solver->add_otf_subsume_long_clauses();
     solver->add_otf_subsume_implicit_clause();
     runStats.addedBin += solver->hyper_bin_res_all();
