@@ -1653,13 +1653,13 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             stats.red_cl_in_which0++;
         }
 
-        if (conf.guess_cl_effectiveness) {
+        /*if (conf.guess_cl_effectiveness) {
             unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
             if (lower_it) {
                 stats.guess_different++;
                 cl->stats.ttl = 1;
             }
-        }
+        }*/
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
@@ -3149,6 +3149,7 @@ unsigned Searcher::guess_clause_array(
     const ClauseStats& cl_stats
     , uint32_t backtrack_lev
 ) const {
+    /*
     uint32_t votes = 0;
     //double trail_depth_rel = (double)trail.size()/hist.trailDepthHistLT.avg();
     double dec_lev_rel = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
@@ -3167,7 +3168,7 @@ unsigned Searcher::guess_clause_array(
 
     if (votes > 2) {
         return true;
-    }
+    }*/
     return false;
 }
 
