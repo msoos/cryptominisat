@@ -283,7 +283,7 @@ class Searcher : public HyperEngine
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         template<bool update_bogoprops>
-        void bump_var_activities_based_on_implied_by_learnts(const uint32_t glue);
+        void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(const PropBy confl);
         template<bool update_bogoprops>
@@ -293,7 +293,7 @@ class Searcher : public HyperEngine
         AtecedentData<uint16_t> antec_data;
         #endif
 
-        vector<std::pair<uint32_t, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
+        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
 
         /////////////////
         //Graphical conflict generation
@@ -547,15 +547,12 @@ inline bool Searcher::pickPolarity(const uint32_t var)
 }
 
 template<bool update_bogoprops>
-void Searcher::bump_var_activities_based_on_implied_by_learnts(
-    const uint32_t glue
-) {
+void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrack_level) {
     assert(!update_bogoprops);
 
-    for (const auto dat :implied_by_learnts) {
-        const uint32_t v_glue = dat.second;
-        if (v_glue < glue) {
-            bump_vsids_var_act<update_bogoprops>(dat.first);
+    for (const uint32_t var :implied_by_learnts) {
+        if ((int32_t)varData[var].level >= (int32_t)backtrack_level-1L) {
+            bump_vsids_var_act<update_bogoprops>(var, 1.0);
         }
     }
 }

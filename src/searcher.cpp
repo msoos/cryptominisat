@@ -145,35 +145,25 @@ inline void Searcher::add_lit_to_learnt(
     if (seen[var] || varData[var].level == 0) {
         return;
     }
-
-    if (VSIDS) {
-        bump_vsids_var_act<update_bogoprops>(var, 0.5);
-    } else {
-        varData[var].conflicted++;
-    }
     seen[var] = 1;
-    if (!update_bogoprops && conf.doOTFSubsume) {
-        tmp_learnt_clause_size++;
-        seen2[lit.toInt()] = 1;
-        tmp_learnt_clause_abst |= abst_var(lit.var());
+
+    if (!update_bogoprops) {
+        if (VSIDS) {
+            bump_vsids_var_act<update_bogoprops>(var, 0.5);
+            implied_by_learnts.push_back(var);
+        } else {
+            varData[var].conflicted++;
+        }
+
+        if (conf.doOTFSubsume) {
+            tmp_learnt_clause_size++;
+            seen2[lit.toInt()] = 1;
+            tmp_learnt_clause_abst |= abst_var(lit.var());
+        }
     }
 
     if (varData[var].level >= decisionLevel()) {
         pathC++;
-
-        if (!update_bogoprops && varData[var].reason != PropBy()) {
-            if (varData[var].reason.getType() == clause_t) {
-                Clause* cl = cl_alloc.ptr(varData[var].reason.get_offset());
-                if (cl->red()) {
-                    const uint32_t glue = cl->stats.glue;
-                    implied_by_learnts.push_back(std::make_pair(var, glue));
-                }
-            } else if (varData[var].reason.getType() == binary_t
-                && varData[var].reason.isRedStep()
-            ) {
-                implied_by_learnts.push_back(std::make_pair(var, 2));
-            }
-        }
     } else {
         learnt_clause.push_back(lit);
     }
@@ -838,7 +828,7 @@ Clause* Searcher::analyze_conflict(
     out_btlevel = find_backtrack_level_of_learnt();
     if (!update_bogoprops) {
         if (VSIDS) {
-            bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(glue);
+            bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(out_btlevel);
         } else {
             assert(toClear.empty());
             const Lit p = learnt_clause[0];
