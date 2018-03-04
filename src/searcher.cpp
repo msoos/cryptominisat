@@ -135,7 +135,9 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
+    #ifdef STATS_NEEDED
     antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc);
+    #endif
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
 
@@ -411,10 +413,14 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     switch (confl.getType()) {
         case binary_t : {
             if (confl.isRedStep()) {
+                #ifdef STATS_NEEDED
                 antec_data.binRed++;
+                #endif
                 stats.resolvs.binRed++;
             } else {
+                #ifdef STATS_NEEDED
                 antec_data.binIrred++;
+                #endif
                 stats.resolvs.binIrred++;
             }
             break;
@@ -431,12 +437,13 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
+                #ifdef STATS_NEEDED
                 antec_data.longIrred++;
+                #endif
                 stats.resolvs.longRed++;
             }
-            antec_data.size_longs.push(cl->size());
-
             #ifdef STATS_NEEDED
+            antec_data.size_longs.push(cl->size());
             cl->stats.used_for_uip_creation++;
             #endif
 
@@ -608,7 +615,9 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
+            #ifdef STATS_NEEDED
             antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc);
+            #endif
             if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
                 assert(seen2[(~p).toInt()] == 1);
@@ -795,7 +804,9 @@ Clause* Searcher::analyze_conflict(
     , uint32_t& glue
 ) {
     //Set up environment
+    #ifdef STATS_NEEDED
     antec_data.clear();
+    #endif
     learnt_clause.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
@@ -853,11 +864,12 @@ Clause* Searcher::analyze_conflict(
             toClear.clear();
         }
     }
-    implied_by_learnts.clear();
 
+    #ifdef STATS_NEEDED
     for(const Lit l: learnt_clause) {
         antec_data.vsids_vars.push(var_act_vsids[l.var()]/var_inc);
     }
+    #endif
 
     return otf_subsume_last_resolved_clause(last_resolved_cl);
 
@@ -1463,18 +1475,20 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.branchDepthHist.push(decisionLevel());
     #ifdef STATS_NEEDED
     hist.branchDepthHistQueue.push(decisionLevel());
+    hist.numResolutionsHist.push(antec_data.num());
     #endif
     hist.branchDepthDeltaHist.push(decisionLevel() - backtrack_level);
     hist.conflSizeHist.push(learnt_clause.size());
-    hist.numResolutionsHist.push(antec_data.num());
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
 
     //long-term averages
     hist.decisionLevelHistLT.push(decisionLevel());
     hist.backtrackLevelHistLT.push(backtrack_level);
 
+    #ifdef STATS_NEEDED
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
+    #endif
     hist.conflSizeHistLT.push(learnt_clause.size());
 
     hist.trailDepthHistLT.push(trail.size());

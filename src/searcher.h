@@ -289,7 +289,9 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
+        #ifdef STATS_NEEDED
         AtecedentData<uint16_t> antec_data;
+        #endif
 
         vector<std::pair<uint32_t, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
 
