@@ -1115,7 +1115,7 @@ lbool Searcher::search()
     ) {
         if (!confl.isNULL()) {
             //manipulate startup parameters
-            if (!!update_bogoprops) {
+            if (!update_bogoprops) {
                 if (VSIDS &&
                     ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
                     var_decay < conf.var_decay_max
