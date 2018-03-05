@@ -148,12 +148,17 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     assert(solver->value(replaced_with) == l_Undef);
 
-    double orig_act = solver->var_act_vsids[orig];
-    double repl_with_act = solver->var_act_vsids[replaced_with];
-    if (orig_act + repl_with_act >= orig_act) {
-        solver->var_act_vsids[replaced_with] += orig_act;
+    double orig_act_vsids = solver->var_act_vsids[orig];
+    double repl_with_act_vsids = solver->var_act_vsids[replaced_with];
+    if (orig_act_vsids + repl_with_act_vsids >= orig_act_vsids) {
+        solver->var_act_vsids[replaced_with] += orig_act_vsids;
     }
-    //TODO: should we do the above for maple too?
+
+    double repl_with_act_maple = solver->var_act_maple[replaced_with];
+    double orig_act_maple = solver->var_act_maple[orig];
+    if (orig_act_maple + repl_with_act_vsids >= orig_act_maple) {
+        solver->var_act_maple[replaced_with] += orig_act_maple;
+    }
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
