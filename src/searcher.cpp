@@ -2491,6 +2491,7 @@ Lit Searcher::pickBranchLit()
                     if (order_heap.inHeap(v2))
                         order_heap.increase(v2);
                     varData[v2].cancelled = sumConflicts;
+
                     v2 = order_heap[0];
                     age = sumConflicts - varData[v2].cancelled;
                 }
