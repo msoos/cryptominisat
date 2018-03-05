@@ -1114,15 +1114,17 @@ lbool Searcher::search()
         || !confl.isNULL() //always finish the last conflict
     ) {
         if (!confl.isNULL()) {
-            if (!update_bogoprops &&
-                VSIDS &&
-                ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
-                var_decay < conf.var_decay_max
-            ) {
-                var_decay += 0.01;
-            }
-            if (!VSIDS && step_size > solver->conf.min_step_size) {
-                step_size -= solver->conf.step_size_dec;
+            //manipulate startup parameters
+            if (!!update_bogoprops) {
+                if (VSIDS &&
+                    ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
+                    var_decay < conf.var_decay_max
+                ) {
+                    var_decay += 0.01;
+                }
+                if (!VSIDS && step_size > solver->conf.min_step_size) {
+                    step_size -= solver->conf.step_size_dec;
+                }
             }
 
             #ifdef STATS_NEEDED
