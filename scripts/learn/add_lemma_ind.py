@@ -27,6 +27,9 @@ def parse_lemmas(lemmafname, runID, verbose=False):
                 continue
 
             myid = int(l[len(l)-3])
+            if (myid == 1):
+                continue
+
             num_used = int(l[len(l)-1])
             ret.append((runID, myid, num_used))
 

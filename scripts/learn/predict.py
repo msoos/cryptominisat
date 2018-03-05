@@ -335,6 +335,7 @@ class Query2 (QueryHelper):
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
+        and clauseStats.clauseID != 1
         and clauseStats.runID = goodClauses.runID"""
         q_ok += common_restrictions
 
