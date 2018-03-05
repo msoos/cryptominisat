@@ -14,7 +14,9 @@ dist: trusty
 # not container-based
 sudo: required
 
-python: "3.6"
+python:
+    - "2.7"
+    - "3.6"
 
 env:
   global:
