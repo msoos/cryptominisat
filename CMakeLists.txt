@@ -489,7 +489,7 @@ if (NOT FORCE_PYTHON2)
 endif()
 
 if (NOT (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS))
-    message(STATUS "Python 3 not fully found, trying Python 3")
+    message(STATUS "Python 3 not fully found or Python 2 has been forced -- trying Python 2")
     find_package(PythonInterp 2)
     find_package(PythonLibs 2)
 
