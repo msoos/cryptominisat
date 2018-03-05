@@ -184,7 +184,7 @@ void ClauseAllocator::clauseFree(Clause* cl)
         uint64_t needed
             = neededbytes/sizeof(BASE_DATA_TYPE) + (bool)(neededbytes % sizeof(BASE_DATA_TYPE));
 
-        if ((ClOffset*)cl == (dataStart + size - needed)) {
+        if (((BASE_DATA_TYPE*)cl + needed) == (dataStart + size)) {
             size -= needed;
             currentlyUsedSize -= needed;
             quick_freed = true;
