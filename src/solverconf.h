@@ -175,7 +175,6 @@ class DLL_PUBLIC SolverConf
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
 

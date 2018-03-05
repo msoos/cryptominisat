@@ -279,8 +279,6 @@ class Tester:
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--cacheformoreminim %d " % random.choice([0, 1, 1, 1, 1])
-            cmd += "--stampformoreminim %d " % random.choice([0, 1, 1, 1, 1])
             cmd += "--alwaysmoremin %s " % random.randint(0, 1)
             cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
