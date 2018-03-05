@@ -279,7 +279,6 @@ class Tester:
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--alwaysmoremin %s " % random.randint(0, 1)
             cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
