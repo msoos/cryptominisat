@@ -61,7 +61,7 @@ THE SOFTWARE.
 #define LARGE_OFFSETS
 #endif
 
-#if defined(STATS_NEEDED)
+#if defined(LARGE_OFFSETS)
 #define BASE_DATA_TYPE uint64_t
 #define EFFECTIVELY_USEABLE_BITS 62
 #else
