@@ -72,7 +72,7 @@ case $CMS_CONFIG in
 
     NORMAL_PYTHON2)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
-        eval cmake -FORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
+        eval cmake -DFORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
