@@ -170,7 +170,7 @@ Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 Python usage
 -----
-The python3 module must be compiled as per:
+The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
 
 ```
 sudo apt-get install build-essential cmake
