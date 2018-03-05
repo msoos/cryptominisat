@@ -63,7 +63,6 @@ class ClauseAllocator {
             #endif
         ) {
             void* mem = allocEnough(ps.size());
-            memset(mem, 0, sizeof(Clause)+sizeof(Lit)*ps.size());
             Clause* real = new (mem) Clause(ps, conflictNum
             #ifdef STATS_NEEDED
             , ID

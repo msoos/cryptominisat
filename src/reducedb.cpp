@@ -284,7 +284,9 @@ void ReduceDB::remove_cl_from_lev2() {
             cl->stats.which_red_array = 1;
         }
 
+        //move to another array
         if (cl->stats.which_red_array < 2) {
+            cl->stats.marked_clause = 0;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
             continue;
         }

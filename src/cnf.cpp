@@ -682,3 +682,20 @@ void CNF::print_all_clauses() const
         }
     }
 }
+
+bool CNF::no_marked_clauses() const
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        assert(!cl->stats.marked_clause);
+    }
+
+    for(auto& lredcls: longRedCls) {
+        for(ClOffset offset: lredcls) {
+            Clause* cl = cl_alloc.ptr(offset);
+            assert(!cl->stats.marked_clause);
+        }
+    }
+
+    return true;
+}

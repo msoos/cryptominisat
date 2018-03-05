@@ -1808,6 +1808,9 @@ lbool Solver::simplify_problem(const bool startup)
     #ifdef SLOW_DEBUG
     assert(check_order_heap_sanity());
     #endif
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
 
     clear_order_heap();
 

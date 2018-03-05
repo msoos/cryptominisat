@@ -55,12 +55,18 @@ THE SOFTWARE.
 #endif //__GNUC__
 
 //We shift stuff around in Watched, so not all of 32 bits are useable.
-#ifndef LARGE_OFFSETS
-#define BASE_DATA_TYPE uint32_t
-#define EFFECTIVELY_USEABLE_BITS 30
-#else
+//for STATS we have 64b values in the Clauses, so they must be aligned to 64
+
+#if defined(STATS_NEEDED)
+#define LARGE_OFFSETS
+#endif
+
+#if defined(STATS_NEEDED)
 #define BASE_DATA_TYPE uint64_t
 #define EFFECTIVELY_USEABLE_BITS 62
+#else
+#define BASE_DATA_TYPE uint32_t
+#define EFFECTIVELY_USEABLE_BITS 30
 #endif
 
 #if defined _WIN32

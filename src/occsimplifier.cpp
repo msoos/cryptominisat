@@ -837,7 +837,7 @@ bool OccSimplifier::deal_with_added_cl_to_var_lit(const Lit lit)
             ClOffset offs = it->get_offset();
             Clause* cl = solver->cl_alloc.ptr(offs);
 
-            //Has already been removed
+            //Has already been removed or added to "added_long_cl"
             if (cl->freed() || cl->getRemoved() || cl->stats.marked_clause)
                 continue;
 
@@ -1329,6 +1329,10 @@ bool OccSimplifier::setup()
 
 bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 {
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
+
     startup = _startup;
     if (!setup()) {
         return solver->ok;
@@ -2044,15 +2048,18 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Calculate new clause stats
             #ifdef STATS_NEEDED
             ClauseStats stats;
-            if (it->isBin() && it2->isClause())
+            if (it->isBin() && it2->isClause()) {
                 stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
-            else if (it2->isBin() && it->isClause())
+            } else if (it2->isBin() && it->isClause()) {
                 stats = solver->cl_alloc.ptr(it->get_offset())->stats;
-            else if (it->isClause() && it2->isClause())
+            } else if (it2->isClause() && it->isClause()) {
                 stats = ClauseStats::combineStats(
                     solver->cl_alloc.ptr(it->get_offset())->stats
                     , solver->cl_alloc.ptr(it2->get_offset())->stats
-            );
+                );
+            }
+            //must clear marking that has been set due to gate
+            stats.marked_clause = 0;
             resolvents.add_resolvent(dummy, stats);
             #else
             resolvents.add_resolvent(dummy, ClauseStats());

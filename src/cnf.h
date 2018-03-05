@@ -390,27 +390,6 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
     watches.clear_smudged();
 }
 
-inline bool CNF::no_marked_clauses() const
-{
-    for(ClOffset offset: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offset);
-        if (cl->stats.marked_clause) {
-            return false;
-        }
-    }
-
-    for(auto& lredcls: longRedCls) {
-        for(ClOffset offset: lredcls) {
-            Clause* cl = cl_alloc.ptr(offset);
-            if (cl->stats.marked_clause) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 inline void CNF::clean_occur_from_idx_types_only_smudged()
 {
     for(const Lit lit: watches.get_smudged_list()) {
