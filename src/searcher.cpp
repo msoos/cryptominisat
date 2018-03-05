@@ -846,6 +846,13 @@ Clause* Searcher::analyze_conflict(
                             toClear.push_back(l);
                         }
                     }
+                } else if (varData[v].reason.getType() == binary_t) {
+                    const Lit l = varData[v].reason.lit2();
+                    if (!seen[l.var()]) {
+                        seen[l.var()] = true;
+                        varData[l.var()].almost_conflicted++;
+                        toClear.push_back(l);
+                    }
                 }
             }
             for (Lit l: toClear) {
@@ -2207,13 +2214,18 @@ lbool Searcher::solve(
             goto end;
     }
 
-    if (conf.restartType == Restart::geom) {
-        max_confl_phase = conf.restart_first;
-        max_confl_this_phase = conf.restart_first;
-        params.rest_type = Restart::geom;
-    }
+    if (VSIDS) {
+        if (conf.restartType == Restart::geom) {
+            max_confl_phase = conf.restart_first;
+            max_confl_this_phase = conf.restart_first;
+            params.rest_type = Restart::geom;
+        }
 
-    if (conf.restartType == Restart::luby) {
+        if (conf.restartType == Restart::luby) {
+            max_confl_this_phase = conf.restart_first;
+            params.rest_type = Restart::luby;
+        }
+    } else {
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
@@ -2267,12 +2279,10 @@ void Searcher::adjust_phases_restarts()
     if (max_confl_this_phase > 0)
         return;
 
-    if (VSIDS && conf.maple) {
+    if (conf.maple) {
         VSIDS = false;
-        max_confl_this_phase = 5000;
-        if (conf.verbosity >= 3) {
-            cout << "c doing NON-VSIDS" << endl;
-        }
+        params.rest_type = Restart::luby;
+        max_confl_this_phase = luby(2, loop_num) * (double)conf.restart_first;
     } else {
         VSIDS = true;
         if (conf.verbosity >= 3) {
@@ -3319,7 +3329,7 @@ void Searcher::cancelUntil(uint32_t level)
                 if (age > 0) {
                     double adjusted_reward = ((double)(varData[var].conflicted + varData[var].almost_conflicted)) / ((double)age);
                     double old_activity = var_act_maple[var];
-                    var_act_maple[var] = step_size * adjusted_reward + ((1 - step_size) * old_activity);
+                    var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
                     if (order_heap_maple.inHeap(var)) {
                         if (var_act_maple[var] > old_activity)
                             order_heap_maple.decrease(var);
