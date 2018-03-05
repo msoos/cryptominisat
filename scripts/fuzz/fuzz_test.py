@@ -104,9 +104,16 @@ def set_up_parser():
     return parser
 
 
-def fuzzer_call_failed():
+def fuzzer_call_failed(fname):
     print("OOps, fuzzer executable call failed!")
     print("Did you build with cmake -DENABLE_TESTING=ON? Did you do git submodules init & update?")
+    print("Here is the output:")
+
+    print("**** ----- ****")
+    with open(fname, "r") as a:
+        for x in a:
+            print(x.strip())
+    print("**** ----- ****")
     exit(-1)
 
 
@@ -154,7 +161,7 @@ class create_fuzz:
                 print("calling sub-fuzzer: %s" % call)
                 status = subprocess.call(call, shell=True)
                 if status != 0:
-                    fuzzer_call_failed()
+                    fuzzer_call_failed(fname2)
 
             # construct multi-fuzzer call
             call = ""
@@ -510,7 +517,7 @@ class Tester:
         print("calling %s" % call)
         status = subprocess.call(call, shell=True)
         if status != 0:
-            fuzzer_call_failed()
+            fuzzer_call_failed(fname)
 
         if not self.drat:
             self.needDebugLib = True
