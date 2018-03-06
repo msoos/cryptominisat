@@ -406,6 +406,7 @@ class Searcher : public HyperEngine
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
         uint64_t next_distill = 0;
+        bool DISTANCE = true;
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);
