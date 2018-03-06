@@ -755,11 +755,11 @@ uint32_t OccSimplifier::sum_irred_cls_longs_lits() const
     return sum;
 }
 
-bool OccSimplifier::deal_with_added_long_and_bin()
+bool OccSimplifier::deal_with_added_long_and_bin(const bool main)
 {
     while (!added_long_cl.empty() && !added_bin_cl.empty())
     {
-        if (!sub_str->handle_added_long_cl(limit_to_decrease, false)) {
+        if (!sub_str->handle_added_long_cl(limit_to_decrease, main)) {
             return false;
         }
         added_long_cl.clear();
@@ -904,7 +904,7 @@ bool OccSimplifier::simulate_frw_sub_str_with_added_cl_to_var()
     added_cl_to_var.clear();
 
     //here, we clean the marks on the clauses, even in case of timeout/abort
-    if (!sub_str->handle_added_long_cl(&varelim_sub_str_limit, true)) {
+    if (!sub_str->handle_added_long_cl(&varelim_sub_str_limit, false)) {
         return false;
     }
     limit_to_decrease = &norm_varelim_time_limit;
@@ -1013,7 +1013,7 @@ bool OccSimplifier::eliminate_vars()
 
                 //SUB and STR for long and short
                 limit_to_decrease = &varelim_sub_str_limit;
-                if (!deal_with_added_long_and_bin())
+                if (!deal_with_added_long_and_bin(false))
                     goto end;
                 limit_to_decrease = &norm_varelim_time_limit;
 
@@ -1371,7 +1371,7 @@ bool OccSimplifier::backward_sub_str()
         goto end;
     }
 
-    if (!deal_with_added_long_and_bin()
+    if (!deal_with_added_long_and_bin(true)
         || solver->must_interrupt_asap()
     ) {
         goto end;
