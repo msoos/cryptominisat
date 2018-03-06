@@ -582,7 +582,7 @@ class Tester:
                 print("Return code is not 0, error!")
                 exit(-1)
 
-            solution = "%s-solution.txt" % fname
+            solution = "%s-solution.sol" % fname
             ret = self.check(fname=simp, dump_output_fname=solution)
             if ret is not None:
                 # didn't time out, so let's reconstruct the solution
