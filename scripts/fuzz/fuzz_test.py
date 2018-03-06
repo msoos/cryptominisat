@@ -561,7 +561,7 @@ class Tester:
         print("calling %s : %s" % (fuzzer, call))
         status = subprocess.call(call, shell=True)
         if status != 0:
-            fuzzer_call_failed()
+            fuzzer_call_failed(fname)
 
         rnd_opts = self.random_options(preproc=True)
 
