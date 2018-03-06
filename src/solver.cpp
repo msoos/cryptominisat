@@ -1240,12 +1240,13 @@ lbool Solver::solve_with_assumptions(
     conflict.clear();
     check_config_parameters();
 
-    //Parameters for restarts
+    //Reset parameters
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
     VSIDS = true;
     var_decay = conf.var_decay_start;
     step_size = conf.orig_step_size;
+    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     params.rest_type = conf.restartType;
     if (params.rest_type == Restart::glue_geom) {
         params.rest_type = Restart::geom;
@@ -1254,7 +1255,6 @@ lbool Solver::solve_with_assumptions(
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
-    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;

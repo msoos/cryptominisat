@@ -67,11 +67,12 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , cla_inc(1)
 {
     var_decay = conf.var_decay_start;
+    step_size = solver->conf.orig_step_size;
+
     var_inc = conf.var_inc_start;
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-    step_size = solver->conf.orig_step_size;
 }
 
 Searcher::~Searcher()
