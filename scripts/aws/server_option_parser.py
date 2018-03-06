@@ -27,7 +27,7 @@ To use other solvers, give:
 --solver MapleCOMSPS/simp/maplecomsps_static
 --solver cmsat-satcomp16/bin/cryptominisat4_simple
 --solver lingeling-bbc/build/lingeling/lingeling_bbc
---solver Maple_LCM_Dist/Maple_LCM_Dist # ONLY WORKS WITH --drat !!!
+--solver Maple_LCM_Dist/Maple_LCM_Dist # may work with --drat, but needs updated DRAT checker
 
 
 Use-cases:

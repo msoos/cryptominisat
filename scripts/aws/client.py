@@ -190,8 +190,10 @@ class solverThread (threading.Thread):
 
         toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
-            toexec.extend(["--drat", self.get_drat_fname()])
+            if "Maple" in self.indata["solver"]:
+                toexec.extend(["-drup-file=%s" % self.get_drat_fname()])
             if "cryptominisat5" in self.indata["solver"]:
+                toexec.extend(["--drat", self.get_drat_fname()])
                 # never stop search() to simplify anything
                 # toexec.append("-n 1")
                 # toexec.append("--ml 0")
