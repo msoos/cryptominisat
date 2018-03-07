@@ -79,6 +79,8 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
     std::vector<std::vector<Lit>> clauses;
+    std::vector<std::vector<uint32_t>> xor_clauses;
+    int nb_threads;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
@@ -120,6 +122,8 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
         return;
     }
+
+    self->nb_threads = num_threads;
 
     SATSolver *cmsat = new SATSolver;
     cmsat->set_max_confl(confl_limit);
@@ -341,6 +345,7 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     self->cmsat->add_xor_clause(vars, real_rhs);
+    self->xor_clauses.push_back(vars);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -647,6 +652,15 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 
     std::string drat_file_name;
     if (drat != NULL) {
+        // Add other exceptions if other non DRAT compliant features are added in the future
+        if (self->nb_threads > 1) {
+            PyErr_SetString(PyExc_ValueError, "number of threads must stricktly be 1 to get DRAT file");
+            return NULL;
+        }
+        if (self->xor_clauses.size() > 0) {
+            PyErr_SetString(PyExc_ValueError, "XOR manipulation is not supported in DRAT");
+            return NULL;
+        }
         drat_file_name = drat;
     }
 
@@ -666,6 +680,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     std::ofstream drat_file;
     if (!drat_file_name.empty()) {
         drat_file.open(drat_file_name, std::fstream::out);
+        if (!drat_file) {
+            PyErr_SetString(PyExc_ValueError, "could not open DRAT file for writing");
+            return NULL;
+        }
         self->cmsat->set_drat(&drat_file, false);
     }
 
