@@ -1500,42 +1500,40 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
     //Find if variable is really needed to be eliminated
     var = solver->map_inter_to_outer(var);
-    map<uint32_t, vector<size_t> >::iterator it = blk_var_to_cl.find(var);
-    if (it == blk_var_to_cl.end())
+    uint32_t at_blocked_cls = blk_var_to_cls[var];
+    if (at_blocked_cls == std::numeric_limits<uint32_t>::max())
         return solver->okay();
 
     //Eliminate it in practice
     //NOTE: Need to eliminate in theory first to avoid infinite loops
+
+    //Mark for removal from blocked list
+    blockedClauses[at_blocked_cls].toRemove = true;
+    can_remove_blocked_clauses = true;
+    assert(blockedClauses[at_blocked_cls].lits[0].var() == var);
+
+    //Re-insert into Solver
+    #ifdef VERBOSE_DEBUG_RECONSTRUCT
+    cout
+    << "Uneliminating cl " << blockedClauses[at_blocked_cls].lits
+    << " on var " << var+1
+    << endl;
+    #endif
+
     vector<Lit> lits;
-    for(size_t i = 0; i < it->second.size(); i++) {
-        size_t at = it->second[i];
-
-        //Mark for removal from blocked list
-        blockedClauses[at].toRemove = true;
-        can_remove_blocked_clauses = true;
-        assert(blockedClauses[at].lits[0].var() == var);
-
-        //Re-insert into Solver
-        #ifdef VERBOSE_DEBUG_RECONSTRUCT
-        cout
-        << "Uneliminating cl " << blockedClauses[at].lits
-        << " on var " << var+1
-        << endl;
-        #endif
-        size_t bat = 1;
-        while(bat < blockedClauses[at].lits.size()) {
-            Lit l = blockedClauses[at].lits[bat];
-            if (l == lit_Undef) {
-                solver->addClause(lits);
-                if (!solver->okay()) {
-                    return false;
-                }
-                lits.clear();
-            } else {
-                lits.push_back(l);
+    size_t bat = 1;
+    while(bat < blockedClauses[at_blocked_cls].lits.size()) {
+        Lit l = blockedClauses[at_blocked_cls].lits[bat];
+        if (l == lit_Undef) {
+            solver->addClause(lits);
+            if (!solver->okay()) {
+                return false;
             }
-            bat++;
+            lits.clear();
+        } else {
+            lits.push_back(l);
         }
+        bat++;
     }
 
     return solver->okay();
@@ -1578,19 +1576,13 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
 
 void OccSimplifier::buildBlockedMap()
 {
-    blk_var_to_cl.clear();
+    blk_var_to_cls.clear();
+    blk_var_to_cls.resize(solver->nVarsOuter(), std::numeric_limits<uint32_t>::max());
     for(size_t i = 0; i < blockedClauses.size(); i++) {
         const BlockedClauses& blocked = blockedClauses[i];
-        map<uint32_t, vector<size_t> >::iterator it
-            = blk_var_to_cl.find(blocked.lits[0].var());
-
-        if (it == blk_var_to_cl.end()) {
-            vector<size_t> tmp;
-            tmp.push_back(i);
-            blk_var_to_cl[blocked.lits[0].var()] = tmp;
-        } else {
-            it->second.push_back(i);
-        }
+        uint32_t blockedon = blocked.lits[0].var();
+        assert(blockedon < blk_var_to_cls.size());
+        blk_var_to_cls[blockedon] = i;
     }
     blockedMapBuilt = true;
 }
@@ -2677,13 +2669,6 @@ size_t OccSimplifier::mem_used() const
     b += dummy.capacity()*sizeof(char);
     b += added_long_cl.capacity()*sizeof(ClOffset);
     b += sub_str->mem_used();
-    for(map<uint32_t, vector<size_t> >::const_iterator
-        it = blk_var_to_cl.begin(), end = blk_var_to_cl.end()
-        ; it != end
-        ; ++it
-    ) {
-        b += it->second.capacity()*sizeof(size_t);
-    }
     b += blockedClauses.capacity()*sizeof(BlockedClauses);
     for(vector<BlockedClauses>::const_iterator
         it = blockedClauses.begin(), end = blockedClauses.end()
@@ -2692,7 +2677,7 @@ size_t OccSimplifier::mem_used() const
     ) {
         b += it->lits.capacity()*sizeof(Lit);
     }
-    b += blk_var_to_cl.size()*(sizeof(uint32_t)+sizeof(vector<size_t>)); //TODO under-counting
+    b += blk_var_to_cls.size()*sizeof(uint32_t);
     b += velim_order.mem_used();
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += elim_calc_need_update.mem_used();

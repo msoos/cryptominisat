@@ -480,8 +480,8 @@ private:
     /////////////////////
     //Blocked clause elimination
     bool anythingHasBeenBlocked;
-    vector<BlockedClauses> blockedClauses;
-    map<uint32_t, vector<size_t> > blk_var_to_cl;
+    vector<BlockedClauses> blockedClauses; ///<maps var(outer!!) to postion in blockedClauses
+    vector<uint32_t> blk_var_to_cls;
     bool blockedMapBuilt;
     void buildBlockedMap();
     void cleanBlockedClauses();
