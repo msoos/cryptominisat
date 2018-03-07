@@ -142,42 +142,51 @@ void OccSimplifier::save_on_var_memory()
 
 void OccSimplifier::print_blocked_clauses_reverse() const
 {
-    for(vector<BlockedClause>::const_reverse_iterator
+    for(vector<BlockedClauses>::const_reverse_iterator
         it = blockedClauses.rbegin(), end = blockedClauses.rend()
         ; it != end
         ; ++it
     ) {
-        if (it->dummy) {
-            cout
-            << "dummy blocked clause for literal (internal number) " << it->blockedOn
-            << endl;
-        } else {
-            cout
-            << "blocked clause (internal number) " << it->lits
-            << " blocked on var (internal numbering) "
-            << solver->map_outer_to_inter(it->blockedOn.var()) + 1
-            << endl;
+        size_t at = 1;
+        vector<Lit> lits;
+        while(at < it->lits.size()) {
+            Lit l = it->lits[at];
+            if (l == lit_Undef) {
+                cout
+                << "blocked clause (internal number) " << it->lits
+                << endl;
+                lits.clear();
+            } else {
+                lits.push_back(l);
+            }
+            at++;
         }
+
+        cout
+        << "dummy blocked clause for var (internal number) " << it->lits[0].var()
+        << endl;
+
     }
 }
 
 void OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
 {
-    for (BlockedClause blocked: blockedClauses) {
-        if (blocked.dummy)
-            continue;
-
-        //Print info about clause
-        *outfile
-        << "c next clause is eliminated/blocked on lit "
-        << blocked.blockedOn
-        << endl;
-
-        //Print clause
-        *outfile
-        << sortLits(blocked.lits)
-        << " 0"
-        << endl;
+    for (BlockedClauses blocked: blockedClauses) {
+        for (size_t i = 0; i < blocked.lits.size(); i++) {
+            //It's blocked on this variable
+            if (i == 0) {
+                continue;
+            }
+            Lit l = blocked.lits[i];
+            if (l == lit_Undef) {
+                *outfile
+                << " 0"
+                << endl;
+            } else {
+                *outfile
+                << l << " ";
+            }
+        }
     }
 }
 
@@ -197,46 +206,47 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     #endif
 
     //go through in reverse order
+    vector<Lit> lits;
     for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
-        BlockedClause* it = &blockedClauses[i];
-        if (i > 3) {
-            BlockedClause* it2 = &blockedClauses[i-3];
-            if (!it2->dummy
-                && !it->toRemove
-            ) {
-                __builtin_prefetch(it->lits.data());
-            }
-        }
+        BlockedClauses* it = &blockedClauses[i];
         if (it->toRemove) {
             continue;
         }
 
-        it->blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->blockedOn);
-        if (it->dummy) {
-            extender->dummyBlocked(it->blockedOn);
-        } else {
-            //Check if clause can be removed, update literals to replaced literals
-            for(Lit& l: it->lits) {
-                l = solver->varReplacer->get_lit_replaced_with_outer(l);
+        Lit blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->lits[0]);
+        size_t at = 1;
+        bool satisfied = false;
+        while(at < it->lits.size()) {
+            if (it->lits[at] == lit_Undef) {
+                satisfied = false;
+                for(Lit& l: lits) {
+                    l = solver->varReplacer->get_lit_replaced_with_outer(l);
 
-                //Check if clause can be removed because it's set at dec level 0
-                Lit inter = solver->map_outer_to_inter(l);
-                if (solver->value(inter) == l_True
-                    && solver->varData[inter.var()].level == 0
-                ) {
-                    it->toRemove = true;
-                    can_remove_blocked_clauses = true;
-                    goto next;
-                }
+                    //Check if clause can be removed because it's set at dec level 0
+                    Lit inter = solver->map_outer_to_inter(l);
+                    if (solver->value(inter) == l_True
+                        && solver->varData[inter.var()].level == 0
+                    ) {
+                        satisfied = true;
+                        break;
+                    }
 
-                //Blocked clause can be skipped, it's satisfied
-                if (solver->model_value(l) == l_True) {
-                    goto next;
+                    //Blocked clause can be skipped, it's satisfied
+                    if (solver->model_value(l) == l_True) {
+                        satisfied = true;
+                        break;
+                    }
                 }
+                if (!satisfied) {
+                    extender->addClause(lits, blockedOn.var());
+                }
+                lits.clear();
+            } else {
+                lits.push_back(it->lits[at]);
             }
-            extender->addClause(it->lits, it->blockedOn);
+            at++;
         }
-        next:;
+        extender->dummyBlocked(blockedOn);
     }
     if (solver->conf.verbosity) {
         cout << "c [extend] Extended " << blockedClauses.size() << " var-elim clauses" << endl;
@@ -1496,16 +1506,14 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
     //Eliminate it in practice
     //NOTE: Need to eliminate in theory first to avoid infinite loops
+    vector<Lit> lits;
     for(size_t i = 0; i < it->second.size(); i++) {
         size_t at = it->second[i];
 
         //Mark for removal from blocked list
         blockedClauses[at].toRemove = true;
         can_remove_blocked_clauses = true;
-        assert(blockedClauses[at].blockedOn.var() == var);
-
-        if (blockedClauses[at].dummy)
-            continue;
+        assert(blockedClauses[at].lits[0].var() == var);
 
         //Re-insert into Solver
         #ifdef VERBOSE_DEBUG_RECONSTRUCT
@@ -1514,9 +1522,20 @@ bool OccSimplifier::uneliminate(uint32_t var)
         << " on var " << var+1
         << endl;
         #endif
-        solver->addClause(blockedClauses[at].lits);
-        if (!solver->okay())
-            return false;
+        size_t bat = 1;
+        while(bat < blockedClauses[at].lits.size()) {
+            Lit l = blockedClauses[at].lits[bat];
+            if (l == lit_Undef) {
+                solver->addClause(lits);
+                if (!solver->okay()) {
+                    return false;
+                }
+                lits.clear();
+            } else {
+                lits.push_back(l);
+            }
+            bat++;
+        }
     }
 
     return solver->okay();
@@ -1532,28 +1551,28 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
     }
 
     for(size_t i = origBlockedSize; i < blockedClauses.size(); i++) {
-        if (blockedClauses[i].dummy)
-            continue;
-
         //If doing stamping or caching, we cannot delete binary redundant
         //clauses, because they are stored in the stamp/cache and so
         //will be used -- and DRAT will complain when used
-        if (blockedClauses[i].lits.size() <= 2
-            && (solver->conf.doCache
-                || solver->conf.doStamp)
-        ) {
-            continue;
-        }
+        vector<Lit> lits;
+        size_t at = 1;
+        while(at < blockedClauses[i].lits.size()) {
+            const Lit l = blockedClauses[i].lits[at];
+            if (l == lit_Undef) {
+                if (!(lits.size() <= 2 && (solver->conf.doCache|| solver->conf.doStamp))) {
+                    (*solver->drat) << del;
+                    for(Lit x: lits) {
+                        (*solver->drat) << x;
+                    }
+                    (*solver->drat) << fin;
+                }
 
-        (*solver->drat) << del;
-        for(vector<Lit>::const_iterator
-            it = blockedClauses[i].lits.begin(), end = blockedClauses[i].lits.end()
-            ; it != end
-            ; ++it
-        ) {
-            (*solver->drat) << *it;
+                lits.clear();
+            } else {
+                lits.push_back(l);
+            }
+            at++;
         }
-        (*solver->drat) << fin;
     }
 }
 
@@ -1561,14 +1580,14 @@ void OccSimplifier::buildBlockedMap()
 {
     blk_var_to_cl.clear();
     for(size_t i = 0; i < blockedClauses.size(); i++) {
-        const BlockedClause& blocked = blockedClauses[i];
+        const BlockedClauses& blocked = blockedClauses[i];
         map<uint32_t, vector<size_t> >::iterator it
-            = blk_var_to_cl.find(blocked.blockedOn.var());
+            = blk_var_to_cl.find(blocked.lits[0].var());
 
         if (it == blk_var_to_cl.end()) {
             vector<size_t> tmp;
             tmp.push_back(i);
-            blk_var_to_cl[blocked.blockedOn.var()] = tmp;
+            blk_var_to_cl[blocked.lits[0].var()] = tmp;
         } else {
             it->second.push_back(i);
         }
@@ -1730,15 +1749,15 @@ void OccSimplifier::cleanBlockedClausesIfDirty()
 void OccSimplifier::cleanBlockedClauses()
 {
     assert(solver->decisionLevel() == 0);
-    vector<BlockedClause>::iterator i = blockedClauses.begin();
-    vector<BlockedClause>::iterator j = blockedClauses.begin();
+    vector<BlockedClauses>::iterator i = blockedClauses.begin();
+    vector<BlockedClauses>::iterator j = blockedClauses.begin();
 
-    for (vector<BlockedClause>::iterator
+    for (vector<BlockedClauses>::iterator
         end = blockedClauses.end()
         ; i != end
         ; i++
     ) {
-        const uint32_t blockedOn = solver->map_outer_to_inter(i->blockedOn.var());
+        const uint32_t blockedOn = solver->map_outer_to_inter(i->lits[0].var());
         if (solver->varData[blockedOn].removed == Removed::elimed
             && solver->value(blockedOn) != l_Undef
         ) {
@@ -1761,12 +1780,11 @@ void OccSimplifier::cleanBlockedClauses()
     can_remove_blocked_clauses = false;
 }
 
-size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
+void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     watch_subarray todo
     , const Lit lit
 ) {
     blockedMapBuilt = false;
-    const size_t orig_blocked_cls_size = blockedClauses.size();
 
     //Copy&clear i.e. MOVE
     todo.moveTo(tmp_rem_cls_copy);
@@ -1845,8 +1863,6 @@ size_t OccSimplifier::rem_cls_from_watch_due_to_varelim(
             << endl;
         }
     }
-
-    return blockedClauses.size() - orig_blocked_cls_size;
 }
 
 void OccSimplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
@@ -1856,10 +1872,12 @@ void OccSimplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
         elim_calc_need_update.touch(l.var());
     }
 
-    const Lit lit_outer = solver->map_inter_to_outer(lit);
     vector<Lit> lits_outer = lits;
     solver->map_inter_to_outer(lits_outer);
-    blockedClauses.push_back(BlockedClause(lit_outer, lits_outer));
+    for(Lit l: lits_outer) {
+        blockedClauses.back().lits.push_back(l);
+    }
+    blockedClauses.back().lits.push_back(lit_Undef);
 }
 
 void OccSimplifier::find_gate(
@@ -2215,8 +2233,10 @@ void OccSimplifier::set_var_as_eliminated(const uint32_t var, const Lit lit)
 
 void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
 {
+    vector<Lit> lits;
+    lits.push_back(solver->map_inter_to_outer(lit));
     blockedClauses.push_back(
-        BlockedClause(solver->map_inter_to_outer(lit))
+        BlockedClauses(lits)
     );
 }
 
@@ -2664,8 +2684,8 @@ size_t OccSimplifier::mem_used() const
     ) {
         b += it->second.capacity()*sizeof(size_t);
     }
-    b += blockedClauses.capacity()*sizeof(BlockedClause);
-    for(vector<BlockedClause>::const_iterator
+    b += blockedClauses.capacity()*sizeof(BlockedClauses);
+    for(vector<BlockedClauses>::const_iterator
         it = blockedClauses.begin(), end = blockedClauses.end()
         ; it != end
         ; ++it
@@ -2823,7 +2843,7 @@ void OccSimplifier::save_state(SimpleOutFile& f)
     assert(solver->decisionLevel() == 0);
     cleanBlockedClauses();
     f.put_uint64_t(blockedClauses.size());
-    for(const BlockedClause& c: blockedClauses) {
+    for(const BlockedClauses& c: blockedClauses) {
         c.save_to_file(f);
     }
     f.put_struct(globalStats);
@@ -2835,7 +2855,7 @@ void OccSimplifier::load_state(SimpleInFile& f)
 {
     const uint64_t sz = f.get_uint64_t();
     for(uint64_t i = 0; i < sz; i++) {
-        BlockedClause b;
+        BlockedClauses b;
         b.load_from_file(f);
         blockedClauses.push_back(b);
     }

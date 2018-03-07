@@ -57,47 +57,29 @@ class TopLevelGaussAbst;
 class SubsumeStrengthen;
 class BVA;
 
-struct BlockedClause {
-    BlockedClause()
+struct BlockedClauses {
+    BlockedClauses()
     {}
 
-    explicit BlockedClause(Lit dummyLit) :
-        blockedOn(dummyLit)
+    explicit BlockedClauses(const vector<Lit>& _lits) :
+        lits(_lits)
         , toRemove(false)
-        , dummy(true)
     {}
-
-    BlockedClause(
-        const Lit _blockedOn
-        , const vector<Lit>& _lits
-    ) :
-        blockedOn(_blockedOn)
-        , toRemove(false)
-        , lits(_lits)
-        , dummy(false)
-    {
-    }
 
     void save_to_file(SimpleOutFile& f) const
     {
-        f.put_lit(blockedOn);
         f.put_uint32_t(toRemove);
         f.put_vector(lits);
-        f.put_uint32_t(dummy);
     }
 
     void load_from_file(SimpleInFile& f)
     {
-        blockedOn = f.get_lit();
         toRemove = f.get_uint32_t();
         f.get_vector(lits);
-        dummy = f.get_uint32_t();
     }
 
-    Lit blockedOn = lit_Undef;
-    bool toRemove = false;
     vector<Lit> lits;
-    bool dummy = false;
+    bool toRemove = false;
 };
 
 struct BVEStats
@@ -396,7 +378,7 @@ private:
     };
     void        order_vars_for_elim();
     Heap<VarOrderLt> velim_order;
-    size_t      rem_cls_from_watch_due_to_varelim(watch_subarray todo, const Lit lit);
+    void        rem_cls_from_watch_due_to_varelim(watch_subarray todo, const Lit lit);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
     void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
@@ -498,7 +480,7 @@ private:
     /////////////////////
     //Blocked clause elimination
     bool anythingHasBeenBlocked;
-    vector<BlockedClause> blockedClauses;
+    vector<BlockedClauses> blockedClauses;
     map<uint32_t, vector<size_t> > blk_var_to_cl;
     bool blockedMapBuilt;
     void buildBlockedMap();
@@ -526,9 +508,9 @@ inline bool OccSimplifier::getAnythingHasBeenBlocked() const
     return anythingHasBeenBlocked;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const BlockedClause& bl)
+inline std::ostream& operator<<(std::ostream& os, const BlockedClauses& bl)
 {
-    os << bl.lits << " blocked on: " << bl.blockedOn;
+    os << bl.lits << " to remove: " << bl.toRemove;
 
     return os;
 }
