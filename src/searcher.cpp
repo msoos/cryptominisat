@@ -848,7 +848,13 @@ Clause* Searcher::analyze_conflict(
                         }
                     }
                 } else if (varData[v].reason.getType() == binary_t) {
-                    const Lit l = varData[v].reason.lit2();
+                    Lit l = varData[v].reason.lit2();
+                    if (!seen[l.var()]) {
+                        seen[l.var()] = true;
+                        varData[l.var()].almost_conflicted++;
+                        toClear.push_back(l);
+                    }
+                    l = Lit(v, false);
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
                         varData[l.var()].almost_conflicted++;
@@ -2484,16 +2490,17 @@ Lit Searcher::pickBranchLit()
             }
 
             if (!VSIDS) {
-                uint32_t v2 = order_heap[0];
+                uint32_t v2 = order_heap_maple[0];
                 uint32_t age = sumConflicts - varData[v2].cancelled;
                 while (age > 0) {
                     double decay = pow(0.95, age);
                     var_act_maple[v2] *= decay;
-                    if (order_heap.inHeap(v2))
-                        order_heap.increase(v2);
-                    varData[v2].cancelled = sumConflicts;
+                    if (order_heap_maple.inHeap(v2)) {
+                        order_heap_maple.increase(v2);
+                    }
 
-                    v2 = order_heap[0];
+                    varData[v2].cancelled = sumConflicts;
+                    v2 = order_heap_maple[0];
                     age = sumConflicts - varData[v2].cancelled;
                 }
             }
