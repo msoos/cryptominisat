@@ -596,7 +596,7 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 }
 
 PyDoc_STRVAR(solve_doc,
-"solve(assumptions=None)\n\
+"solve(assumptions=None, drat=None)\n\
 Solve the system of equations that have been added with add_clause();\n\
 \n\
 .. example:: \n\
@@ -625,7 +625,8 @@ Solve the system of equations that have been added with add_clause();\n\
     is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
     solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
     still return a solution.\n\
-:param arg2: (Optional) To ask pycryptosat to create specified DRAT file.\n\
+:param arg2: (Optional) Asks the solver to generate a DRAT file under the\n\
+    specified name.\n\
 :type arg1: <list>\n\
 :type arg2: <String>\n\
 :return: A tuple. First part of the tuple indicates whether the problem\n\
