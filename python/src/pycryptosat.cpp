@@ -80,6 +80,7 @@ typedef struct {
     SATSolver* cmsat;
     std::vector<std::vector<Lit>> clauses;
     std::vector<std::vector<uint32_t>> xor_clauses;
+    std::vector<bool> rhs;
     int nb_threads;
 } Solver;
 
@@ -346,6 +347,7 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
     self->cmsat->add_xor_clause(vars, real_rhs);
     self->xor_clauses.push_back(vars);
+    self->rhs.push_back(real_rhs);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -353,12 +355,26 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
 
 PyObject* int_vector_to_list(const std::vector<int> &data) {
   PyObject* listObj = PyList_New(data.size());
-	if (!listObj) PyErr_SetString(PyExc_SystemError, "Unable to allocate memory for Python list/");
+	if (!listObj) PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
 	for (unsigned int i = 0 ; i < data.size() ; i++) {
 		PyObject *num = PyLong_FromLong((long) data[i]);
 		if (!num) {
 			Py_DECREF(listObj);
-			PyErr_SetString(PyExc_SystemError, "Unable to allocate memory for Python list/");
+			PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+		}
+		PyList_SET_ITEM(listObj, i, num);
+	}
+	return listObj;
+}
+
+PyObject* uint_vector_to_list(const std::vector<uint32_t> &data) {
+  PyObject* listObj = PyList_New(data.size());
+	if (!listObj) PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+	for (unsigned int i = 0 ; i < data.size() ; i++) {
+		PyObject *num = PyLong_FromLong(data[i]);
+		if (!num) {
+			Py_DECREF(listObj);
+			PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
 		}
 		PyList_SET_ITEM(listObj, i, num);
 	}
@@ -371,7 +387,39 @@ static PyObject* load_file(Solver *self, std::string cnf)
     if (cnf_file.is_open()) {
         std::string line;
         while (std::getline(cnf_file, line)) {
-            if ((line.substr(0,1) != std::string("c")) && (line.substr(0,1) != std::string("p"))) { // ignoring comments in DIMACS
+            if ((line.substr(0,1) == std::string("x"))) {
+                std::string buf;
+                std::stringstream ss(line.substr(1,line.size()));
+                std::vector<uint32_t> tokens;
+                bool rhs = true;
+                while (ss >> buf) {
+                    int tok = 0;
+                    try {
+                        int tmp_tok = stoi(buf);
+                        if (tmp_tok < 0) {
+                            rhs ^= true;
+                        }
+                        tok = abs(tmp_tok);
+                    }
+                    catch(std::invalid_argument& e){
+                        PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
+                    }
+                    if (tok != 0) {
+                        tokens.push_back(tok);
+                    }
+                }
+
+                PyObject* clause = uint_vector_to_list(tokens);
+                std::vector<uint32_t> lits;
+                if (!parse_xor_clause(self, clause, lits)) {
+                  return 0;
+                }
+
+                self->cmsat->add_xor_clause(lits, rhs);
+                self->xor_clauses.push_back(lits);
+                self->rhs.push_back(rhs);
+            }
+            else if ((line.substr(0,1) != std::string("c")) && (line.substr(0,1) != std::string("p"))) { // ignoring comments in DIMACS
                 std::string buf;
                 std::stringstream ss(line);
                 std::vector<int> tokens;
@@ -381,7 +429,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                         tok = stoi(buf);
                     }
                     catch(std::invalid_argument& e){
-                        PyErr_SetString(PyExc_ValueError, "Invalid character in DIMACS file (not an integer)");
+                        PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
                     }
                     if (tok != 0) {
                         tokens.push_back(tok);
@@ -392,6 +440,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                 if (!parse_clause(self, clause, lits)) {
                     return 0;
                 }
+
                 self->cmsat->add_clause(lits);
                 self->clauses.push_back(lits);
             }
@@ -431,10 +480,22 @@ static PyObject* save_file(Solver *self, std::string cnf)
 {
     std::ofstream cnf_file(cnf, std::fstream::out | std::fstream::trunc);
     if (cnf_file.is_open()) {
-        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->clauses.size() << "\n";
+        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->clauses.size() + self->xor_clauses.size() << "\n";
         for(std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
             for (std::vector<Lit>::iterator jt = it->begin(); jt != it->end(); ++jt) {
-                cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << ' ';
+                cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << " ";
+    		}
+    		cnf_file << "0" << "\n";
+        }
+        std::vector<bool>::iterator rhs_it = self->rhs.begin();
+        for(std::vector<std::vector<uint32_t>>::iterator it = self->xor_clauses.begin();
+            it != self->xor_clauses.end(); ++it, ++rhs_it) {
+            if (!*rhs_it) {
+                cnf_file << "-";
+                *rhs_it = false;
+            }
+            for (std::vector<uint32_t>::iterator jt = it->begin(); jt != it->end(); ++jt) {
+                cnf_file << *jt + 1 << " ";
     		}
     		cnf_file << "0" << "\n";
         }
