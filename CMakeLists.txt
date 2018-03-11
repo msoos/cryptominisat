@@ -400,6 +400,35 @@ ELSE ()
     MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
 
+# ----------
+# manpage
+# ----------
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_program(HELP2MAN_FOUND help2man)
+    if (HELP2MAN_FOUND)
+        ADD_CUSTOM_TARGET(man
+            ALL
+            DEPENDS cryptominisat5
+        )
+
+        ADD_CUSTOM_COMMAND(
+            TARGET man
+            COMMAND help2man
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+        )
+
+        INSTALL(
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+
+        message(STATUS "Manpage will be created and installed")
+    else()
+        MESSAGE(STATUS "Cannot find help2man, not creating manpage")
+    endif()
+else()
+    MESSAGE(STATUS "Not on Linux, not creating manpage")
+endif()
+
 # -----------------------------------------------------------------------------
 # Look for ZLIB (For reading zipped CNFs)
 # -----------------------------------------------------------------------------

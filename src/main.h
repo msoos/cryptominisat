@@ -84,7 +84,7 @@ class Main
         po::options_description help_options_simple;
         po::options_description help_options_complicated;
         po::options_description hiddenOptions;
-        po::options_description generalOptions;
+        po::options_description generalOptions = po::options_description("Main options");
 
         SATSolver* solver = NULL;
 

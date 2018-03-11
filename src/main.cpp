@@ -652,6 +652,14 @@ void Main::add_supported_options()
     ;
 }
 
+string remove_last_comma_if_exists(std::string s)
+{
+    std::string s2 = s;
+    if (s[s.length()-1] == ',')
+        s2.resize(s2.length()-1);
+    return s2;
+}
+
 void Main::check_options_correctness()
 {
     try {
@@ -659,27 +667,32 @@ void Main::check_options_correctness()
         if (vm.count("hhelp"))
         {
             cout
-            << "USAGE 1: " << argv[0] << " [options] inputfile [drat-trim-file]" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
-
-            << "Where input is "
+            << "A universal, fast SAT solver with XOR and Gaussian Elimination support. " << endl
+            << "Input "
             #ifndef USE_ZLIB
-            << "plain"
+            << "must be plain"
             #else
-            << "plain or gzipped"
+            << "can be either plain or gzipped"
             #endif
-            << " DIMACS." << endl;
+            << " DIMACS with XOR extension" << endl << endl;
+
+            cout
+            << "cryptominisat5 [options] inputfile [drat-trim-file]" << endl << endl;
+
+            cout << "Preprocessor usage:" << endl
+            << "  cryptominisat5 --preproc 1 [options] inputfile simplified-cnf-file" << endl << endl
+            << "  cryptominisat5 --preproc 2 [options] solution-file" << endl;
 
             cout << help_options_complicated << endl;
-            cout << "NORMAL RUN SCHEDULES" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule: " << conf.simplify_schedule_nonstartup << endl<< endl;
-            cout << "Default schedule at startup: " << conf.simplify_schedule_startup << endl << endl;
+            cout << "Normal run schedules:" << endl;
+            cout << "  Default schedule: "
+            << remove_last_comma_if_exists(conf.simplify_schedule_nonstartup) << endl<< endl;
+            cout << "  Schedule at startup: "
+            << remove_last_comma_if_exists(conf.simplify_schedule_startup) << endl << endl;
 
-            cout << "PREPROC RUN SCHEDULE" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule: " << conf.simplify_schedule_preproc<< endl;
+            cout << "Preproc run schedule:" << endl;
+            cout << "  "
+            << remove_last_comma_if_exists(conf.simplify_schedule_preproc) << endl;
             std::exit(0);
         }
 
