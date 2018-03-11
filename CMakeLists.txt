@@ -406,19 +406,35 @@ ENDIF ()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
-        ADD_CUSTOM_TARGET(man
+        if (NOT ONLY_SIMPLE)
+            ADD_CUSTOM_TARGET(man_cms5
+                ALL
+                DEPENDS cryptominisat5
+            )
+
+            ADD_CUSTOM_COMMAND(
+                TARGET man_cms5
+                COMMAND help2man
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+            )
+
+            INSTALL(
+                FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+        endif()
+        ADD_CUSTOM_TARGET(man_cms5_simple
             ALL
-            DEPENDS cryptominisat5
+            DEPENDS cryptominisat5_simple
         )
 
         ADD_CUSTOM_COMMAND(
-            TARGET man
+            TARGET man_cms5
             COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
         )
 
         INSTALL(
-            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
             DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
 
         message(STATUS "Manpage will be created and installed")
