@@ -80,7 +80,7 @@ string binary(unsigned x, uint32_t length)
     return s;
 }
 
-string CUSP::GenerateRandomBits(uint32_t size)
+string ScalMC::GenerateRandomBits(uint32_t size)
 {
     string randomBits;
     std::uniform_int_distribution<unsigned> uid {0, 2147483647U};
@@ -92,7 +92,7 @@ string CUSP::GenerateRandomBits(uint32_t size)
     return randomBits;
 }
 
-void CUSP::add_approxmc_options()
+void ScalMC::add_scalmc_options()
 {
     approxMCOptions.add_options()
     ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC)
@@ -114,10 +114,10 @@ void CUSP::add_approxmc_options()
     help_options_complicated.add(approxMCOptions);
 }
 
-void CUSP::add_supported_options()
+void ScalMC::add_supported_options()
 {
     Main::add_supported_options();
-    add_approxmc_options();
+    add_scalmc_options();
 }
 
 void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
@@ -132,11 +132,11 @@ void print_xor(const vector<uint32_t>& vars, const uint32_t rhs)
     cout << " = " << (rhs ? "True" : "False") << endl;
 }
 
-bool CUSP::openLogFile()
+bool ScalMC::openLogFile()
 {
     cusp_logf.open(cuspLogFile.c_str());
     if (!cusp_logf.is_open()) {
-        cout << "Cannot open CUSP log file '" << cuspLogFile
+        cout << "Cannot open ScalMC log file '" << cuspLogFile
              << "' for writing." << endl;
         exit(1);
     }
@@ -169,7 +169,7 @@ inline T findMin(vector<T>& numList)
     return min;
 }
 
-bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
+bool ScalMC::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
 {
     string randomBits = GenerateRandomBits((independent_vars.size() + 1) * num_xor_cls);
     bool rhs = true;
@@ -198,7 +198,7 @@ bool CUSP::AddHash(uint32_t num_xor_cls, vector<Lit>& assumps)
     return true;
 }
 
-int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
+int64_t ScalMC::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
 {
     cout << "BoundedSATCount looking for " << maxSolutions << " solutions" << endl;
 
@@ -261,7 +261,7 @@ int64_t CUSP::BoundedSATCount(uint32_t maxSolutions, const vector<Lit>& assumps)
     return solutions;
 }
 
-bool CUSP::ApproxMC(SATCount& count)
+bool ScalMC::ApproxMC(SATCount& count)
 {
     count.clear();
     int64_t currentNumSolutions = 0;
@@ -336,7 +336,7 @@ bool CUSP::ApproxMC(SATCount& count)
     return true;
 }
 
-int CUSP::solve()
+int ScalMC::solve()
 {
     conf.reconfigure_at = 0;
     conf.reconfigure_val = 15;
@@ -358,7 +358,7 @@ int CUSP::solve()
     solverToInterrupt = solver;
     if (dratf) {
         cout
-                << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for CUSP. Exiting."
+                << "ERROR: Gauss does NOT work with DRAT and Gauss is needed for ScalMC. Exiting."
                 << endl;
         exit(-1);
     }
@@ -416,20 +416,20 @@ int main(int argc, char** argv)
     #endif
 
     #ifndef USE_GAUSS
-    std::cerr << "CUSP only makes any sese to run if you have configured with:" << endl
+    std::cerr << "ScalMC only makes any sese to run if you have configured with:" << endl
               << "*** cmake -DUSE_GAUSS=ON (.. or .)  ***" << endl
               << "Refusing to run. Please reconfigure and then re-compile." << endl;
     exit(-1);
     #else
 
-    CUSP main(argc, argv);
+    ScalMC main(argc, argv);
     main.conf.verbStats = 1;
     main.parseCommandLine();
     return main.solve();
     #endif
 }
 
-void CUSP::call_after_parse()
+void ScalMC::call_after_parse()
 {
     if (independent_vars.empty()) {
         cout
@@ -444,7 +444,7 @@ void CUSP::call_after_parse()
 }
 
 //For ScalApproxMC only
-void CUSP::SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps)
+void ScalMC::SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<Lit>& assumps)
 {
     if (clausNum < assumps.size()) {
         uint64_t numberToRemove = assumps.size()- clausNum;
@@ -467,7 +467,7 @@ void CUSP::SetHash(uint32_t clausNum, std::map<uint64_t,Lit>& hashVars, vector<L
 }
 
 //For ScalApproxMC only
-bool CUSP::ScalApproxMC(SATCount& count)
+bool ScalMC::ScalApproxMC(SATCount& count)
 {
     count.clear();
     vector<uint64_t> numHashList;

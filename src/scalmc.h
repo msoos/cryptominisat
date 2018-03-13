@@ -1,5 +1,5 @@
 /*
- CUSP and ScalMC
+ ScalMC and ScalMC
 
  Copyright (c) 2009-2015, Mate Soos. All rights reserved.
  Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
@@ -26,8 +26,8 @@
  */
 
 
-#ifndef CUSP_H_
-#define CUSP_H_
+#ifndef ScalMC_H_
+#define ScalMC_H_
 
 #include "main.h"
 #include <fstream>
@@ -43,9 +43,9 @@ struct SATCount {
     uint32_t cellSolCount = 0;
 };
 
-class CUSP: public Main {
+class ScalMC: public Main {
 public:
-    CUSP(int argc, char** argv):
+    ScalMC(int argc, char** argv):
         Main(argc, argv)
         , approxMCOptions("ApproxMC options")
     {
@@ -57,7 +57,7 @@ public:
     po::options_description approxMCOptions;
 
 private:
-    void add_approxmc_options();
+    void add_scalmc_options();
     bool ScalApproxMC(SATCount& count);
     bool ApproxMC(SATCount& count);
     bool AddHash(uint32_t num_xor_cls, vector<Lit>& assumps);
@@ -92,4 +92,4 @@ private:
 };
 
 
-#endif //CUSP_H_
+#endif //ScalMC_H_

@@ -1,5 +1,5 @@
 /*
- CUSP and ScalMC
+ ScalMC and ScalMC
 
  Copyright (c) 2009-2015, Mate Soos. All rights reserved.
  Copyright (c) 2014, Supratik Chakraborty, Kuldeep S. Meel, Moshe Y. Vardi
@@ -29,7 +29,7 @@
 
 
 
-void CUSP::generate_samples()
+void ScalMC::generate_samples()
 {
     uint32_t maxSolutions = (uint32_t) (1.41 * (1 + kappa) * pivotUniGen + 2);
     uint32_t minSolutions = (uint32_t) (pivotUniGen / (1.41 * (1 + kappa)));
@@ -110,7 +110,7 @@ void CUSP::generate_samples()
     cout << "Samples generated: " << allThreadsSampleCount << endl;
 }
 
-uint32_t CUSP::UniGen(
+uint32_t ScalMC::UniGen(
     uint32_t samples
     , uint32_t sampleCounter
     , std::map<string, uint32_t>& solutionMap
@@ -212,7 +212,7 @@ uint32_t CUSP::UniGen(
     return sampleCounter;
 }
 
-lbool CUSP::BoundedSAT(
+lbool ScalMC::BoundedSAT(
     uint32_t maxSolutions
     , uint32_t minSolutions
     , vector<Lit>& assumps
@@ -298,7 +298,7 @@ lbool CUSP::BoundedSAT(
 }
 
 
-int CUSP::uniGenCall(
+int ScalMC::uniGenCall(
     uint32_t samples
     , uint32_t sampleCounter
     , std::map<string, uint32_t>& solutionMap

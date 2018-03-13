@@ -1744,6 +1744,13 @@ bool Searcher::handle_conflict(const PropBy confl)
         conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
 
+    /*if (sumConflicts > 50000) {
+        DISTANCE = 0;
+    }
+    if (VSIDS && DISTANCE) {
+        collectFirstUIP(confl);
+    }*/
+
     params.conflictsDoneThisRestart++;
     if (conf.doPrintConflDot)
         create_graphviz_confl_graph(confl);
