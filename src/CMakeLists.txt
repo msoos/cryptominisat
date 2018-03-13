@@ -243,14 +243,6 @@ if (NOT ONLY_SIMPLE)
         main_exe.cpp
         signalcode.cpp
     )
-
-    if (USE_GAUSS)
-        add_executable(scalmc
-            main.cpp
-            signalcode.cpp
-            scalmc.cpp
-        )
-    endif()
 endif()
 add_executable(cryptominisat5_simple
     main_simple.cpp
@@ -284,26 +276,6 @@ install(TARGETS cryptominisat5_simple
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    if (USE_GAUSS)
-        if (STATICCOMPILE)
-            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_START_STATIC 1)
-        endif()
-        set_target_properties(scalmc PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-            INSTALL_RPATH_USE_LINK_PATH TRUE)
-        if (STATICCOMPILE)
-            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_END_STATIC 1)
-        endif()
-        target_link_libraries(scalmc
-            ${cryptoms_exec_link_libs}
-        )
-        install(TARGETS scalmc
-            EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
-        SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
-    endif()
-
     if (STATICCOMPILE)
         SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_START_STATIC 1)
     endif()
