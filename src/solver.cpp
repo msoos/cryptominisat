@@ -1191,6 +1191,13 @@ void Solver::check_config_parameters() const
         std::cerr << "You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
     }
+
+    #ifdef USE_GAUSS
+    if (drat->enabled() && conf.gaussconf.decision_until > 0)  {
+        std::cerr << "Cannot have both DRAT and GAUSS on at the same time!" << endl;
+        exit(-1);
+    }
+    #endif
 }
 
 lbool Solver::simplify_problem_outside()
