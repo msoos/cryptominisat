@@ -498,7 +498,7 @@ class Tester:
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
-        self.drat = self.num_threads == 1 and random.choice([True, False])
+        self.drat = self.num_threads == 1 and random.choice([True, False]) and (not options.test_gauss)
 
         if self.drat:
             fuzzers = fuzzers_drat
