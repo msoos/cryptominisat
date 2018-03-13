@@ -95,7 +95,7 @@ string ScalMC::GenerateRandomBits(uint32_t size)
 void ScalMC::add_scalmc_options()
 {
     approxMCOptions.add_options()
-    ("pivotAC", po::value(&pivotApproxMC)->default_value(pivotApproxMC)
+    ("pivotAC", po::value(&pivot)->default_value(pivot)
         , "Number of solutions to check for")
     ("mode", po::value(&searchMode)->default_value(searchMode)
         ,"Seach mode. ApproxMX = 0, ScalMC = 1")
@@ -274,13 +274,13 @@ bool ScalMC::ApproxMC(SATCount& count)
         for (hashCount = 0; hashCount < solver->nVars(); hashCount++) {
             cout << "-> Hash Count " << hashCount << endl;
             double myTime = cpuTimeTotal();
-            currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
+            currentNumSolutions = BoundedSATCount(pivot + 1, assumps);
 
-            //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
+            //cout << currentNumSolutions << ", " << pivot << endl;
             cusp_logf << "ApproxMC:" << searchMode << ":"
                       << j << ":" << hashCount << ":"
                       << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
-                      << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
+                      << (int)(currentNumSolutions == (pivot + 1)) << ":"
                       << currentNumSolutions << endl;
             //Timeout!
             if (currentNumSolutions < 0) {
@@ -303,8 +303,8 @@ bool ScalMC::ApproxMC(SATCount& count)
                 continue;
             }
 
-            if (currentNumSolutions < pivotApproxMC + 1) {
-                //less than pivotApproxMC solutions
+            if (currentNumSolutions < pivot + 1) {
+                //less than pivot solutions
                 break;
             }
 
@@ -480,14 +480,14 @@ bool ScalMC::ScalApproxMC(SATCount& count)
 
     double myTime = cpuTimeTotal();
     if (hashCount == 0) {
-        int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC+1,assumps);
+        int64_t currentNumSolutions = BoundedSATCount(pivot+1,assumps);
         cusp_logf << "ApproxMC:"<< searchMode<<":"<<"0:0:"
                   << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
-                  << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
+                  << (int)(currentNumSolutions == (pivot + 1)) << ":"
                   << currentNumSolutions << endl;
 
-        //Din't find at least pivotApproxMC+1
-        if (currentNumSolutions <= pivotApproxMC) {
+        //Din't find at least pivot+1
+        if (currentNumSolutions <= pivot) {
             count.cellSolCount = currentNumSolutions;
             count.hashCount = 0;
             return true;
@@ -511,13 +511,13 @@ bool ScalMC::ScalApproxMC(SATCount& count)
             uint64_t swapVar = hashCount;
             SetHash(hashCount,hashVars,assumps);
             cout << "Number of XOR hashes active: " << hashCount << endl;
-            int64_t currentNumSolutions = BoundedSATCount(pivotApproxMC + 1, assumps);
+            int64_t currentNumSolutions = BoundedSATCount(pivot + 1, assumps);
 
-            //cout << currentNumSolutions << ", " << pivotApproxMC << endl;
+            //cout << currentNumSolutions << ", " << pivot << endl;
             cusp_logf << "ApproxMC:" << searchMode<<":"
                       << j << ":" << hashCount << ":"
                       << std::fixed << std::setprecision(2) << (cpuTimeTotal() - myTime) << ":"
-                      << (int)(currentNumSolutions == (pivotApproxMC + 1)) << ":"
+                      << (int)(currentNumSolutions == (pivot + 1)) << ":"
                       << currentNumSolutions << endl;
             //Timeout!
             if (currentNumSolutions < 0) {
@@ -542,7 +542,7 @@ bool ScalMC::ScalApproxMC(SATCount& count)
                 continue;
             }
 
-            if (currentNumSolutions < pivotApproxMC + 1) {
+            if (currentNumSolutions < pivot + 1) {
                 numExplored = lowerFib+independent_vars.size()-hashCount;
                 if (succRecord.find(hashCount-1) != succRecord.end()
                     && succRecord[hashCount-1] == 1
@@ -550,7 +550,7 @@ bool ScalMC::ScalApproxMC(SATCount& count)
                     numHashList.push_back(hashCount);
                     numCountList.push_back(currentNumSolutions);
                     mPrev = hashCount;
-                    //less than pivotApproxMC solutions
+                    //less than pivot solutions
                     break;
                 }
                 succRecord[hashCount] = 0;
@@ -569,7 +569,7 @@ bool ScalMC::ScalApproxMC(SATCount& count)
                     hashCount = (upperFib+lowerFib)/2;
                 }
             } else {
-                assert(currentNumSolutions == pivotApproxMC+1);
+                assert(currentNumSolutions == pivot+1);
 
                 numExplored = hashCount + independent_vars.size()-upperFib;
                 if (succRecord.find(hashCount+1) != succRecord.end()

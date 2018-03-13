@@ -82,7 +82,7 @@ private:
     void call_after_parse() override;
 
     uint32_t startIteration = 0;
-    uint32_t pivotApproxMC = 52;
+    uint32_t pivot = 52;
     uint32_t tApproxMC = 17;
     uint32_t searchMode = 1;
     double   loopTimeout = 2500;
