@@ -1062,18 +1062,6 @@ void Main::parseCommandLine()
     }
 }
 
-void Main::printVersionInfo()
-{
-    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
-    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
-    #ifdef __GNUC__
-    cout << "c compiled with gcc version " << __VERSION__ << endl;
-    #else
-    cout << "c compiled with non-gcc compiler" << endl;
-    #endif
-}
-
 void Main::dumpIfNeeded() const
 {
     if (redDumpFname.empty()
@@ -1116,28 +1104,6 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
         << " cores reported by the system.\n"
         << "c WARNING: This is not a good idea in general. It's best to set the"
         << " number of threads to the number of real cores" << endl;
-    }
-}
-
-
-int Main::correctReturnValue(const lbool ret) const
-{
-    int retval = -1;
-    if (ret == l_True) {
-        retval = 10;
-    } else if (ret == l_False) {
-        retval = 20;
-    } else if (ret == l_Undef) {
-        retval = 15;
-    } else {
-        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
-        exit(-1);
-    }
-
-    if (zero_exit_status) {
-        return 0;
-    } else {
-        return retval;
     }
 }
 
@@ -1245,4 +1211,41 @@ lbool Main::multi_solutions()
         }
     }
     return ret;
+}
+
+///////////
+// Useful helper functions
+///////////
+
+void Main::printVersionInfo()
+{
+    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
+    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
+    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
+    #ifdef __GNUC__
+    cout << "c compiled with gcc version " << __VERSION__ << endl;
+    #else
+    cout << "c compiled with non-gcc compiler" << endl;
+    #endif
+}
+
+int Main::correctReturnValue(const lbool ret) const
+{
+    int retval = -1;
+    if (ret == l_True) {
+        retval = 10;
+    } else if (ret == l_False) {
+        retval = 20;
+    } else if (ret == l_Undef) {
+        retval = 15;
+    } else {
+        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
+        exit(-1);
+    }
+
+    if (zero_exit_status) {
+        return 0;
+    } else {
+        return retval;
+    }
 }
