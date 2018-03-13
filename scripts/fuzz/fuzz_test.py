@@ -89,9 +89,6 @@ def set_up_parser():
     parser.add_option("--sqlite", dest="sqlite", default=False,
                       action="store_true", help="Test SQLite dumping")
 
-    parser.add_option("--gauss", dest="test_gauss", default=False,
-                      action="store_true", help="Test gauss too")
-
     parser.add_option("--maxthreads", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
 
@@ -241,8 +238,9 @@ class Tester:
         for _ in range(int(random.gammavariate(12, 0.7))):
             sched.append(random.choice(opts))
 
-        if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
-            sched.append("occ-gauss")
+        if "autodisablegauss" in self.extra_options_if_supported:
+            if random.choice([False, True, True, True]) and self.this_gauss_on:
+                sched.append("occ-gauss")
 
         return sched
 
@@ -270,6 +268,10 @@ class Tester:
 
     def random_options(self, preproc=False):
         cmd = " --zero-exit-status "
+
+        # disable gauss when gauss is compiled in but asked not to be used
+        if not self.this_gauss_on and "autodisablegauss" in self.extra_options_if_supported:
+            cmd += "--maxgaussdepth 0 "
 
         if random.choice([True, False]):
             cmd += "--maple %d " % random.choice([0, 0, 0, 1])
@@ -308,6 +310,28 @@ class Tester:
             cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
             # gammavariate gives us sometimes very low values, sometimes large
 
+            if self.this_gauss_on:
+                # Reduce iteratively the matrix that is updated
+                cmd += "--iterreduce %s " % random.choice([0, 1])
+
+                # Only run Gaussian Elimination until this depth
+                cmd += "--maxgaussdepth %s " % int(random.gammavariate(1, 20.0))
+
+                # Set maximum no. of rows for gaussian matrix."
+                cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
+
+                #, "Automatically disable gauss when performing badly")
+                cmd += "--autodisablegauss %s " % random.choice([0, 1])
+
+                # "Set minimum no. of rows for gaussian matrix.
+                cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
+
+                # Save matrix every Nth decision level."
+                cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
+
+                # "Maximum number of matrixes to treat.")
+                cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
+
             if options.sqlite:
                 cmd += "--sql 2 "
                 cmd += "--sqlrestfull %d " % random.choice([0, 1])
@@ -320,7 +344,8 @@ class Tester:
                     "renumber", "savemem", "moreminim", "gates", "bva",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
-            opts.extend(self.extra_options_if_supported)
+            if "xor" in self.extra_options_if_supported:
+                opts.append("xor")
 
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
@@ -498,7 +523,8 @@ class Tester:
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
-        self.drat = self.num_threads == 1 and random.choice([True, False]) and (not options.test_gauss)
+        self.this_gauss_on = "autodisablegauss" in self.extra_options_if_supported and random.choice([True, False, False, False, False])
+        self.drat = self.num_threads == 1 and random.choice([True, False]) and (not self.this_gauss_on)
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -549,6 +575,7 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
+        self.this_gauss_on = False # don't do gauss on preproc
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1

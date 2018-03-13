@@ -640,7 +640,7 @@ void Main::add_supported_options()
     .add(simplificationOptions)
     .add(eqLitOpts)
     .add(componentOptions)
-    #ifdef USE_M4RI
+    #if defined(USE_M4RI) or defined(USE_GAUSS)
     .add(xorOptions)
     #endif
     .add(gateOptions)

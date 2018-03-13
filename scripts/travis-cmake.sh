@@ -54,7 +54,6 @@ SOURCE_DIR=$(pwd)
 cd build
 BUILD_DIR=$(pwd)
 
-
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
     SLOW_DEBUG)
