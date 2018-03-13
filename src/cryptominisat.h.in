@@ -48,34 +48,46 @@ namespace CMSat {
         , std::atomic<bool>* interrupt_asap = NULL
         );
         ~SATSolver();
-        unsigned nVars() const; //number of variables inside the solver
+
+        ////////////////////////////
+        // Adding variables and clauses
+        ////////////////////////////
+
+        void new_var(); //add a new variable to the solver
+        void new_vars(const size_t n); //and many new variables to the solver -- much faster
+        unsigned nVars() const; //get number of variables inside the solver
         bool add_clause(const std::vector<Lit>& lits);
         bool add_xor_clause(const std::vector<unsigned>& vars, bool rhs);
-        void new_var(); //add a new variable to the solver
-        void new_vars(const size_t n); //and many new variables to the solver -- a LOT faster than calling new_var() one-by-one
+
+        ////////////////////////////
+        // Solving and simplifying
+        ////////////////////////////
+
         lbool solve(const std::vector<Lit>* assumptions = 0); //solve the problem, optionally with assumptions
         lbool simplify(const std::vector<Lit>* assumptions = 0); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False
         bool okay() const; //the problem is still solveable, i.e. the empty clause hasn't been derived
+
+        ////////////////////////////
+        // Debug all calls for later replay with --debuglit FILENAME
+        ////////////////////////////
         void log_to_file(std::string filename);
 
-        //SQL
+        ////////////////////////////
+        // SQLite for statistics gathering
+        ////////////////////////////
         void set_sqlite(std::string filename);
-        void set_mysql(
-            std::string sqlServer
-            , std::string sqlUser
-            , std::string sqlPass
-            , std::string sqlDatabase);
-
         void add_sql_tag(const std::string& tagname, const std::string& tag);
         unsigned long get_sql_id() const;
 
-        //Setup
+        ////////////////////////////
+        // Configuration
         // -- Note that nothing else can be changed, only these.
         // -- The main.cpp has access to the internal config, but it changes
         // -- all the time and hence exposing it to the outside world would
         // -- be very brittle.
+        ////////////////////////////
 
         void set_num_threads(unsigned n); //Number of threads to use. Must be set before any vars/clauses are added
         void set_allow_otf_gauss(); //allow on-the-fly gaussian elimination
@@ -90,17 +102,28 @@ namespace CMSat {
         void set_independent_vars(std::vector<uint32_t>* ind_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
 
-        //Get generic info
+
+        ////////////////////////////
+        // Get generic info
+        ////////////////////////////
         static const char* get_version(); //get solver version in string format
         static const char* get_version_sha1(); //get SHA1 version string of the solver
         static const char* get_compilation_env(); //get compilation environment string
 
-        //Get info about only the last solve() OR simplify() call -- summed for all threads
+
+        ////////////////////////////
+        // Get info about only the last solve() OR simplify() call
+        // summed for all threads
+        ////////////////////////////
         uint64_t get_last_conflicts(); //get total number of conflicts of last solve() or simplify() call of all threads
         uint64_t get_last_propagations();  //get total number of propagations of last solve() or simplify() call made by all threads
         uint64_t get_last_decisions(); //get total number of decisions of last solve() or simplify() call made by all threads
 
+
+        ////////////////////////////
         //Get info about total sum of all time of all threads
+        ////////////////////////////
+
         uint64_t get_sum_conflicts(); //get total number of conflicts of all time of all threads
         uint64_t get_sum_propagations();  //get total number of propagations of all time made by all threads
         uint64_t get_sum_decisions(); //get total number of decisions of all time made by all threads
@@ -112,9 +135,20 @@ namespace CMSat {
         void open_file_and_dump_red_clauses(std::string fname) const; //dump redundant ("learnt") clauses to this file when solving finishes
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.
 
+        ////////////////////////////
+        // Extract useful information from the solver
+        // This can be used in the theory solver
+
+        ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+
     private:
+
+        ////////////////////////////
+        // Do not bother with this, it's private
+        ////////////////////////////
+
         CMSatPrivateData *data;
     };
 }
