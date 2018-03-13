@@ -428,7 +428,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         )
 
         ADD_CUSTOM_COMMAND(
-            TARGET man_cms5
+            TARGET man_cms5_simple
             COMMAND help2man
             ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
         )
