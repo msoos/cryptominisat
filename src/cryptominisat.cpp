@@ -404,7 +404,7 @@ DLL_PUBLIC void SATSolver::set_no_simplify()
 DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
 {
     #ifndef USE_GAUSS
-    cout << "ERROR: CryptoMiniSat was not compiled with GAUSS" << endl;
+    std::cerr << "ERROR: CryptoMiniSat was not compiled with GAUSS" << endl;
     exit(-1);
     #else
     for (size_t i = 0; i < data->solvers.size(); ++i) {
