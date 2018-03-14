@@ -206,6 +206,8 @@ endif()
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.

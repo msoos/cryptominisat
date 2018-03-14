@@ -30,11 +30,6 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <cmath>
 
-#ifdef USE_ZLIB
-#include <zlib.h>
-#endif
-
-
 using namespace CMSat;
 using std::vector;
 
@@ -42,7 +37,7 @@ template <class C>
 class DimacsParser
 {
     public:
-        DimacsParser(SATSolver* solver, const std::string& debugLib, unsigned _verbosity);
+        DimacsParser(SATSolver* solver, const std::string* debugLib, unsigned _verbosity);
 
         template <class T> bool parse_DIMACS(T input_stream, const bool strict_header);
         uint64_t max_var = std::numeric_limits<uint64_t>::max();
@@ -66,7 +61,7 @@ class DimacsParser
 
 
         SATSolver* solver;
-        const std::string debugLib;
+        std::string debugLib;
         unsigned verbosity;
 
         //Stat
@@ -104,14 +99,17 @@ using std::endl;
 template<class C>
 DimacsParser<C>::DimacsParser(
     SATSolver* _solver
-    , const std::string& _debugLib
+    , const std::string* _debugLib
     , unsigned _verbosity
 ):
     solver(_solver)
-    , debugLib(_debugLib)
     , verbosity(_verbosity)
     , lineNum(0)
-{}
+{
+    if (_debugLib) {
+        debugLib = *_debugLib;
+    }
+}
 
 template<class C>
 std::string DimacsParser<C>::stringify(uint32_t x) const

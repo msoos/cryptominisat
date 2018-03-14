@@ -216,10 +216,10 @@ int main(int argc, char** argv)
         cout << "Reading from standard input... Use '-h' or '--help' for help.\n";
         #ifndef USE_ZLIB
         FILE* in = stdin;
-        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, NULL, conf.verbosity);
         #else
         gzFile in = gzdopen(0, "rb"); //opens stdin, which is 0
-        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, NULL, conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in, false)) {
@@ -250,9 +250,9 @@ int main(int argc, char** argv)
         }
 
         #ifndef USE_ZLIB
-        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<FILE*, FN> > parser(solver, NULL, conf.verbosity);
         #else
-        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, "", conf.verbosity);
+        DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver, NULL, conf.verbosity);
         #endif
 
         if (!parser.parse_DIMACS(in, false)) {
