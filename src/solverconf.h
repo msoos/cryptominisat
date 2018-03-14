@@ -27,7 +27,8 @@ THE SOFTWARE.
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-#include "gaussconfig.h"
+#include "constants.h"
+#include "cryptominisat5/solvertypesmini.h"
 
 using std::string;
 
