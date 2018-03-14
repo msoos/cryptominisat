@@ -208,6 +208,9 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
     //go through in reverse order
     vector<Lit> lits;
     for (int i = (int)blockedClauses.size()-1; i >= 0; i--) {
+        if (i > 3) {
+            __builtin_prefetch(blockedClauses[i-3].lits.data());
+        }
         BlockedClauses* it = &blockedClauses[i];
         if (it->toRemove) {
             continue;
@@ -216,36 +219,53 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         Lit blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->lits[0]);
         size_t at = 1;
         bool satisfied = false;
+        bool satisfied_zero_level = false;
+        bool all_satisfied_zero_level = true;
         while(at < it->lits.size()) {
             if (it->lits[at] == lit_Undef) {
-                satisfied = false;
-                for(Lit& l: lits) {
-                    l = solver->varReplacer->get_lit_replaced_with_outer(l);
-
-                    //Check if clause can be removed because it's set at dec level 0
-                    Lit inter = solver->map_outer_to_inter(l);
-                    if (solver->value(inter) == l_True
-                        && solver->varData[inter.var()].level == 0
-                    ) {
-                        satisfied = true;
-                        break;
-                    }
-
-                    //Blocked clause can be skipped, it's satisfied
-                    if (solver->model_value(l) == l_True) {
-                        satisfied = true;
-                        break;
-                    }
+                if (!satisfied_zero_level) {
+                    all_satisfied_zero_level = false;
                 }
                 if (!satisfied) {
-                    extender->addClause(lits, blockedOn.var());
+                    bool var_set = extender->addClause(lits, blockedOn.var());
+
+                    #ifndef DEBUG_VARELIM
+                    //all should be satisfied in fact
+                    //no need to go any further
+                    if (var_set)
+                        break;
+                    #endif
                 }
+                satisfied = false;
+                satisfied_zero_level = false;
                 lits.clear();
-            } else {
-                lits.push_back(it->lits[at]);
+            } else if (!satisfied) {
+                Lit l = it->lits[at];
+                l = solver->varReplacer->get_lit_replaced_with_outer(l);
+
+                //Check if clause can be removed because it's set at dec level 0
+                /*Lit inter = solver->map_outer_to_inter(l);
+                if (solver->value(inter) == l_True
+                    && solver->varData[inter.var()].level == 0
+                ) {
+                    satisfied_zero_level = true;
+                    satisfied = true;
+                }*/
+
+                //Blocked clause can be skipped, it's satisfied
+                if (solver->model_value(l) == l_True) {
+                    satisfied = true;
+                }
+                lits.push_back(l);
             }
             at++;
         }
+        //can only remove if all are satisfied
+        if (all_satisfied_zero_level) {
+            cout << "Can be removed!" << endl;
+        }
+        it->toRemove = all_satisfied_zero_level;
+
         extender->dummyBlocked(blockedOn);
     }
     if (solver->conf.verbosity) {

@@ -87,8 +87,10 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     << endl;
     #endif
 
+    #ifdef SLOW_DEBUG
     const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
+    #endif
 
     //Blocked clauses set its value already
     if (solver->model_value(blockedOn) != l_Undef)
@@ -110,7 +112,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     }
 }
 
-void SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
+bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
@@ -124,37 +126,34 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
     assert(contains_var(lits, blockedOn));
     #endif
-    if (satisfied(lits)) {
-        return;
-    } else {
-        //Note: we need to do this even if solver->conf.greedy_undef is FALSE
-        //because the solution we are given (when used as a preprocessor)
-        //may not be full
 
-        //Try to extend through setting variables that have been blocked but
-        //were not required to be set until now
-        for(Lit l: lits) {
-            if (solver->model_value(l) == l_Undef
-                && var_has_been_blocked[l.var()]
-            ) {
-                solver->model[l.var()] = l.sign() ? l_False : l_True;
-                solver->varReplacer->extend_model(l.var());
-                return;
-            }
-        }
+    //Note: we need to do this even if solver->conf.greedy_undef is FALSE
+    //because the solution we are given (when used as a preprocessor)
+    //may not be full
 
-        //Try to set var that hasn't been set
-        for(Lit l: lits) {
-            uint32_t v_inter = solver->map_outer_to_inter(l.var());
-            if (solver->model_value(l) == l_Undef
-                && solver->varData[v_inter].removed == Removed::none
-            ) {
-                solver->model[l.var()] = l.sign() ? l_False : l_True;
-                solver->varReplacer->extend_model(l.var());
-                return;
-            }
+    //Try to extend through setting variables that have been blocked but
+    //were not required to be set until now
+    /*for(Lit l: lits) {
+        if (solver->model_value(l) == l_Undef
+            && var_has_been_blocked[l.var()]
+        ) {
+            solver->model[l.var()] = l.sign() ? l_False : l_True;
+            solver->varReplacer->extend_model(l.var());
+            return false;
         }
     }
+
+    //Try to set var that hasn't been set
+    for(Lit l: lits) {
+        uint32_t v_inter = solver->map_outer_to_inter(l.var());
+        if (solver->model_value(l) == l_Undef
+            && solver->varData[v_inter].removed == Removed::none
+        ) {
+            solver->model[l.var()] = l.sign() ? l_False : l_True;
+            solver->varReplacer->extend_model(l.var());
+            return false;
+        }
+    }*/
 
     if (solver->conf.verbosity >= 10) {
         for(Lit lit: lits) {
@@ -198,6 +197,9 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     solver->varReplacer->extend_model(blockedOn);
 
     assert(satisfied(lits));
+
+    //it's been set now
+    return true;
 }
 
 size_t SolutionExtender::count_num_unset_model() const
