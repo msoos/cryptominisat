@@ -27,6 +27,10 @@ THE SOFTWARE.
 #include "constants.h"
 #include "packedrow.h"
 
+#if not defined(_MSC_VER)
+#include <stdlib.h>
+#endif
+
 //#define DEBUG_MATRIX
 
 namespace CMSat {
@@ -49,13 +53,23 @@ public:
         assert(b.numRows > 0 && b.numCols > 0);
         #endif
 
-        mp = new uint64_t[numRows*2*(numCols+1)];
-        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));
+        const uint64_t needed = numRows*2*(numCols+1);
+#if defined(_MSC_VER)
+        mp = new uint64_t[needed];
+#else
+        posix_memalign((void**)&mp, 0x20, needed*sizeof(uint64_t));
+        mp = (uint64_t*)__builtin_assume_aligned((void*)mp, 0x20);
+#endif
+        memcpy(mp, b.mp, needed*sizeof(uint64_t));
     }
 
     ~PackedMatrix()
     {
+        #if defined(_MSC_VER)
         delete[] mp;
+        #else
+        free(mp);
+        #endif
     }
 
     uint32_t used_mem() const
@@ -68,9 +82,15 @@ public:
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
-        if (numRows*2*(numCols+1) < num_rows*2*(num_cols+1)) {
+        const uint64_t needed = num_rows*2*(num_cols+1);
+        if (numRows*2*(numCols+1) < needed) {
+            #if defined(_MSC_VER)
             delete[] mp;
-            mp = new uint64_t[num_rows*2*(num_cols+1)];
+            mp = new uint64_t[needed];
+            #else
+            free(mp);
+            posix_memalign((void**)&mp, 0x20, needed*sizeof(uint64_t));
+            #endif
         }
         numRows = num_rows;
         numCols = num_cols;
@@ -91,13 +111,22 @@ public:
         //assert(b.numRows > 0 && b.numCols > 0);
         #endif
 
-        if (numRows*2*(numCols+1) < b.numRows*2*(b.numCols+1)) {
+        const uint64_t needed = b.numRows*2*(b.numCols+1);
+        if (numRows*2*(numCols+1) < needed) {
+            #if defined(_MSC_VER)
             delete[] mp;
-            mp = new uint64_t[b.numRows*2*(b.numCols+1)];
+            mp = new uint64_t[needed];
+            #else
+            free(mp);
+            posix_memalign((void**)&mp, 0x20, needed*sizeof(uint64_t));
+            #endif
         }
 
         numRows = b.numRows;
         numCols = b.numCols;
+        #if !defined(_MSC_VER)
+        mp = (uint64_t*)__builtin_assume_aligned((void*)mp, 0x20);
+        #endif
         memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));
 
         return *this;
