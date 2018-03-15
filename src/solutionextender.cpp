@@ -105,11 +105,11 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     }
 
     //If greedy undef is not set, set model to value
-    if (!solver->conf.greedy_undef) {
+    //if (!solver->conf.greedy_undef) {
         solver->model[blockedOn.var()] = l_False;
-    } else {
+    /*} else {
         var_has_been_blocked[blockedOn.var()] = true;
-    }
+    }*/
 }
 
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
@@ -141,7 +141,7 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
             solver->varReplacer->extend_model(l.var());
             return false;
         }
-    }
+    }*/
 
     //Try to set var that hasn't been set
     for(Lit l: lits) {
@@ -153,7 +153,7 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
             solver->varReplacer->extend_model(l.var());
             return false;
         }
-    }*/
+    }
 
     if (solver->conf.verbosity >= 10) {
         for(Lit lit: lits) {

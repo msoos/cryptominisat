@@ -232,8 +232,9 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
                     //no need to go any further
-                    if (var_set)
-                        break;
+
+//                     if (var_set)
+//                         break;
                     #endif
                 }
                 satisfied = false;

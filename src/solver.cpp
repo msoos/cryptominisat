@@ -1279,6 +1279,8 @@ lbool Solver::solve_with_assumptions(
     set_assumptions();
 
     if (conf.preprocess == 2) {
+        //can't do greedy undef on preproc
+        conf.greedy_undef = false;
         status = load_state(conf.saved_state_file);
         if (status != l_False) {
             model = assigns;
@@ -3425,17 +3427,24 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         uint32_t v = var_Undef;
         for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
             if (undef->can_be_unset[i]) {
-                    /*cout << "Var " << i+1 << " can be fixed"
-                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;*/
-                if ((int32_t)undef->satisfies[i] >= maximum) {
+                if (undef->verbose) {
+                    cout << "Var " << i+1 << " can be unset"
+                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;
+                }
+
+                if ((int32_t)undef->satisfies[i] > maximum) {
                     maximum = (int32_t)undef->satisfies[i];
                     v = i;
-                    //cout << "v set to:" << Lit(v, false) << endl;
+                    if (undef->verbose) {
+                        cout << "v to set is now:" << v+1 << endl;
+                    }
                 }
             }
         }
-        assert(maximum > 0);
-        if (undef->verbose) cout << "--" << endl;
+        assert(maximum >= 0);
+        if (undef->verbose)
+            cout << "--" << endl;
+
         assert(v != var_Undef && "maximum satisfied by this var is zero? Then can_be_unsetSum was wrongly calculated!");
 
         //Fix 'v' to be set to curent value
@@ -3444,8 +3453,11 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         undef->can_be_unsetSum--;
         undef->num_fixed++;
 
-        //cout << "Fixed var " << v+1 << endl;
+        if (undef->verbose) {
+            cout << "Fixed var " << v+1 << endl;
+        }
 
+        //reset count
         std::fill(undef->satisfies.begin(), undef->satisfies.end(), 0);
     }
 
@@ -3535,7 +3547,8 @@ void Solver::undef_unset_potentials()
     for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
         if (undef->can_be_unset[i]) {
             model[i] = l_Undef;
-            if (undef->verbose) cout << "Unset variable " << i << endl;
+            if (undef->verbose)
+                cout << "Unset variable " << i+1 << endl;
         }
     }
 }
