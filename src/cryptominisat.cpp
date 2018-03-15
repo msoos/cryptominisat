@@ -897,7 +897,7 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 DLL_PUBLIC void SATSolver::set_gauss_config(const GaussConf& gconf)
 {
 #ifndef USE_GAUSS
-    cerr << "ERROR: Gauss not compiled, cannot set gauss config." << endl;
+    std::cerr << "ERROR: Gauss not compiled, cannot set gauss config." << endl;
     assert(false);
     exit(-1);
 #endif
