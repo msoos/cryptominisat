@@ -261,8 +261,8 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             at++;
         }
         //can only remove if all are satisfied
-        if (all_satisfied_zero_level) {
-            cout << "Can be removed!" << endl;
+        if (all_satisfied_zero_level && it->lits.size() > 1) {
+            //cout << "Can be removed!" << endl;
         }
         it->toRemove = all_satisfied_zero_level;
 
