@@ -3088,11 +3088,11 @@ void Solver::reconfigure(int val)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-            conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.02;
+            //conf.every_lev1_reduce = 0;
+            //conf.every_lev2_reduce = 0;
+            //conf.glue_put_lev1_if_below_or_eq = 0;
+            //conf.glue_put_lev0_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.01;
 
             conf.update_glues_on_analyze = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
