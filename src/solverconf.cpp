@@ -64,6 +64,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
+        , ratio_glue_geom(4)
 
         //Clause minimisation
         , doRecursiveMinim (true)

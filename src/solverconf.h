@@ -172,6 +172,7 @@ class DLL_PUBLIC SolverConf
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
+        double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
 
         //Clause minimisation
         int doRecursiveMinim;
