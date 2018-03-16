@@ -547,7 +547,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 {
     //over + irred -> exit
     if (irred
-        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurIrredMB
+        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurIrredMB
     ) {
         if (solver->conf.verbosity) {
             cout
@@ -559,7 +559,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 
     //over + red -> don't link
     if (!irred
-        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurRedMB
+        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurRedMB
     ) {
         if (solver->conf.verbosity) {
             cout
