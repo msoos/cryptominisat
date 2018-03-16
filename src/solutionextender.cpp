@@ -144,16 +144,16 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     }*/
 
     //Try to set var that hasn't been set
-    for(Lit l: lits) {
-        uint32_t v_inter = solver->map_outer_to_inter(l.var());
-        if (solver->model_value(l) == l_Undef
-            && solver->varData[v_inter].removed == Removed::none
-        ) {
-            solver->model[l.var()] = l.sign() ? l_False : l_True;
-            solver->varReplacer->extend_model(l.var());
-            return false;
-        }
-    }
+//     for(Lit l: lits) {
+//         uint32_t v_inter = solver->map_outer_to_inter(l.var());
+//         if (solver->model_value(l) == l_Undef
+//             && solver->varData[v_inter].removed == Removed::none
+//         ) {
+//             solver->model[l.var()] = l.sign() ? l_False : l_True;
+//             solver->varReplacer->extend_model(l.var());
+//             return false;
+//         }
+//     }
 
     if (solver->conf.verbosity >= 10) {
         for(Lit lit: lits) {
