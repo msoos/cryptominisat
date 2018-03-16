@@ -867,7 +867,7 @@ bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
 
     for(ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->getRemoved() && !cl->freed()) {
+        if (!cl->getRemoved() && !cl->freed() && cl->getOccurLinked()) {
             lbool ret = clean_clause(offs);
             if (ret == l_False) {
                 return false;
