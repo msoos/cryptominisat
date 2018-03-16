@@ -1290,6 +1290,10 @@ lbool Solver::solve_with_assumptions(
         if (status != l_False) {
             model = assigns;
             status = load_solution_from_file(conf.solution_file);
+            if (status == l_Undef) {
+                cout << "ERROR loading in solution from " << conf.solution_file << ". Please check solution file for correctness" << endl;
+                exit(-1);
+            }
             full_model = model;
         }
     }
