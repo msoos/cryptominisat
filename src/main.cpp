@@ -891,6 +891,11 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
+    if (!vm["savedstate"].defaulted() && conf.preprocess == 0) {
+        cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
+        exit(-1);
+    }
+
     if (conf.preprocess != 0) {
         conf.varelim_time_limitM *= 5;
         conf.global_timeout_multiplier *= 1.5;
