@@ -1198,6 +1198,11 @@ void Solver::check_config_parameters() const
         exit(-1);
     }
     #endif
+
+    if (conf.greedy_undef) {
+        std::cerr << "Unfortunately, greedy undef is broken" << endl;
+        exit(-1);
+    }
 }
 
 lbool Solver::simplify_problem_outside()
