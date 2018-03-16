@@ -568,7 +568,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 {
     //over + irred -> exit
     if (irred
-        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurIrredMB
+        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurIrredMB
     ) {
         if (solver->conf.verbosity) {
             cout
@@ -580,7 +580,7 @@ bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
 
     //over + red -> don't link
     if (!irred
-        && memUsage/(1024ULL*1024ULL) >= solver->conf.maxOccurRedMB
+        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurRedMB
     ) {
         if (solver->conf.verbosity) {
             cout
@@ -888,7 +888,7 @@ bool OccSimplifier::prop_and_clean_long_and_impl_clauses()
 
     for(ClOffset offs: clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (!cl->getRemoved() && !cl->freed()) {
+        if (!cl->getRemoved() && !cl->freed() && cl->getOccurLinked()) {
             lbool ret = clean_clause(offs);
             if (ret == l_False) {
                 return false;

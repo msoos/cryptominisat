@@ -283,9 +283,9 @@ class DLL_PUBLIC SolverConf
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
-        unsigned maxOccurIrredMB;
-        unsigned maxOccurRedMB;
-        unsigned long long maxOccurRedLitLinkedM;
+        double maxOccurIrredMB;
+        double maxOccurRedMB;
+        double maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
 
         //Distillation
