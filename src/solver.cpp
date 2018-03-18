@@ -1589,6 +1589,9 @@ lbool Solver::iterate_until_solved()
         //Iterate between VSIDS and Maple
         if (conf.maple) {
             VSIDS = !VSIDS;
+        } else {
+            //so that in case of reconfiguration, VSIDS is correctly set
+            VSIDS = true;
         }
     }
 
@@ -3016,6 +3019,8 @@ void Solver::reconfigure(int val)
     switch (val) {
         case 3: {
             //Glue clause cleaning
+            conf.maple = 0;
+            VSIDS = true;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -3030,6 +3035,8 @@ void Solver::reconfigure(int val)
         }
 
         case 4: {
+            conf.maple = 0;
+            VSIDS = true;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.glue_put_lev1_if_below_or_eq = 0;
@@ -3040,12 +3047,16 @@ void Solver::reconfigure(int val)
 
         case 6: {
             //No more simplifying
+            conf.maple = 0;
+            VSIDS = true;
             conf.never_stop_search = true;
             break;
         }
 
         case 7: {
             //Geom restart, but keep low glue clauses
+            conf.maple = 0;
+            VSIDS = true;
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -3061,6 +3072,8 @@ void Solver::reconfigure(int val)
 
         case 12: {
             //Mix of keeping clauses
+            conf.maple = 0;
+            VSIDS = true;
             conf.do_bva = false;
             conf.varElimRatioPerIter = 1;
             conf.every_lev1_reduce = 0;
@@ -3080,6 +3093,8 @@ void Solver::reconfigure(int val)
         }
 
         case 13: {
+            conf.maple = 0;
+            VSIDS = true;
             conf.orig_global_timeout_multiplier = 5;
             conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
             conf.global_multiplier_multiplier_max = 5;
@@ -3092,11 +3107,15 @@ void Solver::reconfigure(int val)
         }
 
         case 14: {
+            conf.maple = 0;
+            VSIDS = true;
             conf.shortTermHistorySize = 600;
             break;
         }
 
         case 15: {
+            conf.maple = 0;
+            VSIDS = true;
             //Like OLD-OLD minisat
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
