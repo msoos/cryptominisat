@@ -1291,7 +1291,7 @@ lbool Solver::solve_with_assumptions(
             model = assigns;
             status = load_solution_from_file(conf.solution_file);
             if (status == l_Undef) {
-                cout << "ERROR loading in solution from " << conf.solution_file << ". Please check solution file for correctness" << endl;
+                cout << "ERROR loading in solution from file '" << conf.solution_file << "'. Please check solution file for correctness" << endl;
                 exit(-1);
             }
             full_model = model;
@@ -3200,19 +3200,22 @@ lbool Solver::load_solution_from_file(const string& fname)
                     status = l_False;
                     goto end;
                 } else if (str == "INDETERMINATE") {
-                    status = l_Undef;
-                    goto end;
+                    std::cerr << "The solution given for preproc extension is INDETERMINATE -- we cannot extend it!" << endl;
+                    exit(-1);
                 } else {
                     std::cerr << "ERROR: Cannot parse solution line starting with 's'"
                     << endl;
                     std::exit(-1);
                 }
-                status = l_True;
                 in.skipLine();
                 lineNum++;
                 break;
             }
             case 'v': {
+                if (status == l_False) {
+                    std::cerr << "ERROR: The solution you gave is UNSAT but it has 'v' lines. This is definietely wrong." << endl;
+                    exit(-1);
+                }
                 ++in;
                 parse_v_line(&in, lineNum);
                 in.skipLine();
