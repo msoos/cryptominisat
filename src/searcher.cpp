@@ -2280,13 +2280,11 @@ void Searcher::adjust_phases_restarts()
     if (max_confl_this_phase > 0)
         return;
 
-    if (conf.maple) {
-        VSIDS = false;
+    if (!VSIDS) {
         params.rest_type = Restart::luby;
         max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
         luby_loop_num++;
     } else {
-        VSIDS = true;
         if (conf.verbosity >= 3) {
             cout << "c doing VSIDS" << endl;
         }

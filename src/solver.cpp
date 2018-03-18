@@ -1585,6 +1585,11 @@ lbool Solver::iterate_until_solved()
         if (status == l_Undef) {
             check_reconfigure();
         }
+
+        //Iterate between VSIDS and Maple
+        if (conf.maple) {
+            VSIDS = !VSIDS;
+        }
     }
 
     clear_gauss();
