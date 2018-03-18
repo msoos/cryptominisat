@@ -190,13 +190,17 @@ class solverThread (threading.Thread):
 
         toexec.append(self.get_tmp_cnf_fname())
         if self.indata["drat"]:
-            toexec.append(self.get_drat_fname())
-            toexec.append("--clid")
-            # never stop search() to simplify anything
-            toexec.append("-n 1")
-            toexec.append("--ml 0")
-            toexec.append("--gluecut0 50")
-            toexec.append("--otfsubsume 0")
+            if "Maple" in self.indata["solver"]:
+                toexec.extend(["-drup-file=%s" % self.get_drat_fname()])
+            if "cryptominisat5" in self.indata["solver"]:
+                toexec.extend(["--drat", self.get_drat_fname()])
+                # never stop search() to simplify anything
+                # toexec.append("-n 1")
+                # toexec.append("--ml 0")
+                # toexec.append("--gluecut0 100")
+                # toexec.append("--otfsubsume 0")
+                if self.indata["stats"]:
+                    toexec.append("--clid")
         else:
             if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
                 toexec.append("--sqlfull 0")
@@ -278,7 +282,7 @@ class solverThread (threading.Thread):
 
         useful_lemma_ids = []
         with addlemm.Query(dbfname) as q:
-            useful_lemma_ids = addlemm.parse_lemmas(lemmafname)
+            useful_lemma_ids = addlemm.parse_lemmas(lemmafname, q.runID)
             q.add_goods(useful_lemma_ids)
 
         logging.info("Num good IDs: %d",
@@ -311,31 +315,43 @@ class solverThread (threading.Thread):
         toreturn = []
 
         # stdout
-        os.system("gzip -f %s" % self.get_stdout_fname())
+        ret = os.system("gzip -f %s" % self.get_stdout_fname())
+        logging.info("Return from gzip '%s': %s", self.get_stdout_fname(),
+                     ret, extra=self.logextra)
         fname = s3_folder_and_fname + ".stdout.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stdout.gz"
         k.key = fname
         boto_bucket.delete_key(k)
-        k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
+        ret = k.set_contents_from_filename(self.get_stdout_fname() + ".gz")
+        logging.info("Return from S3 writing file '%s': %s",
+                     fname, ret, extra=self.logextra)
         toreturn.append([fname, fname_clean])
 
         # stderr
-        os.system("gzip -f %s" % self.get_stderr_fname())
+        ret = os.system("gzip -f %s" % self.get_stderr_fname())
+        logging.info("Return from gzip '%s': %s", self.get_stderr_fname(),
+                     ret, extra=self.logextra)
         fname = s3_folder_and_fname + ".stderr.gz-tmp" + self.rnd_id()
         fname_clean = s3_folder_and_fname_clean + ".stderr.gz"
         k.key = fname
         boto_bucket.delete_key(k)
-        k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
+        ret = k.set_contents_from_filename(self.get_stderr_fname() + ".gz")
+        logging.info("Return from S3 writing file '%s': %s",
+                     fname, ret, extra=self.logextra)
         toreturn.append([fname, fname_clean])
 
         # sqlite
         if "cryptominisat5" in self.indata["solver"] and self.indata["stats"]:
-            os.system("gzip -f %s" % self.get_sqlite_fname())
+            ret = os.system("gzip -f %s" % self.get_sqlite_fname())
+            logging.info("Return from gzip '%s': %s", self.get_sqlite_fname(),
+                         ret, extra=self.logextra)
             fname = s3_folder_and_fname + ".sqlite.gz-tmp" + self.rnd_id()
             fname_clean = s3_folder_and_fname_clean + ".sqlite.gz"
             k.key = fname
             boto_bucket.delete_key(k)
-            k.set_contents_from_filename(self.get_sqlite_fname() + ".gz")
+            ret = k.set_contents_from_filename(self.get_sqlite_fname() + ".gz")
+            logging.info("Return from S3 writing file '%s': %s",
+                         fname, ret, extra=self.logextra)
             toreturn.append([fname, fname_clean])
 
         logging.info("Uploaded stdout+stderr+sqlite files: %s",
@@ -395,7 +411,7 @@ class solverThread (threading.Thread):
             # handle 'solve'
             if self.indata["command"] == "solve":
                 returncode, executed = self.execute_solver()
-                if returncode == 20 and self.indata["drat"]:
+                if returncode == 20 and self.indata["drat"] and self.indata["stats"]:
                     if self.run_drat_trim() == 0:
                         self.add_lemma_idx_to_sqlite(
                             self.get_lemmas_fname(),

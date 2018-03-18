@@ -135,6 +135,28 @@ C:\cms\build> cmake --build --config Release .
 
 You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
+Compiling under Cygwin64 in Windows
+-----
+
+This is just a rough guide, but it should work. Compiling with Visual Studio may be easier, and better, though:
+
+```
+get boost from Boost.org e.g. boost_1_66_0.tar.gz
+$ tar xzvf cryptominisat-version.tar.gz
+$ cd cryptominisat-version
+$ mkdir build
+$ cd build
+$ gunzip -c ../../boost_1_66_0.tar.gz | tar -xvof -
+$ cd boost_1_66_0/
+$ ./bootstrap.sh --with-libraries=program_options
+$ ./b2
+$ export BOOST_ROOT=$(pwd)
+$ cd ..
+$ cmake ..
+$ make
+$ make install
+$ cp ./boost_1_66_0/bin.v2/libs/program_options/build/gcc-gnu-6.4.0/release/threadapi-pthread/threading-multi/cygboost_program_options.dll /usr/local/bin
+```
 
 Command-line usage
 -----
@@ -170,7 +192,7 @@ Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
 Python usage
 -----
-The python3 module must be compiled as per:
+The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
 
 ```
 sudo apt-get install build-essential cmake
@@ -377,6 +399,7 @@ cd cryptominisat-version
 mkdir build && cd build
 cmake -DUSE_GAUSS=ON ..
 make
+sudo make install
 ```
 
 To use Gaussian elimination, provide a CNF with xors in it (either in CNF or XOR+CNF form) and tune the gaussian parameters. Use `--hhelp` to find all the gaussian elimination options:
@@ -397,16 +420,18 @@ Gauss options:
   --maxnummatrixes arg (=3)   Maximum number of matrixes to treat.
 ```
 
+If any of these options seem to be non-existent, then either you forgot to compile the SAT solver with the above options, or you forgot to re-install it with `sudo make install`.
+
 Testing
 -----
 For testing you will need the GIT checkout and build as per:
 
 ```
-sudo apt-get install build-essential cmake
+sudo apt-get install build-essential cmake git
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
-pip3 install pip
-pip3 install lit
+sudo pip3 install --upgrade pip
+sudo pip3 install lit
 git clone https://github.com/msoos/cryptominisat.git
 cd cryptominisat
 git submodule update --init
@@ -425,8 +450,34 @@ Build for test as per above, then:
 ```
 cd ../cryptominisat/scripts/fuzz/
 ./fuzz_test.py
+```
+
+Using the Machine Learning System
+-----
+This is experimental but should work relatively well:
 
 ```
+sudo apt-get install build-essential cmake git
+sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install graphviz
+sudo apt-get install python3-pip python3-setuptools python3-dev
+sudo apt-get install python3-numpy
+sudo pip3 install --upgrade pip
+sudo pip3 install lit
+sudo pip3 install scikit-learn pandas scipy
+git clone https://github.com/msoos/cryptominisat.git
+cd cryptominisat
+git submodule update --init
+mkdir build && cd build
+ln -s ../scripts/build_scripts/* .
+ln -s ../scripts/learn/* .
+./build_stats.sh
+sudo make install
+sudo ldconfig
+./test_predict.sh
+```
+
+The prediction datas are now written to the directory `build/test_predict/`. You can use e.g. Weka to examine the CSV found there. Please note that this is under *heavy* development
 
 Configuring a build for a minimal binary&library
 -----
@@ -435,34 +486,6 @@ The following configures the system to build a bare minimal binary&library. It n
 ```
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
-
-Using the Machine Learning System
------
-This is experimental but should work relatively well:
-
-```
-sudo apt-get install build-essential cmake
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
-sudo apt-get install graphviz
-sudo apt-get install git python3-pip python3-setuptools python3-dev
-sudo apt-get install git python3-numpy
-pip3 install pip
-pip3 install lit
-pip3 install scikit-learn
-pip3 install pandas
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-mkdir build && cd build
-ln -s ../scripts/build_scripts/* .
-ln -s ../scripts/learn/* .
-/build_stats.sh
-sudo make install
-sudo ldconfig
-./test_predict.sh
-```
-
-The prediction datas are now written to the directory `build/test_predict/`. You can use e.g. Weka to examine the CSV found there. Please note that this is under *heavy* development
 
 Trying different configurations
 -----

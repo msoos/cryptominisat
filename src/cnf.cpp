@@ -110,29 +110,31 @@ void CNF::new_vars(const size_t n)
     enlarge_minimal_datastructs(n);
     enlarge_nonminimial_datastructs(n);
 
-    uint64_t f = interToOuterMain.size() + n;
-    f += 0xfff - (f&0xfff);
-    interToOuterMain.reserve(f);
-    outerToInterMain.reserve(f);
-    uint64_t g = outer_to_with_bva_map.size() + n;
-    g += 0xfff - (g&0xfff);
-    outer_to_with_bva_map.reserve(g);
+    size_t inter_at = interToOuterMain.size();
+    interToOuterMain.insert(interToOuterMain.end(), n, 0);
+
+    size_t outer_at = outerToInterMain.size();
+    outerToInterMain.insert(outerToInterMain.end(), n, 0);
+
+    size_t outer_to_with_bva_at = outer_to_with_bva_map.size();
+    outer_to_with_bva_map.insert(outer_to_with_bva_map.end(), n, 0);
+
     for(int i = n-1; i >= 0; i--) {
         const uint32_t minVar = nVars()-i-1;
         const uint32_t maxVar = nVarsOuter()-i-1;
 
-        interToOuterMain.push_back(maxVar);
+        interToOuterMain[inter_at++] = maxVar;
         const uint32_t x = interToOuterMain[minVar];
         interToOuterMain[minVar] = maxVar;
         interToOuterMain[maxVar] = x;
 
-        outerToInterMain.push_back(maxVar);
+        outerToInterMain[outer_at++] = maxVar;
         outerToInterMain[maxVar] = minVar;
         outerToInterMain[x] = maxVar;
 
         swapVars(nVarsOuter()-i-1, i);
         varData[nVars()-i-1].is_bva = false;
-        outer_to_with_bva_map.push_back(nVarsOuter()-i-1);
+        outer_to_with_bva_map[outer_to_with_bva_at++] = nVarsOuter()-i-1;
     }
 
     #ifdef SLOW_DEBUG
@@ -148,9 +150,9 @@ void CNF::swapVars(const uint32_t which, const int off_by)
 
 void CNF::enlarge_nonminimial_datastructs(size_t n)
 {
-    assigns.resize(assigns.size() + n, l_Undef);
-    varData.resize(varData.size() + n, VarData());
-    depth.resize(depth.size() + n);
+    assigns.insert(assigns.end(), n, l_Undef);
+    varData.insert(varData.end(), n, VarData());
+    depth.insert(depth.end(), n, 0);
 }
 
 void CNF::enlarge_minimal_datastructs(size_t n)
@@ -424,7 +426,7 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
     attached &= findWCl(watches[cl[0]], offset);
     attached &= findWCl(watches[cl[1]], offset);
 
-    bool satisfied = satisfied_cl(&cl);
+    bool satisfied = satisfied_cl(cl);
     uint32_t num_false2 = 0;
     num_false2 += value(cl[0]) == l_False;
     num_false2 += value(cl[1]) == l_False;
@@ -469,7 +471,7 @@ void CNF::find_all_attach() const
             Clause* cl = cl_alloc.ptr(w.get_offset());
             assert(!cl->freed());
 
-            bool satisfied = satisfied_cl(cl);
+            bool satisfied = satisfied_cl(*cl);
             if (!satisfied) {
                 if (value(w.getBlockedLit())  == l_True) {
                     cout << "ERROR: Clause " << *cl << " not satisfied, but its blocked lit, "
@@ -580,15 +582,6 @@ void CNF::check_wrong_attach() const
 #endif
 }
 
-bool CNF::satisfied_cl(const Clause* cl) const {
-    for(Lit lit: *cl) {
-        if (value(lit) == l_True) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void CNF::check_watchlist(watch_subarray_const ws) const
 {
     for(const Watched& w: ws) {
@@ -608,7 +601,7 @@ void CNF::check_watchlist(watch_subarray_const ws) const
         if (varData[blockedLit.var()].removed == Removed::none
             //0-level FALSE --> clause cleaner removed it from clause, that's OK
             && value(blockedLit) != l_False
-            && !satisfied_cl(&c)
+            && !satisfied_cl(c)
         ) {
             bool found = false;
             for(Lit l: c) {
@@ -688,4 +681,21 @@ void CNF::print_all_clauses() const
             }
         }
     }
+}
+
+bool CNF::no_marked_clauses() const
+{
+    for(ClOffset offset: longIrredCls) {
+        Clause* cl = cl_alloc.ptr(offset);
+        assert(!cl->stats.marked_clause);
+    }
+
+    for(auto& lredcls: longRedCls) {
+        for(ClOffset offset: lredcls) {
+            Clause* cl = cl_alloc.ptr(offset);
+            assert(!cl->stats.marked_clause);
+        }
+    }
+
+    return true;
 }

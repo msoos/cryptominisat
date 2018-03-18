@@ -60,7 +60,7 @@ TEST(scc_test, find_2)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 2);
+    EXPECT_EQ(scc.get_binxors().size(), 2U);
 }
 
 TEST(scc_test, find_circle_3)
@@ -76,7 +76,7 @@ TEST(scc_test, find_circle_3)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 3);
+    EXPECT_EQ(scc.get_binxors().size(), 3U);
 }
 
 TEST(scc_test, find_two_circle2_3)
@@ -96,7 +96,7 @@ TEST(scc_test, find_two_circle2_3)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 6);
+    EXPECT_EQ(scc.get_binxors().size(), 6U);
 }
 
 TEST(scc_test, find_1_diff)
@@ -112,7 +112,7 @@ TEST(scc_test, find_1_diff)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 1);
+    EXPECT_EQ(scc.get_binxors().size(), 1U);
 }
 
 TEST(scc_test, find_0)
@@ -128,7 +128,7 @@ TEST(scc_test, find_0)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 0);
+    EXPECT_EQ(scc.get_binxors().size(), 0U);
 }
 
 
@@ -145,7 +145,7 @@ TEST(scc_test, limit_test4)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 3);
+    EXPECT_EQ(scc.get_binxors().size(), 3U);
 }
 
 TEST(scc_test, limit_test3)
@@ -161,7 +161,7 @@ TEST(scc_test, limit_test3)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 0);
+    EXPECT_EQ(scc.get_binxors().size(), 0U);
 }
 
 TEST(scc_test, limit_test2)
@@ -177,7 +177,7 @@ TEST(scc_test, limit_test2)
 
     SCCFinder scc(&s);
     scc.performSCC();
-    EXPECT_EQ(scc.get_binxors().size(), 0);
+    EXPECT_EQ(scc.get_binxors().size(), 0U);
 }
 
 int main(int argc, char **argv) {

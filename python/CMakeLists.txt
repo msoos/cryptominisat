@@ -19,12 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-execute_process(
-    COMMAND ${PY_CONFIG_EXE} --cflags
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+from __future__ import print_function;
+import sysconfig;
+print(sysconfig.get_config_var('CFLAGS'), end = '')"
     OUTPUT_VARIABLE PY_C_CONFIG)
-execute_process(
-    COMMAND ${PY_CONFIG_EXE} --ldflags
+
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+from __future__ import print_function;
+import sysconfig;
+print(sysconfig.get_config_var('SHLIBS'), end = '')"
     OUTPUT_VARIABLE PY_LD_CONFIG)
+
 
 string(REPLACE "\n" " " PY_C_CONFIG ${PY_C_CONFIG})
 string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})

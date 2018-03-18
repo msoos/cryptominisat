@@ -27,7 +27,8 @@ THE SOFTWARE.
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-#include "gaussconfig.h"
+#include "constants.h"
+#include "cryptominisat5/solvertypesmini.h"
 
 using std::string;
 
@@ -105,25 +106,6 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     };
 }
 
-enum class ElimStrategy {
-    heuristic
-    , calculate_exactly
-};
-
-inline std::string getNameOfElimStrategy(ElimStrategy strategy)
-{
-    switch(strategy)
-    {
-        case ElimStrategy::heuristic:
-            return "heuristic";
-
-        case ElimStrategy::calculate_exactly:
-            return "calculate";
-    }
-
-    assert(false && "Unknown elimination strategy type");
-}
-
 class DLL_PUBLIC SolverConf
 {
     public:
@@ -190,18 +172,13 @@ class DLL_PUBLIC SolverConf
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
-        int more_otf_shrink_with_cache;
-        int more_otf_shrink_with_stamp;
+        double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
 
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
-        int doAlwaysFMinim; ///< Always try to minimise clause with cache&gates
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
-        unsigned more_red_minim_limit_cache;
-        unsigned more_red_minim_limit_binary;
-        unsigned max_num_lits_more_red_min;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
@@ -215,10 +192,9 @@ class DLL_PUBLIC SolverConf
 
         //Limits
         double   maxTime;
-        long maxConfl;
+        long max_confl;
 
         //Glues
-        int       update_glues_on_prop;
         int       update_glues_on_analyze;
 
         //OTF stuff
@@ -232,7 +208,7 @@ class DLL_PUBLIC SolverConf
         bool      dump_individual_restarts_and_clauses;
 
         //Steps
-        double step_size = 0.40;
+        double orig_step_size = 0.40;
         double step_size_dec = 0.000001;
         double min_step_size = 0.06;
 
@@ -242,11 +218,7 @@ class DLL_PUBLIC SolverConf
         int      do_empty_varelim;
         long long empty_varelim_time_limitM;
         long long varelim_time_limitM;
-        int      updateVarElimComplexityOTF;
-        uint64_t updateVarElimComplexityOTF_limitvars;
-        uint64_t updateVarElimComplexityOTF_limitavg;
-        ElimStrategy  var_elim_strategy; ///<Guess varelim order, or calculate?
-        int      varElimCostEstimateStrategy;
+        long long varelim_sub_str_limit;
         double    varElimRatioPerIter;
         int      skip_some_bve_resolvents;
         int velim_resolvent_too_large; //-1 == no limit
@@ -258,6 +230,7 @@ class DLL_PUBLIC SolverConf
 
         //BVA
         int      do_bva;
+        int min_bva_gain;
         unsigned bva_limit_per_call;
         int      bva_also_twolit_diff;
         long     bva_extra_lit_and_red_start;
@@ -310,15 +283,14 @@ class DLL_PUBLIC SolverConf
         int      perform_occur_based_simp;
         int      do_strengthen_with_occur;         ///<Perform self-subsuming resolution
         unsigned maxRedLinkInSize;
-        unsigned maxOccurIrredMB;
-        unsigned maxOccurRedMB;
-        unsigned long long maxOccurRedLitLinkedM;
+        double maxOccurIrredMB;
+        double maxOccurRedMB;
+        double maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
 
         //Distillation
-        uint32_t distill_queue_by;
         int      do_distill_clauses;
-        unsigned long long distill_long_irred_cls_time_limitM;
+        unsigned long long distill_long_cls_time_limitM;
         long watch_cache_stamp_based_str_time_limitM;
         long long distill_time_limitM;
 

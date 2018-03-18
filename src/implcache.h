@@ -178,7 +178,7 @@ public:
 
     void new_vars(const size_t n)
     {
-        implCache.resize(implCache.size()+2*n);
+        implCache.insert(implCache.end(), 2*n, TransCache());
     }
 
     size_t size() const

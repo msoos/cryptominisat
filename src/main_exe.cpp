@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     int ret = -1;
     try {
         Main main(argc, argv);
-        main.conf.verbosity = 2;
+        main.conf.verbosity = 1;
         main.conf.verbStats = 1;
         main.parseCommandLine();
 

@@ -54,7 +54,6 @@ SOURCE_DIR=$(pwd)
 cd build
 BUILD_DIR=$(pwd)
 
-
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
 case $CMS_CONFIG in
     SLOW_DEBUG)
@@ -67,6 +66,12 @@ case $CMS_CONFIG in
     NORMAL)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
+                   "${SOURCE_DIR}"
+    ;;
+
+    NORMAL_PYTHON2)
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
+        eval cmake -DFORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
 
@@ -265,7 +270,11 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 fi
 
 python --version
-export MYPYTHON=python3
+if [ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]; then
+    export MYPYTHON=python2
+else
+    export MYPYTHON=python3
+fi
 echo "MYPYTHON is '${MYPYTHON}'"
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
@@ -338,7 +347,7 @@ fi
 #do fuzz testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
     cd ../scripts/fuzz/
-    ./fuzz_test.py --novalgrind --small --fuzzlim 30
+    ${MYPYTHON} ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
 
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then

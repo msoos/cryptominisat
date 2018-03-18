@@ -71,7 +71,7 @@ private:
     );
 
     void dumpEquivalentLits();
-    void dumpUnitaryClauses();
+    void dumpUnitaryClauses(const bool backnumber);
     void dumpRedClauses();
     void dump_clauses(
         const vector<ClOffset>& cls
@@ -80,7 +80,7 @@ private:
 
     void dump_blocked_clauses();
     void dump_component_clauses();
-    void dumpIrredClauses();
+    void dump_irred_clauses_all();
 
     vector<Lit> tmpCl;
 

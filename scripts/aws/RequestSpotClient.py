@@ -94,6 +94,7 @@ sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_drat-tri
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_glucose2016.sh >> /home/ubuntu/build.log'
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_cmsat_satcomp16.sh >> /home/ubuntu/build.log'
 sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_lingeling_bbc.sh >> /home/ubuntu/build.log'
+sudo -H -u ubuntu bash -c '/home/ubuntu/cryptominisat/scripts/aws/build_Maple_LCM_Dist.sh >> /home/ubuntu/build.log'
 
 # Start client
 cd /home/ubuntu/cryptominisat
@@ -123,7 +124,7 @@ DATA="{ip}"
             instance_profile_arn=self.conf.get('ec2', 'instance_profile_arn'),
             user_data=self.user_data,
             key_name=self.conf.get('ec2', 'key_name'),
-            security_group_ids=[self.conf.get('ec2', 'security_group')])
+            security_group_ids=[self.conf.get('ec2', 'security_group_client')])
 
         logging.info("Request created, got back IDs %s" % [r.id for r in reqs])
         return reqs

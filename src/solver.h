@@ -50,7 +50,7 @@ class ClauseCleaner;
 class Prober;
 class OccSimplifier;
 class SCCFinder;
-class DistillerAllWithAll;
+class DistillerLong;
 class DistillerLongWithImpl;
 class StrImplWImplStamp;
 class CalcDefPolars;
@@ -104,7 +104,7 @@ class Solver : public Searcher
         static const char* get_version_sha1();
         static const char* get_compilation_env();
 
-        vector<Lit> get_zero_assigned_lits() const;
+        vector<Lit> get_zero_assigned_lits(const bool backnumber = true, bool only_nvars = false) const;
         void     print_stats(const double cpu_time) const;
         void     print_clause_stats() const;
         size_t get_num_free_vars() const;
@@ -141,7 +141,7 @@ class Solver : public Searcher
         Prober*                prober = NULL;
         InTree*                intree = NULL;
         OccSimplifier*         occsimplifier = NULL;
-        DistillerAllWithAll*   distill_all_with_all = NULL;
+        DistillerLong*         distill_long_cls = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImplStamp* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
@@ -316,7 +316,7 @@ class Solver : public Searcher
             uint32_t num_fixed;
             bool verbose = false;
         };
-        FindUndef* undef;
+        FindUndef* undef = NULL;
         bool undef_must_fix_var();
         void undef_fill_potentials();
         void undef_unset_potentials();

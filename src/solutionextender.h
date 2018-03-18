@@ -41,7 +41,7 @@ class SolutionExtender
     public:
         SolutionExtender(Solver* _solver, OccSimplifier* simplifier);
         void extend();
-        void addClause(const vector<Lit>& lits, const Lit blockedOn);
+        bool addClause(const vector<Lit>& lits, const uint32_t blockedOn);
         void dummyBlocked(const Lit blockedOn);
 
     private:
@@ -50,19 +50,19 @@ class SolutionExtender
 
         size_t count_num_unset_model() const;
         bool satisfied(const vector<Lit>& lits) const;
-        bool contains_lit(
+        bool contains_var(
             const vector<Lit>& lits
-            , const Lit tocontain
+            , const uint32_t tocontain
         ) const;
         vector<char> var_has_been_blocked;
 };
 
-inline bool SolutionExtender::contains_lit(
+inline bool SolutionExtender::contains_var(
     const vector<Lit>& lits
-    , const Lit tocontain
+    , const uint32_t tocontain
 ) const {
     for(const Lit lit: lits) {
-        if (lit == tocontain)
+        if (lit.var() == tocontain)
             return true;
     }
 

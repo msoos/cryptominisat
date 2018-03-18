@@ -38,7 +38,7 @@ THE SOFTWARE.
 #include "searcher.h"
 #include "occsimplifier.h"
 #include "prober.h"
-#include "distillerallwithall.h"
+#include "distillerlong.h"
 #include "clausecleaner.h"
 #include "solutionextender.h"
 #include "varupdatehelper.h"
@@ -96,7 +96,7 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
     }
-    distill_all_with_all = new DistillerAllWithAll(this);
+    distill_long_cls = new DistillerLong(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
     dist_impl_with_impl = new StrImplWImplStamp(this);
     clauseCleaner = new ClauseCleaner(this);
@@ -123,7 +123,7 @@ Solver::~Solver()
     delete prober;
     delete intree;
     delete occsimplifier;
-    delete distill_all_with_all;
+    delete distill_long_cls;
     delete dist_long_with_impl;
     delete dist_impl_with_impl;
     delete clauseCleaner;
@@ -393,6 +393,9 @@ Clause* Solver::add_clause_int(
 
     vector<Lit> ps = lits;
     if (!sort_and_clean_clause(ps, lits, red)) {
+        if (finalLits) {
+            finalLits->clear();
+        }
         return NULL;
     }
 
@@ -1115,9 +1118,9 @@ void Solver::check_minimization_effectiveness(const lbool status)
         && conf.doMinimRedMore
         && search_stats.moreMinimLitsStart > 100000
     ) {
-        double remPercent =
-            (double)(search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd)/
-                (double)(search_stats.moreMinimLitsStart)*100.0;
+        double remPercent = float_div(
+            search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd,
+            search_stats.moreMinimLitsStart)*100.0;
 
         //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
@@ -1127,26 +1130,6 @@ void Solver::check_minimization_effectiveness(const lbool status)
                 << "c more minimization effectiveness low: "
                 << std::fixed << std::setprecision(2) << remPercent
                 << " % lits removed --> disabling"
-                << endl;
-            }
-        } else if (remPercent > 7.0) {
-            more_red_minim_limit_binary_actual = 3*conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = 3*conf.more_red_minim_limit_cache;
-            if (conf.verbosity) {
-                cout
-                << "c more minimization effectiveness good: "
-                << std::fixed << std::setprecision(2) << remPercent
-                << " % --> increasing limit to 3x"
-                << endl;
-            }
-        } else {
-            more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
-            more_red_minim_limit_cache_actual  = conf.more_red_minim_limit_cache;
-            if (conf.verbosity) {
-                cout
-                << "c more minimization effectiveness OK: "
-                << std::fixed << std::setprecision(2) << remPercent
-                << " % --> setting limit to norm"
                 << endl;
             }
         }
@@ -1199,13 +1182,25 @@ void Solver::set_up_sql_writer()
 
 void Solver::check_config_parameters() const
 {
-    if (conf.maxConfl < 0) {
+    if (conf.max_confl < 0) {
         std::cerr << "Maximum number conflicts set must be greater or equal to 0" << endl;
         exit(-1);
     }
 
     if (conf.shortTermHistorySize <= 0) {
         std::cerr << "You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
+        exit(-1);
+    }
+
+    #ifdef USE_GAUSS
+    if (drat->enabled() && conf.gaussconf.decision_until > 0)  {
+        std::cerr << "Cannot have both DRAT and GAUSS on at the same time!" << endl;
+        exit(-1);
+    }
+    #endif
+
+    if (conf.greedy_undef) {
+        std::cerr << "Unfortunately, greedy undef is broken" << endl;
         exit(-1);
     }
 }
@@ -1257,10 +1252,13 @@ lbool Solver::solve_with_assumptions(
     conflict.clear();
     check_config_parameters();
 
-    //Parameters for restarts
+    //Reset parameters
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
     VSIDS = true;
+    var_decay = conf.var_decay_start;
+    step_size = conf.orig_step_size;
+    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     params.rest_type = conf.restartType;
     if (params.rest_type == Restart::glue_geom) {
         params.rest_type = Restart::geom;
@@ -1269,7 +1267,6 @@ lbool Solver::solve_with_assumptions(
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
-    conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
 
     //Check if adding the clauses caused UNSAT
     lbool status = l_Undef;
@@ -1287,6 +1284,8 @@ lbool Solver::solve_with_assumptions(
     set_assumptions();
 
     if (conf.preprocess == 2) {
+        //can't do greedy undef on preproc
+        conf.greedy_undef = false;
         status = load_state(conf.saved_state_file);
         if (status != l_False) {
             model = assigns;
@@ -1355,7 +1354,7 @@ lbool Solver::solve_with_assumptions(
     handle_found_solution(status);
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
-    conf.maxConfl = std::numeric_limits<long>::max();
+    conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     return status;
 }
@@ -1518,7 +1517,7 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
     }
     num_conflicts_of_search = std::min<long>(
         num_conflicts_of_search
-        , (long)conf.maxConfl - (long)sumConflicts
+        , (long)conf.max_confl - (long)sumConflicts
     );
 
     return num_conflicts_of_search;
@@ -1534,7 +1533,7 @@ lbool Solver::iterate_until_solved()
     while (status == l_Undef
         && !must_interrupt_asap()
         && cpuTime() < conf.maxTime
-        && sumConflicts < (uint64_t)conf.maxConfl
+        && sumConflicts < (uint64_t)conf.max_confl
     ) {
         iteration_num++;
         if (conf.verbosity && iteration_num >= 2) {
@@ -1569,7 +1568,7 @@ lbool Solver::iterate_until_solved()
         }
 
         //If we are over the limit, exit
-        if (sumConflicts >= (uint64_t)conf.maxConfl
+        if (sumConflicts >= (uint64_t)conf.max_confl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
         ) {
@@ -1645,7 +1644,7 @@ bool Solver::execute_inprocess_strategy(
     std::string occ_strategy_tokens;
 
     while(std::getline(ss, token, ',')) {
-        if (sumConflicts >= (uint64_t)conf.maxConfl
+        if (sumConflicts >= (uint64_t)conf.max_confl
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
@@ -1661,10 +1660,6 @@ bool Solver::execute_inprocess_strategy(
 
         token = trim(token);
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
-            cout << "c --> Executing strategy token: " << token << '\n';
-        }
-
         if (!occ_strategy_tokens.empty() && token.substr(0,3) != "occ") {
             if (conf.perform_occur_based_simp
                 && occsimplifier
@@ -1683,7 +1678,7 @@ bool Solver::execute_inprocess_strategy(
                 }
             }
             occ_strategy_tokens.clear();
-            if (sumConflicts >= (uint64_t)conf.maxConfl
+            if (sumConflicts >= (uint64_t)conf.max_confl
                 || cpuTime() > conf.maxTime
                 || must_interrupt_asap()
                 || nVars() == 0
@@ -1694,6 +1689,10 @@ bool Solver::execute_inprocess_strategy(
             #ifdef SLOW_DEBUG
             solver->check_stats();
             #endif
+        }
+
+        if (conf.verbosity && token.substr(0,3) != "occ" && token != "") {
+            cout << "c --> Executing strategy token: " << token << '\n';
         }
 
         if (token == "find-comps") {
@@ -1741,10 +1740,15 @@ bool Solver::execute_inprocess_strategy(
             if (conf.do_distill_clauses) {
                 dist_long_with_impl->distill_long_with_implicit(true);
             }
+        } else if (token == "sub-cls-with-bin") {
+            //Subsumes and strengthens long clauses with binary clauses
+            if (conf.do_distill_clauses) {
+                dist_long_with_impl->distill_long_with_implicit(false);
+            }
         } else if (token == "distill-cls") {
             //Enqueues literals in long + tri clauses two-by-two and propagates
             if (conf.do_distill_clauses) {
-                distill_all_with_all->distill(conf.distill_queue_by);
+                distill_long_cls->distill(false);
             }
         } else if (token == "str-impl") {
             //Strengthens BIN&TRI with BIN&TRI
@@ -1817,6 +1821,9 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
     #ifdef SLOW_DEBUG
     assert(check_order_heap_sanity());
+    #endif
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
     #endif
 
     clear_order_heap();
@@ -1899,13 +1906,13 @@ void Solver::print_stats(const double cpu_time) const
         , "% time"
     );
 
-    if (conf.verbStats >= 2) {
+    //if (conf.verbStats >= 2) {
         print_full_restart_stat(cpu_time);
-    } else if (conf.verbStats == 1) {
+    /*} else if (conf.verbStats == 1) {
         print_norm_stats(cpu_time);
     } else {
         print_min_stats(cpu_time);
-    }
+    }*/
 }
 
 
@@ -1949,8 +1956,8 @@ void Solver::print_min_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2034,8 +2041,8 @@ void Solver::print_norm_stats(const double cpu_time) const
 
     //varReplacer->get_stats().print_short(nVars());
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
     print_stats_line("c strength cache-irred time"
@@ -2128,10 +2135,10 @@ void Solver::print_full_restart_stat(const double cpu_time) const
 
     //DistillerAllWithAll stats
     print_stats_line("c distill time"
-                    , distill_all_with_all->get_stats().time_used
-                    , stats_line_percent(distill_all_with_all->get_stats().time_used, cpu_time)
+                    , distill_long_cls->get_stats().time_used
+                    , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
-    distill_all_with_all->get_stats().print(nVars());
+    distill_long_cls->get_stats().print(nVars());
 
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
@@ -2304,7 +2311,7 @@ void Solver::print_mem_stats() const
     }
 
 
-    mem = distill_all_with_all->mem_used();
+    mem = distill_long_cls->mem_used();
     mem += dist_long_with_impl->mem_used();
     mem += dist_impl_with_impl->mem_used();
     print_stats_line("c Mem for 3 distills"
@@ -2378,18 +2385,30 @@ void Solver::print_clause_size_distrib()
 }
 
 
-vector<Lit> Solver::get_zero_assigned_lits() const
+vector<Lit> Solver::get_zero_assigned_lits(const bool backnumber,
+                                           const bool only_nvars) const
 {
     vector<Lit> lits;
     assert(decisionLevel() == 0);
-    for(size_t i = 0; i < assigns.size(); i++) {
+    size_t until;
+    if (only_nvars) {
+        until = nVars();
+    } else {
+        until = assigns.size();
+    }
+    for(size_t i = 0; i < until; i++) {
         if (assigns[i] != l_Undef) {
             Lit lit(i, assigns[i] == l_False);
 
             //Update to higher-up
             lit = varReplacer->get_lit_replaced_with(lit);
             if (varData[lit.var()].is_bva == false) {
-                lits.push_back(map_inter_to_outer(lit));
+                if (backnumber) {
+                    lits.push_back(map_inter_to_outer(lit));
+                } else {
+                    lits.push_back(lit);
+                }
+
             }
 
             //Everything it repaces has also been set
@@ -2405,23 +2424,28 @@ vector<Lit> Solver::get_zero_assigned_lits() const
                 }
                 assert(lit == varReplacer->get_lit_replaced_with(tmp_lit));
 
-                lits.push_back(map_inter_to_outer(tmp_lit));
+                if (backnumber) {
+                    lits.push_back(map_inter_to_outer(tmp_lit));
+                } else {
+                    lits.push_back(tmp_lit);
+                }
             }
         }
     }
 
     //Remove duplicates. Because of above replacing-mimicing algo
     //multipe occurrences of literals can be inside
-    vector<Lit>::iterator it;
     std::sort(lits.begin(), lits.end());
-    it = std::unique (lits.begin(), lits.end());
+    vector<Lit>::iterator it = std::unique (lits.begin(), lits.end());
     lits.resize( std::distance(lits.begin(),it) );
 
     //Update to outer without BVA
-    vector<uint32_t> my_map = build_outer_to_without_bva_map();
-    updateLitsMap(lits, my_map);
-    for(const Lit lit: lits) {
-        assert(lit.var() < nVarsOutside());
+    if (backnumber) {
+        vector<uint32_t> my_map = build_outer_to_without_bva_map();
+        updateLitsMap(lits, my_map);
+        for(const Lit lit: lits) {
+            assert(lit.var() < nVarsOutside());
+        }
     }
 
     return lits;
@@ -3052,9 +3076,6 @@ void Solver::reconfigure(int val)
             conf.global_multiplier_multiplier_max = 5;
 
             conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
-            conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_red_min = 20;
             conf.max_temp_lev2_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             update_var_decay();
@@ -3072,13 +3093,12 @@ void Solver::reconfigure(int val)
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
-            conf.every_lev1_reduce = 0;
-            conf.every_lev2_reduce = 0;
-            conf.glue_put_lev1_if_below_or_eq = 0;
-            conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.02;
+            //conf.every_lev1_reduce = 0;
+            //conf.every_lev2_reduce = 0;
+            //conf.glue_put_lev1_if_below_or_eq = 0;
+            //conf.glue_put_lev0_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.01;
 
-            conf.update_glues_on_prop = 0;
             conf.update_glues_on_analyze = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
@@ -3173,7 +3193,7 @@ lbool Solver::load_solution_from_file(const string& fname)
                     status = l_Undef;
                     goto end;
                 } else {
-                    std::cerr << "ERROR: Cannot parse solution line startig with 's'"
+                    std::cerr << "ERROR: Cannot parse solution line starting with 's'"
                     << endl;
                     std::exit(-1);
                 }
@@ -3228,7 +3248,7 @@ void Solver::parse_v_line(A* in, const size_t lineNum)
         if (var >= nVars()) {
             std::cerr
             << "ERROR! "
-            << "Variable in solution is too large: " << var << endl
+            << "Variable in solution is too large: " << var +1 << endl
             << "--> At line " << lineNum+1
             << endl;
             std::exit(-1);
@@ -3412,17 +3432,24 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         uint32_t v = var_Undef;
         for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
             if (undef->can_be_unset[i]) {
-                    /*cout << "Var " << i+1 << " can be fixed"
-                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;*/
-                if ((int32_t)undef->satisfies[i] >= maximum) {
+                if (undef->verbose) {
+                    cout << "Var " << i+1 << " can be unset"
+                    << ", it satisfies: " << undef->satisfies[i] << " clauses" << endl;
+                }
+
+                if ((int32_t)undef->satisfies[i] > maximum) {
                     maximum = (int32_t)undef->satisfies[i];
                     v = i;
-                    //cout << "v set to:" << Lit(v, false) << endl;
+                    if (undef->verbose) {
+                        cout << "v to set is now:" << v+1 << endl;
+                    }
                 }
             }
         }
-        assert(maximum > 0);
-        if (undef->verbose) cout << "--" << endl;
+        assert(maximum >= 0);
+        if (undef->verbose)
+            cout << "--" << endl;
+
         assert(v != var_Undef && "maximum satisfied by this var is zero? Then can_be_unsetSum was wrongly calculated!");
 
         //Fix 'v' to be set to curent value
@@ -3431,8 +3458,11 @@ uint32_t Solver::undefine(vector<uint32_t>& trail_lim_vars)
         undef->can_be_unsetSum--;
         undef->num_fixed++;
 
-        //cout << "Fixed var " << v+1 << endl;
+        if (undef->verbose) {
+            cout << "Fixed var " << v+1 << endl;
+        }
 
+        //reset count
         std::fill(undef->satisfies.begin(), undef->satisfies.end(), 0);
     }
 
@@ -3522,7 +3552,8 @@ void Solver::undef_unset_potentials()
     for (uint32_t i = 0; i < undef->can_be_unset.size(); i++) {
         if (undef->can_be_unset[i]) {
             model[i] = l_Undef;
-            if (undef->verbose) cout << "Unset variable " << i << endl;
+            if (undef->verbose)
+                cout << "Unset variable " << i+1 << endl;
         }
     }
 }

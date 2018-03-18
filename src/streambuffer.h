@@ -135,7 +135,7 @@ public:
         exit(-1);
     }
 
-    bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
+    inline bool parseInt(int32_t& ret, size_t lineNum, bool allow_eol = false)
     {
         int32_t val = 0;
         int32_t mult = 1;

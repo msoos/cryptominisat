@@ -42,21 +42,22 @@ public:
     SubsumeStrengthen(OccSimplifier* simplifier, Solver* solver);
     size_t mem_used() const;
 
-    void backward_subsumption_long_with_long();
-    bool backward_strengthen_long_with_long();
-    bool backward_sub_str_with_bins();
+    void backw_sub_long_with_long();
+    bool backw_str_long_with_long();
+    bool backw_sub_str_long_with_bins();
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
-    bool backw_sub_str_with_bins_watch(
+    uint32_t backw_sub_long_with_implicit(const vector<Lit>& lits);
+    bool backw_sub_str_long_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
     );
-    bool handle_sub_str_with(size_t orig_limit = 400ULL*1000ULL*1000ULL);
+    bool handle_added_long_cl(int64_t* limit, const bool main_run);
 
     struct Sub0Ret {
-        bool subsumedIrred = 0;
         ClauseStats stats;
+        bool subsumedIrred = 0;
         uint32_t numSubsumed = 0;
     };
 
@@ -74,7 +75,7 @@ public:
         bool subsumedIrred = false;
     };
 
-    Sub1Ret sub_str_with_implicit(const vector<Lit>& lits);
+    Sub1Ret backw_sub_str_long_with_implicit(const vector<Lit>& lits);
     Sub1Ret strengthen_subsume_and_unlink_and_markirred(ClOffset offset);
 
     struct Stats
@@ -158,8 +159,6 @@ private:
     size_t tried_bin_tri = 0;
     uint64_t subsumedBin = 0;
     uint64_t strBin = 0;
-    uint64_t subsumedTri = 0;
-    uint64_t strTri = 0;
 };
 
 inline const SubsumeStrengthen::Stats& SubsumeStrengthen::getRunStats() const

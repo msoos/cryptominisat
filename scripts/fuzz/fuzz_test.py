@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2014  Mate Soos
@@ -89,9 +89,6 @@ def set_up_parser():
     parser.add_option("--sqlite", dest="sqlite", default=False,
                       action="store_true", help="Test SQLite dumping")
 
-    parser.add_option("--gauss", dest="test_gauss", default=False,
-                      action="store_true", help="Test gauss too")
-
     parser.add_option("--maxthreads", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
 
@@ -104,9 +101,16 @@ def set_up_parser():
     return parser
 
 
-def fuzzer_call_failed():
+def fuzzer_call_failed(fname):
     print("OOps, fuzzer executable call failed!")
     print("Did you build with cmake -DENABLE_TESTING=ON? Did you do git submodules init & update?")
+    print("Here is the output:")
+
+    print("**** ----- ****")
+    with open(fname, "r") as a:
+        for x in a:
+            print(x.strip())
+    print("**** ----- ****")
     exit(-1)
 
 
@@ -154,7 +158,7 @@ class create_fuzz:
                 print("calling sub-fuzzer: %s" % call)
                 status = subprocess.call(call, shell=True)
                 if status != 0:
-                    fuzzer_call_failed()
+                    fuzzer_call_failed(fname2)
 
             # construct multi-fuzzer call
             call = ""
@@ -223,8 +227,51 @@ class Tester:
 
         return False
 
+    def create_rnd_sched(self, string_list):
+        opts = string_list.split(",")
+        opts = [a.strip(" ") for a in opts]
+        opts = sorted(list(set(opts)))
+        if options.verbose:
+            print("available schedule options: %s" % opts)
+
+        sched = []
+        for _ in range(int(random.gammavariate(12, 0.7))):
+            sched.append(random.choice(opts))
+
+        if "autodisablegauss" in self.extra_options_if_supported:
+            if random.choice([False, True, True, True]) and self.this_gauss_on:
+                sched.append("occ-gauss")
+
+        return sched
+
+    def rnd_schedule_all(self, preproc):
+        sched_opts = "handle-comps,"
+        sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
+        sched_opts += "sub-impl, intree-probe, probe,"
+        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
+        sched_opts += "sub-cls-with-bin,"
+        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
+        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+        sched_opts += "check-cache-size, renumber"
+
+        # type of schedule
+        cmd = ""
+        sched = ",".join(self.create_rnd_sched(sched_opts))
+        if sched != "" and not preproc:
+            cmd += "--schedule %s " % sched
+
+        sched = ",".join(self.create_rnd_sched(sched_opts))
+        if sched != "":
+            cmd += "--preschedule %s " % sched
+
+        return cmd
+
     def random_options(self, preproc=False):
         cmd = " --zero-exit-status "
+
+        # disable gauss when gauss is compiled in but asked not to be used
+        if not self.this_gauss_on and "autodisablegauss" in self.extra_options_if_supported:
+            cmd += "--maxgaussdepth 0 "
 
         if random.choice([True, False]):
             cmd += "--maple %d " % random.choice([0, 0, 0, 1])
@@ -241,16 +288,11 @@ class Tester:
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--cacheformoreminim %d " % random.choice([0, 1, 1, 1, 1])
-            cmd += "--stampformoreminim %d " % random.choice([0, 1, 1, 1, 1])
-            cmd += "--alwaysmoremin %s " % random.randint(0, 1)
             cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--cachesize %s " % random.randint(10, 100)
             cmd += "--cachecutoff %s " % random.randint(0, 2000)
-            cmd += "--elimstrgy %s " % random.choice(["heuristic", "calculate"])
-            cmd += "--elimcplxupd %s " % random.randint(0, 1)
             cmd += "--occredmax %s " % random.randint(0, 100)
             cmd += "--extscc %s " % random.randint(0, 1)
             cmd += "--distill %s " % random.randint(0, 1)
@@ -260,13 +302,35 @@ class Tester:
             cmd += "--compslimit %d " % random.randint(0, 3000)
             cmd += "--implicitmanip %s " % random.randint(0, 1)
             cmd += "--occsimp %s " % random.randint(0, 1)
-            cmd += "--occirredmaxmb %s " % random.randint(0, 10)
-            cmd += "--occredmaxmb %s " % random.randint(0, 10)
+            cmd += "--occirredmaxmb %s " % random.gammavariate(0.2, 5)
+            cmd += "--occredmaxmb %s " % random.gammavariate(0.2, 5)
             cmd += "--skipresol %d " % random.choice([1, 1, 1, 0])
             cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
-            cmd += "-m %0.12f " % random.gammavariate(0.4, 2.0)
+            cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
             # gammavariate gives us sometimes very low values, sometimes large
+
+            if self.this_gauss_on:
+                # Reduce iteratively the matrix that is updated
+                cmd += "--iterreduce %s " % random.choice([0, 1])
+
+                # Only run Gaussian Elimination until this depth
+                cmd += "--maxgaussdepth %s " % int(random.gammavariate(1, 20.0))
+
+                # Set maximum no. of rows for gaussian matrix."
+                cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
+
+                #, "Automatically disable gauss when performing badly")
+                cmd += "--autodisablegauss %s " % random.choice([0, 1])
+
+                # "Set minimum no. of rows for gaussian matrix.
+                cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
+
+                # Save matrix every Nth decision level."
+                cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
+
+                # "Maximum number of matrixes to treat.")
+                cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
             if options.sqlite:
                 cmd += "--sql 2 "
@@ -278,52 +342,15 @@ class Tester:
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp",
-                    "elimcoststrategy"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "presimp"]
 
-            opts.extend(self.extra_options_if_supported)
+            if "xor" in self.extra_options_if_supported:
+                opts.append("xor")
 
             for opt in opts:
                 cmd += "--%s %d " % (opt, random.randint(0, 1))
 
-            def create_rnd_sched(string_list):
-                opts = string_list.split(",")
-                opts = [a.strip(" ") for a in opts]
-                opts = list(set(opts))
-                if options.verbose:
-                    print("available schedule options: %s" % opts)
-
-                sched = []
-                for _ in range(int(random.gammavariate(12, 0.7))):
-                    sched.append(random.choice(opts))
-
-                if "autodisablegauss" in self.extra_options_if_supported and options.test_gauss:
-                    sched.append("occ-gauss")
-
-                return sched
-
-            cmd += self.add_schedule_options(create_rnd_sched, preproc)
-
-        return cmd
-
-    def add_schedule_options(self, create_rnd_sched, preproc):
-        cmd = ""
-
-        sched_opts = "handle-comps,"
-        sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
-        sched_opts += "sub-impl, intree-probe, probe,"
-        sched_opts += "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-        sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
-        sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
-        sched_opts += "check-cache-size, renumber"
-
-        sched = ",".join(create_rnd_sched(sched_opts))
-        if sched != "" and not preproc:
-            cmd += "--schedule %s " % sched
-
-        sched = ",".join(create_rnd_sched(sched_opts))
-        if sched != "":
-            cmd += "--preschedule %s " % sched
+            cmd += self.rnd_schedule_all(preproc)
 
         return cmd
 
@@ -496,7 +523,8 @@ class Tester:
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 2, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
-        self.drat = self.num_threads == 1 and random.choice([True, False])
+        self.this_gauss_on = "autodisablegauss" in self.extra_options_if_supported and random.choice([True, False, False, False, False])
+        self.drat = self.num_threads == 1 and random.choice([True, False]) and (not self.this_gauss_on)
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -515,7 +543,7 @@ class Tester:
         print("calling %s" % call)
         status = subprocess.call(call, shell=True)
         if status != 0:
-            fuzzer_call_failed()
+            fuzzer_call_failed(fname)
 
         if not self.drat:
             self.needDebugLib = True
@@ -547,6 +575,7 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
+        self.this_gauss_on = False # don't do gauss on preproc
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
@@ -559,7 +588,7 @@ class Tester:
         print("calling %s : %s" % (fuzzer, call))
         status = subprocess.call(call, shell=True)
         if status != 0:
-            fuzzer_call_failed()
+            fuzzer_call_failed(fname)
 
         rnd_opts = self.random_options(preproc=True)
 
@@ -580,7 +609,7 @@ class Tester:
                 print("Return code is not 0, error!")
                 exit(-1)
 
-            solution = "%s-solution.txt" % fname
+            solution = "%s-solution.sol" % fname
             ret = self.check(fname=simp, dump_output_fname=solution)
             if ret is not None:
                 # didn't time out, so let's reconstruct the solution

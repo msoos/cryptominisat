@@ -257,7 +257,7 @@ void InTree::tree_look()
             timeout = handle_lit_popped_from_queue(elem.propagated, elem.other_lit, elem.red);
         } else {
             assert(solver->decisionLevel() > 0);
-            solver->cancelUntil<false>(solver->decisionLevel()-1);
+            solver->cancelUntil<false, true>(solver->decisionLevel()-1);
 
             depth_failed.pop_back();
             assert(!depth_failed.empty());
@@ -286,7 +286,7 @@ void InTree::tree_look()
 
     bogoprops_remain -= (int64_t)solver->propStats.bogoProps + (int64_t)solver->propStats.otfHyperTime;
 
-    solver->cancelUntil<false>(0);
+    solver->cancelUntil<false, true>(0);
     empty_failed_list();
 }
 

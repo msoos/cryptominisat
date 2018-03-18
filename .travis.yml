@@ -14,7 +14,9 @@ dist: trusty
 # not container-based
 sudo: required
 
-python: "3.6"
+python:
+    - "2.7"
+    - "3.6"
 
 env:
   global:
@@ -23,6 +25,7 @@ env:
 
   matrix:
     - CMS_CONFIG=NORMAL
+    - CMS_CONFIG=NORMAL_PYTHON2
     - CMS_CONFIG=LARGEMEM_GAUSS
     - CMS_CONFIG=ONLY_SIMPLE
     - CMS_CONFIG=STATS
@@ -110,9 +113,10 @@ addons:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
   # we probably want to install python 3 though...
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew install python3 --universal --framework; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo easy_install pip; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "osx")  &&  ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then brew upgrade python --universal; fi
+  -  if [[ "$TRAVIS_OS_NAME" == "osx"  ]]; then sudo easy_install pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes help2man; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes libboost-test-dev; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3; fi

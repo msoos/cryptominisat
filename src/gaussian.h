@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include <vector>
 
 #include "solvertypes.h"
-#include "gaussconfig.h"
 #include "propby.h"
 #include "packedmatrix.h"
 #include "bitarray.h"

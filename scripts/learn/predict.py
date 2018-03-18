@@ -106,19 +106,6 @@ class Query2 (QueryHelper):
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
-    def get_max_clauseID(self):
-        q = """
-        SELECT max(clauseID)
-        FROM clauseStats
-        WHERE runID = %d
-        """ % self.runID
-
-        max_clID = None
-        for row in self.c.execute(q):
-            max_clID = int(row[0])
-
-        return max_clID
-
     def get_clstats(self):
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/restart.`\1` as `rst.\1`/' ../tmp.txt
@@ -311,8 +298,25 @@ class Query2 (QueryHelper):
         -- , features.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
         """
 
+        common_restrictions = """
+        and clauseStats.restarts > 1 -- to avoid history being invalid
+        and clauseStats.runID = {runid}
+        and features.runID = {runid}
+        and features.latest_feature_calc = clauseStats.latest_feature_calc
+        and restart.restarts = clauseStats.prev_restart
+        and restart.runID = {runid}
+        and tags.tagname = "filename"
+        and tags.runID = {runid}
+        and clauseStats.conflicts > {start_confl}
+        """
+
+        common_limits = """
+        order by random()
+        limit {limit}
+        """
+
         q_count = "SELECT count(*)"
-        q_ok1 = """
+        q_ok_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -321,7 +325,7 @@ class Query2 (QueryHelper):
         , "OK" as `class`
         """
 
-        q_ok2 = """
+        q_ok = """
         FROM
         clauseStats
         , goodClauses
@@ -331,23 +335,12 @@ class Query2 (QueryHelper):
         WHERE
 
         clauseStats.clauseID = goodClauses.clauseID
-        and clauseStats.runID = goodClauses.runID
-        and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {runid}
-        and features.runID = {runid}
-        and features.latest_feature_calc = clauseStats.latest_feature_calc
-        and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {runid}
-        and tags.tagname = "filename"
-        and tags.runID = {runid}
-
-        order by random()
-        limit {limit}
-        """
-
+        and clauseStats.clauseID != 1
+        and clauseStats.runID = goodClauses.runID"""
+        q_ok += common_restrictions
 
         # BAD caluses
-        q_bad1 = """
+        q_bad_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -356,7 +349,7 @@ class Query2 (QueryHelper):
         , "BAD" as `class`
         """
 
-        q_bad2 = """
+        q_bad = """
         FROM clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         and clauseStats.runID = goodClauses.runID
@@ -366,34 +359,25 @@ class Query2 (QueryHelper):
         WHERE
 
         goodClauses.clauseID is NULL
-        and goodClauses.runID is NULL
-        and clauseStats.restarts > 1 -- to avoid history being invalid
-        and clauseStats.runID = {runid}
-        and features.runID = {runid}
-        and features.latest_feature_calc = clauseStats.latest_feature_calc
-        and restart.restarts = clauseStats.prev_restart
-        and restart.runID = {runid}
-        and tags.tagname = "filename"
-        and tags.runID = {runid}
+        and goodClauses.runID is NULL"""
+        q_bad += common_restrictions
 
-        order by random()
-        limit {limit}
-        """
         myformat = {"runid" : self.runID,
                 "limit" : 1000*1000*1000,
-                "restart_dat" : restart_dat,
-                "clause_dat" : clause_dat,
-                "feat_dat" : feat_dat}
+                "restart_dat": restart_dat,
+                "clause_dat": clause_dat,
+                "feat_dat": feat_dat,
+                "start_confl": options.start_conflicts}
 
         t = time.time()
 
-        q = q_count + q_ok2
+        q = q_count + q_ok
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_ok = int(cur.fetchone()[0])
         print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
 
-        q = q_count + q_bad2
+        q = q_count + q_bad
         q = q.format(**myformat)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_bad = int(cur.fetchone()[0])
@@ -405,14 +389,15 @@ class Query2 (QueryHelper):
             if options.fixed_num_datapoints > total_lines:
                 print("WARNING -- Your fixed num datapoints is too high:", options.fixed_num_datapoints)
                 print("WARNING -- We only have:", total_lines)
+                print("WARNING --> Not returning data.")
                 return False, None
 
         if total_lines == 0:
-            print("WARNING: Total number of datapoints is 0, something is wrong or empty")
+            print("WARNING: Total number of datapoints is 0: minimum conflict too high, no conflicts in SQL, or something went wrong!!")
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-        q = q_ok1 + q_ok2
+        q = q_ok_select + q_ok + common_limits
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
         print("limit for OK:", myformat["limit"])
@@ -420,12 +405,12 @@ class Query2 (QueryHelper):
         print("Running query for OK...")
         df = pd.read_sql_query(q, self.conn)
 
-        print("Running query for BAD...")
-        q = q_bad1 + q_bad2
+        q = q_bad_select + q_bad + common_limits
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
         print("limit for bad:", myformat["limit"])
         q = q.format(**myformat)
+        print("Running query for BAD...")
         df2 = pd.read_sql_query(q, self.conn)
         print("Queries finished. T: %-3.2f" % (time.time() - t))
 
@@ -436,7 +421,6 @@ class Query2 (QueryHelper):
 
 
         return True, pd.concat([df, df2])
-
 
 def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
@@ -495,7 +479,6 @@ class Classify:
         print("Number of features:", len(self.features))
 
     def learn(self, df, cleanname, classifiername="classifier"):
-
         print("total samples: %5d" % df.shape[0])
 
         num_ok = df.loc[df['class'] == "OK"].shape[0]
@@ -509,8 +492,9 @@ class Classify:
         if df.shape[0] == 0:
             return
 
-        df["fname"] = LabelEncoder().fit_transform(df["fname"])
-        train, test = train_test_split(df, test_size=0.2, random_state=90)
+        df_lab = df.copy()
+        df_lab["fname"] = LabelEncoder().fit_transform(df_lab["fname"])
+        train, test = train_test_split(df_lab, test_size=0.2, random_state=90)
         X_train = train[self.features]
         y_train = train["class"]
         X_test = test[self.features]
@@ -613,6 +597,10 @@ def transform(df):
     df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / \
         df["cl.backtrack_level_hist"]
+    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < \
+        df["cl.backtrack_level_hist"]
+    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < \
+        df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
         df["cl.trail_depth_level_hist"]
     df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
@@ -625,7 +613,6 @@ def transform(df):
         print("columns: ", (old - new))
         assert(False)
         exit(-1)
-
 
     # making sure "class" is the last one
     new_no_class = list(new)
@@ -641,17 +628,16 @@ def dump_dataframe(df, name):
         print("Dumping CSV data to:", fname)
         df.to_csv(fname, index=False)
 
-        fname ="%s-pandasdata.dat" % name
-        print("Dumping pandas data to:", fname)
-        with open(fname, "wb") as f:
-            pickle.dump(df, f)
+        # fname = "%s-pandasdata.dat" % name
+        # print("Dumping pandas data to:", fname)
+        # with open(fname, "wb") as f:
+        #     pickle.dump(df, f)
 
 
-def one_predictor(dbfname, final_df):
-    t = time.time()
+def one_predictor(dbfname):
     ok, df = get_one_file(dbfname)
     if not ok:
-        return False, final_df
+        return False, None
 
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
 
@@ -669,11 +655,6 @@ def one_predictor(dbfname, final_df):
         print(df.describe())
         print("Describe done.---")
 
-    if final_df is None:
-        final_df = df
-    else:
-        final_df = pd.concat([final_df, df])
-
     dump_dataframe(df, cleanname)
 
     # display
@@ -686,15 +667,15 @@ def one_predictor(dbfname, final_df):
         check = Check(options.check)
         check.check(df)
     else:
-        clf = Classify(df)
-        clf.learn(df, "%s.classifier" % cleanname)
-        clf.output_to_dot("%s.tree.dot" % cleanname)
+        if not options.no_predict:
+            clf = Classify(df)
+            clf.learn(df, "%s.classifier" % cleanname)
+            clf.output_to_dot("%s.tree.dot" % cleanname)
 
-    return True, final_df
+    return True, df
 
 
 if __name__ == "__main__":
-
     usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
     parser = optparse.OptionParser(usage=usage)
 
@@ -711,7 +692,10 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
-                      dest="fixed_num_datapoints", help="Exact number of examples to take")
+                      dest="fixed_num_datapoints", help="Exact number of examples to take. Default: %default")
+    parser.add_option("--start", default=-1, type=int,
+                      dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
+
 
     parser.add_option("--depth", default=5, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
@@ -722,16 +706,21 @@ if __name__ == "__main__":
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
 
+    parser.add_option("--nopredict", action="store_true", default=False,
+                      dest="no_predict", help="Don't create predictive model")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give at least one file")
         exit(-1)
 
-    final_df = None
+    dfs = []
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------")
-        ok, final_df = one_predictor(dbfname, final_df)
+        ok, df = one_predictor(dbfname)
+        if ok:
+            dfs.append(df)
 
     # intermediate predictor is final
     if len(args) == 1:
@@ -742,12 +731,17 @@ if __name__ == "__main__":
         exit(0)
 
     print("----- FINAL predictor -------")
+    if len(dfs) == 0:
+        print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
+        exit(0)
+
+    final_df = pd.concat(dfs)
+    dump_dataframe(final_df, "final")
     if options.check:
         check = Check()
         check.check(final_df)
     else:
         clf = Classify(final_df)
-        clf.learn(final_df, "final.classifier")
-        clf.output_to_dot("final.dot")
-
-    dump_dataframe(final_df, "final")
+        if not options.no_predict:
+            clf.learn(final_df, "final.classifier")
+            clf.output_to_dot("final.dot")

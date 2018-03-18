@@ -325,6 +325,7 @@ bool DistillerLongWithImpl::sub_str_cl_with_cache_watch_stamp(
     return remove_or_shrink_clause(cl, offset);
 }
 
+//returns FALSE in case clause is shortened, and TRUE in case it is removed
 bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset)
 {
     //Remove or shrink clause
@@ -407,7 +408,11 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
     tmpStats.numCalled = 1;
     cache_based_data.clear();
     bool need_to_finish = false;
-    randomise_order_of_clauses(clauses);
+
+    //don't randomise if it's too large.
+    if (clauses.size() < 100*10000*1000) {
+        randomise_order_of_clauses(clauses);
+    }
 
     size_t i = 0;
     size_t j = i;

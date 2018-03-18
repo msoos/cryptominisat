@@ -107,10 +107,11 @@ if (LARGEMEM)
     add_definitions(-DLARGE_OFFSETS)
 endif()
 
-option(SANITIZE "Use Clang sanitizers. This will force using clang++ as the compiler" OFF)
+option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
 if (SANITIZE)
-    SET (CMAKE_CXX_COMPILER "clang++")
-
+    MESSAGE(WARN "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
+    SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}  -lubsan" )
+    SET( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lubsan")
     #add_compile_options("-fsanitize=address")
     add_compile_options("-fsanitize=integer")
     #add_compile_options("-fsanitize=undefined")
@@ -296,7 +297,7 @@ option(IPASIR "Also build IPASIR" ON)
 
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
-    set(LIMITMEM "ON")
+    add_definitions(-DLIMITMEM)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -364,7 +365,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "5.0.1")
+set(CMS_FULL_VERSION "5.2.1")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -396,8 +397,53 @@ if (STATS)
         endif ()
     endif()
 ELSE ()
-    MESSAGE(STATUS "Not compiling detailed statistics. Leads to faster system")
+    MESSAGE(STATUS "Not compiling detailed statistics. The system is faster without them")
 ENDIF ()
+
+# ----------
+# manpage
+# ----------
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    find_program(HELP2MAN_FOUND help2man)
+    if (HELP2MAN_FOUND)
+        if (NOT ONLY_SIMPLE)
+            ADD_CUSTOM_TARGET(man_cms5
+                ALL
+                DEPENDS cryptominisat5
+            )
+
+            ADD_CUSTOM_COMMAND(
+                TARGET man_cms5
+                COMMAND help2man
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+            )
+
+            INSTALL(
+                FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+        endif()
+        ADD_CUSTOM_TARGET(man_cms5_simple
+            ALL
+            DEPENDS cryptominisat5_simple
+        )
+
+        ADD_CUSTOM_COMMAND(
+            TARGET man_cms5_simple
+            COMMAND help2man
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
+        )
+
+        INSTALL(
+            FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+
+        message(STATUS "Manpage will be created and installed")
+    else()
+        MESSAGE(STATUS "Cannot find help2man, not creating manpage")
+    endif()
+else()
+    MESSAGE(STATUS "Not on Linux, not creating manpage")
+endif()
 
 # -----------------------------------------------------------------------------
 # Look for ZLIB (For reading zipped CNFs)
@@ -477,13 +523,37 @@ endmacro()
 # Look for python
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
-find_package(PythonInterp 3)
-find_package(PythonLibs 3)
+option(FORCE_PYTHON2 OFF)
+if (NOT FORCE_PYTHON2)
+    find_package(PythonInterp 3)
+    find_package(PythonLibs 3)
+    message(STATUS "Python 3 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    message(STATUS "Python 3 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+    message(STATUS "Python 3 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+    message(STATUS "Python 3 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+endif()
 
-message(STATUS "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-message(STATUS "PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-message(STATUS "PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-message(STATUS "PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
+    unset(PYTHONLIBS_FOUND CACHE)
+    unset(PYTHON_LIBRARIES CACHE)
+    unset(PYTHON_INCLUDE_PATH CACHE)
+    unset(PYTHON_INCLUDE_DIRS CACHE)
+    unset(PYTHON_DEBUG_LIBRARIES CACHE)
+    unset(PYTHONLIBS_VERSION_STRING CACHE)
+
+    unset(PYTHONINTERP_FOUND CACHE)
+    unset(PYTHON_EXECUTABLE CACHE)
+    unset(PYTHON_VERSION_STRING CACHE)
+
+    message(STATUS "Python 3 not fully found or Python 2 has been forced -- trying Python 2")
+    find_package(PythonInterp 2)
+    find_package(PythonLibs 2)
+
+    message(STATUS "Python 2 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    message(STATUS "Python 2 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+    message(STATUS "Python 2 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+    message(STATUS "Python 2 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+endif()
 
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)
@@ -541,30 +611,7 @@ else()
 endif()
 
 if (ENABLE_PYTHON_INTERFACE)
-    # check python-config
-    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
-        SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}.${PYTHON_VERSION_MINOR}-config")
-        message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
-        execute_process(
-            COMMAND ${PY_CONFIG_EXE} --help
-            OUTPUT_VARIABLE PY_CONF_OPTIONS
-            RESULT_VARIABLE RES_VAR)
-
-        if(NOT ${RES_VAR} MATCHES "0")
-            message(WARNING "That python config did not work, trying another one...")
-            SET(PY_CONFIG_EXE "${PYTHON_EXECUTABLE}-config")
-            message(STATUS "Will execute python config ${PY_CONFIG_EXE}")
-            execute_process(
-                COMMAND ${PY_CONFIG_EXE} --help
-                OUTPUT_VARIABLE PY_CONF_OPTIONS
-                RESULT_VARIABLE RES_VAR)
-            if(NOT ${RES_VAR} MATCHES "0")
-                UNSET(PY_CONFIG_EXE)
-            endif()
-        endif()
-    endif()
-
-    if (PYTHON_EXECUTABLE AND PYTHON_LIBRARIES AND PYTHON_INCLUDE_DIRS AND PY_CONFIG_EXE AND NOT COVERAGE)
+    if (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS AND NOT COVERAGE)
         message(STATUS "Found python interpreter, libs and header files")
         message(STATUS "Building python interface")
         add_subdirectory(python pycryptosat)

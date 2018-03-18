@@ -52,7 +52,7 @@ void DataSync::new_vars(size_t n)
     if (!enabled())
         return;
 
-    syncFinish.resize(syncFinish.size() + 2*n, 0);
+    syncFinish.insert(syncFinish.end(), 2*n, 0);
     assert(solver->nVarsOutside()*2 == syncFinish.size());
 }
 

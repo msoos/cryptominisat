@@ -97,6 +97,9 @@ public:
     size_t trail_size() const {
         return trail.size();
     }
+    Lit trail_at(size_t at) const {
+        return trail[at];
+    }
     bool propagate_occur();
     PropStats propStats;
     template<bool update_bogoprops = true>
@@ -242,7 +245,6 @@ private:
         , const Lit p
         , PropBy& confl
     ); ///<Propagate 2-long clause
-    void update_glue(Clause& c);
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
         Watched* i
@@ -405,7 +407,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         watches.prefetch((~p).toInt());
     }
 
-    if (!VSIDS) {
+    if (!update_bogoprops && !VSIDS) {
         varData[v].picked = sumConflicts;
         varData[v].conflicted = 0;
         varData[v].almost_conflicted = 0;
@@ -444,6 +446,30 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << endl;
     #endif
+}
+
+inline void PropEngine::attach_bin_clause(
+    const Lit lit1
+    , const Lit lit2
+    , const bool red
+    , const bool
+    #ifdef DEBUG_ATTACH
+    checkUnassignedFirst
+    #endif
+) {
+    #ifdef DEBUG_ATTACH
+    assert(lit1.var() != lit2.var());
+    if (checkUnassignedFirst) {
+        assert(value(lit1.var()) == l_Undef);
+        assert(value(lit2) == l_Undef || value(lit2) == l_False);
+    }
+
+    assert(varData[lit1.var()].removed == Removed::none);
+    assert(varData[lit2.var()].removed == Removed::none);
+    #endif //DEBUG_ATTACH
+
+    watches[lit1].push(Watched(lit2, red));
+    watches[lit2].push(Watched(lit1, red));
 }
 
 } //end namespace

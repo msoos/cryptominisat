@@ -78,7 +78,7 @@ public:
     }
     void new_vars(const size_t n)
     {
-        tstamp.resize(tstamp.size() + 2*n, Timestamp());
+        tstamp.insert(tstamp.end(), 2*n, Timestamp());
     }
     size_t mem_used() const
     {

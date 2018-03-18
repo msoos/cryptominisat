@@ -6,49 +6,32 @@ import sqlite3
 import optparse
 
 
-class Data:
-    def __init__(self, used_for_time=-1, num_used=0):
-        self.used_for_time = used_for_time
-        self.num_used = num_used
-
-
-def parse_lemmas(lemmafname, verbose=False):
+def parse_lemmas(lemmafname, runID, verbose=False):
     """Takes the lemma file and returns map with clauses' IDs and data"""
 
     # clause in "lemmas" file layout:
     # CLAUSE 0 ID last_used num_used
 
-    ret = {}
+    ret = []
     with open(lemmafname, "r") as f:
-        for line, lineno in zip(f, range(1000*1000*1000)):
+        for line in f:
             l = line.strip().split(" ")
+
+            # checking that delete line is ok
+            # TODO: maybe calculate used_for_time
+            if line[0] == "d":
+                continue
 
             if len(l) == 1:
                 # empty clause, finished
                 continue
 
             myid = int(l[len(l)-3])
-            last_used = int(l[len(l)-2])
-            num_used = int(l[len(l)-1])
-
-            # checking that delete line is ok AND calculating used_for_time
-            if line[0] == "d":
-                if myid <= 1:
-                    continue
-
-                ret[myid].used_for_time = last_used - myid
-                if verbose:
-                    print("line %d" % lineno)
-                    print("myid:", myid)
-                    print("num used:", num_used)
-                    print(ret[myid].num_used)
-
+            if (myid == 1):
                 continue
 
-            #cl = sorted(l[:-4])
-            used_for_time = 1000000  # used until the end
-
-            ret[myid] = Data(used_for_time, num_used)
+            num_used = int(l[len(l)-1])
+            ret.append((runID, myid, num_used))
 
     print("Parsed %d number of good lemmas" % len(ret))
     return ret
@@ -86,13 +69,9 @@ class Query:
 
     def add_goods(self, ids):
         self.c.execute('delete from goodClauses;')
-
-        id_b = [(self.runID, ID, x.num_used, x.used_for_time) for ID,
-                x in ids.items()]
         self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`,
-                `usedForTime`)
-            VALUES (?, ?, ?, ?);""", id_b)
+            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`)
+            VALUES (?, ?, ?);""", ids)
 
 
 if __name__ == "__main__":
@@ -119,7 +98,7 @@ it was good or not."""
     print("Using lemma file %s" % lemmafname)
 
     with Query(dbfname) as q:
-        useful_lemma_ids = parse_lemmas(lemmafname, options.verbose)
+        useful_lemma_ids = parse_lemmas(lemmafname, q.runID, options.verbose)
         print("Num good IDs: %d" % len(useful_lemma_ids))
         q.add_goods(useful_lemma_ids)
 

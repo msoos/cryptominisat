@@ -39,6 +39,7 @@ class Solver;
 class SQLStats;
 class VarReplacer;
 class Gaussian;
+class DistillerLong;
 
 using std::string;
 using std::cout;
@@ -67,7 +68,7 @@ class Searcher : public HyperEngine
         // Solving
         //
         lbool solve(
-            uint64_t maxConfls
+            uint64_t max_confls
             , const unsigned upper_level_iteration_num
         );
         void finish_up_solve(lbool status);
@@ -108,7 +109,7 @@ class Searcher : public HyperEngine
         {
             return assumptionsSet.at(var);
         }
-        template<bool also_insert_var_order = true>
+        template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
 
@@ -140,6 +141,11 @@ class Searcher : public HyperEngine
             order_heap_maple.clear();
         }
         void bumpClauseAct(Clause* cl);
+        void simple_create_learnt_clause(
+            PropBy confl,
+            vector<Lit>& out_learnt,
+            bool True_confl
+        );
 
     protected:
         void new_var(const bool bva, const uint32_t orig_outer) override;
@@ -215,6 +221,7 @@ class Searcher : public HyperEngine
         /////////////////
         //Settings
         Solver*   solver;          ///< Thread control class
+        uint32_t step_size;
 
         /////////////////
         // Searching
@@ -276,15 +283,17 @@ class Searcher : public HyperEngine
         void print_fully_minimized_learnt_clause() const;
         size_t find_backtrack_level_of_learnt();
         template<bool update_bogoprops>
-        void bump_var_activities_based_on_implied_by_learnts(const uint32_t glue);
+        void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
         Clause* otf_subsume_last_resolved_clause(Clause* last_resolved_long_cl);
         void print_debug_resolution_data(const PropBy confl);
         template<bool update_bogoprops>
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
+        #ifdef STATS_NEEDED
         AtecedentData<uint16_t> antec_data;
+        #endif
 
-        vector<std::pair<uint32_t, uint32_t> > implied_by_learnts; //for glue-based extra var activity bumping
+        vector<uint32_t> implied_by_learnts; //for glue-based extra var activity bumping
 
         /////////////////
         //Graphical conflict generation
@@ -316,6 +325,7 @@ class Searcher : public HyperEngine
 
         uint64_t next_lev1_reduce;
         uint64_t next_lev2_reduce;
+        double   var_decay;
 
     private:
         //////////////
@@ -351,14 +361,6 @@ class Searcher : public HyperEngine
         void adjust_phases_restarts();
 
         void print_solution_varreplace_status() const;
-        void dump_search_sql(const double myTime);
-
-        ////////////
-        // Transitive on-the-fly self-subsuming resolution
-        void   minimise_redundant_more(vector<Lit>& cl);
-        void   binary_based_more_minim(vector<Lit>& cl);
-        void   cache_based_more_minim(vector<Lit>& cl);
-        void   stamp_based_more_minim(vector<Lit>& cl);
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
@@ -371,6 +373,7 @@ class Searcher : public HyperEngine
             bool operator()(uint32_t var) const;
         };
         friend class Gaussian;
+        friend class DistillerLong;
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
@@ -387,6 +390,7 @@ class Searcher : public HyperEngine
         ) const;
 
         //SQL
+        void dump_search_sql(const double myTime);
         #ifdef STATS_NEEDED
         void dump_restart_sql();
         PropStats lastSQLPropStats;
@@ -401,7 +405,8 @@ class Searcher : public HyperEngine
         //Other
         void print_solution_type(const lbool status) const;
         void clearGaussMatrixes();
-        void sortWatched();
+        uint64_t next_distill = 0;
+        bool DISTANCE = true;
 
         //Picking polarity when doing decision
         bool     pickPolarity(const uint32_t var);
@@ -415,7 +420,6 @@ class Searcher : public HyperEngine
 
         double   startTime; ///<When solve() was started
         SearchStats stats;
-        double   var_decay;
 };
 
 inline uint32_t Searcher::abstractLevel(const uint32_t x) const
@@ -483,6 +487,7 @@ inline void Searcher::bumpClauseAct(Clause* cl)
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
         cla_inc *= 1e-20;
+        assert(cla_inc != 0);
     }
 }
 
@@ -543,15 +548,12 @@ inline bool Searcher::pickPolarity(const uint32_t var)
 }
 
 template<bool update_bogoprops>
-void Searcher::bump_var_activities_based_on_implied_by_learnts(
-    const uint32_t glue
-) {
+void Searcher::bump_var_activities_based_on_implied_by_learnts(uint32_t backtrack_level) {
     assert(!update_bogoprops);
 
-    for (const auto dat :implied_by_learnts) {
-        const uint32_t v_glue = dat.second;
-        if (v_glue < glue) {
-            bump_vsids_var_act<update_bogoprops>(dat.first);
+    for (const uint32_t var :implied_by_learnts) {
+        if ((int32_t)varData[var].level >= (int32_t)backtrack_level-1L) {
+            bump_vsids_var_act<update_bogoprops>(var, 1.0);
         }
     }
 }

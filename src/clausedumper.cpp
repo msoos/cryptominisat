@@ -81,7 +81,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname
         if (!solver->okay()) {
             write_unsat_file();
         } else {
-            dumpIrredClauses();
+            dump_irred_clauses_all();
         }
     } catch (std::ifstream::failure& e) {
         cout
@@ -196,17 +196,17 @@ void ClauseDumper::dumpEquivalentLits()
     solver->varReplacer->print_equivalent_literals(outfile);
 }
 
-void ClauseDumper::dumpUnitaryClauses()
+void ClauseDumper::dumpUnitaryClauses(const bool backnumber)
 {
     *outfile
     << "c " << endl
     << "c ---------" << endl
-    << "c unitaries" << endl
+    << "c unit clauses" << endl
     << "c ---------" << endl;
 
     //'trail' cannot be trusted between 0....size()
-    vector<Lit> lits = solver->get_zero_assigned_lits();
-    for(const Lit lit: lits) {
+    vector<Lit> lits = solver->get_zero_assigned_lits(backnumber, true);
+    for(Lit lit: lits) {
         *outfile << lit << " 0\n";
     }
 }
@@ -216,8 +216,6 @@ void ClauseDumper::dumpRedClauses() {
         std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
-
-    dumpUnitaryClauses();
 
     *outfile
     << "c " << endl
@@ -285,14 +283,15 @@ void ClauseDumper::dump_irred_cls_for_preprocessor(const bool backnumber)
     dump_clauses(solver->longIrredCls, backnumber);
 }
 
-void ClauseDumper::dumpIrredClauses()
+void ClauseDumper::dump_irred_clauses_all()
 {
     if (solver->get_num_bva_vars() > 0) {
         std::cerr << "ERROR: cannot make meaningful dump with BVA turned on." << endl;
         exit(-1);
     }
 
-    dumpUnitaryClauses();
+    dumpUnitaryClauses(true);
+
     dumpEquivalentLits();
 
     dump_irred_cls_for_preprocessor(true);

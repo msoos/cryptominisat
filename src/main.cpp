@@ -110,10 +110,10 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     }
     #ifndef USE_ZLIB
     FILE * in = fopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, &debugLib, conf.verbosity);
     #else
     gzFile in = gzopen(filename.c_str(), "rb");
-    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, &debugLib, conf.verbosity);
     #endif
 
     if (in == NULL) {
@@ -125,7 +125,8 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         std::exit(1);
     }
 
-    if (!parser.parse_DIMACS(in)) {
+    bool strict_header = conf.preprocess;
+    if (!parser.parse_DIMACS(in, strict_header)) {
         exit(-1);
     }
 
@@ -159,12 +160,12 @@ void Main::readInStandardInput(SATSolver* solver2)
     }
 
     #ifndef USE_ZLIB
-    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<FILE*, FN> > parser(solver2, &debugLib, conf.verbosity);
     #else
-    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, debugLib, conf.verbosity);
+    DimacsParser<StreamBuffer<gzFile, GZ> > parser(solver2, &debugLib, conf.verbosity);
     #endif
 
-    if (!parser.parse_DIMACS(in)) {
+    if (!parser.parse_DIMACS(in, false)) {
         exit(-1);
     }
 
@@ -256,11 +257,9 @@ void Main::add_supported_options()
         , "[0..] Random seed")
     ("threads,t", po::value(&num_threads)->default_value(1)
         ,"Number of threads")
-    ("sync", po::value(&conf.sync_every_confl)->default_value(conf.sync_every_confl)
-        , "Sync threads every N conflicts")
     ("maxtime", po::value(&conf.maxTime)->default_value(conf.maxTime, "MAX")
         , "Stop solving after this much time (s)")
-    ("maxconfl", po::value(&conf.maxConfl)->default_value(conf.maxConfl, "MAX")
+    ("maxconfl", po::value(&conf.max_confl)->default_value(conf.max_confl, "MAX")
         , "Stop solving after this many conflicts")
 //     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
 //         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
@@ -347,7 +346,7 @@ void Main::add_supported_options()
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
-        , "Write result(s) to this file")
+        , "Write solution(s) to this file")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -399,12 +398,6 @@ void Main::add_supported_options()
         , "Var elimination bogoprops M time limit")
     ("emptyelim", po::value(&conf.do_empty_varelim)->default_value(conf.do_empty_varelim)
         , "Perform empty resolvent elimination using bit-map trick")
-    ("elimstrgy", po::value(&var_elim_strategy)->default_value(getNameOfElimStrategy(conf.var_elim_strategy))
-        , "Sort variable elimination order by intelligent guessing ('heuristic') or by exact calculation ('calculate')")
-    ("elimcplxupd", po::value(&conf.updateVarElimComplexityOTF)->default_value(conf.updateVarElimComplexityOTF)
-        , "Update estimated elimination complexity on-the-fly while eliminating")
-    ("elimcoststrategy", po::value(&conf.varElimCostEstimateStrategy)->default_value(conf.varElimCostEstimateStrategy)
-        , "How simple strategy (guessing, above) is calculated. Valid values: 0, 1")
     ("strengthen", po::value(&conf.do_strengthen_with_occur)->default_value(conf.do_strengthen_with_occur)
         , "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system")
     ("bva", po::value(&conf.do_bva)->default_value(conf.do_bva)
@@ -489,18 +482,6 @@ void Main::add_supported_options()
         , "Perform recursive minimisation")
     ("moreminim", po::value(&conf.doMinimRedMore)->default_value(conf.doMinimRedMore)
         , "Perform strong minimisation at conflict gen.")
-    ("moreminimcache", po::value(&conf.more_red_minim_limit_cache)->default_value(conf.more_red_minim_limit_cache)
-        , "Time-out in microsteps for each more minimisation with cache. Only active if 'moreminim' is on")
-    ("moreminimbin", po::value(&conf.more_red_minim_limit_binary)->default_value(conf.more_red_minim_limit_binary)
-        , "Time-out in microsteps for each more minimisation with binary clauses. Only active if 'moreminim' is on")
-    ("moreminimlit", po::value(&conf.max_num_lits_more_red_min)->default_value(conf.max_num_lits_more_red_min)
-        , "Number of first literals to look through for more minimisation when doing learnt cl minim right after learning it")
-    ("cacheformoreminim", po::value(&conf.more_otf_shrink_with_stamp)->default_value(conf.more_otf_shrink_with_stamp)
-        , "Use cache for otf more minim of learnt clauses")
-    ("stampformoreminim", po::value(&conf.more_otf_shrink_with_cache)->default_value(conf.more_otf_shrink_with_cache)
-        , "Use stamp for otf more minim of learnt clauses")
-    ("alwaysmoremin", po::value(&conf.doAlwaysFMinim)->default_value(conf.doAlwaysFMinim)
-        , "Always strong-minimise clause")
     ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
         , "Perform on-the-fly subsumption")
     ("rewardotfsubsume", po::value(&conf.rewardShortenedClauseWithConfl)
@@ -512,8 +493,6 @@ void Main::add_supported_options()
 
     po::options_description propOptions("Propagation options");
     propOptions.add_options()
-    ("updateglueonprop", po::value(&conf.update_glues_on_prop)->default_value(conf.update_glues_on_prop)
-        , "Update glues while propagating")
     ("updateglueonanalysis", po::value(&conf.update_glues_on_analyze)->default_value(conf.update_glues_on_analyze)
         , "Update glues while analyzing")
     ("otfhyper", po::value(&conf.otfHyperbin)->default_value(conf.otfHyperbin)
@@ -575,12 +554,10 @@ void Main::add_supported_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
         , "Regularly execute clause distillation")
-    ("distillmaxm", po::value(&conf.distill_long_irred_cls_time_limitM)->default_value(conf.distill_long_irred_cls_time_limitM)
-        , "Maximum number of Mega-bogoprops(~time) to spend on viviying long irred cls by enqueueing and propagating")
+    ("distillmaxm", po::value(&conf.distill_long_cls_time_limitM)->default_value(conf.distill_long_cls_time_limitM)
+        , "Maximum number of Mega-bogoprops(~time) to spend on viviying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
-    ("distillby", po::value(&conf.distill_queue_by)->default_value(conf.distill_queue_by)
-        , "Enqueue lits from long clauses during distiallation N-by-N. 1 is slower, 2 is faster, etc.")
     ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
         , "Maximum number of Mega-bogoprops(~time) to spend on viviying long irred cls through watches, cache and stamps")
     ("renumber", po::value(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
@@ -606,6 +583,8 @@ void Main::add_supported_options()
     ;
 
     hiddenOptions.add_options()
+    ("sync", po::value(&conf.sync_every_confl)->default_value(conf.sync_every_confl)
+        , "Sync threads every N conflicts")
     ("dratdebug", po::bool_switch(&dratDebug)
         , "Output DRAT verification into the console. Helpful to see where DRAT fails -- use in conjunction with --verb 20")
     ("clearinter", po::value(&need_clean_exit)->default_value(0)
@@ -661,7 +640,7 @@ void Main::add_supported_options()
     .add(simplificationOptions)
     .add(eqLitOpts)
     .add(componentOptions)
-    #ifdef USE_M4RI
+    #if defined(USE_M4RI) or defined(USE_GAUSS)
     .add(xorOptions)
     #endif
     .add(gateOptions)
@@ -673,6 +652,14 @@ void Main::add_supported_options()
     ;
 }
 
+string remove_last_comma_if_exists(std::string s)
+{
+    std::string s2 = s;
+    if (s[s.length()-1] == ',')
+        s2.resize(s2.length()-1);
+    return s2;
+}
+
 void Main::check_options_correctness()
 {
     try {
@@ -680,27 +667,32 @@ void Main::check_options_correctness()
         if (vm.count("hhelp"))
         {
             cout
-            << "USAGE 1: " << argv[0] << " [options] inputfile [drat-trim-file]" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 1 [options] inputfile simplified-cnf-file" << endl
-            << "USAGE 2: " << argv[0] << " --preproc 2 [options] solution-file" << endl
-
-            << "Where input is "
+            << "A universal, fast SAT solver with XOR and Gaussian Elimination support. " << endl
+            << "Input "
             #ifndef USE_ZLIB
-            << "plain"
+            << "must be plain"
             #else
-            << "plain or gzipped"
+            << "can be either plain or gzipped"
             #endif
-            << " DIMACS." << endl;
+            << " DIMACS with XOR extension" << endl << endl;
+
+            cout
+            << "cryptominisat5 [options] inputfile [drat-trim-file]" << endl << endl;
+
+            cout << "Preprocessor usage:" << endl
+            << "  cryptominisat5 --preproc 1 [options] inputfile simplified-cnf-file" << endl << endl
+            << "  cryptominisat5 --preproc 2 [options] solution-file" << endl;
 
             cout << help_options_complicated << endl;
-            cout << "NORMAL RUN SCHEDULES" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule: " << conf.simplify_schedule_nonstartup << endl;
-            cout << "Default schedule at startup: " << conf.simplify_schedule_startup << endl << endl;
+            cout << "Normal run schedules:" << endl;
+            cout << "  Default schedule: "
+            << remove_last_comma_if_exists(conf.simplify_schedule_nonstartup) << endl<< endl;
+            cout << "  Schedule at startup: "
+            << remove_last_comma_if_exists(conf.simplify_schedule_startup) << endl << endl;
 
-            cout << "PREPROC RUN SCHEDULES" << endl;
-            cout << "--------------------" << endl;
-            cout << "Default schedule: " << conf.simplify_schedule_preproc<< endl;
+            cout << "Preproc run schedule:" << endl;
+            cout << "  "
+            << remove_last_comma_if_exists(conf.simplify_schedule_preproc) << endl;
             std::exit(0);
         }
 
@@ -861,22 +853,6 @@ void Main::handle_drat_option()
     }
 }
 
-void Main::parse_var_elim_strategy()
-{
-    if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::heuristic)) {
-        conf.var_elim_strategy = ElimStrategy::heuristic;
-    } else if (var_elim_strategy == getNameOfElimStrategy(ElimStrategy::calculate_exactly)) {
-        conf.var_elim_strategy = ElimStrategy::calculate_exactly;
-    } else {
-        std::cerr
-        << "ERROR: Cannot parse option given to '--elimstrgy'. It's '"
-        << var_elim_strategy << "'" << " but that none of the possiblities listed."
-        << endl;
-
-        std::exit(-1);
-    }
-}
-
 void Main::parse_restart_type()
 {
     if (vm.count("restart")) {
@@ -917,7 +893,6 @@ void Main::manually_parse_some_options()
 
     if (conf.preprocess != 0) {
         conf.varelim_time_limitM *= 5;
-        conf.varElimRatioPerIter = 2.0;
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
             conf.doCompHandler = false;
@@ -945,8 +920,8 @@ void Main::manually_parse_some_options()
         }
 
         if (!filesToRead.empty()) {
-            std::cerr << "ERROR: reading in CNF file(s) make no sense with preprocessing. Exiting." << endl;
-            std::exit(-1);
+            assert(false && "we should never reach this place, filesToRead has not been populated yet");
+            exit(-1);
         }
 
         if (!debugLib.empty()) {
@@ -969,7 +944,7 @@ void Main::manually_parse_some_options()
         }
 
         if (!vm.count("eratio")) {
-            conf.varElimRatioPerIter = 1.0;
+            conf.varElimRatioPerIter = 2.0;
         }
     }
 
@@ -998,7 +973,6 @@ void Main::manually_parse_some_options()
     }
 
     parse_restart_type();
-    parse_var_elim_strategy();
 
     if (conf.preprocess == 2) {
         if (vm.count("input") == 0) {
@@ -1009,7 +983,9 @@ void Main::manually_parse_some_options()
 
         vector<string> solution = vm["input"].as<vector<string> >();
         if (solution.size() > 1) {
-            cout << "ERROR: When post-processing you must give only the solution as the positional argument"
+            cout << "ERROR: When post-processing you must give only the solution as the positional argument."
+            << endl
+            << "The saved state must be given as the argument '--savedsate X'"
             << endl;
             std::exit(-1);
         }
@@ -1086,18 +1062,6 @@ void Main::parseCommandLine()
     }
 }
 
-void Main::printVersionInfo()
-{
-    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
-    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
-    #ifdef __GNUC__
-    cout << "c compiled with gcc version " << __VERSION__ << endl;
-    #else
-    cout << "c compiled with non-gcc compiler" << endl;
-    #endif
-}
-
 void Main::dumpIfNeeded() const
 {
     if (redDumpFname.empty()
@@ -1140,28 +1104,6 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
         << " cores reported by the system.\n"
         << "c WARNING: This is not a good idea in general. It's best to set the"
         << " number of threads to the number of real cores" << endl;
-    }
-}
-
-
-int Main::correctReturnValue(const lbool ret) const
-{
-    int retval = -1;
-    if (ret == l_True) {
-        retval = 10;
-    } else if (ret == l_False) {
-        retval = 20;
-    } else if (ret == l_Undef) {
-        retval = 15;
-    } else {
-        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
-        exit(-1);
-    }
-
-    if (zero_exit_status) {
-        return 0;
-    } else {
-        return retval;
     }
 }
 
@@ -1269,4 +1211,41 @@ lbool Main::multi_solutions()
         }
     }
     return ret;
+}
+
+///////////
+// Useful helper functions
+///////////
+
+void Main::printVersionInfo()
+{
+    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
+    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
+    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
+    #ifdef __GNUC__
+    cout << "c compiled with gcc version " << __VERSION__ << endl;
+    #else
+    cout << "c compiled with non-gcc compiler" << endl;
+    #endif
+}
+
+int Main::correctReturnValue(const lbool ret) const
+{
+    int retval = -1;
+    if (ret == l_True) {
+        retval = 10;
+    } else if (ret == l_False) {
+        retval = 20;
+    } else if (ret == l_Undef) {
+        retval = 15;
+    } else {
+        std::cerr << "Something is very wrong, output is neither l_Undef, nor l_False, nor l_True" << endl;
+        exit(-1);
+    }
+
+    if (zero_exit_status) {
+        return 0;
+    } else {
+        return retval;
+    }
 }

@@ -253,7 +253,8 @@ public:
     void test_all_clause_attached(const vector<ClOffset>& offsets) const;
     void check_wrong_attach() const;
     void check_watchlist(watch_subarray_const ws) const;
-    bool satisfied_cl(const Clause* cl) const;
+    template<class T>
+    bool satisfied_cl(const T& cl) const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
@@ -389,27 +390,6 @@ inline void CNF::clean_occur_from_removed_clauses_only_smudged()
     watches.clear_smudged();
 }
 
-inline bool CNF::no_marked_clauses() const
-{
-    for(ClOffset offset: longIrredCls) {
-        Clause* cl = cl_alloc.ptr(offset);
-        if (cl->stats.marked_clause) {
-            return false;
-        }
-    }
-
-    for(auto& lredcls: longRedCls) {
-        for(ClOffset offset: lredcls) {
-            Clause* cl = cl_alloc.ptr(offset);
-            if (cl->stats.marked_clause) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 inline void CNF::clean_occur_from_idx_types_only_smudged()
 {
     for(const Lit lit: watches.get_smudged_list()) {
@@ -518,6 +498,16 @@ inline void CNF::check_no_removed_or_freed_cl_in_watch() const
             assert(!cl.freed());
         }
     }
+}
+
+template<class T>
+bool CNF::satisfied_cl(const T& cl) const {
+    for(Lit lit: cl) {
+        if (value(lit) == l_True) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }

@@ -37,6 +37,9 @@ SolutionExtender::SolutionExtender(Solver* _solver, OccSimplifier* _simplifier) 
 
 void SolutionExtender::extend()
 {
+    if (solver->conf.verbosity >= 10) {
+        cout << "c Exteding solution -- SolutionExtender::extend()" << endl;
+    }
     assert(var_has_been_blocked.empty());
     var_has_been_blocked.resize(solver->nVarsOuter(), false);
     //cout << "c [extend] start num unset: " << solver->count_num_unset_mode(l) << endl;
@@ -84,8 +87,10 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     << endl;
     #endif
 
+    #ifdef SLOW_DEBUG
     const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
+    #endif
 
     //Blocked clauses set its value already
     if (solver->model_value(blockedOn) != l_Undef)
@@ -100,14 +105,14 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
     }
 
     //If greedy undef is not set, set model to value
-    if (!solver->conf.greedy_undef) {
+    //if (!solver->conf.greedy_undef) {
         solver->model[blockedOn.var()] = l_False;
-    } else {
+    /*} else {
         var_has_been_blocked[blockedOn.var()] = true;
-    }
+    }*/
 }
 
-void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
+bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
@@ -117,55 +122,52 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn.var());
+    const uint32_t blocked_on_inter = solver->map_outer_to_inter(blockedOn);
     assert(solver->varData[blocked_on_inter].removed == Removed::elimed);
-    assert(contains_lit(lits, blockedOn));
+    assert(contains_var(lits, blockedOn));
     #endif
-    if (satisfied(lits)) {
-        return;
-    } else {
-        //Note: we need to do this even if solver->conf.greedy_undef is FALSE
-        //because the solution we are given (when used as a preprocessor)
-        //may not be full
 
-        //Try to extend through setting variables that have been blocked but
-        //were not required to be set until now
-        for(Lit l: lits) {
-            if (solver->model_value(l) == l_Undef
-                && var_has_been_blocked[l.var()]
-            ) {
-                solver->model[l.var()] = l.sign() ? l_False : l_True;
-                solver->varReplacer->extend_model(l.var());
-                return;
-            }
+    //Note: we need to do this even if solver->conf.greedy_undef is FALSE
+    //because the solution we are given (when used as a preprocessor)
+    //may not be full
+
+    //Try to extend through setting variables that have been blocked but
+    //were not required to be set until now
+    /*for(Lit l: lits) {
+        if (solver->model_value(l) == l_Undef
+            && var_has_been_blocked[l.var()]
+        ) {
+            solver->model[l.var()] = l.sign() ? l_False : l_True;
+            solver->varReplacer->extend_model(l.var());
+            return false;
         }
+    }*/
 
-        //Try to set var that hasn't been set
-        for(Lit l: lits) {
-            uint32_t v_inter = solver->map_outer_to_inter(l.var());
-            if (solver->model_value(l) == l_Undef
-                && solver->varData[v_inter].removed == Removed::none
-            ) {
-                solver->model[l.var()] = l.sign() ? l_False : l_True;
-                solver->varReplacer->extend_model(l.var());
-                return;
-            }
+    //Try to set var that hasn't been set
+//     for(Lit l: lits) {
+//         uint32_t v_inter = solver->map_outer_to_inter(l.var());
+//         if (solver->model_value(l) == l_Undef
+//             && solver->varData[v_inter].removed == Removed::none
+//         ) {
+//             solver->model[l.var()] = l.sign() ? l_False : l_True;
+//             solver->varReplacer->extend_model(l.var());
+//             return false;
+//         }
+//     }
+
+    if (solver->conf.verbosity >= 10) {
+        for(Lit lit: lits) {
+            Lit lit_inter = solver->map_outer_to_inter(lit);
+            cout
+            << lit << ": " << solver->model_value(lit)
+            << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
+            << ", ";
         }
+        cout << "blocked on: " <<  blockedOn+1 << endl;
     }
-
-    #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
-    for(Lit lit: lits) {
-        Lit lit_inter = solver->map_outer_to_inter(lit);
-        cout
-        << lit << ": " << solver->model_value(lit)
-        << "(elim: " << removed_type_to_string(solver->varData[lit_inter.var()].removed) << ")"
-        << ", ";
-    }
-    cout << "blocked on: " <<  blockedOn << endl;
-    #endif
 
     if (solver->model_value(blockedOn) != l_Undef) {
-        cout << "ERROR: Model value for var " << blockedOn.unsign() << " is "
+        cout << "ERROR: Model value for var " << blockedOn+1 << " is "
         << solver->model_value(blockedOn)
         << " but that doesn't satisfy a v-elim clause on the stack!"
         << " clause is: " << lits
@@ -179,14 +181,25 @@ void SolutionExtender::addClause(const vector<Lit>& lits, const Lit blockedOn)
         }
     }
     assert(solver->model_value(blockedOn) == l_Undef);
-    solver->model[blockedOn.var()] = blockedOn.sign() ? l_False : l_True;
+    Lit actual_lit = lit_Undef;
+    for(Lit l: lits) {
+        if (l.var() == blockedOn) {
+            actual_lit = l;
+            break;
+        }
+    }
+    assert(actual_lit != lit_Undef);
+    solver->model[blockedOn] = actual_lit.sign() ? l_False : l_True;
     if (solver->conf.verbosity >= 10) {
         cout << "Extending VELIM cls. -- setting model for var "
-        << blockedOn.unsign() << " to " << solver->model[blockedOn.var()] << endl;
+        << blockedOn + 1 << " to " << solver->model[blockedOn] << endl;
     }
-    solver->varReplacer->extend_model(blockedOn.var());
+    solver->varReplacer->extend_model(blockedOn);
 
     assert(satisfied(lits));
+
+    //it's been set now
+    return true;
 }
 
 size_t SolutionExtender::count_num_unset_model() const

@@ -37,10 +37,10 @@ using std::vector;
 class Solver;
 class Clause;
 
-class DistillerAllWithAll {
+class DistillerLong {
     public:
-        explicit DistillerAllWithAll(Solver* solver);
-        bool distill(uint32_t queueByBy = 2);
+        explicit DistillerLong(Solver* solver);
+        bool distill(const bool red);
 
         struct Stats
         {
@@ -72,18 +72,25 @@ class DistillerAllWithAll {
         ClOffset try_distill_clause_and_return_new(
             ClOffset offset
             , const bool red
-            , const ClauseStats* stats
-            , const uint32_t queueByBy
+            , const ClauseStats& stats
         );
+        ClOffset try_distill_clause_and_return_new_slow(
+            ClOffset offset
+            , const bool red
+            , const ClauseStats& stats
+        );
+        bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult);
 
         //Actual algorithms used
-        bool distill_long_irred_cls(uint32_t queueByBy);
+        bool distill_long_irred_cls();
+        bool go_through_clauses(vector<ClOffset>& cls);
         Solver* solver;
 
         //For distill
         vector<Lit> lits;
-        vector<Lit> uselessLits;
-        uint64_t extraTime;
+        uint64_t oldBogoProps;
+        int64_t maxNumProps;
+        int64_t orig_maxNumProps;
 
         //Global status
         Stats runStats;
@@ -92,7 +99,7 @@ class DistillerAllWithAll {
 
 };
 
-inline const DistillerAllWithAll::Stats& DistillerAllWithAll::get_stats() const
+inline const DistillerLong::Stats& DistillerLong::get_stats() const
 {
     return globalStats;
 }

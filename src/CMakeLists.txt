@@ -75,7 +75,7 @@ set(cryptoms_lib_files
     clauseallocator.cpp
     sccfinder.cpp
     solverconf.cpp
-    distillerallwithall.cpp
+    distillerlong.cpp
     distillerlongwithimpl.cpp
     str_impl_w_impl_stamp.cpp
     solutionextender.cpp
@@ -206,6 +206,8 @@ endif()
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
 cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
+cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
@@ -243,14 +245,6 @@ if (NOT ONLY_SIMPLE)
         main_exe.cpp
         signalcode.cpp
     )
-
-    if (USE_GAUSS)
-        add_executable(scalmc
-            main.cpp
-            signalcode.cpp
-            scalmc.cpp
-        )
-    endif()
 endif()
 add_executable(cryptominisat5_simple
     main_simple.cpp
@@ -284,26 +278,6 @@ install(TARGETS cryptominisat5_simple
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    if (USE_GAUSS)
-        if (STATICCOMPILE)
-            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_START_STATIC 1)
-        endif()
-        set_target_properties(scalmc PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-            INSTALL_RPATH_USE_LINK_PATH TRUE)
-        if (STATICCOMPILE)
-            SET_TARGET_PROPERTIES(scalmc PROPERTIES LINK_SEARCH_END_STATIC 1)
-        endif()
-        target_link_libraries(scalmc
-            ${cryptoms_exec_link_libs}
-        )
-        install(TARGETS scalmc
-            EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
-        SET(CPACK_PACKAGE_EXECUTABLES "scalmc")
-    endif()
-
     if (STATICCOMPILE)
         SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_START_STATIC 1)
     endif()

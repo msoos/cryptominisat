@@ -84,7 +84,7 @@ void VarReplacer::check_no_replaced_var_set() const
 void VarReplacer::new_vars(const size_t n)
 {
     size_t oldsize = table.size();
-    table.resize(table.size()+n, lit_Undef);
+    table.insert(table.end(), n, lit_Undef);
     for(size_t i = oldsize; i < table.size(); i++) {
         table[i] = Lit(i, false);
     }
@@ -148,12 +148,17 @@ void VarReplacer::update_vardata_and_activities(
     assert(solver->varData[replaced_with].removed == Removed::none);
     assert(solver->value(replaced_with) == l_Undef);
 
-    double orig_act = solver->var_act_vsids[orig];
-    double repl_with_act = solver->var_act_vsids[replaced_with];
-    if (orig_act + repl_with_act >= orig_act) {
-        solver->var_act_vsids[replaced_with] += orig_act;
+    double orig_act_vsids = solver->var_act_vsids[orig];
+    double repl_with_act_vsids = solver->var_act_vsids[replaced_with];
+    if (orig_act_vsids + repl_with_act_vsids >= orig_act_vsids) {
+        solver->var_act_vsids[replaced_with] += orig_act_vsids;
     }
-    //TODO: should we do the above for maple too?
+
+    double repl_with_act_maple = solver->var_act_maple[replaced_with];
+    double orig_act_maple = solver->var_act_maple[orig];
+    if (orig_act_maple + repl_with_act_vsids >= orig_act_maple) {
+        solver->var_act_maple[replaced_with] += orig_act_maple;
+    }
 }
 
 bool VarReplacer::enqueueDelayedEnqueue()
@@ -276,7 +281,7 @@ end:
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
     runStats.cpu_time = time_used;
     globalStats += runStats;
-    if (solver->conf.verbosity  >= 1) {
+    if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
             runStats.print(solver->nVars());
         else
