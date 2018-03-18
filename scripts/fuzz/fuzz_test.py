@@ -382,7 +382,10 @@ class Tester:
         if fname is not None:
             command += fname
         if fname2:
-            command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
+            if self.drat:
+                command += " %s " % fname2
+            else:
+                command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
 
         print("Executing: %s " % command)
 
