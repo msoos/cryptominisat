@@ -3179,12 +3179,18 @@ lbool Solver::load_solution_from_file(const string& fname)
 
     unsigned lineNum = 0;
     std::string str;
+    bool sol_already_seen = false;
     for (;;) {
         in.skipWhitespace();
         switch (*in) {
             case EOF:
                 goto end;
             case 's': {
+                if (sol_already_seen) {
+                    std::cerr << "ERROR: The input file you gave for solution extension contains more than one line starting with 's', which indicates more than one solution! That is not supported!" << endl;
+                    exit(-1);
+                }
+                sol_already_seen = true;
                 ++in;
                 in.skipWhitespace();
                 in.parseString(str);
@@ -3249,7 +3255,10 @@ void Solver::parse_v_line(A* in, const size_t lineNum)
         }
         if (parsed_lit == 0) break;
         var = abs(parsed_lit)-1;
-        if (var >= nVars()) {
+        if (var >= nVars()
+            || var >= model.size()
+            || var >= varData.size()
+        ) {
             std::cerr
             << "ERROR! "
             << "Variable in solution is too large: " << var +1 << endl
