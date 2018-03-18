@@ -104,14 +104,14 @@ Create Solver object.\n\
 
 static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
-	static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
-		return;
+        return;
     }
     if (verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
@@ -133,7 +133,7 @@ static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
 
-	self->cmsat = cmsat;
+    self->cmsat = cmsat;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -149,8 +149,7 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
         return 0;
     }
     if (val > std::numeric_limits<int>::max()/2
-        || val < std::numeric_limits<int>::min()/2
-    ) {
+        || val < std::numeric_limits<int>::min()/2) {
         PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
         return 0;
     }
@@ -184,7 +183,7 @@ static int parse_clause(
         }
 
         if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+            for (long i = (long)self->cmsat->nVars(); i <= var ; i++) {
                 self->cmsat->new_var();
             }
         }
@@ -227,7 +226,7 @@ static int parse_xor_clause(
         }
 
         if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+            for (long i = (long)self->cmsat->nVars(); i <= var ; i++) {
                 self->cmsat->new_var();
             }
         }
@@ -265,7 +264,7 @@ Add a clause to the solver.\n\
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
-	PyObject* clause;
+    PyObject* clause;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
         return NULL;
     }
@@ -355,32 +354,36 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
-PyObject* int_vector_to_list(const std::vector<int> &data) {
-  PyObject* listObj = PyList_New(data.size());
-	if (!listObj) PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
-	for (unsigned int i = 0 ; i < data.size() ; i++) {
-		PyObject *num = PyLong_FromLong((long) data[i]);
-		if (!num) {
-			Py_DECREF(listObj);
-			PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
-		}
-		PyList_SET_ITEM(listObj, i, num);
+PyObject* int_vector_to_list(const std::vector<int> &data)
+{
+    PyObject* listObj = PyList_New(data.size());
+    if (!listObj)
+	PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+    for (unsigned int i = 0 ; i < data.size() ; i++) {
+	PyObject *num = PyLong_FromLong((long) data[i]);
+	if (!num) {
+	    Py_DECREF(listObj);
+	    PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
 	}
-	return listObj;
+	PyList_SET_ITEM(listObj, i, num);
+    }
+    return listObj;
 }
 
-PyObject* uint_vector_to_list(const std::vector<uint32_t> &data) {
-  PyObject* listObj = PyList_New(data.size());
-	if (!listObj) PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
-	for (unsigned int i = 0 ; i < data.size() ; i++) {
-		PyObject *num = PyLong_FromLong(data[i]);
-		if (!num) {
-			Py_DECREF(listObj);
-			PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
-		}
-		PyList_SET_ITEM(listObj, i, num);
+PyObject* uint_vector_to_list(const std::vector<uint32_t> &data)
+{
+    PyObject* listObj = PyList_New(data.size());
+    if (!listObj)
+	PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+    for (unsigned int i = 0 ; i < data.size() ; i++) {
+	PyObject *num = PyLong_FromLong(data[i]);
+	if (!num) {
+	    Py_DECREF(listObj);
+	    PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
 	}
-	return listObj;
+	PyList_SET_ITEM(listObj, i, num);
+    }
+    return listObj;
 }
 
 static PyObject* load_file(Solver *self, std::string cnf)
@@ -403,7 +406,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                         }
                         tok = abs(tmp_tok);
                     }
-                    catch(std::invalid_argument& e){
+                    catch (std::invalid_argument& e){
                         PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
                     }
                     if (tok != 0) {
@@ -414,7 +417,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                 PyObject* clause = uint_vector_to_list(tokens);
                 std::vector<uint32_t> lits;
                 if (!parse_xor_clause(self, clause, lits)) {
-                  return 0;
+                    return 0;
                 }
 
                 self->cmsat->add_xor_clause(lits, rhs);
@@ -430,7 +433,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                     try {
                         tok = stoi(buf);
                     }
-                    catch(std::invalid_argument& e){
+                    catch (std::invalid_argument& e){
                         PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
                     }
                     if (tok != 0) {
@@ -469,7 +472,7 @@ Parse DIMACS file to add clauses to the solver.\n\
 static PyObject* load(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"cnf", NULL};
-	char* cnf = NULL;
+    char* cnf = NULL;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
         return NULL;
     }
@@ -483,14 +486,14 @@ static PyObject* save_file(Solver *self, std::string cnf)
     std::ofstream cnf_file(cnf, std::fstream::out | std::fstream::trunc);
     if (cnf_file.is_open()) {
         cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->clauses.size() + self->xor_clauses.size() << "\n";
-        for(std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
+        for (std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
             for (std::vector<Lit>::iterator jt = it->begin(); jt != it->end(); ++jt) {
                 cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << " ";
-    		}
-    		cnf_file << "0" << "\n";
+    	    }
+    	    cnf_file << "0" << "\n";
         }
         std::vector<bool>::iterator rhs_it = self->rhs.begin();
-        for(std::vector<std::vector<uint32_t>>::iterator it = self->xor_clauses.begin();
+        for (std::vector<std::vector<uint32_t>>::iterator it = self->xor_clauses.begin();
             it != self->xor_clauses.end(); ++it, ++rhs_it) {
             if (!*rhs_it) {
                 cnf_file << "-";
@@ -498,8 +501,8 @@ static PyObject* save_file(Solver *self, std::string cnf)
             }
             for (std::vector<uint32_t>::iterator jt = it->begin(); jt != it->end(); ++jt) {
                 cnf_file << *jt + 1 << " ";
-    		}
-    		cnf_file << "0" << "\n";
+            }
+    	    cnf_file << "0" << "\n";
         }
         cnf_file.close();
     }
@@ -524,7 +527,7 @@ save clauses as a DIMACS file.\n\
 static PyObject* save(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"cnf", NULL};
-	char* cnf = NULL;
+    char* cnf = NULL;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
         return NULL;
     }
@@ -625,7 +628,7 @@ Return the number of clauses in the solver.\n\
 
 static PyObject* nb_clauses(Solver *self)
 {
-	return PyLong_FromLong(self->clauses.size());
+    return PyLong_FromLong(self->clauses.size());
 }
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
