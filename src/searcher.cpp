@@ -2144,9 +2144,7 @@ bool Searcher::must_abort(const lbool status) {
     if (status != l_Undef) {
         if (conf.verbosity >= 6) {
             cout
-            << "c Returned status of search() is non-l_Undef at loop "
-            << loop_num
-            << " confl:"
+            << "c Returned status of search() is non-l_Undef at confl:"
             << sumConflicts
             << endl;
         }
@@ -2181,15 +2179,6 @@ bool Searcher::must_abort(const lbool status) {
     }
 
     return false;
-}
-
-void Searcher::print_search_loop_num()
-{
-    if (conf.verbosity >= 6) {
-        cout
-        << "c search loop " << loop_num
-        << endl;
-    }
 }
 
 lbool Searcher::solve(
@@ -2247,16 +2236,12 @@ lbool Searcher::solve(
     }
 
     assert(solver->check_order_heap_sanity());
-    for(loop_num = 0
-        ; stats.conflStats.numConflicts < max_confl_per_search_solve_call
-        ; loop_num ++
-    ) {
+    while(stats.conflStats.numConflicts < max_confl_per_search_solve_call) {
         #ifdef SLOW_DEBUG
         assert(solver->check_order_heap_sanity());
         #endif
 
         assert(watches.get_smudged_list().empty());
-        print_search_loop_num();
 
         lastRestartConfl = sumConflicts;
         params.clear();
@@ -2298,7 +2283,8 @@ void Searcher::adjust_phases_restarts()
     if (conf.maple) {
         VSIDS = false;
         params.rest_type = Restart::luby;
-        max_confl_this_phase = luby(2, loop_num) * (double)conf.restart_first;
+        max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
+        luby_loop_num++;
     } else {
         VSIDS = true;
         if (conf.verbosity >= 3) {
@@ -2315,8 +2301,10 @@ void Searcher::adjust_phases_restarts()
             break;
 
         case Restart::luby:
-            max_confl_this_phase = luby(conf.restart_inc*1.5, loop_num)
-                                    * (double)conf.restart_first/2.0;
+            max_confl_this_phase = luby(conf.restart_inc*1.5, luby_loop_num)
+                * (double)conf.restart_first/2.0;
+
+            luby_loop_num++;
             break;
 
         case Restart::glue_geom:

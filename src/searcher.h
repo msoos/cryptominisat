@@ -78,8 +78,7 @@ class Searcher : public HyperEngine
         void check_calc_features();
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
-        void print_search_loop_num();
-        uint64_t loop_num;
+        uint64_t luby_loop_num = 0;
         MiniSatRnd mtrand; ///< random number generator
 
 
