@@ -392,7 +392,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
     if (cnf_file.is_open()) {
         std::string line;
         while (std::getline(cnf_file, line)) {
-            if ((line.substr(0,1) == std::string("x"))) {
+	    if (line[0] == 'x') {
                 std::string buf;
                 std::stringstream ss(line.substr(1,line.size()));
                 std::vector<uint32_t> tokens;
@@ -424,7 +424,7 @@ static PyObject* load_file(Solver *self, std::string cnf)
                 self->xor_clauses.push_back(lits);
                 self->rhs.push_back(rhs);
             }
-            else if ((line.substr(0,1) != std::string("c")) && (line.substr(0,1) != std::string("p"))) { // ignoring comments in DIMACS
+            else if ((line[0] != 'c') && (line[0] != 'p')) { // ignoring comments in DIMACS
                 std::string buf;
                 std::stringstream ss(line);
                 std::vector<int> tokens;
