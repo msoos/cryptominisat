@@ -996,7 +996,7 @@ bool OccSimplifier::eliminate_vars()
         && grow < (uint32_t)solver->conf.min_bva_gain
         //&& grow < 1 //solver->conf.min_bva_gain
     ) {
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >= 2) {
             cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
             #ifdef DEBUG_VARELIM
             cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
@@ -1066,7 +1066,7 @@ bool OccSimplifier::eliminate_vars()
             update_varelim_complexity_heap();
 
 
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 2) {
                 cout <<"c size of added_cl_to_var    : " << added_cl_to_var.getTouchedList().size() << endl;
                 cout <<"c size of removed_cl_with_var: " << removed_cl_with_var.getTouchedList().size() << endl;
             }
@@ -1083,7 +1083,7 @@ bool OccSimplifier::eliminate_vars()
                 velim_order.update(var);
             }
 
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 2) {
                 cout << "c x n vars       : " << solver->get_num_free_vars() << endl;
                 #ifdef DEBUG_VARELIM
                 cout << "c x cls long     : " << sum_irred_cls_longs() << endl;
@@ -1094,7 +1094,7 @@ bool OccSimplifier::eliminate_vars()
             }
         }
         #ifdef DEBUG_VARELIM
-        if (solver->conf.verbosity) {
+        if (solver->conf.verbosity >= 2) {
             cout << "c finished here" << endl;
         }
         #endif
@@ -1162,11 +1162,11 @@ end:
 
     if (solver->conf.verbosity) {
         cout
-        << "c  #try to eliminate: " << wenThrough << endl
-        << "c  #var-elim: " << vars_elimed << endl
+        << "c  #try to eliminate: "; print_value_kilo_mega(wenThrough); cout << endl
+        << "c  #var-elim        : "; print_value_kilo_mega(vars_elimed); cout << endl
         << "c  #T-o: " << (time_out ? "Y" : "N") << endl
         << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
-        << "c  #T: " << time_used << endl;
+        << "c  #T  : " << time_used << endl;
     }
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
