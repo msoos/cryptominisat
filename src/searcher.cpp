@@ -3344,7 +3344,9 @@ void Searcher::cancelUntil(uint32_t level)
                 assert(sumConflicts >= varData[var].picked);
                 uint32_t age = sumConflicts - varData[var].picked;
                 if (age > 0) {
-                    double adjusted_reward = ((double)(varData[var].conflicted + varData[var].almost_conflicted)) / ((double)age);
+                    double adjusted_reward = ((double)(varData[var].conflicted
+                        + varData[var].almost_conflicted)) / ((double)age);
+
                     double old_activity = var_act_maple[var];
                     var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
                     if (order_heap_maple.inHeap(var)) {
