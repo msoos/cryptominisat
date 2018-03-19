@@ -40,9 +40,6 @@ void SolutionExtender::extend()
     if (solver->conf.verbosity >= 10) {
         cout << "c Exteding solution -- SolutionExtender::extend()" << endl;
     }
-    assert(var_has_been_blocked.empty());
-    var_has_been_blocked.resize(solver->nVarsOuter(), false);
-    //cout << "c [extend] start num unset: " << solver->count_num_unset_mode(l) << endl;
 
     //Extend variables already set
     solver->varReplacer->extend_model_already_set();
@@ -104,12 +101,7 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
         solver->varReplacer->extend_model(blockedOn.var());
     }
 
-    //If greedy undef is not set, set model to value
-    //if (!solver->conf.greedy_undef) {
-        solver->model[blockedOn.var()] = l_False;
-    /*} else {
-        var_has_been_blocked[blockedOn.var()] = true;
-    }*/
+    solver->model[blockedOn.var()] = l_False;
 }
 
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)

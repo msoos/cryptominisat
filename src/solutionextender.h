@@ -54,7 +54,6 @@ class SolutionExtender
             const vector<Lit>& lits
             , const uint32_t tocontain
         ) const;
-        vector<char> var_has_been_blocked;
 };
 
 inline bool SolutionExtender::contains_var(
