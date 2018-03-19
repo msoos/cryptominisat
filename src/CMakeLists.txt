@@ -252,7 +252,6 @@ add_executable(cryptominisat5_simple
 
 set(cryptoms_exec_link_libs
     libcryptominisat5
-    ${Boost_LIBRARIES}
 )
 
 IF (ZLIB_FOUND)
@@ -289,6 +288,7 @@ if (NOT ONLY_SIMPLE)
     endif()
     target_link_libraries(cryptominisat5
         ${cryptoms_exec_link_libs}
+        ${Boost_LIBRARIES}
     )
     install(TARGETS cryptominisat5
         EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
