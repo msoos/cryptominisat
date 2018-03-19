@@ -219,13 +219,8 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         Lit blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->lits[0]);
         size_t at = 1;
         bool satisfied = false;
-        bool satisfied_zero_level = false;
-        bool all_satisfied_zero_level = true;
         while(at < it->lits.size()) {
             if (it->lits[at] == lit_Undef) {
-                if (!satisfied_zero_level) {
-                    all_satisfied_zero_level = false;
-                }
                 if (!satisfied) {
                     bool var_set = extender->addClause(lits, blockedOn.var());
 
@@ -237,20 +232,10 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                     #endif
                 }
                 satisfied = false;
-                satisfied_zero_level = false;
                 lits.clear();
             } else if (!satisfied) {
                 Lit l = it->lits[at];
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
-
-                //Check if clause can be removed because it's set at dec level 0
-                /*Lit inter = solver->map_outer_to_inter(l);
-                if (solver->value(inter) == l_True
-                    && solver->varData[inter.var()].level == 0
-                ) {
-                    satisfied_zero_level = true;
-                    satisfied = true;
-                }*/
 
                 //Blocked clause can be skipped, it's satisfied
                 if (solver->model_value(l) == l_True) {
@@ -260,13 +245,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             }
             at++;
         }
-        //can only remove if all are satisfied
-        if (all_satisfied_zero_level && it->lits.size() > 1) {
-            //cout << "Can be removed!" << endl;
-        }
-        it->toRemove = all_satisfied_zero_level;
-
-        extender->dummyBlocked(blockedOn);
+        extender->dummyBlocked(blockedOn.var());
     }
     if (solver->conf.verbosity) {
         cout << "c [extend] Extended " << blockedClauses.size() << " var-elim clauses" << endl;
@@ -2119,12 +2098,15 @@ void OccSimplifier::printOccur(const Lit lit) const
         }
 
         if (w.isClause()) {
+            const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+            if (cl.getRemoved())
+                continue;
             cout
             << "Clause--> "
-            << *solver->cl_alloc.ptr(w.get_offset())
-            << "(red: " << solver->cl_alloc.ptr(w.get_offset())->red()
+            << cl
+            << "(red: " << cl.red()
             << ")"
-            << "(rem: " << solver->cl_alloc.ptr(w.get_offset())->getRemoved()
+            << "(rem: " << cl.getRemoved()
             << ")"
             << endl;
         }

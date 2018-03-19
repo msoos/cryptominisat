@@ -75,12 +75,12 @@ inline bool SolutionExtender::satisfied(const vector< Lit >& lits) const
     return false;
 }
 
-void SolutionExtender::dummyBlocked(const Lit blockedOn)
+void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
 {
     #ifdef VERBOSE_DEBUG_SOLUTIONEXTENDER
     cout
     << "dummy blocked lit (outer) "
-    << blockedOn
+    << blockedOn + 1
     << endl;
     #endif
 
@@ -95,13 +95,13 @@ void SolutionExtender::dummyBlocked(const Lit blockedOn)
 
 
     //If var is replacing something else, it MUST be set.
-    if (solver->varReplacer->var_is_replacing(blockedOn.var())) {
+    if (solver->varReplacer->var_is_replacing(blockedOn)) {
         //Picking l_False because MiniSat likes False solutions. Could pick anything.
-        solver->model[blockedOn.var()] = l_False;
-        solver->varReplacer->extend_model(blockedOn.var());
+        solver->model[blockedOn] = l_False;
+        solver->varReplacer->extend_model(blockedOn);
     }
 
-    solver->model[blockedOn.var()] = l_False;
+    solver->model[blockedOn] = l_False;
 }
 
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
