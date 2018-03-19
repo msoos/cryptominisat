@@ -26,17 +26,23 @@ set -x
 # fix TravisCI issue --> https://github.com/travis-ci/travis-ci/issues/8920
 python -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
 
-#license check -- first print and then fail in case of problems
-./utils/licensecheck/licensecheck.pl -m  ./src
-NUM=$(./utils/licensecheck/licensecheck.pl -m  ./src | grep UNK | wc -l)
-shopt -s extglob
-NUM="${NUM##*( )}"
-NUM="${NUM%%*( )}"
-shopt -u extglob
-if [ "$NUM" -ne 0 ]; then
-    echo "There are some files without license information!"
-    exit -1
-fi
+check_license() {
+    #license check -- first print and then fail in case of problems
+    ./utils/licensecheck/licensecheck.pl -m  $1
+    NUM=$(./utils/licensecheck/licensecheck.pl -m  $1 | grep UNK | wc -l)
+    shopt -s extglob
+    NUM="${NUM##*( )}"
+    NUM="${NUM%%*( )}"
+    shopt -u extglob
+    if [ "$NUM" -ne 0 ]; then
+        echo "There are some files without license information!"
+        exit -1
+    fi
+}
+
+check_license ./src
+check_license ./tests/
+check_license ./scripts/fuzz/
 
 NUM=$(./utils/licensecheck/licensecheck.pl -m  ./tests | grep UNK | wc -l)
 shopt -s extglob
