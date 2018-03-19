@@ -43,6 +43,8 @@ check_license() {
 check_license ./src
 check_license ./tests/
 check_license ./scripts/fuzz/
+check_license ./scripts/learn/
+check_license ./scripts/aws/
 
 NUM=$(./utils/licensecheck/licensecheck.pl -m  ./tests | grep UNK | wc -l)
 shopt -s extglob
