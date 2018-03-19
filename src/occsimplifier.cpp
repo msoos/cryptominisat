@@ -2098,12 +2098,15 @@ void OccSimplifier::printOccur(const Lit lit) const
         }
 
         if (w.isClause()) {
+            const Clause& cl = *solver->cl_alloc.ptr(w.get_offset());
+            if (cl.getRemoved())
+                continue;
             cout
             << "Clause--> "
-            << *solver->cl_alloc.ptr(w.get_offset())
-            << "(red: " << solver->cl_alloc.ptr(w.get_offset())->red()
+            << cl
+            << "(red: " << cl.red()
             << ")"
-            << "(rem: " << solver->cl_alloc.ptr(w.get_offset())->getRemoved()
+            << "(rem: " << cl.getRemoved()
             << ")"
             << endl;
         }
