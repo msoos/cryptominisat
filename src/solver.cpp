@@ -1529,8 +1529,6 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 
 lbool Solver::iterate_until_solved()
 {
-    uint64_t backup_burst_len = conf.burst_search_len;
-    conf.burst_search_len = 0;
     size_t iteration_num = 0;
 
     lbool status = l_Undef;
@@ -1542,9 +1540,6 @@ lbool Solver::iterate_until_solved()
         iteration_num++;
         if (conf.verbosity && iteration_num >= 2) {
             print_clause_size_distrib();
-        }
-        if (iteration_num >= 2) {
-            conf.burst_search_len = backup_burst_len;
         }
         dump_memory_stats_to_sql();
 
@@ -1596,7 +1591,6 @@ lbool Solver::iterate_until_solved()
     }
 
     clear_gauss();
-    conf.burst_search_len = backup_burst_len;
     return status;
 }
 

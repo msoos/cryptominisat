@@ -1157,26 +1157,28 @@ lbool Searcher::search()
         } else {
             assert(ok);
             #ifdef USE_GAUSS
-            bool at_least_one_continue = false;
-            for (Gaussian* g: gauss_matrixes) {
-                gauss_ret ret = g->find_truths();
-                switch (ret) {
-                    case gauss_cont:
-                        at_least_one_continue = true;
-                        break;
-                    case gauss_false:
-                        return l_False;
-                    case gauss_confl:
-                        confl = g->found_conflict;
-                        goto confl;
-                    case gauss_nothing:
-                        ;
+            if (!update_bogoprops) {
+                bool at_least_one_continue = false;
+                for (Gaussian* g: gauss_matrixes) {
+                    gauss_ret ret = g->find_truths();
+                    switch (ret) {
+                        case gauss_cont:
+                            at_least_one_continue = true;
+                            break;
+                        case gauss_false:
+                            return l_False;
+                        case gauss_confl:
+                            confl = g->found_conflict;
+                            goto confl;
+                        case gauss_nothing:
+                            ;
+                    }
                 }
+                if (at_least_one_continue) {
+                    goto prop;
+                }
+                assert(ok);
             }
-            if (at_least_one_continue) {
-                goto prop;
-            }
-            assert(ok);
             #endif //USE_GAUSS
 
             if (decisionLevel() == 0
@@ -1185,7 +1187,7 @@ lbool Searcher::search()
                 return l_False;
             };
 
-            dec_ret = new_decision();
+            dec_ret = new_decision<update_bogoprops>();
             if (dec_ret != l_Undef) {
                 dump_search_loop_stats(myTime);
                 return dec_ret;
@@ -1231,6 +1233,7 @@ void Searcher::dump_search_sql(const double myTime)
 @returns l_Undef if it should restart instead. l_False if it reached UNSAT
          (through simplification)
 */
+template<bool update_bogoprops>
 lbool Searcher::new_decision()
 {
     Lit next = lit_Undef;
@@ -1247,9 +1250,11 @@ lbool Searcher::new_decision()
             #ifdef USE_GAUSS
             //These are not supposed to be changed *at all* by the funciton
             //since it has already been called before
-            for (Gaussian* g: gauss_matrixes) {
-                gauss_ret ret = g->find_truths();
-                assert(ret == gauss_nothing);
+            if (!update_bogoprops) {
+                for (Gaussian* g: gauss_matrixes) {
+                    gauss_ret ret = g->find_truths();
+                    assert(ret == gauss_nothing);
+                }
             }
             #endif //USE_GAUSS
 
@@ -2200,6 +2205,17 @@ lbool Searcher::solve(
         << endl;
     }
 
+    resetStats();
+    lbool status = l_Undef;
+    if (conf.burst_search_len > 0
+        && upper_level_iteration_num > 1
+    ) {
+        assert(solver->check_order_heap_sanity());
+        status = burst_search();
+        if (status != l_Undef)
+            goto end;
+    }
+
     #ifdef USE_GAUSS
     for (Gaussian* g : gauss_matrixes) {
         if (!g->init_until_fixedpoint()) {
@@ -2207,17 +2223,6 @@ lbool Searcher::solve(
         }
     }
     #endif
-
-    resetStats();
-    lbool status = l_Undef;
-    if (conf.burst_search_len > 0
-        && upper_level_iteration_num > 0
-    ) {
-        assert(solver->check_order_heap_sanity());
-        status = burst_search();
-        if (status != l_Undef)
-            goto end;
-    }
 
     if (VSIDS) {
         if (conf.restartType == Restart::geom) {
@@ -3364,22 +3369,6 @@ void Searcher::cancelUntil(uint32_t level)
     << endl;
     #endif
 }
-
-#ifdef USE_GAUSS
-void Searcher::clearGaussMatrixes()
-{
-    /*assert(decisionLevel() == 0);
-    for (uint32_t i = 0; i < gauss_matrixes.size(); i++)
-        delete gauss_matrixes[i];
-    gauss_matrixes.clear();*/
-
-    /*
-    for (uint32_t i = 0; i != freeLater.size(); i++)
-        clauseAllocator.clauseFree(freeLater[i]);
-    freeLater.clear();
-    */
-}
-#endif
 
 #ifdef USE_GAUSS
 void Searcher::clear_gauss()

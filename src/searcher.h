@@ -241,6 +241,7 @@ class Searcher : public HyperEngine
             , const uint32_t glue
             , const uint32_t old_decision_level
         );
+        template<bool update_bogoprops>
         lbool new_decision();  // Handles the case when decision must be made
         void  check_need_restart();     // Helper function to decide if we need to restart during search
         Lit   pickBranchLit();
@@ -403,7 +404,6 @@ class Searcher : public HyperEngine
 
         //Other
         void print_solution_type(const lbool status) const;
-        void clearGaussMatrixes();
         uint64_t next_distill = 0;
         bool DISTANCE = true;
 
