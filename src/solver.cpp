@@ -1530,6 +1530,7 @@ long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 lbool Solver::iterate_until_solved()
 {
     size_t iteration_num = 0;
+    VSIDS = true;
 
     lbool status = l_Undef;
     while (status == l_Undef
