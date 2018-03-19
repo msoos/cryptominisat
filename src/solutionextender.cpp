@@ -107,7 +107,6 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     //If greedy undef is not set, set model to value
     //if (!solver->conf.greedy_undef) {
         solver->model[blockedOn] = l_False;
-        solver->varReplacer->extend_model(blockedOn);
     /*} else {
         var_has_been_blocked[blockedOn.var()] = true;
     }*/
