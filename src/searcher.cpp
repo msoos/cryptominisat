@@ -3301,8 +3301,10 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        for (Gaussian* gauss : gauss_matrixes) {
-            gauss->canceling(trail_lim[level]);
+        if (!update_bogoprops) {
+            for (Gaussian* gauss : gauss_matrixes) {
+                gauss->canceling(trail_lim[level]);
+            }
         }
         #endif //USE_GAUSS
 
