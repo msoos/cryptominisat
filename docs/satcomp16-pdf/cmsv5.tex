@@ -55,7 +55,7 @@ Besides glues and clause activites, CMS5 also tries to guess clause usefulness b
 \subsection{Auto-tuning}
 The version 'autotune' reconfigures itself after about 160K conflicts. The configuration picked is one of 2 different setups that vary many different parameters of the solving such as learnt clause removal strategy, restart strategy, and in-processing strategies. CMS5 was run on all SAT Comp'09 + 11 + 13 + 14 + 15 problems with both configurations, extracting relevant information from the all problems after they have been solved and simplified for 160K conflicts.  configurations were then given to a machine learning algorithm (C5.0\cite{Quinlan:1993:CPM:152181}) which built a decision tree from this data. This decision tree was then translated into C++ and compiled into the CMS5 source code.
 
-\bibliographystyle{splncs}
+\bibliographystyle{splncs03}
 \bibliography{sigproc}
 
 \vfill
