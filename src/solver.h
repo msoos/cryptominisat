@@ -523,6 +523,9 @@ inline bool Solver::prop_at_head() const
 
 inline lbool Solver::model_value (const Lit p) const
 {
+    if (model[p.var()] == l_Undef)
+        return l_Undef;
+
     return model[p.var()] ^ p.sign();
 }
 
