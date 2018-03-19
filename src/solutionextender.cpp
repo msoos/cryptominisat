@@ -85,7 +85,7 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     #endif
 
     #ifdef SLOW_DEBUG
-    const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn.var());
+    const uint32_t blockedOn_inter = solver->map_outer_to_inter(blockedOn);
     assert(solver->varData[blockedOn_inter].removed == Removed::elimed);
     #endif
 
