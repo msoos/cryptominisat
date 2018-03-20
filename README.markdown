@@ -163,14 +163,15 @@ Command-line usage
 
 Let's take the file:
 ```
-p cnf 2 3
+p cnf 3 3
 1 0
 -2 0
 -1 2 3 0
 ```
 
-The files has 3 clauses and 2 variables, this is reflected in the header
-`p cnf 2 3`. Every clause is ended by '0'. The clauses say: 1 must be True, 2
+The file has 3 variables and 3 clauses, this is reflected in the header
+`p cnf 3 3` which gives the number of variables as the first number and the number of clauses as the second.
+Every clause is ended by '0'. The clauses say: 1 must be True, 2
 must be False, and either 1 has to be False, 2 has to be True or 3 has to be
 True. The only solution to this problem is:
 ```
@@ -181,7 +182,7 @@ v 1 -2 3 0
 
 Which means, that setting variable 1 True, variable 2 False and variable 3 True satisfies the set of constraints (clauses) in the CNF. If the file had contained:
 ```
-p cnf 2 4
+p cnf 3 4
 1 0
 -2 0
 -3 0
