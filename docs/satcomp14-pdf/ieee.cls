@@ -1,3 +1,6 @@
+% Copyright 2014 IEEEE
+% for terms of use see https://www.ieee.org/publications_standards/publications/rights/copyrightpolicy.html
+
 % =========================================================================
 % -------------------------------------------------------------------------
 %               XX                              X
