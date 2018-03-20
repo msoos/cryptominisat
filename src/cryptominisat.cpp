@@ -881,6 +881,7 @@ DLL_PUBLIC uint64_t SATSolver::get_sum_decisions()
     return dec;
 }
 
+
 DLL_PUBLIC uint64_t SATSolver::get_last_conflicts()
 {
     return get_sum_conflicts() - data->previous_sum_conflicts;

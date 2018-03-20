@@ -207,6 +207,29 @@ class TestSolve(unittest.TestCase):
         res, _ = self.solver.solve()
         self.assertEqual(res, True)
 
+class TestSolverDrat(unittest.TestCase):
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_nb_clauses1(self):
+        for cl in clauses1:
+            self.solver.add_clause(cl)
+        self.assertEqual(self.solver.nb_clauses(), 3)
+
+    def test_nb_clauses2(self):
+        for cl in clauses2:
+            self.solver.add_clause(cl)
+        self.assertEqual(self.solver.nb_clauses(), 2)
+
+
+    def test_nb_clauses3(self):
+        for cl in clauses3:
+            self.solver.add_clause(cl)
+        self.assertEqual(self.solver.nb_clauses(), 3)
+
+
+
 # ------------------------------------------------------------------------
 
 
@@ -221,6 +244,7 @@ def run():
     suite.addTest(unittest.makeSuite(TestXor))
     suite.addTest(unittest.makeSuite(InitTester))
     suite.addTest(unittest.makeSuite(TestSolve))
+    suite.addTest(unittest.makeSuite(TestSolverDrat))
 
     runner = unittest.TextTestRunner(verbosity=2)
     return runner.run(suite)

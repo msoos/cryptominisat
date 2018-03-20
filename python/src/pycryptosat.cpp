@@ -4,6 +4,8 @@ Python bindings to CryptoMiniSat (http://msoos.org)
 Copyright (c) 2013, Ilan Schnell, Continuum Analytics, Inc.
               2014, Mate Soos
               2017, Pierre Vignet
+              2018, Alban Delpech, Mary Pascal, Matthias Paulmier,
+                    Marc Saint-Jean Clergeau
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +30,8 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 #include <cassert>
+#include <fstream>
+#include <sstream>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
@@ -76,51 +80,60 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
+    std::vector<std::vector<Lit>> clauses;
+    std::vector<std::vector<uint32_t>> xor_clauses;
+    std::vector<bool> rhs;
+    int nb_threads;
 } Solver;
 
 static PyObject *outofconflerr = NULL;
 
 static const char solver_create_docstring[] = \
-"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1)\n\
+"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1, cnf=0, drat=0)\n\
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
 :param confl_limit: Propagation limit: abort after this many conflicts.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
+:param cnf: cnf file to write.\n\
 :type verbose: <int>\n\
 :type confl_limit: <int>\n\
-:type threads: <int>";
+:type threads: <int>\n\
+:type cnf: <str>";
 
-static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
+static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
     long confl_limit = std::numeric_limits<long>::max();
+
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
-        return NULL;
+        return;
     }
     if (verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
-        return NULL;
+        return;
     }
     if (confl_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
-        return NULL;
+        return;
     }
     if (num_threads <= 0) {
         PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
-        return NULL;
+        return;
     }
+
+    self->nb_threads = num_threads;
 
     SATSolver *cmsat = new SATSolver;
     cmsat->set_max_confl(confl_limit);
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
 
-    return cmsat;
+    self->cmsat = cmsat;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -136,8 +149,7 @@ static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
         return 0;
     }
     if (val > std::numeric_limits<int>::max()/2
-        || val < std::numeric_limits<int>::min()/2
-    ) {
+        || val < std::numeric_limits<int>::min()/2) {
         PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
         return 0;
     }
@@ -171,7 +183,7 @@ static int parse_clause(
         }
 
         if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+            for (long i = (long)self->cmsat->nVars(); i <= var ; i++) {
                 self->cmsat->new_var();
             }
         }
@@ -214,7 +226,7 @@ static int parse_xor_clause(
         }
 
         if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+            for (long i = (long)self->cmsat->nVars(); i <= var ; i++) {
                 self->cmsat->new_var();
             }
         }
@@ -227,6 +239,16 @@ static int parse_xor_clause(
     }
 
     return 1;
+}
+
+static long convert_from_lit_to_int(uint32_t i)
+{
+    if ((i % 2) == 0) {
+        return ((i / 2) + 1);
+    }
+    else {
+        return -((i + 1) / 2);
+    }
 }
 
 PyDoc_STRVAR(add_clause_doc,
@@ -242,7 +264,7 @@ Add a clause to the solver.\n\
 static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"clause", NULL};
-    PyObject *clause;
+    PyObject* clause;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clause)) {
         return NULL;
     }
@@ -252,6 +274,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
     self->cmsat->add_clause(lits);
+    self->clauses.push_back(lits);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -324,9 +347,193 @@ static PyObject* add_xor_clause(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     self->cmsat->add_xor_clause(vars, real_rhs);
+    self->xor_clauses.push_back(vars);
+    self->rhs.push_back(real_rhs);
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+PyObject* int_vector_to_list(const std::vector<int> &data)
+{
+    PyObject* listObj = PyList_New(data.size());
+    if (!listObj)
+	PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+    for (unsigned int i = 0 ; i < data.size() ; i++) {
+	PyObject *num = PyLong_FromLong((long) data[i]);
+	if (!num) {
+	    Py_DECREF(listObj);
+	    PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+	}
+	PyList_SET_ITEM(listObj, i, num);
+    }
+    return listObj;
+}
+
+PyObject* uint_vector_to_list(const std::vector<uint32_t> &data)
+{
+    PyObject* listObj = PyList_New(data.size());
+    if (!listObj)
+	PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+    for (unsigned int i = 0 ; i < data.size() ; i++) {
+	PyObject *num = PyLong_FromLong(data[i]);
+	if (!num) {
+	    Py_DECREF(listObj);
+	    PyErr_SetString(PyExc_SystemError, "unable to allocate memory for Python list/");
+	}
+	PyList_SET_ITEM(listObj, i, num);
+    }
+    return listObj;
+}
+
+static PyObject* load_file(Solver *self, std::string cnf)
+{
+    std::ifstream cnf_file(cnf, std::ios::in);
+    if (cnf_file.is_open()) {
+        std::string line;
+        while (std::getline(cnf_file, line)) {
+	    if (line[0] == 'x') {
+                std::string buf;
+                std::stringstream ss(line.substr(1,line.size()));
+                std::vector<uint32_t> tokens;
+                bool rhs = true;
+                while (ss >> buf) {
+                    int tok = 0;
+                    try {
+                        int tmp_tok = stoi(buf);
+                        if (tmp_tok < 0) {
+                            rhs ^= true;
+                        }
+                        tok = abs(tmp_tok);
+                    }
+                    catch (std::invalid_argument& e){
+                        PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
+                    }
+                    if (tok != 0) {
+                        tokens.push_back(tok);
+                    }
+                }
+
+                PyObject* clause = uint_vector_to_list(tokens);
+                std::vector<uint32_t> lits;
+                if (!parse_xor_clause(self, clause, lits)) {
+                    return 0;
+                }
+
+                self->cmsat->add_xor_clause(lits, rhs);
+                self->xor_clauses.push_back(lits);
+                self->rhs.push_back(rhs);
+            }
+            else if ((line[0] != 'c') && (line[0] != 'p')) { // ignoring comments in DIMACS
+                std::string buf;
+                std::stringstream ss(line);
+                std::vector<int> tokens;
+                while (ss >> buf) {
+                    int tok;
+                    try {
+                        tok = stoi(buf);
+                    }
+                    catch (std::invalid_argument& e){
+                        PyErr_SetString(PyExc_ValueError, "invalid character in DIMACS file (not an integer)");
+                    }
+                    if (tok != 0) {
+                        tokens.push_back(tok);
+                    }
+                }
+                PyObject* clause = int_vector_to_list(tokens);
+                std::vector<Lit> lits;
+                if (!parse_clause(self, clause, lits)) {
+                    return 0;
+                }
+
+                self->cmsat->add_clause(lits);
+                self->clauses.push_back(lits);
+            }
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_SystemError, "Error opening cnf_file");
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyDoc_STRVAR(load_doc,
+"load(cnf)\n\
+Parse DIMACS file to add clauses to the solver.\n\
+\n\
+:param arg1: A DIMACS filename.\n\
+:return: None\n\
+:type arg1: <String>\n\
+:rtype: <None>"
+);
+
+static PyObject* load(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"cnf", NULL};
+    char* cnf = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
+        return NULL;
+    }
+
+    std::string cnf_file_name = cnf;
+    return load_file(self, cnf_file_name);
+}
+
+static PyObject* save_file(Solver *self, std::string cnf)
+{
+    std::ofstream cnf_file(cnf, std::fstream::out | std::fstream::trunc);
+    if (cnf_file.is_open()) {
+        cnf_file << "p cnf " << self->cmsat->nVars() << " " << self->clauses.size() + self->xor_clauses.size() << "\n";
+        for (std::vector<std::vector<Lit>>::iterator it = self->clauses.begin(); it != self->clauses.end(); ++it) {
+            for (std::vector<Lit>::iterator jt = it->begin(); jt != it->end(); ++jt) {
+                cnf_file << static_cast<int>(convert_from_lit_to_int(jt->toInt())) << " ";
+    	    }
+    	    cnf_file << "0" << "\n";
+        }
+        std::vector<bool>::iterator rhs_it = self->rhs.begin();
+        for (std::vector<std::vector<uint32_t>>::iterator it = self->xor_clauses.begin();
+            it != self->xor_clauses.end(); ++it, ++rhs_it) {
+            if (!*rhs_it) {
+                cnf_file << "-";
+                *rhs_it = false;
+            }
+            for (std::vector<uint32_t>::iterator jt = it->begin(); jt != it->end(); ++jt) {
+                cnf_file << *jt + 1 << " ";
+            }
+    	    cnf_file << "0" << "\n";
+        }
+        cnf_file.close();
+    }
+    else {
+        PyErr_SetString(PyExc_SystemError, "Error opening cnf_file");
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyDoc_STRVAR(save_doc,
+"save(cnf)\n\
+save clauses as a DIMACS file.\n\
+\n\
+:param arg1: A DIMACS filename.\n\
+:return: None\n\
+:type arg1: <String>\n\
+:rtype: <None>"
+);
+
+static PyObject* save(Solver *self, PyObject *args, PyObject *kwds)
+{
+    static char* kwlist[] = {"cnf", NULL};
+    char* cnf = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &cnf)) {
+        return NULL;
+    }
+
+    std::string cnf_file_name = cnf;
+    return save_file(self, cnf_file_name);
 }
 
 static PyObject* get_solution(SATSolver *cmsat)
@@ -411,12 +618,18 @@ static PyObject* nb_vars(Solver *self)
     #endif
 }
 
-/*
+PyDoc_STRVAR(nb_clauses_doc,
+"nb_clauses()\n\
+Return the number of clauses in the solver.\n\
+\n\
+:return: Number of clauses\n\
+:rtype: <int>"
+);
+
 static PyObject* nb_clauses(Solver *self)
 {
-    // Private attribute => need to make a public method
-    return PyInt_FromLong(self->cmsat->data->solvers.size());
-}*/
+    return PyLong_FromLong(self->clauses.size());
+}
 
 static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::vector<Lit>& assumption_lits)
 {
@@ -454,7 +667,7 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 }
 
 PyDoc_STRVAR(solve_doc,
-"solve(assumptions=None)\n\
+"solve(assumptions=None, drat=None)\n\
 Solve the system of equations that have been added with add_clause();\n\
 \n\
 .. example:: \n\
@@ -483,7 +696,10 @@ Solve the system of equations that have been added with add_clause();\n\
     is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
     solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
     still return a solution.\n\
+:param arg2: (Optional) Asks the solver to generate a DRAT file under the\n\
+    specified name.\n\
 :type arg1: <list>\n\
+:type arg2: <String>\n\
 :return: A tuple. First part of the tuple indicates whether the problem\n\
     is satisfiable. The second part is a tuple contains the solution,\n\
     preceded by None, so you can index into it with the variable number.\n\
@@ -494,9 +710,24 @@ Solve the system of equations that have been added with add_clause();\n\
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    static char* kwlist[] = {"assumptions", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+    char* drat = NULL;
+    static char* kwlist[] = {"assumptions", "drat", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Os", kwlist, &assumptions, &drat)) {
         return NULL;
+    }
+
+    std::string drat_file_name;
+    if (drat != NULL) {
+        // Add other exceptions if other non DRAT compliant features are added in the future
+        if (self->nb_threads > 1) {
+            PyErr_SetString(PyExc_ValueError, "number of threads must stricktly be 1 to get DRAT file");
+            return NULL;
+        }
+        if (self->xor_clauses.size() > 0) {
+            PyErr_SetString(PyExc_ValueError, "XOR manipulation is not supported in DRAT");
+            return NULL;
+        }
+        drat_file_name = drat;
     }
 
     std::vector<Lit> assumption_lits;
@@ -510,6 +741,16 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     if (result == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a tuple");
         return NULL;
+    }
+
+    std::ofstream drat_file;
+    if (!drat_file_name.empty()) {
+        drat_file.open(drat_file_name, std::fstream::out);
+        if (!drat_file) {
+            PyErr_SetString(PyExc_ValueError, "could not open DRAT file for writing");
+            return NULL;
+        }
+        self->cmsat->set_drat(&drat_file, false);
     }
 
     lbool res;
@@ -543,6 +784,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         assert((res == l_False) || (res == l_True) || (res == l_Undef));
         Py_DECREF(result);
         return NULL;
+    }
+
+    if (drat_file.is_open()) {
+        drat_file.close();
     }
 
     return result;
@@ -763,9 +1008,11 @@ static PyMethodDef Solver_methods[] = {
     {"add_clauses", (PyCFunction) add_clauses,  METH_VARARGS | METH_KEYWORDS, add_clauses_doc},
     {"add_xor_clause",(PyCFunction) add_xor_clause,  METH_VARARGS | METH_KEYWORDS, "adds an XOR clause to the system"},
     {"nb_vars", (PyCFunction) nb_vars, METH_VARARGS | METH_KEYWORDS, nb_vars_doc},
-    //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
+    {"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, nb_clauses_doc},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
+    {"load", (PyCFunction) load, METH_VARARGS | METH_KEYWORDS, load_doc},
+    {"save", (PyCFunction) save, METH_VARARGS | METH_KEYWORDS, save_doc},
     {NULL,        NULL}  /* sentinel - marks the end of this structure */
 };
 
@@ -783,7 +1030,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->cmsat = setup_solver(args, kwds);
+        setup_solver(self, args, kwds);
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -795,7 +1042,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
-    self->cmsat = setup_solver(args, kwds);
+    setup_solver(self, args, kwds);
     if (!self->cmsat) {
         return -1;
     }
