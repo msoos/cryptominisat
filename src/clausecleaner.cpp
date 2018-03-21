@@ -49,6 +49,11 @@ void ClauseCleaner::clean_binary_implicit(
     , const Lit lit
 ) {
     if (satisfied(ws, lit)) {
+        //Only delete once
+        if (lit < ws.lit2()) {
+            (*solver->drat) << del << lit << ws.lit2() << fin;
+        }
+
         if (ws.red()) {
             impl_data.remLBin++;
         } else {
@@ -163,6 +168,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
     assert(cl.size() > 2);
+    (*solver->drat) << deldelay << cl << fin;
 
     #ifdef SLOW_DEBUG
     uint32_t num_false_begin = 0;
@@ -182,11 +188,15 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
         }
 
         if (val == l_True) {
+            (*solver->drat) << findelay;
             return true;
         }
     }
     if (i != j) {
         cl.shrink(i-j);
+        (*solver->drat) << add << cl << fin << findelay;
+    } else {
+        solver->drat->forget_delay();
     }
 
     assert(cl.size() > 1);
