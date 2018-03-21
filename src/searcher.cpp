@@ -215,6 +215,7 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
     }
 
     if (drat->enabled()) {
+        *drat << add;
         for(unsigned  i = 0; i < newCl.size; i++) {
             *drat << newCl.lits[i];
         }
@@ -255,7 +256,7 @@ void Searcher::create_otf_subsuming_long_clause(
     cl.stats.ID = clauseID;
     clauseID++;
 #endif
-    *drat << cl << fin << findelay;
+    *drat << add << cl << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
 }
 
@@ -1394,7 +1395,7 @@ void Searcher::add_otf_subsume_long_clauses()
 
             //Drat
             if (decisionLevel() == 0) {
-                *drat << cl[0] << fin;
+                *drat << add << cl[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1459,7 +1460,7 @@ void Searcher::add_otf_subsume_implicit_clause()
 
             //Drat
             if (decisionLevel() == 0) {
-                *drat << it->lits[0] << fin;
+                *drat << add << it->lits[0] << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1642,7 +1643,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 2) {
-        *drat << learnt_clause << fin;
+        *drat << add << learnt_clause << fin;
         return NULL;
     }
 
@@ -1684,7 +1685,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
         cl->stats.which_red_array = which_arr;
         solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-        *drat << *cl << fin;
+        *drat << add << *cl << fin;
 
         #ifdef STATS_NEEDED
         if (solver->sqlStats
@@ -2892,10 +2893,10 @@ PropBy Searcher::propagate() {
                 << endl;
             }
             #endif
-            *drat << trail[i] << fin;
+            *drat << add << trail[i] << fin;
         }
         if (!ret.isNULL()) {
-            *drat << fin;
+            *drat << add << fin;
         }
     }
 

@@ -64,6 +64,7 @@ THE SOFTWARE.
 #include "gaussian.h"
 #include "matrixfinder.h"
 #include "sqlstats.h"
+#include "drat.h"
 
 using namespace CMSat;
 using std::cout;
@@ -216,7 +217,7 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= rhs;
     } else {
         if (rhs) {
-            *drat << fin;
+            *drat << add << fin;
             ok = false;
         }
         return ok;
@@ -418,7 +419,7 @@ Clause* Solver::add_clause_int(
             }
         }
         std::swap(ps[0], ps[i]);
-        *drat << ps << fin;
+        *drat << add << ps << fin;
         std::swap(ps[0], ps[i]);
 
         if (ps.size() == 2) {
@@ -487,10 +488,7 @@ void Solver::attachClause(
 ) {
     #if defined(DRAT_DEBUG) && defined(DRAT)
     if (drat) {
-        for(size_t i = 0; i < cl.size(); i++) {
-            *drat << cl[i];
-        }
-        *drat << fin;
+        *drat << add << cl << fin;
     }
     #endif
 
@@ -511,7 +509,7 @@ void Solver::attach_bin_clause(
     , const bool checkUnassignedFirst
 ) {
     #if defined(DRAT_DEBUG)
-    *drat << lit1 << lit2 << fin;
+    *drat << add << lit1 << lit2 << fin;
     #endif
 
     //Update stats
@@ -690,12 +688,12 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl_tmp.empty()) {
-            *drat << finalCl_tmp << fin;
+            *drat << add << finalCl_tmp << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!okay()) {
-            *drat << fin;
+            *drat << add << fin;
         }
         *drat << del << ps << fin;
     }
@@ -1360,6 +1358,7 @@ lbool Solver::solve_with_assumptions(
     assumptions.clear();
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
+    drat->flush();
     return status;
 }
 

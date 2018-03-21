@@ -1557,11 +1557,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
             const Lit l = blockedClauses[i].lits[at];
             if (l == lit_Undef) {
                 if (!(lits.size() <= 2 && (solver->conf.doCache|| solver->conf.doStamp))) {
-                    (*solver->drat) << del;
-                    for(Lit x: lits) {
-                        (*solver->drat) << x;
-                    }
-                    (*solver->drat) << fin;
+                    (*solver->drat) << del << lits << fin;
                 }
 
                 lits.clear();

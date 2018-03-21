@@ -778,8 +778,8 @@ bool VarReplacer::replace(
 
     #ifdef DRAT_DEBUG
     (*solver->drat)
-    << add << Lit(var1, true)  << " " << (Lit(var2, false) ^ xor_is_true) << fin
-    << add << Lit(var1, false) << " " << (Lit(var2, true)  ^ xor_is_true) << fin
+    << add << Lit(var1, true)  << (Lit(var2, false) ^ xor_is_true) << fin
+    << add << Lit(var1, false) << (Lit(var2, true)  ^ xor_is_true) << fin
     ;
     #endif
 

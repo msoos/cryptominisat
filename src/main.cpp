@@ -803,7 +803,7 @@ void Main::handle_drat_option()
         dratf = &cout;
     } else {
         std::ofstream* dratfTmp = new std::ofstream;
-        dratfTmp->open(dratfilname.c_str(), std::ofstream::out);
+        dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
         if (!*dratfTmp) {
             std::cerr
             << "ERROR: Could not open DRAT file "
