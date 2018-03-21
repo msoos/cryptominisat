@@ -1726,7 +1726,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->stats.ID = clauseID;
         clauseID++;
     #endif
-    *(solver->drat) << *cl << fin << findelay;
+    *(solver->drat) << add << *cl << fin << findelay;
 
     #ifdef STATS_NEEDED
     cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;

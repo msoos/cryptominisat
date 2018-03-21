@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-enum DratFlag{fin, deldelay, del, findelay};
+enum DratFlag{fin, deldelay, del, findelay, add};
 
 struct Drat
 {
@@ -38,6 +38,7 @@ struct Drat
 
     virtual ~Drat()
     {
+        delete drup_buf;
     }
 
     virtual bool enabled()
@@ -82,14 +83,66 @@ struct Drat
     virtual void setFile(std::ostream*)
     {
     }
+
+    int buf_len = 0;
+    unsigned char* drup_buf;
+    unsigned char* buf_ptr;
 };
 
 template<bool add_ID>
 struct DratFile: public Drat
 {
+    DratFile()
+    {
+        drup_buf = new unsigned char[2 * 1024 * 1024];
+        buf_ptr = drup_buf;
+
+        del_buf = new unsigned char[2 * 1024 * 1024];
+        del_ptr = del_buf;
+    }
+
+    virtual ~DratFile()
+    {
+        delete drup_buf;
+        delete del_buf;
+    }
+
+    void byteDRUPa(const Lit l)
+    {
+        unsigned int u = 2 * (l.var() + 1) + l.sign();
+        do {
+            *buf_ptr++ = u & 0x7f | 0x80;
+            buf_len++;
+            u = u >> 7;
+        } while (u);
+
+        // End marker of this unsigned number
+        *(buf_ptr - 1) &= 0x7f;
+    }
+
+    void byteDRUPd(const Lit l)
+    {
+        unsigned int u = 2 * (l.var() + 1) + l.sign();
+        do {
+            *del_ptr++ = u & 0x7f | 0x80;
+            del_len++;
+            u = u >> 7;
+        } while (u);
+
+        // End marker of this unsigned number
+        *(del_ptr - 1) &= 0x7f;
+    }
+
+    void binDRUP_flush() {
+        //fwrite_unlocked(drup_buf, sizeof(unsigned char), buf_len, drup_file);
+        drup_file->write((const char*)drup_buf, buf_len);
+        buf_ptr = drup_buf;
+        buf_len = 0;
+    }
+
     void setFile(std::ostream* _file) override
     {
-        file = _file;
+        drup_file = _file;
     }
 
     bool get_conf_id() override {
@@ -103,7 +156,7 @@ struct DratFile: public Drat
 
     void forget_delay() override
     {
-        todel.str(string());
+        del_ptr = del_buf;
         must_delete_next = false;
         delete_filled = false;
     }
@@ -113,16 +166,19 @@ struct DratFile: public Drat
         return true;
     }
 
-    std::stringstream todel;
+    int del_len = 0;
+    unsigned char* del_buf;
+    unsigned char* del_ptr;
+
     bool delete_filled = false;
     bool must_delete_next = false;
 
     Drat& operator<<(const Lit lit) override
     {
         if (must_delete_next) {
-            todel << lit << " ";
+            byteDRUPd(lit);
         } else {
-            *file << lit << " ";
+            byteDRUPa(lit);
         }
 
         return *this;
@@ -131,9 +187,11 @@ struct DratFile: public Drat
     Drat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
-            todel << cl << " ";
+            for(const Lit l: cl)
+                byteDRUPd(l);
         } else {
-            *file << cl << " ";
+            for(const Lit l: cl)
+                byteDRUPa(l);
         }
         #ifdef STATS_NEEDED
         if (add_ID) {
@@ -151,15 +209,18 @@ struct DratFile: public Drat
         {
             case DratFlag::fin:
                 if (must_delete_next) {
-                    todel << "0\n";
+                    *del_ptr++ = 0;
+                    del_len++;
                     delete_filled = true;
                 } else {
+                    *buf_ptr++ = 0;
+                    buf_len++;
                     if (add_ID) {
-                        *file << "0 "
-                        << ID
-                        << "\n";
-                    } else {
-                        *file << "0 \n";
+                        //HACK and *will not work*, 31b is too small!!
+                        byteDRUPa(Lit(ID, false));
+                    }
+                    if (buf_len > 1048576) {
+                        binDRUP_flush();
                     }
                 }
                 if (add_ID) {
@@ -170,8 +231,10 @@ struct DratFile: public Drat
 
             case DratFlag::deldelay:
                 assert(!delete_filled);
-                assert(todel.str() == "");
-                todel.str(string());
+                del_ptr = del_buf;
+                del_len = 0;
+                *buf_ptr++ = 'd';
+                buf_len++;
                 delete_filled = false;
 
                 must_delete_next = true;
@@ -179,24 +242,38 @@ struct DratFile: public Drat
 
             case DratFlag::findelay:
                 assert(delete_filled);
-                *file << "d " << todel.str();
-                todel.str(string());
+                memcpy(buf_ptr, del_buf, del_len);
+                buf_len += del_len;
+                buf_ptr += del_len;
+                if (buf_len > 1048576) {
+                    binDRUP_flush();
+                }
+
+                del_ptr = del_buf;
+                del_len = 0;
                 delete_filled = false;
                 break;
 
+            case DratFlag::add:
+                *buf_ptr++ = 'a';
+                buf_len++;
+                break;
+
             case DratFlag::del:
-                todel.str(string());
+                del_ptr = del_buf;
+                del_len = 0;
                 delete_filled = false;
 
                 must_delete_next = false;
-                *file << "d ";
+                *buf_ptr++ = 'd';
+                buf_len++;
                 break;
         }
 
         return *this;
     }
 
-    Drat& operator<<(const vector<Lit>& lits) override
+    /*Drat& operator<<(const vector<Lit>& lits) override
     {
         if (must_delete_next) {
             todel << lits << " ";
@@ -205,9 +282,9 @@ struct DratFile: public Drat
         }
 
         return *this;
-    }
+    }*/
 
-    std::ostream* file = NULL;
+    std::ostream* drup_file = NULL;
     int64_t ID = 1;
 };
 

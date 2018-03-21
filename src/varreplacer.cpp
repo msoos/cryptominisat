@@ -320,7 +320,7 @@ void VarReplacer::newBinClause(
         && origLit2 < origLit3
     ){
         delayed_attach_bin.push_back(BinaryClause(lit1, lit2, red));
-        (*solver->drat) << lit1 << lit2 << fin;
+        (*solver->drat) << add << lit1 << lit2 << fin;
     }
 }
 
@@ -337,7 +337,7 @@ inline void VarReplacer::updateBin(
     //Two lits are the same in BIN
     if (lit1 == lit2) {
         delayedEnqueue.push_back(lit2);
-        (*solver->drat) << lit2 << fin;
+        (*solver->drat) << add << lit2 << fin;
         remove = true;
     }
 
@@ -364,7 +364,7 @@ inline void VarReplacer::updateBin(
         && (origLit1 < origLit2)
     ) {
         (*solver->drat)
-        << lit1 << lit2 << fin
+        << add << lit1 << lit2 << fin
         << del << origLit1 << origLit2 << fin;
     }
 
@@ -567,7 +567,7 @@ bool VarReplacer::handleUpdatedClause(
         c.setRemoved();
         return true;
     }
-    (*solver->drat) << c << fin << findelay;
+    (*solver->drat) << add << c << fin << findelay;
 
     runStats.bogoprops += 3;
     switch(c.size()) {
@@ -702,10 +702,10 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
     //OOps, already inside, but with inverse polarity, UNSAT
     if (lit1.sign() != lit2.sign()) {
         (*solver->drat)
-        << ~lit1 << lit2 << fin
-        << lit1 << ~lit2 << fin
-        << lit1 << fin
-        << ~lit1 << fin;
+        << add << ~lit1 << lit2 << fin
+        << add << lit1 << ~lit2 << fin
+        << add << lit1 << fin
+        << add << ~lit1 << fin;
 
         solver->ok = false;
         return false;
@@ -723,8 +723,8 @@ bool VarReplacer::replace_vars_already_set(
 ) {
     if (val1 != val2) {
         (*solver->drat)
-        << ~lit1 << fin
-        << lit1 << fin;
+        << add << ~lit1 << fin
+        << add << lit1 << fin;
 
         solver->ok = false;
     }
@@ -747,7 +747,7 @@ bool VarReplacer::handleOneSet(
             toEnqueue = lit1 ^ (val2 == l_False);
         }
         solver->enqueue(toEnqueue);
-        (*solver->drat) << toEnqueue << fin;
+        (*solver->drat) << add << toEnqueue << fin;
 
         #ifdef STATS_NEEDED
         solver->propStats.propsUnit++;
@@ -778,8 +778,8 @@ bool VarReplacer::replace(
 
     #ifdef DRAT_DEBUG
     (*solver->drat)
-    << Lit(var1, true)  << " " << (Lit(var2, false) ^ xor_is_true) << fin
-    << Lit(var1, false) << " " << (Lit(var2, true)  ^ xor_is_true) << fin
+    << add << Lit(var1, true)  << " " << (Lit(var2, false) ^ xor_is_true) << fin
+    << add << Lit(var1, false) << " " << (Lit(var2, true)  ^ xor_is_true) << fin
     ;
     #endif
 
@@ -792,8 +792,8 @@ bool VarReplacer::replace(
         return handleAlreadyReplaced(lit1, lit2);
     }
     (*solver->drat)
-    << ~lit1 << lit2 << fin
-    << lit1 << ~lit2 << fin;
+    << add << ~lit1 << lit2 << fin
+    << add << lit1 << ~lit2 << fin;
 
     //None should be removed, only maybe queued for replacement
     assert(solver->varData[lit1.var()].removed == Removed::none);

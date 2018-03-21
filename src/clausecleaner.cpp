@@ -49,11 +49,6 @@ void ClauseCleaner::clean_binary_implicit(
     , const Lit lit
 ) {
     if (satisfied(ws, lit)) {
-        //Only delete once
-        if (lit < ws.lit2()) {
-            (*solver->drat) << del << lit << ws.lit2() << fin;
-        }
-
         if (ws.red()) {
             impl_data.remLBin++;
         } else {
@@ -77,7 +72,6 @@ void ClauseCleaner::clean_implicit_watchlist(
             *j++ = *i;
             continue;
         }
-        assert(!solver->drat->something_delayed());
 
         if (i->isBin()) {
             clean_binary_implicit(*i, j, lit);
@@ -89,7 +83,6 @@ void ClauseCleaner::clean_implicit_watchlist(
 
 void ClauseCleaner::clean_implicit_clauses()
 {
-    assert(!solver->drat->something_delayed());
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
     size_t wsLit = 0;
@@ -127,7 +120,6 @@ void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
-    assert(!solver->drat->something_delayed());
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
 
@@ -170,9 +162,7 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 
 inline bool ClauseCleaner::clean_clause(Clause& cl)
 {
-    assert(!solver->drat->something_delayed());
     assert(cl.size() > 2);
-    (*solver->drat) << deldelay << cl << fin;
 
     #ifdef SLOW_DEBUG
     uint32_t num_false_begin = 0;
@@ -192,15 +182,11 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
         }
 
         if (val == l_True) {
-            (*solver->drat) << findelay;
             return true;
         }
     }
     if (i != j) {
         cl.shrink(i-j);
-        (*solver->drat) << cl << fin << findelay;
-    } else {
-        solver->drat->forget_delay();
     }
 
     assert(cl.size() > 1);

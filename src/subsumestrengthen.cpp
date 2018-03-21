@@ -550,7 +550,7 @@ void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
     cl.strengthen(toRemoveLit);
     simplifier->added_cl_to_var.touch(toRemoveLit.var());
     cl.recalc_abst_if_needed();
-    (*solver->drat) << cl << fin << findelay;
+    (*solver->drat) << add << cl << fin << findelay;
     if (!cl.red()) {
         simplifier->n_occurs[toRemoveLit.toInt()]--;
         simplifier->elim_calc_need_update.touch(toRemoveLit.var());
