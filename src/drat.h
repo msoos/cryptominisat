@@ -214,6 +214,19 @@ struct DratFile: public Drat
         return *this;
     }
 
+    Drat& operator<<(const vector<Lit>& cl) override
+    {
+        if (must_delete_next) {
+            for(const Lit l: cl)
+                byteDRUPd(l);
+        } else {
+            for(const Lit l: cl)
+                byteDRUPa(l);
+        }
+
+        return *this;
+    }
+
     Drat& operator<<(const DratFlag flag) override
     {
         switch (flag)
