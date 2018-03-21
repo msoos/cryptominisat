@@ -38,7 +38,6 @@ struct Drat
 
     virtual ~Drat()
     {
-        delete drup_buf;
     }
 
     virtual bool enabled()
@@ -85,7 +84,7 @@ struct Drat
     }
 
     int buf_len = 0;
-    unsigned char* drup_buf;
+    unsigned char* drup_buf = 0;
     unsigned char* buf_ptr;
 };
 
