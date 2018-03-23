@@ -275,6 +275,7 @@ class Tester:
 
         if random.choice([True, False]):
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
+            cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--maple %d " % random.choice([0, 0, 0, 1])
             cmd += "--reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
             # cmd += "--undef %d " % random.choice([0, 1])
@@ -375,8 +376,6 @@ class Tester:
         command += rnd_opts
         if self.needDebugLib:
             command += "--debuglib %s " % fname
-        if not options.verbose:
-            command += "--verb 0 "
         command += "--threads %d " % self.num_threads
         command += options.extra_options + " "
         command += fixed_opts + " "

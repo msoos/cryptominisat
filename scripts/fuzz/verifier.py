@@ -251,6 +251,15 @@ class solution_parser:
                         break
                     intvar = int(var)
                     solution[abs(intvar)] = (intvar >= 0)
+                continue
+
+            if (line.strip() == ""):
+                continue
+
+            print("Error! SAT solver output contains a line that is neither 'v' nor 'c' nor 's'!")
+            print("Line is:", line.strip())
+            exit(500)
+
         # print("Parsed values:", solution)
 
         if (ignoreNoSolution is False and
