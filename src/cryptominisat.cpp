@@ -122,8 +122,12 @@ DLL_PUBLIC SATSolver::SATSolver(
     data = new CMSatPrivateData(interrupt_asap);
 
     if (config && ((SolverConf*) config)->verbosity) {
-        print_thread_start_and_finish = true;
+        //NOT SAFE
+        //yes -- this system will use a lock, but the solver itself won't(!)
+        //so things will get mangled and printed wrongly
+        //print_thread_start_and_finish = true;
     }
+
     data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
 }
 
@@ -463,10 +467,11 @@ DLL_PUBLIC void SATSolver::set_independent_vars(vector<uint32_t>* ind_vars)
 
 DLL_PUBLIC void SATSolver::set_verbosity(unsigned verbosity)
 {
-  for (size_t i = 0; i < data->solvers.size(); ++i) {
-    Solver& s = *data->solvers[i];
+    if (data->solvers.empty())
+        return;
+
+    Solver& s = *data->solvers[0];
     s.conf.verbosity = verbosity;
-  }
 }
 
 DLL_PUBLIC void SATSolver::set_timeout_all_calls(double timeout)
