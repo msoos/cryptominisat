@@ -273,6 +273,8 @@ void Main::add_supported_options()
         , "Add clause IDs to DRAT output")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
         , "Use maple-type variable picking sometimes")
+    ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
+        , "Use maple N-1 of N rounds. Normall, N is 2, so used every other round. Set to 3 and it will use maple 2/3 of the time.")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;

@@ -1583,7 +1583,12 @@ lbool Solver::iterate_until_solved()
 
         //Iterate between VSIDS and Maple
         if (conf.maple) {
-            VSIDS = !VSIDS;
+            int modulo = (iteration_num-1) % conf.modulo_maple_iter;
+            if (modulo < (conf.modulo_maple_iter-1)) {
+                VSIDS = false;
+            } else {
+                VSIDS = true;
+            }
         } else {
             //so that in case of reconfiguration, VSIDS is correctly set
             VSIDS = true;

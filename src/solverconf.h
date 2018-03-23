@@ -167,6 +167,7 @@ class DLL_PUBLIC SolverConf
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
         int      maple;
+        unsigned modulo_maple_iter;
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
