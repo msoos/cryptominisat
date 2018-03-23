@@ -332,6 +332,7 @@ class DLL_PUBLIC SolverConf
         double global_timeout_multiplier;
         double global_timeout_multiplier_multiplier;
         double global_multiplier_multiplier_max;
+        double var_and_mem_out_mult;
 
         //Misc
         unsigned origSeed;

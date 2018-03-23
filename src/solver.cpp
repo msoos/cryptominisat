@@ -921,7 +921,7 @@ void Solver::renumber_variables(bool must_renumber)
 void Solver::check_switchoff_limits_newvar(size_t n)
 {
     if (conf.doStamp
-        && nVars() + n > 15ULL*1000ULL*1000ULL //~1 GB of RAM
+        && nVars() + n > 15ULL*1000ULL*1000ULL*conf.var_and_mem_out_mult //~1 GB of RAM
     ) {
         conf.doStamp = false;
         stamp.freeMem();
@@ -934,7 +934,7 @@ void Solver::check_switchoff_limits_newvar(size_t n)
     }
 
     if (conf.doCache
-        && nVars() + n > 5ULL*1000ULL*1000ULL
+        && nVars() + n > 5ULL*1000ULL*1000ULL*conf.var_and_mem_out_mult
     ) {
         conf.doCache = false;
         implCache.free();
@@ -1702,14 +1702,14 @@ bool Solver::execute_inprocess_strategy(
         }
 
         if (token == "find-comps") {
-            if (get_num_free_vars() < conf.compVarLimit) {
+            if (get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult) {
                 CompFinder findParts(this);
                 findParts.find_components();
             }
         } else if (token == "handle-comps") {
             if (compHandler
                 && conf.doCompHandler
-                && get_num_free_vars() < conf.compVarLimit
+                && get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult
                 && solveStats.numSimplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
                 && solveStats.numSimplify % 2 == 0 //TODO

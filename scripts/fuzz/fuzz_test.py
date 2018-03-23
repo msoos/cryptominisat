@@ -274,6 +274,7 @@ class Tester:
             cmd += "--maxgaussdepth 0 "
 
         if random.choice([True, False]):
+            cmd += "--memoutmut %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--maple %d " % random.choice([0, 0, 0, 1])
             cmd += "--reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
             # cmd += "--undef %d " % random.choice([0, 1])

@@ -191,8 +191,11 @@ bool DistillerLong::distill_long_cls_all(
         solver->conf.distill_long_cls_time_limitM*1000LL*1000ULL
         *solver->conf.global_timeout_multiplier;
 
-    if (solver->litStats.irredLits + solver->litStats.redLits < (500ULL*1000ULL))
+    if (solver->litStats.irredLits + solver->litStats.redLits <
+            (500ULL*1000ULL*solver->conf.var_and_mem_out_mult)
+    ) {
         maxNumProps *=2;
+    }
     maxNumProps *= time_mult;
     orig_maxNumProps = maxNumProps;
 

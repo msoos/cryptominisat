@@ -572,6 +572,8 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit strengthening")
     ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
         , "Number of conflicts to do in burst search")
+    ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
+        , "Multiplier for memory-out checks on variables and clause-link-in, etc. Used for fuzzing by setting it very low, e.g. 0.000001")
     ;
 
     po::options_description reconfOptions("Reconf options");

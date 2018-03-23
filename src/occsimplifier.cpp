@@ -1312,8 +1312,8 @@ bool OccSimplifier::setup()
     solver->clauseCleaner->remove_and_clean_all();
 
     //If too many clauses, don't do it
-    if (solver->getNumLongClauses() > 40ULL*1000ULL*1000ULL
-        || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL
+    if (solver->getNumLongClauses() > 40ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
+        || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     ) {
         if (solver->conf.verbosity) {
             cout << "[occ] will not link in occur, CNF has too many clauses/irred lits" << endl;
@@ -1419,7 +1419,7 @@ bool OccSimplifier::fill_occur()
     //Add irredundant to occur
     uint64_t memUsage = calc_mem_usage_of_occur(solver->longIrredCls);
     print_mem_usage_of_occur(memUsage);
-    if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL) {
+    if (memUsage > solver->conf.maxOccurIrredMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
         if (solver->conf.verbosity) {
             cout << "c [occ] Memory usage of occur is too high, unlinking and skipping occur" << endl;
         }
@@ -1441,7 +1441,7 @@ bool OccSimplifier::fill_occur()
     memUsage = calc_mem_usage_of_occur(solver->longRedCls[0]);
     print_mem_usage_of_occur(memUsage);
     bool linkin = true;
-    if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL) {
+    if (memUsage > solver->conf.maxOccurRedMB*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult) {
         linkin = false;
     }
     //Sort, so we get the shortest ones in at least
@@ -1452,7 +1452,7 @@ bool OccSimplifier::fill_occur()
         solver->longRedCls[0]
         , linkin
         , solver->conf.maxRedLinkInSize
-        , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL
+        , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     );
     solver->longRedCls[0].clear();
 
