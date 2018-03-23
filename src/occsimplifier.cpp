@@ -1316,7 +1316,7 @@ bool OccSimplifier::setup()
         || solver->litStats.irredLits > 100ULL*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     ) {
         if (solver->conf.verbosity) {
-            cout << "[occ] will not link in occur, CNF has too many clauses/irred lits" << endl;
+            cout << "c [occ] will not link in occur, CNF has too many clauses/irred lits" << endl;
         }
         return false;
     }
