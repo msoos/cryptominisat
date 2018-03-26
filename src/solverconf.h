@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-#include "constants.h"
 #include "cryptominisat5/solvertypesmini.h"
 
 using std::string;
@@ -106,7 +105,12 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     };
 }
 
-class DLL_PUBLIC SolverConf
+
+#ifdef _WIN32
+class __declspec(dllexport) SolverConf
+#else
+class SolverConf
+#endif
 {
     public:
         SolverConf();
