@@ -281,16 +281,13 @@ void ImplCache::handleNewData(
     //the watchlists, which are being traversed by the callers, so we add these
     //new truths as delayed clauses, and add them at the end
 
-    vector<Lit> tmp;
-
     //a->b and (-a)->b, so 'b'
     if  (val[lit.var()] == lit.sign()) {
         delayedClausesToAddNorm.push_back(lit);
         runStats.bProp++;
     } else {
         //a->b, and (-a)->(-b), so equivalent literal
-        tmp.push_back(Lit(var, false));
-        tmp.push_back(Lit(lit.var(), false));
+        auto tmp = std::make_pair(Lit(var, false), Lit(lit.var(), false));
         bool sign = lit.sign();
         delayedClausesToAddXor.push_back(std::make_pair(tmp, sign));
         runStats.bXProp++;
@@ -300,34 +297,25 @@ void ImplCache::handleNewData(
 bool ImplCache::addDelayedClauses(Solver* solver)
 {
     assert(solver->ok);
+    vector<Lit> tmp;
 
     //Add all delayed clauses
     if (solver->conf.doFindAndReplaceEqLits) {
-        for(vector<std::pair<vector<Lit>, bool> > ::const_iterator
-            it = delayedClausesToAddXor.begin(), end = delayedClausesToAddXor.end()
-            ; it != end
-            ; ++it
-        ) {
-            bool OK = true;
-            for(vector<Lit>::const_iterator
-                it2 = it->first.begin(), end2 = it->first.end()
-                ; it2 != end2
-                ; it2++
+        for(const auto& x: delayedClausesToAddXor) {
+            Lit lit1 = x.first.first;
+            Lit lit2 = x.first.second;
+            if (solver->varData[lit1.var()].removed != Removed::none ||
+                solver->varData[lit2.var()].removed != Removed::none
             ) {
-                if (solver->varData[it2->var()].removed != Removed::none) {
-                    //Var has been eliminated one way or another. Don't add this clause
-                    OK = false;
-                    break;
-                }
+                //Var has been eliminated one way or another. Don't add this clause
+                continue;
             }
 
-            //If any of the variables have been eliminated (possible, if cache is used)
-            //then don't add this clause
-            if (!OK)
-                continue;
-
             //Add the clause
-            solver->add_xor_clause_inter(it->first, it->second, true);
+            tmp.clear();
+            tmp.push_back(lit1);
+            tmp.push_back(lit2);
+            solver->add_xor_clause_inter(tmp, x.second, true);
 
             //Check if this caused UNSAT
             if  (!solver->ok)

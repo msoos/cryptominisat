@@ -248,7 +248,7 @@ private:
         , Lit lit
     );
 
-    vector<std::pair<vector<Lit>, bool> > delayedClausesToAddXor;
+    vector< std::pair<std::pair<Lit, Lit>, bool> > delayedClausesToAddXor;
     vector<Lit> delayedClausesToAddNorm;
     bool addDelayedClauses(Solver* solver);
 };
