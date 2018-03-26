@@ -59,8 +59,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
-        , maple(false)
-        , modulo_maple_iter(2)
+        , maple(true)
+        , modulo_maple_iter(3)
         , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
@@ -246,7 +246,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , independent_vars (NULL)
 
         //Timeouts
-        , orig_global_timeout_multiplier(2.0)
+        , orig_global_timeout_multiplier(4.0)
         , global_timeout_multiplier(1.0) // WILL BE UNSET, NOT RELEVANT
         , global_timeout_multiplier_multiplier(1.1)
         , global_multiplier_multiplier_max(3)
