@@ -73,6 +73,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+    mess_up_polarity = conf.mess_up_polarity;
 }
 
 Searcher::~Searcher()
