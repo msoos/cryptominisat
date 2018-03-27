@@ -378,7 +378,7 @@ SolveFeatures SolveFeaturesCalc::extract()
         if (!solver->longRedCls[0].empty()) {
             calculate_cl_distributions(solver->longRedCls[0], feat.red_cl_distrib);
         }
-        if (!solver->longIrredCls.empt()) {
+        if (!solver->longIrredCls.empty()) {
             calculate_cl_distributions(solver->longIrredCls, feat.irred_cl_distrib);
         }
     }
