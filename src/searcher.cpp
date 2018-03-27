@@ -380,14 +380,13 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             && cl->stats.which_red_array >= 1
         ) {
             cl->stats.which_red_array = 0;
-        }
-
-        //move to lev1 if low glue
-        if (new_glue <= conf.glue_put_lev1_if_below_or_eq
-            && solver->conf.glue_put_lev1_if_below_or_eq != 0
-            && cl->stats.which_red_array == 2
-        ) {
-            cl->stats.which_red_array = 1;
+        } else {
+            //move to lev1 if low glue
+            if (new_glue <= conf.glue_put_lev1_if_below_or_eq
+                && solver->conf.glue_put_lev1_if_below_or_eq != 0
+            ) {
+                cl->stats.which_red_array = 1;
+            }
         }
      }
 }
@@ -1153,7 +1152,6 @@ lbool Searcher::search()
                 dump_search_loop_stats(myTime);
                 return l_False;
             }
-            reduce_db_if_needed();
             check_need_restart();
         } else {
             assert(ok);
@@ -1187,7 +1185,7 @@ lbool Searcher::search()
             ) {
                 return l_False;
             };
-
+            reduce_db_if_needed();
             dec_ret = new_decision<update_bogoprops>();
             if (dec_ret != l_Undef) {
                 dump_search_loop_stats(myTime);
@@ -1771,6 +1769,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
     );
+    glue --;
     print_learnt_clause();
 
     //Add decision-based clause in case it's short
