@@ -1152,7 +1152,6 @@ lbool Searcher::search()
                 dump_search_loop_stats(myTime);
                 return l_False;
             }
-            reduce_db_if_needed();
             check_need_restart();
         } else {
             assert(ok);
@@ -1186,7 +1185,7 @@ lbool Searcher::search()
             ) {
                 return l_False;
             };
-
+            reduce_db_if_needed();
             dec_ret = new_decision<update_bogoprops>();
             if (dec_ret != l_Undef) {
                 dump_search_loop_stats(myTime);
