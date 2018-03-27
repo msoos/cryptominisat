@@ -286,7 +286,7 @@ bool BVA::try_bva_on_lit(const Lit lit)
     }
 
     const int simp_size = simplification_size(m_lits.size(), m_cls.size());
-    if (simp_size <= 0) {
+    if (simp_size <= solver->conf.min_bva_gain) {
         return solver->okay();
     }
 
