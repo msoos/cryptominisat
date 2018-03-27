@@ -380,14 +380,13 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             && cl->stats.which_red_array >= 1
         ) {
             cl->stats.which_red_array = 0;
-        }
-
-        //move to lev1 if low glue
-        if (new_glue <= conf.glue_put_lev1_if_below_or_eq
-            && solver->conf.glue_put_lev1_if_below_or_eq != 0
-            && cl->stats.which_red_array == 2
-        ) {
-            cl->stats.which_red_array = 1;
+        } else {
+            //move to lev1 if low glue
+            if (new_glue <= conf.glue_put_lev1_if_below_or_eq
+                && solver->conf.glue_put_lev1_if_below_or_eq != 0
+            ) {
+                cl->stats.which_red_array = 1;
+            }
         }
      }
 }

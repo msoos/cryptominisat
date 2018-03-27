@@ -230,14 +230,6 @@ void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
         const ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
-        if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-            cl->stats.which_red_array = 0;
-        } else if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
-            && solver->conf.glue_put_lev1_if_below_or_eq != 0
-        ) {
-            cl->stats.which_red_array = 1;
-        }
-
         if (cl->used_in_xor()
             || cl->stats.ttl > 0
             || solver->clause_locked(*cl, offset)
@@ -272,17 +264,6 @@ void ReduceDB::remove_cl_from_lev2() {
         ClOffset offset = solver->longRedCls[2][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
         assert(cl->size() > 2);
-
-        // check and move to lower (better) levels, if possible
-        if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-            cl->stats.which_red_array = 0;
-        }
-
-        if (cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
-            && solver->conf.glue_put_lev1_if_below_or_eq != 0
-        ) {
-            cl->stats.which_red_array = 1;
-        }
 
         //move to another array
         if (cl->stats.which_red_array < 2) {
