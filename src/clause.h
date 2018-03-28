@@ -190,7 +190,7 @@ class Clause
 {
 public:
     uint16_t isRed:1; ///<Is the clause a redundant clause?
-    uint16_t isRemoved:1; ///<Is this clause queued for removal because of usless binary removal?
+    uint16_t isRemoved:1; ///<Is this clause queued for removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
     uint16_t occurLinked:1;
