@@ -1022,8 +1022,10 @@ bool OccSimplifier::eliminate_vars()
 
                 //SUB and STR for long and short
                 limit_to_decrease = &varelim_sub_str_limit;
-                if (!deal_with_added_long_and_bin(false))
+                if (!deal_with_added_long_and_bin(false)) {
+                    limit_to_decrease = &norm_varelim_time_limit;
                     goto end;
+                }
                 limit_to_decrease = &norm_varelim_time_limit;
 
                 solver->ok = solver->propagate_occur();
