@@ -129,7 +129,7 @@ install:
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
-  - sudo -H pip install lit
+  - pip install --user lit
   - lit --version
   - which lit
 #submodules
