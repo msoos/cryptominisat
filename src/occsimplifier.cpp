@@ -1291,6 +1291,11 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
     }
 
+    if (!solver->propagate_occur()) {
+        solver->ok = false;
+        return false;
+    }
+
     return solver->ok;
 }
 
@@ -1595,6 +1600,9 @@ void OccSimplifier::finishUp(
     }
     remove_all_longs_from_watches();
     add_back_to_solver();
+    if (solver->ok) {
+        solver->ok = solver->propagate<false>().isNULL();
+    }
 
     //Update global stats
     const double time_used = cpuTime() - myTime;
