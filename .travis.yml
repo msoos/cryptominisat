@@ -128,7 +128,7 @@ install:
   - if [[ "$CMS_CONFIG" == "COVERAGE" ]]; then ./scripts/travis-install-lcov.sh; fi
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
-  - sudo -H pip install --upgrade pip
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
   - sudo -H pip install lit
   - lit --version
   - which lit
