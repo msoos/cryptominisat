@@ -2231,6 +2231,12 @@ lbool Searcher::solve(
             params.rest_type = Restart::geom;
         }
 
+        if (conf.restartType == Restart::glue_geom) {
+            max_confl_phase = conf.restart_first;
+            max_confl_this_phase = conf.restart_first;
+            params.rest_type = Restart::glue;
+        }
+
         if (conf.restartType == Restart::luby) {
             max_confl_this_phase = conf.restart_first;
             params.rest_type = Restart::luby;
@@ -2285,6 +2291,7 @@ void Searcher::adjust_phases_restarts()
     if (max_confl_this_phase > 0)
         return;
 
+    //Note that all of this will be overridden by params.max_confl_to_do
     if (!VSIDS) {
         params.rest_type = Restart::luby;
         max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
