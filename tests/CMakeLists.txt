@@ -23,7 +23,6 @@ find_program(LIT_TOOL
     lit
     DOC "Path to lit tool"
 )
-add_sanitize_flags()
 
 if(NOT LIT_TOOL)
     message(FATAL_ERROR "Could not find 'lit' tool. You need to install it by e.g. 'pip install lit' If it's already installed, set LIT_TOOL to the full path for lit")
@@ -79,7 +78,7 @@ if(NOT ONLY_SIMPLE)
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 endif()
 
-
+add_sanitize_flags()
 if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
     add_subdirectory(simp-checks)
