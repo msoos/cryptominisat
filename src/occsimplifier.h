@@ -444,6 +444,10 @@ private:
     uint64_t time_spent_on_calc_otf_update;
     uint64_t num_otf_update_until_now;
 
+    //for n_occur checking only
+    uint32_t calc_occ_data(const Lit lit);
+    void     check_n_occur();
+
     //For empty resolvents
     enum class ResolvCount{count, set, unset};
     bool check_empty_resolvent(const Lit lit);

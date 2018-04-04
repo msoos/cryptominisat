@@ -266,6 +266,9 @@ void OccSimplifier::unlink_clause(
     if (!cl.red()) {
         for (const Lit lit: cl) {
             elim_calc_need_update.touch(lit.var());
+#ifdef CHECK_N_OCCUR
+            assert(n_occurs[lit.toInt()]>0);
+#endif
             n_occurs[lit.toInt()]--;
             removed_cl_with_var.touch(lit.var());
         }
@@ -1247,7 +1250,14 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             ) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                topLevelGauss->toplevelgauss(finder.xors);
+                vector<Lit> out_changed_occur;
+                topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
+
+                //these may have changed, recalculating occur
+                for(Lit lit: out_changed_occur) {
+                    n_occurs[lit.toInt()] = calc_occ_data(lit);
+                    n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+                }
             }
             #endif
         } else if (token == "occ-gauss") {
@@ -1291,6 +1301,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
              cout << "ERROR: occur strategy '" << token << "' not recognised!" << endl;
             exit(-1);
         }
+
+#ifdef CHECK_N_OCCUR
+        check_n_occur();
+#endif //CHECK_N_OCCUR
     }
 
     if (!solver->propagate_occur()) {
@@ -2196,6 +2210,28 @@ bool OccSimplifier::add_varelim_resolvent(
     return true;
 }
 
+void OccSimplifier::check_n_occur()
+{
+    for (size_t i=0; i < solver->nVars(); i++) {
+        Lit lit(i, false);
+        const uint32_t pos = calc_occ_data(lit);
+        if (pos != n_occurs[lit.toInt()]) {
+            cout << "for lit: " << lit << endl;
+            cout << "pos is: " << pos
+            << " n_occurs is:" << n_occurs[lit.toInt()] << endl;
+            assert(false);
+        }
+
+        const uint32_t neg = calc_occ_data(~lit);
+        if (neg != n_occurs[(~lit).toInt()]) {
+            cout << "for lit: " << lit << endl;
+            cout << "neg is: " << neg
+            << " n_occurs is:" << n_occurs[(~lit).toInt()] << endl;
+            assert(false);
+        }
+    }
+}
+
 void OccSimplifier::update_varelim_complexity_heap()
 {
     num_otf_update_until_now++;
@@ -2400,6 +2436,37 @@ uint32_t OccSimplifier::calc_data_for_heuristic(const Lit lit)
     }*/
 
     *limit_to_decrease -= (long)ws_list.size()*3 + 100;
+    for (const Watched ws: ws_list) {
+        //Skip redundant clauses
+        if (solver->redundant(ws))
+            continue;
+
+        switch(ws.getType()) {
+            case watch_binary_t:
+                ret++;
+                break;
+
+            case watch_clause_t: {
+                const Clause* cl = solver->cl_alloc.ptr(ws.get_offset());
+                if (!cl->getRemoved()) {
+                    assert(!cl->freed() && "Inside occur, so cannot be freed");
+                    ret++;
+                }
+                break;
+            }
+
+            default:
+                assert(false);
+                break;
+        }
+    }
+    return ret;
+}
+
+uint32_t OccSimplifier::calc_occ_data(const Lit lit)
+{
+    uint32_t ret = 0;
+    watch_subarray_const ws_list = solver->watches[lit];
     for (const Watched ws: ws_list) {
         //Skip redundant clauses
         if (solver->redundant(ws))

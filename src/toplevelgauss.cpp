@@ -41,8 +41,9 @@ TopLevelGauss::TopLevelGauss(Solver* _solver) :
     m4ri_build_all_codes();
 }
 
-bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors)
+bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors, vector<Lit>* _out_changed_occur)
 {
+    out_changed_occur = _out_changed_occur;
     runStats.clear();
     runStats.numCalls = 1;
     xors = _xors;
@@ -255,6 +256,7 @@ bool TopLevelGauss::extractInfoFromBlock(
 
             case 2: {
                 runStats.newBins++;
+                out_changed_occur->insert(out_changed_occur->end(), lits.begin(), lits.end());
                 solver->add_xor_clause_inter(lits, rhs, false);
                 if (!solver->okay())
                     goto end;
