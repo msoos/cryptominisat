@@ -313,6 +313,12 @@ void Main::add_supported_options()
         , "If more than this % of clauses is LOW glue (level 0) then lower the glue cutoff by 1 -- once and never again")
     ("ml", po::value(&conf.guess_cl_effectiveness)->default_value(conf.guess_cl_effectiveness)
         , "Use ML model to guess clause effectiveness")
+    ("everylev1", po::value(&conf.every_lev1_reduce)->default_value(conf.every_lev1_reduce)
+        , "Reduce lev1 clauses every N")
+    ("everylev2", po::value(&conf.every_lev2_reduce)->default_value(conf.every_lev2_reduce)
+        , "Reduce lev2 clauses every N")
+    ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
+        , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
     ;
 
     std::ostringstream s_random_var_freq;
