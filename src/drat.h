@@ -117,7 +117,7 @@ struct DratFile: public Drat
     {
         unsigned int u = 2 * (l.var() + 1) + l.sign();
         do {
-            *buf_ptr++ = u & 0x7f | 0x80;
+            *buf_ptr++ = (u & 0x7f) | 0x80;
             buf_len++;
             u = u >> 7;
         } while (u);
@@ -130,7 +130,7 @@ struct DratFile: public Drat
     {
         unsigned int u = 2 * (l.var() + 1) + l.sign();
         do {
-            *del_ptr++ = u & 0x7f | 0x80;
+            *del_ptr++ = (u & 0x7f) | 0x80;
             del_len++;
             u = u >> 7;
         } while (u);
