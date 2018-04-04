@@ -37,6 +37,7 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-pedantic")
     #add_cxx_flag_if_supported("-Wdeprecated")
 endif()
+add_sanitize_flags()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

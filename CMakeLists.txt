@@ -112,6 +112,17 @@ macro(add_sanitize_option flagname)
 endmacro()
 
 option(SANITIZE "Use Clang sanitizers. You MUST use clang++ as the compiler for this to work" OFF)
+
+include(CheckCXXCompilerFlag)
+macro(add_cxx_flag_if_supported flagname)
+  check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
+
+  if(HAVE_FLAG_${flagname})
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )
+  endif()
+endmacro()
+
+macro(add_sanitize_flags)
 if (SANITIZE)
     MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
     add_sanitize_option("-fsanitize=address")
@@ -138,14 +149,6 @@ if (SANITIZE)
     #add_sanitize_option("-Wsign-conversion")
     #add_sanitize_option("-Wconversion")
 endif()
-
-include(CheckCXXCompilerFlag)
-macro(add_cxx_flag_if_supported flagname)
-  check_cxx_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
-
-  if(HAVE_FLAG_${flagname})
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )
-  endif()
 endmacro()
 
 option(USE_GAUSS "Build with every-level GAUSS enabled" OFF)

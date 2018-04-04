@@ -35,9 +35,9 @@ struct F : public ::testing::Test {
     ~F() {
     }
 
-    Clause* allocate_space_for(size_t n)
+    Clause* allocate_space_for(size_t n, void*& tmp)
     {
-        void* tmp = malloc(sizeof(Clause) + n*sizeof(Lit));
+        tmp = malloc(sizeof(Clause) + n*sizeof(Lit));
         std::vector<Lit> lits;
         for(size_t i = 0; i < n ; i++) {
             lits.push_back(Lit(i, false));
@@ -54,7 +54,8 @@ struct F : public ::testing::Test {
 
 TEST_F(F, convert_to_string)
 {
-    Clause& cl = *allocate_space_for(3);
+    void* tmp;
+    Clause& cl = *allocate_space_for(3, tmp);
     cl[0] = Lit(0, false);
     cl[1] = Lit(1, false);
     cl[2] = Lit(2, false);
@@ -62,11 +63,13 @@ TEST_F(F, convert_to_string)
     std::stringstream ss;
     ss << cl;
     EXPECT_EQ( ss.str(), "1 2 3");
+    free(tmp);
 }
 
 TEST_F(F, convert_to_string2)
 {
-    Clause& cl = *allocate_space_for(3);
+    void* tmp;
+    Clause& cl = *allocate_space_for(3, tmp);
     cl[0] = Lit(0, false);
     cl[1] = Lit(1, true);
     cl[2] = Lit(2, false);
@@ -74,6 +77,7 @@ TEST_F(F, convert_to_string2)
     std::stringstream ss;
     ss << cl;
     EXPECT_EQ( ss.str(), "1 -2 3");
+    free(tmp);
 }
 
 int main(int argc, char **argv) {

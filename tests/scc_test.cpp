@@ -35,7 +35,8 @@ TEST(scc_test, find_1)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(2);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -50,7 +51,8 @@ TEST(scc_test, find_2)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -68,7 +70,8 @@ TEST(scc_test, find_circle_3)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("2, -3"));
@@ -84,7 +87,8 @@ TEST(scc_test, find_two_circle2_3)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(6);
     s.add_clause_outer(str_to_cl("1, -2"));
     s.add_clause_outer(str_to_cl("2, -3"));
@@ -104,7 +108,8 @@ TEST(scc_test, find_1_diff)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(2);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-1, -2"));
@@ -120,7 +125,8 @@ TEST(scc_test, find_0)
     SolverConf conf;
     conf.doCache = false;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("1, -2"));
@@ -137,7 +143,8 @@ TEST(scc_test, limit_test4)
     SolverConf conf;
     conf.max_scc_depth = 4;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-2, 3"));
@@ -153,7 +160,8 @@ TEST(scc_test, limit_test3)
     SolverConf conf;
     conf.max_scc_depth = 3;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-2, 3"));
@@ -169,7 +177,8 @@ TEST(scc_test, limit_test2)
     SolverConf conf;
     conf.max_scc_depth = 2;
 
-    Solver s(&conf, new std::atomic<bool>(false));
+    std::unique_ptr<std::atomic<bool>> tmp(new std::atomic<bool>(false));
+    Solver s(&conf, tmp.get());
     s.new_vars(4);
     s.add_clause_outer(str_to_cl("1, 2"));
     s.add_clause_outer(str_to_cl("-2, 3"));

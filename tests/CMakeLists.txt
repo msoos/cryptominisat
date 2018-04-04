@@ -23,6 +23,7 @@ find_program(LIT_TOOL
     lit
     DOC "Path to lit tool"
 )
+add_sanitize_flags()
 
 if(NOT LIT_TOOL)
     message(FATAL_ERROR "Could not find 'lit' tool. You need to install it by e.g. 'pip install lit' If it's already installed, set LIT_TOOL to the full path for lit")
