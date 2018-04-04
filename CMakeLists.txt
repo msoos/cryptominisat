@@ -108,7 +108,6 @@ if (LARGEMEM)
 endif()
 
 macro(add_sanitize_option flagname)
-    add_compile_options("${flagname}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flagname}" )
 endmacro()
 

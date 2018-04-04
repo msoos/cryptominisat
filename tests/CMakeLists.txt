@@ -106,17 +106,19 @@ add_test (
 )
 
 # C bindings test
-add_executable(c_test
-    c_test.c
-)
-target_link_libraries(c_test
-    libcryptominisat5
-)
-add_test (
-    NAME c_test
-    COMMAND c_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+if (NOT SANITIZE)
+    add_executable(c_test
+        c_test.c
+    )
+    target_link_libraries(c_test
+        libcryptominisat5
+    )
+    add_test (
+        NAME c_test
+        COMMAND c_test
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+endif()
 
 # Multisol test
 add_executable(multisol_test
