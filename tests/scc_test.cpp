@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "gtest/gtest.h"
 
 #include <fstream>
+#include <memory>
 
 #include "src/solver.h"
 #include "src/sccfinder.h"
