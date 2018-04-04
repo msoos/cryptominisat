@@ -415,6 +415,8 @@ class Tester:
             found_something = False
             for line in err_file:
                 print("Error line while executing: %s" % line.strip())
+                # don't error out on issues related to UBSAN/ASAN
+                # of clang of other projects
                 if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line:
                     pass
                 else:
