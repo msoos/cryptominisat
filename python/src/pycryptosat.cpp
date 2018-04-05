@@ -78,8 +78,6 @@ typedef struct {
     SATSolver* cmsat;
 } Solver;
 
-static PyObject *outofconflerr = NULL;
-
 static const char solver_create_docstring[] = \
 "Solver(verbose=0, confl_limit=max_numeric_limits, threads=1)\n\
 Create Solver object.\n\
@@ -536,13 +534,16 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         PyTuple_SET_ITEM(result, 1, Py_None);
 
     } else if (res == l_Undef) {
-        Py_DECREF(result);
-        return PyErr_SetFromErrno(outofconflerr);
+        Py_INCREF(Py_None);
+        Py_INCREF(Py_None);
+
+        PyTuple_SET_ITEM(result, 0, Py_None);
+        PyTuple_SET_ITEM(result, 1, Py_None);
     } else {
         // res can only be l_False, l_True, l_Undef
         assert((res == l_False) || (res == l_True) || (res == l_Undef));
         Py_DECREF(result);
-        return NULL;
+        return PyErr_NewExceptionWithDoc("pycyrptosat.IllegalState", "Error Occured in CyrptoMiniSat", NULL, NULL);
     }
 
     return result;
@@ -570,7 +571,7 @@ static PyObject* is_satisfiable(Solver *self)
         Py_INCREF(Py_False);
         return Py_False;
     } else if (res == l_Undef) {
-        return PyErr_SetFromErrno(outofconflerr);
+        return Py_None;
     } else {
         // res can only be l_False, l_True, l_Undef
         assert((res == l_False) || (res == l_True) || (res == l_Undef));
@@ -892,16 +893,10 @@ MODULE_INIT_FUNC(pycryptosat)
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
     PyModule_AddObject(m, "__version__", PyUnicode_FromString(LIBRARY_VERSION));
-    if (!(outofconflerr = PyErr_NewExceptionWithDoc("_cadbiom.InternalError", "Unsupported error.", NULL, NULL))) {
-        goto error;
-    }
-    PyModule_AddObject(m, "OutOfConflicts",  outofconflerr);
-
-error:
 
     if (PyErr_Occurred())
     {
-        PyErr_SetString(PyExc_ImportError, "pycryptosat: init failed");
+        PyErr_SetString(PyExc_ImportError, "pycryptosat: initialisation failed");
         Py_DECREF(m);
         m = NULL;
     }
