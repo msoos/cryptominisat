@@ -104,9 +104,10 @@ class Prober {
                     , "s/call"
                 );
 
+                int64_t unused_time = ((int64_t)timeAllocated - (int64_t)(propStats.bogoProps + propStats.otfHyperTime));
                 print_stats_line("c unused Mega BP+HP"
-                    , (double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))/(1000.0*1000.0)
-                    , ratio_for_stat(cpu_time, propStats.bogoProps + propStats.otfHyperTime)*(double)(timeAllocated - (propStats.bogoProps + propStats.otfHyperTime))
+                    , (double)unused_time/(1000.0*1000.0)
+                    , ratio_for_stat(cpu_time, propStats.bogoProps + propStats.otfHyperTime)*(double)unused_time
                     , "est. secs"
                 );
 
