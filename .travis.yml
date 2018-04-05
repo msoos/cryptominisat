@@ -7,7 +7,7 @@ compiler:
 
 os:
   - linux
-  - osx
+#  - osx
 
 dist: trusty
 
