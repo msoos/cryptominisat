@@ -194,7 +194,7 @@ void CompFinder::addToCompImplicits()
             if (ws.empty())
                 continue;
 
-            bogoprops_remain -= ws.size() + 10;
+            bogoprops_remain -= (int64_t)ws.size() + 10;
             for(const Watched *it2 = ws.begin(), *end2 = ws.end()
                 ; it2 != end2
                 ; it2++
@@ -233,7 +233,7 @@ template<class T>
 bool CompFinder::belong_to_same_component(const T& cl)
 {
     if (table[cl[0].var()] != std::numeric_limits<uint32_t>::max()) {
-        bogoprops_remain -= cl.size()/2 + 1;
+        bogoprops_remain -= (int64_t)cl.size()/2 + 1;
         const uint32_t comp = table[cl[0].var()];
 
         for (const Lit l: cl) {
@@ -251,7 +251,7 @@ bool CompFinder::belong_to_same_component(const T& cl)
 template<class T>
 void CompFinder::fill_newset_and_tomerge(const T& cl)
 {
-    bogoprops_remain -= cl.size()*2;
+    bogoprops_remain -= (int64_t)cl.size()*2;
 
     for (const Lit lit: cl) {
         if (table[lit.var()] != std::numeric_limits<uint32_t>::max()
@@ -308,12 +308,12 @@ void CompFinder::add_clause_to_component(const T& cl)
         seen[merge] = 0;
 
         //Find in reverseTable
-        bogoprops_remain -= reverseTable.size()*2;
+        bogoprops_remain -= (int64_t)reverseTable.size()*2;
         map<uint32_t, vector<uint32_t> >::iterator it2 = reverseTable.find(merge);
         assert(it2 != reverseTable.end());
 
         //Add them all
-        bogoprops_remain -= it2->second.size();
+        bogoprops_remain -= (int64_t)it2->second.size();
         newSet.insert(
             newSet.end()
             , it2->second.begin()
@@ -321,7 +321,7 @@ void CompFinder::add_clause_to_component(const T& cl)
         );
 
         //Delete this comp
-        bogoprops_remain -= reverseTable.size();
+        bogoprops_remain -= (int64_t)reverseTable.size();
         reverseTable.erase(it2);
         used_comp_no--;
     }
@@ -331,7 +331,7 @@ void CompFinder::add_clause_to_component(const T& cl)
         return;
 
     //Mark all lits not belonging to seen components as belonging to comp_no
-    bogoprops_remain -= newSet.size();
+    bogoprops_remain -= (int64_t)newSet.size();
     for (const uint32_t v: newSet) {
         table[v] = comp_no;
     }
