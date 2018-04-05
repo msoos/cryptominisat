@@ -1307,7 +1307,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 #endif //CHECK_N_OCCUR
     }
 
-    if (!solver->propagate_occur()) {
+    if (solver->okay() &&
+        !solver->propagate_occur()
+    ) {
         solver->ok = false;
         return false;
     }
