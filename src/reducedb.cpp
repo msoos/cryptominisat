@@ -292,12 +292,12 @@ void ReduceDB::remove_cl_from_lev2() {
         }
 
         //Stats Update
-        cl->setRemoved();
         solver->watches.smudge((*cl)[0]);
         solver->watches.smudge((*cl)[1]);
         solver->litStats.redLits -= cl->size();
 
         *solver->drat << del << *cl << fin;
+        cl->setRemoved();
         delayed_clause_free.push_back(offset);
     }
     solver->longRedCls[2].resize(j);
