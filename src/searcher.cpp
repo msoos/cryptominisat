@@ -1655,7 +1655,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         ClOffset offset = cl_alloc.get_offset(cl);
         unsigned which_arr = 2;
 
-        //double glue_rel = ((double)cl->stats.glue) / hist.glueHistLTAll.avg();
         if (glue <= conf.glue_put_lev0_if_below_or_eq) {
             which_arr = 0;
         } else if (
