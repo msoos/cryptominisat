@@ -1103,7 +1103,7 @@ void Searcher::check_blocking_restart_backtrack()
         && hist.backtrackLevelHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip*1.2
     ) {
         hist.backtrackLevelHist.clear();
         if (!blocked_restart) {
@@ -1344,7 +1344,7 @@ void Searcher::check_need_restart()
     assert(params.rest_type != Restart::glue_geom);
 
     if (params.rest_type == Restart::backtrack) {
-        //check_blocking_restart_backtrack();
+        check_blocking_restart_backtrack();
         if (hist.backtrackLevelHist.isvalid()
             && conf.local_backtrack_multiplier * hist.backtrackLevelHist.avg() > hist.backtrackLevelHistLTLimited.avg()
         ) {
