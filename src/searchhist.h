@@ -38,7 +38,6 @@ struct SearchHist {
     AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
     AvgCalc<uint32_t>   branchDepthDeltaHist;
 
-    AvgCalc<uint32_t>   decisionLevelHistLT;
     AvgCalc<uint32_t>   backtrackLevelHistLT;
     AvgCalc<uint32_t>   trailDepthHistLT;
     AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
@@ -58,6 +57,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #ifdef STATS_NEEDED
+    AvgCalc<uint32_t>   decisionLevelHistLT;
     bqueue<uint32_t>    branchDepthHistQueue;
     bqueue<uint32_t>    trailDepthHist;
     #endif

@@ -1492,12 +1492,12 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
 
     //long-term averages
-    hist.decisionLevelHistLT.push(decisionLevel());
     hist.backtrackLevelHistLT.push(backtrack_level);
 
     #ifdef STATS_NEEDED
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
+    hist.decisionLevelHistLT.push(decisionLevel());
     #endif
     hist.conflSizeHistLT.push(learnt_clause.size());
 
