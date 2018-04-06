@@ -52,11 +52,10 @@ struct SearchHist {
 
     AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history
     AvgCalc<uint32_t>   conflSizeHistLT;
-
-    AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #ifdef STATS_NEEDED
+    AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
     AvgCalc<uint32_t>   decisionLevelHistLT;
     bqueue<uint32_t>    branchDepthHistQueue;
     bqueue<uint32_t>    trailDepthHist;
@@ -88,9 +87,9 @@ struct SearchHist {
         //conflict generated
         glueHist.clear();
         conflSizeHist.clear();
-        numResolutionsHist.clear();
 
         #ifdef STATS_NEEDED
+        numResolutionsHist.clear();
         trailDepthHist.clear();
         branchDepthHistQueue.clear();
         #endif
