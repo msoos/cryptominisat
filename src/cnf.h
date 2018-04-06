@@ -306,7 +306,7 @@ void CNF::for_each_lit(
 
         case CMSat::watch_clause_t: {
             const Clause& clause = *cl_alloc.ptr(cl.ws.get_offset());
-            *limit -= clause.size();
+            *limit -= (int64_t)clause.size();
             for(const Lit lit: clause) {
                 func(lit);
             }
