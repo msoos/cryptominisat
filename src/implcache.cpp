@@ -329,7 +329,7 @@ bool ImplCache::addDelayedClauses(Solver* solver)
         ; ++it
     ) {
         //Build unit clause
-        vector<Lit> tmp(1);
+        tmp.resize(1);
         tmp[0] = *it;
 
         //Add unit clause
