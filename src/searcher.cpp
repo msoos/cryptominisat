@@ -2266,13 +2266,11 @@ lbool Searcher::solve(
         if (conf.restartType == Restart::backtrack) {
             max_confl_this_phase = conf.restart_first;
             params.rest_type = Restart::backtrack;
+            params.backtrack_num = 0;
         }
     } else {
         max_confl_this_phase = conf.restart_first;
-        if (conf.maple_backtrack)
-            params.rest_type = Restart::backtrack;
-        else
-            params.rest_type = Restart::luby;
+        params.rest_type = Restart::luby;
     }
 
     assert(solver->check_order_heap_sanity());
@@ -2323,9 +2321,18 @@ void Searcher::adjust_phases_restarts()
     //Note that all of this will be overridden by params.max_confl_to_do
     if (!VSIDS) {
         if (solver->conf.maple_backtrack) {
-            assert(params.rest_type == Restart::backtrack);
+            if (params.rest_type == Restart::luby) {
+                params.backtrack_num = 0;
+                params.rest_type = Restart::backtrack;
+            } else {
+                params.backtrack_num++;
+                if (params.backtrack_num >= solver->conf.maple_backtrack_mod)
+                    params.rest_type = Restart::luby;
+            }
         } else {
             assert(params.rest_type == Restart::luby);
+        }
+        if (params.rest_type == Restart::luby) {
             max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
             luby_loop_num++;
         }

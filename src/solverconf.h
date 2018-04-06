@@ -172,6 +172,7 @@ class DLL_PUBLIC SolverConf
         double   blocking_restart_multip;
         int      maple;
         int      maple_backtrack;
+        unsigned maple_backtrack_mod;
         unsigned modulo_maple_iter;
 
         double   local_glue_multiplier;

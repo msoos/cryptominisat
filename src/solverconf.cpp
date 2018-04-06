@@ -61,6 +61,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , blocking_restart_multip(1.4)
         , maple(true)
         , maple_backtrack(false)
+        , maple_backtrack_mod(3)
         , modulo_maple_iter(3)
         , local_glue_multiplier(0.80)
         , local_backtrack_multiplier(0.90)
