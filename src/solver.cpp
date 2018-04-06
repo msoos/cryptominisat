@@ -1583,8 +1583,9 @@ lbool Solver::iterate_until_solved()
 
         //Iterate between VSIDS and Maple
         if (conf.maple) {
-            int modulo = (iteration_num-1) % conf.modulo_maple_iter;
-            if (modulo < (conf.modulo_maple_iter-1)) {
+            //The 1st of every modulo N is VSIDS otherwise Maple
+            long modulo = ((long)iteration_num-1) % conf.modulo_maple_iter;
+            if (modulo < ((long)conf.modulo_maple_iter-1)) {
                 VSIDS = false;
             } else {
                 VSIDS = true;
