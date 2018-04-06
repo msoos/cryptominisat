@@ -229,7 +229,7 @@ uint32_t Gaussian::select_columnorder(
     var_to_col.resize(largest_used_var + 1);
     var_is_in.setZero();
     var_is_in.resize(var_to_col.size(), 0);
-    origMat.col_is_set.resize(origMat.num_cols, false);
+    origMat.col_is_set.resize(vars_needed.size(), false);
 
     origMat.col_to_var.clear();
     std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
@@ -257,6 +257,10 @@ uint32_t Gaussian::select_columnorder(
     std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(),
               std::ostream_iterator<uint32_t>(cout, ","));
     cout << endl;
+    cout << "origMat.num_cols:" << origMat.num_cols << endl;
+    cout << "col is set:" << endl;
+    std::copy(origMat.col_is_set.begin(), origMat.col_is_set.end(),
+              std::ostream_iterator<char>(cout, ","));
     #endif
 
     return num_xorclauses;
