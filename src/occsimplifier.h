@@ -381,7 +381,7 @@ private:
     void        rem_cls_from_watch_due_to_varelim(watch_subarray todo, const Lit lit);
     vector<Lit> tmp_rem_lits;
     vec<Watched> tmp_rem_cls_copy;
-    void        add_clause_to_blck(const Lit lit, const vector<Lit>& lits);
+    void        add_clause_to_blck(const vector<Lit>& lits);
     void        set_var_as_eliminated(const uint32_t var, const Lit lit);
     bool        can_eliminate_var(const uint32_t var) const;
     bool        clear_vars_from_cls_that_have_been_set(size_t& last_trail);

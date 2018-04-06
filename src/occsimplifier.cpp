@@ -1823,7 +1823,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
 
                 lits.resize(cl.size());
                 std::copy(cl.begin(), cl.end(), lits.begin());
-                add_clause_to_blck(lit, lits);
+                add_clause_to_blck(lits);
             } else {
                 red = true;
                 bvestats.longRedClRemThroughElim++;
@@ -1850,7 +1850,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
             lits[0] = lit;
             lits[1] = watch.lit2();
             if (!watch.red()) {
-                add_clause_to_blck(lit, lits);
+                add_clause_to_blck(lits);
                 n_occurs[lits[0].toInt()]--;
                 n_occurs[lits[1].toInt()]--;
             } else {
@@ -1878,7 +1878,7 @@ void OccSimplifier::rem_cls_from_watch_due_to_varelim(
     }
 }
 
-void OccSimplifier::add_clause_to_blck(const Lit lit, const vector<Lit>& lits)
+void OccSimplifier::add_clause_to_blck(const vector<Lit>& lits)
 {
     for(const Lit& l: lits) {
         removed_cl_with_var.touch(l.var());
