@@ -88,8 +88,8 @@ Create Solver object.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
 :type verbose: <int>\n\
-:type time_limit: <int>\n\
-:type confl_limit: <int>\n\
+:type time_limit: <double>\n\
+:type confl_limit: <long>\n\
 :type threads: <int>";
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
@@ -98,9 +98,9 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 
     int verbose = 0;
     int num_threads = 1;
-    long time_limit = std::numeric_limits<long>::max();
+    long time_limit = std::numeric_limits<double>::max();
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|illi", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
         return NULL;
     }
     if (verbose < 0) {

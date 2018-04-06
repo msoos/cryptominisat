@@ -374,7 +374,7 @@ static bool actually_add_clauses_to_threads(CMSatPrivateData* data)
     return ret;
 }
 
-DLL_PUBLIC void SATSolver::set_max_time(int64_t max_time)
+DLL_PUBLIC void SATSolver::set_max_time(double max_time)
 {
   for (size_t i = 0; i < data->solvers.size(); ++i) {
     Solver& s = *data->solvers[i];
