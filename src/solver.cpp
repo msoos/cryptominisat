@@ -1249,6 +1249,7 @@ lbool Solver::solve_with_assumptions(
     solveStats.num_solve_calls++;
     conflict.clear();
     check_config_parameters();
+    luby_loop_num = 0;
 
     //Reset parameters
     max_confl_phase = conf.restart_first;
