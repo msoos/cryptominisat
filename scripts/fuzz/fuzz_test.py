@@ -274,10 +274,14 @@ class Tester:
             cmd += "--maxgaussdepth 0 "
 
         if random.choice([True, False]):
+            cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
+            cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
+            cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
+            cmd += "--mbackt %d " % random.choice([0, 1])
             cmd += "--varelimover %d " % random.gammavariate(1,20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
-            cmd += "--maple %d " % random.choice([0, 0, 0, 1])
+            cmd += "--maple %d " % random.choice([0, 1])
             cmd += "--reconf %d " % random.choice([3, 6, 7, 12, 13, 14])
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
