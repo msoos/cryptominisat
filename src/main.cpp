@@ -273,6 +273,8 @@ void Main::add_supported_options()
         , "Add clause IDs to DRAT output")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
         , "Use maple-type variable picking sometimes")
+    ("mbackt", po::value(&conf.maple_backtrack)->default_value(conf.maple_backtrack)
+        , "Use backtracking restart for maple")
     ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
         , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
@@ -285,7 +287,7 @@ void Main::add_supported_options()
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
     ("restart", po::value<string>()
-        , "{geom, glue, luby}  Restart strategy to follow.")
+        , "{geom, glue, luby, backtrack}  Restart strategy to follow.")
     ("gluehist", po::value(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ("blkrest", po::value(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
@@ -873,6 +875,8 @@ void Main::parse_restart_type()
             conf.restartType = Restart::geom;
         else if (type == "luby")
             conf.restartType = Restart::luby;
+        else if (type == "backtrack")
+            conf.restartType = Restart::backtrack;
         else if (type == "glue")
             conf.restartType = Restart::glue;
         else throw WrongParam("restart", "unknown restart type");

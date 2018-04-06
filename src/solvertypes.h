@@ -57,6 +57,9 @@ inline std::string restart_type_to_string(const Restart type)
         case Restart::luby:
             return "luby";
 
+        case Restart::backtrack:
+            return "backtrack";
+
         case Restart::glue_geom:
             return "switch-glue-geom";
 
@@ -77,6 +80,9 @@ inline std::string restart_type_to_short_string(const Restart type)
 
         case Restart::geom:
             return "geom";
+
+        case Restart::backtrack:
+            return "backt";
 
         case Restart::luby:
             return "luby";

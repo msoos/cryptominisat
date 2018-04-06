@@ -284,7 +284,7 @@ class Tester:
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
             cmd += "--ml  %s " % random.randint(0, 10)
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby"])
+                ["geom", "glue", "luby", "backtrack"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)

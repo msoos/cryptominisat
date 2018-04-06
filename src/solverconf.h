@@ -65,6 +65,7 @@ enum class Restart {
     , geom
     , glue_geom
     , luby
+    , backtrack
     , never
 };
 
@@ -82,6 +83,9 @@ inline std::string getNameOfRestartType(Restart rest_type)
 
         case Restart::luby:
             return "luby";
+
+        case Restart::backtrack:
+            return "backtrack";
 
         case Restart::never:
             return "never";
@@ -167,9 +171,11 @@ class DLL_PUBLIC SolverConf
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
         int      maple;
+        int      maple_backtrack;
         unsigned modulo_maple_iter;
 
         double   local_glue_multiplier;
+        double   local_backtrack_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom

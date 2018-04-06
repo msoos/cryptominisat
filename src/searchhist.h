@@ -38,7 +38,9 @@ struct SearchHist {
     AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
     AvgCalc<uint32_t>   branchDepthDeltaHist;
 
+    bqueue<uint32_t>    backtrackLevelHist;
     AvgCalc<uint32_t>   backtrackLevelHistLT;
+    AvgCalc<uint32_t>   backtrackLevelHistLTLimited;
     AvgCalc<uint32_t>   trailDepthHistLT;
     AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
 
@@ -69,6 +71,7 @@ struct SearchHist {
         used += sizeof(AvgCalc<size_t>)*2;
         used += sizeof(AvgCalc<double, double>)*2;
         used += glueHist.usedMem();
+        used += backtrackLevelHist.usedMem();
         used += trailDepthHistLonger.usedMem();
         #ifdef STATS_NEEDED
         used += branchDepthHistQueue.usedMem();
@@ -98,6 +101,7 @@ struct SearchHist {
     void reset_glue_hist_size(size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
+        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         #ifdef STATS_NEEDED
         trailDepthHist.clearAndResize(shortTermHistorySize);
         branchDepthHistQueue.clearAndResize(shortTermHistorySize);
@@ -107,6 +111,7 @@ struct SearchHist {
     void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
     {
         glueHist.clearAndResize(shortTermHistorySize);
+        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
         #ifdef STATS_NEEDED
         trailDepthHist.clearAndResize(shortTermHistorySize);
