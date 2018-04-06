@@ -156,7 +156,7 @@ void VarReplacer::update_vardata_and_activities(
 
     double repl_with_act_maple = solver->var_act_maple[replaced_with];
     double orig_act_maple = solver->var_act_maple[orig];
-    if (orig_act_maple + repl_with_act_vsids >= orig_act_maple) {
+    if (orig_act_maple + repl_with_act_maple >= orig_act_maple) {
         solver->var_act_maple[replaced_with] += orig_act_maple;
     }
 }
