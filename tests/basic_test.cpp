@@ -189,6 +189,20 @@ TEST(normal_interface, logfile2_assumps)
     EXPECT_EQ(line, "c Solver::solve( -2 )");
 }
 
+TEST(normal_interface, max_time)
+{
+    SATSolver* s = new SATSolver();
+    s->new_vars(200);
+    s->add_clause(str_to_cl("1"));
+    s->add_clause(str_to_cl("1, 2"));
+    s->set_max_time(3);
+    lbool ret = s->solve();
+    s->add_clause(vector<Lit>{Lit(1, false)});
+    ret = s->solve();
+    delete s;
+    EXPECT_EQ(ret, l_True);
+}
+
 bool is_critical(const std::range_error&) { return true; }
 
 TEST(xor_interface, xor_check_sat_solution)
