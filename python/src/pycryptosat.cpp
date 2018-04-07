@@ -79,29 +79,36 @@ typedef struct {
 } Solver;
 
 static const char solver_create_docstring[] = \
-"Solver(verbose=0, confl_limit=max_numeric_limits, threads=1)\n\
+"Solver(verbose=0, time_limit=max_numeric_limits, confl_limit=max_numeric_limits, threads=1)\n\
 Create Solver object.\n\
 \n\
 :param verbose: Verbosity level: 0: nothing printed; 15: very verbose.\n\
+:param time_limit: Propagation limit: abort after this many seconds has elapsed.\n\
 :param confl_limit: Propagation limit: abort after this many conflicts.\n\
     Default: never abort.\n\
 :param threads: Number of threads to use.\n\
 :type verbose: <int>\n\
-:type confl_limit: <int>\n\
+:type time_limit: <double>\n\
+:type confl_limit: <long>\n\
 :type threads: <int>";
 
 static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"verbose", "confl_limit", "threads", NULL};
+    static char* kwlist[] = {"verbose", "time_limit", "confl_limit", "threads", NULL};
 
     int verbose = 0;
     int num_threads = 1;
+    long time_limit = std::numeric_limits<double>::max();
     long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ili", kwlist, &verbose, &confl_limit, &num_threads)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
         return NULL;
     }
     if (verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
+        return NULL;
+    }
+    if (time_limit < 0) {
+        PyErr_SetString(PyExc_ValueError, "timelimit must be at least 0");
         return NULL;
     }
     if (confl_limit < 0) {
@@ -114,6 +121,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
     }
 
     SATSolver *cmsat = new SATSolver;
+    cmsat->set_max_time(time_limit);
     cmsat->set_max_confl(confl_limit);
     cmsat->set_verbosity(verbose);
     cmsat->set_num_threads(num_threads);
