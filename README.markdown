@@ -19,6 +19,9 @@ that it allows for a more efficient system, with assumptions and multiple
 `solve()` calls. A C compatible wrapper is also provided. The python interface provides
 a high-level yet efficient API to use most of the C++ interface with ease.
 
+When citing, always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24), bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
+
+
 Docker usage
 -----
 
@@ -387,11 +390,6 @@ sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber
 ```
 
 It is a good idea to put `renumber` as late as possible, as it renumbers the variables for memory usage reduction.
-
-How to cite CryptoMiniSat
------
-Always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24).
-BibTex record [HERE](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
 Gaussian elimination
 -----
