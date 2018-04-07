@@ -458,6 +458,7 @@ Using the Machine Learning System
 This is experimental but should work relatively well:
 
 ```
+git checkout clauseID
 sudo apt-get install build-essential cmake git
 sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install graphviz
