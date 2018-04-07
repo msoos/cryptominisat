@@ -525,6 +525,7 @@ inline void Searcher::minimize_using_permdiff()
     if (conf.doMinimRedMore
         && learnt_clause.size() > 1
     ) {
+        stats.permDiff_attempt++;
         stats.moreMinimLitsStart += learnt_clause.size();
         watch_based_learnt_minim();
 
@@ -560,6 +561,8 @@ inline void Searcher::watch_based_learnt_minim()
             }
         }
         learnt_clause.resize(learnt_clause.size()-nb);
+        stats.permDiff_success++;
+        stats.permDiff_rem_lits+=nb;
     }
 }
 
@@ -811,17 +814,23 @@ Clause* Searcher::analyze_conflict(
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
+
+    //further minimisation 1 -- short, small glue clauses
+    glue = std::numeric_limits<uint32_t>::max();
     if (learnt_clause.size() <= conf.max_size_more_minim) {
         glue = calc_glue(learnt_clause);
         if (glue <= conf.max_glue_more_minim) {
             minimize_using_permdiff();
         }
     }
-    glue = calc_glue(learnt_clause);
+    if (glue == std::numeric_limits<uint32_t>::max()) {
+        glue = calc_glue(learnt_clause);
+    }
     print_fully_minimized_learnt_clause();
 
     if (learnt_clause.size() > conf.max_size_more_minim
-        && glue <= conf.glue_put_lev0_if_below_or_eq
+        && glue <= (conf.glue_put_lev0_if_below_or_eq+2)
+        && conf.doMinimRedMoreMore
     ) {
         minimise_redundant_more(learnt_clause);
     }

@@ -197,6 +197,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 7: {
+            conf.doMinimRedMoreMore = 1;
             conf.global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
@@ -208,6 +209,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 8: {
             //Different glue limit
+            conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
             //conf.glue_put_lev2_if_below_or_eq = 8;
             conf.max_num_lits_more_red_min = 3;

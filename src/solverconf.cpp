@@ -76,6 +76,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
+        , doMinimRedMoreMore(false)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
         , more_red_minim_limit_cache(400)

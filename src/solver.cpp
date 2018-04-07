@@ -1116,9 +1116,9 @@ void Solver::check_minimization_effectiveness(const lbool status)
         && conf.doMinimRedMore
         && search_stats.moreMinimLitsStart > 100000
     ) {
-        double remPercent =
-            (double)(search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd)/
-                (double)(search_stats.moreMinimLitsStart)*100.0;
+        double remPercent = float_div(
+            search_stats.moreMinimLitsStart-search_stats.moreMinimLitsEnd,
+            search_stats.moreMinimLitsStart)*100.0;
 
         //TODO take into account the limit on the number of first literals, too
         if (remPercent < 1.0) {
@@ -3124,6 +3124,7 @@ void Solver::reconfigure(int val)
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
             conf.max_num_lits_more_red_min = 20;
+
             conf.max_temp_lev2_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             update_var_decay();
