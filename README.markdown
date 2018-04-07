@@ -388,6 +388,11 @@ sub-str-cls-with-bin, occ-backw-sub-str, occ-bve,check-cache-size, renumber
 
 It is a good idea to put `renumber` as late as possible, as it renumbers the variables for memory usage reduction.
 
+How to cite CryptoMiniSat
+-----
+Always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24).
+BibTex record [HERE](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
+
 Gaussian elimination
 -----
 For building with Gaussian Elimination, you need to build as per:
