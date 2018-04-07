@@ -71,6 +71,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ratio_glue_geom(4)
         , more_otf_shrink_with_cache(false)
         , more_otf_shrink_with_stamp(false)
+        , doAlwaysFMinim(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)

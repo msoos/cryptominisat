@@ -183,6 +183,7 @@ class DLL_PUBLIC SolverConf
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
         int more_otf_shrink_with_cache;
         int more_otf_shrink_with_stamp;
+        int doAlwaysFMinim;
 
         //Clause minimisation
         int doRecursiveMinim;
