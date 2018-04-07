@@ -69,12 +69,17 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(4)
+        , more_otf_shrink_with_cache(false)
+        , more_otf_shrink_with_stamp(false)
 
         //Clause minimisation
         , doRecursiveMinim (true)
         , doMinimRedMore(true)
         , max_glue_more_minim(6)
         , max_size_more_minim(30)
+        , more_red_minim_limit_cache(400)
+        , more_red_minim_limit_binary(200)
+        , max_num_lits_more_red_min(1)
 
         //Verbosity
         , verbosity        (0)

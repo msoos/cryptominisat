@@ -42,11 +42,15 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     recMinCl += other.recMinCl;
     recMinLitRem += other.recMinLitRem;
 
-    permDiff_attempt  += other.permDiff_attempt;
-    permDiff_rem_lits += other.permDiff_rem_lits;
-    permDiff_success += other.permDiff_success;
+    furtherShrinkAttempt  += other.furtherShrinkAttempt;
+    binTriShrinkedClause += other.binTriShrinkedClause;
+    cacheShrinkedClause += other.cacheShrinkedClause;
+    furtherShrinkedSuccess += other.furtherShrinkedSuccess;
 
 
+    stampShrinkAttempt += other.stampShrinkAttempt;
+    stampShrinkCl += other.stampShrinkCl;
+    stampShrinkLit += other.stampShrinkLit;
     moreMinimLitsStart += other.moreMinimLitsStart;
     moreMinimLitsEnd += other.moreMinimLitsEnd;
     recMinimCost += other.recMinimCost;
@@ -98,9 +102,14 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     recMinCl -= other.recMinCl;
     recMinLitRem -= other.recMinLitRem;
 
-    permDiff_attempt  -= other.permDiff_attempt;
-    permDiff_rem_lits -= other.permDiff_rem_lits;
-    permDiff_success -= other.permDiff_success;
+    furtherShrinkAttempt  -= other.furtherShrinkAttempt;
+    binTriShrinkedClause -= other.binTriShrinkedClause;
+    cacheShrinkedClause -= other.cacheShrinkedClause;
+    furtherShrinkedSuccess -= other.furtherShrinkedSuccess;
+
+    stampShrinkAttempt -= other.stampShrinkAttempt;
+    stampShrinkCl -= other.stampShrinkCl;
+    stampShrinkLit -= other.stampShrinkLit;
     moreMinimLitsStart -= other.moreMinimLitsStart;
     moreMinimLitsEnd -= other.moreMinimLitsEnd;
     recMinimCost -= other.recMinimCost;
@@ -303,28 +312,46 @@ void SearchStats::print(uint64_t props) const
         , "lit/confl"
     );
 
-    print_stats_line("c recurs-min effective"
+    print_stats_line("c rec-min effective"
         , recMinCl
         , stats_line_percent(recMinCl, conflStats.numConflicts)
         , "% attempt successful"
     );
 
-    print_stats_line("c recurs-min lits"
+    print_stats_line("c rec-min lits"
         , recMinLitRem
         , stats_line_percent(recMinLitRem, litsRedNonMin)
         , "% less overall"
     );
 
-    print_stats_line("c permDiff call%"
-        , stats_line_percent(permDiff_attempt, conflStats.numConflicts)
-        , stats_line_percent(permDiff_success, permDiff_attempt)
+    print_stats_line("c further-min call%"
+        , stats_line_percent(furtherShrinkAttempt, conflStats.numConflicts)
+        , stats_line_percent(furtherShrinkedSuccess, furtherShrinkAttempt)
         , "% attempt successful"
     );
 
-    print_stats_line("c permDiff lits-rem"
-        , permDiff_rem_lits
-        , ratio_for_stat(permDiff_rem_lits, permDiff_attempt)
-        , "less lits/cl on attempts"
+    print_stats_line("c bintri-min lits"
+        , binTriShrinkedClause
+        , stats_line_percent(binTriShrinkedClause, litsRedNonMin)
+        , "% less overall"
+    );
+
+    print_stats_line("c cache-min lits"
+        , cacheShrinkedClause
+        , stats_line_percent(cacheShrinkedClause, litsRedNonMin)
+        , "% less overall"
+    );
+
+    print_stats_line("c stamp-min call%"
+        , stats_line_percent(stampShrinkAttempt, conflStats.numConflicts)
+        , stats_line_percent(stampShrinkCl, stampShrinkAttempt)
+        , "% attempt successful"
+    );
+
+    print_stats_line("c stamp-min lits"
+        , stampShrinkLit
+        , stats_line_percent(stampShrinkLit, litsRedNonMin)
+        , "% less overall"
     );
 
     print_stats_line("c final avg"

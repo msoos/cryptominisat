@@ -62,9 +62,13 @@ public:
     uint64_t litsRedFinal = 0;
     uint64_t recMinCl = 0;
     uint64_t recMinLitRem = 0;
-    uint64_t permDiff_attempt = 0;
-    uint64_t permDiff_success = 0;
-    uint64_t permDiff_rem_lits = 0;
+    uint64_t furtherShrinkAttempt = 0;
+    uint64_t binTriShrinkedClause = 0;
+    uint64_t cacheShrinkedClause = 0;
+    uint64_t furtherShrinkedSuccess = 0;
+    uint64_t stampShrinkAttempt = 0;
+    uint64_t stampShrinkCl = 0;
+    uint64_t stampShrinkLit = 0;
     uint64_t moreMinimLitsStart = 0;
     uint64_t moreMinimLitsEnd = 0;
     uint64_t recMinimCost = 0;

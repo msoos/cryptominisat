@@ -181,12 +181,17 @@ class DLL_PUBLIC SolverConf
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
+        int more_otf_shrink_with_cache;
+        int more_otf_shrink_with_stamp;
 
         //Clause minimisation
         int doRecursiveMinim;
         int doMinimRedMore;  ///<Perform learnt clause minimisation using watchists' binary and tertiary clauses? ("strong minimization" in PrecoSat)
         unsigned max_glue_more_minim;
         unsigned max_size_more_minim;
+        unsigned more_red_minim_limit_cache;
+        unsigned more_red_minim_limit_binary;
+        unsigned max_num_lits_more_red_min;
 
         //Verbosity
         int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
