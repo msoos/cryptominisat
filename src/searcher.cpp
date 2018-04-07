@@ -1360,7 +1360,9 @@ void Searcher::check_need_restart()
             params.needToStopSearch = true;
         }
     }
-    if ((params.rest_type == Restart::geom || params.rest_type == Restart::luby)
+    if ((params.rest_type == Restart::geom ||
+        params.rest_type == Restart::luby ||
+        (conf.broken_glue_restart && conf.restartType == Restart::glue_geom))
         && (int64_t)params.conflictsDoneThisRestart > max_confl_this_phase
     ) {
         params.needToStopSearch = true;

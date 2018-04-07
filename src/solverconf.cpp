@@ -59,6 +59,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
+        , broken_glue_restart(true)
         , maple(true)
         , maple_backtrack(false)
         , maple_backtrack_mod(3)

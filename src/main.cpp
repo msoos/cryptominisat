@@ -304,6 +304,8 @@ void Main::add_supported_options()
         , "Use backtracking restart for maple")
     ("mbacktmod", po::value(&conf.maple_backtrack_mod)->default_value(conf.maple_backtrack_mod)
         , "How much more backtrack than luby (during maple)")
+    ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
+        , "Should glue restart be broken as before 8e74cb5010bb4")
     ;
 
     std::ostringstream s_incclean;
