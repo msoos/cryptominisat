@@ -2274,6 +2274,10 @@ lbool Searcher::solve(
             params.rest_type = Restart::luby;
         }
 
+        if (conf.restartType == Restart::glue) {
+            params.rest_type = Restart::glue;
+        }
+
         if (conf.restartType == Restart::backtrack) {
             max_confl_this_phase = conf.restart_first;
             params.rest_type = Restart::backtrack;
