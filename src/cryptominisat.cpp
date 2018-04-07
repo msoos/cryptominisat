@@ -168,6 +168,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 3: {
             //Similar to CMS 5.0
+            conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
             conf.max_temp_lev2_learnt_clauses = 30000;
@@ -183,10 +184,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 5: {
             //conf.max_temporary_learnt_clauses = 10000;
+            conf.do_bva = true;
             break;
         }
         case 6: {
-            conf.do_bva = false;
+            conf.do_bva = true;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
             conf.inc_max_temp_lev2_red_cls = 1.04;
