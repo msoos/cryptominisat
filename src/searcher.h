@@ -366,10 +366,10 @@ class Searcher : public HyperEngine
 
         ////////////
         // Transitive on-the-fly self-subsuming resolution
-        void   minimise_redundant_more(vector<Lit>& cl);
-        void   binary_based_more_minim(vector<Lit>& cl);
-        void   cache_based_more_minim(vector<Lit>& cl);
-        void   stamp_based_more_minim(vector<Lit>& cl);
+        void   minimise_redundant_more_more(vector<Lit>& cl);
+        void   binary_based_morem_minim(vector<Lit>& cl);
+        void   cache_based_morem_minim(vector<Lit>& cl);
+        void   stamp_based_morem_minim(vector<Lit>& cl);
 
         //Variable activities
         struct VarFilter { ///Filter out vars that have been set or is not decision from heap
