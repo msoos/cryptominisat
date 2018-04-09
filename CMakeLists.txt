@@ -271,8 +271,6 @@ if (NOT WIN32)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_cxx_flag_if_supported("-flto")
-        add_cxx_flag_if_supported("-fno-exceptions")
-        add_definitions(-DCMS_NO_THROW)
     else()
         add_cxx_flag_if_supported("-Wall")
         add_cxx_flag_if_supported("-Wextra")

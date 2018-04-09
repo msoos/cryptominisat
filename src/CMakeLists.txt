@@ -23,6 +23,11 @@ include_directories(
 )
 
 if (NOT WIN32)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        #add_definitions(-DCMS_NO_THROW)
+        #add_cxx_flag_if_supported("-fno-exceptions")
+    endif()
+
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
     #add_cxx_flag_if_supported("-Wduplicated-cond")
     #add_cxx_flag_if_supported("-Wduplicated-branches")
