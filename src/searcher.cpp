@@ -2587,7 +2587,7 @@ void Searcher::cache_based_morem_minim(vector<Lit>& cl)
 {
     int64_t limit = more_red_minim_limit_cache_actual;
     const size_t first_n_lits_of_cl =
-        std::min<size_t>(conf.max_num_lits_more_red_min, cl.size());
+        std::min<size_t>(conf.max_num_lits_more_more_red_min, cl.size());
     for (size_t at_lit = 0; at_lit < first_n_lits_of_cl; at_lit++) {
         Lit lit = cl[at_lit];
 
@@ -2616,7 +2616,7 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
 {
     int64_t limit  = more_red_minim_limit_binary_actual;
     const size_t first_n_lits_of_cl =
-        std::min<size_t>(conf.max_num_lits_more_red_min, cl.size());
+        std::min<size_t>(conf.max_num_lits_more_more_red_min, cl.size());
     for (size_t at_lit = 0; at_lit < first_n_lits_of_cl; at_lit++) {
         Lit lit = cl[at_lit];
         //Already removed this literal
@@ -2644,7 +2644,7 @@ void Searcher::binary_based_morem_minim(vector<Lit>& cl)
 
 void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
 {
-    /*if (conf.doStamp&& conf.more_otf_shrink_with_stamp) {
+    /*if (conf.doStamp&& conf.more_more_with_stamp) {
         stamp_based_morem_minim(learnt_clause);
     }*/
 
@@ -2653,7 +2653,7 @@ void Searcher::minimise_redundant_more_more(vector<Lit>& cl)
         seen[lit.toInt()] = 1;
     }
 
-    if (conf.doCache && conf.more_otf_shrink_with_cache) {
+    if (conf.doCache && conf.more_more_with_cache) {
         cache_based_morem_minim(cl);
     }
 

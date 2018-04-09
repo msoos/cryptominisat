@@ -208,7 +208,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_red_min = 20;
+            conf.max_num_lits_more_more_red_min = 20;
             //conf.max_temporary_learnt_clauses = 10000;
             conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             break;
@@ -218,7 +218,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
             //conf.glue_put_lev2_if_below_or_eq = 8;
-            conf.max_num_lits_more_red_min = 3;
+            conf.max_num_lits_more_more_red_min = 3;
             conf.max_glue_more_minim = 4;
             break;
         }
