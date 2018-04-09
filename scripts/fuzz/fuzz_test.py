@@ -317,10 +317,10 @@ class Tester:
             cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
 
             # more more minim
-            cmd += "--moremoreminim %d " % random.choice([1, 0])
+            cmd += "--moremoreminim %d " % random.choice([1, 1, 1, 0])
             cmd += "--moremorecachelimit %d " % int(random.gammavariate(1, 6))
-            cmd += "--moremorestamp %d " % random.choice([1, 0])
-            cmd += "--moremorealways %d " % random.choice([1, 0])
+            cmd += "--moremorestamp %d " % random.choice([1, 1, 1, 0])
+            cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
 
             if self.this_gauss_on:
                 # Reduce iteratively the matrix that is updated
