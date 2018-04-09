@@ -148,6 +148,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
     switch(thread_num) {
         case 1: {
             //Minisat-like
+            conf.maple = 0;
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
@@ -168,6 +169,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 3: {
             //Similar to CMS 5.0
+            conf.maple = 0;
             conf.varElimRatioPerIter = 0.4;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -179,6 +181,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 4: {
+            conf.maple = 0;
             conf.never_stop_search = true;
             break;
         }
@@ -199,6 +202,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         case 7: {
+            conf.maple = 0;
             conf.doMinimRedMoreMore = 1;
             conf.global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
@@ -238,6 +242,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 12: {
+            conf.maple = 0;
             conf.var_decay_max = 0.998;
             break;
         }
@@ -246,6 +251,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 14: {
+            conf.maple = 0;
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
 
@@ -260,6 +266,9 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
 
         default: {
+            conf.maple = ((thread_num % 3) <= 1);
+            conf.maple_backtrack = ((thread_num % 4) == 0);
+            conf.modulo_maple_iter = (thread_num % 4);
             break;
         }
     }
