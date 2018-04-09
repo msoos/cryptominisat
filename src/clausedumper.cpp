@@ -57,18 +57,22 @@ void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
 void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
 {
     open_dump_file(redDumpFname);
+#ifndef CMS_NO_THROW
     try {
+#endif
         if (!solver->okay()) {
             write_unsat_file();
         } else {
             dumpRedClauses();
         }
+#ifndef CMS_NO_THROW
     } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
         std::exit(-1);
     }
+#endif
     delete outfile;
     outfile = NULL;
 }
@@ -77,18 +81,23 @@ void ClauseDumper::open_file_and_dump_irred_clauses(const string& irredDumpFname
 {
     open_dump_file(irredDumpFname);
 
+#ifndef CMS_NO_THROW
     try {
+#endif
         if (!solver->okay()) {
             write_unsat_file();
         } else {
             dump_irred_clauses_all();
         }
+#ifndef CMS_NO_THROW
     } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
         std::exit(-1);
     }
+#endif
+
     delete outfile;
     outfile = NULL;
 }
@@ -97,7 +106,9 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
 {
     open_dump_file(irredDumpFname);
 
+#ifndef CMS_NO_THROW
     try {
+#endif
         if (!solver->okay()) {
             write_unsat_file();
         } else {
@@ -110,12 +121,14 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
 
             dump_irred_cls_for_preprocessor(false);
         }
+#ifndef CMS_NO_THROW
     } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
         std::exit(-1);
     }
+#endif
     delete outfile;
     outfile = NULL;
 }

@@ -117,7 +117,11 @@ void* ClauseAllocator::allocEnough(
             << " newcapacity: " << newcapacity
             << endl;
 
+#ifndef CMS_NO_THROW
             throw std::bad_alloc();
+#else
+            exit(-1);
+#endif
         }
 
         //Reallocate data
@@ -133,7 +137,11 @@ void* ClauseAllocator::allocEnough(
             << "ERROR: while reallocating clause space"
             << endl;
 
+#ifndef CMS_NO_THROW
             throw std::bad_alloc();
+#else
+            exit(-1);
+#endif
         }
         dataStart = new_dataStart;
 

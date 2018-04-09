@@ -36,7 +36,9 @@ int main(int argc, char** argv)
     #endif
 
     int ret = -1;
+#ifndef CMS_NO_THROW
     try {
+#endif
         Main main(argc, argv);
         main.conf.verbosity = 1;
         main.conf.verbStats = 1;
@@ -44,6 +46,7 @@ int main(int argc, char** argv)
 
         signal(SIGINT, SIGINT_handler);
         ret = main.solve();
+#ifndef CMS_NO_THROW
     } catch (CMSat::TooManyVarsError& e) {
         std::cerr << "ERROR! Variable requested is far too large" << std::endl;
         exit(-1);
@@ -51,6 +54,7 @@ int main(int argc, char** argv)
         std::cerr << "ERROR! Too long clause inserted" << std::endl;
         exit(-1);
     };
+#endif
 
     return ret;
 }

@@ -100,14 +100,20 @@ class SimpleInFile
 public:
     void start(const string& fname)
     {
+#ifndef CMS_NO_THROW
         try {
+#endif
             inf = new std::ifstream(fname.c_str(), ios::in | ios::binary);
             inf->exceptions(~std::ios::goodbit);
+#ifndef CMS_NO_THROW
         } catch (...) {
+#endif
             cout << "Error opening file " << fname.c_str() << endl;
             exit(-1);
         }
+#ifndef CMS_NO_THROW
     }
+#endif
 
     ~SimpleInFile()
     {

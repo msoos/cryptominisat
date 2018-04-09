@@ -206,7 +206,11 @@ bool Solver::add_xor_clause_inter(
     ps.resize(ps.size() - (i - j));
 
     if (ps.size() >= (0x01UL << 28)) {
+#ifndef CMS_NO_THROW
         throw CMSat::TooLongClauseError();
+#else
+        exit(-1);
+#endif
     }
     //cout << "Cleaned ps is: " << ps << endl;
 
@@ -569,7 +573,11 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     //Check for too long clauses
     if (ps.size() > (0x01UL << 28)) {
         cout << "Too long clause!" << endl;
+#ifndef CMS_NO_THROW
         throw CMSat::TooLongClauseError();
+#else
+        exit(-1);
+#endif
     }
 
     //Check for too large variable number

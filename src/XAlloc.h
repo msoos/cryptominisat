@@ -30,12 +30,18 @@ namespace Glucose {
 //=================================================================================================
 // Simple layer on top of malloc/realloc to catch out-of-memory situtaions and provide some typing:
 
+#ifndef CMS_NO_THROW
 class OutOfMemoryException {};
+#endif
 static inline void* xrealloc(void* ptr, size_t size)
 {
     void* mem = realloc(ptr, size);
     if (mem == NULL && errno == ENOMEM) {
+#ifndef CMS_NO_THROW
         throw OutOfMemoryException();
+#else
+        exit(-1);
+#endif
     } else {
         return mem;
     }
