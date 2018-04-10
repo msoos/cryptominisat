@@ -71,7 +71,7 @@ void printVersionInfo()
 void handle_drat_option(SolverConf& conf, const char* dratfilname)
 {
     std::ofstream* dratfTmp = new std::ofstream;
-    dratfTmp->open(dratfilname, std::ofstream::out);
+    dratfTmp->open(dratfilname, std::ofstream::out | std::ofstream::binary);
     if (!*dratfTmp) {
         std::cerr
         << "ERROR: Could not open DRAT file "
