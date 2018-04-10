@@ -64,7 +64,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maple_backtrack(false)
         , maple_backtrack_mod(3)
         , modulo_maple_iter(3)
-        , local_glue_multiplier(0.80)
+        , local_glue_multiplier(0.90)
         , local_backtrack_multiplier(0.90)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
@@ -128,7 +128,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Bounded variable addition
         , do_bva(false)
-        , min_bva_gain(16)
+        , min_bva_gain(32)
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
@@ -138,7 +138,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doProbe          (true)
         , doIntreeProbe    (true)
         , probe_bogoprops_time_limitM  (800ULL)
-        , intree_time_limitM(400ULL)
+        , intree_time_limitM(1200ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
@@ -165,7 +165,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_scc_depth (10000)
 
         //Iterative Alo Scheduling
-        , simplify_at_startup(true)
+        , simplify_at_startup(false)
         , simplify_at_every_startup(false)
         , do_simplify_problem(true)
         , full_simplify_at_startup(false)
@@ -223,7 +223,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Distillation
         , do_distill_clauses(true)
-        , distill_long_cls_time_limitM(50ULL)
+        , distill_long_cls_time_limitM(20ULL)
         , watch_cache_stamp_based_str_time_limitM(30LL)
         , distill_time_limitM(120LL)
 
