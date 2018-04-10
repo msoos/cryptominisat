@@ -48,7 +48,7 @@ Over the years, much cruft has accumulated in CryptoMiniSat. This has left serio
 Some of the ideas from Maple\_LCM\_Dist\cite{maple} have been included into CMS. In particular, the clause cleaning system, the radical in-process distillation and the Maple-based varible activites are all used.
 
 \subsection{Cluster Tuning}
-The author has been generously given time on the ASPIRE-1 cluster of the National Supercomputing Centre Singapore\cite{nscc}. This allowed experimentation and tuning that would have been impossible otherwise. CMS has not been tuned on a cluster for over 6 years and the difference shows.
+The author has been generously given time on the ASPIRE-1 cluster of the National Supercomputing Centre Singapore\cite{nscc}. This allowed experimentation and tuning that would have been impossible otherwise. CMS has not been tuned on a cluster for over 6 years and the difference shows. A slightly interesting side-effect is that the parameters suggested by the cluster are non-intuitive, such as not simplifying the CNF straight away, but rather CDCL-solving it first. Another interesting effect is that intree probing\cite{HeuleJB13} seems to be very important.
 
 \section{General Notes}
 \subsection{On-the-fly Gaussian Elimination}
