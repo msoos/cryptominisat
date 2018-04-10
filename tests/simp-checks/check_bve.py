@@ -129,7 +129,8 @@ class MyThread(threading.Thread):
 
         toprint = ""
 
-        toexec = [options.cms_exe, "--zero-exit-status", "--preproc", "1", "--verb", "0"]
+        toexec = [options.cms_exe, "--zero-exit-status",
+                  "--preproc", "1", "--verb", "0"]
         toexec.extend(self.extraopts)
         toexec.extend([fname, simp_fname])
 

@@ -929,6 +929,7 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess != 0) {
+        conf.simplify_at_startup = 1;
         conf.varelim_time_limitM *= 5;
         conf.global_timeout_multiplier *= 1.5;
         if (conf.doCompHandler) {
