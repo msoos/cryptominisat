@@ -128,6 +128,7 @@ void printUsage(char** argv)
     cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
     cout << "                            than 2 will give debug log\n";
     cout << "  --drat          = {fname} DRAT dumped to file\n";
+    cout << "  --gluebreak     = {0,1}   Break the glue-based restarts\n";
     cout << "  --threads       = [1...]  Sets number of threads\n";
     cout << "\n";
 }
@@ -166,6 +167,13 @@ int main(int argc, char** argv)
                 cout << "ERROR! illegal threads " << value << endl;
                 exit(0);
             }
+        }else if ((value = hasPrefix(argv[i], "--gluebreak="))){
+            int gluebreak  = (int)strtol(value, NULL, 10);
+            if (gluebreak == 0 && errno == EINVAL){
+                cout << "ERROR! illegal gluebreak " << value << endl;
+                exit(0);
+            }
+            conf.broken_glue_restart = gluebreak;
         }else if ((value = hasPrefix(argv[i], "--reconf="))){
             long int reconf  = (int)strtol(value, NULL, 10);
             if (reconf == 0 && errno == EINVAL){
