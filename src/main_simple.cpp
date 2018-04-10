@@ -125,11 +125,10 @@ void printUsage(char** argv)
     cout << "USAGE:"
     << argv[0] << " [options] <input-file> \n\n  where input is plain DIMACS.\n\n";
     cout << "OPTIONS:\n\n";
-    cout << "  --verb          = [0...] Sets verbosity level. Anything higher\n";
-    cout << "                           than 2 will give debug log\n";
-    cout << "  --drat          = {0,1}  Sets whether DRAT should be dumped to\n";
-    cout << "                           the console as per SAT COMPETITION'14 guidelines\n";
-    cout << "  --threads       = [1...] Sets number of threads\n";
+    cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
+    cout << "                            than 2 will give debug log\n";
+    cout << "  --drat          = {fname} DRAT dumped to file\n";
+    cout << "  --threads       = [1...]  Sets number of threads\n";
     cout << "\n";
 }
 
