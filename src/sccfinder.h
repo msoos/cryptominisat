@@ -98,6 +98,7 @@ class SCCFinder {
 
         const Stats& get_stats() const;
         size_t mem_used() const;
+        bool depth_warning_triggered() const;
 
     private:
         void tarjan(const uint32_t vertex);
@@ -131,6 +132,11 @@ inline void SCCFinder::doit(const Lit lit, const uint32_t vertex) {
     } else if (stackIndicator[lit.toInt()])  {
         lowlink[vertex] = std::min(lowlink[vertex], lowlink[lit.toInt()]);
     }
+}
+
+inline bool SCCFinder::depth_warning_triggered() const
+{
+    return depth_warning_issued;
 }
 
 inline const SCCFinder::Stats& SCCFinder::get_stats() const

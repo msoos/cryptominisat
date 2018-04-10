@@ -628,6 +628,8 @@ void Main::add_supported_options()
         , "Put DRAT verification information into this file")
     ("savedstate", po::value(&conf.saved_state_file)->default_value(conf.saved_state_file)
         , "The file to save the saved state of the solver")
+    ("maxsccdepth", po::value(&conf.max_scc_depth)->default_value(conf.max_scc_depth)
+        , "The maximum for scc search depth")
     ;
 
 #ifdef USE_GAUSS

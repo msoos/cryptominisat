@@ -1166,3 +1166,8 @@ void VarReplacer::load_state(SimpleInFile& f)
         reverseTable[v] = point_to;
     }
 }
+
+bool VarReplacer::get_scc_depth_warning_triggered() const
+{
+    return scc_finder->depth_warning_triggered();
+}

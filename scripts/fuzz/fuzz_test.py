@@ -315,6 +315,7 @@ class Tester:
             cmd += "--implsubsto %s " % random.choice([0, 10, 1000])
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
             cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
+            cmd += "--maxsccdepth %d " % random.choice[0, 1, 100, 100000]
 
             # more more minim
             cmd += "--moremoreminim %d " % random.choice([1, 1, 1, 0])

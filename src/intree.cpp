@@ -55,11 +55,16 @@ bool InTree::replace_until_fixedpoint(bool& aborted)
         if (!OK) {
             return false;
         }
+
+        if (solver->varReplacer->get_scc_depth_warning_triggered()) {
+            aborted = true;
+            solver->okay();
+        }
         this_replace = solver->varReplacer->get_num_replaced_vars();
 
         if (bogoprops > time_limit) {
             aborted = true;
-            return true;
+            solver->okay();
         }
     }
 
@@ -134,12 +139,12 @@ bool InTree::intree_probe()
     bool aborted = false;
     if (!replace_until_fixedpoint(aborted))
     {
-        return false;
+        return solver->okay();
     }
     if (aborted) {
         if (solver->conf.verbosity) {
             cout
-            << "c [intree] too expensive SCC + varreplace loop: aborting"
+            << "c [intree] too expensive or depth exceeded during SCC: aborting"
             << endl;
         }
         solver->use_depth_trick = true;
