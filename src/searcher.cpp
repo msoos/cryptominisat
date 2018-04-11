@@ -2209,7 +2209,7 @@ lbool Searcher::solve(
     resetStats();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0
-        && (upper_level_iteration_num > 1 || solver->conf.burst_broken)
+        && solver->conf.burst_broken
     ) {
         assert(solver->check_order_heap_sanity());
         status = burst_search();
