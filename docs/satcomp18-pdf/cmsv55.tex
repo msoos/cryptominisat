@@ -38,7 +38,7 @@ pdfproducer = {PdfLaTex}}
 \pagestyle{empty}
 
 \section{Introduction}
-This paper presents the conflict-driven clause-learning SAT solver CryptoMiniSat v5.5 (\emph{CMS5.5}) as submitted to SAT Competition 2018. CMS5 aims to be a modern, open-source SAT solver that allows for multi-threaded in-processing techniques while still retaining a strong CDCL component. In general, CMS5 is a inprocessing SAT solver that usues optimized datastructures and finely-tuned timeouts to have good control over both memory and time usage of simplification steps. Below are the changes to CMS5.5 compared to the SAT Competition 2016 version.
+This paper presents the conflict-driven clause-learning SAT solver CryptoMiniSat v5.5 (\emph{CMS}) as submitted to SAT Competition 2018. CMS aims to be a modern, open-source SAT solver that allows for multi-threaded in-processing techniques while still retaining a strong CDCL component. In general, CMS is a inprocessing SAT solver that usues optimized datastructures and finely-tuned timeouts to have good control over both memory and time usage of simplification steps. Below are the changes to CMS compared to the SAT Competition 2016 version.
 
 \section{Major Improvements}
 \subsection{Careful code review}
@@ -61,9 +61,9 @@ The "autotune" version of the solver measures internal solving parameters and re
 On-the-fly Gaussian elimination is again part of CryptoMiniSat. This is explicitly disabled for the compeititon, but the code is available and well-tested. This allows for special uses of the solver that other solvers, without on-the-fly Gaussian elimination, are not capable of.
 
 \subsection{Robustness}
-CMS is different from most other solvers in that it aims to be useable in both industry and academia. CMS has over 150 indivudual test cases, over 2000 lines of Python just for fuzzing orchestration, and compiles and runs without fault under both the ASAN and UBSAN sanitizers in clang and under Valgrind. This is in contrast many academic winning SAT solvers that produce results that are non-reproducible and/or produce segmentation faults if used as a library. CryptoMiniSat has extensive external fuzzing setup for library usage and is very robust under strange/unexpected use cases.
+CMS aims to be useable in both industry and academia. CMS has over 150 test cases and over 2000 lines of Python just for fuzzing orchestration, and runs without fault under both the ASAN and UBSAN sanitizers of clang. It also compiles and runs under Windows, Linux and MacOS X. This is in contrast many academic winning SAT solvers that produce results that are non-reproducible, cannot be compiled on anythong but a few select systems, and/or produce segmentation faults if used as a library. CryptoMiniSat has extensive fuzzing setup for library usage and is very robust under strange/unexpected use cases.
 
-\subsection{Thanks}
+\section{Thanks}
 This work was supported in part by NUS ODPRT Grant, R-252-000-685-133. The computational work for this article was performed on resources of the National Supercomputing Centre, Singapore\cite{nscc}. The author would also like to thank all the users of CryptoMiniSat who have submitted over 400 issues and many pull requests to the GitHub CMS repository\cite{CMS}.
 
 
