@@ -1932,7 +1932,7 @@ void Searcher::check_calc_features()
             solver->last_solve_feature = solver->calculate_features();
         }
     }
- }
+}
 
 void Searcher::print_restart_header()
 {
