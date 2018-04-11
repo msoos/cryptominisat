@@ -3029,7 +3029,7 @@ SolveFeatures Solver::calculate_features()
     feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
     feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
-    if (conf.verbosity > 5) {
+    if (conf.verbosity) {
         feat.print_stats();
     }
 

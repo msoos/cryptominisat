@@ -2163,7 +2163,9 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
 
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
-    check_calc_features();
+    if (solver->sqlStats)
+        check_calc_features();
+
     print_restart_header();
     dump_search_sql(myTime);
     if (conf.verbosity && conf.print_all_restarts)
