@@ -3086,7 +3086,7 @@ void Solver::reconfigure(int val)
             //Geom restart, but keep low glue clauses
             conf.maple = 0;
             VSIDS = true;
-            conf.varElimRatioPerIter = 1;
+            conf.varElimRatioPerIter = 0.2;
             conf.restartType = Restart::geom;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
 
@@ -3143,6 +3143,7 @@ void Solver::reconfigure(int val)
             conf.maple = 0;
             VSIDS = true;
             conf.shortTermHistorySize = 600;
+            conf.doAlwaysFMinim = true;
             break;
         }
 
@@ -3172,6 +3173,14 @@ void Solver::reconfigure(int val)
             conf.modulo_maple_iter = 100;
             VSIDS = false;
             conf.maple_backtrack = true;
+            break;
+        }
+
+        case 17: {
+            conf.maple = 1;
+            conf.modulo_maple_iter = 100;
+            VSIDS = false;
+            conf.maple_backtrack = false;
             break;
         }
 
