@@ -966,32 +966,47 @@ size_t VarReplacer::mem_used() const
     return b;
 }
 
-void VarReplacer::print_equivalent_literals(std::ostream *os) const
+uint32_t VarReplacer::print_equivalent_literals(std::ostream *os) const
 {
+    uint32_t num = 0;
     vector<Lit> tmpCl;
     for (uint32_t var = 0; var < table.size(); var++) {
         const Lit lit = table[var];
         if (lit.var() == var)
             continue;
 
-        tmpCl.clear();
-        tmpCl.push_back(~lit);
-        tmpCl.push_back(Lit(var, false));
-        std::sort(tmpCl.begin(), tmpCl.end());
+        //They have been renumbered in a way that cannot be dumped
+        Lit lit1 = solver->map_outer_to_inter(lit);
+        Lit lit2 = solver->map_outer_to_inter(Lit(var, false));
 
-        *os
-        << tmpCl[0] << " "
-        << tmpCl[1]
-        << " 0\n";
+        if (lit1.var() >= solver->nVars() ||
+            lit2.var() >= solver->nVars()
+        ) {
+            continue;
+        }
 
-        tmpCl[0] ^= true;
-        tmpCl[1] ^= true;
+        if (os) {
+            tmpCl.clear();
+            tmpCl.push_back(~lit1);
+            tmpCl.push_back(lit2);
+            std::sort(tmpCl.begin(), tmpCl.end());
 
-        *os
-        << tmpCl[0] << " "
-        << tmpCl[1]
-        << " 0\n";
+            *os
+            << tmpCl[0] << " "
+            << tmpCl[1]
+            << " 0\n";
+
+            tmpCl[0] ^= true;
+            tmpCl[1] ^= true;
+
+            *os
+            << tmpCl[0] << " "
+            << tmpCl[1]
+            << " 0\n";
+        }
+        num++;
     }
+    return num;
 }
 
 void VarReplacer::print_some_stats(const double global_cpu_time) const

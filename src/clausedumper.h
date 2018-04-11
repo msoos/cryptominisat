@@ -51,9 +51,6 @@ public:
 
     void open_file_and_write_unsat(const std::string& fname);
     void open_file_and_write_sat(const std::string& fname);
-
-    void open_file_and_dump_red_clauses(const std::string& redDumpFname);
-    void open_file_and_dump_irred_clauses(const std::string& irredDumpFname);
     void open_file_and_dump_irred_clauses_preprocessor(const std::string& irredDumpFname);
 
 
@@ -77,10 +74,6 @@ private:
         const vector<ClOffset>& cls
         , const bool backnumber
     );
-
-    void dump_blocked_clauses();
-    void dump_component_clauses();
-    void dump_irred_clauses_all();
 
     vector<Lit> tmpCl;
 
