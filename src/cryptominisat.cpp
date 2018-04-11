@@ -269,6 +269,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.maple = ((thread_num % 3) <= 1);
             conf.maple_backtrack = ((thread_num % 4) == 0);
             conf.modulo_maple_iter = (thread_num % 4);
+            conf.varElimRatioPerIter = 0.1*(thread_num % 4);
+            if (thread_num % 4 == 0) {
+                conf.restartType = Restart::glue;
+            }
+            conf.restart_first = 100 * (0.5*(thread_num % 4));
             break;
         }
     }
