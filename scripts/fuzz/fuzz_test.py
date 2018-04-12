@@ -273,6 +273,7 @@ class Tester:
         if not self.this_gauss_on and "autodisablegauss" in self.extra_options_if_supported:
             cmd += "--maxgaussdepth 0 "
 
+        cmd += "--confbtwsimp %d " % random.choice([10, 100, 1000])
         if random.choice([True, False]):
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
@@ -316,7 +317,6 @@ class Tester:
             cmd += "--sync %d " % random.choice([100, 1000, 6000, 100000])
             cmd += "-m %0.12f " % random.gammavariate(0.1, 5.0)
             cmd += "--maxsccdepth %d " % random.choice([0, 1, 100, 100000])
-            cmd += "--confbtwsimp %d " % random.choice([10, 100, 1000])
 
             # more more minim
             cmd += "--moremoreminim %d " % random.choice([1, 1, 1, 0])
