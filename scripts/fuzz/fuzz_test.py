@@ -274,7 +274,7 @@ class Tester:
             cmd += "--maxgaussdepth 0 "
 
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
-        cmd += "--confbtwsimp %d " % random.choice([10, 100, 1000])
+        cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         if random.choice([True, False]):
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
