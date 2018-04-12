@@ -273,6 +273,7 @@ class Tester:
         if not self.this_gauss_on and "autodisablegauss" in self.extra_options_if_supported:
             cmd += "--maxgaussdepth 0 "
 
+        cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
         cmd += "--confbtwsimp %d " % random.choice([10, 100, 1000])
         if random.choice([True, False]):
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
@@ -323,7 +324,6 @@ class Tester:
             cmd += "--moremorecachelimit %d " % int(random.gammavariate(1, 6))
             cmd += "--moremorestamp %d " % random.choice([1, 1, 1, 0])
             cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
-            cmd += "--presimp %d " % random.choice([1,1,1,1,0])
 
             if self.this_gauss_on:
                 # Reduce iteratively the matrix that is updated
@@ -539,10 +539,10 @@ class Tester:
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
-        self.num_threads = random.choice([1, 1, 1, 1, 1, 4])
+        self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_options_if_supported and random.choice([True, False, False, False, False])
-        self.drat = self.num_threads == 1 and random.choice([True, True, True, True, False]) and (not self.this_gauss_on)
+        self.drat = self.num_threads == 1 and random.choice([True, True, True, True, True, False]) and (not self.this_gauss_on)
 
         if self.drat:
             fuzzers = fuzzers_drat
