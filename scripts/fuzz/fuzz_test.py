@@ -542,7 +542,7 @@ class Tester:
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_options_if_supported and random.choice([True, False, False, False, False])
-        self.drat = self.num_threads == 1 and random.choice([True, True, True, True, True, False]) and (not self.this_gauss_on)
+        self.drat = self.num_threads == 1 and random.randint(0, 10) != 0 and (not self.this_gauss_on)
 
         if self.drat:
             fuzzers = fuzzers_drat
