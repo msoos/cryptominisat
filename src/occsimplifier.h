@@ -59,26 +59,44 @@ class BVA;
 
 struct BlockedClauses {
     BlockedClauses()
-    {}
+    {};
 
-    explicit BlockedClauses(const vector<Lit>& _lits) :
-        lits(_lits)
+    explicit BlockedClauses(size_t _start, size_t _end) :
+        start(_start)
+        , end(_end)
         , toRemove(false)
     {}
 
     void save_to_file(SimpleOutFile& f) const
     {
         f.put_uint32_t(toRemove);
-        f.put_vector(lits);
+        f.put_uint64_t(start);
+        f.put_uint64_t(end);
     }
 
     void load_from_file(SimpleInFile& f)
     {
         toRemove = f.get_uint32_t();
-        f.get_vector(lits);
+        start = f.get_uint64_t();
+        end = f.get_uint64_t();
     }
 
-    vector<Lit> lits;
+    const Lit& at(const uint64_t at, const vector<Lit>& blkcls) const
+    {
+        return blkcls[start+at];
+    }
+
+    Lit& at(const uint64_t at, vector<Lit>& blkcls)
+    {
+        return blkcls[start+at];
+    }
+
+    uint64_t size() const {
+        return end-start;
+    }
+
+    uint64_t start;
+    uint64_t end;
     bool toRemove = false;
 };
 
@@ -484,6 +502,7 @@ private:
     /////////////////////
     //Blocked clause elimination
     bool anythingHasBeenBlocked;
+    vector<Lit> blkcls;
     vector<BlockedClauses> blockedClauses; ///<maps var(outer!!) to postion in blockedClauses
     vector<uint32_t> blk_var_to_cls;
     bool blockedMapBuilt;
@@ -512,12 +531,12 @@ inline bool OccSimplifier::getAnythingHasBeenBlocked() const
     return anythingHasBeenBlocked;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const BlockedClauses& bl)
+/*inline std::ostream& operator<<(std::ostream& os, const BlockedClauses& bl)
 {
     os << bl.lits << " to remove: " << bl.toRemove;
 
     return os;
-}
+}*/
 
 inline bool OccSimplifier::subsetReverse(const Clause& B) const
 {
