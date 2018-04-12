@@ -1541,7 +1541,8 @@ void Solver::dump_memory_stats_to_sql()
 
 long Solver::calc_num_confl_to_do_this_iter(const size_t iteration_num) const
 {
-    double mult = std::pow(conf.num_conflicts_of_search_inc, (double)iteration_num);
+    double iter_num = std::min<size_t>(iteration_num, 100ULL);
+    double mult = std::pow(conf.num_conflicts_of_search_inc, iter_num);
     mult = std::min(mult, conf.num_conflicts_of_search_inc_max);
     long num_conflicts_of_search = (double)conf.num_conflicts_of_search*mult;
     if (conf.never_stop_search) {
