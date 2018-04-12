@@ -500,6 +500,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
             && solver->varData[ancestor.var()].removed == Removed::none
         ) {
             toEnqueue.push_back(~ancestor);
+            (*solver->drat) << add << lit << fin;
             if (solver->conf.verbosity >= 10)
                 cout << "c Tautology from cache indicated we can enqueue " << (~ancestor) << endl;
         }
