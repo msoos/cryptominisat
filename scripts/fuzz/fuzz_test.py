@@ -732,7 +732,7 @@ if __name__ == "__main__":
         print("--> To re-create fuzz-test below: %s" % toexec)
 
         random.seed(rnd_seed)
-        if random.choice([False, False, False, False, True]):
+        if random.randint(0, 10) == 0:
             tester.fuzz_test_preproc()
         else:
             tester.fuzz_test_one()
