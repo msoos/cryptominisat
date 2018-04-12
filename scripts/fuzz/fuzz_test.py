@@ -322,6 +322,7 @@ class Tester:
             cmd += "--moremorecachelimit %d " % int(random.gammavariate(1, 6))
             cmd += "--moremorestamp %d " % random.choice([1, 1, 1, 0])
             cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
+            cmd += "--presimp %d " % random.choice([1,1,1,1,0])
 
             if self.this_gauss_on:
                 # Reduce iteratively the matrix that is updated
