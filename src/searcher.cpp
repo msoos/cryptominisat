@@ -216,7 +216,7 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
         cout  << endl;
     }
 
-    if (drat->enabled()) {
+    if (drat->enabled() || solver->conf.simulate_drat) {
         *drat << add;
         for(unsigned  i = 0; i < newCl.size; i++) {
             *drat << newCl.lits[i];
@@ -3089,7 +3089,9 @@ PropBy Searcher::propagate() {
     ret = propagate_any_order<update_bogoprops>();
 
     //Drat -- If declevel 0 propagation, we have to add the unitaries
-    if (decisionLevel() == 0 && drat->enabled()) {
+    if (decisionLevel() == 0 &&
+        (drat->enabled() || solver->conf.simulate_drat)
+    ) {
         for(size_t i = origTrailSize; i < trail.size(); i++) {
             #ifdef DEBUG_DRAT
             if (conf.verbosity >= 6) {

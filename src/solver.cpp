@@ -691,7 +691,7 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     );
 
     //Drat -- We manipulated the clause, delete
-    if (drat->enabled()
+    if ((drat->enabled() || conf.simulate_drat)
         && ps != finalCl_tmp
     ) {
         //Dump only if non-empty (UNSAT handled later)
@@ -1219,7 +1219,9 @@ void Solver::check_config_parameters() const
     }
 
     #ifdef USE_GAUSS
-    if (drat->enabled() && conf.gaussconf.decision_until > 0)  {
+    if ((drat->enabled() || solver->conf.simulate_drat) &&
+        conf.gaussconf.decision_until > 0
+    )  {
         std::cerr << "Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
     }

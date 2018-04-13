@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "watchalgos.h"
 
 #include <cmath>
+#include <cassert>
 
 using namespace CMSat;
 
@@ -86,6 +87,7 @@ bool InTree::watches_only_contains_nonbin(const Lit lit) const
 bool InTree::check_timeout_due_to_hyperbin()
 {
     assert(!(solver->timedOutPropagateFull && solver->drat->enabled()));
+    assert(!(solver->timedOutPropagateFull && solver->conf.simulate_drat));
 
     if (solver->timedOutPropagateFull
         && !solver->drat->enabled()
@@ -334,7 +336,9 @@ bool InTree::handle_lit_popped_from_queue(const Lit lit, const Lit other_lit, co
         bool ok;
         if (solver->conf.otfHyperbin) {
             uint64_t max_hyper_time = std::numeric_limits<uint64_t>::max();
-            if (!solver->drat->enabled()) {
+            if (!solver->drat->enabled() &&
+                !solver->conf.simulate_drat
+            ) {
                 max_hyper_time =
                 solver->propStats.otfHyperTime
                 + solver->propStats.bogoProps

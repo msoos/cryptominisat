@@ -295,7 +295,9 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         return;
     }
 
-    if (data->solvers[0]->drat->enabled()) {
+    if (data->solvers[0]->drat->enabled() ||
+        data->solvers[0]->conf.simulate_drat
+    ) {
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
 #ifndef CMS_NO_THROW
         throw std::runtime_error("ERROR: DRAT cannot be used in multi-threaded mode");

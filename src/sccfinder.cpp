@@ -117,7 +117,8 @@ void SCCFinder::tarjan(const uint32_t vertex)
     vector<LitExtra>* transCache = NULL;
     if (solver->conf.doCache
         && solver->conf.doExtendedSCC
-        && (!solver->drat->enabled() || solver->conf.otfHyperbin)
+        && (!(solver->drat->enabled() || solver->conf.simulate_drat) ||
+            solver->conf.otfHyperbin)
     ) {
         transCache = &(solver->implCache[~vertLit].lits);
         __builtin_prefetch(transCache->data());

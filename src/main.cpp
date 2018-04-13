@@ -630,6 +630,8 @@ void Main::add_supported_options()
         , "The file to save the saved state of the solver")
     ("maxsccdepth", po::value(&conf.max_scc_depth)->default_value(conf.max_scc_depth)
         , "The maximum for scc search depth")
+    ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
+        , "The maximum for scc search depth")
     ;
 
 #ifdef USE_GAUSS
@@ -831,21 +833,23 @@ void Main::check_options_correctness()
 
 void Main::handle_drat_option()
 {
-    if (dratDebug) {
-        dratf = &cout;
-    } else {
-        std::ofstream* dratfTmp = new std::ofstream;
-        dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
-        if (!*dratfTmp) {
-            std::cerr
-            << "ERROR: Could not open DRAT file "
-            << dratfilname
-            << " for writing"
-            << endl;
+    if (!conf.simulate_drat) {
+        if (dratDebug) {
+            dratf = &cout;
+        } else {
+            std::ofstream* dratfTmp = new std::ofstream;
+            dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
+            if (!*dratfTmp) {
+                std::cerr
+                << "ERROR: Could not open DRAT file "
+                << dratfilname
+                << " for writing"
+                << endl;
 
-            std::exit(-1);
+                std::exit(-1);
+            }
+            dratf = dratfTmp;
         }
-        dratf = dratfTmp;
     }
 
     if (!conf.otfHyperbin) {
@@ -1057,7 +1061,9 @@ void Main::manually_parse_some_options()
         }
     }
 
-    if (conf.preprocess == 0 && vm.count("drat")) {
+    if (conf.preprocess == 0 &&
+        (vm.count("drat") || conf.simulate_drat)
+    ) {
         handle_drat_option();
     }
 

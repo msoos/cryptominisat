@@ -88,7 +88,7 @@ void Prober::checkOTFRatio()
             > time_limit
         && ratio < solver->conf.otf_hyper_ratio_limit
         && solver->conf.otfHyperbin
-        && !solver->drat->enabled()
+        && !(solver->drat->enabled() || solver->conf.simulate_drat)
     ) {
         solver->conf.otfHyperbin = false;
         if (solver->conf.verbosity) {
@@ -577,7 +577,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     //If we timed out on ONE call, turn otf hyper-bin off
     //and return --> the "visitedAlready" will be wrong
     if (solver->timedOutPropagateFull
-        && !solver->drat->enabled()
+        && !(solver->drat->enabled() || solver->conf.simulate_drat)
     ) {
         if (solver->conf.verbosity) {
             cout
@@ -700,7 +700,7 @@ bool Prober::propagate(Lit& failed)
         //Set timeout for ONE enqueue. This used so that in case ONE enqueue
         //takes too long (usually because of hyper-bin), we exit early
         uint64_t timeout = std::numeric_limits<uint64_t>::max();
-        if (!solver->drat->enabled()) {
+        if (!(solver->drat->enabled() || solver->conf.simulate_drat)) {
             timeout = solver->propStats.otfHyperTime
             + solver->propStats.bogoProps
             + single_prop_tout;

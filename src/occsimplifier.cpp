@@ -259,7 +259,7 @@ void OccSimplifier::unlink_clause(
     , bool only_set_is_removed
 ) {
     Clause& cl = *solver->cl_alloc.ptr(offset);
-    if (solver->drat->enabled() && doDrat) {
+    if (doDrat && (solver->drat->enabled() || solver->conf.simulate_drat)) {
        (*solver->drat) << del << cl << fin;
     }
 
