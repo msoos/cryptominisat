@@ -238,7 +238,7 @@ class Prober {
         void clear_up_before_first_set();
 
         void update_cache(Lit thisLit, Lit lit, size_t numElemsSet);
-        void check_and_set_both_prop(uint32_t var, bool first);
+        void check_and_set_both_prop(Lit probed_lit, uint32_t var, bool first);
         void add_rest_of_lits_to_cache(Lit lit);
 
         //For hyper-bin resolution

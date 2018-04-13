@@ -512,7 +512,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
     }
 }
 
-void Prober::check_and_set_both_prop(uint32_t var, bool first)
+void Prober::check_and_set_both_prop(Lit probed_lit, uint32_t var, bool first)
 {
     //If this is the first, set what is propagated
     if (first) {
@@ -533,6 +533,8 @@ void Prober::check_and_set_both_prop(uint32_t var, bool first)
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);
             toEnqueue.push_back(litToEnq);
+            (*solver->drat) << add << probed_lit << litToEnq << fin;
+            (*solver->drat) << add << ~probed_lit << litToEnq << fin;
             (*solver->drat) << add << litToEnq << fin;
 
             if (solver->conf.verbosity >= 10)
@@ -645,7 +647,7 @@ bool Prober::try_this(const Lit lit, const bool first)
             const uint32_t var = thisLit.var();
 
             if (solver->conf.doBothProp) {
-                check_and_set_both_prop(var, first);
+                check_and_set_both_prop(lit, var, first);
             }
             visitedAlready[thisLit.toInt()] = 1;
             if (solver->conf.otfHyperbin) {
