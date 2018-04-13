@@ -306,6 +306,8 @@ void Main::add_supported_options()
         , "How much more backtrack than luby (during maple)")
     ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
         , "Should glue restart be broken as before 8e74cb5010bb4")
+    ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
+        , "Ratio of glue vs geometric restarts -- more is more glue")
     ;
 
     std::ostringstream s_incclean;
