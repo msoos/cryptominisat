@@ -59,7 +59,7 @@ class BVA;
 
 struct BlockedClauses {
     BlockedClauses()
-    {};
+    {}
 
     explicit BlockedClauses(size_t _start, size_t _end) :
         start(_start)
