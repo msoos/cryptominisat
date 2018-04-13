@@ -29,6 +29,7 @@ if (NOT WIN32)
     endif()
 
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
+    add_cxx_flag_if_supported("-Wno-class-memaccess")
     #add_cxx_flag_if_supported("-Wduplicated-cond")
     #add_cxx_flag_if_supported("-Wduplicated-branches")
     add_cxx_flag_if_supported("-Wlogical-op")
