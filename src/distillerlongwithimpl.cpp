@@ -417,7 +417,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
     size_t i = 0;
     size_t j = i;
     ClOffset offset;
-    #ifdef USE_GAUS
+    #ifdef USE_GAUSS
     Clause* cl;
     #endif
     const size_t end = clauses.size();
@@ -439,7 +439,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
             goto copy;
         }
 
-        #ifdef USE_GAUS
+        #ifdef USE_GAUSS
         cl = solver->cl_alloc.ptr(offset);
         if (cl->_used_in_xor) {
             goto copy;
