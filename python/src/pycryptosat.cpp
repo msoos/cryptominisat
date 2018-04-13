@@ -98,7 +98,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
 
     int verbose = 0;
     int num_threads = 1;
-    long time_limit = std::numeric_limits<double>::max();
+    double time_limit = std::numeric_limits<double>::max();
     long confl_limit = std::numeric_limits<long>::max();
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
         return NULL;
@@ -108,7 +108,7 @@ static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
         return NULL;
     }
     if (time_limit < 0) {
-        PyErr_SetString(PyExc_ValueError, "timelimit must be at least 0");
+        PyErr_SetString(PyExc_ValueError, "time_limit must be at least 0");
         return NULL;
     }
     if (confl_limit < 0) {
