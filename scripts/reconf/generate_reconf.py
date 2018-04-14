@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from __future__ import with_statement  # Required in 2.5
+from __future__ import print_function
 import sys
 import subprocess
 
@@ -54,8 +56,8 @@ def query_yes_no(question, default="no"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
-#num = 15
-#ignore = "2,4,5,0,8,11,9,10"
+# num = 15
+# ignore = "2,4,5,0,8,11,9,10"
 num = 8
 ignore = "1,2,3,4,5,6"
 ignore_elems = {}
@@ -73,17 +75,16 @@ f = open("output", "w")
 ret = subprocess.call(toexec, shell=True, stdout=f)
 f.close()
 if ret != 0:
-    print "ERROR: reconf call exited non-zero: %s" % toexec
+    print("ERROR: reconf call exited non-zero: %s" % toexec)
     exit(-1)
 
 for i in range(num):
     if i in ignore_elems:
         continue
 
-    print "reconf with %d" % i
+    print("reconf with %d" % i)
     subprocess.call("cp outs/reconf.names outs/out%d.names" % i, shell=True)
-    subprocess.call("c5.0 -u 20 -f outs/out%d -r > outs/out%d.c50.out" % (i, i),
-                    shell=True)
+    subprocess.call("c5.0 -u 20 -f outs/out%d -r > outs/out%d.c50.out" % (i, i), shell=True)
 
 subprocess.call("./tocpp.py -i %s -n %d > ../../src/features_to_reconf.cpp" % (ignore, num),
                 shell=True)
@@ -94,8 +95,8 @@ subprocess.call("sed -i 's/red-/red_cl_distrib./g' ../../src/features_to_reconf.
 upload = query_yes_no("Upload to AWS?")
 if upload:
     subprocess.call("aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/", shell=True)
-    print "Uploded to AWS"
+    print("Uploded to AWS")
 else:
-    print "Not uploaded to AWS"
+    print("Not uploaded to AWS")
 
 

@@ -58,7 +58,7 @@ parser.add_option("--ignore", "-i",
                   help="Ignore these reconfs")
 
 (options, args) = parser.parse_args()
-# print "args:", args
+# print("args:", args)
 
 ignore = {}
 if options.ignore:
@@ -78,7 +78,7 @@ f.write("\nreconf:                 +,-.\n")
 f.close()
 
 if options.num is None:
-    print "ERROR: You must give the number of reconfs"
+    print("ERROR: You must give the number of reconfs")
     exit(-1)
 
 
@@ -119,17 +119,17 @@ def print_features_and_scores(fname, features, reconfs_scores):
     r_s = sorted(reconfs_scores, key=lambda x: x[1])[::-1]
     best_reconf = r_s[0][0]
     best_reconf_score = r_s[0][1]
-    print r_s
+    print(r_s)
 
     if nobody_could_solve_it(r_s):
-        print "Nobody could solve: %s" % fname
+        print("Nobody could solve: %s" % fname)
         return -1, False
 
     if all_above_fixed_score(r_s, options.ignore_threshold):
-        print "All above score: %s" % (fname)
+        print("All above score: %s" % (fname))
         return -2, False
 
-    print "Calculating +/- for %s" % fname
+    print("Calculating +/- for %s" % fname)
 
     #calculate final array
     final_array = [0.0]*options.num
@@ -161,7 +161,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         for a in final_array:
             string2 += "%.1f " % a
 
-        print string2
+        print(string2)
 
     #print to files
     origstring = str(string)
@@ -184,7 +184,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
 
 def parse_file(fname):
     f = gzip.open(fname, 'rb')
-    #print "fname orig:", fname
+    #print("fname orig:", fname)
     fname_clean = re.sub("cnf.gz-.*", "cnf.gz", fname)
     fname_clean = ntpath.split(fname_clean)[1]
     reconf = 0
@@ -194,7 +194,7 @@ def parse_file(fname):
     score = 0
     for line in f:
         line = line.strip()
-        #print "parsing line:", line
+        #print("parsing line:", line)
         if features is None and "features" in line and "numClauses" in line:
             features = parse_features_line(line)
 
@@ -220,7 +220,7 @@ def parse_file(fname):
     if reconf in ignore:
         score = 0
 
-    #print "features:", features
+    #print("features:", features)
     return fname_clean, reconf, features, score
 
 all_files = set()
@@ -228,14 +228,14 @@ all_files_scores = {}
 all_files_features = {}
 max_num_features = 0
 for x in args:
-    print "# parsing infile:", x
+    print("# parsing infile:", x)
     fname, reconf, features, score = parse_file(x)
     if fname in all_files:
         if all_files_features[fname] != features:
-            print "different features extracted for fname", fname
-            print "orig:", all_files_features[fname]
-            print "new: ", features
-            print "Keeping the longer one!"
+            print("different features extracted for fname", fname)
+            print("orig:", all_files_features[fname])
+            print("new: ", features)
+            print("Keeping the longer one!")
 
         if all_files_features[fname] is None:
             num_features = 0
@@ -249,15 +249,15 @@ for x in args:
         all_files_features[fname] = features
         all_files_scores[fname] = []
 
-    #print "fname:", fname
+    #print("fname:", fname)
     all_files_scores[fname].append([reconf, score])
 
     sys.stdout.write(".")
     sys.stdout.flush()
 
-print "END--------"
-print "all files:", all_files
-print ""
+print("END--------")
+print("all files:", all_files)
+print("")
 outf = []
 for i in range(options.num):
     fname = options.outfname + str(i) + ".data"
@@ -277,18 +277,18 @@ for x in range(options.num):
 only_this = dict(best_reconf)
 
 for fname in all_files:
-    print "calculating final DATs for CNF ", fname
+    print("calculating final DATs for CNF ", fname)
     if all_files_features[fname] is None:
-        print "solved too early, no features, skipping"
+        print("solved too early, no features, skipping")
         continue
 
-    print "all_files_features[fname]:", all_files_features[fname]
+    print("all_files_features[fname]:", all_files_features[fname])
     if "avg_confl_size" not in all_files_features[fname]:
-        print "WARNING This is weird, probably not solved by one (different features than everything else), skipping"
+        print("WARNING This is weird, probably not solved by one (different features than everything else), skipping")
         continue
 
     if all_files_features[fname] is None:
-        print "features for file is None: %s" % fname
+        print("features for file is None: %s" % fname)
 
     if all_files_features[fname] is not None:
         best, only_this_could_solve_it = print_features_and_scores(fname, all_files_features[fname], all_files_scores[fname])
@@ -299,26 +299,25 @@ for fname in all_files:
         if best == -1:
             best = "nobody_could_solve_it"
 
-        print "best here:", best
+        print("best here:", best)
         best_reconf[best] = best_reconf[best] + 1
         if only_this_could_solve_it:
             only_this[best] = only_this[best] + 1
 
-        print ""
+        print("")
 
-print "\n-----------------------------"
-print "best reconfs: "
+print("\n-----------------------------")
+print("best reconfs: ")
 for a, b in best_reconf.iteritems():
     if a not in ignore:
-        print "%-20s : %-3d" % (a, b)
+        print("%-20s : %-3d" % (a, b))
 
-print "\n-----------------------------"
-print "uniquely solved by: "
+print("\n-----------------------------")
+print("uniquely solved by: ")
 for a, b in only_this.iteritems():
     if a not in ignore:
-        print "%-20s : %-3d" % (a, b)
+        print("%-20s : %-3d" % (a, b))
 
 for i in range(options.num):
     if outf[i] is not None:
         outf[i].close()
-
