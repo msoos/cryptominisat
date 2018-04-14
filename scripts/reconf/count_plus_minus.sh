@@ -2,7 +2,7 @@
 
 #rm outfile*.data
 #rm outs/*.data
-#./reconf.py -n 18 -i 1,2,8,9,10,11,15,5,14,13,3 /home/soos/media/sat/out/new/out-reconf-6776906.wlm01-*/*.out
+#./reconf.py -n 18 -i 1,2,8,9,10,11,15,5,14,13,3 -f outs/out /home/soos/media/sat/out/new/out-reconf-6776906.wlm01-*/*.out
 
 
 for f in `ls outfile*.data`; do
