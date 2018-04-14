@@ -205,6 +205,4 @@ for i in range(options.num):
         read_one_reconf(i)
 
 print("""
-} //end namespace
-
-""")
+} //end namespace""")
