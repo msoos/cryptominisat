@@ -580,10 +580,10 @@ class Tester:
 
         # remove temporary filenames
         os.unlink(interspersed_fname)
-        for name in todel:
-            os.unlink(name)
         if fname_drat:
             os.unlink(fname_drat)
+        for name in todel:
+            os.unlink(name)
 
     def delete_file_no_matter_what(self, fname):
         try:
