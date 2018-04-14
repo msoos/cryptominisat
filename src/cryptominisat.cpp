@@ -161,6 +161,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 2: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
+            conf.maple = 0;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
             conf.glue_put_lev0_if_below_or_eq = 0;
@@ -191,6 +192,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 6: {
+            conf.maple = 0;
             conf.do_bva = true;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.varElimRatioPerIter = 1;
@@ -215,6 +217,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 8: {
             //Different glue limit
+            conf.maple = 0;
             conf.doMinimRedMoreMore = 1;
             conf.glue_put_lev0_if_below_or_eq = 4;
             //conf.glue_put_lev2_if_below_or_eq = 8;
@@ -224,18 +227,21 @@ void update_config(SolverConf& conf, unsigned thread_num)
         }
         case 9: {
             //Different glue limit
+            conf.maple = 0;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
         case 10: {
             //Luby
+            conf.maple = 0;
             conf.restart_inc = 1.5;
             conf.restart_first = 100;
             conf.restartType = CMSat::Restart::luby;
             break;
         }
         case 11: {
+            conf.maple = 0;
             conf.glue_put_lev0_if_below_or_eq = 3;
             conf.glue_put_lev1_if_below_or_eq = 5;
             conf.var_decay_max = 0.97;
@@ -247,6 +253,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 13: {
+            conf.maple = 0;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             break;
         }
@@ -261,7 +268,77 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 15: {
+            conf.maple = 0;
             conf.inc_max_temp_lev2_red_cls = 1.001;
+            break;
+        }
+
+        case 16: {
+            //Minisat-like
+            conf.maple = 1;
+            conf.varElimRatioPerIter = 1;
+            conf.restartType = Restart::geom;
+            conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+
+            conf.inc_max_temp_lev2_red_cls = 1.02;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
+            break;
+        }
+        case 17: {
+            //Similar to CMS 2.9 except we look at learnt DB size insteead
+            //of conflicts to see if we need to clean.
+            conf.maple = 1;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0.5;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0;
+            conf.glue_put_lev0_if_below_or_eq = 0;
+            conf.inc_max_temp_lev2_red_cls = 1.03;
+            break;
+        }
+        case 18: {
+            //Similar to CMS 5.0
+            conf.maple = 1;
+            conf.varElimRatioPerIter = 0.4;
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.max_temp_lev2_learnt_clauses = 30000;
+            conf.glue_put_lev0_if_below_or_eq = 4;
+
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
+            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
+            break;
+        }
+        case 19: {
+            conf.maple = 1;
+            conf.modulo_maple_iter = 100;
+            break;
+        }
+        case 20: {
+            //Maple with backtrack
+            conf.maple = 1;
+            conf.modulo_maple_iter = 100;
+            conf.maple_backtrack = 1;
+            break;
+        }
+        case 21: {
+            conf.maple = 0;
+            conf.every_lev1_reduce = 0;
+            conf.every_lev2_reduce = 0;
+            conf.glue_put_lev1_if_below_or_eq = 0;
+            conf.max_temp_lev2_learnt_clauses = 10000;
+            break;
+        }
+
+        case 22: {
+            conf.maple = 1;
+            conf.doMinimRedMoreMore = 1;
+            conf.global_timeout_multiplier = 5;
+            conf.num_conflicts_of_search_inc = 1.15;
+            conf.more_red_minim_limit_cache = 1200;
+            conf.more_red_minim_limit_binary = 600;
+            conf.max_num_lits_more_more_red_min = 20;
+            //conf.max_temporary_learnt_clauses = 10000;
+            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
             break;
         }
 
