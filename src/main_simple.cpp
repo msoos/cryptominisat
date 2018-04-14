@@ -145,7 +145,7 @@ const char* hasPrefix(const char* str, const char* prefix)
 int main(int argc, char** argv)
 {
     SolverConf conf;
-    conf.verbosity = 2;
+    conf.verbosity = 1;
     dratf = NULL;
 
     int i, j;
