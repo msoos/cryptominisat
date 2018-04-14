@@ -44,7 +44,7 @@ parser.add_option("--cutoff",
                   dest="cutoff", type=float, default=0.45,
                   help="At least this much or higher is needed for +")
 parser.add_option("--divisor",
-                  dest="divisor", type=float, default=3000.0,
+                  dest="divisor", type=float, default=2000.0,
                   help="Time difference is divided by this much and subtracted")
 parser.add_option("--ignorethresh",
                   dest="ignore_threshold", type=float, default=4000.0,
