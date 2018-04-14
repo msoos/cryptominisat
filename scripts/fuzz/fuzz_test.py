@@ -553,7 +553,7 @@ class Tester:
         fname = unique_file("fuzzTest")
         fname_drat = None
         if self.drat:
-            fname_drat = "%s-drat" % fname
+            fname_drat = unique_file("fuzzTest-drat")
 
         # create the fuzz file
         cf = create_fuzz()
