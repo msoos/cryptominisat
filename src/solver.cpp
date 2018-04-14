@@ -3188,7 +3188,7 @@ void Solver::reconfigure(int val)
         }
 
         default: {
-            cout << "ERROR: Only reconfigure values of 3,4,67,12,13,14,15 are supported" << endl;
+            cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16,17 are supported" << endl;
             exit(-1);
         }
     }
