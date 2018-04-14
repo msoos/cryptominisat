@@ -55,9 +55,11 @@ parser.add_option("--maxscore",
 parser.add_option("--ignore", "-i",
                   dest="ignore", type=str,
                   help="Ignore these reconfs")
+parser.add_option("--verbose", "-r", dest="verbose", default=False,
+                  action="store_true", help="More verbose")
 
 (options, args) = parser.parse_args()
-# print("args:", args)
+# print("files to parse are:", args)
 
 ignore = {}
 if options.ignore:
