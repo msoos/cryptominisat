@@ -108,9 +108,13 @@ def nobody_could_solve_it(reconf_score):
     return True
 
 
-def all_above_fixed_score(reconf_score, score_limit):
+def all_above_fixed_score(reconf_score):
     for x in reconf_score:
-        if x[1] < score_limit:
+        if x[0] in ignore:
+            continue
+
+        if x[1] < options.ignore_threshold:
+            print("-> not ignoring, reconf %d is below ignore threshold" % x[0])
             return False
 
     return True
@@ -126,7 +130,7 @@ def print_features_and_scores(fname, features, reconfs_scores):
         print("Nobody could solve: %s" % fname)
         return -1, False
 
-    if all_above_fixed_score(r_s, options.ignore_threshold):
+    if all_above_fixed_score(r_s):
         print("All above score: %s" % (fname))
         return -2, False
 
