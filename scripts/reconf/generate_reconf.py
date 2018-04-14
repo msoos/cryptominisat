@@ -25,7 +25,7 @@ import subprocess
 
 
 def query_yes_no(question, default="no"):
-    """Ask a yes/no question via raw_input() and return their answer.
+    """Ask a yes/no question via input() and return their answer.
 
     "question" is a string that is presented to the user.
     "default" is the presumed answer if the user just hits <Enter>.
@@ -47,7 +47,7 @@ def query_yes_no(question, default="no"):
 
     while True:
         sys.stdout.write(question + prompt)
-        choice = raw_input().lower()
+        choice = input().lower()
         if default is not None and choice == '':
             return valid[default]
         elif choice in valid:
@@ -56,10 +56,16 @@ def query_yes_no(question, default="no"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
-# num = 15
-# ignore = "2,4,5,0,8,11,9,10"
-num = 8
-ignore = "1,2,3,4,5,6"
+
+num = 18
+ignore = "1,2,8,9,10,11,15,5,14,13,3"
+files = "/home/soos/media/sat/out/new/out-reconf-6776906.wlm01-*/*.out"
+
+# for testing
+#num = 8
+#ignore = "0,1,2,3,5,6"
+#files = "/home/soos/media/sat/out/new2/out-reconf-6776906.wlm01-*/*.out"
+
 ignore_elems = {}
 for x in ignore.split(","):
     x = x.strip()
@@ -70,7 +76,7 @@ for x in ignore.split(","):
     ignore_elems[x] = True
 
 subprocess.call("rm outs/*", shell=True)
-toexec = "./reconf.py -n %d -i %s  -f outs/out  /home/soos/media/sat/out/large_fixed_adjust_guess-12-April-2016-MMEDX-13e1c9168-tout-1500-mout-1600/*stdout* /home/soos/media/sat/out/large_reconf7-14-April-2016-W2ZZ5-636d5f5dd-tout-1500-mout-1600/*stdout*" % (num, ignore)
+toexec = "./reconf.py -n %d -i %s  -f outs/out  %s" % (num, ignore, files)
 f = open("output", "w")
 ret = subprocess.call(toexec, shell=True, stdout=f)
 f.close()
