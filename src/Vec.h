@@ -287,6 +287,9 @@ template<class T>
 void vec<T>::clear(bool dealloc)
 {
     if (data != NULL) {
+        for (uint32_t i = 0; i < sz; i++) {
+            data[i].~T();
+        }
         sz = 0;
         if (dealloc) {
             free(data), data = NULL, cap = 0;
