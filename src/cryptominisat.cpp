@@ -159,6 +159,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
         case 2: {
+            conf.maple = 1;
+            conf.modulo_maple_iter = 100;
+            break;
+        }
+        case 3: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
             conf.maple = 0;
@@ -168,7 +173,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.inc_max_temp_lev2_red_cls = 1.03;
             break;
         }
-        case 3: {
+        case 4: {
             //Similar to CMS 5.0
             conf.maple = 0;
             conf.varElimRatioPerIter = 0.4;
@@ -181,17 +186,19 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
-        case 4: {
+        case 5: {
             conf.maple = 0;
             conf.never_stop_search = true;
             break;
         }
-        case 5: {
-            //conf.max_temporary_learnt_clauses = 10000;
-            conf.do_bva = true;
+        case 6: {
+            //Maple with backtrack
+            conf.maple = 1;
+            conf.modulo_maple_iter = 100;
+            conf.maple_backtrack = 1;
             break;
         }
-        case 6: {
+        case 7: {
             conf.maple = 0;
             conf.do_bva = true;
             conf.glue_put_lev0_if_below_or_eq = 2;
@@ -202,62 +209,24 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
             break;
         }
-
-        case 7: {
-            conf.maple = 0;
-            conf.doMinimRedMoreMore = 1;
-            conf.global_timeout_multiplier = 5;
-            conf.num_conflicts_of_search_inc = 1.15;
-            conf.more_red_minim_limit_cache = 1200;
-            conf.more_red_minim_limit_binary = 600;
-            conf.max_num_lits_more_more_red_min = 20;
-            //conf.max_temporary_learnt_clauses = 10000;
-            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
-            break;
-        }
         case 8: {
-            //Different glue limit
-            conf.maple = 0;
-            conf.doMinimRedMoreMore = 1;
-            conf.glue_put_lev0_if_below_or_eq = 4;
-            //conf.glue_put_lev2_if_below_or_eq = 8;
-            conf.max_num_lits_more_more_red_min = 3;
-            conf.max_glue_more_minim = 4;
-            break;
-        }
-        case 9: {
             //Different glue limit
             conf.maple = 0;
             conf.glue_put_lev0_if_below_or_eq = 2;
             conf.glue_put_lev1_if_below_or_eq = 2;
             break;
         }
-        case 10: {
-            //Luby
-            conf.maple = 0;
-            conf.restart_inc = 1.5;
-            conf.restart_first = 100;
-            conf.restartType = CMSat::Restart::luby;
-            break;
-        }
-        case 11: {
-            conf.maple = 0;
-            conf.glue_put_lev0_if_below_or_eq = 3;
-            conf.glue_put_lev1_if_below_or_eq = 5;
-            conf.var_decay_max = 0.97;
-            break;
-        }
-        case 12: {
+        case 9: {
             conf.maple = 0;
             conf.var_decay_max = 0.998;
             break;
         }
-        case 13: {
+        case 10: {
             conf.maple = 0;
             conf.polarity_mode = CMSat::PolarityMode::polarmode_pos;
             break;
         }
-        case 14: {
+        case 11: {
             conf.maple = 0;
             conf.varElimRatioPerIter = 1;
             conf.restartType = Restart::geom;
@@ -267,13 +236,13 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             break;
         }
-        case 15: {
+        case 12: {
             conf.maple = 0;
             conf.inc_max_temp_lev2_red_cls = 1.001;
             break;
         }
 
-        case 16: {
+        case 13: {
             //Minisat-like
             conf.maple = 1;
             conf.varElimRatioPerIter = 1;
@@ -285,7 +254,17 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
-        case 17: {
+        case 14: {
+            //Different glue limit
+            conf.maple = 0;
+            conf.doMinimRedMoreMore = 1;
+            conf.glue_put_lev0_if_below_or_eq = 4;
+            //conf.glue_put_lev2_if_below_or_eq = 8;
+            conf.max_num_lits_more_more_red_min = 3;
+            conf.max_glue_more_minim = 4;
+            break;
+        }
+        case 15: {
             //Similar to CMS 2.9 except we look at learnt DB size insteead
             //of conflicts to see if we need to clean.
             conf.maple = 1;
@@ -295,7 +274,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.inc_max_temp_lev2_red_cls = 1.03;
             break;
         }
-        case 18: {
+        case 16: {
             //Similar to CMS 5.0
             conf.maple = 1;
             conf.varElimRatioPerIter = 0.4;
@@ -308,19 +287,12 @@ void update_config(SolverConf& conf, unsigned thread_num)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
             break;
         }
-        case 19: {
-            conf.maple = 1;
-            conf.modulo_maple_iter = 100;
+        case 17: {
+            //conf.max_temporary_learnt_clauses = 10000;
+            conf.do_bva = true;
             break;
         }
-        case 20: {
-            //Maple with backtrack
-            conf.maple = 1;
-            conf.modulo_maple_iter = 100;
-            conf.maple_backtrack = 1;
-            break;
-        }
-        case 21: {
+        case 18: {
             conf.maple = 0;
             conf.every_lev1_reduce = 0;
             conf.every_lev2_reduce = 0;
@@ -329,8 +301,38 @@ void update_config(SolverConf& conf, unsigned thread_num)
             break;
         }
 
-        case 22: {
+        case 19: {
             conf.maple = 1;
+            conf.doMinimRedMoreMore = 1;
+            conf.global_timeout_multiplier = 5;
+            conf.num_conflicts_of_search_inc = 1.15;
+            conf.more_red_minim_limit_cache = 1200;
+            conf.more_red_minim_limit_binary = 600;
+            conf.max_num_lits_more_more_red_min = 20;
+            //conf.max_temporary_learnt_clauses = 10000;
+            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
+            break;
+        }
+
+        case 20: {
+            //Luby
+            conf.maple = 0;
+            conf.restart_inc = 1.5;
+            conf.restart_first = 100;
+            conf.restartType = CMSat::Restart::luby;
+            break;
+        }
+
+        case 21: {
+            conf.maple = 0;
+            conf.glue_put_lev0_if_below_or_eq = 3;
+            conf.glue_put_lev1_if_below_or_eq = 5;
+            conf.var_decay_max = 0.97;
+            break;
+        }
+
+        case 22: {
+            conf.maple = 0;
             conf.doMinimRedMoreMore = 1;
             conf.global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
