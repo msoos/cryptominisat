@@ -170,6 +170,18 @@ int main(int argc, char** argv)
             if (num_threads > 16) {
                 conf.var_and_mem_out_mult *= 0.4;
             }
+        }else if ((value = hasPrefix(argv[i], "--otherconf="))){
+            int otherconf  = (int)strtol(value, NULL, 10);
+            if (otherconf == 0 && errno == EINVAL){
+                cout << "ERROR! illegal threads " << value << endl;
+                exit(0);
+            }
+            if (otherconf == 1) {
+                cout << "c other conf set" << endl;
+                conf.intree_time_limitM = 1500;
+                conf.min_bva_gain = 64;
+                conf.ratio_glue_geom = 5;
+            }
         }else if ((value = hasPrefix(argv[i], "--gluebreak="))){
             int gluebreak  = (int)strtol(value, NULL, 10);
             if (gluebreak == 0 && errno == EINVAL){
