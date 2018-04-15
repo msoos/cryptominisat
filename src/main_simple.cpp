@@ -167,6 +167,9 @@ int main(int argc, char** argv)
                 cout << "ERROR! illegal threads " << value << endl;
                 exit(0);
             }
+            if (num_threads > 16) {
+                conf.var_and_mem_out_mult *= 0.4;
+            }
         }else if ((value = hasPrefix(argv[i], "--gluebreak="))){
             int gluebreak  = (int)strtol(value, NULL, 10);
             if (gluebreak == 0 && errno == EINVAL){
