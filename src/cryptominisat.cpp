@@ -366,9 +366,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 {
     if (num <= 0) {
         std::cerr << "ERROR: Number of threads must be at least 1" << endl;
-#ifndef CMS_NO_THROW
         throw std::runtime_error("ERROR: Number of threads must be at least 1");
-#endif
     }
     if (num == 1) {
         return;
@@ -378,16 +376,12 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         data->solvers[0]->conf.simulate_drat
     ) {
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
-#ifndef CMS_NO_THROW
         throw std::runtime_error("ERROR: DRAT cannot be used in multi-threaded mode");
-#endif
     }
 
     if (data->cls > 0 || nVars() > 0) {
         std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
-#ifndef CMS_NO_THROW
         throw std::runtime_error("ERROR: You must first call set_num_threads() and only then add clauses and variables");
-#endif
     }
 
     data->cls_lits.reserve(CACHE_SIZE);
@@ -843,11 +837,7 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
     if (n >= MAX_VARS
         || (data->vars_to_add + n) >= MAX_VARS
     ) {
-#ifndef CMS_NO_THROW
         throw CMSat::TooManyVarsError();
-#else
-        exit(-1);
-#endif
     }
 
     if (data->log) {

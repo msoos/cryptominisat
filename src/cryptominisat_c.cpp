@@ -73,16 +73,11 @@ Dest unwrap(const std::vector<T>& vec)
     return Dest {toc(vec.data()), vec.size()};
 }
 
-#ifndef CMS_NO_THROW
 #define NOEXCEPT_START noexcept { try {
 #define NOEXCEPT_END } catch(...) { \
     std::cerr << "ERROR: exception thrown past FFI boundary" << std::endl;\
     std::exit(-1);\
 } }
-#else
-#define NOEXCEPT_START
-#define NOEXCEPT_END
-#endif
 
 extern "C"
 {

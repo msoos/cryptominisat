@@ -58,9 +58,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
 {
     open_dump_file(irredDumpFname);
 
-#ifndef CMS_NO_THROW
     try {
-#endif
         if (!solver->okay()) {
             write_unsat_file();
         } else {
@@ -83,14 +81,12 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
 
             dump_irred_cls_for_preprocessor(false);
         }
-#ifndef CMS_NO_THROW
     } catch (std::ifstream::failure& e) {
         cout
         << "Error writing clause dump to file: " << e.what()
         << endl;
         std::exit(-1);
     }
-#endif
     delete outfile;
     outfile = NULL;
 }

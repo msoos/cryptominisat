@@ -245,12 +245,8 @@ void vec<T>::capacity(int32_t min_cap)
     if (add > std::numeric_limits<uint32_t>::max() - cap
         || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
             && errno == ENOMEM)
-       ) {
-#ifndef CMS_NO_THROW
+    ) {
         throw std::bad_alloc();
-#else
-        exit(-1);
-#endif
     }
 }
 

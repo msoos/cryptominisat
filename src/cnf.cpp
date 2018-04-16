@@ -37,11 +37,7 @@ void CNF::new_var(const bool bva, const uint32_t orig_outer)
 {
     if (nVars() >= 1ULL<<28) {
         cout << "ERROR! Variable requested is far too large" << endl;
-#ifndef CMS_NO_THROW
         throw std::runtime_error("ERROR! Variable requested is far too large");
-#else
-        exit(-1);
-#endif
     }
 
     minNumVars++;
