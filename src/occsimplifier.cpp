@@ -176,6 +176,9 @@ void OccSimplifier::print_blocked_clauses_reverse() const
 void OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
 {
     for (BlockedClauses blocked: blockedClauses) {
+        if (blocked.toRemove)
+            continue;
+
         for (size_t i = 0; i < blocked.size(); i++) {
             //It's blocked on this variable
             if (i == 0) {

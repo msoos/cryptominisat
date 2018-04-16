@@ -1020,3 +1020,13 @@ DLL_PUBLIC void SATSolver::set_gauss_config(const GaussConf& gconf)
         s.conf.gaussconf = gconf;
     }
 }
+
+DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
+{
+    data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);
+}
+
+void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) const
+{
+    data->solvers[data->which_solved]->open_file_and_dump_red_clauses(fname);
+}

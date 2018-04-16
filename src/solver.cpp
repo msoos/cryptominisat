@@ -3732,3 +3732,16 @@ vector<Lit> Solver::get_toplevel_units_for_preproc() const
 
     return units;
 }
+
+
+void Solver::open_file_and_dump_irred_clauses(string fname) const
+{
+    ClauseDumper dumper(this);
+    dumper.open_file_and_dump_irred_clauses(fname);
+}
+
+void Solver::open_file_and_dump_red_clauses(string fname) const
+{
+    ClauseDumper dumper(this);
+    dumper.open_file_and_dump_red_clauses(fname);
+}

@@ -51,7 +51,9 @@ public:
 
     void open_file_and_write_unsat(const std::string& fname);
     void open_file_and_write_sat(const std::string& fname);
-    void open_file_and_dump_irred_clauses_preprocessor(const std::string& irredDumpFname);
+    void open_file_and_dump_irred_clauses_preprocessor(const std::string& fname);
+    void open_file_and_dump_irred_clauses(const std::string& fname);
+    void open_file_and_dump_red_clauses(const std::string& fname);
 
 
 private:
@@ -61,15 +63,18 @@ private:
     void write_unsat_file();
     void dump_irred_cls_for_preprocessor(bool backnumber);
     void open_dump_file(const std::string& filename);
-    void dumpBinClauses(
+    void dump_bin_cls(
         const bool dumpRed
         , const bool dumpIrred
         , const bool backnumber
     );
 
-    void dumpEquivalentLits();
-    void dumpUnitaryClauses(const bool backnumber);
-    void dumpRedClauses();
+    void dump_red_cls();
+    void dump_eq_lits();
+    void dump_unit_cls();
+    void dump_blocked_clauses();
+    void dump_irred_cls();
+    void dump_component_clauses();
     void dump_clauses(
         const vector<ClOffset>& cls
         , const bool backnumber
