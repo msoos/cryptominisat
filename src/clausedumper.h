@@ -61,23 +61,24 @@ private:
     std::ofstream* outfile = NULL;
 
     void write_unsat_file();
-    void dump_irred_cls_for_preprocessor(bool backnumber);
+    void dump_irred_cls_for_preprocessor(bool outer_number);
     void open_dump_file(const std::string& filename);
     void dump_bin_cls(
         const bool dumpRed
         , const bool dumpIrred
-        , const bool backnumber
+        , const bool outer_number
     );
 
-    void dump_red_cls();
-    void dump_eq_lits();
-    void dump_unit_cls();
-    void dump_blocked_clauses();
-    void dump_irred_cls();
-    void dump_component_clauses();
+    void dump_red_cls(bool outer_numbering);
+    void dump_eq_lits(bool outer_numbering);
+    void dump_unit_cls(bool outer_numbering);
+    void dump_blocked_clauses(bool outer_numbering);
+    void dump_irred_cls(bool outer_numbering);
+    void dump_component_clauses(bool outer_numbering);
+    void dump_vars_appearing_inverted(bool outer_numbering);
     void dump_clauses(
         const vector<ClOffset>& cls
-        , const bool backnumber
+        , const bool outer_number
     );
 
     vector<Lit> tmpCl;

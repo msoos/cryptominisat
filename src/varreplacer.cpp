@@ -966,7 +966,7 @@ size_t VarReplacer::mem_used() const
     return b;
 }
 
-uint32_t VarReplacer::print_equivalent_literals(std::ostream *os) const
+uint32_t VarReplacer::print_equivalent_literals(bool outer_numbering, std::ostream *os) const
 {
     uint32_t num = 0;
     vector<Lit> tmpCl;
@@ -976,13 +976,20 @@ uint32_t VarReplacer::print_equivalent_literals(std::ostream *os) const
             continue;
 
         //They have been renumbered in a way that cannot be dumped
-        Lit lit1 = solver->map_outer_to_inter(lit);
-        Lit lit2 = solver->map_outer_to_inter(Lit(var, false));
+        Lit lit1;
+        Lit lit2;
+        if (outer_numbering) {
+            lit1 = lit;
+            lit2 = Lit(var, false);
+        } else {
+            lit1 = solver->map_outer_to_inter(lit);
+            lit2 = solver->map_outer_to_inter(Lit(var, false));
 
-        if (lit1.var() >= solver->nVars() ||
-            lit2.var() >= solver->nVars()
-        ) {
-            continue;
+            if (lit1.var() >= solver->nVars() ||
+                lit2.var() >= solver->nVars()
+            ) {
+                continue;
+            }
         }
 
         if (os) {

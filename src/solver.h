@@ -217,7 +217,7 @@ class Solver : public Searcher
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
         );
-        template<class T> vector<Lit> clauseBackNumbered(const T& cl) const;
+        template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
         void set_sqlite(string filename);
@@ -398,7 +398,7 @@ inline const BinTriStats& Solver::getBinTriStats() const
 }
 
 template<class T>
-inline vector<Lit> Solver::clauseBackNumbered(const T& cl) const
+inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
 {
     tmpCl.clear();
     for(size_t i = 0; i < cl.size(); i++) {
