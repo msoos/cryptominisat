@@ -133,6 +133,7 @@ void OccSimplifier::save_on_var_memory()
 {
     clauses.clear();
     clauses.shrink_to_fit();
+    blkcls.shrink_to_fit();
 
     cl_to_free_later.shrink_to_fit();
 
@@ -1768,6 +1769,8 @@ void OccSimplifier::cleanBlockedClauses()
     vector<BlockedClauses>::iterator i = blockedClauses.begin();
     vector<BlockedClauses>::iterator j = blockedClauses.begin();
 
+    uint64_t i_blkcls = 0;
+    uint64_t j_blkcls = 0;
     for (vector<BlockedClauses>::iterator
         end = blockedClauses.end()
         ; i != end
@@ -1787,11 +1790,32 @@ void OccSimplifier::cleanBlockedClauses()
 
         if (i->toRemove) {
             blockedMapBuilt = false;
+            i_blkcls += i->size();
+            assert(i_blkcls == i->end);
+            i->start = std::numeric_limits<uint64_t>::max();
+            i->end = std::numeric_limits<uint64_t>::max();
         } else {
             assert(solver->varData[blockedOn].removed == Removed::elimed);
+
+            //beware we might change this
+            const size_t sz = i->size();
+
+            //don't copy if we don't need to
+            if (!blockedMapBuilt) {
+                for(size_t x = 0; x < sz; x++) {
+                    blkcls[j_blkcls++] = blkcls[i_blkcls++];
+                }
+            } else {
+                i_blkcls += sz;
+                j_blkcls += sz;
+            }
+            assert(i_blkcls == i->end);
+            i->start = j_blkcls-sz;
+            i->end   = j_blkcls;
             *j++ = *i;
         }
     }
+    blkcls.resize(j_blkcls);
     blockedClauses.resize(blockedClauses.size()-(i-j));
     can_remove_blocked_clauses = false;
 }
@@ -2279,6 +2303,7 @@ void OccSimplifier::create_dummy_blocked_clause(const Lit lit)
     blockedClauses.push_back(
         BlockedClauses(blkcls.size()-1, blkcls.size())
     );
+    blockedMapBuilt = false;
 }
 
 bool OccSimplifier::maybe_eliminate(const uint32_t var)
