@@ -248,7 +248,7 @@ struct DratFile: public Drat
                     *buf_ptr++ = 0;
                     buf_len++;
                     #ifdef STATS_NEEDED
-                    if (add_ID) {
+                    if (is_add && add_ID) {
                         byteDRUPaID(ID);
                     }
                     #endif
@@ -284,11 +284,17 @@ struct DratFile: public Drat
                 break;
 
             case DratFlag::add:
+                #ifdef STATS_NEEDED
+                is_add = true;
+                #endif
                 *buf_ptr++ = 'a';
                 buf_len++;
                 break;
 
             case DratFlag::del:
+                #ifdef STATS_NEEDED
+                is_add = false;
+                #endif
                 forget_delay();
                 *buf_ptr++ = 'd';
                 buf_len++;
@@ -299,7 +305,10 @@ struct DratFile: public Drat
     }
 
     std::ostream* drup_file = NULL;
+    #ifdef STATS_NEEDED
     int64_t ID = 1;
+    bool is_add = true;
+    #endif
 };
 
 }
