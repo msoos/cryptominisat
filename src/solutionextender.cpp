@@ -46,7 +46,6 @@ void SolutionExtender::extend()
 
     if (simplifier) {
         simplifier->extend_model(this);
-        simplifier->cleanBlockedClausesIfDirty();
     }
 
     //cout << "aft simp unset       : " << count_num_unset_model() << endl;
