@@ -1,5 +1,5 @@
 /******************************************
-Copyright (c) 2016, Mate Soos
+Copyright (c) 2018, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -210,8 +210,6 @@ void ClauseDumper::open_dump_file(const std::string& filename)
     f->exceptions(std::ifstream::failbit | std::ifstream::badbit);
     outfile = f;
 }
-
-
 
 void ClauseDumper::dump_bin_cls(
     const bool dumpRed
