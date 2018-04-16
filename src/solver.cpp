@@ -2871,18 +2871,6 @@ void Solver::bva_changed()
     datasync->rebuild_bva_map();
 }
 
-void Solver::open_file_and_dump_irred_clauses(string fname) const
-{
-    ClauseDumper dumper(this);
-    dumper.open_file_and_dump_irred_clauses(fname);
-}
-
-void Solver::open_file_and_dump_red_clauses(string fname) const
-{
-    ClauseDumper dumper(this);
-    dumper.open_file_and_dump_red_clauses(fname);
-}
-
 vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
 {
     vector<pair<Lit, Lit> > bin_xors = varReplacer->get_all_binary_xors_outer();
@@ -3738,4 +3726,17 @@ bool Solver::undef_must_fix_var()
 
     //There is hope
     return undef->must_fix_at_least_one_var;
+}
+
+vector<Lit> Solver::get_toplevel_units_for_preproc() const
+{
+    vector<Lit> units;
+    for(size_t i = 0; i < nVars(); i++) {
+        if (value(i) != l_Undef) {
+            Lit l = Lit(i, value(i) == l_False);
+            units.push_back(map_inter_to_outer(l));
+        }
+    }
+
+    return units;
 }

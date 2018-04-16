@@ -359,10 +359,6 @@ void Main::add_supported_options()
     iterativeOptions.add_options()
     ("maxsol", po::value(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions")
-    ("dumpred", po::value(&redDumpFname)
-        , "If stopped dump redundant clauses here")
-    ("dumpirred", po::value(&irredDumpFname)
-        , "If stopped, dump irred original problem here")
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
@@ -1110,34 +1106,6 @@ void Main::parseCommandLine()
     }
 }
 
-void Main::dumpIfNeeded() const
-{
-    if (redDumpFname.empty()
-        && irredDumpFname.empty()
-    ) {
-        return;
-    }
-
-    if (!redDumpFname.empty()) {
-        solver->open_file_and_dump_red_clauses(redDumpFname);
-        if (conf.verbosity) {
-            cout << "c Dumped redundant clauses" << endl;
-        }
-    }
-
-    if (!irredDumpFname.empty()) {
-        solver->open_file_and_dump_irred_clauses(irredDumpFname);
-        if (conf.verbosity) {
-            cout
-            << "c [solver] Dumped irredundant clauses to file "
-            << "'" << irredDumpFname << "'." << endl
-            << "c [solver] Note that these may NOT be in the original CNF, but"
-            << " *describe the same problem* with the *same variables*"
-            << endl;
-        }
-    }
-}
-
 void Main::check_num_threads_sanity(const unsigned thread_num) const
 {
     const unsigned num_cores = std::thread::hardware_concurrency();
@@ -1196,7 +1164,6 @@ int Main::solve()
     }
 
     lbool ret = multi_solutions();
-    dumpIfNeeded();
 
     if (conf.preprocess != 1) {
         if (ret == l_Undef && conf.verbosity) {

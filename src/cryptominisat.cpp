@@ -915,16 +915,6 @@ DLL_PUBLIC void SATSolver::interrupt_asap()
     data->must_interrupt->store(true, std::memory_order_relaxed);
 }
 
-DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
-{
-    data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);
-}
-
-void DLL_PUBLIC SATSolver::open_file_and_dump_red_clauses(std::string fname) const
-{
-    data->solvers[data->which_solved]->open_file_and_dump_red_clauses(fname);
-}
-
 void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 {
     data->solvers[data->which_solved]->add_in_partial_solving_stats();

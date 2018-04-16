@@ -95,9 +95,6 @@ class Solver : public Searcher
         lbool full_model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
-
-        void open_file_and_dump_irred_clauses(string fname) const;
-        void open_file_and_dump_red_clauses(string fname) const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
 
         static const char* get_version_tag();
@@ -227,6 +224,7 @@ class Solver : public Searcher
         SolveFeatures last_solve_feature;
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
+        vector<Lit> get_toplevel_units_for_preproc() const;
 
         //if set to TRUE, a clause has been removed during add_clause_int
         //that contained "lit, ~lit". So "lit" must be set to a value
