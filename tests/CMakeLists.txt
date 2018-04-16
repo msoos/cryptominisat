@@ -167,6 +167,7 @@ set (MY_TESTS
     intree_test
     xorfinder_test
     comphandler_test
+    dump_test
 #    undefine_test
 )
 

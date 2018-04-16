@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include <functional>
 #include <cctype>
 #include <cassert>
+#include <algorithm>
 #include "src/solver.h"
 #include "src/stamp.h"
 #include "src/xor.h"
@@ -567,6 +568,94 @@ uint32_t count_num_undef_in_solution(const Solver* s)
         }
     }
     return num;
+}
+
+struct cnfdata {
+    int64_t num_cls_per_header = -1;
+    int64_t num_vars_per_header = -1;
+    vector<vector<Lit>> cls;
+    uint64_t num_vars = 0;
+};
+
+template<typename Out>
+void split(const std::string &s, char delim, Out result) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        *(result++) = item;
+    }
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
+}
+
+cnfdata cnf_file_read(std::string fname)
+{
+    cnfdata cnfdat;
+
+    std::ifstream file(fname);
+    std::string str;
+    std::string file_contents;
+    vector<Lit> cl;
+    while (std::getline(file, str))
+    {
+        if (str.find("cnf") != string::npos) {
+            continue;
+        }
+
+        if (str.find("c ") == 0) {
+            continue;
+        }
+
+        cl.clear();
+        vector<string> s = split(rtrim(ltrim(str)), ' ');
+        for(string& l: s) {
+            if (l.length() == 0)
+                continue;
+
+            int x = std::stoi(l);
+            if (x == 0) {
+                break;
+            }
+            uint64_t var = std::abs(x)-1;
+            cnfdat.num_vars = std::max(cnfdat.num_vars, var+1);
+            bool sign = x < 0;
+            cl.push_back(Lit(var, sign));
+        }
+        cnfdat.cls.push_back(cl);
+    }
+    return cnfdat;
+}
+
+bool cl_eq(const vector<Lit>& lits1, const vector<Lit>& lits2)
+{
+    if (lits1.size() != lits2.size())
+        return false;
+
+
+
+    vector<Lit> cl1_s = lits1;
+    std::sort(cl1_s.begin(), cl1_s.end());
+
+    vector<Lit> cl2_s = lits2;
+    std::sort(cl2_s.begin(), cl2_s.end());
+    for(size_t i = 0; i < cl1_s.size(); i++) {
+        if (cl1_s[i] != cl2_s[i])
+            return false;
+    }
+    return true;
+}
+
+bool cl_exists(const vector<vector<Lit> >& cls, const vector<Lit>& cl) {
+    for(const vector<Lit>& cli: cls) {
+        if (cl_eq(cli, cl)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // string print(const vector<Lit>& dat) {
