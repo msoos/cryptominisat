@@ -182,10 +182,14 @@ if (NOT MSVC)
 
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-    add_compile_options("$<$<CONFIG:RELEASE>:-DNDEBUG>")
     add_compile_options("$<$<CONFIG:RELEASE>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
+
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -O2")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2")
+    endif()
 
 else()
     # see https://msdn.microsoft.com/en-us/library/fwkeyyhe.aspx for details
@@ -267,9 +271,6 @@ if (NOT WIN32)
     if(NOT ENABLE_TESTING AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT COVERAGE)
         #dd_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
-    add_cxx_flag_if_supported("-mtune=native")
-    add_cxx_flag_if_supported("-O2")
-
     if (NOT STATICCOMPILE)
         add_compile_options("-fPIC")
     endif()
@@ -277,6 +278,7 @@ if (NOT WIN32)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         #add_cxx_flag_if_supported("-flto")
     else()
+        add_cxx_flag_if_supported("-mtune=native")
         add_cxx_flag_if_supported("-Wall")
         add_cxx_flag_if_supported("-Wextra")
         add_cxx_flag_if_supported("-Wunused")
