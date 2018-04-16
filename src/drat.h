@@ -126,6 +126,14 @@ struct DratFile: public Drat
         *(buf_ptr - 1) &= 0x7f;
     }
 
+    void byteDRUPaID(const uint64_t id)
+    {
+        for(unsigned i = 0; i < 6; i++) {
+            *buf_ptr++ = (id>>(8*i))&0xff;
+            buf_len++;
+        }
+    }
+
     void byteDRUPd(const Lit l)
     {
         unsigned int u = 2 * (l.var() + 1) + l.sign();
@@ -241,8 +249,7 @@ struct DratFile: public Drat
                     buf_len++;
                     #ifdef STATS_NEEDED
                     if (add_ID) {
-                        //HACK and *will not work*, 31b is too small!!
-                        byteDRUPa(Lit(ID, false));
+                        byteDRUPaID(ID);
                     }
                     #endif
                     if (buf_len > 1048576) {
@@ -250,7 +257,7 @@ struct DratFile: public Drat
                     }
                 }
                 if (add_ID) {
-                    ID = 1;
+                    ID = 0;
                 }
                 must_delete_next = false;
                 break;
