@@ -21,8 +21,8 @@ python:
 env:
   global:
     # below is coveralls token
--    - secure: SodOHkeIggfLhzWD2kxbmHWcbqhOZzL5/5RFxUH+wPtj4VArxeTWCklSAn5BjrSZN9ljVf+lArt4L238odotLhCa9UXjvuPOFVQ+nAGw7XNjso/ccu1ce9cClv+Dzlc8NVJx0tApGZqJjscYesfw/Ij2fN21iwk/U736E08ya9I=
-     - secure: "iWvQPW/6x5CM0rxK37gdbGBbjr2EhVeTPlWT9AfM9mXOnRz76ANq3O4xVmBw0KbfLExBOu8wNyzDf07NMBWzKNyyj0fBWzLVoToLF/R9PYkiiqYT2DWtT/iawf3uXhQKMUN9zfQNULtN6DrWIZXpBkHRDuQjNkNu6mXExkFdEcc="
+     - secure: "fZqRStzy+aN3BPTRcc97+J4oidbIXcHlAQo2Sc25WGS1pV4+NOiM/gJeh+7WDfPmszXZBHdyyg/XPXeI86OMikXL7DaG53D/6Zq+qzVehyTlHi3sT93sDs53FbwAqa5F/dDf+z74VK7P+pQZkAr96ra8sU0Pz9nWr/8XhSpdZlE="
+
     # below is coverity token
     - secure: "WXFslB4aWOcCtMYnNlIYLkxi0aQ8R9ApMmV3fWlGN98gm2+5aaDKsRxpy9Q25ghQNgouS894klSqJhfB9Xa7SW389LHVor3FIYvYHZC0vSQQjFMg4/kUZg+t3HXhRt4254sxIJrTXSeF/3nOq1HMVIk4UanVUp7aihEyNcfJ6rk="
 
