@@ -43,9 +43,6 @@ class ClauseCleaner
     public:
         ClauseCleaner(Solver* solver);
 
-        void clean_clauses(vector<ClOffset>& cs);
-
-
         void clean_implicit_clauses();
         void remove_and_clean_all();
         bool satisfied(const Clause& c) const;

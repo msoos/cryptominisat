@@ -54,14 +54,12 @@ bool DistillerLong::distill(const bool red)
 
     if (!red) {
         runStats.clear();
-        //solver->clauseCleaner->clean_clauses(solver->longIrredCls);
         if (!distill_long_cls_all(solver->longIrredCls, 1)) {
             goto end;
         }
         other = runStats;
     } else {
         runStats.clear();
-        //solver->clauseCleaner->clean_clauses(solver->longRedCls[0]);
         if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
             goto end;
         }

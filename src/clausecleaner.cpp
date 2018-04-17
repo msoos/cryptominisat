@@ -120,17 +120,6 @@ void ClauseCleaner::clean_implicit_clauses()
     #endif
 }
 
-void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
-{
-    if (solver->conf.verbosity > 15) {
-        cout << "c cleaning all clauses in vector" << endl;
-    }
-
-    clean_clauses_pre();
-    clean_clauses_inter(cs);
-    clean_clauses_post();
-}
-
 void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
 {
     assert(solver->decisionLevel() == 0);
