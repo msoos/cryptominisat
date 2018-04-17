@@ -104,7 +104,7 @@ void ClauseDumper::open_file_and_dump_irred_clauses_preprocessor(const string& i
             size_t num_cls = 0;
             num_cls += solver->longIrredCls.size();
             num_cls += solver->binTri.irredBins;
-            vector<Lit> units = solver->get_toplevel_units_for_preproc();
+            vector<Lit> units = solver->get_toplevel_units_internal(false);
             num_cls += units.size();
             num_cls += solver->undef_must_set_vars.size();
             num_cls += solver->varReplacer->print_equivalent_literals(false)*2;
@@ -243,7 +243,6 @@ void ClauseDumper::dump_bin_cls(
                     if (outer_number) {
                         tmpCl[0] = solver->map_inter_to_outer(tmpCl[0]);
                         tmpCl[1] = solver->map_inter_to_outer(tmpCl[1]);
-                        std::sort(tmpCl.begin(), tmpCl.end());
                     }
 
                     *outfile
@@ -273,7 +272,7 @@ void ClauseDumper::dump_clauses(
     ) {
         Clause* cl = solver->cl_alloc.ptr(*it);
         if (outer_numbering) {
-            *outfile << sortLits(solver->clause_outer_numbered(*cl)) << " 0\n";
+            *outfile << solver->clause_outer_numbered(*cl) << " 0\n";
         } else {
             *outfile << *cl << " 0\n";
         }

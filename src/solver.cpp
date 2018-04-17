@@ -3720,13 +3720,14 @@ bool Solver::undef_must_fix_var()
     return undef->must_fix_at_least_one_var;
 }
 
-vector<Lit> Solver::get_toplevel_units_for_preproc() const
+vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
 {
+    assert(!outer_numbering);
     vector<Lit> units;
     for(size_t i = 0; i < nVars(); i++) {
         if (value(i) != l_Undef) {
             Lit l = Lit(i, value(i) == l_False);
-            units.push_back(map_inter_to_outer(l));
+            units.push_back(l);
         }
     }
 

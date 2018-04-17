@@ -227,7 +227,7 @@ class Solver : public Searcher
         SolveFeatures last_solve_feature;
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
-        vector<Lit> get_toplevel_units_for_preproc() const;
+        vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         //if set to TRUE, a clause has been removed during add_clause_int
         //that contained "lit, ~lit". So "lit" must be set to a value
