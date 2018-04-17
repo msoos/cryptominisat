@@ -255,6 +255,8 @@ public:
     void check_watchlist(watch_subarray_const ws) const;
     template<class T>
     bool satisfied_cl(const T& cl) const;
+    template<typename T> bool no_duplicate_lits(const T& lits) const;
+    void check_no_duplicate_lits_anywhere() const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
@@ -508,6 +510,36 @@ bool CNF::satisfied_cl(const T& cl) const {
         }
     }
     return false;
+}
+
+
+template<typename T>
+bool CNF::no_duplicate_lits(const T& lits) const
+{
+    vector<Lit> x(lits.size());
+    for(size_t i = 0; i < x.size(); i++) {
+        x[i] = lits[i];
+    }
+    std::sort(x.begin(), x.end());
+    for(size_t i = 1; i < x.size(); i++) {
+        if (x[i-1] == x[i])
+            return false;
+    }
+    return true;
+}
+
+inline void CNF::check_no_duplicate_lits_anywhere() const
+{
+    for(ClOffset offs: longIrredCls) {
+        Clause * cl = cl_alloc.ptr(offs);
+        assert(no_duplicate_lits((*cl)));
+    }
+    for(auto l: longRedCls) {
+        for(ClOffset offs: l) {
+            Clause * cl = cl_alloc.ptr(offs);
+            assert(no_duplicate_lits((*cl)));
+        }
+    }
 }
 
 }

@@ -1126,6 +1126,9 @@ template<bool update_bogoprops>
 lbool Searcher::search()
 {
     assert(ok);
+    #ifdef SLOW_DEBUG
+    check_no_duplicate_lits_anywhere();
+    #endif
     const double myTime = cpuTime();
 
     //Stats reset & update

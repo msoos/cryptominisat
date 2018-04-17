@@ -1265,6 +1265,7 @@ lbool Solver::solve_with_assumptions(
         assert(check_order_heap_sanity());
         check_implicit_stats();
         find_all_attach();
+        check_no_duplicate_lits_anywhere();
     }
     #endif
 
@@ -1692,6 +1693,7 @@ bool Solver::execute_inprocess_strategy(
         check_wrong_attach();
         #ifdef SLOW_DEBUG
         check_stats();
+        check_no_duplicate_lits_anywhere();
         #endif
 
         token = trim(token);
