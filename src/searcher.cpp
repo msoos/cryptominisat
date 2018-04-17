@@ -1810,7 +1810,14 @@ bool Searcher::handle_conflict(const PropBy confl)
         && decisionLevel() >= 2
     ) {
         for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
-            decision_clause.push_back(~trail[trail_lim[i]]);
+            Lit l = ~trail[trail_lim[i]];
+            if (!seen[l.toInt()]) {
+                decision_clause.push_back(l);
+                seen[l.toInt()] = 1;
+            }
+        }
+        for(Lit l: decision_clause) {
+            seen[l.toInt()] = 0;
         }
     }
 
