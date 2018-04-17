@@ -44,7 +44,7 @@ def parse_lemmas(lemmafname, runID, verbose=False):
                 continue
 
             myid = int(l[len(l)-1])
-            assert id >= 0, "ID is always at least 0"
+            assert myid >= 0, "ID is always at least 0"
             if (myid == 0):
                 continue
 
