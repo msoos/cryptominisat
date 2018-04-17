@@ -215,9 +215,12 @@ struct DratFile: public Drat
         #ifdef STATS_NEEDED
         if (add_ID) {
             ID = cl.stats.ID;
-            assert(!(ID != 0 && !cl.red()));
-            assert(!(ID == 0 &&  cl.red()));
-            //note, ID = 0 is true ONLY for learnt clauses
+
+            // actually... for on-the-fly subsumed irred clauses can have an ID.
+            //assert(!(ID != 0 && !cl.red()));
+
+            //redundant clauses MUST have a valid ID
+            assert(!(ID == 0 && cl.red()));
         }
         #endif
 
