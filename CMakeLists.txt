@@ -557,14 +557,14 @@ if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
     unset(PYTHON_EXECUTABLE CACHE)
     unset(PYTHON_VERSION_STRING CACHE)
 
-    message(STATUS "Python 3 not fully found or Python 2 has been forced -- trying Python 2")
-    find_package(PythonInterp 2)
-    find_package(PythonLibs 2)
+    message(STATUS "Python 3 not fully found or Python 2 has been forced -- trying Python 2.7")
+    find_package(PythonInterp 2.7)
+    find_package(PythonLibs 2.7)
 
-    message(STATUS "Python 2 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-    message(STATUS "Python 2 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-    message(STATUS "Python 2 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-    message(STATUS "Python 2 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+    message(STATUS "Python 2.7 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    message(STATUS "Python 2.7 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+    message(STATUS "Python 2.7 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+    message(STATUS "Python 2.7 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
 endif()
 
 #command-line parsing executable needs boost program-options
