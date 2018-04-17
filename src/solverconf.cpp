@@ -109,7 +109,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //SQL
         , dump_individual_search_time(true)
         , dump_individual_restarts_and_clauses(true)
-        , dump_individual_cldata_ratio(0.90)
+        , dump_individual_cldata_ratio(0.005)
 
         //Var-elim
         , doVarElim        (true)
