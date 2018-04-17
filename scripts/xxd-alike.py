@@ -29,6 +29,7 @@ input_name = sys.argv[1]
 output_path = sys.argv[2]
 output_name = input_name.replace('.', '_')
 
+
 # In python 3, opening file as rb will return bytes and iteration is per byte
 # In python 2, opening file as rb will return string and iteration is per char
 # and char need to be converted to bytes.
@@ -38,8 +39,11 @@ def convert(c):
         return c
     return ord(c)
 
+
 with open(input_name, 'rb') as file:
     contents = file.read()
+
+
 with open(output_path, 'w') as out:
     out.write('unsigned char {}[] = {{'.format(output_name))
     first = True
