@@ -215,7 +215,9 @@ struct DratFile: public Drat
         #ifdef STATS_NEEDED
         if (add_ID) {
             ID = cl.stats.ID;
-            assert(ID != 0);
+            assert(!(ID != 0 && !cl.red()));
+            assert(!(ID == 0 &&  cl.red()));
+            //note, ID = 0 is true ONLY for learnt clauses
         }
         #endif
 
@@ -250,14 +252,13 @@ struct DratFile: public Drat
                     #ifdef STATS_NEEDED
                     if (is_add && add_ID) {
                         byteDRUPaID(ID);
+                        //cout << "ID is:" << ID << endl;
+                        ID = 0;
                     }
                     #endif
                     if (buf_len > 1048576) {
                         binDRUP_flush();
                     }
-                }
-                if (add_ID) {
-                    ID = 0;
                 }
                 must_delete_next = false;
                 break;
@@ -286,6 +287,7 @@ struct DratFile: public Drat
             case DratFlag::add:
                 #ifdef STATS_NEEDED
                 is_add = true;
+                ID =  0;
                 #endif
                 *buf_ptr++ = 'a';
                 buf_len++;
@@ -306,7 +308,7 @@ struct DratFile: public Drat
 
     std::ostream* drup_file = NULL;
     #ifdef STATS_NEEDED
-    int64_t ID = 1;
+    int64_t ID = 0;
     bool is_add = true;
     #endif
 };

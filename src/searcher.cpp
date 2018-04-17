@@ -255,8 +255,7 @@ void Searcher::create_otf_subsuming_long_clause(
         << "New smaller clause OTF:" << cl << endl;
     }
 #ifdef STATS_NEEDED
-    cl.stats.ID = clauseID;
-    clauseID++;
+    cl.stats.ID = clauseID++;
 #endif
     *drat << add << cl << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
@@ -1683,7 +1682,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl = cl_alloc.Clause_new(learnt_clause
         , sumConflicts
         #ifdef STATS_NEEDED
-        , clauseID
+        , clauseID++
         #endif
         );
         cl->makeRed(glue);
@@ -1729,7 +1728,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             );
         }
         #endif
-        clauseID++;
 
         return cl;
     }
@@ -1754,8 +1752,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->stats.glue = glue;
     }
     #ifdef STATS_NEEDED
-        cl->stats.ID = clauseID;
-        clauseID++;
+    cl->stats.ID = clauseID++;
     #endif
     *(solver->drat) << add << *cl << fin << findelay;
 

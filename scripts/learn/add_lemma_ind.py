@@ -43,8 +43,9 @@ def parse_lemmas(lemmafname, runID, verbose=False):
                 # empty clause, finished
                 continue
 
-            myid = int(l[len(l)-3])
-            if (myid == 1):
+            myid = int(l[len(l)-1])
+            assert id >= 0, "ID is always at least 0"
+            if (myid == 0):
                 continue
 
             num_used = int(l[len(l)-1])
