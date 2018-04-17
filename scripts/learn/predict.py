@@ -397,17 +397,21 @@ class Query2 (QueryHelper):
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-        q = q_ok_select + q_ok + common_limits
+        q = q_ok_select + q_ok
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
+            q += common_limits
+
         print("limit for OK:", myformat["limit"])
         q = q.format(**myformat)
         print("Running query for OK...")
         df = pd.read_sql_query(q, self.conn)
 
-        q = q_bad_select + q_bad + common_limits
+        q = q_bad_select + q_bad
         if options.fixed_num_datapoints != -1:
             myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
+            q += common_limits
+
         print("limit for bad:", myformat["limit"])
         q = q.format(**myformat)
         print("Running query for BAD...")
@@ -494,7 +498,7 @@ class Classify:
 
         df_lab = df.copy()
         df_lab["fname"] = LabelEncoder().fit_transform(df_lab["fname"])
-        train, test = train_test_split(df_lab, test_size=0.2, random_state=90)
+        train, test = train_test_split(df_lab, test_size=0.2)
         X_train = train[self.features]
         y_train = train["class"]
         X_test = test[self.features]
@@ -506,7 +510,7 @@ class Classify:
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
         # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        self.clf = sklearn.tree.DecisionTreeClassifier(random_state=90, max_depth=options.tree_depth)
+        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -692,7 +696,7 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
-                      dest="fixed_num_datapoints", help="Exact number of examples to take. Default: %default")
+                      dest="fixed_num_datapoints", help="Exact number of examples to take. -1 is to take all. Default: %default")
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
 
@@ -715,6 +719,7 @@ if __name__ == "__main__":
         print("ERROR: You must give at least one file")
         exit(-1)
 
+    np.random.seed(2097483)
     dfs = []
     for dbfname in args:
         print("----- INTERMEDIATE predictor -------")
