@@ -32,23 +32,14 @@ def parse_lemmas(lemmafname, runID, verbose=False):
     ret = []
     with open(lemmafname, "r") as f:
         for line in f:
-            l = line.strip().split(" ")
+            line = line.strip().split(" ")
 
-            # checking that delete line is ok
-            # TODO: maybe calculate used_for_time
-            if line[0] == "d":
-                continue
-
-            if len(l) == 1:
-                # empty clause, finished
-                continue
-
-            myid = int(l[len(l)-1])
+            myid = int(line[len(line)-1])
             assert myid >= 0, "ID is always at least 0"
-            if (myid == 0):
-                continue
+            assert myid != 0, "ID with 0 should not even be printed"
 
-            num_used = int(l[len(l)-1])
+            #num_used = int(line[len(line)-1])
+            num_used = 0
             ret.append((runID, myid, num_used))
 
     print("Parsed %d number of good lemmas" % len(ret))

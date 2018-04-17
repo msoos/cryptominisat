@@ -45,7 +45,7 @@ echo "Predicting file $1"
 ./cryptominisat5 ${FNAME} --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --clid --sql 2 --sqlitedb ${OUTDIR}/data.sqlite ${OUTDIR}/drat_out > ${OUTDIR}/cms_output.txt
 
 # getting drat
-./tests/drat-trim/drat-trim ${FNAME} ${OUTDIR}/drat_out -l ${OUTDIR}/lemmas -i
+./tests/drat-trim/drat-trim ${FNAME} ${OUTDIR}/drat_out -x ${OUTDIR}/lemmas -i
 
 # add lemma indices that were good
 ./add_lemma_ind.py ${OUTDIR}/data.sqlite ${OUTDIR}/lemmas

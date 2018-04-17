@@ -263,7 +263,7 @@ class solverThread (threading.Thread):
         return p.returncode, toexec
 
     def run_drat_trim(self):
-        toexec = "%s/drat-trim/drat-trim %s %s -l %s" % (
+        toexec = "%s/drat-trim/drat-trim %s %s -x %s" % (
             options.base_dir,
             self.get_tmp_cnf_fname(),
             self.get_drat_fname(),
