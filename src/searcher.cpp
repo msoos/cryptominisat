@@ -2299,7 +2299,9 @@ lbool Searcher::solve(
     }
 
     assert(solver->check_order_heap_sanity());
-    while(stats.conflStats.numConflicts < max_confl_per_search_solve_call) {
+    while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
+        && status == l_Undef
+    ) {
         #ifdef SLOW_DEBUG
         assert(solver->check_order_heap_sanity());
         #endif
