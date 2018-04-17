@@ -23,34 +23,15 @@ import sqlite3
 import optparse
 
 
-def parse_lemmas(lemmafname, runID, verbose=False):
-    """Takes the lemma file and returns map with clauses' IDs and data"""
-
-    # clause in "lemmas" file layout:
-    # CLAUSE 0 ID last_used num_used
-
-    ret = []
-    with open(lemmafname, "r") as f:
-        for line in f:
-            line = line.strip().split(" ")
-
-            myid = int(line[len(line)-1])
-            assert myid >= 0, "ID is always at least 0"
-            assert myid != 0, "ID with 0 should not even be printed"
-
-            #num_used = int(line[len(line)-1])
-            num_used = 0
-            ret.append((runID, myid, num_used))
-
-    print("Parsed %d number of good lemmas" % len(ret))
-    return ret
-
-
 class Query:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
+        # zero out goodClauses
+        self.c.execute('delete from goodClauses;')
+        self.num_goods_total = 0
+        self.cur_good_ids = []
 
     def __enter__(self):
         return self
@@ -58,6 +39,41 @@ class Query:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.commit()
         self.conn.close()
+
+    def parse_and_add_lemmas(self, lemmafname):
+        with open(lemmafname, "r") as f:
+            for line in f:
+                line = line.strip().split(" ")
+                self.parse_one_line(line)
+
+        # final dump
+        self.dump_ids()
+
+        print("Parsed %d number of good lemmas" % self.num_goods_total)
+
+    def parse_one_line(self, line):
+        self.num_goods_total += 1
+
+        # get ID
+        myid = int(line[len(line)-1])
+        assert myid >= 0, "ID is always at least 0"
+        assert myid != 0, "ID with 0 should not even be printed"
+
+        # num_used = int(line[len(line)-1])
+        num_used = 0
+
+        # append to cur_good_ids
+        self.cur_good_ids.append((self.runID, myid, num_used))
+
+        # don't run out of memory, dump early
+        if num_used > 10000:
+            self.dump_ids()
+
+    def dump_ids(self):
+        self.c.executemany("""
+        INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`)
+        VALUES (?, ?, ?);""", self.cur_good_ids)
+        self.cur_good_ids = []
 
     def find_runID(self):
         q = """
@@ -75,12 +91,6 @@ class Query:
 
         print("runID: %d" % runID)
         return runID
-
-    def add_goods(self, ids):
-        self.c.execute('delete from goodClauses;')
-        self.c.executemany("""
-            INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`)
-            VALUES (?, ?, ?);""", ids)
 
 
 if __name__ == "__main__":
@@ -107,9 +117,7 @@ it was good or not."""
     print("Using lemma file %s" % lemmafname)
 
     with Query(dbfname) as q:
-        useful_lemma_ids = parse_lemmas(lemmafname, q.runID, options.verbose)
-        print("Num good IDs: %d" % len(useful_lemma_ids))
-        q.add_goods(useful_lemma_ids)
+        q.parse_and_add_lemmas(lemmafname)
 
     print("Finished adding good lemma indicators to db %s" % dbfname)
     exit(0)
