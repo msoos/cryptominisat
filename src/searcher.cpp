@@ -1721,6 +1721,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             && drat
             && conf.dump_individual_restarts_and_clauses
             && learnt_clause.size() > 2
+            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio
         ) {
             dump_sql_clause_data(
                 glue
