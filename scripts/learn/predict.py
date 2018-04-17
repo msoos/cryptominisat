@@ -373,12 +373,16 @@ class Query2 (QueryHelper):
 
         q = q_count + q_ok
         q = q.format(**myformat)
+        if options.verbose:
+            print("query:", q)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_ok = int(cur.fetchone()[0])
         print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
 
         q = q_count + q_bad
         q = q.format(**myformat)
+        if options.verbose:
+            print("query:", q)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_bad = int(cur.fetchone()[0])
         print("Num datpoints BAD (K): %-3.5f" % (num_lines_bad/1000.0))
@@ -393,7 +397,11 @@ class Query2 (QueryHelper):
                 return False, None
 
         if total_lines == 0:
-            print("WARNING: Total number of datapoints is 0: minimum conflict too high, no conflicts in SQL, or something went wrong!!")
+            print("WARNING: Total number of datapoints is 0. Potential issues:")
+            print(" --> Minimum no. conflicts set too high")
+            print(" --> Less than 1 restarts were made")
+            print(" --> No conflicts in SQL")
+            print(" --> Something went wrong")
             return False, None
 
         print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
@@ -405,6 +413,8 @@ class Query2 (QueryHelper):
         print("limit for OK:", myformat["limit"])
         q = q.format(**myformat)
         print("Running query for OK...")
+        if options.verbose:
+            print("query:", q)
         df = pd.read_sql_query(q, self.conn)
 
         q = q_bad_select + q_bad
@@ -415,6 +425,8 @@ class Query2 (QueryHelper):
         print("limit for bad:", myformat["limit"])
         q = q.format(**myformat)
         print("Running query for BAD...")
+        if options.verbose:
+            print("query:", q)
         df2 = pd.read_sql_query(q, self.conn)
         print("Queries finished. T: %-3.2f" % (time.time() - t))
 
@@ -726,6 +738,10 @@ if __name__ == "__main__":
         ok, df = one_predictor(dbfname)
         if ok:
             dfs.append(df)
+
+    if len(dfs) == 0:
+        print("Error, nothing got ingested, something is off")
+        exit(-1)
 
     # intermediate predictor is final
     if len(args) == 1:
