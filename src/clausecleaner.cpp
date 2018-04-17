@@ -88,6 +88,10 @@ void ClauseCleaner::clean_implicit_watchlist(
 
 void ClauseCleaner::clean_implicit_clauses()
 {
+    if (solver->conf.verbosity > 15) {
+        cout << "c cleaning implicit clauses" << endl;
+    }
+
     assert(solver->decisionLevel() == 0);
     impl_data = ImplicitData();
     size_t wsLit = 0;
@@ -118,6 +122,10 @@ void ClauseCleaner::clean_implicit_clauses()
 
 void ClauseCleaner::clean_clauses(vector<ClOffset>& cs)
 {
+    if (solver->conf.verbosity > 15) {
+        cout << "c cleaning all clauses in vector" << endl;
+    }
+
     clean_clauses_pre();
     clean_clauses_inter(cs);
     clean_clauses_post();
@@ -128,9 +136,9 @@ void ClauseCleaner::clean_clauses_inter(vector<ClOffset>& cs)
     assert(solver->decisionLevel() == 0);
     assert(solver->prop_at_head());
 
-    #ifdef VERBOSE_DEBUG
-    cout << "Cleaning  clauses" << endl;
-    #endif //VERBOSE_DEBUG
+    if (solver->conf.verbosity > 15) {
+        cout << "Cleaning clauses in vector<>" << endl;
+    }
 
     vector<ClOffset>::iterator s, ss, end;
     size_t at = 0;
