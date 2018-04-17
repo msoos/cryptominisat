@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2017, Martin Hořeňovský
+# Copyright (c) 2017, Martin Horenovsky
 # Copyright (c) 2018, Mate Soos
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
