@@ -423,8 +423,8 @@ class Query2 (QueryHelper):
             print(q)
             print("-- query ends --")
 
-
         return True, pd.concat([df, df2])
+
 
 def get_one_file(dbfname):
     print("Using sqlite3db file %s" % dbfname)
