@@ -350,8 +350,9 @@ class Tester:
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
-                cmd += "sqlitedb %s " % self.sqlitedbfname
-                cmd += "--sqlresttime %d " % random.choice([0, 1])
+                cmd += "--sqlitedb %s " % self.sqlitedbfname
+                if random.choice([True, False]):
+                    cmd += "--sqlresttime "
                 if "clid" in self.extra_opts_supported:
                     if random.choice([True, False]):
                         cmd += "--clid "
