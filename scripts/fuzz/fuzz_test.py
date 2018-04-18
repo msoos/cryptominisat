@@ -196,7 +196,7 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sqlite", "clid"])
+            ["xor", "autodisablegauss", "sql", "clid"])
         self.sol_parser = solution_parser(options)
 
     def list_options_if_supported(self, tocheck):
