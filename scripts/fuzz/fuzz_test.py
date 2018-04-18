@@ -349,6 +349,9 @@ class Tester:
                 cmd += "--sql 2 "
                 cmd += "--sqlrestfull %d " % random.choice([0, 1])
                 cmd += "--sqlresttime %d " % random.choice([0, 1])
+                if "clid" in self.extra_opts_supported:
+                    if random.choice([True, False]):
+                        cmd += "--clid "
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
