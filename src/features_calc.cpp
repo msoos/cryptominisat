@@ -107,7 +107,7 @@ void SolveFeaturesCalc::for_all_clauses(Function func_each_cl, Function2 func_ea
 
 void SolveFeaturesCalc::fill_vars_cls()
 {
-    feat.numVars = solver->nVars();
+    feat.numVars = solver->get_num_free_vars();
     feat.numClauses = solver->longIrredCls.size() + solver->binTri.irredBins;
     myVars.resize(solver->nVars());
 

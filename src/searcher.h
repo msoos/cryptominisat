@@ -176,7 +176,7 @@ class Searcher : public HyperEngine
         ) const;
 
         //Misc
-        void update_var_decay();
+        void update_var_decay_vsids();
         void add_in_partial_solving_stats();
 
 
@@ -311,7 +311,7 @@ class Searcher : public HyperEngine
 
         /////////////////
         // Variable activity
-        double var_inc;
+        double var_inc_vsids;
         void insert_var_order(const uint32_t x);  ///< Insert a variable in current heap
         void insert_var_order_all(const uint32_t x);  ///< Insert a variable in all heaps
 
@@ -326,7 +326,7 @@ class Searcher : public HyperEngine
 
         uint64_t next_lev1_reduce;
         uint64_t next_lev2_reduce;
-        double   var_decay;
+        double   var_decay_vsids;
 
     private:
         //////////////
@@ -573,7 +573,7 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
         return;
     }
 
-    var_act_vsids[var] += var_inc * mult;
+    var_act_vsids[var] += var_inc_vsids * mult;
 
     #ifdef SLOW_DEBUG
     bool rescaled = false;
@@ -588,7 +588,7 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
         #endif
 
         //Reset var_inc
-        var_inc *= 1e-100;
+        var_inc_vsids *= 1e-100;
     }
 
     // Update order_heap with respect to new activity:

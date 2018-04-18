@@ -1279,7 +1279,7 @@ lbool Solver::solve_with_assumptions(
     max_confl_phase = conf.restart_first;
     max_confl_this_phase = max_confl_phase;
     VSIDS = true;
-    var_decay = conf.var_decay_start;
+    var_decay_vsids = conf.var_decay_vsids_start;
     step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     params.rest_type = conf.restartType;
@@ -3106,8 +3106,8 @@ void Solver::reconfigure(int val)
             conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.3;
             conf.inc_max_temp_lev2_red_cls = 1.04;
 
-            conf.var_decay_max = 0.90; //more 'slow' in adjusting activities
-            update_var_decay();
+            conf.var_decay_vsids_max = 0.90; //more 'slow' in adjusting activities
+            update_var_decay_vsids();
             reset_temp_cl_num();
             break;
         }
@@ -3125,8 +3125,8 @@ void Solver::reconfigure(int val)
             conf.max_num_lits_more_more_red_min = 20;
 
             conf.max_temp_lev2_learnt_clauses = 10000;
-            conf.var_decay_max = 0.99; //more 'fast' in adjusting activities
-            update_var_decay();
+            conf.var_decay_vsids_max = 0.99; //more 'fast' in adjusting activities
+            update_var_decay_vsids();
             break;
         }
 

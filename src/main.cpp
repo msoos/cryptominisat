@@ -336,19 +336,19 @@ void Main::add_supported_options()
     std::ostringstream s_random_var_freq;
     s_random_var_freq << std::setprecision(5) << conf.random_var_freq;
 
-    std::ostringstream s_var_decay_start;
-    s_var_decay_start << std::setprecision(5) << conf.var_decay_start;
+    std::ostringstream s_var_decay_vsids_start;
+    s_var_decay_vsids_start << std::setprecision(5) << conf.var_decay_vsids_start;
 
-    std::ostringstream s_var_decay_max;
-    s_var_decay_max << std::setprecision(5) << conf.var_decay_max;
+    std::ostringstream s_var_decay_vsids_max;
+    s_var_decay_vsids_max << std::setprecision(5) << conf.var_decay_vsids_max;
 
     po::options_description varPickOptions("Variable branching options");
     varPickOptions.add_options()
-    ("vardecaystart", po::value(&conf.var_decay_start)->default_value(conf.var_decay_start, s_var_decay_start.str())
+    ("vardecaystart", po::value(&conf.var_decay_vsids_start)->default_value(conf.var_decay_vsids_start, s_var_decay_vsids_start.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vardecaymax", po::value(&conf.var_decay_max)->default_value(conf.var_decay_max, s_var_decay_max.str())
+    ("vardecaymax", po::value(&conf.var_decay_vsids_max)->default_value(conf.var_decay_vsids_max, s_var_decay_vsids_max.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
-    ("vincstart", po::value(&conf.var_inc_start)->default_value(conf.var_inc_start)
+    ("vincstart", po::value(&conf.var_inc_vsids_start)->default_value(conf.var_inc_vsids_start)
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")

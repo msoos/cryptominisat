@@ -159,10 +159,10 @@ CREATE TABLE `clauseStats` (
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
 
-  `last_dec_var_act_0` double NOT NULL,
-  `last_dec_var_act_1` double NOT NULL,
-  `first_dec_var_act_0` double NOT NULL,
-  `first_dec_var_act_1` double NOT NULL,
+  `last_dec_var_act_vsids_0` double NOT NULL,
+  `last_dec_var_act_vsids_1` double NOT NULL,
+  `first_dec_var_act_vsids_0` double NOT NULL
+  `first_dec_var_act_vsids_1` double NOT NULL
 
   `vsids_vars_avg` double NOT NULL,
   `vsids_vars_var` double NOT NULL,

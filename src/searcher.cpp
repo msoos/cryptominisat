@@ -66,10 +66,10 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         , solver(_solver)
         , cla_inc(1)
 {
-    var_decay = conf.var_decay_start;
+    var_decay_vsids = conf.var_decay_vsids_start;
     step_size = solver->conf.orig_step_size;
 
-    var_inc = conf.var_inc_start;
+    var_inc_vsids = conf.var_inc_vsids_start;
     more_red_minim_limit_binary_actual = conf.more_red_minim_limit_binary;
     more_red_minim_limit_cache_actual = conf.more_red_minim_limit_cache;
     mtrand.seed(conf.origSeed);
@@ -139,7 +139,7 @@ inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
     #ifdef STATS_NEEDED
-    antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc);
+    antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc_vsids);
     #endif
     const uint32_t var = lit.var();
     assert(varData[var].removed == Removed::none);
@@ -608,7 +608,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
             #ifdef STATS_NEEDED
-            antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc);
+            antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc_vsids);
             #endif
             if (!update_bogoprops && conf.doOTFSubsume) {
                 tmp_learnt_clause_size--;
@@ -879,7 +879,7 @@ Clause* Searcher::analyze_conflict(
 
     #ifdef STATS_NEEDED
     for(const Lit l: learnt_clause) {
-        antec_data.vsids_vars.push(var_act_vsids[l.var()]/var_inc);
+        antec_data.vsids_vars.push(var_act_vsids[l.var()]/var_inc_vsids);
     }
     #endif
 
@@ -1093,7 +1093,8 @@ void Searcher::check_blocking_restart()
         && hist.glueHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+        && trail_lim.size() > 0
+        && (trail.size()-trail_lim[0]) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
     ) {
         hist.glueHist.clear();
         if (!blocked_restart) {
@@ -1111,7 +1112,8 @@ void Searcher::check_blocking_restart_backtrack()
         && hist.backtrackLevelHist.isvalid()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
-        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip*1.2
+        && trail_lim.size() > 0
+        && (trail.size()-trail_lim[0]) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip*1.2
     ) {
         hist.backtrackLevelHist.clear();
         if (!blocked_restart) {
@@ -1154,9 +1156,9 @@ lbool Searcher::search()
             if (!update_bogoprops) {
                 if (VSIDS &&
                     ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
-                    var_decay < conf.var_decay_max
+                    var_decay_vsids < conf.var_decay_vsids_max
                 ) {
-                    var_decay += 0.01;
+                    var_decay_vsids += 0.01;
                 }
                 if (!VSIDS && step_size > solver->conf.min_step_size) {
                     step_size -= solver->conf.step_size_dec;
@@ -1172,10 +1174,11 @@ lbool Searcher::search()
             #endif
             print_restart_stat();
             if (!update_bogoprops) {
+                uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
                 #ifdef STATS_NEEDED
-                hist.trailDepthHist.push(trail.size()); //TODO  - trail_lim[0]
+                hist.trailDepthHist.push(trail.size() - tosub);
                 #endif
-                hist.trailDepthHistLonger.push(trail.size()); //TODO  - trail_lim[0]
+                hist.trailDepthHistLonger.push(trail.size() - tosub);
             }
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_loop_stats(myTime);
@@ -1538,7 +1541,8 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     }
     hist.backtrackLevelHistLT.push(backtrack_level);
     hist.conflSizeHistLT.push(learnt_clause.size());
-    hist.trailDepthHistLT.push(trail.size());
+    uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
+    hist.trailDepthHistLT.push(trail.size() - tosub);
     if (params.rest_type == Restart::glue) {
         hist.glueHistLTLimited.push(std::min<size_t>(glue, 50));
     }
@@ -1624,7 +1628,7 @@ void Searcher::dump_sql_clause_data(
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
             uint32_t v = trail[at].var();
-            double act_rel = var_act_vsids[v]/var_inc;
+            double act_rel = var_act_vsids[v]/var_inc_vsids;
             last_dec_var_act.push_back(act_rel);
             if (last_dec_var_act.size() >= 2)
                 break;
@@ -1639,7 +1643,7 @@ void Searcher::dump_sql_clause_data(
         uint32_t at = trail_lim[i];
         if (at < trail.size()) {
             uint32_t v = trail[at].var();
-            double act_rel = var_act_vsids[v]/var_inc;
+            double act_rel = var_act_vsids[v]/var_inc_vsids;
             first_dec_var_act.push_back(act_rel);
             if (first_dec_var_act.size() >= 2)
                 break;
@@ -1649,6 +1653,7 @@ void Searcher::dump_sql_clause_data(
     while(first_dec_var_act.size() < 2)
         first_dec_var_act.push_back(0);
 
+    uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
@@ -1657,7 +1662,7 @@ void Searcher::dump_sql_clause_data(
         , learnt_clause.size()
         , antec_data
         , old_decision_level
-        , trail.size()
+        , trail.size() - tosub
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
         , hist
@@ -1894,8 +1899,8 @@ lbool Searcher::burst_search()
     const double backup_rand = conf.random_var_freq;
     const PolarityMode backup_polar_mode = conf.polarity_mode;
     Restart backup_restart_type = params.rest_type;
-    double backup_var_inc = var_inc;
-    double backup_var_decay = var_decay;
+    double backup_var_inc_vsids = var_inc_vsids;
+    double backup_var_decay_vsids = var_decay_vsids;
 
     //Set burst config
     conf.random_var_freq = 1;
@@ -1911,8 +1916,8 @@ lbool Searcher::burst_search()
     conf.random_var_freq = backup_rand;
     conf.polarity_mode = backup_polar_mode;
     params.rest_type = backup_restart_type;
-    assert(var_inc == backup_var_inc);
-    assert(var_decay == backup_var_decay);
+    assert(var_inc_vsids == backup_var_inc_vsids);
+    assert(var_decay_vsids == backup_var_decay_vsids);
 
     //Print what has happened
     const double time_used = cpuTime() - myTime;
@@ -3275,13 +3280,14 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
 
 inline void Searcher::varDecayActivity()
 {
-    var_inc *= (1.0 / var_decay);
+    assert(VSIDS);
+    var_inc_vsids *= (1.0 / var_decay_vsids);
 }
 
-void Searcher::update_var_decay()
+void Searcher::update_var_decay_vsids()
 {
-    if (var_decay >= conf.var_decay_max) {
-        var_decay = conf.var_decay_max;
+    if (var_decay_vsids >= conf.var_decay_vsids_max) {
+        var_decay_vsids = conf.var_decay_vsids_max;
     }
 }
 
