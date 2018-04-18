@@ -199,6 +199,7 @@ class Tester:
             ["xor", "autodisablegauss", "sql", "clid"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
+        self.clid_added = False
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -266,6 +267,7 @@ class Tester:
 
     def random_options(self, preproc=False):
         self.sqlitedbfname = None
+        self.clid_added = False
         cmd = " --zero-exit-status "
 
         # disable gauss when gauss is compiled in but asked not to be used
@@ -275,6 +277,9 @@ class Tester:
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         if random.choice([True, False]):
+            if random.choice([True, False]):
+                self.clid_added = True
+                cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
@@ -347,16 +352,12 @@ class Tester:
                 # "Maximum number of matrixes to treat.")
                 cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
-            if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
+            if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0 and self.num_threads == 1 and not self.preproc:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
                 cmd += "--sqlitedb %s " % self.sqlitedbfname
-                if random.choice([True, False]):
-                    cmd += "--sqlresttime "
-                if "clid" in self.extra_opts_supported:
-                    if random.choice([True, False]):
-                        cmd += "--clid "
-                        cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
+                cmd += "--sqlresttime %d " % random.randint(0, 1)
+                cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
@@ -445,7 +446,7 @@ class Tester:
 
         os.unlink(err_fname)
         if self.sqlitedbfname is not None:
-            os.unline(self.sqlitedbfname)
+            os.unlink(self.sqlitedbfname)
 
         if options.verbose:
             print("CPU limit of parent (pid %d) after child finished executing: %s" %
@@ -506,7 +507,11 @@ class Tester:
 
         # it's UNSAT, let's check with DRAT
         if fname2:
-            toexec = "../../build/tests/drat-trim/drat-trim %s %s" % (fname, fname2)
+            toexec = "../../build/tests/drat-trim/drat-trim {cnf} {dratf} {opt}"
+            opt = ""
+            if self.clid_added:
+                opt = "-i "
+            toexec = toexec.format(cnf=fname, dratf=fname2, opt=opt)
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
                     stdout=subprocess.PIPE,
@@ -551,6 +556,8 @@ class Tester:
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
+        self.sqlitedbfname = None
+        self.preproc = False
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -607,6 +614,7 @@ class Tester:
         self.num_threads = 1
         fname = unique_file("fuzzTest")
         self.drat = False
+        self.preproc = True
 
         # create the fuzz file
         cf = create_fuzz()
@@ -648,8 +656,6 @@ class Tester:
 
         # remove temporary filenames
         os.unlink(fname)
-        if self.sqlitedbfname is not None:
-            os.unline(self.sqlitedbfname)
         for name in todel:
             os.unlink(name)
 
