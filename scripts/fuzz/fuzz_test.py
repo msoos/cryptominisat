@@ -348,7 +348,6 @@ class Tester:
             self.sqlitedbfname = None
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
                 cmd += "--sql 2 "
-                cmd += "--sqlrestfull %d " % random.choice([0, 1])
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
                 cmd += "sqlitedb %s " % self.sqlitedbfname
                 cmd += "--sqlresttime %d " % random.choice([0, 1])
