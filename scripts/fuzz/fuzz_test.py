@@ -333,7 +333,7 @@ class Tester:
                 # Set maximum no. of rows for gaussian matrix."
                 cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
 
-                #, "Automatically disable gauss when performing badly")
+                # "Automatically disable gauss when performing badly")
                 cmd += "--autodisablegauss %s " % random.choice([0, 1])
 
                 # "Set minimum no. of rows for gaussian matrix.
