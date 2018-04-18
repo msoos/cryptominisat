@@ -276,7 +276,7 @@ class Tester:
 
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
-        if random.choice([True, False]):
+        if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             if random.choice([True, True, True, False]):
                 self.clid_added = True
                 cmd += "--clid "
