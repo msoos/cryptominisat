@@ -545,12 +545,14 @@ inline void CNF::check_no_duplicate_lits_anywhere() const
 
 inline void CNF::check_clid_correct() const
 {
+    #ifdef STATS_NEEDED
     for(auto l: longRedCls) {
         for(ClOffset offs: l) {
             Clause * cl = cl_alloc.ptr(offs);
             assert(!(cl->stats.ID == 0 && cl->red()));
         }
     }
+    #endif
 }
 
 }

@@ -2965,10 +2965,12 @@ void OccSimplifier::load_state(SimpleInFile& f)
 
 void OccSimplifier::check_clid_correct() const
 {
+    #ifdef STATS_NEEDED
     for(auto offs: clauses) {
         Clause * cl = solver->cl_alloc.ptr(offs);
         if (!cl->freed() && !cl->getRemoved()) {
             assert(!(cl->stats.ID == 0 && cl->red()));
         }
     }
+    #endif
 }
