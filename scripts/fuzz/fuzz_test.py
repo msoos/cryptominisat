@@ -198,6 +198,7 @@ class Tester:
         self.extra_opts_supported = self.list_options_if_supported(
             ["xor", "autodisablegauss", "sql", "clid"])
         self.sol_parser = solution_parser(options)
+        self.sqlitedbfname = None
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -264,6 +265,7 @@ class Tester:
         return cmd
 
     def random_options(self, preproc=False):
+        self.sqlitedbfname = None
         cmd = " --zero-exit-status "
 
         # disable gauss when gauss is compiled in but asked not to be used
@@ -345,7 +347,6 @@ class Tester:
                 # "Maximum number of matrixes to treat.")
                 cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
-            self.sqlitedbfname = None
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
