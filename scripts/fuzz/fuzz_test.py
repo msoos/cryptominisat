@@ -277,7 +277,7 @@ class Tester:
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         if random.choice([True, False]):
-            if random.choice([True, False]):
+            if random.choice([True, True, True, False]):
                 self.clid_added = True
                 cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
