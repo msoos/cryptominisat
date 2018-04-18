@@ -345,9 +345,12 @@ class Tester:
                 # "Maximum number of matrixes to treat.")
                 cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
+            self.sqlitedbfname = None
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
                 cmd += "--sql 2 "
                 cmd += "--sqlrestfull %d " % random.choice([0, 1])
+                self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
+                cmd += "sqlitedb %s " % self.sqlitedbfname
                 cmd += "--sqlresttime %d " % random.choice([0, 1])
                 if "clid" in self.extra_opts_supported:
                     if random.choice([True, False]):
@@ -440,6 +443,8 @@ class Tester:
                 exit(-1)
 
         os.unlink(err_fname)
+        if self.sqlitedbfname is not None:
+            os.unline(self.sqlitedbfname)
 
         if options.verbose:
             print("CPU limit of parent (pid %d) after child finished executing: %s" %
@@ -642,6 +647,8 @@ class Tester:
 
         # remove temporary filenames
         os.unlink(fname)
+        if self.sqlitedbfname is not None:
+            os.unline(self.sqlitedbfname)
         for name in todel:
             os.unlink(name)
 
