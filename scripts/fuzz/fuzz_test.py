@@ -352,7 +352,7 @@ class Tester:
                 if "clid" in self.extra_opts_supported:
                     if random.choice([True, False]):
                         cmd += "--clid "
-                        cmd += "--cldatadumpratio %%0.3f " % random.choice([0.9, 0.1, 0.7])
+                        cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
