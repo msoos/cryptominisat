@@ -76,7 +76,7 @@ public:
 
     Stats runStats;
     Stats globalStats;
-    size_t mem_used() const;
+    size_t mem_used() const override;
 
 private:
     Solver* solver;
