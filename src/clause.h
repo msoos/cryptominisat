@@ -144,7 +144,7 @@ struct ClauseStats
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
     {
         //Create to-be-returned data
-        ClauseStats ret;
+        ClauseStats ret = first;
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);

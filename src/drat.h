@@ -211,18 +211,19 @@ struct DratFile: public Drat
         } else {
             for(const Lit l: cl)
                 byteDRUPa(l);
-        }
-        #ifdef STATS_NEEDED
-        if (add_ID) {
-            ID = cl.stats.ID;
 
-            // actually... for on-the-fly subsumed irred clauses can have an ID.
-            //assert(!(ID != 0 && !cl.red()));
+            #ifdef STATS_NEEDED
+            if (is_add && add_ID) {
+                ID = cl.stats.ID;
 
-            //redundant clauses MUST have a valid ID
-            assert(!(ID == 0 && cl.red()));
+                // actually... for on-the-fly subsumed irred clauses can have an ID.
+                //assert(!(ID != 0 && !cl.red()));
+
+                //redundant clauses MUST have a valid ID
+                assert(!(ID == 0 && cl.red()));
+            }
+            #endif
         }
-        #endif
 
         return *this;
     }
