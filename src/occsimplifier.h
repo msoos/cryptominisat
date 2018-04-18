@@ -380,17 +380,17 @@ private:
     /////////////////////
     //Variable elimination
     uint32_t grow = 0; /// maximum grow rate for clauses
-    vector<uint32_t> varElimComplexity;
+    vector<uint64_t> varElimComplexity;
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
-        const vector<uint32_t>&  varElimComplexity;
+        const vector<uint64_t>&  varElimComplexity;
         bool operator () (const size_t x, const size_t y) const
         {
             return varElimComplexity[x] < varElimComplexity[y];
         }
 
         explicit VarOrderLt(
-            const vector<uint32_t>& _varElimComplexity
+            const vector<uint64_t>& _varElimComplexity
         ) :
             varElimComplexity(_varElimComplexity)
         {}
@@ -476,7 +476,7 @@ private:
         , int otherSize
     );
 
-    uint32_t heuristicCalcVarElimScore(const uint32_t var);
+    uint64_t heuristicCalcVarElimScore(const uint32_t var);
     bool resolve_clauses(
         const Watched ps
         , const Watched qs

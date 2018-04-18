@@ -2681,7 +2681,7 @@ int OccSimplifier::check_empty_resolvent_action(
     return std::numeric_limits<int>::max();
 }
 
-uint32_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
+uint64_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
 {
     const Lit lit(var, false);
     #ifdef CHECK_N_OCCUR
@@ -2702,14 +2702,14 @@ uint32_t OccSimplifier::heuristicCalcVarElimScore(const uint32_t var)
     }
     #endif
 
-    return  n_occurs[lit.toInt()] * n_occurs[(~lit).toInt()];
+    return  (uint64_t)n_occurs[lit.toInt()] * (uint64_t)n_occurs[(~lit).toInt()];
 }
 
 void OccSimplifier::order_vars_for_elim()
 {
     velim_order.clear();
     varElimComplexity.clear();
-    varElimComplexity.resize(solver->nVars(), 1000);
+    varElimComplexity.resize(solver->nVars(), 0);
     elim_calc_need_update.clear();
 
     //Go through all vars
