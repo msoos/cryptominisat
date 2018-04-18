@@ -257,6 +257,7 @@ public:
     bool satisfied_cl(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_clid_correct() const;
     void print_all_clauses() const;
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
@@ -538,6 +539,16 @@ inline void CNF::check_no_duplicate_lits_anywhere() const
         for(ClOffset offs: l) {
             Clause * cl = cl_alloc.ptr(offs);
             assert(no_duplicate_lits((*cl)));
+        }
+    }
+}
+
+inline void CNF::check_clid_correct() const
+{
+    for(auto l: longRedCls) {
+        for(ClOffset offs: l) {
+            Clause * cl = cl_alloc.ptr(offs);
+            assert(!(cl->stats.ID == 0 && cl->red()));
         }
     }
 }

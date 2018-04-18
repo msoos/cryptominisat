@@ -260,6 +260,7 @@ public:
     const Stats& get_stats() const;
     const SubsumeStrengthen* getSubsumeStrengthen() const;
     void check_elimed_vars_are_unassigned() const;
+    void check_clid_correct() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
     void save_state(SimpleOutFile& f);
