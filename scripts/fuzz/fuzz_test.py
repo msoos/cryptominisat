@@ -86,9 +86,6 @@ def set_up_parser():
                       help="Don't run 'large' fuzzer"
                       " (may mem-out on smaller systems)")
 
-    parser.add_option("--sqlite", dest="sqlite", default=False,
-                      action="store_true", help="Test SQLite dumping")
-
     parser.add_option("--maxthreads", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
 
@@ -198,8 +195,8 @@ class Tester:
 
     def __init__(self):
         self.ignoreNoSolution = False
-        self.extra_options_if_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss"])
+        self.extra_opts_supported = self.list_options_if_supported(
+            ["xor", "autodisablegauss", "sqlite", "clid"])
         self.sol_parser = solution_parser(options)
 
     def list_options_if_supported(self, tocheck):
@@ -238,7 +235,7 @@ class Tester:
         for _ in range(int(random.gammavariate(12, 0.7))):
             sched.append(random.choice(opts))
 
-        if "autodisablegauss" in self.extra_options_if_supported:
+        if "autodisablegauss" in self.extra_opts_supported:
             if random.choice([False, True, True, True]) and self.this_gauss_on:
                 sched.append("occ-gauss")
 
@@ -270,7 +267,7 @@ class Tester:
         cmd = " --zero-exit-status "
 
         # disable gauss when gauss is compiled in but asked not to be used
-        if not self.this_gauss_on and "autodisablegauss" in self.extra_options_if_supported:
+        if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
             cmd += "--maxgaussdepth 0 "
 
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
@@ -348,7 +345,7 @@ class Tester:
                 # "Maximum number of matrixes to treat.")
                 cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
-            if options.sqlite:
+            if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0:
                 cmd += "--sql 2 "
                 cmd += "--sqlrestfull %d " % random.choice([0, 1])
                 cmd += "--sqlresttime %d " % random.choice([0, 1])
@@ -360,7 +357,7 @@ class Tester:
                     "renumber", "savemem", "moreminim", "gates", "bva",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 
-            if "xor" in self.extra_options_if_supported:
+            if "xor" in self.extra_opts_supported:
                 opts.append("xor")
 
             for opt in opts:
@@ -542,7 +539,7 @@ class Tester:
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
-        self.this_gauss_on = "autodisablegauss" in self.extra_options_if_supported and random.choice([True, False, False])
+        self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
 
         if self.drat:
