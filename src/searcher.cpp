@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
-#include "EnhanceGaussian.h"
+#include "EGaussian.h"
 #include "sqlstats.h"
 #include "watchalgos.h"
 #include "hasher.h"
@@ -79,7 +79,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
 Searcher::~Searcher()
 {
-    clear_gauss();
+    clearEnGaussMatrixes();
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
@@ -1147,10 +1147,28 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
 
+    #ifdef USE_GAUSS
+    if (!update_bogoprops) {
+        for (vector<EGaussian*>::iterator gauss = gmatrixes.begin(), end = gmatrixes.end();
+            gauss != end;
+            gauss++
+        ) {
+            if (!(*gauss)->full_init())
+                return l_False;
+        }
+        big_gaussnum = 0;
+        big_propagate = 0;
+        big_conflict = 0;
+        engaus_disable = false;
+    }
+    #endif //USE_GAUSS
+
     lbool dec_ret = l_Undef;
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
+        Gauseqhead = qhead;
+
         if (!confl.isNULL()) {
             //manipulate startup parameters
             if (!update_bogoprops) {
@@ -1189,26 +1207,11 @@ lbool Searcher::search()
             assert(ok);
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
-                bool at_least_one_continue = false;
-                for (Gaussian* g: gauss_matrixes) {
-                    gauss_ret ret = g->find_truths();
-                    switch (ret) {
-                        case gauss_cont:
-                            at_least_one_continue = true;
-                            break;
-                        case gauss_false:
-                            return l_False;
-                        case gauss_confl:
-                            confl = g->found_conflict;
-                            goto confl;
-                        case gauss_nothing:
-                            ;
-                    }
+                if (!engaus_disable) {
+                    ret = Gauss_elimination(learnt_clause, conflictC);
+                    if (ret == l_Continue) continue;
+                    else if (ret != l_Nothing) return ret;
                 }
-                if (at_least_one_continue) {
-                    goto prop;
-                }
-                assert(ok);
             }
             #endif //USE_GAUSS
 
@@ -2263,11 +2266,6 @@ lbool Searcher::solve(
             goto end;
     }
 
-    #ifdef USE_GAUSS
-    if (!solver->init_all_matrixes())
-        return l_False;
-    #endif
-
     if (VSIDS) {
         if (conf.restartType == Restart::geom) {
             max_confl_phase = conf.restart_first;
@@ -2782,6 +2780,133 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
     solver->needToAddBinClause.clear();
 
     return added;
+}
+
+inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& conflictC)
+{
+
+    bool do_eliminate = false;  // we do elimination when basic variable is invoked
+    bool enter_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
+    uint32_t e_var;                     // do elimination variable
+    uint16_t e_row_n ;             // do elimination row
+    uint16_t matrix_id = 0;         // Gaussian matrix index
+    PropBy confl;                 // conflict
+    // for choose better conflict
+    int ret_gauss = 4;        // gauss matrix result
+    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();  // conflict clause size
+    bool xorEqualFalse_gauss = false;            // conflict xor clause xorEqualFalse_gauss
+    conflict_clause_gauss.clear();          //  for gaussian elimination better conflict
+
+    //assert(qhead == trail.size());
+    //assert(Gauseqhead <= qhead);
+
+
+    // cryptominisat orignal heristic
+    if( (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.05 ) ) ||
+         gmatrixes.size() == 0
+    ) {
+        engaus_disable = true;
+    }
+
+    // cryptominisat orignal heristic
+     if( engaus_disable|| (decisionLevel() > gaussconfig.decision_until) ) {
+        return l_Nothing;
+    }
+
+    //while (Gauseqhead <  trail.size() ) {
+    while (Gauseqhead <  qhead ) {
+        Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
+
+        vec<GausWatched>&  ws  = GausWatches[p.var()];
+        vec<GausWatched>::iterator i = ws.getData();
+        vec<GausWatched>::iterator j = i;
+        vec<GausWatched>::iterator end = ws.getDataEnd();
+
+        if(i != end)
+            matrix_id = (*i).matrix_num;
+        else
+            continue ;
+
+        enter_matrix = true; // one variable is in gaussian matrix
+
+        for (; i != end; i++) {
+            //assert(matrix_id == (*i).matrix_num);
+            if(gmatrixes[matrix_id]->find_truths2(i ,j , p.var()  , confl ,(*i).row_id ,do_eliminate , e_var , e_row_n
+                                ,ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,xorEqualFalse_gauss)){
+                    continue;
+            }
+            else{ // only in conflict two variable
+                break;
+            }
+        }
+
+        if (i != end) {  // must conflict two variable
+            i++;
+            //copy remaining watches
+            vec<GausWatched>::iterator j2 = i;
+            vec<GausWatched>::iterator i2 = j;
+
+            for(i2 = i, j2 = j; i2 != end; i2++) {
+                *j2 = *i2;
+                j2++;
+            }
+        }
+        //assert(i >= j);
+        ws.shrink_(i-j);
+
+        if(do_eliminate){
+            gmatrixes[matrix_id]->eliminate_col2(e_var , e_row_n , p.var() ,confl,
+                                                ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,xorEqualFalse_gauss);
+        }
+    }
+
+    if(enter_matrix){
+        big_gaussnum++; sum_EnGauss++;
+    }
+
+    switch(ret_gauss){
+        case 1:{ // unit conflict
+            //assert(confl.isBinary());
+            llbool ret = handle_conflict(learnt_clause, confl, conflictC, true);
+
+            big_conflict++;
+            sum_Enconflict++;
+
+            if (ret != l_Nothing) return ret;
+            return l_Continue;
+
+        }
+        case 0:{  // conflict
+            //assert(conflict_size_gauss>2 && conflict_size_gauss != UINT_MAX);
+            //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
+
+            Clause* conflPtr = (Clause*)clauseAllocator.XorClause_new(conflict_clause_gauss, xorEqualFalse_gauss);
+            confl = clauseAllocator.getOffset(conflPtr);
+            Gauseqhead = qhead = trail.size();
+
+            llbool ret = handle_conflict(learnt_clause, confl, conflictC, true);
+
+            big_conflict++;
+            sum_Enconflict++;
+
+            clauseAllocator.clauseFree(clauseAllocator.getPointer(confl.getClause()));
+            if (ret != l_Nothing) return ret;
+            return l_Continue;
+
+        }
+
+        case 2:  // propagation
+        case 3: // unit propagation
+            big_propagate++;
+            sum_Enpropagate++;
+            return l_Continue;;
+        case 4:
+            return l_Nothing;
+        default:
+            assert(0);
+            return l_Nothing;
+
+    }
 }
 
 std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
@@ -3528,7 +3653,7 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-		for (vector<EnhanceGaussian*>::iterator gauss = EnhancGauss_matrixes.begin(), end= EnhancGauss_matrixes.end(); gauss != end; gauss++)
+        for (vector<EGaussian*>::iterator gauss = gmatrixes.begin(), end= gmatrixes.end(); gauss != end; gauss++)
             (*gauss)->canceling(trail_lim[level]);
 
         #endif //USE_GAUSS
@@ -3591,7 +3716,7 @@ void Searcher::cancelUntil(uint32_t level)
 }
 
 #ifdef USE_GAUSS
-void Searcher::clear_gauss()
+void Searcher::clearEnGaussMatrixes()
 {
     for(Gaussian* g: gauss_matrixes) {
         if (conf.verbosity) {

@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include "matrixfinder.h"
 #include "solver.h"
-#include "EnhanceGaussian.h"
+#include "EGaussian.h"
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "sqlstats.h"

@@ -61,7 +61,7 @@ THE SOFTWARE.
 #include "features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
-#include "EnhanceGaussian.h"
+#include "EGaussian.h"
 #include "matrixfinder.h"
 #include "sqlstats.h"
 #include "drat.h"
@@ -1339,7 +1339,7 @@ lbool Solver::solve_with_assumptions(
         && conf.preprocess == 0
     ) {
         #ifdef USE_GAUSS
-        clear_gauss();
+        clearEnGaussMatrixes();
         MatrixFinder finder(this);
         ok = finder.findMatrixes();
         if (!ok) {
@@ -1583,7 +1583,7 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_confl, iteration_num);
-        clear_gauss();
+        clearEnGaussMatrixes();
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1631,7 +1631,7 @@ lbool Solver::iterate_until_solved()
         }
     }
 
-    clear_gauss();
+    clearEnGaussMatrixes();
     return status;
 }
 
