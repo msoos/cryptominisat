@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
-#include "gaussian.h"
+#include "EnhanceGaussian.h"
 #include "sqlstats.h"
 #include "watchalgos.h"
 #include "hasher.h"
@@ -3528,11 +3528,9 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        if (!update_bogoprops) {
-            for (Gaussian* gauss : gauss_matrixes) {
-                gauss->canceling(trail_lim[level]);
-            }
-        }
+		for (vector<EnhanceGaussian*>::iterator gauss = EnhancGauss_matrixes.begin(), end= EnhancGauss_matrixes.end(); gauss != end; gauss++)
+            (*gauss)->canceling(trail_lim[level]);
+
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then
