@@ -202,12 +202,6 @@ bool MatrixFinder::findMatrixes()
         );
     }
 
-    for (Gaussian* g: solver->gauss_matrixes) {
-        if (!g->init_until_fixedpoint()) {
-            break;
-        }
-    }
-
     return solver->ok;
 }
 

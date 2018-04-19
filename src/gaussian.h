@@ -67,7 +67,7 @@ public:
     Gaussian(Solver* solver, const vector<Xor>& xors, const uint32_t matrix_no);
     ~Gaussian();
 
-    bool init_until_fixedpoint();
+    bool init_until_fixedpoint(bool& created);
     gauss_ret find_truths();
 
     //statistics
@@ -139,7 +139,7 @@ protected:
     uint32_t unit_truths = 0; //how many unitary (i.e. decisionLevel 0) truths have been found
 
     //gauss init functions
-    void init(); // Initalise gauss state
+    bool init(); // Initalise gauss state
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
     uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 

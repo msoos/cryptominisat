@@ -2218,11 +2218,8 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
-    for (Gaussian* g : gauss_matrixes) {
-        if (!g->init_until_fixedpoint()) {
-            return l_False;
-        }
-    }
+    if (!solver->init_all_matrixes())
+        return l_False;
     #endif
 
     if (VSIDS) {

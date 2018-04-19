@@ -1323,6 +1323,11 @@ lbool Solver::solve_with_assumptions(
             status = l_False;
             goto end;
         }
+        ok = init_all_matrixes();
+        if (!ok) {
+            status = l_False;
+            goto end;
+        }
         #endif
         status = iterate_until_solved();
     }
@@ -1681,6 +1686,9 @@ bool Solver::execute_inprocess_strategy(
                     #ifdef USE_GAUSS
                     MatrixFinder finder(this);
                     finder.findMatrixes();
+                    if (ok) {
+                        ok = init_all_matrixes();
+                    }
                     #endif
                 }
             }
@@ -3700,4 +3708,31 @@ bool Solver::undef_must_fix_var()
 
     //There is hope
     return undef->must_fix_at_least_one_var;
+}
+
+bool Solver::init_all_matrixes()
+{
+    assert(ok);
+
+    vector<Gaussian*>::iterator i = solver->gauss_matrixes.begin();
+    vector<Gaussian*>::iterator j = i;
+    vector<Gaussian*>::iterator gend =solver->gauss_matrixes.end();
+    for (; i != gend; i++) {
+        Gaussian* g = *i;
+        bool created = false;
+        ok = g->init_until_fixedpoint(created);
+        if (!ok) {
+            break;
+        }
+        if (created) {
+            *j++=*i;
+        } else {
+            delete g;
+        }
+    }
+    while(i != gend) {
+        *j++ = *i++;
+    }
+    solver->gauss_matrixes.resize(solver->gauss_matrixes.size()-(i-j));
+    return solver->ok;
 }
