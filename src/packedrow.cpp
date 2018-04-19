@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **************************************************************************************************/
 
-#include "PackedRow.h"
+#include "packedrow.h"
 
 using namespace CMSat;
 
@@ -73,7 +73,11 @@ uint32_t PackedRow::popcnt(const uint32_t from) const
     return popcnt;
 }
 
-bool PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<Var>& col_to_var_original) const
+bool PackedRow::fill(
+    vec<Lit>& tmp_clause,
+    const vec<lbool>& assigns,
+    const vector<uint32_t>& col_to_var_original
+) const
 {
     bool final = !is_true_internal;
 
@@ -82,8 +86,8 @@ bool PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vect
     bool wasundef = false;
     for (uint32_t i = 0; i < size; i++) for (uint32_t i2 = 0; i2 < 64; i2++) {
         if ((mp[i] >> i2) &1) {
-            const Var& var = col_to_var_original[col];
-            assert(var != std::numeric_limits<Var>::max());
+            const uint32_t& var = col_to_var_original[col];
+            assert(var != std::numeric_limits<uint32_t>::max());
 
             const lbool val = assigns[var];
             const bool val_bool = val.getBool();
@@ -111,101 +115,105 @@ bool PackedRow::fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vect
 
 
 // add by hankf4
-uint32_t PackedRow::find_watchVar(vec<Lit>& tmp_clause, const vector<Var>& col_to_var,vec<bool> &GasVar_state , uint32_t& nb_var )
-{
-	uint32_t  tmp_var = 0;
-	uint32_t popcnt = 0;
-	nb_var = std::numeric_limits<uint32_t>::max();
-	uint32_t i;
-	tmp_clause.clear();
-	
-	
-	for(i = 0; i < size*64; i++) {
-		if (this->operator[](i)){
-			popcnt++;
-			tmp_var = col_to_var[i];
-			tmp_clause.push(Lit(tmp_var, false));
-			if( !GasVar_state[tmp_var] ){  //nobasic 
-				nb_var = tmp_var;
-				break;
-			}else{  // basic
-				Lit tmp(tmp_clause[0]);
-				tmp_clause[0] = tmp_clause.last();
-				tmp_clause.last() = tmp;	
-			}
-		}
-	}
-	
-	for( i = i + 1 ; i <  size*64; i++) {
-		if (this->operator[](i)){
-			popcnt++;
-			tmp_var = col_to_var[i];
-			tmp_clause.push(Lit(tmp_var, false));
-			if( GasVar_state[tmp_var] ){  //basic 
-				Lit tmp(tmp_clause[0]);
-				tmp_clause[0] = tmp_clause.last();
-				tmp_clause.last() = tmp;
-			}
-		}
-	}
-	assert(tmp_clause.size() == popcnt);
-	assert( popcnt == 0 || GasVar_state[ tmp_clause[0].var() ]) ;
-	return popcnt;
+uint32_t PackedRow::find_watchVar(
+    vec<Lit>& tmp_clause,
+    const vector<uint32_t>& col_to_var,
+    vec<bool> &GasVar_state,
+    uint32_t& nb_var
+) {
+    uint32_t  tmp_var = 0;
+    uint32_t popcnt = 0;
+    nb_var = std::numeric_limits<uint32_t>::max();
+    uint32_t i;
+    tmp_clause.clear();
+
+
+    for(i = 0; i < size*64; i++) {
+        if (this->operator[](i)){
+            popcnt++;
+            tmp_var = col_to_var[i];
+            tmp_clause.push(Lit(tmp_var, false));
+            if( !GasVar_state[tmp_var] ){  //nobasic
+                nb_var = tmp_var;
+                break;
+            }else{  // basic
+                Lit tmp(tmp_clause[0]);
+                tmp_clause[0] = tmp_clause.last();
+                tmp_clause.last() = tmp;
+            }
+        }
+    }
+
+    for( i = i + 1 ; i <  size*64; i++) {
+        if (this->operator[](i)){
+            popcnt++;
+            tmp_var = col_to_var[i];
+            tmp_clause.push(Lit(tmp_var, false));
+            if( GasVar_state[tmp_var] ){  //basic
+                Lit tmp(tmp_clause[0]);
+                tmp_clause[0] = tmp_clause.last();
+                tmp_clause.last() = tmp;
+            }
+        }
+    }
+    assert(tmp_clause.size() == popcnt);
+    assert( popcnt == 0 || GasVar_state[ tmp_clause[0].var() ]) ;
+    return popcnt;
 
 }
 
 
 // add by hankf4
-int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const vector<Var>& col_to_var, vec<bool> &GasVar_state ,uint32_t& nb_var , uint32_t start)
+int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &GasVar_state ,uint32_t& nb_var , uint32_t start)
 {
 
-	bool final = !is_true_internal;
-	nb_var = std::numeric_limits<uint32_t>::max();
-	tmp_clause.clear();
-	
-	for ( uint32_t i = start/64; i != size; i++) if (mp[i]) {
+    bool final = !is_true_internal;
+    nb_var = std::numeric_limits<uint32_t>::max();
+    tmp_clause.clear();
+
+    for ( uint32_t i = start/64; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         uint32_t i2;
         for (i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
-				const Var& var = col_to_var[ i * 64  + i2];
-				const lbool& val= assigns[var];
-				if (val.isUndef() &&  !GasVar_state[var] ){  // find non basic value
-					nb_var = var;
-					return 5;   // nothing
-				}
-				const bool val_bool = val.getBool();
-				final ^= val_bool;
-				tmp_clause.push(Lit(var, val_bool));
-				if ( GasVar_state[var] ) {
-					Lit tmp_lit(tmp_clause[0]);
-					tmp_clause[0] = tmp_clause.last();
-					tmp_clause.last() = tmp_lit;
-				}
-			}
+                const uint32_t& var = col_to_var[ i * 64  + i2];
+                const lbool& val= assigns[var];
+                if (val.isUndef() &&  !GasVar_state[var] ){  // find non basic value
+                    nb_var = var;
+                    return 5;   // nothing
+                }
+                const bool val_bool = val.getBool();
+                final ^= val_bool;
+                tmp_clause.push(Lit(var, val_bool));
+                if ( GasVar_state[var] ) {
+                    Lit tmp_lit(tmp_clause[0]);
+                    tmp_clause[0] = tmp_clause.last();
+                    tmp_clause.last() = tmp_lit;
+                }
+            }
             tmp >>= 1;
         }
     }
-	for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
+    for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
         uint64_t tmp = mp[i]; 
         uint32_t i2;
         for (i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
-				const Var& var = col_to_var[ i * 64  + i2];
-				const lbool& val= assigns[var];
-				if (val.isUndef() &&  !GasVar_state[var] ){  // find non basic value
-					nb_var = var;
-					return 5;   // nothing
-				}
-				const bool val_bool = val.getBool();
-				final ^= val_bool;
-				tmp_clause.push(Lit(var, val_bool));
-				if ( GasVar_state[var] ) {
-					Lit tmp_lit(tmp_clause[0]);
-					tmp_clause[0] = tmp_clause.last();
-					tmp_clause.last() = tmp_lit;
-				}
-			}
+                const uint32_t& var = col_to_var[ i * 64  + i2];
+                const lbool& val= assigns[var];
+                if (val.isUndef() &&  !GasVar_state[var] ){  // find non basic value
+                    nb_var = var;
+                    return 5;   // nothing
+                }
+                const bool val_bool = val.getBool();
+                final ^= val_bool;
+                tmp_clause.push(Lit(var, val_bool));
+                if ( GasVar_state[var] ) {
+                    Lit tmp_lit(tmp_clause[0]);
+                    tmp_clause[0] = tmp_clause.last();
+                    tmp_clause.last() = tmp_lit;
+                }
+            }
             tmp >>= 1;
         }
     }
@@ -217,17 +225,17 @@ int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const v
             tmp >>= 1;
         }
     }
-	assert(popcnt == tmp_clause.size()); */
-	
-	if (assigns[tmp_clause[0].var()].isUndef()) {    // propogate
-		tmp_clause[0] = tmp_clause[0].unsign()^final;
-		return 2;  // propogate
+    assert(popcnt == tmp_clause.size()); */
+
+    if (assigns[tmp_clause[0].var()].isUndef()) {    // propogate
+        tmp_clause[0] = tmp_clause[0].unsign()^final;
+        return 2;  // propogate
     } else if (!final) {
-		return 0;  // conflict
+        return 0;  // conflict
     }
-	// this row already true
-	return 4;  // nothing
-		
+    // this row already true
+    return 4;  // nothing
+
 }
 
 

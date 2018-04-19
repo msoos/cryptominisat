@@ -147,7 +147,7 @@ protected:
     Heap<VarOrderLt> order_heap_vsids;
     Heap<VarOrderLt> order_heap_maple;
 
-    friend class Gaussian;
+    friend class EGaussian;
 
     template<bool update_bogoprops>
     PropBy propagate_any_order();

@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "sqlstats.h"
 #ifdef USE_GAUSS
-#include "EnhanceGaussian.h"
+#include "EGaussian.h"
 #endif
 
 #ifdef USE_VALGRIND
@@ -285,23 +285,24 @@ void ClauseAllocator::consolidate(
     }
 
     #ifdef USE_GAUSS
-    for (Gaussian* gauss : solver->gauss_matrixes) {
-        for(GaussClauseToClear& gcl: gauss->clauses_toclear) {
-            ClOffset& off = gcl.offs;
-            Clause* old = ptr(off);
+    for (EGaussian* gauss : solver->gmatrixes) {
+        for(auto& gcl: gauss->clauses_toclear) {
+            Clause*& old = gcl.first;
+            ClOffset offs = get_offset(old);
             if (old->reloced) {
                 ClOffset new_offset = (*old)[0].toInt();
                 #ifdef LARGE_OFFSETS
                 new_offset += ((uint64_t)(*old)[1].toInt())<<32;
                 #endif
-                off = new_offset;
+                old = ptr(new_offset);
             } else {
                 ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
-                off = new_offset;
+                old = ptr(new_offset);
             }
             assert(!old->freed());
-        }
     }
+
+
     #endif //USE_GAUSS
 
     update_offsets(solver->longIrredCls);
@@ -354,20 +355,6 @@ void ClauseAllocator::consolidate(
             , "consolidate"
             , time_used
         );
-    }
-}
-
-void ClauseAllocator::update_offsets(
-    vector<ClOffset>& offsets
-) {
-
-    for(ClOffset& offs: offsets) {
-        Clause* old = ptr(offs);
-        assert(old->reloced);
-        offs = (*old)[0].toInt();
-        #ifdef LARGE_OFFSETS
-        offs += ((uint64_t)(*old)[1].toInt())<<32;
-        #endif
     }
 }
 

@@ -32,13 +32,14 @@ THE SOFTWARE.
 #include "minisat_rnd.h"
 #include "simplefile.h"
 #include "searchstats.h"
+#include "gausswatched.h"
 
 namespace CMSat {
 
 class Solver;
 class SQLStats;
 class VarReplacer;
-class Gaussian;
+class EGaussian;
 class DistillerLong;
 
 using std::string;
@@ -112,15 +113,34 @@ class Searcher : public HyperEngine
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
 
-        //Gauss
-        vector<Gaussian*> gauss_matrixes;
         SQLStats* sqlStats = NULL;
         void consolidate_watches();
-        #ifdef USE_GAUSS
-        void clear_gauss();
-        #else
-        void clear_gauss() {}
-        #endif
+
+        //Gauss
+        const bool clearEnGaussMatrixes();  //  clear Gaussian matrixes
+        llbool Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& conflictC); // gaussian elimination in DPLL
+        vec<vec<GausWatched> > GausWatches;                // Gauss watch list
+        vector<EGaussian*>gmatrixes;   // enhance gaussian matrix
+        uint32_t Gauseqhead;                ///< Head of queue (as index into the trail)
+        vec<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
+
+        double   gauss_cpu_time;
+        uint32_t big_gaussnum;   // total gauss time for DPLL
+        uint32_t big_propagate;  // total gauss propogation time for DPLL
+        uint32_t big_conflict;   // total gauss conflict    time for DPLL
+        bool engaus_disable;     // decide to do gaussian elimination
+        bool findmatrix_first;  // Dose find matrix first . For findmatrix only first if only matrix is zero
+
+        // stats
+        bool     Is_Gauss_first;       // The first time doing gaussian elimination , used for calculation how many row are linear row
+        uint32_t sum_initEnGauss;      // the total sum of time calling "full_init"
+        uint32_t sum_initUnit;           // the total sum of number getting unit  xor clasue in  initial gaussian matrix
+        uint32_t sum_initTwo;           // the total sum of number getting two-variable xor clasue in  initial gaussian matrix
+        uint32_t sum_initLinear;     // the total sum of how many row are linear row
+        uint32_t sum_Enconflict;        // the total sum of conflict in gaussian matrix
+        uint32_t sum_Enpropagate;    // the total sum of propagation in gaussian matrx
+        uint32_t sum_Enunit;            // the total sum of number getting two-variable xor clasue in  gaussian matrix
+        uint32_t sum_EnGauss;        // the total sum of time entering gaussian matrix
 
         void testing_fill_assumptions_set()
         {
