@@ -51,6 +51,7 @@ struct gauss : public ::testing::Test {
     std::vector<uint32_t> vars;
     std::atomic<bool> must_inter;
     vector<Xor> xs;
+    bool created;
 };
 
 //2 XORs inside
@@ -62,7 +63,7 @@ TEST_F(gauss, propagate_1)
     xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 0));
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(s->ok, true);
@@ -76,7 +77,7 @@ TEST_F(gauss, propagate_2)
     xs.push_back(Xor(str_to_vars("1, 2, 3, 4"), 1));
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(s->ok, true);
@@ -90,7 +91,7 @@ TEST_F(gauss, propagate_3)
     xs.push_back(Xor(str_to_vars("1, 3, 5"), 1));
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(s->ok, true);
@@ -105,7 +106,7 @@ TEST_F(gauss, propagate_4)
     xs.push_back(Xor(str_to_vars("1, 2, 4, 7"), 1));
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(s->ok, true);
@@ -121,7 +122,7 @@ TEST_F(gauss, unsat_4)
     xs.push_back(Xor(str_to_vars("1, 3, 5"), 1));
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, false);
     EXPECT_EQ(s->ok, false);
@@ -140,7 +141,7 @@ TEST_F(gauss, propagate_unsat)
     //-> unsat
 
     g = new Gaussian(s, xs, 0);
-    bool ret = g->init_until_fixedpoint();
+    bool ret = g->init_until_fixedpoint(created);
 
     EXPECT_EQ(ret, false);
     EXPECT_EQ(s->ok, false);

@@ -84,7 +84,7 @@ inline void Gaussian::set_matrixset_to_cur()
         matrix_sets[level] = cur_matrixset;
 }
 
-bool Gaussian::init_until_fixedpoint()
+bool Gaussian::init_until_fixedpoint(bool& created)
 {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
@@ -105,7 +105,10 @@ bool Gaussian::init_until_fixedpoint()
         }
         do_again_gauss = false;
 
-        init();
+        created = init();
+        if (!created) {
+            return solver->okay();
+        }
         PropBy confl;
         gaussian_ret g = perform_gauss(confl);
         switch (g) {
@@ -149,7 +152,7 @@ bool Gaussian::init_until_fixedpoint()
     return true;
 }
 
-void Gaussian::init()
+bool Gaussian::init()
 {
     assert(solver->decisionLevel() == 0);
     #ifdef VERBOSE_DEBUG
@@ -157,12 +160,13 @@ void Gaussian::init()
     #endif
 
     fill_matrix(cur_matrixset);
+
     if (cur_matrixset.num_rows == 0
         || cur_matrixset.num_cols == 0
     ) {
         disabled = true;
         badlevel = 0;
-        return;
+        return false;
     }
 
     matrix_sets.clear();
@@ -174,6 +178,7 @@ void Gaussian::init()
     #ifdef VERBOSE_DEBUG
     cout << "(" << matrix_no << ") Gaussian init finished." << endl;
     #endif
+    return true;
 }
 
 struct HeapSorter
@@ -212,16 +217,16 @@ uint32_t Gaussian::select_columnorder(
             }
         }
     }
-    if (vars_needed.size() >= std::numeric_limits<uint16_t>::max()-1) {
-        if (solver->conf.verbosity >= 10) {
-            cout << "Matrix has too many columns, exiting select_columnorder" << endl;
+    if (vars_needed.size() >= std::numeric_limits<uint32_t>::max()/2-1) {
+        if (solver->conf.verbosity) {
+            cout << "c Matrix has too many columns, exiting select_columnorder" << endl;
         }
 
         return 0;
     }
-    if (xors.size() >= std::numeric_limits<uint16_t>::max()-1) {
-        if (solver->conf.verbosity >= 10) {
-            cout << "Matrix has too many rows, exiting select_columnorder" << endl;
+    if (xors.size() >= std::numeric_limits<uint32_t>::max()/2-1) {
+        if (solver->conf.verbosity) {
+            cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
         }
         return 0;
     }
@@ -229,7 +234,6 @@ uint32_t Gaussian::select_columnorder(
     var_to_col.resize(largest_used_var + 1);
     var_is_in.setZero();
     var_is_in.resize(var_to_col.size(), 0);
-    origMat.col_is_set.resize(vars_needed.size(), false);
 
     origMat.col_to_var.clear();
     std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
@@ -277,6 +281,7 @@ void Gaussian::fill_matrix(matrixset& origMat)
         return;
     }
     origMat.num_cols = origMat.col_to_var.size();
+    origMat.col_is_set.resize(origMat.num_cols, false);
     col_to_var_original = origMat.col_to_var;
     assert(changed_rows.empty());
 
