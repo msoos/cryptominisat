@@ -1238,6 +1238,7 @@ void Main::printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
     cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
+    cout << "c Using code from 'When Boolean Satisfiability Meets Gaussian Elimination in a Simplex Way' by Cheng-Shen Han and Jie-Hong Roland Jiang in CAV 2012" << endl;
     cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
     #ifdef __GNUC__
     cout << "c compiled with gcc version " << __VERSION__ << endl;

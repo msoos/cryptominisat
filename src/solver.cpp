@@ -61,7 +61,7 @@ THE SOFTWARE.
 #include "features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
-#include "gaussian.h"
+#include "EnhanceGaussian.h"
 #include "matrixfinder.h"
 #include "sqlstats.h"
 #include "drat.h"
