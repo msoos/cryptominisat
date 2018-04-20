@@ -312,7 +312,7 @@ uint32_t MatrixFinder::setMatrixes()
                 cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             }
             solver->gmatrixes.push_back(
-                new EGaussian(solver, solver->gaussconfig, realMatrixNum, xorsInMatrix[realMatrixNum]));
+                new EGaussian(solver, solver->conf.gaussconf, realMatrixNum, xorsInMatrix[realMatrixNum]));
             realMatrixNum++;
         } else {
             if (solver->conf.verbosity) {

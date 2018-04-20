@@ -358,7 +358,6 @@ inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
     tmp_clause[0] = tmp_clause[0].unsign();
     tmp_clause[1] = tmp_clause[1].unsign();
     solver->ok = solver->add_xor_clause_inter(tmp_clause, xorEqualFalse, true);
-    release_assert(cl == NULL);
     release_assert(solver->ok);
     //printf("DD:x%d %d    n",tmp_clause[0].var() , tmp_clause[1].var());
 }
@@ -405,7 +404,7 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  
     }
 }
 
-bool  EGaussian::find_truths2(
+bool EGaussian::find_truths2(
     const GausWatched*& i,
     GausWatched*& j,
     uint32_t p,
@@ -415,7 +414,7 @@ bool  EGaussian::find_truths2(
     uint32_t& e_var,
     uint16_t& e_row_n,
     int& ret_gauss,
-    vec<Lit>& conflict_clause_gauss,
+    vector<Lit>& conflict_clause_gauss,
     uint32_t& conflict_size_gauss,
     bool& xorEqualFalse_gauss
 ) {
