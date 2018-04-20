@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "packedmatrix.h"
 #include "bitarray.h"
 #include "propby.h"
+#include "xor.h"
 #include "gausswatched.h"
 
 //#define VERBOSE_DEBUG
@@ -52,6 +53,8 @@ using std::vector;
 
 namespace CMSat {
 
+class Solver;
+
 class EGaussian {
   protected:
     // gaussian state        0          1            2             3               4
@@ -59,8 +62,8 @@ class EGaussian {
 
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
-    const uint matrix_no;            // matrix index
-    vec<Lit> tmp_clause;  // conflict&propagation handling
+    const uint32_t matrix_no;            // matrix index
+    vector<Lit> tmp_clause;  // conflict&propagation handling
 
     PackedMatrix      clause_state;        // clasue state
     vec<bool>         GasVar_state ;      // variable state  : basic or non-basic
@@ -90,7 +93,7 @@ class EGaussian {
 
   public:
     // variable
-    vector<Xor*> xorclauses;   // xorclauses
+    vector<Xor> xorclauses;   // xorclauses
     vector<pair<Clause*, uint32_t> > clauses_toclear; // use to delete propagate clause
 
 
@@ -98,7 +101,7 @@ class EGaussian {
         Solver* solver,
         const GaussConf& config,
         const uint32_t matrix_no,
-        const vector<Xor*>& xorclauses
+        const vector<Xor>& xorclauses
     );
     ~EGaussian();
 
@@ -106,12 +109,12 @@ class EGaussian {
     void canceling(const uint32_t sublevel); //functions used throughout the Solver
     bool full_init();  // initial arrary. return true is fine , return false means solver already false;
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
-    uint32_t select_columnorder(vector<uint32_t>& var_to_col,matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
+    uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
     //execute gaussian
     bool  find_truths2(
-        const vector<GausWatched>::iterator& i,
-        vector<GausWatched>::iterator& j,
+        const GausWatched*& i,
+        GausWatched*& j,
         uint32_t p,
         PropBy& confl,
         const uint16_t row_n, bool& do_eliminate, uint32_t& e_var, uint16_t& e_row_n,

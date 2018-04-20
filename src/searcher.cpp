@@ -65,6 +65,24 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         //variables
         , solver(_solver)
         , cla_inc(1)
+        #ifdef USE_GAUSS
+		/****************************** add by hankf4 ******************************************/
+ 		, gauss_cpu_time(0)
+		, findmatrix_first(false)
+		, Is_Gauss_first (false)
+		, sum_initEnGauss (0)
+		, sum_initUnit (0)
+		, sum_initTwo (0)
+		, sum_initLinear (0)
+		, sum_Enconflict (0)
+		, sum_Enpropagate(0)
+		, sum_Enunit(0)
+        /**************************************************************************/
+		, sum_gauss_called (0)
+        , sum_gauss_confl  (0)
+        , sum_gauss_prop   (0)
+        , sum_gauss_unit_truths (0)
+        #endif //USE_GAUSS
 {
     var_decay_vsids = conf.var_decay_vsids_start;
     step_size = solver->conf.orig_step_size;
@@ -1208,8 +1226,8 @@ lbool Searcher::search()
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
                 if (!engaus_disable) {
-                    ret = Gauss_elimination(learnt_clause, conflictC);
-                    if (ret == l_Continue) continue;
+                    lbool ret = Gauss_elimination();
+                    if (ret == l_Continue) goto prop;
                     else if (ret != l_Nothing) return ret;
                 }
             }
@@ -1279,19 +1297,6 @@ lbool Searcher::new_decision()
         if (value(p) == l_True) {
             // Dummy decision level:
             new_decision_level();
-            //To store matrix in case it needs to be stored. No new information
-            //is meant to be available at this point.
-            #ifdef USE_GAUSS
-            //These are not supposed to be changed *at all* by the funciton
-            //since it has already been called before
-            if (!update_bogoprops) {
-                for (Gaussian* g: gauss_matrixes) {
-                    gauss_ret ret = g->find_truths();
-                    assert(ret == gauss_nothing);
-                }
-            }
-            #endif //USE_GAUSS
-
         } else if (value(p) == l_False) {
             analyze_final_confl_with_assumptions(~p, conflict);
             return l_False;
@@ -2782,9 +2787,8 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
     return added;
 }
 
-inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& conflictC)
+llbool Searcher::Gauss_elimination()
 {
-
     bool do_eliminate = false;  // we do elimination when basic variable is invoked
     bool enter_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
     uint32_t e_var;                     // do elimination variable
@@ -2809,7 +2813,7 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
     }
 
     // cryptominisat orignal heristic
-     if( engaus_disable|| (decisionLevel() > gaussconfig.decision_until) ) {
+     if( engaus_disable|| (decisionLevel() > solver->conf.gaussconf.decision_until) ) {
         return l_Nothing;
     }
 
@@ -2818,24 +2822,26 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
         Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
 
         vec<GausWatched>&  ws  = GausWatches[p.var()];
-        vec<GausWatched>::iterator i = ws.getData();
-        vec<GausWatched>::iterator j = i;
-        vec<GausWatched>::iterator end = ws.getDataEnd();
+        GausWatched* i = ws.begin();
+        GausWatched* j = i;
+        GausWatched* end = ws.end();
 
         if(i != end)
             matrix_id = (*i).matrix_num;
         else
-            continue ;
+            continue;
 
         enter_matrix = true; // one variable is in gaussian matrix
 
         for (; i != end; i++) {
             //assert(matrix_id == (*i).matrix_num);
-            if(gmatrixes[matrix_id]->find_truths2(i ,j , p.var()  , confl ,(*i).row_id ,do_eliminate , e_var , e_row_n
-                                ,ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,xorEqualFalse_gauss)){
+            if (gmatrixes[matrix_id]->find_truths2(
+                    i, j, p.var(), confl, (*i).row_id, do_eliminate, e_var, e_row_n,
+                    ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse_gauss)
+            ) {
                     continue;
-            }
-            else{ // only in conflict two variable
+            } else {
+                // only in conflict two variable
                 break;
             }
         }
@@ -2843,8 +2849,8 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
         if (i != end) {  // must conflict two variable
             i++;
             //copy remaining watches
-            vec<GausWatched>::iterator j2 = i;
-            vec<GausWatched>::iterator i2 = j;
+            GausWatched* j2 = i;
+            GausWatched* i2 = j;
 
             for(i2 = i, j2 = j; i2 != end; i2++) {
                 *j2 = *i2;
@@ -2855,8 +2861,10 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
         ws.shrink_(i-j);
 
         if(do_eliminate){
-            gmatrixes[matrix_id]->eliminate_col2(e_var , e_row_n , p.var() ,confl,
-                                                ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,xorEqualFalse_gauss);
+            gmatrixes[matrix_id]->eliminate_col2(
+                e_var , e_row_n , p.var() ,confl,
+                ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,
+                xorEqualFalse_gauss);
         }
     }
 
@@ -2867,7 +2875,7 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
     switch(ret_gauss){
         case 1:{ // unit conflict
             //assert(confl.isBinary());
-            llbool ret = handle_conflict(learnt_clause, confl, conflictC, true);
+            llbool ret = handle_conflict<false>(confl);
 
             big_conflict++;
             sum_Enconflict++;
@@ -2880,16 +2888,16 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
             //assert(conflict_size_gauss>2 && conflict_size_gauss != UINT_MAX);
             //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
 
-            Clause* conflPtr = (Clause*)clauseAllocator.XorClause_new(conflict_clause_gauss, xorEqualFalse_gauss);
-            confl = clauseAllocator.getOffset(conflPtr);
+            Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse_gauss);
+            confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
             Gauseqhead = qhead = trail.size();
 
-            llbool ret = handle_conflict(learnt_clause, confl, conflictC, true);
+            llbool ret = handle_conflict<false>(confl);
 
             big_conflict++;
             sum_Enconflict++;
 
-            clauseAllocator.clauseFree(clauseAllocator.getPointer(confl.getClause()));
+            solver->cl_alloc.clauseFree(confl.get_offset());
             if (ret != l_Nothing) return ret;
             return l_Continue;
 
@@ -2905,7 +2913,6 @@ inline llbool Solver::Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& confl
         default:
             assert(0);
             return l_Nothing;
-
     }
 }
 

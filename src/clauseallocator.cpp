@@ -300,6 +300,7 @@ void ClauseAllocator::consolidate(
                 old = ptr(new_offset);
             }
             assert(!old->freed());
+        }
     }
 
 
