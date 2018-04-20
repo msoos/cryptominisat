@@ -117,10 +117,10 @@ class Searcher : public HyperEngine
         void consolidate_watches();
 
         //Gauss
-        const bool clearEnGaussMatrixes();  //  clear Gaussian matrixes
-        llbool Gauss_elimination(vec<Lit>& learnt_clause, uint64_t& conflictC); // gaussian elimination in DPLL
+        bool clearEnGaussMatrixes();  //  clear Gaussian matrixes
+        llbool Gauss_elimination(); // gaussian elimination in DPLL
         vec<vec<GausWatched> > GausWatches;                // Gauss watch list
-        vector<EGaussian*>gmatrixes;   // enhance gaussian matrix
+        vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
         uint32_t Gauseqhead;                ///< Head of queue (as index into the trail)
         vec<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
 
@@ -130,6 +130,14 @@ class Searcher : public HyperEngine
         uint32_t big_conflict;   // total gauss conflict    time for DPLL
         bool engaus_disable;     // decide to do gaussian elimination
         bool findmatrix_first;  // Dose find matrix first . For findmatrix only first if only matrix is zero
+        uint32_t sum_gauss_called;
+        uint32_t sum_gauss_confl;
+        uint32_t sum_gauss_prop;
+        uint32_t sum_gauss_unit_truths;
+        uint32_t get_sum_gauss_called() const;
+        uint32_t get_sum_gauss_confl() const;
+        uint32_t get_sum_gauss_prop() const;
+        uint32_t get_sum_gauss_unit_truths() const;
 
         // stats
         bool     Is_Gauss_first;       // The first time doing gaussian elimination , used for calculation how many row are linear row
@@ -622,6 +630,28 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
     }
     #endif
 }
+
+
+inline uint32_t Searcher::get_sum_gauss_unit_truths() const
+{
+    return sum_gauss_unit_truths;
+}
+
+inline uint32_t Searcher::get_sum_gauss_called() const
+{
+    return sum_gauss_called;
+}
+
+inline uint32_t Searcher::get_sum_gauss_confl() const
+{
+    return sum_gauss_confl;
+}
+
+inline uint32_t Searcher::get_sum_gauss_prop() const
+{
+    return sum_gauss_prop;
+}
+
 
 
 } //end namespace

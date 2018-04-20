@@ -11,6 +11,7 @@
 #include "varreplacer.h"
 #include "time_mem.h"
 #include "propby.h"
+#include "solver.h"
 #include "EGaussian.h"
 
 using std::ostream;
@@ -31,7 +32,7 @@ EGaussian::EGaussian(
     Solver* _solver,
     const GaussConf& _config,
     const uint32_t _matrix_no,
-    const vector<Xor*>& _xorclauses
+    const vector<Xor>& _xorclauses
 ) :
     solver(_solver)
     , config(_config)
@@ -42,7 +43,7 @@ EGaussian::EGaussian(
 
 EGaussian::~EGaussian() {
     for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
-        solver->clauseAllocator.clauseFree(clauses_toclear[i].first);
+        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
     }
 
 }
@@ -50,7 +51,7 @@ EGaussian::~EGaussian() {
 void EGaussian::canceling(const uint32_t sublevel) {
     uint32_t a = 0;
     for (int i = clauses_toclear.size()-1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        solver->clauseAllocator.clauseFree(clauses_toclear[i].first);
+        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
         a++;
     }
     clauses_toclear.resize(clauses_toclear.size()-a);
@@ -60,71 +61,86 @@ void EGaussian::canceling(const uint32_t sublevel) {
 
 }
 
-uint32_t EGaussian::select_columnorder(
-    vector<uint32_t>& var_to_col,
-    matrixset& origMat
-) {
-    // oringinal cryptominisat method
-    var_to_col.resize(solver->nVars(), unassigned_col);
-    uint32_t num_xorclauses  = 0;
+struct HeapSorter
+{
+    explicit HeapSorter(vector<double>& _activities) :
+        activities(_activities)
+    {}
 
-    for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        Xor& c = *xorclauses[i];
-        if (c.getRemoved()) {
-            continue;
-        }
+    //higher activity first
+    bool operator()(uint32_t a, uint32_t b) {
+        return activities[a] < activities[b];
+    }
+
+    const vector<double>& activities;
+};
+
+uint32_t EGaussian::select_columnorder(matrixset& origMat)
+{
+    var_to_col.clear();
+    var_to_col.resize(solver->nVars(), unassigned_col);
+    vector<uint32_t> vars_needed;
+    uint32_t largest_used_var = 0;
+
+    uint32_t num_xorclauses  = 0;
+    for (uint32_t i = 0; i < xorclauses.size(); i++) {
+        const Xor& x = xorclauses[i];
         num_xorclauses++;
-        for (uint32_t i2 = 0; i2 < c.size(); i2++) {
-            assert(solver->assigns[c[i2].var()].isUndef());
-            var_to_col[c[i2].var()] = unassigned_col - 1;
+
+        for (const uint32_t v: x) {
+            assert(solver->value(v) == l_Undef);
+            if (var_to_col[v] == unassigned_col) {
+                vars_needed.push_back(v);
+                var_to_col[v] = unassigned_col - 1;;
+                largest_used_var = std::max(largest_used_var, v);
+            }
         }
     }
-    uint32_t largest_used_var = 0;
-    for (uint32_t i = 0; i < var_to_col.size(); i++)
-        if (var_to_col[i] != unassigned_col) {
-            largest_used_var = i;
+    if (vars_needed.size() >= std::numeric_limits<uint32_t>::max()/2-1) {
+        if (solver->conf.verbosity) {
+            cout << "c Matrix has too many columns, exiting select_columnorder" << endl;
         }
-    var_to_col.resize(largest_used_var + 1);
-    origMat.col_to_var.clear();
-    vector<uint32_t> vars(solver->nVars());
 
-    Heap<Solver::VarOrderLt> order_heap(solver->order_heap);
-    uint32_t iterReduceIt = 0;
-    while (
-        config.orderCols && !order_heap.empty() ||
-        (!config.orderCols && iterReduceIt < vars.size())
-    ) {
-        uint32_t v;
-        if (config.orderCols) {
-            v = order_heap.removeMin();
-        } else {
-            v = vars[iterReduceIt++];
+        return 0;
+    }
+    if (xorclauses.size() >= std::numeric_limits<uint32_t>::max()/2-1) {
+        if (solver->conf.verbosity) {
+            cout << "c Matrix has too many rows, exiting select_columnorder" << endl;
         }
-        if (var_to_col[v] == 1) {
-            origMat.col_to_var.push_back(v);
-            var_to_col[v] = origMat.col_to_var.size()-1;
-        }
+        return 0;
+    }
+
+    var_to_col.resize(largest_used_var + 1);
+
+    origMat.col_to_var.clear();
+    std::sort(vars_needed.begin(), vars_needed.end(), HeapSorter(solver->var_act_vsids));
+
+    for(uint32_t v : vars_needed) {
+        assert(var_to_col[v] == unassigned_col - 1);
+        origMat.col_to_var.push_back(v);
+        var_to_col[v] = origMat.col_to_var.size()-1;
     }
 
     //for the ones that were not in the order_heap, but are marked in var_to_col
     for (uint32_t v = 0; v != var_to_col.size(); v++) {
         if (var_to_col[v] == unassigned_col - 1) {
+            //assert(false && "order_heap MUST be complete!");
             origMat.col_to_var.push_back(v);
             var_to_col[v] = origMat.col_to_var.size() -1;
         }
     }
 
-#ifdef VERBOSE_DEBUG
-    printf("Column variable index:    n");
-    for(size_t i = 0 ; i< origMat.col_to_var.size() ; i++)
-        printf("%d ",origMat.col_to_var[i]);
-    printf("    n");
-
-    printf("var_to_col index    n");
-    for(size_t i = 0 ; i < var_to_col.size() ; i++)
-        printf("%d ", var_to_col[i]);
-    printf("    n");
-#endif
+    #ifdef VERBOSE_DEBUG_MORE
+    cout << "(" << matrix_no << ") num_xorclauses: " << num_xorclauses << endl;
+    cout << "(" << matrix_no << ") col_to_var: ";
+    std::copy(origMat.col_to_var.begin(), origMat.col_to_var.end(),
+              std::ostream_iterator<uint32_t>(cout, ","));
+    cout << endl;
+    cout << "origMat.num_cols:" << origMat.num_cols << endl;
+    cout << "col is set:" << endl;
+    std::copy(origMat.col_is_set.begin(), origMat.col_is_set.end(),
+              std::ostream_iterator<char>(cout, ","));
+    #endif
 
     return num_xorclauses;
 }
@@ -134,16 +150,13 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
-    origMat.num_rows = select_columnorder(var_to_col,origMat);
+    origMat.num_rows = select_columnorder(origMat);
     origMat.num_cols = origMat.col_to_var.size();
     origMat.matrix.resize(origMat.num_rows, origMat.num_cols);   // initial gaussian matrix
 
     uint32_t matrix_row = 0;
     for (uint32_t i = 0; i != xorclauses.size(); i++) {
-        const Xor& c = *xorclauses[i];
-        if (c.getRemoved()) {
-            continue;
-        }
+        const Xor& c = xorclauses[i];
         origMat.matrix.getMatrixAt(matrix_row).set(c, var_to_col, origMat.num_cols);
         matrix_row++;
     }
@@ -163,9 +176,7 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     //print_matrix(origMat);
 }
 
-
-
-const bool EGaussian::full_init() {
+bool EGaussian::full_init() {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
     gaussian_ret ret;  // gaussian elimination result
@@ -178,8 +189,7 @@ const bool EGaussian::full_init() {
         do_again_gauss = false;
         solver->sum_initEnGauss++;  // to gather statistics
 
-        solver->clauseCleaner->cleanClauses(solver->xorclauses, ClauseCleaner::xorclauses);
-        if (!solver->ok) {
+        if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
             return false;
         }
 
@@ -283,8 +293,8 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
 
                 xorEqualFalse = !m.matrix.getMatrixAt(row_id).is_true();
                 tmp_clause[0] = Lit( tmp_clause[0].var(), xorEqualFalse) ;
-                assert(solver->value( tmp_clause[0] .var()).isUndef());
-                solver->uncheckedEnqueue(tmp_clause[0]);  // propagation
+                assert(solver->value(tmp_clause[0] .var()) == l_Undef);
+                solver->enqueue(tmp_clause[0]);  // propagation
 
                 (*rowIt).setZero();// reset this row all zero
                 m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
@@ -347,7 +357,7 @@ inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
 
     tmp_clause[0] = tmp_clause[0].unsign();
     tmp_clause[1] = tmp_clause[1].unsign();
-    Xor* cl = solver->addXorInt(tmp_clause, xorEqualFalse);
+    solver->ok = solver->add_xor_clause_inter(tmp_clause, xorEqualFalse, true);
     release_assert(cl == NULL);
     release_assert(solver->ok);
     //printf("DD:x%d %d    n",tmp_clause[0].var() , tmp_clause[1].var());
@@ -359,24 +369,18 @@ inline void EGaussian::conflict_twoclause(PropBy& confl) {
     Lit lit1 = tmp_clause[0];
     Lit lit2 = tmp_clause[1];
 
-    solver->watches[(~lit1).toInt()].push(Watched(lit2, true));
-    solver->watches[(~lit2).toInt()].push(Watched(lit1, true));
-    solver->numBins++;
-    solver->learnts_literals += 2;
-    solver->dataSync->signalNewBinClause(lit1, lit2);
+    solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
+    //solver->dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 = ~lit1;
     lit2 = ~lit2;
-    solver->watches[(~lit2).toInt()].push(Watched(lit1, true));
-    solver->watches[(~lit1).toInt()].push(Watched(lit2, true));
-    solver->numBins++;
-    solver->learnts_literals += 2;
-    solver->dataSync->signalNewBinClause(lit1, lit2);
+    solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
+    //solver->dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 = ~lit1;
     lit2 = ~lit2;
 
-    confl = PropBy(lit1);
+    confl = PropBy(lit1, true);
     solver->failBinLit = lit2;
 }
 
@@ -385,7 +389,7 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  
     // Delete this row because we have already add to xor clause, nothing to do anymore
     if (orig_basic) { // clear nonbasic value watch list
         bool debug_find = false;
-        vector<GausWatched>&  ws_t  =  solver->GausWatches[ cur_matrixset.nb_rows[row_n] ];
+        vec<GausWatched>&  ws_t = solver->GausWatches[cur_matrixset.nb_rows[row_n]];
         for (int tmpi = ws_t.size() - 1 ; tmpi >= 0 ; tmpi--) {
             if (ws_t[tmpi].row_id == row_n) {
                 ws_t[tmpi] = ws_t.last();
@@ -401,11 +405,20 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  
     }
 }
 
-
 bool  EGaussian::find_truths2(
-    const vector<GausWatched>::iterator& i, vector<GausWatched>::iterator& j, uint32_t p, PropBy& confl,
-    const uint16_t row_n, bool& do_eliminate, uint32_t& e_var, uint16_t& e_row_n,
-    int& ret_gauss,  vec<Lit>& conflict_clause_gauss,uint32_t& conflict_size_gauss,bool& xorEqualFalse_gauss) {
+    const GausWatched*& i,
+    GausWatched*& j,
+    uint32_t p,
+    PropBy& confl,
+    const uint16_t row_n,
+    bool& do_eliminate,
+    uint32_t& e_var,
+    uint16_t& e_row_n,
+    int& ret_gauss,
+    vec<Lit>& conflict_clause_gauss,
+    uint32_t& conflict_size_gauss,
+    bool& xorEqualFalse_gauss
+) {
     //printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     uint32_t nb_var = 0; // new nobasic variable
