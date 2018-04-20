@@ -162,10 +162,14 @@ uint32_t PackedRow::find_watchVar(
 
 }
 
-
-// add by hankf4
-int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &GasVar_state ,uint32_t& nb_var , uint32_t start)
-{
+int PackedRow::propGause(
+    vector<Lit>& tmp_clause,
+    const vec<lbool>& assigns,
+    const vector<uint32_t>& col_to_var,
+    vec<bool> &GasVar_state,
+    uint32_t& nb_var,
+    uint32_t start
+) {
 
     bool final = !is_true_internal;
     nb_var = std::numeric_limits<uint32_t>::max();
@@ -184,11 +188,11 @@ int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const v
                 }
                 const bool val_bool = val == l_True;
                 final ^= val_bool;
-                tmp_clause.push(Lit(var, val_bool));
+                tmp_clause.push_back(Lit(var, val_bool));
                 if ( GasVar_state[var] ) {
                     Lit tmp_lit(tmp_clause[0]);
-                    tmp_clause[0] = tmp_clause.last();
-                    tmp_clause.last() = tmp_lit;
+                    tmp_clause[0] = tmp_clause.back();
+                    tmp_clause.back() = tmp_lit;
                 }
             }
             tmp >>= 1;
@@ -207,25 +211,16 @@ int PackedRow::propGause(vec<Lit>& tmp_clause,const vec<lbool>& assigns, const v
                 }
                 const bool val_bool = val == l_True;
                 final ^= val_bool;
-                tmp_clause.push(Lit(var, val_bool));
+                tmp_clause.push_back(Lit(var, val_bool));
                 if ( GasVar_state[var] ) {
                     Lit tmp_lit(tmp_clause[0]);
-                    tmp_clause[0] = tmp_clause.last();
-                    tmp_clause.last() = tmp_lit;
+                    tmp_clause[0] = tmp_clause.back();
+                    tmp_clause.back() = tmp_lit;
                 }
             }
             tmp >>= 1;
         }
     }
-/*     uint32_t popcnt = 0;
-    for (uint32_t i = 0; i < size; i++) if (mp[i]) { 
-        uint64_t tmp = mp[i];
-        for (uint32_t i2 = 0; i2 < 64; i2++) {
-            popcnt += (tmp & 1);
-            tmp >>= 1;
-        }
-    }
-    assert(popcnt == tmp_clause.size()); */
 
     if (assigns[tmp_clause[0].var()] == l_Undef) {    // propogate
         tmp_clause[0] = tmp_clause[0].unsign()^final;
