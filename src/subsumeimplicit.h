@@ -60,9 +60,6 @@ public:
         uint64_t numCalled = 0;
         uint64_t time_out = 0;
         uint64_t remBins = 0;
-        uint64_t remTris = 0;
-        uint64_t stampTriRem = 0;
-        uint64_t cacheTriRem = 0;
         uint64_t numWatchesLooked = 0;
     };
     Stats get_stats() const;
