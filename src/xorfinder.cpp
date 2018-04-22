@@ -108,6 +108,25 @@ void XorFinder::find_xors()
     #endif
 
     find_xors_based_on_long_clauses();
+    assert(runStats.foundXors == xors.size());
+
+    //clean them of equivalent XORs
+    if (!xors.empty()) {
+        for(Xor& x: xors) {
+            std::sort(x.begin(), x.end());
+        }
+        std::sort(xors.begin(), xors.end());
+
+        vector<Xor>::iterator i = xors.begin();
+        vector<Xor>::iterator j = i;
+        i++;
+        for(vector<Xor>::iterator end = xors.end(); i != end; i++) {
+            if (*i != *j) {
+                *j++ = *j;
+            }
+        }
+        xors.resize(xors.size() - (i-j));
+    }
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {
@@ -120,7 +139,6 @@ void XorFinder::find_xors()
     const double time_remain = float_div(xor_find_time_limit, orig_xor_find_time_limit);
     runStats.findTime = cpuTime() - myTime;
     runStats.time_outs += time_out;
-    assert(runStats.foundXors == xors.size());
     solver->sumSearchStats.num_xors_found_last = xors.size();
     print_found_xors();
 
@@ -201,7 +219,6 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         }
         #endif
 
-        //TODO check if already inside in some clever way
         add_found_xor(found_xor);
         for(ClOffset off: poss_xor.get_offsets()) {
             cls_of_xors.push_back(off);
@@ -351,6 +368,7 @@ void XorFinder::xor_together_xors()
     }
 
     while(!interesting.empty()) {
+        start:
         const uint32_t v = interesting.back();
         interesting.resize(interesting.size()-1);
 
@@ -360,17 +378,16 @@ void XorFinder::xor_together_xors()
         size_t i2 = 0;
         assert(solver->watches.size() > Lit(v, false).toInt());
         watch_subarray ws = solver->watches[Lit(v, false)];
+
         for(size_t i = 0; i < ws.size(); i++) {
             const Watched& w = ws[i];
             if (!w.isIdx()) {
-                ws[i2] = ws[i];
-                i2++;
+                ws[i2++] = ws[i];
             } else if (xors[w.get_idx()] != Xor()) {
 
-                //Rollaround in 'seen' -- probably will never happen
-                if (at > 2) {
-                    assert(false && "Rollaround in 'seen'? May happen, but weird");
-                    continue;
+                //seen may be not 2
+                if (at >= 2) {
+                    break;
                 }
 
                 x[at] = xors[w.get_idx()];
@@ -378,6 +395,10 @@ void XorFinder::xor_together_xors()
                 at++;
             }
         }
+        if (at != 2) {
+            continue;
+        }
+
         ws.resize(i2);
         if (at < 2) {
             //Has been removed thanks to some XOR-ing together, skip

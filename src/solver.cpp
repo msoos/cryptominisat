@@ -1351,11 +1351,6 @@ lbool Solver::solve_with_assumptions(
             status = l_False;
             goto end;
         }
-        ok = solver->init_all_matrixes();
-        if (!ok) {
-            status = l_False;
-            goto end;
-        }
         #endif
         status = iterate_until_solved();
     }
@@ -1728,9 +1723,6 @@ bool Solver::execute_inprocess_strategy(
                     #ifdef USE_GAUSS
                     MatrixFinder finder(this);
                     finder.findMatrixes();
-                    if (ok) {
-                        ok = solver->init_all_matrixes();
-                    }
                     #endif
                 }
             }

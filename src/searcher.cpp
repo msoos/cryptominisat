@@ -1169,19 +1169,6 @@ lbool Searcher::search()
     //Loop until restart or finish (SAT/UNSAT)
     blocked_restart = false;
     PropBy confl;
-
-    #ifdef USE_GAUSS
-    if (!update_bogoprops) {
-        if (!solver->init_all_matrixes()) {
-            return l_False;
-        }
-        big_gaussnum = 0;
-        big_propagate = 0;
-        big_conflict = 0;
-        engaus_disable = false;
-    }
-    #endif //USE_GAUSS
-
     lbool dec_ret = l_Undef;
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
@@ -2175,9 +2162,9 @@ lbool Searcher::perform_scc_and_varreplace_if_needed()
         solver->clauseCleaner->remove_and_clean_all();
 
         lastCleanZeroDepthAssigns = trail.size();
-        if (!solver->varReplacer->replace_if_enough_is_found(std::floor((double)solver->get_num_free_vars()*0.001))) {
+        /*if (!solver->varReplacer->replace_if_enough_is_found(std::floor((double)solver->get_num_free_vars()*0.001))) {
             return l_False;
-        }
+        }*/
         #ifdef SLOW_DEBUG
         assert(solver->check_order_heap_sanity());
         #endif
@@ -2306,6 +2293,16 @@ lbool Searcher::solve(
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
     }
+
+    #ifdef USE_GAUSS
+    if (!solver->init_all_matrixes()) {
+        return l_False;
+    }
+    big_gaussnum = 0;
+    big_propagate = 0;
+    big_conflict = 0;
+    engaus_disable = false;
+    #endif //USE_GAUSS
 
     assert(solver->check_order_heap_sanity());
     while(stats.conflStats.numConflicts < max_confl_per_search_solve_call
