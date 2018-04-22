@@ -94,6 +94,12 @@ public:
         smudged.resize(new_size, false);
     }
 
+    void insert(uint32_t num)
+    {
+        smudged.insert(smudged.end(), num);
+        watches.resize(watches.size() + num);
+    }
+
     size_t mem_used() const
     {
         double mem = watches.capacity()*sizeof(vec<Watched>);

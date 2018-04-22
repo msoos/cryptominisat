@@ -97,7 +97,9 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
 Searcher::~Searcher()
 {
+    #ifdef USE_GAUSS
     clearEnGaussMatrixes();
+    #endif
 }
 
 void Searcher::new_var(const bool bva, const uint32_t orig_outer)
@@ -2787,6 +2789,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
     return added;
 }
 
+#ifdef USE_GAUSS
 llbool Searcher::Gauss_elimination()
 {
     bool do_eliminate = false;  // we do elimination when basic variable is invoked
@@ -2821,10 +2824,10 @@ llbool Searcher::Gauss_elimination()
     while (Gauseqhead <  qhead ) {
         Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
 
-        vec<GausWatched>&  ws  = GausWatches[p.var()];
-        GausWatched* i = ws.begin();
-        GausWatched* j = i;
-        GausWatched* end = ws.end();
+        vec<GaussWatched>&  ws  = GausWatches[p.var()];
+        GaussWatched* i = ws.begin();
+        GaussWatched* j = i;
+        GaussWatched* end = ws.end();
 
         if(i != end)
             matrix_id = (*i).matrix_num;
@@ -2849,8 +2852,8 @@ llbool Searcher::Gauss_elimination()
         if (i != end) {  // must conflict two variable
             i++;
             //copy remaining watches
-            GausWatched* j2 = i;
-            GausWatched* i2 = j;
+            GaussWatched* j2 = i;
+            GaussWatched* i2 = j;
 
             for(i2 = i, j2 = j; i2 != end; i2++) {
                 *j2 = *i2;
@@ -2915,6 +2918,7 @@ llbool Searcher::Gauss_elimination()
             return l_Nothing;
     }
 }
+#endif //USE_GAUSS
 
 std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
 {

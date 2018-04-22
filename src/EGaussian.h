@@ -113,8 +113,8 @@ class EGaussian {
 
     //execute gaussian
     bool  find_truths2(
-        const GausWatched*& i,
-        GausWatched*& j,
+        const GaussWatched* i,
+        GaussWatched*& j,
         uint32_t p,
         PropBy& confl,
         const uint16_t row_n, bool& do_eliminate, uint32_t& e_var, uint16_t& e_row_n,
@@ -131,7 +131,7 @@ class EGaussian {
         uint32_t p,
         PropBy& confl,
         int& ret_gauss,
-        vec<Lit>& conflict_clause_gauss,
+        vector<Lit>& conflict_clause_gauss,
         uint32_t& conflict_size_gauss,
         bool& xorEqualFalse_gauss
     );

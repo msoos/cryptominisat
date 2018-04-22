@@ -31,8 +31,8 @@ THE SOFTWARE.
 #define GAUSSWATCHED_H
 
 namespace CMSat {
-    struct GausWatched{
-        GausWatched(uint16_t r ,uint32_t m):
+    struct GaussWatched{
+        GaussWatched(uint16_t r ,uint32_t m):
             row_id(r) , matrix_num(m)
         {}
 

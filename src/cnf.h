@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "varupdatehelper.h"
 #include "simplefile.h"
+#include "gausswatched.h"
 #include "xor.h"
 
 namespace CMSat {
@@ -86,9 +87,12 @@ public:
 
     ClauseAllocator cl_alloc;
     SolverConf conf;
-    //If FALSE, state of CNF is UNSAT
-    bool ok = true;
-    watch_array watches;  ///< 'watches[lit]' is a list of constraints watching 'lit'
+
+    bool ok = true; //If FALSE, state of CNF is UNSAT
+
+    watch_array watches;
+    vec<vec<GaussWatched>> GausWatches;
+    uint32_t Gauseqhead;
     vector<VarData> varData;
     bool VSIDS = true;
     vector<uint32_t> depth;

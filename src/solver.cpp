@@ -1583,7 +1583,9 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_confl, iteration_num);
+        #ifdef DEBUG
         clearEnGaussMatrixes();
+        #endif
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1630,8 +1632,9 @@ lbool Solver::iterate_until_solved()
             VSIDS = true;
         }
     }
-
+    #ifdef USE_GAUSS
     clearEnGaussMatrixes();
+    #endif
     return status;
 }
 
@@ -3761,31 +3764,4 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
-}
-
-bool Solver::init_all_matrixes()
-{
-    assert(ok);
-
-    vector<Gaussian*>::iterator i = solver->gauss_matrixes.begin();
-    vector<Gaussian*>::iterator j = i;
-    vector<Gaussian*>::iterator gend =solver->gauss_matrixes.end();
-    for (; i != gend; i++) {
-        Gaussian* g = *i;
-        bool created = false;
-        ok = g->init_until_fixedpoint(created);
-        if (!ok) {
-            break;
-        }
-        if (created) {
-            *j++=*i;
-        } else {
-            delete g;
-        }
-    }
-    while(i != gend) {
-        *j++ = *i++;
-    }
-    solver->gauss_matrixes.resize(solver->gauss_matrixes.size()-(i-j));
-    return solver->ok;
 }
