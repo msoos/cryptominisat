@@ -557,13 +557,12 @@ bool EGaussian::find_truths2(
 
             } else {
                 Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
-                /*cla->is_xor = true;
-                cla->xorEqualFalse = xorEqualFalse;*/
+                const ClOffset offs = solver->cl_alloc.get_offset(cla);
 
-                clauses_toclear.push_back(std::make_pair(cla, solver->trail.size()-1));
+                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size()-1));
                 assert(cla->freed());
                 assert(solver->value((*cla)[0].var()) == l_Undef);
-                solver->enqueue((*cla)[0], PropBy(solver->cl_alloc.get_offset(cla)));
+                solver->enqueue((*cla)[0], PropBy(offs));
 
                 ret_gauss = 2 ;  // gaussian matrix is  propagation
             }
@@ -739,10 +738,11 @@ void EGaussian::eliminate_col2(
                                 ret_gauss = 3 ; //unit_propagation
                             } else {
                                 Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
-                                clauses_toclear.push_back(std::make_pair(cla, solver->trail.size()-1));
+                                const ClOffset offs = solver->cl_alloc.get_offset(cla);
+                                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size()-1));
                                 assert(!cla->freed());
                                 assert(solver->value((*cla)[0].var()) == l_Undef);
-                                solver->enqueue((*cla)[0], PropBy(solver->cl_alloc.get_offset(cla)));
+                                solver->enqueue((*cla)[0], PropBy(offs));
                                 ret_gauss = 2;
                             }
 
@@ -792,7 +792,9 @@ void EGaussian::print_matrix(matrixset& m) const {
 void EGaussian::Debug_funtion() {
 
     for (int i = clauses_toclear.size()-1; i >= 0 ; i--) {
-        assert(!clauses_toclear[i].first->freed());
+        ClOffset offs = clauses_toclear[i].first;
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        assert(!cl->freed());
     }
 }
 
