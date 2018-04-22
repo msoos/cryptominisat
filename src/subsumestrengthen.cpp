@@ -164,10 +164,15 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
     ) {
         ClOffset offset2 = subs[j];
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
+        if (cl2.used_in_xor()) {
+            //cout << "subsuming used in XOR!!" << endl;
+            continue;
+        }
         if (subsLits[j] == lit_Undef) {  //Subsume
-
+            #ifdef VERBOSE_DEBUG
             if (solver->conf.verbosity >= 6)
                 cout << "subsumed clause " << cl2 << endl;
+            #endif
 
             //If subsumes a irred, and is redundant, make it irred
             if (cl.red()
@@ -191,8 +196,14 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::strengthen_subsume_and_unlink_and_
             simplifier->unlink_clause(offset2, true, false, true);
             ret.sub++;
         } else { //Strengthen
+            #ifdef VERBOSE_DEBUG
             if (solver->conf.verbosity >= 6) {
                 cout << "strenghtened clause " << cl2 << endl;
+            }
+            #endif
+            if (cl2.used_in_xor()) {
+                //cout << "strengtening used in XOR!!" << endl;
+                continue;
             }
             remove_literal(offset2, subsLits[j]);
 
@@ -867,9 +878,14 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
         ClOffset offset2 = subs[j];
         Clause& cl2 = *solver->cl_alloc.ptr(offset2);
         if (subsLits[j] == lit_Undef) {  //Subsume
-
+            #ifdef VERBOSE_DEBUG
             if (solver->conf.verbosity >= 6)
                 cout << "subsumed clause " << cl2 << endl;
+            #endif
+            if (cl2.used_in_xor()) {
+                //cout << "subsuming used in XOR!!" << endl;
+                continue;
+            }
 
             if (!cl2.red()) {
                 ret.subsumedIrred = true;
@@ -878,8 +894,14 @@ SubsumeStrengthen::Sub1Ret SubsumeStrengthen::backw_sub_str_long_with_implicit(
             simplifier->unlink_clause(offset2, true, false, true);
             ret.sub++;
         } else { //Strengthen
+            #ifdef VERBOSE_DEBUG
             if (solver->conf.verbosity >= 6) {
                 cout << "strenghtened clause " << cl2 << endl;
+            }
+            #endif
+            if (cl2.used_in_xor()) {
+                //cout << "str-ing used in XOR with bin" << endl;
+                continue;
             }
             remove_literal(offset2, subsLits[j]);
 

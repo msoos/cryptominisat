@@ -2876,7 +2876,7 @@ llbool Searcher::Gauss_elimination()
 
     switch(ret_gauss){
         case 1:{ // unit conflict
-            //assert(confl.isBinary());
+            //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
             bool ret = handle_conflict<false>(confl);
 
             big_conflict++;
@@ -2914,7 +2914,7 @@ llbool Searcher::Gauss_elimination()
             return l_Nothing;
 
         default:
-            assert(0);
+            assert(false);
             return l_Nothing;
     }
 }
