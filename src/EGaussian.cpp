@@ -68,6 +68,28 @@ EGaussian::EGaussian(
     , matrix_no(_matrix_no)
     , xorclauses(_xorclauses)
 {
+    if (solver->conf.verbosity >= 2) {
+        vector<Xor> xors;
+        for(Xor& x: xorclauses) {
+            xors.push_back(x);
+        }
+        for(Xor& x: xors) {
+            x.sort();
+        }
+        std::sort(xors.begin(), xors.end());
+
+        uint64_t num_unfound = 0;
+        for(Xor& x: xors) {
+            for(uint32_t v: x) {
+                if (v > 165) {
+                    num_unfound++;
+                    break;
+                }
+            }
+            cout << " c " << x << endl;
+        }
+        cout << "c num_unfound xor: " << num_unfound << endl;
+    }
 }
 
 EGaussian::~EGaussian() {
@@ -121,6 +143,7 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
             }
         }
     }
+
     if (vars_needed.size() >= std::numeric_limits<uint32_t>::max()/2-1) {
         if (solver->conf.verbosity) {
             cout << "c Matrix has too many columns, exiting select_columnorder" << endl;

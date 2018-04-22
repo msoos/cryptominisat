@@ -323,24 +323,18 @@ void XorFinder::xor_together_xors()
     uint32_t xored = 0;
     const double myTime = cpuTime();
     assert(toClear.empty());
-    //count how many times a var is used
-    for(const Xor& x: xors) {
-        for(uint32_t v: x) {
-            if (seen[v] == 0) {
-                toClear.push_back(Lit(v, false));
-            }
-
-            //Don't roll around
-            if (seen[v] != std::numeric_limits<uint16_t>::max()) {
-                seen[v]++;
-            }
-        }
-    }
 
     //Link in xors into watchlist
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& x = xors[i];
         for(uint32_t v: x) {
+            if (seen[v] == 0) {
+                toClear.push_back(Lit(v, false));
+            }
+            if (seen[v] < std::numeric_limits<uint16_t>::max()) {
+                seen[v]++;
+            }
+
             Lit l(v, false);
             assert(solver->watches.size() > l.toInt());
             solver->watches[l].push(Watched(i)); //Idx watch
@@ -390,12 +384,32 @@ void XorFinder::xor_together_xors()
             continue;
         }
 
-        vector<uint32_t> vars = xor_two(x[0], x[1]);
-        Xor x_new(vars, x[0].rhs ^ x[1].rhs);
+        for(uint32_t vv: x[0]) {
+            assert(seen[vv] > 0);
+            seen[vv]--;
+            if (seen[vv] == 2) {
+                interesting.push_back(vv);
+            }
+        }
+        for(uint32_t vv: x[1]) {
+            assert(seen[vv] > 0);
+            seen[vv]--;
+            if (seen[vv] == 2) {
+                interesting.push_back(vv);
+            }
+        }
+        Xor x_new(xor_two(x[0], x[1]), x[0].rhs ^ x[1].rhs);
+
         xors.push_back(x_new);
         for(uint32_t v2: x_new) {
             Lit l(v2, false);
             solver->watches[l].push(Watched(xors.size()-1));
+            if (seen[l.var()] < std::numeric_limits<uint16_t>::max()) {
+                seen[l.var()]++;
+                if (seen[l.var()] == 2) {
+                    interesting.push_back(l.var());
+                }
+            }
             solver->watches.smudge(l);
         }
         xors[idxes[0]] = Xor();

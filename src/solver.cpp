@@ -298,6 +298,7 @@ void Solver::add_xor_clause_inter_cleaned_cut(
         //cout << "Added. " << new_lits << endl;
         Clause* cl = add_clause_int(new_lits, false, ClauseStats(), attach, NULL, addDrat);
         if (cl) {
+            cl->set_used_in_xor(true);
             longIrredCls.push_back(cl_alloc.get_offset(cl));
         }
 
