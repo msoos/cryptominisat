@@ -94,7 +94,7 @@ class EGaussian {
   public:
     // variable
     vector<Xor> xorclauses;   // xorclauses
-    vector<pair<Clause*, uint32_t> > clauses_toclear; // use to delete propagate clause
+    vector<pair<ClOffset, uint32_t> > clauses_toclear; // use to delete propagate clause
 
 
     EGaussian(

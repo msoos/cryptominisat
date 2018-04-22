@@ -287,16 +287,16 @@ void ClauseAllocator::consolidate(
     #ifdef USE_GAUSS
     for (EGaussian* gauss : solver->gmatrixes) {
         for(auto& gcl: gauss->clauses_toclear) {
-            Clause*& old = gcl.first;
+            Clause* old = ptr(gcl.first);
             if (old->reloced) {
                 ClOffset new_offset = (*old)[0].toInt();
                 #ifdef LARGE_OFFSETS
                 new_offset += ((uint64_t)(*old)[1].toInt())<<32;
                 #endif
-                old = ptr(new_offset);
+                gcl.first = new_offset;
             } else {
                 ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
-                old = ptr(new_offset);
+                gcl.first = new_offset;
             }
             assert(!old->freed());
         }
