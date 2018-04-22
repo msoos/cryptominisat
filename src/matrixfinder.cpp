@@ -97,6 +97,7 @@ bool MatrixFinder::findMatrixes()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
+    assert(solver->gmatrixes.empty());
 
     table.clear();
     table.resize(solver->nVars(), var_Undef);
@@ -312,7 +313,7 @@ uint32_t MatrixFinder::setMatrixes()
                 cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             }
             solver->gmatrixes.push_back(
-                new EGaussian(solver, solver->conf.gaussconf, realMatrixNum, xorsInMatrix[realMatrixNum]));
+                new EGaussian(solver, solver->conf.gaussconf, realMatrixNum, xorsInMatrix[i]));
             realMatrixNum++;
         } else {
             if (solver->conf.verbosity) {

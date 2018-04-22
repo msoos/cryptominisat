@@ -171,7 +171,11 @@ void CNF::save_on_var_memory()
     //never resize interToOuterMain, outerToInterMain
 
     watches.resize(nVars()*2);
-    watches.consolidate(); //not using the one with SQL because it's already saved
+    watches.consolidate();
+    GausWatches.resize(nVars()*2);
+    //GAUSS TODO
+    //GausWatches.consolidate();
+
     implCache.save_on_var_memorys(nVars());
     stamp.save_on_var_memory(nVars());
     for(auto& l: longRedCls) {

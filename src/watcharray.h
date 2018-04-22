@@ -97,7 +97,7 @@ public:
     void insert(uint32_t num)
     {
         smudged.insert(smudged.end(), num, false);
-        watches.resize(watches.size() + num);
+        watches.insert(num);
     }
 
     size_t mem_used() const

@@ -91,6 +91,11 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
+
+    big_gaussnum = 0;
+    big_propagate = 0;
+    big_conflict = 0;
+    engaus_disable = false;
 }
 
 Searcher::~Searcher()
@@ -1182,6 +1187,11 @@ lbool Searcher::search()
         || !confl.isNULL() //always finish the last conflict
     ) {
         Gauseqhead = qhead;
+        if (update_bogoprops) {
+            confl = propagate<update_bogoprops>();
+        } else {
+            confl = propagate_any_order_fast();
+        }
 
         if (!confl.isNULL()) {
             //manipulate startup parameters
@@ -1224,7 +1234,7 @@ lbool Searcher::search()
                 if (!engaus_disable) {
                     llbool ret = Gauss_elimination();
                     if (ret == l_Continue) {
-                        goto prop;
+                        continue;
                     //TODO conflict should be goto-d to "confl" label
                     } else if (ret != l_Nothing) {
                         dump_search_loop_stats(myTime);
@@ -1245,16 +1255,6 @@ lbool Searcher::search()
                 dump_search_loop_stats(myTime);
                 return dec_ret;
             }
-        }
-
-        #ifdef USE_GAUSS
-        prop:
-        #endif
-
-        if (update_bogoprops) {
-            confl = propagate<update_bogoprops>();
-        } else {
-            confl = propagate_any_order_fast();
         }
     }
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
@@ -2809,7 +2809,6 @@ llbool Searcher::Gauss_elimination()
     //assert(qhead == trail.size());
     //assert(Gauseqhead <= qhead);
 
-
     if (solver->conf.gaussconf.autodisable &&
         (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
     ) {
@@ -3731,10 +3730,18 @@ void Searcher::clearEnGaussMatrixes()
 {
     if (solver->conf.verbosity && big_gaussnum > 0) {
         cout << "big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
-        cout << "big_propagate/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
+        cout << "big_propagate/big_gaussnum:" << (double)big_propagate/(double)big_gaussnum*100.0 << " %" <<endl;
     }
+    big_conflict = 0;
+    big_propagate = 0;
+    big_gaussnum = 0;
+
+    //cout << "Clearing matrixes" << endl;
     for(EGaussian* g: gmatrixes) {
         delete g;
+    }
+    for(auto& w: GausWatches) {
+        w.clear();
     }
     gmatrixes.clear();
 }
