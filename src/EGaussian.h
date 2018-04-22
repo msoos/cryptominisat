@@ -107,7 +107,7 @@ class EGaussian {
 
     // functiion
     void canceling(const uint32_t sublevel); //functions used throughout the Solver
-    bool full_init();  // initial arrary. return true is fine , return false means solver already false;
+    bool full_init(bool& created);  // initial arrary. return true is fine , return false means solver already false;
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
     uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 

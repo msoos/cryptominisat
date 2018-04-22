@@ -158,6 +158,8 @@ public:
     friend class llbool;
 };
 
+inline lbool::lbool(llbool b) : value(b.value) {}
+
 inline lbool boolToLBool(const bool b)
 {
     if (b)

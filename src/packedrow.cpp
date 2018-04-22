@@ -164,7 +164,7 @@ uint32_t PackedRow::find_watchVar(
 
 int PackedRow::propGause(
     vector<Lit>& tmp_clause,
-    const vec<lbool>& assigns,
+    const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
     vec<bool> &GasVar_state,
     uint32_t& nb_var,

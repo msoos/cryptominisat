@@ -1346,7 +1346,7 @@ lbool Solver::solve_with_assumptions(
             status = l_False;
             goto end;
         }
-        ok = init_all_matrixes();
+        ok = solver->init_all_matrixes();
         if (!ok) {
             status = l_False;
             goto end;
@@ -1727,7 +1727,7 @@ bool Solver::execute_inprocess_strategy(
                     MatrixFinder finder(this);
                     finder.findMatrixes();
                     if (ok) {
-                        ok = init_all_matrixes();
+                        ok = solver->init_all_matrixes();
                     }
                     #endif
                 }
@@ -3771,13 +3771,17 @@ bool Solver::init_all_matrixes()
 {
     assert(ok);
 
-    vector<Gaussian*>::iterator i = solver->gauss_matrixes.begin();
-    vector<Gaussian*>::iterator j = i;
-    vector<Gaussian*>::iterator gend =solver->gauss_matrixes.end();
+    vector<EGaussian*>::iterator i = gmatrixes.begin();
+    vector<EGaussian*>::iterator j = i;
+    vector<EGaussian*>::iterator gend = gmatrixes.end();
     for (; i != gend; i++) {
-        Gaussian* g = *i;
+        EGaussian* g = *i;
+
         bool created = false;
-        ok = g->init_until_fixedpoint(created);
+        // initial arrary. return true is fine , return false means solver already false;
+        if (!g->full_init(created)) {
+            return false;
+        }
         if (!ok) {
             break;
         }
@@ -3790,7 +3794,12 @@ bool Solver::init_all_matrixes()
     while(i != gend) {
         *j++ = *i++;
     }
-    solver->gauss_matrixes.resize(solver->gauss_matrixes.size()-(i-j));
+    gmatrixes.resize(solver->gmatrixes.size()-(i-j));
+
+    big_gaussnum = 0;
+    big_propagate = 0;
+    big_conflict = 0;
+    engaus_disable = false;
+
     return solver->ok;
 }
-#endif

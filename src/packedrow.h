@@ -210,13 +210,13 @@ public:
         //mp = new uint64_t[size];
         setZero();
         for (uint32_t i = 0; i != v.size(); i++) {
-            const uint32_t toset_var = var_to_col[v[i].var()];
+            const uint32_t toset_var = var_to_col[v[i]];
             assert(toset_var != std::numeric_limits<uint32_t>::max());
 
             setBit(toset_var);
         }
 
-        is_true_internal = !v.xorEqualFalse();
+        is_true_internal = v.rhs;
     }
 
     bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
@@ -225,7 +225,7 @@ public:
     uint32_t find_watchVar(vector<Lit>& tmp_clause, const vector<uint32_t>& col_to_var,vec<bool> &GasVar_state , uint32_t& nb_var );
 
 	// using find nonbasic value after watch list is enter
-	int propGause(vector<Lit>& tmp_clause,const vec<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &GasVar_state ,uint32_t& nb_var , uint32_t start);
+	int propGause(vector<Lit>& tmp_clause,const vector<lbool>& assigns, const vector<uint32_t>& col_to_var, vec<bool> &GasVar_state ,uint32_t& nb_var , uint32_t start);
 
 	
     inline unsigned long int scan(const unsigned long int var) const

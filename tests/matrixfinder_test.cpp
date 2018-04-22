@@ -64,7 +64,7 @@ TEST_F(gauss, min_rows)
 
     mf->findMatrixes();
 
-    EXPECT_EQ(s->gauss_matrixes.size(), 1);
+    EXPECT_EQ(s->gmatrixes.size(), 1);
 }
 
 TEST_F(gauss, min_rows_2)
@@ -77,7 +77,7 @@ TEST_F(gauss, min_rows_2)
 
     mf->findMatrixes();
 
-    EXPECT_EQ(s->gauss_matrixes.size(), 0);
+    EXPECT_EQ(s->gmatrixes.size(), 0);
 }
 
 TEST_F(gauss, separate_1)
@@ -90,7 +90,7 @@ TEST_F(gauss, separate_1)
 
     mf->findMatrixes();
 
-    EXPECT_EQ(s->gauss_matrixes.size(), 2);
+    EXPECT_EQ(s->gmatrixes.size(), 2);
 }
 
 TEST_F(gauss, separate_2)
@@ -108,7 +108,7 @@ TEST_F(gauss, separate_2)
 
     mf->findMatrixes();
 
-    EXPECT_EQ(s->gauss_matrixes.size(), 2);
+    EXPECT_EQ(s->gmatrixes.size(), 2);
 }
 
 TEST_F(gauss, separate_3)
@@ -130,7 +130,7 @@ TEST_F(gauss, separate_3)
 
     mf->findMatrixes();
 
-    EXPECT_EQ(s->gauss_matrixes.size(), 3);
+    EXPECT_EQ(s->gmatrixes.size(), 3);
 }
 
 int main(int argc, char **argv) {

@@ -173,7 +173,7 @@ set (MY_TESTS
 
 if (USE_GAUSS)
     set (MY_TESTS ${MY_TESTS}
-        gauss_test
+        # gauss_test
         matrixfinder_test
     )
 endif()

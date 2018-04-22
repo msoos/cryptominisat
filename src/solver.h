@@ -232,10 +232,12 @@ class Solver : public Searcher
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
+        bool init_all_matrixes();
+
         //if set to TRUE, a clause has been removed during add_clause_int
         //that contained "lit, ~lit". So "lit" must be set to a value
         //Contains _outer_ variables
-        vector<char> undef_must_set_vars;
+        vector<bool> undef_must_set_vars;
 
     private:
         friend class Prober;
