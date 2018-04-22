@@ -441,7 +441,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
 
         #ifdef USE_GAUSS
         cl = solver->cl_alloc.ptr(offset);
-        if (cl->_used_in_xor) {
+        if (cl->used_in_xor()) {
             goto copy;
         }
         #endif
