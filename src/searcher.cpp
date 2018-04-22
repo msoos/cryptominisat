@@ -2870,7 +2870,7 @@ llbool Searcher::Gauss_elimination()
         }
     }
 
-    if(enter_matrix) {
+    if (enter_matrix) {
         big_gaussnum++;
         sum_EnGauss++;
     }
