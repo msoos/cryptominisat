@@ -78,11 +78,6 @@ private:
         int32_t mask = (y - x) >> (sizeof(uint32_t) * 8 - 1);
         return (x & mask) + (y & (~mask));
     }
-    //static inline void nextCap(uint32_t& cap){ cap += ((cap >> 1) + 2) & ~1; }
-    static inline void nextCap(uint32_t& cap)
-    {
-        cap += ((cap >> 1) + 2) & ~1;
-    }
 
 public:
     // Constructors:
@@ -210,6 +205,11 @@ public:
         }
     }
 
+    void insert(uint32_t num)
+    {
+        growTo(num);
+    }
+
     bool empty() const
     {
         return sz == 0;
@@ -241,7 +241,9 @@ void vec<T>::capacity(int32_t min_cap)
     if ((int32_t)cap >= min_cap) {
         return;
     }
-    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);   // NOTE: grow by approximately 3/2
+
+    // NOTE: grow by approximately 3/2
+    uint32_t add = imax((min_cap - cap + 1) & ~1, ((cap >> 1) + 2) & ~1);
     if (add > std::numeric_limits<uint32_t>::max() - cap
         || (((data = (T*)::realloc(data, (cap += (uint32_t)add) * sizeof(T))) == NULL)
             && errno == ENOMEM)

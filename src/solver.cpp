@@ -1583,7 +1583,9 @@ lbool Solver::iterate_until_solved()
             break;
         }
         status = Searcher::solve(num_confl, iteration_num);
+        #ifdef DEBUG
         clearEnGaussMatrixes();
+        #endif
 
         //Check for effectiveness
         check_recursive_minimization_effectiveness(status);
@@ -1630,8 +1632,9 @@ lbool Solver::iterate_until_solved()
             VSIDS = true;
         }
     }
-
+    #ifdef USE_GAUSS
     clearEnGaussMatrixes();
+    #endif
     return status;
 }
 

@@ -160,7 +160,9 @@ bool CompHandler::handle()
         return solver->ok;
     }
 
+    #ifdef USE_GAUSS
     solver->clearEnGaussMatrixes();
+    #endif
     solver->xorclauses.clear();
     map<uint32_t, vector<uint32_t> > reverseTable = compFinder->getReverseTable();
     assert(num_comps == compFinder->getReverseTable().size());

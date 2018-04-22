@@ -302,8 +302,6 @@ void ClauseAllocator::consolidate(
             assert(!old->freed());
         }
     }
-
-
     #endif //USE_GAUSS
 
     update_offsets(solver->longIrredCls);
@@ -356,6 +354,20 @@ void ClauseAllocator::consolidate(
             , "consolidate"
             , time_used
         );
+    }
+}
+
+void ClauseAllocator::update_offsets(
+    vector<ClOffset>& offsets
+) {
+
+    for(ClOffset& offs: offsets) {
+        Clause* old = ptr(offs);
+        assert(old->reloced);
+        offs = (*old)[0].toInt();
+        #ifdef LARGE_OFFSETS
+        offs += ((uint64_t)(*old)[1].toInt())<<32;
+        #endif
     }
 }
 
