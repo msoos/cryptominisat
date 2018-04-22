@@ -207,7 +207,7 @@ public:
 
     void insert(uint32_t num)
     {
-        growTo(num);
+        growTo(sz+num);
     }
 
     bool empty() const

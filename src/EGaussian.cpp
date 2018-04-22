@@ -111,11 +111,7 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
     vector<uint32_t> vars_needed;
     uint32_t largest_used_var = 0;
 
-    uint32_t num_xorclauses  = 0;
-    for (uint32_t i = 0; i < xorclauses.size(); i++) {
-        const Xor& x = xorclauses[i];
-        num_xorclauses++;
-
+    for (const Xor& x: xorclauses) {
         for (const uint32_t v: x) {
             assert(solver->value(v) == l_Undef);
             if (var_to_col[v] == unassigned_col) {
@@ -138,7 +134,6 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
         }
         return 0;
     }
-
     var_to_col.resize(largest_used_var + 1);
 
     origMat.col_to_var.clear();
@@ -171,7 +166,7 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
               std::ostream_iterator<char>(cout, ","));
     #endif
 
-    return num_xorclauses;
+    return xorclauses.size();
 }
 
 
@@ -586,10 +581,11 @@ bool EGaussian::find_truths2(
 
             } else {
                 Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                cla->set_gauss_temp_cl();
                 const ClOffset offs = solver->cl_alloc.get_offset(cla);
 
                 clauses_toclear.push_back(std::make_pair(offs, solver->trail.size()-1));
-                assert(cla->freed());
+                assert(!cla->freed());
                 assert(solver->value((*cla)[0].var()) == l_Undef);
                 solver->enqueue((*cla)[0], PropBy(offs));
 
@@ -767,6 +763,7 @@ void EGaussian::eliminate_col2(
                                 ret_gauss = 3 ; //unit_propagation
                             } else {
                                 Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                                cla->set_gauss_temp_cl();
                                 const ClOffset offs = solver->cl_alloc.get_offset(cla);
                                 clauses_toclear.push_back(std::make_pair(offs, solver->trail.size()-1));
                                 assert(!cla->freed());
