@@ -3763,6 +3763,7 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
     dumper.open_file_and_dump_red_clauses(fname);
 }
 
+#ifdef USE_GAUSS
 bool Solver::init_all_matrixes()
 {
     assert(ok);
@@ -3789,3 +3790,4 @@ bool Solver::init_all_matrixes()
     solver->gauss_matrixes.resize(solver->gauss_matrixes.size()-(i-j));
     return solver->ok;
 }
+#endif
