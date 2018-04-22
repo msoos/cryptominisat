@@ -3665,9 +3665,8 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        for (vector<EGaussian*>::iterator gauss = gmatrixes.begin(), end= gmatrixes.end(); gauss != end; gauss++)
-            (*gauss)->canceling(trail_lim[level]);
-
+        for (EGaussian* gauss: gmatrixes)
+            gauss->canceling(trail_lim[level]);
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then
