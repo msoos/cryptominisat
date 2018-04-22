@@ -3730,7 +3730,7 @@ void Searcher::cancelUntil(uint32_t level)
 #ifdef USE_GAUSS
 void Searcher::clearEnGaussMatrixes()
 {
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity && big_gaussnum > 0) {
         cout << "big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
         cout << "big_propagate/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
     }

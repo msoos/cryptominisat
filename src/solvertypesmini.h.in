@@ -25,6 +25,7 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <iostream>
+#include <cassert>
 #include <vector>
 
 namespace CMSat {
@@ -158,8 +159,6 @@ public:
     friend class llbool;
 };
 
-inline lbool::lbool(llbool b) : value(b.value) {}
-
 inline lbool boolToLBool(const bool b)
 {
     if (b)
@@ -193,8 +192,12 @@ public:
 
     friend class lbool;
 };
-const llbool l_Nothing  = llbool(2);
-const llbool l_Continue = llbool(3);
+static const llbool l_Nothing  = llbool(2);
+static const llbool l_Continue = llbool(3);
+inline lbool::lbool(llbool b): value(b.value) {
+    assert(b != l_Nothing);
+    assert(b != l_Continue);
+}
 
 inline std::ostream& operator<<(std::ostream& cout, const lbool val)
 {
