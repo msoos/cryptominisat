@@ -1222,7 +1222,7 @@ lbool Searcher::search()
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
                 if (!engaus_disable) {
-                    lbool ret = Gauss_elimination();
+                    llbool ret = Gauss_elimination();
                     if (ret == l_Continue) {
                         goto prop;
                     //TODO conflict should be goto-d to "confl" label
