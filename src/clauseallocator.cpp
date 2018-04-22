@@ -288,7 +288,6 @@ void ClauseAllocator::consolidate(
     for (EGaussian* gauss : solver->gmatrixes) {
         for(auto& gcl: gauss->clauses_toclear) {
             Clause*& old = gcl.first;
-            ClOffset offs = get_offset(old);
             if (old->reloced) {
                 ClOffset new_offset = (*old)[0].toInt();
                 #ifdef LARGE_OFFSETS

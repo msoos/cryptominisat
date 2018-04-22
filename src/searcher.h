@@ -116,7 +116,7 @@ class Searcher : public HyperEngine
         void consolidate_watches();
 
         //Gauss
-        bool clearEnGaussMatrixes();  //  clear Gaussian matrixes
+        void clearEnGaussMatrixes();  //  clear Gaussian matrixes
         llbool Gauss_elimination(); // gaussian elimination in DPLL
         vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
         vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict

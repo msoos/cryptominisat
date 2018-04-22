@@ -146,12 +146,16 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
 }
 
 
-void EGaussian::fill_matrix(matrixset& origMat) {
+void EGaussian::fill_matrix(matrixset& origMat)
+{
     var_to_col.clear();
 
     // decide which variable in matrix column and the number of rows
     origMat.num_rows = select_columnorder(origMat);
     origMat.num_cols = origMat.col_to_var.size();
+    if (origMat.num_rows == 0 || origMat.num_cols == 0) {
+        return;
+    }
     origMat.matrix.resize(origMat.num_rows, origMat.num_cols);   // initial gaussian matrix
 
     uint32_t matrix_row = 0;
@@ -176,14 +180,13 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     //print_matrix(origMat);
 }
 
-bool EGaussian::full_init() {
+bool EGaussian::full_init(bool& created)
+{
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
     gaussian_ret ret;  // gaussian elimination result
     bool do_again_gauss = true;
-
-    //double GaussConstructTime = cpuTime();
-    //printf("    n");
+    created = true;
 
     while (do_again_gauss) {         // need to chekc
         do_again_gauss = false;
@@ -193,10 +196,10 @@ bool EGaussian::full_init() {
             return false;
         }
 
-        fill_matrix(cur_matrixset);  // construct matrix
-
-        if (!cur_matrixset.num_rows || !cur_matrixset.num_cols) {
-            assert(false);   // I am not sure this condition can appear ???? , so test
+        fill_matrix(cur_matrixset);
+        if (cur_matrixset.num_rows == 0 || cur_matrixset.num_cols == 0) {
+            created = false;
+            return solver->okay();
         }
 
         eliminate(cur_matrixset);  // gauss eliminate algorithm
@@ -399,8 +402,8 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  
         }
         assert(debug_find);
     } else {
-        assert( solver->GausWatches[  tmp_clause[0].var() ].size()== 1 );
-        solver->GausWatches[  tmp_clause[0].var() ].clear();
+        assert( solver->GausWatches[tmp_clause[0].var()].size()== 1 );
+        solver->GausWatches[tmp_clause[0].var() ].clear();
     }
 }
 
@@ -445,11 +448,19 @@ bool EGaussian::find_truths2(
         GasVar_state[ p ]  = non_basic_var;
     }
 
-    ret = (*rowIt).propGause(tmp_clause,solver->assigns,cur_matrixset.col_to_var, GasVar_state,nb_var,  var_to_col[p]);
+    ret = (*rowIt).propGause(
+        tmp_clause,
+        solver->assigns,
+        cur_matrixset.col_to_var,
+        GasVar_state,
+        nb_var,
+        var_to_col[p]);
 
     switch (ret) {
         // gaussian state     0         1              2            3                4
         //enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
+
+        //conflict
         case 0: {
             //printf("dd %d:This row is conflict %d    n",row_n , solver->level[p] );
             if (tmp_clause.size()  >= conflict_size_gauss ) { // choose perfect conflict clause
@@ -483,7 +494,7 @@ bool EGaussian::find_truths2(
             } else {
                 *j++ = *i;
                 // for tell outside solver
-                tmp_clause.copyTo(conflict_clause_gauss);  // choose better conflice clause
+                conflict_clause_gauss = tmp_clause;  // choose better conflice clause
                 ret_gauss = 0;  // gaussian matrix is   conflict
                 conflict_size_gauss = tmp_clause.size();
                 xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(row_n).is_true();
@@ -497,6 +508,8 @@ bool EGaussian::find_truths2(
                 return true;
             }
         }
+
+        //propagation
         case 2: {
             //printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
             if (ret_gauss == 0) { // Gaussian matrix is already conflict
@@ -526,10 +539,11 @@ bool EGaussian::find_truths2(
                 solver->Gauseqhead = solver->qhead; // quick break gaussian elimination
                 return false;
             }
+            //larger-than-2 propagation
 
             *j++ = *i;  // store watch list
             if (solver->decisionLevel() == 0) {
-                solver->uncheckedEnqueue(tmp_clause[0]);
+                solver->enqueue(tmp_clause[0]);
 
                 if (orig_basic) { // recover
                     GasVar_state[ cur_matrixset.nb_rows[row_n] ]  = non_basic_var;
@@ -542,13 +556,14 @@ bool EGaussian::find_truths2(
                 return false;
 
             } else {
-                Clause& cla = *(Clause*)solver->clauseAllocator.Xor_new(tmp_clause, xorEqualFalse);
-                //cla.print();
-                //Clause& cla =*(Clause*)solver->clauseAllocator.Clause_new(tmp_clause, solver->learnt_clause_group++);
-                clauses_toclear.push_back(std::make_pair(&cla, solver->trail.size()-1));
-                assert(!(cla.getFreed()));
-                assert(solver->assigns[cla[0].var()].isUndef());
-                solver->uncheckedEnqueue(cla[0], solver->clauseAllocator.getOffset(&cla));
+                Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                /*cla->is_xor = true;
+                cla->xorEqualFalse = xorEqualFalse;*/
+
+                clauses_toclear.push_back(std::make_pair(cla, solver->trail.size()-1));
+                assert(cla->freed());
+                assert(solver->value((*cla)[0].var()) == l_Undef);
+                solver->enqueue((*cla)[0], PropBy(solver->cl_alloc.get_offset(cla)));
 
                 ret_gauss = 2 ;  // gaussian matrix is  propagation
             }
@@ -573,10 +588,10 @@ bool EGaussian::find_truths2(
             }
             assert(nb_var != std::numeric_limits<uint32_t>::max());
             if (orig_basic) {
-                solver->GausWatches[nb_var].clear();    ///clear orignal gausWatch list , because only one basic value in gausWatch list
+                ///clear orignal gausWatch list , because only one basic value in gausWatch list
+                solver->GausWatches[nb_var].clear();
             }
-
-            solver->GausWatches[nb_var].push(GaussWatched( row_n,matrix_no));  // update gausWatch list
+            solver->GausWatches[nb_var].push(GaussWatched(row_n, matrix_no));  // update gausWatch list
 
             if (!orig_basic) {
                 cur_matrixset.nb_rows[row_n] = nb_var; // update in this row non_basic variable
@@ -684,7 +699,7 @@ void EGaussian::eliminate_col2(
                             cur_matrixset.nb_rows[num_row] = p; // // update in this row non_basic variable
 
                             // for tell outside solver
-                            tmp_clause.copyTo(conflict_clause_gauss);  // choose better conflice clause
+                            conflict_clause_gauss = tmp_clause;  // choose better conflice clause
                             ret_gauss = 0;  // gaussian matrix is   conflict
                             conflict_size_gauss = tmp_clause.size();
                             xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(num_row).is_true();
@@ -720,14 +735,14 @@ void EGaussian::eliminate_col2(
                             cur_matrixset.nb_rows[num_row] = p;
 
                             if (solver->decisionLevel() == 0) {
-                                solver->uncheckedEnqueue(tmp_clause[0]);
+                                solver->enqueue(tmp_clause[0]);
                                 ret_gauss = 3 ; //unit_propagation
                             } else {
-                                Clause& cla = *(Clause*)solver->clauseAllocator.Xor_new(tmp_clause, xorEqualFalse);
-                                clauses_toclear.push_back(std::make_pair(&cla, solver->trail.size()-1));
-                                assert(!(cla.getFreed()));
-                                assert(solver->assigns[cla[0].var()].isUndef());
-                                solver->uncheckedEnqueue(cla[0], solver->clauseAllocator.getOffset(&cla));
+                                Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                                clauses_toclear.push_back(std::make_pair(cla, solver->trail.size()-1));
+                                assert(!cla->freed());
+                                assert(solver->value((*cla)[0].var()) == l_Undef);
+                                solver->enqueue((*cla)[0], PropBy(solver->cl_alloc.get_offset(cla)));
                                 ret_gauss = 2;
                             }
 
@@ -777,7 +792,7 @@ void EGaussian::print_matrix(matrixset& m) const {
 void EGaussian::Debug_funtion() {
 
     for (int i = clauses_toclear.size()-1; i >= 0 ; i--) {
-        assert(!(clauses_toclear[i].first)->getFreed());
+        assert(!clauses_toclear[i].first->freed());
     }
 }
 

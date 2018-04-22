@@ -63,12 +63,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
         )
 
         //variables
-        , solver(_solver)
-        , cla_inc(1)
         #ifdef USE_GAUSS
-		/****************************** add by hankf4 ******************************************/
- 		, gauss_cpu_time(0)
-		, findmatrix_first(false)
+        , gauss_cpu_time(0)
+        , findmatrix_first(false)
+        , sum_gauss_called (0)
+        , sum_gauss_confl  (0)
+        , sum_gauss_prop   (0)
+        , sum_gauss_unit_truths (0)
 		, Is_Gauss_first (false)
 		, sum_initEnGauss (0)
 		, sum_initUnit (0)
@@ -77,12 +78,9 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 		, sum_Enconflict (0)
 		, sum_Enpropagate(0)
 		, sum_Enunit(0)
-        /**************************************************************************/
-		, sum_gauss_called (0)
-        , sum_gauss_confl  (0)
-        , sum_gauss_prop   (0)
-        , sum_gauss_unit_truths (0)
         #endif //USE_GAUSS
+        , solver(_solver)
+        , cla_inc(1)
 {
     var_decay_vsids = conf.var_decay_vsids_start;
     step_size = solver->conf.orig_step_size;
@@ -1169,12 +1167,8 @@ lbool Searcher::search()
 
     #ifdef USE_GAUSS
     if (!update_bogoprops) {
-        for (vector<EGaussian*>::iterator gauss = gmatrixes.begin(), end = gmatrixes.end();
-            gauss != end;
-            gauss++
-        ) {
-            if (!(*gauss)->full_init())
-                return l_False;
+        if (!solver->init_all_matrixes()) {
+            return l_False;
         }
         big_gaussnum = 0;
         big_propagate = 0;
@@ -1229,8 +1223,13 @@ lbool Searcher::search()
             if (!update_bogoprops) {
                 if (!engaus_disable) {
                     lbool ret = Gauss_elimination();
-                    if (ret == l_Continue) goto prop;
-                    else if (ret != l_Nothing) return ret;
+                    if (ret == l_Continue) {
+                        goto prop;
+                    //TODO conflict should be goto-d to "confl" label
+                    } else if (ret != l_Nothing) {
+                        dump_search_loop_stats(myTime);
+                        return ret;
+                    }
                 }
             }
             #endif //USE_GAUSS
@@ -1687,7 +1686,10 @@ void Searcher::dump_sql_clause_data(
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
-    , const uint32_t old_decision_level
+    , const uint32_t
+    #ifdef STATS_NEEDED
+    old_decision_level
+    #endif
 ) {
     //Cannot make a non-implicit into an implicit
     if (learnt_clause.size() <= 2) {
@@ -2796,8 +2798,8 @@ llbool Searcher::Gauss_elimination()
     bool enter_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
     uint32_t e_var;                     // do elimination variable
     uint16_t e_row_n ;             // do elimination row
-    uint16_t matrix_id = 0;         // Gaussian matrix index
-    PropBy confl;                 // conflict
+    uint16_t matrix_id = 0;
+    PropBy confl;
     // for choose better conflict
     int ret_gauss = 4;        // gauss matrix result
     uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();  // conflict clause size
@@ -2808,19 +2810,16 @@ llbool Searcher::Gauss_elimination()
     //assert(Gauseqhead <= qhead);
 
 
-    // cryptominisat orignal heristic
-    if( (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.05 ) ) ||
-         gmatrixes.size() == 0
+    if (solver->conf.gaussconf.autodisable &&
+        (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
     ) {
         engaus_disable = true;
     }
 
-    // cryptominisat orignal heristic
-     if( engaus_disable|| (decisionLevel() > solver->conf.gaussconf.decision_until) ) {
+     if( engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
         return l_Nothing;
     }
 
-    //while (Gauseqhead <  trail.size() ) {
     while (Gauseqhead <  qhead ) {
         Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
 
@@ -2871,19 +2870,20 @@ llbool Searcher::Gauss_elimination()
         }
     }
 
-    if(enter_matrix){
-        big_gaussnum++; sum_EnGauss++;
+    if(enter_matrix) {
+        big_gaussnum++;
+        sum_EnGauss++;
     }
 
     switch(ret_gauss){
         case 1:{ // unit conflict
             //assert(confl.isBinary());
-            llbool ret = handle_conflict<false>(confl);
+            bool ret = handle_conflict<false>(confl);
 
             big_conflict++;
             sum_Enconflict++;
 
-            if (ret != l_Nothing) return ret;
+            if (!ret) return l_False;
             return l_Continue;
 
         }
@@ -2895,24 +2895,25 @@ llbool Searcher::Gauss_elimination()
             confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
             Gauseqhead = qhead = trail.size();
 
-            llbool ret = handle_conflict<false>(confl);
+            bool ret = handle_conflict<false>(confl);
 
             big_conflict++;
             sum_Enconflict++;
 
             solver->cl_alloc.clauseFree(confl.get_offset());
-            if (ret != l_Nothing) return ret;
+            if (!ret) return l_False;
             return l_Continue;
-
         }
 
         case 2:  // propagation
         case 3: // unit propagation
             big_propagate++;
             sum_Enpropagate++;
-            return l_Continue;;
+            return l_Continue;
+
         case 4:
             return l_Nothing;
+
         default:
             assert(0);
             return l_Nothing;
@@ -3521,8 +3522,8 @@ void Searcher::read_long_cls(
 }
 
 unsigned Searcher::guess_clause_array(
-    const ClauseStats& cl_stats
-    , uint32_t backtrack_lev
+    const ClauseStats& /*cl_stats*/
+    , uint32_t /*backtrack_lev*/
 ) const {
     /*
     uint32_t votes = 0;
@@ -3729,12 +3730,13 @@ void Searcher::cancelUntil(uint32_t level)
 #ifdef USE_GAUSS
 void Searcher::clearEnGaussMatrixes()
 {
-    for(Gaussian* g: gauss_matrixes) {
-        if (conf.verbosity) {
-            g->print_stats();
-        }
+    if (solver->conf.verbosity) {
+        cout << "big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
+        cout << "big_propagate/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
+    }
+    for(EGaussian* g: gmatrixes) {
         delete g;
     }
-    gauss_matrixes.clear();
+    gmatrixes.clear();
 }
 #endif

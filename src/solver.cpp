@@ -1346,7 +1346,7 @@ lbool Solver::solve_with_assumptions(
             status = l_False;
             goto end;
         }
-        ok = init_all_matrixes();
+        ok = solver->init_all_matrixes();
         if (!ok) {
             status = l_False;
             goto end;
@@ -1727,7 +1727,7 @@ bool Solver::execute_inprocess_strategy(
                     MatrixFinder finder(this);
                     finder.findMatrixes();
                     if (ok) {
-                        ok = init_all_matrixes();
+                        ok = solver->init_all_matrixes();
                     }
                     #endif
                 }
@@ -3764,4 +3764,41 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
+}
+
+bool Solver::init_all_matrixes()
+{
+    assert(ok);
+
+    vector<EGaussian*>::iterator i = gmatrixes.begin();
+    vector<EGaussian*>::iterator j = i;
+    vector<EGaussian*>::iterator gend = gmatrixes.end();
+    for (; i != gend; i++) {
+        EGaussian* g = *i;
+
+        bool created = false;
+        // initial arrary. return true is fine , return false means solver already false;
+        if (!g->full_init(created)) {
+            return false;
+        }
+        if (!ok) {
+            break;
+        }
+        if (created) {
+            *j++=*i;
+        } else {
+            delete g;
+        }
+    }
+    while(i != gend) {
+        *j++ = *i++;
+    }
+    gmatrixes.resize(solver->gmatrixes.size()-(i-j));
+
+    big_gaussnum = 0;
+    big_propagate = 0;
+    big_conflict = 0;
+    engaus_disable = false;
+
+    return solver->ok;
 }
