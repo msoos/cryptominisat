@@ -96,7 +96,7 @@ public:
 
     void insert(uint32_t num)
     {
-        smudged.insert(smudged.end(), num);
+        smudged.insert(smudged.end(), num, false);
         watches.resize(watches.size() + num);
     }
 
