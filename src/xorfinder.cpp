@@ -36,7 +36,6 @@ using std::endl;
 XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     occsimplifier(_occsimplifier)
     , solver(_solver)
-    , seen(_solver->seen)
     , toClear(_solver->toClear)
 {
 }
@@ -91,6 +90,7 @@ void XorFinder::find_xors()
 {
     runStats.clear();
     runStats.numCalls = 1;
+    occcnt.resize(solver->nVars(), 0);
 
     xors.clear();
     double myTime = cpuTime();
@@ -185,7 +185,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 {
     //Set this clause as the base for the XOR, fill 'seen'
     xor_find_time_limit -= 50;
-    poss_xor.setup(lits, offset, abst, seen);
+    poss_xor.setup(lits, offset, abst, occcnt);
 
     Lit slit = lit_Undef;
     size_t snum = std::numeric_limits<size_t>::max();
@@ -220,7 +220,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
 
     //Clear 'seen'
     for (const Lit tmp_lit: lits) {
-        seen[tmp_lit.var()] = 0;
+        occcnt[tmp_lit.var()] = 0;
     }
 }
 
@@ -236,26 +236,23 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     xor_find_time_limit -= (int64_t)occ.size();
     for (const Watched& w: occ) {
 
-        //TODO bin!
         if (w.isIdx()) {
             continue;
         }
         assert(poss_xor.getSize() > 2);
 
         if (w.isBin()) {
+            assert(occcnt[wlit.var()]);
+            if (!occcnt[w.lit2().var()]) {
+                goto end;
+            }
+
             binvec.clear();
             binvec.resize(2);
             binvec[0] = w.lit2();
             binvec[1] = wlit;
             if (binvec[0] > binvec[1]) {
                 std::swap(binvec[0], binvec[1]);
-            }
-
-            //Check vars inside
-            for (const Lit cl_lit :binvec) {
-                //early-abort, contains literals not in original clause
-                if (!seen[cl_lit.var()])
-                    goto end;
             }
 
             xor_find_time_limit-=50;
@@ -280,7 +277,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             bool rhs = true;
             for (const Lit cl_lit :cl) {
                 //early-abort, contains literals not in original clause
-                if (!seen[cl_lit.var()])
+                if (!occcnt[cl_lit.var()])
                     goto end;
 
                 rhs ^= cl_lit.sign();
@@ -307,40 +304,37 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     }
 }
 
-void XorFinder::clean_up_xors()
+void XorFinder::remove_xors_without_connecting_vars()
 {
     assert(toClear.empty());
 
     //Fill seen with vars used
     for(const Xor& x: xors) {
         for(uint32_t v: x) {
-            if (seen[v] == 0) {
+            if (occcnt[v] == 0) {
                 toClear.push_back(Lit(v, false));
             }
 
-            if (seen[v] < 2) {
-                seen[v]++;
+            if (occcnt[v] < 2) {
+                occcnt[v]++;
             }
         }
     }
 
-    vector<Xor>::iterator it = xors.begin();
-    vector<Xor>::iterator it2 = xors.begin();
-    size_t num = 0;
+    vector<Xor>::iterator i = xors.begin();
+    vector<Xor>::iterator j = i;
     for(vector<Xor>::iterator end = xors.end()
-        ; it != end
-        ; it++
+        ; i != end
+        ; i++
     ) {
-        if (xor_has_interesting_var(*it)) {
-            *it2 = *it;
-            it2++;
-            num++;
+        if (xor_has_interesting_var(*i)) {
+            *j++ = *i;
         }
     }
-    xors.resize(num);
+    xors.resize(xors.size() - (i-j));
 
     for(Lit l: toClear) {
-        seen[l.var()] = 0;
+        occcnt[l.var()] = 0;
     }
     toClear.clear();
 }
@@ -356,12 +350,10 @@ void XorFinder::xor_together_xors()
     for(size_t i = 0; i < xors.size(); i++) {
         const Xor& x = xors[i];
         for(uint32_t v: x) {
-            if (seen[v] == 0) {
+            if (occcnt[v] == 0) {
                 toClear.push_back(Lit(v, false));
             }
-            if (seen[v] < std::numeric_limits<uint16_t>::max()) {
-                seen[v]++;
-            }
+            occcnt[v]++;
 
             Lit l(v, false);
             assert(solver->watches.size() > l.toInt());
@@ -370,87 +362,73 @@ void XorFinder::xor_together_xors()
         }
     }
 
-    //Only when a var is used exactly twice it's interesting
-    interesting.clear();
-    for(const Lit l: toClear) {
-        if (seen[l.var()] == 2) {
-            interesting.push_back(l.var());
+
+    //until fixedpoint
+    bool changed = true;
+    while(changed) {
+        changed = false;
+        interesting.clear();
+        for(const Lit l: toClear) {
+            if (occcnt[l.var()] == 2) {
+                interesting.push_back(l.var());
+            }
         }
-    }
 
-    while(!interesting.empty()) {
-        start:
-        const uint32_t v = interesting.back();
-        interesting.resize(interesting.size()-1);
+        while(!interesting.empty()) {
+            const uint32_t v = interesting.back();
+            interesting.resize(interesting.size()-1);
 
-        Xor x[2];
-        size_t idxes[2];
-        unsigned at = 0;
-        size_t i2 = 0;
-        assert(solver->watches.size() > Lit(v, false).toInt());
-        watch_subarray ws = solver->watches[Lit(v, false)];
+            Xor x[2];
+            size_t idxes[2];
+            unsigned at = 0;
+            size_t i2 = 0;
+            assert(solver->watches.size() > Lit(v, false).toInt());
+            watch_subarray ws = solver->watches[Lit(v, false)];
 
-        for(size_t i = 0; i < ws.size(); i++) {
-            const Watched& w = ws[i];
-            if (!w.isIdx()) {
-                ws[i2++] = ws[i];
-            } else if (xors[w.get_idx()] != Xor()) {
+            for(size_t i = 0; i < ws.size(); i++) {
+                const Watched& w = ws[i];
+                if (!w.isIdx()) {
+                    ws[i2++] = ws[i];
+                } else if (xors[w.get_idx()] != Xor()) {
+                    //seen may be not 2
+                    if (at >= 2) {
+                        //signal that this is wrong by making "at" too large
+                        at++;
+                        break;
+                    }
 
-                //seen may be not 2
-                if (at >= 2) {
-                    break;
+                    idxes[at] = w.get_idx();
+                    at++;
                 }
-
-                x[at] = xors[w.get_idx()];
-                idxes[at] = w.get_idx();
-                at++;
             }
-        }
-        if (at != 2) {
-            continue;
-        }
-
-        ws.resize(i2);
-        if (at < 2) {
-            //Has been removed thanks to some XOR-ing together, skip
-            continue;
-        }
-
-        for(uint32_t vv: x[0]) {
-            assert(seen[vv] > 0);
-            seen[vv]--;
-            if (seen[vv] == 2) {
-                interesting.push_back(vv);
+            if (at != 2) {
+                continue;
             }
-        }
-        for(uint32_t vv: x[1]) {
-            assert(seen[vv] > 0);
-            seen[vv]--;
-            if (seen[vv] == 2) {
-                interesting.push_back(vv);
-            }
-        }
-        Xor x_new(xor_two(x[0], x[1]), x[0].rhs ^ x[1].rhs);
 
-        xors.push_back(x_new);
-        for(uint32_t v2: x_new) {
-            Lit l(v2, false);
-            solver->watches[l].push(Watched(xors.size()-1));
-            if (seen[l.var()] < std::numeric_limits<uint16_t>::max()) {
-                seen[l.var()]++;
-                if (seen[l.var()] == 2) {
+            ws.resize(i2);
+            Xor x_new(xor_two(xors[idxes[0]], xors[idxes[1]]),
+                      xors[idxes[0]].rhs ^ xors[idxes[1]].rhs);
+
+            changed = true;
+
+            xors.push_back(x_new);
+            for(uint32_t v2: x_new) {
+                Lit l(v2, false);
+                solver->watches[l].push(Watched(xors.size()-1));
+                occcnt[l.var()]++;
+                if (occcnt[l.var()] == 2) {
                     interesting.push_back(l.var());
                 }
+                solver->watches.smudge(l);
             }
-            solver->watches.smudge(l);
+            xors[idxes[0]] = Xor();
+            xors[idxes[1]] = Xor();
+            xored++;
         }
-        xors[idxes[0]] = Xor();
-        xors[idxes[1]] = Xor();
-        xored++;
     }
 
     for(const Lit l: toClear) {
-        seen[l.var()] = 0;
+        occcnt[l.var()] = 0;
     }
     toClear.clear();
 
@@ -621,8 +599,9 @@ vector<uint32_t> XorFinder::xor_two(
             x1_at++;
             x2_at++;
 
-            seen[a] -= 2;
-            if (seen[a] == 2) {
+            assert(occcnt[a] >= 2);
+            occcnt[a] -= 2;
+            if (occcnt[a] == 2) {
                 interesting.push_back(a);
             }
             continue;
@@ -645,7 +624,7 @@ vector<uint32_t> XorFinder::xor_two(
 bool XorFinder::xor_has_interesting_var(const Xor& x)
 {
     for(uint32_t v: x) {
-        if (seen[v] > 1) {
+        if (occcnt[v] > 1) {
             return true;
         }
     }
@@ -662,6 +641,12 @@ size_t XorFinder::mem_used() const
     mem += varsMissing.capacity()*sizeof(uint32_t);
 
     return mem;
+}
+
+void XorFinder::free_mem()
+{
+    occcnt.clear();
+    occcnt.shrink_to_fit();
 }
 
 void XorFinder::Stats::print_short(const Solver* solver) const
