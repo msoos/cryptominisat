@@ -271,7 +271,7 @@ public:
 
     void set_used_in_xor(const bool val)
     {
-        _used_in_xor = val;
+        //_used_in_xor = val;
     }
 
     void shrink(const uint32_t i)
