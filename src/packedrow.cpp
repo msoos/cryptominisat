@@ -31,67 +31,13 @@ THE SOFTWARE.
 
 using namespace CMSat;
 
-bool PackedRow::operator ==(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
-bool PackedRow::operator !=(const PackedRow& b) const
-{
-    #ifdef DEBUG_ROW
-    assert(size > 0);
-    assert(b.size > 0);
-    assert(size == b.size);
-    #endif
-
-    return (!std::equal(b.mp-1, b.mp+size, mp-1));
-}
-
-uint32_t PackedRow::popcnt() const
-{
-    uint32_t popcnt = 0;
-    for (uint32_t i = 0; i < size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        for (uint32_t i2 = 0; i2 < 64; i2++) {
-            popcnt += (tmp & 1);
-            tmp >>= 1;
-        }
-    }
-    return popcnt;
-}
-
-uint32_t PackedRow::popcnt(const uint32_t from) const
-{
-    uint32_t popcnt = 0;
-    for (uint32_t i = from/64; i != size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        uint32_t i2;
-        if (i == from/64) {
-            i2 = from%64;
-            tmp >>= i2;
-        } else
-            i2 = 0;
-        for (; i2 < 64; i2++) {
-            popcnt += (tmp & 1);
-            tmp >>= 1;
-        }
-    }
-    return popcnt;
-}
-
 bool PackedRow::fill(
     vec<Lit>& tmp_clause,
     const vec<lbool>& assigns,
     const vector<uint32_t>& col_to_var_original
 ) const
 {
-    bool final = !is_true_internal;
+    bool final = !rhs_internal;
 
     tmp_clause.clear();
     uint32_t col = 0;
@@ -124,9 +70,6 @@ bool PackedRow::fill(
     return wasundef;
 }
 
-
-
-// add by hankf4
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
@@ -183,7 +126,7 @@ int PackedRow::propGause(
     uint32_t start
 ) {
 
-    bool final = !is_true_internal;
+    bool final = !rhs_internal;
     nb_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 

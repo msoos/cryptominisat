@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include <limits>
 
 #include "solvertypes.h"
+#include "popcnt.h"
 #include "Vec.h"
 
 namespace CMSat {
@@ -73,7 +74,7 @@ public:
             *(mp + i) ^= *(b.mp + i);
         }
 
-        is_true_internal ^= b.is_true_internal;
+        rhs_internal ^= b.rhs_internal;
         return *this;
     }
 
@@ -84,46 +85,25 @@ public:
         assert(b.size > 0);
         assert(b.size == size);
         #endif
-		
-		// delete by hankf4
-		/*
-        for (uint32_t i = 0; i != 2*size+1; i++) {
-            *(mp + i) ^= *(b.mp + i);
-        }*/
-		
-		// add by hankf4
+
         for (uint32_t i = 0; i != size; i++) {
             *(mp + i) ^= *(b.mp + i);
         }
 
-        is_true_internal ^= b.is_true_internal;
+        rhs_internal ^= b.rhs_internal;
     }
 
 
     uint32_t popcnt() const;
-    uint32_t popcnt(uint32_t from) const;
-
     bool popcnt_is_one() const
     {
-        #if __GNUC__ >= 4
         int ret = 0;
         for (uint32_t i = 0; i != size; i++) {
-            ret += __builtin_popcount(mp[i]&0xffffffff);
-            ret += __builtin_popcount(mp[i]>>32);
+            ret += my_popcnt(mp[i]&0xffffffff);
+            ret += my_popcnt(mp[i]>>32);
             if (ret > 1) return false;
         }
         return ret == 1;
-        #else
-        uint32_t popcount = 0;
-        for (uint32_t i = 0; i != size; i++) {
-            uint64_t tmp = mp[i];
-            while(tmp) {
-                popcount += tmp & 1;
-                tmp >>= 1;
-            }
-        }
-        return popcount == 1;
-        #endif
     }
 
     bool popcnt_is_one(uint32_t from) const
@@ -139,9 +119,9 @@ public:
         return true;
     }
 
-    inline const uint64_t& is_true() const
+    inline const uint64_t& rhs() const
     {
-        return is_true_internal;
+        return rhs_internal;
     }
 
     inline bool isZero() const
@@ -162,9 +142,9 @@ public:
         mp[i/64] &= ~((uint64_t)1 << (i%64));
     }
 
-    inline void invert_is_true(const bool b = true)
+    inline void invert_rhs(const bool b = true)
     {
-        is_true_internal ^= (uint64_t)b;
+        rhs_internal ^= (uint64_t)b;
     }
 
     inline void setBit(const uint32_t i)
@@ -183,8 +163,7 @@ public:
         uint64_t * __restrict mp1 = mp-1;
         uint64_t * __restrict mp2 = b.mp-1;
 
-        //uint32_t i = 2*(size+1);  // delete by hankf4
-		uint32_t i = (size+1); // add by hankf4
+        uint32_t i = size+1;
         while(i != 0) {
             std::swap(*mp1, *mp2);
             mp1++;
@@ -216,7 +195,7 @@ public:
             setBit(toset_var);
         }
 
-        is_true_internal = v.rhs;
+        rhs_internal = v.rhs;
     }
 
     bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
@@ -247,12 +226,12 @@ private:
 
     PackedRow(const uint32_t _size, uint64_t*  const _mp) :
         mp(_mp+1)
-        , is_true_internal(*_mp)
+        , rhs_internal(*_mp)
         , size(_size)
     {}
 
     uint64_t* __restrict const mp;
-    uint64_t& is_true_internal;
+    uint64_t& rhs_internal;
     const uint32_t size;
 };
 
@@ -261,8 +240,45 @@ inline std::ostream& operator << (std::ostream& os, const PackedRow& m)
     for(uint32_t i = 0; i < m.size*64; i++) {
         os << m[i];
     }
-    os << " -- xor: " << m.is_true();
+    os << " -- rhs: " << m.rhs();
     return os;
+}
+
+
+inline bool PackedRow::operator ==(const PackedRow& b) const
+{
+    #ifdef DEBUG_ROW
+    assert(size > 0);
+    assert(b.size > 0);
+    assert(size == b.size);
+    #endif
+
+    return (std::equal(b.mp-1, b.mp+size, mp-1));
+}
+
+inline bool PackedRow::operator !=(const PackedRow& b) const
+{
+    #ifdef DEBUG_ROW
+    assert(size > 0);
+    assert(b.size > 0);
+    assert(size == b.size);
+    #endif
+
+    return (!std::equal(b.mp-1, b.mp+size, mp-1));
+}
+
+
+inline uint32_t PackedRow::popcnt() const
+{
+    uint32_t popcnt = 0;
+    for (uint32_t i = 0; i < size; i++) if (mp[i]) {
+        uint64_t tmp = mp[i];
+        for (uint32_t i2 = 0; i2 < 64; i2++) {
+            popcnt += (tmp & 1);
+            tmp >>= 1;
+        }
+    }
+    return popcnt;
 }
 
 }
