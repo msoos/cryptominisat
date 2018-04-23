@@ -48,20 +48,6 @@ public:
     {
     }
 
-    PackedMatrix(const PackedMatrix& b) :
-        numRows(b.numRows)
-        , numCols(b.numCols)
-    {
-        #ifdef DEBUG_MATRIX
-        assert(b.numRows > 0 && b.numCols > 0);
-        #endif
-		
-		assert(false); // add by hankf4 for debug test 
-		
-        mp = new uint64_t[numRows*2*(numCols+1)];
-        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));
-    }
-
     ~PackedMatrix()
     {
         delete[] mp;
@@ -70,19 +56,11 @@ public:
     void resize(const uint32_t num_rows, uint32_t num_cols)
     {
         num_cols = num_cols / 64 + (bool)(num_cols % 64);
-		
-		// add by hankf4
-		if (numRows*(numCols+1) < num_rows*(num_cols+1)) {
+        if (numRows*(numCols+1) < num_rows*(num_cols+1)) {
             delete[] mp;
             mp = new uint64_t[num_rows*(num_cols+1)];
         }
-		
-		// delete by hankf4
-		/*
-        if (numRows*2*(numCols+1) < num_rows*2*(num_cols+1)) {
-            delete[] mp;
-            mp = new uint64_t[num_rows*2*(num_cols+1)];
-        }*/
+
         numRows = num_rows;
         numCols = num_cols;
     }
@@ -101,26 +79,14 @@ public:
         #ifdef DEBUG_MATRIX
         //assert(b.numRows > 0 && b.numCols > 0);
         #endif
-		
-		// add by hankf4
-		if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
+
+        if (numRows*(numCols+1) < b.numRows*(b.numCols+1)) {
             delete[] mp;
             mp = new uint64_t[b.numRows*(b.numCols+1)];
         }
         numRows = b.numRows;
         numCols = b.numCols;
         memcpy(mp, b.mp, sizeof(uint64_t)*numRows*(numCols+1));
-		
-		// delete by hankf4
-		/*
-        if (numRows*2*(numCols+1) < b.numRows*2*(b.numCols+1)) {
-            delete[] mp;
-            mp = new uint64_t[b.numRows*2*(b.numCols+1)];
-        }
-
-        numRows = b.numRows;
-        numCols = b.numCols;
-        memcpy(mp, b.mp, sizeof(uint64_t)*numRows*2*(numCols+1));*/
 
         return *this;
     }
@@ -130,19 +96,9 @@ public:
         #ifdef DEBUG_MATRIX
         assert(i <= numRows);
         #endif
-		
-		return PackedRow(numCols, mp+i*(numCols+1)); // add by hankf4
-        //return PackedRow(numCols, mp+i*2*(numCols+1)); //delete by hankf4
-    }
-    inline PackedRow getVarsetAt(const uint32_t i)
-    {
-        #ifdef DEBUG_MATRIX
-        assert(i <= numRows);
-        #endif
-	
-		assert(false); // add by hankf4 for debug test
-		
-        return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
+
+        return PackedRow(numCols, mp+i*(numCols+1));
+
     }
 
     inline PackedRow getMatrixAt(const uint32_t i) const
@@ -151,19 +107,7 @@ public:
         assert(i <= numRows);
         #endif
 
-       	return PackedRow(numCols, mp+i*(numCols+1)); // add by hankf4
-        //return PackedRow(numCols, mp+i*2*(numCols+1)); // delete by hankf4
-    }
-
-    inline PackedRow getVarsetAt(const uint32_t i) const
-    {
-        #ifdef DEBUG_MATRIX
-        assert(i <= numRows);
-        #endif
-
-		assert(false); // add by hankf4 for debug test
-		
-        return PackedRow(numCols, mp+i*2*(numCols+1)+(numCols+1));
+        return PackedRow(numCols, mp+i*(numCols+1));
     }
 
     class iterator
@@ -178,29 +122,25 @@ public:
 
         iterator& operator++()
         {
-           	mp += (numCols+1); // add by hankf4
-            //mp += 2*(numCols+1); // delete by hankf4
+            mp += (numCols+1);
             return *this;
         }
 
         iterator operator+(const uint32_t num) const
         {
             iterator ret(*this);
-            //ret.mp += 2*(numCols+1)*num; // delete by f4
-            ret.mp += (numCols+1)*num; // add by f4
+            ret.mp += (numCols+1)*num;
             return ret;
         }
 
         uint32_t operator-(const iterator& b) const
         {
-            return (mp - b.mp)/((numCols+1)); // add by f4
-            //return (mp - b.mp)/(2*(numCols+1)); // delete by f4
+            return (mp - b.mp)/((numCols+1));
         }
 
         void operator+=(const uint32_t num)
         {
-            // mp += 2*(numCols+1)*num;   // delete by f4
-		   mp += (numCols+1)*num;  // add by f4
+            mp += (numCols+1)*num;  // add by f4
         }
 
         bool operator!=(const iterator& it) const
@@ -230,20 +170,7 @@ public:
 
     inline iterator endMatrix()
     {
-        //return iterator(mp+numRows*2*(numCols+1), numCols);   // delete by f4
-		return iterator(mp+numRows*(numCols+1), numCols);  // add by f4
-    }
-
-    inline iterator beginVarset()
-    {
-		assert(false); // add by hankf4 for debug test
-        return iterator(mp+(numCols+1), numCols);
-    }
-
-    inline iterator endVarset()
-    {
-		assert(false); // add by hankf4 for debug test
-        return iterator(mp+(numCols+1)+numRows*2*(numCols+1), numCols);
+        return iterator(mp+numRows*(numCols+1), numCols);
     }
 
     inline uint32_t getSize() const

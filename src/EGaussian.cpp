@@ -348,7 +348,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
             case 0: // this row is all zero
                 //printf("%d:Warring: this row is all zero in adjust matrix    n",row_id);
                 adjust_zero++; // information
-                if ( (*rowIt).is_true() ) {    // conflic
+                if ( (*rowIt).rhs() ) {    // conflic
                     //printf("%d:Warring: this row is conflic in adjust matrix!!!",row_id);
                     return conflict;
                 }
@@ -356,7 +356,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
             case 1: {   // this row neeed to propogation
                 //printf("%d:This row only one variable, need to propogation!!!! in adjust matrix    n",row_id);
 
-                xorEqualFalse = !m.matrix.getMatrixAt(row_id).is_true();
+                xorEqualFalse = !m.matrix.getMatrixAt(row_id).rhs();
                 tmp_clause[0] = Lit( tmp_clause[0].var(), xorEqualFalse) ;
                 assert(solver->value(tmp_clause[0] .var()) == l_Undef);
                 solver->enqueue(tmp_clause[0]);  // propagation
@@ -371,7 +371,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
             }
             case 2: {   // this row have to variable
                 //printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
-                xorEqualFalse = !m.matrix.getMatrixAt(row_id).is_true();
+                xorEqualFalse = !m.matrix.getMatrixAt(row_id).rhs();
                 propagation_twoclause(xorEqualFalse);
 
                 (*rowIt).setZero();// reset this row all zero
@@ -559,7 +559,7 @@ bool EGaussian::find_truths2(
                 conflict_clause_gauss = tmp_clause;  // choose better conflice clause
                 ret_gauss = 0;  // gaussian matrix is   conflict
                 conflict_size_gauss = tmp_clause.size();
-                xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(row_n).is_true();
+                xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(row_n).rhs();
 
                 if (orig_basic) { // recover
                     GasVar_state[ cur_matrixset.nb_rows[row_n] ]  = non_basic_var;
@@ -584,7 +584,7 @@ bool EGaussian::find_truths2(
             }
 
 
-            xorEqualFalse = !cur_matrixset.matrix.getMatrixAt(row_n).is_true();
+            xorEqualFalse = !cur_matrixset.matrix.getMatrixAt(row_n).rhs();
             if (tmp_clause.size() == 2) {
                 //printf("%d:This row is propagation two    n",row_n);
 
@@ -764,7 +764,7 @@ void EGaussian::eliminate_col2(
                             conflict_clause_gauss = tmp_clause;  // choose better conflice clause
                             ret_gauss = 0;  // gaussian matrix is   conflict
                             conflict_size_gauss = tmp_clause.size();
-                            xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(num_row).is_true();
+                            xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(num_row).rhs();
                             // If conflict is happened in eliminaiton conflict, then we only return immediately
                             solver->qhead = solver->trail.size();
                             solver->Gauseqhead = solver->trail.size();
@@ -778,7 +778,7 @@ void EGaussian::eliminate_col2(
                             cur_matrixset.nb_rows[num_row] = p;
                             break;
                         }
-                        xorEqualFalse = !cur_matrixset.matrix.getMatrixAt(num_row).is_true();
+                        xorEqualFalse = !cur_matrixset.matrix.getMatrixAt(num_row).rhs();
                         if (tmp_clause.size() == 2) {
                             //printf("%d:This row is propagation two in eliminate col    n",num_row);
                             solver->sum_Enunit++;
