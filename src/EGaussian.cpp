@@ -68,27 +68,42 @@ EGaussian::EGaussian(
     , matrix_no(_matrix_no)
     , xorclauses(_xorclauses)
 {
-    if (solver->conf.verbosity >= 2) {
-        vector<Xor> xors;
-        for(Xor& x: xorclauses) {
-            xors.push_back(x);
-        }
-        for(Xor& x: xors) {
-            x.sort();
-        }
-        std::sort(xors.begin(), xors.end());
+    uint64_t num_unfound = 0;
+    vector<Xor> xors;
+    for(Xor& x: xorclauses) {
+        xors.push_back(x);
+    }
+    for(Xor& x: xors) {
+        x.sort();
+    }
+    std::sort(xors.begin(), xors.end());
 
-        uint64_t num_unfound = 0;
-        for(Xor& x: xors) {
-            for(uint32_t v: x) {
-                if (v > 165) {
-                    num_unfound++;
-                    break;
+    for(Xor& x: xors) {
+        for(uint32_t v: x) {
+            if (v > 165) {
+                num_unfound++;
+                if (solver->conf.verbosity) {
+                    cout << "c " << x << endl;
                 }
+                break;
             }
-            cout << " c " << x << endl;
         }
-        cout << "c num_unfound xor: " << num_unfound << endl;
+    }
+    cout << "c num_unfound xor: " << num_unfound << endl;
+
+    for(Xor& x: xors) {
+        bool must_print = true;
+        for(uint32_t v: x) {
+            if (v > 165) {
+                must_print = false;
+                break;
+            }
+        }
+        if (must_print) {
+            if (solver->conf.verbosity) {
+                cout << "c " << x << endl;
+            }
+        }
     }
 }
 
