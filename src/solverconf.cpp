@@ -129,7 +129,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Bounded variable addition
         , do_bva(false)
+        #ifdef USE_GAUSS
+        , min_bva_gain(2)
+        #else
         , min_bva_gain(32)
+        #endif
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
