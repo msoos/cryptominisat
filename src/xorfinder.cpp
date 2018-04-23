@@ -68,7 +68,10 @@ void XorFinder::find_xors_based_on_long_clauses()
             cl->stats.marked_clause = true;
             assert(!cl->getRemoved());
 
-            const size_t needed_per_ws = 1ULL << (cl->size()-2);
+            size_t needed_per_ws = 1ULL << (cl->size()-2);
+            //let's allow shortened clauses
+            needed_per_ws >>= 2;
+
             for(const Lit lit: *cl) {
                 if (solver->watches[lit].size() < needed_per_ws) {
                     goto next;
