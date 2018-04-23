@@ -79,7 +79,7 @@ TEST_F(dump, twolit)
     s.new_vars(2);
     s.add_clause(str_to_cl("1"));
     s.add_clause(str_to_cl("1, 2"));
-    lbool ret = s.solve();
+    s.solve();
 
 
     read_dat();
@@ -93,7 +93,7 @@ TEST_F(dump, longcls)
     s.new_vars(4);
     s.add_clause(str_to_cl("1, 2, 3, 4"));
     s.add_clause(str_to_cl("-4"));
-    lbool ret = s.simplify();
+    s.simplify();
 
 
     read_dat();
@@ -108,7 +108,7 @@ TEST_F(dump, eqcls)
     s.new_vars(4);
     s.add_clause(str_to_cl("1, 2"));
     s.add_clause(str_to_cl("-1, -2"));
-    lbool ret = s.simplify();
+    s.simplify();
 
 
     read_dat();
@@ -122,7 +122,7 @@ TEST_F(dump, eqcls2)
     s.new_vars(4);
     s.add_clause(str_to_cl("-1, 2"));
     s.add_clause(str_to_cl("1, -2"));
-    lbool ret = s.simplify();
+    s.simplify();
 
 
     read_dat();
@@ -136,7 +136,7 @@ TEST_F(dump, subsume)
     s.new_vars(4);
     s.add_clause(str_to_cl("-1, -2, 3"));
     s.add_clause(str_to_cl("-1, -2"));
-    lbool ret = s.simplify();
+    s.simplify();
 
 
     read_dat();
