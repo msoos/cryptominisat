@@ -3726,8 +3726,8 @@ void Searcher::cancelUntil(uint32_t level)
 void Searcher::clearEnGaussMatrixes()
 {
     if (solver->conf.verbosity && big_gaussnum > 0) {
-        cout << "big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
-        cout << "big_propagate/big_gaussnum:" << (double)big_propagate/(double)big_gaussnum*100.0 << " %" <<endl;
+        cout << "c big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
+        cout << "c big_propagate/big_gaussnum:" << (double)big_propagate/(double)big_gaussnum*100.0 << " %" <<endl;
     }
     big_conflict = 0;
     big_propagate = 0;
