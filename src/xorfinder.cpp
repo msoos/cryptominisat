@@ -117,9 +117,10 @@ void XorFinder::find_xors()
         vector<Xor>::iterator i = xors.begin();
         vector<Xor>::iterator j = i;
         i++;
+        j++;
         for(vector<Xor>::iterator end = xors.end(); i != end; i++) {
-            if (*i != *j) {
-                *j++ = *j;
+            if (*j != *i) {
+                *j++ = *i;
             }
         }
         xors.resize(xors.size() - (i-j));
