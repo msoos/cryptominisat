@@ -141,18 +141,17 @@ int PackedRow::propGause(
                     nb_var = var;
                     return 5;   // nothing
                 }
-                const bool val_bool = val == l_True;
+                const bool val_bool = (val == l_True);
                 final ^= val_bool;
                 tmp_clause.push_back(Lit(var, val_bool));
                 if ( GasVar_state[var] ) {
-                    Lit tmp_lit(tmp_clause[0]);
-                    tmp_clause[0] = tmp_clause.back();
-                    tmp_clause.back() = tmp_lit;
+                    std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }
             tmp >>= 1;
         }
     }
+
     for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
         uint64_t tmp = mp[i]; 
         uint32_t i2;
@@ -168,9 +167,7 @@ int PackedRow::propGause(
                 final ^= val_bool;
                 tmp_clause.push_back(Lit(var, val_bool));
                 if ( GasVar_state[var] ) {
-                    Lit tmp_lit(tmp_clause[0]);
-                    tmp_clause[0] = tmp_clause.back();
-                    tmp_clause.back() = tmp_lit;
+                    std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }
             tmp >>= 1;
