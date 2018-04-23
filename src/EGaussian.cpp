@@ -418,7 +418,7 @@ inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
 
     tmp_clause[0] = tmp_clause[0].unsign();
     tmp_clause[1] = tmp_clause[1].unsign();
-    solver->ok = solver->add_xor_clause_inter(tmp_clause, xorEqualFalse, true);
+    solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
     release_assert(solver->ok);
     //printf("DD:x%d %d    n",tmp_clause[0].var() , tmp_clause[1].var());
 }
