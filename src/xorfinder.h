@@ -121,7 +121,7 @@ class PossibleXor
         // 0 1 0
         // 0 0 1
         vector<bool> foundComb;
-        Lit origCl[7];
+        Lit origCl[8];
         cl_abst_type abst;
         uint32_t size;
         bool rhs;
