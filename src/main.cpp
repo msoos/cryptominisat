@@ -131,6 +131,9 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
     }
 
     independent_vars.swap(parser.independent_vars);
+    if (!independent_vars.empty()) {
+        solver2->set_independent_vars(&independent_vars);
+    }
     call_after_parse();
 
     #ifndef USE_ZLIB

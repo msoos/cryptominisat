@@ -735,7 +735,8 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     assert(var <= solver->nVars());
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        ||  solver->var_inside_assumptions(var)
+        || solver->var_inside_assumptions(var)
+        || (solver->conf.independent_vars && indep_vars[var])
     ) {
         return false;
     }
@@ -1381,6 +1382,22 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     const size_t origBlockedSize = blockedClauses.size();
     const size_t origTrailSize = solver->trail_size();
+
+
+    indep_vars.clear();
+    if (solver->conf.independent_vars) {
+        cout << "Independent vars given" << endl;
+        indep_vars.resize(solver->nVars(), false);
+        for(uint32_t outside_var: *solver->conf.independent_vars) {
+            uint32_t outer_var = solver->map_to_with_bva(outside_var);
+            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = solver->map_outer_to_inter(outer_var);
+            indep_vars[int_var] = true;
+        }
+    } else {
+        indep_vars.shrink_to_fit();
+    }
+
     execute_simplifier_strategy(schedule);
 
     remove_by_drat_recently_blocked_clauses(origBlockedSize);
@@ -2113,24 +2130,26 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             }
 
             //Calculate new clause stats
-            #ifdef STATS_NEEDED
             ClauseStats stats;
+            bool is_xor = false;
             if (it->isBin() && it2->isClause()) {
-                stats = solver->cl_alloc.ptr(it2->get_offset())->stats;
+                Clause* c = solver->cl_alloc.ptr(it2->get_offset());
+                stats = c->stats;
+                is_xor |= c->used_in_xor();
             } else if (it2->isBin() && it->isClause()) {
-                stats = solver->cl_alloc.ptr(it->get_offset())->stats;
+                Clause* c = solver->cl_alloc.ptr(it->get_offset());
+                stats = c->stats;
+                is_xor |= c->used_in_xor();
             } else if (it2->isClause() && it->isClause()) {
-                stats = ClauseStats::combineStats(
-                    solver->cl_alloc.ptr(it->get_offset())->stats
-                    , solver->cl_alloc.ptr(it2->get_offset())->stats
-                );
+                Clause* c1 = solver->cl_alloc.ptr(it->get_offset());
+                Clause* c2 = solver->cl_alloc.ptr(it2->get_offset());
+                stats = ClauseStats::combineStats(c1->stats, c2->stats);
+                is_xor |= c1->used_in_xor();
+                is_xor |= c2->used_in_xor();
             }
             //must clear marking that has been set due to gate
             stats.marked_clause = 0;
-            resolvents.add_resolvent(dummy, stats);
-            #else
-            resolvents.add_resolvent(dummy, ClauseStats());
-            #endif
+            resolvents.add_resolvent(dummy, stats, is_xor);
         }
     }
 
@@ -2193,6 +2212,7 @@ void OccSimplifier::print_var_eliminate_stat(const Lit lit) const
 bool OccSimplifier::add_varelim_resolvent(
     vector<Lit>& finalLits
     , const ClauseStats& stats
+    , const bool is_xor
 ) {
     bvestats.newClauses++;
     Clause* newCl = NULL;
@@ -2216,6 +2236,7 @@ bool OccSimplifier::add_varelim_resolvent(
         return false;
 
     if (newCl != NULL) {
+        newCl->set_used_in_xor(is_xor);
         linkInClause(*newCl);
         ClOffset offset = solver->cl_alloc.get_offset(newCl);
         clauses.push_back(offset);
@@ -2338,7 +2359,9 @@ bool OccSimplifier::maybe_eliminate(const uint32_t var)
 
     //Add resolvents
     while(!resolvents.empty()) {
-        if (!add_varelim_resolvent(resolvents.back_lits(), resolvents.back_stats())) {
+        if (!add_varelim_resolvent(resolvents.back_lits(),
+            resolvents.back_stats(), resolvents.back_xor())
+        ) {
             goto end;
         }
         resolvents.pop();
@@ -2789,6 +2812,7 @@ size_t OccSimplifier::mem_used() const
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += elim_calc_need_update.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
+    b += indep_vars.capacity();
 
     return b;
 }
