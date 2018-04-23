@@ -1876,6 +1876,7 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
 
     clear_order_heap();
+    clearEnGaussMatrixes();
 
     if (conf.verbosity >= 6) {
         cout
