@@ -96,6 +96,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     big_propagate = 0;
     big_conflict = 0;
     engaus_disable = false;
+    mess_up_polarity = conf.mess_up_polarity;
 }
 
 Searcher::~Searcher()
@@ -2254,7 +2255,7 @@ lbool Searcher::solve(
     resetStats();
     lbool status = l_Undef;
     if (conf.burst_search_len > 0
-        && upper_level_iteration_num > 1
+        && solver->conf.burst_broken
     ) {
         assert(solver->check_order_heap_sanity());
         status = burst_search();

@@ -173,6 +173,7 @@ class Solver : public Searcher
         void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
         void bva_changed();
+        bool init_all_matrixes();
 
         //Attaching-detaching clauses
         void attachClause(

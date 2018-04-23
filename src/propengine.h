@@ -235,6 +235,7 @@ protected:
         mem += toClear.capacity()*sizeof(Lit);
         return mem;
     }
+    bool mess_up_polarity = false;
 
 private:
     bool propagate_binary_clause_occur(const Watched& ws);
@@ -426,7 +427,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
     varData[v].level = decisionLevel();
-    if (!update_bogoprops) {
+    if (!update_bogoprops || mess_up_polarity) {
         varData[v].polarity = !sign;
     }
     trail.push_back(p);

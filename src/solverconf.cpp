@@ -276,6 +276,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , preprocess(0)
         , simulate_drat(false)
         , saved_state_file("savedstate.dat")
+        , mess_up_polarity(false)
+        , burst_broken(false)
 {
     ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
     ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.44;
