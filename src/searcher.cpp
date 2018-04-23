@@ -2837,7 +2837,7 @@ llbool Searcher::Gauss_elimination()
                     i, j, p.var(), confl, (*i).row_id, do_eliminate, e_var, e_row_n,
                     ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse_gauss)
             ) {
-                    continue;
+                continue;
             } else {
                 // only in conflict two variable
                 break;

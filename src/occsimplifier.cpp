@@ -1386,7 +1386,6 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     indep_vars.clear();
     if (solver->conf.independent_vars) {
-        cout << "Independent vars given" << endl;
         indep_vars.resize(solver->nVars(), false);
         for(uint32_t outside_var: *solver->conf.independent_vars) {
             uint32_t outer_var = solver->map_to_with_bva(outside_var);
