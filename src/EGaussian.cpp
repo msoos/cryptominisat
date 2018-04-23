@@ -535,6 +535,7 @@ bool EGaussian::find_truths2(
                 return true;
             }
 
+            //binary conflict
             if (tmp_clause.size() == 2) {
                 //printf("%d:This row is conflict two    n",row_n);
                 delete_gausswatch(orig_basic, row_n);   // delete watch list
@@ -552,10 +553,10 @@ bool EGaussian::find_truths2(
                 conflict_size_gauss = 2;
                 solver->sum_Enunit++;
                 return false;
-
             } else {
+                //long conflict clause
+
                 *j++ = *i;
-                // for tell outside solver
                 conflict_clause_gauss = tmp_clause;  // choose better conflice clause
                 ret_gauss = 0;  // gaussian matrix is   conflict
                 conflict_size_gauss = tmp_clause.size();
@@ -585,6 +586,8 @@ bool EGaussian::find_truths2(
 
 
             xorEqualFalse = !cur_matrixset.matrix.getMatrixAt(row_n).rhs();
+
+            //binary propagation
             if (tmp_clause.size() == 2) {
                 //printf("%d:This row is propagation two    n",row_n);
 
@@ -601,8 +604,8 @@ bool EGaussian::find_truths2(
                 solver->Gauseqhead = solver->qhead; // quick break gaussian elimination
                 return false;
             }
-            //larger-than-2 propagation
 
+            //larger-than-2 propagation
             *j++ = *i;  // store watch list
             if (solver->decisionLevel() == 0) {
                 solver->enqueue(tmp_clause[0]);
