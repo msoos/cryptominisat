@@ -2132,6 +2132,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
             //Calculate new clause stats
             ClauseStats stats;
             bool is_xor = false;
+            #if defined(USE_GAUSS) || defined(STATS_NEEDED)
             if (it->isBin() && it2->isClause()) {
                 Clause* c = solver->cl_alloc.ptr(it2->get_offset());
                 stats = c->stats;
@@ -2147,6 +2148,7 @@ int OccSimplifier::test_elim_and_fill_resolvents(const uint32_t var)
                 is_xor |= c1->used_in_xor();
                 is_xor |= c2->used_in_xor();
             }
+            #endif
             //must clear marking that has been set due to gate
             stats.marked_clause = 0;
             resolvents.add_resolvent(dummy, stats, is_xor);
