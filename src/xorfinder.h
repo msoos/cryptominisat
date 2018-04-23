@@ -53,7 +53,7 @@ class PossibleXor
             const vector<Lit>& cl
             , const ClOffset offset
             , cl_abst_type _abst
-            , vector<uint16_t>& seen
+            , vector<uint64_t>& occcnt
         ) {
             abst = _abst;
             size = cl.size();
@@ -68,7 +68,7 @@ class PossibleXor
                 if (i > 0)
                     assert(cl[i-1] < cl[i]);
             }
-            setup_seen_rhs_foundcomb(seen);
+            setup_seen_rhs_foundcomb(occcnt);
             if (offset != std::numeric_limits<ClOffset>::max()) {
                 offsets.push_back(offset);
             }
@@ -90,7 +90,7 @@ class PossibleXor
         }
 
     private:
-        void setup_seen_rhs_foundcomb(vector<uint16_t>& seen)
+        void setup_seen_rhs_foundcomb(vector<uint64_t>& occcnt)
         {
             //Calculate parameters of base clause.
             //Also set 'seen' for easy check in 'findXorMatch()'
@@ -99,7 +99,7 @@ class PossibleXor
             for (uint32_t i = 0; i < size; i++) {
                 rhs ^= origCl[i].sign();
                 whichOne += ((uint32_t)origCl[i].sign()) << i;
-                seen[origCl[i].var()] = 1;
+                occcnt[origCl[i].var()] = 1;
             }
 
             foundComb.clear();
@@ -157,9 +157,10 @@ public:
     };
 
     const Stats& get_stats() const;
-    virtual size_t mem_used() const;
+    size_t mem_used() const;
+    void free_mem();
     void add_xors_to_gauss();
-    void clean_up_xors();
+    void remove_xors_without_connecting_vars();
     void xor_together_xors();
     bool add_new_truths_from_xors();
 
@@ -195,7 +196,7 @@ private:
     vector<Lit> binvec;
 
     //Other temporaries
-    vector<uint16_t>& seen;
+    vector<uint64_t> occcnt;
     vector<Lit>& toClear;
     vector<uint32_t> interesting;
 };

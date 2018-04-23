@@ -360,7 +360,7 @@ TEST_F(xor_finder, clean_v1)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0;");
-    finder.clean_up_xors();
+    finder.remove_xors_without_connecting_vars();
     EXPECT_EQ(finder.xors.size(), 0u);
 }
 
@@ -368,7 +368,7 @@ TEST_F(xor_finder, clean_v2)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0");
-    finder.clean_up_xors();
+    finder.remove_xors_without_connecting_vars();
     EXPECT_EQ(finder.xors.size(), 2u);
 }
 
@@ -376,7 +376,7 @@ TEST_F(xor_finder, clean_v3)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1");
-    finder.clean_up_xors();
+    finder.remove_xors_without_connecting_vars();
     EXPECT_EQ(finder.xors.size(), 2u);
 }
 
@@ -384,7 +384,7 @@ TEST_F(xor_finder, clean_v4)
 {
     XorFinder finder(occsimp, s);
     finder.xors = str_to_xors("1, 2, 3 = 0; 1, 4, 5, 6 = 0; 10, 11, 12, 13 = 1; 10, 15, 16, 17 = 0");
-    finder.clean_up_xors();
+    finder.remove_xors_without_connecting_vars();
     EXPECT_EQ(finder.xors.size(), 4u);
 }
 

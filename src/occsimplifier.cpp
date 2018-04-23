@@ -1271,10 +1271,12 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 XorFinder finder(this, solver);
                 finder.find_xors();
                 finder.xor_together_xors();
+                finder.remove_xors_without_connecting_vars();
                 const bool ok = finder.add_new_truths_from_xors();
                 if (ok) {
                     finder.add_xors_to_gauss();
                 }
+                finder.free_mem();
                 #endif
             }
         } else if (token == "occ-clean-implicit") {
