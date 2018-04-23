@@ -120,7 +120,7 @@ class PossibleXor
         // 1 0 0
         // 0 1 0
         // 0 0 1
-        vector<bool> foundComb;
+        vector<char> foundComb;
         Lit origCl[8];
         cl_abst_type abst;
         uint32_t size;
@@ -266,7 +266,10 @@ template<class T> void PossibleXor::add(
             origI++;
             assert(origI < size && "cl must be sorted");
         }
-        whichOne += ((uint32_t)l->sign()) << origI;
+        if (i > 0) {
+            assert(cl[i-1] < cl[i] && "Must be sorted");
+        }
+        whichOne |= ((uint32_t)l->sign()) << origI;
     }
 
     //if vars are missing from the end
