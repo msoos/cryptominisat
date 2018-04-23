@@ -1773,7 +1773,7 @@ bool Solver::execute_inprocess_strategy(
                 implCache.tryBoth(this);
             }
         } else if (token == "sub-impl") {
-            //Susbsume TRI with BIN+TRI+stamp, subsume BIN with BIN
+            //subsume BIN with BIN
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
             }
