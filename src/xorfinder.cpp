@@ -92,7 +92,6 @@ void XorFinder::find_xors()
     runStats.clear();
     runStats.numCalls = 1;
 
-    cls_of_xors.clear();
     xors.clear();
     double myTime = cpuTime();
     const int64_t orig_xor_find_time_limit =
@@ -180,12 +179,6 @@ void XorFinder::add_xors_to_gauss()
         }
     }
     #endif
-
-    for(ClOffset offs: cls_of_xors) {
-        Clause* cl = solver->cl_alloc.ptr(offs);
-        assert(!cl->getRemoved());
-        cl->set_used_in_xor(true);
-    }
 }
 
 void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst)
@@ -205,8 +198,8 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     }
 
     xor_find_time_limit -= 20;
-    findXorMatch(solver->watches[slit]);
-    findXorMatch(solver->watches[~slit]);
+    findXorMatch(solver->watches[slit], slit);
+    findXorMatch(solver->watches[~slit], ~slit);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -218,8 +211,10 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         #endif
 
         add_found_xor(found_xor);
-        for(ClOffset off: poss_xor.get_offsets()) {
-            cls_of_xors.push_back(off);
+        for(ClOffset offs: poss_xor.get_offsets()) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            assert(!cl->getRemoved());
+            cl->set_used_in_xor(true);
         }
     }
 
@@ -236,57 +231,75 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     runStats.sumSizeXors += found_xor.size();
 }
 
-void XorFinder::findXorMatch(watch_subarray_const occ)
+void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 {
     xor_find_time_limit -= (int64_t)occ.size();
     for (const Watched& w: occ) {
-        if (w.isIdx() || w.isBin()) {
+
+        //TODO bin!
+        if (w.isIdx()) {
             continue;
         }
+        assert(poss_xor.getSize() > 2);
 
-        //Deal with clause
+        if (w.isBin()) {
+            binvec.clear();
+            binvec.resize(2);
+            binvec[0] = w.lit2();
+            binvec[1] = wlit;
+            if (binvec[0] > binvec[1]) {
+                std::swap(binvec[0], binvec[1]);
+            }
 
-        //Clause will be at least 3 long
-        if (poss_xor.getSize() <= 2) {
-            continue;
+            //Check vars inside
+            for (const Lit cl_lit :binvec) {
+                //early-abort, contains literals not in original clause
+                if (!seen[cl_lit.var()])
+                    goto end;
+            }
+
+            xor_find_time_limit-=50;
+            poss_xor.add(binvec, std::numeric_limits<ClOffset>::max(), varsMissing);
+
+        } else {
+            const ClOffset offset = w.get_offset();
+            Clause& cl = *solver->cl_alloc.ptr(offset);
+            xor_find_time_limit -= 20; //deref penalty
+            if (cl.freed() || cl.getRemoved())
+                continue;
+
+            //Could be smaller, but it would be expensive
+            if (cl.size() > poss_xor.getSize())
+                continue;
+
+            //Doesn't contain variables not in the original clause
+            if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
+                continue;
+
+            //Check RHS, vars inside
+            bool rhs = true;
+            for (const Lit cl_lit :cl) {
+                //early-abort, contains literals not in original clause
+                if (!seen[cl_lit.var()])
+                    goto end;
+
+                rhs ^= cl_lit.sign();
+            }
+            //either the invertedness has to match, or the size must be smaller
+            if (rhs != poss_xor.getRHS() && cl.size() == poss_xor.getSize())
+                continue;
+
+            //If the size of this clause is the same of the base clause, then
+            //there is no point in using this clause as a base for another XOR
+            //because exactly the same things will be found.
+            if (cl.size() == poss_xor.getSize()) {
+                cl.stats.marked_clause = true;;
+            }
+
+            xor_find_time_limit-=50;
+            poss_xor.add(cl, offset, varsMissing);
         }
 
-        const ClOffset offset = w.get_offset();
-        Clause& cl = *solver->cl_alloc.ptr(offset);
-        xor_find_time_limit -= 20; //deref penalty
-        if (cl.freed() || cl.getRemoved())
-            continue;
-
-        //Could be smaller, but it would be expensive
-        if (cl.size() != poss_xor.getSize())
-            continue;
-
-        //Doesn't contain variables not in the original clause
-        if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
-            continue;
-
-        //Check RHS, vars inside
-        bool rhs = true;
-        for (const Lit cl_lit :cl) {
-            //early-abort, contains literals not in original clause
-            if (!seen[cl_lit.var()])
-                goto end;
-
-            rhs ^= cl_lit.sign();
-        }
-        //either the invertedness has to match, or the size must be smaller
-        if (rhs != poss_xor.getRHS() && cl.size() == poss_xor.getSize())
-            continue;
-
-        //If the size of this clause is the same of the base clause, then
-        //there is no point in using this clause as a base for another XOR
-        //because exactly the same things will be found.
-        if (cl.size() == poss_xor.getSize()) {
-            cl.stats.marked_clause = true;;
-        }
-
-        xor_find_time_limit-=50;
-        poss_xor.add(cl, offset, varsMissing);
         if (poss_xor.foundAll())
             break;
 

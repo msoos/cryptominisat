@@ -164,7 +164,6 @@ public:
     bool add_new_truths_from_xors();
 
     vector<Xor> xors;
-    vector<ClOffset> cls_of_xors;
 
 private:
     PossibleXor poss_xor;
@@ -181,7 +180,7 @@ private:
     void findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type abst);
 
     ///Normal finding of matching clause for XOR
-    void findXorMatch(watch_subarray_const occ);
+    void findXorMatch(watch_subarray_const occ, const Lit wlit);
 
     OccSimplifier* occsimplifier;
     Solver *solver;
@@ -193,6 +192,7 @@ private:
     //Temporary
     vector<Lit> tmpClause;
     vector<uint32_t> varsMissing;
+    vector<Lit> binvec;
 
     //Other temporaries
     vector<uint16_t>& seen;
