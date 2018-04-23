@@ -89,7 +89,7 @@ def set_up_parser():
                       action="store_true",
                       help="Concentrate fuzzing gauss")
 
-    parser.add_option("--maxthreads", dest="max_threads", default=100,
+    parser.add_option("--maxth", "-m", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
 
     parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
@@ -742,15 +742,16 @@ if __name__ == "__main__":
         rnd_seed = random.randint(0, 1000*1000*100)
 
     while True:
-        toexec = "./fuzz_test.py --fuzzlim 1 --seed %d" % rnd_seed
+        toexec = "./fuzz_test.py --fuzzlim 1 --seed %d " % rnd_seed
         if options.novalgrind:
-            toexec += " --novalgrind"
+            toexec += "--novalgrind "
         if options.valgrind_freq:
-            toexec += " --valgrindfreq %d" % options.valgrind_freq
+            toexec += "--valgrindfreq %d " % options.valgrind_freq
         if options.small:
-            toexec += " --small"
+            toexec += "--small "
         if options.gauss:
-            toexec += " --gauss"
+            toexec += "--gauss "
+        toexec += "-m %d " % options.max_threads
 
         print("")
         print("")
