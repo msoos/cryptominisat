@@ -1955,13 +1955,13 @@ void Solver::print_stats(const double cpu_time) const
         , "% time"
     );
 
-    //if (conf.verbStats >= 2) {
+    if (conf.verbStats >= 2) {
         print_full_restart_stat(cpu_time);
-    /*} else if (conf.verbStats == 1) {
+    } else if (conf.verbStats == 1) {
         print_norm_stats(cpu_time);
     } else {
         print_min_stats(cpu_time);
-    }*/
+    }
 }
 
 
