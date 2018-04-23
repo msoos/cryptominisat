@@ -123,7 +123,8 @@ void XorFinder::find_xors()
         j++;
         for(vector<Xor>::iterator end = xors.end(); i != end; i++) {
             if (*j != *i) {
-                *j++ = *i;
+                j++;
+                *j = *i;
             }
         }
         xors.resize(xors.size() - (i-j));
@@ -199,11 +200,13 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
             snum = num;
             slit = lit;
         }
+        findXorMatch(solver->watches[lit], lit);
+        findXorMatch(solver->watches[~lit], ~lit);
     }
 
     xor_find_time_limit -= 20;
-    findXorMatch(solver->watches[slit], slit);
-    findXorMatch(solver->watches[~slit], ~slit);
+    //findXorMatch(solver->watches[slit], slit);
+    //findXorMatch(solver->watches[~slit], ~slit);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
