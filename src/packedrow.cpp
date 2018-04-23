@@ -130,14 +130,14 @@ int PackedRow::propGause(
     nb_var = std::numeric_limits<uint32_t>::max();
     tmp_clause.clear();
 
-    for ( uint32_t i = start/64; i != size; i++) if (mp[i]) {
+    for (uint32_t i = start/64; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
         uint32_t i2;
         for (i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
-                const uint32_t& var = col_to_var[ i * 64  + i2];
-                const lbool& val= assigns[var];
-                if (val == l_Undef &&  !GasVar_state[var] ){  // find non basic value
+                const uint32_t var = col_to_var[i * 64  + i2];
+                const lbool val = assigns[var];
+                if (val == l_Undef && !GasVar_state[var]) {  // find non basic value
                     nb_var = var;
                     return 5;   // nothing
                 }
@@ -153,12 +153,12 @@ int PackedRow::propGause(
     }
 
     for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
-        uint64_t tmp = mp[i]; 
+        uint64_t tmp = mp[i];
         uint32_t i2;
         for (i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
-                const uint32_t& var = col_to_var[ i * 64  + i2];
-                const lbool& val= assigns[var];
+                const uint32_t var = col_to_var[i * 64  + i2];
+                const lbool val = assigns[var];
                 if (val == l_Undef &&  !GasVar_state[var] ){  // find non basic value
                     nb_var = var;
                     return 5;   // nothing
