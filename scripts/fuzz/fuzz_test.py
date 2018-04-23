@@ -85,6 +85,9 @@ def set_up_parser():
                       action="store_true",
                       help="Don't run 'large' fuzzer"
                       " (may mem-out on smaller systems)")
+    parser.add_option("--gauss", dest="gauss", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing gauss")
 
     parser.add_option("--maxthreads", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
@@ -555,12 +558,16 @@ class Tester:
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
+        if options.gauss:
+            self.this_gauss_on = True
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
         self.sqlitedbfname = None
         self.preproc = False
 
         if self.drat:
             fuzzers = fuzzers_drat
+        elif options.gauss:
+            fuzzers = fuzzers_xor
         else:
             fuzzers = fuzzers_nodrat
         fuzzer = random.choice(fuzzers)
@@ -742,6 +749,8 @@ if __name__ == "__main__":
             toexec += " --valgrindfreq %d" % options.valgrind_freq
         if options.small:
             toexec += " --small"
+        if options.gauss:
+            toexec += " --gauss"
 
         print("")
         print("")
