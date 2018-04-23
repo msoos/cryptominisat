@@ -81,8 +81,6 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             lits.resize(cl->size());
             std::copy(cl->begin(), cl->end(), lits.begin());
-
-            //TODO check if already inside in some clever way
             findXor(lits, offset, cl->abst);
             next:;
         }
