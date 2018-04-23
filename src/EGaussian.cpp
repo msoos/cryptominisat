@@ -338,10 +338,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
     uint32_t row_id = 0;  // row index
     uint32_t nb_var = 0;  // non-basic variable
     bool  xorEqualFalse;  // xor =
-    gaussian_ret adjust_ret = nothing; // gaussian results
     uint32_t adjust_zero = 0;    //  elimination row
-    //prpagation_lit.clear();  //
-
 
     while ( rowIt != end ) {
         switch ((*rowIt).find_watchVar(tmp_clause,cur_matrixset.col_to_var,GasVar_state,nb_var)) {
@@ -365,7 +362,6 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
                 m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var;   // delete basic value in this row
 
-                adjust_ret = unit_propagation; // gaussian result
                 solver->sum_initUnit++;  // information
                 return unit_propagation;
             }
@@ -408,7 +404,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m)
     //print_matrix(m);
     //printf(" adjust_zero %d    n",adjust_zero);
     //printf("%d    t%d    t",m.num_rows , m.num_cols);
-    return adjust_ret;
+    return nothing;
 }
 
 
