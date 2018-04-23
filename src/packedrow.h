@@ -270,15 +270,12 @@ inline bool PackedRow::operator !=(const PackedRow& b) const
 
 inline uint32_t PackedRow::popcnt() const
 {
-    uint32_t popcnt = 0;
-    for (uint32_t i = 0; i < size; i++) if (mp[i]) {
-        uint64_t tmp = mp[i];
-        for (uint32_t i2 = 0; i2 < 64; i2++) {
-            popcnt += (tmp & 1);
-            tmp >>= 1;
-        }
+    int ret = 0;
+    for (uint32_t i = 0; i != size; i++) {
+        ret += my_popcnt(mp[i]&0xffffffff);
+        ret += my_popcnt(mp[i]>>32);
     }
-    return popcnt;
+    return ret;
 }
 
 }
