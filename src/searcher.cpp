@@ -2888,6 +2888,7 @@ llbool Searcher::Gauss_elimination()
             //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
 
             Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse_gauss);
+            conflPtr->set_gauss_temp_cl();
             confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
             Gauseqhead = qhead = trail.size();
 
