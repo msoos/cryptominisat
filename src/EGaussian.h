@@ -82,7 +82,7 @@ class EGaussian {
     matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
 
-    // fucntion
+    void clear_gwatches(const uint32_t var);
     void print_matrix(matrixset& m) const ;   // print matrix
     void eliminate(matrixset& m) ;            //gaussian elimination
     gaussian_ret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
