@@ -511,7 +511,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                     GasVar_state[cur_matrixset.nb_rows[row_n]] = non_basic_var;
                     GasVar_state[p] = basic_var;
                 }
-                //(*clauseIt).setBit(row_n);  // this clasue already conflict
+
                 return true;
             }
 
@@ -527,19 +527,18 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
 
                 conflict_twoclause(confl);            // get two conflict  clause
                 solver->qhead = solver->trail.size(); // quick break gaussian elimination
-                solver->Gauseqhead = solver->trail.size();
+                solver->gqhead = solver->trail.size();
 
                 // for tell outside solver
-                ret_gauss = 1; // gaussian matrix is   unit_conflict
+                ret_gauss = 1; // gaussian matrix is unit_conflict
                 conflict_size_gauss = 2;
                 solver->sum_Enunit++;
                 return false;
             } else {
                 // long conflict clause
-
                 *j++ = *i;
                 conflict_clause_gauss = tmp_clause; // choose better conflice clause
-                ret_gauss = 0;                      // gaussian matrix is   conflict
+                ret_gauss = 0;                      // gaussian matrix is conflict
                 conflict_size_gauss = tmp_clause.size();
                 xorEqualFalse_gauss = !cur_matrixset.matrix.getMatrixAt(row_n).rhs();
 
@@ -548,7 +547,6 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                     GasVar_state[p] = basic_var;
                 }
 
-                //(*clauseIt).setBit(row_n);  // this clasue already conflict
                 return true;
             }
         }
@@ -556,7 +554,9 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         // propagation
         case 2: {
             // printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
-            if (ret_gauss == 0) { // Gaussian matrix is already conflict
+
+            // Gaussian matrix is already conflict
+            if (ret_gauss == 0) {
                 *j++ = *i;        // store watch list
                 if (orig_basic) { // recover
                     GasVar_state[cur_matrixset.nb_rows[row_n]] = non_basic_var;
@@ -582,7 +582,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
 
                 // for tell outside solver
                 ret_gauss = 3;                      // gaussian matrix is   unit_propagation
-                solver->Gauseqhead = solver->qhead; // quick break gaussian elimination
+                solver->gqhead = solver->qhead; // quick break gaussian elimination
                 return false;
             }
 
@@ -596,11 +596,10 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                     GasVar_state[p] = basic_var;
                 }
 
-                ret_gauss = 3;                      // gaussian matrix is   unit_propagation
-                solver->Gauseqhead = solver->qhead; // quick break gaussian elimination
+                ret_gauss = 3;                      // gaussian matrix is unit_propagation
+                solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
                 return false;
-
             } else {
                 Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
                 cla->set_gauss_temp_cl();
@@ -625,7 +624,9 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         case 5: // find new watch list
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
             // nb_var,orig_basic , p);
-            if (ret_gauss == 0) { // Gaussian matrix is already conflict
+
+            // Gaussian matrix is already conflict
+            if (ret_gauss == 0) {
                 *j++ = *i;        // store watch list
                 if (orig_basic) { // recover
                     GasVar_state[cur_matrixset.nb_rows[row_n]] = non_basic_var;
@@ -738,7 +739,7 @@ void EGaussian::eliminate_col2(uint32_t e_var, uint16_t e_row_n, uint32_t p, Pro
 
                             // quick break gaussian elimination
                             solver->qhead = solver->trail.size();
-                            solver->Gauseqhead = solver->trail.size();
+                            solver->gqhead = solver->trail.size();
 
                             // unit_conflict
                             ret_gauss = 1;
@@ -759,7 +760,7 @@ void EGaussian::eliminate_col2(uint32_t e_var, uint16_t e_row_n, uint32_t p, Pro
                             // If conflict is happened in eliminaiton conflict, then we only return
                             // immediately
                             solver->qhead = solver->trail.size();
-                            solver->Gauseqhead = solver->trail.size();
+                            solver->gqhead = solver->trail.size();
                         }
                         break;
                     }

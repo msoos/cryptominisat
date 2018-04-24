@@ -92,7 +92,7 @@ public:
 
     watch_array watches;
     vec<vec<GaussWatched>> gwatches;
-    uint32_t Gauseqhead;
+    uint32_t gqhead;
     vector<VarData> varData;
     bool VSIDS = true;
     vector<uint32_t> depth;
