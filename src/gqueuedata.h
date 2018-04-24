@@ -1,12 +1,5 @@
 /******************************************
-Copyright (c) 2012  Cheng-Shen Han
-Copyright (c) 2012  Jie-Hong Roland Jiang
-Copyright (c) 2018  Mate Soos
-
-For more information, see " When Boolean Satisfiability Meets Gaussian
-Elimination in a Simplex Way." by Cheng-Shen Han and Jie-Hong Roland Jiang
-in CAV (Computer Aided Verification), 2012: 410-426
-
+Copyright (c) 2016, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,18 +20,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef GAUSSWATCHED_H
-#define GAUSSWATCHED_H
+#ifndef GQUEUEDATA_H__
+#define GQUEUEDATA_H__
 
 namespace CMSat {
-    struct GaussWatched{
-        GaussWatched(uint32_t r ,uint32_t m):
-            row_id(r) , matrix_num(m)
-        {}
 
-        uint32_t row_id;        // watch row id
-        uint32_t matrix_num;    // watch matrix id
-    };
+struct GaussQData {
+    bool do_eliminate; // we do elimination when basic variable is invoked
+    uint32_t e_var;                     // do elimination variable
+    uint16_t e_row_n ;         // do elimination row
+    PropBy confl;              // for choosing better conflict
+    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max(); // for choosing better conflict
+    int ret_gauss;         // gauss matrix result
+    bool xorEqualFalse_gauss;            // conflict xor clause xorEqualFalse
+    vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
+    void reset()
+    {
+        do_eliminate = false;
+        conflict_clause_gauss.clear();
+        xorEqualFalse_gauss = false;
+        ret_gauss = 4;
+    }
+
+};
+
 }
 
-#endif //GAUSSWATCHED_H
+#endif

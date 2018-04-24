@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "minisat_rnd.h"
 #include "simplefile.h"
 #include "searchstats.h"
+#include "gqueuedata.h"
 
 namespace CMSat {
 
@@ -119,7 +120,7 @@ class Searcher : public HyperEngine
         void clearEnGaussMatrixes();  //  clear Gaussian matrixes
         llbool Gauss_elimination(); // gaussian elimination in DPLL
         vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
-        vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
+        vector<GaussQData> gqueuedata;
 
         double   gauss_cpu_time;
         uint32_t big_gaussnum;   // total gauss time for DPLL

@@ -131,6 +131,7 @@ bool MatrixFinder::findMatrixes()
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         }
         solver->gmatrixes.push_back(new EGaussian(solver, solver->conf.gaussconf, 0, solver->xorclauses));
+        solver->gqueuedata.resize(solver->gmatrixes.size());
         return true;
     }
 
@@ -311,6 +312,7 @@ uint32_t MatrixFinder::setMatrixes()
         if (use_matrix) {
             solver->gmatrixes.push_back(
                 new EGaussian(solver, solver->conf.gaussconf, realMatrixNum, xorsInMatrix[i]));
+            solver->gqueuedata.resize(solver->gmatrixes.size());
 
             if (solver->conf.verbosity) {
                 cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;

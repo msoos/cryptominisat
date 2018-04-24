@@ -2791,19 +2791,10 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 llbool Searcher::Gauss_elimination()
 {
-    bool do_eliminate = false;  // we do elimination when basic variable is invoked
     bool entered_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
-    uint32_t e_var;                     // do elimination variable
-    uint16_t e_row_n ;             // do elimination row
-    uint16_t matrix_id = 0;
-    PropBy confl;
-
-    // for choose better conflict
-    int ret_gauss = 4;        // gauss matrix result
-    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();
-    bool xorEqualFalse = false;            // conflict xor clause xorEqualFalse
-    conflict_clause_gauss.clear();          //  for gaussian elimination better conflict
-
+    for(auto& gqd: gqueuedata) {
+        gqd.reset();
+    }
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
@@ -2831,8 +2822,7 @@ llbool Searcher::Gauss_elimination()
 
         for (; i != end; i++) {
             if (gmatrixes[i->matrix_num]->find_truths2(
-                    i, j, p.var(), confl, i->row_id, do_eliminate, e_var, e_row_n,
-                    ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse)
+                i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
@@ -2852,11 +2842,10 @@ llbool Searcher::Gauss_elimination()
         }
         ws.shrink_(i-j);
 
-        if (do_eliminate) {
-            gmatrixes[matrix_id]->eliminate_col2(
-                e_var, e_row_n, p.var(), confl,
-                ret_gauss, conflict_clause_gauss, conflict_size_gauss,
-                xorEqualFalse);
+        for (size_t i = 0; i < gqueuedata.size(); i++) {
+            if (gqueuedata[i].do_eliminate) {
+                gmatrixes[i]->eliminate_col2(p.var(), gqueuedata[i]);
+            }
         }
     }
 
@@ -2865,50 +2854,52 @@ llbool Searcher::Gauss_elimination()
         sum_EnGauss++;
     }
 
-    switch (ret_gauss){
-        case 1:{ // unit conflict
-            //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
-            bool ret = handle_conflict<false>(confl);
+    llbool finret = l_Nothing;
+    for (GaussQData& gqd: gqueuedata) {
+        switch (gqd.ret_gauss) {
+            case 1:{ // unit conflict
+                //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
+                bool ret = handle_conflict<false>(gqd.confl);
 
-            big_conflict++;
-            sum_Enconflict++;
+                big_conflict++;
+                sum_Enconflict++;
 
-            if (!ret) return l_False;
-            return l_Continue;
+                if (!ret) return l_False;
+                return l_Continue;
+            }
+            case 0:{  // conflict
+                big_conflict++;
+                sum_Enconflict++;
 
+                Clause* conflPtr = solver->cl_alloc.Clause_new(
+                    gqd.conflict_clause_gauss, gqd.xorEqualFalse_gauss);
+
+                conflPtr->set_gauss_temp_cl();
+                gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
+                gqhead = qhead = trail.size();
+
+                bool ret = handle_conflict<false>(gqd.confl);
+                solver->cl_alloc.clauseFree(gqd.confl.get_offset());
+                if (!ret) return l_False;
+                return l_Continue;
+            }
+
+            case 2:  // propagation
+            case 3: // unit propagation
+                big_propagate++;
+                sum_Enpropagate++;
+                finret = l_Continue;
+
+            case 4:
+                //nothing
+                break;
+
+            default:
+                assert(false);
+                return l_Nothing;
         }
-        case 0:{  // conflict
-            //assert(conflict_size_gauss>2 && conflict_size_gauss != UINT_MAX);
-            //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
-
-            Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse);
-            conflPtr->set_gauss_temp_cl();
-            confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
-            gqhead = qhead = trail.size();
-
-            bool ret = handle_conflict<false>(confl);
-
-            big_conflict++;
-            sum_Enconflict++;
-
-            solver->cl_alloc.clauseFree(confl.get_offset());
-            if (!ret) return l_False;
-            return l_Continue;
-        }
-
-        case 2:  // propagation
-        case 3: // unit propagation
-            big_propagate++;
-            sum_Enpropagate++;
-            return l_Continue;
-
-        case 4:
-            return l_Nothing;
-
-        default:
-            assert(false);
-            return l_Nothing;
     }
+    return finret;
 }
 #endif //USE_GAUSS
 
@@ -3736,5 +3727,6 @@ void Searcher::clearEnGaussMatrixes()
         w.clear();
     }
     gmatrixes.clear();
+    gqueuedata.clear();
 }
 #endif

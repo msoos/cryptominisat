@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "propby.h"
 #include "xor.h"
 #include "gausswatched.h"
+#include "gqueuedata.h"
 
 //#define VERBOSE_DEBUG
 //#define DEBUG_GAUSS
@@ -76,7 +77,7 @@ class EGaussian {
         // used in orignal matrix
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
         vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
-        uint16_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
+        uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
     };
     matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
@@ -89,7 +90,7 @@ class EGaussian {
 
     inline void propagation_twoclause(const bool xorEqualFalse);
     inline void conflict_twoclause(PropBy& confl);
-    inline void delete_gausswatch(const bool orig_basic, const uint16_t  row_n);
+    inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
 
   public:
     // variable
@@ -116,24 +117,14 @@ class EGaussian {
         const GaussWatched* i,
         GaussWatched*& j,
         uint32_t p,
-        PropBy& confl,
-        const uint16_t row_n, bool& do_eliminate, uint32_t& e_var, uint16_t& e_row_n,
-        int& ret_gauss,
-        vector<Lit>& conflict_clause_gauss,
-        uint32_t& conflict_size_gauss,
-        bool& xorEqualFalse_gauss
+        const uint32_t row_n,
+        GaussQData& gqd
     );
 
     // when basic variable is touch , eliminate one col
     void eliminate_col2(
-        uint32_t e_var,
-        uint16_t e_row_n,
         uint32_t p,
-        PropBy& confl,
-        int& ret_gauss,
-        vector<Lit>& conflict_clause_gauss,
-        uint32_t& conflict_size_gauss,
-        bool& xorEqualFalse_gauss
+        GaussQData& gqd
     );
 
     void Debug_funtion(); // used to debug
