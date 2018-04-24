@@ -158,7 +158,7 @@ void CNF::enlarge_nonminimial_datastructs(size_t n)
 void CNF::enlarge_minimal_datastructs(size_t n)
 {
     watches.insert(2*n);
-    GausWatches.insert(2*n);
+    gwatches.insert(2*n);
     seen.insert(seen.end(), 2*n, 0);
     seen2.insert(seen2.end(), 2*n, 0);
     permDiff.insert(permDiff.end(), 2*n, 0);
@@ -172,9 +172,9 @@ void CNF::save_on_var_memory()
 
     watches.resize(nVars()*2);
     watches.consolidate();
-    GausWatches.resize(nVars()*2);
+    gwatches.resize(nVars()*2);
     //GAUSS TODO
-    //GausWatches.consolidate();
+    //gwatches.consolidate();
 
     implCache.save_on_var_memorys(nVars());
     stamp.save_on_var_memory(nVars());

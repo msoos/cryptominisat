@@ -2819,7 +2819,7 @@ llbool Searcher::Gauss_elimination()
     while (Gauseqhead <  qhead ) {
         Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
 
-        vec<GaussWatched>&  ws  = GausWatches[p.var()];
+        vec<GaussWatched>&  ws  = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
         GaussWatched* end = ws.end();
@@ -3738,7 +3738,7 @@ void Searcher::clearEnGaussMatrixes()
     for(EGaussian* g: gmatrixes) {
         delete g;
     }
-    for(auto& w: GausWatches) {
+    for(auto& w: gwatches) {
         w.clear();
     }
     gmatrixes.clear();
