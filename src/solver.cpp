@@ -3790,6 +3790,7 @@ bool Solver::init_all_matrixes()
         *j++ = *i++;
     }
     gmatrixes.resize(solver->gmatrixes.size()-(i-j));
+    gqueuedata.resize(gmatrixes.size());
 
     big_gaussnum = 0;
     big_propagate = 0;
