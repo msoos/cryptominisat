@@ -470,9 +470,8 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     uint32_t nb_var = 0;     // new nobasic variable
-    int ret;                 // gaussian matrixt condition
     bool orig_basic = false; // check invoked variable is basic or non-basic
-    // init
+
     gqd.e_var = std::numeric_limits<uint32_t>::max();
     gqd.e_row_n = std::numeric_limits<uint32_t>::max();
     gqd.do_eliminate = false;
@@ -492,7 +491,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         GasVar_state[p] = non_basic_var;
     }
 
-    ret = (*rowIt).propGause(tmp_clause, solver->assigns, cur_matrixset.col_to_var, GasVar_state,
+    int ret = (*rowIt).propGause(tmp_clause, solver->assigns, cur_matrixset.col_to_var, GasVar_state,
                              nb_var, var_to_col[p]);
 
     switch (ret) {
