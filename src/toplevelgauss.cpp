@@ -186,10 +186,14 @@ bool TopLevelGauss::extractInfoFromBlock(
     assert(thisXors.size() > 1 && "We pre-filter the set such that *every* block contains at least 2 xors");
 
     //Set up matrix
-    size_t numCols = block.size()+1; //we need augmented column
-    size_t matSize = numCols*thisXors.size();
+    uint64_t numCols = block.size()+1; //we need augmented column
+    uint64_t matSize = numCols*thisXors.size();
+    matSize /= 1000ULL*1000ULL;
     if (matSize > solver->conf.maxXORMatrix) {
         //this matrix is way too large, skip :(
+        if (solver->conf.verbosity) {
+            cout << "c skipping matrix " << thisXors.size() << " x " << numCols << " size:" << matSize << endl;
+        }
         return solver->okay();
     }
     mzd_t *mat = mzd_init(thisXors.size(), numCols);
@@ -217,7 +221,7 @@ bool TopLevelGauss::extractInfoFromBlock(
     }
 
     //Fully echelonize
-    mzd_echelonize(mat, true);
+    mzd_echelonize_pluq(mat, true);
 
     //Examine every row if it gives some new short truth
     vector<Lit> lits;

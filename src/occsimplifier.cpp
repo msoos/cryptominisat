@@ -1256,6 +1256,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             ) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
+                finder.xor_together_xors();
+                finder.remove_xors_without_connecting_vars();
                 vector<Lit> out_changed_occur;
                 topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
 

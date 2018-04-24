@@ -160,7 +160,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXorToFind     (7)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
-        , maxXORMatrix     (10LL*1000LL*1000LL)
+        , maxXORMatrix     (400ULL)
         , xor_finder_time_limitM(60)
 
         //Var-replacer
