@@ -207,7 +207,6 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat)
     return xorclauses.size();
 }
 
-
 void EGaussian::fill_matrix(matrixset& origMat)
 {
     var_to_col.clear();
@@ -232,7 +231,9 @@ void EGaussian::fill_matrix(matrixset& origMat)
     GasVar_state.clear();  // reset variable state
     GasVar_state.growTo(solver->nVars(), non_basic_var); // init varaible state
     origMat.nb_rows.clear();  // clear non-basic
-    for (size_t ii = 0 ; ii < solver->GausWatches.size() ; ii++) { //  delete gauss watch list
+
+    //delete gauss watch list
+    for (size_t ii = 0 ; ii < solver->GausWatches.size() ; ii++) {
         //assert(solver->GausWatches[ii].size() == 0);  // I think gaussian watch list already clear
         solver->GausWatches[ii].clear();
     }
@@ -444,10 +445,10 @@ inline void EGaussian::conflict_twoclause(PropBy& confl) {
     solver->failBinLit = lit2;
 }
 
-
+// Delete this row because we have already add to xor clause, nothing to do anymore
 inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  row_n) {
-    // Delete this row because we have already add to xor clause, nothing to do anymore
-    if (orig_basic) { // clear nonbasic value watch list
+    if (orig_basic) {
+        // clear nonbasic value watch list
         bool debug_find = false;
         vec<GaussWatched>&  ws_t = solver->GausWatches[cur_matrixset.nb_rows[row_n]];
         for (int tmpi = ws_t.size() - 1 ; tmpi >= 0 ; tmpi--) {
@@ -460,7 +461,7 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint16_t  
         }
         assert(debug_find);
     } else {
-        assert( solver->GausWatches[tmp_clause[0].var()].size()== 1 );
+        assert(solver->GausWatches[tmp_clause[0].var()].size() == 1);
         solver->GausWatches[tmp_clause[0].var() ].clear();
     }
 }
