@@ -91,7 +91,7 @@ public:
     bool ok = true; //If FALSE, state of CNF is UNSAT
 
     watch_array watches;
-    vec<vec<GaussWatched>> GausWatches;
+    vec<vec<GaussWatched>> gwatches;
     uint32_t Gauseqhead;
     vector<VarData> varData;
     bool VSIDS = true;
