@@ -2813,7 +2813,7 @@ llbool Searcher::Gauss_elimination()
         engaus_disable = true;
     }
 
-     if (engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
+    if (engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
         return l_Nothing;
     }
 
