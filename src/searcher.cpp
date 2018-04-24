@@ -2834,10 +2834,11 @@ llbool Searcher::Gauss_elimination()
         if (i != end) {  // must conflict two variable
             i++;
             //copy remaining watches
-            GaussWatched* j2 = i;
-            GaussWatched* i2 = j;
-            while(i2 != end) {
-                *j2++ = *i2++;
+            GaussWatched* j2 = j;
+            GaussWatched* i2 = i;
+            for(; i2 != end; i2++) {
+                *j2 = *i2;
+                j2++;
             }
         }
         ws.shrink_(i-j);
