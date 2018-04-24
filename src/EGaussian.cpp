@@ -262,8 +262,9 @@ bool EGaussian::full_init(bool& created) {
         }
 
         eliminate(cur_matrixset); // gauss eliminate algorithm
-        ret =
-            adjust_matrix(cur_matrixset); // find some row already true false, and insert watch list
+
+        // find some row already true false, and insert watch list
+        ret = adjust_matrix(cur_matrixset);
 
         switch (ret) {
             case conflict:

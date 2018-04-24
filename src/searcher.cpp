@@ -2792,7 +2792,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 llbool Searcher::Gauss_elimination()
 {
     bool do_eliminate = false;  // we do elimination when basic variable is invoked
-    bool enter_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
+    bool entered_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
     uint32_t e_var;                     // do elimination variable
     uint16_t e_row_n ;             // do elimination row
     uint16_t matrix_id = 0;
@@ -2800,7 +2800,7 @@ llbool Searcher::Gauss_elimination()
     // for choose better conflict
     int ret_gauss = 4;        // gauss matrix result
     uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();  // conflict clause size
-    bool xorEqualFalse_gauss = false;            // conflict xor clause xorEqualFalse_gauss
+    bool xorEqualFalse = false;            // conflict xor clause xorEqualFalse
     conflict_clause_gauss.clear();          //  for gaussian elimination better conflict
 
     //assert(qhead == trail.size());
@@ -2816,26 +2816,22 @@ llbool Searcher::Gauss_elimination()
         return l_Nothing;
     }
 
-    while (Gauseqhead <  qhead ) {
-        Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
-
-        vec<GaussWatched>&  ws  = gwatches[p.var()];
+    while (Gauseqhead <  qhead) {
+        const Lit p = trail[Gauseqhead++];
+        vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
-        GaussWatched* end = ws.end();
+        const GaussWatched* end = ws.end();
 
-        if(i != end)
-            matrix_id = (*i).matrix_num;
-        else
+        if (i == end)
             continue;
 
-        enter_matrix = true; // one variable is in gaussian matrix
+        entered_matrix = true;
 
         for (; i != end; i++) {
-            //assert(matrix_id == (*i).matrix_num);
-            if (gmatrixes[matrix_id]->find_truths2(
-                    i, j, p.var(), confl, (*i).row_id, do_eliminate, e_var, e_row_n,
-                    ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse_gauss)
+            if (gmatrixes[i->matrix_num]->find_truths2(
+                    i, j, p.var(), confl, i->row_id, do_eliminate, e_var, e_row_n,
+                    ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse)
             ) {
                 continue;
             } else {
@@ -2849,24 +2845,21 @@ llbool Searcher::Gauss_elimination()
             //copy remaining watches
             GaussWatched* j2 = i;
             GaussWatched* i2 = j;
-
-            for(i2 = i, j2 = j; i2 != end; i2++) {
-                *j2 = *i2;
-                j2++;
+            while(i2 != end) {
+                *j2++ = *i2++;
             }
         }
-        //assert(i >= j);
         ws.shrink_(i-j);
 
-        if(do_eliminate){
+        if (do_eliminate) {
             gmatrixes[matrix_id]->eliminate_col2(
-                e_var , e_row_n , p.var() ,confl,
-                ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,
-                xorEqualFalse_gauss);
+                e_var, e_row_n, p.var(), confl,
+                ret_gauss, conflict_clause_gauss, conflict_size_gauss,
+                xorEqualFalse);
         }
     }
 
-    if (enter_matrix) {
+    if (entered_matrix) {
         big_gaussnum++;
         sum_EnGauss++;
     }
@@ -2887,7 +2880,7 @@ llbool Searcher::Gauss_elimination()
             //assert(conflict_size_gauss>2 && conflict_size_gauss != UINT_MAX);
             //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
 
-            Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse_gauss);
+            Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse);
             conflPtr->set_gauss_temp_cl();
             confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
             Gauseqhead = qhead = trail.size();
