@@ -1173,7 +1173,7 @@ lbool Searcher::search()
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
-        Gauseqhead = qhead;
+        gqhead = qhead;
         if (update_bogoprops) {
             confl = propagate<update_bogoprops>();
         } else {
@@ -2797,14 +2797,15 @@ llbool Searcher::Gauss_elimination()
     uint16_t e_row_n ;             // do elimination row
     uint16_t matrix_id = 0;
     PropBy confl;
+
     // for choose better conflict
     int ret_gauss = 4;        // gauss matrix result
-    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();  // conflict clause size
+    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();
     bool xorEqualFalse = false;            // conflict xor clause xorEqualFalse
     conflict_clause_gauss.clear();          //  for gaussian elimination better conflict
 
-    //assert(qhead == trail.size());
-    //assert(Gauseqhead <= qhead);
+    assert(qhead == trail.size());
+    assert(gqhead <= qhead);
 
     if (solver->conf.gaussconf.autodisable &&
         (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
@@ -2812,12 +2813,12 @@ llbool Searcher::Gauss_elimination()
         engaus_disable = true;
     }
 
-     if( engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
+     if (engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
         return l_Nothing;
     }
 
-    while (Gauseqhead <  qhead) {
-        const Lit p = trail[Gauseqhead++];
+    while (gqhead <  qhead) {
+        const Lit p = trail[gqhead++];
         vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
@@ -2864,7 +2865,7 @@ llbool Searcher::Gauss_elimination()
         sum_EnGauss++;
     }
 
-    switch(ret_gauss){
+    switch (ret_gauss){
         case 1:{ // unit conflict
             //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
             bool ret = handle_conflict<false>(confl);
@@ -2883,7 +2884,7 @@ llbool Searcher::Gauss_elimination()
             Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse);
             conflPtr->set_gauss_temp_cl();
             confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
-            Gauseqhead = qhead = trail.size();
+            gqhead = qhead = trail.size();
 
             bool ret = handle_conflict<false>(confl);
 
