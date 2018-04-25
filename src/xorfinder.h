@@ -143,7 +143,7 @@ public:
         }
 
         Stats& operator+=(const Stats& other);
-        void print_short(const Solver* solver) const;
+        void print_short(const Solver* solver, const double time_remain) const;
         void print() const;
 
         //Time
