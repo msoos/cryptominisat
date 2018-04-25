@@ -430,10 +430,15 @@ bool XorFinder::xor_together_xors()
             if (x_new.size() == 1) {
                 unit_added++;
                 Lit l(x_new[0], !x_new.rhs);
-                solver->enqueue(l);
-                solver->ok = solver->propagate_occur();
-                if (!solver->ok) {
+                if (solver->value(l) == l_False) {
+                    solver->ok = false;
                     goto end;
+                } else if (solver->value(l) == l_Undef) {
+                    solver->enqueue(l);
+                    solver->ok = solver->propagate_occur();
+                    if (!solver->ok) {
+                        goto end;
+                    }
                 }
                 add = false;
             }
