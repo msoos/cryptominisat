@@ -428,20 +428,19 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     varData[v].level = decisionLevel();
     if (!update_bogoprops) {
         varData[v].polarity = !sign;
+        #ifdef STATS_NEEDED
+        if (sign) {
+            propStats.varSetNeg++;
+        } else {
+            propStats.varSetPos++;
+        }
+        #endif
     }
     trail.push_back(p);
 
     if (update_bogoprops) {
         propStats.bogoProps += 1;
     }
-
-    #ifdef STATS_NEEDED
-    if (sign) {
-        propStats.varSetNeg++;
-    } else {
-        propStats.varSetPos++;
-    }
-    #endif
 
     #ifdef ANIMATE3D
     std::cerr << "s " << v << " " << p.sign() << endl;
