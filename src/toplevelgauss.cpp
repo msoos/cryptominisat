@@ -392,7 +392,7 @@ void TopLevelGauss::cutIntoBlocks(const vector<size_t>& xorsToUse)
     }
 
     if (solver->conf.verbosity) {
-        cout << "c Sum vars in blocks: " << runStats.numVarsInBlocks << endl;
+        cout << "c [xor-m4ri] Sum vars in blocks: " << runStats.numVarsInBlocks << endl;
     }
 }
 
