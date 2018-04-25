@@ -161,7 +161,7 @@ public:
     void free_mem();
     void add_xors_to_gauss();
     void remove_xors_without_connecting_vars();
-    void xor_together_xors();
+    bool xor_together_xors();
     bool add_new_truths_from_xors();
 
     vector<Xor> xors;
