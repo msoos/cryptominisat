@@ -42,6 +42,10 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
 
 void XorFinder::find_xors_based_on_long_clauses()
 {
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
+
     vector<Lit> lits;
     for (vector<ClOffset>::iterator
         it = occsimplifier->clauses.begin()
