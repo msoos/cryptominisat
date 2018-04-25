@@ -487,7 +487,7 @@ void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(
     } else {
         runStats.irredCacheBased += tmpStats;
     }
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         if (solver->conf.verbosity >= 10) {
             cout << "red:" << red << " alsostrenghten:" << alsoStrengthen << endl;
         }
