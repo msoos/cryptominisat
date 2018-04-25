@@ -1804,7 +1804,6 @@ bool Searcher::handle_conflict(const PropBy confl)
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
     );
-    glue --;
     print_learnt_clause();
 
     //Add decision-based clause in case it's short
