@@ -81,7 +81,10 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
             }
         }
     }
-    cout << "c num_unfound xor: " << num_unfound << endl;
+
+    if (solver->conf.verbosity) {
+        cout << "c num_unfound xor: " << num_unfound << endl;
+    }
 
     for (Xor& x : xors) {
         bool must_print = true;
