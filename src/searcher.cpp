@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "hasher.h"
 #include "solverconf.h"
 #include "distillerlong.h"
+#include "matrixfinder.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -2295,6 +2296,15 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
+    clearEnGaussMatrixes();
+    {
+        MatrixFinder finder(solver);
+        ok = finder.findMatrixes();
+        if (!ok) {
+            status = l_False;
+            goto end;
+        }
+    }
     if (!solver->init_all_matrixes()) {
         return l_False;
     }
@@ -2799,7 +2809,7 @@ llbool Searcher::Gauss_elimination()
     assert(gqhead <= qhead);
 
     if (solver->conf.gaussconf.autodisable &&
-        (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
+        (big_gaussnum > 500 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
     ) {
         engaus_disable = true;
     }

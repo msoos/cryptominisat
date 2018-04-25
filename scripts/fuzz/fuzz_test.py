@@ -242,7 +242,7 @@ class Tester:
 
         if "autodisablegauss" in self.extra_opts_supported:
             if random.choice([False, True, True, True]) and self.this_gauss_on:
-                sched.append("occ-gauss")
+                sched.append("occ-xor")
 
         return sched
 

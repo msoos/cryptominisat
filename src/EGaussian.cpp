@@ -74,7 +74,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         for (uint32_t v : x) {
             if (v > 165) {
                 num_unfound++;
-                if (solver->conf.verbosity) {
+                if (solver->conf.verbosity >= 2) {
                     cout << "c " << x << endl;
                 }
                 break;
@@ -92,7 +92,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
             }
         }
         if (must_print) {
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 2) {
                 cout << "c " << x << endl;
             }
         }

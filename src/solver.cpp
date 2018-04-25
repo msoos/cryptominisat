@@ -62,7 +62,6 @@ THE SOFTWARE.
 #include "trim.h"
 #include "streambuffer.h"
 #include "EGaussian.h"
-#include "matrixfinder.h"
 #include "sqlstats.h"
 #include "drat.h"
 
@@ -1343,15 +1342,6 @@ lbool Solver::solve_with_assumptions(
     if (status == l_Undef
         && conf.preprocess == 0
     ) {
-        #ifdef USE_GAUSS
-        clearEnGaussMatrixes();
-        MatrixFinder finder(this);
-        ok = finder.findMatrixes();
-        if (!ok) {
-            status = l_False;
-            goto end;
-        }
-        #endif
         status = iterate_until_solved();
     }
 
@@ -1719,12 +1709,6 @@ bool Solver::execute_inprocess_strategy(
                     << occ_strategy_tokens << "'\n";
                 }
                 occsimplifier->simplify(startup, occ_strategy_tokens);
-                if (ok && occ_strategy_tokens == "occ-gauss,") {
-                    #ifdef USE_GAUSS
-                    MatrixFinder finder(this);
-                    finder.findMatrixes();
-                    #endif
-                }
             }
             occ_strategy_tokens.clear();
             if (sumConflicts >= (uint64_t)conf.max_confl
