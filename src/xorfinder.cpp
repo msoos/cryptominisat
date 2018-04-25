@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 
 #include <limits>
+//#define XOR_DEBUG
 
 using namespace CMSat;
 using std::cout;
@@ -42,6 +43,10 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
 
 void XorFinder::find_xors_based_on_long_clauses()
 {
+    #ifdef DEBUG_MARKED_CLAUSE
+    assert(solver->no_marked_clauses());
+    #endif
+
     vector<Lit> lits;
     for (vector<ClOffset>::iterator
         it = occsimplifier->clauses.begin()
@@ -178,7 +183,7 @@ void XorFinder::print_found_xors()
 void XorFinder::add_xors_to_gauss()
 {
     solver->xorclauses = xors;
-    #ifdef SLOW_DEBUG
+    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     for(const Xor& x: xors) {
         for(uint32_t v: x) {
             assert(solver->varData[v].removed == Removed::none);
@@ -205,14 +210,13 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
         findXorMatch(solver->watches[~lit], ~lit);
     }
 
-    xor_find_time_limit -= 20;
     //findXorMatch(solver->watches[slit], slit);
     //findXorMatch(solver->watches[~slit], ~slit);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
         Xor found_xor(lits, poss_xor.getRHS());
-        #ifdef SLOW_DEBUG
+        #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
         for(Lit lit: lits) {
             assert(solver->varData[lit.var()].removed == Removed::none);
         }
@@ -263,21 +267,23 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
                 std::swap(binvec[0], binvec[1]);
             }
 
-            xor_find_time_limit-=50;
+            xor_find_time_limit -= 10;
             poss_xor.add(binvec, std::numeric_limits<ClOffset>::max(), varsMissing);
 
         } else {
             const ClOffset offset = w.get_offset();
             Clause& cl = *solver->cl_alloc.ptr(offset);
-            xor_find_time_limit -= 20; //deref penalty
             if (cl.freed() || cl.getRemoved())
                 continue;
 
-            //Could be smaller, but it would be expensive
+            //Allow the clause to be smaller or equal in size
             if (cl.size() > poss_xor.getSize())
                 continue;
 
             //Doesn't contain variables not in the original clause
+            #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
+            assert(cl.abst == calcAbstraction(cl));
+            #endif
             if ((cl.abst | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
@@ -301,7 +307,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
                 cl.stats.marked_clause = true;;
             }
 
-            xor_find_time_limit-=50;
+            xor_find_time_limit -= 10;
             poss_xor.add(cl, offset, varsMissing);
         }
 
@@ -478,7 +484,7 @@ bool XorFinder::xor_together_xors()
         );
     }
 
-    #ifdef SLOW_DEBUG
+    #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     //Make sure none is 2.
     for(const Xor& x: xors) {
         for(uint32_t v: x) {
