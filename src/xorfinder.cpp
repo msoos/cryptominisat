@@ -420,44 +420,29 @@ bool XorFinder::xor_together_xors()
                       xors[idxes[0]].rhs ^ xors[idxes[1]].rhs);
 
             //check x_new
-            if (x_new.size() == 0) {
-                if (x_new.rhs == true) {
-                    solver->ok = false;
-                    goto end;
-                } else {
-                    continue;
-                }
-            }
+            bool add = true;
             if (x_new.size() == 1) {
                 unit_added++;
                 Lit l(x_new[0], !x_new.rhs);
                 solver->enqueue(l);
                 solver->ok = solver->propagate_occur();
-                if (!solver->ok)
+                if (!solver->ok) {
                     goto end;
-                continue;
-            }
-            if (x_new.size() == 2) {
-                bin_added++;
-                vector<Lit> lits(2);
-                lits[0] = Lit(x_new[0], false);
-                lits[1] = Lit(x_new[1], false);
-                solver->ok = solver->add_xor_clause_inter(lits, x_new.rhs, true);
-                if (!solver->ok)
-                    goto end;
+                }
+                add = false;
             }
 
             changed = true;
-
-            xors.push_back(x_new);
-            for(uint32_t v2: x_new) {
-                Lit l(v2, false);
-                solver->watches[l].push(Watched(xors.size()-1));
-                occcnt[l.var()]++;
-                if (occcnt[l.var()] == 2) {
-                    interesting.push_back(l.var());
+            if (add) {
+                xors.push_back(x_new);
+                for(uint32_t v2: x_new) {
+                    Lit l(v2, false);
+                    solver->watches[l].push(Watched(xors.size()-1));
+                    if (occcnt[l.var()] == 2) {
+                        interesting.push_back(l.var());
+                    }
+                    solver->watches.smudge(l);
                 }
-                solver->watches.smudge(l);
             }
             xors[idxes[0]] = Xor();
             xors[idxes[1]] = Xor();
