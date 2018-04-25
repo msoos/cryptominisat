@@ -1860,7 +1860,9 @@ lbool Solver::simplify_problem(const bool startup)
     #endif
 
     clear_order_heap();
+    #ifdef USE_GAUSS
     clearEnGaussMatrixes();
+    #endif
 
     if (conf.verbosity >= 6) {
         cout

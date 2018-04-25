@@ -402,10 +402,6 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
     m.matrix.resizeNumRows(row_id - adjust_zero);
     m.num_rows = row_id - adjust_zero;
 
-    if (!solver->Is_Gauss_first) {
-        solver->sum_initLinear = adjust_zero;
-        solver->Is_Gauss_first = true;
-    }
     // printf("DD: adjust number of Row:%d    n",num_row);
     // printf("dd:matrix by EGaussian::adjust_matrix    n");
     // print_matrix(m);

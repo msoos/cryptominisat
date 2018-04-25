@@ -117,13 +117,12 @@ class Searcher : public HyperEngine
         void consolidate_watches();
 
         //Gauss
+        #ifdef USE_GAUSS
         void clearEnGaussMatrixes();  //  clear Gaussian matrixes
         llbool Gauss_elimination(); // gaussian elimination in DPLL
         vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
         vector<GaussQData> gqueuedata;
 
-        double   gauss_cpu_time;
-        bool findmatrix_first;  // Dose find matrix first . For findmatrix only first if only matrix is zero
         uint32_t sum_gauss_called;
         uint32_t sum_gauss_confl;
         uint32_t sum_gauss_prop;
@@ -132,13 +131,12 @@ class Searcher : public HyperEngine
         uint32_t get_sum_gauss_confl() const;
         uint32_t get_sum_gauss_prop() const;
         uint32_t get_sum_gauss_unit_truths() const;
+        #endif
 
         // stats
-        bool     Is_Gauss_first;       // The first time doing gaussian elimination , used for calculation how many row are linear row
         uint32_t sum_initEnGauss;      // the total sum of time calling "full_init"
         uint32_t sum_initUnit;           // the total sum of number getting unit  xor clasue in  initial gaussian matrix
         uint32_t sum_initTwo;           // the total sum of number getting two-variable xor clasue in  initial gaussian matrix
-        uint32_t sum_initLinear;     // the total sum of how many row are linear row
         uint32_t sum_Enconflict;        // the total sum of conflict in gaussian matrix
         uint32_t sum_Enpropagate;    // the total sum of propagation in gaussian matrx
         uint32_t sum_Enunit;            // the total sum of number getting two-variable xor clasue in  gaussian matrix
@@ -612,7 +610,7 @@ inline void Searcher::bump_vsids_var_act(uint32_t var, double mult)
     #endif
 }
 
-
+#ifdef USE_GAUSS
 inline uint32_t Searcher::get_sum_gauss_unit_truths() const
 {
     return sum_gauss_unit_truths;
@@ -632,6 +630,7 @@ inline uint32_t Searcher::get_sum_gauss_prop() const
 {
     return sum_gauss_prop;
 }
+#endif
 
 
 
