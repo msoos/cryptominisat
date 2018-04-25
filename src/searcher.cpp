@@ -65,17 +65,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         #ifdef USE_GAUSS
-        , gauss_cpu_time(0)
-        , findmatrix_first(false)
         , sum_gauss_called (0)
         , sum_gauss_confl  (0)
         , sum_gauss_prop   (0)
         , sum_gauss_unit_truths (0)
-		, Is_Gauss_first (false)
 		, sum_initEnGauss (0)
 		, sum_initUnit (0)
 		, sum_initTwo (0)
-		, sum_initLinear (0)
 		, sum_Enconflict (0)
 		, sum_Enpropagate(0)
 		, sum_Enunit(0)
