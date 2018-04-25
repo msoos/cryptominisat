@@ -1531,6 +1531,9 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
     hist.decisionLevelHistLT.push(decisionLevel());
+    const uint32_t overlap = antec_data.sum_size()-(antec_data.num()-1)-learnt_clause.size();
+    hist.antec_data_sum_sizeHistLT.push(antec_data.sum_size());
+    hist.overlapHistLT.push(overlap);
     #endif
     if (params.rest_type == Restart::backtrack) {
         hist.backtrackLevelHistLTLimited.push(backtrack_level);

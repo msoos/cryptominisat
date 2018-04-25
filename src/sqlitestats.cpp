@@ -921,7 +921,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 56;
+    const size_t numElems = 58;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -992,7 +992,9 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `vsids_vars_hist`,"
     << " `size_hist`,"
     << " `glue_hist`,"
-    << " `num_antecedents_hist`"
+    << " `num_antecedents_hist`,"
+    << " `antec_sum_size_hist`,"
+    << " `antec_overlap_hist`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -1104,6 +1106,9 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLTAll.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHistLT.avg());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.antec_data_sum_sizeHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.overlapHistLT.avg());
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {

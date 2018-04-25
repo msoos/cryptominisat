@@ -198,7 +198,9 @@ CREATE TABLE `clauseStats` (
   `vsids_vars_hist` double NOT NULL,
   `size_hist` float NOT NULL,
   `glue_hist` float NOT NULL,
-  `num_antecedents_hist` float NOT NULL
+  `num_antecedents_hist` float NOT NULL,
+  `antec_sum_size_hist` float NOT NULL,
+  `antec_overlap_hist` float NOT NULL
 );
 
 DROP TABLE IF EXISTS `features`;
