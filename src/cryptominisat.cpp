@@ -1008,19 +1008,6 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
     return get_sum_decisions() - data->previous_sum_decisions;
 }
 
-DLL_PUBLIC void SATSolver::set_gauss_config(const GaussConf& gconf)
-{
-#ifndef USE_GAUSS
-    std::cerr << "ERROR: Gauss not compiled, cannot set gauss config." << endl;
-    assert(false);
-    exit(-1);
-#endif
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.gaussconf = gconf;
-    }
-}
-
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);
