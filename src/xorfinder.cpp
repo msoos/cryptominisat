@@ -120,14 +120,15 @@ void XorFinder::find_xors()
         vector<Xor>::iterator i = xors.begin();
         vector<Xor>::iterator j = i;
         i++;
-        j++;
+        uint64_t size = 1;
         for(vector<Xor>::iterator end = xors.end(); i != end; i++) {
             if (*j != *i) {
                 j++;
                 *j = *i;
+                size++;
             }
         }
-        xors.resize(xors.size() - (i-j));
+        xors.resize(size);
     }
 
     //Cleanup

@@ -92,12 +92,6 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
     mtrand.seed(conf.origSeed);
     hist.setSize(conf.shortTermHistorySize, conf.blocking_restart_trail_hist_length);
     cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
-
-    big_gaussnum = 0;
-    big_propagate = 0;
-    big_conflict = 0;
-    engaus_disable = false;
-    mess_up_polarity = conf.mess_up_polarity;
 }
 
 Searcher::~Searcher()
@@ -1220,15 +1214,13 @@ lbool Searcher::search()
             assert(ok);
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
-                if (!engaus_disable) {
-                    llbool ret = Gauss_elimination();
-                    if (ret == l_Continue) {
-                        continue;
-                    //TODO conflict should be goto-d to "confl" label
-                    } else if (ret != l_Nothing) {
-                        dump_search_loop_stats(myTime);
-                        return ret;
-                    }
+                llbool ret = Gauss_elimination();
+                if (ret == l_Continue) {
+                    continue;
+                //TODO conflict should be goto-d to "confl" label
+                } else if (ret != l_Nothing) {
+                    dump_search_loop_stats(myTime);
+                    return ret;
                 }
             }
             #endif //USE_GAUSS
@@ -2309,10 +2301,6 @@ lbool Searcher::solve(
     if (!solver->init_all_matrixes()) {
         return l_False;
     }
-    big_gaussnum = 0;
-    big_propagate = 0;
-    big_conflict = 0;
-    engaus_disable = false;
     #endif //USE_GAUSS
 
     assert(solver->check_order_heap_sanity());
@@ -2802,22 +2790,28 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 llbool Searcher::Gauss_elimination()
 {
-    bool entered_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
+    if (decisionLevel() > solver->conf.gaussconf.decision_until ||
+        gqueuedata.size() == 0
+    ) {
+        return l_Nothing;
+    }
+
     for(auto& gqd: gqueuedata) {
         gqd.reset();
+
+        if (solver->conf.gaussconf.autodisable &&
+            (gqd.big_gaussnum > 500 && gqd.big_conflict*2+gqd.big_propagate < (uint32_t)((double)gqd.big_gaussnum*0.02))
+        ) {
+            gqd.engaus_disable = true;
+        }
+
+        if (gqd.engaus_disable) {
+            //TODO
+            return l_Nothing;
+        }
     }
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
-
-    if (solver->conf.gaussconf.autodisable &&
-        (big_gaussnum > 500 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
-    ) {
-        engaus_disable = true;
-    }
-
-    if (engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
-        return l_Nothing;
-    }
 
     while (gqhead <  qhead) {
         const Lit p = trail[gqhead++];
@@ -2829,9 +2823,8 @@ llbool Searcher::Gauss_elimination()
         if (i == end)
             continue;
 
-        entered_matrix = true;
-
         for (; i != end; i++) {
+            gqueuedata[i->matrix_num].enter_matrix = true;
             if (gmatrixes[i->matrix_num]->find_truths2(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
@@ -2854,33 +2847,32 @@ llbool Searcher::Gauss_elimination()
         }
         ws.shrink_(i-j);
 
-        for (size_t i = 0; i < gqueuedata.size(); i++) {
-            if (gqueuedata[i].do_eliminate) {
-                gmatrixes[i]->eliminate_col2(p.var(), gqueuedata[i]);
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].do_eliminate) {
+                gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
             }
         }
     }
 
-    if (entered_matrix) {
-        big_gaussnum++;
-        sum_EnGauss++;
-    }
-
     llbool finret = l_Nothing;
     for (GaussQData& gqd: gqueuedata) {
+        if (gqd.enter_matrix) {
+            gqueuedata[0].big_gaussnum++;
+            sum_EnGauss++;
+        }
         switch (gqd.ret_gauss) {
             case 1:{ // unit conflict
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
 
-                big_conflict++;
+                gqd.big_conflict++;
                 sum_Enconflict++;
 
                 if (!ret) return l_False;
                 return l_Continue;
             }
             case 0:{  // conflict
-                big_conflict++;
+                gqd.big_conflict++;
                 sum_Enconflict++;
 
                 Clause* conflPtr = solver->cl_alloc.Clause_new(
@@ -2898,7 +2890,7 @@ llbool Searcher::Gauss_elimination()
 
             case 2:  // propagation
             case 3: // unit propagation
-                big_propagate++;
+                gqd.big_propagate++;
                 sum_Enpropagate++;
                 finret = l_Continue;
 
@@ -3723,13 +3715,21 @@ void Searcher::cancelUntil(uint32_t level)
 #ifdef USE_GAUSS
 void Searcher::clearEnGaussMatrixes()
 {
-    if (solver->conf.verbosity && big_gaussnum > 0) {
-        cout << "c big_conflict/big_gaussnum:" << (double)big_conflict/(double)big_gaussnum*100.0 << " %" <<endl;
-        cout << "c big_propagate/big_gaussnum:" << (double)big_propagate/(double)big_gaussnum*100.0 << " %" <<endl;
+    for (auto& gqd: gqueuedata) {
+        if (solver->conf.verbosity && gqd.big_gaussnum > 0) {
+            cout << "c [gauss] big_conflict/big_gaussnum:" << (double)gqd.big_conflict/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
+            cout << "c [gauss] big_propagate/big_gaussnum:" << (double)gqd.big_propagate/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
+            cout << "c [gauss] big_propagate  : "; print_value_kilo_mega(gqd.big_propagate); cout << endl;
+            cout << "c [gauss] big_conflict   : "; print_value_kilo_mega(gqd.big_conflict); cout << endl;
+            cout << "c [gauss] big_gaussnum   : "; print_value_kilo_mega(gqd.big_gaussnum); cout << endl;
+
+            cout << "c [gauss] - sumstats -" << endl;
+            cout << "c [gauss] sum_Enpropagate: "; print_value_kilo_mega(sum_Enpropagate); cout << endl;
+            cout << "c [gauss] sum_Enconflict : "; print_value_kilo_mega(sum_Enconflict); cout << endl;
+            cout << "c [gauss] sum_EnGauss    : "; print_value_kilo_mega(sum_EnGauss); cout << endl;
+        }
+        gqd.reset_stats();
     }
-    big_conflict = 0;
-    big_propagate = 0;
-    big_gaussnum = 0;
 
     //cout << "Clearing matrixes" << endl;
     for(EGaussian* g: gmatrixes) {

@@ -123,10 +123,6 @@ class Searcher : public HyperEngine
         vector<GaussQData> gqueuedata;
 
         double   gauss_cpu_time;
-        uint32_t big_gaussnum;   // total gauss time for DPLL
-        uint32_t big_propagate;  // total gauss propogation time for DPLL
-        uint32_t big_conflict;   // total gauss conflict    time for DPLL
-        bool engaus_disable;     // decide to do gaussian elimination
         bool findmatrix_first;  // Dose find matrix first . For findmatrix only first if only matrix is zero
         uint32_t sum_gauss_called;
         uint32_t sum_gauss_confl;
