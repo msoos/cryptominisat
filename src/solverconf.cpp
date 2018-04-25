@@ -161,7 +161,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (400ULL)
-        , xor_finder_time_limitM(60)
+        , xor_finder_time_limitM(600)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
