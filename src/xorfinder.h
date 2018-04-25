@@ -159,6 +159,7 @@ public:
     const Stats& get_stats() const;
     size_t mem_used() const;
     void free_mem();
+    void grab_mem();
     void add_xors_to_gauss();
     void remove_xors_without_connecting_vars();
     bool xor_together_xors();

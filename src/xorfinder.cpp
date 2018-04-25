@@ -98,7 +98,7 @@ void XorFinder::find_xors()
 {
     runStats.clear();
     runStats.numCalls = 1;
-    occcnt.resize(solver->nVars(), 0);
+    grab_mem();
 
     xors.clear();
     double myTime = cpuTime();
@@ -675,6 +675,12 @@ size_t XorFinder::mem_used() const
     mem += varsMissing.capacity()*sizeof(uint32_t);
 
     return mem;
+}
+
+void XorFinder::grab_mem()
+{
+    occcnt.clear();
+    occcnt.resize(solver->nVars(), 0);
 }
 
 void XorFinder::free_mem()
