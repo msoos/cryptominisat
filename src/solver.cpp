@@ -3775,11 +3775,9 @@ bool Solver::init_all_matrixes()
     }
     gmatrixes.resize(solver->gmatrixes.size()-(i-j));
     gqueuedata.resize(gmatrixes.size());
-
-    big_gaussnum = 0;
-    big_propagate = 0;
-    big_conflict = 0;
-    engaus_disable = false;
+    for(auto& gqd: gqueuedata) {
+        gqd.reset_stats();
+    }
 
     return solver->ok;
 }
