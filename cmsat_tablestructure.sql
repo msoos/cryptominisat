@@ -146,7 +146,7 @@ CREATE TABLE `clauseStats` (
   `num_overlap_literals` int(20) NOT NULL,
   `num_antecedents` int(20) NOT NULL,
   `num_total_lits_antecedents` int(20) NOT NULL,
-  `antecedents_avg_size` int(20) NOT NULL,
+  `antecedents_avg_size` double(20) NOT NULL,
 
   `backtrack_level` int(20) NOT NULL,
   `decision_level` int(20) NOT NULL,
