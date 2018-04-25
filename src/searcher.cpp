@@ -1242,6 +1242,11 @@ lbool Searcher::search()
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil<true, update_bogoprops>(0);
+    confl = propagate<update_bogoprops>();
+    if (!confl.isNULL()) {
+        ok = false;
+        return l_False;
+    }
     assert(solver->prop_at_head());
     if (!solver->datasync->syncData()) {
         return l_False;
