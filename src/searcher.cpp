@@ -79,6 +79,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 		, sum_Enconflict (0)
 		, sum_Enpropagate(0)
 		, sum_Enunit(0)
+        , sum_EnGauss(0)
         #endif //USE_GAUSS
         , solver(_solver)
         , cla_inc(1)
