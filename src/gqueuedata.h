@@ -34,13 +34,30 @@ struct GaussQData {
     int ret_gauss;         // gauss matrix result
     bool xorEqualFalse_gauss;            // conflict xor clause xorEqualFalse
     vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
+
+
+    uint32_t big_gaussnum;   // total gauss time for DPLL
+    uint32_t big_propagate;  // total gauss propogation time for DPLL
+    uint32_t big_conflict;   // total gauss conflict    time for DPLL
+    bool engaus_disable;     // decide to do gaussian elimination
+    bool enter_matrix;
+
     void reset()
     {
+        enter_matrix = false;
         do_eliminate = false;
         conflict_clause_gauss.clear();
         xorEqualFalse_gauss = false;
         ret_gauss = 4;
         conflict_size_gauss = std::numeric_limits<uint32_t>::max();
+    }
+
+    void reset_stats()
+    {
+        big_gaussnum = 0;   // total gauss time for DPLL
+        big_propagate = 0;  // total gauss propogation time for DPLL
+        big_conflict = 0;   // total gauss conflict    time for DPLL
+        engaus_disable = 0;     // decide to do gaussian elimination
     }
 
 };
