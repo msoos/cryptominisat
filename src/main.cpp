@@ -518,8 +518,6 @@ void Main::add_supported_options()
     ("rewardotfsubsume", po::value(&conf.rewardShortenedClauseWithConfl)
         ->default_value(conf.rewardShortenedClauseWithConfl)
         , "Reward with this many prop&confl a clause that has been shortened with on-the-fly subsumption")
-    ("printimpldot", po::value(&conf.doPrintConflDot)->default_value(conf.doPrintConflDot)
-        , "Print implication graph DOT files (for input into graphviz package)")
     ;
 
     po::options_description propOptions("Propagation options");

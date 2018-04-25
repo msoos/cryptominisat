@@ -98,7 +98,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Verbosity
         , verbosity        (0)
         , doPrintGateDot   (false)
-        , doPrintConflDot  (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
         , verbStats        (0)
