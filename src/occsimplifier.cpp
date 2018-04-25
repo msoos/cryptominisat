@@ -1256,7 +1256,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             ) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                finder.xor_together_xors();
+                solver->ok = finder.xor_together_xors();
+                if (!solver->ok)
+                    return false;
                 finder.remove_xors_without_connecting_vars();
                 vector<Lit> out_changed_occur;
                 topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
@@ -1273,7 +1275,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 #ifdef USE_GAUSS
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                finder.xor_together_xors();
+                solver->ok = finder.xor_together_xors();
+                if (!solver->ok)
                 finder.remove_xors_without_connecting_vars();
                 const bool ok = finder.add_new_truths_from_xors();
                 if (ok) {
