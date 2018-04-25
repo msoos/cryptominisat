@@ -299,7 +299,7 @@ class DLL_PUBLIC SolverConf
         int      useCacheWhenFindingXors;
         int      doEchelonizeXOR;
         uint64_t maxXORMatrix;
-        long long xor_finder_time_limitM;
+        uint64_t xor_finder_time_limitM;
 
         //Var-replacement
         int doFindAndReplaceEqLits;
