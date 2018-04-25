@@ -30,6 +30,10 @@ THE SOFTWARE.
 #include "src/occsimplifier.h"
 using namespace CMSat;
 #include "test_helper.h"
+#include "src/toplevelgaussabst.h"
+#ifdef USE_M4RI
+#include "src/toplevelgauss.h"
+#endif
 
 struct xor_finder : public ::testing::Test {
     xor_finder()
@@ -369,16 +373,25 @@ struct xor_finder2 : public ::testing::Test {
         occsimp = s->occsimplifier;
         finder = new XorFinder(occsimp, s);
         finder->grab_mem();
+        #ifdef USE_M4RI
+        topLevelGauss = new TopLevelGauss(s);
+        #endif
     }
     ~xor_finder2()
     {
         delete s;
         delete finder;
+        #ifdef USE_M4RI
+        delete topLevelGauss;
+        #endif
     }
     Solver* s = NULL;
     OccSimplifier* occsimp = NULL;
     std::atomic<bool> must_inter;
     XorFinder* finder;
+    #ifdef USE_M4RI
+    TopLevelGaussAbst *topLevelGauss;
+    #endif
 };
 
 
@@ -483,18 +496,33 @@ TEST_F(xor_finder2, xor_unit)
 
 TEST_F(xor_finder2, xor_unit2)
 {
-    s->add_clause_outer(str_to_cl("-3"));
-    finder->xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    s->add_clause_outer(str_to_cl("-4"));
+    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_FALSE(ret);
 }
+
+#ifdef USE_M4RI
+TEST_F(xor_finder2, xor_unit2_2)
+{
+    s->add_clause_outer(str_to_cl("-4"));
+    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
+    vector<Lit> out_changed_occur;
+    bool ret = topLevelGauss->toplevelgauss(finder->xors, &out_changed_occur);
+    EXPECT_FALSE(ret);
+}
+#endif
 
 TEST_F(xor_finder2, xor_binx)
 {
     finder->xors = str_to_xors("1, 2, 5 = 0; 1, 2, 3 = 0;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
     check_red_cls_eq(s, "5, -3; -5, 3");
@@ -503,8 +531,10 @@ TEST_F(xor_finder2, xor_binx)
 TEST_F(xor_finder2, xor_binx_inv)
 {
     finder->xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 0;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
     check_red_cls_eq(s, "-5, -3; 5, 3");
@@ -513,8 +543,10 @@ TEST_F(xor_finder2, xor_binx_inv)
 TEST_F(xor_finder2, xor_binx_inv2)
 {
     finder->xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 1;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
     check_red_cls_eq(s, "5, -3; -5, 3");
@@ -523,8 +555,10 @@ TEST_F(xor_finder2, xor_binx_inv2)
 TEST_F(xor_finder2, xor_binx2_recur)
 {
     finder->xors = str_to_xors("1, 2, 5 = 0; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
     check_red_cls_eq(s, "5, -3; -5, 3");
@@ -533,11 +567,15 @@ TEST_F(xor_finder2, xor_binx2_recur)
 TEST_F(xor_finder2, xor_binx3_recur)
 {
     finder->xors = str_to_xors("8, 9, 2 = 1; 8, 9, 1, 5 = 1; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
-    finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
-    finder->xor_together_xors();
-    ret = finder->add_new_truths_from_xors();
+    ret = finder->xor_together_xors();
+    if (ret) {
+        ret &= finder->add_new_truths_from_xors();
+    }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
     check_red_cls_eq(s, "5, -3; -5, 3");
@@ -546,7 +584,8 @@ TEST_F(xor_finder2, xor_binx3_recur)
 TEST_F(xor_finder2, xor_recur_bug)
 {
     finder->xors = str_to_xors("3, 7, 9 = 0; 1, 3, 4, 5 = 1;");
-    finder->xor_together_xors();
+    bool ret = finder->xor_together_xors();
+    EXPECT_TRUE(ret);
     check_xors_eq(finder->xors, "7, 9 , 1, 4, 5 = 1;");
 }
 
