@@ -2800,15 +2800,20 @@ llbool Searcher::Gauss_elimination()
     for(auto& gqd: gqueuedata) {
         gqd.reset();
 
-        if (solver->conf.gaussconf.autodisable &&
-            (gqd.big_gaussnum > 500 && gqd.big_conflict*2+gqd.big_propagate < (uint32_t)((double)gqd.big_gaussnum*0.02))
-        ) {
-            gqd.engaus_disable = true;
-        }
-
         if (gqd.engaus_disable) {
             //TODO
             return l_Nothing;
+        }
+
+        if (solver->conf.gaussconf.autodisable &&
+            (gqd.big_gaussnum > 1000 && gqd.big_conflict*2+gqd.big_propagate < (uint32_t)((double)gqd.big_gaussnum*0.01))
+        ) {
+            const double perc = stats_line_percent(gqd.big_conflict*2+gqd.big_propagate, gqd.big_gaussnum);
+            if (solver->conf.verbosity) {
+                cout << "c [xor] Disabling ALL GJ-elim in this round. "
+                " Usefulness was: " << std::setprecision(2) << std::fixed << perc <<  "%" << endl;
+            }
+            gqd.engaus_disable = true;
         }
     }
     assert(qhead == trail.size());
