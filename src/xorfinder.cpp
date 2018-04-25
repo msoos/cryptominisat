@@ -346,12 +346,16 @@ void XorFinder::remove_xors_without_connecting_vars()
     toClear.clear();
 }
 
-void XorFinder::xor_together_xors()
+bool XorFinder::xor_together_xors()
 {
+    assert(solver->okay());
+    assert(solver->decisionLevel() == 0);
     assert(solver->watches.get_smudged_list().empty());
     uint32_t xored = 0;
     const double myTime = cpuTime();
     assert(toClear.empty());
+    uint32_t unit_added = 0;
+    uint32_t bin_added = 0;
 
     //Link in xors into watchlist
     for(size_t i = 0; i < xors.size(); i++) {
@@ -368,7 +372,6 @@ void XorFinder::xor_together_xors()
             solver->watches.smudge(l);
         }
     }
-
 
     //until fixedpoint
     bool changed = true;
@@ -416,23 +419,37 @@ void XorFinder::xor_together_xors()
             Xor x_new(xor_two(xors[idxes[0]], xors[idxes[1]]),
                       xors[idxes[0]].rhs ^ xors[idxes[1]].rhs);
 
-            changed = true;
-
-            xors.push_back(x_new);
-            for(uint32_t v2: x_new) {
-                Lit l(v2, false);
-                solver->watches[l].push(Watched(xors.size()-1));
-                occcnt[l.var()]++;
-                if (occcnt[l.var()] == 2) {
-                    interesting.push_back(l.var());
+            //check x_new
+            bool add = true;
+            if (x_new.size() == 1) {
+                unit_added++;
+                Lit l(x_new[0], !x_new.rhs);
+                solver->enqueue(l);
+                solver->ok = solver->propagate_occur();
+                if (!solver->ok) {
+                    goto end;
                 }
-                solver->watches.smudge(l);
+                add = false;
+            }
+
+            changed = true;
+            if (add) {
+                xors.push_back(x_new);
+                for(uint32_t v2: x_new) {
+                    Lit l(v2, false);
+                    solver->watches[l].push(Watched(xors.size()-1));
+                    if (occcnt[l.var()] == 2) {
+                        interesting.push_back(l.var());
+                    }
+                    solver->watches.smudge(l);
+                }
             }
             xors[idxes[0]] = Xor();
             xors[idxes[1]] = Xor();
             xored++;
         }
     }
+    end:
 
     for(const Lit l: toClear) {
         occcnt[l.var()] = 0;
@@ -444,8 +461,9 @@ void XorFinder::xor_together_xors()
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
-        << "c [occ-xor] xored together " << xored*2
-        << " clauses "
+        << "c [occ-xor] xored together " << xored
+        << " cls "
+        << " unit: " << unit_added << " bin: " << bin_added << " "
         << solver->conf.print_times(recur_time)
         << endl;
     }
@@ -480,6 +498,8 @@ void XorFinder::xor_together_xors()
     }
     toClear.clear();
     #endif
+
+    return solver->ok;
 }
 
 void XorFinder::clean_xors_from_empty()

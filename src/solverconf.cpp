@@ -160,7 +160,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxXorToFind     (7)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
-        , maxXORMatrix     (10LL*1000LL*1000LL)
+        , maxXORMatrix     (400ULL)
         , xor_finder_time_limitM(60)
 
         //Var-replacer
@@ -186,7 +186,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-cls-with-bin,"
             #ifdef USE_GAUSS
             //occ--gauss must be last
-            "occ-gauss"
+            "occ-xor"
             #endif
         )
         , simplify_schedule_nonstartup(
@@ -201,7 +201,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, check-cache-size, renumber,"
             #ifdef USE_GAUSS
             //occ--gauss must be last
-            "occ-gauss"
+            "occ-xor"
             #endif
         )
         , simplify_schedule_preproc(

@@ -1250,34 +1250,30 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
         } else if (token == "occ-xor") {
-            #ifdef USE_M4RI
-            if (solver->conf.doFindXors
-                && topLevelGauss != NULL
-            ) {
-                XorFinder finder(this, solver);
-                finder.find_xors();
-                vector<Lit> out_changed_occur;
-                topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
-
-                //these may have changed, recalculating occur
-                for(Lit lit: out_changed_occur) {
-                    n_occurs[lit.toInt()] = calc_occ_data(lit);
-                    n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-                }
-            }
-            #endif
-        } else if (token == "occ-gauss") {
             if (solver->conf.doFindXors) {
-                #ifdef USE_GAUSS
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                finder.xor_together_xors();
+                solver->ok = finder.xor_together_xors();
+                if (!solver->ok)
+                    return false;
+
+                solver->ok = finder.add_new_truths_from_xors();
+                if (!solver->ok)
+                    return false;
                 finder.remove_xors_without_connecting_vars();
-                const bool ok = finder.add_new_truths_from_xors();
-                if (ok) {
-                    finder.add_xors_to_gauss();
+                finder.add_xors_to_gauss();
+
+                #ifdef USE_M4RI
+                if (topLevelGauss != NULL) {
+                    vector<Lit> out_changed_occur;
+                    topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
+
+                    //these may have changed, recalculating occur
+                    for(Lit lit: out_changed_occur) {
+                        n_occurs[lit.toInt()] = calc_occ_data(lit);
+                        n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+                    }
                 }
-                finder.free_mem();
                 #endif
             }
         } else if (token == "occ-clean-implicit") {

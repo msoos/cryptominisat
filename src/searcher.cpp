@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "hasher.h"
 #include "solverconf.h"
 #include "distillerlong.h"
+#include "matrixfinder.h"
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
@@ -1174,7 +1175,7 @@ lbool Searcher::search()
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
-        Gauseqhead = qhead;
+        gqhead = qhead;
         if (update_bogoprops) {
             confl = propagate<update_bogoprops>();
         } else {
@@ -2296,6 +2297,15 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
+    clearEnGaussMatrixes();
+    {
+        MatrixFinder finder(solver);
+        ok = finder.findMatrixes();
+        if (!ok) {
+            status = l_False;
+            goto end;
+        }
+    }
     if (!solver->init_all_matrixes()) {
         return l_False;
     }
@@ -2792,51 +2802,38 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 llbool Searcher::Gauss_elimination()
 {
-    bool do_eliminate = false;  // we do elimination when basic variable is invoked
-    bool enter_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
-    uint32_t e_var;                     // do elimination variable
-    uint16_t e_row_n ;             // do elimination row
-    uint16_t matrix_id = 0;
-    PropBy confl;
-    // for choose better conflict
-    int ret_gauss = 4;        // gauss matrix result
-    uint32_t conflict_size_gauss = std::numeric_limits<uint32_t>::max();  // conflict clause size
-    bool xorEqualFalse_gauss = false;            // conflict xor clause xorEqualFalse_gauss
-    conflict_clause_gauss.clear();          //  for gaussian elimination better conflict
-
-    //assert(qhead == trail.size());
-    //assert(Gauseqhead <= qhead);
+    bool entered_matrix = false;  // If any variable in gauss watch list is invoked , used for calculation
+    for(auto& gqd: gqueuedata) {
+        gqd.reset();
+    }
+    assert(qhead == trail.size());
+    assert(gqhead <= qhead);
 
     if (solver->conf.gaussconf.autodisable &&
-        (big_gaussnum > 50 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
+        (big_gaussnum > 500 && big_conflict*2+big_propagate < (uint32_t)((double)big_gaussnum*0.02))
     ) {
         engaus_disable = true;
     }
 
-     if( engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
+    if (engaus_disable || (decisionLevel() > solver->conf.gaussconf.decision_until)) {
         return l_Nothing;
     }
 
-    while (Gauseqhead <  qhead ) {
-        Lit p   = trail[Gauseqhead++];     // 'p' is enqueued fact to propagate.
-
-        vec<GaussWatched>&  ws  = GausWatches[p.var()];
+    while (gqhead <  qhead) {
+        const Lit p = trail[gqhead++];
+        vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
-        GaussWatched* end = ws.end();
+        const GaussWatched* end = ws.end();
 
-        if(i != end)
-            matrix_id = (*i).matrix_num;
-        else
+        if (i == end)
             continue;
 
-        enter_matrix = true; // one variable is in gaussian matrix
+        entered_matrix = true;
 
         for (; i != end; i++) {
-            //assert(matrix_id == (*i).matrix_num);
-            if (gmatrixes[matrix_id]->find_truths2(
-                    i, j, p.var(), confl, (*i).row_id, do_eliminate, e_var, e_row_n,
-                    ret_gauss, conflict_clause_gauss, conflict_size_gauss, xorEqualFalse_gauss)
+            if (gmatrixes[i->matrix_num]->find_truths2(
+                i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
@@ -2848,74 +2845,73 @@ llbool Searcher::Gauss_elimination()
         if (i != end) {  // must conflict two variable
             i++;
             //copy remaining watches
-            GaussWatched* j2 = i;
-            GaussWatched* i2 = j;
-
-            for(i2 = i, j2 = j; i2 != end; i2++) {
+            GaussWatched* j2 = j;
+            GaussWatched* i2 = i;
+            for(; i2 != end; i2++) {
                 *j2 = *i2;
                 j2++;
             }
         }
-        //assert(i >= j);
         ws.shrink_(i-j);
 
-        if(do_eliminate){
-            gmatrixes[matrix_id]->eliminate_col2(
-                e_var , e_row_n , p.var() ,confl,
-                ret_gauss ,  conflict_clause_gauss ,conflict_size_gauss,
-                xorEqualFalse_gauss);
+        for (size_t i = 0; i < gqueuedata.size(); i++) {
+            if (gqueuedata[i].do_eliminate) {
+                gmatrixes[i]->eliminate_col2(p.var(), gqueuedata[i]);
+            }
         }
     }
 
-    if (enter_matrix) {
+    if (entered_matrix) {
         big_gaussnum++;
         sum_EnGauss++;
     }
 
-    switch(ret_gauss){
-        case 1:{ // unit conflict
-            //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
-            bool ret = handle_conflict<false>(confl);
+    llbool finret = l_Nothing;
+    for (GaussQData& gqd: gqueuedata) {
+        switch (gqd.ret_gauss) {
+            case 1:{ // unit conflict
+                //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
+                bool ret = handle_conflict<false>(gqd.confl);
 
-            big_conflict++;
-            sum_Enconflict++;
+                big_conflict++;
+                sum_Enconflict++;
 
-            if (!ret) return l_False;
-            return l_Continue;
+                if (!ret) return l_False;
+                return l_Continue;
+            }
+            case 0:{  // conflict
+                big_conflict++;
+                sum_Enconflict++;
 
+                Clause* conflPtr = solver->cl_alloc.Clause_new(
+                    gqd.conflict_clause_gauss, gqd.xorEqualFalse_gauss);
+
+                conflPtr->set_gauss_temp_cl();
+                gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
+                gqhead = qhead = trail.size();
+
+                bool ret = handle_conflict<false>(gqd.confl);
+                solver->cl_alloc.clauseFree(gqd.confl.get_offset());
+                if (!ret) return l_False;
+                return l_Continue;
+            }
+
+            case 2:  // propagation
+            case 3: // unit propagation
+                big_propagate++;
+                sum_Enpropagate++;
+                finret = l_Continue;
+
+            case 4:
+                //nothing
+                break;
+
+            default:
+                assert(false);
+                return l_Nothing;
         }
-        case 0:{  // conflict
-            //assert(conflict_size_gauss>2 && conflict_size_gauss != UINT_MAX);
-            //assert(confl.isNULL()); assert(conflict_clause_gauss.size() > 2);
-
-            Clause* conflPtr = solver->cl_alloc.Clause_new(conflict_clause_gauss, xorEqualFalse_gauss);
-            conflPtr->set_gauss_temp_cl();
-            confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
-            Gauseqhead = qhead = trail.size();
-
-            bool ret = handle_conflict<false>(confl);
-
-            big_conflict++;
-            sum_Enconflict++;
-
-            solver->cl_alloc.clauseFree(confl.get_offset());
-            if (!ret) return l_False;
-            return l_Continue;
-        }
-
-        case 2:  // propagation
-        case 3: // unit propagation
-            big_propagate++;
-            sum_Enpropagate++;
-            return l_Continue;
-
-        case 4:
-            return l_Nothing;
-
-        default:
-            assert(false);
-            return l_Nothing;
     }
+    return finret;
 }
 #endif //USE_GAUSS
 
@@ -3739,9 +3735,10 @@ void Searcher::clearEnGaussMatrixes()
     for(EGaussian* g: gmatrixes) {
         delete g;
     }
-    for(auto& w: GausWatches) {
+    for(auto& w: gwatches) {
         w.clear();
     }
     gmatrixes.clear();
+    gqueuedata.clear();
 }
 #endif
