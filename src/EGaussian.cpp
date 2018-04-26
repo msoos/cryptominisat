@@ -336,7 +336,7 @@ void EGaussian::eliminate(matrixset& m) {
     // print_matrix(m);
 }
 
-EGaussian::gret EGaussian::adjust_matrix(matrixset& m) {
+gret EGaussian::adjust_matrix(matrixset& m) {
     assert(solver->decisionLevel() == 0);
 
     PackedMatrix::iterator end = m.matrix.beginMatrix() + m.num_rows;
@@ -501,15 +501,11 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         GasVar_state[p] = non_basic_var;
     }
 
-    int ret = (*rowIt).propGause(tmp_clause, solver->assigns, matrix.col_to_var, GasVar_state,
+    const gret ret = (*rowIt).propGause(tmp_clause, solver->assigns, matrix.col_to_var, GasVar_state,
                              nb_var, var_to_col[p]);
 
     switch (ret) {
-        // gaussian state     0         1              2            3                4
-        // enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
-
-        // conflict
-        case 0: {
+        case gret::confl: {
             // printf("dd %d:This row is conflict %d    n",row_n , solver->level[p] );
             if (tmp_clause.size() >= gqd.conflict_size_gauss) { // choose perfect conflict clause
                 *j++ = *i;                                  // we need to leave this
@@ -558,7 +554,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         }
 
         // propagation
-        case 2: {
+        case gret::prop: {
             // printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
 
             // Gaussian matrix is already conflict
@@ -627,7 +623,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
             (*clauseIt).setBit(row_n); // this clause arleady sat
             return true;
         }
-        case 5: // find new watch list
+        case gret::nothing_fnewwatch: // find new watch list
             // printf("%d:This row is find new watch:%d => orig %d p:%d    n",row_n ,
             // nb_var,orig_basic , p);
 
@@ -658,7 +654,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
             gqd.e_var = nb_var;                   // store the eliminate valuable
             gqd.e_row_n = row_n;
             break;
-        case 4: // this row already treu
+        case gret::nothing: // this row already treu
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;        // store watch list
             if (orig_basic) { // recover
@@ -686,7 +682,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     PackedMatrix::iterator this_row = matrix.matrix.beginMatrix() + gqd.e_row_n;
     PackedMatrix::iterator rowI = matrix.matrix.beginMatrix();
     PackedMatrix::iterator end = matrix.matrix.endMatrix();
-    int ret;
     uint32_t e_col = var_to_col[gqd.e_var];
     uint32_t ori_nb = 0, ori_nb_col = 0;
     uint32_t nb_var = 0;
@@ -712,11 +707,12 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     delete_gausswatch(true, num_row);
                 }
 
-                ret = (*rowI).propGause(tmp_clause, solver->assigns, matrix.col_to_var,
-                                        GasVar_state, nb_var, ori_nb_col);
+                const gret ret = (*rowI).propGause(tmp_clause,
+                                                   solver->assigns, matrix.col_to_var,
+                                                   GasVar_state, nb_var, ori_nb_col);
 
                 switch (ret) {
-                    case 0: { // conflict
+                    case gret::confl: {
                         // printf("%d:This row is conflict in eliminate col    n",num_row);
                         if (tmp_clause.size() >= gqd.conflict_size_gauss || gqd.ret_gauss == 3) {
                             solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
@@ -768,7 +764,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         }
                         break;
                     }
-                    case 2: {
+                    case gret::prop: {
                         // printf("%d:This row is propagation in eliminate col    n",num_row);
 
                         // update no_basic_value?
@@ -822,14 +818,14 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         }
                         break;
                     }
-                    case 5: // find new watch list
+                    case gret::nothing_fnewwatch: // find new watch list
                         // printf("%d::This row find new watch list :%d in eliminate col
                         // n",num_row,nb_var);
 
                         solver->gwatches[nb_var].push(GaussWatched(num_row, matrix_no));
                         matrix.nb_rows[num_row] = nb_var;
                         break;
-                    case 4: // this row already tre
+                    case gret::nothing: // this row already tre
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
                         // n",num_row);
 

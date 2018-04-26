@@ -58,9 +58,6 @@ class Solver;
 
 class EGaussian {
   protected:
-    // gaussian state        0          1            2             3               4
-    enum class gret {confl, unit_confl, prop, unit_prop, nothing};
-
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
     const uint32_t matrix_no;            // matrix index
