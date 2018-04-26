@@ -334,6 +334,8 @@ void EGaussian::eliminate(matrixset& m) {
 }
 
 EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
+    assert(solver->decisionLevel() == 0);
+
     PackedMatrix::iterator end = m.matrix.beginMatrix() + m.num_rows;
     PackedMatrix::iterator rowIt = m.matrix.beginMatrix();
     uint32_t row_id = 0;      // row index
@@ -342,17 +344,17 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
-        switch (
-            (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, GasVar_state, nb_var)) {
+        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, GasVar_state, nb_var);
+        switch (popcnt) {
             case 0: // this row is all zero
                 // printf("%d:Warring: this row is all zero in adjust matrix    n",row_id);
                 adjust_zero++;        // information
-                if ((*rowIt).rhs()) { // conflic
+                if ((*rowIt).rhs()) { // conflict
                     // printf("%d:Warring: this row is conflic in adjust matrix!!!",row_id);
                     return conflict;
                 }
                 break;
-            case 1: { // this row neeed to propogation
+            case 1: { // this row neeeds propogation
                 // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
                 // n",row_id);
 
@@ -361,12 +363,12 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 assert(solver->value(tmp_clause[0].var()) == l_Undef);
                 solver->enqueue(tmp_clause[0]); // propagation
 
+                //adjusting
                 (*rowIt).setZero(); // reset this row all zero
-                m.nb_rows.push(
-                    std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
+                m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
 
-                solver->sum_initUnit++; // information
+                solver->sum_initUnit++;
                 return unit_propagation;
             }
             case 2: { // this row have to variable
@@ -375,10 +377,9 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 propagation_twoclause(xorEqualFalse);
 
                 (*rowIt).setZero(); // reset this row all zero
-                m.nb_rows.push(
-                    std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
+                m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
-                solver->sum_initTwo++;                             // information
+                solver->sum_initTwo++;
                 break;
             }
             default: // need to update watch list
