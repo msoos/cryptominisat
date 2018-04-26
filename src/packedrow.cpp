@@ -70,6 +70,7 @@ bool PackedRow::fill(
     return wasundef;
 }
 
+///returns popcnt
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
