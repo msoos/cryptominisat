@@ -450,8 +450,10 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint32_t r
         // clear nonbasic value watch list
         bool debug_find = false;
         vec<GaussWatched>& ws_t = solver->gwatches[cur_matrixset.nb_rows[row_n]];
-        for (int tmpi = ws_t.size() - 1; tmpi >= 0; tmpi--) {
-            if (ws_t[tmpi].row_id == row_n) {
+        for (int32_t tmpi = ws_t.size() - 1; tmpi >= 0; tmpi--) {
+            if (ws_t[tmpi].row_id == row_n
+                && ws_t[tmpi].matrix_num == matrix_no
+            ) {
                 ws_t[tmpi] = ws_t.last();
                 ws_t.shrink(1);
                 debug_find = true;
