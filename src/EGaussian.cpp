@@ -284,11 +284,14 @@ bool EGaussian::full_init(bool& created) {
                 if (!solver->ok) {
                     return false;
                 }
-
                 break;
             default:
                 break;
         }
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [gauss] initialised matrix " << matrix_no << endl;
     }
 
     // std::cout << cpuTime() - GaussConstructTime << "    t";
