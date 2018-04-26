@@ -436,17 +436,16 @@ inline void EGaussian::conflict_twoclause(PropBy& confl) {
     Lit lit1 = tmp_clause[0];
     Lit lit2 = tmp_clause[1];
 
-    solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
+    solver->attach_bin_clause(lit1, lit2, true, false);
     // solver->dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 = ~lit1;
     lit2 = ~lit2;
-    solver->attach_bin_clause(tmp_clause[0], tmp_clause[1], true, false);
+    solver->attach_bin_clause(lit1, lit2, true, false);
     // solver->dataSync->signalNewBinClause(lit1, lit2);
 
     lit1 = ~lit1;
     lit2 = ~lit2;
-
     confl = PropBy(lit1, true);
     solver->failBinLit = lit2;
 }
