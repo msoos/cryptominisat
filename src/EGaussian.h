@@ -80,7 +80,7 @@ class EGaussian {
         uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
     };
-    matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
+    matrixset matrix; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
 
     void clear_gwatches(const uint32_t var);
