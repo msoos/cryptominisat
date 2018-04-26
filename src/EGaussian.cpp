@@ -279,7 +279,7 @@ bool EGaussian::full_init(bool& created) {
                 do_again_gauss = true;
                 solver->sum_Enpropagate++;
 
-                solver->cancelUntil(0);
+                assert(solver->decisionLevel() == 0);
                 solver->ok = (solver->propagate<true>().isNULL());
                 if (!solver->ok) {
                     return false;
