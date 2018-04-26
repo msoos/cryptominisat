@@ -280,7 +280,7 @@ bool EGaussian::full_init(bool& created) {
                 solver->sum_Enpropagate++;
 
                 assert(solver->decisionLevel() == 0);
-                solver->ok = (solver->propagate<true>().isNULL());
+                solver->ok = (solver->propagate<false>().isNULL());
                 if (!solver->ok) {
                     return false;
                 }
