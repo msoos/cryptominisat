@@ -246,7 +246,6 @@ void EGaussian::clear_gwatches(const uint32_t var) {
 bool EGaussian::full_init(bool& created) {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
-    gaussian_ret ret; // gaussian elimination result
     bool do_again_gauss = true;
     created = true;
 
@@ -267,15 +266,16 @@ bool EGaussian::full_init(bool& created) {
         eliminate(matrix); // gauss eliminate algorithm
 
         // find some row already true false, and insert watch list
-        ret = adjust_matrix(matrix);
+        gret ret = adjust_matrix(matrix);
 
         switch (ret) {
-            case conflict:
+            case gret::confl:
                 solver->ok = false;
                 solver->sum_Enconflict++;
                 return false;
                 break;
-            case unit_propagation:
+            case gret::prop:
+            case gret::unit_prop:
                 do_again_gauss = true;
                 solver->sum_Enpropagate++;
 
@@ -336,7 +336,7 @@ void EGaussian::eliminate(matrixset& m) {
     // print_matrix(m);
 }
 
-EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
+EGaussian::gret EGaussian::adjust_matrix(matrixset& m) {
     assert(solver->decisionLevel() == 0);
 
     PackedMatrix::iterator end = m.matrix.beginMatrix() + m.num_rows;
@@ -354,7 +354,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 adjust_zero++;        // information
                 if ((*rowIt).rhs()) { // conflict
                     // printf("%d:Warring: this row is conflic in adjust matrix!!!",row_id);
-                    return conflict;
+                    return gret::confl;
                 }
                 break;
             case 1: { // this row neeeds propogation
@@ -372,7 +372,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
 
                 solver->sum_initUnit++;
-                return unit_propagation;
+                return gret::unit_prop;
             }
             case 2: { // this row have to variable
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
@@ -383,7 +383,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
                 solver->sum_initTwo++;
-                return unit_propagation;
+                return gret::prop;
             }
             default: // need to update watch list
                 // printf("%d:need to update watch list    n",row_id);
@@ -411,7 +411,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
     // print_matrix(m);
     // printf(" adjust_zero %d    n",adjust_zero);
     // printf("%d    t%d    t",m.num_rows , m.num_cols);
-    return nothing;
+    return gret::nothing;
 }
 
 inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
