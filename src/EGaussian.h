@@ -85,7 +85,7 @@ class EGaussian {
     void eliminate(matrixset& m) ;            //gaussian elimination
     gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
 
-    inline void propagation_twoclause(const bool );
+    inline void propagation_twoclause();
     inline void conflict_twoclause(PropBy& confl);
     inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
 

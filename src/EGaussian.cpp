@@ -349,7 +349,9 @@ gret EGaussian::adjust_matrix(matrixset& m) {
     while (rowIt != end) {
         const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, GasVar_state, nb_var);
         switch (popcnt) {
-            case 0: // this row is all zero
+
+            //Conflict potentially
+            case 0:
                 // printf("%d:Warring: this row is all zero in adjust matrix    n",row_id);
                 adjust_zero++;        // information
                 if ((*rowIt).rhs()) { // conflict
@@ -357,7 +359,10 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                     return gret::confl;
                 }
                 break;
-            case 1: { // this row neeeds propogation
+
+            //Normal propagation
+            case 1:
+            {
                 // printf("%d:This row only one variable, need to propogation!!!! in adjust matrix
                 // n",row_id);
 
@@ -374,17 +379,24 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 solver->sum_initUnit++;
                 return gret::unit_prop;
             }
+
+            //Binary XOR
             case 2: { // this row have to variable
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
                 xorEqualFalse = !m.matrix.getMatrixAt(row_id).rhs();
-                propagation_twoclause(xorEqualFalse);
+
+                tmp_clause[0] = tmp_clause[0].unsign();
+                tmp_clause[1] = tmp_clause[1].unsign();
+                solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
+                release_assert(solver->ok);
 
                 (*rowIt).setZero(); // reset this row all zero
                 m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
                 solver->sum_initTwo++;
-                return gret::prop;
+                break;
             }
+
             default: // need to update watch list
                 // printf("%d:need to update watch list    n",row_id);
                 assert(nb_var != std::numeric_limits<uint32_t>::max());
@@ -414,7 +426,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
     return gret::nothing;
 }
 
-inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
+inline void EGaussian::propagation_twoclause() {
     // printf("DD:%d %d    n", solver->qhead  ,solver->trail.size());
     // printf("CC %d. %d  %d    n", solver->qhead , solver->trail.size() , solver->decisionLevel());
 
@@ -567,31 +579,14 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 return true;
             }
 
-            bool xorEqualFalse = !matrix.matrix.getMatrixAt(row_n).rhs();
-
-            // binary propagation
-            if (tmp_clause.size() == 2) {
-                // printf("%d:This row is propagation two    n",row_n);
-
-                delete_gausswatch(orig_basic, row_n);              // delete watch list
-                GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
-                GasVar_state[tmp_clause[1].var()] = non_basic_var;
-                matrix.nb_rows[row_n] =
-                    std::numeric_limits<uint32_t>::max(); // delete non basic value in this row
-                (*rowIt).setZero();                       // reset this row all zero
-
-                propagation_twoclause(xorEqualFalse); // propagation two clause
-
-                // for tell outside solver
-                gqd.ret_gauss = 3;                      // gaussian matrix is   unit_propagation
-                solver->gqhead = solver->qhead; // quick break gaussian elimination
-                return false;
-            }
-
-            // larger-than-2 propagation
+            // propagation
             *j++ = *i; // store watch list
             if (solver->decisionLevel() == 0) {
-                solver->enqueue(tmp_clause[0]);
+                if (tmp_clause.size() == 2) {
+                    propagation_twoclause();
+                } else {
+                    solver->enqueue(tmp_clause[0]);
+                }
 
                 if (orig_basic) { // recover
                     GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
@@ -603,15 +598,17 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
                 return false;
             } else {
-                Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
-                cla->set_gauss_temp_cl();
-                const ClOffset offs = solver->cl_alloc.get_offset(cla);
-
-                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                assert(!cla->freed());
-                assert(solver->value((*cla)[0].var()) == l_Undef);
-                solver->enqueue((*cla)[0], PropBy(offs));
-
+                if (tmp_clause.size() == 2) {
+                    propagation_twoclause();
+                } else {
+                    Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                    cla->set_gauss_temp_cl();
+                    const ClOffset offs = solver->cl_alloc.get_offset(cla);
+                    clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
+                    assert(!cla->freed());
+                    assert(solver->value((*cla)[0].var()) == l_Undef);
+                    solver->enqueue((*cla)[0], PropBy(offs));
+                }
                 gqd.ret_gauss = 2; // gaussian matrix is  propagation
             }
 
@@ -776,44 +773,30 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             break;
                         }
                         xorEqualFalse = !matrix.matrix.getMatrixAt(num_row).rhs();
-                        if (tmp_clause.size() == 2) {
-                            // printf("%d:This row is propagation two in eliminate col n",num_row);
-                            solver->sum_Enunit++;
-                            delete_gausswatch(false, num_row); // delete watch list
-                            assert(GasVar_state[tmp_clause[0].var()] == basic_var);
-                            assert(GasVar_state[tmp_clause[1].var()] == non_basic_var);
+                        // update no_basic information
+                        solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
+                        matrix.nb_rows[num_row] = p;
 
-                            // delete value state;
-                            GasVar_state[tmp_clause[0].var()] = non_basic_var;
-
-                            // delete non basic value in this row
-                            matrix.nb_rows[num_row] = std::numeric_limits<uint32_t>::max();
-
-                            // reset this row all zero
-                            (*rowI).setZero();
-                            propagation_twoclause(xorEqualFalse); // propagation two clause
-                            gqd.ret_gauss = 2;                        // normal_propagation
-                        } else {
-                            // update no_basic information
-                            solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
-                            matrix.nb_rows[num_row] = p;
-
-                            if (solver->decisionLevel() == 0) {
-                                solver->enqueue(tmp_clause[0]);
-                                gqd.ret_gauss = 3; // unit_propagation
+                        if (solver->decisionLevel() == 0) {
+                            if (tmp_clause.size() == 2) {
+                                propagation_twoclause();
                             } else {
-                                Clause* cla =
-                                    solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                                solver->enqueue(tmp_clause[0]);
+                            }
+                            gqd.ret_gauss = 3; // unit_propagation
+                        } else {
+                            if (tmp_clause.size() == 2) {
+                                propagation_twoclause();
+                            } else {
+                                Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
                                 cla->set_gauss_temp_cl();
                                 const ClOffset offs = solver->cl_alloc.get_offset(cla);
-                                clauses_toclear.push_back(
-                                    std::make_pair(offs, solver->trail.size() - 1));
+                                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
                                 assert(!cla->freed());
                                 assert(solver->value((*cla)[0].var()) == l_Undef);
                                 solver->enqueue((*cla)[0], PropBy(offs));
-                                gqd.ret_gauss = 2; // normal_propagation
                             }
-
+                            gqd.ret_gauss = 2;
                             (*clauseIt).setBit(num_row); // this clause arleady sat
                         }
                         break;
