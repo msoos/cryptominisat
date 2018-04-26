@@ -59,7 +59,7 @@ class Solver;
 class EGaussian {
   protected:
     // gaussian state        0          1            2             3               4
-    enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
+    enum class gret {confl, unit_confl, prop, unit_prop, nothing};
 
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
@@ -86,9 +86,9 @@ class EGaussian {
     void clear_gwatches(const uint32_t var);
     void print_matrix(matrixset& m) const ;   // print matrix
     void eliminate(matrixset& m) ;            //gaussian elimination
-    gaussian_ret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
+    gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
 
-    inline void propagation_twoclause(const bool xorEqualFalse);
+    inline void propagation_twoclause(const bool );
     inline void conflict_twoclause(PropBy& confl);
     inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
 
