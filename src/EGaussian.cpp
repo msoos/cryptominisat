@@ -70,12 +70,13 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
     }
     std::sort(xors.begin(), xors.end());
 
+    //Incorrect ones ones
     for (Xor& x : xors) {
         for (uint32_t v : x) {
             if (v > 165) {
                 num_unfound++;
                 if (solver->conf.verbosity >= 2) {
-                    cout << "c " << x << endl;
+                    cout << "c NOT OK: " << x << endl;
                 }
                 break;
             }
@@ -86,6 +87,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         cout << "c num_unfound xor: " << num_unfound << endl;
     }
 
+    //GOOD ones
     for (Xor& x : xors) {
         bool must_print = true;
         for (uint32_t v : x) {
@@ -96,7 +98,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         }
         if (must_print) {
             if (solver->conf.verbosity >= 2) {
-                cout << "c " << x << endl;
+                cout << "c --- OK: " << x << endl;
             }
         }
     }
