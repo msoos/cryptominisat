@@ -796,7 +796,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             // reset this row all zero
                             (*rowI).setZero();
                             propagation_twoclause(xorEqualFalse); // propagation two clause
-                            gqd.ret_gauss = 3;                        // unit_propagation
+                            gqd.ret_gauss = 2;                        // normal_propagation
                         } else {
                             // update no_basic information
                             solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
@@ -815,7 +815,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                                 assert(!cla->freed());
                                 assert(solver->value((*cla)[0].var()) == l_Undef);
                                 solver->enqueue((*cla)[0], PropBy(offs));
-                                gqd.ret_gauss = 2;
+                                gqd.ret_gauss = 2; // normal_propagation
                             }
 
                             (*clauseIt).setBit(num_row); // this clause arleady sat
