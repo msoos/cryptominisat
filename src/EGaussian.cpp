@@ -383,7 +383,7 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
                 m.nb_rows.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
                 solver->sum_initTwo++;
-                break;
+                return unit_propagation;
             }
             default: // need to update watch list
                 // printf("%d:need to update watch list    n",row_id);
