@@ -414,14 +414,20 @@ EGaussian::gaussian_ret EGaussian::adjust_matrix(matrixset& m) {
 inline void EGaussian::propagation_twoclause(const bool xorEqualFalse) {
     // printf("DD:%d %d    n", solver->qhead  ,solver->trail.size());
     // printf("CC %d. %d  %d    n", solver->qhead , solver->trail.size() , solver->decisionLevel());
-    solver->cancelUntil(0);
-    // printf("DD %d. %d  %d    n", solver->qhead , solver->trail.size() , solver->decisionLevel());
 
-    tmp_clause[0] = tmp_clause[0].unsign();
-    tmp_clause[1] = tmp_clause[1].unsign();
-    solver->ok = solver->add_xor_clause_inter(tmp_clause, !xorEqualFalse, true);
-    release_assert(solver->ok);
-    // printf("DD:x%d %d    n",tmp_clause[0].var() , tmp_clause[1].var());
+    Lit lit1 = tmp_clause[0];
+    Lit lit2 = tmp_clause[1];
+    solver->attach_bin_clause(lit1, lit2, true, false);
+    // solver->dataSync->signalNewBinClause(lit1, lit2);
+
+    lit1 = ~lit1;
+    lit2 = ~lit2;
+    solver->attach_bin_clause(lit1, lit2, true, false);
+    // solver->dataSync->signalNewBinClause(lit1, lit2);
+
+    lit1 = ~lit1;
+    lit2 = ~lit2;
+    solver->enqueue(lit1, PropBy(lit2, true));
 }
 
 inline void EGaussian::conflict_twoclause(PropBy& confl) {
