@@ -2630,17 +2630,17 @@ void Solver::print_clause_stats() const
 
 const char* Solver::get_version_sha1()
 {
-    return ::get_version_sha1();
+    return CMSat::get_version_sha1();
 }
 
 const char* Solver::get_version_tag()
 {
-    return ::get_version_tag();
+    return CMSat::get_version_tag();
 }
 
 const char* Solver::get_compilation_env()
 {
-    return ::get_compilation_env();
+    return CMSat::get_compilation_env();
 }
 
 void Solver::print_watch_list(watch_subarray_const ws, const Lit lit) const
