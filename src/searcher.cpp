@@ -3114,7 +3114,6 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
     }
 }
 
-
 void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from)
 {
     if (unfill_from.empty()) {
