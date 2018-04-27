@@ -277,6 +277,7 @@ class SolverConf
         int      doEchelonizeXOR;
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;
+        int      allow_elim_xor_vars;
 
         //Var-replacement
         int doFindAndReplaceEqLits;
@@ -340,6 +341,7 @@ class SolverConf
 
         //Gauss
         GaussConf gaussconf;
+        bool dont_elim_xor_vars;
 
         //Greedy undef
         int      greedy_undef;

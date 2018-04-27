@@ -177,6 +177,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #else
         , xor_finder_time_limitM(30000)
         #endif
+        , allow_elim_xor_vars(1)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)

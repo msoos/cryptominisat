@@ -49,6 +49,7 @@ struct VarData
     ///Whether var has been eliminated (var-elim, different component, etc.)
     Removed removed = Removed::none;
     bool is_bva = false;
+    bool added_for_xor = false;
 };
 
 }
