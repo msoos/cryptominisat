@@ -736,6 +736,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
         || solver->var_inside_assumptions(var)
+        || (solver->conf.independent_vars && indep_vars[var])
         || (!solver->conf.allow_elim_xor_vars && solver->varData[var].added_for_xor)
     ) {
         return false;
