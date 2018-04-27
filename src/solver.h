@@ -246,6 +246,7 @@ class Solver : public Searcher
         uint64_t mem_used_vardata() const;
         void check_reconfigure();
         void reconfigure(int val);
+        bool already_reconfigured = false;
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;

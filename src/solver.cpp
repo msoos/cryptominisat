@@ -1388,13 +1388,16 @@ void Solver::check_reconfigure()
         && longIrredCls.size() > 1
         && (binTri.irredBins + binTri.redBins) > 1
     ) {
-        if (solveStats.numSimplify == conf.reconfigure_at) {
+        if (solveStats.numSimplify == conf.reconfigure_at &&
+            !already_reconfigured
+        ) {
             check_calc_features();
             if (conf.reconfigure_val == 100) {
                 conf.reconfigure_val = get_reconf_from_features(last_solve_feature, conf.verbosity);
             }
             if (conf.reconfigure_val != 0) {
                 reconfigure(conf.reconfigure_val);
+                already_reconfigured = true;
             }
         }
     }
