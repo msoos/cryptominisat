@@ -1387,7 +1387,9 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
             uint32_t outer_var = solver->map_to_with_bva(outside_var);
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = solver->map_outer_to_inter(outer_var);
-            indep_vars[int_var] = true;
+            if (int_var < solver->nVars()) {
+                indep_vars[int_var] = true;
+            }
         }
     } else {
         indep_vars.shrink_to_fit();
