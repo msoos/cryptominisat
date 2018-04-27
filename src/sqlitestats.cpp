@@ -921,7 +921,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 55;
+    const size_t numElems = 58;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -939,6 +939,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `conflicts_this_restart`,"
     << " `num_overlap_literals`,"
     << " `num_antecedents`,"
+    << " `num_total_lits_antecedents`,"
     << " `antecedents_avg_size`,"
 
     << " `last_dec_var_act_vsids_0`,"
@@ -991,7 +992,9 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `vsids_vars_hist`,"
     << " `size_hist`,"
     << " `glue_hist`,"
-    << " `num_antecedents_hist`"
+    << " `num_antecedents_hist`,"
+    << " `antec_sum_size_hist`,"
+    << " `antec_overlap_hist`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -1050,6 +1053,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.num());
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.sum_size());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
     sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_vsids_0);
     sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_vsids_1);
@@ -1102,6 +1106,9 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLTAll.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHistLT.avg());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.antec_data_sum_sizeHistLT.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.overlapHistLT.avg());
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {

@@ -58,9 +58,6 @@ class Solver;
 
 class EGaussian {
   protected:
-    // gaussian state        0          1            2             3               4
-    enum gaussian_ret {conflict, unit_conflict, propagation, unit_propagation, nothing};
-
     Solver* solver;   // orignal sat solver
     const GaussConf& config;  // gauss some configure
     const uint32_t matrix_no;            // matrix index
@@ -80,15 +77,15 @@ class EGaussian {
         uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
     };
-    matrixset cur_matrixset; // The current matrixset, i.e. the one we are working on, or the last one we worked on
+    matrixset matrix; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
 
     void clear_gwatches(const uint32_t var);
     void print_matrix(matrixset& m) const ;   // print matrix
     void eliminate(matrixset& m) ;            //gaussian elimination
-    gaussian_ret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
+    gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
 
-    inline void propagation_twoclause(const bool xorEqualFalse);
+    inline void propagation_twoclause();
     inline void conflict_twoclause(PropBy& confl);
     inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
 

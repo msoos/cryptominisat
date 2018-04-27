@@ -57,6 +57,8 @@ struct SearchHist {
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #ifdef STATS_NEEDED
+    AvgCalc<uint32_t>   overlapHistLT;
+    AvgCalc<uint32_t>   antec_data_sum_sizeHistLT;
     AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
     AvgCalc<uint32_t>   decisionLevelHistLT;
     bqueue<uint32_t>    branchDepthHistQueue;

@@ -70,6 +70,7 @@ bool PackedRow::fill(
     return wasundef;
 }
 
+///returns popcnt
 uint32_t PackedRow::find_watchVar(
     vector<Lit>& tmp_clause,
     const vector<uint32_t>& col_to_var,
@@ -117,7 +118,7 @@ uint32_t PackedRow::find_watchVar(
 
 }
 
-int PackedRow::propGause(
+gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
@@ -139,7 +140,7 @@ int PackedRow::propGause(
                 const lbool val = assigns[var];
                 if (val == l_Undef && !GasVar_state[var]) {  // find non basic value
                     nb_var = var;
-                    return 5;   // nothing
+                    return gret::nothing_fnewwatch;   // nothing
                 }
                 const bool val_bool = (val == l_True);
                 final ^= val_bool;
@@ -161,7 +162,7 @@ int PackedRow::propGause(
                 const lbool val = assigns[var];
                 if (val == l_Undef &&  !GasVar_state[var] ){  // find non basic value
                     nb_var = var;
-                    return 5;   // nothing
+                    return gret::nothing_fnewwatch;   // nothing
                 }
                 const bool val_bool = val == l_True;
                 final ^= val_bool;
@@ -176,12 +177,12 @@ int PackedRow::propGause(
 
     if (assigns[tmp_clause[0].var()] == l_Undef) {    // propogate
         tmp_clause[0] = tmp_clause[0].unsign()^final;
-        return 2;  // propogate
+        return gret::prop;  // propogate
     } else if (!final) {
-        return 0;  // conflict
+        return gret::confl;  // conflict
     }
     // this row already true
-    return 4;  // nothing
+    return gret::nothing;  // nothing
 
 }
 

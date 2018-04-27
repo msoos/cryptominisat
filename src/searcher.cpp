@@ -65,17 +65,13 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 
         //variables
         #ifdef USE_GAUSS
-        , gauss_cpu_time(0)
-        , findmatrix_first(false)
         , sum_gauss_called (0)
         , sum_gauss_confl  (0)
         , sum_gauss_prop   (0)
         , sum_gauss_unit_truths (0)
-		, Is_Gauss_first (false)
 		, sum_initEnGauss (0)
 		, sum_initUnit (0)
 		, sum_initTwo (0)
-		, sum_initLinear (0)
 		, sum_Enconflict (0)
 		, sum_Enpropagate(0)
 		, sum_Enunit(0)
@@ -1242,6 +1238,11 @@ lbool Searcher::search()
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 
     cancelUntil<true, update_bogoprops>(0);
+    confl = propagate<update_bogoprops>();
+    if (!confl.isNULL()) {
+        ok = false;
+        return l_False;
+    }
     assert(solver->prop_at_head());
     if (!solver->datasync->syncData()) {
         return l_False;
@@ -1526,6 +1527,9 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
     hist.decisionLevelHistLT.push(decisionLevel());
+    const uint32_t overlap = antec_data.sum_size()-(antec_data.num()-1)-learnt_clause.size();
+    hist.antec_data_sum_sizeHistLT.push(antec_data.sum_size());
+    hist.overlapHistLT.push(overlap);
     #endif
     if (params.rest_type == Restart::backtrack) {
         hist.backtrackLevelHistLTLimited.push(backtrack_level);
@@ -1788,8 +1792,6 @@ bool Searcher::handle_conflict(const PropBy confl)
     }*/
 
     params.conflictsDoneThisRestart++;
-    if (conf.doPrintConflDot)
-        create_graphviz_confl_graph(confl);
 
     if (decisionLevel() == 0)
         return false;
@@ -1801,7 +1803,6 @@ bool Searcher::handle_conflict(const PropBy confl)
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
     );
-    glue --;
     print_learnt_clause();
 
     //Add decision-based clause in case it's short
@@ -2967,259 +2968,6 @@ std::pair<size_t, size_t> Searcher::remove_useless_bins(bool except_marked)
     uselessBin.clear();
 
     return std::make_pair(removedIrred, removedRed);
-}
-
-string Searcher::analyze_confl_for_graphviz_graph(
-    PropBy conflHalf
-    , uint32_t& out_btlevel
-    , uint32_t &glue
-) {
-    pathC = 0;
-    Lit p = lit_Undef;
-
-    learnt_clause.clear();
-    learnt_clause.push_back(lit_Undef);      // (leave room for the asserting literal)
-    int index   = trail.size() - 1;
-    out_btlevel = 0;
-    std::stringstream resolutions_str;
-
-    PropByForGraph confl(conflHalf, failBinLit, cl_alloc);
-    do {
-        assert(!confl.isNULL());          // (otherwise should be UIP)
-
-        //Update antec_data output
-        if (p != lit_Undef) {
-            resolutions_str << " | ";
-        }
-        resolutions_str << "{ " << confl << " | " << pathC << " -- ";
-
-        for (uint32_t j = (p == lit_Undef) ? 0 : 1, size = confl.size(); j != size; j++) {
-            Lit q = confl[j];
-            const uint32_t my_var = q.var();
-
-            if (!seen[my_var] //if already handled, don't care
-                && varData[my_var].level > 0 //if it's assigned at level 0, it's assigned FALSE, so leave it out
-            ) {
-                seen[my_var] = 1;
-                assert(varData[my_var].level <= decisionLevel());
-
-                if (varData[my_var].level == decisionLevel()) {
-                    pathC++;
-                } else {
-                    learnt_clause.push_back(q);
-
-                    //Backtracking level is largest of thosee inside the clause
-                    if (varData[my_var].level > out_btlevel)
-                        out_btlevel = varData[my_var].level;
-                }
-            }
-        }
-        resolutions_str << pathC << " }";
-
-        //Go through the trail backwards, select the one that is to be resolved
-        while (!seen[trail[index--].var()]);
-
-        p = trail[index+1];
-        confl = PropByForGraph(varData[p.var()].reason, p, cl_alloc);
-        seen[p.var()] = 0; // this one is resolved
-        pathC--;
-    } while (pathC > 0); //UIP when eveything goes through this one
-    assert(pathC == 0);
-    learnt_clause[0] = ~p;
-
-    // clear out seen
-    for (uint32_t j = 0; j != learnt_clause.size(); j++)
-        seen[learnt_clause[j].var()] = 0;    // ('seen[]' is now cleared)
-
-    //Calculate glue
-    glue = calc_glue(learnt_clause);
-
-    return resolutions_str.str();
-}
-
-void Searcher::print_edges_for_graphviz_file(std::ofstream& file) const
-{
-    for (const Lit lit: trail) {
-
-        //0-decision level means it's pretty useless to put into the impl. graph
-        if (varData[lit.var()].level == 0) continue;
-
-        //Not directly connected with the conflict, drop
-        if (!seen[lit.var()]) continue;
-
-        PropBy reason = varData[lit.var()].reason;
-
-        //A decision variable, it is not propagated by any clause
-        if (reason.isNULL()) continue;
-
-        PropByForGraph prop(reason, lit, cl_alloc);
-        for (uint32_t i = 0; i < prop.size(); i++) {
-            if (prop[i] == lit //This is being propagated, don't make a circular line
-                || varData[prop[i].var()].level == 0 //'clean' clauses of 0-level lits
-            ) continue;
-
-            file << "x" << prop[i].unsign() << " -> x" << lit.unsign() << " "
-            << "[ "
-            << " label=\"";
-            for(uint32_t i2 = 0; i2 < prop.size();) {
-                //'clean' clauses of 0-level lits
-                if (varData[prop[i2].var()].level == 0) {
-                    i2++;
-                    continue;
-                }
-
-                file << prop[i2];
-                i2++;
-                if (i2 != prop.size()) file << " ";
-            }
-            file << "\""
-            << " , fontsize=8"
-            << " ];" << endl;
-        }
-    }
-}
-
-void Searcher::print_vertex_definitions_for_graphviz_file(std::ofstream& file)
-{
-    for (size_t i = 0; i < trail.size(); i++) {
-        Lit lit = trail[i];
-
-        //Only vertexes that really have been used
-        if (seen[lit.var()] == 0) continue;
-        seen[lit.var()] = 0;
-
-        file << "x" << lit.unsign()
-        << " [ "
-        << " shape=\"box\""
-        //<< ", size = 0.8"
-        << ", style=\"filled\"";
-        if (varData[lit.var()].reason.isNULL())
-            file << ", color=\"darkorange2\""; //decision var
-        else
-            file << ", color=\"darkseagreen4\""; //propagated var
-
-        //Print label
-        file
-        << ", label=\"" << (lit.sign() ? "-" : "") << "x" << lit.unsign()
-        << " @ " << varData[lit.var()].level << "\""
-        << " ];" << endl;
-    }
-}
-
-void Searcher::fill_seen_for_lits_connected_to_conflict_graph(
-    vector<Lit>& lits
-) {
-    while(!lits.empty())
-    {
-        vector<Lit> newLits;
-        for (size_t i = 0; i < lits.size(); i++) {
-            PropBy reason = varData[lits[i].var()].reason;
-            //Reason in NULL, so remove: it's got no antedecent
-            if (reason.isNULL()) continue;
-
-            #ifdef VERBOSE_DEBUG_GEN_CONFL_DOT
-            cout << "Reason for lit " << lits[i] << " : " << reason << endl;
-            #endif
-
-            PropByForGraph prop(reason, lits[i], cl_alloc);
-            for (uint32_t i2 = 0; i2 < prop.size(); i2++) {
-                const Lit lit = prop[i2];
-                assert(value(lit) != l_Undef);
-
-                //Don't put into the impl. graph lits at 0 decision level
-                if (varData[lit.var()].level == 0) continue;
-
-                //Already added, just drop
-                if (seen[lit.var()]) continue;
-
-                seen[lit.var()] = true;
-                newLits.push_back(lit);
-            }
-        }
-        lits = newLits;
-    }
-}
-
-vector<Lit> Searcher::get_lits_from_conflict(const PropBy conflPart)
-{
-    vector<Lit> lits;
-    PropByForGraph confl(conflPart, failBinLit, cl_alloc);
-    for (uint32_t i = 0; i < confl.size(); i++) {
-        const Lit lit = confl[i];
-        assert(value(lit) == l_False);
-        lits.push_back(lit);
-
-        //Put these into the impl. graph for sure
-        seen[lit.var()] = true;
-    }
-
-    return lits;
-}
-
-void Searcher::create_graphviz_confl_graph(const PropBy conflPart)
-{
-    assert(ok);
-    assert(!conflPart.isNULL());
-
-    std::stringstream s;
-    s << "confls/" << "confl" << solver->sumConflicts << ".dot";
-    std::string filename = s.str();
-
-    std::ofstream file;
-    file.open(filename.c_str());
-    if (!file) {
-        cout << "Couldn't open filename " << filename << endl;
-        cout << "Maybe you forgot to create subdirectory 'confls'" << endl;
-        std::exit(-1);
-    }
-    file << "digraph G {" << endl;
-
-    //Special vertex indicating final conflict clause (to help us)
-    uint32_t out_btlevel, glue;
-    const std::string res = analyze_confl_for_graphviz_graph(conflPart, out_btlevel, glue);
-    file << "vertK -> dummy;";
-    file << "dummy "
-    << "[ "
-    << " shape=record"
-    << " , label=\"{"
-    << " clause: " << learnt_clause
-    << " | btlevel: " << out_btlevel
-    << " | glue: " << glue
-    << " | {resol: | " << res << " }"
-    << "}\""
-    << " , fontsize=8"
-    << " ];" << endl;
-
-    vector<Lit> lits = get_lits_from_conflict(conflPart);
-    for (const Lit lit: lits) {
-        file << "x" << lit.unsign() << " -> vertK "
-        << "[ "
-        << " label=\"" << lits << "\""
-        << " , fontsize=8"
-        << " ];" << endl;
-    }
-
-    //Special conflict vertex
-    file << "vertK"
-    << " [ "
-    << "shape=\"box\""
-    << ", style=\"filled\""
-    << ", color=\"darkseagreen\""
-    << ", label=\"K : " << lits << "\""
-    << "];" << endl;
-
-    fill_seen_for_lits_connected_to_conflict_graph(lits);
-    print_edges_for_graphviz_file(file);
-    print_vertex_definitions_for_graphviz_file(file);
-
-    file  << "}" << endl;
-    file.close();
-
-    if (conf.verbosity >= 6) {
-        cout
-        << "c Printed implication graph (with conflict clauses) to file "
-        << filename << endl;
-    };
 }
 
 template<bool update_bogoprops>

@@ -50,11 +50,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         #ifndef USE_GAUSS
-        , glue_put_lev0_if_below_or_eq(3) // never removed
-        , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
+        , glue_put_lev0_if_below_or_eq(4) // never removed
+        , glue_put_lev1_if_below_or_eq(7) // kept for a while then moved to lev2
         #else
-        , glue_put_lev0_if_below_or_eq(5) // never removed
-        , glue_put_lev1_if_below_or_eq(10) // kept for a while then moved to lev2
+        , glue_put_lev0_if_below_or_eq(6) // never removed
+        , glue_put_lev1_if_below_or_eq(11) // kept for a while then moved to lev2
         #endif
 
 
@@ -98,7 +98,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Verbosity
         , verbosity        (0)
         , doPrintGateDot   (false)
-        , doPrintConflDot  (false)
         , print_full_restart_stat   (false)
         , print_all_restarts (false)
         , verbStats        (0)

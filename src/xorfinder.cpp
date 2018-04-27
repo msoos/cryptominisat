@@ -98,7 +98,7 @@ void XorFinder::find_xors()
 {
     runStats.clear();
     runStats.numCalls = 1;
-    occcnt.resize(solver->nVars(), 0);
+    grab_mem();
 
     xors.clear();
     double myTime = cpuTime();
@@ -430,10 +430,15 @@ bool XorFinder::xor_together_xors()
             if (x_new.size() == 1) {
                 unit_added++;
                 Lit l(x_new[0], !x_new.rhs);
-                solver->enqueue(l);
-                solver->ok = solver->propagate_occur();
-                if (!solver->ok) {
+                if (solver->value(l) == l_False) {
+                    solver->ok = false;
                     goto end;
+                } else if (solver->value(l) == l_Undef) {
+                    solver->enqueue(l);
+                    solver->ok = solver->propagate_occur();
+                    if (!solver->ok) {
+                        goto end;
+                    }
                 }
                 add = false;
             }
@@ -675,6 +680,12 @@ size_t XorFinder::mem_used() const
     mem += varsMissing.capacity()*sizeof(uint32_t);
 
     return mem;
+}
+
+void XorFinder::grab_mem()
+{
+    occcnt.clear();
+    occcnt.resize(solver->nVars(), 0);
 }
 
 void XorFinder::free_mem()
