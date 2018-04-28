@@ -32,6 +32,9 @@ namespace CMSat {
 
 #define var_Undef (0xffffffffU >> 4)
 
+class TooManyVarsError {};
+class TooLongClauseError {};
+
 class Lit
 {
     uint32_t x;
