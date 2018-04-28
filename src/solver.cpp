@@ -69,11 +69,6 @@ using namespace CMSat;
 using std::cout;
 using std::endl;
 
-namespace CMSat {
-    class TooManyVarsError {};
-    class TooLongClauseError {};
-}
-
 #ifdef USE_SQLITE3
 #include "sqlitestats.h"
 #endif
