@@ -263,6 +263,7 @@ public:
     void check_clid_correct() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
+    void sort_occurs_and_set_abst();
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
     vector<ClOffset> added_long_cl;

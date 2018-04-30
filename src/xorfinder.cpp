@@ -113,6 +113,11 @@ void XorFinder::find_xors()
 
     xor_find_time_limit = orig_xor_find_time_limit;
 
+    occsimplifier->sort_occur_lists_and_set_blocked_size();
+    if (solver->conf.verbosity) {
+        cout << "c [occ-xor] sort occur list T: " << (cpuTime()-myTime) << endl;
+    }
+
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
     #endif
@@ -203,20 +208,31 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     xor_find_time_limit -= lits.size()/4+1;
     poss_xor.setup(lits, offset, abst, occcnt);
 
+    //Run findXorMatch for the 2 smallest watchlists
     Lit slit = lit_Undef;
-    size_t snum = std::numeric_limits<size_t>::max();
-    for (const Lit lit: lits) {
-        size_t num = solver->watches[lit].size() + solver->watches[~lit].size();
-        if (snum > num) {
-            snum = num;
-            slit = lit;
-        }
-        findXorMatch(solver->watches[lit], lit);
-        findXorMatch(solver->watches[~lit], ~lit);
-    }
+    Lit slit2 = lit_Undef;
+    uint32_t smallest = std::numeric_limits<uint32_t>::max();
+    uint32_t smallest2 = std::numeric_limits<uint32_t>::max();
+    for (size_t i = 0, end = lits.size(); i < end; i++) {
+        const Lit lit = lits[i];
+        uint32_t num = solver->watches[lit].size();
+        num += solver->watches[~lit].size();
+        if (num < smallest) {
+            slit2 = slit;
+            smallest2 = smallest;
 
-    //findXorMatch(solver->watches[slit], slit);
-    //findXorMatch(solver->watches[~slit], ~slit);
+            slit = lit;
+            smallest = num;
+        } else if (num < smallest2) {
+            slit2 = lit;
+            smallest2 = num;
+        }
+
+    }
+    findXorMatch(solver->watches[slit], slit);
+    findXorMatch(solver->watches[~slit], ~slit);
+    findXorMatch(solver->watches[slit2], slit2);
+    findXorMatch(solver->watches[~slit2], ~slit2);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -259,7 +275,9 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         assert(poss_xor.getSize() > 2);
 
         if (w.isBin()) {
+            #ifdef SLOW_DEBUG
             assert(occcnt[wlit.var()]);
+            #endif
             if (!occcnt[w.lit2().var()]) {
                 goto end;
             }
@@ -277,14 +295,21 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             if (poss_xor.foundAll())
                 break;
         } else {
-            const ClOffset offset = w.get_offset();
-            Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.freed() || cl.getRemoved())
+            if ((w.getBlockedLit().var() | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
+            const ClOffset offset = w.get_offset();
+            Clause& cl = *solver->cl_alloc.ptr(offset);
+            if (cl.freed() || cl.getRemoved()) {
+                //Clauses are ordered!!
+                break;
+            }
+
             //Allow the clause to be smaller or equal in size
-            if (cl.size() > poss_xor.getSize())
-                continue;
+            if (cl.size() > poss_xor.getSize()) {
+                //clauses are ordered!!
+                break;
+            }
 
             //Doesn't contain variables not in the original clause
             #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)

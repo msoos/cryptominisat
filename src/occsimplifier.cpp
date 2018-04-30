@@ -1219,6 +1219,58 @@ bool OccSimplifier::fill_occur_and_print_stats()
     return true;
 }
 
+struct MyOccSorter
+{
+    MyOccSorter(const Solver* _solver) :
+        solver(_solver)
+    {
+    }
+    bool operator()(const Watched& w1, const Watched& w2)
+    {
+        if (w2.isBin())
+            return false;
+
+        if (w1.isBin() && !w2.isBin())
+            return true;
+
+        //both are non-bin
+        const Clause* cl1 = solver->cl_alloc.ptr(w1.get_offset());
+        const Clause* cl2 = solver->cl_alloc.ptr(w2.get_offset());
+
+        //The other is at least as good, this is removed
+        if (cl1->freed() || cl1->getRemoved())
+            return false;
+
+        //The other is not removed, so it's better
+        if (cl2->freed() || cl2->getRemoved())
+            return true;
+
+        const uint32_t sz1 = cl1->size();
+        const uint32_t sz2 = cl2->size();
+        return sz1 < sz2;
+
+    }
+
+    const Solver* solver;
+};
+
+void OccSimplifier::sort_occur_lists_and_set_blocked_size()
+{
+    for(auto& ws: solver->watches) {
+        std::sort(ws.begin(), ws.end(), MyOccSorter(solver));
+        for(Watched& w: ws) {
+            if (w.isClause()) {
+                Clause* cl = solver->cl_alloc.ptr(w.get_offset());
+                if (cl->freed() || cl->getRemoved()) {
+                    w.setBlockedLit(lit_Error);
+                } else {
+                    w.setBlockedLit(Lit(cl->abst, false));
+                }
+            }
+        }
+    }
+}
+
 bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 {
     std::istringstream ss(strategy);
