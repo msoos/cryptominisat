@@ -1851,7 +1851,7 @@ lbool Solver::simplify_problem(const bool startup)
     }
     conf.global_timeout_multiplier *= conf.global_timeout_multiplier_multiplier;
     conf.global_timeout_multiplier =
-        std::min(
+        std::min<double>(
             conf.global_timeout_multiplier,
             conf.orig_global_timeout_multiplier*conf.global_multiplier_multiplier_max
         );
