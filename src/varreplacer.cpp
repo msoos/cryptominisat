@@ -314,6 +314,7 @@ bool VarReplacer::replace_xor_clauses()
 {
     for(Xor& x: solver->xorclauses) {
         for(uint32_t i = 0, end = x.size(); i < end; i++) {
+            assert(x[i] < solver->nVars());
             Lit l = Lit(x[i], false);
             if (get_lit_replaced_with_fast(l) != l) {
                 l = get_lit_replaced_with_fast(l);
