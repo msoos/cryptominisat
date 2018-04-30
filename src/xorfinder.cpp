@@ -68,6 +68,11 @@ void XorFinder::find_xors_based_on_long_clauses()
             continue;
         }
 
+        //Let's not take learnt clauses as bases for XORs
+        if (cl->red()) {
+            continue;
+        }
+
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
             cl->stats.marked_clause = true;
@@ -75,7 +80,7 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             size_t needed_per_ws = 1ULL << (cl->size()-2);
             //let's allow shortened clauses
-            needed_per_ws >>= 2;
+            needed_per_ws >>= 1;
 
             for(const Lit lit: *cl) {
                 if (solver->watches[lit].size() < needed_per_ws) {
@@ -531,7 +536,7 @@ void XorFinder::clean_xors_from_empty()
     xors.resize(i2);
 }
 
-bool XorFinder::add_new_truths_from_xors()
+bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors)
 {
     size_t origTrailSize  = solver->trail_size();
     size_t origBins = solver->binTri.redBins;
@@ -539,10 +544,10 @@ bool XorFinder::add_new_truths_from_xors()
 
     assert(solver->ok);
     size_t i2 = 0;
-    for(size_t i = 0;i < xors.size(); i++) {
-        Xor& x = xors[i];
+    for(size_t i = 0;i < this_xors.size(); i++) {
+        Xor& x = this_xors[i];
         if (x.size() > 2) {
-            xors[i2] = xors[i];
+            this_xors[i2] = this_xors[i];
             i2++;
             continue;
         }
@@ -585,7 +590,7 @@ bool XorFinder::add_new_truths_from_xors()
             }
         }
     }
-    xors.resize(i2);
+    this_xors.resize(i2);
 
     double add_time = cpuTime() - myTime;
     uint32_t num_bins_added = solver->binTri.redBins - origBins;

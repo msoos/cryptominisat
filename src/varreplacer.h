@@ -123,6 +123,7 @@ class VarReplacer
         uint32_t get_var_replaced_with_fast(const uint32_t var) const {
             return fast_inter_replace_lookup[var].var();
         }
+        bool replace_xor_clauses();
 
         vector<Lit> ps_tmp;
         bool perform_replace();

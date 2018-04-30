@@ -80,6 +80,7 @@ class EGaussian {
     matrixset matrix; // The current matrixset, i.e. the one we are working on, or the last one we worked on
 
 
+    bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void print_matrix(matrixset& m) const ;   // print matrix
     void eliminate(matrixset& m) ;            //gaussian elimination

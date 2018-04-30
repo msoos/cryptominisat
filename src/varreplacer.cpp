@@ -260,6 +260,9 @@ bool VarReplacer::perform_replace()
     }
     solver->clean_occur_from_removed_clauses_only_smudged();
     attach_delayed_attach();
+    if (!replace_xor_clauses()) {
+        goto end;
+    }
 
     //While replacing the clauses
     //we cannot(for implicits) and/or shouldn't (for implicit & long cls) enqueue
@@ -305,6 +308,30 @@ end:
     }
 
     return solver->ok;
+}
+
+bool VarReplacer::replace_xor_clauses()
+{
+    for(Xor& x: solver->xorclauses) {
+        assert(x.size() > 0);
+
+        for(uint32_t i = 0, end = x.size(); i < end; i++) {
+            Lit l = Lit(x[i], false);
+            if (get_lit_replaced_with_fast(l) != l) {
+                l = get_lit_replaced_with_fast(l);
+                x.rhs ^= l.sign();
+                x[i] = l.var();
+                runStats.replacedLits++;
+            }
+        }
+
+        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        if (x.size() == 0 && x.rhs == true) {
+            solver->ok = false;
+        }
+    }
+
+    return solver->okay();
 }
 
 void VarReplacer::newBinClause(
@@ -913,7 +940,6 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
 
 bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given)
 {
-    solver->xorclauses.clear();
     #ifdef USE_GAUSS
     solver->clearEnGaussMatrixes();
     #endif
