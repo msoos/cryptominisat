@@ -120,6 +120,11 @@ public:
         vars.resize(newsize);
     }
 
+    vector<uint32_t>& get_vars()
+    {
+        return vars;
+    }
+
     size_t size() const
     {
         return vars.size();

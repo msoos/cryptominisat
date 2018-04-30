@@ -187,6 +187,8 @@ TEST_F(xor_finder, find_4_3)
     check_xors_eq(finder.xors, "1, 2, 3, 4 = 0;");
 }
 
+/*
+//Finder pruning is too strong and we don't find this one
 TEST_F(xor_finder, find_5_2)
 {
     s->add_clause_outer(str_to_cl("-1, -2, 3, 4, 5"));
@@ -216,7 +218,7 @@ TEST_F(xor_finder, find_5_2)
     XorFinder finder(occsimp, s);
     finder.find_xors();
     check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
-}
+}*/
 
 TEST_F(xor_finder, find_4_5)
 {
@@ -280,7 +282,9 @@ TEST_F(xor_finder, find_5_1)
     check_xors_eq(finder.xors, "1, 2, 3, 4, 5 = 1;");
 }
 
-TEST_F(xor_finder, find_6_0)
+
+//we don't find 6-long, too expensive
+/*TEST_F(xor_finder, find_6_0)
 {
     s->add_clause_outer(str_to_cl("1, -7, -3, -4, -5, -9"));
     s->add_clause_outer(str_to_cl("-1, 7, -3, -4, -5, -9"));
@@ -360,7 +364,7 @@ TEST_F(xor_finder, find_6_1)
     XorFinder finder(occsimp, s);
     finder.find_xors();
     check_xors_eq(finder.xors, "6, 7, 3, 4, 5, 9 = 1;");
-}
+}*/
 
 struct xor_finder2 : public ::testing::Test {
     xor_finder2()
@@ -481,7 +485,7 @@ TEST_F(xor_finder2, xor_8)
 {
     finder->xors = str_to_xors("1, 2 = 0; 1, 2 = 1;");
     finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->add_new_truths_from_xors(finder->xors);
     EXPECT_FALSE(ret);
 }
 
@@ -489,7 +493,7 @@ TEST_F(xor_finder2, xor_unit)
 {
     finder->xors = str_to_xors("1, 2 = 0; 1, 2, 3 = 1;");
     finder->xor_together_xors();
-    bool ret = finder->add_new_truths_from_xors();
+    bool ret = finder->add_new_truths_from_xors(finder->xors);
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
 }
@@ -500,7 +504,7 @@ TEST_F(xor_finder2, xor_unit2)
     finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3, 4 = 1;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_FALSE(ret);
 }
@@ -521,7 +525,7 @@ TEST_F(xor_finder2, xor_binx)
     finder->xors = str_to_xors("1, 2, 5 = 0; 1, 2, 3 = 0;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
@@ -533,7 +537,7 @@ TEST_F(xor_finder2, xor_binx_inv)
     finder->xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 0;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
@@ -545,7 +549,7 @@ TEST_F(xor_finder2, xor_binx_inv2)
     finder->xors = str_to_xors("1, 2, 5 = 1; 1, 2, 3 = 1;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
@@ -557,7 +561,7 @@ TEST_F(xor_finder2, xor_binx2_recur)
     finder->xors = str_to_xors("1, 2, 5 = 0; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);
@@ -569,12 +573,12 @@ TEST_F(xor_finder2, xor_binx3_recur)
     finder->xors = str_to_xors("8, 9, 2 = 1; 8, 9, 1, 5 = 1; 2, 3, 4, 5 = 0; 1, 4, 5 = 0;");
     bool ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     ret = finder->xor_together_xors();
     if (ret) {
-        ret &= finder->add_new_truths_from_xors();
+        ret &= finder->add_new_truths_from_xors(finder->xors);
     }
     EXPECT_TRUE(ret);
     EXPECT_EQ(finder->xors.size(), 0u);

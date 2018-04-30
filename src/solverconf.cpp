@@ -36,27 +36,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , polarity_mode(PolarityMode::polarmode_automatic)
 
         //Clause cleaning
-        #ifndef USE_GAUSS
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
         , must_touch_lev1_within(30000)
-        #else
-        , every_lev1_reduce(15000) // kept for a while then moved to lev2
-        , every_lev2_reduce(25000) // cleared regularly
-        , must_touch_lev1_within(40000)
-        #endif
 
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        #ifndef USE_GAUSS
         , glue_put_lev0_if_below_or_eq(4) // never removed
         , glue_put_lev1_if_below_or_eq(7) // kept for a while then moved to lev2
-        #else
-        , glue_put_lev0_if_below_or_eq(6) // never removed
-        , glue_put_lev1_if_below_or_eq(11) // kept for a while then moved to lev2
-        #endif
-
 
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
@@ -168,14 +156,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //XOR
         , doFindXors       (true)
-        , maxXorToFind     (7)
+        , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS
-        , xor_finder_time_limitM(5000)
+        , xor_finder_time_limitM(50)
         #else
-        , xor_finder_time_limitM(30000)
+        , xor_finder_time_limitM(100)
         #endif
         , allow_elim_xor_vars(1)
 
@@ -200,10 +188,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-backw-sub-str, occ-xor,"
             "scc-vrepl,"
             "sub-cls-with-bin,"
-            #ifdef USE_GAUSS
-            //occ--gauss must be last
-            "occ-xor"
-            #endif
         )
         , simplify_schedule_nonstartup(
             "handle-comps,"
@@ -215,10 +199,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
-            #ifdef USE_GAUSS
-            //occ--gauss must be last
-            "occ-xor"
-            #endif
         )
         , simplify_schedule_preproc(
             "handle-comps,"

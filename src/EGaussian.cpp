@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include "solver.h"
 #include "time_mem.h"
 #include "varreplacer.h"
+#include "xorfinder.h"
 
 using std::cout;
 using std::endl;
@@ -83,7 +84,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         }
     }
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c num_unfound xor: " << num_unfound << endl;
     }
 
@@ -245,11 +246,26 @@ void EGaussian::clear_gwatches(const uint32_t var) {
     solver->gwatches[var].shrink(i-j);
 }
 
+bool EGaussian::clean_xors()
+{
+    for(Xor& x: xorclauses) {
+        solver->clean_xor_vars(x.get_vars(), x.rhs);
+    }
+    XorFinder f(NULL, solver);
+    if (!f.add_new_truths_from_xors(xorclauses))
+        return false;
+
+    return true;
+}
+
 bool EGaussian::full_init(bool& created) {
     assert(solver->ok);
     assert(solver->decisionLevel() == 0);
     bool do_again_gauss = true;
     created = true;
+    if (!clean_xors()) {
+        return false;
+    }
 
     while (do_again_gauss) { // need to chekc
         do_again_gauss = false;

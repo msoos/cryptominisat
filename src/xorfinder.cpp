@@ -68,6 +68,11 @@ void XorFinder::find_xors_based_on_long_clauses()
             continue;
         }
 
+        //Let's not take learnt clauses as bases for XORs
+        if (cl->red()) {
+            continue;
+        }
+
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
             cl->stats.marked_clause = true;
@@ -75,7 +80,7 @@ void XorFinder::find_xors_based_on_long_clauses()
 
             size_t needed_per_ws = 1ULL << (cl->size()-2);
             //let's allow shortened clauses
-            needed_per_ws >>= 2;
+            needed_per_ws >>= 1;
 
             for(const Lit lit: *cl) {
                 if (solver->watches[lit].size() < needed_per_ws) {
@@ -107,6 +112,11 @@ void XorFinder::find_xors()
         *solver->conf.global_timeout_multiplier;
 
     xor_find_time_limit = orig_xor_find_time_limit;
+
+    occsimplifier->sort_occurs_and_set_abst();
+    if (solver->conf.verbosity) {
+        cout << "c [occ-xor] sort occur list T: " << (cpuTime()-myTime) << endl;
+    }
 
     #ifdef DEBUG_MARKED_CLAUSE
     assert(solver->no_marked_clauses());
@@ -198,20 +208,30 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     xor_find_time_limit -= lits.size()/4+1;
     poss_xor.setup(lits, offset, abst, occcnt);
 
+    //Run findXorMatch for the 2 smallest watchlists
     Lit slit = lit_Undef;
-    size_t snum = std::numeric_limits<size_t>::max();
-    for (const Lit lit: lits) {
-        size_t num = solver->watches[lit].size() + solver->watches[~lit].size();
-        if (snum > num) {
-            snum = num;
-            slit = lit;
-        }
-        findXorMatch(solver->watches[lit], lit);
-        findXorMatch(solver->watches[~lit], ~lit);
-    }
+    Lit slit2 = lit_Undef;
+    uint32_t smallest = std::numeric_limits<uint32_t>::max();
+    uint32_t smallest2 = std::numeric_limits<uint32_t>::max();
+    for (size_t i = 0, end = lits.size(); i < end; i++) {
+        const Lit lit = lits[i];
+        uint32_t num = solver->watches[lit].size();
+        num += solver->watches[~lit].size();
+        if (num < smallest) {
+            slit2 = slit;
+            smallest2 = smallest;
 
-    //findXorMatch(solver->watches[slit], slit);
-    //findXorMatch(solver->watches[~slit], ~slit);
+            slit = lit;
+            smallest = num;
+        } else if (num < smallest2) {
+            slit2 = lit;
+            smallest2 = num;
+        }
+    }
+    findXorMatch(solver->watches[slit], slit);
+    findXorMatch(solver->watches[~slit], ~slit);
+    findXorMatch(solver->watches[slit2], slit2);
+    findXorMatch(solver->watches[~slit2], ~slit2);
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -254,7 +274,9 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
         assert(poss_xor.getSize() > 2);
 
         if (w.isBin()) {
+            #ifdef SLOW_DEBUG
             assert(occcnt[wlit.var()]);
+            #endif
             if (!occcnt[w.lit2().var()]) {
                 goto end;
             }
@@ -272,14 +294,21 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             if (poss_xor.foundAll())
                 break;
         } else {
-            const ClOffset offset = w.get_offset();
-            Clause& cl = *solver->cl_alloc.ptr(offset);
-            if (cl.freed() || cl.getRemoved())
+            if ((w.getBlockedLit().var() | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
+            const ClOffset offset = w.get_offset();
+            Clause& cl = *solver->cl_alloc.ptr(offset);
+            if (cl.freed() || cl.getRemoved()) {
+                //Clauses are ordered!!
+                break;
+            }
+
             //Allow the clause to be smaller or equal in size
-            if (cl.size() > poss_xor.getSize())
-                continue;
+            if (cl.size() > poss_xor.getSize()) {
+                //clauses are ordered!!
+                break;
+            }
 
             //Doesn't contain variables not in the original clause
             #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
@@ -531,7 +560,7 @@ void XorFinder::clean_xors_from_empty()
     xors.resize(i2);
 }
 
-bool XorFinder::add_new_truths_from_xors()
+bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors)
 {
     size_t origTrailSize  = solver->trail_size();
     size_t origBins = solver->binTri.redBins;
@@ -539,10 +568,10 @@ bool XorFinder::add_new_truths_from_xors()
 
     assert(solver->ok);
     size_t i2 = 0;
-    for(size_t i = 0;i < xors.size(); i++) {
-        Xor& x = xors[i];
+    for(size_t i = 0;i < this_xors.size(); i++) {
+        Xor& x = this_xors[i];
         if (x.size() > 2) {
-            xors[i2] = xors[i];
+            this_xors[i2] = this_xors[i];
             i2++;
             continue;
         }
@@ -585,7 +614,7 @@ bool XorFinder::add_new_truths_from_xors()
             }
         }
     }
-    xors.resize(i2);
+    this_xors.resize(i2);
 
     double add_time = cpuTime() - myTime;
     uint32_t num_bins_added = solver->binTri.redBins - origBins;

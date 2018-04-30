@@ -240,6 +240,7 @@ class Tester:
         for _ in range(int(random.gammavariate(12, 0.7))):
             sched.append(random.choice(opts))
 
+        # just so that XOR is really found and used, so we can fuzz it
         if "autodisablegauss" in self.extra_opts_supported:
             if random.choice([False, True, True, True]) and self.this_gauss_on:
                 sched.append("occ-xor")
