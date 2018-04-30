@@ -227,7 +227,6 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
             slit2 = lit;
             smallest2 = num;
         }
-
     }
     findXorMatch(solver->watches[slit], slit);
     findXorMatch(solver->watches[~slit], ~slit);
