@@ -84,7 +84,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         }
     }
 
-    if (solver->conf.verbosity) {
+    if (solver->conf.verbosity >= 2) {
         cout << "c num_unfound xor: " << num_unfound << endl;
     }
 
