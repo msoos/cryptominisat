@@ -1254,7 +1254,7 @@ struct MyOccSorter
     const Solver* solver;
 };
 
-void OccSimplifier::sort_occur_lists_and_set_blocked_size()
+void OccSimplifier::sort_occurs_and_set_abst()
 {
     for(auto& ws: solver->watches) {
         std::sort(ws.begin(), ws.end(), MyOccSorter(solver));

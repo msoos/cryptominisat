@@ -113,7 +113,7 @@ void XorFinder::find_xors()
 
     xor_find_time_limit = orig_xor_find_time_limit;
 
-    occsimplifier->sort_occur_lists_and_set_blocked_size();
+    occsimplifier->sort_occurs_and_set_abst();
     if (solver->conf.verbosity) {
         cout << "c [occ-xor] sort occur list T: " << (cpuTime()-myTime) << endl;
     }
