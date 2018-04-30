@@ -168,14 +168,14 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //XOR
         , doFindXors       (true)
-        , maxXorToFind     (7)
+        , maxXorToFind     (4)
         , useCacheWhenFindingXors(false)
         , doEchelonizeXOR  (true)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS
-        , xor_finder_time_limitM(5000)
+        , xor_finder_time_limitM(50)
         #else
-        , xor_finder_time_limitM(30000)
+        , xor_finder_time_limitM(100)
         #endif
         , allow_elim_xor_vars(1)
 
