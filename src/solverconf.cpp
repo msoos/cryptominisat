@@ -200,10 +200,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-backw-sub-str, occ-xor,"
             "scc-vrepl,"
             "sub-cls-with-bin,"
-            #ifdef USE_GAUSS
-            //occ--gauss must be last
-            "occ-xor"
-            #endif
         )
         , simplify_schedule_nonstartup(
             "handle-comps,"
@@ -215,10 +211,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-xor,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
-            #ifdef USE_GAUSS
-            //occ--gauss must be last
-            "occ-xor"
-            #endif
         )
         , simplify_schedule_preproc(
             "handle-comps,"
