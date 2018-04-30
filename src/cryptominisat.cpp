@@ -304,7 +304,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 19: {
             conf.maple = 1;
             conf.doMinimRedMoreMore = 1;
-            conf.global_timeout_multiplier = 5;
+            conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
@@ -334,7 +334,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
         case 22: {
             conf.maple = 0;
             conf.doMinimRedMoreMore = 1;
-            conf.global_timeout_multiplier = 5;
+            conf.orig_global_timeout_multiplier = 5;
             conf.num_conflicts_of_search_inc = 1.15;
             conf.more_red_minim_limit_cache = 1200;
             conf.more_red_minim_limit_binary = 600;
