@@ -1310,7 +1310,8 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 if (!solver->ok)
                     return false;
 
-                solver->ok = finder.add_new_truths_from_xors(finder.xors);
+                vector<Lit> out_changed_occur;
+                solver->ok = finder.add_new_truths_from_xors(finder.xors, &out_changed_occur);
                 if (!solver->ok)
                     return false;
                 finder.remove_xors_without_connecting_vars();
@@ -1318,16 +1319,15 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
                 #ifdef USE_M4RI
                 if (topLevelGauss != NULL) {
-                    vector<Lit> out_changed_occur;
                     topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
-
-                    //these may have changed, recalculating occur
-                    for(Lit lit: out_changed_occur) {
-                        n_occurs[lit.toInt()] = calc_occ_data(lit);
-                        n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
-                    }
                 }
                 #endif
+
+                //these may have changed, recalculating occur
+                for(Lit lit: out_changed_occur) {
+                    n_occurs[lit.toInt()] = calc_occ_data(lit);
+                    n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
+                }
             }
         } else if (token == "occ-clean-implicit") {
             //BUG TODO

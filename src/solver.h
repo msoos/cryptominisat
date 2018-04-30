@@ -222,7 +222,7 @@ class Solver : public Searcher
         void dump_memory_stats_to_sql();
         void set_sqlite(string filename);
         //Not Private for testing (maybe could be called from outside)
-        void renumber_variables(bool must_renumber = true);
+        bool renumber_variables(bool must_renumber = true);
         SolveFeatures calculate_features();
         SolveFeatures last_solve_feature;
 
