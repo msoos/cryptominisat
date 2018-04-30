@@ -2811,7 +2811,7 @@ llbool Searcher::Gauss_elimination()
         ) {
             const double perc = stats_line_percent(gqd.big_conflict*2+gqd.big_propagate, gqd.big_gaussnum);
             if (solver->conf.verbosity) {
-                cout << "c [xor] Disabling ALL GJ-elim in this round. "
+                cout << "c [matrix] Disabling ALL GJ-elim in this round. "
                 " Usefulness was: " << std::setprecision(2) << std::fixed << perc <<  "%" << endl;
             }
             gqd.engaus_disable = true;

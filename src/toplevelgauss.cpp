@@ -416,13 +416,13 @@ size_t TopLevelGauss::mem_used() const
 void TopLevelGauss::Stats::print_short(const Solver* solver) const
 {
     cout
-    << "c [occ-xor] cut into " << numBlocks << " blcks. "
+    << "c [xor-m4ri] cut into " << numBlocks << " blcks. "
     << " Vars in blcks: " << numVarsInBlocks
     << solver->conf.print_times(blockCutTime)
     << endl;
 
     cout
-    << "c [occ-xor] extr info. "
+    << "c [xor-m4ri] extr info. "
     << " unit: " << newUnits
     << " bin: " << newBins
     << " 0-depth-ass: " << zeroDepthAssigns
