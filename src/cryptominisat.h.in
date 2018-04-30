@@ -35,8 +35,6 @@ THE SOFTWARE.
 
 namespace CMSat {
     struct CMSatPrivateData;
-    class TooManyVarsError {};
-    class TooLongClauseError {};
     #ifdef _WIN32
     class __declspec(dllexport) SATSolver
     #else
