@@ -171,33 +171,7 @@ bool Solver::add_xor_clause_inter(
             lit ^= true;
         }
     }
-    std::sort(ps.begin(), ps.end());
-    Lit p;
-    uint32_t i, j;
-    for (i = j = 0, p = lit_Undef; i != ps.size(); i++) {
-        assert(ps[i].sign() == false);
-
-        if (ps[i].var() == p.var()) {
-            //added, but easily removed
-            j--;
-            p = lit_Undef;
-
-            //Flip rhs if neccessary
-            if (value(ps[i]) != l_Undef) {
-                rhs ^= value(ps[i]) == l_True;
-            }
-
-        } else if (value(ps[i]) == l_Undef) {
-            //Add and remember as last one to have been added
-            ps[j++] = p = ps[i];
-
-            assert(varData[p.var()].removed != Removed::elimed);
-        } else {
-            //modify rhs instead of adding
-            rhs ^= value(ps[i]) == l_True;
-        }
-    }
-    ps.resize(ps.size() - (i - j));
+    clean_xor(ps, rhs);
 
     if (ps.size() >= (0x01UL << 28)) {
         throw CMSat::TooLongClauseError();
@@ -766,15 +740,10 @@ void Solver::renumber_clauses(const vector<uint32_t>& outerToInter)
             cl->setStrenghtened();
         }
     }
-}
 
-void Solver::renumber_xor_clauses(const vector<uint32_t>& outerToInter)
-{
     //Clauses' abstractions have to be re-calculated
     for(Xor& x: xorclauses) {
-        for(uint32_t& v: x) {
-            v = getUpdatedVar(v, outerToInter);
-        }
+        updateVarsMap(x, outerToInter);
     }
 }
 
@@ -874,7 +843,6 @@ void Solver::renumber_variables(bool must_renumber)
     }
 
     renumber_clauses(outerToInter);
-    renumber_xor_clauses(outerToInter);
     CNF::updateVars(outerToInter, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);

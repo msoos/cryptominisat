@@ -73,6 +73,16 @@ void updateLitsMap(T& toUpdate, const vector< uint32_t >& mapper)
     }
 }
 
+template<typename T>
+void updateVarsMap(T& toUpdate, const vector< uint32_t >& mapper)
+{
+    for(size_t i = 0; i < toUpdate.size(); i++) {
+        if (toUpdate[i] < mapper.size()) {
+            toUpdate[i] = getUpdatedVar(toUpdate[i], mapper);
+        }
+    }
+}
+
 inline Lit getUpdatedLit(Lit toUpdate, const vector< uint32_t >& mapper)
 {
     return Lit(getUpdatedVar(toUpdate.var(), mapper), toUpdate.sign());

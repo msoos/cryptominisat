@@ -1258,7 +1258,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 if (!solver->ok)
                     return false;
 
-                solver->ok = finder.add_new_truths_from_xors();
+                solver->ok = finder.add_new_truths_from_xors(finder.xors);
                 if (!solver->ok)
                     return false;
                 finder.remove_xors_without_connecting_vars();
