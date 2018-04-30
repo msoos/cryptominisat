@@ -163,7 +163,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifndef USE_GAUSS
         , xor_finder_time_limitM(50)
         #else
-        , xor_finder_time_limitM(100)
+        , xor_finder_time_limitM(400)
         #endif
         , allow_elim_xor_vars(1)
 
