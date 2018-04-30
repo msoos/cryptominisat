@@ -64,6 +64,7 @@ THE SOFTWARE.
 #include "EGaussian.h"
 #include "sqlstats.h"
 #include "drat.h"
+#include "xorfinder.h"
 
 using namespace CMSat;
 using std::cout;
@@ -809,10 +810,10 @@ double Solver::calc_renumber_saving()
 }
 
 //Beware. Cannot be called while Searcher is running.
-void Solver::renumber_variables(bool must_renumber)
+bool Solver::renumber_variables(bool must_renumber)
 {
     if (nVars() == 0) {
-        return;
+        return true;
     }
 
     #ifdef USE_GAUSS
@@ -822,11 +823,23 @@ void Solver::renumber_variables(bool must_renumber)
     if (!must_renumber
         && calc_renumber_saving() < 0.2
     ) {
-        return;
+        return true;
     }
 
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
+    XorFinder f(NULL, this);
+    if (!f.add_new_truths_from_xors(xorclauses))
+    {
+        return false;
+    }
+    for(Xor& x: xorclauses) {
+        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        if (x.size() == 0 && x.rhs == true) {
+            solver->ok = false;
+            return false;
+        }
+    }
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.
     vector<uint32_t> outerToInter(nVarsOuter());
@@ -884,6 +897,8 @@ void Solver::renumber_variables(bool must_renumber)
 
     //NOTE order heap is now wrong, but that's OK, it will be restored from
     //backed up activities and then rebuilt at the start of Searcher
+
+    return okay();
 }
 
 void Solver::check_switchoff_limits_newvar(size_t n)
@@ -1783,7 +1798,9 @@ bool Solver::execute_inprocess_strategy(
                     }
                 }
 
-                renumber_variables(token == "must-renumber");
+                if (!renumber_variables(token == "must-renumber")) {
+                    return false;
+                }
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore

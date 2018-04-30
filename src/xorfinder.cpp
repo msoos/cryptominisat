@@ -561,7 +561,7 @@ void XorFinder::clean_xors_from_empty()
     xors.resize(i2);
 }
 
-bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors)
+bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* out_changed_occur)
 {
     size_t origTrailSize  = solver->trail_size();
     size_t origBins = solver->binTri.redBins;
@@ -588,7 +588,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors)
 
             case 1: {
                 vector<Lit> lits = {Lit(x[0], !x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), false);
+                solver->add_clause_int(lits, true, ClauseStats(), true);
                 if (!solver->ok) {
                     return false;
                 }
@@ -598,14 +598,21 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors)
             case 2: {
                 //RHS == 1 means both same is not allowed
                 vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), false);
+                solver->add_clause_int(lits, true, ClauseStats(), true);
                 if (!solver->ok) {
                     return false;
                 }
                 lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), false);
+                solver->add_clause_int(lits, true, ClauseStats(), true);
                 if (!solver->ok) {
                     return false;
+                }
+
+                if (out_changed_occur) {
+                    out_changed_occur->push_back(Lit(x[0], false));
+                    out_changed_occur->push_back(Lit(x[1], true^x.rhs));
+                    out_changed_occur->push_back(Lit(x[0], true));
+                    out_changed_occur->push_back(Lit(x[1], false^x.rhs));
                 }
                 break;
             }

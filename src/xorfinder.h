@@ -163,7 +163,7 @@ public:
     void add_xors_to_gauss();
     void remove_xors_without_connecting_vars();
     bool xor_together_xors();
-    bool add_new_truths_from_xors(vector<Xor>& xors);
+    bool add_new_truths_from_xors(vector<Xor>& xors, vector<Lit>* out_changed_occur = NULL);
 
     vector<Xor> xors;
 
