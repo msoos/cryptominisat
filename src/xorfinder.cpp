@@ -297,6 +297,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             if ((w.getBlockedLit().var() | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
+            xor_find_time_limit -= 3;
             const ClOffset offset = w.get_offset();
             Clause& cl = *solver->cl_alloc.ptr(offset);
             if (cl.freed() || cl.getRemoved()) {
