@@ -58,9 +58,13 @@ struct Drat
         return false;
     }
 
+    virtual Drat& operator<<(const uint64_t)
+    {
+        return *this;
+    }
+
     virtual Drat& operator<<(const Lit)
     {
-
         return *this;
     }
 
@@ -111,6 +115,12 @@ struct DratFile: public Drat
     {
         delete[] drup_buf;
         delete[] del_buf;
+    }
+
+    virtual Drat& operator<<(const uint64_t clauseID)
+    {
+        ID = clauseID;
+        return *this;
     }
 
     void byteDRUPa(const Lit l)
