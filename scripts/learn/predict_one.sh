@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-set -x
 
 # Copyright (C) 2017  Mate Soos
 #
@@ -25,6 +23,8 @@ if [[ $# -ne 3 ]]; then
     echo "for ex.  ./predict_one.sh 6s153.cnf.gz mydir 0.5"
     exit -1
 fi
+set -e
+set -x
 
 status=$(./cryptominisat5 --hhelp | grep sql)
 ret=$?
