@@ -26,6 +26,7 @@ using namespace CMSat;
 
 #ifndef _MSC_VER
 #include <fcntl.h>
+#include <unistd.h>
 void SQLStats::getRandomID()
 {
     //Generate random ID for SQL

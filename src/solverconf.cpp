@@ -103,7 +103,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (true)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
-        , rewardShortenedClauseWithConfl(5)
 
         //SQL
         , dump_individual_search_time(true)

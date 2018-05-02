@@ -23,14 +23,15 @@ THE SOFTWARE.
 #ifndef __SQLSTATS_H__
 #define __SQLSTATS_H__
 
-#include "searcher.h"
-#include "clause.h"
 #include "clauseusagestats.h"
 #include "solvefeatures.h"
+#include "searchstats.h"
 
 namespace CMSat {
 
 class Solver;
+class Searcher;
+class Clause;
 
 class SQLStats
 {
@@ -75,10 +76,9 @@ public:
     ) = 0;
 
     virtual void reduceDB(
-        uint64_t level
-        , uint64_t num_cleans
-        , uint64_t num_removed
-        , const Solver* solver
+        const Solver* solver
+        , const bool locked
+        , const Clause* cl
     ) = 0;
 
     virtual void dump_clause_stats(

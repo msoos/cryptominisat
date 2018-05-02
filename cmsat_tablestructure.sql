@@ -12,9 +12,21 @@ CREATE TABLE `reduceDB` (
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `runtime` float NOT NULL,
-  `level` int(20) NOT NULL,
-  `numReduceDBs` int(20) NOT NULL,
-  `numRemoved` int(20) NOT NULL
+
+  `clauseID` int(20) NOT NULL,
+  `dump_no` int(20) NOT NULL,
+  `conflicts_made` bigint(20) NOT NULL,
+  `sum_of_branch_depth_conflict` bigint(20) NOT NULL,
+  `propagations_made` bigint(20) NOT NULL,
+  `clause_looked_at` bigint(20) NOT NULL,
+  `used_for_uip_creation` bigint(20) NOT NULL,
+  `last_touched_diff` bigint(20) NOT NULL,
+  `activity_rel` float(20) NOT NULL,
+  `locked` int(20) NOT NULL,
+  `in_xor` int(20) NOT NULL,
+  `glue` int(20) NOT NULL,
+  `size` int(20) NOT NULL,
+  `ttl` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;
