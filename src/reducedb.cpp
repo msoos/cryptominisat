@@ -166,7 +166,7 @@ void ReduceDB::dump_sql_cl_data()
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
             assert(!cl->freed());
-            if (cl->stats.dump_number != std::numeric_limits<uint32_t>::max()) {
+            if (cl->stats.dump_number < 5) {
                 const bool locked = solver->clause_locked(*cl, offs);
                 solver->sqlStats->reduceDB(
                     solver
@@ -174,11 +174,9 @@ void ReduceDB::dump_sql_cl_data()
                     , cl
                 );
                 cl->stats.dump_number++;
-                //cout << "SQL dumped clid:" << cl->stats.ID <<  endl;
             }
         }
     }
-    //cout << "SQL dump happened" << endl;
 }
 
 void ReduceDB::handle_lev1()

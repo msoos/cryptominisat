@@ -260,8 +260,7 @@ class Query2 (QueryHelper):
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
         """
 
-        clause_dat2 = clause_dat.replace("cl.", "cl2.")
-        print(clause_dat2)
+        clause2_dat = clause_dat.replace("cl.", "cl2.")
 
         feat_dat = """
         -- , feat.`simplifications` as `feat.simplifications`
@@ -354,6 +353,7 @@ class Query2 (QueryHelper):
         SELECT
         tags.tag as "fname"
         {clause_dat}
+        {clause2_dat}
         {restart_dat}
         {feat_dat}
         {rdb_dat}
@@ -363,6 +363,7 @@ class Query2 (QueryHelper):
         q_ok = """
         FROM
         clauseStats as cl
+        , clauseStats as cl2
         , goodClauses
         , restart as rst
         , features as feat
@@ -375,7 +376,10 @@ class Query2 (QueryHelper):
         and cl.runID = goodClauses.runID
         and rdb.runID = cl.runID
         and rdb.clauseID = cl.clauseID
-        and rdb.dump_no = 0"""
+        and rdb.dump_no = 4
+        and cl2.runID = cl.runID
+        and cl2.clauseID = cl.clauseID
+        """
         q_ok += common_restrictions
 
         # BAD caluses
@@ -383,6 +387,7 @@ class Query2 (QueryHelper):
         SELECT
         tags.tag as "fname"
         {clause_dat}
+        {clause2_dat}
         {restart_dat}
         {feat_dat}
         {rdb_dat}
@@ -393,6 +398,7 @@ class Query2 (QueryHelper):
         FROM clauseStats as cl left join goodClauses
         on cl.clauseID = goodClauses.clauseID
         and cl.runID = goodClauses.runID
+        , clauseStats as cl2
         , restart as rst
         , features as feat
         , reduceDB as rdb
@@ -404,13 +410,17 @@ class Query2 (QueryHelper):
         and cl.clauseID != 1
         and rdb.runID = cl.runID
         and rdb.clauseID = cl.clauseID
-        and rdb.dump_no = 0"""
+        and rdb.dump_no = 4
+        and cl2.runID = cl.runID
+        and cl2.clauseID = cl.clauseID
+        """
         q_bad += common_restrictions
 
         myformat = {"runid": self.runID,
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
+                    "clause2_dat": clause2_dat,
                     "feat_dat": feat_dat,
                     "rdb_dat": rdb_dat,
                     "start_confl": options.start_conflicts}
@@ -517,6 +527,7 @@ class Classify:
                     "cl.decision_level",
                     "cl.backtrack_level",
                     "cl.cur_restart_type", # only because of tree classifier
+                    "cl2.cur_restart_type", # only because of tree classifier
                     "x.class"]
 
         #toremove.extend(["cl.vsids_vars_avg",

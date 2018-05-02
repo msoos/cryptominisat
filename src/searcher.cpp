@@ -2038,7 +2038,6 @@ inline void Searcher::dump_restart_sql()
     thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
     thisStats.clauseID_at_end_exclusive = clauseID;
 
-    solver->reduceDB->dump_sql_cl_data();
     solver->sqlStats->restart(
         restart_type_to_short_string(params.rest_type)
         , thisPropStats
@@ -2075,6 +2074,9 @@ void Searcher::reduce_db_if_needed()
     if (conf.every_lev1_reduce != 0
         && sumConflicts >= next_lev1_reduce
     ) {
+        if (solver->sqlStats) {
+            solver->reduceDB->dump_sql_cl_data();
+        }
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }
