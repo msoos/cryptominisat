@@ -184,10 +184,10 @@ class Query2 (QueryHelper):
         -- , rdb.`runID` as `rdb.runID`
         -- , rdb.`simplifications` as `rdb.simplifications`
         -- , rdb.`restarts` as `rdb.restarts`
-        -- , rdb.`conflicts` as `rdb.conflicts`
+        , rdb.`conflicts` as `rdb.conflicts`
         -- , rdb.`runtime` as `rdb.runtime`
 
-        , rdb.`clauseID` as `rdb.clauseID`
+        -- , rdb.`clauseID` as `rdb.clauseID`
         , rdb.`dump_no` as `rdb.dump_no`
         , rdb.`conflicts_made` as `rdb.conflicts_made`
         , rdb.`sum_of_branch_depth_conflict` as `rdb.sum_of_branch_depth_conflict`
