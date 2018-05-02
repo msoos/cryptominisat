@@ -105,9 +105,9 @@ CREATE TABLE `timepassed` (
   `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `runtime` double NOT NULL,
+  `runtime` float NOT NULL,
   `name` varchar(200) NOT NULL,
-  `elapsed` double NOT NULL,
+  `elapsed` float NOT NULL,
   `timeout` int(20) DEFAULT NULL,
   `percenttimeremain` float DEFAULT NULL
 );
@@ -117,7 +117,7 @@ CREATE TABLE `memused` (
   `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `runtime` double NOT NULL,
+  `runtime` float NOT NULL,
   `name` varchar(200) NOT NULL,
   `MB` int(20) NOT NULL
 );
@@ -125,7 +125,7 @@ CREATE TABLE `memused` (
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
   `runID` bigint(20) NOT NULL,
-  `runtime` bigint(20) NOT NULL,
+  `runtime` float NOT NULL,
   `gitrev` varchar(100) NOT NULL
 );
 
@@ -158,7 +158,7 @@ CREATE TABLE `clauseStats` (
   `num_overlap_literals` int(20) NOT NULL,
   `num_antecedents` int(20) NOT NULL,
   `num_total_lits_antecedents` int(20) NOT NULL,
-  `antecedents_avg_size` double(20) NOT NULL,
+  `antecedents_avg_size` float(20) NOT NULL,
 
   `backtrack_level` int(20) NOT NULL,
   `decision_level` int(20) NOT NULL,
@@ -172,42 +172,42 @@ CREATE TABLE `clauseStats` (
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
 
-  `last_dec_var_act_vsids_0` double NOT NULL,
-  `last_dec_var_act_vsids_1` double NOT NULL,
-  `first_dec_var_act_vsids_0` double NOT NULL,
-  `first_dec_var_act_vsids_1` double NOT NULL,
+  `last_dec_var_act_vsids_0` float NOT NULL,
+  `last_dec_var_act_vsids_1` float NOT NULL,
+  `first_dec_var_act_vsids_0` float NOT NULL,
+  `first_dec_var_act_vsids_1` float NOT NULL,
 
-  `vsids_vars_avg` double NOT NULL,
-  `vsids_vars_var` double NOT NULL,
-  `vsids_vars_min` double NOT NULL,
-  `vsids_vars_max` double NOT NULL,
+  `vsids_vars_avg` float NOT NULL,
+  `vsids_vars_var` float NOT NULL,
+  `vsids_vars_min` float NOT NULL,
+  `vsids_vars_max` float NOT NULL,
 
   `antecedents_glue_long_reds_avg` float NOT NULL,
   `antecedents_glue_long_reds_var` float NOT NULL,
   `antecedents_glue_long_reds_min` int(20) NOT NULL,
   `antecedents_glue_long_reds_max` int(20) NOT NULL,
 
-  `antecedents_long_red_age_avg` double NOT NULL,
-  `antecedents_long_red_age_var` double NOT NULL,
+  `antecedents_long_red_age_avg` float NOT NULL,
+  `antecedents_long_red_age_var` float NOT NULL,
   `antecedents_long_red_age_min` bigint(20) NOT NULL,
   `antecedents_long_red_age_max` bigint(20) NOT NULL,
 
-  `vsids_of_resolving_literals_avg` double NOT NULL,
-  `vsids_of_resolving_literals_var` double NOT NULL,
-  `vsids_of_resolving_literals_min` double NOT NULL,
-  `vsids_of_resolving_literals_max` double NOT NULL,
+  `vsids_of_resolving_literals_avg` float NOT NULL,
+  `vsids_of_resolving_literals_var` float NOT NULL,
+  `vsids_of_resolving_literals_min` float NOT NULL,
+  `vsids_of_resolving_literals_max` float NOT NULL,
 
-  `vsids_of_all_incoming_lits_avg` double NOT NULL,
-  `vsids_of_all_incoming_lits_var` double NOT NULL,
-  `vsids_of_all_incoming_lits_min` double NOT NULL,
-  `vsids_of_all_incoming_lits_max` double NOT NULL,
+  `vsids_of_all_incoming_lits_avg` float NOT NULL,
+  `vsids_of_all_incoming_lits_var` float NOT NULL,
+  `vsids_of_all_incoming_lits_min` float NOT NULL,
+  `vsids_of_all_incoming_lits_max` float NOT NULL,
 
-  `antecedents_antecedents_vsids_avg` double NOT NULL,
+  `antecedents_antecedents_vsids_avg` float NOT NULL,
 
   `decision_level_hist` float NOT NULL,
   `backtrack_level_hist` float NOT NULL,
   `trail_depth_level_hist` float NOT NULL,
-  `vsids_vars_hist` double NOT NULL,
+  `vsids_vars_hist` float NOT NULL,
   `size_hist` float NOT NULL,
   `glue_hist` float NOT NULL,
   `num_antecedents_hist` float NOT NULL,
