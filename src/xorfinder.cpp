@@ -630,7 +630,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
 
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-xor] added unit " << num_units_added
+        << "c [xor-add-lem] added unit " << num_units_added
         << " bin " << num_bins_added
         << solver->conf.print_times(add_time)
         << endl;
