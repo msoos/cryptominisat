@@ -26,7 +26,7 @@ if [[ $# -ne 3 ]]; then
     exit -1
 fi
 
-status=`./cryptominisat5 --hhelp | grep sql`
+status=$(./cryptominisat5 --hhelp | grep sql)
 ret=$?
 if [ "$ret" -ne 0 ]; then
     echo "You must compile SQL into cryptominisat"
@@ -38,19 +38,19 @@ OUTDIR=$2
 RATIO=$3
 mkdir -p "${OUTDIR}"
 
-rm -if ${OUTDIR}/drat_out
-rm -if ${OUTDIR}/lemmas
-rm -if ${OUTDIR}/*.sqlite
+rm -if "${OUTDIR}/drat_out"
+rm -if "${OUTDIR}/lemmas"
+rm -if "${OUTDIR}/data.sqlite"
 echo "Predicting file $1"
 
 # running CNF
 ./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --clid --sql 2 --distill 0 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
 
 # getting drat
-./tests/drat-trim/drat-trim ${FNAME} ${OUTDIR}/drat_out -x ${OUTDIR}/lemmas -i
+./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/lemmas" -i
 
 # add lemma indices that were good
-./add_lemma_ind.py ${OUTDIR}/data.sqlite ${OUTDIR}/lemmas
+./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/lemmas"
 
 # run prediction on SQLite database
 ./predict.py --nordb --csv "${OUTDIR}/data.sqlite"
