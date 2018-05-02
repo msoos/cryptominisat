@@ -94,12 +94,14 @@ class Query2 (QueryHelper):
         drop index if exists `idxclid3`;
         drop index if exists `idxclid4`;
         drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
         create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
         create index `idxclid4` on `restart` (`runID`, `restarts`);
         create index `idxclid5` on `tags` (`runID`, `tagname`);
+        create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -178,6 +180,29 @@ class Query2 (QueryHelper):
         -- , rst.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
         """
 
+        rdb_dat = """
+        -- , rdb.`runID` as `rdb.runID`
+        -- , rdb.`simplifications` as `rdb.simplifications`
+        -- , rdb.`restarts` as `rdb.restarts`
+        -- , rdb.`conflicts` as `rdb.conflicts`
+        -- , rdb.`runtime` as `rdb.runtime`
+
+        , rdb.`clauseID` as `rdb.clauseID`
+        , rdb.`dump_no` as `rdb.dump_no`
+        , rdb.`conflicts_made` as `rdb.conflicts_made`
+        , rdb.`sum_of_branch_depth_conflict` as `rdb.sum_of_branch_depth_conflict`
+        , rdb.`propagations_made` as `rdb.propagations_made`
+        , rdb.`clause_looked_at` as `rdb.clause_looked_at`
+        , rdb.`used_for_uip_creation` as `rdb.used_for_uip_creation`
+        , rdb.`last_touched_diff` as `rdb.last_touched_diff`
+        , rdb.`activity_rel` as `rdb.activity_rel`
+        , rdb.`locked` as `rdb.locked`
+        , rdb.`in_xor` as `rdb.in_xor`
+        , rdb.`glue` as `rdb.glue`
+        , rdb.`size` as `rdb.size`
+        , rdb.`ttl` as `rdb.ttl`
+        """
+
         clause_dat = """
         -- , cl.`runID` as `cl.runID`
         -- , cl.`simplifications` as `cl.simplifications`
@@ -203,10 +228,10 @@ class Query2 (QueryHelper):
         , cl.`atedecents_binRed` as `cl.atedecents_binRed`
         , cl.`atedecents_longIrred` as `cl.atedecents_longIrred`
         , cl.`atedecents_longRed` as `cl.atedecents_longRed`
-        , cl.`vsids_vars_avg` as `cl.vsids_vars_avg`
-        , cl.`vsids_vars_var` as `cl.vsids_vars_var`
-        , cl.`vsids_vars_min` as `cl.vsids_vars_min`
-        , cl.`vsids_vars_max` as `cl.vsids_vars_max`
+        -- , cl.`vsids_vars_avg` as `cl.vsids_vars_avg`
+        -- , cl.`vsids_vars_var` as `cl.vsids_vars_var`
+        -- , cl.`vsids_vars_min` as `cl.vsids_vars_min`
+        -- , cl.`vsids_vars_max` as `cl.vsids_vars_max`
         , cl.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`
         , cl.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`
         , cl.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`
@@ -215,25 +240,28 @@ class Query2 (QueryHelper):
         , cl.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`
         , cl.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`
         , cl.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`
-        , cl.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`
-        , cl.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`
-        , cl.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`
-        , cl.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`
-        , cl.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`
-        , cl.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`
-        , cl.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`
-        , cl.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
-        , cl.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
+        -- , cl.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`
+        -- , cl.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`
+        -- , cl.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`
+        -- , cl.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`
+        -- , cl.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`
+        -- , cl.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`
+        -- , cl.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`
+        -- , cl.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
+        -- , cl.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
         , cl.`decision_level_hist` as `cl.decision_level_hist`
         , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
         , cl.`trail_depth_level_hist` as `cl.trail_depth_level_hist`
-        , cl.`vsids_vars_hist` as `cl.vsids_vars_hist`
+        -- , cl.`vsids_vars_hist` as `cl.vsids_vars_hist`
         , cl.`size_hist` as `cl.size_hist`
         , cl.`glue_hist` as `cl.glue_hist`
         , cl.`num_antecedents_hist` as `cl.num_antecedents_hist`
         , cl.`antec_sum_size_hist` as `cl.antec_sum_size_hist`
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
         """
+
+        clause_dat2 = clause_dat.replace("cl.", "cl2.")
+        print(clause_dat2)
 
         feat_dat = """
         -- , feat.`simplifications` as `feat.simplifications`
@@ -328,6 +356,7 @@ class Query2 (QueryHelper):
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        {rdb_dat}
         , "OK" as `x.class`
         """
 
@@ -337,12 +366,16 @@ class Query2 (QueryHelper):
         , goodClauses
         , restart as rst
         , features as feat
+        , reduceDB as rdb
         , tags
         WHERE
 
         cl.clauseID = goodClauses.clauseID
         and cl.clauseID != 1
-        and cl.runID = goodClauses.runID"""
+        and cl.runID = goodClauses.runID
+        and rdb.runID = cl.runID
+        and rdb.clauseID = cl.clauseID
+        and rdb.dump_no = 0"""
         q_ok += common_restrictions
 
         # BAD caluses
@@ -352,6 +385,7 @@ class Query2 (QueryHelper):
         {clause_dat}
         {restart_dat}
         {feat_dat}
+        {rdb_dat}
         , "BAD" as `x.class`
         """
 
@@ -361,19 +395,25 @@ class Query2 (QueryHelper):
         and cl.runID = goodClauses.runID
         , restart as rst
         , features as feat
+        , reduceDB as rdb
         , tags
         WHERE
 
         goodClauses.clauseID is NULL
-        and goodClauses.runID is NULL"""
+        and goodClauses.runID is NULL
+        and cl.clauseID != 1
+        and rdb.runID = cl.runID
+        and rdb.clauseID = cl.clauseID
+        and rdb.dump_no = 0"""
         q_bad += common_restrictions
 
-        myformat = {"runid" : self.runID,
-                "limit" : 1000*1000*1000,
-                "restart_dat": restart_dat,
-                "clause_dat": clause_dat,
-                "feat_dat": feat_dat,
-                "start_confl": options.start_conflicts}
+        myformat = {"runid": self.runID,
+                    "limit": 1000*1000*1000,
+                    "restart_dat": restart_dat,
+                    "clause_dat": clause_dat,
+                    "feat_dat": feat_dat,
+                    "rdb_dat": rdb_dat,
+                    "start_confl": options.start_conflicts}
 
         t = time.time()
 
@@ -470,26 +510,27 @@ class Classify:
         toremove = ["cl.decision_level_hist",
                     "cl.backtrack_level_hist",
                     "cl.trail_depth_level_hist",
-                    "cl.vsids_vars_hist",
+                    #"cl.vsids_vars_hist",
                     "cl.size_hist",
                     "cl.glue_hist",
                     "cl.num_antecedents_hist",
                     "cl.decision_level",
                     "cl.backtrack_level",
+                    "cl.cur_restart_type", # only because of tree classifier
                     "x.class"]
 
-        toremove.extend(["cl.vsids_vars_avg",
-                         "cl.vsids_vars_var",
-                         "cl.vsids_vars_min",
-                         "cl.vsids_vars_max",
-                         "cl.vsids_of_resolving_literals_avg",
-                         "cl.vsids_of_resolving_literals_var",
-                         "cl.vsids_of_resolving_literals_min",
-                         "cl.vsids_of_resolving_literals_max",
-                         "cl.vsids_of_all_incoming_lits_avg",
-                         "cl.vsids_of_all_incoming_lits_var",
-                         "cl.vsids_of_all_incoming_lits_min",
-                         "cl.vsids_of_all_incoming_lits_max"])
+        #toremove.extend(["cl.vsids_vars_avg",
+                         #"cl.vsids_vars_var",
+                         #"cl.vsids_vars_min",
+                         #"cl.vsids_vars_max",
+                         #"cl.vsids_of_resolving_literals_avg",
+                         #"cl.vsids_of_resolving_literals_var",
+                         #"cl.vsids_of_resolving_literals_min",
+                         #"cl.vsids_of_resolving_literals_max",
+                         #"cl.vsids_of_all_incoming_lits_avg",
+                         #"cl.vsids_of_all_incoming_lits_var",
+                         #"cl.vsids_of_all_incoming_lits_min",
+                         #"cl.vsids_of_all_incoming_lits_max"])
 
         for t in toremove:
             if options.verbose:
@@ -656,7 +697,7 @@ def transform(df):
         df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
         df["cl.trail_depth_level_hist"]
-    df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
+    # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
 
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
