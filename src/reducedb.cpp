@@ -159,6 +159,7 @@ void ReduceDB::handle_lev2()
 
 void ReduceDB::dump_sql_cl_data()
 {
+    #ifdef STATS_NEEDED
     assert(solver->sqlStats);
 
     for(auto& cc: solver->longRedCls) {
@@ -177,6 +178,7 @@ void ReduceDB::dump_sql_cl_data()
             }
         }
     }
+    #endif
 }
 
 void ReduceDB::handle_lev1()
