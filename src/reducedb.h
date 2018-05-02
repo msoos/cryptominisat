@@ -39,6 +39,7 @@ public:
     }
     void handle_lev1();
     void handle_lev2();
+    void dump_sql_cl_data();
     uint64_t nbReduceDB_lev1 = 0;
     uint64_t nbReduceDB_lev2 = 0;
 
@@ -52,7 +53,6 @@ private:
     unsigned cl_locked_solver;
 
     size_t last_reducedb_num_conflicts = 0;
-    void dump_sql_cl_data();
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 

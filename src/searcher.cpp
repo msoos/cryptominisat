@@ -2038,6 +2038,7 @@ inline void Searcher::dump_restart_sql()
     thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
     thisStats.clauseID_at_end_exclusive = clauseID;
 
+    solver->reduceDB->dump_sql_cl_data();
     solver->sqlStats->restart(
         restart_type_to_short_string(params.rest_type)
         , thisPropStats

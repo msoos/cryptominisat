@@ -174,19 +174,15 @@ void ReduceDB::dump_sql_cl_data()
                     , cl
                 );
                 cl->stats.dump_number++;
+                //cout << "SQL dumped clid:" << cl->stats.ID <<  endl;
             }
         }
     }
+    //cout << "SQL dump happened" << endl;
 }
 
 void ReduceDB::handle_lev1()
 {
-    #ifdef STATS_NEEDED
-    if (solver->sqlStats) {
-        dump_sql_cl_data();
-    }
-    #endif
-
     nbReduceDB_lev1++;
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
