@@ -51,7 +51,7 @@ echo "Predicting file $1"
 ./add_lemma_ind.py ${OUTDIR}/data.sqlite ${OUTDIR}/lemmas
 
 # run prediction on SQLite database
-./predict.py --csv ${OUTDIR}/data.sqlite
+./predict.py --nordb --csv "${OUTDIR}/data.sqlite"
 
 # generate DOT and display it
 dot -Tpng ${OUTDIR}/data.sqlite.tree.dot -o tree.png
