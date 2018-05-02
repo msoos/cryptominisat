@@ -45,10 +45,9 @@ public:
     ) override;
 
     void reduceDB(
-        uint64_t level
-        , uint64_t num_cleans
-        , uint64_t num_removed
-        , const Solver* solver
+        const Solver* solver
+        , const bool locked
+        , const Clause* cl
     ) override;
 
     void time_passed(

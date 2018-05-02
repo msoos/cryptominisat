@@ -169,7 +169,9 @@ bool DistillerLong::go_through_clauses(
             , cl.stats
         );
 
+        #ifdef USE_GAUSS
         copy:
+        #endif
         if (offset2 != CL_OFFSET_MAX) {
             *j++ = offset2;
         }

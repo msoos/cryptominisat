@@ -200,8 +200,7 @@ class solution_parser:
         if len(output_lines) == 0:
             print("Error! SAT solver output is empty!")
             print("output lines: %s" % output_lines)
-            print("Error code 500")
-            exit(500)
+            exit(-1)
 
         # solution will be put here
         satunsatfound = False
@@ -258,7 +257,7 @@ class solution_parser:
 
             print("Error! SAT solver output contains a line that is neither 'v' nor 'c' nor 's'!")
             print("Line is:", line.strip())
-            exit(500)
+            exit(-1)
 
         # print("Parsed values:", solution)
 
@@ -268,7 +267,7 @@ class solution_parser:
             print("Error: Cannot find line starting with 's' or 'v' in output!")
             print(output_lines)
             print("Error code 500")
-            exit(500)
+            exit(-1)
 
         if (ignoreNoSolution is True and
                 (satunsatfound is False or (
@@ -281,13 +280,13 @@ class solution_parser:
             print("Error: Cannot find if SAT or UNSAT. Maybe didn't finish running?")
             print(output_lines)
             print("Error code 500")
-            exit(500)
+            exit(-1)
 
         if (unsat is False and vlinefound is False):
             print("Error: Solution is SAT, but no 'v' line")
             print (output_lines)
             print("Error code 500")
-            exit(500)
+            exit(-1)
 
         return unsat, solution, conflict
 

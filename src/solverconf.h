@@ -218,7 +218,6 @@ class SolverConf
         int       otfHyperbin;
         int       doOTFSubsume;
         int       doOTFSubsumeOnlyAtOrBelowGlue;
-        int       rewardShortenedClauseWithConfl; //Shortened through OTF subsumption
 
         //SQL
         bool      dump_individual_search_time;

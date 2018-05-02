@@ -155,8 +155,27 @@ void ReduceDB::handle_lev2()
     total_time += cpuTime()-myTime;
 
     last_reducedb_num_conflicts = solver->sumConflicts;
-    if (solver->sqlStats) {
-        //solver->sqlStats->reduceDB(2, nbReduceDB_lev2, solver);
+}
+
+void ReduceDB::dump_sql_cl_data()
+{
+    assert(solver->sqlStats);
+
+    for(auto& cc: solver->longRedCls) {
+        for(const auto& offs: cc) {
+            Clause* cl = solver->cl_alloc.ptr(offs);
+            assert(!cl->getRemoved());
+            assert(!cl->freed());
+            if (cl->stats.dump_number < 5) {
+                const bool locked = solver->clause_locked(*cl, offs);
+                solver->sqlStats->reduceDB(
+                    solver
+                    , locked
+                    , cl
+                );
+                cl->stats.dump_number++;
+            }
+        }
     }
 }
 
@@ -214,10 +233,6 @@ void ReduceDB::handle_lev1()
         );
     }
     total_time += cpuTime()-myTime;
-
-    if (solver->sqlStats) {
-        //solver->sqlStats->reduceDB(1, nbReduceDB_lev1, solver);
-    }
 }
 
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)

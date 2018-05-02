@@ -1391,9 +1391,6 @@ void Searcher::add_otf_subsume_long_clauses()
     for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
         const ClOffset offset = otf_subsuming_long_cls[i];
         Clause& cl = *solver->cl_alloc.ptr(offset);
-        #ifdef STATS_NEEDED
-        cl.stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
-        #endif
 
         //Find the l_Undef
         size_t at = std::numeric_limits<size_t>::max();
@@ -1677,94 +1674,99 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     old_decision_level
     #endif
 ) {
-    //Cannot make a non-implicit into an implicit
-    if (learnt_clause.size() <= 2) {
-        *drat << add << learnt_clause << fin;
-        return NULL;
+    if (learnt_clause.size() <= 2 ||
+        cl == NULL ||
+        cl->gauss_temp_cl() ||
+        !conf.doOTFSubsume
+    ) {
+        //Cannot make a non-implicit into an implicit
+        if (learnt_clause.size() <= 2) {
+            *drat << add << clauseID << learnt_clause << fin;
+            cl = NULL;
+        } else {
+            cl = cl_alloc.Clause_new(learnt_clause
+            , sumConflicts
+            #ifdef STATS_NEEDED
+            , clauseID
+            #endif
+            );
+            cl->makeRed(glue);
+            ClOffset offset = cl_alloc.get_offset(cl);
+            unsigned which_arr = 2;
+
+            if (glue <= conf.glue_put_lev0_if_below_or_eq) {
+                which_arr = 0;
+            } else if (
+                glue <= conf.glue_put_lev1_if_below_or_eq
+                && conf.glue_put_lev1_if_below_or_eq != 0
+            ) {
+                which_arr = 1;
+            } else {
+                which_arr = 2;
+            }
+
+            if (which_arr == 0) {
+                stats.red_cl_in_which0++;
+            }
+
+            /*if (conf.guess_cl_effectiveness) {
+                unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
+                if (lower_it) {
+                    stats.guess_different++;
+                    cl->stats.ttl = 1;
+                }
+            }*/
+
+            cl->stats.which_red_array = which_arr;
+            solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+            *drat << add << *cl << fin;
+        }
+    } else {
+        //On-the-fly subsumption
+        assert(cl->size() > 2);
+        *(solver->drat) << deldelay << *cl << fin;
+        solver->detachClause(*cl, false);
+
+        //Shrink clause
+        assert(cl->size() > learnt_clause.size());
+        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
+            (*cl)[i] = learnt_clause[i];
+        }
+        cl->resize(learnt_clause.size());
+        assert(cl->size() == learnt_clause.size());
+
+        //Update stats
+        if (cl->red() && cl->stats.glue > glue) {
+            cl->stats.glue = glue;
+        }
+        #ifdef STATS_NEEDED
+        cl->stats.ID = clauseID;
+        #endif
+        *(solver->drat) << add << *cl << fin << findelay;
     }
 
-    //No on-the-fly subsumption
-    if (cl == NULL || cl->gauss_temp_cl() || !conf.doOTFSubsume) {
-        cl = cl_alloc.Clause_new(learnt_clause
-        , sumConflicts
-        #ifdef STATS_NEEDED
-        , clauseID++
-        #endif
-        );
-        cl->makeRed(glue);
-        ClOffset offset = cl_alloc.get_offset(cl);
-        unsigned which_arr = 2;
-
-        if (glue <= conf.glue_put_lev0_if_below_or_eq) {
-            which_arr = 0;
-        } else if (
-            glue <= conf.glue_put_lev1_if_below_or_eq
-            && conf.glue_put_lev1_if_below_or_eq != 0
-        ) {
-            which_arr = 1;
-        } else {
-            which_arr = 2;
+    #ifdef STATS_NEEDED
+    if (solver->sqlStats
+        && drat
+        && conf.dump_individual_restarts_and_clauses
+    ) {
+        if (!dump_this_many_cldata_in_stream) {
+            if (mtrand.randDblExc() <= conf.dump_individual_cldata_ratio)
+                dump_this_many_cldata_in_stream = 5;
         }
 
-        if (which_arr == 0) {
-            stats.red_cl_in_which0++;
-        }
-
-        /*if (conf.guess_cl_effectiveness) {
-            unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
-            if (lower_it) {
-                stats.guess_different++;
-                cl->stats.ttl = 1;
+        if (dump_this_many_cldata_in_stream) {
+            if (cl) {
+                cl->stats.dump_number = 0;
             }
-        }*/
-
-        cl->stats.which_red_array = which_arr;
-        solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-        *drat << add << *cl << fin;
-
-        #ifdef STATS_NEEDED
-        if (solver->sqlStats
-            && drat
-            && conf.dump_individual_restarts_and_clauses
-            && learnt_clause.size() > 2
-            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio
-        ) {
+            dump_this_many_cldata_in_stream--;
             dump_sql_clause_data(
                 glue
                 , old_decision_level
             );
         }
-        #endif
-
-        return cl;
     }
-
-    assert(cl->size() > 2);
-#ifdef VERBOSE_DEBUG
-    cout << "Detaching OTF subsumed (LAST) clause:" << *cl << endl;
-#endif
-    *(solver->drat) << deldelay << *cl << fin;
-    solver->detachClause(*cl, false);
-
-    //Shrink clause
-    assert(cl->size() > learnt_clause.size());
-    for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-        (*cl)[i] = learnt_clause[i];
-    }
-    cl->resize(learnt_clause.size());
-    assert(cl->size() == learnt_clause.size());
-
-    //Update stats
-    if (cl->red() && cl->stats.glue > glue) {
-        cl->stats.glue = glue;
-    }
-    #ifdef STATS_NEEDED
-    cl->stats.ID = clauseID++;
-    #endif
-    *(solver->drat) << add << *cl << fin << findelay;
-
-    #ifdef STATS_NEEDED
-    cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
+    clauseID++;
     #endif
 
     return cl;
@@ -2072,6 +2074,9 @@ void Searcher::reduce_db_if_needed()
     if (conf.every_lev1_reduce != 0
         && sumConflicts >= next_lev1_reduce
     ) {
+        if (solver->sqlStats) {
+            solver->reduceDB->dump_sql_cl_data();
+        }
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }

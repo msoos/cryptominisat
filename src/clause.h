@@ -131,6 +131,7 @@ struct ClauseStats
     float   activity = 1.0;
     uint32_t last_touched = 0;
     #ifdef STATS_NEEDED
+    uint32_t dump_number = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint64_t conflicts_made = 0; ///<Number of times caused conflict

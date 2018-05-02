@@ -39,6 +39,7 @@ public:
     }
     void handle_lev1();
     void handle_lev2();
+    void dump_sql_cl_data();
     uint64_t nbReduceDB_lev1 = 0;
     uint64_t nbReduceDB_lev2 = 0;
 
