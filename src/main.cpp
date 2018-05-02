@@ -515,9 +515,6 @@ void Main::add_supported_options()
         , "Always strong-minimise clause")
     ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
         , "Perform on-the-fly subsumption")
-    ("rewardotfsubsume", po::value(&conf.rewardShortenedClauseWithConfl)
-        ->default_value(conf.rewardShortenedClauseWithConfl)
-        , "Reward with this many prop&confl a clause that has been shortened with on-the-fly subsumption")
     ;
 
     po::options_description propOptions("Propagation options");

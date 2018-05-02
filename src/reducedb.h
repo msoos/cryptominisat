@@ -52,6 +52,7 @@ private:
     unsigned cl_locked_solver;
 
     size_t last_reducedb_num_conflicts = 0;
+    void dump_sql_cl_data();
     bool red_cl_too_young(const Clause* cl) const;
     void clear_clauses_stats(vector<ClOffset>& clauseset);
 

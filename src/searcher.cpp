@@ -1391,9 +1391,6 @@ void Searcher::add_otf_subsume_long_clauses()
     for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
         const ClOffset offset = otf_subsuming_long_cls[i];
         Clause& cl = *solver->cl_alloc.ptr(offset);
-        #ifdef STATS_NEEDED
-        cl.stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
-        #endif
 
         //Find the l_Undef
         size_t at = std::numeric_limits<size_t>::max();
@@ -1686,10 +1683,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (learnt_clause.size() <= 2) {
             *drat << add << clauseID << learnt_clause << fin;
             cl = NULL;
-        }
-
-        //No on-the-fly subsumption
-        if (cl == NULL || cl->gauss_temp_cl() || !conf.doOTFSubsume) {
+        } else {
             cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
             #ifdef STATS_NEEDED
@@ -1749,10 +1743,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->stats.ID = clauseID;
         #endif
         *(solver->drat) << add << *cl << fin << findelay;
-
-        #ifdef STATS_NEEDED
-        cl->stats.conflicts_made += conf.rewardShortenedClauseWithConfl;
-        #endif
     }
 
     #ifdef STATS_NEEDED
@@ -1766,6 +1756,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         }
 
         if (dump_this_many_cldata_in_stream) {
+            if (cl) {
+                cl->stats.dump_number = 0;
+            }
             dump_this_many_cldata_in_stream--;
             dump_sql_clause_data(
                 glue
