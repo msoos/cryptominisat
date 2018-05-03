@@ -260,8 +260,6 @@ class Query2 (QueryHelper):
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
         """
 
-        clause2_dat = clause_dat.replace("cl.", "cl2.")
-
         feat_dat = """
         -- , feat.`simplifications` as `feat.simplifications`
         -- , feat.`restarts` as `feat.restarts`
@@ -357,6 +355,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {feat_dat}
         {rdb_dat}
+        {rdb2_dat}
         , "OK" as `x.class`
         """
 
@@ -368,6 +367,7 @@ class Query2 (QueryHelper):
         , restart as rst
         , features as feat
         {no_rdb}, reduceDB as rdb
+        {no_rdb}, reduceDB as rdb2
         , tags
         WHERE
 
@@ -377,6 +377,9 @@ class Query2 (QueryHelper):
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
         {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb2.runID = cl.runID
+        {no_rdb} and rdb2.clauseID = cl.clauseID
+        {no_rdb} and rdb2.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
@@ -391,6 +394,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {feat_dat}
         {rdb_dat}
+        {rdb2_dat}
         , "BAD" as `x.class`
         """
 
@@ -402,6 +406,7 @@ class Query2 (QueryHelper):
         , restart as rst
         , features as feat
         {no_rdb}, reduceDB as rdb
+        {no_rdb}, reduceDB as rdb2
         , tags
         WHERE
 
@@ -411,6 +416,9 @@ class Query2 (QueryHelper):
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
         {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb2.runID = cl.runID
+        {no_rdb} and rdb2.clauseID = cl.clauseID
+        {no_rdb} and rdb2.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
@@ -426,9 +434,10 @@ class Query2 (QueryHelper):
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
-                    "clause2_dat": clause2_dat,
+                    "clause2_dat": clause_dat.replace("cl.", "cl2."),
                     "feat_dat": feat_dat,
                     "rdb_dat": rdb_dat,
+                    "rdb2_dat": rdb_dat.replace("rdb.", "rdb2."),
                     "no_rdb": no_rdb,
                     "start_confl": options.start_conflicts}
 
