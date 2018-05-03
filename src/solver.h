@@ -173,7 +173,6 @@ class Solver : public Searcher
         void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
         void bva_changed();
-        bool init_all_matrixes();
 
         //Attaching-detaching clauses
         void attachClause(
@@ -229,6 +228,10 @@ class Solver : public Searcher
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
+
+        #ifdef USE_GAUSS
+        bool init_all_matrixes();
+        #endif
 
 
         //if set to TRUE, a clause has been removed during add_clause_int

@@ -3815,4 +3815,3 @@ bool Solver::init_all_matrixes()
     return solver->ok;
 }
 #endif //USE_GAUSS
-
