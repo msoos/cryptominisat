@@ -260,8 +260,6 @@ class Query2 (QueryHelper):
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
         """
 
-        clause2_dat = clause_dat.replace("cl.", "cl2.")
-
         feat_dat = """
         -- , feat.`simplifications` as `feat.simplifications`
         -- , feat.`restarts` as `feat.restarts`
@@ -357,6 +355,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {feat_dat}
         {rdb_dat}
+        {rdb2_dat}
         , "OK" as `x.class`
         """
 
@@ -367,16 +366,20 @@ class Query2 (QueryHelper):
         , goodClauses
         , restart as rst
         , features as feat
-        , reduceDB as rdb
+        {no_rdb}, reduceDB as rdb
+        {no_rdb}, reduceDB as rdb2
         , tags
         WHERE
 
         cl.clauseID = goodClauses.clauseID
         and cl.clauseID != 1
         and cl.runID = goodClauses.runID
-        and rdb.runID = cl.runID
-        and rdb.clauseID = cl.clauseID
-        and rdb.dump_no = 4
+        {no_rdb} and rdb.runID = cl.runID
+        {no_rdb} and rdb.clauseID = cl.clauseID
+        {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb2.runID = cl.runID
+        {no_rdb} and rdb2.clauseID = cl.clauseID
+        {no_rdb} and rdb2.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
@@ -391,6 +394,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {feat_dat}
         {rdb_dat}
+        {rdb2_dat}
         , "BAD" as `x.class`
         """
 
@@ -401,28 +405,40 @@ class Query2 (QueryHelper):
         , clauseStats as cl2
         , restart as rst
         , features as feat
-        , reduceDB as rdb
+        {no_rdb}, reduceDB as rdb
+        {no_rdb}, reduceDB as rdb2
         , tags
         WHERE
 
         goodClauses.clauseID is NULL
         and goodClauses.runID is NULL
         and cl.clauseID != 1
-        and rdb.runID = cl.runID
-        and rdb.clauseID = cl.clauseID
-        and rdb.dump_no = 4
+        {no_rdb} and rdb.runID = cl.runID
+        {no_rdb} and rdb.clauseID = cl.clauseID
+        {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb2.runID = cl.runID
+        {no_rdb} and rdb2.clauseID = cl.clauseID
+        {no_rdb} and rdb2.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
         q_bad += common_restrictions
 
+        if options.no_rdb:
+            rdb_dat = ""
+            no_rdb = " -- "
+        else:
+            no_rdb = ""
+
         myformat = {"runid": self.runID,
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
-                    "clause2_dat": clause2_dat,
+                    "clause2_dat": clause_dat.replace("cl.", "cl2."),
                     "feat_dat": feat_dat,
                     "rdb_dat": rdb_dat,
+                    "rdb2_dat": rdb_dat.replace("rdb.", "rdb2."),
+                    "no_rdb": no_rdb,
                     "start_confl": options.start_conflicts}
 
         t = time.time()
@@ -813,6 +829,8 @@ if __name__ == "__main__":
 
     parser.add_option("--nopredict", action="store_true", default=False,
                       dest="no_predict", help="Don't create predictive model")
+    parser.add_option("--nordb", action="store_true", default=False,
+                      dest="no_rdb", help="Don't add RDB to the features")
 
     (options, args) = parser.parse_args()
 

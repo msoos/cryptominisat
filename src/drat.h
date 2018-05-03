@@ -117,9 +117,14 @@ struct DratFile: public Drat
         delete[] del_buf;
     }
 
-    virtual Drat& operator<<(const uint64_t clauseID)
-    {
+    virtual Drat& operator<<(const uint64_t
+        #ifdef STATS_NEEDED
+        clauseID
+        #endif
+    ) {
+        #ifdef STATS_NEEDED
         ID = clauseID;
+        #endif
         return *this;
     }
 

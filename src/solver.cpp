@@ -809,9 +809,41 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
+bool Solver::clean_xor_clauses()
+{
+    assert(decisionLevel() == 0);
+    double myTime = cpuTime();
+    XorFinder f(NULL, this);
+    for(Xor& x: xorclauses) {
+        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        if (x.size() == 0 && x.rhs == true) {
+            ok = false;
+            break;
+        }
+    }
+
+    const double time_used = cpuTime() - myTime;
+    if (conf.verbosity) {
+        cout
+        << "c [xor-clean]"
+        << conf.print_times(time_used)
+        << endl;
+    }
+    if (sqlStats) {
+        sqlStats->time_passed_min(
+            solver
+            , "xor-clean"
+            , time_used
+        );
+    }
+
+    return okay();
+}
+
 //Beware. Cannot be called while Searcher is running.
 bool Solver::renumber_variables(bool must_renumber)
 {
+    assert(decisionLevel() == 0);
     if (nVars() == 0) {
         return true;
     }
@@ -828,17 +860,9 @@ bool Solver::renumber_variables(bool must_renumber)
 
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
-    XorFinder f(NULL, this);
-    if (!f.add_new_truths_from_xors(xorclauses))
-    {
-        return false;
-    }
-    for(Xor& x: xorclauses) {
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
-        if (x.size() == 0 && x.rhs == true) {
-            solver->ok = false;
+    if (!xorclauses.empty()) {
+        if (!clean_xor_clauses())
             return false;
-        }
     }
 
     //outerToInter[10] = 0 ---> what was 10 is now 0.

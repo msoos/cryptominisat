@@ -304,6 +304,7 @@ class Solver : public Searcher
         );
         void renumber_clauses(const vector<uint32_t>& outerToInter);
         void test_renumbering() const;
+        bool clean_xor_clauses();
 
         //Value Unsetter
         struct FindUndef {
