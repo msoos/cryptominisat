@@ -172,7 +172,7 @@ bool Solver::add_xor_clause_inter(
             lit ^= true;
         }
     }
-    clean_xor(ps, rhs);
+    clean_xor_no_prop(ps, rhs);
 
     if (ps.size() >= (0x01UL << 28)) {
         throw CMSat::TooLongClauseError();
@@ -809,13 +809,13 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
-bool Solver::clean_xor_clauses()
+bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
     XorFinder f(NULL, this);
     for(Xor& x: xorclauses) {
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
         if (x.size() == 0 && x.rhs == true) {
             ok = false;
             break;
@@ -861,7 +861,7 @@ bool Solver::renumber_variables(bool must_renumber)
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
     if (!xorclauses.empty()) {
-        if (!clean_xor_clauses())
+        if (!clean_xor_clauses_from_duplicate_and_set_vars())
             return false;
     }
 

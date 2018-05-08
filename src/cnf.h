@@ -266,8 +266,8 @@ public:
     void check_no_duplicate_lits_anywhere() const;
     void check_clid_correct() const;
     void print_all_clauses() const;
-    template<class T> void clean_xor(T& ps, bool& rhs);
-    template<class T> void clean_xor_vars(T& ps, bool& rhs);
+    template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
+    template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
     uint64_t count_lits(
         const vector<ClOffset>& clause_array
         , const bool red
@@ -565,7 +565,7 @@ inline void CNF::check_clid_correct() const
 }
 
 template<class T>
-void CNF::clean_xor(T& ps, bool& rhs)
+void CNF::clean_xor_no_prop(T& ps, bool& rhs)
 {
     std::sort(ps.begin(), ps.end());
     Lit p;
@@ -597,7 +597,7 @@ void CNF::clean_xor(T& ps, bool& rhs)
 }
 
 template<class T>
-void CNF::clean_xor_vars(T& ps, bool& rhs)
+void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
 {
     std::sort(ps.begin(), ps.end());
     uint32_t p;
