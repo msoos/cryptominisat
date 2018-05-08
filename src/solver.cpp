@@ -186,7 +186,11 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= rhs;
     } else {
         if (rhs) {
-            *drat << add << fin;
+            *drat << add
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
             ok = false;
         }
         return ok;
@@ -390,7 +394,11 @@ Clause* Solver::add_clause_int(
             }
         }
         std::swap(ps[0], ps[i]);
-        *drat << add << ps << fin;
+        *drat << add << ps
+        #ifdef STATS_NEEDED
+        << cl_stats.ID << sumConflicts
+        #endif
+        << fin;
         std::swap(ps[0], ps[i]);
 
         if (ps.size() == 2) {
@@ -428,7 +436,7 @@ Clause* Solver::add_clause_int(
             Clause* c = cl_alloc.Clause_new(ps
             , sumConflicts
             #ifdef STATS_NEEDED
-            , 1
+            , cl_stats.ID
             #endif
             );
             if (red) {
@@ -659,12 +667,20 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl_tmp.empty()) {
-            *drat << add << finalCl_tmp << fin;
+            *drat << add << finalCl_tmp
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!okay()) {
-            *drat << add << fin;
+            *drat << add
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
         *drat << del << ps << fin;
     }
