@@ -324,7 +324,7 @@ bool VarReplacer::replace_xor_clauses()
             }
         }
 
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
         if (x.size() == 0 && x.rhs == true) {
             solver->ok = false;
         }
