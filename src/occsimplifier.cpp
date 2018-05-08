@@ -361,7 +361,11 @@ lbool OccSimplifier::clean_clause(ClOffset offset)
     }
 
     if (i-j > 0) {
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->drat) << add << cl
+        #ifdef STATS_NEEDED
+        << solver->sumConflicts
+        #endif
+        << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }
@@ -434,7 +438,11 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
     //Drat
     if (i - j > 0) {
-        (*solver->drat) << add << cl << fin << findelay;
+        (*solver->drat) << add << cl
+        #ifdef STATS_NEEDED
+        << solver->sumConflicts
+        #endif
+        << fin << findelay;
     } else {
         solver->drat->forget_delay();
     }

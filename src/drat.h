@@ -119,11 +119,16 @@ struct DratFile: public Drat
 
     virtual Drat& operator<<(const uint64_t
         #ifdef STATS_NEEDED
-        clauseID
+        clauseID_or_sumConflicts
         #endif
     ) {
         #ifdef STATS_NEEDED
-        ID = clauseID;
+        if (!id_set) {
+            ID = clauseID_or_sumConflicts;
+            id_set = true;
+        } else {
+            sumConflicts = clauseID_or_sumConflicts;
+        }
         #endif
         return *this;
     }
@@ -228,6 +233,7 @@ struct DratFile: public Drat
                 byteDRUPa(l);
 
             #ifdef STATS_NEEDED
+            id_set = true;
             if (is_add && add_ID) {
                 ID = cl.stats.ID;
 
@@ -271,8 +277,12 @@ struct DratFile: public Drat
                     #ifdef STATS_NEEDED
                     if (is_add && add_ID) {
                         byteDRUPaID(ID);
-                        //cout << "ID is:" << ID << endl;
                         ID = 0;
+                        id_set = false;
+
+                        assert(sumConflicts != std::numeric_limits<int64_t>::max());
+                        byteDRUPaID(sumConflicts);
+                        sumConflicts = std::numeric_limits<int64_t>::max();
                     }
                     #endif
                     if (buf_len > 1048576) {
@@ -306,7 +316,9 @@ struct DratFile: public Drat
             case DratFlag::add:
                 #ifdef STATS_NEEDED
                 is_add = true;
-                ID =  0;
+                ID = 0;
+                id_set = false;
+                sumConflicts = std::numeric_limits<int64_t>::max();
                 #endif
                 *buf_ptr++ = 'a';
                 buf_len++;
@@ -315,6 +327,8 @@ struct DratFile: public Drat
             case DratFlag::del:
                 #ifdef STATS_NEEDED
                 is_add = false;
+                ID = 0;
+                id_set = false;
                 #endif
                 forget_delay();
                 *buf_ptr++ = 'd';
@@ -328,7 +342,9 @@ struct DratFile: public Drat
     std::ostream* drup_file = NULL;
     #ifdef STATS_NEEDED
     int64_t ID = 0;
+    int64_t sumConflicts = std::numeric_limits<int64_t>::max();
     bool is_add = true;
+    bool id_set = false;
     #endif
 };
 

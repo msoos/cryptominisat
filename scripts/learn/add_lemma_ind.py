@@ -30,6 +30,7 @@ class Query:
         self.runID = self.find_runID()
         # zero out goodClauses
         self.c.execute('delete from goodClauses;')
+        self.cur_good_ids_num = 0
         self.num_goods_total = 0
         self.cur_good_ids = []
 
@@ -52,28 +53,30 @@ class Query:
         print("Parsed %d number of good lemmas" % self.num_goods_total)
 
     def parse_one_line(self, line):
+        self.cur_good_ids_num += 1
         self.num_goods_total += 1
 
         # get ID
-        myid = int(line[len(line)-1])
+        myid = int(line[0])
         assert myid >= 0, "ID is always at least 0"
         assert myid != 0, "ID with 0 should not even be printed"
 
-        # num_used = int(line[len(line)-1])
-        num_used = 0
+        num_used = int(line[1])
+        last_used = int(line[2])
 
         # append to cur_good_ids
-        self.cur_good_ids.append((self.runID, myid, num_used))
+        self.cur_good_ids.append((self.runID, myid, num_used, last_used))
 
         # don't run out of memory, dump early
-        if num_used > 10000:
+        if self.cur_good_ids_num > 10000:
             self.dump_ids()
 
     def dump_ids(self):
         self.c.executemany("""
-        INSERT INTO goodClauses (`runID`, `clauseID`, `numUsed`)
-        VALUES (?, ?, ?);""", self.cur_good_ids)
+        INSERT INTO goodClauses (`runID`, `clauseID`, `num_used`, `last_confl_used`)
+        VALUES (?, ?, ?, ?);""", self.cur_good_ids)
         self.cur_good_ids = []
+        self.cur_good_ids_num = 0
 
     def find_runID(self):
         q = """

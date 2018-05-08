@@ -500,7 +500,12 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
             && solver->varData[ancestor.var()].removed == Removed::none
         ) {
             toEnqueue.push_back(~ancestor);
-            (*solver->drat) << add << ~ancestor << fin;
+            (*solver->drat) << add << ~ancestor
+            #ifdef STATS_NEEDED
+            << solver->clauseID++
+            << solver->sumConflicts
+            #endif
+            << fin;
             if (solver->conf.verbosity >= 10)
                 cout << "c Tautology from cache indicated we can enqueue " << (~ancestor) << endl;
         }
@@ -533,9 +538,24 @@ void Prober::check_and_set_both_prop(Lit probed_lit, uint32_t var, bool first)
             //they both imply the same
             const Lit litToEnq = Lit(var, !propValue[var]);
             toEnqueue.push_back(litToEnq);
-            (*solver->drat) << add << probed_lit << litToEnq << fin;
-            (*solver->drat) << add << ~probed_lit << litToEnq << fin;
-            (*solver->drat) << add << litToEnq << fin;
+            (*solver->drat) << add << probed_lit << litToEnq
+            #ifdef STATS_NEEDED
+            << solver->clauseID++
+            << solver->sumConflicts
+            #endif
+            << fin;
+            (*solver->drat) << add << ~probed_lit << litToEnq
+            #ifdef STATS_NEEDED
+            << solver->clauseID++
+            << solver->sumConflicts
+            #endif
+            << fin;
+            (*solver->drat) << add << litToEnq
+            #ifdef STATS_NEEDED
+            << solver->clauseID++
+            << solver->sumConflicts
+            #endif
+            << fin;
 
             if (solver->conf.verbosity >= 10)
                 cout << "c Bothprop indicated to enqueue " << litToEnq << endl;
@@ -568,7 +588,12 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
     //~lit V OTHER, and ~lit V ~OTHER are technically in
     if (taut) {
         toEnqueue.push_back(~lit);
-        (*solver->drat) << add << ~lit << fin;
+        (*solver->drat) << add << ~lit
+        #ifdef STATS_NEEDED
+        << solver->clauseID++
+        << solver->sumConflicts
+        #endif
+        << fin;
     }
 }
 

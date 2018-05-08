@@ -356,6 +356,8 @@ class Query2 (QueryHelper):
         {feat_dat}
         {rdb_dat}
         {rdb2_dat}
+        , goodcl.num_used as `x.num_used`
+        , goodcl.last_confl_used as `x.last_confl_used`
         , "OK" as `x.class`
         """
 
@@ -363,7 +365,7 @@ class Query2 (QueryHelper):
         FROM
         clauseStats as cl
         , clauseStats as cl2
-        , goodClauses
+        , goodClauses as goodcl
         , restart as rst
         , features as feat
         {no_rdb}, reduceDB as rdb
@@ -371,9 +373,9 @@ class Query2 (QueryHelper):
         , tags
         WHERE
 
-        cl.clauseID = goodClauses.clauseID
+        cl.clauseID = goodcl.clauseID
         and cl.clauseID != 1
-        and cl.runID = goodClauses.runID
+        and cl.runID = goodcl.runID
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
         {no_rdb} and rdb.dump_no = 4
@@ -395,13 +397,15 @@ class Query2 (QueryHelper):
         {feat_dat}
         {rdb_dat}
         {rdb2_dat}
+        , 0 as `x.num_used`
+        , 0 as `x.last_confl_used`
         , "BAD" as `x.class`
         """
 
         q_bad = """
-        FROM clauseStats as cl left join goodClauses
-        on cl.clauseID = goodClauses.clauseID
-        and cl.runID = goodClauses.runID
+        FROM clauseStats as cl left join goodClauses as goodcl
+        on cl.clauseID = goodcl.clauseID
+        and cl.runID = goodcl.runID
         , clauseStats as cl2
         , restart as rst
         , features as feat
@@ -410,8 +414,8 @@ class Query2 (QueryHelper):
         , tags
         WHERE
 
-        goodClauses.clauseID is NULL
-        and goodClauses.runID is NULL
+        goodcl.clauseID is NULL
+        and goodcl.runID is NULL
         and cl.clauseID != 1
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
@@ -544,7 +548,9 @@ class Classify:
                     "cl.backtrack_level",
                     "cl.cur_restart_type", # only because of tree classifier
                     "cl2.cur_restart_type", # only because of tree classifier
-                    "x.class"]
+                    "x.class",
+                    "x.num_used",
+                    "x.last_confl_used"]
 
         #toremove.extend(["cl.vsids_vars_avg",
                          #"cl.vsids_vars_var",
