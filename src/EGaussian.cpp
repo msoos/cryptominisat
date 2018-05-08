@@ -249,7 +249,7 @@ void EGaussian::clear_gwatches(const uint32_t var) {
 bool EGaussian::clean_xors()
 {
     for(Xor& x: xorclauses) {
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
     }
     XorFinder f(NULL, solver);
     if (!f.add_new_truths_from_xors(xorclauses))
