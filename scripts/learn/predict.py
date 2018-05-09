@@ -581,7 +581,9 @@ class Classify:
                     "cl2.cur_restart_type", # only because of tree classifier
                     "x.class",
                     "x.num_used",
-                    "x.lifetime"
+                    "x.lifetime",
+                    "x.lifetime_cut",
+                    "fname"
                     ]
 
         #toremove.extend(["cl.vsids_vars_avg",
@@ -609,22 +611,12 @@ class Classify:
     def learn(self, df, cleanname, classifiername="classifier"):
         print("total samples: %5d" % df.shape[0])
 
-        num_ok = df.loc[df['x.class'] == "OK"].shape[0]
-        num_bad = df.loc[df['x.class'] == "BAD"].shape[0]
-        if df.shape[0] > 0:
-            perc_good = "%-3.4f" % (float(num_ok) / float(df.shape[0]) * 100.0)
-        else:
-            perc_good = "NaN"
-        print("percentage of good ones: %s" % perc_good)
-
         if df.shape[0] == 0:
             return
 
-        df_lab = df.copy()
-        df_lab["fname"] = LabelEncoder().fit_transform(df_lab["fname"])
-        train, test = train_test_split(df_lab, test_size=0.2)
+        train, test = train_test_split(df, test_size=0.33)
         X_train = train[self.features]
-        y_train = train["x.class"]
+        y_train = train["x.lifetime_cut"]
         X_test = test[self.features]
         y_test = test["x.class"]
 
@@ -642,13 +634,7 @@ class Classify:
         t = time.time()
         y_pred = self.clf.predict(X_test)
 
-        # binarize the label OK/BAD
-        lb = sklearn.preprocessing.LabelBinarizer()
-        y_train = np.array([x[0] for x in lb.fit_transform(y_train)])
-        y_test = np.array([x[0] for x in lb.fit_transform(y_test)])
-        y_pred = np.array([x[0] for x in lb.fit_transform(y_pred)])
-
-        # calculate accuracy/prec/recall for TEST
+        # calculate accuracy/prec/recall for test
         accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
         precision = sklearn.metrics.precision_score(y_test, y_pred)
         recall = sklearn.metrics.recall_score(y_test, y_pred)
@@ -674,9 +660,11 @@ class Classify:
             pickle.dump(self.clf, f)
 
     def output_to_dot(self, fname):
+        return
+
         sklearn.tree.export_graphviz(self.clf, out_file=fname,
                                      feature_names=self.features,
-                                     class_names=["BAD", "OK"],
+                                     #class_names=["throw", "medium", "OK"],
                                      filled=True, rounded=True,
                                      special_characters=True,
                                      proportion=True
@@ -763,6 +751,7 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
         df["cl.trail_depth_level_hist"]
     # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
+    df["x.lifetime_cut"] = pd.cut(df["x.lifetime"], [-1, 10000, 100000, 1000000000000], labels=["throw", "middle", "forever"])
 
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
