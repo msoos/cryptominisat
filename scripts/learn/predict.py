@@ -356,6 +356,8 @@ class Query2 (QueryHelper):
         {feat_dat}
         {rdb_dat}
         {rdb2_dat}
+        {rdb3_dat}
+        {rdb4_dat}
         , goodcl.num_used as `x.num_used`
         , goodcl.last_confl_used-cl.`conflicts` as `x.lifetime`
         , "OK" as `x.class`
@@ -370,6 +372,8 @@ class Query2 (QueryHelper):
         , features as feat
         {no_rdb}, reduceDB as rdb
         {no_rdb}, reduceDB as rdb2
+        {less_rdb}, reduceDB as rdb3
+        {less_rdb}, reduceDB as rdb4
         , tags
         WHERE
 
@@ -382,6 +386,12 @@ class Query2 (QueryHelper):
         {no_rdb} and rdb2.runID = cl.runID
         {no_rdb} and rdb2.clauseID = cl.clauseID
         {no_rdb} and rdb2.dump_no = 1
+        {less_rdb} and rdb3.runID = cl.runID
+        {less_rdb} and rdb3.clauseID = cl.clauseID
+        {less_rdb} and rdb3.dump_no = 2
+        {less_rdb} and rdb4.runID = cl.runID
+        {less_rdb} and rdb4.clauseID = cl.clauseID
+        {less_rdb} and rdb4.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
@@ -397,6 +407,8 @@ class Query2 (QueryHelper):
         {feat_dat}
         {rdb_dat}
         {rdb2_dat}
+        {rdb3_dat}
+        {rdb4_dat}
         , 0 as `x.num_used`
         , 0 as `x.lifetime`
         , "BAD" as `x.class`
@@ -411,6 +423,8 @@ class Query2 (QueryHelper):
         , features as feat
         {no_rdb}, reduceDB as rdb
         {no_rdb}, reduceDB as rdb2
+        {less_rdb}, reduceDB as rdb3
+        {less_rdb}, reduceDB as rdb4
         , tags
         WHERE
 
@@ -423,16 +437,30 @@ class Query2 (QueryHelper):
         {no_rdb} and rdb2.runID = cl.runID
         {no_rdb} and rdb2.clauseID = cl.clauseID
         {no_rdb} and rdb2.dump_no = 1
+        {less_rdb} and rdb3.runID = cl.runID
+        {less_rdb} and rdb3.clauseID = cl.clauseID
+        {less_rdb} and rdb3.dump_no = 2
+        {less_rdb} and rdb4.runID = cl.runID
+        {less_rdb} and rdb4.clauseID = cl.clauseID
+        {less_rdb} and rdb4.dump_no = 3
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
         q_bad += common_restrictions
 
+        rdb_dat_less = rdb_dat
         if options.no_rdb:
             rdb_dat = ""
+            rdb_dat_less = ""
             no_rdb = " -- "
+            less_rdb = " -- "
         else:
             no_rdb = ""
+            less_rdb = ""
+
+        if options.less_rdb:
+            less_rdb = " -- "
+            rdb_dat_less = ""
 
         myformat = {"runid": self.runID,
                     "limit": 1000*1000*1000,
@@ -442,7 +470,10 @@ class Query2 (QueryHelper):
                     "feat_dat": feat_dat,
                     "rdb_dat": rdb_dat,
                     "rdb2_dat": rdb_dat.replace("rdb.", "rdb2."),
+                    "rdb3_dat": rdb_dat_less.replace("rdb.", "rdb3."),
+                    "rdb4_dat": rdb_dat_less.replace("rdb.", "rdb4."),
                     "no_rdb": no_rdb,
+                    "less_rdb": less_rdb,
                     "start_confl": options.start_conflicts}
 
         t = time.time()
@@ -838,6 +869,8 @@ if __name__ == "__main__":
                       dest="no_predict", help="Don't create predictive model")
     parser.add_option("--nordb", action="store_true", default=False,
                       dest="no_rdb", help="Don't add RDB to the features")
+    parser.add_option("--lessrdb", action="store_true", default=False,
+                      dest="less_rdb", help="Only add first 2 RDB to the features")
 
     (options, args) = parser.parse_args()
 
