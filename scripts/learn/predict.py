@@ -378,10 +378,10 @@ class Query2 (QueryHelper):
         and cl.runID = goodcl.runID
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb.dump_no = 0
         {no_rdb} and rdb2.runID = cl.runID
         {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 3
+        {no_rdb} and rdb2.dump_no = 1
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
@@ -419,10 +419,10 @@ class Query2 (QueryHelper):
         and cl.clauseID != 1
         {no_rdb} and rdb.runID = cl.runID
         {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 4
+        {no_rdb} and rdb.dump_no = 0
         {no_rdb} and rdb2.runID = cl.runID
         {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 3
+        {no_rdb} and rdb2.dump_no = 1
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         """
