@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-import pandas
+import pandas as pd
 import pickle
 import sklearn
 import sklearn.svm
@@ -27,13 +27,17 @@ import optparse
 import numpy as np
 import sklearn.metrics
 import time
+import itertools
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+
+class_names = ["throw", "middle", "forever"]
 
 
 def output_to_dot(clf, features):
     sklearn.tree.export_graphviz(clf, out_file=options.dot,
                                  feature_names=features,
-                                 # class_names=["throw", "medium", "OK"],
+                                 class_names=class_names,
                                  filled=True, rounded=True,
                                  special_characters=True,
                                  proportion=True)
@@ -55,11 +59,53 @@ def calc_cross_val():
     print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
           (precision, recall, accuracy, (time.time() - t)))
 
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+
 def learn(fname):
     with open(fname, "rb") as f:
         df = pickle.load(f)
 
     print("total samples: %5d" % df.shape[0])
+
+    # lifetime to predict
+    df["x.lifetime_cut"] = pd.cut(
+        df["x.lifetime"],
+        [-1, 10000, 100000, 1000000000000],
+        labels=class_names)
 
     features = df.columns.values.flatten().tolist()
     features.remove("x.num_used")
@@ -95,10 +141,25 @@ def learn(fname):
     accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
     precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
     recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
-    conf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred)
-    print(conf_matrix)
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
+
+    if options.confusion:
+        cnf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred,
+                                                      labels=class_names)
+        np.set_printoptions(precision=2)
+
+        # Plot non-normalized confusion matrix
+        plt.figure()
+        plot_confusion_matrix(cnf_matrix, classes=class_names,
+                              title='Confusion matrix, without normalization')
+
+        # Plot normalized confusion matrix
+        plt.figure()
+        plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
+                              title='Normalized confusion matrix')
+
+        plt.show()
 
     # TODO do L1 regularization
 
@@ -125,6 +186,8 @@ if __name__ == "__main__":
                       dest="tree_depth", help="Depth of the tree to create")
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
+    parser.add_option("--confusion", action="store_true", default=False,
+                      dest="confusion", help="Create confusion matrix")
 
     (options, args) = parser.parse_args()
 
