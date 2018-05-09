@@ -95,10 +95,8 @@ def learn(fname):
     accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
     precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
     recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
-    print("accuracy:", accuracy)
-    print("precision:", precision)
-    print("recall:", recall)
-    sklearn.metrics.confusion_matrix(y_test, y_pred)
+    conf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred)
+    print(conf_matrix)
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
 
