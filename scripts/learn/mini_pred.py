@@ -175,7 +175,7 @@ def learn(fname):
 
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
+    usage = "usage: %prog [options] file.pandas"
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
