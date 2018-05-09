@@ -41,6 +41,7 @@ mkdir -p "${OUTDIR}"
 rm -if "${OUTDIR}/drat_out"
 rm -if "${OUTDIR}/lemmas"
 rm -if "${OUTDIR}/data.sqlite"
+rm -if "${OUTDIR}/data.sqlite.tree.dot"
 echo "Predicting file $1"
 
 # running CNF
@@ -55,6 +56,8 @@ echo "Predicting file $1"
 # run prediction on SQLite database
 ./predict.py --nordb --csv "${OUTDIR}/data.sqlite"
 
+./mini_pred.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
+
 # generate DOT and display it
-dot -Tpng ${OUTDIR}/data.sqlite.tree.dot -o tree.png
+dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png
 display tree.png
