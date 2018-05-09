@@ -32,6 +32,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "middle", "forever"]
+# class_names = ["throw", "middle1", "middle2", "forever"]
+cuts = [-1, 20000, 100000, 1000000000000]
 
 
 def output_to_dot(clf, features):
@@ -104,7 +106,7 @@ def learn(fname):
     # lifetime to predict
     df["x.lifetime_cut"] = pd.cut(
         df["x.lifetime"],
-        [-1, 10000, 100000, 1000000000000],
+        cuts,
         labels=class_names)
 
     features = df.columns.values.flatten().tolist()
