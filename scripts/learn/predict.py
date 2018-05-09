@@ -618,7 +618,7 @@ class Classify:
         X_train = train[self.features]
         y_train = train["x.lifetime_cut"]
         X_test = test[self.features]
-        y_test = test["x.class"]
+        y_test = test["x.lifetime_cut"]
 
         print("Training....")
         t = time.time()
