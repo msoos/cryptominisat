@@ -30,16 +30,15 @@ import time
 from sklearn.model_selection import train_test_split
 
 
-def output_to_dot(self, fname):
-    sklearn.tree.export_graphviz(self.clf, out_file=fname,
-                                 feature_names=self.features,
-                                 #class_names=["throw", "medium", "OK"],
+def output_to_dot(clf, features):
+    sklearn.tree.export_graphviz(clf, out_file=options.dot,
+                                 feature_names=features,
+                                 # class_names=["throw", "medium", "OK"],
                                  filled=True, rounded=True,
                                  special_characters=True,
-                                 proportion=True
-                                 )
+                                 proportion=True)
     print("Run dot:")
-    print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
+    print("dot -Tpng {fname} -o {fname}.png".format(fname=options.dot))
 
 
 def calc_cross_val():
@@ -86,8 +85,8 @@ def learn(fname):
     # clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
     # clf = sklearn.linear_model.LogisticRegression() # NOT good.
     # clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-    # self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
-    clf = sklearn.svm.SVC()
+    clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, class_weight="balanced")
+    # clf = sklearn.svm.SVC()
     clf.fit(X_train, y_train)
     print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -108,6 +107,9 @@ def learn(fname):
     if False:
         calc_cross_val()
 
+    if options.dot is not None:
+        output_to_dot(clf, features)
+
     # dump the classifier
     with open("classifier", "wb") as f:
         pickle.dump(clf, f)
@@ -121,8 +123,10 @@ if __name__ == "__main__":
                       dest="verbose", help="Print more output")
     parser.add_option("--cross", action="store_true", default=False,
                       dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
-    parser.add_option("--depth", default=10, type=int,
+    parser.add_option("--depth", default=5, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
+    parser.add_option("--dot", type=str, default=None,
+                      dest="dot", help="Create DOT file")
 
     (options, args) = parser.parse_args()
 
