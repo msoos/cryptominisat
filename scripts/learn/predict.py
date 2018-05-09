@@ -613,18 +613,26 @@ def transform(df):
     df["rst.resolLRed_ratio"] = df["rst.resolLRed"]/df["rst.resolutions"]
     df["rst.resolLIrred_ratio"] = df["rst.resolLIrred"]/df["rst.resolutions"]
 
-    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / \
-        df["cl.num_antecedents_hist"]
+    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / df["cl.num_antecedents_hist"]
     df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
-    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / \
-        df["cl.backtrack_level_hist"]
-    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < \
-        df["cl.backtrack_level_hist"]
-    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < \
-        df["cl.glue_hist"]
-    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
-        df["cl.trail_depth_level_hist"]
+    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / df["cl.trail_depth_level_hist"]
+    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / df["cl.backtrack_level_hist"]
+
+    # smaller-or-greater comparisons
+    df["cl.decision_level_smaller_than_hist"] = df["cl.decision_level"] < df["cl.decision_level_hist"]
+    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]
+    df["cl.trail_depth_level_smaller_than_hist"] = df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]
+    df["cl.size_smaller_than_hist"] = df["cl.size"] < df["cl.size_hist"]
+    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < df["cl.glue_hist"]
+    df["cl.num_antecedents_smaller_than_hist"] = df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]
+    df["cl.antec_sum_size_smaller_than_hist"] = df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]
+    df["cl.antec_overlap_smaller_than_hist"] = df["cl.antec_overlap_hist"] < df["cl.overlap"]
+
+
+
     # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
+
+    # lifetime to predict
     df["x.lifetime_cut"] = pd.cut(df["x.lifetime"], [-1, 10000, 100000, 1000000000000], labels=["throw", "middle", "forever"])
 
     old = set(df.columns.values.flatten().tolist())
