@@ -565,135 +565,6 @@ def get_one_file(dbfname):
     return True, df
 
 
-class Classify:
-    def __init__(self, df):
-        self.features = df.columns.values.flatten().tolist()
-
-        toremove = ["cl.decision_level_hist",
-                    "cl.backtrack_level_hist",
-                    "cl.trail_depth_level_hist",
-                    #"cl.vsids_vars_hist",
-                    "cl.size_hist",
-                    "cl.glue_hist",
-                    "cl.num_antecedents_hist",
-                    "cl.decision_level",
-                    "cl.backtrack_level",
-                    "cl.cur_restart_type", # only because of tree classifier
-                    "cl2.cur_restart_type", # only because of tree classifier
-                    "x.class",
-                    "x.num_used",
-                    "x.lifetime",
-                    "x.lifetime_cut",
-                    "fname"
-                    ]
-
-        #toremove.extend(["cl.vsids_vars_avg",
-                         #"cl.vsids_vars_var",
-                         #"cl.vsids_vars_min",
-                         #"cl.vsids_vars_max",
-                         #"cl.vsids_of_resolving_literals_avg",
-                         #"cl.vsids_of_resolving_literals_var",
-                         #"cl.vsids_of_resolving_literals_min",
-                         #"cl.vsids_of_resolving_literals_max",
-                         #"cl.vsids_of_all_incoming_lits_avg",
-                         #"cl.vsids_of_all_incoming_lits_var",
-                         #"cl.vsids_of_all_incoming_lits_min",
-                         #"cl.vsids_of_all_incoming_lits_max"])
-
-        for t in toremove:
-            if options.verbose:
-                print("removing feature:", t)
-            self.features.remove(t)
-
-        if options.verbose:
-            print("features:", self.features)
-        print("Number of features:", len(self.features))
-
-    def learn(self, df, cleanname, classifiername="classifier"):
-        print("total samples: %5d" % df.shape[0])
-
-        if df.shape[0] == 0:
-            return
-
-        train, test = train_test_split(df, test_size=0.33)
-        X_train = train[self.features]
-        y_train = train["x.lifetime_cut"]
-        X_test = test[self.features]
-        y_test = test["x.lifetime_cut"]
-
-        print("Training....")
-        t = time.time()
-        # self.clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
-        # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-        self.clf = sklearn.svm.SVC() # can't make it work too well..
-        # self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
-        self.clf.fit(X_train, y_train)
-        print("Training finished. T: %-3.2f" % (time.time() - t))
-
-        # TODO do L1 regularization
-
-        print("Calculating scores....")
-        t = time.time()
-        y_pred = self.clf.predict(X_test)
-
-        # calculate accuracy/prec/recall for test
-        accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
-        precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
-        recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
-        print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" %
-              (precision, recall, accuracy, (time.time() - t)))
-
-        # calculate accuracy/prec/recall for cross-validation
-        if options.cross_validate:
-            accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
-            precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
-            recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
-            print("cv-accuracy:", accuracy)
-            print("cv-precision:", precision)
-            print("cv-recall:", recall)
-            accuracy = np.mean(accuracy)
-            precision = np.mean(precision)
-            recall = np.mean(recall)
-            print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
-                  (precision, recall, accuracy, (time.time() - t)))
-
-        # dump the classifier
-        with open(classifiername, "wb") as f:
-            pickle.dump(self.clf, f)
-
-    def output_to_dot(self, fname):
-        return
-
-        sklearn.tree.export_graphviz(self.clf, out_file=fname,
-                                     feature_names=self.features,
-                                     #class_names=["throw", "medium", "OK"],
-                                     filled=True, rounded=True,
-                                     special_characters=True,
-                                     proportion=True
-                                     )
-        print("Run dot:")
-        print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
-
-
-class Check:
-    def __init__(self, classf_fname):
-        with open(classf_fname, "rb") as f:
-            self.clf = pickle.load(f)
-
-    def check(self, X, y):
-        print("total samples: %5d   percentage of good ones %-3.2f" %
-              (len(X), sum(y) / float(len(X)) * 100.0))
-
-        t = time.time()
-        y_pred = self.clf.predict(X)
-        recall = sklearn.metrics.recall_score(y, y_pred)
-        prec = sklearn.metrics.precision_score(y, y_pred)
-        # avg_prec = self.clf.score(X, y)
-        print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
-              (prec, recall, (time.time() - t)))
-
-
 def transform(df):
     def check_clstat_row(self, row):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
@@ -808,21 +679,6 @@ def one_predictor(dbfname):
 
     dump_dataframe(df, cleanname)
 
-    # display
-    if False:
-        pd.options.display.mpl_style = "default"
-        df.hist()
-        df.boxplot()
-
-    if options.check:
-        check = Check(options.check)
-        check.check(df)
-    else:
-        if not options.no_predict:
-            clf = Classify(df)
-            clf.learn(df, "%s.classifier" % cleanname)
-            clf.output_to_dot("%s.tree.dot" % cleanname)
-
     return True, df
 
 
@@ -836,31 +692,22 @@ if __name__ == "__main__":
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
 
-    parser.add_option("--cross", action="store_true", default=False,
-                      dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
-
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed_num_datapoints", help="Exact number of examples to take. -1 is to take all. Default: %default")
+
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
-
-
-    parser.add_option("--depth", default=5, type=int,
-                      dest="tree_depth", help="Depth of the tree to create")
-
-    parser.add_option("--check", "-c", type=str,
-                      dest="check", help="Check classifier")
 
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
 
-    parser.add_option("--nopredict", action="store_true", default=False,
-                      dest="no_predict", help="Don't create predictive model")
+    # reduce DB features
     parser.add_option("--nordb", action="store_true", default=False,
                       dest="no_rdb", help="Don't add RDB to the features")
+
     parser.add_option("--lessrdb", action="store_true", default=False,
                       dest="less_rdb", help="Only add first 2 RDB to the features")
 
@@ -886,10 +733,6 @@ if __name__ == "__main__":
     if len(args) == 1:
         exit(0)
 
-    # no need, we checked them all individually
-    if options.check:
-        exit(0)
-
     print("----- FINAL predictor -------")
     if len(dfs) == 0:
         print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
@@ -897,11 +740,3 @@ if __name__ == "__main__":
 
     final_df = pd.concat(dfs)
     dump_dataframe(final_df, "final")
-    if options.check:
-        check = Check()
-        check.check(final_df)
-    else:
-        clf = Classify(final_df)
-        if not options.no_predict:
-            clf.learn(final_df, "final.classifier")
-            clf.output_to_dot("final.dot")
