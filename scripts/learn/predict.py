@@ -357,7 +357,7 @@ class Query2 (QueryHelper):
         {rdb_dat}
         {rdb2_dat}
         , goodcl.num_used as `x.num_used`
-        , goodcl.last_confl_used as `x.last_confl_used`
+        , goodcl.last_confl_used-cl.`conflicts` as `x.lifetime`
         , "OK" as `x.class`
         """
 
@@ -398,7 +398,7 @@ class Query2 (QueryHelper):
         {rdb_dat}
         {rdb2_dat}
         , 0 as `x.num_used`
-        , 0 as `x.last_confl_used`
+        , 0 as `x.lifetime`
         , "BAD" as `x.class`
         """
 
@@ -550,7 +550,8 @@ class Classify:
                     "cl2.cur_restart_type", # only because of tree classifier
                     "x.class",
                     "x.num_used",
-                    "x.last_confl_used"]
+                    "x.lifetime"
+                    ]
 
         #toremove.extend(["cl.vsids_vars_avg",
                          #"cl.vsids_vars_var",
