@@ -631,6 +631,8 @@ class Classify:
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
+        # TODO do L1 regularization
+
         print("Calculating scores....")
         t = time.time()
         y_pred = self.clf.predict(X_test)
