@@ -632,9 +632,6 @@ def transform(df):
 
     # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
 
-    # lifetime to predict
-    df["x.lifetime_cut"] = pd.cut(df["x.lifetime"], [-1, 10000, 100000, 1000000000000], labels=["throw", "middle", "forever"])
-
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
     new = set(df.columns.values.flatten().tolist())
