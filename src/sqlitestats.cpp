@@ -913,7 +913,15 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.used_for_uip_creation);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts-cl->stats.last_touched);
+
+    uint64_t last_touched_diff;
+    if (cl->stats.last_touched == 0) {
+        last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
+    } else {
+        last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
+    }
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_diff);
+
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->used_in_xor());
