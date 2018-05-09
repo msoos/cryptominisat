@@ -29,6 +29,7 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 import sklearn.tree
+import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
 from sklearn.preprocessing import LabelEncoder
@@ -625,8 +626,8 @@ class Classify:
         # self.clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
         # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
         # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-        # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
+        self.clf = sklearn.svm.SVC() # can't make it work too well..
+        # self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
         self.clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -636,8 +637,8 @@ class Classify:
 
         # calculate accuracy/prec/recall for test
         accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
-        precision = sklearn.metrics.precision_score(y_test, y_pred)
-        recall = sklearn.metrics.recall_score(y_test, y_pred)
+        precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
+        recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
         print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" %
               (precision, recall, accuracy, (time.time() - t)))
 
