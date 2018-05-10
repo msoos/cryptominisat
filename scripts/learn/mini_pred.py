@@ -184,8 +184,19 @@ def one_classifier(df, features, to_predict, class_weight, names):
         calc_cross_val()
 
     if options.dot is not None:
-        output_to_dot(clf, features)
+        output_to_dot(clf, features, names[0])
 
+
+def remove_old_clause_features(features):
+    todel = []
+    for name in features:
+        if "cl2" in name or "cl3" in name or "cl4" in name:
+            todel.append(name)
+
+    for x in todel:
+        features.remove(x)
+        if options.verbose:
+            print("Removing old clause feature:", x)
 
 def learn(fname):
     with open(fname, "rb") as f:
@@ -218,6 +229,9 @@ def learn(fname):
     features.remove("cl3.cur_restart_type")
     # x = (df["cl.cur_restart_type"].values[:, np.newaxis] == df["cl.cur_restart_type"].unique()).astype(int)
     # print(x)
+
+    if True:
+        remove_old_clause_features(features)
 
     print("Number of features:", len(features))
     features_less = list(features)
