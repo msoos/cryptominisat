@@ -168,7 +168,7 @@ def one_classifier(df, features, to_predict, class_weight, names):
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
-        if False:
+        if True:
             plt.figure()
             plot_confusion_matrix(
                 cnf_matrix, classes=names,
