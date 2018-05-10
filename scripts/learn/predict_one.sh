@@ -41,10 +41,11 @@ mkdir -p "${OUTDIR}"
 rm -if "${OUTDIR}/drat_out"
 rm -if "${OUTDIR}/lemmas"
 rm -if "${OUTDIR}/data.sqlite"
+rm -if "${OUTDIR}/data.sqlite.tree.dot"
 echo "Predicting file $1"
 
 # running CNF
-./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --clid --sql 2 --distill 0 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
+./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --restart luby --clid --sql 2 --maple 0 --distill 0 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
 
 # getting drat
 ./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/lemmas" -i
@@ -53,8 +54,10 @@ echo "Predicting file $1"
 ./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/lemmas"
 
 # run prediction on SQLite database
-./predict.py --nordb --csv "${OUTDIR}/data.sqlite"
+./predict.py --csv "${OUTDIR}/data.sqlite"
+
+./mini_pred.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
 
 # generate DOT and display it
-dot -Tpng ${OUTDIR}/data.sqlite.tree.dot -o tree.png
+dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png
 display tree.png

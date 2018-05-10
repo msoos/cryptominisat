@@ -99,6 +99,14 @@ public:
         return (double)sumofqueue/(double)queuesize;
     }
 
+    double avg_nocheck() const
+    {
+        if (queuesize == 0)
+            return 0;
+
+        return (double)sumofqueue/(double)queuesize;
+    }
+
     #ifdef STATS_NEEDED
     const AvgCalc<T,T2>& getLongtTerm() const
     {

@@ -205,14 +205,24 @@ CREATE TABLE `clauseStats` (
   `antecedents_antecedents_vsids_avg` float NOT NULL,
 
   `decision_level_hist` float NOT NULL,
-  `backtrack_level_hist` float NOT NULL,
+  `backtrack_level_hist_lt` float NOT NULL,
   `trail_depth_level_hist` float NOT NULL,
   `vsids_vars_hist` float NOT NULL,
   `size_hist` float NOT NULL,
   `glue_hist` float NOT NULL,
   `num_antecedents_hist` float NOT NULL,
   `antec_sum_size_hist` float NOT NULL,
-  `antec_overlap_hist` float NOT NULL
+  `antec_overlap_hist` float NOT NULL,
+
+  `branch_depth_hist_queue` float NOT NULL,
+  `trail_depth_hist` float NOT NULL,
+  `trail_depth_hist_longer` float NOT NULL,
+  `num_resolutions_hist` float NOT NULL,
+  `confl_size_hist` float NOT NULL,
+  `trail_depth_delta_hist` float NOT NULL,
+  `backtrack_level_hist` float NOT NULL,
+  `glue_hist_queue` float NOT NULL,
+  `glue_hist_long` float NOT NULL
 );
 
 DROP TABLE IF EXISTS `features`;
@@ -304,7 +314,8 @@ DROP TABLE IF EXISTS `goodClauses`;
 create table `goodClauses` (
     `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
-    `numUsed` bigint(20) NOT NULL
+    `num_used` bigint(20) NOT NULL,
+    `last_confl_used` bigint(20) NOT NULL
 );
 
 -- create index `idx6` on `restart` (`runID`,`simplifications`);

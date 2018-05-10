@@ -249,7 +249,7 @@ void EGaussian::clear_gwatches(const uint32_t var) {
 bool EGaussian::clean_xors()
 {
     for(Xor& x: xorclauses) {
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
     }
     XorFinder f(NULL, solver);
     if (!f.add_new_truths_from_xors(xorclauses))
@@ -619,7 +619,13 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 if (tmp_clause.size() == 2) {
                     propagation_twoclause();
                 } else {
-                    Clause* cla = solver->cl_alloc.Clause_new(tmp_clause, solver->sumConflicts);
+                    Clause* cla = solver->cl_alloc.Clause_new(
+                        tmp_clause,
+                        solver->sumConflicts
+                        #ifdef STATS_NEEDED
+                        solver->clauseID++
+                        #endif
+                    );
                     cla->set_gauss_temp_cl();
                     const ClOffset offs = solver->cl_alloc.get_offset(cla);
                     clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));

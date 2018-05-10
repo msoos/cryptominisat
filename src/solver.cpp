@@ -172,7 +172,7 @@ bool Solver::add_xor_clause_inter(
             lit ^= true;
         }
     }
-    clean_xor(ps, rhs);
+    clean_xor_no_prop(ps, rhs);
 
     if (ps.size() >= (0x01UL << 28)) {
         throw CMSat::TooLongClauseError();
@@ -186,7 +186,11 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= rhs;
     } else {
         if (rhs) {
-            *drat << add << fin;
+            *drat << add
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
             ok = false;
         }
         return ok;
@@ -390,7 +394,11 @@ Clause* Solver::add_clause_int(
             }
         }
         std::swap(ps[0], ps[i]);
-        *drat << add << ps << fin;
+        *drat << add << ps
+        #ifdef STATS_NEEDED
+        << cl_stats.ID << sumConflicts
+        #endif
+        << fin;
         std::swap(ps[0], ps[i]);
 
         if (ps.size() == 2) {
@@ -428,7 +436,7 @@ Clause* Solver::add_clause_int(
             Clause* c = cl_alloc.Clause_new(ps
             , sumConflicts
             #ifdef STATS_NEEDED
-            , 1
+            , cl_stats.ID
             #endif
             );
             if (red) {
@@ -659,12 +667,20 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl_tmp.empty()) {
-            *drat << add << finalCl_tmp << fin;
+            *drat << add << finalCl_tmp
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
 
         //Empty clause, it's UNSAT
         if (!okay()) {
-            *drat << add << fin;
+            *drat << add
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
         *drat << del << ps << fin;
     }
@@ -809,13 +825,13 @@ double Solver::calc_renumber_saving()
     return saving;
 }
 
-bool Solver::clean_xor_clauses()
+bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 {
     assert(decisionLevel() == 0);
     double myTime = cpuTime();
     XorFinder f(NULL, this);
     for(Xor& x: xorclauses) {
-        solver->clean_xor_vars(x.get_vars(), x.rhs);
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
         if (x.size() == 0 && x.rhs == true) {
             ok = false;
             break;
@@ -861,7 +877,7 @@ bool Solver::renumber_variables(bool must_renumber)
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
     if (!xorclauses.empty()) {
-        if (!clean_xor_clauses())
+        if (!clean_xor_clauses_from_duplicate_and_set_vars())
             return false;
     }
 

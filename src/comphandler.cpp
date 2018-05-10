@@ -401,6 +401,7 @@ SolverConf CompHandler::configureNewSolver(
         conf.doProbe = false;
         conf.otfHyperbin = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);
+        conf.independent_vars = NULL;
     }
 
     //Otherwise issues are:

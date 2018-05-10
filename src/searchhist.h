@@ -45,7 +45,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
 
     bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
-    AvgCalc<uint32_t>   trailDepthDeltaHist;
+    AvgCalc<uint32_t>   trailDepthDeltaHist; ///<for THIS restart only
 
     //About the confl generated
     bqueue<uint32_t>    glueHist;   ///< Set of last decision levels in (glue of) conflict clauses
@@ -59,7 +59,7 @@ struct SearchHist {
     #ifdef STATS_NEEDED
     AvgCalc<uint32_t>   overlapHistLT;
     AvgCalc<uint32_t>   antec_data_sum_sizeHistLT;
-    AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis
+    AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis of THIS restart
     AvgCalc<uint32_t>   decisionLevelHistLT;
     bqueue<uint32_t>    branchDepthHistQueue;
     bqueue<uint32_t>    trailDepthHist;

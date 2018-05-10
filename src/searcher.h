@@ -159,7 +159,7 @@ class Searcher : public HyperEngine
             order_heap_vsids.clear();
             order_heap_maple.clear();
         }
-        void bumpClauseAct(Clause* cl);
+        void bump_cl_act(Clause* cl);
         void simple_create_learnt_clause(
             PropBy confl,
             vector<Lit>& out_learnt,
@@ -491,17 +491,25 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     }
 }
 
-inline void Searcher::bumpClauseAct(Clause* cl)
+inline void Searcher::bump_cl_act(Clause* cl)
 {
     assert(!cl->getRemoved());
 
     double new_val = cla_inc + (double)cl->stats.activity;
     cl->stats.activity = (float)new_val;
     if (cl->stats.activity > 1e20F ) {
-        // Rescale
+        // Rescale. For STATS_NEEDED we rescale ALL
+        #ifndef STATS_NEEDED
         for(ClOffset offs: longRedCls[2]) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
+        #else
+        for(auto& lrcs: longRedCls) {
+            for(ClOffset offs: lrcs) {
+                cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
+            }
+        }
+        #endif
         cla_inc *= 1e-20;
         assert(cla_inc != 0);
     }

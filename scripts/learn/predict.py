@@ -29,6 +29,7 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 import sklearn.tree
+import sklearn.svm
 import sklearn.ensemble
 import sklearn.metrics
 from sklearn.preprocessing import LabelEncoder
@@ -180,27 +181,27 @@ class Query2 (QueryHelper):
         -- , rst.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
         """
 
-        rdb_dat = """
-        -- , rdb.`runID` as `rdb.runID`
-        -- , rdb.`simplifications` as `rdb.simplifications`
-        -- , rdb.`restarts` as `rdb.restarts`
-        , rdb.`conflicts` as `rdb.conflicts`
-        -- , rdb.`runtime` as `rdb.runtime`
+        rdb0_dat = """
+        -- , rdb0.`runID` as `rdb0.runID`
+        -- , rdb0.`simplifications` as `rdb0.simplifications`
+        -- , rdb0.`restarts` as `rdb0.restarts`
+        , rdb0.`conflicts` as `rdb0.conflicts`
+        -- , rdb0.`runtime` as `rdb0.runtime`
 
-        -- , rdb.`clauseID` as `rdb.clauseID`
-        , rdb.`dump_no` as `rdb.dump_no`
-        , rdb.`conflicts_made` as `rdb.conflicts_made`
-        , rdb.`sum_of_branch_depth_conflict` as `rdb.sum_of_branch_depth_conflict`
-        , rdb.`propagations_made` as `rdb.propagations_made`
-        , rdb.`clause_looked_at` as `rdb.clause_looked_at`
-        , rdb.`used_for_uip_creation` as `rdb.used_for_uip_creation`
-        , rdb.`last_touched_diff` as `rdb.last_touched_diff`
-        , rdb.`activity_rel` as `rdb.activity_rel`
-        , rdb.`locked` as `rdb.locked`
-        , rdb.`in_xor` as `rdb.in_xor`
-        , rdb.`glue` as `rdb.glue`
-        , rdb.`size` as `rdb.size`
-        , rdb.`ttl` as `rdb.ttl`
+        -- , rdb0.`clauseID` as `rdb0.clauseID`
+        , rdb0.`dump_no` as `rdb0.dump_no`
+        , rdb0.`conflicts_made` as `rdb0.conflicts_made`
+        , rdb0.`sum_of_branch_depth_conflict` as `rdb0.sum_of_branch_depth_conflict`
+        , rdb0.`propagations_made` as `rdb0.propagations_made`
+        , rdb0.`clause_looked_at` as `rdb0.clause_looked_at`
+        , rdb0.`used_for_uip_creation` as `rdb0.used_for_uip_creation`
+        , rdb0.`last_touched_diff` as `rdb0.last_touched_diff`
+        , rdb0.`activity_rel` as `rdb0.activity_rel`
+        , rdb0.`locked` as `rdb0.locked`
+        , rdb0.`in_xor` as `rdb0.in_xor`
+        -- , rdb0.`glue` as `rdb0.glue`
+        -- , rdb0.`size` as `rdb0.size`
+        , rdb0.`ttl` as `rdb0.ttl`
         """
 
         clause_dat = """
@@ -250,7 +251,7 @@ class Query2 (QueryHelper):
         -- , cl.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
         -- , cl.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
         , cl.`decision_level_hist` as `cl.decision_level_hist`
-        , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
+        , cl.`backtrack_level_hist_lt` as `cl.backtrack_level_hist_lt`
         , cl.`trail_depth_level_hist` as `cl.trail_depth_level_hist`
         -- , cl.`vsids_vars_hist` as `cl.vsids_vars_hist`
         , cl.`size_hist` as `cl.size_hist`
@@ -258,6 +259,16 @@ class Query2 (QueryHelper):
         , cl.`num_antecedents_hist` as `cl.num_antecedents_hist`
         , cl.`antec_sum_size_hist` as `cl.antec_sum_size_hist`
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
+
+        , cl.`branch_depth_hist_queue` as `cl.branch_depth_hist_queue`
+        , cl.`trail_depth_hist` as `cl.trail_depth_hist`
+        , cl.`trail_depth_hist_longer` as `cl.trail_depth_hist_longer`
+        , cl.`num_resolutions_hist` as `cl.num_resolutions_hist`
+        , cl.`confl_size_hist` as `cl.confl_size_hist`
+        , cl.`trail_depth_delta_hist` as `cl.trail_depth_delta_hist`
+        , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
+        , cl.`glue_hist_queue` as `cl.glue_hist_queue`
+        , cl.`glue_hist_long` as `cl.glue_hist_long`
         """
 
         feat_dat = """
@@ -352,10 +363,16 @@ class Query2 (QueryHelper):
         tags.tag as "fname"
         {clause_dat}
         {clause2_dat}
+        {clause3_dat}
         {restart_dat}
         {feat_dat}
-        {rdb_dat}
+        {rdb0_dat}
+        {rdb1_dat}
         {rdb2_dat}
+        {rdb3_dat}
+        {rdb4_dat}
+        , goodcl.num_used as `x.num_used`
+        , goodcl.last_confl_used-cl.`conflicts` as `x.lifetime`
         , "OK" as `x.class`
         """
 
@@ -363,25 +380,40 @@ class Query2 (QueryHelper):
         FROM
         clauseStats as cl
         , clauseStats as cl2
-        , goodClauses
+        , clauseStats as cl3
+        , goodClauses as goodcl
         , restart as rst
         , features as feat
-        {no_rdb}, reduceDB as rdb
-        {no_rdb}, reduceDB as rdb2
+        , reduceDB as rdb0
+        , reduceDB as rdb1
+        , reduceDB as rdb2
+        , reduceDB as rdb3
+        , reduceDB as rdb4
         , tags
         WHERE
 
-        cl.clauseID = goodClauses.clauseID
+        cl.clauseID = goodcl.clauseID
         and cl.clauseID != 1
-        and cl.runID = goodClauses.runID
-        {no_rdb} and rdb.runID = cl.runID
-        {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 4
-        {no_rdb} and rdb2.runID = cl.runID
-        {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 3
+        and cl.runID = goodcl.runID
+        and rdb0.runID = cl.runID
+        and rdb0.clauseID = cl.clauseID
+        and rdb0.dump_no = 0
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = 1
+        and rdb2.runID = cl.runID
+        and rdb2.clauseID = cl.clauseID
+        and rdb2.dump_no = 2
+        and rdb3.runID = cl.runID
+        and rdb3.clauseID = cl.clauseID
+        and rdb3.dump_no = 3
+        and rdb4.runID = cl.runID
+        and rdb4.clauseID = cl.clauseID
+        and rdb4.dump_no = 4
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
+        and cl3.runID = cl.runID
+        and cl3.clauseID = cl.clauseID
         """
         q_ok += common_restrictions
 
@@ -391,54 +423,72 @@ class Query2 (QueryHelper):
         tags.tag as "fname"
         {clause_dat}
         {clause2_dat}
+        {clause3_dat}
         {restart_dat}
         {feat_dat}
-        {rdb_dat}
+        {rdb0_dat}
+        {rdb1_dat}
         {rdb2_dat}
+        {rdb3_dat}
+        {rdb4_dat}
+        , 0 as `x.num_used`
+        , 0 as `x.lifetime`
         , "BAD" as `x.class`
         """
 
         q_bad = """
-        FROM clauseStats as cl left join goodClauses
-        on cl.clauseID = goodClauses.clauseID
-        and cl.runID = goodClauses.runID
+        FROM clauseStats as cl left join goodClauses as goodcl
+        on cl.clauseID = goodcl.clauseID
+        and cl.runID = goodcl.runID
         , clauseStats as cl2
+        , clauseStats as cl3
         , restart as rst
         , features as feat
-        {no_rdb}, reduceDB as rdb
-        {no_rdb}, reduceDB as rdb2
+        , reduceDB as rdb0
+        , reduceDB as rdb1
+        , reduceDB as rdb2
+        , reduceDB as rdb3
+        , reduceDB as rdb4
         , tags
         WHERE
 
-        goodClauses.clauseID is NULL
-        and goodClauses.runID is NULL
+        goodcl.clauseID is NULL
+        and goodcl.runID is NULL
         and cl.clauseID != 1
-        {no_rdb} and rdb.runID = cl.runID
-        {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 4
-        {no_rdb} and rdb2.runID = cl.runID
-        {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 3
+        and rdb0.runID = cl.runID
+        and rdb0.clauseID = cl.clauseID
+        and rdb0.dump_no = 0
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = 1
+        and rdb2.runID = cl.runID
+        and rdb2.clauseID = cl.clauseID
+        and rdb2.dump_no = 2
+        and rdb3.runID = cl.runID
+        and rdb3.clauseID = cl.clauseID
+        and rdb3.dump_no = 3
+        and rdb4.runID = cl.runID
+        and rdb4.clauseID = cl.clauseID
+        and rdb4.dump_no = 4
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
+        and cl3.runID = cl.runID
+        and cl3.clauseID = cl.clauseID
         """
         q_bad += common_restrictions
-
-        if options.no_rdb:
-            rdb_dat = ""
-            no_rdb = " -- "
-        else:
-            no_rdb = ""
 
         myformat = {"runid": self.runID,
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
                     "clause2_dat": clause_dat.replace("cl.", "cl2."),
+                    "clause3_dat": clause_dat.replace("cl.", "cl3."),
                     "feat_dat": feat_dat,
-                    "rdb_dat": rdb_dat,
-                    "rdb2_dat": rdb_dat.replace("rdb.", "rdb2."),
-                    "no_rdb": no_rdb,
+                    "rdb0_dat": rdb0_dat,
+                    "rdb1_dat": rdb0_dat.replace("rdb0.", "rdb1."),
+                    "rdb2_dat": rdb0_dat.replace("rdb0.", "rdb2."),
+                    "rdb3_dat": rdb0_dat.replace("rdb0.", "rdb3."),
+                    "rdb4_dat": rdb0_dat.replace("rdb0.", "rdb4."),
                     "start_confl": options.start_conflicts}
 
         t = time.time()
@@ -529,142 +579,6 @@ def get_one_file(dbfname):
     return True, df
 
 
-class Classify:
-    def __init__(self, df):
-        self.features = df.columns.values.flatten().tolist()
-
-        toremove = ["cl.decision_level_hist",
-                    "cl.backtrack_level_hist",
-                    "cl.trail_depth_level_hist",
-                    #"cl.vsids_vars_hist",
-                    "cl.size_hist",
-                    "cl.glue_hist",
-                    "cl.num_antecedents_hist",
-                    "cl.decision_level",
-                    "cl.backtrack_level",
-                    "cl.cur_restart_type", # only because of tree classifier
-                    "cl2.cur_restart_type", # only because of tree classifier
-                    "x.class"]
-
-        #toremove.extend(["cl.vsids_vars_avg",
-                         #"cl.vsids_vars_var",
-                         #"cl.vsids_vars_min",
-                         #"cl.vsids_vars_max",
-                         #"cl.vsids_of_resolving_literals_avg",
-                         #"cl.vsids_of_resolving_literals_var",
-                         #"cl.vsids_of_resolving_literals_min",
-                         #"cl.vsids_of_resolving_literals_max",
-                         #"cl.vsids_of_all_incoming_lits_avg",
-                         #"cl.vsids_of_all_incoming_lits_var",
-                         #"cl.vsids_of_all_incoming_lits_min",
-                         #"cl.vsids_of_all_incoming_lits_max"])
-
-        for t in toremove:
-            if options.verbose:
-                print("removing feature:", t)
-            self.features.remove(t)
-
-        if options.verbose:
-            print("features:", self.features)
-        print("Number of features:", len(self.features))
-
-    def learn(self, df, cleanname, classifiername="classifier"):
-        print("total samples: %5d" % df.shape[0])
-
-        num_ok = df.loc[df['x.class'] == "OK"].shape[0]
-        num_bad = df.loc[df['x.class'] == "BAD"].shape[0]
-        if df.shape[0] > 0:
-            perc_good = "%-3.4f" % (float(num_ok) / float(df.shape[0]) * 100.0)
-        else:
-            perc_good = "NaN"
-        print("percentage of good ones: %s" % perc_good)
-
-        if df.shape[0] == 0:
-            return
-
-        df_lab = df.copy()
-        df_lab["fname"] = LabelEncoder().fit_transform(df_lab["fname"])
-        train, test = train_test_split(df_lab, test_size=0.2)
-        X_train = train[self.features]
-        y_train = train["x.class"]
-        X_test = test[self.features]
-        y_test = test["x.class"]
-
-        print("Training....")
-        t = time.time()
-        # self.clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
-        # self.clf = sklearn.linear_model.LogisticRegression() # NOT good.
-        # self.clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-        # self.clf = sklearn.svm.SVC(max_iter=1000) # can't make it work too well..
-        self.clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
-        self.clf.fit(X_train, y_train)
-        print("Training finished. T: %-3.2f" % (time.time() - t))
-
-        print("Calculating scores....")
-        t = time.time()
-        y_pred = self.clf.predict(X_test)
-
-        # binarize the label OK/BAD
-        lb = sklearn.preprocessing.LabelBinarizer()
-        y_train = np.array([x[0] for x in lb.fit_transform(y_train)])
-        y_test = np.array([x[0] for x in lb.fit_transform(y_test)])
-        y_pred = np.array([x[0] for x in lb.fit_transform(y_pred)])
-
-        # calculate accuracy/prec/recall for TEST
-        accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
-        precision = sklearn.metrics.precision_score(y_test, y_pred)
-        recall = sklearn.metrics.recall_score(y_test, y_pred)
-        print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" %
-              (precision, recall, accuracy, (time.time() - t)))
-
-        # calculate accuracy/prec/recall for cross-validation
-        if options.cross_validate:
-            accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
-            precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
-            recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
-            print("cv-accuracy:", accuracy)
-            print("cv-precision:", precision)
-            print("cv-recall:", recall)
-            accuracy = np.mean(accuracy)
-            precision = np.mean(precision)
-            recall = np.mean(recall)
-            print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
-                  (precision, recall, accuracy, (time.time() - t)))
-
-        # dump the classifier
-        with open(classifiername, "wb") as f:
-            pickle.dump(self.clf, f)
-
-    def output_to_dot(self, fname):
-        sklearn.tree.export_graphviz(self.clf, out_file=fname,
-                                     feature_names=self.features,
-                                     class_names=["BAD", "OK"],
-                                     filled=True, rounded=True,
-                                     special_characters=True,
-                                     proportion=True
-                                     )
-        print("Run dot:")
-        print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
-
-
-class Check:
-    def __init__(self, classf_fname):
-        with open(classf_fname, "rb") as f:
-            self.clf = pickle.load(f)
-
-    def check(self, X, y):
-        print("total samples: %5d   percentage of good ones %-3.2f" %
-              (len(X), sum(y) / float(len(X)) * 100.0))
-
-        t = time.time()
-        y_pred = self.clf.predict(X)
-        recall = sklearn.metrics.recall_score(y, y_pred)
-        prec = sklearn.metrics.precision_score(y, y_pred)
-        # avg_prec = self.clf.score(X, y)
-        print("prec: %-3.3f  recall: %-3.3f T: %-3.2f" %
-              (prec, recall, (time.time() - t)))
-
-
 def transform(df):
     def check_clstat_row(self, row):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
@@ -713,17 +627,23 @@ def transform(df):
     df["rst.resolLRed_ratio"] = df["rst.resolLRed"]/df["rst.resolutions"]
     df["rst.resolLIrred_ratio"] = df["rst.resolLIrred"]/df["rst.resolutions"]
 
-    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / \
-        df["cl.num_antecedents_hist"]
+    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / df["cl.num_antecedents_hist"]
     df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
-    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / \
-        df["cl.backtrack_level_hist"]
-    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < \
-        df["cl.backtrack_level_hist"]
-    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < \
-        df["cl.glue_hist"]
-    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / \
-        df["cl.trail_depth_level_hist"]
+    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / df["cl.trail_depth_level_hist"]
+    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / df["cl.backtrack_level_hist"]
+
+    # smaller-or-greater comparisons
+    df["cl.decision_level_smaller_than_hist"] = (df["cl.decision_level"] < df["cl.decision_level_hist"]).astype(int)
+    df["cl.backtrack_level_smaller_than_hist"] = (df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]).astype(int)
+    df["cl.trail_depth_level_smaller_than_hist"] = (df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]).astype(int)
+    df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
+    df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
+    df["cl.num_antecedents_smaller_than_hist"] = (df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]).astype(int)
+    df["cl.antec_sum_size_smaller_than_hist"] = (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
+    df["cl.antec_overlap_smaller_than_hist"] = (df["cl.antec_overlap_hist"] < df["cl.overlap"]).astype(int)
+
+
+
     # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
 
     old = set(df.columns.values.flatten().tolist())
@@ -749,10 +669,10 @@ def dump_dataframe(df, name):
         print("Dumping CSV data to:", fname)
         df.to_csv(fname, index=False, columns=sorted(list(df)))
 
-        # fname = "%s-pandasdata.dat" % name
-        # print("Dumping pandas data to:", fname)
-        # with open(fname, "wb") as f:
-        #     pickle.dump(df, f)
+    fname = "%s-pandasdata.dat" % name
+    print("Dumping pandas data to:", fname)
+    with open(fname, "wb") as f:
+        pickle.dump(df, f)
 
 
 def one_predictor(dbfname):
@@ -778,21 +698,6 @@ def one_predictor(dbfname):
 
     dump_dataframe(df, cleanname)
 
-    # display
-    if False:
-        pd.options.display.mpl_style = "default"
-        df.hist()
-        df.boxplot()
-
-    if options.check:
-        check = Check(options.check)
-        check.check(df)
-    else:
-        if not options.no_predict:
-            clf = Classify(df)
-            clf.learn(df, "%s.classifier" % cleanname)
-            clf.output_to_dot("%s.tree.dot" % cleanname)
-
     return True, df
 
 
@@ -806,31 +711,17 @@ if __name__ == "__main__":
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
 
-    parser.add_option("--cross", action="store_true", default=False,
-                      dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
-
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed_num_datapoints", help="Exact number of examples to take. -1 is to take all. Default: %default")
+
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
 
-
-    parser.add_option("--depth", default=5, type=int,
-                      dest="tree_depth", help="Depth of the tree to create")
-
-    parser.add_option("--check", "-c", type=str,
-                      dest="check", help="Check classifier")
-
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
-
-    parser.add_option("--nopredict", action="store_true", default=False,
-                      dest="no_predict", help="Don't create predictive model")
-    parser.add_option("--nordb", action="store_true", default=False,
-                      dest="no_rdb", help="Don't add RDB to the features")
 
     (options, args) = parser.parse_args()
 
@@ -854,10 +745,6 @@ if __name__ == "__main__":
     if len(args) == 1:
         exit(0)
 
-    # no need, we checked them all individually
-    if options.check:
-        exit(0)
-
     print("----- FINAL predictor -------")
     if len(dfs) == 0:
         print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
@@ -865,11 +752,3 @@ if __name__ == "__main__":
 
     final_df = pd.concat(dfs)
     dump_dataframe(final_df, "final")
-    if options.check:
-        check = Check()
-        check.check(final_df)
-    else:
-        clf = Classify(final_df)
-        if not options.no_predict:
-            clf.learn(final_df, "final.classifier")
-            clf.output_to_dot("final.dot")

@@ -913,7 +913,15 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.used_for_uip_creation);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts-cl->stats.last_touched);
+
+    uint64_t last_touched_diff;
+    if (cl->stats.last_touched == 0) {
+        last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
+    } else {
+        last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
+    }
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, last_touched_diff);
+
     sqlite3_bind_double(stmtReduceDB, bindAt++, (double)cl->stats.activity/(double)solver->get_cla_inc());
     sqlite3_bind_int(stmtReduceDB, bindAt++, locked);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->used_in_xor());
@@ -946,7 +954,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 58;
+    const size_t numElems = 67;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -1012,14 +1020,23 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `antecedents_antecedents_vsids_avg`,"
 
     << " `decision_level_hist`,"
-    << " `backtrack_level_hist`,"
+    << " `backtrack_level_hist_lt`,"
     << " `trail_depth_level_hist`,"
     << " `vsids_vars_hist`,"
     << " `size_hist`,"
     << " `glue_hist`,"
     << " `num_antecedents_hist`,"
     << " `antec_sum_size_hist`,"
-    << " `antec_overlap_hist`"
+    << " `antec_overlap_hist`,"
+    << " `branch_depth_hist_queue`,"
+    << " `trail_depth_hist`,"
+    << " `trail_depth_hist_longer`,"
+    << " `num_resolutions_hist`,"
+    << " `confl_size_hist`,"
+    << " `trail_depth_delta_hist`,"
+    << " `backtrack_level_hist`,"
+    << " `glue_hist_queue`,"
+    << " `glue_hist_long`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -1134,6 +1151,16 @@ void SQLiteStats::dump_clause_stats(
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.antec_data_sum_sizeHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.overlapHistLT.avg());
+
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.branchDepthHistQueue.avg_nocheck());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHist.avg_nocheck());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLonger.avg_nocheck());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHist.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHist.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthDeltaHist.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHist.avg_nocheck());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.avg_nocheck());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.getLongtTerm().avg());
 
     int rc = sqlite3_step(stmt_clause_stats);
     if (rc != SQLITE_DONE) {

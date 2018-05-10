@@ -233,7 +233,11 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
     }
 
     if (drat->enabled() || solver->conf.simulate_drat) {
-        *drat << add;
+        *drat << add
+        #ifdef STATS_NEEDED
+        << solver->clauseID++ << sumConflicts
+        #endif
+        ;
         for(unsigned  i = 0; i < newCl.size; i++) {
             *drat << newCl.lits[i];
         }
@@ -270,11 +274,19 @@ void Searcher::create_otf_subsuming_long_clause(
         cout
         << "New smaller clause OTF:" << cl << endl;
     }
-#ifdef STATS_NEEDED
-    cl.stats.ID = clauseID++;
-#endif
-    *drat << add << cl << fin << findelay;
+    #ifdef STATS_NEEDED
+    cl.stats.ID = clauseID;
+    #endif
+    *drat << add << cl
+    #ifdef STATS_NEEDED
+    << sumConflicts
+    #endif
+    << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
+
+    #ifdef STATS_NEEDED
+    clauseID++;
+    #endif
 }
 
 void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
@@ -463,11 +475,17 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     update_clause_glue_from_analysis(cl);
                 }
 
+                //If STATS_NEEDED then bump acitvity of ALL clauses
                 if (cl->stats.which_red_array == 1) {
                     cl->stats.last_touched = sumConflicts;
                 } else if (cl->stats.which_red_array == 2) {
-                    bumpClauseAct(cl);
+                    #ifndef STATS_NEEDED
+                    bump_cl_act(cl);
+                    #endif
                 }
+                #ifdef STATS_NEEDED
+                bump_cl_act(cl);
+                #endif
             }
 
             break;
@@ -1420,7 +1438,12 @@ void Searcher::add_otf_subsume_long_clauses()
 
             //Drat
             if (decisionLevel() == 0) {
-                *drat << add << cl[0] << fin;
+                *drat << add << cl[0]
+                #ifdef STATS_NEEDED
+                << cl.stats.ID
+                << sumConflicts
+                #endif
+                << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1485,7 +1508,12 @@ void Searcher::add_otf_subsume_implicit_clause()
 
             //Drat
             if (decisionLevel() == 0) {
-                *drat << add << it->lits[0] << fin;
+                *drat << add << it->lits[0]
+                #ifdef STATS_NEEDED
+                << clauseID++
+                << sumConflicts
+                #endif
+                << fin;
             }
         } else {
             //We have a non-propagating clause
@@ -1575,7 +1603,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            bumpClauseAct(cl);
+            bump_cl_act(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -1681,7 +1709,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     ) {
         //Cannot make a non-implicit into an implicit
         if (learnt_clause.size() <= 2) {
-            *drat << add << clauseID << learnt_clause << fin;
+            *drat << add << learnt_clause
+            #ifdef STATS_NEEDED
+            << clauseID
+            << sumConflicts
+            #endif
+            << fin;
             cl = NULL;
         } else {
             cl = cl_alloc.Clause_new(learnt_clause
@@ -1719,7 +1752,11 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
             cl->stats.which_red_array = which_arr;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-            *drat << add << *cl << fin;
+            *drat << add << *cl
+            #ifdef STATS_NEEDED
+            << sumConflicts
+            #endif
+            << fin;
         }
     } else {
         //On-the-fly subsumption
@@ -1742,7 +1779,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         #ifdef STATS_NEEDED
         cl->stats.ID = clauseID;
         #endif
-        *(solver->drat) << add << *cl << fin << findelay;
+
+        *(solver->drat) << add << *cl
+        #ifdef STATS_NEEDED
+        << solver->sumConflicts
+        #endif
+         << fin << findelay;
     }
 
     #ifdef STATS_NEEDED
@@ -2995,10 +3037,18 @@ PropBy Searcher::propagate() {
                 << endl;
             }
             #endif
-            *drat << add << trail[i] << fin;
+            *drat << add << trail[i]
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
         if (!ret.isNULL()) {
-            *drat << add << fin;
+            *drat << add
+            #ifdef STATS_NEEDED
+            << clauseID++ << sumConflicts
+            #endif
+            << fin;
         }
     }
 
