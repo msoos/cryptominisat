@@ -23,6 +23,7 @@ import pickle
 import sklearn
 import sklearn.svm
 import sklearn.tree
+import sklearn.ensemble
 import optparse
 import numpy as np
 import sklearn.metrics
@@ -31,9 +32,10 @@ import itertools
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
-class_names = ["throw", "middle", "forever"]
-# class_names = ["throw", "middle1", "middle2", "forever"]
-cuts = [-1, 20000, 100000, 1000000000000]
+class_names = ["throw", "longer"]
+cuts = [-1, 20000, 1000000000000]
+class_names2 = ["middle", "forever"]
+cuts2 = [-1, 100000, 1000000000000]
 
 
 def output_to_dot(clf, features):
@@ -97,6 +99,81 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
+def one_classifier(df, features, to_predict, class_weight, names):
+    train, test = train_test_split(df, test_size=0.33)
+    X_train = train[features]
+    y_train = train[to_predict]
+    X_test = test[features]
+    y_test = test[to_predict]
+
+    t = time.time()
+    # clf = sklearn.linear_model.LogisticRegression(class_weight={"throw": 0.1, "forever":1})
+    # clf = sklearn.ensemble.RandomForestClassifier(class_weight={"throw": 0.1, "forever": 1})
+    clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth,
+                                              class_weight=class_weight)
+
+    clf = sklearn.ensemble.ExtraTreesClassifier(class_weight=class_weight,
+                                                n_estimators=40,
+                                                random_state=0)
+
+    # clf = sklearn.svm.SVC()
+    clf.fit(X_train, y_train)
+    print("Training finished. T: %-3.2f" % (time.time() - t))
+    if True:
+        importances = clf.feature_importances_
+        std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+        indices = np.argsort(importances)[::-1]
+
+        # Print the feature ranking
+        print("Feature ranking:")
+
+        for f in range(X_train.shape[1]):
+            print("%d. feature %s (%f)" %
+                  (f + 1, features[indices[f]], importances[indices[f]])
+                  )
+
+        # Plot the feature importances of the clf
+        plt.figure()
+        plt.title("Feature importances")
+        plt.bar(range(X_train.shape[1]), importances[indices],
+                color="r", yerr=std[indices], align="center")
+        plt.xticks(range(X_train.shape[1]), indices)
+        plt.xlim([-1, X_train.shape[1]])
+
+    print("Calculating scores....")
+    y_pred = clf.predict(X_test)
+    accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
+    precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
+    recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
+    print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
+        precision, recall, accuracy, (time.time() - t)))
+
+    if options.confusion:
+        cnf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred, labels=names)
+        np.set_printoptions(precision=2)
+
+        # Plot non-normalized confusion matrix
+        if False:
+            plt.figure()
+            plot_confusion_matrix(
+                cnf_matrix, classes=names,
+                title='Confusion matrix, without normalization')
+
+        # Plot normalized confusion matrix
+        plt.figure()
+        plot_confusion_matrix(
+            cnf_matrix, classes=names, normalize=True,
+            title='Normalized confusion matrix')
+
+    # TODO do L1 regularization
+
+    if False:
+        calc_cross_val()
+
+    if options.dot is not None:
+        output_to_dot(clf, features)
+
+
 def learn(fname):
     with open(fname, "rb") as f:
         df = pickle.load(f)
@@ -109,71 +186,48 @@ def learn(fname):
         cuts,
         labels=class_names)
 
+    df["x.lifetime_cut2"] = pd.cut(
+        df["x.lifetime"],
+        cuts2,
+        labels=class_names2)
+
     features = df.columns.values.flatten().tolist()
     features.remove("x.num_used")
     features.remove("x.class")
     features.remove("x.lifetime")
     features.remove("fname")
     features.remove("x.lifetime_cut")
+    features.remove("x.lifetime_cut2")
     features.remove("cl.cur_restart_type")
     features.remove("cl2.cur_restart_type")
     print("Number of features:", len(features))
+    features_less = list(features)
+    print(sorted(features_less))
+
+    todel = []
+    for name in features_less:
+        if "rdb2" in name or "rdb3" in name or "rdb4" in name:
+            todel.append(name)
+
+    for x in todel:
+        features_less.remove(x)
+        if options.verbose:
+            print("Removing feature from features_less:", x)
 
     # pd.options.display.mpl_style = "default"
     # df.hist()
     # df.boxplot()
 
-    train, test = train_test_split(df, test_size=0.33)
-    X_train = train[features]
-    y_train = train["x.lifetime_cut"]
-    X_test = test[features]
-    y_test = test["x.lifetime_cut"]
+    one_classifier(df, features_less, "x.lifetime_cut",
+                   {"throw": 0.1, "longer": 1},
+                   class_names)
 
-    t = time.time()
-    # clf = sklearn.KNeighborsClassifier(5) # EXPENSIVE at prediction, NOT suitable
-    # clf = sklearn.linear_model.LogisticRegression() # NOT good.
-    # clf = sklearn.ensemble.RandomForestClassifier(min_samples_split=len(X)/20, n_estimators=6)
-    clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, class_weight="balanced")
-    # clf = sklearn.svm.SVC()
-    clf.fit(X_train, y_train)
-    print("Training finished. T: %-3.2f" % (time.time() - t))
+    df2 = df[df["x.lifetime"] > 20000]
+    one_classifier(df2, features, "x.lifetime_cut2",
+                   {"middle": 1, "forever": 1},
+                   class_names2)
 
-    print("Calculating scores....")
-    y_pred = clf.predict(X_test)
-    accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
-    precision = sklearn.metrics.precision_score(y_test, y_pred, average="micro")
-    recall = sklearn.metrics.recall_score(y_test, y_pred, average="micro")
-    print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
-        precision, recall, accuracy, (time.time() - t)))
-
-    if options.confusion:
-        cnf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred,
-                                                      labels=class_names)
-        np.set_printoptions(precision=2)
-
-        # Plot non-normalized confusion matrix
-        plt.figure()
-        plot_confusion_matrix(cnf_matrix, classes=class_names,
-                              title='Confusion matrix, without normalization')
-
-        # Plot normalized confusion matrix
-        plt.figure()
-        plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                              title='Normalized confusion matrix')
-
-        plt.show()
-
-    # TODO do L1 regularization
-
-    if False:
-        calc_cross_val()
-
-    if options.dot is not None:
-        output_to_dot(clf, features)
-
-    # dump the classifier
-    with open("classifier", "wb") as f:
-        pickle.dump(clf, f)
+    plt.show()
 
 
 if __name__ == "__main__":
