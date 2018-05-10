@@ -713,13 +713,6 @@ if __name__ == "__main__":
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
 
-    # reduce DB features
-    parser.add_option("--nordb", action="store_true", default=False,
-                      dest="no_rdb", help="Don't add RDB to the features")
-
-    parser.add_option("--lessrdb", action="store_true", default=False,
-                      dest="less_rdb", help="Only add first 2 RDB to the features")
-
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
