@@ -112,33 +112,36 @@ def one_classifier(df, features, to_predict, class_weight, names):
     clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth,
                                               class_weight=class_weight)
 
-    clf = sklearn.ensemble.ExtraTreesClassifier(class_weight=class_weight,
-                                                n_estimators=40,
-                                                random_state=0)
+    #clf = sklearn.ensemble.ExtraTreesClassifier(class_weight="balanced",
+                                                #n_estimators=80,
+                                                #random_state=0)
 
     # clf = sklearn.svm.SVC()
     clf.fit(X_train, y_train)
     print("Training finished. T: %-3.2f" % (time.time() - t))
     if True:
         importances = clf.feature_importances_
-        std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+        # std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
+        indices = indices[:30]
+        myrange = min(X_train.shape[1], 30)
 
         # Print the feature ranking
         print("Feature ranking:")
 
-        for f in range(X_train.shape[1]):
+        for f in range(myrange):
             print("%d. feature %s (%f)" %
-                  (f + 1, features[indices[f]], importances[indices[f]])
-                  )
+                  (f + 1, features[indices[f]], importances[indices[f]]))
 
         # Plot the feature importances of the clf
         plt.figure()
         plt.title("Feature importances")
-        plt.bar(range(X_train.shape[1]), importances[indices],
-                color="r", yerr=std[indices], align="center")
-        plt.xticks(range(X_train.shape[1]), indices)
-        plt.xlim([-1, X_train.shape[1]])
+        plt.bar(range(myrange), importances[indices],
+                color="r", align="center"
+                #, yerr=std[indices]
+                )
+        plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
+        plt.xlim([-1, myrange])
 
     print("Calculating scores....")
     y_pred = clf.predict(X_test)
