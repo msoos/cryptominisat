@@ -181,27 +181,27 @@ class Query2 (QueryHelper):
         -- , rst.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
         """
 
-        rdb_dat = """
-        -- , rdb.`runID` as `rdb.runID`
-        -- , rdb.`simplifications` as `rdb.simplifications`
-        -- , rdb.`restarts` as `rdb.restarts`
-        , rdb.`conflicts` as `rdb.conflicts`
-        -- , rdb.`runtime` as `rdb.runtime`
+        rdb0_dat = """
+        -- , rdb0.`runID` as `rdb0.runID`
+        -- , rdb0.`simplifications` as `rdb0.simplifications`
+        -- , rdb0.`restarts` as `rdb0.restarts`
+        , rdb0.`conflicts` as `rdb0.conflicts`
+        -- , rdb0.`runtime` as `rdb0.runtime`
 
-        -- , rdb.`clauseID` as `rdb.clauseID`
-        , rdb.`dump_no` as `rdb.dump_no`
-        , rdb.`conflicts_made` as `rdb.conflicts_made`
-        , rdb.`sum_of_branch_depth_conflict` as `rdb.sum_of_branch_depth_conflict`
-        , rdb.`propagations_made` as `rdb.propagations_made`
-        , rdb.`clause_looked_at` as `rdb.clause_looked_at`
-        , rdb.`used_for_uip_creation` as `rdb.used_for_uip_creation`
-        , rdb.`last_touched_diff` as `rdb.last_touched_diff`
-        , rdb.`activity_rel` as `rdb.activity_rel`
-        , rdb.`locked` as `rdb.locked`
-        , rdb.`in_xor` as `rdb.in_xor`
-        , rdb.`glue` as `rdb.glue`
-        , rdb.`size` as `rdb.size`
-        , rdb.`ttl` as `rdb.ttl`
+        -- , rdb0.`clauseID` as `rdb0.clauseID`
+        , rdb0.`dump_no` as `rdb0.dump_no`
+        , rdb0.`conflicts_made` as `rdb0.conflicts_made`
+        , rdb0.`sum_of_branch_depth_conflict` as `rdb0.sum_of_branch_depth_conflict`
+        , rdb0.`propagations_made` as `rdb0.propagations_made`
+        , rdb0.`clause_looked_at` as `rdb0.clause_looked_at`
+        , rdb0.`used_for_uip_creation` as `rdb0.used_for_uip_creation`
+        , rdb0.`last_touched_diff` as `rdb0.last_touched_diff`
+        , rdb0.`activity_rel` as `rdb0.activity_rel`
+        , rdb0.`locked` as `rdb0.locked`
+        , rdb0.`in_xor` as `rdb0.in_xor`
+        -- , rdb0.`glue` as `rdb0.glue`
+        -- , rdb0.`size` as `rdb0.size`
+        , rdb0.`ttl` as `rdb0.ttl`
         """
 
         clause_dat = """
@@ -353,9 +353,11 @@ class Query2 (QueryHelper):
         tags.tag as "fname"
         {clause_dat}
         {clause2_dat}
+        {clause3_dat}
         {restart_dat}
         {feat_dat}
-        {rdb_dat}
+        {rdb0_dat}
+        {rdb1_dat}
         {rdb2_dat}
         {rdb3_dat}
         {rdb4_dat}
@@ -368,33 +370,40 @@ class Query2 (QueryHelper):
         FROM
         clauseStats as cl
         , clauseStats as cl2
+        , clauseStats as cl3
         , goodClauses as goodcl
         , restart as rst
         , features as feat
-        {no_rdb}, reduceDB as rdb
-        {no_rdb}, reduceDB as rdb2
-        {less_rdb}, reduceDB as rdb3
-        {less_rdb}, reduceDB as rdb4
+        , reduceDB as rdb0
+        , reduceDB as rdb1
+        , reduceDB as rdb2
+        , reduceDB as rdb3
+        , reduceDB as rdb4
         , tags
         WHERE
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 1
         and cl.runID = goodcl.runID
-        {no_rdb} and rdb.runID = cl.runID
-        {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 0
-        {no_rdb} and rdb2.runID = cl.runID
-        {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 1
-        {less_rdb} and rdb3.runID = cl.runID
-        {less_rdb} and rdb3.clauseID = cl.clauseID
-        {less_rdb} and rdb3.dump_no = 2
-        {less_rdb} and rdb4.runID = cl.runID
-        {less_rdb} and rdb4.clauseID = cl.clauseID
-        {less_rdb} and rdb4.dump_no = 3
+        and rdb0.runID = cl.runID
+        and rdb0.clauseID = cl.clauseID
+        and rdb0.dump_no = 0
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = 1
+        and rdb2.runID = cl.runID
+        and rdb2.clauseID = cl.clauseID
+        and rdb2.dump_no = 2
+        and rdb3.runID = cl.runID
+        and rdb3.clauseID = cl.clauseID
+        and rdb3.dump_no = 3
+        and rdb4.runID = cl.runID
+        and rdb4.clauseID = cl.clauseID
+        and rdb4.dump_no = 4
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
+        and cl3.runID = cl.runID
+        and cl3.clauseID = cl.clauseID
         """
         q_ok += common_restrictions
 
@@ -404,9 +413,11 @@ class Query2 (QueryHelper):
         tags.tag as "fname"
         {clause_dat}
         {clause2_dat}
+        {clause3_dat}
         {restart_dat}
         {feat_dat}
-        {rdb_dat}
+        {rdb0_dat}
+        {rdb1_dat}
         {rdb2_dat}
         {rdb3_dat}
         {rdb4_dat}
@@ -420,61 +431,54 @@ class Query2 (QueryHelper):
         on cl.clauseID = goodcl.clauseID
         and cl.runID = goodcl.runID
         , clauseStats as cl2
+        , clauseStats as cl3
         , restart as rst
         , features as feat
-        {no_rdb}, reduceDB as rdb
-        {no_rdb}, reduceDB as rdb2
-        {less_rdb}, reduceDB as rdb3
-        {less_rdb}, reduceDB as rdb4
+        , reduceDB as rdb0
+        , reduceDB as rdb1
+        , reduceDB as rdb2
+        , reduceDB as rdb3
+        , reduceDB as rdb4
         , tags
         WHERE
 
         goodcl.clauseID is NULL
         and goodcl.runID is NULL
         and cl.clauseID != 1
-        {no_rdb} and rdb.runID = cl.runID
-        {no_rdb} and rdb.clauseID = cl.clauseID
-        {no_rdb} and rdb.dump_no = 0
-        {no_rdb} and rdb2.runID = cl.runID
-        {no_rdb} and rdb2.clauseID = cl.clauseID
-        {no_rdb} and rdb2.dump_no = 1
-        {less_rdb} and rdb3.runID = cl.runID
-        {less_rdb} and rdb3.clauseID = cl.clauseID
-        {less_rdb} and rdb3.dump_no = 2
-        {less_rdb} and rdb4.runID = cl.runID
-        {less_rdb} and rdb4.clauseID = cl.clauseID
-        {less_rdb} and rdb4.dump_no = 3
+        and rdb0.runID = cl.runID
+        and rdb0.clauseID = cl.clauseID
+        and rdb0.dump_no = 0
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = 1
+        and rdb2.runID = cl.runID
+        and rdb2.clauseID = cl.clauseID
+        and rdb2.dump_no = 2
+        and rdb3.runID = cl.runID
+        and rdb3.clauseID = cl.clauseID
+        and rdb3.dump_no = 3
+        and rdb4.runID = cl.runID
+        and rdb4.clauseID = cl.clauseID
+        and rdb4.dump_no = 4
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
+        and cl3.runID = cl.runID
+        and cl3.clauseID = cl.clauseID
         """
         q_bad += common_restrictions
-
-        rdb_dat_less = rdb_dat
-        if options.no_rdb:
-            rdb_dat = ""
-            rdb_dat_less = ""
-            no_rdb = " -- "
-            less_rdb = " -- "
-        else:
-            no_rdb = ""
-            less_rdb = ""
-
-        if options.less_rdb:
-            less_rdb = " -- "
-            rdb_dat_less = ""
 
         myformat = {"runid": self.runID,
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
                     "clause2_dat": clause_dat.replace("cl.", "cl2."),
+                    "clause3_dat": clause_dat.replace("cl.", "cl3."),
                     "feat_dat": feat_dat,
-                    "rdb_dat": rdb_dat,
-                    "rdb2_dat": rdb_dat.replace("rdb.", "rdb2."),
-                    "rdb3_dat": rdb_dat_less.replace("rdb.", "rdb3."),
-                    "rdb4_dat": rdb_dat_less.replace("rdb.", "rdb4."),
-                    "no_rdb": no_rdb,
-                    "less_rdb": less_rdb,
+                    "rdb0_dat": rdb0_dat,
+                    "rdb1_dat": rdb0_dat.replace("rdb0.", "rdb1."),
+                    "rdb2_dat": rdb0_dat.replace("rdb0.", "rdb2."),
+                    "rdb3_dat": rdb0_dat.replace("rdb0.", "rdb3."),
+                    "rdb4_dat": rdb0_dat.replace("rdb0.", "rdb4."),
                     "start_confl": options.start_conflicts}
 
         t = time.time()
