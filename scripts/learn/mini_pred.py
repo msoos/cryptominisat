@@ -117,6 +117,16 @@ def one_classifier(df, features, to_predict, class_weight, names):
                                                 #random_state=0)
 
     # clf = sklearn.svm.SVC()
+
+    # to check for too large or NaN values:
+    if False:
+        index = 0
+        for index, row in X_train.iterrows():
+            for x, name in zip(row, features):
+                if not np.isfinite(x) or x > np.finfo(np.float32).max:
+                    print("row:", name, x)
+                index += 1
+
     clf.fit(X_train, y_train)
     print("Training finished. T: %-3.2f" % (time.time() - t))
     if True:
