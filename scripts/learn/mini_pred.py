@@ -292,5 +292,4 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    np.random.seed(2097483)
     learn(args[0])
