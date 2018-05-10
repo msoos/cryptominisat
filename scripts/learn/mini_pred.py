@@ -133,8 +133,8 @@ def one_classifier(df, features, to_predict, class_weight, names):
         importances = clf.feature_importances_
         # std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
-        indices = indices[:30]
-        myrange = min(X_train.shape[1], 30)
+        indices = indices[:20]
+        myrange = min(X_train.shape[1], 20)
 
         # Print the feature ranking
         print("Feature ranking:")
