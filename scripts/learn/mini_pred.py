@@ -279,7 +279,7 @@ if __name__ == "__main__":
                       dest="tree_depth", help="Depth of the tree to create")
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
-    parser.add_option("--confusion", action="store_true", default=False,
+    parser.add_option("--conf", action="store_true", default=False,
                       dest="confusion", help="Create confusion matrix")
     parser.add_option("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
