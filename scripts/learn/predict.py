@@ -251,7 +251,7 @@ class Query2 (QueryHelper):
         -- , cl.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
         -- , cl.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
         , cl.`decision_level_hist` as `cl.decision_level_hist`
-        , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
+        , cl.`backtrack_level_hist_lt` as `cl.backtrack_level_hist_lt`
         , cl.`trail_depth_level_hist` as `cl.trail_depth_level_hist`
         -- , cl.`vsids_vars_hist` as `cl.vsids_vars_hist`
         , cl.`size_hist` as `cl.size_hist`
@@ -259,6 +259,16 @@ class Query2 (QueryHelper):
         , cl.`num_antecedents_hist` as `cl.num_antecedents_hist`
         , cl.`antec_sum_size_hist` as `cl.antec_sum_size_hist`
         , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
+
+        , cl.`branch_depth_hist_queue` as `cl.branch_depth_hist_queue`
+        , cl.`trail_depth_hist` as `cl.trail_depth_hist`
+        , cl.`trail_depth_hist_longer` as `cl.trail_depth_hist_longer`
+        , cl.`num_resolutions_hist` as `cl.num_resolutions_hist`
+        , cl.`confl_size_hist` as `cl.confl_size_hist`
+        , cl.`trail_depth_delta_hist` as `cl.trail_depth_delta_hist`
+        , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
+        , cl.`glue_hist_queue` as `cl.glue_hist_queue`
+        , cl.`glue_hist_long` as `cl.glue_hist_long`
         """
 
         feat_dat = """
