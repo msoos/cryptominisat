@@ -255,12 +255,16 @@ def learn(fname):
                    {"throw": 0.1, "longer": 1},
                    class_names)
 
+    if options.show:
+        plt.show()
+
     df2 = df[df["x.lifetime"] > 20000]
     one_classifier(df2, features, "x.lifetime_cut2",
                    {"middle": 1, "forever": 1},
                    class_names2)
 
-    plt.show()
+    if options.show:
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -277,6 +281,8 @@ if __name__ == "__main__":
                       dest="dot", help="Create DOT file")
     parser.add_option("--confusion", action="store_true", default=False,
                       dest="confusion", help="Create confusion matrix")
+    parser.add_option("--show", action="store_true", default=False,
+                      dest="show", help="Show visual graphs")
 
     (options, args) = parser.parse_args()
 
