@@ -623,14 +623,14 @@ def transform(df):
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / df["cl.backtrack_level_hist"]
 
     # smaller-or-greater comparisons
-    df["cl.decision_level_smaller_than_hist"] = df["cl.decision_level"] < df["cl.decision_level_hist"]
-    df["cl.backtrack_level_smaller_than_hist"] = df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]
-    df["cl.trail_depth_level_smaller_than_hist"] = df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]
-    df["cl.size_smaller_than_hist"] = df["cl.size"] < df["cl.size_hist"]
-    df["cl.glue_smaller_than_hist"] = df["cl.glue"] < df["cl.glue_hist"]
-    df["cl.num_antecedents_smaller_than_hist"] = df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]
-    df["cl.antec_sum_size_smaller_than_hist"] = df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]
-    df["cl.antec_overlap_smaller_than_hist"] = df["cl.antec_overlap_hist"] < df["cl.overlap"]
+    df["cl.decision_level_smaller_than_hist"] = (df["cl.decision_level"] < df["cl.decision_level_hist"]).astype(int)
+    df["cl.backtrack_level_smaller_than_hist"] = (df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]).astype(int)
+    df["cl.trail_depth_level_smaller_than_hist"] = (df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]).astype(int)
+    df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
+    df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
+    df["cl.num_antecedents_smaller_than_hist"] = (df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]).astype(int)
+    df["cl.antec_sum_size_smaller_than_hist"] = (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
+    df["cl.antec_overlap_smaller_than_hist"] = (df["cl.antec_overlap_hist"] < df["cl.overlap"]).astype(int)
 
 
 
