@@ -211,11 +211,17 @@ def learn(fname):
     features.remove("fname")
     features.remove("x.lifetime_cut")
     features.remove("x.lifetime_cut2")
+
+    # this needs binarization
     features.remove("cl.cur_restart_type")
     features.remove("cl2.cur_restart_type")
+    features.remove("cl3.cur_restart_type")
+    # x = (df["cl.cur_restart_type"].values[:, np.newaxis] == df["cl.cur_restart_type"].unique()).astype(int)
+    # print(x)
+
     print("Number of features:", len(features))
     features_less = list(features)
-    print(sorted(features_less))
+    # print(sorted(features_less))
 
     todel = []
     for name in features_less:
