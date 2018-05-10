@@ -34,19 +34,21 @@ from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
 cuts = [-1, 20000, 1000000000000]
-class_names2 = ["middle", "forever"]
-cuts2 = [-1, 100000, 1000000000000]
+class_names2 = ["middle", "middle2", "forever"]
+cuts2 = [-1, 60000, 150000, 1000000000000]
 
 
-def output_to_dot(clf, features):
-    sklearn.tree.export_graphviz(clf, out_file=options.dot,
+def output_to_dot(clf, features, nameextra):
+    fname = options.dot+nameextra
+    sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
                                  class_names=class_names,
                                  filled=True, rounded=True,
                                  special_characters=True,
                                  proportion=True)
     print("Run dot:")
-    print("dot -Tpng {fname} -o {fname}.png".format(fname=options.dot))
+    print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
+    print("gwenview {fname}.png".format(fname=fname))
 
 
 def calc_cross_val():
@@ -260,7 +262,7 @@ def learn(fname):
 
     df2 = df[df["x.lifetime"] > 20000]
     one_classifier(df2, features, "x.lifetime_cut2",
-                   {"middle": 1, "forever": 1},
+                   {"middle": 3, "middle2": 3, "forever": 1},
                    class_names2)
 
     if options.show:
