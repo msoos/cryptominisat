@@ -208,7 +208,7 @@ void ReduceDB::handle_lev1()
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;
                 cl->stats.activity = 0;
-                solver->bumpClauseAct(cl);
+                solver->bump_cl_act(cl);
                 non_recent_use++;
             } else {
                 solver->longRedCls[1][j++] = offset;

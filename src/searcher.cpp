@@ -475,11 +475,17 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     update_clause_glue_from_analysis(cl);
                 }
 
+                //If STATS_NEEDED then bump acitvity of ALL clauses
                 if (cl->stats.which_red_array == 1) {
                     cl->stats.last_touched = sumConflicts;
                 } else if (cl->stats.which_red_array == 2) {
-                    bumpClauseAct(cl);
+                    #ifndef STATS_NEEDED
+                    bump_cl_act(cl);
+                    #endif
                 }
+                #ifdef STATS_NEEDED
+                bump_cl_act(cl);
+                #endif
             }
 
             break;
@@ -1597,7 +1603,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            bumpClauseAct(cl);
+            bump_cl_act(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
