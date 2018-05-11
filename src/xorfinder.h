@@ -160,9 +160,9 @@ public:
     size_t mem_used() const;
     void free_mem();
     void grab_mem();
-    void add_xors_to_gauss();
-    void remove_xors_without_connecting_vars();
-    bool xor_together_xors();
+    void add_xors_to_solver();
+    vector<Xor> remove_xors_without_connecting_vars(const vector<Xor>& this_xors);
+    bool xor_together_xors(vector<Xor>& xors);
     bool add_new_truths_from_xors(vector<Xor>& xors, vector<Lit>* out_changed_occur = NULL);
 
     vector<Xor> xors;

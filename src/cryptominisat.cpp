@@ -563,6 +563,14 @@ DLL_PUBLIC void SATSolver::set_no_bva()
     }
 }
 
+DLL_PUBLIC void SATSolver::set_no_bve()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.doVarElim = false;
+    }
+}
+
 DLL_PUBLIC void SATSolver::set_greedy_undef()
 {
     assert(false && "Unfortunately, greedy undef is broken");
@@ -951,6 +959,23 @@ DLL_PUBLIC std::vector<std::pair<Lit, Lit> > SATSolver::get_all_binary_xors() co
 {
     return data->solvers[0]->get_all_binary_xors();
 }
+
+DLL_PUBLIC vector<std::pair<vector<uint32_t>, bool> >
+SATSolver::get_recovered_xors() const
+{
+    vector<std::pair<vector<uint32_t>, bool> > ret;
+    Solver& s = *data->solvers[0];
+
+    std::pair<vector<uint32_t>, bool> tmp;
+    const vector<Xor>& xors = s.get_recovered_xors();
+    for(const auto& x: xors) {
+        tmp.first = x.get_vars();
+        tmp.second = x.rhs;
+        ret.push_back(tmp);
+    }
+    return ret;
+}
+
 
 DLL_PUBLIC void SATSolver::set_sqlite(std::string filename)
 {
