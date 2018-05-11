@@ -1256,7 +1256,6 @@ struct MyOccSorter
         const uint32_t sz1 = cl1->size();
         const uint32_t sz2 = cl2->size();
         return sz1 < sz2;
-
     }
 
     const Solver* solver;
@@ -1317,22 +1316,22 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
                 finder.find_xors();
-                solver->ok = finder.xor_together_xors();
-                if (!solver->ok)
+                vector<Xor> xors = finder.xors;
+                if (!finder.xor_together_xors(xors))
                     return false;
 
                 vector<Lit> out_changed_occur;
-                solver->ok = finder.add_new_truths_from_xors(finder.xors, &out_changed_occur);
+                solver->ok = finder.add_new_truths_from_xors(xors, &out_changed_occur);
                 if (!solver->ok)
                     return false;
-                finder.remove_xors_without_connecting_vars();
-                finder.add_xors_to_gauss();
 
                 #ifdef USE_M4RI
                 if (topLevelGauss != NULL) {
-                    topLevelGauss->toplevelgauss(finder.xors, &out_changed_occur);
+                    xors = finder.remove_xors_without_connecting_vars(xors);
+                    topLevelGauss->toplevelgauss(xors, &out_changed_occur);
                 }
                 #endif
+                finder.add_xors_to_solver();
 
                 //these may have changed, recalculating occur
                 for(Lit lit: out_changed_occur) {

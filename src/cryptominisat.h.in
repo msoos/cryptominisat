@@ -142,6 +142,7 @@ namespace CMSat {
         ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+        std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors() const; //get total number of decisions of all time made by all threads
 
     private:
 

@@ -185,7 +185,7 @@ void XorFinder::print_found_xors()
     }
 }
 
-void XorFinder::add_xors_to_gauss()
+void XorFinder::add_xors_to_solver()
 {
     solver->xorclauses = xors;
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
@@ -350,46 +350,51 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
     }
 }
 
-void XorFinder::remove_xors_without_connecting_vars()
+vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& this_xors)
 {
+    vector<Xor> ret;
     assert(toClear.empty());
 
     //Fill seen with vars used
     for(const Xor& x: xors) {
         for(uint32_t v: x) {
-            if (occcnt[v] == 0) {
+            if (solver->seen[v] == 0) {
                 toClear.push_back(Lit(v, false));
             }
 
-            if (occcnt[v] < 2) {
-                occcnt[v]++;
+            if (solver->seen[v] < 2) {
+                solver->seen[v]++;
             }
         }
     }
 
     vector<Xor>::iterator i = xors.begin();
-    vector<Xor>::iterator j = i;
     for(vector<Xor>::iterator end = xors.end()
         ; i != end
         ; i++
     ) {
         if (xor_has_interesting_var(*i)) {
-            *j++ = *i;
+            ret.push_back(*i);
         }
     }
-    xors.resize(xors.size() - (i-j));
 
     for(Lit l: toClear) {
-        occcnt[l.var()] = 0;
+        solver->seen[l.var()] = 0;
     }
     toClear.clear();
+
+    return ret;
 }
 
-bool XorFinder::xor_together_xors()
+bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 {
+    if (occcnt.size() != solver->nVars())
+        grab_mem();
+
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(solver->watches.get_smudged_list().empty());
+
     uint32_t xored = 0;
     const double myTime = cpuTime();
     assert(toClear.empty());
@@ -397,8 +402,8 @@ bool XorFinder::xor_together_xors()
     uint32_t bin_added = 0;
 
     //Link in xors into watchlist
-    for(size_t i = 0; i < xors.size(); i++) {
-        const Xor& x = xors[i];
+    for(size_t i = 0; i < this_xors.size(); i++) {
+        const Xor& x = this_xors[i];
         for(uint32_t v: x) {
             if (occcnt[v] == 0) {
                 toClear.push_back(Lit(v, false));
@@ -438,7 +443,7 @@ bool XorFinder::xor_together_xors()
                 const Watched& w = ws[i];
                 if (!w.isIdx()) {
                     ws[i2++] = ws[i];
-                } else if (xors[w.get_idx()] != Xor()) {
+                } else if (this_xors[w.get_idx()] != Xor()) {
                     //seen may be not 2
                     if (at >= 2) {
                         //signal that this is wrong by making "at" too large
@@ -455,8 +460,8 @@ bool XorFinder::xor_together_xors()
             }
 
             ws.resize(i2);
-            Xor x_new(xor_two(xors[idxes[0]], xors[idxes[1]]),
-                      xors[idxes[0]].rhs ^ xors[idxes[1]].rhs);
+            Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
+                      this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
 
             //check x_new
             bool add = true;
@@ -478,18 +483,18 @@ bool XorFinder::xor_together_xors()
 
             changed = true;
             if (add) {
-                xors.push_back(x_new);
+                this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
                     Lit l(v2, false);
-                    solver->watches[l].push(Watched(xors.size()-1));
+                    solver->watches[l].push(Watched(this_xors.size()-1));
                     if (occcnt[l.var()] == 2) {
                         interesting.push_back(l.var());
                     }
                     solver->watches.smudge(l);
                 }
             }
-            xors[idxes[0]] = Xor();
-            xors[idxes[1]] = Xor();
+            this_xors[idxes[0]] = Xor();
+            this_xors[idxes[1]] = Xor();
             xored++;
         }
     }
@@ -712,7 +717,7 @@ vector<uint32_t> XorFinder::xor_two(
 bool XorFinder::xor_has_interesting_var(const Xor& x)
 {
     for(uint32_t v: x) {
-        if (occcnt[v] > 1) {
+        if (solver->seen[v] > 1) {
             return true;
         }
     }
