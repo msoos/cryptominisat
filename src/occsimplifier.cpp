@@ -1269,7 +1269,7 @@ void OccSimplifier::sort_occurs_and_set_abst()
         for(Watched& w: ws) {
             if (w.isClause()) {
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->freed() || cl->getRemoved()) {
+                if (cl->freed() || cl->getRemoved() || cl->size() >solver->conf.maxXorToFind) {
                     w.setBlockedLit(lit_Error);
                 } else {
                     w.setBlockedLit(Lit(cl->abst, false));
