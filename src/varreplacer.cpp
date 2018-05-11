@@ -1005,17 +1005,23 @@ bool VarReplacer::add_xor_as_bins(const BinaryXor& bin_xor)
     return true;
 }
 
-bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given)
+bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogoprops_given, bool *replaced)
 {
-    #ifdef USE_GAUSS
-    solver->clearEnGaussMatrixes();
-    #endif
+    if (replaced)
+        *replaced = false;
 
     scc_finder->performSCC(bogoprops_given);
     if (scc_finder->get_num_binxors_found() < limit) {
         scc_finder->clear_binxors();
         return solver->okay();
     }
+
+    #ifdef USE_GAUSS
+    solver->clearEnGaussMatrixes();
+    #endif
+
+    if (replaced)
+        *replaced = true;
 
     const set<BinaryXor>& xors_found = scc_finder->get_binxors();
     for(BinaryXor bin_xor: xors_found) {

@@ -475,6 +475,8 @@ void Main::add_supported_options()
         , "Perform SCC using cache")
     ("sccperc", po::value(&conf.sccFindPercent)->default_value(conf.sccFindPercent, sccFindPercent.str())
         , "Perform SCC only if the number of new binary clauses is at least this many % of the number of free variables")
+    ("repwhilesolving", po::value(&conf.replace_while_solving)->default_value(conf.replace_while_solving)
+        , "Find eqlits while solving and replace them")
     ;
 
     po::options_description gateOptions("Gate-related options");
