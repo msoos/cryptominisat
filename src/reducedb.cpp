@@ -162,6 +162,7 @@ void ReduceDB::dump_sql_cl_data()
     #ifdef STATS_NEEDED
     assert(solver->sqlStats);
 
+    TODO must reset data!!!!
     for(auto& cc: solver->longRedCls) {
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
