@@ -1266,13 +1266,16 @@ void OccSimplifier::sort_occurs_and_set_abst()
 {
     for(auto& ws: solver->watches) {
         std::sort(ws.begin(), ws.end(), MyOccSorter(solver));
+
         for(Watched& w: ws) {
             if (w.isClause()) {
                 Clause* cl = solver->cl_alloc.ptr(w.get_offset());
-                if (cl->freed() || cl->getRemoved() || cl->size() >solver->conf.maxXorToFind) {
+                if (cl->freed() || cl->getRemoved()) {
                     w.setBlockedLit(lit_Error);
+                } else if (cl->size() >solver->conf.maxXorToFind) {
+                    w.setBlockedLit(lit_Undef);
                 } else {
-                    w.setBlockedLit(Lit(cl->abst, false));
+                    w.setBlockedLit(Lit::toLit(cl->abst));
                 }
             }
         }

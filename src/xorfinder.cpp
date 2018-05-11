@@ -289,7 +289,15 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             if (poss_xor.foundAll())
                 break;
         } else {
-            if ((w.getBlockedLit().var() | poss_xor.getAbst()) != poss_xor.getAbst())
+            if (w.getBlockedLit().toInt() == lit_Undef.toInt())
+                //Clauses are ordered, lit_Undef means it's larger than maxXorToFind
+                break;
+
+            if (w.getBlockedLit().toInt() == lit_Error.toInt())
+                //lit_Error means it's freed or removed, and it's ordered so no more
+                break;
+
+            if ((w.getBlockedLit().toInt() | poss_xor.getAbst()) != poss_xor.getAbst())
                 continue;
 
             xor_find_time_limit -= 3;
