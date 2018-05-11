@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "time_mem.h"
 #include "sqlstats.h"
+#include "xorfinder.h"
 #include "varreplacer.h"
 
 #include <set>
@@ -93,7 +94,7 @@ inline bool MatrixFinder::belong_same_matrix(const Xor& x)
     return true;
 }
 
-bool MatrixFinder::findMatrixes()
+bool MatrixFinder::findMatrixes(bool simplify_xors)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
@@ -105,13 +106,27 @@ bool MatrixFinder::findMatrixes()
     matrix_no = 0;
     double myTime = cpuTime();
 
-    if (solver->xorclauses.size() < solver->conf.gaussconf.min_gauss_xor_clauses
+    if (simplify_xors) {
+        XorFinder finder(NULL, solver);
+        xors = solver->xorclauses;
+
+        finder.grab_mem();
+        xors = finder.remove_xors_without_connecting_vars(xors);
+        if (!finder.xor_together_xors(xors))
+            return false;
+
+        xors = finder.remove_xors_without_connecting_vars(xors);
+    } else {
+        xors = solver->xorclauses;
+    }
+
+    if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses
         || solver->conf.gaussconf.decision_until <= 0
     ) {
         return true;
     }
 
-    if (solver->xorclauses.size() > solver->conf.gaussconf.max_gauss_xor_clauses
+    if (xors.size() > solver->conf.gaussconf.max_gauss_xor_clauses
         && solver->conf.independent_vars->size() > 0
     ) {
         if (solver->conf.verbosity) {
@@ -122,7 +137,7 @@ bool MatrixFinder::findMatrixes()
         }
     }
 
-    bool ret = solver->clauseCleaner->clean_xor_clauses(solver->xorclauses);
+    bool ret = solver->clauseCleaner->clean_xor_clauses(xors);
     if (!ret)
         return false;
 
@@ -130,14 +145,14 @@ bool MatrixFinder::findMatrixes()
         if (solver->conf.verbosity >=1) {
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         }
-        solver->gmatrixes.push_back(new EGaussian(solver, solver->conf.gaussconf, 0, solver->xorclauses));
+        solver->gmatrixes.push_back(new EGaussian(solver, solver->conf.gaussconf, 0, xors));
         solver->gqueuedata.resize(solver->gmatrixes.size());
         return true;
     }
 
     vector<uint32_t> newSet;
     set<uint32_t> tomerge;
-    for (const Xor& x : solver->xorclauses) {
+    for (const Xor& x : xors) {
         if (belong_same_matrix(x)) {
             continue;
         }
@@ -230,7 +245,7 @@ uint32_t MatrixFinder::setMatrixes()
         matrix_shape[i].cols = reverseTable[i].size();
     }
 
-    for (const Xor& x : solver->xorclauses) {
+    for (const Xor& x : xors) {
         //take 1st variable to check which matrix it's in.
         const uint32_t matrix = table[x[0]];
         assert(matrix < matrix_no);

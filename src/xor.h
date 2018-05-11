@@ -125,6 +125,11 @@ public:
         return vars;
     }
 
+    const vector<uint32_t>& get_vars() const
+    {
+        return vars;
+    }
+
     size_t size() const
     {
         return vars.size();

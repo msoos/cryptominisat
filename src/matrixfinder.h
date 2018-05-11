@@ -40,7 +40,9 @@ class MatrixFinder {
 
     public:
         MatrixFinder(Solver* solver);
-        bool findMatrixes();
+
+        //NOTE "simplify_xors" should always be true except during testing
+        bool findMatrixes(bool simplify_xors = true);
 
     private:
         uint32_t setMatrixes();
@@ -80,6 +82,7 @@ class MatrixFinder {
         map<uint32_t, vector<uint32_t> > reverseTable; //matrix -> vars
         vector<uint32_t> table; //var -> matrix
         uint32_t matrix_no;
+        vector<Xor> xors;
 
         Solver* solver;
 };
