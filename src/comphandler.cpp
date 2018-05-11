@@ -394,6 +394,7 @@ SolverConf CompHandler::configureNewSolver(
 ) const {
     SolverConf conf(solver->conf);
     conf.origSeed = solver->mtrand.randInt();
+    conf.independent_vars = NULL;
     if (numVars < 60) {
         conf.do_simplify_problem = false;
         conf.doStamp = false;
@@ -401,7 +402,6 @@ SolverConf CompHandler::configureNewSolver(
         conf.doProbe = false;
         conf.otfHyperbin = false;
         conf.verbosity = std::min(solver->conf.verbosity, 0);
-        conf.independent_vars = NULL;
     }
 
     //Otherwise issues are:
