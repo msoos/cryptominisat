@@ -415,7 +415,7 @@ class Searcher : public HyperEngine
             const uint32_t glue
             , const uint32_t old_decision_level
         );
-        uint32_t dump_this_many_cldata_in_stream = 0;
+        int dump_this_many_cldata_in_stream = 0;
         #endif
 
 
