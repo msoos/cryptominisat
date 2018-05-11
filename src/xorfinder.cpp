@@ -68,11 +68,6 @@ void XorFinder::find_xors_based_on_long_clauses()
             continue;
         }
 
-        //Let's not take learnt clauses as bases for XORs
-        if (cl->red()) {
-            continue;
-        }
-
         //If not tried already, find an XOR with it
         if (!cl->stats.marked_clause ) {
             cl->stats.marked_clause = true;
