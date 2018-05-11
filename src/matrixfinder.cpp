@@ -123,6 +123,9 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses
         || solver->conf.gaussconf.decision_until <= 0
     ) {
+        if (solver->conf.verbosity >= 2)
+            cout << "c [matrix] too few xor clauses:" << xors.size() << endl;
+
         return true;
     }
 
