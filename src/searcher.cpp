@@ -1792,12 +1792,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         && drat
         && conf.dump_individual_restarts_and_clauses
     ) {
-        if (!dump_this_many_cldata_in_stream) {
-            if (mtrand.randDblExc() <= conf.dump_individual_cldata_ratio)
+        if (dump_this_many_cldata_in_stream <= 0) {
+            double myrnd = mtrand.randDblExc();
+            if (myrnd <= conf.dump_individual_cldata_ratio) {
                 dump_this_many_cldata_in_stream = 5;
+            }
         }
 
-        if (dump_this_many_cldata_in_stream) {
+        if (dump_this_many_cldata_in_stream >= 0) {
             if (cl) {
                 cl->stats.dump_number = 0;
             }

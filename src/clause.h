@@ -142,6 +142,19 @@ struct ClauseStats
     AtecedentData<uint16_t> antec_data;
     #endif
 
+    #ifdef STATS_NEEDED
+    void reset_rdb_stats()
+    {
+        ttl = 0;
+        conflicts_made = 0;
+        sum_of_branch_depth_conflict = 0;
+        propagations_made = 0;
+        clause_looked_at = 0;
+        used_for_uip_creation = 0;
+        antec_data.clear();
+    }
+    #endif
+
     static ClauseStats combineStats(const ClauseStats& first, const ClauseStats& second)
     {
         //Create to-be-returned data
