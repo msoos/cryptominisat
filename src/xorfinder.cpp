@@ -356,7 +356,7 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     assert(toClear.empty());
 
     //Fill seen with vars used
-    for(const Xor& x: xors) {
+    for(const Xor& x: this_xors) {
         for(uint32_t v: x) {
             if (solver->seen[v] == 0) {
                 toClear.push_back(Lit(v, false));
@@ -368,8 +368,8 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
         }
     }
 
-    vector<Xor>::iterator i = xors.begin();
-    for(vector<Xor>::iterator end = xors.end()
+    vector<Xor>::const_iterator i = this_xors.begin();
+    for(vector<Xor>::const_iterator end = this_xors.end()
         ; i != end
         ; i++
     ) {
