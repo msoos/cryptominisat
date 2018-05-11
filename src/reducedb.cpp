@@ -162,8 +162,8 @@ void ReduceDB::dump_sql_cl_data()
     #ifdef STATS_NEEDED
     assert(solver->sqlStats);
 
-    TODO must reset data!!!!
-    for(auto& cc: solver->longRedCls) {
+    for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
+        auto& cc = solver->longRedCls[lev];
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
@@ -176,6 +176,7 @@ void ReduceDB::dump_sql_cl_data()
                     , cl
                 );
                 cl->stats.dump_number++;
+                cl->stats.reset_rdb_stats();
             }
         }
     }
