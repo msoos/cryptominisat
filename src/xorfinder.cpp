@@ -571,6 +571,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     size_t i2 = 0;
     for(size_t i = 0;i < this_xors.size(); i++) {
         Xor& x = this_xors[i];
+        solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
         if (x.size() > 2) {
             this_xors[i2] = this_xors[i];
             i2++;
@@ -587,8 +588,16 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
             }
 
             case 1: {
-                vector<Lit> lits = {Lit(x[0], !x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), true);
+                Lit lit = Lit(x[0], !x.rhs);
+                if (solver->value(lit) == l_False) {
+                    solver->ok = false;
+                } else if (solver->value(lit) == l_Undef) {
+                    solver->enqueue(lit);
+                    if (out_changed_occur)
+                        solver->ok = solver->propagate_occur();
+                    else
+                        solver->ok = solver->propagate<true>().isNULL();
+                }
                 if (!solver->ok) {
                     return false;
                 }
