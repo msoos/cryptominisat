@@ -75,7 +75,6 @@ class Searcher : public HyperEngine
         void finish_up_solve(lbool status);
         void reduce_db_if_needed();
         bool clean_clauses_if_needed();
-        lbool perform_scc_and_varreplace_if_needed();
         void check_calc_features();
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);

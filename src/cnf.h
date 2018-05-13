@@ -51,7 +51,6 @@ struct BinTriStats
 {
     uint64_t irredBins = 0;
     uint64_t redBins = 0;
-    uint64_t numNewBinsSinceSCC = 0;
 };
 
 struct LitStats

@@ -497,7 +497,6 @@ void Solver::attach_bin_clause(
     } else {
         binTri.irredBins++;
     }
-    binTri.numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
     PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);

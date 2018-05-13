@@ -169,9 +169,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
-        , sccFindPercent        (0.2)
         , max_scc_depth (10000)
-        , replace_while_solving(false)
 
         //Iterative Alo Scheduling
         , simplify_at_startup(false)
