@@ -262,7 +262,7 @@ def learn(fname):
 
     df2 = df[df["x.lifetime"] > 20000]
     one_classifier(df2, features, "x.lifetime_cut2",
-                   class_names2, "middle", 6)
+                   class_names2, "middle", 16)
 
     if options.show:
         plt.show()
