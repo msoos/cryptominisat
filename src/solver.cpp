@@ -2018,16 +2018,19 @@ void Solver::print_min_stats(const double cpu_time) const
     varReplacer->get_scc_finder()->get_stats().print_short(NULL);
 
     //varReplacer->get_stats().print_short(nVars());
+    if (conf.do_print_times)
     print_stats_line("c distill time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
+    if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
+    if (conf.do_print_times)
     print_stats_line("c strength cache-red time"
                     , dist_long_with_impl->get_stats().redCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
