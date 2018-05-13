@@ -2038,6 +2038,7 @@ void Solver::print_min_stats(const double cpu_time) const
         , float_div(sumConflicts, cpu_time)
         , "confl/TOTAL_TIME_SEC"
     );
+    if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
     double vm_usage;
     print_stats_line("c Mem used"
