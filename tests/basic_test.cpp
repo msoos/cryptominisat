@@ -916,7 +916,20 @@ TEST(xor_recovery, find_1_3_xor)
     s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
     s.simplify();
 
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors();
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
+    EXPECT_EQ(xors.size(), 1);
+}
+
+TEST(xor_recovery, find_1_3_xor2)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+
+    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.simplify();
+
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
 }
 
@@ -931,8 +944,25 @@ TEST(xor_recovery, find_2_3_xor)
     s.add_xor_clause(vector<unsigned>{0U, 2U, 3U}, false);
     s.simplify();
 
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors();
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 2);
+}
+
+TEST(xor_recovery, find_2_3_xor_elongate)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+
+    s.add_clause(str_to_cl("1,2,3,4,5"));
+    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
+    s.add_xor_clause(vector<unsigned>{0U, 3U, 4U}, false);
+    s.simplify();
+
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(true);
+    EXPECT_EQ(xors.size(), 1);
+    EXPECT_EQ(xors[0].first, (vector<uint32_t>{1U, 2U, 3U, 4U}));
+    EXPECT_EQ(xors[0].second, false);
 }
 
 TEST(xor_recovery, find_1_3_xor_exact)
@@ -944,9 +974,25 @@ TEST(xor_recovery, find_1_3_xor_exact)
     s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, false);
     s.simplify();
 
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors();
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
     EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].second, false);
+}
+
+TEST(xor_recovery, find_1_3_xor_exact2)
+{
+    SATSolver s;
+    s.new_vars(30);
+    s.set_no_bve();
+
+    s.add_xor_clause(vector<unsigned>{0U, 1U, 2U}, true);
+    s.simplify();
+
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
+    EXPECT_EQ(xors.size(), 1);
+    EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U}));
+    EXPECT_EQ(xors[0].second, true);
 }
 
 TEST(xor_recovery, find_1_4_xor_exact)
@@ -958,7 +1004,7 @@ TEST(xor_recovery, find_1_4_xor_exact)
     s.add_xor_clause(vector<unsigned>{0U, 1U, 2U, 3U}, false);
     s.simplify();
 
-    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors();
+    vector<std::pair<vector<uint32_t>, bool> > xors = s.get_recovered_xors(false);
     EXPECT_EQ(xors.size(), 1);
     EXPECT_EQ(xors[0].first, (vector<uint32_t>{0U, 1U, 2U, 3U}));
 }

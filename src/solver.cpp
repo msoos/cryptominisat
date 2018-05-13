@@ -3774,6 +3774,26 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
     dumper.open_file_and_dump_red_clauses(fname);
 }
 
+vector<Xor> Solver::get_recovered_xors(bool elongate)
+{
+    if (elongate && solver->okay()) {
+        XorFinder finder(NULL, this);
+        auto xors = xorclauses;
+
+        //YEP -- the solver state can turn to OK=false
+        finder.xor_together_xors(xors);
+        //YEP -- the solver state can turn to OK=false
+        if (solver->okay()) {
+            finder.add_new_truths_from_xors(xors);
+        }
+        //YEP -- the solver state can turn to OK=false
+
+        return xors;
+    } else {
+        return xorclauses;
+    }
+}
+
 #ifdef USE_GAUSS
 bool Solver::init_all_matrixes()
 {
