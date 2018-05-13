@@ -129,7 +129,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number):
     clf.fit(X_train, y_train, sample_weight=sample_weight)
 
     print("Training finished. T: %-3.2f" % (time.time() - t))
-    if True:
+    if options.importances:
         importances = clf.feature_importances_
         std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
@@ -286,6 +286,8 @@ if __name__ == "__main__":
                       dest="show", help="Show visual graphs")
     parser.add_option("--check", action="store_true", default=False,
                       dest="check_row_data", help="Check row data for NaN or float overflow")
+    parser.add_option("--imp", action="store_true", default=False,
+                      dest="importances", help="Calculate importances")
 
     (options, args) = parser.parse_args()
 
