@@ -760,7 +760,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_option_value> > what
+        boost::exception_detail::error_info_injector<po::invalid_option_value> >& what
     ) {
         cerr
         << "ERROR: Invalid value '" << what.what() << "'" << endl
@@ -769,7 +769,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::multiple_occurrences> > what
+        boost::exception_detail::error_info_injector<po::multiple_occurrences> >& what
     ) {
         cerr
         << "ERROR: " << what.what() << " of option '"
@@ -778,7 +778,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::required_option> > what
+        boost::exception_detail::error_info_injector<po::required_option> >& what
     ) {
         cerr
         << "ERROR: You forgot to give a required option '"
@@ -787,7 +787,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::too_many_positional_options_error> > what
+        boost::exception_detail::error_info_injector<po::too_many_positional_options_error> >& what
     ) {
         cerr
         << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
@@ -798,7 +798,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::ambiguous_option> > what
+        boost::exception_detail::error_info_injector<po::ambiguous_option> >& what
     ) {
         cerr
         << "ERROR: The option you gave was not fully written and matches" << endl
@@ -815,7 +815,7 @@ void Main::check_options_correctness()
 
         std::exit(-1);
     } catch (boost::exception_detail::clone_impl<
-        boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> > what
+        boost::exception_detail::error_info_injector<po::invalid_command_line_syntax> >& what
     ) {
         cerr
         << "ERROR: The option you gave is missing the argument or the" << endl
