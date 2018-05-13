@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>CryptoMiniSat • Live</title>
+    <title>CMS • Live</title>
 
     <style type="text/css" media="screen">
     html, body {
@@ -13,12 +13,14 @@
         padding: 0;
         color: white;
         margin: 0;
+        background: black;
         }
 
         #wrapper {
             display: table;
             width: 100%;
             height: 100%;
+            background: black;
         }
         #wrapper > div {
             display: table-row;
@@ -42,13 +44,13 @@
 
         #bottom {
             background: black;
+            height: 100%;
         }
 
         #wrapper > div > #bottomleft {
             background: black;
             color: white;
             padding: 0px;
-            padding-left: 10px;
             font-family: "Courier New", Courier, monospace;
             font-size: 10px;
             white-space: pre-line
@@ -67,14 +69,7 @@
         }
 
         #wrapper2 {
-          background-color: #e3f2fd;
-          /*margin-bottom: -56px;*/
-        }
-
-        #footer {
-            margin: 0;
-            height: 56px;
-            /*color: white;*/
+          background: black;
         }
 
         #editor {
@@ -96,8 +91,8 @@
 </header>
 
 <div id="wrapper2">
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">CryptoMiniSat</a>
+    <div class="mynavbar navbar navbar-expand-md navbar-dark bg-dark">
+        <a class="mynavbar" href="#">CryptoMiniSat</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
         </button>
@@ -105,15 +100,10 @@
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="https://www.msoos.org/">Homepage</a>
+                    <a class="nav-link" href="https://www.msoos.org/">Blog</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Examples</a>
-                    <div class="dropdown-menu" aria-labelledby="dropdown01">
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://github.com/msoos/cryptominisat">GitHub</a>
                 </li>
                 <li class="nav-item">
                     <button type="button" id="save" class="btn btn-primary btn-md" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Copied to clipboard" aria-label="Copy to Clipboard" disabled>
@@ -121,17 +111,12 @@
                     </button>
                 </li>
             </ul>
-            <div id="result">Loading</div>
-            <button type="button" id="runbutton" class="btn btn-primary" aria-label="Run" disabled>
-                <i class="fas fa-play" aria-hidden="true"></i>
-            </button>
         </div>
+        <div id="result">Loading</div>
+        <button type="button" id="runbutton" class="btn btn-primary" disabled>
+            <i id="playbut" class="fas fa-play" aria-hidden="true"></i>
+        </button>
     </div>
-
-
-            </ul>
-        </div>
-    </nav>
 
     <div id="wrapper">
         <div id="top">
@@ -207,8 +192,8 @@
             wrap: true
         })
 
-        editor.setPrintMarginColumn(100);
-        editor.renderer.adjustWrapLimit(90);
+        editor.setPrintMarginColumn(1000);
+        //editor.renderer.adjustWrapLimit(1000);
 
 
         // Load text from the URL hash if it's there
@@ -239,7 +224,7 @@
             $(this).popover('show')
             setTimeout(function() {
                 $('#save').popover('hide');
-            }, 1000)
+            }, 50)
         })
 
         // When the user pops state, load the new document
@@ -255,28 +240,37 @@
 
 <script src="cryptominisat5_simple.js" type="text/javascript" charset="utf-8"></script>
 <script>
+    function scroll() {
+        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
+    }
+
     Module['onRuntimeInitialized'] = function () {
         $().ready(function () {
             $('#runbutton').removeAttr("disabled")
-            $('#result').text('Ready to Solve');
+            $('#result').text('Ready');
         })
     }
     Module['print'] = function(text) {
         $('#output').append(text+"\n")
-        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
+        scroll();
     };
     Module['printErr'] = function(text) {
         $('#output').append("--error-- " + text+"\n")
+        scroll();
     };
-</script>
 
-<script>
+
     must_stop = false;
     running = false;
     function check_result(result) {
 
         if (must_stop) {
             $('#output').append("Stopped.\n")
+            $('#result').text('Ready');
+            $('#playbut').removeClass("fa-stop");
+            $('#playbut').addClass("fa-play");
+
+            scroll();
             must_stop = false;
             running = false;
             return;
@@ -285,7 +279,7 @@
         console.log("result:" +  result)
         var nconfl = num_conflicts();
         console.log("num conflicts:" +  nconfl)
-        $('#result').text('Running... ' + nconfl + " conflicts");
+        $('#result').text(nconfl + " confl");
         if (result == 0) {
             $('#result').text('SAT');
             running = false;
@@ -296,20 +290,27 @@
             window.setTimeout(function(){
               var result = cont_query();
               check_result(result);
-            }, 100);
+            }, 50);
+        }
+
+        if (!running) {
+            $('#playbut').removeClass("fa-stop");
+            $('#playbut').addClass("fa-play");
         }
     }
     $().ready(function () {
         $('#runbutton').click(function () {
             if (running) {
-                //TODO change button to look like "stop"
                 must_stop = true;
                 $('#output').append("Stopping...\n")
+                scroll();
                 return;
             }
             running = true;
+            $('#playbut').removeClass("fa-play");
+            $('#playbut').addClass("fa-stop");
 
-            $('#result').text('Running...');
+            $('#result').text('Running');
 
             source = ace.edit('editor').getValue();
             try {
@@ -329,6 +330,7 @@
 <script>
     function cms_query(source) {
         $('#output').html("");
+        scroll();
         var solve_function = Module.cwrap('cstart_solve', 'number', ['string']);
         ret = solve_function(source);
         return ret;
