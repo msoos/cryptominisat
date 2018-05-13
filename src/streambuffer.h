@@ -46,6 +46,23 @@ struct FN {
     }
 };
 
+struct CH {
+    static inline int read(void* buf, size_t num, size_t count, const char*& f)
+    {
+        int toread = num*count;
+        char* mybuf = (char*)buf;
+
+        int read = 0;
+        while(*f != 0 && read < toread) {
+            *mybuf = *f;
+            mybuf++;
+            f++;
+            read++;
+        }
+        return read;
+    }
+};
+
 template<typename A, typename B>
 class StreamBuffer
 {

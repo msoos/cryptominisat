@@ -12,6 +12,7 @@
         width: 100%;
         padding: 0;
         color: white;
+        margin: 0;
         }
 
         #wrapper {
@@ -26,24 +27,62 @@
             display: table-cell;
         }
 
+        #result {
+             color: white;
+        }
+
         #wrapper > div > #topleft,
         #wrapper > div > #bottomleft {
             /*width: 300px;*/
         }
         #wrapper > div > #topleft,
         #wrapper > div > #bottomleft {
-            background: #092A7C;
+            /*background: #092A7C;*/
+        }
+
+        #bottom {
+            background: black;
+        }
+
+        #wrapper > div > #bottomleft {
+            background: black;
+            color: white;
+            padding: 0px;
+            padding-left: 10px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px;
+            white-space: pre-line
+        }
+
+        #output {
+            width: 100%;
+            height: 300px;
+            color: white;
+            background: black;
+            font-size: 10px;
+        }
+
+        #wrapper > div > #topleft {
+        height: 500px;
         }
 
         #wrapper2 {
           background-color: #e3f2fd;
-          height: 100%;
-          margin-bottom: -56px;
+          /*margin-bottom: -56px;*/
         }
 
         #footer {
+            margin: 0;
             height: 56px;
             /*color: white;*/
+        }
+
+        #editor {
+          height: 100%;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          right: 0;
         }
 
     </style>
@@ -53,60 +92,64 @@
 <body>
 
 <header>
-<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-    <a class="navbar-brand" href="#">CryptoMiniSat</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-    </button>
 
-    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="https://www.msoos.org/">Homepage</a>
-            </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Examples</a>
-                <div class="dropdown-menu" aria-labelledby="dropdown01">
-                    <a class="dropdown-item" href="#">Action</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
-                </div>
-            </li>
-            <li class="nav-item">
-                <button type="button" id="save" class="btn btn-primary btn-md" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Copied to clipboard" aria-label="Copy to Clipboard" disabled>
-                    <i class="fas fa-paste" aria-hidden="true"></i>
-                </button>
-            </li>
-        </ul>
-    </div>
-</nav>
 </header>
 
 <div id="wrapper2">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">CryptoMiniSat</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="https://www.msoos.org/">Homepage</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Examples</a>
+                    <div class="dropdown-menu" aria-labelledby="dropdown01">
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <button type="button" id="save" class="btn btn-primary btn-md" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Copied to clipboard" aria-label="Copy to Clipboard" disabled>
+                        <i class="fas fa-paste" aria-hidden="true"></i>
+                    </button>
+                </li>
+            </ul>
+            <div id="result">Loading</div>
+            <button type="button" id="runbutton" class="btn btn-primary" aria-label="Run" disabled>
+                <i class="fas fa-play" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+
+            </ul>
+        </div>
+    </nav>
+
     <div id="wrapper">
         <div id="top">
-            <div id="topleft">Top</div>
+            <div id="topleft"> <div id="editor">p cnf 1 1
+1 0
+</div>
+        </div>
         </div>
         <div id="bottom">
-            <div id="bottomleft">Bottom</div>
+            <pre id="bottomleft">
+            <!--<pre id="output"></pre>-->
+            <textarea class="scrollabletextbox" name="note" id="output">CryptoMiniSat Output
+---------------
+</textarea>
+            </pre>
         </div>
     </div>
 </div>
-
-<footer class="bg-dark">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col">
-                <h1 id="result">loading</h1>
-            </div>
-            <div class="col-xs-2">
-                <button type="button" id="runbutton" class="btn btn-primary btn-lg" aria-label="Run" disabled>
-                    <i class="fas fa-play" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</footer>
 
 
 <!-- Bootstrap JS -->
@@ -160,22 +203,29 @@
         var editor = ace.edit('editor');
         editor.setTheme('ace/theme/monokai');
         editor.session.setMode('ace/mode/lisp');
+        editor.session.setOptions({
+            wrap: true
+        })
+
+        editor.setPrintMarginColumn(100);
+        editor.renderer.adjustWrapLimit(90);
+
 
         // Load text from the URL hash if it's there
         if (window.location.hash) {
-            var hash = window.location.hash.substring(1)
-            editor.setValue(base64dec(hash))
+            var hash = window.location.hash.substring(1);
+            editor.setValue(base64dec(hash));
         }
 
         // Clear the hash whenever the code is updated
         editor.session.on('change', function () {
-            window.location.hash = ''
+            window.location.hash = '';
         })
 
         // Save button implementation
         $('#save').click(function () {
             // Push a new history item and change the URL
-            window.location.hash = ''
+            window.location.hash = '';
             history.pushState(
                 { 'source': editor.getValue() },
                 '', // title
@@ -183,12 +233,12 @@
             )
 
             // Copy the URL to the clipboard
-            copyToClipboard(window.location.href)
+            copyToClipboard(window.location.href);
 
             // Show and hide the popover as a visual indication
             $(this).popover('show')
             setTimeout(function() {
-                $('#save').popover('hide')
+                $('#save').popover('hide');
             }, 1000)
         })
 
@@ -203,51 +253,96 @@
     })
 </script>
 
-<!--<script src="cryptominisat5_simple.js" type="text/javascript" charset="utf-8"></script>-->
+<script src="cryptominisat5_simple.js" type="text/javascript" charset="utf-8"></script>
 <script>
     Module['onRuntimeInitialized'] = function () {
         $().ready(function () {
             $('#runbutton').removeAttr("disabled")
-            $('#result').text('ready')
+            $('#result').text('Ready to Solve');
         })
     }
-    Module['print'] = function(text) { console.log('stdout: ' + text) };
+    Module['print'] = function(text) {
+        $('#output').append(text+"\n")
+        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
+    };
+    Module['printErr'] = function(text) {
+        $('#output').append("--error-- " + text+"\n")
+    };
 </script>
 
 <script>
+    must_stop = false;
+    running = false;
+    function check_result(result) {
+
+        if (must_stop) {
+            $('#output').append("Stopped.\n")
+            must_stop = false;
+            running = false;
+            return;
+        }
+
+        console.log("result:" +  result)
+        var nconfl = num_conflicts();
+        console.log("num conflicts:" +  nconfl)
+        $('#result').text('Running... ' + nconfl + " conflicts");
+        if (result == 0) {
+            $('#result').text('SAT');
+            running = false;
+        } else if (result == 1) {
+            $('#result').text('UNSAT');
+            running = false;
+        } else if (result == 2) {
+            window.setTimeout(function(){
+              var result = cont_query();
+              check_result(result);
+            }, 100);
+        }
+    }
     $().ready(function () {
         $('#runbutton').click(function () {
-            $('#result').text('running');
-            $('#runbutton').attr("disabled", true);
+            if (running) {
+                //TODO change button to look like "stop"
+                must_stop = true;
+                $('#output').append("Stopping...\n")
+                return;
+            }
+            running = true;
+
+            $('#result').text('Running...');
 
             source = ace.edit('editor').getValue();
-
             try {
-                result = cms_query(source);
-                if (result == 0) {
-                    $('#result').text('SAT');
-                } else if (result == 1) {
-                    $('#result').text('UNSAT');
-                } else if (result == 2) {
-                    $('#result').text('UNKNOWN');
-                }
-                //alert(result);
+                var result = cms_query(source)
+                check_result(result);
             } catch (err) {
                 console.log(result);
                 console.log(err);
-                $('#result').text('error');
+                running = false;
+                must_stop =false;
+                $('#result').text('Error');
             }
-
-            $('#runbutton').removeAttr("disabled");
         })
     })
 </script>
 
 <script>
     function cms_query(source) {
-        var solve_function = Module.cwrap('csolve', 'number', ['string']);
-        console.log(source);
+        $('#output').html("");
+        var solve_function = Module.cwrap('cstart_solve', 'number', ['string']);
         ret = solve_function(source);
+        return ret;
+    }
+
+    function cont_query() {
+        var cont_function = Module.cwrap('ccontinue_solve', 'number');
+        ret = cont_function();
+        return ret;
+    }
+
+    function num_conflicts() {
+        var num_conflicts_function = Module.cwrap('cget_num_conflicts', 'number');
+        ret = num_conflicts_function();
         return ret;
     }
 </script>
