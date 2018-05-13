@@ -885,7 +885,7 @@ Clause* Searcher::analyze_conflict(
                     for (const Lit l: *cl) {
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
-                            varData[l.var()].almost_conflicted++;
+                            varData[l.var()].conflicted++;
                             toClear.push_back(l);
                         }
                     }
@@ -893,13 +893,13 @@ Clause* Searcher::analyze_conflict(
                     Lit l = varData[v].reason.lit2();
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].almost_conflicted++;
+                        varData[l.var()].conflicted++;
                         toClear.push_back(l);
                     }
                     l = Lit(v, false);
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].almost_conflicted++;
+                        varData[l.var()].conflicted++;
                         toClear.push_back(l);
                     }
                 }
@@ -3502,11 +3502,11 @@ void Searcher::cancelUntil(uint32_t level)
             assert(value(var) != l_Undef);
 
              if (!update_bogoprops && !VSIDS) {
-                assert(sumConflicts >= varData[var].picked);
-                uint32_t age = sumConflicts - varData[var].picked;
+                assert(sumConflicts >= varData[var].last_picked);
+                uint32_t age = sumConflicts - varData[var].last_picked;
                 if (age > 0) {
-                    double adjusted_reward = ((double)(varData[var].conflicted
-                        + varData[var].almost_conflicted)) / ((double)age);
+                    //adjusted reward -> higher if conflicted more or quicker
+                    double adjusted_reward = ((double)(varData[var].conflicted)) / ((double)age);
 
                     double old_activity = var_act_maple[var];
                     var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
