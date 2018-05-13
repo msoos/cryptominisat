@@ -66,7 +66,7 @@ TEST_F(dump, onelit)
 {
     s.new_var();
     s.add_clause(str_to_cl("1"));
-    lbool ret = s.solve();
+    s.solve();
 
     read_dat();
     EXPECT_EQ(dat.num_vars, 1);
