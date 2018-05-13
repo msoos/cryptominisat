@@ -303,9 +303,7 @@ class DLL_PUBLIC SolverConf
         //Var-replacement
         int doFindAndReplaceEqLits;
         int doExtendedSCC;
-        double sccFindPercent;
         int max_scc_depth;
-        int replace_while_solving;
 
         //Iterative Alo Scheduling
         int      simplify_at_startup; //simplify at 1st startup (only)

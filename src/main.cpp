@@ -449,9 +449,6 @@ void Main::add_supported_options()
         , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
     ;
 
-    std::ostringstream sccFindPercent;
-    sccFindPercent << std::fixed << std::setprecision(3) << conf.sccFindPercent;
-
     po::options_description xorOptions("XOR-related options");
     xorOptions.add_options()
     ("xor", po::value(&conf.doFindXors)->default_value(conf.doFindXors)
@@ -473,10 +470,6 @@ void Main::add_supported_options()
         , "Find equivalent literals through SCC and replace them")
     ("extscc", po::value(&conf.doExtendedSCC)->default_value(conf.doExtendedSCC)
         , "Perform SCC using cache")
-    ("sccperc", po::value(&conf.sccFindPercent)->default_value(conf.sccFindPercent, sccFindPercent.str())
-        , "Perform SCC only if the number of new binary clauses is at least this many % of the number of free variables")
-    ("repwhilesolving", po::value(&conf.replace_while_solving)->default_value(conf.replace_while_solving)
-        , "Find eqlits while solving and replace them")
     ;
 
     po::options_description gateOptions("Gate-related options");
