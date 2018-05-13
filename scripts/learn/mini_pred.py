@@ -121,12 +121,12 @@ def one_classifier(df, features, to_predict, class_weight, names):
     # clf = sklearn.svm.SVC()
 
     # to check for too large or NaN values:
-    if False:
+    if options.check_row_data:
         index = 0
         for index, row in X_train.iterrows():
             for x, name in zip(row, features):
                 if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                    print("row:", name, x)
+                    print("issue with data for features: ", name, x)
                 index += 1
 
     clf.fit(X_train, y_train)
@@ -285,6 +285,8 @@ if __name__ == "__main__":
                       dest="confusion", help="Create confusion matrix")
     parser.add_option("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
+    parser.add_option("--check", action="store_true", default=False,
+                      dest="check_row_data", help="Check row data for NaN or float overflow")
 
     (options, args) = parser.parse_args()
 
