@@ -43,8 +43,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        , glue_put_lev0_if_below_or_eq(4) // never removed
-        , glue_put_lev1_if_below_or_eq(7) // kept for a while then moved to lev2
+        , glue_put_lev0_if_below_or_eq(3) // never removed
+        , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
 
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
@@ -68,7 +68,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , local_backtrack_multiplier(0.90)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
-        , ratio_glue_geom(4)
+        , ratio_glue_geom(5)
         , more_more_with_cache(false)
         , more_more_with_stamp(false)
         , doAlwaysFMinim(false)
@@ -130,7 +130,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifdef USE_GAUSS
         , min_bva_gain(2)
         #else
-        , min_bva_gain(32)
+        , min_bva_gain(64)
         #endif
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
@@ -141,7 +141,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doProbe          (true)
         , doIntreeProbe    (true)
         , probe_bogoprops_time_limitM  (800ULL)
-        , intree_time_limitM(1200ULL)
+        , intree_time_limitM(1800ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
