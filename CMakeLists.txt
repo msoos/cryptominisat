@@ -32,10 +32,6 @@ if(POLICY CMP0022)
     cmake_policy(SET CMP0022 NEW)
 endif()
 
-if(POLICY CMP0048)
-    cmake_policy(SET CMP0048 OLD)
-endif()
-
 if(POLICY CMP0046)
     cmake_policy(SET CMP0046 NEW)
 endif()
