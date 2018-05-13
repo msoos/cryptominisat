@@ -251,6 +251,14 @@
         document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
     }
 
+    function at_bottom() {
+        console.log("top:" + document.getElementById("output").scrollTop);
+        console.log("height:" + document.getElementById("output").scrollHeight);
+        var height = document.getElementById("output").offsetHeight;
+        console.log("my height:" + height);
+        return (document.getElementById("output").scrollTop+height) >= document.getElementById("output").scrollHeight;
+    }
+
     Module['onRuntimeInitialized'] = function () {
         $().ready(function () {
             $('#runbutton').removeAttr("disabled")
@@ -258,8 +266,11 @@
         })
     }
     Module['print'] = function(text) {
+        var bottom = at_bottom();
         $('#output').append(text+"\n")
-        scroll();
+        if (bottom) {
+            scroll();
+        }
     };
     Module['printErr'] = function(text) {
         $('#output').append("--error-- " + text+"\n")
