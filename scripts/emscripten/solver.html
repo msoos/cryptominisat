@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>CryptoMiniSat • Live</title>
+
+    <style type="text/css" media="screen">
+    html, body {
+        height: 100%;
+        width: 100%;
+        padding: 0;
+        color: white;
+        }
+
+        #wrapper {
+            display: table;
+            width: 100%;
+            height: 100%;
+        }
+        #wrapper > div {
+            display: table-row;
+        }
+        #wrapper > div > div {
+            display: table-cell;
+        }
+
+        #wrapper > div > #topleft,
+        #wrapper > div > #bottomleft {
+            /*width: 300px;*/
+        }
+        #wrapper > div > #topleft,
+        #wrapper > div > #bottomleft {
+            background: #092A7C;
+        }
+
+        #wrapper2 {
+          background-color: #e3f2fd;
+          height: 100%;
+          margin-bottom: -56px;
+        }
+
+        #footer {
+            height: 56px;
+            /*color: white;*/
+        }
+
+    </style>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+
+<header>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">CryptoMiniSat</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="https://www.msoos.org/">Homepage</a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Examples</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown01">
+                    <a class="dropdown-item" href="#">Action</a>
+                    <a class="dropdown-item" href="#">Another action</a>
+                    <a class="dropdown-item" href="#">Something else here</a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button type="button" id="save" class="btn btn-primary btn-md" data-container="body" data-toggle="popover" data-placement="bottom" data-content="Copied to clipboard" aria-label="Copy to Clipboard" disabled>
+                    <i class="fas fa-paste" aria-hidden="true"></i>
+                </button>
+            </li>
+        </ul>
+    </div>
+</nav>
+</header>
+
+<div id="wrapper2">
+    <div id="wrapper">
+        <div id="top">
+            <div id="topleft">Top</div>
+        </div>
+        <div id="bottom">
+            <div id="bottomleft">Bottom</div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h1 id="result">loading</h1>
+            </div>
+            <div class="col-xs-2">
+                <button type="button" id="runbutton" class="btn btn-primary btn-lg" aria-label="Run" disabled>
+                    <i class="fas fa-play" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<!-- FontAwesome -->
+<script src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+
+<!-- ACE editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.1/ace.js" type="text/javascript" charset="utf-8"></script>
+
+
+<script>
+    function base64dec(x) {
+        try {
+            if (x.length % 4 != 0) {
+                x = x.padEnd(x.length + (4 - (x.length % 4)), '=')
+            }
+            return atob(x.replace(/-/g, '+').replace(/_/g, '/'))
+        } catch (err) {
+            return ''
+        }
+    }
+
+    function base64enc(x) {
+        return btoa(x).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g,'')
+    }
+
+    function copyToClipboard(x) {
+        // Create an invisible text area
+        var target = $('<textarea>')
+                                 .css('position', 'absolute')
+                                 .css('left', '-9999px')
+                                 .css('top', '0px')
+                                 .val(x)
+        $('body').append(target);
+
+        // Copy the contents
+        target.focus()
+        target[0].setSelectionRange(0, x.length)
+        document.execCommand('copy')
+
+        // Remove it from the page
+        target.remove()
+    }
+
+    $().ready(function () {
+        // Configure the editor
+        var editor = ace.edit('editor');
+        editor.setTheme('ace/theme/monokai');
+        editor.session.setMode('ace/mode/lisp');
+
+        // Load text from the URL hash if it's there
+        if (window.location.hash) {
+            var hash = window.location.hash.substring(1)
+            editor.setValue(base64dec(hash))
+        }
+
+        // Clear the hash whenever the code is updated
+        editor.session.on('change', function () {
+            window.location.hash = ''
+        })
+
+        // Save button implementation
+        $('#save').click(function () {
+            // Push a new history item and change the URL
+            window.location.hash = ''
+            history.pushState(
+                { 'source': editor.getValue() },
+                '', // title
+                window.location.href.replace(/#$/, '') + '#' + base64enc(editor.getValue())
+            )
+
+            // Copy the URL to the clipboard
+            copyToClipboard(window.location.href)
+
+            // Show and hide the popover as a visual indication
+            $(this).popover('show')
+            setTimeout(function() {
+                $('#save').popover('hide')
+            }, 1000)
+        })
+
+        // When the user pops state, load the new document
+        window.onpopstate = function (event) {
+            editor.setValue(event.state.source)
+            window.location.hash = '#' + base64enc(event.state.source)
+        }
+
+        // Button is ready
+        $('#save').removeAttr('disabled');
+    })
+</script>
+
+<!--<script src="cryptominisat5_simple.js" type="text/javascript" charset="utf-8"></script>-->
+<script>
+    Module['onRuntimeInitialized'] = function () {
+        $().ready(function () {
+            $('#runbutton').removeAttr("disabled")
+            $('#result').text('ready')
+        })
+    }
+    Module['print'] = function(text) { console.log('stdout: ' + text) };
+</script>
+
+<script>
+    $().ready(function () {
+        $('#runbutton').click(function () {
+            $('#result').text('running');
+            $('#runbutton').attr("disabled", true);
+
+            source = ace.edit('editor').getValue();
+
+            try {
+                result = cms_query(source);
+                if (result == 0) {
+                    $('#result').text('SAT');
+                } else if (result == 1) {
+                    $('#result').text('UNSAT');
+                } else if (result == 2) {
+                    $('#result').text('UNKNOWN');
+                }
+                //alert(result);
+            } catch (err) {
+                console.log(result);
+                console.log(err);
+                $('#result').text('error');
+            }
+
+            $('#runbutton').removeAttr("disabled");
+        })
+    })
+</script>
+
+<script>
+    function cms_query(source) {
+        var solve_function = Module.cwrap('csolve', 'number', ['string']);
+        console.log(source);
+        ret = solve_function(source);
+        return ret;
+    }
+</script>
+
+
+</body>
+</html>
