@@ -95,6 +95,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
+option(EMSCRIPTEN "Generate only emscripten JS" OFF)
+
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
     SET (CMAKE_CXX_COMPILER "clang++")

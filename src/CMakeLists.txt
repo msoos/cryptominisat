@@ -252,9 +252,25 @@ if (NOT ONLY_SIMPLE)
         signalcode.cpp
     )
 endif()
+
+if (EMSCIPTEN)
+add_executable(cryptominisat5_simple
+    main_emscripten.cpp
+)
+
+set_target_properties(
+  cryptominisat5_simple PROPERTIES LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+)
+
+SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
+    PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+)
+
+else()
 add_executable(cryptominisat5_simple
     main_simple.cpp
 )
+endif()
 
 set(cryptoms_exec_link_libs
     libcryptominisat5

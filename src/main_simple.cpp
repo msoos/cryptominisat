@@ -298,7 +298,13 @@ int main(int argc, char** argv)
     if (conf.verbosity) {
         S.print_stats();
     }
-    cout << (ret == l_True ? "s SATISFIABLE" : "s UNSATISFIABLE") << endl;
+
+    if (ret == l_True) {
+        cout << "s SATISFIABLE" << endl;
+    } else if (ret == l_False) {
+        cout << "s UNSATISFIABLE"<< endl;
+    }
+
     if (ret == l_True) {
         print_model(&std::cout, solver);
     }
