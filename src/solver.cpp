@@ -3212,20 +3212,11 @@ void Solver::reconfigure(int val)
             conf.maple = 1;
             conf.modulo_maple_iter = 100;
             VSIDS = false;
-            conf.maple_backtrack = true;
-            break;
-        }
-
-        case 17: {
-            conf.maple = 1;
-            conf.modulo_maple_iter = 100;
-            VSIDS = false;
-            conf.maple_backtrack = false;
             break;
         }
 
         default: {
-            cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16,17 are supported" << endl;
+            cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16 are supported" << endl;
             exit(-1);
         }
     }

@@ -1141,25 +1141,6 @@ void Searcher::check_blocking_restart()
     }
 }
 
-void Searcher::check_blocking_restart_backtrack()
-{
-    if (conf.do_blocking_restart
-        && sumConflicts > conf.lower_bound_for_blocking_restart
-        && hist.backtrackLevelHist.isvalid()
-        && hist.trailDepthHistLonger.isvalid()
-        && decisionLevel() > 0
-        && trail_lim.size() > 0
-        && (trail.size()-trail_lim[0]) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip*1.2
-    ) {
-        hist.backtrackLevelHist.clear();
-        if (!blocked_restart) {
-            stats.blocked_restart_same++;
-        }
-        blocked_restart = true;
-        stats.blocked_restart++;
-    }
-}
-
 template<bool update_bogoprops>
 lbool Searcher::search()
 {
@@ -1367,16 +1348,6 @@ void Searcher::check_need_restart()
     }
 
     assert(params.rest_type != Restart::glue_geom);
-
-    if (params.rest_type == Restart::backtrack) {
-        check_blocking_restart_backtrack();
-        if (hist.backtrackLevelHist.isvalid()
-            && conf.local_backtrack_multiplier * hist.backtrackLevelHist.avg() > hist.backtrackLevelHistLTLimited.avg()
-        ) {
-            params.needToStopSearch = true;
-        }
-    }
-
     if (params.rest_type == Restart::glue) {
         check_blocking_restart();
         if (hist.glueHist.isvalid()
@@ -1538,9 +1509,9 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     assert(decisionLevel() > 0);
 
     //short-term averages
-    hist.backtrackLevelHist.push(backtrack_level);
     hist.branchDepthHist.push(decisionLevel());
     #ifdef STATS_NEEDED
+    hist.backtrackLevelHist.push(backtrack_level);
     hist.branchDepthHistQueue.push(decisionLevel());
     hist.numResolutionsHist.push(antec_data.num());
     #endif
@@ -1557,9 +1528,6 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.antec_data_sum_sizeHistLT.push(antec_data.sum_size());
     hist.overlapHistLT.push(overlap);
     #endif
-    if (params.rest_type == Restart::backtrack) {
-        hist.backtrackLevelHistLTLimited.push(backtrack_level);
-    }
     hist.backtrackLevelHistLT.push(backtrack_level);
     hist.conflSizeHistLT.push(learnt_clause.size());
     uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
@@ -2296,12 +2264,6 @@ lbool Searcher::solve(
         if (conf.restartType == Restart::glue) {
             params.rest_type = Restart::glue;
         }
-
-        if (conf.restartType == Restart::backtrack) {
-            max_confl_this_phase = conf.restart_first;
-            params.rest_type = Restart::backtrack;
-            params.backtrack_num = 0;
-        }
     } else {
         max_confl_this_phase = conf.restart_first;
         params.rest_type = Restart::luby;
@@ -2371,22 +2333,9 @@ void Searcher::adjust_phases_restarts()
 
     //Note that all of this will be overridden by params.max_confl_to_do
     if (!VSIDS) {
-        if (solver->conf.maple_backtrack) {
-            if (params.rest_type == Restart::luby) {
-                params.backtrack_num = 0;
-                params.rest_type = Restart::backtrack;
-            } else {
-                params.backtrack_num++;
-                if (params.backtrack_num >= solver->conf.maple_backtrack_mod)
-                    params.rest_type = Restart::luby;
-            }
-        } else {
-            assert(params.rest_type == Restart::luby);
-        }
-        if (params.rest_type == Restart::luby) {
-            max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
-            luby_loop_num++;
-        }
+        assert(params.rest_type == Restart::luby);
+        max_confl_this_phase = luby(2, luby_loop_num) * (double)conf.restart_first;
+        luby_loop_num++;
     } else {
         if (conf.verbosity >= 3) {
             cout << "c doing VSIDS" << endl;
@@ -2401,10 +2350,6 @@ void Searcher::adjust_phases_restarts()
             assert(params.rest_type == Restart::geom);
             max_confl_phase *= conf.restart_inc;
             max_confl_this_phase = max_confl_phase;
-            break;
-
-        case Restart::backtrack:
-            assert(params.rest_type == Restart::backtrack);
             break;
 
         case Restart::luby:

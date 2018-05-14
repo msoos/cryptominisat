@@ -305,10 +305,6 @@ void Main::add_supported_options()
         , "The multiplier used to determine if we should restart during glue-based restart")
     ("locbmult" , po::value(&conf.local_backtrack_multiplier)->default_value(conf.local_backtrack_multiplier)
         , "The multiplier used to determine if we should restart during backtrack-based restart")
-    ("mbackt", po::value(&conf.maple_backtrack)->default_value(conf.maple_backtrack)
-        , "Use backtracking restart for maple")
-    ("mbacktmod", po::value(&conf.maple_backtrack_mod)->default_value(conf.maple_backtrack_mod)
-        , "How much more backtrack than luby (during maple)")
     ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
         , "Should glue restart be broken as before 8e74cb5010bb4")
     ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
@@ -885,8 +881,6 @@ void Main::parse_restart_type()
             conf.restartType = Restart::geom;
         else if (type == "luby")
             conf.restartType = Restart::luby;
-        else if (type == "backtrack")
-            conf.restartType = Restart::backtrack;
         else if (type == "glue")
             conf.restartType = Restart::glue;
         else throw WrongParam("restart", "unknown restart type");
