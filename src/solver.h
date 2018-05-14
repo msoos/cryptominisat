@@ -96,7 +96,7 @@ class Solver : public Searcher
         const vector<lbool>& get_model() const;
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
-        const vector<Xor>& get_recovered_xors() const;
+        vector<Xor> get_recovered_xors(bool elongate);
 
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
@@ -550,11 +550,6 @@ inline lbool Solver::full_model_value (const Lit p) const
 inline lbool Solver::full_model_value  (const uint32_t p) const
 {
     return full_model[p];
-}
-
-inline const vector<Xor>& Solver::get_recovered_xors() const
-{
-    return xorclauses;
 }
 
 } //end namespace

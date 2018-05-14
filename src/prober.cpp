@@ -442,7 +442,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t num_prop
 
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars());
+            runStats.print(solver->nVars(), solver->conf.do_print_times);
         else
             runStats.print_short(solver, time_out, time_remain);
     }

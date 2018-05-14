@@ -497,7 +497,6 @@ void Solver::attach_bin_clause(
     } else {
         binTri.irredBins++;
     }
-    binTri.numNewBinsSinceSCC++;
 
     //Call Solver's function for heavy-lifting
     PropEngine::attach_bin_clause(lit1, lit2, red, checkUnassignedFirst);
@@ -1963,6 +1962,7 @@ void Solver::print_prop_confl_stats(
 void Solver::print_stats(const double cpu_time) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
+    if (conf.do_print_times)
     print_stats_line("c UIP search time"
         , sumSearchStats.cpu_time
         , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
@@ -1981,7 +1981,7 @@ void Solver::print_stats(const double cpu_time) const
 
 void Solver::print_min_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations);
+    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -1996,6 +1996,7 @@ void Solver::print_min_stats(const double cpu_time) const
 
     //Failed lit stats
     if (conf.doProbe) {
+        if (conf.do_print_times)
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
@@ -2004,12 +2005,14 @@ void Solver::print_min_stats(const double cpu_time) const
     }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
+        if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
             , occsimplifier->get_stats().total_time()
             , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
     }
+    if (conf.do_print_times)
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
@@ -2018,26 +2021,35 @@ void Solver::print_min_stats(const double cpu_time) const
     varReplacer->get_scc_finder()->get_stats().print_short(NULL);
 
     //varReplacer->get_stats().print_short(nVars());
+    if (conf.do_print_times)
     print_stats_line("c distill time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time"
     );
+    if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
+    if (conf.do_print_times)
     print_stats_line("c strength cache-red time"
                     , dist_long_with_impl->get_stats().redCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
+    if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
     double vm_usage;
     print_stats_line("c Mem used"
@@ -2048,7 +2060,7 @@ void Solver::print_min_stats(const double cpu_time) const
 
 void Solver::print_norm_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations);
+    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -2077,6 +2089,7 @@ void Solver::print_norm_stats(const double cpu_time) const
         && prober
     ) {
         prober->get_stats().print_short(this, 0, 0);
+        if (conf.do_print_times)
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
@@ -2087,6 +2100,7 @@ void Solver::print_norm_stats(const double cpu_time) const
     }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
+        if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
             , occsimplifier->get_stats().total_time()
             , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
@@ -2122,22 +2136,27 @@ void Solver::print_norm_stats(const double cpu_time) const
         implCache.print_statsSort(this);
     }
 
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
     double vm_usage;
     print_stats_line("c Mem used"
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
+    if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
 }
 
 void Solver::print_full_restart_stat(const double cpu_time) const
 {
-    sumSearchStats.print(sumPropStats.propagations);
+    sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
@@ -2160,17 +2179,19 @@ void Solver::print_full_restart_stat(const double cpu_time) const
 
     //Failed lit stats
     if (conf.doProbe) {
+        if (conf.do_print_times)
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
             , "% time"
         );
 
-        prober->get_stats().print(nVars());
+        prober->get_stats().print(nVars(), conf.do_print_times);
     }
 
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
+        if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
             , occsimplifier->get_stats().total_time()
             , stats_line_percent(occsimplifier->get_stats().total_time(), cpu_time)
@@ -2186,6 +2207,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     }*/
 
     //VarReplacer stats
+    if (conf.do_print_times)
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
@@ -2197,16 +2219,19 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     varReplacer->print_some_stats(cpu_time);
 
     //DistillerAllWithAll stats
+    if (conf.do_print_times)
     print_stats_line("c distill time"
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
     distill_long_cls->get_stats().print(nVars());
 
+    if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
                     , dist_long_with_impl->get_stats().irredCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().irredCacheBased.cpu_time, cpu_time)
                     , "% time");
+    if (conf.do_print_times)
     print_stats_line("c strength cache-red time"
                     , dist_long_with_impl->get_stats().redCacheBased.cpu_time
                     , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
@@ -2222,11 +2247,16 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     }
 
     //Other stats
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
+    if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
     print_mem_stats();
 }
@@ -3792,6 +3822,26 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
+}
+
+vector<Xor> Solver::get_recovered_xors(bool elongate)
+{
+    if (elongate && solver->okay()) {
+        XorFinder finder(NULL, this);
+        auto xors = xorclauses;
+
+        //YEP -- the solver state can turn to OK=false
+        finder.xor_together_xors(xors);
+        //YEP -- the solver state can turn to OK=false
+        if (solver->okay()) {
+            finder.add_new_truths_from_xors(xors);
+        }
+        //YEP -- the solver state can turn to OK=false
+
+        return xors;
+    } else {
+        return xorclauses;
+    }
 }
 
 #ifdef USE_GAUSS

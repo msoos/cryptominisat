@@ -42,9 +42,9 @@ public:
     SearchStats& operator+=(const SearchStats& other);
     SearchStats& operator-=(const SearchStats& other);
     SearchStats operator-(const SearchStats& other) const;
-    void printCommon(uint64_t props) const;
-    void print_short(uint64_t props) const;
-    void print(uint64_t props) const;
+    void printCommon(uint64_t props, bool do_print_times) const;
+    void print_short(uint64_t props, bool do_print_times) const;
+    void print(uint64_t props, bool do_print_times) const;
 
     //Restart stats
     uint64_t blocked_restart = 0;
@@ -86,7 +86,6 @@ public:
     uint64_t otfSubsumedLong = 0;
     uint64_t otfSubsumedRed = 0;
     uint64_t otfSubsumedLitsGained = 0;
-    uint64_t guess_different = 0;
     uint64_t cache_hit = 0;
     uint64_t red_cl_in_which0 = 0;
 

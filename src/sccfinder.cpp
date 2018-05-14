@@ -82,7 +82,6 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
             runStats.print_short(solver);
     }
     globalStats += runStats;
-    solver->binTri.numNewBinsSinceSCC = 0;
 
     if (bogoprops_given) {
         *bogoprops_given += runStats.bogoprops;

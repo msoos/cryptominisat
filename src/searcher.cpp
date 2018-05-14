@@ -885,7 +885,7 @@ Clause* Searcher::analyze_conflict(
                     for (const Lit l: *cl) {
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
-                            varData[l.var()].almost_conflicted++;
+                            varData[l.var()].conflicted++;
                             toClear.push_back(l);
                         }
                     }
@@ -893,13 +893,13 @@ Clause* Searcher::analyze_conflict(
                     Lit l = varData[v].reason.lit2();
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].almost_conflicted++;
+                        varData[l.var()].conflicted++;
                         toClear.push_back(l);
                     }
                     l = Lit(v, false);
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].almost_conflicted++;
+                        varData[l.var()].conflicted++;
                         toClear.push_back(l);
                     }
                 }
@@ -2185,48 +2185,6 @@ void Searcher::rebuildOrderHeap()
     order_heap_maple.build(vs);
 }
 
-lbool Searcher::perform_scc_and_varreplace_if_needed()
-{
-    if (conf.doFindAndReplaceEqLits
-        && (solver->binTri.numNewBinsSinceSCC > 200)
-        && (solver->binTri.numNewBinsSinceSCC > ((double)solver->get_num_free_vars()*conf.sccFindPercent))
-    ) {
-        if (conf.verbosity) {
-            cout
-            << "c new bins since last SCC: "
-            << std::setw(2)
-            << solver->binTri.numNewBinsSinceSCC
-            << " free vars %:"
-            << std::fixed << std::setprecision(2) << std::setw(4)
-            << stats_line_percent(solver->binTri.numNewBinsSinceSCC, solver->get_num_free_vars())
-            << endl;
-        }
-
-        solver->clauseCleaner->remove_and_clean_all();
-
-        lastCleanZeroDepthAssigns = trail.size();
-        const uint32_t min_to_replace = std::floor((double)solver->get_num_free_vars()*0.01);
-        bool replaced = false;
-        if (!solver->varReplacer->replace_if_enough_is_found(min_to_replace, NULL, &replaced)) {
-            return l_False;
-        }
-
-        #ifdef USE_GAUSS
-        if (replaced) {
-            if (!solver->init_all_matrixes()) {
-                return l_False;
-            }
-        }
-        #endif
-
-        #ifdef SLOW_DEBUG
-        assert(solver->check_order_heap_sanity());
-        #endif
-    }
-
-    return l_Undef;
-}
-
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
     if (solver->sqlStats)
@@ -2383,13 +2341,6 @@ lbool Searcher::solve(
 
         if (must_abort(status)) {
             goto end;
-        }
-
-        if (conf.replace_while_solving) {
-            status = perform_scc_and_varreplace_if_needed();
-            if (must_abort(status)) {
-                goto end;
-            }
         }
 
         if (status == l_Undef &&
@@ -2593,7 +2544,7 @@ void Searcher::print_iteration_solving_stats()
 {
     if (conf.verbosity >= 3) {
         cout << "c ------ THIS ITERATION SOLVING STATS -------" << endl;
-        stats.print(propStats.propagations);
+        stats.print(propStats.propagations, conf.do_print_times);
         propStats.print(stats.cpu_time);
         print_stats_line("c props/decision"
             , float_div(propStats.propagations, stats.decisions)
@@ -3502,11 +3453,11 @@ void Searcher::cancelUntil(uint32_t level)
             assert(value(var) != l_Undef);
 
              if (!update_bogoprops && !VSIDS) {
-                assert(sumConflicts >= varData[var].picked);
-                uint32_t age = sumConflicts - varData[var].picked;
+                assert(sumConflicts >= varData[var].last_picked);
+                uint32_t age = sumConflicts - varData[var].last_picked;
                 if (age > 0) {
-                    double adjusted_reward = ((double)(varData[var].conflicted
-                        + varData[var].almost_conflicted)) / ((double)age);
+                    //adjusted reward -> higher if conflicted more or quicker
+                    double adjusted_reward = ((double)(varData[var].conflicted)) / ((double)age);
 
                     double old_activity = var_act_maple[var];
                     var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);

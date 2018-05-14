@@ -34,8 +34,8 @@ from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
 cuts = [-1, 20000, 1000000000000]
-class_names2 = ["middle", "middle2", "forever"]
-cuts2 = [-1, 60000, 150000, 1000000000000]
+class_names2 = ["middle", "forever"]
+cuts2 = [-1, 60000, 1000000000000]
 
 
 def output_to_dot(clf, features, nameextra):
@@ -101,7 +101,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-def one_classifier(df, features, to_predict, class_weight, names):
+def one_classifier(df, features, to_predict, names, w_name, w_number):
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
@@ -109,31 +109,29 @@ def one_classifier(df, features, to_predict, class_weight, names):
     y_test = test[to_predict]
 
     t = time.time()
-    # clf = sklearn.linear_model.LogisticRegression(class_weight={"throw": 0.1, "forever":1})
-    # clf = sklearn.ensemble.RandomForestClassifier(class_weight={"throw": 0.1, "forever": 1})
-    clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth,
-                                              class_weight=class_weight)
-
-    #clf = sklearn.ensemble.ExtraTreesClassifier(class_weight="balanced",
-                                                #n_estimators=80,
-                                                #random_state=0)
+    # clf = sklearn.linear_model.LogisticRegression()
+    clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
+    #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
+    #clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
 
     # clf = sklearn.svm.SVC()
 
     # to check for too large or NaN values:
-    if False:
+    if options.check_row_data:
         index = 0
         for index, row in X_train.iterrows():
             for x, name in zip(row, features):
                 if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                    print("row:", name, x)
+                    print("issue with data for features: ", name, x)
                 index += 1
 
-    clf.fit(X_train, y_train)
+    sample_weight = [w_number if i == w_name else 1 for i in y_train]
+    clf.fit(X_train, y_train, sample_weight=sample_weight)
+
     print("Training finished. T: %-3.2f" % (time.time() - t))
-    if True:
+    if options.importances:
         importances = clf.feature_importances_
-        # std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+        std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
         indices = indices[:20]
         myrange = min(X_train.shape[1], 20)
@@ -150,7 +148,7 @@ def one_classifier(df, features, to_predict, class_weight, names):
         plt.title("Feature importances")
         plt.bar(range(myrange), importances[indices],
                 color="r", align="center"
-                #, yerr=std[indices]
+                , yerr=std[indices]
                 )
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
@@ -164,7 +162,10 @@ def one_classifier(df, features, to_predict, class_weight, names):
         precision, recall, accuracy, (time.time() - t)))
 
     if options.confusion:
-        cnf_matrix = sklearn.metrics.confusion_matrix(y_test, y_pred, labels=names)
+        sample_weight = [w_number if i == w_name else 1 for i in y_pred]
+        cnf_matrix = sklearn.metrics.confusion_matrix(
+            y_test, y_pred, labels=names, sample_weight=sample_weight)
+
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
@@ -254,16 +255,14 @@ def learn(fname):
     # df.boxplot()
 
     one_classifier(df, features_less, "x.lifetime_cut",
-                   {"throw": 0.1, "longer": 1},
-                   class_names)
+                   class_names, "longer", 10)
 
     if options.show:
         plt.show()
 
     df2 = df[df["x.lifetime"] > 20000]
     one_classifier(df2, features, "x.lifetime_cut2",
-                   {"middle": 3, "middle2": 3, "forever": 1},
-                   class_names2)
+                   class_names2, "middle", 16)
 
     if options.show:
         plt.show()
@@ -285,6 +284,10 @@ if __name__ == "__main__":
                       dest="confusion", help="Create confusion matrix")
     parser.add_option("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
+    parser.add_option("--check", action="store_true", default=False,
+                      dest="check_row_data", help="Check row data for NaN or float overflow")
+    parser.add_option("--imp", action="store_true", default=False,
+                      dest="importances", help="Calculate importances")
 
     (options, args) = parser.parse_args()
 

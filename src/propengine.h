@@ -409,9 +409,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     }
 
     if (!update_bogoprops && !VSIDS) {
-        varData[v].picked = sumConflicts;
+        varData[v].last_picked = sumConflicts;
         varData[v].conflicted = 0;
-        varData[v].almost_conflicted = 0;
 
         assert(sumConflicts >= varData[v].cancelled);
         uint32_t age = sumConflicts - varData[v].cancelled;

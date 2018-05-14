@@ -179,9 +179,9 @@ class llbool
     char value;
 
 public:
-    llbool(): value(0) {};
+    llbool(): value(0) {}
     llbool(lbool v) :
-            value(v.value) {};
+            value(v.value) {}
     llbool(char a) :
             value(a) {}
 

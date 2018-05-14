@@ -32,10 +32,6 @@ if(POLICY CMP0022)
     cmake_policy(SET CMP0022 NEW)
 endif()
 
-if(POLICY CMP0048)
-    cmake_policy(SET CMP0048 OLD)
-endif()
-
 if(POLICY CMP0046)
     cmake_policy(SET CMP0046 NEW)
 endif()
@@ -94,6 +90,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
+
+option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
