@@ -28,6 +28,12 @@ include (GNUInstallDirs)
 message(STATUS "LIB directory is '${CMAKE_INSTALL_LIBDIR}'")
 message(STATUS "BIN directory is '${CMAKE_INSTALL_BINDIR}'")
 
+if(POLICY CMP0048)
+    #policy for VERSION in cmake 3.0
+    cmake_policy(SET CMP0048 NEW)
+endif()
+
+
 if(POLICY CMP0022)
     cmake_policy(SET CMP0022 NEW)
 endif()
