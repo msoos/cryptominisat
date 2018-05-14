@@ -35,13 +35,15 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
-#include "EGaussian.h"
 #include "sqlstats.h"
 #include "watchalgos.h"
 #include "hasher.h"
 #include "solverconf.h"
 #include "distillerlong.h"
 #include "matrixfinder.h"
+#ifdef USE_GAUSS
+#include "EGaussian.h"
+#endif
 //#define DEBUG_RESOLV
 
 using namespace CMSat;
