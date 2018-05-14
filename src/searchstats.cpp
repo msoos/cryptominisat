@@ -158,7 +158,7 @@ SearchStats SearchStats::operator-(const SearchStats& other) const
     return result;
 }
 
-void SearchStats::printCommon(uint64_t props) const
+void SearchStats::printCommon(uint64_t props, bool do_print_times) const
 {
     print_stats_line("c restarts"
         , numRestarts
@@ -172,6 +172,7 @@ void SearchStats::printCommon(uint64_t props) const
         , "per normal restart"
 
     );
+    if (do_print_times)
     print_stats_line("c time", cpu_time);
     print_stats_line("c decisions", decisions
         , stats_line_percent(decisionsRand, decisions)
@@ -185,10 +186,10 @@ void SearchStats::printCommon(uint64_t props) const
     );
 }
 
-void SearchStats::print_short(uint64_t props) const
+void SearchStats::print_short(uint64_t props, bool do_print_times) const
 {
     //Restarts stats
-    printCommon(props);
+    printCommon(props, do_print_times);
     conflStats.print_short(cpu_time);
 
     print_stats_line("c conf lits non-minim"
@@ -220,9 +221,9 @@ void SearchStats::print_short(uint64_t props) const
     );
 }
 
-void SearchStats::print(uint64_t props) const
+void SearchStats::print(uint64_t props, bool do_print_times) const
 {
-    printCommon(props);
+    printCommon(props, do_print_times);
     conflStats.print(cpu_time);
 
     /*assert(numConflicts

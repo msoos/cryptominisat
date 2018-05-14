@@ -1962,6 +1962,7 @@ void Solver::print_prop_confl_stats(
 void Solver::print_stats(const double cpu_time) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
+    if (conf.do_print_times)
     print_stats_line("c UIP search time"
         , sumSearchStats.cpu_time
         , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
@@ -1980,7 +1981,7 @@ void Solver::print_stats(const double cpu_time) const
 
 void Solver::print_min_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations);
+    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -1995,6 +1996,7 @@ void Solver::print_min_stats(const double cpu_time) const
 
     //Failed lit stats
     if (conf.doProbe) {
+        if (conf.do_print_times)
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
@@ -2003,12 +2005,14 @@ void Solver::print_min_stats(const double cpu_time) const
     }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
+        if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
             , occsimplifier->get_stats().total_time()
             , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
             , "% time"
         );
     }
+    if (conf.do_print_times)
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
         , stats_line_percent(varReplacer->get_scc_finder()->get_stats().cpu_time, cpu_time)
@@ -2051,7 +2055,7 @@ void Solver::print_min_stats(const double cpu_time) const
 
 void Solver::print_norm_stats(const double cpu_time) const
 {
-    sumSearchStats.print_short(sumPropStats.propagations);
+    sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
     );
@@ -2080,6 +2084,7 @@ void Solver::print_norm_stats(const double cpu_time) const
         && prober
     ) {
         prober->get_stats().print_short(this, 0, 0);
+        if (conf.do_print_times)
         print_stats_line("c probing time"
             , prober->get_stats().cpu_time
             , stats_line_percent(prober->get_stats().cpu_time, cpu_time)
@@ -2090,6 +2095,7 @@ void Solver::print_norm_stats(const double cpu_time) const
     }
     //OccSimplifier stats
     if (conf.perform_occur_based_simp) {
+        if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
             , occsimplifier->get_stats().total_time()
             , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
@@ -2141,7 +2147,7 @@ void Solver::print_norm_stats(const double cpu_time) const
 
 void Solver::print_full_restart_stat(const double cpu_time) const
 {
-    sumSearchStats.print(sumPropStats.propagations);
+    sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
         , float_div(propStats.propagations, sumSearchStats.decisions)
