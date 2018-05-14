@@ -42,11 +42,7 @@ SATSolver* solver;
 DLL_PUBLIC void printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-    #ifdef __GNUC__
-    cout << "c compiled with gcc version " << __VERSION__ << endl;
-    #else
-    cout << "c compiled with non-gcc compiler" << endl;
-    #endif
+    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
 }
 
 DLL_PUBLIC int start_solve(const char* input)
