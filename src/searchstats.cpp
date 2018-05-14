@@ -68,7 +68,6 @@ SearchStats& SearchStats::operator+=(const SearchStats& other)
     otfSubsumedLong += other.otfSubsumedLong;
     otfSubsumedRed += other.otfSubsumedRed;
     otfSubsumedLitsGained += other.otfSubsumedLitsGained;
-    guess_different += other.guess_different;
     cache_hit += other.cache_hit;
     red_cl_in_which0 += other.red_cl_in_which0;
 
@@ -131,7 +130,6 @@ SearchStats& SearchStats::operator-=(const SearchStats& other)
     otfSubsumedLong -= other.otfSubsumedLong;
     otfSubsumedRed -= other.otfSubsumedRed;
     otfSubsumedLitsGained -= other.otfSubsumedLitsGained;
-    guess_different -= other.guess_different;
     cache_hit -= other.cache_hit;
     red_cl_in_which0 -= other.red_cl_in_which0;
 
@@ -202,12 +200,6 @@ void SearchStats::print_short(uint64_t props, bool do_print_times) const
         , float_div(litsRedFinal, conflStats.numConflicts)
     );
 
-    print_stats_line("c guess different"
-        , guess_different
-        , stats_line_percent(guess_different, conflStats.numConflicts)
-        , "% of confl"
-    );
-
     print_stats_line("c cache hit re-learnt cl"
         , cache_hit
         , stats_line_percent(cache_hit, conflStats.numConflicts)
@@ -274,12 +266,6 @@ void SearchStats::print(uint64_t props, bool do_print_times) const
         , otfSubsumedLitsGained
         , ratio_for_stat(otfSubsumedLitsGained, otfSubsumed)
         , "lits/otf subsume"
-    );
-
-    print_stats_line("c guess different"
-        , guess_different
-        , stats_line_percent(guess_different, conflStats.numConflicts)
-        , "% of confl"
     );
 
     print_stats_line("c cache hit re-learnt cl"
