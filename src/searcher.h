@@ -283,7 +283,6 @@ class Searcher : public HyperEngine
             bool needToStopSearch;
             uint64_t conflictsDoneThisRestart;
             uint64_t max_confl_to_do;
-            unsigned backtrack_num = 0;
             Restart rest_type = Restart::never;
         };
         SearchParams params;
@@ -362,7 +361,6 @@ class Searcher : public HyperEngine
         uint64_t max_confl_per_search_solve_call;
         bool blocked_restart = false;
         void check_blocking_restart();
-        void check_blocking_restart_backtrack();
         uint32_t num_search_called = 0;
         uint64_t lastRestartConfl;
         double luby(double y, int x);

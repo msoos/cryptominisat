@@ -65,7 +65,6 @@ enum class Restart {
     , geom
     , glue_geom
     , luby
-    , backtrack
     , never
 };
 
@@ -83,9 +82,6 @@ inline std::string getNameOfRestartType(Restart rest_type)
 
         case Restart::luby:
             return "luby";
-
-        case Restart::backtrack:
-            return "backtrack";
 
         case Restart::never:
             return "never";
@@ -197,8 +193,6 @@ class DLL_PUBLIC SolverConf
         double   blocking_restart_multip;
         int      broken_glue_restart;
         int      maple;
-        int      maple_backtrack;
-        unsigned maple_backtrack_mod;
         unsigned modulo_maple_iter;
 
         double   local_glue_multiplier;

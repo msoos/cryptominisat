@@ -195,7 +195,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
             //Maple with backtrack
             conf.maple = 1;
             conf.modulo_maple_iter = 100;
-            conf.maple_backtrack = 1;
             break;
         }
         case 7: {
@@ -346,7 +345,6 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         default: {
             conf.maple = ((thread_num % 3) <= 1);
-            conf.maple_backtrack = ((thread_num % 4) == 0);
             conf.modulo_maple_iter = (thread_num % 7);
             conf.varElimRatioPerIter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
