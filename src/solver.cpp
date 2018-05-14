@@ -2039,11 +2039,16 @@ void Solver::print_min_stats(const double cpu_time) const
                     , stats_line_percent(dist_long_with_impl->get_stats().redCacheBased.cpu_time, cpu_time)
                     , "% time"
     );
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
     if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
     double vm_usage;
@@ -2131,11 +2136,15 @@ void Solver::print_norm_stats(const double cpu_time) const
         implCache.print_statsSort(this);
     }
 
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
     double vm_usage;
     print_stats_line("c Mem used"
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
@@ -2238,11 +2247,15 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     }
 
     //Other stats
-    print_stats_line("c Conflicts in UIP"
-        , sumConflicts
-        , float_div(sumConflicts, cpu_time)
-        , "confl/TOTAL_TIME_SEC"
-    );
+    if (conf.do_print_times) {
+        print_stats_line("c Conflicts in UIP"
+            , sumConflicts
+            , float_div(sumConflicts, cpu_time)
+            , "confl/TOTAL_TIME_SEC"
+        );
+    } else {
+        print_stats_line("c Conflicts in UIP", sumConflicts);
+    }
     if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
     print_mem_stats();
