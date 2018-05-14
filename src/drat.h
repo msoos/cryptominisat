@@ -121,7 +121,7 @@ struct DratFile: public Drat
         #ifdef STATS_NEEDED
         clauseID_or_sumConflicts
         #endif
-    ) {
+    ) override {
         #ifdef STATS_NEEDED
         if (!id_set) {
             ID = clauseID_or_sumConflicts;
