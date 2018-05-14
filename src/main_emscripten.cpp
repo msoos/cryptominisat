@@ -38,7 +38,7 @@ using std::endl;
 
 using namespace CMSat;
 
-SATSolver* solver;
+SATSolver* solver = NULL;
 DLL_PUBLIC void printVersionInfo()
 {
     cout << "c CryptoMiniSat version " << solver->get_version() << endl;
@@ -53,6 +53,7 @@ DLL_PUBLIC int start_solve(const char* input)
     conf.do_print_times = 0;
     conf.simplify_at_startup = 0;
 
+    delete solver;
     solver = new SATSolver(&conf);
 
     if (conf.verbosity) {
