@@ -42,9 +42,9 @@ public:
     SearchStats& operator+=(const SearchStats& other);
     SearchStats& operator-=(const SearchStats& other);
     SearchStats operator-(const SearchStats& other) const;
-    void printCommon(uint64_t props) const;
-    void print_short(uint64_t props) const;
-    void print(uint64_t props) const;
+    void printCommon(uint64_t props, bool do_print_times) const;
+    void print_short(uint64_t props, bool do_print_times) const;
+    void print(uint64_t props, bool do_print_times) const;
 
     //Restart stats
     uint64_t blocked_restart = 0;
