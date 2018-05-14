@@ -2177,7 +2177,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        prober->get_stats().print(nVars());
+        prober->get_stats().print(nVars(), conf.do_print_times);
     }
 
     //OccSimplifier stats

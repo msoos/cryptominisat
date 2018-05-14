@@ -89,7 +89,7 @@ class Prober {
                 return *this;
             }
 
-            void print(const size_t nVars) const
+            void print(const size_t nVars, const bool do_print_times) const
             {
                 cout << "c -------- PROBE STATS ----------" << endl;
                 print_stats_line("c probe time"
@@ -169,7 +169,7 @@ class Prober {
                     , cpu_time
                     , "s");
 
-                conflStats.print(cpu_time);
+                conflStats.print(cpu_time, do_print_times);
                 propStats.print(cpu_time);
                 cout << "c -------- PROBE STATS END ----------" << endl;
             }

@@ -495,20 +495,24 @@ struct ConflStats
         }
     }
 
-    void print_short(double cpu_time) const
+    void print_short(double cpu_time, bool do_print_times) const
     {
         //Search stats
-        print_stats_line("c conflicts", numConflicts
-            , ratio_for_stat(numConflicts, cpu_time)
-            , "/ sec"
-        );
+        if (!do_print_times) {
+            print_stats_line("c conflicts", numConflicts);
+        } else {
+            print_stats_line("c conflicts", numConflicts
+                , ratio_for_stat(numConflicts, cpu_time)
+                , "/ sec"
+            );
+        }
     }
 
-    void print(double cpu_time) const
+    void print(double cpu_time, bool do_print_times) const
     {
         //Search stats
         cout << "c CONFLS stats" << endl;
-        print_short(cpu_time);
+        print_short(cpu_time, do_print_times);
 
         print_stats_line("c conflsBinIrred", conflsBinIrred
             , stats_line_percent(conflsBinIrred, numConflicts)
