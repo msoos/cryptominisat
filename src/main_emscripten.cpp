@@ -48,7 +48,7 @@ DLL_PUBLIC void printVersionInfo()
 DLL_PUBLIC int start_solve(const char* input)
 {
     SolverConf conf;
-    conf.max_confl = 1000;
+    conf.max_confl = 500;
     conf.verbosity = 1;
     conf.do_print_times = 0;
     conf.simplify_at_startup = 0;
