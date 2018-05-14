@@ -1012,7 +1012,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
         << " str w bin: " << strBin
         << " tried: " << tried_bin_tri
         << " str: " << strSucceed
-        //<< " toDecrease: " << *simplifier->limit_to_decrease
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
