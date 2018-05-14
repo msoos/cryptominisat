@@ -1184,7 +1184,9 @@ lbool Searcher::search()
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {
+        #ifdef USE_GAUSS
         gqhead = qhead;
+        #endif
         if (update_bogoprops) {
             confl = propagate<update_bogoprops>();
         } else {
@@ -1209,9 +1211,6 @@ lbool Searcher::search()
             stats.conflStats.update(lastConflictCausedBy);
             #endif
 
-            #ifdef USE_GAUSS
-            confl:
-            #endif
             print_restart_stat();
             if (!update_bogoprops) {
                 uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
