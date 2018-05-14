@@ -393,7 +393,7 @@ class Query2 (QueryHelper):
         WHERE
 
         cl.clauseID = goodcl.clauseID
-        and cl.clauseID != 1
+        and cl.clauseID != 0
         and cl.runID = goodcl.runID
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
@@ -454,7 +454,7 @@ class Query2 (QueryHelper):
 
         goodcl.clauseID is NULL
         and goodcl.runID is NULL
-        and cl.clauseID != 1
+        and cl.clauseID != 0
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
         and rdb0.dump_no = 0
