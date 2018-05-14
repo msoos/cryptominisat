@@ -977,8 +977,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins_watch(
 
 bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 {
-    size_t strSucceed = 0;
-
     //Stats
     int64_t orig_time_limit = *simplifier->limit_to_decrease;
     const size_t origTrailSize = solver->trail_size();
@@ -1007,11 +1005,9 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
     if (solver->conf.verbosity) {
         cout
         << "c [occ-backw-sub-str-long-w-bins]"
-        << " upI: " << upI
-        << " subs w bin: " << subsumedBin
-        << " str w bin: " << strBin
+        << " subs: " << subsumedBin
+        << " str: " << strBin
         << " tried: " << tried_bin_tri
-        << " str: " << strSucceed
         << " 0-depth ass: " << solver->trail_size() - origTrailSize
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
