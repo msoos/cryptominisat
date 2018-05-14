@@ -386,7 +386,7 @@ private:
     ///Order variables according to their complexity of elimination
     struct VarOrderLt {
         const vector<uint64_t>&  varElimComplexity;
-        bool operator () (const size_t x, const size_t y) const
+        bool operator () (const uint64_t x, const uint64_t y) const
         {
             return varElimComplexity[x] < varElimComplexity[y];
         }
