@@ -56,7 +56,6 @@ DLL_PUBLIC int start_solve(const char* input)
     conf.verbosity = 1;
     conf.do_print_times = 0;
     conf.simplify_at_startup = 0;
-    conf.replace_while_solving = true;
 
     solver = new SATSolver(&conf);
 
