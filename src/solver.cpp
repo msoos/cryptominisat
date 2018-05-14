@@ -2135,6 +2135,7 @@ void Solver::print_norm_stats(const double cpu_time) const
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
+    if (conf.do_print_times)
     print_stats_line("c Total time", cpu_time);
 }
 
