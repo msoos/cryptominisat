@@ -58,10 +58,12 @@ struct Drat
         return false;
     }
 
+    #ifdef STATS_NEEDED
     virtual Drat& operator<<(const uint64_t)
     {
         return *this;
     }
+    #endif
 
     virtual Drat& operator<<(const Lit)
     {
@@ -117,21 +119,18 @@ struct DratFile: public Drat
         delete[] del_buf;
     }
 
-    virtual Drat& operator<<(const uint64_t
-        #ifdef STATS_NEEDED
-        clauseID_or_sumConflicts
-        #endif
-    ) {
-        #ifdef STATS_NEEDED
+    #ifdef STATS_NEEDED
+    virtual Drat& operator<<(const uint64_t clauseID_or_sumConflicts) override
+    {
         if (!id_set) {
             ID = clauseID_or_sumConflicts;
             id_set = true;
         } else {
             sumConflicts = clauseID_or_sumConflicts;
         }
-        #endif
         return *this;
     }
+    #endif
 
     void byteDRUPa(const Lit l)
     {

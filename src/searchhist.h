@@ -38,9 +38,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   branchDepthHist;     ///< Avg branch depth in current restart
     AvgCalc<uint32_t>   branchDepthDeltaHist;
 
-    bqueue<uint32_t>    backtrackLevelHist;
     AvgCalc<uint32_t>   backtrackLevelHistLT;
-    AvgCalc<uint32_t>   backtrackLevelHistLTLimited;
     AvgCalc<uint32_t>   trailDepthHistLT;
     AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
 
@@ -57,6 +55,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #ifdef STATS_NEEDED
+    bqueue<uint32_t>    backtrackLevelHist;
     AvgCalc<uint32_t>   overlapHistLT;
     AvgCalc<uint32_t>   antec_data_sum_sizeHistLT;
     AvgCalc<uint32_t>   numResolutionsHist;  ///< Number of resolutions during conflict analysis of THIS restart
@@ -73,9 +72,9 @@ struct SearchHist {
         used += sizeof(AvgCalc<size_t>)*2;
         used += sizeof(AvgCalc<double, double>)*2;
         used += glueHist.usedMem();
-        used += backtrackLevelHist.usedMem();
         used += trailDepthHistLonger.usedMem();
         #ifdef STATS_NEEDED
+        used += backtrackLevelHist.usedMem();
         used += branchDepthHistQueue.usedMem();
         #endif
 
@@ -103,8 +102,8 @@ struct SearchHist {
     void reset_glue_hist_size(size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
-        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         #ifdef STATS_NEEDED
+        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHist.clearAndResize(shortTermHistorySize);
         branchDepthHistQueue.clearAndResize(shortTermHistorySize);
         #endif
@@ -113,9 +112,9 @@ struct SearchHist {
     void setSize(const size_t shortTermHistorySize, const size_t blocking_trail_hist_size)
     {
         glueHist.clearAndResize(shortTermHistorySize);
-        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
         #ifdef STATS_NEEDED
+        backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHist.clearAndResize(shortTermHistorySize);
         branchDepthHistQueue.clearAndResize(shortTermHistorySize);
         #endif

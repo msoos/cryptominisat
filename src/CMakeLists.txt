@@ -23,10 +23,6 @@ include_directories(
 )
 
 if (NOT WIN32)
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        #add_cxx_flag_if_supported("-fno-exceptions")
-    endif()
-
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
     #add_cxx_flag_if_supported("-Wduplicated-cond")
     #add_cxx_flag_if_supported("-Wduplicated-branches")
@@ -39,6 +35,7 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wformat=2")
     add_cxx_flag_if_supported("-Wextra-semi")
     add_cxx_flag_if_supported("-pedantic")
+    add_cxx_flag_if_supported("-Wno-class-memaccess")
     #add_cxx_flag_if_supported("-Wdeprecated")
 endif()
 add_sanitize_flags()

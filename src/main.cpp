@@ -280,6 +280,8 @@ void Main::add_supported_options()
         , "Use maple-type variable picking sometimes")
     ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
         , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
+    ("maplemorebump", po::value(&conf.more_maple_bump_low_glue)->default_value(conf.more_maple_bump_low_glue)
+        , "Bump variable usefulness more when glue is low")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -303,12 +305,6 @@ void Main::add_supported_options()
         , "Lower bound on blocking restart -- don't block before this many conflicts")
     ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier)
         , "The multiplier used to determine if we should restart during glue-based restart")
-    ("locbmult" , po::value(&conf.local_backtrack_multiplier)->default_value(conf.local_backtrack_multiplier)
-        , "The multiplier used to determine if we should restart during backtrack-based restart")
-    ("mbackt", po::value(&conf.maple_backtrack)->default_value(conf.maple_backtrack)
-        , "Use backtracking restart for maple")
-    ("mbacktmod", po::value(&conf.maple_backtrack_mod)->default_value(conf.maple_backtrack_mod)
-        , "How much more backtrack than luby (during maple)")
     ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
         , "Should glue restart be broken as before 8e74cb5010bb4")
     ("ratiogluegeom", po::value(&conf.ratio_glue_geom)->default_value(conf.ratio_glue_geom)
@@ -885,8 +881,6 @@ void Main::parse_restart_type()
             conf.restartType = Restart::geom;
         else if (type == "luby")
             conf.restartType = Restart::luby;
-        else if (type == "backtrack")
-            conf.restartType = Restart::backtrack;
         else if (type == "glue")
             conf.restartType = Restart::glue;
         else throw WrongParam("restart", "unknown restart type");

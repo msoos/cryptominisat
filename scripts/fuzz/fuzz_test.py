@@ -293,7 +293,7 @@ class Tester:
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--maple %d " % random.choice([0, 1])
             if random.randint(0, 2) == 1:
-                cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16, 17])
+                cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16])
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--burst %d " % random.choice([0, 100, random.randint(0, 10000)])
