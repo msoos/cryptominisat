@@ -194,6 +194,7 @@ class DLL_PUBLIC SolverConf
         int      broken_glue_restart;
         int      maple;
         unsigned modulo_maple_iter;
+        bool     more_maple_bump_low_glue;
 
         double   local_glue_multiplier;
         double   local_backtrack_multiplier;

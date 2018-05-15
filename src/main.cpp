@@ -280,6 +280,8 @@ void Main::add_supported_options()
         , "Use maple-type variable picking sometimes")
     ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
         , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
+    ("maplemorebump", po::value(&conf.more_maple_bump_low_glue)->default_value(conf.more_maple_bump_low_glue)
+        , "Bump variable usefulness more when glue is low")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
