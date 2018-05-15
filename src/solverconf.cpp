@@ -64,6 +64,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , modulo_maple_iter(3)
         , local_glue_multiplier(0.90)
         , local_backtrack_multiplier(0.90)
+        , more_maple_bump_low_glue(false)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(5)

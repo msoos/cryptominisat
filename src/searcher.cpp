@@ -875,6 +875,12 @@ Clause* Searcher::analyze_conflict(
         if (VSIDS) {
             bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(out_btlevel);
         } else {
+            uint32_t bump_by = 1;
+            if (conf.more_maple_bump_low_glue) {
+                if (glue <= 3) {
+                    bump_by = 2;
+                }
+            }
             assert(toClear.empty());
             const Lit p = learnt_clause[0];
             seen[p.var()] = true;
@@ -887,7 +893,7 @@ Clause* Searcher::analyze_conflict(
                     for (const Lit l: *cl) {
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
-                            varData[l.var()].conflicted++;
+                            varData[l.var()].conflicted+=bump_by;
                             toClear.push_back(l);
                         }
                     }
@@ -895,13 +901,13 @@ Clause* Searcher::analyze_conflict(
                     Lit l = varData[v].reason.lit2();
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].conflicted++;
+                        varData[l.var()].conflicted+=bump_by;
                         toClear.push_back(l);
                     }
                     l = Lit(v, false);
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].conflicted++;
+                        varData[l.var()].conflicted+=bump_by;
                         toClear.push_back(l);
                     }
                 }
