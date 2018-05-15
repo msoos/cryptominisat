@@ -115,7 +115,8 @@ bool SQLiteStats::connectServer(const int verbosity)
     }
 
     if (sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL)) {
-        cerr << "Problem setting pragma to SQLite DB" << endl;
+        cerr << "ERROR: Problem setting pragma to SQLite DB" << endl;
+        cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
 
