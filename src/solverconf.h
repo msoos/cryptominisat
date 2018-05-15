@@ -197,7 +197,6 @@ class DLL_PUBLIC SolverConf
         bool     more_maple_bump_low_glue;
 
         double   local_glue_multiplier;
-        double   local_backtrack_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size
         unsigned lower_bound_for_blocking_restart;
         double   ratio_glue_geom; //higher the number, the more glue will be done. 2 is 2x glue 1x geom
