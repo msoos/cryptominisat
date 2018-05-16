@@ -74,7 +74,7 @@ add_custom_target(python_interface_dist_package
                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
