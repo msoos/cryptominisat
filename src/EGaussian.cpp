@@ -707,8 +707,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     uint32_t ori_nb = 0, ori_nb_col = 0;
     uint32_t nb_var = 0;
     uint32_t num_row = 0; // row inde
-    bool xorEqualFalse = false;
-    // uint32_t conflict_size = UINT_MAX;
     PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
     // assert(ret_gauss == 4);  // check this matrix is nothing
@@ -796,7 +794,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             matrix.nb_rows[num_row] = p;
                             break;
                         }
-                        xorEqualFalse = !matrix.matrix.getMatrixAt(num_row).rhs();
                         // update no_basic information
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.nb_rows[num_row] = p;
