@@ -54,7 +54,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //maple
         , maple(true)
         , modulo_maple_iter(3)
-        , more_maple_bump_low_glue(false)
+        , more_maple_bump_high_glue(false)
 
         //Restarting
         , restart_first(100)
