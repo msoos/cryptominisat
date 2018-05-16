@@ -1136,7 +1136,7 @@ void Searcher::check_blocking_restart()
         && hist.trailDepthHistLonger.isvalid()
         && decisionLevel() > 0
         && trail_lim.size() > 0
-        && (trail.size()-trail_lim[0]) > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
+        && trail.size() > hist.trailDepthHistLonger.avg()*conf.blocking_restart_multip
     ) {
         hist.glueHist.clear();
         if (!blocked_restart) {
@@ -1202,11 +1202,10 @@ lbool Searcher::search()
 
             print_restart_stat();
             if (!update_bogoprops) {
-                uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
                 #ifdef STATS_NEEDED
-                hist.trailDepthHist.push(trail.size() - tosub);
+                hist.trailDepthHist.push(trail.size());
                 #endif
-                hist.trailDepthHistLonger.push(trail.size() - tosub);
+                hist.trailDepthHistLonger.push(trail.size());
             }
             if (!handle_conflict<update_bogoprops>(confl)) {
                 dump_search_loop_stats(myTime);
@@ -1536,8 +1535,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     #endif
     hist.backtrackLevelHistLT.push(backtrack_level);
     hist.conflSizeHistLT.push(learnt_clause.size());
-    uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
-    hist.trailDepthHistLT.push(trail.size() - tosub);
+    hist.trailDepthHistLT.push(trail.size());
     if (params.rest_type == Restart::glue) {
         hist.glueHistLTLimited.push(std::min<size_t>(glue, 50));
     }
@@ -1648,7 +1646,6 @@ void Searcher::dump_sql_clause_data(
     while(first_dec_var_act.size() < 2)
         first_dec_var_act.push_back(0);
 
-    uint64_t tosub = trail_lim.size() > 0 ? trail_lim[0] : trail.size();
     solver->sqlStats->dump_clause_stats(
         solver
         , clauseID
@@ -1657,7 +1654,7 @@ void Searcher::dump_sql_clause_data(
         , learnt_clause.size()
         , antec_data
         , old_decision_level
-        , trail.size() - tosub
+        , trail.size()
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
         , hist
