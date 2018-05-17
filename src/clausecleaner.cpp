@@ -269,6 +269,8 @@ void ClauseCleaner::clean_clauses_post()
 void ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
+    assert(solver->okay());
+    assert(solver->prop_at_head());
 
     clean_implicit_clauses();
 
@@ -291,6 +293,12 @@ void ClauseCleaner::remove_and_clean_all()
     ) {
         const Lit lit = Lit::toLit(wsLit);
         if (solver->value(lit) != l_Undef) {
+            if (!it->empty()) {
+                cout << "ERROR watches size: " << it->size() << endl;
+                for(const auto& w: *it) {
+                    cout << "ERROR w: " << w << endl;
+                }
+            }
             assert(it->empty());
         }
     }

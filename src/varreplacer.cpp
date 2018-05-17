@@ -222,7 +222,9 @@ bool VarReplacer::perform_replace()
     const size_t origTrailSize = solver->trail_size();
 
     solver->clauseCleaner->remove_and_clean_all();
+    #ifdef DEBUG_ATTACH_MORE
     solver->test_all_clause_attached();
+    #endif
 
     //Printing stats
     if (solver->conf.verbosity >= 5)
@@ -234,7 +236,9 @@ bool VarReplacer::perform_replace()
     runStats.actuallyReplacedVars = replacedVars -lastReplacedVars;
     lastReplacedVars = replacedVars;
 
+    #ifdef DEBUG_ATTACH_MORE
     solver->test_all_clause_attached();
+    #endif
     assert(solver->prop_at_head());
 
     #ifdef DEBUG_IMPLICIT_STATS
@@ -299,7 +303,9 @@ end:
     }
 
     if (solver->okay()) {
+        #ifdef DEBUG_ATTACH_MORE
         solver->test_all_clause_attached();
+        #endif
         solver->check_wrong_attach();
         #ifdef DEBUG_IMPLICIT_STATS
         solver->check_stats();

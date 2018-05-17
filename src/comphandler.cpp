@@ -136,6 +136,11 @@ bool CompHandler::handle()
     assert(solver->okay());
     double myTime = cpuTime();
 
+    solver->xorclauses.clear();
+    #ifdef USE_GAUSS
+    solver->clearEnGaussMatrixes();
+    #endif
+
     delete compFinder;
     compFinder = new CompFinder(solver);
     compFinder->find_components();

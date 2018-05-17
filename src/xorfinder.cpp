@@ -463,42 +463,21 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
                       this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
 
-            //check x_new
-            bool add = true;
-            if (x_new.size() == 1) {
-                unit_added++;
-                Lit l(x_new[0], !x_new.rhs);
-                if (solver->value(l) == l_False) {
-                    solver->ok = false;
-                    goto end;
-                } else if (solver->value(l) == l_Undef) {
-                    solver->enqueue(l);
-                    solver->ok = solver->propagate_occur();
-                    if (!solver->ok) {
-                        goto end;
-                    }
-                }
-                add = false;
-            }
-
             changed = true;
-            if (add) {
-                this_xors.push_back(x_new);
-                for(uint32_t v2: x_new) {
-                    Lit l(v2, false);
-                    solver->watches[l].push(Watched(this_xors.size()-1));
-                    if (occcnt[l.var()] == 2) {
-                        interesting.push_back(l.var());
-                    }
-                    solver->watches.smudge(l);
+            this_xors.push_back(x_new);
+            for(uint32_t v2: x_new) {
+                Lit l(v2, false);
+                solver->watches[l].push(Watched(this_xors.size()-1));
+                if (occcnt[l.var()] == 2) {
+                    interesting.push_back(l.var());
                 }
+                solver->watches.smudge(l);
             }
             this_xors[idxes[0]] = Xor();
             this_xors[idxes[1]] = Xor();
             xored++;
         }
     }
-    end:
 
     for(const Lit l: toClear) {
         occcnt[l.var()] = 0;
@@ -580,7 +559,9 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     for(size_t i = 0;i < this_xors.size(); i++) {
         Xor& x = this_xors[i];
         solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() > 2) {
+        if (x.size() > 2 ||
+            (x.size() == 2 && (out_changed_occur != NULL))
+        ) {
             this_xors[i2] = this_xors[i];
             i2++;
             continue;
@@ -607,31 +588,27 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
                         solver->ok = solver->propagate<true>().isNULL();
                 }
                 if (!solver->ok) {
-                    return false;
+                    goto end;
                 }
                 break;
             }
 
             case 2: {
-                //RHS == 1 means both same is not allowed
-                vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), true);
-                if (!solver->ok) {
-                    return false;
+                //cannot do it during occur -- the propagation would be WRONG inside add_clause_int!!
+                if (out_changed_occur == NULL) {
+                    //RHS == 1 means both same is not allowed
+                    vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
+                    solver->add_clause_int(lits, true, ClauseStats(), true);
+                    if (!solver->ok) {
+                        goto end;
+                    }
+                    lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
+                    solver->add_clause_int(lits, true, ClauseStats(), true);
+                    if (!solver->ok) {
+                        goto end;
+                    }
+                    break;
                 }
-                lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
-                solver->add_clause_int(lits, true, ClauseStats(), true);
-                if (!solver->ok) {
-                    return false;
-                }
-
-                if (out_changed_occur) {
-                    out_changed_occur->push_back(Lit(x[0], false));
-                    out_changed_occur->push_back(Lit(x[1], true^x.rhs));
-                    out_changed_occur->push_back(Lit(x[0], true));
-                    out_changed_occur->push_back(Lit(x[1], false^x.rhs));
-                }
-                break;
             }
 
             default: {
@@ -640,6 +617,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
         }
     }
     this_xors.resize(i2);
+    end:
 
     double add_time = cpuTime() - myTime;
     uint32_t num_bins_added = solver->binTri.redBins - origBins;
@@ -662,7 +640,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
         );
     }
 
-    return true;
+    return solver->okay();
 }
 
 vector<uint32_t> XorFinder::xor_two(
