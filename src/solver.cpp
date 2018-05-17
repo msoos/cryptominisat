@@ -1675,7 +1675,7 @@ void Solver::handle_found_solution(const lbool status)
         extend_solution();
         cancelUntil(0);
 
-        #ifdef STATS_NEEDED
+        #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
         test_all_clause_attached();
         #endif
@@ -1879,7 +1879,7 @@ lbool Solver::simplify_problem(const bool startup)
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
-    #ifdef SLOW_DEBUG
+    #ifdef DEBUG_ATTACH_MORE
     test_all_clause_attached();
     find_all_attach();
     assert(check_order_heap_sanity());
