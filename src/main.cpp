@@ -568,8 +568,8 @@ void Main::add_supported_options()
     ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
         , "Limit how much time is spent in component-finding");
 
-    po::options_description miscOptions("Misc options");
-    miscOptions.add_options()
+    po::options_description distillOptions("Misc options");
+    distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
         , "Regularly execute clause distillation")
@@ -577,6 +577,11 @@ void Main::add_supported_options()
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
+    ;
+
+    po::options_description miscOptions("Misc options");
+    miscOptions.add_options()
+    //("noparts", "Don't find&solve subproblems with subsolvers")
     ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying long irred cls through watches, cache and stamps")
     ("renumber", po::value(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
@@ -665,6 +670,7 @@ void Main::add_supported_options()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    .add(distillOptions)
     .add(reconfOptions)
     .add(miscOptions)
     ;
