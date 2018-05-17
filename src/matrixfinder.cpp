@@ -268,6 +268,7 @@ uint32_t MatrixFinder::setMatrixes()
     std::sort(matrix_shape.begin(), matrix_shape.end(), mysorter());
 
     uint32_t realMatrixNum = 0;
+    uint32_t unusedMatrix = 0;
     for (int a = matrix_no-1; a >= 0; a--) {
         MatrixShape& m = matrix_shape[a];
         uint32_t i = m.num;
@@ -337,13 +338,17 @@ uint32_t MatrixFinder::setMatrixes()
             }
             realMatrixNum++;
         } else {
-            if (solver->conf.verbosity) {
+            if (solver->conf.verbosity >= 3) {
                 cout << "c [matrix] UNused matrix   ";
             }
+            unusedMatrix++;
         }
 
         if (solver->conf.verbosity) {
             double avg = (double)m.sum_xor_sizes/(double)m.rows;
+
+            if (!use_matrix && solver->conf.verbosity < 3)
+                continue;
 
             cout << std::setw(7) << m.rows << " x"
             << std::setw(5) << reverseTable[i].size()
@@ -355,51 +360,10 @@ uint32_t MatrixFinder::setMatrixes()
             << std::setw(5) << std::fixed << std::setprecision(3) << ratio_indep*100.0 << " %"
             << endl;
         }
+    }
 
-#if 0
-        vector<uint32_t> vars;
-        for(const Xor& x: xorsInMatrix[i]) {
-            for(uint32_t var: x) {
-                if (!solver->seen[var]) {
-                    vars.push_back(var);
-                }
-                solver->seen[var]++;
-            }
-        }
-
-        for(const uint32_t var: vars) {
-            cout << "c [matrix] num xors touching var " << var << " : " << solver->seen[var] << endl;
-            solver->seen[var] = false;
-        }
-
-        for(uint32_t outside_var: *solver->conf.independent_vars) {
-            uint32_t outer_var = solver->map_to_with_bva(outside_var);
-            uint32_t int_var = solver->map_outer_to_inter(outer_var);
-            if (int_var < solver->nVars()) {
-                solver->seen[int_var] = true;
-            }
-        }
-
-        for(const Xor& x: xorsInMatrix[i]) {
-            bool num_indeps = 0;
-            for(uint32_t var: x) {
-                vars.push_back(var);
-                if (solver->seen[var]) {
-                    num_indeps++;
-                }
-            }
-            cout << "c [matrix] num indep perc: " << ((double)num_indeps/(double)x.size())*100.0 << " %" << endl;
-        }
-
-        for(uint32_t outside_var: *solver->conf.independent_vars) {
-            uint32_t outer_var = solver->map_to_with_bva(outside_var);
-            uint32_t int_var = solver->map_outer_to_inter(outer_var);
-            if (int_var < solver->nVars()) {
-                solver->seen[int_var] = false;
-            }
-        }
-#endif
-
+    if (solver->conf.verbosity && unusedMatrix > 0) {
+        cout << "c [matrix] unused matrixes: " << unusedMatrix << endl;
     }
 
     return realMatrixNum;
