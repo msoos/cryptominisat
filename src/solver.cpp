@@ -1176,7 +1176,7 @@ void Solver::check_minimization_effectiveness(const lbool status)
     }
 }
 
-void Solver::extend_solution()
+void Solver::extend_solution(const bool only_indep_solution)
 {
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
@@ -1192,10 +1192,19 @@ void Solver::extend_solution()
         compHandler->addSavedState(full_model);
     }
 
-    SolutionExtender extender(this, occsimplifier);
-    extender.extend();
+    if (!only_indep_solution) {
+        SolutionExtender extender(this, occsimplifier);
+        extender.extend();
+    }
 
     model = map_back_to_without_bva(model);
+    if (only_indep_solution) {
+        assert(conf.independent_vars);
+        for(uint32_t v: *conf.independent_vars) {
+            assert(model[v] != l_Undef);
+        }
+    }
+
     check_model_for_assumptions();
     if (sqlStats) {
         sqlStats->time_passed_min(
@@ -1279,7 +1288,8 @@ lbool Solver::simplify_problem_outside()
 }
 
 lbool Solver::solve_with_assumptions(
-    const vector<Lit>* _assumptions
+    const vector<Lit>* _assumptions,
+    const bool only_indep_solution
 ) {
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
@@ -1393,7 +1403,7 @@ lbool Solver::solve_with_assumptions(
         << endl;
     }
 
-    handle_found_solution(status);
+    handle_found_solution(status, only_indep_solution);
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
     conf.max_confl = std::numeric_limits<long>::max();
@@ -1669,10 +1679,10 @@ void Solver::check_too_many_low_glues()
     }
 }
 
-void Solver::handle_found_solution(const lbool status)
+void Solver::handle_found_solution(const lbool status, const bool only_indep_solution)
 {
     if (status == l_True) {
-        extend_solution();
+        extend_solution(only_indep_solution);
         cancelUntil(0);
 
         #ifdef DEBUG_ATTACH_MORE

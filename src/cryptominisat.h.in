@@ -61,7 +61,7 @@ namespace CMSat {
         // Solving and simplifying
         ////////////////////////////
 
-        lbool solve(const std::vector<Lit>* assumptions = 0); //solve the problem, optionally with assumptions
+        lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
         lbool simplify(const std::vector<Lit>* assumptions = 0); //simplify the problem, optionally with assumptions
         const std::vector<lbool>& get_model() const; //get model that satisfies the problem. Only makes sense if previous solve()/simplify() call was l_True
         const std::vector<Lit>& get_conflict() const; //get conflict in terms of the assumptions given in case the previous call to solve() was l_False

@@ -130,9 +130,38 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    independent_vars.swap(parser.independent_vars);
+    if (!independent_vars_str.empty() && !parser.independent_vars.empty()) {
+        cerr << "ERROR! Independent vars set in console but also in CNF." << endl;
+        exit(-1);
+    }
+
+    if (!independent_vars_str.empty()) {
+        assert(independent_vars.empty());
+
+        std::stringstream ss(independent_vars_str);
+        uint32_t i;
+        while (ss >> i)
+        {
+            const uint32_t var = i-1;
+            independent_vars.push_back(var);
+
+            if (ss.peek() == ',' || ss.peek() == ' ')
+                ss.ignore();
+        }
+    } else {
+        independent_vars.swap(parser.independent_vars);
+    }
+
     if (!independent_vars.empty()) {
         solver2->set_independent_vars(&independent_vars);
+        cout << "c Independent vars set: ";
+        for(size_t i = 0; i < independent_vars.size(); i++) {
+            const uint32_t v = independent_vars[i];
+            cout << v+1;
+            if (i+1 != independent_vars.size())
+                cout << ",";
+        }
+        cout << endl;
     }
     call_after_parse();
 
@@ -267,7 +296,9 @@ void Main::add_supported_options()
 //     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
 //         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
-        , "Multiplier for all simplification cutoffs")
+        , "Time multiplier for all simplification cutoffs")
+    ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
+        , "Multiplier for memory-out checks on variables and clause-link-in, etc. Useful when you have limited memory.")
     ("preproc,p", po::value(&conf.preprocess)->default_value(conf.preprocess)
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     ("polar", po::value<string>()->default_value("auto")
@@ -276,12 +307,6 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     #endif
-    ("maple", po::value(&conf.maple)->default_value(conf.maple)
-        , "Use maple-type variable picking sometimes")
-    ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
-        , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
-    ("maplemorebump", po::value(&conf.more_maple_bump_high_glue)->default_value(conf.more_maple_bump_high_glue)
-        , "Bump variable usefulness more when glue is HIGH")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -353,6 +378,12 @@ void Main::add_supported_options()
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
+    ("maple", po::value(&conf.maple)->default_value(conf.maple)
+        , "Use maple-type variable picking sometimes")
+    ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
+        , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
+    ("maplemorebump", po::value(&conf.more_maple_bump_high_glue)->default_value(conf.more_maple_bump_high_glue)
+        , "Bump variable usefulness more when glue is HIGH")
     ;
 
 
@@ -566,8 +597,8 @@ void Main::add_supported_options()
     ("compslimit", po::value(&conf.comp_find_time_limitM)->default_value(conf.comp_find_time_limitM)
         , "Limit how much time is spent in component-finding");
 
-    po::options_description miscOptions("Misc options");
-    miscOptions.add_options()
+    po::options_description distillOptions("Misc options");
+    distillOptions.add_options()
     //("noparts", "Don't find&solve subproblems with subsolvers")
     ("distill", po::value(&conf.do_distill_clauses)->default_value(conf.do_distill_clauses)
         , "Regularly execute clause distillation")
@@ -575,6 +606,11 @@ void Main::add_supported_options()
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying/distilling long cls by enqueueing and propagating")
     ("distillto", po::value(&conf.distill_time_limitM)->default_value(conf.distill_time_limitM)
         , "Maximum time in bogoprops M for distillation")
+    ;
+
+    po::options_description miscOptions("Misc options");
+    miscOptions.add_options()
+    //("noparts", "Don't find&solve subproblems with subsolvers")
     ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
         , "Maximum number of Mega-bogoprops(~time) to spend on vivifying long irred cls through watches, cache and stamps")
     ("renumber", po::value(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
@@ -589,8 +625,6 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit strengthening")
     ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
         , "Number of conflicts to do in burst search")
-    ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
-        , "Multiplier for memory-out checks on variables and clause-link-in, etc. Used for fuzzing by setting it very low, e.g. 0.000001")
     ;
 
     po::options_description reconfOptions("Reconf options");
@@ -621,6 +655,10 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
         , "The maximum for scc search depth")
+    ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
+        , "Independent vars, separated by comma")
+    ("onlyindepsol", po::value(&only_indep_solution)->default_value(only_indep_solution)
+        , "Independent vars, separated by comma")
     ;
 
 #ifdef USE_GAUSS
@@ -665,6 +703,7 @@ void Main::add_supported_options()
     #ifdef USE_GAUSS
     .add(gaussOptions)
     #endif
+    .add(distillOptions)
     .add(reconfOptions)
     .add(miscOptions)
     ;
@@ -1172,7 +1211,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve();
+        ret = solver->solve(NULL, only_indep_solution);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
