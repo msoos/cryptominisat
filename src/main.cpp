@@ -657,7 +657,7 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
         , "Independent vars, separated by comma")
-    ("onlyindepsol", po::value(&only_indep_solution)->default_value(only_indep_solution)
+    ("onlyindep", po::bool_switch(&only_indep_solution)
         , "Independent vars, separated by comma")
     ;
 
