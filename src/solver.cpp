@@ -1675,8 +1675,10 @@ void Solver::handle_found_solution(const lbool status)
         extend_solution();
         cancelUntil(0);
 
+        #ifdef STATS_NEEDED
         find_all_attach();
         test_all_clause_attached();
+        #endif
     } else if (status == l_False) {
         cancelUntil(0);
 
@@ -1874,12 +1876,12 @@ bool Solver::execute_inprocess_strategy(
 lbool Solver::simplify_problem(const bool startup)
 {
     assert(ok);
-    test_all_clause_attached();
-    find_all_attach();
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
     #ifdef SLOW_DEBUG
+    test_all_clause_attached();
+    find_all_attach();
     assert(check_order_heap_sanity());
     #endif
     #ifdef DEBUG_MARKED_CLAUSE
@@ -1926,8 +1928,10 @@ lbool Solver::simplify_problem(const bool startup)
         check_stats();
         check_implicit_propagated();
         rebuildOrderHeap();
+        #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
         test_all_clause_attached();
+        #endif
         check_wrong_attach();
 
         return l_Undef;
