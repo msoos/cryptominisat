@@ -161,6 +161,11 @@ class SolverConf
 
         int      guess_cl_effectiveness;
 
+        //maple
+        int      maple;
+        unsigned modulo_maple_iter;
+        bool     more_maple_bump_high_glue;
+
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)
@@ -170,9 +175,6 @@ class SolverConf
         unsigned blocking_restart_trail_hist_length;
         double   blocking_restart_multip;
         int      broken_glue_restart;
-        int      maple;
-        unsigned modulo_maple_iter;
-        bool     more_maple_bump_low_glue;
 
         double   local_glue_multiplier;
         unsigned  shortTermHistorySize; ///< Rolling avg. glue window size

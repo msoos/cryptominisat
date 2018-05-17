@@ -122,7 +122,7 @@ gret PackedRow::propGause(
     vector<Lit>& tmp_clause,
     const vector<lbool>& assigns,
     const vector<uint32_t>& col_to_var,
-    vec<bool> &GasVar_state,
+    vec<bool> &GasVar_state, // variable state  : basic or non-basic
     uint32_t& nb_var,
     uint32_t start
 ) {
@@ -133,8 +133,7 @@ gret PackedRow::propGause(
 
     for (uint32_t i = start/64; i != size; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
-        uint32_t i2;
-        for (i2 = 0 ; i2 < 64; i2++) {
+        for (uint32_t i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
                 const uint32_t var = col_to_var[i * 64  + i2];
                 const lbool val = assigns[var];
@@ -145,7 +144,7 @@ gret PackedRow::propGause(
                 const bool val_bool = (val == l_True);
                 final ^= val_bool;
                 tmp_clause.push_back(Lit(var, val_bool));
-                if ( GasVar_state[var] ) {
+                if (GasVar_state[var]) {
                     std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }
@@ -155,8 +154,7 @@ gret PackedRow::propGause(
 
     for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
         uint64_t tmp = mp[i];
-        uint32_t i2;
-        for (i2 = 0 ; i2 < 64; i2++) {
+        for (uint32_t i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
                 const uint32_t var = col_to_var[i * 64  + i2];
                 const lbool val = assigns[var];
