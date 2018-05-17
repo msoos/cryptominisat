@@ -1397,8 +1397,10 @@ bool OccSimplifier::setup()
     n_occurs.resize(solver->nVars()*2, 0);
 
     //Test & debug
+    #ifdef DEBUG_ATTACH_MORE
     solver->test_all_clause_attached();
     solver->check_wrong_attach();
+    #endif
 
     //Clean the clauses before playing with them
     solver->clauseCleaner->remove_and_clean_all();

@@ -408,12 +408,10 @@ void CNF::load_state(SimpleInFile& f)
 
 void CNF::test_all_clause_attached() const
 {
-#ifdef DEBUG_ATTACH_MORE
     test_all_clause_attached(longIrredCls);
     for(const vector<ClOffset>& l: longRedCls) {
         test_all_clause_attached(l);
     }
-#endif
 }
 
 void CNF::test_all_clause_attached(const vector<ClOffset>& offsets) const
@@ -469,7 +467,6 @@ bool CNF::normClauseIsAttached(const ClOffset offset) const
 
 void CNF::find_all_attach() const
 {
-#ifdef SLOW_DEBUG
     for (size_t i = 0; i < watches.size(); i++) {
         const Lit lit = Lit::toLit(i);
         for (uint32_t i2 = 0; i2 < watches[lit].size(); i2++) {
@@ -519,7 +516,6 @@ void CNF::find_all_attach() const
     for(auto& lredcls: longRedCls) {
         find_all_attach(lredcls);
     }
-#endif
 }
 
 void CNF::find_all_attach(const vector<ClOffset>& cs) const
