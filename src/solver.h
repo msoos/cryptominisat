@@ -84,7 +84,7 @@ class Solver : public Searcher
         bool add_clause_outer(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
 
-        lbool solve_with_assumptions(const vector<Lit>* _assumptions = NULL);
+        lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data);
 
@@ -256,7 +256,7 @@ class Solver : public Searcher
         vector<std::pair<string, string> > sql_tags;
 
         void check_config_parameters() const;
-        void handle_found_solution(const lbool status);
+        void handle_found_solution(const lbool status, const bool only_indep_solution);
         void add_every_combination_xor(const vector<Lit>& lits, bool attach, bool addDrat);
         void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
@@ -288,7 +288,7 @@ class Solver : public Searcher
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
-        void extend_solution();
+        void extend_solution(const bool only_indep_solution);
         void check_too_many_low_glues();
         bool adjusted_glue_cutoff_if_too_many = false;
 
