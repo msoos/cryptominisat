@@ -2276,14 +2276,6 @@ lbool Searcher::solve(
     #ifdef USE_GAUSS
     clearEnGaussMatrixes();
     {
-        //We MUST do this because binary XORs can be here!!
-        XorFinder xorfinder(NULL, solver);
-        ok = xorfinder.add_new_truths_from_xors(xorclauses);
-        if (!ok) {
-            status = l_False;
-            goto end;
-        }
-
         MatrixFinder finder(solver);
         ok = finder.findMatrixes();
         if (!ok) {
