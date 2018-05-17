@@ -559,9 +559,7 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     for(size_t i = 0;i < this_xors.size(); i++) {
         Xor& x = this_xors[i];
         solver->clean_xor_vars_no_prop(x.get_vars(), x.rhs);
-        if (x.size() > 2 ||
-            (x.size() == 2 && (out_changed_occur != NULL))
-        ) {
+        if (x.size() > 2) {
             this_xors[i2] = this_xors[i];
             i2++;
             continue;
@@ -594,21 +592,28 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
             }
 
             case 2: {
-                //cannot do it during occur -- the propagation would be WRONG inside add_clause_int!!
-                if (out_changed_occur == NULL) {
-                    //RHS == 1 means both same is not allowed
-                    vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
-                    solver->add_clause_int(lits, true, ClauseStats(), true);
-                    if (!solver->ok) {
-                        goto end;
-                    }
-                    lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
-                    solver->add_clause_int(lits, true, ClauseStats(), true);
-                    if (!solver->ok) {
-                        goto end;
-                    }
-                    break;
+                //RHS == 1 means both same is not allowed
+                vector<Lit> lits{Lit(x[0], false), Lit(x[1], true^x.rhs)};
+                solver->add_clause_int(lits, true, ClauseStats(), out_changed_occur != NULL);
+                if (!solver->ok) {
+                    goto end;
                 }
+                lits = {Lit(x[0], true), Lit(x[1], false^x.rhs)};
+                solver->add_clause_int(lits, true, ClauseStats(), out_changed_occur != NULL);
+                if (!solver->ok) {
+                    goto end;
+                }
+                if (out_changed_occur) {
+                    solver->ok = solver->propagate_occur();
+                } else {
+                    solver->ok = solver->propagate<true>().isNULL();
+                }
+
+                if (out_changed_occur) {
+                    out_changed_occur->push_back(Lit(x[0], false));
+                    out_changed_occur->push_back(Lit(x[1], false));
+                }
+                break;
             }
 
             default: {
