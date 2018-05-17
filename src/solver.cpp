@@ -1323,6 +1323,8 @@ lbool Solver::solve_with_assumptions(
         }
         goto end;
     }
+    assert(prop_at_head());
+    assert(okay());
 
     //Clean up as a startup
     datasync->rebuild_bva_map();
@@ -1706,11 +1708,13 @@ bool Solver::execute_inprocess_strategy(
             || cpuTime() > conf.maxTime
             || must_interrupt_asap()
             || nVars() == 0
-            || !ok
+            || !okay()
         ) {
             return ok;
         }
         assert(watches.get_smudged_list().empty());
+        assert(prop_at_head());
+        assert(okay());
         check_wrong_attach();
         #ifdef SLOW_DEBUG
         check_stats();

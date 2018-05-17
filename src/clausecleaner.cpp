@@ -269,6 +269,8 @@ void ClauseCleaner::clean_clauses_post()
 void ClauseCleaner::remove_and_clean_all()
 {
     double myTime = cpuTime();
+    assert(solver->okay());
+    assert(solver->prop_at_head());
 
     clean_implicit_clauses();
 

@@ -526,7 +526,11 @@ inline void Solver::setConf(const SolverConf& _conf)
 
 inline bool Solver::prop_at_head() const
 {
-    return qhead == trail.size();
+    return qhead == trail.size()
+//     #ifdef USE_GAUSS
+//     && gqhead == trail.size()
+//     #endif
+    ;
 }
 
 inline lbool Solver::model_value (const Lit p) const
