@@ -152,7 +152,12 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         independent_vars.swap(parser.independent_vars);
     }
 
-    if (!independent_vars.empty()) {
+    if (independent_vars.empty()) {
+        if (only_indep_solution) {
+            cout << "ERROR: only independent vars are requested in the solution, but no independent vars have been set!" << endl;
+            exit(-1);
+        }
+    } else {
         solver2->set_independent_vars(&independent_vars);
         cout << "c Independent vars set: ";
         for(size_t i = 0; i < independent_vars.size(); i++) {
