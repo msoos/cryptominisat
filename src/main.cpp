@@ -276,12 +276,6 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     #endif
-    ("maple", po::value(&conf.maple)->default_value(conf.maple)
-        , "Use maple-type variable picking sometimes")
-    ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
-        , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
-    ("maplemorebump", po::value(&conf.more_maple_bump_high_glue)->default_value(conf.more_maple_bump_high_glue)
-        , "Bump variable usefulness more when glue is HIGH")
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
@@ -353,6 +347,12 @@ void Main::add_supported_options()
         , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
+    ("maple", po::value(&conf.maple)->default_value(conf.maple)
+        , "Use maple-type variable picking sometimes")
+    ("maplemod", po::value(&conf.modulo_maple_iter)->default_value(conf.modulo_maple_iter)
+        , "Use maple N-1 of N rounds. Normally, N is 2, so used every other round. Set to 3 so it will use maple 2/3rds of the time.")
+    ("maplemorebump", po::value(&conf.more_maple_bump_high_glue)->default_value(conf.more_maple_bump_high_glue)
+        , "Bump variable usefulness more when glue is HIGH")
     ;
 
 
