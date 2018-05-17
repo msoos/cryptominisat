@@ -130,9 +130,38 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    independent_vars.swap(parser.independent_vars);
+    if (!independent_vars_str.empty() && !parser.independent_vars.empty()) {
+        cerr << "ERROR! Independent vars set in console but also in CNF." << endl;
+        exit(-1);
+    }
+
+    if (!independent_vars_str.empty()) {
+        assert(independent_vars.empty());
+
+        std::stringstream ss(independent_vars_str);
+        uint32_t i;
+        while (ss >> i)
+        {
+            const uint32_t var = i-1;
+            independent_vars.push_back(var);
+
+            if (ss.peek() == ',' || ss.peek() == ' ')
+                ss.ignore();
+        }
+    } else {
+        independent_vars.swap(parser.independent_vars);
+    }
+
     if (!independent_vars.empty()) {
         solver2->set_independent_vars(&independent_vars);
+        cout << "c Independent vars set: ";
+        for(size_t i = 0; i < independent_vars.size(); i++) {
+            const uint32_t v = independent_vars[i];
+            cout << v+1;
+            if (i+1 != independent_vars.size())
+                cout << ",";
+        }
+        cout << endl;
     }
     call_after_parse();
 
@@ -626,6 +655,10 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
         , "The maximum for scc search depth")
+    ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
+        , "Independent vars, separated by comma")
+    ("onlyindepsol", po::value(&only_indep_solution)->default_value(only_indep_solution)
+        , "Independent vars, separated by comma")
     ;
 
 #ifdef USE_GAUSS
@@ -1178,7 +1211,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve();
+        ret = solver->solve(NULL, only_indep_solution);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
