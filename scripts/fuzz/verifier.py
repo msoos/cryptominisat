@@ -131,6 +131,8 @@ class solution_parser:
                 else:
                     f.write("-%d 0\n" % i)
 
+        print("-> added partial solution to temporary CNF file %s" % tmpfname)
+
         # execute with the other solver
         toexec = "../../build/tests/minisat/minisat -verb=0 %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
