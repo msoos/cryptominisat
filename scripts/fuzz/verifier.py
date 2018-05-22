@@ -165,6 +165,8 @@ class solution_parser:
             exit(-1)
             return False
 
+        print("OK, other solver found a solution using the partial solution")
+
         return True
 
     def check_unsat(self, fname):
