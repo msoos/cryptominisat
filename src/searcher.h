@@ -158,6 +158,7 @@ class Searcher : public HyperEngine
             order_heap_vsids.clear();
             order_heap_maple.clear();
         }
+        template<bool update_bogoprops>
         void bump_cl_act(Clause* cl);
         void simple_create_learnt_clause(
             PropBy confl,
@@ -250,6 +251,7 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
+        template<bool update_bogoprops>
         void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
@@ -396,7 +398,8 @@ class Searcher : public HyperEngine
 
         //Clause activites
         double cla_inc;
-        void decayClauseAct();
+
+        template<bool update_bogoprops> void decayClauseAct();
         unsigned guess_clause_array(
             const ClauseStats& glue
             , const uint32_t backtrack_lev
@@ -488,8 +491,12 @@ inline void Searcher::insert_var_order_all(const uint32_t x)
     }
 }
 
+template<bool update_bogoprops>
 inline void Searcher::bump_cl_act(Clause* cl)
 {
+    if (update_bogoprops)
+        return;
+
     assert(!cl->getRemoved());
 
     double new_val = cla_inc + (double)cl->stats.activity;
@@ -512,12 +519,13 @@ inline void Searcher::bump_cl_act(Clause* cl)
     }
 }
 
+template<bool update_bogoprops>
 inline void Searcher::decayClauseAct()
 {
+    if (update_bogoprops)
+        return;
+
     cla_inc *= (1 / conf.clause_decay);
-}
-
-
 }
 
 inline bool Searcher::pickPolarity(const uint32_t var)

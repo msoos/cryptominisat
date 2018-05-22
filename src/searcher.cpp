@@ -483,11 +483,11 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     cl->stats.last_touched = sumConflicts;
                 } else if (cl->stats.which_red_array == 2) {
                     #ifndef STATS_NEEDED
-                    bump_cl_act(cl);
+                    bump_cl_act<update_bogoprops>(cl);
                     #endif
                 }
                 #ifdef STATS_NEEDED
-                bump_cl_act(cl);
+                bump_cl_act<update_bogoprops>(cl);
                 #endif
             }
 
@@ -1545,6 +1545,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.glueHist.push(glue);
 }
 
+template<bool update_bogoprops>
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
 {
     switch (learnt_clause.size()) {
@@ -1578,7 +1579,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            bump_cl_act(cl);
+            bump_cl_act<update_bogoprops>(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -1857,7 +1858,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_decision_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
-    attach_and_enqueue_learnt_clause(cl);
+    attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
 
     //Add decision-based clause
     if (!update_bogoprops
@@ -1874,14 +1875,14 @@ bool Searcher::handle_conflict(const PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
         cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), decisionLevel());
-        attach_and_enqueue_learnt_clause(cl, false);
+        attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 
     if (!update_bogoprops) {
         if (VSIDS) {
             varDecayActivity();
         }
-        decayClauseAct();
+        decayClauseAct<update_bogoprops>();
     }
 
     return true;
