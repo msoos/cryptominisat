@@ -29,7 +29,6 @@ from random import choice
 import optparse
 import glob
 import resource
-import locale
 from verifier import *
 from functools import partial
 
@@ -619,7 +618,7 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
-        self.this_gauss_on = False # don't do gauss on preproc
+        self.this_gauss_on = False  # don't do gauss on preproc
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
