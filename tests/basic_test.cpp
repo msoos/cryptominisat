@@ -906,6 +906,54 @@ TEST(propagate, prop_complex)
     EXPECT_EQ(lits.size(), 5);
 }
 
+TEST(independent, indep1)
+{
+    SolverConf conf;
+    conf.simplify_at_startup = true;
+    SATSolver s(&conf);
+
+    s.new_vars(30);
+    s.add_clause(str_to_cl("1, 2, 3, 4"));
+    s.add_clause(str_to_cl("-5, 6"));
+
+    vector<uint32_t> x{4U};
+    s.set_independent_vars(&x);
+
+    lbool ret = s.solve(NULL, true);
+    EXPECT_EQ(ret, l_True);
+    EXPECT_EQ(s.get_model()[0], l_Undef);
+    EXPECT_EQ(s.get_model()[1], l_Undef);
+    EXPECT_NE(s.get_model()[4], l_Undef);
+
+    ret = s.solve();
+    EXPECT_EQ(ret, l_True);
+    EXPECT_NE(s.get_model()[0], l_Undef);
+    EXPECT_NE(s.get_model()[1], l_Undef);
+    EXPECT_NE(s.get_model()[4], l_Undef);
+}
+
+TEST(independent, indep2)
+{
+    SolverConf conf;
+    conf.simplify_at_startup = true;
+    SATSolver s(&conf);
+
+    s.new_vars(30);
+    s.add_clause(str_to_cl("1, 2, 3, 4"));
+    s.add_clause(str_to_cl("-5, 6"));
+
+    vector<uint32_t> x{0U,1U,2U,3U,4U,5U};
+    s.set_independent_vars(&x);
+
+    lbool ret = s.solve(NULL, true);
+    EXPECT_EQ(ret, l_True);
+    for(uint32_t i = 0; i < 6; i++) {
+        EXPECT_NE(s.get_model()[i], l_Undef);
+    }
+    EXPECT_EQ(s.get_model()[6], l_Undef);
+}
+
+
 
 TEST(xor_recovery, find_1_3_xor)
 {
