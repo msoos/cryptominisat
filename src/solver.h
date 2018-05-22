@@ -174,9 +174,6 @@ class Solver : public Searcher
         void new_var(const bool bva = false, const uint32_t orig_outer = std::numeric_limits<uint32_t>::max()) override;
         void new_vars(const size_t n) override;
         void bva_changed();
-        #ifdef USE_GAUSS
-        bool init_all_matrixes();
-        #endif
 
         //Attaching-detaching clauses
         void attachClause(
