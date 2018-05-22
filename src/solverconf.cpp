@@ -64,8 +64,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
         , blocking_restart_multip(1.4)
-        , broken_glue_restart(false)
-        , local_glue_multiplier(0.90)
+        , broken_glue_restart(true)
+        , local_glue_multiplier(0.80)
         , shortTermHistorySize (50)
         , lower_bound_for_blocking_restart(10000)
         , ratio_glue_geom(5)
@@ -130,7 +130,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #ifdef USE_GAUSS
         , min_bva_gain(2)
         #else
-        , min_bva_gain(64)
+        , min_bva_gain(32)
         #endif
         , bva_limit_per_call(150000)
         , bva_also_twolit_diff(true)
@@ -141,7 +141,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doProbe          (true)
         , doIntreeProbe    (true)
         , probe_bogoprops_time_limitM  (800ULL)
-        , intree_time_limitM(1800ULL)
+        , intree_time_limitM(1200ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
