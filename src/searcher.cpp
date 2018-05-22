@@ -1940,7 +1940,7 @@ lbool Searcher::burst_search()
     if (conf.verbosity) {
         cout
         << "c "
-        << conf.burst_search_len << "-long burst search "
+        << conf.burst_search_len << "-long burst search finished "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
         << solver->conf.print_times(time_used)
