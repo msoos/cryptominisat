@@ -279,7 +279,7 @@ class Tester:
             cmd += "--maxgaussdepth 0 "
 
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
-        cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
+        cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             if random.choice([True, True, True, False]):
@@ -289,7 +289,7 @@ class Tester:
             cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
             cmd += "--mbackt %d " % random.choice([0, 1])
-            cmd += "--varelimover %d " % random.gammavariate(1,20)
+            cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--maple %d " % random.choice([0, 1])
