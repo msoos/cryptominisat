@@ -278,6 +278,7 @@ class Tester:
         if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
             cmd += "--maxgaussdepth 0 "
 
+        # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
