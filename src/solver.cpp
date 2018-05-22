@@ -1182,6 +1182,24 @@ void Solver::extend_solution(const bool only_indep_solution)
     check_stats();
     #endif
 
+    #ifdef SLOW_DEBUG
+    //Check that independent vars are all assigned
+    if (conf.independent_vars) {
+        for(uint32_t outside_var: *conf.independent_vars) {
+            uint32_t outer_var = map_to_with_bva(outside_var);
+            outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = map_outer_to_inter(outer_var);
+
+            assert(varData[int_var].removed == Removed::none ||
+                varData[int_var].removed == Removed::decomposed);
+
+            if (int_var < nVars() && varData[int_var].removed == Removed::none) {
+                assert(model[int_var] != l_Undef);
+            }
+        }
+    }
+    #endif
+
     const double myTime = cpuTime();
     model = back_number_solution_from_inter_to_outer(model);
     full_model = back_number_solution_from_inter_to_outer(full_model);
@@ -1195,13 +1213,21 @@ void Solver::extend_solution(const bool only_indep_solution)
     if (!only_indep_solution) {
         SolutionExtender extender(this, occsimplifier);
         extender.extend();
+    } else {
+        solver->varReplacer->extend_model_already_set();
     }
 
     model = map_back_to_without_bva(model);
     if (only_indep_solution) {
         assert(conf.independent_vars);
-        for(uint32_t v: *conf.independent_vars) {
-            assert(model[v] != l_Undef);
+        for(uint32_t var: *conf.independent_vars) {
+            if (model[var] == l_Undef) {
+                cout << "ERROR: varible " << var+1 << " is set as independent but is unset!" << endl;
+                cout << "NOTE: var " << var + 1 << " has removed value: "
+                << removed_type_to_string(varData[var].removed)
+                << " and is set to " << value(var) << endl;
+            }
+            assert(model[var] != l_Undef);
         }
     }
 

@@ -517,33 +517,7 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
-inline bool Searcher::check_order_heap_sanity() const
-{
-    for(size_t i = 0; i < nVars(); i++)
-    {
-        if (varData[i].removed == Removed::none
-            && value(i) == l_Undef)
-        {
-            if (!order_heap_vsids.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in VSIDS heap."
-                << " value: " << value(i)
-                << " removed: " << removed_type_to_string(varData[i].removed)
-                << endl;
-                return false;
-            }
-            if (!order_heap_maple.inHeap(i)) {
-                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
-                << " value: " << value(i)
-                << " removed: " << removed_type_to_string(varData[i].removed)
-                << endl;
-                return false;
-            }
-        }
-    }
-    assert(order_heap_vsids.heap_property());
-    assert(order_heap_maple.heap_property());
 
-    return true;
 }
 
 inline bool Searcher::pickPolarity(const uint32_t var)

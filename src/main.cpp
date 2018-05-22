@@ -275,7 +275,11 @@ void Main::printResultFunc(
         } else {
             const uint32_t num_undef = print_model(os, solver);
             if (num_undef && !toFile && conf.verbosity) {
-               cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                if (only_indep_solution) {
+                    cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the independent set's values: '--onlyindep'" << endl;
+                } else {
+                   cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                }
             }
         }
     }

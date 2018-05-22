@@ -1154,6 +1154,7 @@ lbool Searcher::search()
     assert(ok);
     #ifdef SLOW_DEBUG
     check_no_duplicate_lits_anywhere();
+    check_order_heap_sanity();
     #endif
     const double myTime = cpuTime();
 
@@ -2436,9 +2437,13 @@ void Searcher::finish_up_solve(const lbool status)
 
     if (status == l_True) {
         double myTime = cpuTime();
+        #ifdef SLOW_DEBUG
+        check_order_heap_sanity();
+        #endif
         model = assigns;
         full_model = assigns;
         if (conf.greedy_undef) {
+            assert(false && "Greedy undef is broken");
             vector<uint32_t> trail_lim_vars;
             for(size_t i = 0; i < decisionLevel(); i++) {
                 uint32_t at = trail_lim[i];
@@ -3437,6 +3442,54 @@ void Searcher::cancelUntil(uint32_t level)
     << " sublevel: " << trail.size()-1
     << endl;
     #endif
+}
+
+inline bool Searcher::check_order_heap_sanity() const
+{
+    if (conf.independent_vars) {
+        for(uint32_t outside_var: *conf.independent_vars) {
+            uint32_t outer_var = map_to_with_bva(outside_var);
+            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = map_outer_to_inter(outer_var);
+
+            assert(varData[int_var].removed == Removed::none ||
+                varData[int_var].removed == Removed::decomposed);
+
+            if (int_var < nVars() &&
+                varData[int_var].removed == Removed::none &&
+                value(int_var) == l_Undef
+            ) {
+                order_heap_vsids.inHeap(int_var);
+                order_heap_maple.inHeap(int_var);
+            }
+        }
+    }
+
+    for(size_t i = 0; i < nVars(); i++)
+    {
+        if (varData[i].removed == Removed::none
+            && value(i) == l_Undef)
+        {
+            if (!order_heap_vsids.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+            if (!order_heap_maple.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+        }
+    }
+    assert(order_heap_vsids.heap_property());
+    assert(order_heap_maple.heap_property());
+
+    return true;
 }
 
 #ifdef USE_GAUSS
