@@ -133,8 +133,9 @@ install:
 # lit
     # NOTE we probably should NOT use 'sudo' because Travis uses virtualenvs
     # curl --silent --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py | sudo python
-    # curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    # python get-pip.py
+
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then python get-pip.py; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
   - pip install --user lit
   - lit --version
