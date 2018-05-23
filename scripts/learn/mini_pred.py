@@ -181,11 +181,10 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
-        if True:
-            plt.figure()
-            plot_confusion_matrix(
-                cnf_matrix, classes=names,
-                title='Confusion matrix, without normalization')
+        plt.figure()
+        plot_confusion_matrix(
+            cnf_matrix, classes=names,
+            title='Confusion matrix, without normalization')
 
         # Plot normalized confusion matrix
         plt.figure()
