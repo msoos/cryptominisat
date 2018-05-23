@@ -78,6 +78,17 @@ install(CODE "execute_process(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
+#todo uninstall
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_target(uninstall_pycyrptosat
+        COMMAND Get-Content files.txt | ForEach-Object {Remove-Item $_ -Recurse -Force}
+    )
+else()
+    add_custom_target(uninstall_pycyrptosat
+        COMMAND cat files.txt | xargs rm -f
+    )
+endif()
+
 if (ENABLE_TESTING AND NOT APPLE)
     add_test(NAME python_interface_test
              COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} test
