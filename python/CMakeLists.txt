@@ -37,6 +37,7 @@ string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})
 
 message(STATUS "Python CFLAGS:  '${PY_C_CONFIG}'")
 message(STATUS "Python LDFLAGS: '${PY_LD_CONFIG}'")
+message(STATUS "Python module will be installed to : '${CMAKE_INSTALL_PREFIX}'")
 
 
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
