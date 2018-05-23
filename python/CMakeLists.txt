@@ -37,6 +37,7 @@ string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})
 
 message(STATUS "Python CFLAGS:  '${PY_C_CONFIG}'")
 message(STATUS "Python LDFLAGS: '${PY_LD_CONFIG}'")
+message(STATUS "Python module will be installed to : '${CMAKE_INSTALL_PREFIX}'")
 
 
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
@@ -60,7 +61,7 @@ add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=${CMAKE_INSTALL_PREFIX} --record files.txt
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
