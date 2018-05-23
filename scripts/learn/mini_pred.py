@@ -197,7 +197,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     if False:
         calc_cross_val()
 
-    if options.dot is not None:
+    if options.dot is not None and final:
         output_to_dot(clf, features, names[0])
 
     return best_features
