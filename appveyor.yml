@@ -4,7 +4,6 @@ branches:
   only:
     - master
     - appveyor_debug
-    - multilevel_maple
 
 image:
   - Visual Studio 2015
