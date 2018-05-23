@@ -114,7 +114,30 @@ def check_too_large_or_nan_values(df):
             index += 1
 
 
+def get_code(tree, feature_names):
+    left = tree.tree_.children_left
+    right = tree.tree_.children_right
+    threshold = tree.tree_.threshold
+    features = [feature_names[i] for i in tree.tree_.feature]
+    value = tree.tree_.value
+
+    def recurse(left, right, threshold, features, node):
+        if (threshold[node] != -2):
+            print("if ( " + features[node] + " <= " + str(threshold[node]) + " ) {")
+            if left[node] != -1:
+                recurse(left, right, threshold, features, left[node])
+            print("} else {")
+            if right[node] != -1:
+                recurse(left, right, threshold, features, right[node])
+            print("}")
+        else:
+            print("return " + str(value[node]))
+
+    recurse(left, right, threshold, features, 0)
+
+
 def one_classifier(df, features, to_predict, names, w_name, w_number, final):
+    print("================ predicting %s ================" % to_predict)
     print("-> Number of features  :", len(features))
     print("-> Number of datapoints:", df.shape)
     print("-> Predicting          :", to_predict)
@@ -145,8 +168,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         importances = clf.feature_importances_
         std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
-        indices = indices[:20]
-        myrange = min(X_train.shape[1], 20)
+        indices = indices[:10]
+        myrange = min(X_train.shape[1], 10)
 
         # Print the feature ranking
         print("Feature ranking:")
@@ -164,6 +187,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
                 , yerr=std[indices])
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
+    else:
+        get_code(clf, features)
 
     print("Calculating scores....")
     y_pred = clf.predict(X_test)
@@ -273,33 +298,46 @@ def learn(fname):
     if True:
         feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
         best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
-                                    class_names, "longer", 10,
+                                    class_names, "longer", 13,
                                     False)
         if options.show:
             plt.show()
 
-        best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
-                                    class_names, "longer", 3,
-                                    True)
+        one_classifier(df, best_feats, "x.lifetime_cut",
+                       class_names, "longer", 3,
+                       True)
         if options.show:
             plt.show()
 
-    exit(0)
     if True:
         feat_less = rem_features(features, ["rdb3", "rdb4"])
         df2 = df[df["x.lifetime"] > cuts[1]]
 
-        #one_classifier(df2, features, "x.lifetime_cut2", class_names2, "middle", 20)
-        one_classifier(df2, features, "x.lifetime_cut2", class_names2, "middle", 3)
+        best_feats = one_classifier(df2, feat_less, "x.lifetime_cut2",
+                                    class_names2, "middle", 20,
+                                    False)
+        if options.show:
+            plt.show()
+
+        one_classifier(df2, best_feats, "x.lifetime_cut2",
+                       class_names2, "middle", 3,
+                       True)
+
         if options.show:
             plt.show()
 
     if True:
         df3 = df[df["x.lifetime"] > cuts2[1]]
 
-        one_classifier(df3, features, "x.lifetime_cut3", class_names3, "middle2", 3)
+        best_feats = one_classifier(df3, features, "x.lifetime_cut3",
+                                    class_names3, "middle2", 3,
+                                    False)
         if options.show:
             plt.show()
+
+        one_classifier(df3, best_feats, "x.lifetime_cut3",
+                       class_names3, "middle2", 3,
+                       True)
 
 
 if __name__ == "__main__":
