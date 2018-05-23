@@ -310,9 +310,16 @@ fi
 echo "MYPYTHON is '${MYPYTHON}'"
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
-    cd pycryptosat/tests/
-    ${MYPYTHON} test_pycryptosat.py
-    cd ../..
+
+(cd pycryptosat/tests/
+echo "import sys
+from __future__ import print_function;
+print(sys.path)
+" > check_path.py
+${MYPYTHON} check_path.py
+${MYPYTHON} test_pycryptosat.py
+)
+
 fi
 
 case $CMS_CONFIG in
