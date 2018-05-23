@@ -51,14 +51,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
 
-add_custom_target(mypylib
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
-)
-
-add_dependencies(mypylib
-    libcryptominisat5
-)
-
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ARGS setup.py build_ext --inplace --rpath ../lib
