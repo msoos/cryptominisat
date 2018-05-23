@@ -298,7 +298,7 @@ def learn(fname):
     if True:
         feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
         best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
-                                    class_names, "longer", 13,
+                                    class_names, "longer", 17,
                                     False)
         if options.show:
             plt.show()
