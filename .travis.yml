@@ -138,6 +138,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
   - pip install --user lit
+  - export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
   - lit --version
   - which lit
 #submodules
