@@ -348,7 +348,7 @@ if __name__ == "__main__":
                       dest="verbose", help="Print more output")
     parser.add_option("--cross", action="store_true", default=False,
                       dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
-    parser.add_option("--depth", default=5, type=int,
+    parser.add_option("--depth", default=6, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
