@@ -26,6 +26,7 @@ import pickle
 import re
 import pandas as pd
 import numpy as np
+import os.path
 
 from sklearn.model_selection import train_test_split
 import sklearn.tree
@@ -55,6 +56,10 @@ from sklearn.preprocessing import LabelEncoder
 
 class QueryHelper:
     def __init__(self, dbfname):
+        if not os.path.isfile(dbfname):
+            print("ERROR: Database file '%s' does not exist" % dbfname)
+            exit(-1)
+
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
