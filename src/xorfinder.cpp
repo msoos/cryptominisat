@@ -508,22 +508,20 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     #if defined(SLOW_DEBUG) || defined(XOR_DEBUG)
     //Make sure none is 2.
     assert(toClear.empty());
-    for(const Xor& x: xors) {
+    for(const Xor& x: this_xors) {
         for(uint32_t v: x) {
-            if (solver->seen[v] == 0) {
+            if (occcnt[v] == 0) {
                 toClear.push_back(Lit(v, false));
             }
 
             //Don't roll around
-            if (solver->seen[v] != std::numeric_limits<uint16_t>::max()) {
-                solver->seen[v]++;
-            }
+            occcnt[v]++;
         }
     }
 
     for(const Lit c: toClear) {
-        assert(solver->seen[c.var()] != 2);
-        solver->seen[c.var()] = 0;
+        assert(occcnt[c.var()] != 2);
+        occcnt[c.var()] = 0;
     }
     toClear.clear();
     #endif
