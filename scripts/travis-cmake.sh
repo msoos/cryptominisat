@@ -312,8 +312,8 @@ echo "MYPYTHON is '${MYPYTHON}'"
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
 
 (cd pycryptosat/tests/
-echo "import sys
-from __future__ import print_function;
+echo "from __future__ import print_function;
+import sys
 print(sys.path)
 " > check_path.py
 ${MYPYTHON} check_path.py
