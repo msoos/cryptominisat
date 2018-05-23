@@ -34,10 +34,10 @@ from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
 cuts = [-1, 10000, 1000000000000]
-class_names2 = ["middle", "longer"]
+class_names2 = ["middle", "forever"]
 cuts2 = [-1, 30000, 1000000000000]
-class_names3 = ["middle2", "forever"]
-cuts3 = [-1, 60000, 1000000000000]
+#class_names3 = ["middle2", "forever"]
+#cuts3 = [-1, 60000, 1000000000000]
 
 
 def output_to_dot(clf, features, nameextra):
@@ -273,10 +273,10 @@ def learn(fname):
         cuts2,
         labels=class_names2)
 
-    df["x.lifetime_cut3"] = pd.cut(
-        df["x.lifetime"],
-        cuts3,
-        labels=class_names3)
+    #df["x.lifetime_cut3"] = pd.cut(
+        #df["x.lifetime"],
+        #cuts3,
+        #labels=class_names3)
 
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
@@ -314,30 +314,30 @@ def learn(fname):
         df2 = df[df["x.lifetime"] > cuts[1]]
 
         best_feats = one_classifier(df2, feat_less, "x.lifetime_cut2",
-                                    class_names2, "middle", 20,
+                                    class_names2, "middle", 30,
                                     False)
         if options.show:
             plt.show()
 
         one_classifier(df2, best_feats, "x.lifetime_cut2",
-                       class_names2, "middle", 3,
+                       class_names2, "middle", 4,
                        True)
 
         if options.show:
             plt.show()
 
-    if True:
-        df3 = df[df["x.lifetime"] > cuts2[1]]
+    #if True:
+        #df3 = df[df["x.lifetime"] > cuts2[1]]
 
-        best_feats = one_classifier(df3, features, "x.lifetime_cut3",
-                                    class_names3, "middle2", 3,
-                                    False)
-        if options.show:
-            plt.show()
+        #best_feats = one_classifier(df3, features, "x.lifetime_cut3",
+                                    #class_names3, "middle2", 20,
+                                    #False)
+        #if options.show:
+            #plt.show()
 
-        one_classifier(df3, best_feats, "x.lifetime_cut3",
-                       class_names3, "middle2", 3,
-                       True)
+        #one_classifier(df3, best_feats, "x.lifetime_cut3",
+                       #class_names3, "middle2", 8,
+                       #True)
 
 
 if __name__ == "__main__":
