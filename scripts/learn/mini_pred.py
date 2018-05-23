@@ -358,8 +358,6 @@ if __name__ == "__main__":
                       dest="show", help="Show visual graphs")
     parser.add_option("--check", action="store_true", default=False,
                       dest="check_row_data", help="Check row data for NaN or float overflow")
-    parser.add_option("--imp", action="store_true", default=False,
-                      dest="importances", help="Calculate importances")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
 
