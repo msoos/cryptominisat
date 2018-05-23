@@ -152,7 +152,12 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         independent_vars.swap(parser.independent_vars);
     }
 
-    if (!independent_vars.empty()) {
+    if (independent_vars.empty()) {
+        if (only_indep_solution) {
+            cout << "ERROR: only independent vars are requested in the solution, but no independent vars have been set!" << endl;
+            exit(-1);
+        }
+    } else {
         solver2->set_independent_vars(&independent_vars);
         cout << "c Independent vars set: ";
         for(size_t i = 0; i < independent_vars.size(); i++) {
@@ -270,7 +275,11 @@ void Main::printResultFunc(
         } else {
             const uint32_t num_undef = print_model(os, solver);
             if (num_undef && !toFile && conf.verbosity) {
-               cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                if (only_indep_solution) {
+                    cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the independent set's values: '--onlyindep'" << endl;
+                } else {
+                   cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                }
             }
         }
     }
@@ -657,7 +666,7 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
         , "Independent vars, separated by comma")
-    ("onlyindepsol", po::value(&only_indep_solution)->default_value(only_indep_solution)
+    ("onlyindep", po::bool_switch(&only_indep_solution)
         , "Independent vars, separated by comma")
     ;
 

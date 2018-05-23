@@ -29,7 +29,6 @@ from random import choice
 import optparse
 import glob
 import resource
-import locale
 from verifier import *
 from functools import partial
 
@@ -88,6 +87,9 @@ def set_up_parser():
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
+    parser.add_option("--indep", dest="only_indep", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing independent variables")
 
     parser.add_option("--maxth", "-m", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
@@ -203,6 +205,8 @@ class Tester:
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.clid_added = False
+        self.only_indep = False
+        self.indep_vars = []
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -278,8 +282,15 @@ class Tester:
         if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
             cmd += "--maxgaussdepth 0 "
 
-        cmd += "--presimp %d " % random.choice([1,1,1,1,1,1,1,0])
+        # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
+        cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+
+        if self.only_indep:
+            cmd += "--onlyindep "
+            cmd += "--indep "
+            cmd += ",".join(["%s" % x for x in self.indep_vars]) + " "
+
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             if random.choice([True, True, True, False]):
                 self.clid_added = True
@@ -288,7 +299,7 @@ class Tester:
             cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
             cmd += "--mbackt %d " % random.choice([0, 1])
-            cmd += "--varelimover %d " % random.gammavariate(1,20)
+            cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
             cmd += "--maple %d " % random.choice([0, 1])
@@ -506,7 +517,11 @@ class Tester:
             return True
 
         if not unsat:
-            self.sol_parser.test_found_solution(solution, checkAgainst)
+            if len(self.indep_vars) != 0:
+                self.sol_parser.indep_vars_solution_check(fname, self.indep_vars, solution)
+            else:
+                self.sol_parser.test_found_solution(solution, checkAgainst)
+
             return
 
         # it's UNSAT, let's check with DRAT
@@ -561,9 +576,16 @@ class Tester:
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
         if options.gauss:
             self.this_gauss_on = True
+            assert "autodisablegauss" in self.extra_opts_supported
+
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
         self.sqlitedbfname = None
         self.preproc = False
+        self.only_indep = random.choice([True, False, False, False, False]) and not self.drat
+
+        if options.only_indep:
+            self.drat = False
+            self.only_indep = True
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -586,7 +608,7 @@ class Tester:
         if status != 0:
             fuzzer_call_failed(fname)
 
-        if not self.drat:
+        if not self.drat and not self.only_indep:
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
@@ -598,6 +620,24 @@ class Tester:
         else:
             self.needDebugLib = False
             interspersed_fname = fname
+
+        # calculate indep vars
+        self.indep_vars = []
+        if self.only_indep:
+            max_vars = self.sol_parser.max_vars_in_file(fname)
+            assert max_vars > 0
+
+            self.indep_vars = []
+            myset = {}
+            for _ in range(random.randint(1, 50)):
+                x = random.randint(1, max_vars)
+                if x not in myset:
+                    self.indep_vars.append(x)
+                    myset[x] = 1
+
+            # don't do it for 0-length indep vars
+            if len(self.indep_vars) == 0:
+                self.only_indep = False
 
         self.check(fname=interspersed_fname, fname2=fname_drat)
 
@@ -616,13 +656,15 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
-        self.this_gauss_on = False # don't do gauss on preproc
+        self.this_gauss_on = False  # don't do gauss on preproc
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
         fname = unique_file("fuzzTest")
         self.drat = False
         self.preproc = True
+        self.only_indep = False
+        self.indep_vars = []
 
         # create the fuzz file
         cf = create_fuzz()

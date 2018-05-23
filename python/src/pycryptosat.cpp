@@ -32,7 +32,7 @@ THE SOFTWARE.
 using namespace CMSat;
 
 #define MODULE_NAME "pycryptosat"
-#define MODULE_DOC "CryptoSAT satisfiability solver."
+#define MODULE_DOC "CryptoMiniSAT satisfiability solver."
 
 // Compatibility between Python 2 and 3
 #if PY_MAJOR_VERSION >= 3

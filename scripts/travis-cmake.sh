@@ -87,18 +87,21 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
+                   -DCMAKE_INSTALL_PREFIX=/usr \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
+                   -DCMAKE_INSTALL_PREFIX=/usr \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL_PYTHON2)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DFORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
+                   -DCMAKE_INSTALL_PREFIX=/usr \
                    "${SOURCE_DIR}"
     ;;
 
@@ -106,6 +109,7 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DLARGEMEM:BOOL=ON \
+                   -DCMAKE_INSTALL_PREFIX=/usr \
                    "${SOURCE_DIR}"
     ;;
 
@@ -222,6 +226,7 @@ case $CMS_CONFIG in
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DUSE_GAUSS=ON \
+                   -DCMAKE_INSTALL_PREFIX=/usr \
                    "${SOURCE_DIR}"
     ;;
 
@@ -304,7 +309,7 @@ else
 fi
 echo "MYPYTHON is '${MYPYTHON}'"
 
-if [[ "$CMS_CONFIG" == "NORMAL" ]]; then
+if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
     cd pycryptosat/tests/
     ${MYPYTHON} test_pycryptosat.py
     cd ../..

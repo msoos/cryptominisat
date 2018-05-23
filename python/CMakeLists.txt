@@ -51,14 +51,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
 
-add_custom_target(mypylib
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} build
-)
-
-add_dependencies(mypylib
-    libcryptominisat5
-)
-
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ARGS setup.py build_ext --inplace --rpath ../lib
@@ -67,16 +59,21 @@ add_custom_command(OUTPUT ${OUTPUT}/timestamp
 add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
-# Make a distribution source package
-# not really working -- only adds the .py files, and the test
-add_custom_target(python_interface_dist_package
-                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --record files.txt
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=${CMAKE_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
+
+#todo uninstall
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_target(uninstall_pycyrptosat
+        COMMAND Get-Content files.txt | ForEach-Object {Remove-Item $_ -Recurse -Force}
+    )
+else()
+    add_custom_target(uninstall_pycyrptosat
+        COMMAND cat files.txt | xargs rm -f
+    )
+endif()
 
 if (ENABLE_TESTING AND NOT APPLE)
     add_test(NAME python_interface_test

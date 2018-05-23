@@ -26,6 +26,7 @@ import pickle
 import re
 import pandas as pd
 import numpy as np
+import os.path
 
 from sklearn.model_selection import train_test_split
 import sklearn.tree
@@ -55,6 +56,10 @@ from sklearn.preprocessing import LabelEncoder
 
 class QueryHelper:
     def __init__(self, dbfname):
+        if not os.path.isfile(dbfname):
+            print("ERROR: Database file '%s' does not exist" % dbfname)
+            exit(-1)
+
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
         self.runID = self.find_runID()
@@ -595,6 +600,8 @@ def transform(df):
         return row
 
     df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
+    df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
+    df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
     df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
 

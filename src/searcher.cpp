@@ -483,11 +483,11 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     cl->stats.last_touched = sumConflicts;
                 } else if (cl->stats.which_red_array == 2) {
                     #ifndef STATS_NEEDED
-                    bump_cl_act(cl);
+                    bump_cl_act<update_bogoprops>(cl);
                     #endif
                 }
                 #ifdef STATS_NEEDED
-                bump_cl_act(cl);
+                bump_cl_act<update_bogoprops>(cl);
                 #endif
             }
 
@@ -1154,6 +1154,7 @@ lbool Searcher::search()
     assert(ok);
     #ifdef SLOW_DEBUG
     check_no_duplicate_lits_anywhere();
+    check_order_heap_sanity();
     #endif
     const double myTime = cpuTime();
 
@@ -1544,6 +1545,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.glueHist.push(glue);
 }
 
+template<bool update_bogoprops>
 void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
 {
     switch (learnt_clause.size()) {
@@ -1577,7 +1579,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            bump_cl_act(cl);
+            bump_cl_act<update_bogoprops>(cl);
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -1856,7 +1858,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_decision_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
-    attach_and_enqueue_learnt_clause(cl);
+    attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
 
     //Add decision-based clause
     if (!update_bogoprops
@@ -1873,14 +1875,14 @@ bool Searcher::handle_conflict(const PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
         cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), decisionLevel());
-        attach_and_enqueue_learnt_clause(cl, false);
+        attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 
     if (!update_bogoprops) {
         if (VSIDS) {
             varDecayActivity();
         }
-        decayClauseAct();
+        decayClauseAct<update_bogoprops>();
     }
 
     return true;
@@ -1938,7 +1940,7 @@ lbool Searcher::burst_search()
     if (conf.verbosity) {
         cout
         << "c "
-        << conf.burst_search_len << "-long burst search "
+        << conf.burst_search_len << "-long burst search finished "
         << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
         << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
         << solver->conf.print_times(time_used)
@@ -2436,9 +2438,13 @@ void Searcher::finish_up_solve(const lbool status)
 
     if (status == l_True) {
         double myTime = cpuTime();
+        #ifdef SLOW_DEBUG
+        check_order_heap_sanity();
+        #endif
         model = assigns;
         full_model = assigns;
         if (conf.greedy_undef) {
+            assert(false && "Greedy undef is broken");
             vector<uint32_t> trail_lim_vars;
             for(size_t i = 0; i < decisionLevel(); i++) {
                 uint32_t at = trail_lim[i];
@@ -3437,6 +3443,54 @@ void Searcher::cancelUntil(uint32_t level)
     << " sublevel: " << trail.size()-1
     << endl;
     #endif
+}
+
+inline bool Searcher::check_order_heap_sanity() const
+{
+    if (conf.independent_vars) {
+        for(uint32_t outside_var: *conf.independent_vars) {
+            uint32_t outer_var = map_to_with_bva(outside_var);
+            outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
+            uint32_t int_var = map_outer_to_inter(outer_var);
+
+            assert(varData[int_var].removed == Removed::none ||
+                varData[int_var].removed == Removed::decomposed);
+
+            if (int_var < nVars() &&
+                varData[int_var].removed == Removed::none &&
+                value(int_var) == l_Undef
+            ) {
+                order_heap_vsids.inHeap(int_var);
+                order_heap_maple.inHeap(int_var);
+            }
+        }
+    }
+
+    for(size_t i = 0; i < nVars(); i++)
+    {
+        if (varData[i].removed == Removed::none
+            && value(i) == l_Undef)
+        {
+            if (!order_heap_vsids.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+            if (!order_heap_maple.inHeap(i)) {
+                cout << "ERROR var " << i+1 << " not in !VSIDS heap."
+                << " value: " << value(i)
+                << " removed: " << removed_type_to_string(varData[i].removed)
+                << endl;
+                return false;
+            }
+        }
+    }
+    assert(order_heap_vsids.heap_property());
+    assert(order_heap_maple.heap_property());
+
+    return true;
 }
 
 #ifdef USE_GAUSS
