@@ -600,6 +600,8 @@ def transform(df):
         return row
 
     df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
+    df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
+    df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
     df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
 
