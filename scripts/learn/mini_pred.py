@@ -168,8 +168,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         importances = clf.feature_importances_
         std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
-        indices = indices[:10]
-        myrange = min(X_train.shape[1], 10)
+        indices = indices[:options.top_num_features]
+        myrange = min(X_train.shape[1], options.top_num_features)
 
         # Print the feature ranking
         print("Feature ranking:")
@@ -362,6 +362,8 @@ if __name__ == "__main__":
                       dest="importances", help="Calculate importances")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
+    parser.add_option("--top", default=12, type=int,
+                      dest="top_num_features", help="Number of top features to take to generate the final predictor")
 
     (options, args) = parser.parse_args()
 
