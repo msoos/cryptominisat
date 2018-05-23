@@ -33,9 +33,11 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
-cuts = [-1, 20000, 1000000000000]
-class_names2 = ["middle", "forever"]
-cuts2 = [-1, 60000, 1000000000000]
+cuts = [-1, 10000, 1000000000000]
+class_names2 = ["middle", "longer"]
+cuts2 = [-1, 30000, 1000000000000]
+class_names3 = ["middle2", "forever"]
+cuts3 = [-1, 60000, 1000000000000]
 
 
 def output_to_dot(clf, features, nameextra):
@@ -101,7 +103,22 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-def one_classifier(df, features, to_predict, names, w_name, w_number):
+# to check for too large or NaN values:
+def check_too_large_or_nan_values(df):
+    features = df.columns.values.flatten().tolist()
+    index = 0
+    for index, row in df.iterrows():
+        for x, name in zip(row, features):
+            if not np.isfinite(x) or x > np.finfo(np.float32).max:
+                print("issue with data for features: ", name, x)
+            index += 1
+
+
+def one_classifier(df, features, to_predict, names, w_name, w_number, final):
+    print("-> Number of features  :", len(features))
+    print("-> Number of datapoints:", df.shape)
+    print("-> Predicting          :", to_predict)
+
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
@@ -110,26 +127,20 @@ def one_classifier(df, features, to_predict, names, w_name, w_number):
 
     t = time.time()
     # clf = sklearn.linear_model.LogisticRegression()
-    clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
-    #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
-    #clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
-
     # clf = sklearn.svm.SVC()
-
-    # to check for too large or NaN values:
-    if options.check_row_data:
-        index = 0
-        for index, row in X_train.iterrows():
-            for x, name in zip(row, features):
-                if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                    print("issue with data for features: ", name, x)
-                index += 1
+    if final:
+        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
+    else:
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
+        #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
     clf.fit(X_train, y_train, sample_weight=sample_weight)
 
     print("Training finished. T: %-3.2f" % (time.time() - t))
-    if options.importances:
+
+    best_features = []
+    if not final:
         importances = clf.feature_importances_
         std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
@@ -142,14 +153,14 @@ def one_classifier(df, features, to_predict, names, w_name, w_number):
         for f in range(myrange):
             print("%d. feature %s (%f)" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
+            best_features.append(features[indices[f]])
 
         # Plot the feature importances of the clf
         plt.figure()
         plt.title("Feature importances")
         plt.bar(range(myrange), importances[indices],
                 color="r", align="center"
-                , yerr=std[indices]
-                )
+                , yerr=std[indices])
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
 
@@ -189,6 +200,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number):
     if options.dot is not None:
         output_to_dot(clf, features, names[0])
 
+    return best_features
+
 
 def remove_old_clause_features(features):
     todel = []
@@ -201,9 +214,26 @@ def remove_old_clause_features(features):
         if options.verbose:
             print("Removing old clause feature:", x)
 
+
+def rem_features(feat, to_remove):
+    feat_less = list(feat)
+    todel = []
+    for feature in feat:
+        for rem in to_remove:
+            if rem in feature:
+                feat_less.remove(feature)
+                if options.verbose:
+                    print("Removing feature from feat_less:", feature)
+
+    return feat_less
+
+
 def learn(fname):
     with open(fname, "rb") as f:
         df = pickle.load(f)
+
+    if options.check_row_data:
+        check_too_large_or_nan_values(df)
 
     print("total samples: %5d" % df.shape[0])
 
@@ -218,54 +248,58 @@ def learn(fname):
         cuts2,
         labels=class_names2)
 
+    df["x.lifetime_cut3"] = pd.cut(
+        df["x.lifetime"],
+        cuts3,
+        labels=class_names3)
+
     features = df.columns.values.flatten().tolist()
-    features.remove("x.num_used")
-    features.remove("x.class")
-    features.remove("x.lifetime")
-    features.remove("fname")
-    features.remove("x.lifetime_cut")
-    features.remove("x.lifetime_cut2")
+    features = rem_features(features,
+                            ["x.num_used", "x.class", "x.lifetime", "fname"])
 
     # this needs binarization
-    features.remove("cl.cur_restart_type")
-    features.remove("cl2.cur_restart_type")
-    features.remove("cl3.cur_restart_type")
+    features = rem_features(features, ["cl.cur_restart_type"])
     # x = (df["cl.cur_restart_type"].values[:, np.newaxis] == df["cl.cur_restart_type"].unique()).astype(int)
     # print(x)
 
     if True:
         remove_old_clause_features(features)
 
-    print("Number of features:", len(features))
-    features_less = list(features)
-    # print(sorted(features_less))
+    if options.raw_data_plots:
+        pd.options.display.mpl_style = "default"
+        df.hist()
+        df.boxplot()
 
-    todel = []
-    for name in features_less:
-        if "rdb2" in name or "rdb3" in name or "rdb4" in name:
-            todel.append(name)
+    if True:
+        feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
+        best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
+                                    class_names, "longer", 10,
+                                    False)
+        if options.show:
+            plt.show()
 
-    for x in todel:
-        features_less.remove(x)
-        if options.verbose:
-            print("Removing feature from features_less:", x)
+        best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
+                                    class_names, "longer", 3,
+                                    True)
+        if options.show:
+            plt.show()
 
-    # pd.options.display.mpl_style = "default"
-    # df.hist()
-    # df.boxplot()
+    exit(0)
+    if True:
+        feat_less = rem_features(features, ["rdb3", "rdb4"])
+        df2 = df[df["x.lifetime"] > cuts[1]]
 
-    one_classifier(df, features_less, "x.lifetime_cut",
-                   class_names, "longer", 10)
+        #one_classifier(df2, features, "x.lifetime_cut2", class_names2, "middle", 20)
+        one_classifier(df2, features, "x.lifetime_cut2", class_names2, "middle", 3)
+        if options.show:
+            plt.show()
 
-    if options.show:
-        plt.show()
+    if True:
+        df3 = df[df["x.lifetime"] > cuts2[1]]
 
-    df2 = df[df["x.lifetime"] > 20000]
-    one_classifier(df2, features, "x.lifetime_cut2",
-                   class_names2, "middle", 16)
-
-    if options.show:
-        plt.show()
+        one_classifier(df3, features, "x.lifetime_cut3", class_names3, "middle2", 3)
+        if options.show:
+            plt.show()
 
 
 if __name__ == "__main__":
@@ -288,6 +322,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--imp", action="store_true", default=False,
                       dest="importances", help="Calculate importances")
+    parser.add_option("--rawplots", action="store_true", default=False,
+                      dest="raw_data_plots", help="Display raw data plots")
 
     (options, args) = parser.parse_args()
 
