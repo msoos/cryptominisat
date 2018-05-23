@@ -253,7 +253,7 @@ esac
 make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
-    sudo make install
+    sudo make install VERBOSE=1
     exit 0
 fi
 
@@ -295,12 +295,13 @@ if [ "$CMS_CONFIG" = "STATIC" ] ; then
 fi
 
 ctest -V
-sudo make install
+sudo make install VERBOSE=1
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo $(sudo ldconfig)
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 fi
 
+which python
 python --version
 if [ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]; then
     export MYPYTHON=python2
@@ -308,6 +309,7 @@ else
     export MYPYTHON=python3
 fi
 echo "MYPYTHON is '${MYPYTHON}'"
+which ${MYPYTHON}
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
 
@@ -367,7 +369,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     cd build
     cmake ..
     make -j2
-    sudo make install
+    sudo make install VERBOSE=1
     cd "${BUILD_DIR}"
 
     # STP
@@ -378,7 +380,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     cd build
     cmake ..
     make -j2
-    sudo make install
+    sudo make install VERBOSE=1
     cd "${BUILD_DIR}"
 fi
 
@@ -386,6 +388,7 @@ fi
 #do fuzz testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
     cd ../scripts/fuzz/
+    which ${MYPYTHON}
     ${MYPYTHON} ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
 
