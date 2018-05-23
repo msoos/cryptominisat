@@ -59,12 +59,6 @@ add_custom_command(OUTPUT ${OUTPUT}/timestamp
 add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
-# Make a distribution source package
-# not really working -- only adds the .py files, and the test
-add_custom_target(python_interface_dist_package
-                  COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} sdist
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
 install(CODE "execute_process(
     COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=${CMAKE_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
