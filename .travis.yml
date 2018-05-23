@@ -118,7 +118,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
   # we probably want to install python 3 though...
   - if [[ ("$TRAVIS_OS_NAME" == "osx")  &&  ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then brew upgrade python --universal; fi
-  -  if [[ "$TRAVIS_OS_NAME" == "osx"  ]]; then sudo easy_install pip; fi
+  # -  if [[ "$TRAVIS_OS_NAME" == "osx"  ]]; then sudo easy_install pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes help2man; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-pip; fi
