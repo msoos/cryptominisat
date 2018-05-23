@@ -126,6 +126,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     y_test = test[to_predict]
 
     t = time.time()
+    clf = None
     # clf = sklearn.linear_model.LogisticRegression()
     # clf = sklearn.svm.SVC()
     if final:
