@@ -321,10 +321,10 @@ echo "MYPYTHON is '${MYPYTHON}'"
 which ${MYPYTHON}
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
-    echo "from __future__ import print_function;
-    import sys
-    print(sys.path)
-    " > check_path.py
+    echo "from __future__ import print_function
+import sys
+print(sys.path)
+" > check_path.py
     ${MYPYTHON} check_path.py
     echo $PYTHONPATH
     export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.4/site-packages
