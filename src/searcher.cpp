@@ -2855,7 +2855,12 @@ llbool Searcher::Gauss_elimination()
                 sum_Enconflict++;
 
                 Clause* conflPtr = solver->cl_alloc.Clause_new(
-                    gqd.conflict_clause_gauss, gqd.xorEqualFalse_gauss);
+                    gqd.conflict_clause_gauss,
+                    gqd.xorEqualFalse_gauss
+                    #ifdef STATS_NEEDED
+                    , clauseID++
+                    #endif
+                );
 
                 conflPtr->set_gauss_temp_cl();
                 gqd.confl = PropBy(solver->cl_alloc.get_offset(conflPtr));
