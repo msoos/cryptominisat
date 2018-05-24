@@ -61,12 +61,6 @@ std::vector<T> wrap(const T* vals, size_t num_vals)
     return std::vector<T>(vals, vals + num_vals);
 }
 
-template<typename T>
-struct slice {
-    const T* vals;
-    size_t num_vals;
-};
-
 template<typename Dest, typename T>
 Dest unwrap(const std::vector<T>& vec)
 {
