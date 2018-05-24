@@ -82,26 +82,34 @@ cd build
 BUILD_DIR=$(pwd)
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
+
+
+# for OSX keep prefix
+PATH_PREFIX_ADD=""
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    PATH_PREFIX_ADD="-DCMAKE_INSTALL_PREFIX=/usr"
+fi
+
 case $CMS_CONFIG in
     SLOW_DEBUG)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL_PYTHON2)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DFORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
@@ -109,7 +117,7 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DLARGEMEM:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
@@ -229,7 +237,7 @@ case $CMS_CONFIG in
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DUSE_GAUSS=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
