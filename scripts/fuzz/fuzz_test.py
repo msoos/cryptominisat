@@ -756,7 +756,6 @@ fuzzers_xor = [
 
 if __name__ == "__main__":
     global options
-    global args
     global fuzzers_drat
     global fuzzers_nodrat
     if not os.path.isdir("out"):

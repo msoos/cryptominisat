@@ -82,26 +82,34 @@ cd build
 BUILD_DIR=$(pwd)
 
 # Note eval is needed so COMMON_CMAKE_ARGS is expanded properly
+
+
+# for OSX keep prefix
+PATH_PREFIX_ADD=""
+if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    PATH_PREFIX_ADD="-DCMAKE_INSTALL_PREFIX=/usr"
+fi
+
 case $CMS_CONFIG in
     SLOW_DEBUG)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DSLOW_DEBUG:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
     NORMAL_PYTHON2)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DFORCE_PYTHON2=ON -DENABLE_TESTING:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
@@ -109,7 +117,7 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DLARGEMEM:BOOL=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
@@ -125,6 +133,9 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCOVERAGE:BOOL=ON \
+                   -DUSE_GAUSS=ON \
+                   -DSTATS:BOOL=ON \
+                   -DSLOW_DEBUG:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
@@ -226,7 +237,7 @@ case $CMS_CONFIG in
 
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DUSE_GAUSS=ON \
-                   -DCMAKE_INSTALL_PREFIX=/usr \
+                   ${PATH_PREFIX_ADD} \
                    "${SOURCE_DIR}"
     ;;
 
@@ -253,7 +264,7 @@ esac
 make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
-    sudo make install
+    sudo make install VERBOSE=1
     exit 0
 fi
 
@@ -295,24 +306,44 @@ if [ "$CMS_CONFIG" = "STATIC" ] ; then
 fi
 
 ctest -V
-sudo make install
+sudo make install VERBOSE=1
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo $(sudo ldconfig)
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 fi
 
+
+##################
+# setting up python environment
+##################
+
+which python
 python --version
+echo $PYTHONPATH
 if [ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]; then
     export MYPYTHON=python2
 else
     export MYPYTHON=python3
 fi
 echo "MYPYTHON is '${MYPYTHON}'"
+which ${MYPYTHON}
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
+    echo "from __future__ import print_function
+import sys
+print(sys.path)
+" > check_path.py
+    ${MYPYTHON} check_path.py
+    echo $PYTHONPATH
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.4/site-packages
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages
+    echo $PYTHONPATH
+    ${MYPYTHON} check_path.py
+
+    (
     cd pycryptosat/tests/
     ${MYPYTHON} test_pycryptosat.py
-    cd ../..
+    )
 fi
 
 case $CMS_CONFIG in
@@ -334,14 +365,14 @@ case $CMS_CONFIG in
 esac
 
 if [ "$CMS_CONFIG" == "NORMAL" ] ; then
-    BACKUP=`pwd`
+    (
     cd
     ${MYPYTHON} -c "
 import pycryptosat
 a = pycryptosat.Solver()
 a.add_clause([1,2,3])
 print(a.solve())"
-    cd $BACKUP
+    )
 fi
 
 
@@ -360,7 +391,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     cd build
     cmake ..
     make -j2
-    sudo make install
+    sudo make install VERBOSE=1
     cd "${BUILD_DIR}"
 
     # STP
@@ -371,7 +402,7 @@ if [ "$CMS_CONFIG" == "NORMAL" ] && [ "$CXX" != "clang++" ] ; then
     cd build
     cmake ..
     make -j2
-    sudo make install
+    sudo make install VERBOSE=1
     cd "${BUILD_DIR}"
 fi
 
@@ -379,6 +410,7 @@ fi
 #do fuzz testing
 if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
     cd ../scripts/fuzz/
+    which ${MYPYTHON}
     ${MYPYTHON} ./fuzz_test.py --novalgrind --small --fuzzlim 30
 fi
 
@@ -419,7 +451,7 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
 
         # filter out system and test code
-        lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*'--output-file coverage.info
 
         # debug before upload
         lcov --list coverage.info

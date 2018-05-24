@@ -135,9 +135,11 @@ install:
     # curl --silent --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py | sudo python
 
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then python get-pip.py; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
   - pip install --user lit
+  - echo $PATH
+  - export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
   - lit --version
   - which lit
 #submodules

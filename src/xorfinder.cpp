@@ -398,8 +398,6 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     uint32_t xored = 0;
     const double myTime = cpuTime();
     assert(toClear.empty());
-    uint32_t unit_added = 0;
-    uint32_t bin_added = 0;
 
     //Link in xors into watchlist
     for(size_t i = 0; i < this_xors.size(); i++) {
@@ -489,9 +487,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
-        << "c [occ-xor] xored together " << xored
-        << " cls "
-        << " unit: " << unit_added << " bin: " << bin_added << " "
+        << "c [occ-xor] xored together " << xored << " cls "
         << solver->conf.print_times(recur_time)
         << endl;
     }

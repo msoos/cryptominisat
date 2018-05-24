@@ -288,10 +288,8 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
     }
 
     PyObject *clause;
-    PyObject *arglist;
     while ((clause = PyIter_Next(iterator)) != NULL) {
-
-        arglist = Py_BuildValue("(O)", clause);
+        PyObject *arglist = Py_BuildValue("(O)", clause);
         PyObject *ret = add_clause(self, arglist, NULL);
         Py_DECREF(ret);
 

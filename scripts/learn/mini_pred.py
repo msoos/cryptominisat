@@ -34,10 +34,10 @@ from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
 cuts = [-1, 10000, 1000000000000]
-class_names2 = ["middle", "longer"]
+class_names2 = ["middle", "forever"]
 cuts2 = [-1, 30000, 1000000000000]
-class_names3 = ["middle2", "forever"]
-cuts3 = [-1, 60000, 1000000000000]
+#class_names3 = ["middle2", "forever"]
+#cuts3 = [-1, 60000, 1000000000000]
 
 
 def output_to_dot(clf, features, nameextra):
@@ -168,14 +168,14 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         importances = clf.feature_importances_
         std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
-        indices = indices[:10]
-        myrange = min(X_train.shape[1], 10)
+        indices = indices[:options.top_num_features]
+        myrange = min(X_train.shape[1], options.top_num_features)
 
         # Print the feature ranking
         print("Feature ranking:")
 
         for f in range(myrange):
-            print("%d. feature %s (%f)" %
+            print("%-3d  %-35s -- %8.4f" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
             best_features.append(features[indices[f]])
 
@@ -273,10 +273,10 @@ def learn(fname):
         cuts2,
         labels=class_names2)
 
-    df["x.lifetime_cut3"] = pd.cut(
-        df["x.lifetime"],
-        cuts3,
-        labels=class_names3)
+    #df["x.lifetime_cut3"] = pd.cut(
+        #df["x.lifetime"],
+        #cuts3,
+        #labels=class_names3)
 
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
@@ -298,7 +298,7 @@ def learn(fname):
     if True:
         feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
         best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
-                                    class_names, "longer", 13,
+                                    class_names, "longer", 17,
                                     False)
         if options.show:
             plt.show()
@@ -314,30 +314,30 @@ def learn(fname):
         df2 = df[df["x.lifetime"] > cuts[1]]
 
         best_feats = one_classifier(df2, feat_less, "x.lifetime_cut2",
-                                    class_names2, "middle", 20,
+                                    class_names2, "middle", 30,
                                     False)
         if options.show:
             plt.show()
 
         one_classifier(df2, best_feats, "x.lifetime_cut2",
-                       class_names2, "middle", 3,
+                       class_names2, "middle", 4,
                        True)
 
         if options.show:
             plt.show()
 
-    if True:
-        df3 = df[df["x.lifetime"] > cuts2[1]]
+    #if True:
+        #df3 = df[df["x.lifetime"] > cuts2[1]]
 
-        best_feats = one_classifier(df3, features, "x.lifetime_cut3",
-                                    class_names3, "middle2", 3,
-                                    False)
-        if options.show:
-            plt.show()
+        #best_feats = one_classifier(df3, features, "x.lifetime_cut3",
+                                    #class_names3, "middle2", 20,
+                                    #False)
+        #if options.show:
+            #plt.show()
 
-        one_classifier(df3, best_feats, "x.lifetime_cut3",
-                       class_names3, "middle2", 3,
-                       True)
+        #one_classifier(df3, best_feats, "x.lifetime_cut3",
+                       #class_names3, "middle2", 8,
+                       #True)
 
 
 if __name__ == "__main__":
@@ -348,7 +348,7 @@ if __name__ == "__main__":
                       dest="verbose", help="Print more output")
     parser.add_option("--cross", action="store_true", default=False,
                       dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
-    parser.add_option("--depth", default=5, type=int,
+    parser.add_option("--depth", default=6, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
@@ -360,6 +360,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
+    parser.add_option("--top", default=12, type=int,
+                      dest="top_num_features", help="Number of top features to take to generate the final predictor")
 
     (options, args) = parser.parse_args()
 
