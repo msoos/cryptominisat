@@ -125,6 +125,9 @@ case $CMS_CONFIG in
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
                    -DCOVERAGE:BOOL=ON \
+                   -DUSE_GAUSS=ON \
+                   -DSTATS:BOOL=ON \
+                   -DSLOW_DEBUG:BOOL=ON \
                    -DSTATICCOMPILE:BOOL=ON \
                    "${SOURCE_DIR}"
     ;;
@@ -434,7 +437,7 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
 
         # filter out system and test code
-        lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
+        lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*'--output-file coverage.info
 
         # debug before upload
         lcov --list coverage.info
