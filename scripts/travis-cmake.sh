@@ -304,6 +304,11 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 fi
 
+
+##################
+# setting up python environment
+##################
+
 which python
 python --version
 echo $PYTHONPATH
@@ -316,20 +321,20 @@ echo "MYPYTHON is '${MYPYTHON}'"
 which ${MYPYTHON}
 
 if [[ "$CMS_CONFIG" == "NORMAL" ]] || [[ "$CMS_CONFIG" == "NORMAL_PYTHON2" ]] || [[ "$CMS_CONFIG" == "SLOW_DEBUG" ]] || [[ "$CMS_CONFIG" == "LARGEMEM" ]] || [[ "$CMS_CONFIG" == "GAUSS" ]] ; then
+    echo "from __future__ import print_function;
+    import sys
+    print(sys.path)
+    " > check_path.py
+    ${MYPYTHON} check_path.py
+    echo $PYTHONPATH
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.4/site-packages
+    echo $PYTHONPATH
+    ${MYPYTHON} check_path.py
 
-(cd pycryptosat/tests/
-echo "from __future__ import print_function;
-import sys
-print(sys.path)
-" > check_path.py
-${MYPYTHON} check_path.py
-echo $PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.4/site-packages
-echo $PYTHONPATH
-${MYPYTHON} check_path.py
-${MYPYTHON} test_pycryptosat.py
-)
-
+    (
+    cd pycryptosat/tests/
+    ${MYPYTHON} test_pycryptosat.py
+    )
 fi
 
 case $CMS_CONFIG in
@@ -351,14 +356,14 @@ case $CMS_CONFIG in
 esac
 
 if [ "$CMS_CONFIG" == "NORMAL" ] ; then
-    BACKUP=`pwd`
+    (
     cd
     ${MYPYTHON} -c "
 import pycryptosat
 a = pycryptosat.Solver()
 a.add_clause([1,2,3])
 print(a.solve())"
-    cd $BACKUP
+    )
 fi
 
 
