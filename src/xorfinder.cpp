@@ -357,6 +357,7 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 
 vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& this_xors)
 {
+    double myTime = cpuTime();
     vector<Xor> ret;
     assert(toClear.empty());
 
@@ -388,6 +389,21 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     }
     toClear.clear();
 
+    double time_used = cpuTime() - myTime;
+    if (solver->conf.verbosity) {
+        cout << "c [xor-rem] left with " <<  ret.size()
+        << " xors from " << this_xors.size()
+        << solver->conf.print_times(time_used)
+        << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "xor-rem-no-connecting-vars"
+            , time_used
+        );
+    }
+
     return ret;
 }
 
@@ -399,6 +415,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(solver->watches.get_smudged_list().empty());
+    const size_t origsize = this_xors.size();
 
     uint32_t xored = 0;
     const double myTime = cpuTime();
@@ -492,7 +509,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
-        << "c [occ-xor] xored together " << xored << " cls "
+        << "c [occ-xor] xored together " << xored << " xors"
+        << " orig num xors: " << origsize
         << solver->conf.print_times(recur_time)
         << endl;
     }
