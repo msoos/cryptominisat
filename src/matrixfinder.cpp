@@ -211,6 +211,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
         cout << "c Found matrixes: " << numMatrixes
+        << " from " << xors.size() << " xors"
         << solver->conf.print_times(time_used, time_out)
         << endl;
     }
