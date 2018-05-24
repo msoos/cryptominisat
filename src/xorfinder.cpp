@@ -94,6 +94,29 @@ void XorFinder::find_xors_based_on_long_clauses()
     }
 }
 
+void XorFinder::clean_equivalent_xors(vector<Xor>& txors)
+{
+    if (!txors.empty()) {
+        for(Xor& x: txors) {
+            std::sort(x.begin(), x.end());
+        }
+        std::sort(txors.begin(), txors.end());
+
+        vector<Xor>::iterator i = txors.begin();
+        vector<Xor>::iterator j = i;
+        i++;
+        uint64_t size = 1;
+        for(vector<Xor>::iterator end = txors.end(); i != end; i++) {
+            if (*j != *i) {
+                j++;
+                *j = *i;
+                size++;
+            }
+        }
+        txors.resize(size);
+    }
+}
+
 void XorFinder::find_xors()
 {
     runStats.clear();
@@ -121,25 +144,7 @@ void XorFinder::find_xors()
     assert(runStats.foundXors == xors.size());
 
     //clean them of equivalent XORs
-    if (!xors.empty()) {
-        for(Xor& x: xors) {
-            std::sort(x.begin(), x.end());
-        }
-        std::sort(xors.begin(), xors.end());
-
-        vector<Xor>::iterator i = xors.begin();
-        vector<Xor>::iterator j = i;
-        i++;
-        uint64_t size = 1;
-        for(vector<Xor>::iterator end = xors.end(); i != end; i++) {
-            if (*j != *i) {
-                j++;
-                *j = *i;
-                size++;
-            }
-        }
-        xors.resize(size);
-    }
+    clean_equivalent_xors(xors);
 
     //Cleanup
     for(ClOffset offset: occsimplifier->clauses) {

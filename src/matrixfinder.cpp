@@ -105,9 +105,12 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     reverseTable.clear();
     matrix_no = 0;
     double myTime = cpuTime();
+    XorFinder finder(NULL, solver);
 
     if (simplify_xors) {
-        XorFinder finder(NULL, solver);
+        if (!solver->clauseCleaner->clean_xor_clauses(solver->xorclauses)) {
+            return false;
+        }
         xors = solver->xorclauses;
 
         finder.grab_mem();
@@ -119,6 +122,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     } else {
         xors = solver->xorclauses;
     }
+    finder.clean_equivalent_xors(xors);
 
     if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses
         || solver->conf.gaussconf.decision_until <= 0
@@ -139,10 +143,6 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
             return true;
         }
     }
-
-    bool ret = solver->clauseCleaner->clean_xor_clauses(xors);
-    if (!ret)
-        return false;
 
     if (!solver->conf.gaussconf.doMatrixFind) {
         if (solver->conf.verbosity >=1) {
