@@ -214,9 +214,6 @@ bool PropEngine::prop_long_cl_any_order(
     return true;
 }
 
-#define likely(x)      (x) /*__builtin_expect(!!(x), 1)*/
-#define unlikely(x)    (x) /*__builtin_expect(!!(x), 0)*/
-//__attribute__((optimize("no-unroll-loops")))
 PropBy PropEngine::propagate_any_order_fast()
 {
     PropBy confl;
@@ -234,9 +231,9 @@ PropBy PropEngine::propagate_any_order_fast()
         Watched* end;
         num_props++;
 
-        for (i = j = ws.begin(), end = ws.end(); i != end;) {
+        for (i = j = ws.begin(), end = ws.end(); unlikely(i != end);) {
             //Prop bin clause
-            if (unlikely(i->isBin())) {
+            if (likely(i->isBin())) {
                 assert(j < end);
                 *j++ = *i;
                 const lbool val = value(i->lit2());
@@ -266,7 +263,7 @@ PropBy PropEngine::propagate_any_order_fast()
             //propagate normal clause
             //assert(i->isClause());
             Lit blocked = i->getBlockedLit();
-            if (value(blocked) == l_True) {
+            if (likely(value(blocked) == l_True)) {
                 *j++ = *i++;
                 continue;
             }
@@ -290,7 +287,7 @@ PropBy PropEngine::propagate_any_order_fast()
             // Look for new watch:
             for (uint32_t k = 2; k < c.size(); k++) {
                 //Literal is either unset or satisfied, attach to other watchlist
-                if (value(c[k]) != l_False) {
+                if (likely(value(c[k]) != l_False)) {
                     c[1] = c[k];
                     c[k] = false_lit;
                     watches[c[1]].push(w);
@@ -352,7 +349,7 @@ PropBy PropEngine::propagate_any_order()
         }
         propStats.propagations++;
         for (; i != end; i++) {
-            if (i->isBin()) {
+            if (likely(i->isBin())) {
                 *j++ = *i;
                 if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
                     i++;
