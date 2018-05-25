@@ -344,7 +344,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         default: {
             conf.maple = ((thread_num % 3) <= 1);
-            conf.modulo_maple_iter = (thread_num % 7);
+            conf.modulo_maple_iter = (thread_num % 7)+1;
             conf.varElimRatioPerIter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
                 conf.restartType = Restart::glue;

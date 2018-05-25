@@ -1280,6 +1280,11 @@ void Solver::check_config_parameters() const
         std::cerr << "Unfortunately, greedy undef is broken" << endl;
         exit(-1);
     }
+
+    if (conf.modulo_maple_iter == 0) {
+        std::cerr << "ERROR: Modulo maper iteration must be non-zero" << endl;
+        exit(-1);
+    }
 }
 
 lbool Solver::simplify_problem_outside()
