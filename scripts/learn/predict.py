@@ -599,11 +599,27 @@ def transform(df):
 
         return row
 
+    # relative overlaps
+    df["cl.overlap"] = df["cl.num_total_lits_antecedents"]-df["cl.size"]-2*df["cl.num_antecedents"]
+    df["cl.overlap_rel"] = df["cl.overlap"]-df["cl.antec_overlap_hist"]
+    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
+    df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
+
+    # ************
+    # TODO decision level and branch depth are the same, right???
+    # ************
     df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
     df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
     df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
     df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
+    df["cl.branch_depth_rel_queue"] = df["cl.decision_level"]/df["cl.branch_depth_hist_queue"]
+
+    # smaller-than larger-than for glue and size
+    df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
+    df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
+    df["cl.glue_smaller_than_hist_lt"] = (df["cl.glue"] < df["cl.glue_hist_long"]).astype(int)
+    df["cl.glue_smaller_than_hist_queue"] = (df["cl.glue"] < df["cl.glue_hist_queue"]).astype(int)
 
     # relative decisions
     df["cl.decision_level_rel"] = df["cl.decision_level"]/df["cl.decision_level_hist"]
@@ -612,12 +628,6 @@ def transform(df):
     df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
     df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"]/df["cl.decision_level_hist"]
-
-    # relative overlaps
-    df["cl.overlap"] = df["cl.num_total_lits_antecedents"]-df["cl.size"]-2*df["cl.num_antecedents"]
-    df["cl.overlap_rel"] = df["cl.overlap"]-df["cl.antec_overlap_hist"]
-    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
-    df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
 
     # relative props
     df["rst.all_props"] = df["rst.propBinRed"] + df["rst.propBinIrred"] + df["rst.propLongRed"] + df["rst.propLongIrred"]
@@ -643,11 +653,11 @@ def transform(df):
     df["cl.decision_level_smaller_than_hist"] = (df["cl.decision_level"] < df["cl.decision_level_hist"]).astype(int)
     df["cl.backtrack_level_smaller_than_hist"] = (df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]).astype(int)
     df["cl.trail_depth_level_smaller_than_hist"] = (df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]).astype(int)
-    df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
-    df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
     df["cl.num_antecedents_smaller_than_hist"] = (df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]).astype(int)
     df["cl.antec_sum_size_smaller_than_hist"] = (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
     df["cl.antec_overlap_smaller_than_hist"] = (df["cl.antec_overlap_hist"] < df["cl.overlap"]).astype(int)
+    df["cl.overlap_smaller_than_hist"] = (df["cl.overlap"]<df["cl.antec_overlap_hist"]).astype(int)
+    df["cl.branch_smaller_than_hist_queue"] = (df["cl.decision_level"]<df["cl.branch_depth_hist_queue"]).astype(int)
 
 
 
