@@ -21,6 +21,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 #include <limits>
 #include <cstdint>
+#include <cmath>
+
 
 namespace CMSat {
 
@@ -48,7 +50,7 @@ public:
     // Generate a random integer:
     inline uint32_t randInt(const uint32_t size = std::numeric_limits<uint32_t>::max())
     {
-        return (uint32_t)(randDblExc() * size);
+        return std::round(randDblExc() * size);
     }
 
     inline void seed(const uint32_t _inter_seed)
