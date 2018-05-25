@@ -122,6 +122,14 @@ void XorFinder::find_xors()
     runStats.clear();
     runStats.numCalls = 1;
     grab_mem();
+    if ((solver->conf.xor_var_per_cut + 2) > solver->conf.maxXorToFind) {
+        if (solver->conf.verbosity) {
+            cout << "c WARNING updating max XOR to find to "
+            << (solver->conf.xor_var_per_cut + 2)
+            << " as the current number was lower than the cutting number" << endl;
+        }
+        solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
+    }
 
     xors.clear();
     double myTime = cpuTime();

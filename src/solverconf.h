@@ -295,6 +295,7 @@ class DLL_PUBLIC SolverConf
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;
         int      allow_elim_xor_vars;
+        unsigned xor_var_per_cut;
 
         //Var-replacement
         int doFindAndReplaceEqLits;
