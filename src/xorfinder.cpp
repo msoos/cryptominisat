@@ -417,6 +417,12 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     if (occcnt.size() != solver->nVars())
         grab_mem();
 
+    #ifdef SLOW_DEBUG
+    for(auto x: occcnt) {
+        assert(x == 0);
+    }
+    #endif
+
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     assert(solver->watches.get_smudged_list().empty());
@@ -454,6 +460,22 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         }
 
         while(!interesting.empty()) {
+            #ifdef SLOW_DEBUG
+            {
+                vector<uint32_t> check;
+                check.resize(solver->nVars(), 0);
+                for(size_t i = 0; i < this_xors.size(); i++) {
+                    const Xor& x = this_xors[i];
+                    for(uint32_t v: x) {
+                        check[v]++;
+                    }
+                }
+                for(size_t i = 0; i < solver->nVars(); i++) {
+                    assert(check[i] == occcnt[i]);
+                }
+            }
+            #endif
+
             const uint32_t v = interesting.back();
             interesting.resize(interesting.size()-1);
             if (occcnt[v] != 2)
@@ -476,6 +498,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 }
             }
             assert(at == 2);
+            ws.resize(i2);
 
             if (this_xors[idxes[0]] == this_xors[idxes[1]]) {
                 //Equivalent, so delete one
@@ -483,17 +506,16 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 
                 //Re-attach the other, remove the occur of the one we deleted
                 const Xor& x = this_xors[idxes[1]];
+                solver->watches[Lit(v, false)].push(Watched(idxes[1]));
                 for(uint32_t v2: x) {
                     Lit l(v2, false);
+                    assert(occcnt[l.var()] >= 2);
                     occcnt[l.var()]--;
-                    solver->watches[l].push(Watched(this_xors.size()-1));
                     if (occcnt[l.var()] == 2) {
                         interesting.push_back(l.var());
                     }
-                    solver->watches.smudge(l);
                 }
             } else {
-                ws.resize(i2);
                 Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
                           this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
 
@@ -502,10 +524,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 for(uint32_t v2: x_new) {
                     Lit l(v2, false);
                     solver->watches[l].push(Watched(this_xors.size()-1));
+                    assert(occcnt[l.var()] >= 1);
                     if (occcnt[l.var()] == 2) {
                         interesting.push_back(l.var());
                     }
-                    solver->watches.smudge(l);
                 }
                 this_xors[idxes[0]] = Xor();
                 this_xors[idxes[1]] = Xor();
