@@ -144,7 +144,7 @@ gret PackedRow::propGause(
                 const bool val_bool = (val == l_True);
                 final ^= val_bool;
                 tmp_clause.push_back(Lit(var, val_bool));
-                if (GasVar_state[var]) {
+                if (likely(GasVar_state[var])) {
                     std::swap(tmp_clause[0], tmp_clause.back());
                 }
             }
@@ -152,7 +152,7 @@ gret PackedRow::propGause(
         }
     }
 
-    for ( uint32_t i =0; i != start/64; i++) if (mp[i]) {
+    for ( uint32_t i =0; i != start/64; i++) if (likely(mp[i])) {
         uint64_t tmp = mp[i];
         for (uint32_t i2 = 0 ; i2 < 64; i2++) {
             if(tmp & 1){
