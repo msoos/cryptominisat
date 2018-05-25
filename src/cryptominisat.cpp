@@ -145,6 +145,11 @@ void update_config(SolverConf& conf, unsigned thread_num)
     thread_num = thread_num % 23;
 
     switch(thread_num) {
+        case 0: {
+            //default setup
+            break;
+        }
+
         case 1: {
             //Minisat-like
             conf.maple = 0;
