@@ -1258,12 +1258,12 @@ void Solver::set_up_sql_writer()
 void Solver::check_config_parameters() const
 {
     if (conf.max_confl < 0) {
-        std::cerr << "Maximum number conflicts set must be greater or equal to 0" << endl;
+        std::cerr << "ERROR: Maximum number conflicts set must be greater or equal to 0" << endl;
         exit(-1);
     }
 
     if (conf.shortTermHistorySize <= 0) {
-        std::cerr << "You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
+        std::cerr << "ERROR: You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
     }
 
@@ -1271,13 +1271,13 @@ void Solver::check_config_parameters() const
     if ((drat->enabled() || solver->conf.simulate_drat) &&
         conf.gaussconf.decision_until > 0
     )  {
-        std::cerr << "Cannot have both DRAT and GAUSS on at the same time!" << endl;
+        std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
     }
     #endif
 
     if (conf.greedy_undef) {
-        std::cerr << "Unfortunately, greedy undef is broken" << endl;
+        std::cerr << "ERROR: Unfortunately, greedy undef is broken" << endl;
         exit(-1);
     }
 
