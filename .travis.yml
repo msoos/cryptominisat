@@ -1,6 +1,10 @@
 language: cpp
 cache: ccache
 
+branches:
+  only:
+    - master
+
 compiler:
   - gcc
   - clang
