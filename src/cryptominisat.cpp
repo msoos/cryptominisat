@@ -142,6 +142,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
     if (thread_num > 0) {
         conf.reconfigure_val = 0;
     }
+    conf.origSeed += thread_num;
 
     switch(thread_num % 23) {
         case 0: {
