@@ -233,7 +233,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
         for (i = j = ws.begin(), end = ws.end(); unlikely(i != end);) {
             //Prop bin clause
-            if (likely(i->isBin())) {
+            if (i->isBin()) {
                 assert(j < end);
                 *j++ = *i;
                 const lbool val = value(i->lit2());
