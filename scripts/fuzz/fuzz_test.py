@@ -292,6 +292,8 @@ class Tester:
             cmd += ",".join(["%s" % x for x in self.indep_vars]) + " "
 
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
+            cmd += "--varsperxorcut %d " % random.randint(4, 6)
+            cmd += "--xorcache %d " % random.choice([0, 1])
             if random.choice([True, True, True, False]):
                 self.clid_added = True
                 cmd += "--clid "
