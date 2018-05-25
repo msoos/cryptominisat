@@ -451,8 +451,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
         while(!interesting.empty()) {
             const uint32_t v = interesting.back();
             interesting.resize(interesting.size()-1);
+            if (occcnt[v] != 2)
+                continue;
 
-            Xor x[2];
             size_t idxes[2];
             unsigned at = 0;
             size_t i2 = 0;
@@ -464,38 +465,47 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 if (!w.isIdx()) {
                     ws[i2++] = ws[i];
                 } else if (this_xors[w.get_idx()] != Xor()) {
-                    //seen may be not 2
-                    if (at >= 2) {
-                        //signal that this is wrong by making "at" too large
-                        at++;
-                        break;
-                    }
-
+                    assert(at < 2);
                     idxes[at] = w.get_idx();
                     at++;
                 }
             }
-            if (at != 2) {
-                continue;
-            }
+            assert(at == 2);
 
-            ws.resize(i2);
-            Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
-                      this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
+            if (this_xors[idxes[0]] == this_xors[idxes[1]]) {
+                //Equivalent, so delete one
+                this_xors[idxes[0]] = Xor();
 
-            changed = true;
-            this_xors.push_back(x_new);
-            for(uint32_t v2: x_new) {
-                Lit l(v2, false);
-                solver->watches[l].push(Watched(this_xors.size()-1));
-                if (occcnt[l.var()] == 2) {
-                    interesting.push_back(l.var());
+                //Re-attach the other, remove the occur of the one we deleted
+                const Xor& x = this_xors[idxes[1]];
+                for(uint32_t v2: x) {
+                    Lit l(v2, false);
+                    occcnt[l.var()]--;
+                    solver->watches[l].push(Watched(this_xors.size()-1));
+                    if (occcnt[l.var()] == 2) {
+                        interesting.push_back(l.var());
+                    }
+                    solver->watches.smudge(l);
                 }
-                solver->watches.smudge(l);
+            } else {
+                ws.resize(i2);
+                Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
+                          this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
+
+                changed = true;
+                this_xors.push_back(x_new);
+                for(uint32_t v2: x_new) {
+                    Lit l(v2, false);
+                    solver->watches[l].push(Watched(this_xors.size()-1));
+                    if (occcnt[l.var()] == 2) {
+                        interesting.push_back(l.var());
+                    }
+                    solver->watches.smudge(l);
+                }
+                this_xors[idxes[0]] = Xor();
+                this_xors[idxes[1]] = Xor();
+                xored++;
             }
-            this_xors[idxes[0]] = Xor();
-            this_xors[idxes[1]] = Xor();
-            xored++;
         }
     }
 

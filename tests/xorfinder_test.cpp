@@ -474,11 +474,18 @@ TEST_F(xor_finder2, xor_6)
     check_xors_eq(finder->xors, "2, 4 = 0; 7, 10 = 1");
 }
 
-TEST_F(xor_finder2, xor_7)
+TEST_F(xor_finder2, dont_remove_xors)
 {
     finder->xors = str_to_xors("1, 2 = 0; 1, 2= 0;");
     finder->xor_together_xors(finder->xors);
-    EXPECT_EQ(finder->xors.size(), 0u);
+    EXPECT_EQ(finder->xors.size(), 1U);
+}
+
+TEST_F(xor_finder2, dont_remove_xors2)
+{
+    finder->xors = str_to_xors("1, 2, 3 = 0; 1, 2, 3= 0;");
+    finder->xor_together_xors(finder->xors);
+    EXPECT_EQ(finder->xors.size(), 1U);
 }
 
 TEST_F(xor_finder2, xor_8)
