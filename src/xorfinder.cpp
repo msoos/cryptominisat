@@ -362,7 +362,12 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
     assert(toClear.empty());
 
     //Fill seen with vars used
+    uint32_t non_empty = 0;
     for(const Xor& x: this_xors) {
+        if (x.size() != 0) {
+            non_empty++;
+        }
+
         for(uint32_t v: x) {
             if (solver->seen[v] == 0) {
                 toClear.push_back(Lit(v, false));
@@ -391,8 +396,8 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
 
     double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
-        cout << "c [xor-rem] left with " <<  ret.size()
-        << " xors from " << this_xors.size()
+        cout << "c [xor-rem-unconnected] left with " <<  ret.size()
+        << " xors from " << non_empty << " non-empty xors"
         << solver->conf.print_times(time_used)
         << endl;
     }
@@ -519,7 +524,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     double recur_time = cpuTime() - myTime;
         if (solver->conf.verbosity) {
         cout
-        << "c [occ-xor] xored together " << xored << " xors"
+        << "c [xor-together] xored together " << xored << " xors"
         << " orig num xors: " << origsize
         << solver->conf.print_times(recur_time)
         << endl;
