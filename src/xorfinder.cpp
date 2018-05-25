@@ -122,6 +122,14 @@ void XorFinder::find_xors()
     runStats.clear();
     runStats.numCalls = 1;
     grab_mem();
+    if ((solver->conf.xor_var_per_cut + 2) > solver->conf.maxXorToFind) {
+        if (solver->conf.verbosity) {
+            cout << "c WARNING updating max XOR to find to "
+            << (solver->conf.xor_var_per_cut + 2)
+            << " as the current number was lower than the cutting number" << endl;
+        }
+        solver->conf.maxXorToFind = solver->conf.xor_var_per_cut + 2;
+    }
 
     xors.clear();
     double myTime = cpuTime();
@@ -267,7 +275,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 {
     xor_find_time_limit -= (int64_t)occ.size()/8+1;
     for (const Watched& w: occ) {
-
         if (w.isIdx()) {
             continue;
         }
@@ -352,6 +359,32 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
                 break;
         }
         end:;
+    }
+
+    if (solver->conf.doCache &&
+        solver->conf.useCacheWhenFindingXors &&
+        !poss_xor.foundAll()
+    ) {
+        const TransCache& cache1 = solver->implCache[wlit];
+        for (const LitExtra litExtra: cache1.lits) {
+            const Lit otherlit = litExtra.getLit();
+            if (!occcnt[otherlit.var()]) {
+                continue;
+            }
+
+            binvec.clear();
+            binvec.resize(2);
+            binvec[0] = otherlit;
+            binvec[1] = wlit;
+            if (binvec[0] > binvec[1]) {
+                std::swap(binvec[0], binvec[1]);
+            }
+
+            xor_find_time_limit -= 1;
+            poss_xor.add(binvec, std::numeric_limits<ClOffset>::max(), varsMissing);
+            if (poss_xor.foundAll())
+                break;
+        }
     }
 }
 

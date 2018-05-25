@@ -142,9 +142,14 @@ void update_config(SolverConf& conf, unsigned thread_num)
     if (thread_num > 0) {
         conf.reconfigure_val = 0;
     }
-    thread_num = thread_num % 23;
+    conf.origSeed += thread_num;
 
-    switch(thread_num) {
+    switch(thread_num % 23) {
+        case 0: {
+            //default setup
+            break;
+        }
+
         case 1: {
             //Minisat-like
             conf.maple = 0;
@@ -344,7 +349,7 @@ void update_config(SolverConf& conf, unsigned thread_num)
 
         default: {
             conf.maple = ((thread_num % 3) <= 1);
-            conf.modulo_maple_iter = (thread_num % 7);
+            conf.modulo_maple_iter = (thread_num % 7)+1;
             conf.varElimRatioPerIter = 0.1*(thread_num % 9);
             if (thread_num % 4 == 0) {
                 conf.restartType = Restart::glue;

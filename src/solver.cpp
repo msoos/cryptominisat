@@ -110,6 +110,8 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     set_up_sql_writer();
     next_lev1_reduce = conf.every_lev1_reduce;
     next_lev2_reduce =  conf.every_lev2_reduce;
+
+    check_xor_cut_config_sanity();
 }
 
 Solver::~Solver()
@@ -216,7 +218,7 @@ void Solver::add_every_combination_xor(
     while(at != lits.size()) {
         xorlits.clear();
         size_t last_at = at;
-        for(; at < last_at+2 && at < lits.size(); at++) {
+        for(; at < last_at+conf.xor_var_per_cut && at < lits.size(); at++) {
             xorlits.push_back(lits[at]);
         }
 
@@ -1255,15 +1257,28 @@ void Solver::set_up_sql_writer()
     }
 }
 
+void Solver::check_xor_cut_config_sanity() const
+{
+    if (conf.xor_var_per_cut <= 1) {
+        std::cerr << "ERROR: Too low cutting number. Needs to be at least 2." << endl;
+        exit(-1);
+    }
+
+    if (conf.xor_var_per_cut > 10) {
+        std::cerr << "ERROR: Too high cutting number. High numbers entail huge memory use." << endl;
+        exit(-1);
+    }
+}
+
 void Solver::check_config_parameters() const
 {
     if (conf.max_confl < 0) {
-        std::cerr << "Maximum number conflicts set must be greater or equal to 0" << endl;
+        std::cerr << "ERROR: Maximum number conflicts set must be greater or equal to 0" << endl;
         exit(-1);
     }
 
     if (conf.shortTermHistorySize <= 0) {
-        std::cerr << "You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
+        std::cerr << "ERROR: You MUST give a short term history size (\"--gluehist\")  greater than 0!" << endl;
         exit(-1);
     }
 
@@ -1271,15 +1286,22 @@ void Solver::check_config_parameters() const
     if ((drat->enabled() || solver->conf.simulate_drat) &&
         conf.gaussconf.decision_until > 0
     )  {
-        std::cerr << "Cannot have both DRAT and GAUSS on at the same time!" << endl;
+        std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
     }
     #endif
 
     if (conf.greedy_undef) {
-        std::cerr << "Unfortunately, greedy undef is broken" << endl;
+        std::cerr << "ERROR: Unfortunately, greedy undef is broken" << endl;
         exit(-1);
     }
+
+    if (conf.modulo_maple_iter == 0) {
+        std::cerr << "ERROR: Modulo maper iteration must be non-zero" << endl;
+        exit(-1);
+    }
+
+    check_xor_cut_config_sanity();
 }
 
 lbool Solver::simplify_problem_outside()
