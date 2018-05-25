@@ -275,7 +275,6 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 {
     xor_find_time_limit -= (int64_t)occ.size()/8+1;
     for (const Watched& w: occ) {
-
         if (w.isIdx()) {
             continue;
         }
