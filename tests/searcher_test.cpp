@@ -41,6 +41,14 @@ struct SearcherTest : public ::testing::Test {
         delete s;
     }
 
+    void set_var_polar(uint32_t var, bool polarity)
+    {
+        s->new_decision_level();
+        //it must be inverted to set
+        s->enqueue<false>(Lit(var, !polarity));
+        s->cancelUntil(0);
+    }
+
     SolverConf conf;
     Solver* s = NULL;
     Searcher* ss = NULL;
@@ -124,6 +132,41 @@ TEST_F(SearcherTest, pickpolar_auto)
     //for unset variables, it must all be FALSE
     for(uint32_t i = 1; i < 10; i++) {
         ASSERT_EQ(ss->pick_polarity(i), false);
+    }
+}
+
+TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
+{
+    conf.polarity_mode = PolarityMode::polarmode_automatic;
+    conf.doVarElim = false;
+    //conf.verbosity = 2;
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+    ss = (Searcher*)s;
+    s->add_clause_outer(str_to_cl(" 1,  2"));
+    s->add_clause_outer(str_to_cl(" -1,  2"));
+    s->add_clause_outer(str_to_cl(" 3,  4, 5"));
+
+
+    //The mod%3 is only to set it kinda randomly.
+    for(size_t i = 0; i < 30; i++) {
+        set_var_polar(i, i%3);
+    }
+
+    //for unset variables, it must all be FALSE
+    for(uint32_t i = 0; i < 30; i++) {
+        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
+    }
+
+    s->simplify_problem(true);
+    //for unset variables, it must all be FALSE
+    for(uint32_t i = 0; i < 30; i++) {
+        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
+    }
+
+    s->simplify_problem(false);
+    for(uint32_t i = 0; i < 30; i++) {
+        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
     }
 }
 

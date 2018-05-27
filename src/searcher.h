@@ -403,6 +403,7 @@ class Searcher : public HyperEngine
         FRIEND_TEST(SearcherTest, pickpolar_pos);
         FRIEND_TEST(SearcherTest, pickpolar_neg);
         FRIEND_TEST(SearcherTest, pickpolar_auto);
+        FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
