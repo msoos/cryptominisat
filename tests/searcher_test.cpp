@@ -74,7 +74,6 @@ TEST_F(SearcherTest, pickpolar_pos)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-
     s->add_clause_outer(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
@@ -90,7 +89,6 @@ TEST_F(SearcherTest, pickpolar_neg)
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
-
     s->add_clause_outer(str_to_cl(" 1,  2"));
 
     uint32_t num = 0;
