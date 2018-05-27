@@ -100,6 +100,35 @@ TEST_F(SearcherTest, pickpolar_neg)
     ASSERT_EQ(num, 0U);
 }
 
+TEST_F(SearcherTest, pickpolar_auto)
+{
+    conf.polarity_mode = PolarityMode::polarmode_automatic;
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+    ss = (Searcher*)s;
+    s->add_clause_outer(str_to_cl(" 1,  2"));
+
+    s->new_decision_level();
+    //var set to TRUE
+    s->enqueue<false>(Lit(0, false));
+    s->cancelUntil(0);
+    //we expect TRUE
+    ASSERT_EQ(ss->pick_polarity(0), true);
+
+
+    s->new_decision_level();
+    //var set to FALSE
+    s->enqueue<false>(Lit(0, true));
+    s->cancelUntil(0);
+    //we expect FALSE
+    ASSERT_EQ(ss->pick_polarity(0), false);
+
+    //for unset variables, it must all be FALSE
+    for(uint32_t i = 1; i < 10; i++) {
+        ASSERT_EQ(ss->pick_polarity(i), false);
+    }
+}
+
 }
 
 int main(int argc, char **argv) {
