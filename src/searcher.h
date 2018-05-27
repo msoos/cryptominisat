@@ -106,6 +106,10 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
         bool var_inside_assumptions(const uint32_t var) const
         {
+            #ifdef SLOW_DEBUG
+            assert(var < nVars());
+            assert(var < assumptionsSet.size());
+            #endif
             return assumptionsSet.at(var);
         }
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
