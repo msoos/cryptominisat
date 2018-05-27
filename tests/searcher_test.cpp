@@ -135,12 +135,20 @@ TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
     conf.polarity_mode = PolarityMode::polarmode_automatic;
     conf.doVarElim = false;
     //conf.verbosity = 2;
+    conf.burst_search_len = 1000;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
     ss = (Searcher*)s;
     s->add_clause_outer(str_to_cl(" 1,  2"));
     s->add_clause_outer(str_to_cl(" -1,  2"));
     s->add_clause_outer(str_to_cl(" 3,  4, 5"));
+    s->add_clause_outer(str_to_cl(" -3,  4, 5"));
+    s->add_clause_outer(str_to_cl(" -3,  -4, 5"));
+    s->add_clause_outer(str_to_cl(" 2, -3,  -4, 5"));
+    s->add_clause_outer(str_to_cl(" 2, -3,  4, 5"));
+    s->add_clause_outer(str_to_cl(" 4, 5"));
+    s->add_clause_outer(str_to_cl(" -4, 5"));
+    s->add_clause_outer(str_to_cl(" -4, -5"));
 
 
     //The mod%3 is only to set it kinda randomly.
@@ -160,6 +168,14 @@ TEST_F(SearcherTest, pickpolar_auto_not_changed_by_simp)
     }
 
     s->simplify_problem(false);
+    for(uint32_t i = 0; i < 30; i++) {
+        ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
+    }
+
+    lbool ret =s->burst_search();
+    if (ret == l_True) {
+        s->cancelUntil(0);
+    }
     for(uint32_t i = 0; i < 30; i++) {
         ASSERT_EQ(ss->pick_polarity(i), (bool)(i%3));
     }
