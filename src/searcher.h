@@ -34,6 +34,11 @@ THE SOFTWARE.
 #include "searchstats.h"
 #include "gqueuedata.h"
 
+#ifdef CMS_TESTING_ENABLED
+#include "gtest/gtest_prod.h"
+#endif
+
+
 namespace CMSat {
 
 class Solver;
@@ -393,6 +398,11 @@ class Searcher : public HyperEngine
         };
         friend class Gaussian;
         friend class DistillerLong;
+        #ifdef CMS_TESTING_ENABLED
+        FRIEND_TEST(SearcherTest, pickpolar_rnd);
+        FRIEND_TEST(SearcherTest, pickpolar_pos);
+        FRIEND_TEST(SearcherTest, pickpolar_neg);
+        #endif
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
@@ -429,7 +439,7 @@ class Searcher : public HyperEngine
         bool DISTANCE = true;
 
         //Picking polarity when doing decision
-        bool     pickPolarity(const uint32_t var);
+        bool     pick_polarity(const uint32_t var);
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
@@ -532,7 +542,7 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
-inline bool Searcher::pickPolarity(const uint32_t var)
+inline bool Searcher::pick_polarity(const uint32_t var)
 {
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:

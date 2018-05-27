@@ -227,6 +227,7 @@ case $CMS_CONFIG in
     ;;
 
     NOTEST)
+        rm -rf ${SOURCE_DIR}/utils/gtest
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake "${SOURCE_DIR}"
     ;;
