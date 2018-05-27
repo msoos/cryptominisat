@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "time_mem.h"
 #include "hyperengine.h"
-#include "minisat_rnd.h"
+#include "MersenneTwister.h"
 #include "simplefile.h"
 #include "searchstats.h"
 #include "gqueuedata.h"
@@ -79,7 +79,7 @@ class Searcher : public HyperEngine
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
         uint64_t luby_loop_num = 0;
-        MiniSatRnd mtrand; ///< random number generator
+        MTRand mtrand; ///< random number generator
 
 
         vector<lbool>  model;
