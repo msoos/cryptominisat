@@ -115,17 +115,12 @@ TEST_F(SearcherTest, pickpolar_auto)
     s->add_clause_outer(str_to_cl(" 1,  2"));
 
     s->new_decision_level();
-    //var set to TRUE
-    s->enqueue<false>(Lit(0, false));
-    s->cancelUntil(0);
+    set_var_polar(0, true);
     //we expect TRUE
     ASSERT_EQ(ss->pick_polarity(0), true);
 
 
-    s->new_decision_level();
-    //var set to FALSE
-    s->enqueue<false>(Lit(0, true));
-    s->cancelUntil(0);
+    set_var_polar(0, false);
     //we expect FALSE
     ASSERT_EQ(ss->pick_polarity(0), false);
 
