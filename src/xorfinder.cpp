@@ -257,11 +257,7 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
             cl->set_used_in_xor(true);
         }
     }
-
-    //Clear 'seen'
-    for (const Lit tmp_lit: lits) {
-        occcnt[tmp_lit.var()] = 0;
-    }
+    poss_xor.clear_seen(occcnt);
 }
 
 void XorFinder::add_found_xor(const Xor& found_xor)

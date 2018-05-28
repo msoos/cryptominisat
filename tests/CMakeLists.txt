@@ -59,6 +59,7 @@ add_subdirectory(${GTEST_PREFIX} gtest)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
 include_directories(${GTEST_PREFIX}/include)
+add_definitions( -DCMS_TESTING_ENABLED )
 
 # Add handy macros/functions
 include(AddSTPGTest)
@@ -168,6 +169,7 @@ set (MY_TESTS
     xorfinder_test
     comphandler_test
     dump_test
+    searcher_test
 #    undefine_test
 )
 

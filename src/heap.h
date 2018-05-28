@@ -22,7 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Glucose_Heap_h
 
 #include "Vec.h"
-#include "minisat_rnd.h"
+#include "MersenneTwister.h"
 
 namespace CMSat {
 
@@ -104,7 +104,7 @@ public:
         assert(index < (int)heap.size());
         return heap[index];
     }
-    int random_element(MiniSatRnd& rnd)
+    int random_element(MTRand& rnd)
     {
         assert(!heap.empty());
         return heap[rnd.randInt(heap.size()-1)];

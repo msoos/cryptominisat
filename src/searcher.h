@@ -29,10 +29,15 @@ THE SOFTWARE.
 #include "solvertypes.h"
 #include "time_mem.h"
 #include "hyperengine.h"
-#include "minisat_rnd.h"
+#include "MersenneTwister.h"
 #include "simplefile.h"
 #include "searchstats.h"
 #include "gqueuedata.h"
+
+#ifdef CMS_TESTING_ENABLED
+#include "gtest/gtest_prod.h"
+#endif
+
 
 namespace CMSat {
 
@@ -79,7 +84,7 @@ class Searcher : public HyperEngine
         void dump_search_loop_stats(double myTime);
         bool must_abort(lbool status);
         uint64_t luby_loop_num = 0;
-        MiniSatRnd mtrand; ///< random number generator
+        MTRand mtrand; ///< random number generator
 
 
         vector<lbool>  model;
@@ -106,6 +111,10 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
         bool var_inside_assumptions(const uint32_t var) const
         {
+            #ifdef SLOW_DEBUG
+            assert(var < nVars());
+            assert(var < assumptionsSet.size());
+            #endif
             return assumptionsSet.at(var);
         }
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
@@ -389,6 +398,13 @@ class Searcher : public HyperEngine
         };
         friend class Gaussian;
         friend class DistillerLong;
+        #ifdef CMS_TESTING_ENABLED
+        FRIEND_TEST(SearcherTest, pickpolar_rnd);
+        FRIEND_TEST(SearcherTest, pickpolar_pos);
+        FRIEND_TEST(SearcherTest, pickpolar_neg);
+        FRIEND_TEST(SearcherTest, pickpolar_auto);
+        FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
+        #endif
 
         ///Decay all variables with the specified factor. Implemented by increasing the 'bump' value instead.
         void     varDecayActivity ();
@@ -425,7 +441,7 @@ class Searcher : public HyperEngine
         bool DISTANCE = true;
 
         //Picking polarity when doing decision
-        bool     pickPolarity(const uint32_t var);
+        bool     pick_polarity(const uint32_t var);
 
         //Last time we clean()-ed the clauses, the number of zero-depth assigns was this many
         size_t   lastCleanZeroDepthAssigns;
@@ -528,7 +544,7 @@ inline void Searcher::decayClauseAct()
     cla_inc *= (1 / conf.clause_decay);
 }
 
-inline bool Searcher::pickPolarity(const uint32_t var)
+inline bool Searcher::pick_polarity(const uint32_t var)
 {
     switch(conf.polarity_mode) {
         case PolarityMode::polarmode_neg:

@@ -1920,7 +1920,11 @@ lbool Searcher::burst_search()
 
     //Set burst config
     conf.random_var_freq = 1;
-    conf.polarity_mode = PolarityMode::polarmode_rnd;
+    if (conf.burst_neg_pick) {
+        conf.polarity_mode = PolarityMode::polarmode_neg;
+    } else {
+        conf.polarity_mode = PolarityMode::polarmode_rnd;
+    }
 
     //Do burst
     params.clear();
@@ -2532,7 +2536,7 @@ Lit Searcher::pickBranchLit()
                 && solver->varData[next_var].removed == Removed::none
             ) {
                 stats.decisionsRand++;
-                next = Lit(next_var, !pickPolarity(next_var));
+                next = Lit(next_var, !pick_polarity(next_var));
             }
         }
     }
@@ -2562,7 +2566,7 @@ Lit Searcher::pickBranchLit()
             }
             v = order_heap.removeMin();
         }
-        next = Lit(v, !pickPolarity(v));
+        next = Lit(v, !pick_polarity(v));
     }
 
     //No vars in heap: solution found

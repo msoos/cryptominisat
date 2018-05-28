@@ -56,10 +56,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
 
+        //bursting
+        , burst_search_len(300)
+        , burst_neg_pick(false)
+
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
-        , burst_search_len(300)
         , restartType(Restart::glue_geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)
@@ -101,7 +104,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (true)
+        , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
 
         //SQL
@@ -138,15 +141,15 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_time_limitM(100)
 
         //Probing
-        , doProbe          (true)
+        , doProbe          (false)
         , doIntreeProbe    (true)
         , probe_bogoprops_time_limitM  (800ULL)
         , intree_time_limitM(1200ULL)
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
-        , doStamp          (true)
-        , doCache          (true)
+        , doStamp          (false)
+        , doCache          (false)
         , cacheUpdateCutoff(2000)
         , maxCacheSizeMB   (2048)
         , otf_hyper_time_limitM(340)
@@ -232,7 +235,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doSaveMem        (true)
 
         //Component finding
-        , doCompHandler    (true)
+        , doCompHandler    (false)
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
         , comp_find_time_limitM (500)

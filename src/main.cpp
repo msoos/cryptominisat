@@ -636,6 +636,8 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit strengthening")
     ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
         , "Number of conflicts to do in burst search")
+    ("burstneg", po::value(&conf.burst_neg_pick)->default_value(conf.burst_neg_pick)
+        , "Pick negative polar on burst only instead of random")
     ;
 
     po::options_description reconfOptions("Reconf options");

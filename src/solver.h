@@ -38,6 +38,9 @@ THE SOFTWARE.
 #include "clauseusagestats.h"
 #include "solvefeatures.h"
 #include "searchstats.h"
+#ifdef CMS_TESTING_ENABLED
+#include "gtest/gtest_prod.h"
+#endif
 
 namespace CMSat {
 
@@ -243,6 +246,10 @@ class Solver : public Searcher
     private:
         friend class Prober;
         friend class ClauseDumper;
+        #ifdef CMS_TESTING_ENABLED
+        FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
+        #endif
+
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
         void check_reconfigure();
