@@ -138,7 +138,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_time_limitM(100)
 
         //Probing
-        , doProbe          (true)
+        , doProbe          (false)
         , doIntreeProbe    (true)
         , probe_bogoprops_time_limitM  (800ULL)
         , intree_time_limitM(1200ULL)
