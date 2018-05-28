@@ -1813,7 +1813,9 @@ bool Solver::execute_inprocess_strategy(
             cout << "c --> Executing strategy token: " << token << '\n';
         }
 
-        if (token == "find-comps") {
+        if (token == "find-comps" &&
+            conf.independent_vars == NULL //no point finding, cannot be handled
+        ) {
             if (get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult) {
                 CompFinder findParts(this);
                 findParts.find_components();
@@ -1821,6 +1823,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "handle-comps") {
             if (compHandler
                 && conf.doCompHandler
+                && conf.independent_vars == NULL
                 && get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult
                 && solveStats.numSimplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
