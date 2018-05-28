@@ -53,7 +53,7 @@ class PossibleXor
             const vector<Lit>& cl
             , const ClOffset offset
             , cl_abst_type _abst
-            , vector<uint64_t>& occcnt
+            , vector<uint32_t>& seen
         ) {
             abst = _abst;
             size = cl.size();
@@ -68,9 +68,16 @@ class PossibleXor
                 if (i > 0)
                     assert(cl[i-1] < cl[i]);
             }
-            setup_seen_rhs_foundcomb(occcnt);
+            setup_seen_rhs_foundcomb(seen);
             if (offset != std::numeric_limits<ClOffset>::max()) {
                 offsets.push_back(offset);
+            }
+        }
+
+        void clear_seen(vector<uint32_t>& seen)
+        {
+            for (uint32_t i = 0; i < size; i++) {
+                seen[origCl[i].var()] = 0;
             }
         }
 
@@ -90,7 +97,7 @@ class PossibleXor
         }
 
     private:
-        void setup_seen_rhs_foundcomb(vector<uint64_t>& occcnt)
+        void setup_seen_rhs_foundcomb(vector<uint32_t>& seen)
         {
             //Calculate parameters of base clause.
             //Also set 'seen' for easy check in 'findXorMatch()'
@@ -99,7 +106,7 @@ class PossibleXor
             for (uint32_t i = 0; i < size; i++) {
                 rhs ^= origCl[i].sign();
                 whichOne += ((uint32_t)origCl[i].sign()) << i;
-                occcnt[origCl[i].var()] = 1;
+                seen[origCl[i].var()] = 1;
             }
 
             foundComb.clear();
