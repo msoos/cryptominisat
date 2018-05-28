@@ -198,7 +198,7 @@ private:
     vector<Lit> binvec;
 
     //Other temporaries
-    vector<uint64_t> occcnt;
+    vector<uint32_t> occcnt;
     vector<Lit>& toClear;
     vector<uint32_t> interesting;
 };
