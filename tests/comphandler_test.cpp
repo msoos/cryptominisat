@@ -36,6 +36,7 @@ struct comp_handle : public ::testing::Test {
     {
         must_inter.store(false, std::memory_order_relaxed);
         SolverConf conf;
+        conf.doCompHandler = true;
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         s->new_vars(30);
