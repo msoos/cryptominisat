@@ -133,6 +133,7 @@ vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
 
 bool CompHandler::handle()
 {
+    assert(solver->conf.independent_vars == NULL && "Cannot handle components when indep vars is set");
     assert(solver->okay());
     double myTime = cpuTime();
 
