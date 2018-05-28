@@ -56,10 +56,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
 
+        //bursting
+        , burst_search_len(300)
+        , burst_neg_pick(false)
+
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)
-        , burst_search_len(300)
         , restartType(Restart::glue_geom)
         , do_blocking_restart(1)
         , blocking_restart_trail_hist_length(5000)

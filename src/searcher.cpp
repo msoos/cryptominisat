@@ -1920,7 +1920,11 @@ lbool Searcher::burst_search()
 
     //Set burst config
     conf.random_var_freq = 1;
-    conf.polarity_mode = PolarityMode::polarmode_rnd;
+    if (conf.burst_neg_pick) {
+        conf.polarity_mode = PolarityMode::polarmode_neg;
+    } else {
+        conf.polarity_mode = PolarityMode::polarmode_rnd;
+    }
 
     //Do burst
     params.clear();
