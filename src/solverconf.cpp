@@ -101,7 +101,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (true)
+        , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
 
         //SQL
@@ -145,8 +145,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , intree_scc_varreplace_time_limitM(30ULL)
         , doBothProp       (true)
         , doTransRed       (true)
-        , doStamp          (true)
-        , doCache          (true)
+        , doStamp          (false)
+        , doCache          (false)
         , cacheUpdateCutoff(2000)
         , maxCacheSizeMB   (2048)
         , otf_hyper_time_limitM(340)
@@ -232,7 +232,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doSaveMem        (true)
 
         //Component finding
-        , doCompHandler    (true)
+        , doCompHandler    (false)
         , handlerFromSimpNum (0)
         , compVarLimit      (1ULL*1000ULL*1000ULL)
         , comp_find_time_limitM (500)
