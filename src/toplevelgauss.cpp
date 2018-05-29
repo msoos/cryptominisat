@@ -64,7 +64,7 @@ bool TopLevelGauss::toplevelgauss(const vector<Xor>& _xors, vector<Lit>* _out_ch
     }
     globalStats += runStats;
 
-    return solver->ok;
+    return solver->okay();
 }
 
 struct XorSorter{
@@ -155,7 +155,7 @@ bool TopLevelGauss::extractInfo()
 end:
     runStats.extractTime += cpuTime() - myTime;
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool TopLevelGauss::extractInfoFromBlock(

@@ -3996,6 +3996,6 @@ bool Solver::init_all_matrixes()
         gqd.reset_stats();
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 #endif //USE_GAUSS

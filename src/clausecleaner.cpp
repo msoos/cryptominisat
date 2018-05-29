@@ -379,5 +379,5 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
         cout << "cleaned XOR: " << x << endl;
     }
     #endif
-    return solver->ok;
+    return solver->okay();
 }

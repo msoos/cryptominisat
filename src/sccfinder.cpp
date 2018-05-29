@@ -87,7 +87,7 @@ bool SCCFinder::performSCC(uint64_t* bogoprops_given)
         *bogoprops_given += runStats.bogoprops;
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void SCCFinder::tarjan(const uint32_t vertex)

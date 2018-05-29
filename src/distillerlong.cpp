@@ -79,7 +79,7 @@ end:
     }
     runStats.clear();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 struct ClauseSizeSorterInv
@@ -246,7 +246,7 @@ bool DistillerLong::distill_long_cls_all(
     runStats.time_used += cpuTime() - myTime;
     runStats.zeroDepthAssigns += solver->trail_size() - origTrailSize;
 
-    return solver->ok;
+    return solver->okay();
 }
 
 /*ClOffset DistillerLong::try_distill_clause_and_return_new(

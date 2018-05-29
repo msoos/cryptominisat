@@ -421,7 +421,7 @@ end:
     check_if_must_disable_otf_hyperbin_and_tred(num_props_limit);
     check_if_must_disable_cache_update();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void Prober::update_and_print_stats(const double myTime, const uint64_t num_props_limit)
@@ -710,7 +710,7 @@ bool Prober::try_this(const Lit lit, const bool first)
         lits.push_back(~failed);
         solver->add_clause_int(lits, true);
         clear_up_before_first_set();
-        return solver->ok;
+        return solver->okay();
     } else {
         assert(solver->ok);
         runStats.bothSameAdded += toEnqueue.size();
@@ -853,7 +853,7 @@ size_t Prober::mem_used() const
 //     << " time: " << (cpuTime() - myTime)
 //     << endl;
 //
-//     return solver->ok;
+//     return solver->okay();
 // }
 //
 // const bool Prober::tryMultiLevel(const vector<uint32_t>& vars, uint32_t& enqueued, uint32_t& finished, uint32_t& numFailed)
@@ -911,7 +911,7 @@ size_t Prober::mem_used() const
 //     solver->ok = solver->propagate().isNULL();
 //     //std::exit(-1);
 //
-//     return solver->ok;
+//     return solver->okay();
 // }
 
 void Prober::Stats::print_short(const Solver* solver, const bool time_out, const double time_remain) const
