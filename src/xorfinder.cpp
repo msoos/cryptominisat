@@ -386,6 +386,9 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
 
 vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& this_xors)
 {
+    if (this_xors.empty())
+        return this_xors;
+
     double myTime = cpuTime();
     vector<Xor> ret;
     assert(toClear.empty());
@@ -445,6 +448,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
 {
     if (occcnt.size() != solver->nVars())
         grab_mem();
+
+    if (this_xors.empty())
+        return solver->okay();
 
     #ifdef SLOW_DEBUG
     for(auto x: occcnt) {
