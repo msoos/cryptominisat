@@ -617,7 +617,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     toClear.clear();
     #endif
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void XorFinder::clean_xors_from_empty()
