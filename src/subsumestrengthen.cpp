@@ -368,7 +368,7 @@ bool SubsumeStrengthen::backw_str_long_with_long()
     runStats.litsRemStrengthen += ret.str;
     runStats.strengthenTime += cpuTime() - myTime;
 
-    return solver->ok;
+    return solver->okay();
 }
 
 /**
@@ -547,7 +547,7 @@ bool SubsumeStrengthen::handle_added_long_cl(
         }
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void SubsumeStrengthen::remove_literal(ClOffset offset, const Lit toRemoveLit)
@@ -1025,6 +1025,6 @@ bool SubsumeStrengthen::backw_sub_str_long_with_bins()
 
     //runStats.zeroDepthAssigns = solver->trail_size() - origTrailSize;
 
-    return solver->ok;
+    return solver->okay();
 }
 

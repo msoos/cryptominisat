@@ -1192,7 +1192,7 @@ end:
     bvestats_global += bvestats;
 
     //exit(0);
-    return solver->ok;
+    return solver->okay();
 }
 
 void OccSimplifier::free_clauses_to_free()
@@ -1296,7 +1296,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             || solver->nVars() == 0
             || !solver->ok
         ) {
-            return solver->ok;
+            return solver->okay();
         }
 
         #ifdef SLOW_DEBUG
@@ -1387,7 +1387,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         return false;
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool OccSimplifier::setup()
@@ -1431,7 +1431,7 @@ bool OccSimplifier::setup()
     }
 
     set_limits();
-    return solver->ok;
+    return solver->okay();
 }
 
 bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
@@ -1442,7 +1442,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 
     startup = _startup;
     if (!setup()) {
-        return solver->ok;
+        return solver->okay();
     }
 
     const size_t origBlockedSize = blockedClauses.size();
@@ -1469,7 +1469,7 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     remove_by_drat_recently_blocked_clauses(origBlockedSize);
     finishUp(origTrailSize);
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool OccSimplifier::backward_sub_str()
@@ -1506,7 +1506,7 @@ bool OccSimplifier::backward_sub_str()
     free_clauses_to_free();
     solver->clean_occur_from_removed_clauses_only_smudged();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool OccSimplifier::fill_occur()

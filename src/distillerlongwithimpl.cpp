@@ -88,7 +88,7 @@ end:
     }
     runStats.clear();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void DistillerLongWithImpl::strengthen_clause_with_watch(
@@ -466,7 +466,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
         , orig_time_available
     );
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void DistillerLongWithImpl::dump_stats_for_shorten_all_cl_with_cache_stamp(

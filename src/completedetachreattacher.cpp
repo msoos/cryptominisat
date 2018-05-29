@@ -101,7 +101,7 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
         solver->ok = (solver->propagate<true>().isNULL());
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 

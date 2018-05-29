@@ -72,7 +72,7 @@ end:
     orGates.shrink_to_fit();
     solver->sumSearchStats.num_gates_found_last = orGates.size();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void GateFinder::find_or_gates_and_update_stats()
@@ -173,7 +173,7 @@ bool GateFinder::shorten_with_all_or_gates()
         << endl;
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool GateFinder::remove_clauses_with_all_or_gates()
@@ -224,7 +224,7 @@ bool GateFinder::remove_clauses_with_all_or_gates()
         << endl;
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool GateFinder::all_simplifications_with_gates()
@@ -271,7 +271,7 @@ bool GateFinder::all_simplifications_with_gates()
             return false;
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 size_t GateFinder::findEqOrGates()

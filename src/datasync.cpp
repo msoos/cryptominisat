@@ -228,7 +228,7 @@ bool DataSync::syncBinFromOthers(
     }
     toClear.clear();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void DataSync::syncBinToOthers()

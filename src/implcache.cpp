@@ -396,7 +396,7 @@ end:
         );
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 void ImplCache::tryVar(

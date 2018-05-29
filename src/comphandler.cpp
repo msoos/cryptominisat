@@ -158,7 +158,7 @@ bool CompHandler::handle()
 
         delete compFinder;
         compFinder = NULL;
-        return solver->ok;
+        return solver->okay();
     }
 
     solver->xorclauses.clear();
@@ -186,7 +186,7 @@ bool CompHandler::handle()
         delete compFinder;
         compFinder = NULL;
 
-        return solver->ok;
+        return solver->okay();
     }
 
     const double time_used = cpuTime() - myTime;
@@ -211,7 +211,7 @@ bool CompHandler::handle()
 
     delete compFinder;
     compFinder = NULL;
-    return solver->ok;
+    return solver->okay();
 }
 
 bool CompHandler::try_to_solve_component(

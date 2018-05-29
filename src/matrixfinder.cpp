@@ -223,7 +223,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
         );
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 uint32_t MatrixFinder::setMatrixes()

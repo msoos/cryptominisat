@@ -181,7 +181,7 @@ bool VarReplacer::enqueueDelayedEnqueue()
         return false;
 
     solver->ok = solver->propagate<false>().isNULL();
-    return solver->ok;
+    return solver->okay();
 }
 
 void VarReplacer::attach_delayed_attach()
@@ -313,7 +313,7 @@ end:
         checkUnsetSanity();
     }
 
-    return solver->ok;
+    return solver->okay();
 }
 
 bool VarReplacer::replace_xor_clauses()
@@ -508,7 +508,7 @@ bool VarReplacer::replaceImplicit()
     updateStatsFromImplStats();
     solver->watches.clear_smudged();
 
-    return solver->ok;
+    return solver->okay();
 }
 
 /**
@@ -555,7 +555,7 @@ bool VarReplacer::replace_set(vector<ClOffset>& cs)
     cs.resize(cs.size() - (i-j));
     assert(!solver->drat->something_delayed());
 
-    return solver->ok;
+    return solver->okay();
 }
 
 Lit* my_lit_find(Clause& cl, const Lit lit)
@@ -815,7 +815,7 @@ bool VarReplacer::replace_vars_already_set(
     }
 
     //Already set, return with correct code
-    return solver->ok;
+    return solver->okay();
 }
 
 bool VarReplacer::handleOneSet(
@@ -845,7 +845,7 @@ bool VarReplacer::handleOneSet(
 
         solver->ok = (solver->propagate<false>().isNULL());
     }
-    return solver->ok;
+    return solver->okay();
 }
 
 /**
