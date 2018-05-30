@@ -166,10 +166,6 @@ class SolverConf
         unsigned modulo_maple_iter;
         bool     more_maple_bump_high_glue;
 
-        //Burst
-        unsigned burst_search_len;
-        bool     burst_neg_pick;
-
         //For restarting
         unsigned    restart_first;      ///<The initial restart limit.                                                                (default 100)
         double    restart_inc;        ///<The factor with which the restart limit is multiplied in each restart.                    (default 1.5)

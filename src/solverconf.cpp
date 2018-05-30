@@ -56,10 +56,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , modulo_maple_iter(3)
         , more_maple_bump_high_glue(false)
 
-        //bursting
-        , burst_search_len(300)
-        , burst_neg_pick(false)
-
         //Restarting
         , restart_first(100)
         , restart_inc(1.1)

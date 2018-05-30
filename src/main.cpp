@@ -634,10 +634,6 @@ void Main::add_supported_options()
         , "Timeout (in bogoprop Millions) of implicit subsumption")
     ("implstrto", po::value(&conf.distill_implicit_with_implicit_time_limitM)->default_value(conf.distill_implicit_with_implicit_time_limitM)
         , "Timeout (in bogoprop Millions) of implicit strengthening")
-    ("burst", po::value(&conf.burst_search_len)->default_value(conf.burst_search_len)
-        , "Number of conflicts to do in burst search")
-    ("burstneg", po::value(&conf.burst_neg_pick)->default_value(conf.burst_neg_pick)
-        , "Pick negative polar on burst only instead of random")
     ;
 
     po::options_description reconfOptions("Reconf options");
@@ -1278,9 +1274,9 @@ void Main::printVersionInfo()
     #endif
     cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
     #ifdef __GNUC__
-    cout << "c compiled with gcc version " << __VERSION__ << endl;
+    cout << "c CryptoMiniSat compiled with gcc version " << __VERSION__ << endl;
     #else
-    cout << "c compiled with non-gcc compiler" << endl;
+    cout << "c CryptoMiniSat compiled with non-gcc compiler" << endl;
     #endif
 }
 

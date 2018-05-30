@@ -1905,55 +1905,6 @@ void Searcher::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
-lbool Searcher::burst_search()
-{
-    const double myTime = cpuTime();
-    const size_t numUnitsUntilNow = stats.learntUnits;
-    const size_t numBinsUntilNow = stats.learntBins;
-
-    //Save old config
-    const double backup_rand = conf.random_var_freq;
-    const PolarityMode backup_polar_mode = conf.polarity_mode;
-    Restart backup_restart_type = params.rest_type;
-    double backup_var_inc_vsids = var_inc_vsids;
-    double backup_var_decay_vsids = var_decay_vsids;
-
-    //Set burst config
-    conf.random_var_freq = 1;
-    if (conf.burst_neg_pick) {
-        conf.polarity_mode = PolarityMode::polarmode_neg;
-    } else {
-        conf.polarity_mode = PolarityMode::polarmode_rnd;
-    }
-
-    //Do burst
-    params.clear();
-    params.max_confl_to_do = conf.burst_search_len;
-    params.rest_type = Restart::never;
-    lbool status = search<true>();
-
-    //Restore config
-    conf.random_var_freq = backup_rand;
-    conf.polarity_mode = backup_polar_mode;
-    params.rest_type = backup_restart_type;
-    assert(var_inc_vsids == backup_var_inc_vsids);
-    assert(var_decay_vsids == backup_var_decay_vsids);
-
-    //Print what has happened
-    const double time_used = cpuTime() - myTime;
-    if (conf.verbosity) {
-        cout
-        << "c "
-        << conf.burst_search_len << "-long burst search finished "
-        << " learnt units:" << (stats.learntUnits - numUnitsUntilNow)
-        << " learnt bins: " << (stats.learntBins - numBinsUntilNow)
-        << solver->conf.print_times(time_used)
-        << endl;
-    }
-
-    return status;
-}
-
 void Searcher::check_calc_features()
 {
     if (last_feature_calc_confl == 0 || (last_feature_calc_confl + 100000) < sumConflicts) {
@@ -2244,15 +2195,6 @@ lbool Searcher::solve(
 
     resetStats();
     lbool status = l_Undef;
-    if (conf.burst_search_len > 0
-        && solver->conf.burst_broken
-    ) {
-        assert(solver->check_order_heap_sanity());
-        status = burst_search();
-        if (status != l_Undef)
-            goto end;
-    }
-
     if (VSIDS) {
         if (conf.restartType == Restart::geom) {
             max_confl_phase = conf.restart_first;
@@ -3377,10 +3319,6 @@ void Searcher::cancelUntil<true, false>(uint32_t level);
 //During inprocessing, dont update anyting really (probing, distilling)
 template
 void Searcher::cancelUntil<false, true>(uint32_t level);
-
-//During bursting, we need to insert var_order but not update other stats
-template
-void Searcher::cancelUntil<true, true>(uint32_t level);
 
 template<bool do_insert_var_order, bool update_bogoprops>
 void Searcher::cancelUntil(uint32_t level)
