@@ -256,7 +256,6 @@ class Searcher : public HyperEngine
         /// Search for a given number of conflicts.
         template<bool update_bogoprops>
         lbool search();
-        lbool burst_search();
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause
         void  update_history_stats(size_t backtrack_level, uint32_t glue);
