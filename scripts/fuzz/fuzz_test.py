@@ -452,7 +452,7 @@ class Tester:
                 print("Error line while executing: %s" % line.strip())
                 # don't error out on issues related to UBSAN/ASAN
                 # of clang of other projects
-                if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line:
+                if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line or "MersenneTwister.h" in line:
                     pass
                 else:
                     found_something = True
