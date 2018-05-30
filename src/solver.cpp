@@ -1259,8 +1259,8 @@ void Solver::set_up_sql_writer()
 
 void Solver::check_xor_cut_config_sanity() const
 {
-    if (conf.xor_var_per_cut <= 1) {
-        std::cerr << "ERROR: Too low cutting number. Needs to be at least 2." << endl;
+    if (conf.xor_var_per_cut < 1) {
+        std::cerr << "ERROR: Too low cutting number: " << conf.xor_var_per_cut << ". Needs to be at least 1." << endl;
         exit(-1);
     }
 
