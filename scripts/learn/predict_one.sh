@@ -39,7 +39,7 @@ RATIO=$3
 mkdir -p "${OUTDIR}"
 
 rm -if "${OUTDIR}/drat_out"
-rm -if "${OUTDIR}/lemmas"
+rm -if "${OUTDIR}/clause_id_data"
 rm -if "${OUTDIR}/data.sqlite"
 rm -if "${OUTDIR}/data.sqlite.tree.dot"
 echo "Predicting file $1"
@@ -47,15 +47,16 @@ echo "Predicting file $1"
 # running CNF
 ./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --restart luby --clid --sql 2 --maple 0 --distill 0 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
 
-# getting drat
-./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/lemmas" -i
+# parse DRAT for UNSAT proof data
+./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/clause_id_data" -i
 
-# add lemma indices that were good
-./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/lemmas"
+# add clause IDs and their age and performance data
+./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/clause_id_data"
 
-# run prediction on SQLite database
+# get pandas dataframe from SQLite database
 ./gen_pandas.py --csv "${OUTDIR}/data.sqlite"
 
+# generate predictors
 ./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
 
 # generate DOT and display it
