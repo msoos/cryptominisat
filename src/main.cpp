@@ -326,7 +326,7 @@ void Main::add_supported_options()
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
     ("restart", po::value<string>()
-        , "{geom, glue, luby, backtrack}  Restart strategy to follow.")
+        , "{geom, glue, luby}  Restart strategy to follow.")
     ("gluehist", po::value(&conf.shortTermHistorySize)->default_value(conf.shortTermHistorySize)
         , "The size of the moving window for short-term glue history of redundant clauses. If higher, the minimal number of conflicts between restarts is longer")
     ("blkrest", po::value(&conf.do_blocking_restart)->default_value(conf.do_blocking_restart)
