@@ -70,12 +70,28 @@ docker run --rm -i -p 80:80 cmsweb
 Compiling in Linux
 -----
 
-To build and install, issue:
+To build and install on Ubuntu, issue:
 
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig
+```
+
+
+To build and install on Fedora, issue:
+
+```
+sudo dnf install cmake valgrind valgrind-devel gcc gcc-c++ automake make autoconf help2man
+# not required but very useful
+sudo dnf install zlib-devel boost boost-devel boost-program-options m4ri-devel sqlite-devel
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -161,6 +177,23 @@ $ make install
 $ cp ./boost_1_66_0/bin.v2/libs/program_options/build/gcc-gnu-6.4.0/release/threadapi-pthread/threading-multi/cygboost_program_options.dll /usr/local/bin
 ```
 
+CMake Arguments
+-----
+
+The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
+
+- `-DONLY_SIMPLE=<ON/OFF>` -- whether or not to build only the simple binary and library interface
+- `-DUSE_GAUSS=<ON/OFF>` -- whether or not to build with Gaussian Elimination support
+- `-DNOM4RI=<ON/OFF>` -- whether or not to build with M4RI support (required for Gaussian Elimination)
+- `-DNOZLIB=<ON/OFF>` -- whether or not to build with gzip CNF support
+- `-DNOVALGRIND=<ON/OFF>` -- whether or not to build with extended memory checking support
+- `-DSTATS=<ON/OFF>` -- whether or not to build with advanced statistics (slower)
+- `-DSTATICCOMPILE=<ON/OFF>` -- whether or not to build a statically linked binary
+- `-DENABLE_TESTING=<ON/OFF>` -- whether or not to build with test suite support
+
+Please refer to the CMake [documentation](https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html)
+for general CMake arguments.
+
 Command-line usage
 -----
 
@@ -200,7 +233,7 @@ The python module works with both Python 2 and Python 3. It must be compiled as 
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install python3-setuptools python3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
@@ -373,7 +406,7 @@ s SATISFIABLE
 v [solution] 0
 ```
 
-or 
+or
 
 ```
 s UNSATISFIABLE
@@ -397,7 +430,7 @@ For building with Gaussian Elimination, you need to build as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -432,7 +465,7 @@ For testing you will need the GIT checkout and build as per:
 
 ```
 sudo apt-get install build-essential cmake git
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo pip3 install --upgrade pip
 sudo pip3 install lit
@@ -463,7 +496,7 @@ This is experimental but should work relatively well:
 ```
 git checkout clauseID
 sudo apt-get install build-essential cmake git
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install graphviz
 sudo apt-get install python3-pip python3-setuptools python3-dev
 sudo apt-get install python3-numpy
