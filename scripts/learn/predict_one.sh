@@ -54,9 +54,9 @@ echo "Predicting file $1"
 ./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/lemmas"
 
 # run prediction on SQLite database
-./predict.py --csv "${OUTDIR}/data.sqlite"
+./gen_pandas.py --csv "${OUTDIR}/data.sqlite"
 
-./mini_pred.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
+./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
 
 # generate DOT and display it
 dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png
