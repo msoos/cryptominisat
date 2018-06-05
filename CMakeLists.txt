@@ -309,7 +309,7 @@ if (COVERAGE)
 endif()
 
 
-option(IPASIR "Also build IPASIR" ON)
+option(IPASIR "Also build IPASIR" OFF)
 
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
