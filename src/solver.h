@@ -100,6 +100,7 @@ class Solver : public Searcher
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(bool elongate);
+        void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
 
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
@@ -222,6 +223,7 @@ class Solver : public Searcher
             , const Lit drat_first = lit_Undef
         );
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
+        template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
         void set_sqlite(string filename);
@@ -303,6 +305,7 @@ class Solver : public Searcher
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
+        mutable std::vector<uint32_t> tmpXor;
 
         /////////////////////////////
         //Renumberer
@@ -421,6 +424,17 @@ inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
     }
 
     return tmpCl;
+}
+
+template<class T>
+inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
+{
+    tmpXor.clear();
+    for(size_t i = 0; i < cl.size(); i++) {
+        tmpXor.push_back(map_inter_to_outer(cl[i]));
+    }
+
+    return tmpXor;
 }
 
 inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)

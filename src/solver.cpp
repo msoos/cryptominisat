@@ -3866,6 +3866,7 @@ void Solver::open_file_and_dump_red_clauses(string fname) const
 
 vector<Xor> Solver::get_recovered_xors(bool elongate)
 {
+    vector<Xor> xors_ret;
     if (elongate && solver->okay()) {
         XorFinder finder(NULL, this);
         auto xors = xorclauses;
@@ -3878,9 +3879,28 @@ vector<Xor> Solver::get_recovered_xors(bool elongate)
         }
         //YEP -- the solver state can turn to OK=false
 
-        return xors;
+        renumber_xors_to_outside(xors, xors_ret);
+        return xors_ret;
     } else {
-        return xorclauses;
+        renumber_xors_to_outside(xorclauses, xors_ret);
+        return xors_ret;
+    }
+}
+
+void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret)
+{
+    for(auto& x: xors) {
+        vector<uint32_t> t = xor_outer_numbered(x.get_vars());
+        bool OK = true;
+        for(auto v: t) {
+            if (v >= nVarsOutside()) {
+                OK = false;
+                break;
+            }
+        }
+        if (OK) {
+            xors_ret.push_back(Xor(t, x.rhs));
+        }
     }
 }
 
