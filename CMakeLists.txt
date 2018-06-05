@@ -436,7 +436,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
             INSTALL(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
         endif()
         ADD_CUSTOM_TARGET(man_cms5_simple
             ALL
@@ -451,7 +451,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
         INSTALL(
             FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
 
         message(STATUS "Manpage will be created and installed")
     else()
