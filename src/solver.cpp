@@ -3889,6 +3889,13 @@ vector<Xor> Solver::get_recovered_xors(bool elongate)
 
 void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret)
 {
+    if (conf.verbosity >= 5) {
+        cout << "XORs before outside numbering:" << endl;
+        for(auto& x: xors) {
+            cout << x << endl;
+        }
+    }
+
     for(auto& x: xors) {
         vector<uint32_t> t = xor_outer_numbered(x.get_vars());
         bool OK = true;
