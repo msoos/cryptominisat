@@ -122,11 +122,17 @@ OccSimplifier::~OccSimplifier()
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
     n_occurs.insert(n_occurs.end(), 2, 0);
+    if (solver->conf.independent_vars) {
+        indep_vars.insert(indep_vars.end(), 1, 0);
+    }
 }
 
 void OccSimplifier::new_vars(size_t n)
 {
     n_occurs.insert(n_occurs.end(), n*2ULL, 0);
+    if (solver->conf.independent_vars) {
+        indep_vars.insert(indep_vars.end(), n, 0);
+    }
 }
 
 void OccSimplifier::save_on_var_memory()
@@ -706,6 +712,7 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
         ; num < solver->nVars() && *limit_to_decrease > 0
         ; var = (var + 1) % solver->nVars(), num++
     ) {
+        assert(var == var % solver->nVars());
         if (!can_eliminate_var(var))
             continue;
 
@@ -744,6 +751,13 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
 
 bool OccSimplifier::can_eliminate_var(const uint32_t var) const
 {
+    #ifdef SLOW_DEBUG
+    if (solver->conf.independent_vars) {
+        assert(var < nVars());
+        assert(var < indep_vars.size());
+    }
+    #endif
+
     assert(var < solver->nVars());
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
