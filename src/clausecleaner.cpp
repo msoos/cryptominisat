@@ -359,25 +359,29 @@ bool ClauseCleaner::clean_xor_clauses(vector<Xor>& xors)
     }
     #endif
 
-    size_t i = 0;
-    size_t j = 0;
-    for(size_t size = xors.size(); i < size; i++) {
-        Xor& x = xors[i];
-        const bool keep = clean_one_xor(x);
-        if (!solver->ok) {
-            return false;
-        }
+    size_t last_trail = std::numeric_limits<size_t>::max();
+    while(last_trail != solver->trail_size()) {
+        last_trail = solver->trail_size();
+        size_t i = 0;
+        size_t j = 0;
+        for(size_t size = xors.size(); i < size; i++) {
+            Xor& x = xors[i];
+            const bool keep = clean_one_xor(x);
+            if (!solver->ok) {
+                return false;
+            }
 
-        if (keep) {
-            xors[j++] = x;
+            if (keep) {
+                xors[j++] = x;
+            }
         }
-    }
-    xors.resize(j);
+        xors.resize(j);
 
-    #ifdef VERBOSE_DEBUG
-    for(Xor& x : xors) {
-        cout << "cleaned XOR: " << x << endl;
+        #ifdef VERBOSE_DEBUG
+        for(Xor& x : xors) {
+            cout << "cleaned XOR: " << x << endl;
+        }
+        #endif
     }
-    #endif
     return solver->okay();
 }

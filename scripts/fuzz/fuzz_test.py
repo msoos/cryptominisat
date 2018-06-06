@@ -794,6 +794,8 @@ if __name__ == "__main__":
             toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
+        if options.only_indep:
+            toexec += "--indep "
         toexec += "-m %d " % options.max_threads
 
         print("")

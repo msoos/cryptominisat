@@ -1301,6 +1301,15 @@ void Solver::check_config_parameters() const
         exit(-1);
     }
 
+    #ifdef SLOW_DEBUG
+    if (solver->conf.independent_vars)
+    {
+        for(uint32_t v: *solver->conf.independent_vars) {
+            assert(v < nVarsOutside());
+        }
+    }
+    #endif
+
     check_xor_cut_config_sanity();
 }
 
