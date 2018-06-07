@@ -753,7 +753,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
 {
     #ifdef SLOW_DEBUG
     if (solver->conf.independent_vars) {
-        assert(var < nVars());
+        assert(var < solver->nVars());
         assert(var < indep_vars.size());
     }
     #endif
