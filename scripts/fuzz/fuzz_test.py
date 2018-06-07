@@ -598,7 +598,7 @@ class Tester:
             print("dump file is:     ", self.dump_red)
             print("orig file is:     ",  fname)
 
-        self.old_dump_red = self.dump_red
+        self.old_dump_red = str(self.dump_red)
         self.dump_red = None
         self.indep_vars = []
         self.only_indep = False
