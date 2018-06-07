@@ -4028,6 +4028,23 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
         }
         learnt_clause_query_at++;
     }
+
+    assert(learnt_clause_query_at >= longRedCls[0].size());
+    uint32_t at_lev1 = learnt_clause_query_at-longRedCls[0].size();
+    while(at_lev1 < longRedCls[1].size()) {
+        const ClOffset offs = longRedCls[1][at_lev1];
+        const Clause* cl = cl_alloc.ptr(offs);
+        if (cl->size() <= learnt_clause_query_max_len) {
+            out = clause_outer_numbered(*cl);
+            if (all_vars_outside(out)) {
+                learnt_clausee_query_map_without_bva(out);
+                learnt_clause_query_at++;
+                return true;
+            }
+        }
+        learnt_clause_query_at++;
+        at_lev1++;
+    }
     return false;
 }
 

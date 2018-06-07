@@ -67,7 +67,7 @@ TEST_F(SolverTest, get_bin)
     s->end_getting_small_clauses();
 }
 
-TEST_F(SolverTest, get_long)
+TEST_F(SolverTest, get_long_lev0)
 {
     Clause* c;
     s = new Solver(&conf, &must_inter);
@@ -85,6 +85,68 @@ TEST_F(SolverTest, get_long)
     ASSERT_TRUE(ret);
     std::sort(lits.begin(), lits.end());
     ASSERT_EQ(lits, str_to_cl(" 1,  2, 3, 4"));
+
+    ret = s->get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s->end_getting_small_clauses();
+}
+
+
+TEST_F(SolverTest, get_long_lev1)
+{
+    Clause* c;
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+
+    s->add_clause_outer(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true);
+    assert(c != NULL);
+    s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
+
+    s->start_getting_small_clauses(10);
+    vector<Lit> lits;
+
+    bool ret = s->get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(lits, str_to_cl(" 6,  2, 3, 4"));
+
+    ret = s->get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s->end_getting_small_clauses();
+}
+
+TEST_F(SolverTest, get_long_lev0_and_lev1)
+{
+    Clause* c;
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+
+    s->add_clause_outer(str_to_cl(" 2,  3"));
+
+    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true);
+    assert(c != NULL);
+    s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
+
+    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true);
+    assert(c != NULL);
+    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+
+    s->start_getting_small_clauses(10);
+    vector<Lit> lits;
+
+    //Order is reverse because we get lev0 then lev1
+    bool ret = s->get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(lits, str_to_cl(" 2, 4, 5, 6"));
+
+    ret = s->get_next_small_clause(lits);
+    ASSERT_TRUE(ret);
+    std::sort(lits.begin(), lits.end());
+    ASSERT_EQ(lits, str_to_cl(" 3, -4, -7"));
 
     ret = s->get_next_small_clause(lits);
     ASSERT_FALSE(ret);
