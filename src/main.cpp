@@ -366,6 +366,8 @@ void Main::add_supported_options()
         , "Reduce lev2 clauses every N")
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
+    ("dumpred", po::value(&dump_red_fname)->default_value(dump_red_fname)
+        , "Dump redundant clauses of gluecut0 here")
     ;
 
     std::ostringstream s_random_var_freq;
@@ -1153,6 +1155,36 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 }
 
+void Main::dump_red_file()
+{
+    if (dump_red_fname.length() == 0)
+        return;
+
+    std::ofstream* dumpfile = new std::ofstream;
+    dumpfile->open(dump_red_fname.c_str());
+    if (!(*dumpfile)) {
+        cout
+        << "ERROR: Couldn't open file '"
+        << resultFilename
+        << "' for writing!"
+        << endl;
+        std::exit(-1);
+    }
+
+    bool ret = true;
+    vector<Lit> lits;
+    solver->start_getting_small_clauses(10000);
+    while(ret) {
+        ret = solver->get_next_small_clause(lits);
+        if (ret) {
+            *dumpfile << lits << " " << 0 << endl;
+        }
+    }
+    solver->end_getting_small_clauses();
+
+    delete dumpfile;
+}
+
 int Main::solve()
 {
     solver = new SATSolver((void*)&conf);
@@ -1203,6 +1235,9 @@ int Main::solve()
         }
         if (conf.verbosity) {
             solver->print_stats();
+        }
+        if (ret == l_True) {
+            dump_red_file();
         }
     }
     printResultFunc(&cout, false, ret);
