@@ -100,7 +100,11 @@ class Solver : public Searcher
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(bool elongate);
-        void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
+
+        //get learnt clauses
+        void start_getting_small_clauses(uint32_t max_len);
+        bool get_next_small_clause(std::vector<Lit>& out);
+        void end_getting_small_clauses();
 
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
@@ -245,6 +249,9 @@ class Solver : public Searcher
         //Contains _outer_ variables
         vector<bool> undef_must_set_vars;
 
+        //Helper
+        void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
+
     private:
         friend class Prober;
         friend class ClauseDumper;
@@ -306,6 +313,16 @@ class Solver : public Searcher
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
         mutable std::vector<uint32_t> tmpXor;
+
+
+        //learnt clause querying
+        uint32_t learnt_clause_query_max_len = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
+        vector<uint32_t> learnt_clause_query_outer_to_without_bva_map;
+        bool all_vars_outside(const vector<Lit>& cl) const;
+        void learnt_clausee_query_map_without_bva(vector<Lit>& cl);
 
         /////////////////////////////
         //Renumberer

@@ -171,6 +171,7 @@ set (MY_TESTS
     comphandler_test
     dump_test
     searcher_test
+    solver_test
 #    undefine_test
 )
 
