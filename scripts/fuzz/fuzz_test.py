@@ -695,6 +695,9 @@ class Tester:
         for name in todel:
             os.unlink(name)
 
+        if self.dump_red is not None:
+            os.unlink(self.dump_red)
+
     def delete_file_no_matter_what(self, fname):
         try:
             os.unlink(fname)
