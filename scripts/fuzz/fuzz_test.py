@@ -632,7 +632,8 @@ class Tester:
         if options.only_dump:
             self.drat = False
             self.only_indep = False
-            self.dump_red = unique_file("fuzzTest-dump")
+            if self.dump_red is None:
+                self.dump_red = unique_file("fuzzTest-dump")
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -716,6 +717,7 @@ class Tester:
         self.preproc = True
         self.only_indep = False
         self.indep_vars = []
+        assert self.dump_red is None
         self.dump_red = None
 
         # create the fuzz file
@@ -760,6 +762,7 @@ class Tester:
         os.unlink(fname)
         for name in todel:
             os.unlink(name)
+        assert self.dump_red is None
 
 
 def filter_large_fuzzer(dat):
