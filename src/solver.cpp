@@ -3968,7 +3968,15 @@ bool Solver::init_all_matrixes()
 
 void Solver::start_getting_small_clauses(const uint32_t max_len)
 {
-    assert(ok);
+    if (!ok) {
+        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
+        exit(-1);
+    }
+    if (!learnt_clause_query_outer_to_without_bva_map.empty()) {
+        std::cerr << "ERROR: You forgot to call end_getting_small_clauses() last time!" <<endl;
+        exit(-1);
+    }
+
     assert(learnt_clause_query_at == std::numeric_limits<uint32_t>::max());
     assert(learnt_clause_query_watched_at == std::numeric_limits<uint32_t>::max());
     assert(learnt_clause_query_watched_at_sub == std::numeric_limits<uint32_t>::max());
