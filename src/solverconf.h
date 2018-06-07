@@ -237,7 +237,6 @@ class DLL_PUBLIC SolverConf
         int       doOTFSubsumeOnlyAtOrBelowGlue;
 
         //SQL
-        bool      dump_individual_search_time;
         bool      dump_individual_restarts_and_clauses;
         double    dump_individual_cldata_ratio;
 

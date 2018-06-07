@@ -577,8 +577,6 @@ void Main::add_supported_options()
         , "Write to SQL. 0 = no SQL, 1 or 2 = sqlite")
     ("sqlitedb", po::value(&sqlite_filename)
         , "Where to put the SQLite database")
-    ("sqlresttime", po::value(&conf.dump_individual_search_time)->default_value(conf.dump_individual_search_time)
-        , "Dump individual time for restart stats, but ONLY time")
     ("cldatadumpratio", po::value(&conf.dump_individual_cldata_ratio)->default_value(conf.dump_individual_cldata_ratio)
         , "Only dump this ratio of clauses' data, randomly selected. Since machine learning doesn't need that much data, this can reduce the data you have to deal with.")
     ;
