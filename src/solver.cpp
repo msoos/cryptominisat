@@ -4033,7 +4033,11 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
 
 void Solver::end_getting_small_clauses()
 {
-    assert(ok);
+    if (!ok) {
+        std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
+        exit(-1);
+    }
+
     learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
     learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
     learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
