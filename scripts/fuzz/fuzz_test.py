@@ -298,9 +298,6 @@ class Tester:
                 self.clid_added = True
                 cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
-            cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
-            cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
-            cmd += "--mbackt %d " % random.choice([0, 1])
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
@@ -311,14 +308,13 @@ class Tester:
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--ml  %s " % random.randint(0, 10)
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby", "backtrack"])
+                ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--cachesize %s " % random.randint(10, 100)
