@@ -697,6 +697,7 @@ class Tester:
 
         if self.dump_red is not None:
             os.unlink(self.dump_red)
+            self.dump_red = None
 
     def delete_file_no_matter_what(self, fname):
         try:
