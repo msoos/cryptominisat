@@ -350,7 +350,7 @@ void Main::add_supported_options()
     std::ostringstream s_adjust_low;
     s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
 
-    po::options_description reduceDBOptions("Red clause removal options");
+    po::options_description reduceDBOptions("Redundant clause options");
     reduceDBOptions.add_options()
     ("gluecut0", po::value(&conf.glue_put_lev0_if_below_or_eq)->default_value(conf.glue_put_lev0_if_below_or_eq)
         , "Glue value for lev 0 ('keep') cut")
