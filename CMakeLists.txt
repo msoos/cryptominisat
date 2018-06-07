@@ -422,6 +422,11 @@ ENDIF ()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
+
+        set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+        # INSTALL(CODE "FILE(MAKE_DIRECTORY ${mandir})")
+
+
         if (NOT ONLY_SIMPLE)
             ADD_CUSTOM_TARGET(man_cms5
                 ALL
@@ -436,7 +441,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
             INSTALL(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+                DESTINATION ${mandir}
+            )
+
         endif()
         ADD_CUSTOM_TARGET(man_cms5_simple
             ALL
@@ -451,7 +458,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
         INSTALL(
             FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+            DESTINATION ${mandir}
+        )
 
         message(STATUS "Manpage will be created and installed")
     else()
