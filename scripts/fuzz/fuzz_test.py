@@ -90,6 +90,9 @@ def set_up_parser():
     parser.add_option("--indep", dest="only_indep", default=False,
                       action="store_true",
                       help="Concentrate fuzzing independent variables")
+    parser.add_option("--dump", dest="only_dump", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing dumped clauses")
 
     parser.add_option("--maxth", "-m", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
@@ -626,6 +629,11 @@ class Tester:
             self.drat = False
             self.only_indep = True
 
+        if options.only_dump:
+            self.drat = False
+            self.only_indep = False
+            self.dump_red = unique_file("fuzzTest-dump")
+
         if self.drat:
             fuzzers = fuzzers_drat
         elif options.gauss:
@@ -835,6 +843,8 @@ if __name__ == "__main__":
             toexec += "--gauss "
         if options.only_indep:
             toexec += "--indep "
+        if options.only_dump:
+            toexec += "--dump "
         toexec += "-m %d " % options.max_threads
 
         print("")
