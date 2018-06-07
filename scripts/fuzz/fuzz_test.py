@@ -207,6 +207,7 @@ class Tester:
         self.clid_added = False
         self.only_indep = False
         self.indep_vars = []
+        self.dump_red = None
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -285,6 +286,9 @@ class Tester:
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+
+        if self.dump_red is not None:
+            cmd += "--dumpred %s " % self.dump_red
 
         if self.only_indep:
             cmd += "--onlyindep "
@@ -519,6 +523,9 @@ class Tester:
             else:
                 self.sol_parser.test_found_solution(solution, checkAgainst)
 
+            if self.dump_red:
+                self.check_dumped_clauses(fname)
+
             return
 
         # it's UNSAT, let's check with DRAT
@@ -566,6 +573,38 @@ class Tester:
             print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
             exit()
 
+    def check_dumped_clauses(self, fname):
+        assert self.dump_red is not None
+
+        tmpfname = unique_file("fuzzTest-dump-test")
+        with open(tmpfname, "w") as tmpf:
+            with open(fname, "r") as x:
+                for line in x:
+                    line = line.strip()
+                    if "c" in line or "p" in line:
+                        continue
+                    tmpf.write(line+"\n")
+
+            with open(self.dump_red, "r") as x:
+                for line in x:
+                    line = line.strip()
+                    tmpf.write(line+"\n")
+
+        print("[dump-check] dump-combined file is: ", tmpfname)
+        if options.verbose:
+            print("dump file is:     ", self.dump_red)
+            print("orig file is:     ",  fname)
+
+        self.old_dump_red = self.dump_red
+        self.dump_red = None
+        self.indep_vars = []
+        self.only_indep = False
+        self.check(tmpfname, checkAgainst=fname)
+
+        os.unlink(tmpfname)
+        os.unlink(self.old_dump_red)
+        print("[dump-check] OK, solution after DUMP has been injected is still OK")
+
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
@@ -578,6 +617,9 @@ class Tester:
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
         self.sqlitedbfname = None
         self.preproc = False
+        self.dump_red = random.choice([None, None, None, None, None, True])
+        if self.dump_red is not None:
+            self.dump_red = unique_file("fuzzTest-dump")
         self.only_indep = random.choice([True, False, False, False, False]) and not self.drat
 
         if options.only_indep:
@@ -605,7 +647,7 @@ class Tester:
         if status != 0:
             fuzzer_call_failed(fname)
 
-        if not self.drat and not self.only_indep:
+        if not self.drat and not self.only_indep and not self.dump_red:
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
@@ -662,6 +704,7 @@ class Tester:
         self.preproc = True
         self.only_indep = False
         self.indep_vars = []
+        self.dump_red = None
 
         # create the fuzz file
         cf = create_fuzz()
