@@ -367,7 +367,9 @@ void Main::add_supported_options()
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
     ("dumpred", po::value(&dump_red_fname)->default_value(dump_red_fname)
-        , "Dump redundant clauses of gluecut0 here")
+        , "Dump redundant clauses of gluecut0&1 to this filename")
+    ("dumpredmax", po::value(&dump_red_max_len)->default_value(dump_red_max_len)
+        , "When dumping redundant clauses, only clauses at most this long")
     ;
 
     std::ostringstream s_random_var_freq;
@@ -1173,7 +1175,7 @@ void Main::dump_red_file()
 
     bool ret = true;
     vector<Lit> lits;
-    solver->start_getting_small_clauses(10000);
+    solver->start_getting_small_clauses(dump_red_max_len);
     while(ret) {
         ret = solver->get_next_small_clause(lits);
         if (ret) {

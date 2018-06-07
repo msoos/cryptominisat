@@ -122,6 +122,7 @@ class Main
         vector<string> filesToRead;
         std::ofstream* resultfile = NULL;
         string dump_red_fname;
+        uint32_t dump_red_max_len = 10000;
 
         //Drat checker
         std::ostream* dratf = NULL;
