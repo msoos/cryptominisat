@@ -554,6 +554,9 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 uint32_t clash_num;
                 vector<uint32_t> vars = xor_two(this_xors[idxes[0]], this_xors[idxes[1]], clash_num);
                 if (clash_num > 1) {
+                    //add back to ws
+                    ws.push(Watched(idxes[0]));
+                    ws.push(Watched(idxes[1]));
                     continue;
                 }
                 occcnt[v] -= 2;
