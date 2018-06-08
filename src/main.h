@@ -123,6 +123,7 @@ class Main
         std::ofstream* resultfile = NULL;
         string dump_red_fname;
         uint32_t dump_red_max_len = 10000;
+        uint32_t dump_red_max_glue = 1000;
 
         //Drat checker
         std::ostream* dratf = NULL;

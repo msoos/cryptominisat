@@ -102,7 +102,7 @@ class Solver : public Searcher
         vector<Xor> get_recovered_xors(bool elongate);
 
         //get learnt clauses
-        void start_getting_small_clauses(uint32_t max_len);
+        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
 
@@ -317,6 +317,7 @@ class Solver : public Searcher
 
         //learnt clause querying
         uint32_t learnt_clause_query_max_len = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_max_glue = std::numeric_limits<uint32_t>::max();
         uint32_t learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
         uint32_t learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
         uint32_t learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();

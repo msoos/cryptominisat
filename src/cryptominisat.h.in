@@ -151,7 +151,7 @@ namespace CMSat {
         //Below must be done in-order. Multi-threading not allowed.
         // EXPERIMENTAL!!!
 
-        void start_getting_small_clauses(uint32_t max_len);
+        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
         bool get_next_small_clause(std::vector<Lit>& ret); //returns FALSE if no more
         void end_getting_small_clauses();
 

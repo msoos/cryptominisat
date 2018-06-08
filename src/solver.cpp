@@ -3966,7 +3966,7 @@ bool Solver::init_all_matrixes()
 #endif //USE_GAUSS
 
 
-void Solver::start_getting_small_clauses(const uint32_t max_len)
+void Solver::start_getting_small_clauses(const uint32_t max_len, const uint32_t max_glue)
 {
     if (!ok) {
         std::cerr << "ERROR: the system is in UNSAT state, learnt clauses are meaningless!" <<endl;
@@ -3986,6 +3986,7 @@ void Solver::start_getting_small_clauses(const uint32_t max_len)
     learnt_clause_query_watched_at = 0;
     learnt_clause_query_watched_at_sub = 0;
     learnt_clause_query_max_len = max_len;
+    learnt_clause_query_max_glue = max_glue;
     learnt_clause_query_outer_to_without_bva_map = solver->build_outer_to_without_bva_map();
 }
 
@@ -4018,7 +4019,9 @@ bool Solver::get_next_small_clause(vector<Lit>& out)
     while(learnt_clause_query_at < longRedCls[0].size()) {
         const ClOffset offs = longRedCls[0][learnt_clause_query_at];
         const Clause* cl = cl_alloc.ptr(offs);
-        if (cl->size() <= learnt_clause_query_max_len) {
+        if (cl->size() <= learnt_clause_query_max_len
+            && cl->stats.glue <= learnt_clause_query_max_glue
+        ) {
             out = clause_outer_numbered(*cl);
             if (all_vars_outside(out)) {
                 learnt_clausee_query_map_without_bva(out);

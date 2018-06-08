@@ -54,7 +54,7 @@ TEST_F(SolverTest, get_bin)
     s->add_clause_outer(str_to_cl(" 2,  3"));
     s->add_clause_int(str_to_cl(" 1,  2"), true);
 
-    s->start_getting_small_clauses(2);
+    s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
     bool ret = s->get_next_small_clause(lits);
     ASSERT_TRUE(ret);
@@ -78,7 +78,7 @@ TEST_F(SolverTest, get_long_lev0)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10);
+    s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
     bool ret = s->get_next_small_clause(lits);
@@ -104,7 +104,7 @@ TEST_F(SolverTest, get_long_lev1)
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10);
+    s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
     bool ret = s->get_next_small_clause(lits);
@@ -134,7 +134,7 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(10);
+    s->start_getting_small_clauses(10, 100);
     vector<Lit> lits;
 
     //Order is reverse because we get lev0 then lev1
@@ -165,7 +165,7 @@ TEST_F(SolverTest, get_long_toolarge)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(2);
+    s->start_getting_small_clauses(2, 100);
     vector<Lit> lits;
 
     bool ret = s->get_next_small_clause(lits);
@@ -186,7 +186,7 @@ TEST_F(SolverTest, get_bin_and_long)
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
-    s->start_getting_small_clauses(4);
+    s->start_getting_small_clauses(4, 100);
     vector<Lit> lits;
 
     bool ret = s->get_next_small_clause(lits);

@@ -241,14 +241,15 @@ Start getting clauses."
 );
 static PyObject* start_getting_small_clauses(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"max_len", NULL};
+    static char* kwlist[] = {"max_len", "max_glue", NULL};
 
     unsigned max_len;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "I", kwlist, &max_len)) {
+    unsigned max_glue;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "II", kwlist, &max_len, &max_glue)) {
         return NULL;
     }
 
-    self->cmsat->start_getting_small_clauses(max_len);
+    self->cmsat->start_getting_small_clauses(max_len, max_glue);
 
     Py_INCREF(Py_None);
     return Py_None;
