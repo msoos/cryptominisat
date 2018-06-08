@@ -142,7 +142,18 @@ namespace CMSat {
         ////////////////////////////
         std::vector<Lit> get_zero_assigned_lits() const; //get literals of fixed value
         std::vector<std::pair<Lit, Lit> > get_all_binary_xors() const; //get all binary XORs that are = 0
+
+        //////////////////////
+        // EXPERIMENTAL
         std::vector<std::pair<std::vector<uint32_t>, bool> > get_recovered_xors(bool elongate) const; //get XORs recovered. If "elongate" is TRUE, then variables shared ONLY by two XORs will be XORed together
+
+        //////////////////////
+        //Below must be done in-order. Multi-threading not allowed.
+        // EXPERIMENTAL!!!
+
+        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
+        bool get_next_small_clause(std::vector<Lit>& ret); //returns FALSE if no more
+        void end_getting_small_clauses();
 
     private:
 

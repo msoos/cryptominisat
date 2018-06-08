@@ -104,7 +104,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
 
         //SQL
-        , dump_individual_search_time(true)
         , dump_individual_restarts_and_clauses(true)
         , dump_individual_cldata_ratio(0.005)
 

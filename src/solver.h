@@ -101,6 +101,11 @@ class Solver : public Searcher
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(bool elongate);
 
+        //get learnt clauses
+        void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
+        bool get_next_small_clause(std::vector<Lit>& out);
+        void end_getting_small_clauses();
+
         void open_file_and_dump_irred_clauses(string fname) const;
         void open_file_and_dump_red_clauses(string fname) const;
 
@@ -222,6 +227,7 @@ class Solver : public Searcher
             , const Lit drat_first = lit_Undef
         );
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
+        template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
         size_t mem_used() const;
         void dump_memory_stats_to_sql();
         void set_sqlite(string filename);
@@ -242,6 +248,9 @@ class Solver : public Searcher
         //that contained "lit, ~lit". So "lit" must be set to a value
         //Contains _outer_ variables
         vector<bool> undef_must_set_vars;
+
+        //Helper
+        void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
 
     private:
         friend class Prober;
@@ -303,6 +312,18 @@ class Solver : public Searcher
         /////////////////////////////
         // Temporary datastructs -- must be cleared before use
         mutable std::vector<Lit> tmpCl;
+        mutable std::vector<uint32_t> tmpXor;
+
+
+        //learnt clause querying
+        uint32_t learnt_clause_query_max_len = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_max_glue = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_at = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_watched_at = std::numeric_limits<uint32_t>::max();
+        uint32_t learnt_clause_query_watched_at_sub = std::numeric_limits<uint32_t>::max();
+        vector<uint32_t> learnt_clause_query_outer_to_without_bva_map;
+        bool all_vars_outside(const vector<Lit>& cl) const;
+        void learnt_clausee_query_map_without_bva(vector<Lit>& cl);
 
         /////////////////////////////
         //Renumberer
@@ -421,6 +442,17 @@ inline vector<Lit> Solver::clause_outer_numbered(const T& cl) const
     }
 
     return tmpCl;
+}
+
+template<class T>
+inline vector<uint32_t> Solver::xor_outer_numbered(const T& cl) const
+{
+    tmpXor.clear();
+    for(size_t i = 0; i < cl.size(); i++) {
+        tmpXor.push_back(map_inter_to_outer(cl[i]));
+    }
+
+    return tmpXor;
 }
 
 inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)

@@ -350,7 +350,7 @@ void Main::add_supported_options()
     std::ostringstream s_adjust_low;
     s_adjust_low << std::setprecision(2) << conf.adjust_glue_if_too_many_low;
 
-    po::options_description reduceDBOptions("Red clause removal options");
+    po::options_description reduceDBOptions("Redundant clause options");
     reduceDBOptions.add_options()
     ("gluecut0", po::value(&conf.glue_put_lev0_if_below_or_eq)->default_value(conf.glue_put_lev0_if_below_or_eq)
         , "Glue value for lev 0 ('keep') cut")
@@ -366,6 +366,12 @@ void Main::add_supported_options()
         , "Reduce lev2 clauses every N")
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
+    ("dumpred", po::value(&dump_red_fname)->default_value(dump_red_fname)
+        , "Dump redundant clauses of gluecut0&1 to this filename")
+    ("dumpredmaxlen", po::value(&dump_red_max_len)->default_value(dump_red_max_len)
+        , "When dumping redundant clauses, only dump clauses at most this long")
+    ("dumpredmaxglue", po::value(&dump_red_max_len)->default_value(dump_red_max_glue)
+        , "When dumping redundant clauses, only dump clauses with at most this large glue")
     ;
 
     std::ostringstream s_random_var_freq;
@@ -577,8 +583,6 @@ void Main::add_supported_options()
         , "Write to SQL. 0 = no SQL, 1 or 2 = sqlite")
     ("sqlitedb", po::value(&sqlite_filename)
         , "Where to put the SQLite database")
-    ("sqlresttime", po::value(&conf.dump_individual_search_time)->default_value(conf.dump_individual_search_time)
-        , "Dump individual time for restart stats, but ONLY time")
     ("cldatadumpratio", po::value(&conf.dump_individual_cldata_ratio)->default_value(conf.dump_individual_cldata_ratio)
         , "Only dump this ratio of clauses' data, randomly selected. Since machine learning doesn't need that much data, this can reduce the data you have to deal with.")
     ;
@@ -1155,6 +1159,36 @@ void Main::check_num_threads_sanity(const unsigned thread_num) const
     }
 }
 
+void Main::dump_red_file()
+{
+    if (dump_red_fname.length() == 0)
+        return;
+
+    std::ofstream* dumpfile = new std::ofstream;
+    dumpfile->open(dump_red_fname.c_str());
+    if (!(*dumpfile)) {
+        cout
+        << "ERROR: Couldn't open file '"
+        << resultFilename
+        << "' for writing!"
+        << endl;
+        std::exit(-1);
+    }
+
+    bool ret = true;
+    vector<Lit> lits;
+    solver->start_getting_small_clauses(dump_red_max_len, dump_red_max_glue);
+    while(ret) {
+        ret = solver->get_next_small_clause(lits);
+        if (ret) {
+            *dumpfile << lits << " " << 0 << endl;
+        }
+    }
+    solver->end_getting_small_clauses();
+
+    delete dumpfile;
+}
+
 int Main::solve()
 {
     solver = new SATSolver((void*)&conf);
@@ -1205,6 +1239,9 @@ int Main::solve()
         }
         if (conf.verbosity) {
             solver->print_stats();
+        }
+        if (ret == l_True) {
+            dump_red_file();
         }
     }
     printResultFunc(&cout, false, ret);

@@ -90,6 +90,9 @@ def set_up_parser():
     parser.add_option("--indep", dest="only_indep", default=False,
                       action="store_true",
                       help="Concentrate fuzzing independent variables")
+    parser.add_option("--dump", dest="only_dump", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing dumped clauses")
 
     parser.add_option("--maxth", "-m", dest="max_threads", default=100,
                       type=int, help="Max number of threads")
@@ -207,6 +210,7 @@ class Tester:
         self.clid_added = False
         self.only_indep = False
         self.indep_vars = []
+        self.dump_red = None
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -286,6 +290,11 @@ class Tester:
         cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
 
+        if self.dump_red is not None:
+            cmd += "--dumpred %s " % self.dump_red
+            cmd += "--dumpredmaxlen %d " % random.choice([2, 10, 100, 100000])
+            cmd += "--dumpredmaxglue %d " % random.choice([2, 10, 100, 100000])
+
         if self.only_indep:
             cmd += "--onlyindep "
             cmd += "--indep "
@@ -298,9 +307,6 @@ class Tester:
                 self.clid_added = True
                 cmd += "--clid "
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
-            cmd += "--locbmult %.12f " % random.gammavariate(0.5, 0.7)
-            cmd += "--mbacktmod %d " % int(random.gammavariate(1, 6))
-            cmd += "--mbackt %d " % random.choice([0, 1])
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
             cmd += "--verb %d " % random.choice([0, 0, 0, 0, 1, 2])
@@ -311,14 +317,13 @@ class Tester:
             cmd += " --reconfat %d " % random.randint(0, 2)
             cmd += "--ml  %s " % random.randint(0, 10)
             cmd += "--restart %s " % random.choice(
-                ["geom", "glue", "luby", "backtrack"])
+                ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
             cmd += "--gluehist %s " % random.randint(1, 500)
             cmd += "--updateglueonanalysis %s " % random.randint(0, 1)
             cmd += "--otfhyper %s " % random.randint(0, 1)
             # cmd += "--clean %s " % random.choice(["size", "glue", "activity",
             # "prconf"])
-            cmd += "--rewardotfsubsume %s " % random.randint(0, 100)
             cmd += "--bothprop %s " % random.randint(0, 1)
             cmd += "--probemaxm %s " % random.choice([0, 10, 100, 1000])
             cmd += "--cachesize %s " % random.randint(10, 100)
@@ -523,6 +528,9 @@ class Tester:
             else:
                 self.sol_parser.test_found_solution(solution, checkAgainst)
 
+            if self.dump_red:
+                self.check_dumped_clauses(fname)
+
             return
 
         # it's UNSAT, let's check with DRAT
@@ -570,6 +578,38 @@ class Tester:
             print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
             exit()
 
+    def check_dumped_clauses(self, fname):
+        assert self.dump_red is not None
+
+        tmpfname = unique_file("fuzzTest-dump-test")
+        with open(tmpfname, "w") as tmpf:
+            with open(fname, "r") as x:
+                for line in x:
+                    line = line.strip()
+                    if "c" in line or "p" in line:
+                        continue
+                    tmpf.write(line+"\n")
+
+            with open(self.dump_red, "r") as x:
+                for line in x:
+                    line = line.strip()
+                    tmpf.write(line+"\n")
+
+        print("[dump-check] dump-combined file is: ", tmpfname)
+        if options.verbose:
+            print("dump file is:     ", self.dump_red)
+            print("orig file is:     ",  fname)
+
+        self.old_dump_red = str(self.dump_red)
+        self.dump_red = None
+        self.indep_vars = []
+        self.only_indep = False
+        self.check(tmpfname, checkAgainst=fname)
+
+        os.unlink(tmpfname)
+        os.unlink(self.old_dump_red)
+        print("[dump-check] OK, solution after DUMP has been injected is still OK")
+
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
@@ -582,11 +622,20 @@ class Tester:
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
         self.sqlitedbfname = None
         self.preproc = False
+        self.dump_red = random.choice([None, None, None, None, None, True])
+        if self.dump_red is not None:
+            self.dump_red = unique_file("fuzzTest-dump")
         self.only_indep = random.choice([True, False, False, False, False]) and not self.drat
 
         if options.only_indep:
             self.drat = False
             self.only_indep = True
+
+        if options.only_dump:
+            self.drat = False
+            self.only_indep = False
+            if self.dump_red is None:
+                self.dump_red = unique_file("fuzzTest-dump")
 
         if self.drat:
             fuzzers = fuzzers_drat
@@ -609,7 +658,7 @@ class Tester:
         if status != 0:
             fuzzer_call_failed(fname)
 
-        if not self.drat and not self.only_indep:
+        if not self.drat and not self.only_indep and not self.dump_red:
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)
@@ -649,6 +698,10 @@ class Tester:
         for name in todel:
             os.unlink(name)
 
+        if self.dump_red is not None:
+            os.unlink(self.dump_red)
+            self.dump_red = None
+
     def delete_file_no_matter_what(self, fname):
         try:
             os.unlink(fname)
@@ -666,6 +719,8 @@ class Tester:
         self.preproc = True
         self.only_indep = False
         self.indep_vars = []
+        assert self.dump_red is None
+        self.dump_red = None
 
         # create the fuzz file
         cf = create_fuzz()
@@ -709,6 +764,7 @@ class Tester:
         os.unlink(fname)
         for name in todel:
             os.unlink(name)
+        assert self.dump_red is None
 
 
 def filter_large_fuzzer(dat):
@@ -794,6 +850,10 @@ if __name__ == "__main__":
             toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
+        if options.only_indep:
+            toexec += "--indep "
+        if options.only_dump:
+            toexec += "--dump "
         toexec += "-m %d " % options.max_threads
 
         print("")

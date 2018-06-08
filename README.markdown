@@ -456,34 +456,6 @@ cd ../cryptominisat/scripts/fuzz/
 ./fuzz_test.py
 ```
 
-Using the Machine Learning System
------
-This is experimental but should work relatively well:
-
-```
-git checkout clauseID
-sudo apt-get install build-essential cmake git
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
-sudo apt-get install graphviz
-sudo apt-get install python3-pip python3-setuptools python3-dev
-sudo apt-get install python3-numpy
-sudo pip3 install --upgrade pip
-sudo pip3 install lit
-sudo pip3 install scikit-learn pandas scipy
-git clone https://github.com/msoos/cryptominisat.git
-cd cryptominisat
-git submodule update --init
-mkdir build && cd build
-ln -s ../scripts/build_scripts/* .
-ln -s ../scripts/learn/* .
-./build_stats.sh
-sudo make install
-sudo ldconfig
-./test_predict.sh
-```
-
-The prediction datas are now written to the directory `build/test_predict/`. You can use e.g. Weka to examine the CSV found there. Please note that this is under *heavy* development
-
 Configuring a build for a minimal binary&library
 -----
 The following configures the system to build a bare minimal binary&library. It needs a compiler, but nothing much else:
@@ -504,6 +476,30 @@ Try solving using different reconfiguration values between 1..15 as per:
 ```
 
 These configurations are designed to be relatively orthogonal. Check if any of them solve a lot faster. If it does, try using that for similar problems going forward. Please do come back to the author with what you have found to work best for you.
+
+Getting learnt clauses
+-----
+As an experimental feature, you can get the learnt clauses from the system with the following code, where `lits` is filled with learnt clauses every time `get_next_small_clause` is called. The example below will eventually return all clauses of size 4 or less. You can call `end_getting_small_clauses` at any time.
+
+```
+SATSolver s;
+//fill the solver, run solve, etc.
+
+//Get all clauses of size 4 or less
+
+s->start_getting_small_clauses(4);
+
+vector<Lit> lits;
+bool ret = true;
+while (ret) {
+    bool ret = s->get_next_small_clause(lits);
+    if (ret) {
+        //deal with clause in "lits"
+        add_to_my_db(lits);
+    }
+}
+s->end_getting_small_clauses();
+```
 
 C usage
 -----

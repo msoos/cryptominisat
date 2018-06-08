@@ -551,9 +551,18 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
             } else {
-                Xor x_new(xor_two(this_xors[idxes[0]], this_xors[idxes[1]]),
-                          this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
+                uint32_t clash_num;
+                vector<uint32_t> vars = xor_two(this_xors[idxes[0]], this_xors[idxes[1]], clash_num);
+                if (clash_num > 1) {
+                    //add back to ws
+                    ws.push(Watched(idxes[0]));
+                    ws.push(Watched(idxes[1]));
+                    continue;
+                }
+                occcnt[v] -= 2;
+                assert(occcnt[v] == 0);
 
+                Xor x_new(vars, this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -611,7 +620,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     }
 
     for(const Lit c: toClear) {
-        assert(occcnt[c.var()] != 2);
+        /*This is now possible because we don't XOR them together
+        in case they clash on more than 1 variable */
+        //assert(occcnt[c.var()] != 2);
+
         occcnt[c.var()] = 0;
     }
     toClear.clear();
@@ -737,9 +749,9 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     return solver->okay();
 }
 
-vector<uint32_t> XorFinder::xor_two(
-    Xor& x1, Xor& x2
-) {
+vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
+{
+    clash_num = 0;
     x1.sort();
     x2.sort();
     vector<uint32_t> ret;
@@ -761,14 +773,9 @@ vector<uint32_t> XorFinder::xor_two(
         const uint32_t a = x1[x1_at];
         const uint32_t b = x2[x2_at];
         if (a == b) {
+            clash_num++;
             x1_at++;
             x2_at++;
-
-            assert(occcnt[a] >= 2);
-            occcnt[a] -= 2;
-            if (occcnt[a] == 2) {
-                interesting.push_back(a);
-            }
             continue;
         }
 

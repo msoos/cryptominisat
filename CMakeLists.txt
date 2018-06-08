@@ -309,7 +309,7 @@ if (COVERAGE)
 endif()
 
 
-option(IPASIR "Also build IPASIR" ON)
+option(IPASIR "Also build IPASIR" OFF)
 
 option(LIMITMEM "*Only used for testing*. Limit memory used by CMS through number of variables" OFF)
 if (LIMITMEM)
@@ -381,7 +381,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "5.6.0")
+set(CMS_FULL_VERSION "5.6.1")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -422,6 +422,11 @@ ENDIF ()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
+
+        set(mandir ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+        # INSTALL(CODE "FILE(MAKE_DIRECTORY ${mandir})")
+
+
         if (NOT ONLY_SIMPLE)
             ADD_CUSTOM_TARGET(man_cms5
                 ALL
@@ -436,7 +441,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
             INSTALL(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+                DESTINATION ${mandir}
+            )
+
         endif()
         ADD_CUSTOM_TARGET(man_cms5_simple
             ALL
@@ -451,7 +458,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
         INSTALL(
             FILES ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
-            DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man1)
+            DESTINATION ${mandir}
+        )
 
         message(STATUS "Manpage will be created and installed")
     else()

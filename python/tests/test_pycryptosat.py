@@ -144,6 +144,30 @@ class InitTester(unittest.TestCase):
         self.assertRaises(TypeError, Solver, confl_limit="fail")
 
 
+class TestDump(unittest.TestCase):
+
+    def setUp(self):
+        self.solver = Solver()
+
+    def test_one_dump(self):
+        with open("tests/test.cnf", "r") as x:
+            for line in x:
+                line = line.strip()
+                if "p" in line or "c" in line:
+                    continue
+
+                out = [int(x) for x in line.split()[:-1]]
+                self.solver.add_clause(out)
+
+        res, _ = self.solver.solve()
+        self.assertEqual(res, True)
+
+        self.solver.start_getting_small_clauses(4)
+        x = self.solver.get_next_small_clause()
+        self.assertNotEquals(x, None)
+        self.solver.end_getting_small_clauses()
+
+
 class TestSolve(unittest.TestCase):
 
     def setUp(self):
@@ -223,6 +247,7 @@ def run():
     suite.addTest(unittest.makeSuite(TestXor))
     suite.addTest(unittest.makeSuite(InitTester))
     suite.addTest(unittest.makeSuite(TestSolve))
+    suite.addTest(unittest.makeSuite(TestDump))
 
     runner = unittest.TextTestRunner(verbosity=2)
     return runner.run(suite)
