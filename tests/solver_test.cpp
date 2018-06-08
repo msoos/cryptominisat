@@ -72,9 +72,11 @@ TEST_F(SolverTest, get_long_lev0)
     Clause* c;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 5;
 
     s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -98,9 +100,11 @@ TEST_F(SolverTest, get_long_lev1)
     Clause* c;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 5;
 
     s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true);
+    c = s->add_clause_int(str_to_cl(" 6,  2, 3, 4"), true, stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
@@ -123,14 +127,16 @@ TEST_F(SolverTest, get_long_lev0_and_lev1)
     Clause* c;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 5;
 
     s->add_clause_outer(str_to_cl(" 2,  3"));
 
-    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true);
+    c = s->add_clause_int(str_to_cl(" 3, -4, -7"), true, stats);
     assert(c != NULL);
     s->longRedCls[1].push_back(s->cl_alloc.get_offset(c));
 
-    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true);
+    c = s->add_clause_int(str_to_cl(" 2, 4, 5, 6"), true, stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -159,9 +165,11 @@ TEST_F(SolverTest, get_long_toolarge)
     Clause* c;
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 5;
 
     s->add_clause_outer(str_to_cl(" 2,  3"));
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
@@ -174,15 +182,40 @@ TEST_F(SolverTest, get_long_toolarge)
     s->end_getting_small_clauses();
 }
 
+TEST_F(SolverTest, get_glue_toolarge)
+{
+    Clause* c;
+    s = new Solver(&conf, &must_inter);
+    s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 20;
+
+    s->add_clause_outer(str_to_cl(" 2,  3"));
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
+    assert(c != NULL);
+    s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
+
+    s->start_getting_small_clauses(100, 2);
+    vector<Lit> lits;
+
+    bool ret = s->get_next_small_clause(lits);
+    ASSERT_FALSE(ret);
+
+    s->end_getting_small_clauses();
+}
+
 TEST_F(SolverTest, get_bin_and_long)
 {
     s = new Solver(&conf, &must_inter);
     s->new_vars(30);
+    ClauseStats stats;
+    stats.glue = 5;
+
     s->add_clause_outer(str_to_cl(" 2,  3"));
     Clause* c;
     c = s->add_clause_int(str_to_cl(" 1,  5 "), true);
     assert(c == NULL);
-    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true);
+    c = s->add_clause_int(str_to_cl(" 1,  2, 3, 4"), true, stats);
     assert(c != NULL);
     s->longRedCls[0].push_back(s->cl_alloc.get_offset(c));
 
