@@ -292,6 +292,8 @@ class Tester:
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
+            cmd += "--dumpredmaxlen %s " % random.randchoice([2, 10, 1000])
+            cmd += "--dumpredmaxglue %s " % random.randchoice([2, 10, 1000])
 
         if self.only_indep:
             cmd += "--onlyindep "
