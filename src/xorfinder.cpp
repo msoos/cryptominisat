@@ -617,7 +617,10 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
     }
 
     for(const Lit c: toClear) {
-        assert(occcnt[c.var()] != 2);
+        /*This is now possible because we don't XOR them together
+        in case they clash on more than 1 variable */
+        //assert(occcnt[c.var()] != 2);
+
         occcnt[c.var()] = 0;
     }
     toClear.clear();
