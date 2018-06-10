@@ -323,21 +323,29 @@ void EGaussian::eliminate(matrixset& m) {
     PackedMatrix::iterator rowIt = m.matrix.beginMatrix();
 
     while (i != m.num_rows && j != m.num_cols) { // Gauss-Jordan Elimination
-        PackedMatrix::iterator this_matrix_row = rowIt;
+        PackedMatrix::iterator row_with_1_in_col = rowIt;
 
-        for (; this_matrix_row != end; ++this_matrix_row) {
-            if ((*this_matrix_row)[j]) {
+        //Find first "1" in column.
+        for (; row_with_1_in_col != end; ++row_with_1_in_col) {
+            if ((*row_with_1_in_col)[j]) {
                 break;
             }
         }
-        if (this_matrix_row != end) {
-            // swap rows
-            if (this_matrix_row != rowIt) {
-                (*rowIt).swapBoth(*this_matrix_row);
+
+        //We have found a "1" in this column
+        if (row_with_1_in_col != end) {
+            // swap row row_with_1_in_col and I
+            if (row_with_1_in_col != rowIt) {
+                (*rowIt).swapBoth(*row_with_1_in_col);
             }
-            // diagnose row
-            for (PackedMatrix::iterator k_row = m.matrix.beginMatrix(); k_row != end; ++k_row) {
-                // subtract row i from row u;
+
+            // XOR into *all* rows that have a "1" in col J
+            // Since we XOR into *all*, this is Gauss-Jordan
+            for (PackedMatrix::iterator k_row = m.matrix.beginMatrix()
+                ; k_row != end
+                ; ++k_row
+            ) {
+                // xor rows K and I
                 if (k_row != rowIt) {
                     if ((*k_row)[j]) {
                         (*k_row).xorBoth(*rowIt);
@@ -506,7 +514,8 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint32_t r
 }
 
 bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p,
-                             const uint32_t row_n, GaussQData& gqd) {
+                             const uint32_t row_n, GaussQData& gqd
+) {
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
     uint32_t nb_var = 0;     // new nobasic variable
@@ -531,8 +540,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         GasVar_state[p] = non_basic_var;
     }
 
-    const gret ret = (*rowIt).propGause(tmp_clause, solver->assigns, matrix.col_to_var, GasVar_state,
-                             nb_var, var_to_col[p]);
+    const gret ret = (*rowIt).propGause(tmp_clause, solver->assigns, matrix.col_to_var, GasVar_state, nb_var, var_to_col[p]);
 
     switch (ret) {
         case gret::confl: {
