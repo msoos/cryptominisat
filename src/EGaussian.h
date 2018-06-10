@@ -64,7 +64,10 @@ class EGaussian {
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
     PackedMatrix      clause_state;        // clasue state
-    vec<bool>         GasVar_state ;      // variable state  : basic or non-basic
+
+    // variable state  : basic=NONZERO IN COLUMN or non-basic
+    vec<bool>         GasVar_state ;
+
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information
       public:

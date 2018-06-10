@@ -601,7 +601,7 @@ def transform(df):
 
     # relative overlaps
     df["cl.overlap"] = df["cl.num_total_lits_antecedents"]-df["cl.size"]-2*df["cl.num_antecedents"]
-    df["cl.overlap_rel"] = df["cl.overlap"]-df["cl.antec_overlap_hist"]
+    df["cl.overlap_rel"] = df["cl.overlap"]/df["cl.antec_overlap_hist"]
     df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
     df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
 
