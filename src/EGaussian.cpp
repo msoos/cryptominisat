@@ -119,8 +119,8 @@ void EGaussian::canceling(const uint32_t sublevel) {
     }
     clauses_toclear.resize(clauses_toclear.size() - a);
 
-    PackedMatrix::iterator rowIt = clause_state.beginMatrix();
-    (*rowIt).setZero(); // reset this row all zero
+    clause_state.clear();
+    clause_state.resize(matrix.num_rows, 0);
 }
 
 struct HeapSorter {
@@ -229,10 +229,8 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     for (size_t ii = 0; ii < solver->gwatches.size(); ii++) {
         clear_gwatches(ii);
     }
-    clause_state.resize(1, origMat.num_rows);
-    PackedMatrix::iterator rowIt = clause_state.beginMatrix();
-    (*rowIt).setZero(); // reset this row all zero
-    // print_matrix(origMat);
+    clause_state.clear();
+    clause_state.resize(origMat.num_rows, 0);
 }
 
 void EGaussian::clear_gwatches(const uint32_t var) {
@@ -526,10 +524,9 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
     gqd.do_eliminate = false;
     PackedMatrix::iterator rowIt =
         matrix.matrix.beginMatrix() + row_n; // gaussian watch invoke row
-    PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
     // if this clause is alreadt true
-    if ((*clauseIt)[row_n]) {
+    if (clause_state[row_n]) {
         *j++ = *i; // store watch list
         return true;
     }
@@ -621,7 +618,9 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
 
                 gqd.ret_gauss = 3;                      // gaussian matrix is unit_propagation
                 solver->gqhead = solver->qhead; // quick break gaussian elimination
-                (*clauseIt).setBit(row_n);          // this clause arleady sat
+
+                // this clause arleady sat
+                clause_state[row_n] = 1;
                 return false;
             } else {
                 if (tmp_clause.size() == 2) {
@@ -649,7 +648,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 GasVar_state[p] = basic_var;
             }
 
-            (*clauseIt).setBit(row_n); // this clause arleady sat
+            clause_state[row_n] = 1; // this clause arleady sat
             return true;
         }
         case gret::nothing_fnewwatch: // find new watch list
@@ -690,7 +689,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
                 GasVar_state[p] = basic_var;
             }
-            (*clauseIt).setBit(row_n); // this clause arleady sat
+            clause_state[row_n] = 1; // this clause arleady sat
             return true;
         default:
             assert(false); // can not here
@@ -715,7 +714,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     uint32_t ori_nb = 0, ori_nb_col = 0;
     uint32_t nb_var = 0;
     uint32_t num_row = 0; // row inde
-    PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
     // assert(ret_gauss == 4);  // check this matrix is nothing
     // assert(solver->qhead ==  solver->trail.size() ) ;
@@ -832,7 +830,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                                 solver->enqueue((*cla)[0], PropBy(offs));
                             }
                             gqd.ret_gauss = 2;
-                            (*clauseIt).setBit(num_row); // this clause arleady sat
+                            clause_state[num_row] = 1; // this clause arleady sat
                         }
                         break;
                     }
@@ -849,7 +847,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.nb_rows[num_row] = p; // update in this row non_basic variable
-                        (*clauseIt).setBit(num_row);        // this clause arleady sat
+                        clause_state[num_row] = 1;        // this clause arleady sat
                         break;
                     default:
                         // can not here
