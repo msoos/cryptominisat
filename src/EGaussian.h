@@ -63,14 +63,10 @@ class EGaussian {
     const uint32_t matrix_no;            // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
-    vector<bool> clause_state;        // clasue state
+    PackedMatrix      clause_state;        // clasue state
 
-    /////////////////////////
-    // variable state
-    // basic=NONZERO IN COLUMN
-    // non-basic=ALL ZEROS IN COLUMN
-    vec<bool>         GasVar_state;
-    /////////////////////////
+    // variable state  : basic=NONZERO IN COLUMN or non-basic
+    vec<bool>         GasVar_state ;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information
