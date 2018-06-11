@@ -98,6 +98,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
+if (EMSCRIPTEN)
+    set(ONLY_SIMPLE ON)
+    set(STATICCOMPILE OFF)
+    set(NOZLIB ON)
+endif()
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
