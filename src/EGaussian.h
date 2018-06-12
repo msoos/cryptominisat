@@ -63,9 +63,14 @@ class EGaussian {
     const uint32_t matrix_no;            // matrix index
     vector<Lit> tmp_clause;  // conflict&propagation handling
 
-    PackedMatrix      clause_state;        // clasue state
+    //Is the clause at this ROW satisfied already?
+    //clause_state[row] tells me that
+    PackedMatrix      clause_state;
 
-    // variable state  : basic=NONZERO IN COLUMN or non-basic
+    // variable state
+    // basic    = TRUE  -- non-assigned var
+    // non-basic= FALSE -- assigned var
+    // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
     vec<bool>         GasVar_state ;
 
     vector<uint32_t>  var_to_col;             // variable to column
