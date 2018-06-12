@@ -161,6 +161,8 @@ void ReduceDB::dump_sql_cl_data()
 {
     #ifdef STATS_NEEDED
     assert(solver->sqlStats);
+    solver->sqlStats->begin_transaction();
+
 
     for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
         auto& cc = solver->longRedCls[lev];
@@ -180,6 +182,7 @@ void ReduceDB::dump_sql_cl_data()
             }
         }
     }
+    solver->sqlStats->end_transaction();
     #endif
 }
 

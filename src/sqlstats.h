@@ -40,6 +40,9 @@ public:
     virtual ~SQLStats()
     {}
 
+    virtual void end_transaction() = 0;
+    virtual void begin_transaction() = 0;
+
     virtual void restart(
         const std::string& restart_type
         , const PropStats& thisPropStats

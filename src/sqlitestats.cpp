@@ -127,6 +127,24 @@ bool SQLiteStats::connectServer(const int verbosity)
     return true;
 }
 
+void SQLiteStats::begin_transaction()
+{
+    if (sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL)) {
+        cerr << "ERROR: Beginning SQLITE transaction" << endl;
+        cerr << "c " << sqlite3_errmsg(db) << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::end_transaction()
+{
+    if (sqlite3_exec(db, "END TRANSACTION", NULL, NULL, NULL)) {
+        cerr << "ERROR: Beginning SQLITE transaction" << endl;
+        cerr << "c " << sqlite3_errmsg(db) << endl;
+        std::exit(-1);
+    }
+}
+
 bool SQLiteStats::tryIDInSQL(const Solver* solver)
 {
     std::stringstream ss;

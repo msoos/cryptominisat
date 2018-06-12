@@ -36,6 +36,9 @@ public:
     {
     }
 
+    void end_transaction() override;
+    void begin_transaction() override;
+
     void restart(
         const std::string& restart_type
         , const PropStats& thisPropStats
