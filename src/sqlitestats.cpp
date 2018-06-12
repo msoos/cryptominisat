@@ -115,10 +115,17 @@ bool SQLiteStats::connectServer(const int verbosity)
     }
 
     if (sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL)) {
-        cerr << "ERROR: Problem setting pragma to SQLite DB" << endl;
+        cerr << "ERROR: Problem setting pragma synchronous = OFF to SQLite DB" << endl;
         cerr << "c " << sqlite3_errmsg(db) << endl;
         std::exit(-1);
     }
+
+    if (sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL)) {
+        cerr << "ERROR: Problem setting pragma journal_mode = MEMORY to SQLite DB" << endl;
+        cerr << "c " << sqlite3_errmsg(db) << endl;
+        std::exit(-1);
+    }
+
 
     if (verbosity) {
         cout << "c writing to SQLite file: " << filename << endl;
