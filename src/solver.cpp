@@ -56,9 +56,9 @@ THE SOFTWARE.
 #include "clausedumper.h"
 #include "sccfinder.h"
 #include "intree.h"
-#include "features_calc.h"
+#include "satzilla_features_calc.h"
 #include "GitSHA1.h"
-#include "features_to_reconf.h"
+#include "satzilla_features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
 #include "EGaussian.h"
@@ -1478,9 +1478,9 @@ void Solver::check_reconfigure()
         if (solveStats.numSimplify == conf.reconfigure_at &&
             !already_reconfigured
         ) {
-            check_calc_features();
+            check_calc_satzilla_features();
             if (conf.reconfigure_val == 100) {
-                conf.reconfigure_val = get_reconf_from_features(last_solve_feature, conf.verbosity);
+                conf.reconfigure_val = get_reconf_from_satzilla_features(last_solve_satzilla_feature, conf.verbosity);
             }
             if (conf.reconfigure_val != 0) {
                 reconfigure(conf.reconfigure_val);
@@ -3111,51 +3111,51 @@ uint32_t Solver::num_active_vars() const
     return numActive;
 }
 
-SolveFeatures Solver::calculate_features()
+SatZillaFeatures Solver::calculate_satzilla_features()
 {
-    latest_feature_calc++;
-    SolveFeaturesCalc extract(this);
-    SolveFeatures feat = extract.extract();
-    feat.avg_confl_size = hist.conflSizeHistLT.avg();
-    feat.avg_confl_glue = hist.glueHistLTAll.avg();
-    feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();
-    feat.avg_trail_depth_delta = hist.trailDepthDeltaHist.avg();
-    feat.avg_branch_depth = hist.branchDepthHist.avg();
-    feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
+    latest_satzilla_feature_calc++;
+    SatZillaFeaturesCalc extract(this);
+    SatZillaFeatures satzilla_feat = extract.extract();
+    satzilla_feat.avg_confl_size = hist.conflSizeHistLT.avg();
+    satzilla_feat.avg_confl_glue = hist.glueHistLTAll.avg();
+    satzilla_feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();
+    satzilla_feat.avg_trail_depth_delta = hist.trailDepthDeltaHist.avg();
+    satzilla_feat.avg_branch_depth = hist.branchDepthHist.avg();
+    satzilla_feat.avg_branch_depth_delta = hist.branchDepthDeltaHist.avg();
 
-    feat.confl_size_min = hist.conflSizeHistLT.getMin();
-    feat.confl_size_max = hist.conflSizeHistLT.getMax();
-    feat.confl_glue_min = hist.glueHistLTAll.getMin();
-    feat.confl_glue_max = hist.glueHistLTAll.getMax();
-    feat.branch_depth_min = hist.branchDepthHist.getMin();
-    feat.branch_depth_max = hist.branchDepthHist.getMax();
-    feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
-    feat.trail_depth_delta_max = hist.trailDepthDeltaHist.getMax();
-    feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
-    feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
+    satzilla_feat.confl_size_min = hist.conflSizeHistLT.getMin();
+    satzilla_feat.confl_size_max = hist.conflSizeHistLT.getMax();
+    satzilla_feat.confl_glue_min = hist.glueHistLTAll.getMin();
+    satzilla_feat.confl_glue_max = hist.glueHistLTAll.getMax();
+    satzilla_feat.branch_depth_min = hist.branchDepthHist.getMin();
+    satzilla_feat.branch_depth_max = hist.branchDepthHist.getMax();
+    satzilla_feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
+    satzilla_feat.trail_depth_delta_max = hist.trailDepthDeltaHist.getMax();
+    satzilla_feat.num_resolutions_min = hist.numResolutionsHistLT.getMin();
+    satzilla_feat.num_resolutions_max = hist.numResolutionsHistLT.getMax();
 
     if (sumPropStats.propagations != 0
         && sumConflicts != 0
         && sumSearchStats.numRestarts != 0
     ) {
-        feat.props_per_confl = (double)sumConflicts / (double)sumPropStats.propagations;
-        feat.confl_per_restart = (double)sumConflicts / (double)sumSearchStats.numRestarts;
-        feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumConflicts;
-        feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
+        satzilla_feat.props_per_confl = (double)sumConflicts / (double)sumPropStats.propagations;
+        satzilla_feat.confl_per_restart = (double)sumConflicts / (double)sumSearchStats.numRestarts;
+        satzilla_feat.decisions_per_conflict = (double)sumSearchStats.decisions / (double)sumConflicts;
+        satzilla_feat.learnt_bins_per_confl = (double)sumSearchStats.learntBins / (double)sumConflicts;
     }
 
-    feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
-    feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
+    satzilla_feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
+    satzilla_feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
     if (conf.verbosity) {
-        feat.print_stats();
+        satzilla_feat.print_stats();
     }
 
     if (sqlStats) {
-        sqlStats->features(this, this, feat);
+        sqlStats->satzilla_features(this, this, satzilla_feat);
     }
 
-    return feat;
+    return satzilla_feat;
 }
 
 void Solver::reconfigure(int val)
@@ -3300,7 +3300,7 @@ void Solver::reconfigure(int val)
     }
 
     if (conf.verbosity) {
-        cout << "c [features] reconfigured solver to config " << val << endl;
+        cout << "c [satzilla_features] reconfigured solver to config " << val << endl;
     }
 
     /*Note to self: change

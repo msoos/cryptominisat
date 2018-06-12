@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-struct SolveFeatures
+struct SatZillaFeatures
 {
     void print_stats() const;
 
@@ -111,7 +111,7 @@ struct SolveFeatures
     Distrib irred_cl_distrib;
     Distrib red_cl_distrib;
 
-    //High-level features
+    //High-level satzilla_features
     uint64_t num_gates_found_last;
     uint64_t num_xors_found_last;
 };

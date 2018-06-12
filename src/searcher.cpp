@@ -1905,15 +1905,15 @@ void Searcher::resetStats()
     lastCleanZeroDepthAssigns = trail.size();
 }
 
-void Searcher::check_calc_features()
+void Searcher::check_calc_satzilla_features()
 {
-    if (last_feature_calc_confl == 0 || (last_feature_calc_confl + 100000) < sumConflicts) {
-        last_feature_calc_confl = sumConflicts+1;
+    if (last_satzilla_feature_calc_confl == 0 || (last_satzilla_feature_calc_confl + 100000) < sumConflicts) {
+        last_satzilla_feature_calc_confl = sumConflicts+1;
         if (nVars() > 2
             && longIrredCls.size() > 1
             && (binTri.irredBins + binTri.redBins) > 1
         ) {
-            solver->last_solve_feature = solver->calculate_features();
+            solver->last_solve_satzilla_feature = solver->calculate_satzilla_features();
         }
     }
 }
@@ -2118,7 +2118,7 @@ void Searcher::rebuildOrderHeap()
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
     if (solver->sqlStats)
-        check_calc_features();
+        check_calc_satzilla_features();
 
     print_restart_header();
     dump_search_sql(myTime);

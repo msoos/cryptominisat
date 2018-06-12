@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include <iostream>
 using std::string;
 using std::cout;
@@ -29,9 +29,9 @@ using std::endl;
 using namespace CMSat;
 
 
-void SolveFeatures::print_stats() const
+void SatZillaFeatures::print_stats() const
 {
-    cout << "c [features] ";
+    cout << "c [satzilla_features] ";
     cout << "numVars " << numVars << ", ";
     cout << "numClauses " << numClauses << ", ";
     cout << "var_cl_ratio " << var_cl_ratio << ", ";
@@ -104,7 +104,7 @@ void SolveFeatures::print_stats() const
     cout << endl;
 }
 
-void SolveFeatures::Distrib::print(const string& pre_print) const
+void SatZillaFeatures::Distrib::print(const string& pre_print) const
 {
     cout << pre_print <<"glue_distr_mean " << glue_distr_mean << ", ";
     cout << pre_print <<"glue_distr_var " << glue_distr_var << ", ";

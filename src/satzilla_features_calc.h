@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <vector>
 #include <limits>
 #include <utility>
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include "cloffset.h"
 #include "watched.h"
 using std::vector;
@@ -37,12 +37,12 @@ namespace CMSat {
 
 class Solver;
 
-struct SolveFeaturesCalc {
+struct SatZillaFeaturesCalc {
 public:
-    SolveFeaturesCalc(const Solver* _solver) :
+    SatZillaFeaturesCalc(const Solver* _solver) :
         solver(_solver) {
     }
-    SolveFeatures extract();
+    SatZillaFeatures extract();
 
 private:
     void fill_vars_cls();
@@ -53,7 +53,7 @@ private:
     void normalise_values();
     void calculate_cl_distributions(
         const vector<ClOffset>& clauses
-        , struct SolveFeatures::Distrib& distrib_data
+        , struct SatZillaFeatures::Distrib& distrib_data
     );
 
 
@@ -74,7 +74,7 @@ private:
     };
 
     vector<VARIABLE> myVars;
-    SolveFeatures feat;
+    SatZillaFeatures satzilla_feat;
 };
 
 } //end namespace

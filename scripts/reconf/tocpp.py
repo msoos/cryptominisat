@@ -66,7 +66,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -76,10 +76,10 @@ namespace CMSat {
 
 for i in range(options.num):
     if i not in ignore:
-        print("double get_score%d(const SolveFeatures& feat, const int verb);" % i)
+        print("double get_score%d(const SatZillaFeatures& satzilla_feat, const int verb);" % i)
 
 print("""
-int get_reconf_from_features(const SolveFeatures& feat, const int verb)
+int get_reconf_from_satzilla_features(const SatZillaFeatures& satzilla_feat, const int verb)
 {
 \tdouble best_score = 0.0;
 \tint best_val = 0;
@@ -91,7 +91,7 @@ for i in range(options.num):
         continue
 
     print("""
-\tscore = get_score%d(feat, verb);
+\tscore = get_score%d(satzilla_feat, verb);
 \tif (verb >= 2)
 \t\tcout << "c Score for reconf %d is " << score << endl;
 \tif (best_score < score) {
@@ -119,7 +119,7 @@ def read_one_reconf(reconf_num):
     string = ""
 
     print("""
-double get_score%d(const SolveFeatures& feat, const int verb)
+double get_score%d(const SatZillaFeatures& satzilla_feat, const int verb)
 {""" % reconf_num)
     for line in f:
         if "id=" in line:
@@ -164,7 +164,7 @@ double get_score%d(const SolveFeatures& feat, const int verb)
         else:
             string += " &&\n\t\t"
 
-        string += "(feat.%s %s %.5f)" % (dat["att"], dat["result"],
+        string += "(satzilla_feat.%s %s %.5f)" % (dat["att"], dat["result"],
                                          float(dat["cut"]))
         cond_no += 1
 

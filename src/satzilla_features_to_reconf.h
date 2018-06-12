@@ -20,10 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 
 namespace CMSat {
 
-int get_reconf_from_features(const SolveFeatures& feat, const int verb);
+int get_reconf_from_satzilla_features(const SatZillaFeatures& satzilla_feat, const int verb);
 
 } //end namespace

@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define __SQLSTATS_H__
 
 #include "clauseusagestats.h"
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include "searchstats.h"
 
 namespace CMSat {
@@ -62,10 +62,10 @@ public:
         , double time_passed
     ) = 0;
 
-    virtual void features(
+    virtual void satzilla_features(
         const Solver* solver
         , const Searcher* search
-        , const SolveFeatures& feat
+        , const SatZillaFeatures& satzilla_feat
     ) = 0;
 
     virtual void mem_used(

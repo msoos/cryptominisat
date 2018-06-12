@@ -102,9 +102,9 @@ set(cryptoms_lib_files
     clausedumper.cpp
     bva.cpp
     intree.cpp
-    features_calc.cpp
-    features_to_reconf.cpp
-    solvefeatures.cpp
+    satzilla_features_calc.cpp
+    satzilla_features_to_reconf.cpp
+    satzilla_features.cpp
     searchstats.cpp
     xorfinder.cpp
     cryptominisat_c.cpp

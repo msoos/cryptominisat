@@ -105,8 +105,8 @@ public:
     uint32_t minNumVars = 0;
     Drat* drat;
     uint32_t sumConflicts = 0;
-    uint32_t latest_feature_calc = 0;
-    uint64_t last_feature_calc_confl = 0;
+    uint32_t latest_satzilla_feature_calc = 0;
+    uint64_t last_satzilla_feature_calc_confl = 0;
     unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
 
     //Clauses

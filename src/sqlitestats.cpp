@@ -99,7 +99,7 @@ bool SQLiteStats::setup(const Solver* solver)
     initReduceDBSTMT();
     initTimePassedSTMT();
     initMemUsedSTMT();
-    init_features();
+    init_satzilla_features();
     init_clause_stats_STMT();
 
     return true;
@@ -434,14 +434,14 @@ void SQLiteStats::time_passed_min(
     }
 }
 
-void SQLiteStats::init_features() {
+void SQLiteStats::init_satzilla_features() {
     const size_t numElems = 67;
 
     std::stringstream ss;
-    ss << "insert into `features`"
+    ss << "insert into `satzilla_features`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_feature_calc`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
 
     //Base data
     << ", `numVars`"
@@ -548,7 +548,7 @@ void SQLiteStats::initRestartSTMT()
     ss << "insert into `restart`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_feature_calc`"
+    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
     << ", `runtime` "
 
     //Clause stats
@@ -607,94 +607,94 @@ void SQLiteStats::initRestartSTMT()
     }
 }
 
-void SQLiteStats::features(
+void SQLiteStats::satzilla_features(
     const Solver* solver
     , const Searcher* search
-    , const SolveFeatures& feat
+    , const SatZillaFeatures& satzilla_feat
 ) {
     int bindAt = 1;
     sqlite3_bind_int64(stmtFeat, bindAt++, runID);
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_feature_calc);
+    sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_satzilla_feature_calc);
 
-    sqlite3_bind_int64(stmtFeat, bindAt++, feat.numVars);
-    sqlite3_bind_int64(stmtFeat, bindAt++, feat.numClauses);
-    sqlite3_bind_int64(stmtFeat, bindAt++, feat.var_cl_ratio);
+    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numVars);
+    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numClauses);
+    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.var_cl_ratio);
 
     //Clause distribution
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.binary);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.horn_spread);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.binary);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.horn_spread);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_var_spread);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_var_spread);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.vcg_cls_spread);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.vcg_cls_spread);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_var_spread);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_var_spread);
 
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_std);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.pnr_cls_spread);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_std);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.pnr_cls_spread);
 
     //Conflict clauses
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_confl_size);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_size_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_size_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_confl_glue);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_glue_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_glue_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_num_resolutions);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.num_resolutions_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.num_resolutions_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.learnt_bins_per_confl);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_confl_size);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_size_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_size_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_confl_glue);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_glue_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_glue_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_num_resolutions);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.num_resolutions_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.num_resolutions_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.learnt_bins_per_confl);
 
     //Search
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_branch_depth);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.branch_depth_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.branch_depth_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_trail_depth_delta);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.trail_depth_delta_min);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.trail_depth_delta_max);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.avg_branch_depth_delta);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.props_per_confl);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.confl_per_restart);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.decisions_per_conflict);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_branch_depth);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.branch_depth_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.branch_depth_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_trail_depth_delta);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.trail_depth_delta_min);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.trail_depth_delta_max);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.avg_branch_depth_delta);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.props_per_confl);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.confl_per_restart);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.decisions_per_conflict);
 
     //red stats
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.glue_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.glue_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.size_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.size_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.activity_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.red_cl_distrib.activity_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.glue_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.glue_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.size_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.size_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.activity_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.red_cl_distrib.activity_distr_var);
 
     //irred stats
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.glue_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.glue_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.size_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.size_distr_var);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.activity_distr_mean);
-    sqlite3_bind_double(stmtFeat, bindAt++, feat.irred_cl_distrib.activity_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.glue_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.glue_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.size_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.size_distr_var);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_mean);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_var);
 
     int rc = sqlite3_step(stmtFeat);
     if (rc != SQLITE_DONE) {
@@ -732,7 +732,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmtRst, bindAt++, solver->latest_feature_calc);
+    sqlite3_bind_int(stmtRst, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_double(stmtRst, bindAt++, cpuTime());
 
 
@@ -965,7 +965,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `restarts`,"
     << " `prev_restart`,"
     << " `conflicts`,"
-    << " `latest_feature_calc`,"
+    << " `latest_satzilla_feature_calc`,"
     << " `clauseID`,"
     << ""
     << " `glue`,"
@@ -1088,7 +1088,7 @@ void SQLiteStats::dump_clause_stats(
         sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts()-1);
     }
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmt_clause_stats, bindAt++, solver->latest_feature_calc);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);

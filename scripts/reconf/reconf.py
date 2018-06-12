@@ -68,12 +68,12 @@ if options.ignore:
         r = int(r)
         ignore[r] = True
 
-feat_order = ["numClauses", "binary", "horn", "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread", "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread", "avg_confl_size", "confl_size_min", "confl_size_max", "avg_confl_glue", "confl_glue_min", "confl_glue_max", "avg_num_resolutions", "num_resolutions_min", "num_resolutions_max", "learnt_bins_per_confl", "avg_branch_depth", "branch_depth_min", "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min", "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl", "confl_per_restart", "decisions_per_conflict", "irred_cl_distrib.glue_distr_mean", "irred_cl_distrib.glue_distr_var", "irred_cl_distrib.size_distr_mean", "irred_cl_distrib.size_distr_var", "irred_cl_distrib.uip_use_distr_mean", "irred_cl_distrib.uip_use_distr_var", "irred_cl_distrib.activity_distr_mean", "irred_cl_distrib.activity_distr_var", "red_cl_distrib.glue_distr_mean", "red_cl_distrib.glue_distr_var", "red_cl_distrib.size_distr_mean", "red_cl_distrib.size_distr_var", "red_cl_distrib.uip_use_distr_mean", "red_cl_distrib.uip_use_distr_var", "red_cl_distrib.activity_distr_mean", "red_cl_distrib.activity_distr_var"]
+satzilla_feat_order = ["numClauses", "binary", "horn", "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread", "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread", "avg_confl_size", "confl_size_min", "confl_size_max", "avg_confl_glue", "confl_glue_min", "confl_glue_max", "avg_num_resolutions", "num_resolutions_min", "num_resolutions_max", "learnt_bins_per_confl", "avg_branch_depth", "branch_depth_min", "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min", "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl", "confl_per_restart", "decisions_per_conflict", "irred_cl_distrib.glue_distr_mean", "irred_cl_distrib.glue_distr_var", "irred_cl_distrib.size_distr_mean", "irred_cl_distrib.size_distr_var", "irred_cl_distrib.uip_use_distr_mean", "irred_cl_distrib.uip_use_distr_var", "irred_cl_distrib.activity_distr_mean", "irred_cl_distrib.activity_distr_var", "red_cl_distrib.glue_distr_mean", "red_cl_distrib.glue_distr_var", "red_cl_distrib.size_distr_mean", "red_cl_distrib.size_distr_var", "red_cl_distrib.uip_use_distr_mean", "red_cl_distrib.uip_use_distr_var", "red_cl_distrib.activity_distr_mean", "red_cl_distrib.activity_distr_var"]
 
 f = open("outs/reconf.names", "w")
 f.write("reconf.                     | the target attribute\n\n")
 f.write("name:                     label.\n")
-for o in feat_order:
+for o in satzilla_feat_order:
     f.write("%s:                     continuous.\n" % o)
 f.write("\nreconf:                 +,-.\n")
 f.close()
@@ -83,8 +83,8 @@ if options.num is None:
     exit(-1)
 
 
-def parse_features_line(line):
-    line = re.sub("c.*features. ", "", line)
+def parse_satzilla_features_line(line):
+    line = re.sub("c.*satzilla_features. ", "", line)
     line = line.strip().split(" ")
     dat = {}
 
@@ -120,7 +120,7 @@ def all_above_fixed_score(reconf_score):
     return True
 
 
-def print_features_and_scores(fname, features, reconfs_scores):
+def print_satzilla_features_and_scores(fname, satzilla_features, reconfs_scores):
     r_s = sorted(reconfs_scores, key=lambda x: x[1])[::-1]
     best_reconf = r_s[0][0]
     best_reconf_score = r_s[0][1]
@@ -156,8 +156,8 @@ def print_features_and_scores(fname, features, reconfs_scores):
     # assemble final string
     string = ""
     string += "%s," % fname
-    for name in feat_order:
-        string += "%s," % features[name]
+    for name in satzilla_feat_order:
+        string += "%s," % satzilla_features[name]
 
     # print to console
     if True:
@@ -195,13 +195,13 @@ def parse_file(fname):
     reconf = 0
 
     satisfiable = None
-    features = None
+    satzilla_features = None
     score = 0
     for line in f:
         line = line.strip()
         #print("parsing line:", line)
-        if features is None and "features" in line and "numClauses" in line:
-            features = parse_features_line(line)
+        if satzilla_features is None and "satzilla_features" in line and "numClauses" in line:
+            satzilla_features = parse_satzilla_features_line(line)
 
         if "Total time" in line:
             time_used = line.strip().split(":")[1].strip()
@@ -224,34 +224,34 @@ def parse_file(fname):
     if reconf in ignore:
         score = 0
 
-    # print("features:", features)
-    return fname_clean, reconf, features, score
+    # print("satzilla_features:", satzilla_features)
+    return fname_clean, reconf, satzilla_features, score
 
 
 all_files = set()
 all_files_scores = {}
-all_files_features = {}
-max_num_features = 0
+all_files_satzilla_features = {}
+max_num_satzilla_features = 0
 for x in args:
     print("# parsing infile:", x)
-    fname, reconf, features, score = parse_file(x)
+    fname, reconf, satzilla_features, score = parse_file(x)
     if fname in all_files:
-        if all_files_features[fname] != features:
-            print("different features extracted for fname", fname)
-            print("orig:", all_files_features[fname])
-            print("new: ", features)
+        if all_files_satzilla_features[fname] != satzilla_features:
+            print("different satzilla_features extracted for fname", fname)
+            print("orig:", all_files_satzilla_features[fname])
+            print("new: ", satzilla_features)
             print("Keeping the longer one!")
 
-        if all_files_features[fname] is None:
-            num_features = 0
+        if all_files_satzilla_features[fname] is None:
+            num_satzilla_features = 0
         else:
-            num_features = len(all_files_features[fname])
+            num_satzilla_features = len(all_files_satzilla_features[fname])
 
-        if features is not None and num_features < len(features):
-            all_files_features[fname] = features
+        if satzilla_features is not None and num_satzilla_features < len(satzilla_features):
+            all_files_satzilla_features[fname] = satzilla_features
     else:
         all_files.add(fname)
-        all_files_features[fname] = features
+        all_files_satzilla_features[fname] = satzilla_features
         all_files_scores[fname] = []
 
     #print("fname:", fname)
@@ -288,21 +288,21 @@ only_this = dict(best_reconf)
 for fname in all_files:
     print("")
     print("calculating final DATs for CNF ", fname)
-    if all_files_features[fname] is None:
-        print("-> solved too early, no features, skipping")
+    if all_files_satzilla_features[fname] is None:
+        print("-> solved too early, no satzilla_features, skipping")
         continue
 
     if options.verbose:
-        print("-> all_files_features[fname]:", all_files_features[fname])
-    if "avg_confl_size" not in all_files_features[fname]:
-        print("-> WARNING This is weird, probably not solved by one (different features than everything else), skipping")
+        print("-> all_files_satzilla_features[fname]:", all_files_satzilla_features[fname])
+    if "avg_confl_size" not in all_files_satzilla_features[fname]:
+        print("-> WARNING This is weird, probably not solved by one (different satzilla_features than everything else), skipping")
         continue
 
-    if all_files_features[fname] is None:
-        print("-> features for file is None: %s" % fname)
+    if all_files_satzilla_features[fname] is None:
+        print("-> satzilla_features for file is None: %s" % fname)
 
-    if all_files_features[fname] is not None:
-        best, only_this_could_solve_it = print_features_and_scores(fname, all_files_features[fname], all_files_scores[fname])
+    if all_files_satzilla_features[fname] is not None:
+        best, only_this_could_solve_it = print_satzilla_features_and_scores(fname, all_files_satzilla_features[fname], all_files_scores[fname])
 
         if best == -2:
             best = "all_above_fixed_score"

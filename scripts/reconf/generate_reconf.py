@@ -92,15 +92,15 @@ for i in range(num):
     subprocess.call("cp outs/reconf.names outs/out%d.names" % i, shell=True)
     subprocess.call("c5.0 -u 20 -f outs/out%d -r > outs/out%d.c50.out" % (i, i), shell=True)
 
-subprocess.call("./tocpp.py -i %s -n %d > ../../src/features_to_reconf.cpp" % (ignore, num),
+subprocess.call("./tocpp.py -i %s -n %d > ../../src/satzilla_features_to_reconf.cpp" % (ignore, num),
                 shell=True)
 
-subprocess.call("sed -i 's/red-/red_cl_distrib./g' ../../src/features_to_reconf.cpp",
+subprocess.call("sed -i 's/red-/red_cl_distrib./g' ../../src/satzilla_features_to_reconf.cpp",
                 shell=True)
 
 upload = query_yes_no("Upload to AWS?")
 if upload:
-    subprocess.call("aws s3 cp ../../src/features_to_reconf.cpp s3://msoos-solve-data/solvers/", shell=True)
+    subprocess.call("aws s3 cp ../../src/satzilla_features_to_reconf.cpp s3://msoos-solve-data/solvers/", shell=True)
     print("Uploded to AWS")
 else:
     print("Not uploaded to AWS")

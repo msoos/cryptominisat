@@ -35,7 +35,7 @@ CREATE TABLE `restart` (
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `latest_feature_calc` int(20) NOT NULL,
+  `latest_satzilla_feature_calc` int(20) NOT NULL,
   `runtime` float NOT NULL,
   `numIrredBins` int(20) NOT NULL,
   `numIrredLongs` int(20) NOT NULL,
@@ -149,7 +149,7 @@ CREATE TABLE `clauseStats` (
   `restarts` bigint(20) NOT NULL,
   `prev_restart` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `latest_feature_calc` int(20) NOT NULL,
+  `latest_satzilla_feature_calc` int(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL,
 
   `glue` int(20) NOT NULL,
@@ -225,13 +225,13 @@ CREATE TABLE `clauseStats` (
   `glue_hist_long` float NOT NULL
 );
 
-DROP TABLE IF EXISTS `features`;
-CREATE TABLE `features` (
+DROP TABLE IF EXISTS `satzilla_features`;
+CREATE TABLE `satzilla_features` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
-  `latest_feature_calc` int(20) NOT NULL,
+  `latest_satzilla_feature_calc` int(20) NOT NULL,
 
   `numVars` int(20) NOT NULL,
   `numClauses` int(20) NOT NULL,

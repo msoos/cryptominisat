@@ -36,7 +36,7 @@ THE SOFTWARE.
 #include "propengine.h"
 #include "searcher.h"
 #include "clauseusagestats.h"
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include "searchstats.h"
 #ifdef CMS_TESTING_ENABLED
 #include "gtest/gtest_prod.h"
@@ -233,8 +233,8 @@ class Solver : public Searcher
         void set_sqlite(string filename);
         //Not Private for testing (maybe could be called from outside)
         bool renumber_variables(bool must_renumber = true);
-        SolveFeatures calculate_features();
-        SolveFeatures last_solve_feature;
+        SatZillaFeatures calculate_satzilla_features();
+        SatZillaFeatures last_solve_satzilla_feature;
 
         uint32_t undefine(vector<uint32_t>& trail_lim_vars);
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;

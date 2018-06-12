@@ -122,7 +122,7 @@ class Query2 (QueryHelper):
         -- , rst.`simplifications` as `rst.simplifications`
         -- , rst.`restarts` as `rst.restarts`
         -- , rst.`conflicts` as `rst.conflicts`
-        -- , rst.`latest_feature_calc` as `rst.latest_feature_calc`
+        -- , rst.`latest_satzilla_feature_calc` as `rst.latest_satzilla_feature_calc`
         -- rst.`runtime` as `rst.runtime`
         , rst.`numIrredBins` as `rst.numIrredBins`
         , rst.`numIrredLongs` as `rst.numIrredLongs`
@@ -215,7 +215,7 @@ class Query2 (QueryHelper):
         -- , cl.`restarts` as `cl.restarts`
         -- , cl.`prev_restart` as `cl.prev_restart`
         -- , cl.`conflicts` as `cl.conflicts`
-        -- , cl.`latest_feature_calc` as `cl.latest_feature_calc`
+        -- , cl.`latest_satzilla_feature_calc` as `cl.latest_satzilla_feature_calc`
         -- , cl.`clauseID` as `cl.clauseID`
         , cl.`glue` as `cl.glue`
         , cl.`size` as `cl.size`
@@ -276,80 +276,80 @@ class Query2 (QueryHelper):
         , cl.`glue_hist_long` as `cl.glue_hist_long`
         """
 
-        feat_dat = """
-        -- , feat.`simplifications` as `feat.simplifications`
-        -- , feat.`restarts` as `feat.restarts`
-        , feat.`conflicts` as `feat.conflicts`
-        -- , feat.`latest_feature_calc` as `feat.latest_feature_calc`
-        , feat.`numVars` as `feat.numVars`
-        , feat.`numClauses` as `feat.numClauses`
-        , feat.`var_cl_ratio` as `feat.var_cl_ratio`
-        , feat.`binary` as `feat.binary`
-        , feat.`horn` as `feat.horn`
-        , feat.`horn_mean` as `feat.horn_mean`
-        , feat.`horn_std` as `feat.horn_std`
-        , feat.`horn_min` as `feat.horn_min`
-        , feat.`horn_max` as `feat.horn_max`
-        , feat.`horn_spread` as `feat.horn_spread`
-        , feat.`vcg_var_mean` as `feat.vcg_var_mean`
-        , feat.`vcg_var_std` as `feat.vcg_var_std`
-        , feat.`vcg_var_min` as `feat.vcg_var_min`
-        , feat.`vcg_var_max` as `feat.vcg_var_max`
-        , feat.`vcg_var_spread` as `feat.vcg_var_spread`
-        , feat.`vcg_cls_mean` as `feat.vcg_cls_mean`
-        , feat.`vcg_cls_std` as `feat.vcg_cls_std`
-        , feat.`vcg_cls_min` as `feat.vcg_cls_min`
-        , feat.`vcg_cls_max` as `feat.vcg_cls_max`
-        , feat.`vcg_cls_spread` as `feat.vcg_cls_spread`
-        , feat.`pnr_var_mean` as `feat.pnr_var_mean`
-        , feat.`pnr_var_std` as `feat.pnr_var_std`
-        , feat.`pnr_var_min` as `feat.pnr_var_min`
-        , feat.`pnr_var_max` as `feat.pnr_var_max`
-        , feat.`pnr_var_spread` as `feat.pnr_var_spread`
-        , feat.`pnr_cls_mean` as `feat.pnr_cls_mean`
-        , feat.`pnr_cls_std` as `feat.pnr_cls_std`
-        , feat.`pnr_cls_min` as `feat.pnr_cls_min`
-        , feat.`pnr_cls_max` as `feat.pnr_cls_max`
-        , feat.`pnr_cls_spread` as `feat.pnr_cls_spread`
-        , feat.`avg_confl_size` as `feat.avg_confl_size`
-        , feat.`confl_size_min` as `feat.confl_size_min`
-        , feat.`confl_size_max` as `feat.confl_size_max`
-        , feat.`avg_confl_glue` as `feat.avg_confl_glue`
-        , feat.`confl_glue_min` as `feat.confl_glue_min`
-        , feat.`confl_glue_max` as `feat.confl_glue_max`
-        , feat.`avg_num_resolutions` as `feat.avg_num_resolutions`
-        , feat.`num_resolutions_min` as `feat.num_resolutions_min`
-        , feat.`num_resolutions_max` as `feat.num_resolutions_max`
-        , feat.`learnt_bins_per_confl` as `feat.learnt_bins_per_confl`
-        , feat.`avg_branch_depth` as `feat.avg_branch_depth`
-        , feat.`branch_depth_min` as `feat.branch_depth_min`
-        , feat.`branch_depth_max` as `feat.branch_depth_max`
-        , feat.`avg_trail_depth_delta` as `feat.avg_trail_depth_delta`
-        , feat.`trail_depth_delta_min` as `feat.trail_depth_delta_min`
-        , feat.`trail_depth_delta_max` as `feat.trail_depth_delta_max`
-        , feat.`avg_branch_depth_delta` as `feat.avg_branch_depth_delta`
-        , feat.`props_per_confl` as `feat.props_per_confl`
-        , feat.`confl_per_restart` as `feat.confl_per_restart`
-        , feat.`decisions_per_conflict` as `feat.decisions_per_conflict`
-        , feat.`red_glue_distr_mean` as `feat.red_glue_distr_mean`
-        , feat.`red_glue_distr_var` as `feat.red_glue_distr_var`
-        , feat.`red_size_distr_mean` as `feat.red_size_distr_mean`
-        , feat.`red_size_distr_var` as `feat.red_size_distr_var`
-        -- , feat.`red_activity_distr_mean` as `feat.red_activity_distr_mean`
-        -- , feat.`red_activity_distr_var` as `feat.red_activity_distr_var`
-        -- , feat.`irred_glue_distr_mean` as `feat.irred_glue_distr_mean`
-        -- , feat.`irred_glue_distr_var` as `feat.irred_glue_distr_var`
-        , feat.`irred_size_distr_mean` as `feat.irred_size_distr_mean`
-        , feat.`irred_size_distr_var` as `feat.irred_size_distr_var`
-        -- , feat.`irred_activity_distr_mean` as `feat.irred_activity_distr_mean`
-        -- , feat.`irred_activity_distr_var` as `feat.irred_activity_distr_var`
+        satzfeat_dat = """
+        -- , szfeat.`simplifications` as `szfeat.simplifications`
+        -- , szfeat.`restarts` as `szfeat.restarts`
+        , szfeat.`conflicts` as `szfeat.conflicts`
+        -- , szfeat.`latest_satzilla_feature_calc` as `szfeat.latest_satzilla_feature_calc`
+        , szfeat.`numVars` as `szfeat.numVars`
+        , szfeat.`numClauses` as `szfeat.numClauses`
+        , szfeat.`var_cl_ratio` as `szfeat.var_cl_ratio`
+        , szfeat.`binary` as `szfeat.binary`
+        , szfeat.`horn` as `szfeat.horn`
+        , szfeat.`horn_mean` as `szfeat.horn_mean`
+        , szfeat.`horn_std` as `szfeat.horn_std`
+        , szfeat.`horn_min` as `szfeat.horn_min`
+        , szfeat.`horn_max` as `szfeat.horn_max`
+        , szfeat.`horn_spread` as `szfeat.horn_spread`
+        , szfeat.`vcg_var_mean` as `szfeat.vcg_var_mean`
+        , szfeat.`vcg_var_std` as `szfeat.vcg_var_std`
+        , szfeat.`vcg_var_min` as `szfeat.vcg_var_min`
+        , szfeat.`vcg_var_max` as `szfeat.vcg_var_max`
+        , szfeat.`vcg_var_spread` as `szfeat.vcg_var_spread`
+        , szfeat.`vcg_cls_mean` as `szfeat.vcg_cls_mean`
+        , szfeat.`vcg_cls_std` as `szfeat.vcg_cls_std`
+        , szfeat.`vcg_cls_min` as `szfeat.vcg_cls_min`
+        , szfeat.`vcg_cls_max` as `szfeat.vcg_cls_max`
+        , szfeat.`vcg_cls_spread` as `szfeat.vcg_cls_spread`
+        , szfeat.`pnr_var_mean` as `szfeat.pnr_var_mean`
+        , szfeat.`pnr_var_std` as `szfeat.pnr_var_std`
+        , szfeat.`pnr_var_min` as `szfeat.pnr_var_min`
+        , szfeat.`pnr_var_max` as `szfeat.pnr_var_max`
+        , szfeat.`pnr_var_spread` as `szfeat.pnr_var_spread`
+        , szfeat.`pnr_cls_mean` as `szfeat.pnr_cls_mean`
+        , szfeat.`pnr_cls_std` as `szfeat.pnr_cls_std`
+        , szfeat.`pnr_cls_min` as `szfeat.pnr_cls_min`
+        , szfeat.`pnr_cls_max` as `szfeat.pnr_cls_max`
+        , szfeat.`pnr_cls_spread` as `szfeat.pnr_cls_spread`
+        , szfeat.`avg_confl_size` as `szfeat.avg_confl_size`
+        , szfeat.`confl_size_min` as `szfeat.confl_size_min`
+        , szfeat.`confl_size_max` as `szfeat.confl_size_max`
+        , szfeat.`avg_confl_glue` as `szfeat.avg_confl_glue`
+        , szfeat.`confl_glue_min` as `szfeat.confl_glue_min`
+        , szfeat.`confl_glue_max` as `szfeat.confl_glue_max`
+        , szfeat.`avg_num_resolutions` as `szfeat.avg_num_resolutions`
+        , szfeat.`num_resolutions_min` as `szfeat.num_resolutions_min`
+        , szfeat.`num_resolutions_max` as `szfeat.num_resolutions_max`
+        , szfeat.`learnt_bins_per_confl` as `szfeat.learnt_bins_per_confl`
+        , szfeat.`avg_branch_depth` as `szfeat.avg_branch_depth`
+        , szfeat.`branch_depth_min` as `szfeat.branch_depth_min`
+        , szfeat.`branch_depth_max` as `szfeat.branch_depth_max`
+        , szfeat.`avg_trail_depth_delta` as `szfeat.avg_trail_depth_delta`
+        , szfeat.`trail_depth_delta_min` as `szfeat.trail_depth_delta_min`
+        , szfeat.`trail_depth_delta_max` as `szfeat.trail_depth_delta_max`
+        , szfeat.`avg_branch_depth_delta` as `szfeat.avg_branch_depth_delta`
+        , szfeat.`props_per_confl` as `szfeat.props_per_confl`
+        , szfeat.`confl_per_restart` as `szfeat.confl_per_restart`
+        , szfeat.`decisions_per_conflict` as `szfeat.decisions_per_conflict`
+        , szfeat.`red_glue_distr_mean` as `szfeat.red_glue_distr_mean`
+        , szfeat.`red_glue_distr_var` as `szfeat.red_glue_distr_var`
+        , szfeat.`red_size_distr_mean` as `szfeat.red_size_distr_mean`
+        , szfeat.`red_size_distr_var` as `szfeat.red_size_distr_var`
+        -- , szfeat.`red_activity_distr_mean` as `szfeat.red_activity_distr_mean`
+        -- , szfeat.`red_activity_distr_var` as `szfeat.red_activity_distr_var`
+        -- , szfeat.`irred_glue_distr_mean` as `szfeat.irred_glue_distr_mean`
+        -- , szfeat.`irred_glue_distr_var` as `szfeat.irred_glue_distr_var`
+        , szfeat.`irred_size_distr_mean` as `szfeat.irred_size_distr_mean`
+        , szfeat.`irred_size_distr_var` as `szfeat.irred_size_distr_var`
+        -- , szfeat.`irred_activity_distr_mean` as `szfeat.irred_activity_distr_mean`
+        -- , szfeat.`irred_activity_distr_var` as `szfeat.irred_activity_distr_var`
         """
 
         common_restrictions = """
         and cl.restarts > 1 -- to avoid history being invalid
         and cl.runID = {runid}
-        and feat.runID = {runid}
-        and feat.latest_feature_calc = cl.latest_feature_calc
+        and szfeat.runID = {runid}
+        and szfeat.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
         and rst.restarts = cl.prev_restart
         and rst.runID = {runid}
         and tags.tagname = "filename"
@@ -370,7 +370,7 @@ class Query2 (QueryHelper):
         {clause2_dat}
         {clause3_dat}
         {restart_dat}
-        {feat_dat}
+        {satzfeat_dat}
         {rdb0_dat}
         {rdb1_dat}
         {rdb2_dat}
@@ -388,7 +388,7 @@ class Query2 (QueryHelper):
         , clauseStats as cl3
         , goodClauses as goodcl
         , restart as rst
-        , features as feat
+        , satzilla_features as szfeat
         , reduceDB as rdb0
         , reduceDB as rdb1
         , reduceDB as rdb2
@@ -430,7 +430,7 @@ class Query2 (QueryHelper):
         {clause2_dat}
         {clause3_dat}
         {restart_dat}
-        {feat_dat}
+        {satzfeat_dat}
         {rdb0_dat}
         {rdb1_dat}
         {rdb2_dat}
@@ -448,7 +448,7 @@ class Query2 (QueryHelper):
         , clauseStats as cl2
         , clauseStats as cl3
         , restart as rst
-        , features as feat
+        , satzilla_features as szfeat
         , reduceDB as rdb0
         , reduceDB as rdb1
         , reduceDB as rdb2
@@ -488,7 +488,7 @@ class Query2 (QueryHelper):
                     "clause_dat": clause_dat,
                     "clause2_dat": clause_dat.replace("cl.", "cl2."),
                     "clause3_dat": clause_dat.replace("cl.", "cl3."),
-                    "feat_dat": feat_dat,
+                    "satzfeat_dat": satzfeat_dat,
                     "rdb0_dat": rdb0_dat,
                     "rdb1_dat": rdb0_dat.replace("rdb0.", "rdb1."),
                     "rdb2_dat": rdb0_dat.replace("rdb0.", "rdb2."),
@@ -749,7 +749,7 @@ if __name__ == "__main__":
     np.random.seed(2097483)
     dfs = []
     for dbfname in args:
-        print("----- INTERMEDIATE predictor -------")
+        print("----- INTERMEDIATE data -------")
         ok, df = one_predictor(dbfname)
         if ok:
             dfs.append(df)

@@ -21,7 +21,7 @@ THE SOFTWARE.
 ***********************************************/
 
 #include "sqlstats.h"
-#include "solvefeatures.h"
+#include "satzilla_features.h"
 #include <sqlite3.h>
 
 namespace CMSat {
@@ -65,10 +65,10 @@ public:
     ) override;
 
 
-    void features(
+    void satzilla_features(
         const Solver* solver
         , const Searcher* search
-        , const SolveFeatures& feat
+        , const SatZillaFeatures& satzilla_feat
     ) override;
 
     void mem_used(
@@ -111,7 +111,7 @@ private:
     void initTimePassedSTMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
-    void init_features();
+    void init_satzilla_features();
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
