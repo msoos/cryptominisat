@@ -184,7 +184,7 @@ public:
     template<class T>
     void set(const T& v, const vector<uint32_t>& var_to_col, const uint32_t matrix_size)
     {
-		//(xorclause, var_to_col, origMat.num_cols)
+        //(xorclause, var_to_col, origMat.num_cols)
         assert(size == (matrix_size/64) + ((bool)(matrix_size % 64)));
         //mp = new uint64_t[size];
         setZero();
@@ -199,8 +199,8 @@ public:
     }
 
     bool fill(vec<Lit>& tmp_clause, const vec<lbool>& assigns, const vector<uint32_t>& col_to_var_original) const;
-	
-	// using find nonbasic and basic value
+
+    // using find nonbasic and basic value
     uint32_t find_watchVar(vector<Lit>& tmp_clause, const vector<uint32_t>& col_to_var,vec<bool> &GasVar_state , uint32_t& nb_var );
 
     // using find nonbasic value after watch list is enter
