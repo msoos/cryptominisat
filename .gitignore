@@ -19,3 +19,9 @@ scripts/fuzz/tmp_for_xor_to_cnf_*
 scripts/reconf/outfile*
 
 web/jquery-1.11.3.min.js
+*.pdf
+*.aux
+*.blg
+*.log
+*.bbl
+*.bak
