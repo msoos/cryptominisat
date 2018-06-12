@@ -120,7 +120,7 @@ void EGaussian::canceling(const uint32_t sublevel) {
     clauses_toclear.resize(clauses_toclear.size() - a);
 
     PackedMatrix::iterator rowIt = clause_state.beginMatrix();
-    (*rowIt).setZero(); // reset this row all zero
+    (*rowIt).setZero(); //forget state
 }
 
 struct HeapSorter {
@@ -528,13 +528,14 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         matrix.matrix.beginMatrix() + row_n; // gaussian watch invoke row
     PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
-    // if this clause is alreadt true
+    //if this clause is already satisfied
     if ((*clauseIt)[row_n]) {
         *j++ = *i; // store watch list
         return true;
     }
 
-    if (GasVar_state[p]) { // swap basic and non_basic variable
+    //swap basic and non_basic variable
+    if (GasVar_state[p] == basic_var) {
         orig_basic = true;
         GasVar_state[matrix.nb_rows[row_n]] = basic_var;
         GasVar_state[p] = non_basic_var;
