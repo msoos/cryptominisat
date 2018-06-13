@@ -21,6 +21,7 @@
 from __future__ import print_function
 import sqlite3
 import optparse
+import os
 
 
 class Query:
@@ -42,10 +43,26 @@ class Query:
         self.conn.close()
 
     def parse_and_add_lemmas(self, lemmafname):
-        with open(lemmafname, "r") as f:
+        last_good = 0
+        for i in range(100):
+            tfname = "%s-%d" % (lemmafname, i)
+            print("Checking if lemma file %s exists" % tfname)
+            if not os.path.isfile(tfname):
+                break
+
+            print("Checking if lemma file %s 'Finished'" % tfname)
+            with open(tfname, "r") as f:
+                for line in f:
+                    if "Finished" in line:
+                        last_good = i
+
+        tfname = "%s-%d" % (lemmafname, last_good)
+        print("Using lemma file", tfname)
+        with open(tfname, "r") as f:
             for line in f:
                 line = line.strip().split(" ")
-                self.parse_one_line(line)
+                if "Finished" not in line[0]:
+                    self.parse_one_line(line)
 
         # final dump
         self.dump_ids()
@@ -117,7 +134,7 @@ it was good or not."""
     dbfname = args[0]
     lemmafname = args[1]
     print("Using sqlite3db file %s" % dbfname)
-    print("Using lemma file %s" % lemmafname)
+    print("Base lemma file is %s" % lemmafname)
 
     with Query(dbfname) as q:
         q.parse_and_add_lemmas(lemmafname)
