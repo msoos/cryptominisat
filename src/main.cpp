@@ -670,6 +670,8 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
         , "Independent vars, separated by comma")
+    ("assump", po::value(&assump_filename)->default_value(assump_filename)
+        , "Assumptions file")
     ("onlyindep", po::bool_switch(&only_indep_solution)
         , "Independent vars, separated by comma")
     ;
@@ -1228,6 +1230,20 @@ int Main::solve()
     if (conf.preprocess != 2) {
         parseInAllFiles(solver);
     }
+    if (!assump_filename.empty()) {
+        std::ifstream* tmp = new std::ifstream;
+        tmp->open(assump_filename.c_str());
+        std::string temp;
+        while(std::getline(*tmp, temp)) {
+            //Do with temp
+            int x = std::stoi(temp);
+            cout << "Assume: " << x << endl;
+            Lit l = Lit(std::abs(x)-1, x < 0);
+            assumps.push_back(l);
+        }
+
+        delete tmp;
+    }
 
     lbool ret = multi_solutions();
 
@@ -1257,7 +1273,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(NULL, only_indep_solution);
+        ret = solver->solve(&assumps, only_indep_solution);
         current_nr_of_solutions++;
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {

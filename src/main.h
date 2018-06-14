@@ -114,6 +114,8 @@ class Main
         int sql = 0;
         string sqlite_filename;
         vector<uint32_t> independent_vars;
+        std::string assump_filename;
+        vector<Lit> assumps;
         std::string independent_vars_str = "";
         bool only_indep_solution = false;
 
