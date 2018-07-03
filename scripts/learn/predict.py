@@ -148,7 +148,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.linear_model.LogisticRegression()
     # clf = sklearn.svm.SVC()
     if final:
-        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth)
+        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=20)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
