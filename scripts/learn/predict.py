@@ -130,6 +130,7 @@ def get_code(tree, feature_names):
 
 
 def one_classifier(df, features, to_predict, names, w_name, w_number, final):
+    _, df = train_test_split(df, test_size=options.only_pecr)
     print("================ predicting %s ================" % to_predict)
     print("-> Number of features  :", len(features))
     print("-> Number of datapoints:", df.shape)
@@ -182,7 +183,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
     else:
-        get_code(clf, features)
+        if options.get_code:
+            get_code(clf, features)
 
     print("Calculating scores....")
     y_pred = clf.predict(X_test)
@@ -304,8 +306,10 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
-    parser.add_option("--only", default=None, type=int,
-                      dest="only_pred", help="Only this predictor")
+    parser.add_option("--code", action="store_true", default=False,
+                      dest="get_code", help="Get raw C-like code")
+    parser.add_option("--only", default=0.999, type=float,
+                      dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--top", default=12, type=int,
                       dest="top_num_features", help="Number of top features to take to generate the final predictor")
 
