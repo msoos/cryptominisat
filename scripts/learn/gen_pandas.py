@@ -372,13 +372,14 @@ class Query2 (QueryHelper):
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
-        {rdb1_dat}
-        {rdb2_dat}
-        {rdb3_dat}
-        {rdb4_dat}
         , goodcl.num_used as `x.num_used`
-        , goodcl.last_confl_used-cl.`conflicts` as `x.lifetime`
-        , "OK" as `x.class`
+        , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
+        ,  CASE WHEN goodcl.last_confl_used > rdb0.conflicts
+           THEN 'OK'
+           ELSE 'BAD'
+           END AS `x.class`
+
+        -- if 1==1 "OK" as `x.class` else "OK2" as `x.class`
         """
 
         q_ok = """
@@ -390,10 +391,6 @@ class Query2 (QueryHelper):
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
-        , reduceDB as rdb1
-        , reduceDB as rdb2
-        , reduceDB as rdb3
-        , reduceDB as rdb4
         , tags
         WHERE
 
@@ -402,19 +399,7 @@ class Query2 (QueryHelper):
         and cl.runID = goodcl.runID
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
-        and rdb0.dump_no = 0
-        and rdb1.runID = cl.runID
-        and rdb1.clauseID = cl.clauseID
-        and rdb1.dump_no = 1
-        and rdb2.runID = cl.runID
-        and rdb2.clauseID = cl.clauseID
-        and rdb2.dump_no = 2
-        and rdb3.runID = cl.runID
-        and rdb3.clauseID = cl.clauseID
-        and rdb3.dump_no = 3
-        and rdb4.runID = cl.runID
-        and rdb4.clauseID = cl.clauseID
-        and rdb4.dump_no = 4
+        -- and rdb0.dump_no = 0
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         and cl3.runID = cl.runID
@@ -432,10 +417,6 @@ class Query2 (QueryHelper):
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
-        {rdb1_dat}
-        {rdb2_dat}
-        {rdb3_dat}
-        {rdb4_dat}
         , 0 as `x.num_used`
         , 0 as `x.lifetime`
         , "BAD" as `x.class`
@@ -450,10 +431,6 @@ class Query2 (QueryHelper):
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
-        , reduceDB as rdb1
-        , reduceDB as rdb2
-        , reduceDB as rdb3
-        , reduceDB as rdb4
         , tags
         WHERE
 
@@ -462,19 +439,7 @@ class Query2 (QueryHelper):
         and cl.clauseID != 0
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
-        and rdb0.dump_no = 0
-        and rdb1.runID = cl.runID
-        and rdb1.clauseID = cl.clauseID
-        and rdb1.dump_no = 1
-        and rdb2.runID = cl.runID
-        and rdb2.clauseID = cl.clauseID
-        and rdb2.dump_no = 2
-        and rdb3.runID = cl.runID
-        and rdb3.clauseID = cl.clauseID
-        and rdb3.dump_no = 3
-        and rdb4.runID = cl.runID
-        and rdb4.clauseID = cl.clauseID
-        and rdb4.dump_no = 4
+        -- and rdb0.dump_no = 0
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         and cl3.runID = cl.runID
@@ -490,10 +455,6 @@ class Query2 (QueryHelper):
                     "clause3_dat": clause_dat.replace("cl.", "cl3."),
                     "satzfeat_dat": satzfeat_dat,
                     "rdb0_dat": rdb0_dat,
-                    "rdb1_dat": rdb0_dat.replace("rdb0.", "rdb1."),
-                    "rdb2_dat": rdb0_dat.replace("rdb0.", "rdb2."),
-                    "rdb3_dat": rdb0_dat.replace("rdb0.", "rdb3."),
-                    "rdb4_dat": rdb0_dat.replace("rdb0.", "rdb4."),
                     "start_confl": options.start_conflicts}
 
         t = time.time()

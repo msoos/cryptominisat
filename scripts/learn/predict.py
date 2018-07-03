@@ -32,19 +32,12 @@ import itertools
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
-class_names = ["throw", "longer"]
-cuts = [-1, 20000, 1000000000000]
-class_names2 = ["middle", "longer2"]
-cuts2 = [-1, 40000, 1000000000000]
-class_names3 = ["middle2", "forever"]
-cuts3 = [-1, 100000, 1000000000000]
-
 
 def output_to_dot(clf, features, nameextra):
     fname = options.dot+nameextra
     sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
-                                 class_names=class_names,
+                                 class_names=["BAD", "OK"],
                                  filled=True, rounded=True,
                                  special_characters=True,
                                  proportion=True)
@@ -145,6 +138,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
+
     X_test = test[features]
     y_test = test[to_predict]
 
@@ -201,7 +195,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     if options.confusion:
         sample_weight = [w_number if i == w_name else 1 for i in y_pred]
         cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_test, y_pred, labels=names, sample_weight=sample_weight)
+            y_true=y_test, y_pred=y_pred, sample_weight=sample_weight)
 
         np.set_printoptions(precision=2)
 
@@ -262,22 +256,6 @@ def learn(fname):
 
     print("total samples: %5d" % df.shape[0])
 
-    # lifetime to predict
-    df["x.lifetime_cut"] = pd.cut(
-        df["x.lifetime"],
-        cuts,
-        labels=class_names)
-
-    df["x.lifetime_cut2"] = pd.cut(
-        df["x.lifetime"],
-        cuts2,
-        labels=class_names2)
-
-    df["x.lifetime_cut3"] = pd.cut(
-        df["x.lifetime"],
-        cuts3,
-        labels=class_names3)
-
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
                             ["x.num_used", "x.class", "x.lifetime", "fname"])
@@ -295,53 +273,16 @@ def learn(fname):
         df.hist()
         df.boxplot()
 
-    if options.only_pred is None or options.only_pred == 1:
-        feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
-        best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
-                                    class_names, "longer", 17,
-                                    False)
-        if options.show:
-            plt.show()
+    best_feats = one_classifier(df, features, "x.class",
+                                ["BAD", "OK"], "OK", 40, False)
+    if options.show:
+        plt.show()
 
-        one_classifier(df, best_feats, "x.lifetime_cut",
-                       class_names, "longer", 3,
-                       True)
-        if options.show:
-            plt.show()
+    one_classifier(df, best_feats, "x.class",
+                   ["BAD", "OK"], "OK", 5, True)
 
-    if options.only_pred is None or options.only_pred == 2:
-        feat_less = rem_features(features, ["rdb3", "rdb4"])
-        df2 = df[df["x.lifetime"] > cuts[1]]
-
-        best_feats = one_classifier(df2, feat_less, "x.lifetime_cut2",
-                                    class_names2, "middle", 30,
-                                    False)
-        if options.show:
-            plt.show()
-
-        one_classifier(df2, best_feats, "x.lifetime_cut2",
-                       class_names2, "middle", 4,
-                       True)
-
-        if options.show:
-            plt.show()
-
-    if options.only_pred is None or options.only_pred == 3:
-        df3 = df[df["x.lifetime"] > cuts2[1]]
-
-        best_feats = one_classifier(df3, features, "x.lifetime_cut3",
-                                    class_names3, "middle2", 8,
-                                    False)
-        if options.show:
-            plt.show()
-
-        one_classifier(df3, best_feats, "x.lifetime_cut3",
-                       class_names3, "middle2", 2,
-                       True)
-
-        if options.show:
-            plt.show()
-
+    if options.show:
+        plt.show()
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] file.pandas"
