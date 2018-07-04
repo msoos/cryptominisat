@@ -372,6 +372,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
+        {rdb1_dat}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
         ,  CASE WHEN goodcl.last_confl_used > rdb0.conflicts
@@ -391,6 +392,7 @@ class Query2 (QueryHelper):
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
+        , reduceDB as rdb1
         , tags
         WHERE
 
@@ -399,7 +401,11 @@ class Query2 (QueryHelper):
         and cl.runID = goodcl.runID
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
-        -- and rdb0.dump_no = 0
+
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = rdb0.dump_no-1
+        and rdb0.dump_no > 0
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         and cl3.runID = cl.runID
@@ -417,6 +423,7 @@ class Query2 (QueryHelper):
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
+        {rdb1_dat}
         , 0 as `x.num_used`
         , 0 as `x.lifetime`
         , "BAD" as `x.class`
@@ -431,6 +438,7 @@ class Query2 (QueryHelper):
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
+        , reduceDB as rdb1
         , tags
         WHERE
 
@@ -439,7 +447,11 @@ class Query2 (QueryHelper):
         and cl.clauseID != 0
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
-        -- and rdb0.dump_no = 0
+
+        and rdb1.runID = cl.runID
+        and rdb1.clauseID = cl.clauseID
+        and rdb1.dump_no = rdb0.dump_no-1
+        and rdb0.dump_no > 0
         and cl2.runID = cl.runID
         and cl2.clauseID = cl.clauseID
         and cl3.runID = cl.runID
@@ -455,6 +467,7 @@ class Query2 (QueryHelper):
                     "clause3_dat": clause_dat.replace("cl.", "cl3."),
                     "satzfeat_dat": satzfeat_dat,
                     "rdb0_dat": rdb0_dat,
+                    "rdb1_dat": rdb0_dat.replace("rdb0", "rdb1"),
                     "start_confl": options.start_conflicts}
 
         t = time.time()
@@ -565,6 +578,14 @@ def transform(df):
     df["cl.overlap_rel"] = df["cl.overlap"]/df["cl.antec_overlap_hist"]
     df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
     df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
+
+    # relative RDB
+    df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
+    df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
+    df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
+    df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
+    df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
+    df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
 
     # ************
     # TODO decision level and branch depth are the same, right???

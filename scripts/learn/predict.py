@@ -261,6 +261,8 @@ def learn(fname):
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
                             ["x.num_used", "x.class", "x.lifetime", "fname"])
+    #features = rem_features(features, ["rdb1", "rdb.rel"])
+    #features = rem_features(features, ["rdb.rel"])
 
     # this needs binarization
     features = rem_features(features, ["cl.cur_restart_type"])
