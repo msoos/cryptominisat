@@ -148,7 +148,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.linear_model.LogisticRegression()
     # clf = sklearn.svm.SVC()
     if final:
-        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=20)
+        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
@@ -188,14 +188,17 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
 
     print("Calculating scores....")
     y_pred = clf.predict(X_test)
-    accuracy = sklearn.metrics.accuracy_score(y_test, y_pred)
-    precision = sklearn.metrics.precision_score(y_test, y_pred, average="macro")
-    recall = sklearn.metrics.recall_score(y_test, y_pred, average="macro")
+    sample_weight = [w_number if i == w_name else 1 for i in y_pred]
+    accuracy = sklearn.metrics.accuracy_score(
+        y_test, y_pred, sample_weight=sample_weight)
+    precision = sklearn.metrics.precision_score(
+        y_test, y_pred, average="macro",sample_weight=sample_weight)
+    recall = sklearn.metrics.recall_score(
+        y_test, y_pred, average="macro", sample_weight=sample_weight)
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
 
     if options.confusion:
-        sample_weight = [w_number if i == w_name else 1 for i in y_pred]
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_test, y_pred=y_pred, sample_weight=sample_weight)
 
@@ -221,7 +224,10 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     if options.dot is not None and final:
         output_to_dot(clf, features, names[0])
 
-    return best_features
+    if not final:
+        return best_features
+    else:
+        return accuracy
 
 
 def remove_old_clause_features(features):
@@ -249,6 +255,41 @@ def rem_features(feat, to_remove):
     return feat_less
 
 
+def calc_greedy_best_features(df, features):
+    top_feats = one_classifier(df, features, "x.class", ["BAD", "OK"], "OK", 40, False)
+    if options.show:
+        plt.show()
+
+    best_features = [top_feats[0]]
+    for i in range(options.get_best_topn_feats-1):
+        print("*** Round %d Best feature set until now: %s"
+              % (i, best_features))
+
+        best_acc = 0.0
+        best_feat = None
+        feats_to_try = [i for i in top_feats if i not in best_features]
+        print("Will try to get next best from ", feats_to_try)
+        for feat in feats_to_try:
+            this_feats = list(best_features)
+            this_feats.append(feat)
+            print("Trying feature set: ", this_feats)
+            acc = one_classifier(df, this_feats, "x.class", ["BAD", "OK"], "OK", 5, True)
+            print("Reported acc: ", acc)
+            if acc > best_acc:
+                best_acc = acc
+                best_feat = feat
+                print("-> Making this best accuracy")
+
+        print("*** Best feature for round %d was: %s with acc: %lf"
+              % (i, best_feat, best_acc))
+        best_features.append(best_feat)
+
+        print("\n\n")
+        print("Final best feature selection is: ", best_features)
+
+    return best_features
+
+
 def learn(fname):
     with open(fname, "rb") as f:
         df = pickle.load(f)
@@ -261,8 +302,9 @@ def learn(fname):
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
                             ["x.num_used", "x.class", "x.lifetime", "fname"])
-    #features = rem_features(features, ["rdb1", "rdb.rel"])
-    #features = rem_features(features, ["rdb.rel"])
+    if options.no_rdb1:
+        features = rem_features(features, ["rdb1", "rdb.rel"])
+        features = rem_features(features, ["rdb.rel"])
 
     # this needs binarization
     features = rem_features(features, ["cl.cur_restart_type"])
@@ -277,16 +319,23 @@ def learn(fname):
         df.hist()
         df.boxplot()
 
-    best_feats = one_classifier(df, features, "x.class",
-                                ["BAD", "OK"], "OK", 40, False)
+    if options.only_final:
+        best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.overlap', 'cl.glue_rel_queue', 'cl.glue', 'rdb0.dump_no', 'cl.glue_rel', 'cl.num_total_lits_antecedents', 'cl.size', 'cl.overlap_rel', 'cl.num_overlap_literals', 'rdb1.used_for_uip_creation', 'cl.size_rel', 'rdb0.last_touched_diff']
+
+        if options.no_rdb1:
+            best_features = rem_features(features, ["rdb.rel", "rdb1."])
+
+        #best_features = best_features[:2]
+        #best_features = features
+    else:
+        best_features = calc_greedy_best_features(df, features)
+
+    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, False)
+    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 5, True)
+
     if options.show:
         plt.show()
 
-    one_classifier(df, best_feats, "x.class",
-                   ["BAD", "OK"], "OK", 5, True)
-
-    if options.show:
-        plt.show()
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] file.pandas"
@@ -312,8 +361,14 @@ if __name__ == "__main__":
                       dest="get_code", help="Get raw C-like code")
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
+    parser.add_option("--nordb1", default=False, action="store_true",
+                      dest="no_rdb1", help="Delete RDB1 data")
+    parser.add_option("--final", default=False, action="store_true",
+                      dest="only_final", help="Only generate final predictor")
+    parser.add_option("--greedybest", default=10, type=int,
+                      dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=12, type=int,
-                      dest="top_num_features", help="Number of top features to take to generate the final predictor")
+                      dest="top_num_features", help="Top N features to take to generate the final predictor")
 
     (options, args) = parser.parse_args()
 
