@@ -114,17 +114,38 @@ def get_code(tree, feature_names):
     features = [feature_names[i] for i in tree.tree_.feature]
     value = tree.tree_.value
 
-    def recurse(left, right, threshold, features, node):
+    def recurse(left, right, threshold, features, node, tabs = 0):
         if (threshold[node] != -2):
-            print("if ( " + features[node] + " <= " + str(threshold[node]) + " ) {")
+            feat_name = features[node]
+            if feat_name[:3] == "cl.":
+                feat_name = feat_name[3:]
+            feat_name = feat_name.replace(".", "_")
+            feat_name = "cl->stats." + feat_name
+            print("{tabs}if ( {feat} <= {threshold} ) {{".format(
+                tabs=tabs*"\t",
+                feat=feat_name, threshold=str(threshold[node])))
+
+            # recruse left
             if left[node] != -1:
-                recurse(left, right, threshold, features, left[node])
-            print("} else {")
+                recurse(left, right, threshold, features, left[node], tabs+1)
+
+            print("{tabs}}} else {{".format(tabs=tabs*"\t"))
+
+            # recurse right
             if right[node] != -1:
-                recurse(left, right, threshold, features, right[node])
-            print("}")
+                recurse(left, right, threshold, features, right[node], tabs+1)
+
+            print("{tabs}}}".format(tabs=tabs*"\t"))
         else:
-            print("return " + str(value[node]))
+            x = value[node][0][0]
+            y = value[node][0][1]
+            if y == 0:
+                ratio = "1"
+            else:
+                ratio = "%0.1f/%0.1f" % (x, y)
+
+            print("{tabs}return {ratio};".format(
+                tabs=tabs*"\t", ratio=ratio))
 
     recurse(left, right, threshold, features, 0)
 
