@@ -106,48 +106,68 @@ def check_too_large_or_nan_values(df):
                 print("issue with data for features: ", name, x)
             index += 1
 
+class CodeWriter:
+    def __init__(self, clf, features):
+        self.f = open(options.code_file, 'w')
+        self.clf = clf
+        self.feat = features
 
-def get_code(tree, feature_names):
-    left = tree.tree_.children_left
-    right = tree.tree_.children_right
-    threshold = tree.tree_.threshold
-    features = [feature_names[i] for i in tree.tree_.feature]
-    value = tree.tree_.value
+    def print_full_code(self):
+        num_trees = len(self.clf.estimators_)
+        for tree, i in zip(self.clf.estimators_, range(100)):
+            self.f.write("double estimator_%d(Clause* cl) {\n" % i)
+            self.get_code(tree, 1)
+            self.f.write("}\n")
 
-    def recurse(left, right, threshold, features, node, tabs = 0):
+            self.f.write("bool final_estimator(Clause* cl) {\n")
+            self.f.write("    int votes = 0;\n")
+            for i in range(num_trees):
+                self.f.write("    votes += estimator_%d(cl) > 0.5;\n" % i)
+            self.f.write("    return votes > %d;\n" % round(num_trees/2))
+            self.f.write("}\n")
+
+    def recurse(self, left, right, threshold, features, node, tabs):
+        tabsize = tabs*"    "
         if (threshold[node] != -2):
             feat_name = features[node]
             if feat_name[:3] == "cl.":
                 feat_name = feat_name[3:]
             feat_name = feat_name.replace(".", "_")
             feat_name = "cl->stats." + feat_name
-            print("{tabs}if ( {feat} <= {threshold} ) {{".format(
-                tabs=tabs*"\t",
+            self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
+                tabs=tabsize,
                 feat=feat_name, threshold=str(threshold[node])))
 
             # recruse left
             if left[node] != -1:
-                recurse(left, right, threshold, features, left[node], tabs+1)
+                self.recurse(left, right, threshold, features, left[node], tabs+1)
 
-            print("{tabs}}} else {{".format(tabs=tabs*"\t"))
+            self.f.write("{tabs}}} else {{\n".format(tabs=tabsize))
 
             # recurse right
             if right[node] != -1:
-                recurse(left, right, threshold, features, right[node], tabs+1)
+                self.recurse(left, right, threshold, features, right[node], tabs+1)
 
-            print("{tabs}}}".format(tabs=tabs*"\t"))
+            self.f.write("{tabs}}}\n".format(tabs=tabsize))
         else:
-            x = value[node][0][0]
-            y = value[node][0][1]
+            x = self.value[node][0][0]
+            y = self.value[node][0][1]
             if y == 0:
                 ratio = "1"
             else:
                 ratio = "%0.1f/%0.1f" % (x, y)
 
-            print("{tabs}return {ratio};".format(
-                tabs=tabs*"\t", ratio=ratio))
+            self.f.write("{tabs}return {ratio};\n".format(
+                tabs=tabsize, ratio=ratio))
 
-    recurse(left, right, threshold, features, 0)
+    def get_code(self, tree, starttab=0):
+        left = tree.tree_.children_left
+        right = tree.tree_.children_right
+        threshold = tree.tree_.threshold
+        features = [self.feat[i] for i in tree.tree_.feature]
+        self.value = tree.tree_.value
+
+        self.recurse(left, right, threshold, features, 0, starttab)
 
 
 def one_classifier(df, features, to_predict, names, w_name, w_number, final):
@@ -169,7 +189,8 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.linear_model.LogisticRegression()
     # clf = sklearn.svm.SVC()
     if final:
-        clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
+        #clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=10)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
@@ -203,9 +224,10 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
                 , yerr=std[indices])
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
-    else:
-        if options.get_code:
-            get_code(clf, features)
+
+    if options.code_file is not None:
+        c = CodeWriter(clf, features)
+        c.print_full_code()
 
     print("Calculating scores....")
     y_pred = clf.predict(X_test)
@@ -352,7 +374,7 @@ def learn(fname):
         best_features = calc_greedy_best_features(df, features)
 
     #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, False)
-    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 5, True)
+    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, True)
 
     if options.show:
         plt.show()
@@ -378,8 +400,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
-    parser.add_option("--code", action="store_true", default=False,
-                      dest="get_code", help="Get raw C-like code")
+    parser.add_option("--code", default=None, type=str,
+                      dest="code_file", help="Get raw C-like code")
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
