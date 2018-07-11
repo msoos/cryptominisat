@@ -61,7 +61,7 @@ add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --prefix=${CMAKE_INSTALL_PREFIX} --record files.txt
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR} --prefix=${CMAKE_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
