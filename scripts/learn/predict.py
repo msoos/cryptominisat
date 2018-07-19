@@ -374,7 +374,8 @@ def learn(fname):
         best_features = calc_greedy_best_features(df, features)
 
     #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, False)
-    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, True)
+    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 29, True)
+    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 4, True)
 
     if options.show:
         plt.show()
