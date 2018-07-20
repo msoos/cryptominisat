@@ -606,7 +606,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     ) {
         if (solver->conf.verbosity) {
             cout
-            << "c [probe] intra-propagation timout,"
+            << "c [probe] intra-propagation timeout,"
             << " turning off OTF hyper-bin&trans-red"
             << endl;
         }
