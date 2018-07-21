@@ -832,7 +832,7 @@ void Main::check_options_correctness()
     ) {
         cerr
         << "ERROR: You gave too many positional arguments. Only at most two can be given:" << endl
-        << "       the 1st the CNF file input, and optinally, the 2nd the DRAT file output" << endl
+        << "       the 1st the CNF file input, and optionally, the 2nd the DRAT file output" << endl
         << "    OR (pre-processing)  1st for the input CNF, 2nd for the simplified CNF" << endl
         << "    OR (post-processing) 1st for the solution file" << endl
         ;
