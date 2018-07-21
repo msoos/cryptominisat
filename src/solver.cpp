@@ -342,7 +342,7 @@ bool Solver::sort_and_clean_clause(
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally
 
-This code is very specific in that it must NOT be called with varibles in
+This code is very specific in that it must NOT be called with variables in
 "ps" that have been replaced, eliminated, etc. Also, it must not be called
 when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
@@ -710,7 +710,7 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
 
 void Solver::test_renumbering() const
 {
-    //Check if we renumbered the varibles in the order such as to make
+    //Check if we renumbered the variables in the order such as to make
     //the unknown ones first and the known/eliminated ones second
     bool uninteresting = false;
     bool problem = false;
@@ -3709,7 +3709,7 @@ void Solver::undef_fill_potentials()
     if (conf.independent_vars) {
         for(uint32_t v: *conf.independent_vars) {
             if (v > nVarsOutside()) {
-                cout << "ERROR: Variabe in independent set, " << v+1
+                cout << "ERROR: Variable in independent set, " << v+1
                 << " is bigger than any variable inside the solver! " << endl
                 << " Please examine the call set_independent_vars or the CNF"
                 " lines starting with 'c ind'"
