@@ -441,7 +441,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ADD_CUSTOM_COMMAND(
                 TARGET man_cms5
                 COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1 --name="SAT solver"
             )
 
             INSTALL(
@@ -458,7 +458,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         ADD_CUSTOM_COMMAND(
             TARGET man_cms5_simple
             COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1 --name="SAT solver"
         )
 
         INSTALL(

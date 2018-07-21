@@ -1,0 +1,17 @@
+[=see also]
+More documentation for the cryptominisat5 SAT solver can be found at https://www.msoos.org/cryptominisat5/
+
+[=bug tracker]
+Please don't hesitate to file any and all issues at:
+
+https://github.com/msoos/cryptominisat/issues
+
+[=copyright]
+cryptominisat5 is under the
+.B MIT
+license. Please see https://opensource.org/licenses/MIT for the full text
+
+
+[=authors]
+cryptominisat5 is written and maintained by
+.B Mate Soos soos.mate@gmail.com
