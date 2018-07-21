@@ -464,6 +464,20 @@ The following configures the system to build a bare minimal binary&library. It n
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
 
+CMake Arguments
+-----
+The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
+
+- `-DSTATICCOMPILE=<ON/OFF>` -- build a statically linked library and binary
+- `-DUSE_GAUSS=<ON/OFF>` -- build with Gauss-Jordan Elimination support
+- `-DSTATS=<ON/OFF>` -- build with advanced statistics (slower)
+- `-DENABLE_TESTING=<ON/OFF>` -- build with test suite support
+- `-DNOM4RI=<ON/OFF>` -- build without toplevel Gauss-Jordan Elimination support
+- `-DNOZLIB=<ON/OFF>` -- build without gzip DIMACS input support
+- `-DONLY_SIMPLE=<ON/OFF>` -- build only the simple binary
+- `-DNOVALGRIND=<ON/OFF>` -- build without extended valgrind memory checking support
+
+
 Trying different configurations
 -----
 Try solving using different reconfiguration values between 1..15 as per:
