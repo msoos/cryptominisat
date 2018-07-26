@@ -242,6 +242,80 @@ void ReduceDB::handle_lev1()
     total_time += cpuTime()-myTime;
 }
 
+void ReduceDB::handle_lev1_final_predictor()
+{
+    nbReduceDB_lev1++;
+    uint32_t moved_w0 = 0;
+    uint32_t deleted = 0;
+    uint32_t kept = 0;
+    double myTime = cpuTime();
+
+    size_t j = 0;
+    for(size_t i = 0
+        ; i < solver->longRedCls[1].size()
+        ; i++
+    ) {
+        const ClOffset offset = solver->longRedCls[1][i];
+        Clause* cl = solver->cl_alloc.ptr(offset);
+        if (cl->stats.which_red_array == 0) {
+            solver->longRedCls[0].push_back(offset);
+            moved_w0++;
+        } else {
+            uint32_t last_touched_diff;
+            if (cl->stats.last_touched == 0) {
+                last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
+            } else {
+                last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
+            }
+            if (!solver->clause_locked(*cl, offset)
+                && final_predictor(cl, last_touched_diff) == 0
+            ) {
+                deleted++;
+                solver->watches.smudge((*cl)[0]);
+                solver->watches.smudge((*cl)[1]);
+                solver->litStats.redLits -= cl->size();
+
+                *solver->drat << del << *cl << fin;
+                cl->setRemoved();
+                delayed_clause_free.push_back(offset);
+            } else {
+                solver->longRedCls[1][j++] = offset;
+                kept++;
+                cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+                cl->stats.dump_number++;
+                cl->stats.reset_rdb_stats();
+            }
+        }
+    }
+    solver->longRedCls[1].resize(j);
+
+    //Cleanup
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    for(ClOffset offset: delayed_clause_free) {
+        solver->cl_alloc.clauseFree(offset);
+    }
+    delayed_clause_free.clear();
+
+    //Stats
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [DBclean finalpred]"
+        << " deleted: " << deleted
+        << " kept: " << kept
+        << " moved w0: " << moved_w0
+        << solver->conf.print_times(cpuTime()-myTime)
+        << endl;
+    }
+
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "dbclean-lev1"
+            , cpuTime()-myTime
+        );
+    }
+    total_time += cpuTime()-myTime;
+}
+
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
     size_t marked = 0;

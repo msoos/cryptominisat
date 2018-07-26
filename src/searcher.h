@@ -422,6 +422,10 @@ class Searcher : public HyperEngine
 
         //SQL
         void dump_search_sql(const double myTime);
+        void set_clause_data(
+            Clause* cl
+            , const uint32_t glue
+            , const uint32_t old_decision_level);
         #ifdef STATS_NEEDED
         void dump_restart_sql();
         PropStats lastSQLPropStats;

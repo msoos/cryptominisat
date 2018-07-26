@@ -130,7 +130,20 @@ struct ClauseStats
     uint32_t which_red_array:2;
     float   activity = 1.0;
     uint32_t last_touched = 0;
-    #ifdef STATS_NEEDED
+    #ifdef FINAL_PREDICTOR
+    float       glue_rel_long               = 0;
+    bool        glue_smaller_than_hist_lt   = 0;
+    bool        glue_smaller_than_hist_queue= 0;
+    uint32_t    overlap                     = 0;
+    float       glue_rel_queue              = 0;
+    float       glue_rel                    = 0;
+    uint32_t    num_total_lits_antecedents  = 0;
+    float       overlap_rel                 = 0;
+    uint32_t    num_overlap_literals        = 0;
+    uint32_t    rdb1_used_for_uip_creation  = 0;
+    float       size_rel                    = 0;
+    #endif
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
@@ -142,7 +155,7 @@ struct ClauseStats
     AtecedentData<uint16_t> antec_data;
     #endif
 
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     void reset_rdb_stats()
     {
         ttl = 0;
@@ -163,7 +176,7 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
@@ -181,7 +194,7 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
 {
 
     os << "glue " << stats.glue << " ";
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
     os << "numConfl " << stats.conflicts_made<< " ";
     os << "numProp " << stats.propagations_made<< " ";

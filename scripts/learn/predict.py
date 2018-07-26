@@ -113,18 +113,26 @@ class CodeWriter:
         self.feat = features
 
     def print_full_code(self):
+        self.f.write("""#include "clause.h"
+#include "reducedb.h"
+using namespace CMSat;
+
+namespace CMSat {""")
+
         num_trees = len(self.clf.estimators_)
         for tree, i in zip(self.clf.estimators_, range(100)):
-            self.f.write("double estimator_%d(Clause* cl) {\n" % i)
+            self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff) {\n" % i)
             self.get_code(tree, 1)
             self.f.write("}\n")
 
-            self.f.write("bool final_estimator(Clause* cl) {\n")
-            self.f.write("    int votes = 0;\n")
-            for i in range(num_trees):
-                self.f.write("    votes += estimator_%d(cl) > 0.5;\n" % i)
-            self.f.write("    return votes > %d;\n" % round(num_trees/2))
-            self.f.write("}\n")
+        # Final tally
+        self.f.write("bool ReduceDB::final_predictor(const Clause* cl, uint32_t last_touched_diff) {\n")
+        self.f.write("    int votes = 0;\n")
+        for i in range(num_trees):
+            self.f.write("    votes += estimator_%d(cl, last_touched_diff) > 0.5;\n" % i)
+        self.f.write("    return votes > %d;\n" % round(num_trees/2))
+        self.f.write("}\n")
+        self.f.write("}\n")
 
     def recurse(self, left, right, threshold, features, node, tabs):
         tabsize = tabs*"    "
@@ -133,8 +141,17 @@ class CodeWriter:
             if feat_name[:3] == "cl.":
                 feat_name = feat_name[3:]
             feat_name = feat_name.replace(".", "_")
-            feat_name = "cl->stats." + feat_name
-            self.f.write("{tabs}if ( {feat} <= {threshold} ) {{\n".format(
+            feat_name = feat_name.replace("rdb0_", "")
+            if feat_name == "dump_no":
+                feat_name = "dump_number"
+
+            if feat_name == "size":
+                feat_name = "cl->" + feat_name + "()"
+            elif feat_name == "last_touched_diff":
+                pass
+            else:
+                feat_name = "cl->stats." + feat_name
+            self.f.write("{tabs}if ( {feat} <= {threshold}f ) {{\n".format(
                 tabs=tabsize,
                 feat=feat_name, threshold=str(threshold[node])))
 

@@ -1669,11 +1669,29 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
+void Searcher::set_clause_data(
+    Clause* cl
+    , const uint32_t glue
+    , const uint32_t old_decision_level
+) {
+    /* used:
+     * , glue
+        , decisionLevel()
+        , learnt_clause.size()
+        , antec_data
+        , old_decision_level
+        , trail.size()
+        , params.conflictsDoneThisRestart
+        , restart_type_to_short_string(params.rest_type)
+        , hist
+    */
+}
+
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
     , const uint32_t
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_decision_level
     #endif
 ) {
@@ -1786,6 +1804,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         }
     }
     clauseID++;
+    #endif
+
+    #ifdef FINAL_PREDICTOR
+    set_clause_data(cl, glue, old_decision_level);
     #endif
 
     return cl;
@@ -2045,6 +2067,14 @@ void Searcher::reset_temp_cl_num()
 
 void Searcher::reduce_db_if_needed()
 {
+    #ifdef FINAL_PREDICTOR
+    if (conf.every_lev1_reduce != 0
+        && sumConflicts >= next_lev1_reduce
+    ) {
+        solver->reduceDB->handle_lev1_final_predictor();
+        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
+    }
+    #else
     if (conf.every_lev1_reduce != 0
         && sumConflicts >= next_lev1_reduce
     ) {
@@ -2068,6 +2098,7 @@ void Searcher::reduce_db_if_needed()
             cl_alloc.consolidate(solver);
         }
     }
+    #endif
 }
 
 bool Searcher::clean_clauses_if_needed()
