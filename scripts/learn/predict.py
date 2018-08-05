@@ -393,7 +393,9 @@ def learn(fname):
         best_features = calc_greedy_best_features(df, features)
 
     #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, False)
-    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 29, True)
+    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 29, True)
+    print("Using unbalanced classifier so as not to loose clauses too much")
+    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 150, True)
     #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 4, True)
 
     if options.show:
