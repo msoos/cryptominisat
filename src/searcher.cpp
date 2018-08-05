@@ -157,7 +157,7 @@ template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
 ) {
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc_vsids);
     #endif
     const uint32_t var = lit.var();
@@ -401,6 +401,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     assert(cl->red());
     const unsigned new_glue = calc_glue(*cl);
 
+    #if not defined(FINAL_PREDICTOR)
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
@@ -421,6 +422,7 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             }
         }
      }
+    #endif
 }
 
 template<bool update_bogoprops>
@@ -436,12 +438,12 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
     switch (confl.getType()) {
         case binary_t : {
             if (confl.isRedStep()) {
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binRed++;
                 #endif
                 stats.resolvs.binRed++;
             } else {
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.binIrred++;
                 #endif
                 stats.resolvs.binIrred++;
@@ -453,19 +455,19 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
                 stats.resolvs.longRed++;
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
                 antec_data.longRed++;
                 antec_data.age_long_reds.push(sumConflicts - cl->stats.introduced_at_conflict);
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.longIrred++;
                 #endif
                 stats.resolvs.longRed++;
             }
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
             cl->stats.used_for_uip_creation++;
             #endif
@@ -644,7 +646,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
         //This is for OTF subsumption ("OTF clause improvement" by Han&Somezi)
         //~p is essentially popped from the temporary learnt clause
         if (p != lit_Undef) {
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc_vsids);
             #endif
             if (!update_bogoprops && conf.doOTFSubsume) {
@@ -833,7 +835,7 @@ Clause* Searcher::analyze_conflict(
     , uint32_t& glue
 ) {
     //Set up environment
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     antec_data.clear();
     #endif
     learnt_clause.clear();
@@ -920,7 +922,7 @@ Clause* Searcher::analyze_conflict(
         }
     }
 
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     for(const Lit l: learnt_clause) {
         antec_data.vsids_vars.push(var_act_vsids[l.var()]/var_inc_vsids);
     }
@@ -1198,13 +1200,13 @@ lbool Searcher::search()
                 }
             }
 
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             stats.conflStats.update(lastConflictCausedBy);
             #endif
 
             print_restart_stat();
             if (!update_bogoprops) {
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 hist.trailDepthHist.push(trail.size());
                 #endif
                 hist.trailDepthHistLonger.push(trail.size());
@@ -1517,7 +1519,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 
     //short-term averages
     hist.branchDepthHist.push(decisionLevel());
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     hist.backtrackLevelHist.push(backtrack_level);
     hist.branchDepthHistQueue.push(decisionLevel());
     hist.numResolutionsHist.push(antec_data.num());
@@ -1527,7 +1529,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     hist.trailDepthDeltaHist.push(trail.size() - trail_lim[backtrack_level]);
 
     //long-term averages
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     hist.vsidsVarsAvgLT.push(antec_data.vsids_vars.avg());
     hist.numResolutionsHistLT.push(antec_data.num());
     hist.decisionLevelHistLT.push(decisionLevel());
@@ -1581,8 +1583,11 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
             bump_cl_act<update_bogoprops>(cl);
 
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             cl->stats.antec_data = antec_data;
+            #endif
+
+            #if defined(STATS_NEEDED)
             propStats.propsLongRed++;
             #endif
 
@@ -1685,6 +1690,31 @@ void Searcher::set_clause_data(
         , restart_type_to_short_string(params.rest_type)
         , hist
     */
+
+    //definitely a BUG here I think -- should be 2*antec_data.num(), no?
+    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
+
+    double glue_hist = hist.glueHistLTAll.avg();
+    double glue_hist_long = hist.glueHist.getLongtTerm().avg();
+    double glue_hist_queue = hist.glueHist.avg_nocheck();
+    double size_hist = hist.conflSizeHistLT.avg();
+
+    uint32_t num_total_lits_antecedents = antec_data.sum_size();
+    uint32_t num_antecedents = antec_data.num();
+    uint32_t overlap = num_total_lits_antecedents-cl->size()-2*num_antecedents;
+    double antec_overlap_hist = hist.overlapHistLT.avg();
+
+
+    cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;
+    cl->stats.glue_rel_long = (double)cl->stats.glue/glue_hist_long;
+    cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
+    cl->stats.glue_smaller_than_hist_lt = (double)cl->stats.glue < glue_hist;
+    cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
+    cl->stats.num_overlap_literals = num_overlap_literals;
+    cl->stats.overlap = overlap;
+    cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
+    cl->stats.overlap_rel = (double)overlap/(double)antec_overlap_hist;
+    cl->stats.size_rel = (double)cl->size() / (double)size_hist;
 }
 
 Clause* Searcher::handle_last_confl_otf_subsumption(
@@ -1720,6 +1750,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             ClOffset offset = cl_alloc.get_offset(cl);
             unsigned which_arr = 2;
 
+            #if !defined(FINAL_PREDICTOR)
             if (glue <= conf.glue_put_lev0_if_below_or_eq) {
                 which_arr = 0;
             } else if (
@@ -1734,6 +1765,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             if (which_arr == 0) {
                 stats.red_cl_in_which0++;
             }
+            #else
+            which_arr = 1;
+            #endif
 
             /*if (conf.guess_cl_effectiveness) {
                 unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
@@ -1807,7 +1841,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     #endif
 
     #ifdef FINAL_PREDICTOR
-    set_clause_data(cl, glue, old_decision_level);
+    if (cl) {
+        set_clause_data(cl, glue, old_decision_level);
+        cl->stats.dump_number = 0;
+    }
     #endif
 
     return cl;

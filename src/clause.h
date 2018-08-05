@@ -131,17 +131,17 @@ struct ClauseStats
     float   activity = 1.0;
     uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
+    float       glue_rel                    = 0;
     float       glue_rel_long               = 0;
+    float       glue_rel_queue              = 0;
     bool        glue_smaller_than_hist_lt   = 0;
     bool        glue_smaller_than_hist_queue= 0;
+    uint32_t    num_overlap_literals        = 0;
     uint32_t    overlap                     = 0;
-    float       glue_rel_queue              = 0;
-    float       glue_rel                    = 0;
     uint32_t    num_total_lits_antecedents  = 0;
     float       overlap_rel                 = 0;
-    uint32_t    num_overlap_literals        = 0;
-    uint32_t    rdb1_used_for_uip_creation  = 0;
     float       size_rel                    = 0;
+    uint32_t    rdb1_used_for_uip_creation  = 0; //special
     #endif
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();

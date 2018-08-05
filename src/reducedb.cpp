@@ -248,7 +248,10 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t moved_w0 = 0;
     uint32_t deleted = 0;
     uint32_t kept = 0;
+    uint32_t kept_first = 0;
+    uint32_t kept_locked = 0;
     double myTime = cpuTime();
+    uint32_t largest_dump_no = 0;
 
     size_t j = 0;
     for(size_t i = 0
@@ -268,7 +271,8 @@ void ReduceDB::handle_lev1_final_predictor()
                 last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
             }
             if (!solver->clause_locked(*cl, offset)
-                && final_predictor(cl, last_touched_diff) == 0
+                && cl->stats.dump_number > 0
+                && !final_predictor(cl, last_touched_diff) == 0
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -280,8 +284,16 @@ void ReduceDB::handle_lev1_final_predictor()
                 delayed_clause_free.push_back(offset);
             } else {
                 solver->longRedCls[1][j++] = offset;
-                kept++;
+                if (cl->stats.dump_number == 0) {
+                    kept_first++;
+                } else if (solver->clause_locked(*cl, offset)){
+                    kept_locked++;
+                } else {
+                    kept++;
+                }
                 cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+                if (cl->stats.dump_number > largest_dump_no)
+                    largest_dump_no = cl->stats.dump_number;
                 cl->stats.dump_number++;
                 cl->stats.reset_rdb_stats();
             }
@@ -297,10 +309,13 @@ void ReduceDB::handle_lev1_final_predictor()
     delayed_clause_free.clear();
 
     //Stats
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 0) {
         cout << "c [DBclean finalpred]"
         << " deleted: " << deleted
+        << " kept-0: " << kept_first
+        << " kept-locked: " << kept_locked
         << " kept: " << kept
+        << " largest dump no:" << largest_dump_no
         << " moved w0: " << moved_w0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;

@@ -45,7 +45,7 @@ class bqueue {
     uint32_t maxsize; //max number of history elements
     uint32_t queuesize; // Number of current elements (must be < maxsize !)
     T2  sumofqueue;
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     AvgCalc<T, T2> longTermAvg;
     #endif
 
@@ -80,7 +80,7 @@ public:
 
         sumofqueue += x;
 
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         longTermAvg.push(x);
         #endif
         elems[first] = x;
@@ -107,7 +107,7 @@ public:
         return (double)sumofqueue/(double)queuesize;
     }
 
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     const AvgCalc<T,T2>& getLongtTerm() const
     {
         return longTermAvg;
@@ -169,7 +169,7 @@ public:
         queuesize = 0;
         sumofqueue = 0;
 
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         longTermAvg.clear();
         #endif
     }

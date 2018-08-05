@@ -364,7 +364,7 @@ Clause* Solver::add_clause_int(
     #endif //VERBOSE_DEBUG
 
     //Make cl_stats sane
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     uint64_t introduced_at_conflict =
         std::min<uint64_t>(Searcher::sumConflicts, cl_stats.introduced_at_conflict);
     #endif
@@ -445,7 +445,7 @@ Clause* Solver::add_clause_int(
                 c->makeRed(cl_stats.glue);
             }
             c->stats = cl_stats;
-            #ifdef STATS_NEEDED
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             c->stats.introduced_at_conflict = introduced_at_conflict;
             #endif
 

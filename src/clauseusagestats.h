@@ -54,12 +54,12 @@ struct ClauseUsageStats
     }
 
     void addStat(const Clause&
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     cl
     #endif
     ) {
         num++;
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         sumConfl += cl.stats.conflicts_made;
         sumProp += cl.stats.propagations_made;
         sumLookedAt += cl.stats.clause_looked_at;

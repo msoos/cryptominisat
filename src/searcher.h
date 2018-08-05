@@ -318,7 +318,7 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         Clause* create_learnt_clause(PropBy confl);
         int pathC;
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         AtecedentData<uint16_t> antec_data;
         #endif
 

@@ -54,7 +54,7 @@ struct SearchHist {
     AvgCalc<uint32_t>   conflSizeHistLT;
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
-    #ifdef STATS_NEEDED
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     bqueue<uint32_t>    backtrackLevelHist;
     AvgCalc<uint32_t>   overlapHistLT;
     AvgCalc<uint32_t>   antec_data_sum_sizeHistLT;
@@ -73,7 +73,7 @@ struct SearchHist {
         used += sizeof(AvgCalc<double, double>)*2;
         used += glueHist.usedMem();
         used += trailDepthHistLonger.usedMem();
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         used += backtrackLevelHist.usedMem();
         used += branchDepthHistQueue.usedMem();
         #endif
@@ -92,7 +92,7 @@ struct SearchHist {
         glueHist.clear();
         conflSizeHist.clear();
 
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         numResolutionsHist.clear();
         trailDepthHist.clear();
         branchDepthHistQueue.clear();
@@ -102,7 +102,7 @@ struct SearchHist {
     void reset_glue_hist_size(size_t shortTermHistorySize)
     {
         glueHist.clearAndResize(shortTermHistorySize);
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHist.clearAndResize(shortTermHistorySize);
         branchDepthHistQueue.clearAndResize(shortTermHistorySize);
@@ -113,7 +113,7 @@ struct SearchHist {
     {
         glueHist.clearAndResize(shortTermHistorySize);
         trailDepthHistLonger.clearAndResize(blocking_trail_hist_size);
-        #ifdef STATS_NEEDED
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         backtrackLevelHist.clearAndResize(shortTermHistorySize);
         trailDepthHist.clearAndResize(shortTermHistorySize);
         branchDepthHistQueue.clearAndResize(shortTermHistorySize);

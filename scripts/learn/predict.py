@@ -207,7 +207,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.svm.SVC()
     if final:
         #clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=10)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=4)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
@@ -382,6 +382,8 @@ def learn(fname):
     if options.only_final:
         best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.overlap', 'cl.glue_rel_queue', 'cl.glue', 'rdb0.dump_no', 'cl.glue_rel', 'cl.num_total_lits_antecedents', 'cl.size', 'cl.overlap_rel', 'cl.num_overlap_literals', 'rdb1.used_for_uip_creation', 'cl.size_rel', 'rdb0.last_touched_diff']
 
+        best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.glue_rel_queue', 'cl.glue', 'cl.glue_rel', 'cl.size', 'cl.size_rel', 'rdb1.used_for_uip_creation', 'rdb0.dump_no']
+
         if options.no_rdb1:
             best_features = rem_features(features, ["rdb.rel", "rdb1."])
 
@@ -438,3 +440,9 @@ if __name__ == "__main__":
         exit(-1)
 
     learn(args[0])
+
+
+# todo
+# ./predict.py final-pandasdata.dat-2000-newdata-twoRDB --final --conf --only 0.50 --code ../src/final_predictor.cpp
+#
+# ./cryptominisat5 --presimp 1 -n 1 --distill 0 --everylev1 10000 --restart luby mizh-md5-47-3.cnf.gz
