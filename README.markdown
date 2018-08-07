@@ -313,7 +313,7 @@ lbool ret = solver.solve();
 assert(ret == l_True);
 ```
 
-Since we assume that variabe 2 must be false, there is no solution. However,
+Since we assume that variable 2 must be false, there is no solution. However,
 if we solve again, without the assumption, we get back the original solution.
 Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
