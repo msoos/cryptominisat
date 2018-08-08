@@ -155,7 +155,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindXors       (true)
         , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
-        , doEchelonizeXOR  (true)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS
         , xor_finder_time_limitM(50)
