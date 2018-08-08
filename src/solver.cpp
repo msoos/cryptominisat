@@ -1224,7 +1224,7 @@ void Solver::extend_solution(const bool only_indep_solution)
         assert(conf.independent_vars);
         for(uint32_t var: *conf.independent_vars) {
             if (model[var] == l_Undef) {
-                cout << "ERROR: varible " << var+1 << " is set as independent but is unset!" << endl;
+                cout << "ERROR: variable " << var+1 << " is set as independent but is unset!" << endl;
                 cout << "NOTE: var " << var + 1 << " has removed value: "
                 << removed_type_to_string(varData[var].removed)
                 << " and is set to " << value(var) << endl;

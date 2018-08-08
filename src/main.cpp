@@ -278,7 +278,7 @@ void Main::printResultFunc(
                 if (only_indep_solution) {
                     cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the independent set's values: '--onlyindep'" << endl;
                 } else {
-                   cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                   cout << "c NOTE: " << num_undef << " variables are NOT set" << endl;
                 }
             }
         }

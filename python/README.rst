@@ -65,7 +65,7 @@ The return value is a tuple. First part of the tuple indicates whether the
 problem is satisfiable. In this case, it's ``True``, i.e. satisfiable. The second
 part is a tuple contains the solution, preceded by None, so you can index into
 it with the variable number. E.g. ``solution[1]`` returns the value for
-variabe ``1``.
+variable ``1``.
 
 The ``solve()`` method optionally takes an argument ``assumptions`` that
 allows the user to set values to specific variables in the solver in a temporary
