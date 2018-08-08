@@ -41,7 +41,7 @@ public:
     void handle_lev2();
     void handle_lev1_final_predictor();
     void dump_sql_cl_data();
-    bool final_predictor(const Clause* cl, uint32_t last_touched_diff);
+    bool should_keep(const Clause* cl, uint32_t last_touched_diff);
     uint64_t nbReduceDB_lev1 = 0;
     uint64_t nbReduceDB_lev2 = 0;
 

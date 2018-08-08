@@ -272,7 +272,7 @@ void ReduceDB::handle_lev1_final_predictor()
             }
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
-                && !final_predictor(cl, last_touched_diff) == 0
+                && !should_keep(cl, last_touched_diff)
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -310,13 +310,13 @@ void ReduceDB::handle_lev1_final_predictor()
 
     //Stats
     if (solver->conf.verbosity >= 0) {
-        cout << "c [DBclean finalpred]"
-        << " deleted: " << deleted
+        cout << "c [DBCL pred]"
+        << " del: " << deleted
+        << " kept: " << kept
         << " kept-0: " << kept_first
         << " kept-locked: " << kept_locked
-        << " kept: " << kept
-        << " largest dump no:" << largest_dump_no
-        << " moved w0: " << moved_w0
+        << " maxdump:" << largest_dump_no
+        //<< " moved w0: " << moved_w0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }

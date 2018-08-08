@@ -29,15 +29,16 @@ import numpy as np
 import sklearn.metrics
 import time
 import itertools
+from math import ceil
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def output_to_dot(clf, features, nameextra):
-    fname = options.dot+nameextra
+def output_to_dot(clf, features, class_names):
+    fname = options.dot+class_names[0]
     sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
-                                 class_names=["BAD", "OK"],
+                                 class_names=class_names,
                                  filled=True, rounded=True,
                                  special_characters=True,
                                  proportion=True)
@@ -119,18 +120,24 @@ using namespace CMSat;
 
 namespace CMSat {""")
 
-        num_trees = len(self.clf.estimators_)
-        for tree, i in zip(self.clf.estimators_, range(100)):
-            self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff) {\n" % i)
-            self.get_code(tree, 1)
+        num_trees = 1
+        if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
+            self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff) {\n")
+            self.get_code(self.clf, 1)
             self.f.write("}\n")
+        else:
+            num_trees = len(self.clf.estimators_)
+            for tree, i in zip(self.clf.estimators_, range(100)):
+                self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff) {\n" % i)
+                self.get_code(tree, 1)
+                self.f.write("}\n")
 
         # Final tally
-        self.f.write("bool ReduceDB::final_predictor(const Clause* cl, uint32_t last_touched_diff) {\n")
+        self.f.write("bool ReduceDB::should_keep(const Clause* cl, uint32_t last_touched_diff) {\n")
         self.f.write("    int votes = 0;\n")
         for i in range(num_trees):
-            self.f.write("    votes += estimator_%d(cl, last_touched_diff) > 0.5;\n" % i)
-        self.f.write("    return votes > %d;\n" % round(num_trees/2))
+            self.f.write("    votes += estimator_%d(cl, last_touched_diff) < 1.0;\n" % i)
+        self.f.write("    return votes >= %d;\n" % ceil(float(num_trees)/2.0))
         self.f.write("}\n")
         self.f.write("}\n")
 
@@ -181,6 +188,7 @@ namespace CMSat {""")
         left = tree.tree_.children_left
         right = tree.tree_.children_right
         threshold = tree.tree_.threshold
+        print("tree.tree_.feature:", tree.tree_.feature)
         features = [self.feat[i] for i in tree.tree_.feature]
         self.value = tree.tree_.value
 
@@ -206,8 +214,10 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.linear_model.LogisticRegression()
     # clf = sklearn.svm.SVC()
     if final:
-        #clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=4)
+        if options.final_is_tree:
+            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
+        else:
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
@@ -282,12 +292,12 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         calc_cross_val()
 
     if options.dot is not None and final:
-        output_to_dot(clf, features, names[0])
+        output_to_dot(clf, features, names)
 
     if not final:
         return best_features
     else:
-        return accuracy
+        return precision+recall
 
 
 def remove_old_clause_features(features):
@@ -316,7 +326,7 @@ def rem_features(feat, to_remove):
 
 
 def calc_greedy_best_features(df, features):
-    top_feats = one_classifier(df, features, "x.class", ["BAD", "OK"], "OK", 40, False)
+    top_feats = one_classifier(df, features, "x.class", ["OK", "BAD"], "OK", 40, False)
     if options.show:
         plt.show()
 
@@ -333,7 +343,7 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            acc = one_classifier(df, this_feats, "x.class", ["BAD", "OK"], "OK", 5, True)
+            acc = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 40, True)
             print("Reported acc: ", acc)
             if acc > best_acc:
                 best_acc = acc
@@ -384,19 +394,24 @@ def learn(fname):
 
         best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.glue_rel_queue', 'cl.glue', 'cl.glue_rel', 'cl.size', 'cl.size_rel', 'rdb1.used_for_uip_creation', 'rdb0.dump_no']
 
+        #best_features = ['rdb0.used_for_uip_creation', 'cl.size'] #'cl.glue_rel_long'
+
         if options.no_rdb1:
-            best_features = rem_features(features, ["rdb.rel", "rdb1."])
+            best_features = rem_features(best_features, ["rdb.rel", "rdb1."])
 
         #best_features = best_features[:2]
         #best_features = features
     else:
         best_features = calc_greedy_best_features(df, features)
 
-    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 40, False)
-    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 29, True)
-    print("Using unbalanced classifier so as not to loose clauses too much")
-    one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 150, True)
-    #one_classifier(df, best_features, "x.class", ["BAD", "OK"], "OK", 4, True)
+    #one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 40, False)
+    #one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 29, True)
+
+    if False:
+        print("Using unbalanced classifier so as not to loose clauses too much")
+        one_classifier(df, best_features, "x.class", ["OK", "OK"], "OK", 150, True)
+    else:
+        one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 5, True)
 
     if options.show:
         plt.show()
@@ -430,10 +445,12 @@ if __name__ == "__main__":
                       dest="no_rdb1", help="Delete RDB1 data")
     parser.add_option("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
-    parser.add_option("--greedybest", default=10, type=int,
+    parser.add_option("--greedybest", default=40, type=int,
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_option("--top", default=12, type=int,
+    parser.add_option("--top", default=40, type=int,
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
+    parser.add_option("--tree", default=False, action="store_true",
+                      dest="final_is_tree", help="Final predictor should be a tree")
 
     (options, args) = parser.parse_args()
 
@@ -445,6 +462,6 @@ if __name__ == "__main__":
 
 
 # todo
-# ./predict.py final-pandasdata.dat-2000-newdata-twoRDB --final --conf --only 0.50 --code ../src/final_predictor.cpp
+# ./predict.py final-pandasdata.dat-2000-newdata-twoRDB --final --conf --only 0.50 --code ../src/\.cpp
 #
 # ./cryptominisat5 --presimp 1 -n 1 --distill 0 --everylev1 10000 --restart luby mizh-md5-47-3.cnf.gz

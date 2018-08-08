@@ -1707,6 +1707,9 @@ void Searcher::set_clause_data(
 
     cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;
     cl->stats.glue_rel_long = (double)cl->stats.glue/glue_hist_long;
+//     cout << "cl->stats.glue: " << cl->stats.glue << endl;
+//     cout << "glue_hist_long: " << glue_hist_long << endl;
+//     cout << "glue_rel_long set to:" << cl->stats.glue_rel_long << endl;
     cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
     cl->stats.glue_smaller_than_hist_lt = (double)cl->stats.glue < glue_hist;
     cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
@@ -2377,6 +2380,8 @@ void Searcher::adjust_phases_restarts()
                 * (double)conf.restart_first/2.0;
 
             luby_loop_num++;
+            //cout << "luby_loop_num: " << luby_loop_num << endl;
+            //cout << "max_confl_this_phase:" << max_confl_this_phase << endl;
             break;
 
         case Restart::glue_geom:
