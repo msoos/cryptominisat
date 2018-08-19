@@ -72,29 +72,31 @@ def plot_confusion_matrix(cm, classes,
     """
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
+        print(title)
     else:
-        print('Confusion matrix, without normalization')
+        print('%s without normalization' % title)
 
     print(cm)
 
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    if options.show:
+        plt.figure()
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        plt.title(title)
+        plt.colorbar()
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes, rotation=45)
+        plt.yticks(tick_marks, classes)
 
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+        fmt = '.2f' if normalize else 'd'
+        thresh = cm.max() / 2.
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], fmt),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
 
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
 
 
 # to check for too large or NaN values:
@@ -217,9 +219,9 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         if options.final_is_tree:
             clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5)
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=50)
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=50)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
@@ -326,7 +328,7 @@ def rem_features(feat, to_remove):
 
 
 def calc_greedy_best_features(df, features):
-    top_feats = one_classifier(df, features, "x.class", ["OK", "BAD"], "OK", 40, False)
+    top_feats = one_classifier(df, features, "x.class", ["OK", "BAD"], "OK", 4, False)
     if options.show:
         plt.show()
 
@@ -394,6 +396,8 @@ def learn(fname):
 
         best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.glue_rel_queue', 'cl.glue', 'cl.glue_rel', 'cl.size', 'cl.size_rel', 'rdb1.used_for_uip_creation', 'rdb0.dump_no']
 
+        best_features = ['cl.glue_rel', 'cl.backtrack_level_hist_lt', 'rdb0.used_for_uip_creation', 'cl.size_rel', 'cl.overlap_rel', 'cl.glue_rel_long']
+
         #best_features = ['rdb0.used_for_uip_creation', 'cl.size'] #'cl.glue_rel_long'
 
         if options.no_rdb1:
@@ -409,9 +413,9 @@ def learn(fname):
 
     if False:
         print("Using unbalanced classifier so as not to loose clauses too much")
-        one_classifier(df, best_features, "x.class", ["OK", "OK"], "OK", 150, True)
+        one_classifier(df, best_features, "x.class", ["OK", "OK"], "OK", 8, True)
     else:
-        one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 5, True)
+        one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 4, True)
 
     if options.show:
         plt.show()
