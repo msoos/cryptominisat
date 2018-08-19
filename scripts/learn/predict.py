@@ -354,7 +354,7 @@ def calc_greedy_best_features(df, features):
         print("*** Round %d Best feature set until now: %s"
               % (i, best_features))
 
-        best_acc = 0.0
+        best_sum = 0.0
         best_feat = None
         feats_to_try = [i for i in top_feats if i not in best_features]
         print("Will try to get next best from ", feats_to_try)
@@ -362,15 +362,15 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            acc = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 4, True)
-            print("Reported acc: ", acc)
-            if acc > best_acc:
-                best_acc = acc
+            mysum = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 4, True)
+            print("Reported mysum: ", mysum)
+            if mysum > best_sum:
+                best_sum = mysum
                 best_feat = feat
                 print("-> Making this best accuracy")
 
-        print("*** Best feature for round %d was: %s with acc: %lf"
-              % (i, best_feat, best_acc))
+        print("*** Best feature for round %d was: %s with mysum: %lf"
+              % (i, best_feat, mysum))
         best_features.append(best_feat)
 
         print("\n\n")
