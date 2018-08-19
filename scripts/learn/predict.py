@@ -362,7 +362,7 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            acc = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 40, True)
+            acc = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 4, True)
             print("Reported acc: ", acc)
             if acc > best_acc:
                 best_acc = acc
