@@ -258,7 +258,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         c = CodeWriter(clf, features)
         c.print_full_code()
 
-    print("Calculating scores....")
+    print("Calculating scores for test....")
     y_pred = clf.predict(X_test)
     sample_weight = [w_number if i == w_name else 1 for i in y_pred]
     accuracy = sklearn.metrics.accuracy_score(
@@ -270,6 +270,18 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
 
+    print("Calculating scores for train....")
+    y_pred_train = clf.predict(X_train)
+    sample_weight_train = [w_number if i == w_name else 1 for i in y_pred_train]
+    train_accuracy = sklearn.metrics.accuracy_score(
+        y_train, y_pred_train, sample_weight=sample_weight_train)
+    train_precision = sklearn.metrics.precision_score(
+        y_train, y_pred_train, average="macro",sample_weight=sample_weight_train)
+    train_recall = sklearn.metrics.recall_score(
+        y_train, y_pred_train, average="macro", sample_weight=sample_weight_train)
+    print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+        train_precision, train_recall, train_accuracy))
+
     if options.confusion:
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_test, y_pred=y_pred, sample_weight=sample_weight)
@@ -277,16 +289,21 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         np.set_printoptions(precision=2)
 
         # Plot non-normalized confusion matrix
-        plt.figure()
         plot_confusion_matrix(
             cnf_matrix, classes=names,
-            title='Confusion matrix, without normalization')
+            title='Confusion matrix, without normalization -- test')
 
         # Plot normalized confusion matrix
-        plt.figure()
         plot_confusion_matrix(
             cnf_matrix, classes=names, normalize=True,
-            title='Normalized confusion matrix')
+            title='Normalized confusion matrix -- test')
+
+        cnf_matrix_train = sklearn.metrics.confusion_matrix(
+            y_true=y_train, y_pred=y_pred_train, sample_weight=sample_weight_train)
+        # Plot normalized confusion matrix
+        plot_confusion_matrix(
+            cnf_matrix_train, classes=names, normalize=True,
+            title='Normalized confusion matrix -- train')
 
     # TODO do L1 regularization
 
