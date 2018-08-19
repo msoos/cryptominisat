@@ -241,7 +241,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
         print("Feature ranking:")
 
         for f in range(myrange):
-            print("%-3d  %-35s -- %8.4f" %
+            print("%-3d  %-55s -- %8.4f" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
             best_features.append(features[indices[f]])
 
