@@ -316,7 +316,7 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     if not final:
         return best_features
     else:
-        return precision+recall
+        return precision+recall+accuracy
 
 
 def remove_old_clause_features(features):
