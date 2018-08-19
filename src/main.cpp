@@ -1301,18 +1301,7 @@ lbool Main::multi_solutions()
 
 void Main::printVersionInfo()
 {
-    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
-    #ifdef USE_GAUSS
-    cout << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
-    cout << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
-    #endif
-    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
-    #ifdef __GNUC__
-    cout << "c CryptoMiniSat compiled with gcc version " << __VERSION__ << endl;
-    #else
-    cout << "c CryptoMiniSat compiled with non-gcc compiler" << endl;
-    #endif
+    cout << solver->get_text_version_info() << endl;
 }
 
 int Main::correctReturnValue(const lbool ret) const
