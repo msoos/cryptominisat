@@ -1301,7 +1301,7 @@ lbool Main::multi_solutions()
 
 void Main::printVersionInfo()
 {
-    cout << solver->get_text_version_info() << endl;
+    cout << solver->get_text_version_info();
 }
 
 int Main::correctReturnValue(const lbool ret) const
