@@ -21,6 +21,10 @@ a high-level yet efficient API to use most of the C++ interface with ease.
 
 When citing, always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24), bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
+License
+-----
+
+Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is unfortunately GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
 
 Docker usage
 -----
@@ -75,7 +79,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -200,7 +204,7 @@ The python module works with both Python 2 and Python 3. It must be compiled as 
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install python3-setuptools python3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
@@ -313,7 +317,7 @@ lbool ret = solver.solve();
 assert(ret == l_True);
 ```
 
-Since we assume that variabe 2 must be false, there is no solution. However,
+Since we assume that variable 2 must be false, there is no solution. However,
 if we solve again, without the assumption, we get back the original solution.
 Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
@@ -373,7 +377,7 @@ s SATISFIABLE
 v [solution] 0
 ```
 
-or 
+or
 
 ```
 s UNSATISFIABLE
@@ -397,7 +401,7 @@ For building with Gaussian Elimination, you need to build as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -432,7 +436,7 @@ For testing you will need the GIT checkout and build as per:
 
 ```
 sudo apt-get install build-essential cmake git
-sudo apt-get install libzip-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo pip3 install --upgrade pip
 sudo pip3 install lit
@@ -463,6 +467,22 @@ The following configures the system to build a bare minimal binary&library. It n
 ```
 cmake -DONLY_SIMPLE=ON -DNOZLIB=ON -DNOM4RI=ON -DSTATS=OFF -DNOVALGRIND=ON -DENABLE_TESTING=OFF .
 ```
+
+CMake Arguments
+-----
+The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
+
+- `-DSTATICCOMPILE=<ON/OFF>` -- build a statically linked library and binary
+- `-DUSE_GAUSS=<ON/OFF>` -- build with Gauss-Jordan Elimination support
+- `-DSTATS=<ON/OFF>` -- build with advanced statistics (slower)
+- `-DENABLE_TESTING=<ON/OFF>` -- build with test suite support
+- `-DMIT=<ON/OFF>` -- only build MIT licensed components
+- `-DNOM4RI=<ON/OFF>` -- build without toplevel Gauss-Jordan Elimination support
+- `-DREQUIRE_M4RI=<ON/OFF>` -- must build with M4RI
+- `-DNOZLIB=<ON/OFF>` -- build without gzip DIMACS input support
+- `-DONLY_SIMPLE=<ON/OFF>` -- build only the simple binary
+- `-DNOVALGRIND=<ON/OFF>` -- build without extended valgrind memory checking support
+
 
 Trying different configurations
 -----

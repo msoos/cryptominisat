@@ -33,11 +33,11 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 class_names = ["throw", "longer"]
-cuts = [-1, 10000, 1000000000000]
-class_names2 = ["middle", "forever"]
-cuts2 = [-1, 30000, 1000000000000]
-#class_names3 = ["middle2", "forever"]
-#cuts3 = [-1, 60000, 1000000000000]
+cuts = [-1, 20000, 1000000000000]
+class_names2 = ["middle", "longer2"]
+cuts2 = [-1, 40000, 1000000000000]
+class_names3 = ["middle2", "forever"]
+cuts3 = [-1, 100000, 1000000000000]
 
 
 def output_to_dot(clf, features, nameextra):
@@ -273,10 +273,10 @@ def learn(fname):
         cuts2,
         labels=class_names2)
 
-    #df["x.lifetime_cut3"] = pd.cut(
-        #df["x.lifetime"],
-        #cuts3,
-        #labels=class_names3)
+    df["x.lifetime_cut3"] = pd.cut(
+        df["x.lifetime"],
+        cuts3,
+        labels=class_names3)
 
     features = df.columns.values.flatten().tolist()
     features = rem_features(features,
@@ -295,7 +295,7 @@ def learn(fname):
         df.hist()
         df.boxplot()
 
-    if True:
+    if options.only_pred is None or options.only_pred == 1:
         feat_less = rem_features(features, ["rdb1", "rdb2", "rdb3", "rdb4"])
         best_feats = one_classifier(df, feat_less, "x.lifetime_cut",
                                     class_names, "longer", 17,
@@ -309,7 +309,7 @@ def learn(fname):
         if options.show:
             plt.show()
 
-    if True:
+    if options.only_pred is None or options.only_pred == 2:
         feat_less = rem_features(features, ["rdb3", "rdb4"])
         df2 = df[df["x.lifetime"] > cuts[1]]
 
@@ -326,18 +326,21 @@ def learn(fname):
         if options.show:
             plt.show()
 
-    #if True:
-        #df3 = df[df["x.lifetime"] > cuts2[1]]
+    if options.only_pred is None or options.only_pred == 3:
+        df3 = df[df["x.lifetime"] > cuts2[1]]
 
-        #best_feats = one_classifier(df3, features, "x.lifetime_cut3",
-                                    #class_names3, "middle2", 20,
-                                    #False)
-        #if options.show:
-            #plt.show()
+        best_feats = one_classifier(df3, features, "x.lifetime_cut3",
+                                    class_names3, "middle2", 8,
+                                    False)
+        if options.show:
+            plt.show()
 
-        #one_classifier(df3, best_feats, "x.lifetime_cut3",
-                       #class_names3, "middle2", 8,
-                       #True)
+        one_classifier(df3, best_feats, "x.lifetime_cut3",
+                       class_names3, "middle2", 2,
+                       True)
+
+        if options.show:
+            plt.show()
 
 
 if __name__ == "__main__":
@@ -360,6 +363,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
+    parser.add_option("--only", default=None, type=int,
+                      dest="only_pred", help="Only this predictor")
     parser.add_option("--top", default=12, type=int,
                       dest="top_num_features", help="Number of top features to take to generate the final predictor")
 

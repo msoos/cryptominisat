@@ -264,7 +264,7 @@ bool BVA::try_bva_on_lit(const Lit lit)
         }
 
         size_t num_occur;
-        const lit_pair l_max = most_occuring_lit_in_potential(num_occur);
+        const lit_pair l_max = most_occurring_lit_in_potential(num_occur);
         if (simplifies_system(num_occur)) {
             m_lits.push_back(l_max);
             m_cls.clear();
@@ -690,7 +690,7 @@ bool BVA::simplifies_system(const size_t num_occur) const
 
 
 
-BVA::lit_pair BVA::most_occuring_lit_in_potential(size_t& largest)
+BVA::lit_pair BVA::most_occurring_lit_in_potential(size_t& largest)
 {
     largest = 0;
     lit_pair most_occur = lit_pair(lit_Undef, lit_Undef);
@@ -720,7 +720,7 @@ BVA::lit_pair BVA::most_occuring_lit_in_potential(size_t& largest)
 
     if (solver->conf.verbosity >= 5 || bva_verbosity) {
         cout
-        << "c [occ-bva] ---> Most occuring lit in p: " << most_occur.lit1 << ", " << most_occur.lit2
+        << "c [occ-bva] ---> Most occurring lit in p: " << most_occur.lit1 << ", " << most_occur.lit2
         << " occur num: " << largest
         << endl;
     }

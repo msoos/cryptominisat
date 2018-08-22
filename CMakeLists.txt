@@ -98,6 +98,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
+if (EMSCRIPTEN)
+    set(ONLY_SIMPLE ON)
+    set(STATICCOMPILE OFF)
+    set(NOZLIB ON)
+endif()
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
 if (FEEDBACKFUZZ)
@@ -182,11 +187,9 @@ if (NOT MSVC)
     add_compile_options( -pthread )
 
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
-    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-    add_compile_options("$<$<CONFIG:RELEASE>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
@@ -381,7 +384,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "5.6.3")
+set(CMS_FULL_VERSION "5.6.4")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -402,7 +405,7 @@ option(STATS "Don't use statistics at all" OFF)
 if (STATS)
     add_definitions( -DSTATS_NEEDED )
     if (NOT NOSQLITE)
-        find_package(Sqlite3)
+        find_package (Sqlite3)
         IF (SQLITE3_FOUND)
             MESSAGE(STATUS "OK, Found Sqlite3!")
             include_directories(${SQLITE3_INCLUDE_DIR})
@@ -436,7 +439,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ADD_CUSTOM_COMMAND(
                 TARGET man_cms5
                 COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1 --name="SAT solver"
             )
 
             INSTALL(
@@ -453,7 +456,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         ADD_CUSTOM_COMMAND(
             TARGET man_cms5_simple
             COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1 --name="SAT solver"
         )
 
         INSTALL(
@@ -502,6 +505,14 @@ endif()
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
+option(MIT "Build with only MIT licensed components" OFF)
+if (MIT)
+    set(NOM4RI ON)
+    if(REQUIRE_M4RI)
+        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_M4RI at the same time")
+    endif()
+endif()
+
 if (NOT NOM4RI)
     find_package(M4RI)
     IF (M4RI_FOUND)

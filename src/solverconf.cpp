@@ -155,7 +155,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindXors       (true)
         , maxXorToFind     (5)
         , useCacheWhenFindingXors(false)
-        , doEchelonizeXOR  (true)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS
         , xor_finder_time_limitM(50)
@@ -252,7 +251,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Greedy Undef
         , greedy_undef(false)
-        , independent_vars (NULL)
+        , independent_vars(NULL)
 
         //Timeouts
         , orig_global_timeout_multiplier(4.0)

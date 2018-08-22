@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <string>
 #include "cryptominisat5/solvertypesmini.h"
 
 namespace CMSat {
@@ -109,6 +110,7 @@ namespace CMSat {
         static const char* get_version(); //get solver version in string format
         static const char* get_version_sha1(); //get SHA1 version string of the solver
         static const char* get_compilation_env(); //get compilation environment string
+        std::string get_text_version_info();  //get printable version and copyright text
 
 
         ////////////////////////////
