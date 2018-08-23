@@ -722,20 +722,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
 
-    // Debug
-    // std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
-    // std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
-    // std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
-
-//     for (unsigned long i = 0; i < var_lits.size(); i++) {
-//         std::cout << "real value: " << var_lits[i]
-//                   << "; x: " << var_lits[i].toInt()
-//                   << "; sign: " << var_lits[i].sign()
-//                   << "; var: " << var_lits[i].var()
-//                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
-//                   << '\n';
-//     }
-
     PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a list");
@@ -744,7 +730,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
     int current_nr_of_solutions = 0;
     lbool res = l_True;
-    std::vector<Lit>::iterator it;
     PyObject* solution = NULL;
     while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
 
@@ -753,10 +738,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         Py_END_ALLOW_THREADS
 
         current_nr_of_solutions++;
-
-        // std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
-        //           << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
-
         if(res == l_True) {
 
             // Memorize the solution
@@ -786,20 +767,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Iterate on var_selected (instead of iterate on all vars in solver)
                 for (unsigned long i = 0; i < var_lits.size(); i++) {
-
-                    // If the current variable is > 0 (false)
-                    // PS: internal value of any literal is equal to i;
-                    // human readable value is i+1 (begins with 1 instead of 0)
                     if (var_lits[i].sign() == false) {
-
-                        // The current value of the variable must belong to the solver variables
                         assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
-
-                        // std::cout << "human readable lit: " << var_lits[i] << "; lit sign: " << ((var_lits[i].sign() == 0) ? "false" : "true") << std::endl;
-                        // std::cout << "lit value: " << var_lits[i].var() << "; model status: " << model[var_lits[i].var()] << std::endl;
-
-                        // Get the corresponding variable in the model, whatever its sign
-                        // Add it to the futur banned clause
                         ban_solution.push_back(
                             Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
                         );
@@ -808,11 +777,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Ban current solution for the next run
                 self->cmsat->add_clause(ban_solution);
-
-                //for (unsigned long i = 0; i < ban_solution.size(); i++) {
-                //    std::cout << ban_solution[i] << ';';
-                //}
-                //std::cout << std::endl;
             }
         } else if (res == l_False) {
             // std::cout << "DEBUG :: Solver: No more solution" << std::endl;
