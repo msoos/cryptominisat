@@ -251,6 +251,7 @@ class Solver : public Searcher
 
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
+        void testing_set_solver_not_fresh();
 
     private:
         friend class Prober;
@@ -475,6 +476,7 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
 inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions
 ) {
+    fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     return simplify_problem_outside();
 }
@@ -594,6 +596,11 @@ inline lbool Solver::full_model_value (const Lit p) const
 inline lbool Solver::full_model_value  (const uint32_t p) const
 {
     return full_model[p];
+}
+
+inline void Solver::testing_set_solver_not_fresh()
+{
+    fresh_solver = false;
 }
 
 } //end namespace

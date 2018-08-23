@@ -565,24 +565,27 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         }
 
         //Undo var replacement
-        const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
-        if (conf.verbosity >= 12
-            && lit != updated_lit
-        ) {
-            cout
-            << "EqLit updating outer lit " << lit
-            << " to outer lit " << updated_lit
-            << endl;
-        }
-        lit = updated_lit;
+        if (!fresh_solver) {
+            const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
+            if (conf.verbosity >= 12
+                && lit != updated_lit
+            ) {
+                cout
+                << "EqLit updating outer lit " << lit
+                << " to outer lit " << updated_lit
+                << endl;
+            }
+            lit = updated_lit;
 
-        //Map outer to inter, and add re-variable if need be
-        if (map_outer_to_inter(lit).var() >= nVars()) {
-            new_var(false, lit.var());
+            //Map outer to inter, and add re-variable if need be
+            if (map_outer_to_inter(lit).var() >= nVars()) {
+                new_var(false, lit.var());
+            }
         }
     }
 
-    renumber_outer_to_inter_lits(ps);
+    if (!fresh_solver)
+        renumber_outer_to_inter_lits(ps);
 
     #ifdef SLOW_DEBUG
     //Check renumberer
@@ -593,7 +596,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
      //Undo comp handler
-    if (compHandler) {
+    if (!fresh_solver
+        && compHandler
+    ) {
         bool readd = false;
         for (Lit lit: ps) {
             if (varData[lit.var()].removed == Removed::decomposed) {
@@ -608,12 +613,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Uneliminate vars
-    for (const Lit lit: ps) {
-        if (conf.perform_occur_based_simp
-            && varData[lit.var()].removed == Removed::elimed
-        ) {
-            if (!occsimplifier->uneliminate(lit.var()))
-                return false;
+    if (!fresh_solver) {
+        for (const Lit lit: ps) {
+            if (conf.perform_occur_based_simp
+                && varData[lit.var()].removed == Removed::elimed
+            ) {
+                if (!occsimplifier->uneliminate(lit.var()))
+                    return false;
+            }
         }
     }
 
@@ -1346,6 +1353,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_indep_solution
 ) {
+    fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
     if (ok) {
