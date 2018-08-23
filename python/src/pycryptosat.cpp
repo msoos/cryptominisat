@@ -76,6 +76,7 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
+    std::vector<Lit> tmp_cl_lits;
 } Solver;
 
 static const char solver_create_docstring[] = \
@@ -324,11 +325,11 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    std::vector<Lit> lits;
-    if (!parse_clause(self, clause, lits)) {
+    self->tmp_cl_lits.clear();
+    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
         return 0;
     }
-    self->cmsat->add_clause(lits);
+    self->cmsat->add_clause(self->tmp_cl_lits);
 
     Py_INCREF(Py_None);
     return Py_None;
