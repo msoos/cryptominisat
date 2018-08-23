@@ -563,8 +563,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             assert(false);
             std::exit(-1);
         }
-        assert(lit.var() < nVarsOuter()
-        && "Clause inserted, but variable inside has not been declared with new_var() !");
 
         //Undo var replacement
         const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
