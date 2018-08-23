@@ -178,9 +178,7 @@ static int parse_clause(
         }
 
         if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
-                self->cmsat->new_var();
-            }
+            self->cmsat->new_vars(var-self->cmsat->nVars()+1);
         }
 
         lits.push_back(Lit(var, sign));
