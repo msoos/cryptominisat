@@ -552,8 +552,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         throw CMSat::TooLongClauseError();
     }
 
-    //Check for too large variable number
     for (Lit& lit: ps) {
+        //Check for too large variable number
         if (lit.var() >= nVarsOuter()) {
             std::cerr
             << "ERROR: Variable " << lit.var() + 1
