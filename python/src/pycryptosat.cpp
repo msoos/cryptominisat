@@ -167,6 +167,7 @@ static int parse_clause(
     }
 
     PyObject *lit;
+    long int max_var = 0;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         long var;
         bool sign;
@@ -176,13 +177,15 @@ static int parse_clause(
             Py_DECREF(iterator);
             return 0;
         }
-
-        if (var >= self->cmsat->nVars()) {
-            self->cmsat->new_vars(var-self->cmsat->nVars()+1);
-        }
+        max_var = std::max(var, max_var);
 
         lits.push_back(Lit(var, sign));
     }
+
+    if (!lits.empty() && max_var >= (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+    }
+
     Py_DECREF(iterator);
     if (PyErr_Occurred()) {
         return 0;
