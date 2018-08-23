@@ -3868,14 +3868,25 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
     return units;
 }
 
+void Solver::dump_irred_clauses(std::ostream *out) const
+{
+    ClauseDumper dumper(this);
+    dumper.dump_irred_clauses(out);
+}
 
-void Solver::open_file_and_dump_irred_clauses(string fname) const
+void Solver::dump_red_clauses(std::ostream *out) const
+{
+    ClauseDumper dumper(this);
+    dumper.dump_red_clauses(out);
+}
+
+void Solver::open_file_and_dump_irred_clauses(const std::string &fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_irred_clauses(fname);
 }
 
-void Solver::open_file_and_dump_red_clauses(string fname) const
+void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);
