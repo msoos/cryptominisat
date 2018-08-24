@@ -442,10 +442,14 @@ Add iterable of clauses to the solver.\n\
 
 static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"clauses", NULL};
+    static char* kwlist[] = {"clauses", "max_var", NULL};
     PyObject *clauses;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
+    long int max_var = 0;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|l", kwlist, &clauses, &max_var)) {
         return NULL;
+    }
+    if (max_var >= (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
     }
 
     int add_array_ret = add_clauses_array(self, clauses);
