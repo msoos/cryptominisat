@@ -169,6 +169,14 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
         exit(-1);
     }
 
+    size_t num_cls = get_preprocessor_num_cls(outer_numbering);
+    num_cls += dump_blocked_clauses(NULL, outer_numbering);
+    num_cls += dump_component_clauses(NULL, outer_numbering);
+
+    *out
+    << "p cnf " << solver->nVars()
+    << " " << num_cls << "\n";
+
     dump_irred_cls_for_preprocessor(out, outer_numbering);
 
     *out << "c ------------------ previously eliminated variables" << endl;
@@ -195,19 +203,23 @@ void ClauseDumper::dump_unit_cls(std::ostream *out, bool outer_numbering)
     }
 }
 
-void ClauseDumper::dump_blocked_clauses(std::ostream *out, bool outer_numbering) {
+uint32_t ClauseDumper::dump_blocked_clauses(std::ostream *out, bool outer_numbering) {
     assert(outer_numbering);
+    uint32_t num_cls = 0;
     if (solver->conf.perform_occur_based_simp) {
-        solver->occsimplifier->dump_blocked_clauses(out);
+        num_cls = solver->occsimplifier->dump_blocked_clauses(out);
     }
+    return num_cls;
 }
 
-void ClauseDumper::dump_component_clauses(std::ostream *out, bool outer_numbering)
+uint32_t ClauseDumper::dump_component_clauses(std::ostream *out, bool outer_numbering)
 {
     assert(outer_numbering);
+    uint32_t num_cls = 0;
     if (solver->compHandler) {
-        solver->compHandler->dump_removed_clauses(out);
+        num_cls = solver->compHandler->dump_removed_clauses(out);
     }
+    return num_cls;
 }
 
 void ClauseDumper::open_dump_file(const std::string& filename)

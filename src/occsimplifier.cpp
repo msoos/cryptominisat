@@ -179,8 +179,9 @@ void OccSimplifier::print_blocked_clauses_reverse() const
     }
 }
 
-void OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
+uint32_t OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
 {
+    uint32_t num_cls = 0;
     for (BlockedClauses blocked: blockedClauses) {
         if (blocked.toRemove)
             continue;
@@ -191,16 +192,20 @@ void OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
                 continue;
             }
             Lit l = blocked.at(i, blkcls);
-            if (l == lit_Undef) {
-                *outfile
-                << " 0"
-                << endl;
-            } else {
-                *outfile
-                << l << " ";
+            if (outfile != NULL) {
+                if (l == lit_Undef) {
+                    *outfile
+                    << " 0"
+                    << endl;
+                } else {
+                    *outfile
+                    << l << " ";
+                }
             }
+            num_cls++;
         }
     }
+    return num_cls;
 }
 
 void OccSimplifier::extend_model(SolutionExtender* extender)
