@@ -1072,6 +1072,16 @@ DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
     return get_sum_decisions() - data->previous_sum_decisions;
 }
 
+DLL_PUBLIC void SATSolver::dump_irred_clauses(std::ostream *out) const
+{
+    data->solvers[data->which_solved]->dump_irred_clauses(out);
+}
+
+void DLL_PUBLIC SATSolver::dump_red_clauses(std::ostream *out) const
+{
+    data->solvers[data->which_solved]->dump_red_clauses(out);
+}
+
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const
 {
     data->solvers[data->which_solved]->open_file_and_dump_irred_clauses(fname);

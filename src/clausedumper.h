@@ -49,6 +49,12 @@ public:
         }
     }
 
+    void write_unsat(std::ostream *out);
+    void write_sat(std::ostream *out);
+    void dump_irred_clauses_preprocessor(std::ostream *out);
+    void dump_irred_clauses(std::ostream *out);
+    void dump_red_clauses(std::ostream *out);
+
     void open_file_and_write_unsat(const std::string& fname);
     void open_file_and_write_sat(const std::string& fname);
     void open_file_and_dump_irred_clauses_preprocessor(const std::string& fname);
@@ -60,23 +66,22 @@ private:
     const Solver* solver;
     std::ofstream* outfile = NULL;
 
-    void write_unsat_file();
-    void dump_irred_cls_for_preprocessor(bool outer_number);
     void open_dump_file(const std::string& filename);
-    void dump_bin_cls(
+
+    void dump_irred_cls_for_preprocessor(std::ostream *out, bool outer_number);
+    void dump_bin_cls(std::ostream *out,
         const bool dumpRed
         , const bool dumpIrred
         , const bool outer_number
     );
-
-    void dump_red_cls(bool outer_numbering);
-    void dump_eq_lits(bool outer_numbering);
-    void dump_unit_cls(bool outer_numbering);
-    void dump_blocked_clauses(bool outer_numbering);
-    void dump_irred_cls(bool outer_numbering);
-    void dump_component_clauses(bool outer_numbering);
-    void dump_vars_appearing_inverted(bool outer_numbering);
-    void dump_clauses(
+    void dump_red_cls(std::ostream *out, bool outer_numbering);
+    void dump_eq_lits(std::ostream *out, bool outer_numbering);
+    void dump_unit_cls(std::ostream *out, bool outer_numbering);
+    void dump_blocked_clauses(std::ostream *out, bool outer_numbering);
+    void dump_irred_cls(std::ostream *out, bool outer_numbering);
+    void dump_component_clauses(std::ostream *out, bool outer_numbering);
+    void dump_vars_appearing_inverted(std::ostream *out, bool outer_numbering);
+    void dump_clauses(std::ostream *out,
         const vector<ClOffset>& cls
         , const bool outer_number
     );

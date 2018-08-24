@@ -106,8 +106,10 @@ class Solver : public Searcher
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
 
-        void open_file_and_dump_irred_clauses(string fname) const;
-        void open_file_and_dump_red_clauses(string fname) const;
+        void dump_irred_clauses(std::ostream *out) const;
+        void dump_red_clauses(std::ostream *out) const;
+        void open_file_and_dump_irred_clauses(const std::string &fname) const;
+        void open_file_and_dump_red_clauses(const std::string &fname) const;
 
         static const char* get_version_tag();
         static const char* get_version_sha1();
