@@ -102,24 +102,31 @@ void ClauseDumper::open_file_and_dump_red_clauses(const string& redDumpFname)
     outfile = NULL;
 }
 
+size_t ClauseDumper::get_preprocessor_num_cls(bool outer_numbering) {
+    size_t num_cls = 0;
+    num_cls += solver->longIrredCls.size();
+    num_cls += solver->binTri.irredBins;
+    if (!outer_numbering) {
+        vector<Lit> units = solver->get_toplevel_units_internal(false);
+        num_cls += units.size();
+    } else {
+        vector<Lit> units = solver->get_zero_assigned_lits();
+        num_cls += units.size();
+    }
+    num_cls += solver->undef_must_set_vars.size();
+    num_cls += solver->varReplacer->print_equivalent_literals(outer_numbering)*2;
+
+    return num_cls;
+}
+
 void ClauseDumper::dump_irred_clauses_preprocessor(std::ostream *out) {
     if (!solver->okay()) {
         write_unsat(out);
     } else {
-        size_t num_cls = 0;
-        num_cls += solver->longIrredCls.size();
-        num_cls += solver->binTri.irredBins;
-        vector<Lit> units = solver->get_toplevel_units_internal(false);
-        num_cls += units.size();
-        num_cls += solver->undef_must_set_vars.size();
-        num_cls += solver->varReplacer->print_equivalent_literals(false)*2;
         *out
-        << "p cnf " << solver->nVars() << " " << num_cls << "\n";
-        //dump unit clauses
-        *out << "c ------------ unit clauses" << endl;
-        for(Lit l: units) {
-            *out << l << " 0" << "\n";
-        }
+        << "p cnf " << solver->nVars()
+        << " " << get_preprocessor_num_cls(false) << "\n";
+
         dump_irred_cls_for_preprocessor(out, false);
     }
 }
@@ -162,8 +169,6 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
         exit(-1);
     }
 
-    dump_unit_cls(out, outer_numbering);
-
     dump_irred_cls_for_preprocessor(out, outer_numbering);
 
     *out << "c ------------------ previously eliminated variables" << endl;
@@ -177,13 +182,18 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
 
 void ClauseDumper::dump_unit_cls(std::ostream *out, bool outer_numbering)
 {
-    assert(outer_numbering);
     *out << "c --------- unit clauses" << endl;
-
-    //'trail' cannot be trusted between 0....size()
-    vector<Lit> lits = solver->get_zero_assigned_lits();
-    for(Lit lit: lits) {
-        *out << lit << " 0\n";
+    if (outer_numbering) {
+        //'trail' cannot be trusted between 0....size()
+        vector<Lit> lits = solver->get_zero_assigned_lits();
+        for(Lit lit: lits) {
+            *out << lit << " 0\n";
+        }
+    } else {
+        vector<Lit> units = solver->get_toplevel_units_internal(false);
+        for(Lit l: units) {
+            *out << l << " 0" << "\n";
+        }
     }
 }
 
@@ -311,6 +321,8 @@ void ClauseDumper::dump_vars_appearing_inverted(std::ostream *out, bool outer_nu
 
 void ClauseDumper::dump_irred_cls_for_preprocessor(std::ostream *out, const bool outer_numbering)
 {
+    dump_unit_cls(out, outer_numbering);
+
     dump_vars_appearing_inverted(out, outer_numbering);
 
     *out << "c -------- irred bin cls" << endl;

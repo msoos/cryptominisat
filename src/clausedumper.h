@@ -74,6 +74,7 @@ private:
         , const bool dumpIrred
         , const bool outer_number
     );
+    size_t get_preprocessor_num_cls(bool outer_numbering);
     void dump_red_cls(std::ostream *out, bool outer_numbering);
     void dump_eq_lits(std::ostream *out, bool outer_numbering);
     void dump_unit_cls(std::ostream *out, bool outer_numbering);
