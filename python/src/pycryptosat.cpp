@@ -348,13 +348,14 @@ static int _add_clauses_array(Solver *self, size_t array_length, const T *array)
     }
     size_t k = 0;
     long val = 0;
-    std::vector<Lit> lits;
+    std::vector<Lit>& lits = self->tmp_cl_lits;
     for (val = (long) array[k]; k < array_length; val = (long) array[++k]) {
         if (val == 0) {
             PyErr_SetString(PyExc_ValueError, "non-zero integer expected");
             return 0;
         }
         lits.clear();
+        long int max_var = 0;
         for (; k < array_length && val != 0; val = (long) array[++k]) {
             long var;
             bool sign;
@@ -367,14 +368,12 @@ static int _add_clauses_array(Solver *self, size_t array_length, const T *array)
 
             sign = (val < 0);
             var = std::abs(val) - 1;
-
-            if (var >= self->cmsat->nVars()) {
-                for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
-                    self->cmsat->new_var();
-                }
-            }
+            max_var = std::max(var, max_var);
 
             lits.push_back(Lit(var, sign));
+        }
+        if (max_var >= (long int)self->cmsat->nVars()) {
+            self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
         }
         self->cmsat->add_clause(lits);
     }
