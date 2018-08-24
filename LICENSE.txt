@@ -4,7 +4,9 @@ All rights reserved.
 The general priciple of the licensing is as follows. Everything that's
 needed to run/build/install/link the system is MIT licensed. This allows
 easy distribution and running of the system everywhere. Files that
-have no copyright header are also MIT licensed.
+have no copyright header are also MIT licensed. Note that in case you
+compile with M4RI, then M4RI's GPL license affects the final executable
+and library.
 
 Everything else that's not needed to run/build/install/link is usually GPLv2
 licensed or compatible (see the copyright headers.) The only exceptions are the

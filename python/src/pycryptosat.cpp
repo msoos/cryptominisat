@@ -76,6 +76,7 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
+    std::vector<Lit> tmp_cl_lits;
 } Solver;
 
 static const char solver_create_docstring[] = \
@@ -166,6 +167,7 @@ static int parse_clause(
     }
 
     PyObject *lit;
+    long int max_var = 0;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         long var;
         bool sign;
@@ -175,15 +177,15 @@ static int parse_clause(
             Py_DECREF(iterator);
             return 0;
         }
-
-        if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
-                self->cmsat->new_var();
-            }
-        }
+        max_var = std::max(var, max_var);
 
         lits.push_back(Lit(var, sign));
     }
+
+    if (!lits.empty() && max_var >= (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+    }
+
     Py_DECREF(iterator);
     if (PyErr_Occurred()) {
         return 0;
@@ -324,11 +326,11 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    std::vector<Lit> lits;
-    if (!parse_clause(self, clause, lits)) {
+    self->tmp_cl_lits.clear();
+    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
         return 0;
     }
-    self->cmsat->add_clause(lits);
+    self->cmsat->add_clause(self->tmp_cl_lits);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -666,7 +668,7 @@ Solve the system of equations that have been added with add_clause();\n\
 :return: A tuple. First part of the tuple indicates whether the problem\n\
     is satisfiable. The second part is a tuple contains the solution,\n\
     preceded by None, so you can index into it with the variable number.\n\
-    E.g. solution[1] returns the value for variabe 1.\n\
+    E.g. solution[1] returns the value for variable 1.\n\
 :rtype: <tuple <tuple>>"
 );
 
@@ -724,7 +726,7 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
         // res can only be l_False, l_True, l_Undef
         assert((res == l_False) || (res == l_True) || (res == l_Undef));
         Py_DECREF(result);
-        return PyErr_NewExceptionWithDoc("pycyrptosat.IllegalState", "Error Occured in CyrptoMiniSat", NULL, NULL);
+        return PyErr_NewExceptionWithDoc("pycyrptosat.IllegalState", "Error Occurred in CyrptoMiniSat", NULL, NULL);
     }
 
     return result;
@@ -824,20 +826,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
 
-    // Debug
-    // std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
-    // std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
-    // std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
-
-//     for (unsigned long i = 0; i < var_lits.size(); i++) {
-//         std::cout << "real value: " << var_lits[i]
-//                   << "; x: " << var_lits[i].toInt()
-//                   << "; sign: " << var_lits[i].sign()
-//                   << "; var: " << var_lits[i].var()
-//                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
-//                   << '\n';
-//     }
-
     PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a list");
@@ -846,7 +834,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
     int current_nr_of_solutions = 0;
     lbool res = l_True;
-    std::vector<Lit>::iterator it;
     PyObject* solution = NULL;
     while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
 
@@ -855,10 +842,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         Py_END_ALLOW_THREADS
 
         current_nr_of_solutions++;
-
-        // std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
-        //           << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
-
         if(res == l_True) {
 
             // Memorize the solution
@@ -888,20 +871,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Iterate on var_selected (instead of iterate on all vars in solver)
                 for (unsigned long i = 0; i < var_lits.size(); i++) {
-
-                    // If the current variable is > 0 (false)
-                    // PS: internal value of any literal is equal to i;
-                    // human readable value is i+1 (begins with 1 instead of 0)
                     if (var_lits[i].sign() == false) {
-
-                        // The current value of the variable must belong to the solver variables
                         assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
-
-                        // std::cout << "human readable lit: " << var_lits[i] << "; lit sign: " << ((var_lits[i].sign() == 0) ? "false" : "true") << std::endl;
-                        // std::cout << "lit value: " << var_lits[i].var() << "; model status: " << model[var_lits[i].var()] << std::endl;
-
-                        // Get the corresponding variable in the model, whatever its sign
-                        // Add it to the futur banned clause
                         ban_solution.push_back(
                             Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
                         );
@@ -910,11 +881,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Ban current solution for the next run
                 self->cmsat->add_clause(ban_solution);
-
-                //for (unsigned long i = 0; i < ban_solution.size(); i++) {
-                //    std::cout << ban_solution[i] << ';';
-                //}
-                //std::cout << std::endl;
             }
         } else if (res == l_False) {
             // std::cout << "DEBUG :: Solver: No more solution" << std::endl;

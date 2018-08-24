@@ -278,7 +278,7 @@ void Main::printResultFunc(
                 if (only_indep_solution) {
                     cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the independent set's values: '--onlyindep'" << endl;
                 } else {
-                   cout << "c NOTE: " << num_undef << " varables are NOT set" << endl;
+                   cout << "c NOTE: " << num_undef << " variables are NOT set" << endl;
                 }
             }
         }
@@ -390,7 +390,7 @@ void Main::add_supported_options()
     ("vardecaymax", po::value(&conf.var_decay_vsids_max)->default_value(conf.var_decay_vsids_max, s_var_decay_vsids_max.str())
         , "variable activity increase divider (MUST be smaller than multiplier)")
     ("vincstart", po::value(&conf.var_inc_vsids_start)->default_value(conf.var_inc_vsids_start)
-        , "variable activity increase stars with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
+        , "variable activity increase starts with this value. Make sure that this multiplied by multiplier and divided by divider is larger than itself")
     ("freq", po::value(&conf.random_var_freq)->default_value(conf.random_var_freq, s_random_var_freq.str())
         , "[0 - 1] freq. of picking var at random")
     ("maple", po::value(&conf.maple)->default_value(conf.maple)
@@ -499,8 +499,6 @@ void Main::add_supported_options()
         , "Use cache when finding XORs. Finds a LOT more XORs, but takes a lot more time")
     ("varsperxorcut", po::value(&conf.xor_var_per_cut)->default_value(conf.xor_var_per_cut)
         , "Number of _real_ variables per XOR when cutting them. So 2 will have XORs of size 4 because 1 = connecting to previous, 1 = connecting to next, 2 in the midde. If the XOR is 4 long, it will be just one 4-long XOR, no connectors")
-    ("echelonxor", po::value(&conf.doEchelonizeXOR)->default_value(conf.doEchelonizeXOR)
-        , "Extract data from XORs through echelonization (TOP LEVEL ONLY)")
     ("maxxormat", po::value(&conf.maxXORMatrix)->default_value(conf.maxXORMatrix)
         , "Maximum matrix size (=num elements) that we should try to echelonize")
     //Not implemented yet
@@ -686,7 +684,7 @@ void Main::add_supported_options()
         , "Automatically disable gauss when performing badly")
     ("minmatrixrows", po::value(&conf.gaussconf.min_matrix_rows)->default_value(conf.gaussconf.min_matrix_rows)
         , "Set minimum no. of rows for gaussian matrix. Normally, too small"
-        "matrixes are discarded for reasons of efficiency")
+        " matrixes are discarded for reasons of efficiency")
     ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
         , "Maximum number of matrixes to treat.")
     ;
@@ -1303,18 +1301,7 @@ lbool Main::multi_solutions()
 
 void Main::printVersionInfo()
 {
-    cout << "c CryptoMiniSat version " << solver->get_version() << endl;
-    cout << "c CryptoMiniSat SHA revision " << solver->get_version_sha1() << endl;
-    #ifdef USE_GAUSS
-    cout << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
-    cout << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
-    #endif
-    cout << "c CryptoMiniSat compilation env " << solver->get_compilation_env() << endl;
-    #ifdef __GNUC__
-    cout << "c CryptoMiniSat compiled with gcc version " << __VERSION__ << endl;
-    #else
-    cout << "c CryptoMiniSat compiled with non-gcc compiler" << endl;
-    #endif
+    cout << solver->get_text_version_info();
 }
 
 int Main::correctReturnValue(const lbool ret) const

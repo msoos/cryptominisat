@@ -187,11 +187,9 @@ if (NOT MSVC)
     add_compile_options( -pthread )
 
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
-    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-    add_compile_options("$<$<CONFIG:RELEASE>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
@@ -507,6 +505,14 @@ endif()
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
+option(MIT "Build with only MIT licensed components" OFF)
+if (MIT)
+    set(NOM4RI ON)
+    if(REQUIRE_M4RI)
+        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_M4RI at the same time")
+    endif()
+endif()
+
 if (NOT NOM4RI)
     find_package(M4RI)
     IF (M4RI_FOUND)

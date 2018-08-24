@@ -21,6 +21,10 @@ a high-level yet efficient API to use most of the C++ interface with ease.
 
 When citing, always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24), bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
+License
+-----
+
+Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is unfortunately GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
 
 Docker usage
 -----
@@ -313,7 +317,7 @@ lbool ret = solver.solve();
 assert(ret == l_True);
 ```
 
-Since we assume that variabe 2 must be false, there is no solution. However,
+Since we assume that variable 2 must be false, there is no solution. However,
 if we solve again, without the assumption, we get back the original solution.
 Assumptions allow us to assume certain literal values for a _specific run_ but
 not all runs -- for all runs, we can simply add these assumptions as 1-long
@@ -472,7 +476,9 @@ The following arguments to cmake configure the generated build artifacts. To use
 - `-DUSE_GAUSS=<ON/OFF>` -- build with Gauss-Jordan Elimination support
 - `-DSTATS=<ON/OFF>` -- build with advanced statistics (slower)
 - `-DENABLE_TESTING=<ON/OFF>` -- build with test suite support
+- `-DMIT=<ON/OFF>` -- only build MIT licensed components
 - `-DNOM4RI=<ON/OFF>` -- build without toplevel Gauss-Jordan Elimination support
+- `-DREQUIRE_M4RI=<ON/OFF>` -- must build with M4RI
 - `-DNOZLIB=<ON/OFF>` -- build without gzip DIMACS input support
 - `-DONLY_SIMPLE=<ON/OFF>` -- build only the simple binary
 - `-DNOVALGRIND=<ON/OFF>` -- build without extended valgrind memory checking support

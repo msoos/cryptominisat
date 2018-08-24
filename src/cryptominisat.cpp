@@ -892,6 +892,32 @@ DLL_PUBLIC const char* SATSolver::get_compilation_env()
     return Solver::get_compilation_env();
 }
 
+std::string SATSolver::get_text_version_info()
+{
+    std::stringstream ss;
+    ss << "c CryptoMiniSat version " << get_version() << endl;
+    ss << "c CMS Copyright Mate Soos (soos.mate@gmail.com)" << endl;
+    ss << "c CMS SHA revision " << get_version_sha1() << endl;
+    #ifdef USE_M4RI
+    ss << "c CMS is GPL licensed due to M4RI being linked. Build without M4RI to get MIT version" << endl;
+    #else
+    ss << "c CMS is MIT licensed" << endl;
+    #endif
+
+    #ifdef USE_GAUSS
+    ss << "c Using code from 'When Boolean Satisfiability Meets Gauss-E. in a Simplex Way'" << endl;
+    ss << "c       by C.-S. Han and J.-H. Roland Jiang in CAV 2012. Fixes by M. Soos" << endl;
+    #endif
+    ss << "c CMS compilation env " << get_compilation_env() << endl;
+    #ifdef __GNUC__
+    ss << "c CMS compiled with gcc version " << __VERSION__ << endl;
+    #else
+    ss << "c CMS compiled with non-gcc compiler" << endl;
+    #endif
+
+    return ss.str();
+}
+
 DLL_PUBLIC void SATSolver::print_stats() const
 {
     double cpu_time;
