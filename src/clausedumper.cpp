@@ -176,8 +176,6 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
 
     *out << "c ---------- clauses in components" << endl;
     dump_component_clauses(out, outer_numbering);
-
-    dump_vars_appearing_inverted(out, outer_numbering);
 }
 
 void ClauseDumper::dump_unit_cls(std::ostream *out, bool outer_numbering)
