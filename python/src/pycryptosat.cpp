@@ -406,7 +406,7 @@ static int add_clauses_array(Solver *self, PyObject *clauses)
     }
     PyObject *py_array_address = PyTuple_GetItem(buffer_info, 0);
     long array_length = PyLong_AsLong(PyTuple_GetItem(buffer_info, 1));
-    if (array_length < 9) {
+    if (array_length < 0) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
         return 0;
     }
