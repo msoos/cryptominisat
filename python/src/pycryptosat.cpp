@@ -334,6 +334,101 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+template <typename T>
+static int _add_clauses_array(Solver *self, size_t array_length, const T *array)
+{
+    if (array_length == 0) {
+        return 1;
+    }
+    if (array[array_length - 1] != 0) {
+        PyErr_SetString(PyExc_ValueError, "last clause not terminated by zero");
+        return 0;
+    }
+    size_t k = 0;
+    long val = 0;
+    std::vector<Lit> lits;
+    for (val = (long) array[k]; k < array_length; val = (long) array[++k]) {
+        if (val == 0) {
+            PyErr_SetString(PyExc_ValueError, "non-zero integer expected");
+            return 0;
+        }
+        lits.clear();
+        for (; k < array_length && val != 0; val = (long) array[++k]) {
+            long var;
+            bool sign;
+            if (val > std::numeric_limits<int>::max()/2
+                || val < std::numeric_limits<int>::min()/2
+            ) {
+                PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
+                return 0;
+            }
+
+            sign = (val < 0);
+            var = std::abs(val) - 1;
+
+            if (var >= self->cmsat->nVars()) {
+                for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
+                    self->cmsat->new_var();
+                }
+            }
+
+            lits.push_back(Lit(var, sign));
+        }
+        self->cmsat->add_clause(lits);
+    }
+    return 1;
+}
+
+static int add_clauses_array(Solver *self, PyObject *clauses)
+{
+    if (
+        !PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) ||
+        !PyObject_HasAttr(clauses, PyUnicode_FromString("typecode"))
+    ) {
+        return -1;
+    }
+    PyObject *buffer_info = PyObject_CallMethod(clauses, "buffer_info", NULL);
+    PyObject *typecode = PyObject_GetAttrString(clauses, "typecode");
+    if (buffer_info == NULL || typecode == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: buffer_info or typecode is NULL");
+        return 0;
+    }
+    PyObject *typecode_bytes = PyUnicode_AsASCIIString(typecode);
+    if (typecode_bytes == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode string is NULL");
+        return 0;
+    }
+    const char *typecode_cstr = PyBytes_AsString(typecode_bytes);
+    if (typecode_cstr == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode string is NULL");
+        return 0;
+    }
+    PyObject *py_array_address = PyTuple_GetItem(buffer_info, 0);
+    long array_length = PyLong_AsLong(PyTuple_GetItem(buffer_info, 1));
+    if (array_length < 9) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
+        return 0;
+    }
+    if (typecode_cstr[1] != '\0') {
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
+        return 0;
+    }
+    switch (typecode_cstr[0]) {
+    case 'i':
+        return _add_clauses_array(
+            self, array_length, (const int *) PyLong_AsVoidPtr(py_array_address));
+    case 'l':
+        return _add_clauses_array(
+            self, array_length, (const long *) PyLong_AsVoidPtr(py_array_address));
+    case 'q':
+        return _add_clauses_array(
+            self, array_length, (const long long *) PyLong_AsVoidPtr(py_array_address));
+    default:
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
+        return 0;
+    }
+}
+
 PyDoc_STRVAR(add_clauses_doc,
 "add_clauses(clauses)\n\
 Add iterable of clauses to the solver.\n\
@@ -350,6 +445,15 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
     PyObject *clauses;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
         return NULL;
+    }
+
+    int add_array_ret = add_clauses_array(self, clauses);
+    if (add_array_ret == 0) {
+        return 0;
+    }
+    if (add_array_ret == 1) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
     PyObject *iterator = PyObject_GetIter(clauses);
