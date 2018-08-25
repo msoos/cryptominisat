@@ -188,7 +188,11 @@ class Solver : public Searcher
         //Attaching-detaching clauses
         void attachClause(
             const Clause& c
+            #ifdef DEBUG_ATTACH
             , const bool checkAttach = true
+            #else
+            , const bool checkAttach = false
+            #endif
         );
         void attach_bin_clause(
             const Lit lit1
