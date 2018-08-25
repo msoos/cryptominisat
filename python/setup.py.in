@@ -131,7 +131,7 @@ modules = dict(
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
     runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
-    libraries = ['libname']
+    libraries = [libname]
 )
 
 setup(
