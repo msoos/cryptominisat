@@ -354,8 +354,8 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|l", kwlist, &clauses, &max_var)) {
         return NULL;
     }
-    if (max_var >= (long int)self->cmsat->nVars()) {
-        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+    if (max_var > (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
     }
 
     PyObject *iterator = PyObject_GetIter(clauses);
