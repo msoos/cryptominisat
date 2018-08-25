@@ -651,7 +651,8 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     #endif //VERBOSE_DEBUG
     const size_t origTrailSize = trail.size();
 
-    vector<Lit> ps = lits;
+    add_clause_int_tmp_cl = lits;
+    vector<Lit>& ps = add_clause_int_tmp_cl;
 
     if (!addClauseHelper(ps)) {
         return false;
