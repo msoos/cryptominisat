@@ -320,7 +320,7 @@ bool Solver::sort_and_clean_clause(
         } else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (varData[p.var()].removed != Removed::none) {
+            if (!fresh_solver && varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: clause " << origCl << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
@@ -328,11 +328,11 @@ bool Solver::sort_and_clean_clause(
                 << varReplacer->get_var_replaced_with(p)
                 << ")"
                 << endl;
-            }
 
-            //Variables that have been eliminated cannot be added internally
-            //as part of a clause. That's a bug
-            assert(varData[p.var()].removed == Removed::none);
+                //Variables that have been eliminated cannot be added internally
+                //as part of a clause. That's a bug
+                assert(varData[p.var()].removed == Removed::none);
+            }
         }
     }
     ps.resize(ps.size() - (i - j));
