@@ -369,7 +369,8 @@ Clause* Solver::add_clause_int(
         std::min<uint64_t>(Searcher::sumConflicts, cl_stats.introduced_at_conflict);
     #endif
 
-    vector<Lit> ps = lits;
+    add_clause_int_tmp_cl = lits;
+    vector<Lit>& ps = add_clause_int_tmp_cl;
     if (!sort_and_clean_clause(ps, lits, red)) {
         if (finalLits) {
             finalLits->clear();
