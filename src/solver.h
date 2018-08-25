@@ -296,7 +296,7 @@ class Solver : public Searcher
             back_number_from_outside_to_outer_tmp.clear();
             for (const Lit lit: lits) {
                 assert(lit.var() < nVarsOutside());
-                if (!fresh_solver) {
+                if (get_num_bva_vars() > 0 || !fresh_solver) {
                     back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
                     assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
                 } else {
