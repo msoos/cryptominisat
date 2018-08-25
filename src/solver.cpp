@@ -637,12 +637,6 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::addClause(const vector<Lit>& lits, bool red)
 {
-    vector<Lit> ps = lits;
-    return addClauseInt(ps, red);
-}
-
-bool Solver::addClauseInt(vector<Lit>& ps, bool red)
-{
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
         std::cerr
         << "ERROR: Cannot add new clauses to the system if blocking was"
@@ -652,9 +646,11 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Adding clause " << ps << endl;
+    cout << "Adding clause " << lits << endl;
     #endif //VERBOSE_DEBUG
     const size_t origTrailSize = trail.size();
+
+    vector<Lit> ps = lits;
 
     if (!addClauseHelper(ps)) {
         return false;
@@ -2957,7 +2953,7 @@ bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
     }
     check_too_large_variable_number(lits);
     back_number_from_outside_to_outer(lits);
-    return addClauseInt(back_number_from_outside_to_outer_tmp, red);
+    return addClause(back_number_from_outside_to_outer_tmp, red);
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
