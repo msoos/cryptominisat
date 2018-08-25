@@ -296,8 +296,12 @@ class Solver : public Searcher
             back_number_from_outside_to_outer_tmp.clear();
             for (const Lit lit: lits) {
                 assert(lit.var() < nVarsOutside());
-                back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
-                assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
+                if (!fresh_solver) {
+                    back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
+                    assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
+                } else {
+                    back_number_from_outside_to_outer_tmp.push_back(lit);
+                }
             }
         }
         void check_switchoff_limits_newvar(size_t n = 1);
