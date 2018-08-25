@@ -2953,7 +2953,9 @@ bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
     if (!ok) {
         return false;
     }
+    #ifdef SLOW_DEBUG //we check for this during back-numbering
     check_too_large_variable_number(lits);
+    #endif
     back_number_from_outside_to_outer(lits);
     return addClause(back_number_from_outside_to_outer_tmp, red);
 }
@@ -2968,7 +2970,9 @@ bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
     for(size_t i = 0; i < vars.size(); i++) {
         lits[i] = Lit(vars[i], false);
     }
+    #ifdef SLOW_DEBUG //we check for this during back-numbering
     check_too_large_variable_number(lits);
+    #endif
 
     back_number_from_outside_to_outer(lits);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
