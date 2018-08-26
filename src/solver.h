@@ -387,6 +387,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
+        bool addClauseInt(vector<Lit>& ps, const bool red = false);
 
         /////////////////
         // Debug
