@@ -267,7 +267,6 @@ class Solver : public Searcher
         #endif
 
         vector<Lit> add_clause_int_tmp_cl;
-        vector<Lit> addClause_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
         void check_reconfigure();
@@ -388,6 +387,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
+        bool addClauseInt(vector<Lit>& ps, const bool red = false);
 
         /////////////////
         // Debug
