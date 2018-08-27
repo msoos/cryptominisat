@@ -336,13 +336,143 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
+template <typename T>
+static int _add_clauses_from_array(Solver *self, size_t array_length, const T *array)
+{
+    if (array_length == 0) {
+        return 1;
+    }
+    if (array[array_length - 1] != 0) {
+        PyErr_SetString(PyExc_ValueError, "last clause not terminated by zero");
+        return 0;
+    }
+    size_t k = 0;
+    long val = 0;
+    std::vector<Lit>& lits = self->tmp_cl_lits;
+    for (val = (long) array[k]; k < array_length; val = (long) array[++k]) {
+        lits.clear();
+        long int max_var = 0;
+        for (; k < array_length && val != 0; val = (long) array[++k]) {
+            long var;
+            bool sign;
+            if (val > std::numeric_limits<int>::max()/2
+                || val < std::numeric_limits<int>::min()/2
+            ) {
+                PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
+                return 0;
+            }
+
+            sign = (val < 0);
+            var = std::abs(val) - 1;
+            max_var = std::max(var, max_var);
+
+            lits.push_back(Lit(var, sign));
+        }
+        if (!lits.empty()) {
+            if (max_var >= (long int)self->cmsat->nVars()) {
+                self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+            }
+            self->cmsat->add_clause(lits);
+        }
+    }
+    return 1;
+}
+
+static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const char typecode) {
+    PyObject *py_array_length = PyTuple_GetItem(buffer_info, 1);
+    if (py_array_length == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
+        return 0;
+    }
+    long array_length = PyLong_AsLong(py_array_length);
+    if (array_length < 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
+        return 0;
+    }
+    PyObject *py_array_address = PyTuple_GetItem(buffer_info, 0);
+    if (py_array_address == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
+        return 0;
+    }
+    const void *array_address = PyLong_AsVoidPtr(py_array_address);
+    if (py_array_address == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
+        return 0;
+    }
+    switch (typecode) {
+    case 'i':
+        return _add_clauses_from_array(self, array_length, (const int *) array_address);
+    case 'l':
+        return _add_clauses_from_array(self, array_length, (const long *) array_address);
+    case 'q':
+        return _add_clauses_from_array(self, array_length, (const long long *) array_address);
+    default:
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
+        return 0;
+    }
+}
+
+static int _get_array_typecode(PyObject *clauses, char &typecode) {
+    PyObject *py_typecode = PyObject_GetAttrString(clauses, "typecode");
+    if (py_typecode == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode is NULL");
+        return 0;
+    }
+    PyObject *typecode_bytes = PyUnicode_AsASCIIString(py_typecode);
+    if (typecode_bytes == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode bytes");
+        return 0;
+    }
+    const char *typecode_cstr = PyBytes_AsString(typecode_bytes);
+    if (typecode_cstr == NULL) {
+        Py_DECREF(typecode_bytes);
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode cstring");
+        return 0;
+    }
+    if (typecode_cstr[0] == '\0' || typecode_cstr[1] != '\0') {
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
+        Py_DECREF(typecode_bytes);
+        Py_DECREF(py_typecode);
+        return 0;
+    }
+    typecode = typecode_cstr[0];
+    Py_DECREF(typecode_bytes);
+    Py_DECREF(py_typecode);
+    return 1;
+}
+
+static int add_clauses_array(Solver *self, PyObject *clauses)
+{
+    // return -1 if this is no array.array, 0 if an error occured, 1 if successful
+    if (
+        !PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) ||
+        !PyObject_HasAttr(clauses, PyUnicode_FromString("typecode"))
+    ) {
+        return -1;
+    }
+    char typecode;
+    if (_get_array_typecode(clauses, typecode) == 0) {
+        return 0;
+    }
+    PyObject *buffer_info = PyObject_CallMethod(clauses, "buffer_info", NULL);
+    if (buffer_info == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: buffer_info is NULL");
+        return 0;
+    }
+    int ret = _add_clauses_from_buffer_info(self, buffer_info, typecode);
+    Py_DECREF(buffer_info);
+    return ret;
+}
+
 PyDoc_STRVAR(add_clauses_doc,
 "add_clauses(clauses)\n\
 Add iterable of clauses to the solver.\n\
 \n\
 :param arg1: List of clauses. Each clause contains literals (ints)\n\
+    Alternatively, this can be a flat array.array (typecode 'i', 'l', or 'q')\n\
+    of zero separated and terminated clauses of literals (ints).\n\
 :return: None\n\
-:type arg1: <list>\n\
+:type arg1: <list> or <array.array>\n\
 :rtype: <None>"
 );
 
@@ -356,6 +486,15 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
     }
     if (max_var > (long int)self->cmsat->nVars()) {
         self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
+    }
+
+    int add_clauses_array_ret = add_clauses_array(self, clauses);
+    if (add_clauses_array_ret == 0) {
+        return 0;
+    }
+    if (add_clauses_array_ret == 1) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
     PyObject *iterator = PyObject_GetIter(clauses);
