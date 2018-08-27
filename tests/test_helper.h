@@ -603,6 +603,11 @@ cnfdata cnf_file_read(std::string fname)
     while (std::getline(file, str))
     {
         if (str.find("cnf") != string::npos) {
+            str.erase(0,5);
+            vector<string> s = split(rtrim(ltrim(str)), ' ');
+            assert(s.size() == 2);
+            cnfdat.num_vars_per_header = std::stoi(s[0]);
+            cnfdat.num_cls_per_header = std::stoi(s[1]);
             continue;
         }
 

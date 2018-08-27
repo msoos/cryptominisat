@@ -202,7 +202,9 @@ uint32_t OccSimplifier::dump_blocked_clauses(std::ostream* outfile) const
                     << l << " ";
                 }
             }
-            num_cls++;
+            if (l == lit_Undef) {
+                num_cls++;
+            }
         }
     }
     return num_cls;

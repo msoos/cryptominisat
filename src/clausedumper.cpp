@@ -174,7 +174,7 @@ void ClauseDumper::dump_irred_cls(std::ostream *out, bool outer_numbering)
     num_cls += dump_component_clauses(NULL, outer_numbering);
 
     *out
-    << "p cnf " << solver->nVars()
+    << "p cnf " << solver->nVarsOutside()
     << " " << num_cls << "\n";
 
     dump_irred_cls_for_preprocessor(out, outer_numbering);

@@ -44,6 +44,8 @@ struct dump : public ::testing::Test {
     void read_dat() {
         s.open_file_and_dump_irred_clauses(fname);
         dat = cnf_file_read(fname);
+        EXPECT_GE(dat.num_vars_per_header, dat.num_vars);
+        EXPECT_EQ(dat.cls.size(), dat.num_cls_per_header);
     }
 
     SATSolver s;
