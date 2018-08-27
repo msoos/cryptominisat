@@ -27,6 +27,7 @@ import unittest
 
 
 import pycryptosat
+import array
 from pycryptosat import Solver
 
 
@@ -193,6 +194,27 @@ class TestSolve(unittest.TestCase):
         res, solution = self.solver.solve()
         self.assertEqual(res, True)
         self.assertTrue(check_solution(clauses1, solution))
+
+    def test_add_clauses(self):
+        self.solver.add_clauses([1], [-1])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, False)
+
+    def test_add_clauses_wrong_zero(self):
+        self.assertRaises(TypeError, self.solver.add_clause, [[1, 0], [-1]])
+        res, solution = self.solver.solve()
+        self.assertEqual(res, False)
+
+    def test_add_clauses_array1(self):
+        cls = array.array('i',[1,2,0, 1, 2, 0])
+        self.solver.add_clauses(cls)
+        res, solution = self.solver.solve()
+        self.assertEqual(res, False)
+
+    def test_add_clauses_array_unterminated(self):
+        cls = array.array('i', [1,2,0, 1, 2])
+        #self.assertRaises(ValueError, self.solver.add_clause, b)
+        self.assertRaises(TypeError, self.solver.add_clause, b)
 
     def test_bad_iter(self):
         class Liar:
