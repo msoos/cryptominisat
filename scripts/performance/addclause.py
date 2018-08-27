@@ -63,7 +63,7 @@ if __name__ == "__main__":
             continue
 
         my_type_list = ("list", clause_list), ("array", clause_array)
-        my_type_list = ("list", clause_list), (None, None)
+        #my_type_list = ("list", clause_list), (None, None)
         for clauses_type, clauses in (my_type_list):
             if clauses is None:
                 continue
