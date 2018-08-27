@@ -107,7 +107,7 @@ class TestCommand(Command):
         print("our sys.path is", sys.path)
 
         import tests as tp
-        tp.run()
+        return tp.run()
 
 
 __version__ = '@PROJECT_VERSION@'

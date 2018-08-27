@@ -250,7 +250,19 @@ def run():
     suite.addTest(unittest.makeSuite(TestDump))
 
     runner = unittest.TextTestRunner(verbosity=2)
-    return runner.run(suite)
+    result = runner.run(suite)
+
+    n_errors = len(result.errors)
+    n_failures = len(result.failures)
+
+    if n_errors or n_failures:
+        print('\n\nSummary: %d errors and %d failures reported\n'%\
+            (n_errors, n_failures))
+
+    print()
+
+    sys.exit(n_errors+n_failures)
+
 
 if __name__ == '__main__':
     run()
