@@ -150,6 +150,10 @@ class TestDump(unittest.TestCase):
     def setUp(self):
         self.solver = Solver()
 
+    def test_max_glue_missing(self):
+        self.assertRaises(TypeError,
+                          self.solver.start_getting_small_clauses, 4)
+
     def test_one_dump(self):
         with open("tests/test.cnf", "r") as x:
             for line in x:
@@ -163,7 +167,7 @@ class TestDump(unittest.TestCase):
         res, _ = self.solver.solve()
         self.assertEqual(res, True)
 
-        self.solver.start_getting_small_clauses(4)
+        self.solver.start_getting_small_clauses(4, max_glue=10)
         x = self.solver.get_next_small_clause()
         self.assertNotEquals(x, None)
         self.solver.end_getting_small_clauses()
@@ -196,25 +200,28 @@ class TestSolve(unittest.TestCase):
         self.assertTrue(check_solution(clauses1, solution))
 
     def test_add_clauses(self):
-        self.solver.add_clauses([1], [-1])
+        self.solver.add_clauses([[1], [-1]])
         res, solution = self.solver.solve()
         self.assertEqual(res, False)
 
     def test_add_clauses_wrong_zero(self):
         self.assertRaises(TypeError, self.solver.add_clause, [[1, 0], [-1]])
-        res, solution = self.solver.solve()
-        self.assertEqual(res, False)
 
-    def test_add_clauses_array1(self):
-        cls = array.array('i',[1,2,0, 1, 2, 0])
+    def test_add_clauses_array_SAT(self):
+        cls = array.array('i', [1, 2, 0, 1, 2, 0])
+        self.solver.add_clauses(cls)
+        res, solution = self.solver.solve()
+        self.assertEqual(res, True)
+
+    def test_add_clauses_array_UNSAT(self):
+        cls = array.array('i', [-1, 0, 1, 0])
         self.solver.add_clauses(cls)
         res, solution = self.solver.solve()
         self.assertEqual(res, False)
 
     def test_add_clauses_array_unterminated(self):
-        cls = array.array('i', [1,2,0, 1, 2])
-        #self.assertRaises(ValueError, self.solver.add_clause, b)
-        self.assertRaises(TypeError, self.solver.add_clause, b)
+        cls = array.array('i', [1, 2, 0, 1, 2])
+        self.assertRaises(ValueError, self.solver.add_clause, cls)
 
     def test_bad_iter(self):
         class Liar:
