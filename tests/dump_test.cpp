@@ -105,6 +105,20 @@ TEST_F(dump, longcls)
     EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("1,2,3")));
 }
 
+TEST_F(dump, longcls_beforesimplify)
+{
+    s.new_vars(4);
+    s.add_clause(str_to_cl("1, 2, 3, 4"));
+    s.add_clause(str_to_cl("-4"));
+
+
+    read_dat();
+    EXPECT_EQ(dat.num_vars, 4);
+    EXPECT_EQ(dat.cls.size(), 2);
+    EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("-4")));
+    EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("1,2,3,4")));
+}
+
 TEST_F(dump, eqcls)
 {
     s.new_vars(4);
