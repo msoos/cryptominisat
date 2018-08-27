@@ -48,7 +48,7 @@ def ps_solve(iter_sol):
 
 
 if __name__ == "__main__":
-    n = 550000
+    n = 550*1000
     clause_list = list(chain.from_iterable(
         [(-x, x + n, x + int(n/2)), (-x, x + n, x + int(n/2))] for x in range(1, n+1)
     ))
