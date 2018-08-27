@@ -602,6 +602,7 @@ cnfdata cnf_file_read(std::string fname)
     vector<Lit> cl;
     while (std::getline(file, str))
     {
+        //cout << "CNF LINE: " << str << endl;
         if (str.find("cnf") != string::npos) {
             str.erase(0,5);
             vector<string> s = split(rtrim(ltrim(str)), ' ');
