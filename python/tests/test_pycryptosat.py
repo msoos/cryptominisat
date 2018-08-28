@@ -22,13 +22,17 @@
 
 from __future__ import unicode_literals
 from __future__ import print_function
+from array import array as _array
 import sys
 import unittest
 
 
 import pycryptosat
-import array
 from pycryptosat import Solver
+
+
+def array(typecode, initializer=()):
+    return _array(str(typecode), initializer)
 
 
 def check_clause(clause, solution):
@@ -208,19 +212,19 @@ class TestSolve(unittest.TestCase):
         self.assertRaises(TypeError, self.solver.add_clause, [[1, 0], [-1]])
 
     def test_add_clauses_array_SAT(self):
-        cls = array.array('i', [1, 2, 0, 1, 2, 0])
+        cls = array('i', [1, 2, 0, 1, 2, 0])
         self.solver.add_clauses(cls)
         res, solution = self.solver.solve()
         self.assertEqual(res, True)
 
     def test_add_clauses_array_UNSAT(self):
-        cls = array.array('i', [-1, 0, 1, 0])
+        cls = array('i', [-1, 0, 1, 0])
         self.solver.add_clauses(cls)
         res, solution = self.solver.solve()
         self.assertEqual(res, False)
 
     def test_add_clauses_array_unterminated(self):
-        cls = array.array('i', [1, 2, 0, 1, 2])
+        cls = array('i', [1, 2, 0, 1, 2])
         self.assertRaises(ValueError, self.solver.add_clause, cls)
 
     def test_bad_iter(self):
