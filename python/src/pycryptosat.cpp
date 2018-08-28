@@ -337,7 +337,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 }
 
 template <typename T>
-static int _add_clauses_from_array(Solver *self, size_t array_length, const T *array)
+static int _add_clauses_from_array(Solver *self, const size_t array_length, const T *array)
 {
     if (array_length == 0) {
         return 1;
@@ -378,7 +378,8 @@ static int _add_clauses_from_array(Solver *self, size_t array_length, const T *a
     return 1;
 }
 
-static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const char typecode) {
+static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const size_t itemsize)
+{
     PyObject *py_array_length = PyTuple_GetItem(buffer_info, 1);
     if (py_array_length == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
@@ -399,20 +400,21 @@ static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, co
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
         return 0;
     }
-    switch (typecode) {
-    case 'i':
+    if (itemsize == sizeof(int)) {
         return _add_clauses_from_array(self, array_length, (const int *) array_address);
-    case 'l':
-        return _add_clauses_from_array(self, array_length, (const long *) array_address);
-    case 'q':
-        return _add_clauses_from_array(self, array_length, (const long long *) array_address);
-    default:
-        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
-        return 0;
     }
+    if (itemsize == sizeof(long)) {
+        return _add_clauses_from_array(self, array_length, (const long *) array_address);
+    }
+    if (itemsize == sizeof(long long)) {
+        return _add_clauses_from_array(self, array_length, (const long long *) array_address);
+    }
+    PyErr_Format(PyExc_ValueError, "invalid clause array: invalid itemsize '%ld'", itemsize);
+    return 0;
 }
 
-static int _get_array_typecode(PyObject *clauses, char &typecode) {
+static int _check_array_typecode(PyObject *clauses)
+{
     PyObject *py_typecode = PyObject_GetAttrString(clauses, "typecode");
     if (py_typecode == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode is NULL");
@@ -429,29 +431,36 @@ static int _get_array_typecode(PyObject *clauses, char &typecode) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode cstring");
         return 0;
     }
-    if (typecode_cstr[0] == '\0' || typecode_cstr[1] != '\0') {
+    const char typecode = typecode_cstr[0];
+    if (typecode == '\0' || typecode_cstr[1] != '\0') {
         PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
         Py_DECREF(typecode_bytes);
         Py_DECREF(py_typecode);
         return 0;
     }
-    typecode = typecode_cstr[0];
     Py_DECREF(typecode_bytes);
     Py_DECREF(py_typecode);
+    if (typecode != 'i' && typecode != 'l' && typecode != 'q') {
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
+        return 0;
+    }
     return 1;
 }
 
 static int add_clauses_array(Solver *self, PyObject *clauses)
 {
-    // return -1 if this is no array.array, 0 if an error occured, 1 if successful
-    if (
-        !PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) ||
-        !PyObject_HasAttr(clauses, PyUnicode_FromString("typecode"))
-    ) {
-        return -1;
+    if (_check_array_typecode(clauses) == 0) {
+        return 0;
     }
-    char typecode;
-    if (_get_array_typecode(clauses, typecode) == 0) {
+    PyObject *py_itemsize = PyObject_GetAttrString(clauses, "itemsize");
+    if (py_itemsize == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: itemsize is NULL");
+        return 0;
+    }
+    const long itemsize = PyLong_AsLong(py_itemsize);
+    Py_DECREF(py_itemsize);
+    if (itemsize < 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get itemsize");
         return 0;
     }
     PyObject *buffer_info = PyObject_CallMethod(clauses, "buffer_info", NULL);
@@ -459,7 +468,7 @@ static int add_clauses_array(Solver *self, PyObject *clauses)
         PyErr_SetString(PyExc_ValueError, "invalid clause array: buffer_info is NULL");
         return 0;
     }
-    int ret = _add_clauses_from_buffer_info(self, buffer_info, typecode);
+    int ret = _add_clauses_from_buffer_info(self, buffer_info, itemsize);
     Py_DECREF(buffer_info);
     return ret;
 }
@@ -488,11 +497,15 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
         self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
     }
 
-    int add_clauses_array_ret = add_clauses_array(self, clauses);
-    if (add_clauses_array_ret == 0) {
-        return 0;
-    }
-    if (add_clauses_array_ret == 1) {
+    if (
+        PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("typecode")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("itemsize"))
+    ) {
+        int ret = add_clauses_array(self, clauses);
+        if (ret == 0 || PyErr_Occurred()) {
+            return 0;
+        }
         Py_INCREF(Py_None);
         return Py_None;
     }
