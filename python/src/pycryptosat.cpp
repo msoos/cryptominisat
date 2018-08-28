@@ -337,7 +337,7 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
 }
 
 template <typename T>
-static int _add_clauses_from_array(Solver *self, size_t array_length, const T *array)
+static int _add_clauses_from_array(Solver *self, const size_t array_length, const T *array)
 {
     if (array_length == 0) {
         return 1;
@@ -378,7 +378,8 @@ static int _add_clauses_from_array(Solver *self, size_t array_length, const T *a
     return 1;
 }
 
-static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const size_t itemsize) {
+static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const size_t itemsize)
+{
     PyObject *py_array_length = PyTuple_GetItem(buffer_info, 1);
     if (py_array_length == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
@@ -412,50 +413,43 @@ static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, co
     return 0;
 }
 
-static bool _check_array_typecode(PyObject *clauses) {
+static int _check_array_typecode(PyObject *clauses)
+{
     PyObject *py_typecode = PyObject_GetAttrString(clauses, "typecode");
     if (py_typecode == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode is NULL");
-        return false;
+        return 0;
     }
     PyObject *typecode_bytes = PyUnicode_AsASCIIString(py_typecode);
     if (typecode_bytes == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode bytes");
-        return false;
+        return 0;
     }
     const char *typecode_cstr = PyBytes_AsString(typecode_bytes);
     if (typecode_cstr == NULL) {
         Py_DECREF(typecode_bytes);
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode cstring");
-        return false;
+        return 0;
     }
     const char typecode = typecode_cstr[0];
     if (typecode == '\0' || typecode_cstr[1] != '\0') {
         PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
         Py_DECREF(typecode_bytes);
         Py_DECREF(py_typecode);
-        return false;
+        return 0;
     }
     Py_DECREF(typecode_bytes);
     Py_DECREF(py_typecode);
     if (typecode != 'i' && typecode != 'l' && typecode != 'q') {
         PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
-        return false;
+        return 0;
     }
-    return true;
+    return 1;
 }
 
 static int add_clauses_array(Solver *self, PyObject *clauses)
 {
-    // return -1 if this is no array.array, 0 if an error occured, 1 if successful
-    if (
-        !PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) ||
-        !PyObject_HasAttr(clauses, PyUnicode_FromString("typecode")) ||
-        !PyObject_HasAttr(clauses, PyUnicode_FromString("itemsize"))
-    ) {
-        return -1;
-    }
-    if (!_check_array_typecode(clauses)) {
+    if (_check_array_typecode(clauses) == 0) {
         return 0;
     }
     PyObject *py_itemsize = PyObject_GetAttrString(clauses, "itemsize");
@@ -463,7 +457,7 @@ static int add_clauses_array(Solver *self, PyObject *clauses)
         PyErr_SetString(PyExc_ValueError, "invalid clause array: itemsize is NULL");
         return 0;
     }
-    long itemsize = PyLong_AsLong(py_itemsize);
+    const long itemsize = PyLong_AsLong(py_itemsize);
     Py_DECREF(py_itemsize);
     if (itemsize < 0) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get itemsize");
@@ -503,11 +497,15 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
         self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
     }
 
-    int add_clauses_array_ret = add_clauses_array(self, clauses);
-    if (add_clauses_array_ret == 0) {
-        return 0;
-    }
-    if (add_clauses_array_ret == 1) {
+    if (
+        PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("typecode")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("itemsize"))
+    ) {
+        int ret = add_clauses_array(self, clauses);
+        if (ret == 0 || PyErr_Occurred()) {
+            return 0;
+        }
         Py_INCREF(Py_None);
         return Py_None;
     }
