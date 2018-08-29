@@ -420,11 +420,16 @@ static int _check_array_typecode(PyObject *clauses)
         PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode is NULL");
         return 0;
     }
+#ifdef IS_PY3K
     PyObject *typecode_bytes = PyUnicode_AsASCIIString(py_typecode);
+    Py_DECREF(py_typecode);
     if (typecode_bytes == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode bytes");
         return 0;
     }
+#else
+    PyObject *typecode_bytes = py_typecode;
+#endif
     const char *typecode_cstr = PyBytes_AsString(typecode_bytes);
     if (typecode_cstr == NULL) {
         Py_DECREF(typecode_bytes);
@@ -435,11 +440,9 @@ static int _check_array_typecode(PyObject *clauses)
     if (typecode == '\0' || typecode_cstr[1] != '\0') {
         PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
         Py_DECREF(typecode_bytes);
-        Py_DECREF(py_typecode);
         return 0;
     }
     Py_DECREF(typecode_bytes);
-    Py_DECREF(py_typecode);
     if (typecode != 'i' && typecode != 'l' && typecode != 'q') {
         PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
         return 0;
