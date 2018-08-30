@@ -661,14 +661,19 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
         return false;
     }
 
-    finalCl_tmp.clear();
     std::sort(ps.begin(), ps.end());
-    Clause* cl = add_clause_int(
+
+    vector<Lit> *pFinalCl = NULL;
+    if (drat->enabled() || conf.simulate_drat) {
+        finalCl_tmp.clear();
+        pFinalCl = &finalCl_tmp;
+    }
+    Clause *cl = add_clause_int(
         ps
         , red
         , ClauseStats() //default stats
         , true //yes, attach
-        , &finalCl_tmp
+        , pFinalCl
         , false //add drat?
     );
 
