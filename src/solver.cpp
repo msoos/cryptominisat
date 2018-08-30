@@ -300,8 +300,11 @@ bool Solver::sort_and_clean_clause(
     vector<Lit>& ps
     , const vector<Lit>& origCl
     , const bool red
+    , const bool sorted
 ) {
-    std::sort(ps.begin(), ps.end());
+    if (!sorted) {
+        std::sort(ps.begin(), ps.end());
+    }
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
@@ -355,6 +358,7 @@ Clause* Solver::add_clause_int(
     , vector<Lit>* finalLits
     , bool addDrat
     , const Lit drat_first
+    , const bool sorted
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -371,7 +375,7 @@ Clause* Solver::add_clause_int(
 
     add_clause_int_tmp_cl = lits;
     vector<Lit>& ps = add_clause_int_tmp_cl;
-    if (!sort_and_clean_clause(ps, lits, red)) {
+    if (!sort_and_clean_clause(ps, lits, red, sorted)) {
         if (finalLits) {
             finalLits->clear();
         }
@@ -661,15 +665,22 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
         return false;
     }
 
-    finalCl_tmp.clear();
     std::sort(ps.begin(), ps.end());
-    Clause* cl = add_clause_int(
+
+    vector<Lit> *pFinalCl = NULL;
+    if (drat->enabled() || conf.simulate_drat) {
+        finalCl_tmp.clear();
+        pFinalCl = &finalCl_tmp;
+    }
+    Clause *cl = add_clause_int(
         ps
         , red
         , ClauseStats() //default stats
         , true //yes, attach
-        , &finalCl_tmp
+        , pFinalCl
         , false //add drat?
+        , lit_Undef
+        , true
     );
 
     //Drat -- We manipulated the clause, delete
