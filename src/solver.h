@@ -231,6 +231,7 @@ class Solver : public Searcher
             , vector<Lit>* finalLits = NULL
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
+            , const bool sorted = false
         );
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
@@ -275,7 +276,12 @@ class Solver : public Searcher
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;
-        bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl, const bool red);
+        bool sort_and_clean_clause(
+            vector<Lit>& ps
+            , const vector<Lit>& origCl
+            , const bool red
+            , const bool sorted = false
+        );
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 
