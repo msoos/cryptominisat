@@ -489,6 +489,10 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
     Solver& s = *data->solvers[i];
     if (max_time >= 0) {
       s.conf.maxTime = s.get_stats().cpu_time + max_time;
+
+      //don't allow for overflow
+      if (s.conf.maxTime < max_time)
+          s.conf.maxTime = max_time;
     }
   }
 }
@@ -499,6 +503,10 @@ DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
     Solver& s = *data->solvers[i];
     if (max_confl >= 0) {
       s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+
+      //don't allow for overflow
+      if (s.conf.max_confl < max_confl)
+          s.conf.max_confl = max_confl;
     }
   }
 }
