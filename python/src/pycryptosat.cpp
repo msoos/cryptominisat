@@ -308,6 +308,17 @@ static PyObject* end_getting_small_clauses(Solver *self, PyObject *args, PyObjec
     return Py_None;
 }
 
+static int _add_clause(Solver *self, PyObject *clause)
+{
+    self->tmp_cl_lits.clear();
+    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
+        return 0;
+    }
+    self->cmsat->add_clause(self->tmp_cl_lits);
+
+    return 1;
+}
+
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
@@ -326,11 +337,9 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    self->tmp_cl_lits.clear();
-    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
-        return 0;
+    if (_add_clause(self, clause) == 0 ) {
+        return NULL;
     }
-    self->cmsat->add_clause(self->tmp_cl_lits);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -521,14 +530,8 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 
     PyObject *clause;
     while ((clause = PyIter_Next(iterator)) != NULL) {
-        PyObject *arglist = Py_BuildValue("(O)", clause);
-        PyObject *ret = add_clause(self, arglist, NULL);
-        if (ret) {
-            Py_DECREF(ret);
-        }
-
+        _add_clause(self, clause);
         /* release reference when done */
-        Py_DECREF(arglist);
         Py_DECREF(clause);
     }
 
