@@ -659,6 +659,7 @@ class Tester:
             fuzzer_call_failed(fname)
 
         if not self.drat and not self.only_indep and not self.dump_red:
+            print("->Multipart test")
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest")
             seed_for_inters = random.randint(0, 1000000)

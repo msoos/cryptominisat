@@ -133,6 +133,8 @@ namespace CMSat {
         void print_stats() const; //print solving stats. Call after solve()/simplify()
         void set_drat(std::ostream* os, bool set_ID); //set drat to ostream, e.g. stdout or a file
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
+        void dump_irred_clauses(std::ostream *out) const; //dump irredundant clauses to this stream when solving finishes
+        void dump_red_clauses(std::ostream *out) const; //dump redundant ("learnt") clauses to this stream when solving finishes
         void open_file_and_dump_irred_clauses(std::string fname) const; //dump irredundant clauses to this file when solving finishes
         void open_file_and_dump_red_clauses(std::string fname) const; //dump redundant ("learnt") clauses to this file when solving finishes
         void add_in_partial_solving_stats(); //used only by Ctrl+C handler. Ignore.

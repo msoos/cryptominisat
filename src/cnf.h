@@ -112,6 +112,9 @@ public:
     //Clauses
     vector<ClOffset> longIrredCls;
 
+    //if the solver object only saw add_clause and new_var(s)
+    bool fresh_solver = true;
+
     /**
     level 0 = never remove
     level 1 = check rarely

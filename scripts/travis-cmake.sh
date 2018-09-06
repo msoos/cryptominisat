@@ -342,8 +342,8 @@ print(sys.path)
     ${MYPYTHON} check_path.py
 
     (
-    cd pycryptosat/tests/
-    ${MYPYTHON} test_pycryptosat.py
+    cd pycryptosat/
+    ${MYPYTHON} tests/test_pycryptosat.py
     )
 fi
 

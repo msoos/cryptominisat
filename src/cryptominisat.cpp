@@ -489,6 +489,10 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
     Solver& s = *data->solvers[i];
     if (max_time >= 0) {
       s.conf.maxTime = s.get_stats().cpu_time + max_time;
+
+      //don't allow for overflow
+      if (s.conf.maxTime < max_time)
+          s.conf.maxTime = max_time;
     }
   }
 }
@@ -499,6 +503,10 @@ DLL_PUBLIC void SATSolver::set_max_confl(int64_t max_confl)
     Solver& s = *data->solvers[i];
     if (max_confl >= 0) {
       s.conf.max_confl = s.get_stats().conflStats.numConflicts + max_confl;
+
+      //don't allow for overflow
+      if (s.conf.max_confl < max_confl)
+          s.conf.max_confl = max_confl;
     }
   }
 }
@@ -1070,6 +1078,16 @@ DLL_PUBLIC uint64_t SATSolver::get_last_propagations()
 DLL_PUBLIC uint64_t SATSolver::get_last_decisions()
 {
     return get_sum_decisions() - data->previous_sum_decisions;
+}
+
+DLL_PUBLIC void SATSolver::dump_irred_clauses(std::ostream *out) const
+{
+    data->solvers[data->which_solved]->dump_irred_clauses(out);
+}
+
+void DLL_PUBLIC SATSolver::dump_red_clauses(std::ostream *out) const
+{
+    data->solvers[data->which_solved]->dump_red_clauses(out);
 }
 
 DLL_PUBLIC void SATSolver::open_file_and_dump_irred_clauses(std::string fname) const

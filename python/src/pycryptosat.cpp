@@ -76,6 +76,7 @@ typedef struct {
     PyObject_HEAD
     /* Type-specific fields go here. */
     SATSolver* cmsat;
+    std::vector<Lit> tmp_cl_lits;
 } Solver;
 
 static const char solver_create_docstring[] = \
@@ -166,6 +167,7 @@ static int parse_clause(
     }
 
     PyObject *lit;
+    long int max_var = 0;
     while ((lit = PyIter_Next(iterator)) != NULL) {
         long var;
         bool sign;
@@ -175,15 +177,15 @@ static int parse_clause(
             Py_DECREF(iterator);
             return 0;
         }
-
-        if (var >= self->cmsat->nVars()) {
-            for(long i = (long)self->cmsat->nVars(); i <= var ; i++) {
-                self->cmsat->new_var();
-            }
-        }
+        max_var = std::max(var, max_var);
 
         lits.push_back(Lit(var, sign));
     }
+
+    if (!lits.empty() && max_var >= (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+    }
+
     Py_DECREF(iterator);
     if (PyErr_Occurred()) {
         return 0;
@@ -306,6 +308,17 @@ static PyObject* end_getting_small_clauses(Solver *self, PyObject *args, PyObjec
     return Py_None;
 }
 
+static int _add_clause(Solver *self, PyObject *clause)
+{
+    self->tmp_cl_lits.clear();
+    if (!parse_clause(self, clause, self->tmp_cl_lits)) {
+        return 0;
+    }
+    self->cmsat->add_clause(self->tmp_cl_lits);
+
+    return 1;
+}
+
 PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
@@ -324,14 +337,152 @@ static PyObject* add_clause(Solver *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    std::vector<Lit> lits;
-    if (!parse_clause(self, clause, lits)) {
-        return 0;
+    if (_add_clause(self, clause) == 0 ) {
+        return NULL;
     }
-    self->cmsat->add_clause(lits);
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+template <typename T>
+static int _add_clauses_from_array(Solver *self, const size_t array_length, const T *array)
+{
+    if (array_length == 0) {
+        return 1;
+    }
+    if (array[array_length - 1] != 0) {
+        PyErr_SetString(PyExc_ValueError, "last clause not terminated by zero");
+        return 0;
+    }
+    size_t k = 0;
+    long val = 0;
+    std::vector<Lit>& lits = self->tmp_cl_lits;
+    for (val = (long) array[k]; k < array_length; val = (long) array[++k]) {
+        lits.clear();
+        long int max_var = 0;
+        for (; k < array_length && val != 0; val = (long) array[++k]) {
+            long var;
+            bool sign;
+            if (val > std::numeric_limits<int>::max()/2
+                || val < std::numeric_limits<int>::min()/2
+            ) {
+                PyErr_Format(PyExc_ValueError, "integer %ld is too small or too large", val);
+                return 0;
+            }
+
+            sign = (val < 0);
+            var = std::abs(val) - 1;
+            max_var = std::max(var, max_var);
+
+            lits.push_back(Lit(var, sign));
+        }
+        if (!lits.empty()) {
+            if (max_var >= (long int)self->cmsat->nVars()) {
+                self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars()+1);
+            }
+            self->cmsat->add_clause(lits);
+        }
+    }
+    return 1;
+}
+
+static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, const size_t itemsize)
+{
+    PyObject *py_array_length = PyTuple_GetItem(buffer_info, 1);
+    if (py_array_length == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
+        return 0;
+    }
+    long array_length = PyLong_AsLong(py_array_length);
+    if (array_length < 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array length");
+        return 0;
+    }
+    PyObject *py_array_address = PyTuple_GetItem(buffer_info, 0);
+    if (py_array_address == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
+        return 0;
+    }
+    const void *array_address = PyLong_AsVoidPtr(py_array_address);
+    if (py_array_address == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
+        return 0;
+    }
+    if (itemsize == sizeof(int)) {
+        return _add_clauses_from_array(self, array_length, (const int *) array_address);
+    }
+    if (itemsize == sizeof(long)) {
+        return _add_clauses_from_array(self, array_length, (const long *) array_address);
+    }
+    if (itemsize == sizeof(long long)) {
+        return _add_clauses_from_array(self, array_length, (const long long *) array_address);
+    }
+    PyErr_Format(PyExc_ValueError, "invalid clause array: invalid itemsize '%ld'", itemsize);
+    return 0;
+}
+
+static int _check_array_typecode(PyObject *clauses)
+{
+    PyObject *py_typecode = PyObject_GetAttrString(clauses, "typecode");
+    if (py_typecode == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: typecode is NULL");
+        return 0;
+    }
+#ifdef IS_PY3K
+    PyObject *typecode_bytes = PyUnicode_AsASCIIString(py_typecode);
+    Py_DECREF(py_typecode);
+    if (typecode_bytes == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode bytes");
+        return 0;
+    }
+#else
+    PyObject *typecode_bytes = py_typecode;
+#endif
+    const char *typecode_cstr = PyBytes_AsString(typecode_bytes);
+    if (typecode_cstr == NULL) {
+        Py_DECREF(typecode_bytes);
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get typecode cstring");
+        return 0;
+    }
+    const char typecode = typecode_cstr[0];
+    if (typecode == '\0' || typecode_cstr[1] != '\0') {
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%s'", typecode_cstr);
+        Py_DECREF(typecode_bytes);
+        return 0;
+    }
+    Py_DECREF(typecode_bytes);
+    if (typecode != 'i' && typecode != 'l' && typecode != 'q') {
+        PyErr_Format(PyExc_ValueError, "invalid clause array: invalid typecode '%c'", typecode);
+        return 0;
+    }
+    return 1;
+}
+
+static int add_clauses_array(Solver *self, PyObject *clauses)
+{
+    if (_check_array_typecode(clauses) == 0) {
+        return 0;
+    }
+    PyObject *py_itemsize = PyObject_GetAttrString(clauses, "itemsize");
+    if (py_itemsize == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: itemsize is NULL");
+        return 0;
+    }
+    const long itemsize = PyLong_AsLong(py_itemsize);
+    Py_DECREF(py_itemsize);
+    if (itemsize < 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get itemsize");
+        return 0;
+    }
+    PyObject *buffer_info = PyObject_CallMethod(clauses, "buffer_info", NULL);
+    if (buffer_info == NULL) {
+        PyErr_SetString(PyExc_ValueError, "invalid clause array: buffer_info is NULL");
+        return 0;
+    }
+    int ret = _add_clauses_from_buffer_info(self, buffer_info, itemsize);
+    Py_DECREF(buffer_info);
+    return ret;
 }
 
 PyDoc_STRVAR(add_clauses_doc,
@@ -339,17 +490,36 @@ PyDoc_STRVAR(add_clauses_doc,
 Add iterable of clauses to the solver.\n\
 \n\
 :param arg1: List of clauses. Each clause contains literals (ints)\n\
+    Alternatively, this can be a flat array.array (typecode 'i', 'l', or 'q')\n\
+    of zero separated and terminated clauses of literals (ints).\n\
 :return: None\n\
-:type arg1: <list>\n\
+:type arg1: <list> or <array.array>\n\
 :rtype: <None>"
 );
 
 static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"clauses", NULL};
+    static char* kwlist[] = {"clauses", "max_var", NULL};
     PyObject *clauses;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
+    long int max_var = 0;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|l", kwlist, &clauses, &max_var)) {
         return NULL;
+    }
+    if (max_var > (long int)self->cmsat->nVars()) {
+        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
+    }
+
+    if (
+        PyObject_HasAttr(clauses, PyUnicode_FromString("buffer_info")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("typecode")) &&
+        PyObject_HasAttr(clauses, PyUnicode_FromString("itemsize"))
+    ) {
+        int ret = add_clauses_array(self, clauses);
+        if (ret == 0 || PyErr_Occurred()) {
+            return 0;
+        }
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
     PyObject *iterator = PyObject_GetIter(clauses);
@@ -360,12 +530,8 @@ static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 
     PyObject *clause;
     while ((clause = PyIter_Next(iterator)) != NULL) {
-        PyObject *arglist = Py_BuildValue("(O)", clause);
-        PyObject *ret = add_clause(self, arglist, NULL);
-        Py_DECREF(ret);
-
+        _add_clause(self, clause);
         /* release reference when done */
-        Py_DECREF(arglist);
         Py_DECREF(clause);
     }
 
@@ -720,20 +886,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         return 0;
     }
 
-    // Debug
-    // std::cout << "DEBUG :: Solver: Nb max solutions: " << max_nr_of_solutions << std::endl;
-    // std::cout << "DEBUG :: Solver: Raw sols activated: " << ((raw_solutions_activated) ? "True" : "False") << std::endl;
-    // std::cout << "DEBUG :: Solver: Nb literals: " << var_lits.size() << std::endl;
-
-//     for (unsigned long i = 0; i < var_lits.size(); i++) {
-//         std::cout << "real value: " << var_lits[i]
-//                   << "; x: " << var_lits[i].toInt()
-//                   << "; sign: " << var_lits[i].sign()
-//                   << "; var: " << var_lits[i].var()
-//                   //<< "; toInt as long " << PyLong_AsLong(var_lits[i])
-//                   << '\n';
-//     }
-
     PyObject *solutions = PyList_New(0);
     if (solutions == NULL) {
         PyErr_SetString(PyExc_SystemError, "failed to create a list");
@@ -742,7 +894,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
     int current_nr_of_solutions = 0;
     lbool res = l_True;
-    std::vector<Lit>::iterator it;
     PyObject* solution = NULL;
     while((current_nr_of_solutions < max_nr_of_solutions) && (res == l_True)) {
 
@@ -751,10 +902,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
         Py_END_ALLOW_THREADS
 
         current_nr_of_solutions++;
-
-        // std::cout << "DEBUG :: Solver: Solution number: " << current_nr_of_solutions
-        //           << "; Satisfiable: " << ((res == l_True) ? "True" : "False") << std::endl;
-
         if(res == l_True) {
 
             // Memorize the solution
@@ -784,20 +931,8 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Iterate on var_selected (instead of iterate on all vars in solver)
                 for (unsigned long i = 0; i < var_lits.size(); i++) {
-
-                    // If the current variable is > 0 (false)
-                    // PS: internal value of any literal is equal to i;
-                    // human readable value is i+1 (begins with 1 instead of 0)
                     if (var_lits[i].sign() == false) {
-
-                        // The current value of the variable must belong to the solver variables
                         assert(var_lits[i].var() <= (uint32_t)self->cmsat->nVars());
-
-                        // std::cout << "human readable lit: " << var_lits[i] << "; lit sign: " << ((var_lits[i].sign() == 0) ? "false" : "true") << std::endl;
-                        // std::cout << "lit value: " << var_lits[i].var() << "; model status: " << model[var_lits[i].var()] << std::endl;
-
-                        // Get the corresponding variable in the model, whatever its sign
-                        // Add it to the futur banned clause
                         ban_solution.push_back(
                             Lit(var_lits[i].var(), (model[var_lits[i].var()] == l_True) ? true : false)
                         );
@@ -806,11 +941,6 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
 
                 // Ban current solution for the next run
                 self->cmsat->add_clause(ban_solution);
-
-                //for (unsigned long i = 0; i < ban_solution.size(); i++) {
-                //    std::cout << ban_solution[i] << ';';
-                //}
-                //std::cout << std::endl;
             }
         } else if (res == l_False) {
             // std::cout << "DEBUG :: Solver: No more solution" << std::endl;
