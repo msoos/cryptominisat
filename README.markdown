@@ -359,6 +359,50 @@ only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,
 important variables.
 
+Rust usage
+-----
+
+Under the directory `rust/` you will find Rust bindings that you can use as:
+
+```
+extern crate cryptominisat;
+use cryptominisat::*;
+
+fn new_lit(var: u32, neg: bool) -> Lit {
+    Lit::new(var, neg).unwrap()
+}
+
+fn readme_code() {
+    let mut solver = Solver::new();
+    let mut clause = Vec::new();
+
+    solver.set_num_threads(4);
+    solver.new_vars(3);
+
+    clause.push(new_lit(0, false));
+    solver.add_clause(&clause);
+
+    clause.clear();
+    clause.push(new_lit(1, true));
+    solver.add_clause(&clause);
+
+    clause.clear();
+    clause.push(new_lit(0, true));
+    clause.push(new_lit(1, false));
+    clause.push(new_lit(2, false));
+    solver.add_clause(&clause);
+
+    let ret = solver.solve();
+
+    assert!(ret == Lbool::True);
+    assert!(solver.get_model()[0] == Lbool::True);
+    assert!(solver.get_model()[1] == Lbool::False);
+    assert!(solver.get_model()[2] == Lbool::True);
+}
+```
+
+The above solves the same problem as above in Python and C++.
+
 Preprocessor usage
 -----
 
