@@ -223,7 +223,7 @@ You can then use it as:
 >>> s = Solver()
 >>> s.add_clause([1])
 >>> s.add_clause([-2])
->>> s.add_clause([3])
+>>> s.add_xor_clause([3])
 >>> s.add_clause([-1, 2, 3])
 >>> sat, solution = s.solve()
 >>> print sat
