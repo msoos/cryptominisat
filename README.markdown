@@ -359,10 +359,23 @@ only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,
 important variables.
 
-Rust usage
+Rust binding
 -----
 
-Under the directory `rust/` you will find Rust bindings that you can use as:
+To build the Rust binding, download the prerequisites as before, go into the "Rust" subfolder and use cargo:
+
+```
+sudo apt-get install build-essential cmake
+# not required but very useful
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cd rust
+cargo build
+cargo test
+```
+
+Now you can use your Rust bindings as:
 
 ```
 extern crate cryptominisat;
