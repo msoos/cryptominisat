@@ -590,6 +590,26 @@ if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
     message(STATUS "Python 2.7 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
 endif()
 
+
+# -----------------------------------------------------------------------------
+# Look for rust
+# disabled -- not sure how Rust bindings should be built....
+# maybe just use Cargo and don't build the interface from CMake?
+# -----------------------------------------------------------------------------
+# find_package(rustc)
+# find_package(rustdoc)
+# find_package(cargo)
+# if (RUSTC_EXECUTABLE AND CARGO_EXECUTABLE AND RUSTDOC_EXECUTABLE)
+#     #set(BUILD_RUST_INTERFACE)
+#     message(STATUS "RUST -- RUSTC_EXECUTABLE=${RUSTC_EXECUTABLE}")
+#     message(STATUS "RUST -- CARGO_EXECUTABLE=${CARGO_EXECUTABLE}")
+#     message(STATUS "RUST -- RUSTDOC_EXECUTABLE=${RUSTDOC_EXECUTABLE}")
+#
+#     include(Rust)
+#     add_subdirectory(rust rustinterf)
+# endif()
+
+
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)
     set(ONLY_SIMPLE ON)
