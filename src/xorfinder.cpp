@@ -238,8 +238,11 @@ void XorFinder::findXor(vector<Lit>& lits, const ClOffset offset, cl_abst_type a
     }
     findXorMatch(solver->watches[slit], slit);
     findXorMatch(solver->watches[~slit], ~slit);
-    findXorMatch(solver->watches[slit2], slit2);
-    findXorMatch(solver->watches[~slit2], ~slit2);
+
+    if (lits.size() <= solver->conf.maxXorToFindSlow) {
+        findXorMatch(solver->watches[slit2], slit2);
+        findXorMatch(solver->watches[~slit2], ~slit2);
+    }
 
     if (poss_xor.foundAll()) {
         std::sort(lits.begin(), lits.end());
@@ -319,6 +322,14 @@ void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
             //Allow the clause to be smaller or equal in size
             if (cl.size() > poss_xor.getSize()) {
                 //clauses are ordered!!
+                break;
+            }
+
+            //For longer clauses, don't the the fancy algo that can
+            //deal with incomplete XORs
+            if (cl.size() != poss_xor.getSize()
+                && poss_xor.getSize() > solver->conf.maxXorToFindSlow
+            ) {
                 break;
             }
 
