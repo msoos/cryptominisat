@@ -262,11 +262,7 @@ int main(int argc, char** argv)
 
         if (in == NULL) {
             std::cout << "ERROR! Could not open file: ";
-            if (argc == 1) {
-                std::cout << "<stdin>";
-            } else {
-                std::cout << argv[1] << " reason: " << strerror(errno);
-            }
+            std::cout << argv[1] << " reason: " << strerror(errno);
             std::cout << std::endl;
             std::exit(1);
         }
