@@ -157,6 +157,5 @@ install:
   - mkdir -p build
 
 script:
-script:
-  - sonar-scanner
+  - if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]] sonar-scanner
   - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./scripts/travis-cmake.sh ; fi
