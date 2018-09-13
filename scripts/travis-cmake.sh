@@ -262,6 +262,13 @@ case $CMS_CONFIG in
     ;;
 esac
 
+##################
+# Run sonarqube
+###################
+if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sonar-scanner
+fi
+
 make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
