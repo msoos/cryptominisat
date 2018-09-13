@@ -4,6 +4,7 @@ cache: ccache
 branches:
   only:
     - master
+    - coverity_scan
 
 compiler:
   - gcc
