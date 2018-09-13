@@ -118,6 +118,10 @@ addons:
     build_command: "make"
     branch_pattern: coverity_scan
 
+  sonarcloud:
+    organization: "msoos-github"
+    secure: "dtJVVMl23o7LVhjk4M3eGOc4e7NGaWQ/mRBLxOTkg1fsspi4drrzID24hD4YxTt2sYkwdxOLrKMuXdFs28L0Dc3K/2ktJW2vz+HzasDScIAaec2Mv0siT/O6PIBzT0BUo1tZrap4zQBGFziDpUFPBIR55OOI7OfKIh9fbtfuCwE="
+
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
   # we probably want to install python 3 though...
@@ -153,4 +157,6 @@ install:
   - mkdir -p build
 
 script:
+script:
+  - sonar-scanner
   - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./scripts/travis-cmake.sh ; fi
