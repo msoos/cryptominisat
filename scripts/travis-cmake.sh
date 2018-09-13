@@ -449,15 +449,19 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         pwd
 
         # capture coverage info
+        echo "Capturing coverage info"
         lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
 
         # filter out system and test code
+        echo "Filtering out system and test code"
         lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*'--output-file coverage.info
 
         # debug before upload
-        lcov --list coverage.info
+        echo "Debugging coverage (if enabled, disabled by default...)"
+        # lcov --list coverage.info
 
         # only attempt upload if $COVERTOKEN is set
+        echo "Attempting to upload to coveralls"
         if [ -n "$COVERTOKEN" ]; then
             coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
         fi
