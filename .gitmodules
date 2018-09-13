@@ -36,4 +36,4 @@
 	branch = fuzzer
 [submodule "tests/xor_cnf_tests"]
 	path = tests/xor_cnf_tests
-	url = git@github.com:msoos/xor_testfiles.git
+	url = https://github.com/msoos/xor_testfiles.git
