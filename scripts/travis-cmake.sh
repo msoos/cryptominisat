@@ -267,12 +267,13 @@ esac
 ###################
 if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     (
+    build-wrapper-linux-x86-64 --out-dir bw-output make -j2 VERBOSE=1
     cd $SOURCE_DIR
     sonar-scanner
     )
+else
+    make -j2 VERBOSE=1
 fi
-
-make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install VERBOSE=1
