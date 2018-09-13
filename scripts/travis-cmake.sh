@@ -266,7 +266,10 @@ esac
 # Run sonarqube
 ###################
 if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+    (
+    cd $SOURCE_DIR
     sonar-scanner
+    )
 fi
 
 make -j2 VERBOSE=1
