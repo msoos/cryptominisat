@@ -120,7 +120,8 @@ addons:
 
   sonarcloud:
     organization: "msoos-github"
-    secure: "dtJVVMl23o7LVhjk4M3eGOc4e7NGaWQ/mRBLxOTkg1fsspi4drrzID24hD4YxTt2sYkwdxOLrKMuXdFs28L0Dc3K/2ktJW2vz+HzasDScIAaec2Mv0siT/O6PIBzT0BUo1tZrap4zQBGFziDpUFPBIR55OOI7OfKIh9fbtfuCwE="
+    token:
+      secure: "dtJVVMl23o7LVhjk4M3eGOc4e7NGaWQ/mRBLxOTkg1fsspi4drrzID24hD4YxTt2sYkwdxOLrKMuXdFs28L0Dc3K/2ktJW2vz+HzasDScIAaec2Mv0siT/O6PIBzT0BUo1tZrap4zQBGFziDpUFPBIR55OOI7OfKIh9fbtfuCwE="
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi
@@ -157,5 +158,5 @@ install:
   - mkdir -p build
 
 script:
-  # - if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then sonar-scanner; fi
+  - if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then sonar-scanner; fi
   - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./scripts/travis-cmake.sh ; fi
