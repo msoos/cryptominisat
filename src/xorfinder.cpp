@@ -268,6 +268,8 @@ void XorFinder::add_found_xor(const Xor& found_xor)
     xors.push_back(found_xor);
     runStats.foundXors++;
     runStats.sumSizeXors += found_xor.size();
+    runStats.maxsize = std::max<uint32_t>(runStats.maxsize, found_xor.size());
+    runStats.minsize = std::min<uint32_t>(runStats.minsize, found_xor.size());
 }
 
 void XorFinder::findXorMatch(watch_subarray_const occ, const Lit wlit)
@@ -842,8 +844,17 @@ void XorFinder::Stats::print_short(const Solver* solver, double time_remain) con
 {
     cout
     << "c [occ-xor] found " << std::setw(6) << foundXors
-    << " avg sz " << std::setw(4) << std::fixed << std::setprecision(1)
-    << float_div(sumSizeXors, foundXors)
+    ;
+    if (foundXors > 0) {
+        cout
+        << " avg sz " << std::setw(3) << std::fixed << std::setprecision(1)
+        << float_div(sumSizeXors, foundXors)
+        << " min sz " << std::setw(2) << std::fixed << std::setprecision(1)
+        << minsize
+        << " max sz " << std::setw(2) << std::fixed << std::setprecision(1)
+        << maxsize;
+    }
+    cout
     << solver->conf.print_times(findTime, time_outs, time_remain)
     << endl;
 }
