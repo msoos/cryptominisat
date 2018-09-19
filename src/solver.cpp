@@ -2268,12 +2268,12 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     //reduceDB->get_total_time().print(cpu_time);
 
     print_stats_line("c 0-depth assigns", trail.size()
-        , stats_line_percent(trail.size(), nVars())
+        , stats_line_percent(trail.size(), nVarsOuter())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
         , zeroLevAssignsByCNF
-        , stats_line_percent(zeroLevAssignsByCNF, nVars())
+        , stats_line_percent(zeroLevAssignsByCNF, nVarsOutside())
         , "% vars"
     );
 
@@ -2286,7 +2286,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        prober->get_stats().print(nVars(), conf.do_print_times);
+        prober->get_stats().print(nVarsOuter(), conf.do_print_times);
     }
 
     //OccSimplifier stats
@@ -2298,7 +2298,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        occsimplifier->get_stats().print(nVars());
+        occsimplifier->get_stats().print(nVarsOuter());
     }
 
     //TODO after TRI to LONG conversion
@@ -2315,7 +2315,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     );
     varReplacer->get_scc_finder()->get_stats().print();
 
-    varReplacer->get_stats().print(nVars());
+    varReplacer->get_stats().print(nVarsOuter());
     varReplacer->print_some_stats(cpu_time);
 
     //DistillerAllWithAll stats
@@ -2324,7 +2324,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
-    distill_long_cls->get_stats().print(nVars());
+    distill_long_cls->get_stats().print(nVarsOuter());
 
     if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
