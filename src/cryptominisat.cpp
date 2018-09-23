@@ -800,6 +800,7 @@ lbool calc(
             ret = data->solvers[0]->simplify_with_assumptions(assumptions);
         }
         data->okay = data->solvers[0]->okay();
+        data->cpu_times[0] = cpuTime();
         return ret;
     }
 

@@ -2159,8 +2159,8 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
 void Solver::print_stats_time(const double cpu_time, const double cpu_time_total) const
 {
     if (conf.do_print_times) {
-        print_stats_line("c Total time (all threads)", cpu_time_total);
         print_stats_line("c Total time (this thread)", cpu_time);
+        print_stats_line("c Total time (all threads)", cpu_time_total);
     }
 }
 
