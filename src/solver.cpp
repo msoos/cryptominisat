@@ -2059,9 +2059,8 @@ void Solver::print_prop_confl_stats(
     }
 }
 
-void Solver::print_stats(const double cpu_time_total) const
+void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_total) const
 {
-    double cpu_time = cpuTime();
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     if (conf.do_print_times)
     print_stats_line("c UIP search time"
@@ -2149,13 +2148,20 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time (all threads)", cpu_time_total);
+    print_stats_time(cpu_time, cpu_time_total);
     double vm_usage;
     print_stats_line("c Mem used"
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
+}
+
+void Solver::print_stats_time(const double cpu_time, const double cpu_time_total) const
+{
+    if (conf.do_print_times) {
+        print_stats_line("c Total time (all threads)", cpu_time_total);
+        print_stats_line("c Total time (this thread)", cpu_time);
+    }
 }
 
 void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total) const
@@ -2250,8 +2256,7 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
-    if (conf.do_print_times)
-    print_stats_line("c Total time (all threads)", cpu_time_total);
+    print_stats_time(cpu_time, cpu_time_total);
 }
 
 void Solver::print_full_restart_stat(const double cpu_time, const double cpu_time_total) const
@@ -2357,8 +2362,7 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time (all threads)", cpu_time_total);
+    print_stats_time(cpu_time, cpu_time_total);
     print_mem_stats();
 }
 
