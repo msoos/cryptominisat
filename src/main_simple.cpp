@@ -52,6 +52,7 @@ SATSolver* solver;
 bool zero_exit_status = false;
 static void SIGINT_handler(int) {
     cout << "\n*** INTERRUPTED ***\n";
+    solver->add_in_partial_solving_stats();
     solver->print_stats();
     cout << "\n*** INTERRUPTED ***\n";
     exit(1);

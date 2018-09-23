@@ -81,6 +81,7 @@ namespace CMSat {
         std::ofstream* log = NULL;
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
+        bool interrupted = false;
 
         uint64_t previous_sum_conflicts = 0;
         uint64_t previous_sum_propagations = 0;
@@ -934,7 +935,20 @@ std::string SATSolver::get_text_version_info()
 DLL_PUBLIC void SATSolver::print_stats() const
 {
     double cpu_time_total = cpuTimeTotal();
-    data->solvers[data->which_solved]->print_stats(data->cpu_times[data->which_solved], cpu_time_total);
+    double cpu_time;
+    if (data->interrupted) {
+        if (data->solvers.size() == 1) {
+            cpu_time = cpu_time_total;
+        } else{
+            //cannot know, we have in fact no idea how much time passed...
+            //we have to guess. Shitty guess comes here... :S
+            cpu_time = cpuTimeTotal()/(double)data->solvers.size();
+        }
+    } else {
+        cpu_time = data->cpu_times[data->which_solved];
+    }
+
+    data->solvers[data->which_solved]->print_stats(cpu_time, cpu_time_total);
 }
 
 DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
@@ -964,6 +978,7 @@ DLL_PUBLIC void SATSolver::interrupt_asap()
 void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 {
     data->solvers[data->which_solved]->add_in_partial_solving_stats();
+    data->interrupted = true;
 }
 
 DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const
