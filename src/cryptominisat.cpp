@@ -928,13 +928,8 @@ std::string SATSolver::get_text_version_info()
 
 DLL_PUBLIC void SATSolver::print_stats() const
 {
-    double cpu_time;
-    if (data->solvers.size() > 1) {
-        cpu_time = cpuTimeTotal();
-    } else {
-        cpu_time = cpuTime();
-    }
-    data->solvers[data->which_solved]->print_stats(cpu_time);
+    double cpu_time_total = cpuTimeTotal();
+    data->solvers[data->which_solved]->print_stats(cpu_time_total);
 }
 
 DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
