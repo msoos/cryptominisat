@@ -58,14 +58,9 @@ static inline double cpuTime(void)
     #else
     int ret = getrusage(RUSAGE_SELF, &ru);
     #endif
+    assert(ret == 0);
 
-    //NOTE: This is needed because Windows' Linux subsystem returns non-zero
-    //and I can't figure out a way to detect Windows.
-    if (ret != 0) {
-        return (double)clock() / CLOCKS_PER_SEC;
-    }
-
-    return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0;
+    return (double)ru.ru_utime.tv_sec + ((double)ru.ru_utime.tv_usec / 1000000.0);
 }
 
 static inline double cpuTimeTotal(void)
@@ -74,7 +69,7 @@ static inline double cpuTimeTotal(void)
     int ret = getrusage(RUSAGE_SELF, &ru);
     assert(ret == 0);
 
-    return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0;
+    return (double)ru.ru_utime.tv_sec + ((double)ru.ru_utime.tv_usec / 1000000.0);
 }
 
 #endif
