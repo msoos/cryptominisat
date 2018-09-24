@@ -300,8 +300,11 @@ bool Solver::sort_and_clean_clause(
     vector<Lit>& ps
     , const vector<Lit>& origCl
     , const bool red
+    , const bool sorted
 ) {
-    std::sort(ps.begin(), ps.end());
+    if (!sorted) {
+        std::sort(ps.begin(), ps.end());
+    }
     Lit p = lit_Undef;
     uint32_t i, j;
     for (i = j = 0; i != ps.size(); i++) {
@@ -320,7 +323,7 @@ bool Solver::sort_and_clean_clause(
         } else if (value(ps[i]) != l_False && ps[i] != p) {
             ps[j++] = p = ps[i];
 
-            if (varData[p.var()].removed != Removed::none) {
+            if (!fresh_solver && varData[p.var()].removed != Removed::none) {
                 cout << "ERROR: clause " << origCl << " contains literal "
                 << p << " whose variable has been removed (removal type: "
                 << removed_type_to_string(varData[p.var()].removed)
@@ -328,11 +331,11 @@ bool Solver::sort_and_clean_clause(
                 << varReplacer->get_var_replaced_with(p)
                 << ")"
                 << endl;
-            }
 
-            //Variables that have been eliminated cannot be added internally
-            //as part of a clause. That's a bug
-            assert(varData[p.var()].removed == Removed::none);
+                //Variables that have been eliminated cannot be added internally
+                //as part of a clause. That's a bug
+                assert(varData[p.var()].removed == Removed::none);
+            }
         }
     }
     ps.resize(ps.size() - (i - j));
@@ -342,7 +345,7 @@ bool Solver::sort_and_clean_clause(
 /**
 @brief Adds a clause to the problem. Should ONLY be called internally
 
-This code is very specific in that it must NOT be called with varibles in
+This code is very specific in that it must NOT be called with variables in
 "ps" that have been replaced, eliminated, etc. Also, it must not be called
 when the wer are in an UNSAT (!ok) state, for example. Use it carefully,
 and only internally
@@ -355,6 +358,7 @@ Clause* Solver::add_clause_int(
     , vector<Lit>* finalLits
     , bool addDrat
     , const Lit drat_first
+    , const bool sorted
 ) {
     assert(ok);
     assert(decisionLevel() == 0);
@@ -369,8 +373,9 @@ Clause* Solver::add_clause_int(
         std::min<uint64_t>(Searcher::sumConflicts, cl_stats.introduced_at_conflict);
     #endif
 
-    vector<Lit> ps = lits;
-    if (!sort_and_clean_clause(ps, lits, red)) {
+    add_clause_int_tmp_cl = lits;
+    vector<Lit>& ps = add_clause_int_tmp_cl;
+    if (!sort_and_clean_clause(ps, lits, red, sorted)) {
         if (finalLits) {
             finalLits->clear();
         }
@@ -552,8 +557,8 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
         throw CMSat::TooLongClauseError();
     }
 
-    //Check for too large variable number
     for (Lit& lit: ps) {
+        //Check for too large variable number
         if (lit.var() >= nVarsOuter()) {
             std::cerr
             << "ERROR: Variable " << lit.var() + 1
@@ -563,28 +568,29 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
             assert(false);
             std::exit(-1);
         }
-        assert(lit.var() < nVarsOuter()
-        && "Clause inserted, but variable inside has not been declared with new_var() !");
 
         //Undo var replacement
-        const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
-        if (conf.verbosity >= 12
-            && lit != updated_lit
-        ) {
-            cout
-            << "EqLit updating outer lit " << lit
-            << " to outer lit " << updated_lit
-            << endl;
-        }
-        lit = updated_lit;
+        if (!fresh_solver) {
+            const Lit updated_lit = varReplacer->get_lit_replaced_with_outer(lit);
+            if (conf.verbosity >= 12
+                && lit != updated_lit
+            ) {
+                cout
+                << "EqLit updating outer lit " << lit
+                << " to outer lit " << updated_lit
+                << endl;
+            }
+            lit = updated_lit;
 
-        //Map outer to inter, and add re-variable if need be
-        if (map_outer_to_inter(lit).var() >= nVars()) {
-            new_var(false, lit.var());
+            //Map outer to inter, and add re-variable if need be
+            if (map_outer_to_inter(lit).var() >= nVars()) {
+                new_var(false, lit.var());
+            }
         }
     }
 
-    renumber_outer_to_inter_lits(ps);
+    if (!fresh_solver)
+        renumber_outer_to_inter_lits(ps);
 
     #ifdef SLOW_DEBUG
     //Check renumberer
@@ -595,7 +601,9 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     #endif
 
      //Undo comp handler
-    if (compHandler) {
+    if (!fresh_solver
+        && compHandler
+    ) {
         bool readd = false;
         for (Lit lit: ps) {
             if (varData[lit.var()].removed == Removed::decomposed) {
@@ -610,12 +618,14 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
     }
 
     //Uneliminate vars
-    for (const Lit lit: ps) {
-        if (conf.perform_occur_based_simp
-            && varData[lit.var()].removed == Removed::elimed
-        ) {
-            if (!occsimplifier->uneliminate(lit.var()))
-                return false;
+    if (!fresh_solver) {
+        for (const Lit lit: ps) {
+            if (conf.perform_occur_based_simp
+                && varData[lit.var()].removed == Removed::elimed
+            ) {
+                if (!occsimplifier->uneliminate(lit.var()))
+                    return false;
+            }
         }
     }
 
@@ -632,6 +642,12 @@ bool Solver::addClauseHelper(vector<Lit>& ps)
 
 bool Solver::addClause(const vector<Lit>& lits, bool red)
 {
+    vector<Lit> ps = lits;
+    return Solver::addClauseInt(ps, red);
+}
+
+bool Solver::addClauseInt(vector<Lit>& ps, bool red)
+{
     if (conf.perform_occur_based_simp && occsimplifier->getAnythingHasBeenBlocked()) {
         std::cerr
         << "ERROR: Cannot add new clauses to the system if blocking was"
@@ -641,25 +657,30 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
     }
 
     #ifdef VERBOSE_DEBUG
-    cout << "Adding clause " << lits << endl;
+    cout << "Adding clause " << ps << endl;
     #endif //VERBOSE_DEBUG
     const size_t origTrailSize = trail.size();
-
-    vector<Lit> ps = lits;
 
     if (!addClauseHelper(ps)) {
         return false;
     }
 
-    finalCl_tmp.clear();
     std::sort(ps.begin(), ps.end());
-    Clause* cl = add_clause_int(
+
+    vector<Lit> *pFinalCl = NULL;
+    if (drat->enabled() || conf.simulate_drat) {
+        finalCl_tmp.clear();
+        pFinalCl = &finalCl_tmp;
+    }
+    Clause *cl = add_clause_int(
         ps
         , red
         , ClauseStats() //default stats
         , true //yes, attach
-        , &finalCl_tmp
+        , pFinalCl
         , false //add drat?
+        , lit_Undef
+        , true
     );
 
     //Drat -- We manipulated the clause, delete
@@ -710,7 +731,7 @@ bool Solver::addClause(const vector<Lit>& lits, bool red)
 
 void Solver::test_renumbering() const
 {
-    //Check if we renumbered the varibles in the order such as to make
+    //Check if we renumbered the variables in the order such as to make
     //the unknown ones first and the known/eliminated ones second
     bool uninteresting = false;
     bool problem = false;
@@ -1224,7 +1245,7 @@ void Solver::extend_solution(const bool only_indep_solution)
         assert(conf.independent_vars);
         for(uint32_t var: *conf.independent_vars) {
             if (model[var] == l_Undef) {
-                cout << "ERROR: varible " << var+1 << " is set as independent but is unset!" << endl;
+                cout << "ERROR: variable " << var+1 << " is set as independent but is unset!" << endl;
                 cout << "NOTE: var " << var + 1 << " has removed value: "
                 << removed_type_to_string(varData[var].removed)
                 << " and is set to " << value(var) << endl;
@@ -1348,6 +1369,7 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_indep_solution
 ) {
+    fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
     if (ok) {
@@ -2037,7 +2059,7 @@ void Solver::print_prop_confl_stats(
     }
 }
 
-void Solver::print_stats(const double cpu_time) const
+void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_total) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     if (conf.do_print_times)
@@ -2048,16 +2070,15 @@ void Solver::print_stats(const double cpu_time) const
     );
 
     if (conf.verbStats >= 2) {
-        print_full_restart_stat(cpu_time);
+        print_full_restart_stat(cpu_time, cpu_time_total);
     } else if (conf.verbStats == 1) {
-        print_norm_stats(cpu_time);
+        print_norm_stats(cpu_time, cpu_time_total);
     } else {
-        print_min_stats(cpu_time);
+        print_min_stats(cpu_time, cpu_time_total);
     }
 }
 
-
-void Solver::print_min_stats(const double cpu_time) const
+void Solver::print_min_stats(const double cpu_time, const double cpu_time_total) const
 {
     sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
@@ -2122,13 +2143,12 @@ void Solver::print_min_stats(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
     double vm_usage;
     print_stats_line("c Mem used"
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
@@ -2136,7 +2156,16 @@ void Solver::print_min_stats(const double cpu_time) const
     );
 }
 
-void Solver::print_norm_stats(const double cpu_time) const
+void Solver::print_stats_time(const double cpu_time, const double cpu_time_total) const
+{
+    if (conf.do_print_times) {
+        print_stats_line("c Total time (this thread)", cpu_time);
+        if (cpu_time != cpu_time_total)
+            print_stats_line("c Total time (all threads)", cpu_time_total);
+    }
+}
+
+void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total) const
 {
     sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
@@ -2218,7 +2247,7 @@ void Solver::print_norm_stats(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
@@ -2228,12 +2257,12 @@ void Solver::print_norm_stats(const double cpu_time) const
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
 }
 
-void Solver::print_full_restart_stat(const double cpu_time) const
+void Solver::print_full_restart_stat(const double cpu_time, const double cpu_time_total) const
 {
+    cout << "c All times are for this thread only except if explicity specified" << endl;
     sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
@@ -2246,12 +2275,12 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     //reduceDB->get_total_time().print(cpu_time);
 
     print_stats_line("c 0-depth assigns", trail.size()
-        , stats_line_percent(trail.size(), nVars())
+        , stats_line_percent(trail.size(), nVarsOuter())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
         , zeroLevAssignsByCNF
-        , stats_line_percent(zeroLevAssignsByCNF, nVars())
+        , stats_line_percent(zeroLevAssignsByCNF, nVarsOutside())
         , "% vars"
     );
 
@@ -2264,7 +2293,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        prober->get_stats().print(nVars(), conf.do_print_times);
+        prober->get_stats().print(nVarsOuter(), conf.do_print_times);
     }
 
     //OccSimplifier stats
@@ -2276,7 +2305,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        occsimplifier->get_stats().print(nVars());
+        occsimplifier->get_stats().print(nVarsOuter());
     }
 
     //TODO after TRI to LONG conversion
@@ -2293,7 +2322,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     );
     varReplacer->get_scc_finder()->get_stats().print();
 
-    varReplacer->get_stats().print(nVars());
+    varReplacer->get_stats().print(nVarsOuter());
     varReplacer->print_some_stats(cpu_time);
 
     //DistillerAllWithAll stats
@@ -2302,7 +2331,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
-    distill_long_cls->get_stats().print(nVars());
+    distill_long_cls->get_stats().print(nVarsOuter());
 
     if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
@@ -2329,13 +2358,12 @@ void Solver::print_full_restart_stat(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
     print_mem_stats();
 }
 
@@ -2945,9 +2973,11 @@ bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
     if (!ok) {
         return false;
     }
+    #ifdef SLOW_DEBUG //we check for this during back-numbering
     check_too_large_variable_number(lits);
+    #endif
     back_number_from_outside_to_outer(lits);
-    return addClause(back_number_from_outside_to_outer_tmp, red);
+    return addClauseInt(back_number_from_outside_to_outer_tmp, red);
 }
 
 bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
@@ -2960,7 +2990,9 @@ bool Solver::add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs)
     for(size_t i = 0; i < vars.size(); i++) {
         lits[i] = Lit(vars[i], false);
     }
+    #ifdef SLOW_DEBUG //we check for this during back-numbering
     check_too_large_variable_number(lits);
+    #endif
 
     back_number_from_outside_to_outer(lits);
     addClauseHelper(back_number_from_outside_to_outer_tmp);
@@ -3709,7 +3741,7 @@ void Solver::undef_fill_potentials()
     if (conf.independent_vars) {
         for(uint32_t v: *conf.independent_vars) {
             if (v > nVarsOutside()) {
-                cout << "ERROR: Variabe in independent set, " << v+1
+                cout << "ERROR: Variable in independent set, " << v+1
                 << " is bigger than any variable inside the solver! " << endl
                 << " Please examine the call set_independent_vars or the CNF"
                 " lines starting with 'c ind'"
@@ -3860,14 +3892,25 @@ vector<Lit> Solver::get_toplevel_units_internal(bool outer_numbering) const
     return units;
 }
 
+void Solver::dump_irred_clauses(std::ostream *out) const
+{
+    ClauseDumper dumper(this);
+    dumper.dump_irred_clauses(out);
+}
 
-void Solver::open_file_and_dump_irred_clauses(string fname) const
+void Solver::dump_red_clauses(std::ostream *out) const
+{
+    ClauseDumper dumper(this);
+    dumper.dump_red_clauses(out);
+}
+
+void Solver::open_file_and_dump_irred_clauses(const std::string &fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_irred_clauses(fname);
 }
 
-void Solver::open_file_and_dump_red_clauses(string fname) const
+void Solver::open_file_and_dump_red_clauses(const std::string &fname) const
 {
     ClauseDumper dumper(this);
     dumper.open_file_and_dump_red_clauses(fname);

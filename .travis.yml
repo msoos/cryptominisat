@@ -4,6 +4,7 @@ cache: ccache
 branches:
   only:
     - master
+    - coverity_scan
 
 compiler:
   - gcc
@@ -48,7 +49,6 @@ env:
     - CMS_CONFIG=INTREE_BUILD
     - CMS_CONFIG=NOTEST
     - CMS_CONFIG=STATIC
-    - CMS_CONFIG=COVERAGE
     - CMS_CONFIG=ONLY_SIMPLE_STATIC
 
 matrix:
@@ -117,6 +117,11 @@ addons:
     build_command_prepend: "cmake ."
     build_command: "make"
     branch_pattern: coverity_scan
+
+  sonarcloud:
+    organization: "msoos-github"
+    token:
+      secure: "dtJVVMl23o7LVhjk4M3eGOc4e7NGaWQ/mRBLxOTkg1fsspi4drrzID24hD4YxTt2sYkwdxOLrKMuXdFs28L0Dc3K/2ktJW2vz+HzasDScIAaec2Mv0siT/O6PIBzT0BUo1tZrap4zQBGFziDpUFPBIR55OOI7OfKIh9fbtfuCwE="
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update; fi

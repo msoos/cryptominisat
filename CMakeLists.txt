@@ -187,11 +187,9 @@ if (NOT MSVC)
     add_compile_options( -pthread )
 
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
-    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
-    add_compile_options("$<$<CONFIG:RELEASE>:-mtune=native>")
 
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
@@ -386,7 +384,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "5.6.3")
+set(CMS_FULL_VERSION "5.6.5")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -415,7 +413,7 @@ if (STATS)
     endif()
     add_definitions( -DSTATS_NEEDED )
     if (NOT NOSQLITE)
-        find_package(Sqlite3)
+        find_package (Sqlite3)
         IF (SQLITE3_FOUND)
             MESSAGE(STATUS "OK, Found Sqlite3!")
             include_directories(${SQLITE3_INCLUDE_DIR})
@@ -449,7 +447,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             ADD_CUSTOM_COMMAND(
                 TARGET man_cms5
                 COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1 --name="SAT solver"
             )
 
             INSTALL(
@@ -466,7 +464,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         ADD_CUSTOM_COMMAND(
             TARGET man_cms5_simple
             COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1 --name="SAT solver"
         )
 
         INSTALL(
@@ -515,6 +513,14 @@ endif()
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
+option(MIT "Build with only MIT licensed components" OFF)
+if (MIT)
+    set(NOM4RI ON)
+    if(REQUIRE_M4RI)
+        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_M4RI at the same time")
+    endif()
+endif()
+
 if (NOT NOM4RI)
     find_package(M4RI)
     IF (M4RI_FOUND)
@@ -591,6 +597,26 @@ if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
     message(STATUS "Python 2.7 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
     message(STATUS "Python 2.7 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
 endif()
+
+
+# -----------------------------------------------------------------------------
+# Look for rust
+# disabled -- not sure how Rust bindings should be built....
+# maybe just use Cargo and don't build the interface from CMake?
+# -----------------------------------------------------------------------------
+# find_package(rustc)
+# find_package(rustdoc)
+# find_package(cargo)
+# if (RUSTC_EXECUTABLE AND CARGO_EXECUTABLE AND RUSTDOC_EXECUTABLE)
+#     #set(BUILD_RUST_INTERFACE)
+#     message(STATUS "RUST -- RUSTC_EXECUTABLE=${RUSTC_EXECUTABLE}")
+#     message(STATUS "RUST -- CARGO_EXECUTABLE=${CARGO_EXECUTABLE}")
+#     message(STATUS "RUST -- RUSTDOC_EXECUTABLE=${RUSTDOC_EXECUTABLE}")
+#
+#     include(Rust)
+#     add_subdirectory(rust rustinterf)
+# endif()
+
 
 #command-line parsing executable needs boost program-options
 if(NOT Boost_FOUND)

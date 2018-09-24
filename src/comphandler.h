@@ -66,7 +66,7 @@ class CompHandler
         void addSavedState(vector<lbool>& solution);
         void readdRemovedClauses();
         const RemovedClauses& getRemovedClauses() const;
-        void dump_removed_clauses(std::ostream* outfile) const;
+        uint32_t dump_removed_clauses(std::ostream* outfile) const;
         size_t get_num_vars_removed() const;
         size_t get_num_components_solved() const;
         size_t mem_used() const;

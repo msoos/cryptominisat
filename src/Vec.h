@@ -31,6 +31,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 namespace CMSat {
 
+class Watched;
+
 //=================================================================================================
 // Automatically resizable arrays
 //
@@ -288,6 +290,17 @@ void vec<T>::clear(bool dealloc)
         for (uint32_t i = 0; i < sz; i++) {
             data[i].~T();
         }
+        sz = 0;
+        if (dealloc) {
+            free(data), data = NULL, cap = 0;
+        }
+    }
+}
+
+template<>
+inline void vec<Watched>::clear(bool dealloc)
+{
+    if (data != NULL) {
         sz = 0;
         if (dealloc) {
             free(data), data = NULL, cap = 0;

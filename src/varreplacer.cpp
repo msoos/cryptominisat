@@ -290,7 +290,7 @@ end:
     globalStats += runStats;
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity  >= 3)
-            runStats.print(solver->nVars());
+            runStats.print(solver->nVarsOuter());
         else
             runStats.print_short(solver);
     }

@@ -262,7 +262,16 @@ case $CMS_CONFIG in
     ;;
 esac
 
-make -j2 VERBOSE=1
+##################
+# Run sonarqube
+###################
+if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+    (
+    build-wrapper-linux-x86-64 --out-dir bw-output make -j2 VERBOSE=1
+    )
+else
+    make -j2 VERBOSE=1
+fi
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install VERBOSE=1
@@ -342,8 +351,8 @@ print(sys.path)
     ${MYPYTHON} check_path.py
 
     (
-    cd pycryptosat/tests/
-    ${MYPYTHON} test_pycryptosat.py
+    cd pycryptosat/
+    ${MYPYTHON} tests/test_pycryptosat.py
     )
 fi
 
@@ -448,19 +457,31 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         cd ..
         pwd
 
-        # capture coverage info
-        lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
+        if [[ 0 == 1 ]]; then
+            # capture coverage info
+            echo "Capturing coverage info"
+            lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
 
-        # filter out system and test code
-        lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*'--output-file coverage.info
+            # filter out system and test code
+            echo "Filtering out system and test code"
+            lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*' --output-file coverage.info
 
-        # debug before upload
-        lcov --list coverage.info
+            # debug before upload
+            echo "Debugging coverage (if enabled, disabled by default...)"
+            # lcov --list coverage.info
 
-        # only attempt upload if $COVERTOKEN is set
-        if [ -n "$COVERTOKEN" ]; then
-            coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
+            # only attempt upload if $COVERTOKEN is set
+            echo "Attempting to upload to coveralls"
+            if [ -n "$COVERTOKEN" ]; then
+                coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
+            fi
         fi
+
+        # use sonarcloud instead
+        (
+        cd $SOURCE_DIR
+        sonar-scanner
+        )
     ;;
 
     *)

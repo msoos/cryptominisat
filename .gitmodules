@@ -34,3 +34,6 @@
 	path = utils/minisat
 	url = https://github.com/msoos/minisat
 	branch = fuzzer
+[submodule "tests/xor_cnf_tests"]
+	path = tests/xor_cnf_tests
+	url = https://github.com/msoos/xor_testfiles.git

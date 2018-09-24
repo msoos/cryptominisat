@@ -52,6 +52,7 @@ SATSolver* solver;
 bool zero_exit_status = false;
 static void SIGINT_handler(int) {
     cout << "\n*** INTERRUPTED ***\n";
+    solver->add_in_partial_solving_stats();
     solver->print_stats();
     cout << "\n*** INTERRUPTED ***\n";
     exit(1);
@@ -262,11 +263,7 @@ int main(int argc, char** argv)
 
         if (in == NULL) {
             std::cout << "ERROR! Could not open file: ";
-            if (argc == 1) {
-                std::cout << "<stdin>";
-            } else {
-                std::cout << argv[1] << " reason: " << strerror(errno);
-            }
+            std::cout << argv[1] << " reason: " << strerror(errno);
             std::cout << std::endl;
             std::exit(1);
         }

@@ -44,6 +44,8 @@ struct dump : public ::testing::Test {
     void read_dat() {
         s.open_file_and_dump_irred_clauses(fname);
         dat = cnf_file_read(fname);
+        EXPECT_GE(dat.num_vars_per_header, dat.num_vars);
+        EXPECT_EQ(dat.cls.size(), dat.num_cls_per_header);
     }
 
     SATSolver s;
@@ -101,6 +103,20 @@ TEST_F(dump, longcls)
     EXPECT_EQ(dat.cls.size(), 2);
     EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("-4")));
     EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("1,2,3")));
+}
+
+TEST_F(dump, longcls_beforesimplify)
+{
+    s.new_vars(4);
+    s.add_clause(str_to_cl("1, 2, 3, 4"));
+    s.add_clause(str_to_cl("-4"));
+
+
+    read_dat();
+    EXPECT_EQ(dat.num_vars, 4);
+    EXPECT_EQ(dat.cls.size(), 2);
+    EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("-4")));
+    EXPECT_TRUE(cl_exists(dat.cls, str_to_cl("1,2,3,4")));
 }
 
 TEST_F(dump, eqcls)

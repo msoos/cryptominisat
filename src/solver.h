@@ -106,15 +106,18 @@ class Solver : public Searcher
         bool get_next_small_clause(std::vector<Lit>& out);
         void end_getting_small_clauses();
 
-        void open_file_and_dump_irred_clauses(string fname) const;
-        void open_file_and_dump_red_clauses(string fname) const;
+        void dump_irred_clauses(std::ostream *out) const;
+        void dump_red_clauses(std::ostream *out) const;
+        void open_file_and_dump_irred_clauses(const std::string &fname) const;
+        void open_file_and_dump_red_clauses(const std::string &fname) const;
 
         static const char* get_version_tag();
         static const char* get_version_sha1();
         static const char* get_compilation_env();
 
         vector<Lit> get_zero_assigned_lits(const bool backnumber = true, bool only_nvars = false) const;
-        void     print_stats(const double cpu_time) const;
+        void     print_stats(const double cpu_time, const double cpu_time_total) const;
+        void     print_stats_time(const double cpu_time, const double cpu_time_total) const;
         void     print_clause_stats() const;
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
@@ -186,7 +189,11 @@ class Solver : public Searcher
         //Attaching-detaching clauses
         void attachClause(
             const Clause& c
+            #ifdef DEBUG_ATTACH
             , const bool checkAttach = true
+            #else
+            , const bool checkAttach = false
+            #endif
         );
         void attach_bin_clause(
             const Lit lit1
@@ -225,6 +232,7 @@ class Solver : public Searcher
             , vector<Lit>* finalLits = NULL
             , bool addDrat = true
             , const Lit drat_first = lit_Undef
+            , const bool sorted = false
         );
         template<class T> vector<Lit> clause_outer_numbered(const T& cl) const;
         template<class T> vector<uint32_t> xor_outer_numbered(const T& cl) const;
@@ -251,6 +259,7 @@ class Solver : public Searcher
 
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
+        void testing_set_solver_not_fresh();
 
     private:
         friend class Prober;
@@ -259,6 +268,7 @@ class Solver : public Searcher
         FRIEND_TEST(SearcherTest, pickpolar_auto_not_changed_by_simp);
         #endif
 
+        vector<Lit> add_clause_int_tmp_cl;
         lbool iterate_until_solved();
         uint64_t mem_used_vardata() const;
         void check_reconfigure();
@@ -267,7 +277,12 @@ class Solver : public Searcher
         long calc_num_confl_to_do_this_iter(const size_t iteration_num) const;
 
         vector<Lit> finalCl_tmp;
-        bool sort_and_clean_clause(vector<Lit>& ps, const vector<Lit>& origCl, const bool red);
+        bool sort_and_clean_clause(
+            vector<Lit>& ps
+            , const vector<Lit>& origCl
+            , const bool red
+            , const bool sorted = false
+        );
         void set_up_sql_writer();
         vector<std::pair<string, string> > sql_tags;
 
@@ -288,17 +303,21 @@ class Solver : public Searcher
             back_number_from_outside_to_outer_tmp.clear();
             for (const Lit lit: lits) {
                 assert(lit.var() < nVarsOutside());
-                back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
-                assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
+                if (get_num_bva_vars() > 0 || !fresh_solver) {
+                    back_number_from_outside_to_outer_tmp.push_back(map_to_with_bva(lit));
+                    assert(back_number_from_outside_to_outer_tmp.back().var() < nVarsOuter());
+                } else {
+                    back_number_from_outside_to_outer_tmp.push_back(lit);
+                }
             }
         }
         void check_switchoff_limits_newvar(size_t n = 1);
         vector<Lit> outside_assumptions;
 
         //Stats printing
-        void print_norm_stats(const double cpu_time) const;
-        void print_min_stats(const double cpu_time) const;
-        void print_full_restart_stat(const double cpu_time) const;
+        void print_norm_stats(const double cpu_time, const double cpu_time_total) const;
+        void print_min_stats(const double cpu_time, const double cpu_time_total) const;
+        void print_full_restart_stat(const double cpu_time, const double cpu_time_total) const;
 
         lbool simplify_problem(const bool startup);
         bool execute_inprocess_strategy(const bool startup, const string& strategy);
@@ -375,6 +394,7 @@ class Solver : public Searcher
         /////////////////////
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
+        bool addClauseInt(vector<Lit>& ps, const bool red = false);
 
         /////////////////
         // Debug
@@ -475,6 +495,7 @@ inline void Solver::move_to_outside_assumps(const vector<Lit>* assumps)
 inline lbool Solver::simplify_with_assumptions(
     const vector<Lit>* _assumptions
 ) {
+    fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     return simplify_problem_outside();
 }
@@ -594,6 +615,11 @@ inline lbool Solver::full_model_value (const Lit p) const
 inline lbool Solver::full_model_value  (const uint32_t p) const
 {
     return full_model[p];
+}
+
+inline void Solver::testing_set_solver_not_fresh()
+{
+    fresh_solver = false;
 }
 
 } //end namespace

@@ -442,7 +442,7 @@ void Prober::update_and_print_stats(const double myTime, const uint64_t num_prop
 
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVars(), solver->conf.do_print_times);
+            runStats.print(solver->nVarsOuter(), solver->conf.do_print_times);
         else
             runStats.print_short(solver, time_out, time_remain);
     }
@@ -606,7 +606,7 @@ bool Prober::check_timeout_due_to_hyperbin()
     ) {
         if (solver->conf.verbosity) {
             cout
-            << "c [probe] intra-propagation timout,"
+            << "c [probe] intra-propagation timeout,"
             << " turning off OTF hyper-bin&trans-red"
             << endl;
         }

@@ -107,7 +107,7 @@ class TestCommand(Command):
         print("our sys.path is", sys.path)
 
         import tests as tp
-        tp.run()
+        return tp.run()
 
 
 __version__ = '@PROJECT_VERSION@'
@@ -116,6 +116,11 @@ __version__ = '@PROJECT_VERSION@'
 extra_link_args = list(ldconf)
 if platform.system() == 'Darwin':
     extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
+if platform.system() == 'Windows':
+    libname = "cryptominisat5win"
+else:
+    libname = "cryptominisat5"
 
 modules = dict(
     name = "pycryptosat",
@@ -126,7 +131,7 @@ modules = dict(
     language = "c++",
     library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
     runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
-    libraries = ['cryptominisat5']
+    libraries = [libname]
 )
 
 setup(
