@@ -367,8 +367,6 @@ class Query2 (QueryHelper):
         SELECT
         tags.tag as "fname"
         {clause_dat}
-        {clause2_dat}
-        {clause3_dat}
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
@@ -379,15 +377,11 @@ class Query2 (QueryHelper):
            THEN 'OK'
            ELSE 'BAD'
            END AS `x.class`
-
-        -- if 1==1 "OK" as `x.class` else "OK2" as `x.class`
         """
 
         q_ok = """
         FROM
         clauseStats as cl
-        , clauseStats as cl2
-        , clauseStats as cl3
         , goodClauses as goodcl
         , restart as rst
         , satzilla_features as szfeat
@@ -406,10 +400,6 @@ class Query2 (QueryHelper):
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
         and rdb0.dump_no > 0
-        and cl2.runID = cl.runID
-        and cl2.clauseID = cl.clauseID
-        and cl3.runID = cl.runID
-        and cl3.clauseID = cl.clauseID
         """
         q_ok += common_restrictions
 
@@ -418,8 +408,6 @@ class Query2 (QueryHelper):
         SELECT
         tags.tag as "fname"
         {clause_dat}
-        {clause2_dat}
-        {clause3_dat}
         {restart_dat}
         {satzfeat_dat}
         {rdb0_dat}
@@ -433,8 +421,6 @@ class Query2 (QueryHelper):
         FROM clauseStats as cl left join goodClauses as goodcl
         on cl.clauseID = goodcl.clauseID
         and cl.runID = goodcl.runID
-        , clauseStats as cl2
-        , clauseStats as cl3
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
@@ -452,10 +438,6 @@ class Query2 (QueryHelper):
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
         and rdb0.dump_no > 0
-        and cl2.runID = cl.runID
-        and cl2.clauseID = cl.clauseID
-        and cl3.runID = cl.runID
-        and cl3.clauseID = cl.clauseID
         """
         q_bad += common_restrictions
 
@@ -463,8 +445,6 @@ class Query2 (QueryHelper):
                     "limit": 1000*1000*1000,
                     "restart_dat": restart_dat,
                     "clause_dat": clause_dat,
-                    "clause2_dat": clause_dat.replace("cl.", "cl2."),
-                    "clause3_dat": clause_dat.replace("cl.", "cl3."),
                     "satzfeat_dat": satzfeat_dat,
                     "rdb0_dat": rdb0_dat,
                     "rdb1_dat": rdb0_dat.replace("rdb0", "rdb1"),
