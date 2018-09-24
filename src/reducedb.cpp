@@ -162,6 +162,7 @@ void ReduceDB::dump_sql_cl_data()
     #ifdef STATS_NEEDED
     assert(solver->sqlStats);
     solver->sqlStats->begin_transaction();
+    uint64_t added_to_db = 0;
 
 
     for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
@@ -177,12 +178,20 @@ void ReduceDB::dump_sql_cl_data()
                     , locked
                     , cl
                 );
+                added_to_db++;
                 cl->stats.dump_number++;
                 cl->stats.reset_rdb_stats();
             }
         }
     }
     solver->sqlStats->end_transaction();
+
+    if (solver->conf.verbosity) {
+        cout << "c [sql] added to DB " << added_to_db
+        << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
+        << " dumped-in-stream: " << solver->conf.dump_individual_cldata_stream
+        << endl;
+    }
     #endif
 }
 

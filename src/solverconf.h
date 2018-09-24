@@ -239,6 +239,7 @@ class DLL_PUBLIC SolverConf
         //SQL
         bool      dump_individual_restarts_and_clauses;
         double    dump_individual_cldata_ratio;
+        unsigned  dump_individual_cldata_stream;
 
         //Steps
         double orig_step_size = 0.40;

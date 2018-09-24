@@ -1829,7 +1829,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (dump_this_many_cldata_in_stream <= 0) {
             double myrnd = mtrand.randDblExc();
             if (myrnd <= conf.dump_individual_cldata_ratio) {
-                dump_this_many_cldata_in_stream = 5;
+                dump_this_many_cldata_in_stream = conf.dump_individual_cldata_stream;
             }
         }
 
