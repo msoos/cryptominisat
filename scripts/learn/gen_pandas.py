@@ -455,7 +455,8 @@ class Query2 (QueryHelper):
         q = q_count + q_ok
         q = q.format(**myformat)
         if options.verbose:
-            print("query:", q)
+            print("query:")
+            print(q)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_ok = int(cur.fetchone()[0])
         print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
@@ -463,7 +464,8 @@ class Query2 (QueryHelper):
         q = q_count + q_bad
         q = q.format(**myformat)
         if options.verbose:
-            print("query:", q)
+            print("query:")
+            print(q)
         cur = self.conn.execute(q.format(**myformat))
         num_lines_bad = int(cur.fetchone()[0])
         print("Num datpoints BAD (K): %-3.5f" % (num_lines_bad/1000.0))
