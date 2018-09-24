@@ -1675,6 +1675,7 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
+#ifdef FINAL_PREDICTOR
 void Searcher::set_clause_data(
     Clause* cl
     , const uint32_t glue
@@ -1720,6 +1721,7 @@ void Searcher::set_clause_data(
     cl->stats.overlap_rel = (double)overlap/(double)antec_overlap_hist;
     cl->stats.size_rel = (double)cl->size() / (double)size_hist;
 }
+#endif
 
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl

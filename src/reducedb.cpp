@@ -242,6 +242,7 @@ void ReduceDB::handle_lev1()
     total_time += cpuTime()-myTime;
 }
 
+#ifdef FINAL_PREDICTOR
 void ReduceDB::handle_lev1_final_predictor()
 {
     nbReduceDB_lev1++;
@@ -330,6 +331,7 @@ void ReduceDB::handle_lev1_final_predictor()
     }
     total_time += cpuTime()-myTime;
 }
+#endif
 
 void ReduceDB::mark_top_N_clauses(const uint64_t keep_num)
 {
