@@ -171,6 +171,8 @@ void ReduceDB::dump_sql_cl_data()
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
             assert(!cl->freed());
+
+            //Only if selected to be dumped
             if (cl->stats.dump_number < 50000) {
                 const bool locked = solver->clause_locked(*cl, offs);
                 solver->sqlStats->reduceDB(
