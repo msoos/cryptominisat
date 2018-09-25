@@ -483,9 +483,3 @@ if __name__ == "__main__":
         exit(-1)
 
     learn(args[0])
-
-
-# todo
-# ./predict.py final-pandasdata.dat-2000-newdata-twoRDB --final --conf --only 0.50 --code ../src/\.cpp
-#
-# ./cryptominisat5 --presimp 1 -n 1 --distill 0 --everylev1 10000 --restart luby mizh-md5-47-3.cnf.gz
