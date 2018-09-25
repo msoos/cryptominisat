@@ -207,6 +207,7 @@ class Query2 (QueryHelper):
         -- , rdb0.`glue` as `rdb0.glue`
         -- , rdb0.`size` as `rdb0.size`
         , rdb0.`ttl` as `rdb0.ttl`
+        , rdb0.`act_ranking_top_10` as `rdb0.act_ranking_top_10`
         """
 
         clause_dat = """

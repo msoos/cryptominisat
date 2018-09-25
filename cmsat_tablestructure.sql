@@ -26,7 +26,8 @@ CREATE TABLE `reduceDB` (
   `in_xor` int(20) NOT NULL,
   `glue` int(20) NOT NULL,
   `size` int(20) NOT NULL,
-  `ttl` int(20) NOT NULL
+  `ttl` int(20) NOT NULL,
+  `act_ranking_top_10` int(20) NOT NULL
 );
 
 DROP TABLE IF EXISTS `restart`;

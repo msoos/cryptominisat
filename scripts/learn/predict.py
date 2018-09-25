@@ -124,21 +124,21 @@ namespace CMSat {""")
 
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
-            self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff) {\n")
+            self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n")
             self.get_code(self.clf, 1)
             self.f.write("}\n")
         else:
             num_trees = len(self.clf.estimators_)
             for tree, i in zip(self.clf.estimators_, range(100)):
-                self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff) {\n" % i)
+                self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n" % i)
                 self.get_code(tree, 1)
                 self.f.write("}\n")
 
         # Final tally
-        self.f.write("bool ReduceDB::should_keep(const Clause* cl, uint32_t last_touched_diff) {\n")
+        self.f.write("bool ReduceDB::should_keep(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n")
         self.f.write("    int votes = 0;\n")
         for i in range(num_trees):
-            self.f.write("    votes += estimator_%d(cl, last_touched_diff) < 1.0;\n" % i)
+            self.f.write("    votes += estimator_%d(cl, last_touched_diff, act_ranking_top_10) < 1.0;\n" % i)
         self.f.write("    return votes >= %d;\n" % ceil(float(num_trees)/2.0))
         self.f.write("}\n")
         self.f.write("}\n")
@@ -158,8 +158,11 @@ namespace CMSat {""")
                 feat_name = "cl->" + feat_name + "()"
             elif feat_name == "last_touched_diff":
                 pass
+            elif feat_name == "act_ranking_top_10":
+                pass
             else:
                 feat_name = "cl->stats." + feat_name
+
             self.f.write("{tabs}if ( {feat} <= {threshold}f ) {{\n".format(
                 tabs=tabsize,
                 feat=feat_name, threshold=str(threshold[node])))
@@ -217,11 +220,11 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
     # clf = sklearn.svm.SVC()
     if final:
         if options.final_is_tree:
-            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=50)
+            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=100)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=50)
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=100)
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=50)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=100)
         #clf = sklearn.ensemble.ExtraTreesClassifier(n_estimators=80)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]

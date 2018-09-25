@@ -51,6 +51,7 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
+        , const uint32_t act_ranking_top_10
     ) override;
 
     void time_passed(

@@ -873,7 +873,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 19;
+    const size_t numElems = 20;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
@@ -896,6 +896,7 @@ void SQLiteStats::initReduceDBSTMT()
     << ", `glue`"
     << ", `size`"
     << ", `ttl`"
+    << ", `act_ranking_top_10`"
     << ") values ";
     writeQuestionMarks(
         numElems
@@ -921,6 +922,7 @@ void SQLiteStats::reduceDB(
     const Solver* solver
     , const bool locked
     , const Clause* cl
+    , const uint32_t act_ranking_top_10
 ) {
     assert(cl->stats.dump_number != std::numeric_limits<uint32_t>::max());
 
@@ -954,6 +956,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.glue);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->size());
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking_top_10);
 
     int rc = sqlite3_step(stmtReduceDB);
     if (rc != SQLITE_DONE) {

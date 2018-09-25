@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #include <functional>
+#include <cmath>
 
 using namespace CMSat;
 
@@ -160,30 +161,42 @@ void ReduceDB::handle_lev2()
 void ReduceDB::dump_sql_cl_data()
 {
     #ifdef STATS_NEEDED
+    double myTime = cpuTime();
     assert(solver->sqlStats);
     solver->sqlStats->begin_transaction();
     uint64_t added_to_db = 0;
 
 
+    vector<ClOffset> all_learnt;
     for(uint32_t lev = 0; lev < solver->longRedCls.size(); lev++) {
         auto& cc = solver->longRedCls[lev];
         for(const auto& offs: cc) {
             Clause* cl = solver->cl_alloc.ptr(offs);
             assert(!cl->getRemoved());
             assert(!cl->freed());
+            all_learnt.push_back(offs);
+        }
+    }
 
-            //Only if selected to be dumped
-            if (cl->stats.dump_number < 50000) {
-                const bool locked = solver->clause_locked(*cl, offs);
-                solver->sqlStats->reduceDB(
-                    solver
-                    , locked
-                    , cl
-                );
-                added_to_db++;
-                cl->stats.dump_number++;
-                cl->stats.reset_rdb_stats();
-            }
+    std::sort(all_learnt.begin(), all_learnt.end(), SortRedClsAct(solver->cl_alloc));
+    for(size_t i = 0; i < all_learnt.size(); i++) {
+        ClOffset offs = all_learnt[i];
+        Clause* cl = solver->cl_alloc.ptr(offs);
+
+        //Only if selected to be dumped
+        if (cl->stats.dump_number < 50000) {
+            const bool locked = solver->clause_locked(*cl, offs);
+            const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
+            //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
+            solver->sqlStats->reduceDB(
+                solver
+                , locked
+                , cl
+                , act_ranking_top_10
+            );
+            added_to_db++;
+            cl->stats.dump_number++;
+            cl->stats.reset_rdb_stats();
         }
     }
     solver->sqlStats->end_transaction();
@@ -192,6 +205,7 @@ void ReduceDB::dump_sql_cl_data()
         cout << "c [sql] added to DB " << added_to_db
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
         << " dumped-in-stream: " << solver->conf.dump_individual_cldata_stream
+        << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
     #endif
@@ -266,6 +280,7 @@ void ReduceDB::handle_lev1_final_predictor()
 
     assert(solver->longRedCls[0].size() == 0);
     assert(solver->longRedCls[2].size() == 0);
+    std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
     size_t j = 0;
     for(size_t i = 0
@@ -274,15 +289,18 @@ void ReduceDB::handle_lev1_final_predictor()
     ) {
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
+        const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)solver->longRedCls[1].size()/10.0));
+
         uint32_t last_touched_diff;
         if (cl->stats.last_touched == 0) {
             last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
         } else {
             last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
         }
+        //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
         if (!solver->clause_locked(*cl, offset)
             && cl->stats.dump_number > 0
-            && !should_keep(cl, last_touched_diff)
+            && !should_keep(cl, last_touched_diff, act_ranking_top_10)
         ) {
             deleted++;
             solver->watches.smudge((*cl)[0]);
