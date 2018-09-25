@@ -257,13 +257,15 @@ void ReduceDB::handle_lev1()
 void ReduceDB::handle_lev1_final_predictor()
 {
     nbReduceDB_lev1++;
-    uint32_t moved_w0 = 0;
     uint32_t deleted = 0;
     uint32_t kept = 0;
     uint32_t kept_first = 0;
     uint32_t kept_locked = 0;
     double myTime = cpuTime();
     uint32_t largest_dump_no = 0;
+
+    assert(solver->longRedCls[0].size() == 0);
+    assert(solver->longRedCls[2].size() == 0);
 
     size_t j = 0;
     for(size_t i = 0
@@ -272,43 +274,38 @@ void ReduceDB::handle_lev1_final_predictor()
     ) {
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
-        if (cl->stats.which_red_array == 0) {
-            solver->longRedCls[0].push_back(offset);
-            moved_w0++;
+        uint32_t last_touched_diff;
+        if (cl->stats.last_touched == 0) {
+            last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
         } else {
-            uint32_t last_touched_diff;
-            if (cl->stats.last_touched == 0) {
-                last_touched_diff = solver->sumConflicts-cl->stats.introduced_at_conflict;
-            } else {
-                last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
-            }
-            if (!solver->clause_locked(*cl, offset)
-                && cl->stats.dump_number > 0
-                && !should_keep(cl, last_touched_diff)
-            ) {
-                deleted++;
-                solver->watches.smudge((*cl)[0]);
-                solver->watches.smudge((*cl)[1]);
-                solver->litStats.redLits -= cl->size();
+            last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
+        }
+        if (!solver->clause_locked(*cl, offset)
+            && cl->stats.dump_number > 0
+            && !should_keep(cl, last_touched_diff)
+        ) {
+            deleted++;
+            solver->watches.smudge((*cl)[0]);
+            solver->watches.smudge((*cl)[1]);
+            solver->litStats.redLits -= cl->size();
 
-                *solver->drat << del << *cl << fin;
-                cl->setRemoved();
-                delayed_clause_free.push_back(offset);
+            *solver->drat << del << *cl << fin;
+            cl->setRemoved();
+            delayed_clause_free.push_back(offset);
+        } else {
+            solver->longRedCls[1][j++] = offset;
+            if (cl->stats.dump_number == 0) {
+                kept_first++;
+            } else if (solver->clause_locked(*cl, offset)){
+                kept_locked++;
             } else {
-                solver->longRedCls[1][j++] = offset;
-                if (cl->stats.dump_number == 0) {
-                    kept_first++;
-                } else if (solver->clause_locked(*cl, offset)){
-                    kept_locked++;
-                } else {
-                    kept++;
-                }
-                cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
-                if (cl->stats.dump_number > largest_dump_no)
-                    largest_dump_no = cl->stats.dump_number;
-                cl->stats.dump_number++;
-                cl->stats.reset_rdb_stats();
+                kept++;
             }
+            cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
+            if (cl->stats.dump_number > largest_dump_no)
+                largest_dump_no = cl->stats.dump_number;
+            cl->stats.dump_number++;
+            cl->stats.reset_rdb_stats();
         }
     }
     solver->longRedCls[1].resize(j);
@@ -328,7 +325,6 @@ void ReduceDB::handle_lev1_final_predictor()
         << " kept-0: " << kept_first
         << " kept-locked: " << kept_locked
         << " maxdump:" << largest_dump_no
-        //<< " moved w0: " << moved_w0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
