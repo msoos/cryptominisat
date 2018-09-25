@@ -117,11 +117,7 @@ struct ClauseStats
     ClauseStats()
     {
         glue = 1000;
-        #ifndef FINAL_PREDICTOR
         which_red_array = 2;
-        #else
-        which_red_array = 1;
-        #endif
         activity = 1;
         ttl = 0;
         marked_clause = false;
