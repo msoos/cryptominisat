@@ -126,6 +126,8 @@ namespace CMSat {
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
             self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n")
+            print(self.clf)
+            print(self.clf.get_params())
             self.get_code(self.clf, 1)
             self.f.write("}\n")
         else:
