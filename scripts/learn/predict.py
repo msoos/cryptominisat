@@ -120,7 +120,8 @@ class CodeWriter:
 #include "reducedb.h"
 using namespace CMSat;
 
-namespace CMSat {""")
+namespace CMSat {
+""")
 
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
