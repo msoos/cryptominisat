@@ -404,6 +404,7 @@ endif()
 option(FINAL_PREDICTOR "Use final predictor" OFF)
 if (FINAL_PREDICTOR)
     add_definitions( -DFINAL_PREDICTOR )
+    add_definitions( -DFINAL_PREDICTOR_TOTAL )
 endif()
 
 option(STATS "Don't use statistics at all" OFF)

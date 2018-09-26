@@ -661,7 +661,9 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                #ifndef FINAL_PREDICTOR
+                #ifdef FINAL_PREDICTOR_TOTAL
+                cl->stats.which_red_array = 1;
+                #else
                 if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
                 } else if (
@@ -670,8 +672,6 @@ void OccSimplifier::add_back_to_solver()
                 ) {
                     cl->stats.which_red_array = 1;
                 }
-                #else
-                cl->stats.which_red_array = 1;
                 #endif
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {

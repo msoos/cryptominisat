@@ -712,7 +712,9 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
         if (!red) {
             longIrredCls.push_back(offset);
         } else {
-            #ifndef FINAL_PREDICTOR
+            #ifdef FINAL_PREDICTOR_TOTAL
+            cl->stats.which_red_array = 1;
+            #else
             cl->stats.which_red_array = 2;
             if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
                 cl->stats.which_red_array = 0;
@@ -721,8 +723,6 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
             ) {
                 cl->stats.which_red_array = 1;
             }
-            #else
-            cl->stats.which_red_array = 1;
             #endif
             longRedCls[cl->stats.which_red_array].push_back(offset);
         }
