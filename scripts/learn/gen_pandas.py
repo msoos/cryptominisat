@@ -91,33 +91,10 @@ class QueryHelper:
 
 
 class Query2 (QueryHelper):
-    def create_indexes(self):
-        print("Recreating indexes...")
-        t = time.time()
-        q = """
-        drop index if exists `idxclid`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-
-        create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
-        create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
-        create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
-        create index `idxclid4` on `restart` (`runID`, `restarts`);
-        create index `idxclid5` on `tags` (`runID`, `tagname`);
-        create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-
-        print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def get_clstats(self):
-
+    def __init__(self, dbfname):
+        super(Query2, self).__init__(dbfname)
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
-        restart_dat = """
+        self.restart_dat = """
         -- , rst.`runID` as `rst.runID`
         -- , rst.`simplifications` as `rst.simplifications`
         -- , rst.`restarts` as `rst.restarts`
@@ -186,7 +163,7 @@ class Query2 (QueryHelper):
         -- , rst.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
         """
 
-        rdb0_dat = """
+        self.rdb0_dat = """
         -- , rdb0.`runID` as `rdb0.runID`
         -- , rdb0.`simplifications` as `rdb0.simplifications`
         -- , rdb0.`restarts` as `rdb0.restarts`
@@ -210,7 +187,7 @@ class Query2 (QueryHelper):
         , rdb0.`act_ranking_top_10` as `rdb0.act_ranking_top_10`
         """
 
-        clause_dat = """
+        self.clause_dat = """
         -- , cl.`runID` as `cl.runID`
         -- , cl.`simplifications` as `cl.simplifications`
         -- , cl.`restarts` as `cl.restarts`
@@ -277,7 +254,7 @@ class Query2 (QueryHelper):
         , cl.`glue_hist_long` as `cl.glue_hist_long`
         """
 
-        satzfeat_dat = """
+        self.satzfeat_dat = """
         -- , szfeat.`simplifications` as `szfeat.simplifications`
         -- , szfeat.`restarts` as `szfeat.restarts`
         , szfeat.`conflicts` as `szfeat.conflicts`
@@ -346,7 +323,7 @@ class Query2 (QueryHelper):
         -- , szfeat.`irred_activity_distr_var` as `szfeat.irred_activity_distr_var`
         """
 
-        common_restrictions = """
+        self.common_restrictions = """
         and cl.restarts > 1 -- to avoid history being invalid
         and cl.runID = {runid}
         and szfeat.runID = {runid}
@@ -358,13 +335,20 @@ class Query2 (QueryHelper):
         and cl.conflicts > {start_confl}
         """
 
-        common_limits = """
+        self.common_limits = """
         order by random()
         limit {limit}
         """
 
-        q_count = "SELECT count(*)"
-        q_ok_select = """
+        self.q_count = """
+        SELECT count(*) as count,
+            CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+        """
+
+        self.q_ok_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -374,13 +358,13 @@ class Query2 (QueryHelper):
         {rdb1_dat}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
-        ,  CASE WHEN goodcl.last_confl_used > rdb0.conflicts
-           THEN 'OK'
-           ELSE 'BAD'
+        , CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
+           THEN "OK"
+           ELSE "BAD"
            END AS `x.class`
         """
 
-        q_ok = """
+        self.q_ok = """
         FROM
         clauseStats as cl
         , goodClauses as goodcl
@@ -402,10 +386,10 @@ class Query2 (QueryHelper):
         and rdb1.dump_no = rdb0.dump_no-1
         and rdb0.dump_no > 0
         """
-        q_ok += common_restrictions
+        self.q_ok += self.common_restrictions
 
         # BAD caluses
-        q_bad_select = """
+        self.q_bad_select = """
         SELECT
         tags.tag as "fname"
         {clause_dat}
@@ -418,7 +402,7 @@ class Query2 (QueryHelper):
         , "BAD" as `x.class`
         """
 
-        q_bad = """
+        self.q_bad = """
         FROM clauseStats as cl left join goodClauses as goodcl
         on cl.clauseID = goodcl.clauseID
         and cl.runID = goodcl.runID
@@ -440,36 +424,76 @@ class Query2 (QueryHelper):
         and rdb1.dump_no = rdb0.dump_no-1
         and rdb0.dump_no > 0
         """
-        q_bad += common_restrictions
+        self.q_bad += self.common_restrictions
 
-        myformat = {"runid": self.runID,
-                    "limit": 1000*1000*1000,
-                    "restart_dat": restart_dat,
-                    "clause_dat": clause_dat,
-                    "satzfeat_dat": satzfeat_dat,
-                    "rdb0_dat": rdb0_dat,
-                    "rdb1_dat": rdb0_dat.replace("rdb0", "rdb1"),
-                    "start_confl": options.start_conflicts}
+        self.myformat = {
+            "runid": self.runID,
+            "limit": 1000*1000*1000,
+            "restart_dat": self.restart_dat,
+            "clause_dat": self.clause_dat,
+            "satzfeat_dat": self.satzfeat_dat,
+            "rdb0_dat": self.rdb0_dat,
+            "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
+            "start_confl": options.start_conflicts}
 
+    def create_indexes(self):
+        print("Recreating indexes...")
+        t = time.time()
+        q = """
+        drop index if exists `idxclid`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
+
+        create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
+        create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
+        create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
+        create index `idxclid4` on `restart` (`runID`, `restarts`);
+        create index `idxclid5` on `tags` (`runID`, `tagname`);
+        create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+
+        print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def get_ok(self, subfilter):
+        # calc OK -> which can be both BAD and OK
+        q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
+        q = q.format(**self.myformat)
+        if options.verbose:
+            print("query:")
+            print(q)
+        cur = self.conn.execute(q.format(**self.myformat))
+        num_lines = int(cur.fetchone()[0])
+        print("Num datapoints OK -- %s (K): %-3.5f" % (subfilter, (num_lines/1000.0)))
+        return num_lines
+
+    def get_bad(self):
+        q = self.q_count + self.q_bad
+        q = q.format(**self.myformat)
+        if options.verbose:
+            print("query:")
+            print(q)
+        cur = self.conn.execute(q.format(**self.myformat))
+        num_lines = int(cur.fetchone()[0])
+        print("Num datpoints BAD (K): %-3.5f" % (num_lines/1000.0))
+        return num_lines
+
+    def get_clstats(self):
         t = time.time()
 
-        q = q_count + q_ok
-        q = q.format(**myformat)
-        if options.verbose:
-            print("query:")
-            print(q)
-        cur = self.conn.execute(q.format(**myformat))
-        num_lines_ok = int(cur.fetchone()[0])
-        print("Num datapoints OK (K): %-3.5f" % (num_lines_ok/1000.0))
+        num_lines_ok = 0
+        num_lines_bad = 0
 
-        q = q_count + q_bad
-        q = q.format(**myformat)
-        if options.verbose:
-            print("query:")
-            print(q)
-        cur = self.conn.execute(q.format(**myformat))
-        num_lines_bad = int(cur.fetchone()[0])
-        print("Num datpoints BAD (K): %-3.5f" % (num_lines_bad/1000.0))
+        num_lines_ok_ok = self.get_ok("OK")
+        num_lines_ok_bad = self.get_ok("BAD")
+        num_lines_bad_bad = self.get_bad()
+
+        num_lines_bad = num_lines_ok_bad + num_lines_bad_bad
+        num_lines_ok = num_lines_ok_ok
 
         total_lines = num_lines_ok + num_lines_bad
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
@@ -488,30 +512,46 @@ class Query2 (QueryHelper):
             print(" --> Something went wrong")
             return False, None
 
-        print("Percentage of OK: %-3.2f" % (num_lines_ok/float(total_lines)*100.0))
-        q = q_ok_select + q_ok
+        # OK-OK
+        print("Percentage of OK-OK: %-3.2f" % (num_lines_ok_ok/float(total_lines)*100.0))
+        q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed_num_datapoints != -1:
-            myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok/float(total_lines))
-            q += common_limits
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_ok/float(total_lines))
+            q += self.common_limits
 
-        print("limit for OK:", myformat["limit"])
-        q = q.format(**myformat)
-        print("Running query for OK...")
+        print("limit for OK-OK:", self.myformat["limit"])
+        q = q.format(**self.myformat)
+        print("Running query for OK-OK...")
         if options.verbose:
             print("query:", q)
-        df = pd.read_sql_query(q, self.conn)
+        df_ok_ok = pd.read_sql_query(q, self.conn)
 
-        q = q_bad_select + q_bad
+        # OK-BAD
+        print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(total_lines)*100.0))
+        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed_num_datapoints != -1:
-            myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad/float(total_lines))
-            q += common_limits
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(total_lines))
+            q += self.common_limits
+        print("limit for OK-BAD:", self.myformat["limit"])
+        q = q.format(**self.myformat)
+        print("Running query for OK-BAD...")
+        if options.verbose:
+            print("query:", q)
+        df_ok_bad = pd.read_sql_query(q, self.conn)
 
-        print("limit for bad:", myformat["limit"])
-        q = q.format(**myformat)
+        # BAD-BAD
+        print("Percentage of BAD-BAD: %-3.2f" % (num_lines_bad_bad/float(total_lines)*100.0))
+        q = self.q_bad_select + self.q_bad
+        if options.fixed_num_datapoints != -1:
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(total_lines))
+            q += self.common_limits
+
+        print("limit for bad:", self.myformat["limit"])
+        q = q.format(**self.myformat)
         print("Running query for BAD...")
         if options.verbose:
             print("query:", q)
-        df2 = pd.read_sql_query(q, self.conn)
+        df_bad_bad = pd.read_sql_query(q, self.conn)
         print("Queries finished. T: %-3.2f" % (time.time() - t))
 
         if options.dump_sql:
@@ -519,7 +559,7 @@ class Query2 (QueryHelper):
             print(q)
             print("-- query ends --")
 
-        return True, pd.concat([df, df2])
+        return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad])
 
 
 def get_one_file(dbfname):
