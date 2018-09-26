@@ -34,11 +34,11 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
-def output_to_dot(clf, features, class_names):
-    fname = options.dot+class_names[0]
+def output_to_dot(clf, features):
+    fname = options.dot+clf.classes_[0]
     sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
-                                 class_names=class_names,
+                                 class_names=clf.classes_,
                                  filled=True, rounded=True,
                                  special_characters=True,
                                  proportion=True)
@@ -189,18 +189,20 @@ namespace CMSat {""")
             self.f.write("{tabs}return {ratio};\n".format(
                 tabs=tabsize, ratio=ratio))
 
-    def get_code(self, tree, starttab=0):
-        left = tree.tree_.children_left
-        right = tree.tree_.children_right
-        threshold = tree.tree_.threshold
-        print("tree.tree_.feature:", tree.tree_.feature)
-        features = [self.feat[i] for i in tree.tree_.feature]
-        self.value = tree.tree_.value
+    def get_code(self, clf, starttab=0):
+        left = clf.tree_.children_left
+        right = clf.tree_.children_right
+        threshold = clf.tree_.threshold
+        print("Node count:", clf.tree_.node_count)
+        print("Left: %s Right: %s Threshold: %s" % (left, right, threshold))
+        print("clf.tree_.feature:", clf.tree_.feature)
+        features = [self.feat[i % len(self.feat)] for i in clf.tree_.feature]
+        self.value = clf.tree_.value
 
         self.recurse(left, right, threshold, features, 0, starttab)
 
 
-def one_classifier(df, features, to_predict, names, w_name, w_number, final):
+def one_classifier(df, features, to_predict, w_name, w_number, final):
     _, df = train_test_split(df, test_size=options.only_pecr)
     print("================ predicting %s ================" % to_predict)
     print("-> Number of features  :", len(features))
@@ -293,19 +295,19 @@ def one_classifier(df, features, to_predict, names, w_name, w_number, final):
 
         # Plot non-normalized confusion matrix
         plot_confusion_matrix(
-            cnf_matrix, classes=names,
+            cnf_matrix, classes=clf.classes_,
             title='Confusion matrix, without normalization -- test')
 
         # Plot normalized confusion matrix
         plot_confusion_matrix(
-            cnf_matrix, classes=names, normalize=True,
+            cnf_matrix, classes=clf.classes_, normalize=True,
             title='Normalized confusion matrix -- test')
 
         cnf_matrix_train = sklearn.metrics.confusion_matrix(
             y_true=y_train, y_pred=y_pred_train, sample_weight=sample_weight_train)
         # Plot normalized confusion matrix
         plot_confusion_matrix(
-            cnf_matrix_train, classes=names, normalize=True,
+            cnf_matrix_train, classes=clf.classes_, normalize=True,
             title='Normalized confusion matrix -- train')
 
     # TODO do L1 regularization
@@ -348,7 +350,7 @@ def rem_features(feat, to_remove):
 
 
 def calc_greedy_best_features(df, features):
-    top_feats = one_classifier(df, features, "x.class", ["OK", "BAD"], "OK", 4, False)
+    top_feats = one_classifier(df, features, "x.class", "OK", 4, False)
     if options.show:
         plt.show()
 
@@ -365,7 +367,7 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            mysum = one_classifier(df, this_feats, "x.class", ["OK", "BAD"], "OK", 4, True)
+            mysum = one_classifier(df, this_feats, "x.class", "OK", 4, True)
             print("Reported mysum: ", mysum)
             if mysum > best_sum:
                 best_sum = mysum
@@ -428,14 +430,14 @@ def learn(fname):
     else:
         best_features = calc_greedy_best_features(df, features)
 
-    #one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 40, False)
-    #one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 29, True)
+    #one_classifier(df, best_features, "x.class", "OK", 40, False)
+    #one_classifier(df, best_features, "x.class", "OK", 29, True)
 
     if False:
         print("Using unbalanced classifier so as not to loose clauses too much")
-        one_classifier(df, best_features, "x.class", ["OK", "OK"], "OK", 8, True)
+        one_classifier(df, best_features, "x.class", "OK", 8, True)
     else:
-        one_classifier(df, best_features, "x.class", ["OK", "BAD"], "OK", 4, True)
+        one_classifier(df, best_features, "x.class", "OK", 3, True)
 
     if options.show:
         plt.show()
