@@ -262,6 +262,9 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
         plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
         plt.xlim([-1, myrange])
 
+    if options.dot is not None and final:
+        output_to_dot(clf, features)
+
     if options.code_file is not None:
         c = CodeWriter(clf, features)
         c.print_full_code()
@@ -317,9 +320,6 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
 
     if False:
         calc_cross_val()
-
-    if options.dot is not None and final:
-        output_to_dot(clf, features, names)
 
     if not final:
         return best_features
