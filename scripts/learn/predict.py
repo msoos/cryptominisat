@@ -416,6 +416,7 @@ def learn(fname):
         df.hist()
         df.boxplot()
 
+    best_features = []
     if options.only_final:
         best_features = ['cl.glue_rel_long', 'rdb0.used_for_uip_creation', 'cl.glue_smaller_than_hist_lt', 'cl.glue_smaller_than_hist_queue', 'cl.overlap', 'cl.glue_rel_queue', 'cl.glue', 'rdb0.dump_no', 'cl.glue_rel', 'cl.num_total_lits_antecedents', 'cl.size', 'cl.overlap_rel', 'cl.num_overlap_literals', 'rdb1.used_for_uip_creation', 'cl.size_rel', 'rdb0.last_touched_diff']
 
@@ -423,7 +424,8 @@ def learn(fname):
 
         best_features = ['cl.glue_rel', 'cl.backtrack_level_hist_lt', 'rdb0.used_for_uip_creation', 'cl.size_rel', 'cl.overlap_rel', 'cl.glue_rel_long']
 
-        #best_features = ['rdb0.used_for_uip_creation', 'cl.size'] #'cl.glue_rel_long'
+        best_features = ['rdb0.used_for_uip_creation', 'rdb1.used_for_uip_creation', 'cl.size', 'cl.glue_rel_long', 'cl.glue_rel', 'cl.glue', 'cl.size', 'rdb0.dump_no'] #, 'cl.overlap_rel', 'cl.overlap']
+        best_features.append('rdb0.act_ranking_top_10')
 
         if options.no_rdb1:
             best_features = rem_features(best_features, ["rdb.rel", "rdb1."])
