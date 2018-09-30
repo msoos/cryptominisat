@@ -198,9 +198,10 @@ namespace CMSat {
         left = clf.tree_.children_left
         right = clf.tree_.children_right
         threshold = clf.tree_.threshold
-        print("Node count:", clf.tree_.node_count)
-        print("Left: %s Right: %s Threshold: %s" % (left, right, threshold))
-        print("clf.tree_.feature:", clf.tree_.feature)
+        if options.verbose:
+            print("Node count:", clf.tree_.node_count)
+            print("Left: %s Right: %s Threshold: %s" % (left, right, threshold))
+            print("clf.tree_.feature:", clf.tree_.feature)
         features = [self.feat[i % len(self.feat)] for i in clf.tree_.feature]
         self.value = clf.tree_.value
 
