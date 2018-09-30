@@ -15,6 +15,7 @@ FIXED="70000"
 ./build_stats.sh
 rm -f "$FNAMEOUT.db"
 rm -f "$FNAMEOUT.lemmas-*"
+rm -f "$FNAMEOUT.db-pandas*"
 ./cryptominisat5 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "$FNAME"
 ./tests/drat-trim/drat-trim "$FNAME" "$FNAMEOUT.drat" -x $FNAMEOUT.lemmas -i
 ./add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.lemmas"
@@ -22,4 +23,4 @@ rm -f "$FNAMEOUT.lemmas-*"
 
 ./predict.py "$FNAMEOUT.db-pandasdata.dat" --final --conf --tree --code ../src/final_predictor.cpp
 ./build_final_predictor.sh
-./cryptominisat5 --everylev1 10000 "$FNAME"
+./cryptominisat5 "$FNAME"
