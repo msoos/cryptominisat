@@ -341,12 +341,17 @@ class Query2 (QueryHelper):
         limit {limit}
         """
 
-        self.q_count = """
-        SELECT count(*) as count,
-            CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
+        self.case_stmt = """
+        CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
+            -- and `goodcl`.`num_used` > 5
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
+        """
+
+        self.q_count = """
+        SELECT count(*) as count,
+        {case_stmt}
         """
 
         self.q_ok_select = """
@@ -359,10 +364,7 @@ class Query2 (QueryHelper):
         {rdb1_dat}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
-        , CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
-           THEN "OK"
-           ELSE "BAD"
-           END AS `x.class`
+        , {case_stmt}
         """
 
         self.q_ok = """
@@ -435,7 +437,8 @@ class Query2 (QueryHelper):
             "satzfeat_dat": self.satzfeat_dat,
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
-            "start_confl": options.start_conflicts}
+            "start_confl": options.start_conflicts,
+            "case_stmt": self.case_stmt}
 
     def create_indexes(self):
         print("Recreating indexes...")
