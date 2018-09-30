@@ -1709,9 +1709,6 @@ void Searcher::set_clause_data(
 
     cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;
     cl->stats.glue_rel_long = (double)cl->stats.glue/glue_hist_long;
-//     cout << "cl->stats.glue: " << cl->stats.glue << endl;
-//     cout << "glue_hist_long: " << glue_hist_long << endl;
-//     cout << "glue_rel_long set to:" << cl->stats.glue_rel_long << endl;
     cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
     cl->stats.glue_smaller_than_hist_lt = (double)cl->stats.glue < glue_hist;
     cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
@@ -1720,6 +1717,10 @@ void Searcher::set_clause_data(
     cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
     cl->stats.overlap_rel = (double)overlap/(double)antec_overlap_hist;
     cl->stats.size_rel = (double)cl->size() / (double)size_hist;
+
+//     cout << "cl->stats.glue: " << cl->stats.glue << endl;
+//     cout << "glue_hist_long: " << glue_hist_long << endl;
+//     cout << "glue_rel_long set to:" << cl->stats.glue_rel_long << endl;
 }
 #endif
 
