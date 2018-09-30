@@ -185,6 +185,7 @@ class Query2 (QueryHelper):
         -- , rdb0.`size` as `rdb0.size`
         , rdb0.`ttl` as `rdb0.ttl`
         , rdb0.`act_ranking_top_10` as `rdb0.act_ranking_top_10`
+        , rdb0.`act_ranking` as `rdb0.act_ranking`
         """
 
         self.clause_dat = """

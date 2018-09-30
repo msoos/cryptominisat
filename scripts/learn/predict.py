@@ -125,7 +125,7 @@ namespace CMSat {
 
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
-            self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n")
+            self.f.write("double estimator_0(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking, const uint32_t act_ranking_top_10) {\n")
             print(self.clf)
             print(self.clf.get_params())
             self.get_code(self.clf, 1)
@@ -133,15 +133,15 @@ namespace CMSat {
         else:
             num_trees = len(self.clf.estimators_)
             for tree, i in zip(self.clf.estimators_, range(100)):
-                self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n" % i)
+                self.f.write("double estimator_%d(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking, const uint32_t act_ranking_top_10) {\n" % i)
                 self.get_code(tree, 1)
                 self.f.write("}\n")
 
         # Final tally
-        self.f.write("bool ReduceDB::should_keep(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking_top_10) {\n")
+        self.f.write("bool ReduceDB::should_keep(const Clause* cl, uint32_t last_touched_diff, const uint32_t act_ranking, const uint32_t act_ranking_top_10) {\n")
         self.f.write("    int votes = 0;\n")
         for i in range(num_trees):
-            self.f.write("    votes += estimator_%d(cl, last_touched_diff, act_ranking_top_10) < 1.0;\n" % i)
+            self.f.write("    votes += estimator_%d(cl, last_touched_diff, act_ranking, act_ranking_top_10) < 1.0;\n" % i)
         self.f.write("    return votes >= %d;\n" % ceil(float(num_trees)/2.0))
         self.f.write("}\n")
         self.f.write("}\n")
@@ -162,6 +162,8 @@ namespace CMSat {
             elif feat_name == "last_touched_diff":
                 pass
             elif feat_name == "act_ranking_top_10":
+                pass
+            elif feat_name == "act_ranking":
                 pass
             else:
                 feat_name = "cl->stats." + feat_name
@@ -426,6 +428,8 @@ def learn(fname):
 
         best_features = ['rdb0.used_for_uip_creation', 'rdb1.used_for_uip_creation', 'cl.size', 'cl.glue_rel_long', 'cl.glue_rel', 'cl.glue', 'cl.size', 'rdb0.dump_no'] #, 'cl.overlap_rel', 'cl.overlap']
         best_features.append('rdb0.act_ranking_top_10')
+        best_features.append('rdb0.act_ranking')
+        #best_features = ['rdb0.used_for_uip_creation']
 
         if options.no_rdb1:
             best_features = rem_features(best_features, ["rdb.rel", "rdb1."])

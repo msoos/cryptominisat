@@ -83,6 +83,7 @@ public:
         , const bool locked
         , const Clause* cl
         , const uint32_t act_ranking_top_10
+        , const uint32_t act_ranking
     ) = 0;
 
     virtual void dump_clause_stats(
