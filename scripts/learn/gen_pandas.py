@@ -344,6 +344,7 @@ class Query2 (QueryHelper):
         self.case_stmt = """
         CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
             -- and `goodcl`.`num_used` > 5
+            or `goodcl`.`last_prop_used` > rdb0.conflicts
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -450,6 +451,7 @@ class Query2 (QueryHelper):
         drop index if exists `idxclid4`;
         drop index if exists `idxclid5`;
         drop index if exists `idxclid6`;
+        drop index if exists `idxclid7`;
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
@@ -457,11 +459,28 @@ class Query2 (QueryHelper):
         create index `idxclid4` on `restart` (`runID`, `restarts`);
         create index `idxclid5` on `tags` (`runID`, `tagname`);
         create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
+        create index `idxclid7` on `reduceDB` (`runID`,`clauseID`, `propagations_made`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def fill_last_prop(self):
+        print("Adding last prop...")
+        t = time.time()
+        q = """
+        update goodClauses
+        set last_prop_used =
+        (select max(conflicts)
+            from reduceDB
+            where reduceDB.clauseID = goodClauses.clauseID
+                and reduceDB.propagations_made > 0
+                and reduceDB.runID = goodClauses.runID
+        );
+        """
+        self.c.execute(q)
+        print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
 
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK
@@ -573,6 +592,8 @@ def get_one_file(dbfname):
     with Query2(dbfname) as q:
         if not options.no_recreate_indexes:
             q.create_indexes()
+            q.fill_last_prop()
+
         ok, df = q.get_clstats()
         if not ok:
             return False, None
