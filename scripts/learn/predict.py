@@ -228,11 +228,11 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
     # clf = sklearn.svm.SVC()
     if final:
         if options.final_is_tree:
-            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=16)
+            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=60)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=16)
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=30)
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=16)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=30)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
     clf.fit(X_train, y_train, sample_weight=sample_weight)
