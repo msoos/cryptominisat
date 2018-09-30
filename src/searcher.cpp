@@ -1544,7 +1544,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     if (params.rest_type == Restart::glue) {
         hist.glueHistLTLimited.push(std::min<size_t>(glue, 50));
     }
-    hist.glueHistLTAll.push(glue);
+    hist.glueHistLT.push(glue);
     hist.glueHist.push(glue);
 }
 
@@ -1696,7 +1696,7 @@ void Searcher::set_clause_data(
     //definitely a BUG here I think -- should be 2*antec_data.num(), no?
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
-    double glue_hist = hist.glueHistLTAll.avg();
+    double glue_hist = hist.glueHistLT.avg();
     double glue_hist_long = hist.glueHist.getLongtTerm().avg();
     double glue_hist_queue = hist.glueHist.avg_nocheck();
     double size_hist = hist.conflSizeHistLT.avg();

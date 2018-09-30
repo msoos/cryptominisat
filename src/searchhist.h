@@ -46,12 +46,12 @@ struct SearchHist {
     AvgCalc<uint32_t>   trailDepthDeltaHist; ///<for THIS restart only
 
     //About the confl generated
-    bqueue<uint32_t>    glueHist;   ///< Set of last decision levels in (glue of) conflict clauses
-    AvgCalc<uint32_t>   glueHistLTLimited; //LIMITED, only glue-based restart, max 50 glue
-    AvgCalc<uint32_t>   glueHistLTAll;
+    bqueue<uint32_t>    glueHist;          ///< Conflict glue history (this restart only)
+    AvgCalc<uint32_t>   glueHistLT;        ///< Conflict glue history (all restarts)
+    AvgCalc<uint32_t>   glueHistLTLimited; //As before, but ONLY glue-based restart, max 50 glue
 
-    AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history
-    AvgCalc<uint32_t>   conflSizeHistLT;
+    AvgCalc<uint32_t>   conflSizeHist;       ///< Conflict size history (this restart only)
+    AvgCalc<uint32_t>   conflSizeHistLT;     ///< Conflict size history (all restarts)
     AvgCalc<uint32_t>   numResolutionsHistLT;
 
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -128,7 +128,7 @@ struct SearchHist {
         #ifdef STATS_NEEDED
         << std::right << glueHist.getLongtTerm().avgPrint(1, 5)
         #endif
-        << "/" << std::left << glueHistLTAll.avgPrint(1, 5)
+        << "/" << std::left << glueHistLT.avgPrint(1, 5)
 
         << " confllen"
         << " " << std::right << conflSizeHist.avgPrint(1, 5)

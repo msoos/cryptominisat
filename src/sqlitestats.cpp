@@ -1178,7 +1178,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.vsidsVarsAvgLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHistLT.avg());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLTAll.avg());
+    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHistLT.avg());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.antec_data_sum_sizeHistLT.avg());

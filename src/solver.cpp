@@ -3153,7 +3153,7 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     SatZillaFeaturesCalc extract(this);
     SatZillaFeatures satzilla_feat = extract.extract();
     satzilla_feat.avg_confl_size = hist.conflSizeHistLT.avg();
-    satzilla_feat.avg_confl_glue = hist.glueHistLTAll.avg();
+    satzilla_feat.avg_confl_glue = hist.glueHistLT.avg();
     satzilla_feat.avg_num_resolutions = hist.numResolutionsHistLT.avg();
     satzilla_feat.avg_trail_depth_delta = hist.trailDepthDeltaHist.avg();
     satzilla_feat.avg_branch_depth = hist.branchDepthHist.avg();
@@ -3161,8 +3161,8 @@ SatZillaFeatures Solver::calculate_satzilla_features()
 
     satzilla_feat.confl_size_min = hist.conflSizeHistLT.getMin();
     satzilla_feat.confl_size_max = hist.conflSizeHistLT.getMax();
-    satzilla_feat.confl_glue_min = hist.glueHistLTAll.getMin();
-    satzilla_feat.confl_glue_max = hist.glueHistLTAll.getMax();
+    satzilla_feat.confl_glue_min = hist.glueHistLT.getMin();
+    satzilla_feat.confl_glue_max = hist.glueHistLT.getMax();
     satzilla_feat.branch_depth_min = hist.branchDepthHist.getMin();
     satzilla_feat.branch_depth_max = hist.branchDepthHist.getMax();
     satzilla_feat.trail_depth_delta_min = hist.trailDepthDeltaHist.getMin();
