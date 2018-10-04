@@ -426,7 +426,7 @@ def learn(fname):
 
         best_features = ['cl.glue_rel', 'cl.backtrack_level_hist_lt', 'rdb0.used_for_uip_creation', 'cl.size_rel', 'cl.overlap_rel', 'cl.glue_rel_long']
 
-        best_features = ['rdb0.used_for_uip_creation', 'rdb1.used_for_uip_creation', 'cl.size', 'cl.glue_rel_long', 'cl.glue_rel', 'cl.glue', 'cl.size', 'rdb0.dump_no'] #, 'cl.overlap_rel', 'cl.overlap']
+        best_features = ['rdb0.used_for_uip_creation', 'rdb1.used_for_uip_creation', 'cl.size', 'cl.glue_rel_long', 'cl.glue_rel', 'cl.glue', 'cl.size'] #, 'cl.overlap_rel', 'cl.overlap']
         best_features.append('rdb0.act_ranking_top_10')
         best_features.append('rdb0.act_ranking')
         #best_features = ['rdb0.used_for_uip_creation']
