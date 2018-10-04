@@ -427,7 +427,7 @@ class Query2 (QueryHelper):
         and rdb1.runID = cl.runID
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
-        and rdb0.dump_no = 1 -- only mark this as throw-away ONCE
+        and rdb0.dump_no <= {num_times_bad} -- only mark this as throw-away TWICE
         """
         self.q_bad += self.common_restrictions
 
@@ -440,7 +440,9 @@ class Query2 (QueryHelper):
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "start_confl": options.start_conflicts,
-            "case_stmt": self.case_stmt}
+            "case_stmt": self.case_stmt,
+            "num_times_bad": options.num_times_bad
+            }
 
     def create_indexes(self):
         print("Recreating indexes...")
@@ -487,7 +489,7 @@ class Query2 (QueryHelper):
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
         if subfilter == "BAD":
-            q += " and rdb0.dump_no = 1"
+            q += " and rdb0.dump_no <= %d" % options.num_times_bad
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:")
@@ -553,7 +555,7 @@ class Query2 (QueryHelper):
 
         # OK-BAD
         #print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(num_lines_bad)*100.0))
-        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no = 1"
+        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no <= %d" % options.num_times_bad
         if options.fixed_num_datapoints != -1:
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
             q += self.common_limits
@@ -771,6 +773,9 @@ if __name__ == "__main__":
 
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
+
+    parser.add_option("--badnum", default=1, type=int,
+                      dest="num_times_bad", help="How many times should a BAD clause be counted")
 
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")
