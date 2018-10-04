@@ -45,10 +45,10 @@ rm -if "${OUTDIR}/data.sqlite.tree.dot"
 echo "Predicting file $1"
 
 # running CNF
-./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --gluecut0 10000 --presimp 1 -n 1 --zero-exit-status --restart luby --clid --sql 2 --maple 0 --distill 0 --everylev1 10 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
+./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --zero-exit-status --clid --sql 2 --everylev1 10 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt" --confbtwsimp 100
 
 # parse DRAT for UNSAT proof data
-./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/clause_id_data" -i -O 5
+./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/clause_id_data" -i
 
 # add clause IDs and their age and performance data
 ./add_lemma_ind.py "${OUTDIR}/data.sqlite" "${OUTDIR}/clause_id_data"
@@ -57,7 +57,7 @@ echo "Predicting file $1"
 ./gen_pandas.py --csv "${OUTDIR}/data.sqlite"
 
 # generate predictors
-./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot"
+./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot" --final --tree
 
 # generate DOT and display it
 dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png
