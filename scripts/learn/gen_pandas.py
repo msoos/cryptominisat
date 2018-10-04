@@ -519,7 +519,6 @@ class Query2 (QueryHelper):
         num_lines_ok = num_lines_ok_ok
 
         total_lines = num_lines_ok + num_lines_bad
-        distrib = 0.7;
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
         if options.fixed_num_datapoints != -1:
             if options.fixed_num_datapoints > total_lines:
@@ -540,8 +539,8 @@ class Query2 (QueryHelper):
         #print("Percentage of OK-OK: %-3.2f" % (num_lines_ok_ok/float(total_lines)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * distrib)
-            #q += self.common_limits
+            self.myformat["limit"] = int(options.fixed_num_datapoints * options.distrib)
+            q += self.common_limits
         print("limit for OK-OK:", self.myformat["limit"])
         q = q.format(**self.myformat)
         print("Running query for OK-OK...")
@@ -553,7 +552,7 @@ class Query2 (QueryHelper):
         #print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(num_lines_bad)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
             q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
         q = q.format(**self.myformat)
@@ -566,7 +565,7 @@ class Query2 (QueryHelper):
         #print("Percentage of BAD-BAD: %-3.2f" % (num_lines_bad_bad/float(total_lines)*100.0))
         q = self.q_bad_select + self.q_bad
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-options.distrib))
             q += self.common_limits
 
         print("limit for bad:", self.myformat["limit"])
@@ -763,6 +762,9 @@ if __name__ == "__main__":
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed_num_datapoints", help="Exact number of examples to take. -1 is to take all. Default: %default")
+
+    parser.add_option("--ok", default=0.7, type=float,
+                      dest="distrib", help="Distribution of OK vs BAD of datapoints. Default: %default")
 
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
