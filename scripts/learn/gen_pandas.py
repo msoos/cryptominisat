@@ -420,13 +420,14 @@ class Query2 (QueryHelper):
         goodcl.clauseID is NULL
         and goodcl.runID is NULL
         and cl.clauseID != 0
+        and cl.clauseID is not NULL
         and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
 
         and rdb1.runID = cl.runID
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
-        and rdb0.dump_no > 0
+        and rdb0.dump_no = 1 -- only mark this as throw-away ONCE
         """
         self.q_bad += self.common_restrictions
 
@@ -485,6 +486,8 @@ class Query2 (QueryHelper):
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
+        if subfilter == "BAD":
+            q += " and rdb0.dump_no = 1"
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:")
@@ -550,7 +553,7 @@ class Query2 (QueryHelper):
 
         # OK-BAD
         #print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(num_lines_bad)*100.0))
-        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
+        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no = 1"
         if options.fixed_num_datapoints != -1:
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
             q += self.common_limits
