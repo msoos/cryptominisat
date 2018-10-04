@@ -519,6 +519,7 @@ class Query2 (QueryHelper):
         num_lines_ok = num_lines_ok_ok
 
         total_lines = num_lines_ok + num_lines_bad
+        distrib = 0.7;
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
         if options.fixed_num_datapoints != -1:
             if options.fixed_num_datapoints > total_lines:
@@ -536,12 +537,11 @@ class Query2 (QueryHelper):
             return False, None
 
         # OK-OK
-        print("Percentage of OK-OK: %-3.2f" % (num_lines_ok_ok/float(total_lines)*100.0))
+        #print("Percentage of OK-OK: %-3.2f" % (num_lines_ok_ok/float(total_lines)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_ok/float(total_lines))
-            q += self.common_limits
-
+            self.myformat["limit"] = int(options.fixed_num_datapoints * distrib)
+            #q += self.common_limits
         print("limit for OK-OK:", self.myformat["limit"])
         q = q.format(**self.myformat)
         print("Running query for OK-OK...")
@@ -550,10 +550,10 @@ class Query2 (QueryHelper):
         df_ok_ok = pd.read_sql_query(q, self.conn)
 
         # OK-BAD
-        print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(total_lines)*100.0))
+        #print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(num_lines_bad)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(total_lines))
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
             q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
         q = q.format(**self.myformat)
@@ -563,10 +563,10 @@ class Query2 (QueryHelper):
         df_ok_bad = pd.read_sql_query(q, self.conn)
 
         # BAD-BAD
-        print("Percentage of BAD-BAD: %-3.2f" % (num_lines_bad_bad/float(total_lines)*100.0))
+        #print("Percentage of BAD-BAD: %-3.2f" % (num_lines_bad_bad/float(total_lines)*100.0))
         q = self.q_bad_select + self.q_bad
         if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(total_lines))
+            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
             q += self.common_limits
 
         print("limit for bad:", self.myformat["limit"])

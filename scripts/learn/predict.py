@@ -446,7 +446,7 @@ def learn(fname):
         print("Using unbalanced classifier so as not to loose clauses too much")
         one_classifier(df, best_features, "x.class", "OK", 8, True)
     else:
-        one_classifier(df, best_features, "x.class", "OK", 7, True)
+        one_classifier(df, best_features, "x.class", "OK", 1, True)
 
     if options.show:
         plt.show()
