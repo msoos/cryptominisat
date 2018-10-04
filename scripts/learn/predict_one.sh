@@ -57,7 +57,7 @@ echo "Predicting file $1"
 ./gen_pandas.py --csv "${OUTDIR}/data.sqlite"
 
 # generate predictors
-./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot" --final --tree
+./predict.py "${OUTDIR}/data.sqlite-pandasdata.dat" --dot "${OUTDIR}/dectree.dot" --final --tree --conf
 
 # generate DOT and display it
 dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png

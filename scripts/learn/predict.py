@@ -35,7 +35,7 @@ from sklearn.model_selection import train_test_split
 
 
 def output_to_dot(clf, features):
-    fname = options.dot+clf.classes_[0]
+    fname = options.dot
     sklearn.tree.export_graphviz(clf, out_file=fname,
                                  feature_names=features,
                                  class_names=clf.classes_,
