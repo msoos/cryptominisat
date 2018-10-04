@@ -187,6 +187,7 @@ struct ClauseStats
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
+        ret.ID = 0; //don't track combined clauses
         #endif
         ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
 
