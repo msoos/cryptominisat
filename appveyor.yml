@@ -63,7 +63,11 @@ before_build:
   - echo %configuration%
 
   # get "lit" from python pip
+  - echo "Python is:"
+  - echo %PYTHON%
   - "%PYTHON%/python -m pip install lit"
+  - cd %PYTHON%/
+  - ls
 
   # boost
   - cd c:\projects\cryptominisat
@@ -98,7 +102,7 @@ before_build:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%STATICCOMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DBoost_DEBUG=1 ..
+  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%STATICCOMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DBoost_DEBUG=1 ..
   - ls
 
 after_build:
