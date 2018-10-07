@@ -271,6 +271,7 @@ void ReduceDB::handle_lev1()
 #ifdef FINAL_PREDICTOR
 void ReduceDB::handle_lev1_final_predictor()
 {
+    assert(delayed_clause_free.empty());
     nbReduceDB_lev1++;
     uint32_t deleted = 0;
     uint32_t kept = 0;
