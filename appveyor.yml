@@ -28,7 +28,7 @@ environment:
   global:
     BOOST_ROOT: C:\projects\cryptominisat\boost_1_59_0_install
     ZLIB_ROOT: C:\projects\cryptominisat\zlib\myinstall
-    PYTHON: "C:\\Python33-x64"
+    PYTHON: "C:\\Python36-x64"
     BUILD_TYPE: Release
     APPVEYOR_SAVE_CACHE_ON_ERROR: false
 
