@@ -5,12 +5,12 @@ set -e
 FNAME="barman-pfile07-027.sas.cr.37.cnf"
 FNAMEOUT="mystuff"
 RATIO="1"
-FIXED="50000"
+FIXED="40000"
 
 FNAME="UTI-20-10p0.cnf-unz"
 FNAMEOUT="mystuff2"
 RATIO="0.05"
-FIXED="70000"
+FIXED="150000"
 
 ./build_stats.sh
 rm -f "$FNAMEOUT.db"
