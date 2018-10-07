@@ -240,7 +240,8 @@ struct DratFile: public Drat
                 //assert(!(ID != 0 && !cl.red()));
 
                 //redundant clauses MUST have a valid ID
-                assert(!(ID == 0 && cl.red()));
+                //actually, they don't, in case they got merged
+                //assert(!(ID == 0 && cl.red()));
             }
             #endif
         }

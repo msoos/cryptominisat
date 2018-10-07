@@ -341,6 +341,9 @@ public:
     void setStrenghtened()
     {
         must_recalc_abst = true;
+        #ifdef STATS_NEEDED
+        stats.ID = 0;
+        #endif
     }
 
     void recalc_abst_if_needed()
