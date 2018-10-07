@@ -355,7 +355,7 @@ def rem_features(feat, to_remove):
 
 
 def calc_greedy_best_features(df, features):
-    top_feats = one_classifier(df, features, "x.class", "OK", 4, False)
+    top_feats = one_classifier(df, features, "x.class", "OK", 1, False)
     if options.show:
         plt.show()
 
@@ -372,7 +372,7 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            mysum = one_classifier(df, this_feats, "x.class", "OK", 4, True)
+            mysum = one_classifier(df, this_feats, "x.class", "OK", 1, True)
             print("Reported mysum: ", mysum)
             if mysum > best_sum:
                 best_sum = mysum
@@ -442,14 +442,7 @@ def learn(fname):
     else:
         best_features = calc_greedy_best_features(df, features)
 
-    #one_classifier(df, best_features, "x.class", "OK", 40, False)
-    #one_classifier(df, best_features, "x.class", "OK", 29, True)
-
-    if False:
-        print("Using unbalanced classifier so as not to loose clauses too much")
-        one_classifier(df, best_features, "x.class", "OK", 8, True)
-    else:
-        one_classifier(df, best_features, "x.class", "OK", 1, True)
+    one_classifier(df, best_features, "x.class", "OK", 1, True)
 
     if options.show:
         plt.show()
