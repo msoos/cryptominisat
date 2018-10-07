@@ -774,8 +774,8 @@ if __name__ == "__main__":
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
 
-    parser.add_option("--badnum", default=1, type=int,
-                      dest="num_times_bad", help="How many times should a BAD clause be counted")
+    parser.add_option("--badnum", default=10000, type=int,
+                      dest="num_times_bad", help="How many times at most should a BAD clause be in the data. Basically, we can count them only once, the first time they are in. But that introduces a weird bias.")
 
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes", help="Don't recreate indexes")

@@ -399,8 +399,8 @@ def learn(fname):
     print("total samples: %5d" % df.shape[0])
 
     features = df.columns.values.flatten().tolist()
-    features = rem_features(features,
-                            ["x.num_used", "x.class", "x.lifetime", "fname"])
+    features = rem_features(
+        features, ["x.num_used", "x.class", "x.lifetime", "fname", "dump_no"])
     if options.no_rdb1:
         features = rem_features(features, ["rdb1", "rdb.rel"])
         features = rem_features(features, ["rdb.rel"])
