@@ -558,6 +558,7 @@ endmacro()
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(FORCE_PYTHON2 OFF)
+message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
 if (NOT FORCE_PYTHON2)
     find_package(PythonInterp 3)
     find_package(PythonLibs 3)
