@@ -43,21 +43,17 @@ def cleanup(dat):
     ret = []
     for elem in dat:
         elem = elem.strip()
+        if is_apple != "" and "-ldl" in elem:
+            continue
         if elem != "" and not "flto" in elem:
             ret.append(elem)
 
-#    if is_apple != "":
-#        for x in ret:
-#            if x == "-lpython" or x == "-lframework":
-#                x = "-undefined dynamic_lookup"
-
     return ret
-    # return []
 
 cconf = cleanup(cconf)
 ldconf = cleanup(ldconf)
-# print "Extra C flags from python-config:", cconf
-# print "Extra libraries from python-config:", ldconf
+print("Extra C flags from python-config:", cconf)
+print("Extra libraries from python-config:", ldconf)
 
 
 def _init_posix(init):
