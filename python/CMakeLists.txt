@@ -32,12 +32,23 @@ print(sysconfig.get_config_var('SHLIBS'), end = '')"
     OUTPUT_VARIABLE PY_LD_CONFIG)
 
 
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "
+from __future__ import print_function;
+import sysconfig;
+print(sysconfig.get_config_var('LINKFORSHARED'), end = '')"
+    OUTPUT_VARIABLE PY_LINKFORSHARED_CONFIG)
+
+
 string(REPLACE "\n" " " PY_C_CONFIG ${PY_C_CONFIG})
 string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})
+string(REPLACE "\n" " " PY_LINKFORSHARED_CONFIG ${PY_LINKFORSHARED_CONFIG})
 
 message(STATUS "Python CFLAGS:  '${PY_C_CONFIG}'")
 message(STATUS "Python LDFLAGS: '${PY_LD_CONFIG}'")
+message(STATUS "Python LINKFORSHARED flags: '${PY_LINKFORSHARED_CONFIG}'")
 message(STATUS "Python module will be installed to : '${CMAKE_INSTALL_PREFIX}'")
+
+set(PY_LD_CONFIG "${PY_LD_CONFIG} ${PY_LINKFORSHARED_CONFIG}")
 
 
 set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
