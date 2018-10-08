@@ -401,7 +401,6 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
     assert(cl->red());
     const unsigned new_glue = calc_glue(*cl);
 
-    #if not defined(FINAL_PREDICTOR)
     if (new_glue < cl->stats.glue) {
         if (cl->stats.glue <= conf.protect_cl_if_improved_glue_below_this_glue_for_one_turn) {
             cl->stats.ttl = 1;
@@ -422,7 +421,6 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
             }
         }
      }
-    #endif
 }
 
 template<bool update_bogoprops>
@@ -469,27 +467,32 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             }
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
-            cl->stats.used_for_uip_creation++;
+            if (!update_bogoprops) {
+                cl->stats.used_for_uip_creation++;
+            }
             #endif
 
+            //If STATS_NEEDED then bump acitvity of ALL clauses
+            //and set stats on all clauses
             if (!update_bogoprops
                 && cl->red()
+                #if not defined(STATS_NEEDED) && not defined(FINAL_PREDICTOR)
                 && cl->stats.which_red_array != 0
+                #endif
             ) {
+                #if not defined(FINAL_PREDICTOR)
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
                 }
+                #endif
+                cl->stats.last_touched = sumConflicts;
 
-                //If STATS_NEEDED then bump acitvity of ALL clauses
-                if (cl->stats.which_red_array == 1) {
-                    cl->stats.last_touched = sumConflicts;
-                } else if (cl->stats.which_red_array == 2) {
-                    #ifndef STATS_NEEDED
-                    bump_cl_act<update_bogoprops>(cl);
-                    #endif
-                }
-                #ifdef STATS_NEEDED
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 bump_cl_act<update_bogoprops>(cl);
+                #else
+                if (cl->stats.which_red_array == 2) {
+                    bump_cl_act<update_bogoprops>(cl);
+                }
                 #endif
             }
 
