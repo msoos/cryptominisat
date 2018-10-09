@@ -241,6 +241,7 @@ void ReduceDB::handle_lev1()
 
                 //when stats are needed, activities are correctly updated
                 //across all clauses
+                //WARNING this changes the way things behave during STATS relative to non-STATS!
                 #ifndef STATS_NEEDED
                 cl->stats.activity = 0;
                 #endif
