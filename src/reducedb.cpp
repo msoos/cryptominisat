@@ -102,6 +102,10 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
 //kept no. of clauses as other solvers do
 void ReduceDB::handle_lev2()
 {
+    #ifdef FINAL_PREDICTOR
+    assert(false);
+    #endif
+
     nbReduceDB_lev1++;
     solver->dump_memory_stats_to_sql();
 
@@ -214,6 +218,10 @@ void ReduceDB::dump_sql_cl_data()
 
 void ReduceDB::handle_lev1()
 {
+    #ifdef FINAL_PREDICTOR
+    assert(false);
+    #endif
+
     nbReduceDB_lev1++;
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
