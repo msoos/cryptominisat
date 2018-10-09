@@ -179,8 +179,7 @@ struct ClauseStats
 
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
-        ret.activity = std::min(first.activity, second.activity);
-        ret.activity = std::max<float>(ret.activity, 0); //at least 0, though!
+        ret.activity = std::max(first.activity, second.activity);
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
