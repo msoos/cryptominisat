@@ -238,7 +238,12 @@ void ReduceDB::handle_lev1()
             ) {
                 solver->longRedCls[2].push_back(offset);
                 cl->stats.which_red_array = 2;
+
+                //when stats are needed, activities are correctly updated
+                //across all clauses
+                #ifndef STATS_NEEDED
                 cl->stats.activity = 0;
+                #endif
                 solver->bump_cl_act<false>(cl);
                 non_recent_use++;
             } else {
