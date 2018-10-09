@@ -62,7 +62,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY
 
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" "${SETUP_PY}")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/pycryptosat.cpp")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/pycryptosat.cpp")
 
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}
