@@ -117,7 +117,7 @@ else:
 
 modules = dict(
     name = "pycryptosat",
-    sources = ["${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp"],
+    sources = ["${CMAKE_CURRENT_BINARY_DIR}/src/pycryptosat.cpp"],
     define_macros = [('LIBRARY_VERSION', '"' + __LIBRARY_VERSION__ + '"')],
     extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
     extra_link_args = extra_link_args,

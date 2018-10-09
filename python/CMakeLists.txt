@@ -51,8 +51,8 @@ message(STATUS "Python module will be installed to : '${CMAKE_INSTALL_PREFIX}'")
 set(PY_LD_CONFIG "${PY_LD_CONFIG} ${PY_LINKFORSHARED_CONFIG}")
 
 
-set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
-set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build")
+set(SETUP_PY       "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+set(OUTPUT         "${CMAKE_CURRENT_BINARY_DIR}/build")
 
 # Copy environment for distutils
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/README.rst" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
@@ -61,7 +61,8 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/tests" DESTINATION "${CMAKE_CURRENT_BINAR
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY_DIR}/MANIFEST.in")
 
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" ${SETUP_PY})
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" "${SETUP_PY}")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/pycryptosat.cpp")
 
 add_custom_command(OUTPUT ${OUTPUT}/timestamp
                    COMMAND ${PYTHON_EXECUTABLE}

@@ -1099,7 +1099,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString(LIBRARY_VERSION));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("${CMS_FULL_VERSION}"));
 
     if (PyErr_Occurred())
     {
