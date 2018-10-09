@@ -480,6 +480,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 && cl->stats.which_red_array != 0
                 #endif
             ) {
+                //don't update glues on final predictor
+                //but normal "stats", please do, so it doesn't behave much
+                //different than a normal run (except slower)
                 #if not defined(FINAL_PREDICTOR)
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
@@ -487,6 +490,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 #endif
                 cl->stats.last_touched = sumConflicts;
 
+                //If stats or predictor, bump all because during final
+                //we will need this data and during dump when stats is on
+                //we also need this data.
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 bump_cl_act<update_bogoprops>(cl);
                 #else
