@@ -327,7 +327,12 @@ void ReduceDB::handle_lev1_final_predictor()
             //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
-                && !should_keep(cl, last_touched_diff, i, act_ranking_top_10)
+                && !should_keep(
+                    cl
+                    , last_touched_diff
+                    , i
+                    , act_ranking_top_10
+                )
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
