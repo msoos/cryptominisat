@@ -460,10 +460,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 antec_data.glue_long_reds.push(cl->stats.glue);
                 #endif
             } else {
+                stats.resolvs.longIrred++;
                 #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.longIrred++;
                 #endif
-                stats.resolvs.longRed++;
             }
             #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
             antec_data.size_longs.push(cl->size());
