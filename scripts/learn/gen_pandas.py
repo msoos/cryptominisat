@@ -541,7 +541,6 @@ class Query2 (QueryHelper):
             return False, None
 
         # OK-OK
-        #print("Percentage of OK-OK: %-3.2f" % (num_lines_ok_ok/float(total_lines)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed_num_datapoints != -1:
             self.myformat["limit"] = int(options.fixed_num_datapoints * options.distrib)
@@ -554,7 +553,6 @@ class Query2 (QueryHelper):
         df_ok_ok = pd.read_sql_query(q, self.conn)
 
         # OK-BAD
-        #print("Percentage of OK-BAD: %-3.2f" % (num_lines_ok_bad/float(num_lines_bad)*100.0))
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no <= %d" % options.num_times_bad
         if options.fixed_num_datapoints != -1:
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
@@ -567,7 +565,6 @@ class Query2 (QueryHelper):
         df_ok_bad = pd.read_sql_query(q, self.conn)
 
         # BAD-BAD
-        #print("Percentage of BAD-BAD: %-3.2f" % (num_lines_bad_bad/float(total_lines)*100.0))
         q = self.q_bad_select + self.q_bad
         if options.fixed_num_datapoints != -1:
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-options.distrib))
