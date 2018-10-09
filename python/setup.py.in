@@ -36,7 +36,6 @@ os.environ["CC"] = "${CMAKE_C_COMPILER}"
 os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
 
 cconf = """${PY_C_CONFIG}""".split(" ")
-ldconf = """${PY_LD_CONFIG}""".split(" ")
 is_apple = """${APPLE}"""
 
 def cleanup(dat):
@@ -51,9 +50,7 @@ def cleanup(dat):
     return ret
 
 cconf = cleanup(cconf)
-ldconf = cleanup(ldconf)
-print("Extra C flags from python-config:", cconf)
-print("Extra libraries from python-config:", ldconf)
+# print "Extra C flags from python-config:", cconf
 
 
 def _init_posix(init):
@@ -109,7 +106,7 @@ class TestCommand(Command):
 __version__ = '@PROJECT_VERSION@'
 
 # needed because Mac doesn't make use of runtime_library_dirs
-extra_link_args = list(ldconf)
+extra_link_args = []
 if platform.system() == 'Darwin':
     extra_link_args.append('-Wl,-rpath,'+"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
