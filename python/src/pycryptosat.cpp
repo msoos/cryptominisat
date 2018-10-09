@@ -56,11 +56,6 @@ using namespace CMSat;
         static PyObject *PyInit_ ## name(void)
 #endif
 
-// Mask "missing initializer for member" warnings in PyTypeObject
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-// Mask "deprecated conversion from string constant to ‘char*’" warnings in kwlist arrays
-#pragma GCC diagnostic ignored "-Wwrite-strings"
-
 // Support for old and end-of-life Python versions
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
     #define PyUnicode_FromString  PyString_FromString
