@@ -9,7 +9,7 @@ FIXED="40000"
 
 FNAME="UTI-20-10p0.cnf-unz"
 FNAMEOUT="mystuff2"
-RATIO="0.05"
+RATIO="0.20"
 FIXED="150000"
 
 ./build_stats.sh
