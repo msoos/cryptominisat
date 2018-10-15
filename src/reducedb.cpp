@@ -252,8 +252,8 @@ void ReduceDB::handle_lev1()
                 //WARNING this changes the way things behave during STATS relative to non-STATS!
                 #ifndef STATS_NEEDED
                 cl->stats.activity = 0;
-                #endif
                 solver->bump_cl_act<false>(cl);
+                #endif
                 non_recent_use++;
             } else {
                 solver->longRedCls[1][j++] = offset;
