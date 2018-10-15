@@ -47,21 +47,6 @@ def output_to_dot(clf, features):
     print("gwenview {fname}.png".format(fname=fname))
 
 
-def calc_cross_val():
-    # calculate accuracy/prec/recall for cross-validation
-    accuracy = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10)
-    precision = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='precision')
-    recall = sklearn.model_selection.cross_val_score(self.clf, X_train, y_train, cv=10, scoring='recall')
-    print("cv-accuracy:", accuracy)
-    print("cv-precision:", precision)
-    print("cv-recall:", recall)
-    accuracy = np.mean(accuracy)
-    precision = np.mean(precision)
-    recall = np.mean(recall)
-    print("cv-prec: %-3.4f  cv-recall: %-3.4f cv-accuracy: %-3.4f T: %-3.2f" %
-          (precision, recall, accuracy, (time.time() - t)))
-
-
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
@@ -343,9 +328,6 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
             title='Normalized confusion matrix -- train')
 
     # TODO do L1 regularization
-
-    if False:
-        calc_cross_val()
 
     if not final:
         return best_features
