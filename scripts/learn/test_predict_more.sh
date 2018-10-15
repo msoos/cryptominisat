@@ -12,6 +12,8 @@ FNAMEOUT="mystuff2"
 RATIO="0.20"
 FIXED="150000"
 
+FNAME="countbitswegner064.cnf"
+
 ./build_stats.sh
 rm -f "$FNAMEOUT.db"
 rm -f "$FNAMEOUT.lemmas-*"
