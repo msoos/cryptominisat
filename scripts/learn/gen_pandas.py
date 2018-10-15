@@ -344,7 +344,7 @@ class Query2 (QueryHelper):
         self.case_stmt = """
         CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
             -- and `goodcl`.`num_used` > 5
-            or `goodcl`.`last_prop_used` > rdb0.conflicts
+            -- or `goodcl`.`last_prop_used` > rdb0.conflicts
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
