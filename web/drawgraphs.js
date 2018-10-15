@@ -145,7 +145,7 @@ function clear_everything()
     blockRedraw = false;
     dists = [];
 
-    datagraphs = document.getElementById("datagraphs");
+    var datagraphs = document.getElementById("datagraphs");
     datagraphs.innerHTML = "";
 }
 
