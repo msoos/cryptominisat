@@ -127,6 +127,9 @@ modules = dict(
     libraries = [libname]
 )
 
+if platform.system() == 'Windows':
+    del modules['runtime_library_dirs']
+
 setup(
     name = "pycryptosat",
     version = __PACKAGE_VERSION__,
