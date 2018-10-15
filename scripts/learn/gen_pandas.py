@@ -546,6 +546,7 @@ class Query2 (QueryHelper):
             self.myformat["limit"] = int(options.fixed_num_datapoints * options.distrib)
             if self.myformat["limit"] > num_lines_ok_ok:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-OK")
+                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_ok))
                 return False, None
             q += self.common_limits
 
@@ -562,6 +563,7 @@ class Query2 (QueryHelper):
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
             if self.myformat["limit"] > num_lines_ok_bad:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
+                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_bad))
                 return False, None
             q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
@@ -577,6 +579,7 @@ class Query2 (QueryHelper):
             self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-options.distrib))
             if self.myformat["limit"] > num_lines_bad_bad:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
+                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_bad_bad))
                 return False, None
             q += self.common_limits
 
