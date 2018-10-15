@@ -237,11 +237,11 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
     # clf = sklearn.svm.SVC()
     if final:
         if options.final_is_tree:
-            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=60)
+            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=options.min_samples_split)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=30)
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=options.min_samples_split/2)
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=30)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=options.min_samples_split/2)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
     clf.fit(X_train, y_train, sample_weight=sample_weight)
@@ -482,6 +482,8 @@ if __name__ == "__main__":
                       dest="no_rdb1", help="Delete RDB1 data")
     parser.add_option("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
+    parser.add_option("--split", default=80, type=int,
+                      dest="min_samples_split", help="Split in tree if this many samples or above. Haved for forests, as there it's the leaf limit")
     parser.add_option("--greedybest", default=40, type=int,
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=40, type=int,
