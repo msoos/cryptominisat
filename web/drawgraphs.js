@@ -33,7 +33,7 @@ function drawOneGraph(i)
 {
     console.log("putting to:");
     console.log(document.getElementById(graph_data[i].dataDivID));
-    graph = new Dygraph(
+    var graph = new Dygraph(
         document.getElementById(graph_data[i].dataDivID),
         graph_data[i].data
         , {
