@@ -21,9 +21,7 @@
 import pandas as pd
 import pickle
 import sklearn
-import sklearn.svm
 import sklearn.tree
-import sklearn.ensemble
 import optparse
 import numpy as np
 import sklearn.metrics
