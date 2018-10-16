@@ -30,7 +30,6 @@ import os
 import stat
 import time
 import resource
-import locale
 from functools import partial
 
 
