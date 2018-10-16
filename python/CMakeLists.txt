@@ -64,10 +64,19 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" "${CMAKE_CURRENT_BINARY
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in" "${SETUP_PY}")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/pycryptosat.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/pycryptosat.cpp")
 
-add_custom_command(OUTPUT ${OUTPUT}/timestamp
-                   COMMAND ${PYTHON_EXECUTABLE}
-                   ARGS setup.py build_ext --inplace --rpath ../lib
-                   DEPENDS libcryptominisat5)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(OUTPUT ${OUTPUT}/timestamp
+       COMMAND ${PYTHON_EXECUTABLE}
+       ARGS setup.py build_ext --inplace
+       DEPENDS libcryptominisat5
+   )
+else()
+    add_custom_command(OUTPUT ${OUTPUT}/timestamp
+       COMMAND ${PYTHON_EXECUTABLE}
+       ARGS setup.py build_ext --inplace --rpath ../lib
+       DEPENDS libcryptominisat5
+   )
+endif()
 
 add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
