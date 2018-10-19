@@ -329,7 +329,7 @@ void ReduceDB::handle_lev1_final_predictor()
             //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
-                && cl->stats.locked_long
+                && !cl->stats.locked_long
                 && !should_keep_short(
                     cl
                     , last_touched_diff
