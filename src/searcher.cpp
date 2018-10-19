@@ -1782,9 +1782,36 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             #if defined(FINAL_PREDICTOR)
-            //if (which_arr > 0)
-                which_arr = 1;
+            which_arr = 1;
             #endif
+
+            #ifdef STATS_NEEDED
+            if (solver->sqlStats
+                && drat
+                && conf.dump_individual_restarts_and_clauses
+            ) {
+                if (dump_this_many_cldata_in_stream <= 0) {
+                    double myrnd = mtrand.randDblExc();
+                    if (myrnd <= conf.dump_individual_cldata_ratio) {
+                        dump_this_many_cldata_in_stream = conf.dump_individual_cldata_stream;
+                    }
+                }
+
+                if (dump_this_many_cldata_in_stream >= 0) {
+                    which_arr = 0; //keep them in always
+                    if (cl) {
+                        cl->stats.dump_number = 0;
+                    }
+                    dump_this_many_cldata_in_stream--;
+                    dump_sql_clause_data(
+                        glue
+                        , old_decision_level
+                    );
+                }
+            }
+            clauseID++;
+            #endif
+
 
             /*if (conf.guess_cl_effectiveness) {
                 unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
@@ -1830,32 +1857,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         #endif
          << fin << findelay;
     }
-
-    #ifdef STATS_NEEDED
-    if (solver->sqlStats
-        && drat
-        && conf.dump_individual_restarts_and_clauses
-    ) {
-        if (dump_this_many_cldata_in_stream <= 0) {
-            double myrnd = mtrand.randDblExc();
-            if (myrnd <= conf.dump_individual_cldata_ratio) {
-                dump_this_many_cldata_in_stream = conf.dump_individual_cldata_stream;
-            }
-        }
-
-        if (dump_this_many_cldata_in_stream >= 0) {
-            if (cl) {
-                cl->stats.dump_number = 0;
-            }
-            dump_this_many_cldata_in_stream--;
-            dump_sql_clause_data(
-                glue
-                , old_decision_level
-            );
-        }
-    }
-    clauseID++;
-    #endif
 
     #ifdef FINAL_PREDICTOR
     if (cl) {
