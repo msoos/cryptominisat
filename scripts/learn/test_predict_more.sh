@@ -41,10 +41,11 @@ FIXED="70000" #used before 70k
 # # orig: 98s
 # prop inside learnt: 82s
 # no prop inside: 95s
-# FNAME="AProVE07-16.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="0.60"
-# FIXED="30000"
+# locked: 69s
+FNAME="AProVE07-16.cnf"
+FNAMEOUT="mystuff2"
+RATIO="0.60"
+FIXED="30000"
 
 
 # orig: 197.10
