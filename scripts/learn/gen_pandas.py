@@ -341,10 +341,17 @@ class Query2 (QueryHelper):
         limit {limit}
         """
 
-        self.case_stmt = """
+        self.case_stmt_10k = """
         CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
             -- and `goodcl`.`num_used` > 5
             -- or `goodcl`.`last_prop_used` > rdb0.conflicts
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+        """
+
+        self.case_stmt_100k = """
+        CASE WHEN goodcl.last_confl_used > (rdb0.conflicts+100000)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -440,7 +447,6 @@ class Query2 (QueryHelper):
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "start_confl": options.start_conflicts,
-            "case_stmt": self.case_stmt,
             "num_times_bad": options.num_times_bad
             }
 
@@ -510,7 +516,18 @@ class Query2 (QueryHelper):
         print("Num datpoints BAD (K): %-3.5f" % (num_lines/1000.0))
         return num_lines
 
-    def get_clstats(self):
+    def get_clstats(self, long_or_short):
+        if long_or_short == "short":
+            self.myformat["case_stmt"] = self.case_stmt_10k
+            fixed_mult = 1.0
+            distrib = 0.7
+        else:
+            self.myformat["case_stmt"] = self.case_stmt_100k
+            fixed_mult = 0.2
+            distrib = 0.1
+        print("Distrib OK vs BAD set to %s ", distrib)
+        print("Fixed multiplier set to %s  ", fixed_mult)
+
         t = time.time()
 
         num_lines_ok = 0
@@ -525,9 +542,9 @@ class Query2 (QueryHelper):
 
         total_lines = num_lines_ok + num_lines_bad
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
-        if options.fixed_num_datapoints != -1:
-            if options.fixed_num_datapoints > total_lines:
-                print("WARNING -- Your fixed num datapoints is too high:", options.fixed_num_datapoints)
+        if options.fixed != -1:
+            if options.fixed*fixed_mult > total_lines:
+                print("WARNING -- Your fixed num datapoints is too high:", options.fixed*fixed_mult)
                 print("WARNING -- We only have:", total_lines)
                 print("WARNING --> Not returning data.")
                 return False, None
@@ -542,8 +559,8 @@ class Query2 (QueryHelper):
 
         # OK-OK
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
-        if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * options.distrib)
+        if options.fixed != -1:
+            self.myformat["limit"] = int(options.fixed*fixed_mult * distrib)
             if self.myformat["limit"] > num_lines_ok_ok:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-OK")
                 print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_ok))
@@ -559,8 +576,8 @@ class Query2 (QueryHelper):
 
         # OK-BAD
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no <= %d" % options.num_times_bad
-        if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_ok_bad/float(num_lines_bad) * (1.0-options.distrib))
+        if options.fixed != -1:
+            self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
             if self.myformat["limit"] > num_lines_ok_bad:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
                 print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_bad))
@@ -575,8 +592,8 @@ class Query2 (QueryHelper):
 
         # BAD-BAD
         q = self.q_bad_select + self.q_bad
-        if options.fixed_num_datapoints != -1:
-            self.myformat["limit"] = int(options.fixed_num_datapoints * num_lines_bad_bad/float(num_lines_bad) * (1.0-options.distrib))
+        if options.fixed*fixed_mult != -1:
+            self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
             if self.myformat["limit"] > num_lines_bad_bad:
                 print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
                 print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_bad_bad))
@@ -599,7 +616,7 @@ class Query2 (QueryHelper):
         return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad])
 
 
-def get_one_file(dbfname):
+def get_one_file(dbfname, long_or_short):
     print("Using sqlite3db file %s" % dbfname)
 
     df = None
@@ -608,7 +625,7 @@ def get_one_file(dbfname):
             q.create_indexes()
             q.fill_last_prop()
 
-        ok, df = q.get_clstats()
+        ok, df = q.get_clstats(long_or_short)
         if not ok:
             return False, None
 
@@ -736,12 +753,13 @@ def dump_dataframe(df, name):
         pickle.dump(df, f)
 
 
-def one_predictor(dbfname):
-    ok, df = get_one_file(dbfname)
+def one_dataframe(dbfname, long_or_short):
+    ok, df = get_one_file(dbfname, long_or_short)
     if not ok:
         return False, None
 
     cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+    cleanname += "-"+long_or_short
 
     if options.verbose:
         print("Describing----")
@@ -776,10 +794,7 @@ if __name__ == "__main__":
                       dest="dump_sql", help="Dump SQL query")
 
     parser.add_option("--fixed", default=-1, type=int,
-                      dest="fixed_num_datapoints", help="Exact number of examples to take. -1 is to take all. Default: %default")
-
-    parser.add_option("--ok", default=0.7, type=float,
-                      dest="distrib", help="Distribution of OK vs BAD of datapoints. Default: %default")
+                      dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
 
     parser.add_option("--start", default=-1, type=int,
                       dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
@@ -788,7 +803,8 @@ if __name__ == "__main__":
                       dest="num_times_bad", help="How many times at most should a BAD clause be in the data. Basically, we can count them only once, the first time they are in. But that introduces a weird bias.")
 
     parser.add_option("--noind", action="store_true", default=False,
-                      dest="no_recreate_indexes", help="Don't recreate indexes")
+                      dest="no_recreate_indexes",
+                      help="Don't recreate indexes")
 
     (options, args) = parser.parse_args()
 
@@ -797,25 +813,23 @@ if __name__ == "__main__":
         exit(-1)
 
     np.random.seed(2097483)
-    dfs = []
-    for dbfname in args:
-        print("----- INTERMEDIATE data -------")
-        ok, df = one_predictor(dbfname)
-        if ok:
-            dfs.append(df)
+    for long_or_short in ["long", "short"]:
+        dfs = []
+        for dbfname in args:
+            print("----- INTERMEDIATE data %s -------" % long_or_short)
+            ok, df = one_dataframe(dbfname, long_or_short)
+            if ok:
+                dfs.append(df)
 
-    if len(dfs) == 0:
-        print("Error, nothing got ingested, something is off")
-        exit(-1)
+        if len(dfs) == 0:
+            print("Error, nothing got ingested, something is off")
+            exit(-1)
 
-    # intermediate predictor is final
-    if len(args) == 1:
-        exit(0)
+        if len(args) > 1:
+            print("----- FINAL predictor %S -------" % long_or_short)
+            if len(dfs) == 0:
+                print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
+                exit(0)
 
-    print("----- FINAL predictor -------")
-    if len(dfs) == 0:
-        print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
-        exit(0)
-
-    final_df = pd.concat(dfs)
-    dump_dataframe(final_df, "final")
+            final_df = pd.concat(dfs)
+            dump_dataframe(final_df, "final")

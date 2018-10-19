@@ -294,6 +294,8 @@ void ReduceDB::handle_lev1_final_predictor()
     double myTime = cpuTime();
     uint32_t largest_dump_no = 0;
     uint32_t moved_w0 = 0;
+    uint32_t marked_long_keep = 0;
+    uint32_t kept_due_to_lock = 0;
 
     #ifdef FINAL_PREDICTOR_TOTAL
     assert(solver->longRedCls[0].size() == 0);
@@ -327,7 +329,8 @@ void ReduceDB::handle_lev1_final_predictor()
             //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
-                && !should_keep(
+                && cl->stats.locked_long
+                && !should_keep_short(
                     cl
                     , last_touched_diff
                     , i
@@ -343,14 +346,30 @@ void ReduceDB::handle_lev1_final_predictor()
                 cl->setRemoved();
                 delayed_clause_free.push_back(offset);
             } else {
-                solver->longRedCls[1][j++] = offset;
-                if (cl->stats.dump_number == 0) {
-                    kept_first++;
-                } else if (solver->clause_locked(*cl, offset)){
-                    kept_locked++;
+                if (cl->stats.locked_long) {
+                    kept_due_to_lock++;
+                    cl->stats.locked_long--;
                 } else {
-                    kept++;
+                    if (cl->stats.dump_number > 0 && should_keep_long(
+                        cl
+                        , last_touched_diff
+                        , i
+                        , act_ranking_top_10
+                    )) {
+                        marked_long_keep++;
+                        cl->stats.locked_long = 10;
+                    }
+
+
+                    if (cl->stats.dump_number == 0) {
+                        kept_first++;
+                    } else if (solver->clause_locked(*cl, offset)){
+                        kept_locked++;
+                    } else {
+                        kept++;
+                    }
                 }
+                solver->longRedCls[1][j++] = offset;
                 cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
                 if (cl->stats.dump_number > largest_dump_no)
                     largest_dump_no = cl->stats.dump_number;
@@ -373,10 +392,12 @@ void ReduceDB::handle_lev1_final_predictor()
         cout << "c [DBCL pred]"
         << " del: " << deleted
         << " kept: " << kept
+        << " kept-long: " << kept_due_to_lock
         << " kept-0: " << kept_first
-        << " moved_w0: " << moved_w0
-        << " kept-locked: " << kept_locked
-        << " maxdump_no:" << largest_dump_no
+        << " locked: " << kept_locked
+        << " marked-long: " << marked_long_keep
+        << " //moved_w0: " << moved_w0
+        << " //maxdump_no:" << largest_dump_no
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }

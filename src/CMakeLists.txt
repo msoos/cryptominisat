@@ -124,7 +124,9 @@ endif()
 
 if (FINAL_PREDICTOR)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
-        final_predictor.cpp)
+        final_predictor_short.cpp
+        final_predictor_long.cpp
+        )
 endif()
 
 if (M4RI_FOUND)

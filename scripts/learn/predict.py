@@ -109,7 +109,7 @@ namespace CMSat {
         num_trees = 1
         if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
             self.f.write("""
-double estimator_0(
+static double estimator_0(
     const Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
@@ -123,7 +123,7 @@ double estimator_0(
             num_trees = len(self.clf.estimators_)
             for tree, i in zip(self.clf.estimators_, range(100)):
                 self.f.write("""
-double estimator_%d(
+static double estimator_%d(
     const Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
@@ -134,12 +134,12 @@ double estimator_%d(
 
         # Final tally
         self.f.write("""
-bool ReduceDB::should_keep(
+bool ReduceDB::%s(
     const Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
-) {\n""")
+) {\n""" % options.funcname)
         self.f.write("    int votes = 0;\n")
         for i in range(num_trees):
             self.f.write("""    votes += estimator_%d(
@@ -488,6 +488,8 @@ if __name__ == "__main__":
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
+    parser.add_option("--funcname", default="should_keep", type=str,
+                      dest="funcname", help="The finali function name")
 
     (options, args) = parser.parse_args()
 

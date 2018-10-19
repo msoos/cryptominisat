@@ -157,6 +157,7 @@ struct ClauseStats
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation
     AtecedentData<uint16_t> antec_data;
+    uint16_t locked_long = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
