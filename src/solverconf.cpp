@@ -49,7 +49,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
-        , guess_cl_effectiveness(0)
 
         //maple
         , maple(true)

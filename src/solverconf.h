@@ -181,8 +181,6 @@ class DLL_PUBLIC SolverConf
         double   adjust_glue_if_too_many_low;
         uint64_t min_num_confl_adjust_glue_cutoff;
 
-        int      guess_cl_effectiveness;
-
         //maple
         int      maple;
         unsigned modulo_maple_iter;
