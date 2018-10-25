@@ -215,8 +215,10 @@ else()
     if (STATICCOMPILE)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-            # /MD -- Causes the application to use the multithread-specific and DLL-specific version of the run-time library.
-            #        Defines _MT and _DLL and causes the compiler to place the library name MSVCRT.lib into the .obj file.
+            # /MD -- Causes the application to use the multithread-specific
+            #        and DLL-specific version of the run-time library.
+            #        Defines _MT and _DLL and causes the compiler to place
+            #        the library name MSVCRT.lib into the .obj file.
             if(${flag_var} MATCHES "/MD")
                 string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
             endif(${flag_var} MATCHES "/MD")
