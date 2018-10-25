@@ -41,7 +41,7 @@ FIXED="70000" #used before 70k
 # # orig: 98s
 # prop inside learnt: 82s
 # no prop inside: 95s
-# locked: 69s
+# locked: 69s -- 737d7a5dcf32c2c2e07e2f5edf09819ee5fb0dfb
 FNAME="AProVE07-16.cnf"
 FNAMEOUT="mystuff2"
 RATIO="0.60"
