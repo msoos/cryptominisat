@@ -222,6 +222,8 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
     print("-> Number of datapoints:", df.shape)
     print("-> Predicting          :", to_predict)
 
+    values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
+    df['cl.cur_restart_type'] = df['cl.cur_restart_type'].replace(values2nums)
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
@@ -409,11 +411,6 @@ def learn(fname):
         features = rem_features(features, ["rdb1", "rdb.rel"])
         features = rem_features(features, ["rdb.rel"])
 
-    # this needs binarization
-    features = rem_features(features, ["cl.cur_restart_type"])
-    # x = (df["cl.cur_restart_type"].values[:, np.newaxis] == df["cl.cur_restart_type"].unique()).astype(int)
-    # print(x)
-
     if True:
         remove_old_clause_features(features)
 
@@ -437,6 +434,8 @@ def learn(fname):
         #best_features.append('rdb1.act_ranking_top_10')
         #best_features.append('rdb1.act_ranking')
         #best_features.append('rdb1.last_touched_diff')
+
+        #best_features.append('cl.cur_restart_type')
 
         if options.no_rdb1:
             best_features = rem_features(best_features, ["rdb.rel", "rdb1."])
