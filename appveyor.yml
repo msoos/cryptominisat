@@ -39,7 +39,7 @@ environment:
   # No Gauss
   - STATICCOMPILE_SETTING: OFF
     EXTRA_FLAGS:
-    BOOST_OPTIONS:
+    BOOST_OPTIONS: link=shared runtime-link=shared
   - STATICCOMPILE_SETTING: ON
     EXTRA_FLAGS:
     BOOST_OPTIONS: runtime-link=static  link=static
