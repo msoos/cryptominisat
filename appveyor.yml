@@ -66,6 +66,8 @@ before_build:
   - echo "Python is:"
   - echo %PYTHON%
   - "%PYTHON%/python -m pip install lit"
+  - echo "Querying lit version..."
+  - lit --version
   - cd %PYTHON%/
   - ls
 
