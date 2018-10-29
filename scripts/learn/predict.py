@@ -21,6 +21,7 @@
 import pandas as pd
 import pickle
 import sklearn
+import sklearn.svm
 import sklearn.tree
 import optparse
 import numpy as np
@@ -29,6 +30,7 @@ import time
 import itertools
 from math import ceil
 import matplotlib.pyplot as plt
+from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import train_test_split
 
 
@@ -234,14 +236,20 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
     t = time.time()
     clf = None
     # clf = sklearn.linear_model.LogisticRegression()
-    # clf = sklearn.svm.SVC()
     if final:
         if options.final_is_tree:
-            clf = sklearn.tree.DecisionTreeClassifier(max_depth=options.tree_depth, min_samples_split=options.min_samples_split)
+            clf = sklearn.tree.DecisionTreeClassifier(
+                max_depth=options.tree_depth,
+                min_samples_split=options.min_samples_split)
+        elif options.final_is_svm:
+            #clf = sklearn.svm.SVC(C=900, gamma=10**-7)
+            clf1 = sklearn.svm.SVC(C=500, gamma=10**-5)
+            clf = BaggingClassifier(clf1, n_estimators=3, max_samples=0.5, max_features=0.5)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=options.min_samples_split/2)
+            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=options.min_samples_split)
+
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=options.min_samples_split/2)
+        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=options.min_samples_split)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
     clf.fit(X_train, y_train, sample_weight=sample_weight)
@@ -487,6 +495,8 @@ if __name__ == "__main__":
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
+    parser.add_option("--svm", default=False, action="store_true",
+                      dest="final_is_svm", help="Final predictor should be an svm")
     parser.add_option("--funcname", default="should_keep", type=str,
                       dest="funcname", help="The finali function name")
 
