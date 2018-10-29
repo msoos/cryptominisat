@@ -223,7 +223,7 @@ def one_classifier(df, features, to_predict, w_name, w_number, final):
     print("-> Predicting          :", to_predict)
 
     values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
-    df['cl.cur_restart_type'] = df['cl.cur_restart_type'].replace(values2nums)
+    df['cl.cur_restart_type'].replace(values2nums)
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
