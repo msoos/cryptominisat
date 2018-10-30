@@ -444,6 +444,8 @@ def learn(fname):
         #best_features.append('rdb1.last_touched_diff')
 
         best_features.append('cl.num_overlap_literals')
+        #best_features.append('rdb0.activity_rel')
+        #best_features.append('cl.glue_rel_queue')
         #best_features.append('cl.cur_restart_type')
 
         if options.no_rdb1:
