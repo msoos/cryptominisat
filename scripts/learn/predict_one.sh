@@ -45,7 +45,7 @@ rm -if "${OUTDIR}/data.sqlite.tree.dot"
 echo "Predicting file $1"
 
 # running CNF
-./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --zero-exit-status --clid --sql 2 --everylev1 10 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt" --confbtwsimp 100
+./cryptominisat5 ${FNAME} --cldatadumpratio "${RATIO}" --zero-exit-status --clid --sql 2 --everylev1 10 --sqlitedb "${OUTDIR}/data.sqlite" "${OUTDIR}/drat_out" > "${OUTDIR}/cms_output.txt"
 
 # parse DRAT for UNSAT proof data
 ./tests/drat-trim/drat-trim "${FNAME}" "${OUTDIR}/drat_out" -x "${OUTDIR}/clause_id_data" -i
