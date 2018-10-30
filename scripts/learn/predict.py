@@ -217,15 +217,15 @@ bool ReduceDB::%s(
         self.recurse(left, right, threshold, features, 0, starttab)
 
 
-def one_classifier(df, features, to_predict, w_name, w_number, final):
-    _, df = train_test_split(df, test_size=options.only_pecr)
+def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
+    _, df = train_test_split(df_orig, test_size=options.only_pecr)
     print("================ predicting %s ================" % to_predict)
     print("-> Number of features  :", len(features))
     print("-> Number of datapoints:", df.shape)
     print("-> Predicting          :", to_predict)
 
     values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
-    df['cl.cur_restart_type'].replace(values2nums)
+    df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
     train, test = train_test_split(df, test_size=0.33)
     X_train = train[features]
     y_train = train[to_predict]
