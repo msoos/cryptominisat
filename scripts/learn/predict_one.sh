@@ -61,4 +61,5 @@ echo "Predicting file $1"
 
 # generate DOT and display it
 dot -Tpng "${OUTDIR}/dectree.dot" -o tree.png
-display tree.png
+echo "---> PLEASE RUN COMMAND BELOW:"
+echo display tree.png
