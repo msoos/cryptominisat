@@ -342,10 +342,30 @@ class Query2 (QueryHelper):
         """
 
         self.case_stmt_10k = """
-        CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
-            and (goodcl.last_confl_used2 is NULL OR goodcl.last_confl_used2 > (rdb0.conflicts))
-            -- and `goodcl`.`num_used` > 5
-            -- or `goodcl`.`last_prop_used` > rdb0.conflicts
+        CASE WHEN
+
+        -- if NULL, just stick with last_confl_used
+        (goodcl.last_confl_used > rdb0.conflicts AND goodcl.last_confl_used2 is NULL)
+        OR
+        (
+            -- if it's close by, wait for last_confl_used
+            (
+            goodcl.last_confl_used < (goodcl.last_confl_used2+1) AND
+            goodcl.last_confl_used > rdb0.conflicts
+            )
+            -- otherwise, just terminate at goodcl.last_confl_used2
+            OR goodcl.last_confl_used2 > rdb0.conflicts
+        )
+        -- and `goodcl`.`num_used` > 5
+        -- or `goodcl`.`last_prop_used` > rdb0.conflicts
+        THEN "OK"
+        ELSE "BAD"
+        END AS `x.class`
+        """
+
+        self.case_stmt_10k = """
+        CASE WHEN
+            goodcl.last_confl_used > rdb0.conflicts
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
