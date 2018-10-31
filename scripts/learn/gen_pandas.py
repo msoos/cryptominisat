@@ -343,6 +343,7 @@ class Query2 (QueryHelper):
 
         self.case_stmt_10k = """
         CASE WHEN goodcl.last_confl_used > (rdb0.conflicts)
+            and (goodcl.last_confl_used2 is NULL OR goodcl.last_confl_used2 > (rdb0.conflicts))
             -- and `goodcl`.`num_used` > 5
             -- or `goodcl`.`last_prop_used` > rdb0.conflicts
             THEN "OK"
@@ -352,6 +353,7 @@ class Query2 (QueryHelper):
 
         self.case_stmt_100k = """
         CASE WHEN goodcl.last_confl_used > (rdb0.conflicts+100000)
+            and (goodcl.last_confl_used2 is NULL OR goodcl.last_confl_used2 > (rdb0.conflicts+100000))
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
