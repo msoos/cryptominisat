@@ -394,10 +394,16 @@ void ReduceDB::handle_lev1_final_predictor()
         << " kept: " << kept
         << " kept-long: " << kept_due_to_lock
         << " kept-0: " << kept_first
+        << endl;
+
+        cout << "c [DBCL pred]"
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
-        << " //moved_w0: " << moved_w0
-        << " //maxdump_no:" << largest_dump_no
+
+        << endl;
+        cout << "c [DBCL pred]"
+        << " moved_w0: " << moved_w0
+        << " maxdump_no:" << largest_dump_no
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
