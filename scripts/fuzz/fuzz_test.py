@@ -289,6 +289,8 @@ class Tester:
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+        cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
+        cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
