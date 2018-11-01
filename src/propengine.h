@@ -424,6 +424,11 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
+    #ifdef STATS_NEEDED
+    if (from == PropBy()) {
+        varData[v].clid_at_picking = clauseID;
+    }
+    #endif
     varData[v].level = decisionLevel();
     if (!update_bogoprops) {
         varData[v].polarity = !sign;

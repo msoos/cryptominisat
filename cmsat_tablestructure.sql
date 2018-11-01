@@ -322,6 +322,19 @@ create table `goodClauses` (
     `last_prop_used` bigint(20) DEFAULT NULL
 );
 
+DROP TABLE IF EXISTS `varData`;
+create table `varData` (
+    `runID` bigint(20) NOT NULL,
+    `restarts` int(20) NOT NULL,
+    `conflicts` bigint(20) NOT NULL,
+
+    `var` int(20) NOT NULL,
+    `dec_depth` int(20) NOT NULL,
+    `clid_start_incl` bigint(20) NOT NULL,
+    `clid_end_notincl` bigint(20) NOT NULL
+);
+
+
 -- create index `idx6` on `restart` (`runID`,`simplifications`);
 -- create index `idx7` on `timepassed` (`runID`,`conflicts`);
 -- create index `idx7_2` on `memused` (`runID`,`conflicts`);

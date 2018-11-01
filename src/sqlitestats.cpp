@@ -82,6 +82,12 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmt_var_data);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     //Close clonnection
     sqlite3_close(db);
 }
@@ -101,6 +107,7 @@ bool SQLiteStats::setup(const Solver* solver)
     initMemUsedSTMT();
     init_satzilla_features();
     init_clause_stats_STMT();
+    init_var_data_STMT();
 
     return true;
 }
@@ -1213,6 +1220,82 @@ void SQLiteStats::dump_clause_stats(
 
     if (sqlite3_clear_bindings(stmt_clause_stats)) {
         cerr << "Error calling sqlite3_clear_bindings on stmt_clause_stats" << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::init_var_data_STMT()
+{
+    const size_t numElems = 7;
+
+    std::stringstream ss;
+    ss << "insert into `varData`"
+    << "("
+    //Position
+    << "  `runID`, `restarts`, `conflicts`"
+
+    //data
+    ", `var`"
+    ", `dec_depth`"
+    ", `clid_start_incl`"
+    ", `clid_end_notincl`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    int rc = sqlite3_prepare(db, ss.str().c_str(), -1, &stmt_var_data, NULL);
+    if (rc) {
+        cout
+        << "Error in sqlite_prepare(), INSERT failed"
+        << endl
+        << sqlite3_errmsg(db)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+}
+
+void SQLiteStats::var_data(
+    const Solver* solver
+    , const uint32_t var
+    , const uint32_t depth
+    , const uint64_t start_clid_incl
+    , const uint64_t end_clid_notincl
+) {
+    int bindAt = 1;
+    sqlite3_bind_int64(stmt_var_data, bindAt++, runID);
+    sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumRestarts());
+    sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumConflicts);
+
+    sqlite3_bind_int   (stmt_var_data, bindAt++, var);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, depth);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, start_clid_incl);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);
+
+    int rc = sqlite3_step(stmt_var_data);
+    if (rc != SQLITE_DONE) {
+        cout
+        << "ERROR: while executing clause DB cleaning SQLite prepared statement"
+        << endl;
+
+        cout << "Error from sqlite: "
+        << sqlite3_errmsg(db)
+        << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_reset(stmt_var_data)) {
+        cerr << "Error calling sqlite3_reset on stmt_var_data" << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_clear_bindings(stmt_var_data)) {
+        cerr << "Error calling sqlite3_clear_bindings on stmt_var_data" << endl;
         std::exit(-1);
     }
 }

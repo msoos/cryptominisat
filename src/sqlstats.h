@@ -86,6 +86,14 @@ public:
         , const uint32_t act_ranking
     ) = 0;
 
+    virtual void var_data(
+        const Solver* solver
+        , const uint32_t var
+        , const uint32_t depth
+        , const uint64_t start_clid_incl
+        , const uint64_t end_clid_notincl
+    ) = 0;
+
     virtual void dump_clause_stats(
         const Solver* solver
         , uint64_t clauseID

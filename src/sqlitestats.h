@@ -101,6 +101,14 @@ public:
         , const double first_dec_var_act_1
     ) override;
 
+    void var_data(
+        const Solver* solver
+        , const uint32_t var
+        , const uint32_t depth
+        , const uint64_t start_clid_incl
+        , const uint64_t end_clid_notincl
+    ) override;
+
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;
     void add_tag(const std::pair<std::string, std::string>& tag) override;
@@ -117,6 +125,7 @@ private:
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
     void init_satzilla_features();
+    void init_var_data_STMT();
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
@@ -127,6 +136,7 @@ private:
     sqlite3_stmt *stmtRst = NULL;
     sqlite3_stmt *stmtFeat = NULL;
     sqlite3_stmt *stmt_clause_stats = NULL;
+    sqlite3_stmt *stmt_var_data = NULL;
 
     sqlite3 *db = NULL;
     bool setup_ok = false;

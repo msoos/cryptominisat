@@ -1916,7 +1916,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         update_history_stats(backtrack_level, glue);
     }
     uint32_t old_decision_level = decisionLevel();
-    cancelUntil<true, update_bogoprops>(backtrack_level);
+    cancelUntil<true, update_bogoprops>(backtrack_level, true);
 
     add_otf_subsume_long_clauses();
     add_otf_subsume_implicit_clause();
@@ -2540,7 +2540,10 @@ void Searcher::print_iteration_solving_stats()
 Lit Searcher::pickBranchLit()
 {
     #ifdef VERBOSE_DEBUG
-    cout << "picking decision variable, dec. level: " << decisionLevel() << " ";
+    cout << "picking decision variable, dec. level: " << decisionLevel()
+    #ifdef STATS_NEEDED
+    << " clid: " << clauseID;
+    #endif
     #endif
 
     Lit next = lit_Undef;
@@ -3393,19 +3396,23 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
 
 //Normal running
 template
-void Searcher::cancelUntil<true, false>(uint32_t level);
+void Searcher::cancelUntil<true, false>(uint32_t level, bool clid_plus_one);
 
 //During inprocessing, dont update anyting really (probing, distilling)
 template
-void Searcher::cancelUntil<false, true>(uint32_t level);
+void Searcher::cancelUntil<false, true>(uint32_t level, bool clid_plus_one);
 
 template<bool do_insert_var_order, bool update_bogoprops>
-void Searcher::cancelUntil(uint32_t level)
+void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
     if (level > 0) cout << " sublevel: " << trail_lim[level];
     cout << endl;
+    #endif
+
+    #ifdef STATS_NEEDED
+    solver->sqlStats->begin_transaction();
     #endif
 
     if (decisionLevel() > level) {
@@ -3434,7 +3441,31 @@ void Searcher::cancelUntil(uint32_t level)
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
 
-             if (!update_bogoprops && !VSIDS) {
+            #ifdef STATS_NEEDED
+            if (!update_bogoprops) {
+                //this was a decision var
+                if (varData[var].reason == PropBy()) {
+                    uint64_t outer_var = map_inter_to_outer(var);
+
+                    if (solver->sqlStats) {
+                        solver->sqlStats->var_data(
+                            solver
+                            , outer_var
+                            , varData[var].level
+                            , varData[var].clid_at_picking
+                            , clauseID+((uint64_t)clid_plus_one)
+                        );
+                    }
+                    /*cout << "responsible " << map_inter_to_outer(var)+1 << " var cls -- "
+                    << " incl: " << varData[var].clid_at_picking
+                    << " not incl: " << clauseID+((uint64_t)clid_plus_one)
+                    << endl;*/
+                }
+            }
+            #endif
+
+
+            if (!update_bogoprops && !VSIDS) {
                 assert(sumConflicts >= varData[var].last_picked);
                 uint32_t age = sumConflicts - varData[var].last_picked;
                 if (age > 0) {
@@ -3462,6 +3493,10 @@ void Searcher::cancelUntil(uint32_t level)
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
     }
+
+    #ifdef STATS_NEEDED
+    solver->sqlStats->end_transaction();
+    #endif
 
     #ifdef VERBOSE_DEBUG
     cout
