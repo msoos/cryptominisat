@@ -483,6 +483,7 @@ class Query2 (QueryHelper):
         drop index if exists `idxclid5`;
         drop index if exists `idxclid6`;
         drop index if exists `idxclid7`;
+        drop index if exists `idxclid8`;
 
         create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
         create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
@@ -491,6 +492,7 @@ class Query2 (QueryHelper):
         create index `idxclid5` on `tags` (`runID`, `tagname`);
         create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
         create index `idxclid7` on `reduceDB` (`runID`,`clauseID`, `propagations_made`);
+        create index `idxclid8` on `varData` (`runID`, `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
