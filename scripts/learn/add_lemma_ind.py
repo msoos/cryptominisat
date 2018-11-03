@@ -61,8 +61,7 @@ class Query:
         with open(tfname, "r") as f:
             for line in f:
                 line = line.strip().split(" ")
-                if "Finished" not in line[0]:
-                    self.parse_one_line(line)
+                self.parse_one_line(line)
 
         # final dump
         self.dump_ids()
