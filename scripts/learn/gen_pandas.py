@@ -567,8 +567,8 @@ class Query2 (QueryHelper):
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.2
             distrib = 0.1
-        print("Distrib OK vs BAD set to %s ", distrib)
-        print("Fixed multiplier set to %s  ", fixed_mult)
+        print("Distrib OK vs BAD set to %s " % distrib)
+        print("Fixed multiplier set to  %s " % fixed_mult)
 
         t = time.time()
 
