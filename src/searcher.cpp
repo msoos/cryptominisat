@@ -1796,7 +1796,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     } else {
         //On-the-fly subsumption
         assert(cl->size() > 2);
-        *(solver->drat) << deldelay << *cl << fin;
+        *drat << deldelay << *cl << fin;
         solver->detachClause(*cl, false);
 
         //Shrink clause
@@ -1815,7 +1815,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         cl->stats.ID = clauseID;
         #endif
 
-        *(solver->drat) << add << *cl
+        *drat << add << *cl
         #ifdef STATS_NEEDED
         << solver->sumConflicts
         #endif
