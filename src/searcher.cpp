@@ -1322,6 +1322,7 @@ lbool Searcher::new_decision()
         //Update stats
         stats.decisions++;
     }
+    sumDecisions++;
 
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
@@ -3412,7 +3413,14 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
     #endif
 
     #ifdef STATS_NEEDED
-    solver->sqlStats->begin_transaction();
+    bool dump_this_canceluntil = false;
+    if (solver->sqlStats
+        //we need a lot less of this data
+        && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.1
+    ) {
+        dump_this_canceluntil = true;
+        solver->sqlStats->begin_transaction();
+    }
     #endif
 
     if (decisionLevel() > level) {
@@ -3444,23 +3452,28 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
             #ifdef STATS_NEEDED
             if (!update_bogoprops) {
                 //this was a decision var
-                if (varData[var].reason == PropBy()) {
+                if (dump_this_canceluntil
+                    && varData[var].reason == PropBy()
+                ) {
                     uint64_t outer_var = map_inter_to_outer(var);
-
-                    if (solver->sqlStats) {
-                        solver->sqlStats->var_data(
-                            solver
-                            , outer_var
-                            , varData[var].level
-                            , varData[var].clid_at_picking
-                            , clauseID+((uint64_t)clid_plus_one)
-                        );
-                    }
-                    /*cout << "responsible " << map_inter_to_outer(var)+1 << " var cls -- "
+                    solver->sqlStats->var_data(
+                        solver
+                        , outer_var
+                        , varData[var].level
+                        , sumDecisions - varData[var].num_decisions_till_now
+                        , sumConflicts - varData[var].num_conflicts_till_now
+                        , varData[var].clid_at_picking
+                        , clauseID+((uint64_t)clid_plus_one)
+                    );
+                }
+                /*
+                if (varData[var].reason == PropBy()) {
+                    cout << "responsible " << map_inter_to_outer(var)+1 << " var cls -- "
                     << " incl: " << varData[var].clid_at_picking
                     << " not incl: " << clauseID+((uint64_t)clid_plus_one)
-                    << endl;*/
+                    << endl;
                 }
+                */
             }
             #endif
 
@@ -3495,7 +3508,9 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
     }
 
     #ifdef STATS_NEEDED
-    solver->sqlStats->end_transaction();
+    if (dump_this_canceluntil) {
+        solver->sqlStats->end_transaction();
+    }
     #endif
 
     #ifdef VERBOSE_DEBUG

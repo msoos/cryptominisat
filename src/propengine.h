@@ -426,6 +426,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     varData[v].reason = from;
     #ifdef STATS_NEEDED
     if (from == PropBy()) {
+        varData[v].num_decisions_till_now = sumDecisions;
+        varData[v].num_conflicts_till_now = sumConflicts;
         varData[v].clid_at_picking = clauseID;
     }
     #endif
