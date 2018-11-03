@@ -517,6 +517,14 @@ class Query2 (QueryHelper):
 
     def fill_good_clauses_fixed(self):
         print("Filling good clauses fixed...")
+
+        t = time.time()
+        q = """
+        delete from goodClausesFixed;
+        """
+        self.c.execute(q)
+        print("goodClausesFixed deleted T: %-3.2f s" % (time.time() - t))
+
         t = time.time()
         q = """insert into goodClausesFixed
         select runID, clauseID, sum(num_used), max(last_confl_used), max(last_confl_used2), max(last_prop_used)
