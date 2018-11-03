@@ -354,7 +354,7 @@ void VarReplacer::newBinClause(
         delayed_attach_bin.push_back(BinaryClause(lit1, lit2, red));
         (*solver->drat) << add << lit1 << lit2
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;
@@ -376,7 +376,7 @@ inline void VarReplacer::updateBin(
         delayedEnqueue.push_back(lit2);
         (*solver->drat) << add << lit2
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;
@@ -408,7 +408,7 @@ inline void VarReplacer::updateBin(
         (*solver->drat)
         << add << lit1 << lit2
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin
@@ -755,28 +755,28 @@ bool VarReplacer::handleAlreadyReplaced(const Lit lit1, const Lit lit2)
         (*solver->drat)
         << add << ~lit1 << lit2
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin
 
         << add << lit1 << ~lit2
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin
 
         << add << lit1
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin
 
         << add << ~lit1
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;
@@ -799,14 +799,14 @@ bool VarReplacer::replace_vars_already_set(
         (*solver->drat)
         << add << ~lit1
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin
 
         << add << lit1
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;
@@ -834,7 +834,7 @@ bool VarReplacer::handleOneSet(
         solver->enqueue(toEnqueue);
         (*solver->drat) << add << toEnqueue
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;
@@ -884,13 +884,13 @@ bool VarReplacer::replace(
     (*solver->drat)
     << add << ~lit1 << lit2
     #ifdef STATS_NEEDED
-    << solver->clauseID++
+    << 0
     << solver->sumConflicts
     #endif
     << fin
     << add << lit1 << ~lit2
     #ifdef STATS_NEEDED
-    << solver->clauseID++
+    << 0
     << solver->sumConflicts
     #endif
     << fin;

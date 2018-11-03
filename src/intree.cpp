@@ -385,7 +385,7 @@ bool InTree::empty_failed_list()
             solver->enqueue(lit);
             *(solver->drat) << add << lit
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
@@ -396,14 +396,14 @@ bool InTree::empty_failed_list()
         } else if (solver->value(lit) == l_False) {
             *(solver->drat) << add << ~lit
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
 
             *(solver->drat) << add
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;

@@ -236,14 +236,15 @@ void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
     }
 
     if (drat->enabled() || solver->conf.simulate_drat) {
-        *drat << add
-        #ifdef STATS_NEEDED
-        << solver->clauseID++ << sumConflicts
-        #endif
-        ;
+        *drat << add;
         for(unsigned  i = 0; i < newCl.size; i++) {
             *drat << newCl.lits[i];
         }
+        #ifdef STATS_NEEDED
+        *drat
+        << 0
+        << sumConflicts;
+        #endif
         *drat << fin;
     }
 
@@ -277,19 +278,12 @@ void Searcher::create_otf_subsuming_long_clause(
         cout
         << "New smaller clause OTF:" << cl << endl;
     }
-    #ifdef STATS_NEEDED
-    cl.stats.ID = clauseID;
-    #endif
     *drat << add << cl
     #ifdef STATS_NEEDED
     << sumConflicts
     #endif
     << fin << findelay;
     otf_subsuming_long_cls.push_back(offset);
-
-    #ifdef STATS_NEEDED
-    clauseID++;
-    #endif
 }
 
 void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
@@ -1502,7 +1496,7 @@ void Searcher::add_otf_subsume_implicit_clause()
             if (decisionLevel() == 0) {
                 *drat << add << it->lits[0]
                 #ifdef STATS_NEEDED
-                << clauseID++
+                << 0
                 << sumConflicts
                 #endif
                 << fin;
@@ -2998,14 +2992,16 @@ PropBy Searcher::propagate() {
             #endif
             *drat << add << trail[i]
             #ifdef STATS_NEEDED
-            << clauseID++ << sumConflicts
+            << 0
+            << sumConflicts
             #endif
             << fin;
         }
         if (!ret.isNULL()) {
             *drat << add
             #ifdef STATS_NEEDED
-            << clauseID++ << sumConflicts
+            << 0
+            << sumConflicts
             #endif
             << fin;
         }

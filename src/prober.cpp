@@ -502,7 +502,7 @@ void Prober::update_cache(Lit thisLit, Lit lit, size_t numElemsSet)
             toEnqueue.push_back(~ancestor);
             (*solver->drat) << add << ~ancestor
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
@@ -540,19 +540,19 @@ void Prober::check_and_set_both_prop(Lit probed_lit, uint32_t var, bool first)
             toEnqueue.push_back(litToEnq);
             (*solver->drat) << add << probed_lit << litToEnq
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
             (*solver->drat) << add << ~probed_lit << litToEnq
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
             (*solver->drat) << add << litToEnq
             #ifdef STATS_NEEDED
-            << solver->clauseID++
+            << 0
             << solver->sumConflicts
             #endif
             << fin;
@@ -590,7 +590,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
         toEnqueue.push_back(~lit);
         (*solver->drat) << add << ~lit
         #ifdef STATS_NEEDED
-        << solver->clauseID++
+        << 0
         << solver->sumConflicts
         #endif
         << fin;

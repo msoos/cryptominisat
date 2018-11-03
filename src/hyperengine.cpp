@@ -529,11 +529,12 @@ void HyperEngine::add_hyper_bin(const Lit p)
         cout << "Adding hyper-bin clause: " << p << " , " << ~deepestAncestor << endl;
         #endif
         needToAddBinClause.insert(BinaryClause(p, ~deepestAncestor, true));
-        *drat << add
+        *drat << add << p << (~deepestAncestor)
         #ifdef STATS_NEEDED
-        << clauseID++ << sumConflicts
+        << 0
+        << sumConflicts
         #endif
-        << p << (~deepestAncestor) << fin;
+        << fin;
 
         hyperBinNotAdded = false;
     } else {

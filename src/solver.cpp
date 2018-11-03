@@ -700,7 +700,8 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
         if (!okay()) {
             *drat << add
             #ifdef STATS_NEEDED
-            << clauseID++ << sumConflicts
+            << 0
+            << sumConflicts
             #endif
             << fin;
         }
