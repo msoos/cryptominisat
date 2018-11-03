@@ -400,7 +400,7 @@ class Query2 (QueryHelper):
         self.q_ok = """
         FROM
         clauseStats as cl
-        , goodClauses as goodcl
+        , goodClausesFixed as goodcl
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
@@ -436,7 +436,7 @@ class Query2 (QueryHelper):
         """
 
         self.q_bad = """
-        FROM clauseStats as cl left join goodClauses as goodcl
+        FROM clauseStats as cl left join goodClausesFixed as goodcl
         on cl.clauseID = goodcl.clauseID
         and cl.runID = goodcl.runID
         , restart as rst
@@ -512,6 +512,24 @@ class Query2 (QueryHelper):
         """
         self.c.execute(q)
         print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
+
+    def fill_good_clauses_fixed(self):
+        print("Filling good clauses fixed...")
+        t = time.time()
+        q = """insert into goodClausesFixed
+        select runID, clauseID, sum(num_used), max(last_confl_used), max(last_confl_used2), max(last_prop_used)
+        from goodClauses as c group by runID, clauseID;"""
+        self.c.execute(q)
+        print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        drop index if exists `idxclid20`;
+        create index `idxclid20` on `goodClausesFixed` (`runID`,`clauseID`);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
 
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK
@@ -646,6 +664,7 @@ def get_one_file(dbfname, long_or_short):
         if not options.no_recreate_indexes:
             q.create_indexes()
             q.fill_last_prop()
+            q.fill_good_clauses_fixed()
 
         ok, df = q.get_clstats(long_or_short)
         if not ok:
