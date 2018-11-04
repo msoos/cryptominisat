@@ -1226,7 +1226,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 9;
+    const size_t numElems = 10;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1239,6 +1239,7 @@ void SQLiteStats::init_var_data_STMT()
     ", `dec_depth`"
     ", `decisions_below`"
     ", `conflicts_below`"
+    ", `clauses_below`"
 
     ", `clid_start_incl`"
     ", `clid_end_notincl`"
@@ -1268,7 +1269,8 @@ void SQLiteStats::var_data(
     , const uint32_t var
     , const uint32_t depth
     , const uint32_t decisions_below
-    , const uint32_t propagations_below
+    , const uint32_t conflicts_below
+    , const uint32_t cls_below
     , const uint64_t start_clid_incl
     , const uint64_t end_clid_notincl
 ) {
@@ -1280,7 +1282,8 @@ void SQLiteStats::var_data(
     sqlite3_bind_int   (stmt_var_data, bindAt++, var);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, depth);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, decisions_below);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, propagations_below);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, cls_below);
 
 
     sqlite3_bind_int64 (stmt_var_data, bindAt++, start_clid_incl);

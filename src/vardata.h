@@ -53,6 +53,7 @@ struct VarData
     uint64_t clid_at_picking = std::numeric_limits<uint64_t>::max();
     uint64_t num_decisions_till_now = std::numeric_limits<uint64_t>::max();
     uint64_t num_conflicts_till_now = std::numeric_limits<uint64_t>::max();
+    uint64_t num_decision_based_cl_till_now = std::numeric_limits<uint64_t>::max();
     #endif
 };
 

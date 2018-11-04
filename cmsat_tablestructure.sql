@@ -344,6 +344,7 @@ create table `varData` (
     `dec_depth` int(20) NOT NULL,
     `decisions_below` int(20) NOT NULL,
     `conflicts_below` int(20) NOT NULL,
+    `clauses_below` int(20) NOT NULL,
 
     `clid_start_incl` bigint(20) NOT NULL,
     `clid_end_notincl` bigint(20) NOT NULL
