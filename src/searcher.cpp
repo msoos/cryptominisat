@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include "EGaussian.h"
 #endif
 //#define DEBUG_RESOLV
+//#define VERBOSE_DEBUG
 
 using namespace CMSat;
 using std::cout;
