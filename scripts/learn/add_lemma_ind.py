@@ -78,14 +78,15 @@ class Query:
         assert myid != 0, "ID with 0 should not even be printed"
 
         num_used = int(line[1])
-        last_used = int(line[2])
-        last_used2 = int(line[3])
+        first_used = int(line[2])
+        last_used = int(line[3])
+        last_used2 = int(line[4])
         if last_used2 == -1:
             last_used2 = None
 
         # append to cur_good_ids
         self.cur_good_ids.append(
-            (self.runID, myid, num_used, last_used, last_used2))
+            (self.runID, myid, num_used, first_used, last_used, last_used2))
 
         # don't run out of memory, dump early
         if self.cur_good_ids_num > 10000:
@@ -93,8 +94,14 @@ class Query:
 
     def dump_ids(self):
         self.c.executemany("""
-        INSERT INTO goodClauses (`runID`, `clauseID`, `num_used`, `last_confl_used`, `last_confl_used2`)
-        VALUES (?, ?, ?, ?, ?);""", self.cur_good_ids)
+        INSERT INTO goodClauses (
+        `runID`
+        , `clauseID`
+        , `num_used`
+        , `first_confl_used`
+        , `last_confl_used`
+        , `last_confl_used2`)
+        VALUES (?, ?, ?, ?, ?, ?);""", self.cur_good_ids)
         self.cur_good_ids = []
         self.cur_good_ids_num = 0
 

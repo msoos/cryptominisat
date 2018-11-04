@@ -317,6 +317,7 @@ create table `goodClauses` (
     `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
     `num_used` bigint(20) NOT NULL,
+    `first_confl_used` bigint(20) NOT NULL,
     `last_confl_used` bigint(20) NOT NULL,
     `last_confl_used2` bigint(20) DEFAULT NULL,
     `last_prop_used` bigint(20) DEFAULT NULL
@@ -327,6 +328,7 @@ create table `goodClausesFixed` (
     `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
     `num_used` bigint(20) NOT NULL,
+    `first_confl_used` bigint(20) NOT NULL,
     `last_confl_used` bigint(20) NOT NULL,
     `last_confl_used2` bigint(20) DEFAULT NULL,
     `last_prop_used` bigint(20) DEFAULT NULL

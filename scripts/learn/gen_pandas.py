@@ -527,7 +527,14 @@ class Query2 (QueryHelper):
 
         t = time.time()
         q = """insert into goodClausesFixed
-        select runID, clauseID, sum(num_used), max(last_confl_used), max(last_confl_used2), max(last_prop_used)
+        select
+        runID
+        , clauseID
+        , sum(num_used)
+        , min(first_confl_used)
+        , max(last_confl_used)
+        , max(last_confl_used2)
+        , max(last_prop_used)
         from goodClauses as c group by runID, clauseID;"""
         self.c.execute(q)
         print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
