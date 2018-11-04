@@ -188,9 +188,11 @@ bool Solver::add_xor_clause_inter(
         ps[0] ^= rhs;
     } else {
         if (rhs) {
+            cout << "xx clauseID++" << endl;
             *drat << add
             #ifdef STATS_NEEDED
-            << clauseID++ << sumConflicts
+            << clauseID++
+            << sumConflicts
             #endif
             << fin;
             ok = false;
@@ -689,9 +691,11 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
     ) {
         //Dump only if non-empty (UNSAT handled later)
         if (!finalCl_tmp.empty()) {
+            cout << "xxyz clauseID++" << endl;
             *drat << add << finalCl_tmp
             #ifdef STATS_NEEDED
-            << clauseID++ << sumConflicts
+            << clauseID++
+            << sumConflicts
             #endif
             << fin;
         }
