@@ -353,6 +353,27 @@ create table `varData` (
     --`activity` double NOT NULL
 );
 
+DROP TABLE IF EXISTS `varDataUse`;
+create table `varDataUse` (
+    `runID` bigint(20) NOT NULL,
+    `restarts` int(20) NOT NULL,
+    `conflicts` bigint(20) NOT NULL,
+
+    `var` int(20) NOT NULL,
+    `dec_depth` int(20) NOT NULL,
+    `decisions_below` int(20) NOT NULL,
+    `conflicts_below` int(20) NOT NULL,
+    `clauses_below` int(20) NOT NULL,
+
+    `useful_clauses` int(20) NOT NULL,
+    `useful_clauses_used` int(20) NOT NULL,
+    `useful_clauses_first_used` int(20) NOT NULL,
+    `useful_clauses_last_used` int(20) NOT NULL
+
+    -- features when picked
+    --`activity` double NOT NULL
+);
+
 
 -- create index `idx6` on `restart` (`runID`,`simplifications`);
 -- create index `idx7` on `timepassed` (`runID`,`conflicts`);

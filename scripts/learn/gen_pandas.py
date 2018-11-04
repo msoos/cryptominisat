@@ -548,6 +548,33 @@ class Query2 (QueryHelper):
             self.c.execute(l)
         print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
 
+    def fill_var_data_use(self):
+        print("Filling var data use...")
+        t = time.time()
+        q = """
+        insert into varDataUse
+        select
+        v.runID
+        , v.restarts
+        , v.conflicts
+        , v.var
+        , v.dec_depth
+        , v.conflicts_below
+        , v.clauses_below
+        , count(cls.runID) as useful_clauses
+        , clauses_below, sum(cls.num_used) as useful_clauses_used
+        , min(cls.first_confl_used) as useful_clauses_first_used
+        , max(cls.last_confl_used) as useful_clauses_last_used
+
+        FROM varData as v left join goodClausesFixed as cls
+        on cls.clauseID >= v.clid_start_incl
+        and cls.clauseID < v.clid_end_notincl and cls.runID = v.runID
+        group by var, conflicts
+        ;
+        """
+        self.c.execute(q)
+        print("vart data use filled T: %-3.2f s" % (time.time() - t))
+
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
@@ -682,6 +709,7 @@ def get_one_file(dbfname, long_or_short):
             q.create_indexes()
             q.fill_last_prop()
             q.fill_good_clauses_fixed()
+            q.fill_var_data_use()
 
         ok, df = q.get_clstats(long_or_short)
         if not ok:
