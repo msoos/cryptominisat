@@ -1156,7 +1156,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         conf.varElimRatioPerIter = 1;
         conf.restartType = Restart::geom;
         conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
-        conf.maple = conf.maple;
+        conf.maple = 0;
         conf.do_simplify_problem = true;
         data->solvers[i]->setConf(conf);
     }
