@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <vector>
 #include <cstdlib>
 #include <cassert>
+#include "constants.h"
 #include "cryptominisat5/solvertypesmini.h"
 
 using std::string;
@@ -105,11 +106,33 @@ inline std::string getNameOfCleanType(ClauseClean clauseCleaningType)
     };
 }
 
-#ifdef _WIN32
-class __declspec(dllexport) SolverConf
-#else
-class SolverConf
-#endif
+class GaussConf
+{
+    public:
+
+    GaussConf() :
+        decision_until(700)
+        , autodisable(true)
+        , max_matrix_rows(5000)
+        , min_matrix_rows(2)
+        , max_num_matrixes(5)
+    {
+    }
+
+    uint32_t decision_until; //do Gauss until this level
+    bool autodisable;
+    uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
+    uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
+    uint32_t max_num_matrixes; //Maximum number of matrixes
+
+    //Matrix extraction config
+    bool doMatrixFind = true;
+    uint32_t min_gauss_xor_clauses = 2;
+    uint32_t max_gauss_xor_clauses = 500000;
+};
+
+
+class DLL_PUBLIC SolverConf
 {
     public:
         SolverConf();
