@@ -131,7 +131,6 @@ class GaussConf
     uint32_t max_gauss_xor_clauses = 500000;
 };
 
-
 class DLL_PUBLIC SolverConf
 {
     public:
