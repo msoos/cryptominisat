@@ -357,8 +357,6 @@ class SolverConf
         std::string simplified_cnf;
         std::string solution_file;
         std::string saved_state_file;
-        bool mess_up_polarity;
-        bool burst_broken;
 };
 
 } //end namespace
