@@ -550,6 +550,14 @@ class Query2 (QueryHelper):
 
     def fill_var_data_use(self):
         print("Filling var data use...")
+
+        t = time.time()
+        q = """
+        delete from varDataUse
+        """
+        self.c.execute(q)
+        print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
+
         t = time.time()
         q = """
         insert into varDataUse
@@ -557,12 +565,17 @@ class Query2 (QueryHelper):
         v.runID
         , v.restarts
         , v.conflicts
+
+        -- data about var
         , v.var
         , v.dec_depth
+        , v.decisions_below
         , v.conflicts_below
         , v.clauses_below
+
+        -- measures for good
         , count(cls.runID) as useful_clauses
-        , clauses_below, sum(cls.num_used) as useful_clauses_used
+        , sum(cls.num_used) as useful_clauses_used
         , min(cls.first_confl_used) as useful_clauses_first_used
         , max(cls.last_confl_used) as useful_clauses_last_used
 
@@ -573,7 +586,7 @@ class Query2 (QueryHelper):
         ;
         """
         self.c.execute(q)
-        print("vart data use filled T: %-3.2f s" % (time.time() - t))
+        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
 
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK

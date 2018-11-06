@@ -365,10 +365,10 @@ create table `varDataUse` (
     `conflicts_below` int(20) NOT NULL,
     `clauses_below` int(20) NOT NULL,
 
-    `useful_clauses` int(20) NOT NULL,
-    `useful_clauses_used` int(20) NOT NULL,
-    `useful_clauses_first_used` int(20) NOT NULL,
-    `useful_clauses_last_used` int(20) NOT NULL
+    `useful_clauses` int(20) DEFAULT NULL,
+    `useful_clauses_used` int(20) DEFAULT NULL,
+    `useful_clauses_first_used` int(20) DEFAULT NULL,
+    `useful_clauses_last_used` int(20) DEFAULT NULL
 
     -- features when picked
     --`activity` double NOT NULL
