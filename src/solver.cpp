@@ -3325,26 +3325,6 @@ void Solver::reconfigure(int val)
             break;
         }
 
-        case 115: {
-            conf.maple = 0;
-            VSIDS = true;
-            //Like OLD-OLD minisat
-            conf.varElimRatioPerIter = 1;
-            conf.restartType = Restart::geom;
-
-            //conf.every_lev1_reduce = 0;
-            //conf.every_lev2_reduce = 0;
-            //conf.glue_put_lev1_if_below_or_eq = 0;
-            //conf.glue_put_lev0_if_below_or_eq = 0;
-            conf.inc_max_temp_lev2_red_cls = 1.01;
-
-            conf.update_glues_on_analyze = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::glue)] = 0;
-            conf.ratio_keep_clauses[clean_to_int(ClauseClean::activity)] = 0.5;
-            reset_temp_cl_num();
-            break;
-        }
-
         default: {
             cout << "ERROR: Only reconfigure values of 3,4,6,7,12,13,14,15,16 are supported" << endl;
             exit(-1);
