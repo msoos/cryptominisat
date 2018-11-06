@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <limits>
 #include "xor.h"
 #include "cset.h"
 #include "watcharray.h"
@@ -161,6 +162,8 @@ public:
         //XOR stats
         uint64_t foundXors = 0;
         uint64_t sumSizeXors = 0;
+        uint32_t minsize = std::numeric_limits<uint32_t>::max();
+        uint32_t maxsize = std::numeric_limits<uint32_t>::min();
     };
 
     const Stats& get_stats() const;

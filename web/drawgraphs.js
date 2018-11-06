@@ -33,7 +33,7 @@ function drawOneGraph(i)
 {
     console.log("putting to:");
     console.log(document.getElementById(graph_data[i].dataDivID));
-    graph = new Dygraph(
+    var graph = new Dygraph(
         document.getElementById(graph_data[i].dataDivID),
         graph_data[i].data
         , {
@@ -145,7 +145,7 @@ function clear_everything()
     blockRedraw = false;
     dists = [];
 
-    datagraphs = document.getElementById("datagraphs");
+    var datagraphs = document.getElementById("datagraphs");
     datagraphs.innerHTML = "";
 }
 

@@ -1220,6 +1220,7 @@ lbool Searcher::search()
             if (!update_bogoprops) {
                 llbool ret = Gauss_elimination();
                 if (ret == l_Continue) {
+                    check_need_restart();
                     continue;
                 //TODO conflict should be goto-d to "confl" label
                 } else if (ret != l_Nothing) {

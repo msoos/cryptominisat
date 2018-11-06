@@ -2059,7 +2059,7 @@ void Solver::print_prop_confl_stats(
     }
 }
 
-void Solver::print_stats(const double cpu_time) const
+void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_total) const
 {
     cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
     if (conf.do_print_times)
@@ -2070,16 +2070,15 @@ void Solver::print_stats(const double cpu_time) const
     );
 
     if (conf.verbStats >= 2) {
-        print_full_restart_stat(cpu_time);
+        print_full_restart_stat(cpu_time, cpu_time_total);
     } else if (conf.verbStats == 1) {
-        print_norm_stats(cpu_time);
+        print_norm_stats(cpu_time, cpu_time_total);
     } else {
-        print_min_stats(cpu_time);
+        print_min_stats(cpu_time, cpu_time_total);
     }
 }
 
-
-void Solver::print_min_stats(const double cpu_time) const
+void Solver::print_min_stats(const double cpu_time, const double cpu_time_total) const
 {
     sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
@@ -2144,13 +2143,12 @@ void Solver::print_min_stats(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
     double vm_usage;
     print_stats_line("c Mem used"
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
@@ -2158,7 +2156,16 @@ void Solver::print_min_stats(const double cpu_time) const
     );
 }
 
-void Solver::print_norm_stats(const double cpu_time) const
+void Solver::print_stats_time(const double cpu_time, const double cpu_time_total) const
+{
+    if (conf.do_print_times) {
+        print_stats_line("c Total time (this thread)", cpu_time);
+        if (cpu_time != cpu_time_total)
+            print_stats_line("c Total time (all threads)", cpu_time_total);
+    }
+}
+
+void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total) const
 {
     sumSearchStats.print_short(sumPropStats.propagations, conf.do_print_times);
     print_stats_line("c props/decision"
@@ -2240,7 +2247,7 @@ void Solver::print_norm_stats(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
@@ -2250,12 +2257,12 @@ void Solver::print_norm_stats(const double cpu_time) const
         , (double)memUsedTotal(vm_usage)/(1024UL*1024UL)
         , "MB"
     );
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
 }
 
-void Solver::print_full_restart_stat(const double cpu_time) const
+void Solver::print_full_restart_stat(const double cpu_time, const double cpu_time_total) const
 {
+    cout << "c All times are for this thread only except if explicity specified" << endl;
     sumSearchStats.print(sumPropStats.propagations, conf.do_print_times);
     sumPropStats.print(sumSearchStats.cpu_time);
     print_stats_line("c props/decision"
@@ -2268,12 +2275,12 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     //reduceDB->get_total_time().print(cpu_time);
 
     print_stats_line("c 0-depth assigns", trail.size()
-        , stats_line_percent(trail.size(), nVars())
+        , stats_line_percent(trail.size(), nVarsOuter())
         , "% vars"
     );
     print_stats_line("c 0-depth assigns by CNF"
         , zeroLevAssignsByCNF
-        , stats_line_percent(zeroLevAssignsByCNF, nVars())
+        , stats_line_percent(zeroLevAssignsByCNF, nVarsOutside())
         , "% vars"
     );
 
@@ -2286,7 +2293,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        prober->get_stats().print(nVars(), conf.do_print_times);
+        prober->get_stats().print(nVarsOuter(), conf.do_print_times);
     }
 
     //OccSimplifier stats
@@ -2298,7 +2305,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
             , "% time"
         );
 
-        occsimplifier->get_stats().print(nVars());
+        occsimplifier->get_stats().print(nVarsOuter());
     }
 
     //TODO after TRI to LONG conversion
@@ -2315,7 +2322,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
     );
     varReplacer->get_scc_finder()->get_stats().print();
 
-    varReplacer->get_stats().print(nVars());
+    varReplacer->get_stats().print(nVarsOuter());
     varReplacer->print_some_stats(cpu_time);
 
     //DistillerAllWithAll stats
@@ -2324,7 +2331,7 @@ void Solver::print_full_restart_stat(const double cpu_time) const
                     , distill_long_cls->get_stats().time_used
                     , stats_line_percent(distill_long_cls->get_stats().time_used, cpu_time)
                     , "% time");
-    distill_long_cls->get_stats().print(nVars());
+    distill_long_cls->get_stats().print(nVarsOuter());
 
     if (conf.do_print_times)
     print_stats_line("c strength cache-irred time"
@@ -2351,13 +2358,12 @@ void Solver::print_full_restart_stat(const double cpu_time) const
         print_stats_line("c Conflicts in UIP"
             , sumConflicts
             , float_div(sumConflicts, cpu_time)
-            , "confl/TOTAL_TIME_SEC"
+            , "confl/time_this_thread"
         );
     } else {
         print_stats_line("c Conflicts in UIP", sumConflicts);
     }
-    if (conf.do_print_times)
-    print_stats_line("c Total time", cpu_time);
+    print_stats_time(cpu_time, cpu_time_total);
     print_mem_stats();
 }
 

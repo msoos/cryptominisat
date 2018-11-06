@@ -56,7 +56,7 @@ $('#fname').change(function(){
 
 function fill_files_options()
 {
-    link = "get_files.php?";
+    var link = "get_files.php?";
     link += "unfinish=" + $('#need_unfinished')[0].checked;
     link += "&sat=" + $('#need_SAT')[0].checked;
     link += "&unsat=" + $('#need_UNSAT')[0].checked;

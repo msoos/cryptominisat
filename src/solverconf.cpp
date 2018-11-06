@@ -153,7 +153,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //XOR
         , doFindXors       (true)
-        , maxXorToFind     (5)
+        , maxXorToFind     (7)
+        , maxXorToFindSlow (5)
         , useCacheWhenFindingXors(false)
         , maxXORMatrix     (400ULL)
         #ifndef USE_GAUSS

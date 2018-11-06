@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <structmember.h>
 #include <limits>
 #include <cassert>
+#include <algorithm>
 #include <cryptominisat5/cryptominisat.h>
 using namespace CMSat;
 
@@ -54,11 +55,6 @@ using namespace CMSat;
         PyMODINIT_FUNC init ## name(void) { PyInit_ ## name(); } \
         static PyObject *PyInit_ ## name(void)
 #endif
-
-// Mask "missing initializer for member" warnings in PyTypeObject
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-// Mask "deprecated conversion from string constant to ‘char*’" warnings in kwlist arrays
-#pragma GCC diagnostic ignored "-Wwrite-strings"
 
 // Support for old and end-of-life Python versions
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION <= 5
@@ -1103,7 +1099,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     Py_INCREF(&pycryptosat_SolverType);
     PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString(LIBRARY_VERSION));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("${CMS_FULL_VERSION}"));
 
     if (PyErr_Occurred())
     {

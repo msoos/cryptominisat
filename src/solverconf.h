@@ -266,6 +266,7 @@ class SolverConf
         //XORs
         int      doFindXors;
         unsigned maxXorToFind;
+        unsigned maxXorToFindSlow;
         int      useCacheWhenFindingXors;
         uint64_t maxXORMatrix;
         uint64_t xor_finder_time_limitM;

@@ -69,6 +69,7 @@ namespace CMSat {
         CMSatPrivateData& operator=(const CMSatPrivateData&) = delete;
 
         vector<Solver*> solvers;
+        vector<double> cpu_times;
         SharedData *shared_data = NULL;
         int which_solved = 0;
         std::atomic<bool>* must_interrupt;
@@ -80,6 +81,7 @@ namespace CMSat {
         std::ofstream* log = NULL;
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
+        bool interrupted = false;
 
         uint64_t previous_sum_conflicts = 0;
         uint64_t previous_sum_propagations = 0;
@@ -91,6 +93,7 @@ struct DataForThread
 {
     explicit DataForThread(CMSatPrivateData* data, const vector<Lit>* _assumptions = NULL) :
         solvers(data->solvers)
+        , cpu_times(data->cpu_times)
         , lits_to_add(&(data->cls_lits))
         , vars_to_add(data->vars_to_add)
         , assumptions(_assumptions)
@@ -106,6 +109,7 @@ struct DataForThread
         delete ret;
     }
     vector<Solver*>& solvers;
+    vector<double>& cpu_times;
     vector<Lit> *lits_to_add;
     uint32_t vars_to_add;
     const vector<Lit> *assumptions;
@@ -129,6 +133,7 @@ DLL_PUBLIC SATSolver::SATSolver(
     }
 
     data->solvers.push_back(new Solver((SolverConf*) config, data->must_interrupt));
+    data->cpu_times.push_back(0.0);
 }
 
 DLL_PUBLIC SATSolver::~SATSolver()
@@ -391,6 +396,7 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
         SolverConf conf = data->solvers[0]->getConf();
         update_config(conf, i);
         data->solvers.push_back(new Solver(&conf, data->must_interrupt));
+        data->cpu_times.push_back(0.0);
     }
 
     //set shared data
@@ -720,13 +726,13 @@ struct OneThreadCalc
             ret = data_for_thread.solvers[tid]->simplify_with_assumptions(data_for_thread.assumptions);
         }
 
+        data_for_thread.cpu_times[tid] = cpuTime();
         if (print_thread_start_and_finish) {
-            double end_time = cpuTime();
             data_for_thread.update_mutex->lock();
             ios::fmtflags f(cout.flags());
             cout << "c Finished thread " << tid << " with result: " << ret
             << " T-diff: " << std::fixed << std::setprecision(2)
-            << (end_time-start_time)
+            << (data_for_thread.cpu_times[tid]-start_time)
             << endl;
             cout.flags(f);
             data_for_thread.update_mutex->unlock();
@@ -794,6 +800,7 @@ lbool calc(
             ret = data->solvers[0]->simplify_with_assumptions(assumptions);
         }
         data->okay = data->solvers[0]->okay();
+        data->cpu_times[0] = cpuTime();
         return ret;
     }
 
@@ -928,13 +935,24 @@ std::string SATSolver::get_text_version_info()
 
 DLL_PUBLIC void SATSolver::print_stats() const
 {
+    double cpu_time_total = cpuTimeTotal();
+
     double cpu_time;
-    if (data->solvers.size() > 1) {
-        cpu_time = cpuTimeTotal();
+    if (data->interrupted) {
+        //cannot know, we have in fact no idea how much time passed...
+        //we have to guess. Shitty guess comes here... :S
+        cpu_time = cpuTimeTotal()/(double)data->solvers.size();
     } else {
-        cpu_time = cpuTime();
+        cpu_time = data->cpu_times[data->which_solved];
     }
-    data->solvers[data->which_solved]->print_stats(cpu_time);
+
+    //If only one thread, then don't confuse the user. The difference
+    //is minimal.
+    if (data->solvers.size() == 1) {
+        cpu_time = cpu_time_total;
+    }
+
+    data->solvers[data->which_solved]->print_stats(cpu_time, cpu_time_total);
 }
 
 DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
@@ -964,6 +982,7 @@ DLL_PUBLIC void SATSolver::interrupt_asap()
 void DLL_PUBLIC SATSolver::add_in_partial_solving_stats()
 {
     data->solvers[data->which_solved]->add_in_partial_solving_stats();
+    data->interrupted = true;
 }
 
 DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const

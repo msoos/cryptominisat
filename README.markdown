@@ -2,7 +2,6 @@
 [![Linux build](https://travis-ci.org/msoos/cryptominisat.svg?branch=master)](https://travis-ci.org/msoos/cryptominisat)
 [![Windows build](https://ci.appveyor.com/api/projects/status/8d000iy63xu7eau5?svg=true)](https://ci.appveyor.com/project/msoos/cryptominisat)
 [![Coverity](https://scan.coverity.com/projects/507/badge.svg)](https://scan.coverity.com/projects/507)
-[![code coverage](https://coveralls.io/repos/msoos/cryptominisat/badge.svg?branch=master)](https://coveralls.io/r/msoos/cryptominisat?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f043efa22ea64e9ba44fde0f3a4fb09f)](https://www.codacy.com/app/soos.mate/cryptominisat?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=msoos/cryptominisat&amp;utm_campaign=Badge_Grade)
 [![Docker Hub](https://img.shields.io/badge/docker-latest-blue.svg)](https://hub.docker.com/r/msoos/cryptominisat/)
 
@@ -223,7 +222,7 @@ You can then use it as:
 >>> s = Solver()
 >>> s.add_clause([1])
 >>> s.add_clause([-2])
->>> s.add_clause([3])
+>>> s.add_xor_clause([3])
 >>> s.add_clause([-1, 2, 3])
 >>> sat, solution = s.solve()
 >>> print sat
@@ -358,6 +357,63 @@ variables that are "important" or "main" to your problem. Variables that were
 only used to translate the original problem into CNF should not be added.
 This way, you will not get spurious solutions that don't differ in the main,
 important variables.
+
+Rust binding
+-----
+
+To build the Rust binding, download the prerequisites as before, go into the "Rust" subfolder and use cargo:
+
+```
+sudo apt-get install build-essential cmake
+# not required but very useful
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+tar xzvf cryptominisat-version.tar.gz
+cd cryptominisat-version
+cd rust
+cargo build
+cargo test
+```
+
+Now you can use your Rust bindings as:
+
+```
+extern crate cryptominisat;
+use cryptominisat::*;
+
+fn new_lit(var: u32, neg: bool) -> Lit {
+    Lit::new(var, neg).unwrap()
+}
+
+fn readme_code() {
+    let mut solver = Solver::new();
+    let mut clause = Vec::new();
+
+    solver.set_num_threads(4);
+    solver.new_vars(3);
+
+    clause.push(new_lit(0, false));
+    solver.add_clause(&clause);
+
+    clause.clear();
+    clause.push(new_lit(1, true));
+    solver.add_clause(&clause);
+
+    clause.clear();
+    clause.push(new_lit(0, true));
+    clause.push(new_lit(1, false));
+    clause.push(new_lit(2, false));
+    solver.add_clause(&clause);
+
+    let ret = solver.solve();
+
+    assert!(ret == Lbool::True);
+    assert!(solver.get_model()[0] == Lbool::True);
+    assert!(solver.get_model()[1] == Lbool::False);
+    assert!(solver.get_model()[2] == Lbool::True);
+}
+```
+
+The above solves the same problem as above in Python and C++.
 
 Preprocessor usage
 -----

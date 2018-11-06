@@ -116,7 +116,8 @@ class Solver : public Searcher
         static const char* get_compilation_env();
 
         vector<Lit> get_zero_assigned_lits(const bool backnumber = true, bool only_nvars = false) const;
-        void     print_stats(const double cpu_time) const;
+        void     print_stats(const double cpu_time, const double cpu_time_total) const;
+        void     print_stats_time(const double cpu_time, const double cpu_time_total) const;
         void     print_clause_stats() const;
         size_t get_num_free_vars() const;
         size_t get_num_nonfree_vars() const;
@@ -314,9 +315,9 @@ class Solver : public Searcher
         vector<Lit> outside_assumptions;
 
         //Stats printing
-        void print_norm_stats(const double cpu_time) const;
-        void print_min_stats(const double cpu_time) const;
-        void print_full_restart_stat(const double cpu_time) const;
+        void print_norm_stats(const double cpu_time, const double cpu_time_total) const;
+        void print_min_stats(const double cpu_time, const double cpu_time_total) const;
+        void print_full_restart_stat(const double cpu_time, const double cpu_time_total) const;
 
         lbool simplify_problem(const bool startup);
         bool execute_inprocess_strategy(const bool startup, const string& strategy);
