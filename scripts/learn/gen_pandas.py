@@ -911,7 +911,7 @@ if __name__ == "__main__":
         exit(-1)
 
     np.random.seed(2097483)
-    for long_or_short in ["long", "short"]:
+    for long_or_short in ["short", "long"]:
         dfs = []
         for dbfname in args:
             print("----- INTERMEDIATE data %s -------" % long_or_short)
