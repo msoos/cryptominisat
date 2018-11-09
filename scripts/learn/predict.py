@@ -246,10 +246,14 @@ def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
             clf1 = sklearn.svm.SVC(C=500, gamma=10**-5)
             clf = BaggingClassifier(clf1, n_estimators=3, max_samples=0.5, max_features=0.5)
         else:
-            clf = sklearn.ensemble.RandomForestClassifier(n_estimators=5, min_samples_leaf=options.min_samples_split)
+            clf = sklearn.ensemble.RandomForestClassifier(
+                n_estimators=5
+                , min_samples_leaf=options.min_samples_split)
 
     else:
-        clf = sklearn.ensemble.RandomForestClassifier(n_estimators=80, min_samples_leaf=options.min_samples_split)
+        clf = sklearn.ensemble.RandomForestClassifier(
+            n_estimators=80
+            , min_samples_leaf=options.min_samples_split)
 
     sample_weight = [w_number if i == w_name else 1 for i in y_train]
     clf.fit(X_train, y_train, sample_weight=sample_weight)
