@@ -217,7 +217,7 @@ bool ReduceDB::%s(
         self.recurse(left, right, threshold, features, 0, starttab)
 
 
-def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
+def one_classifier(df_orig, features, to_predict, final):
     _, df = train_test_split(df_orig, test_size=options.only_pecr)
     print("================ predicting %s ================" % to_predict)
     print("-> Number of features  :", len(features))
@@ -255,8 +255,7 @@ def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
             n_estimators=80
             , min_samples_leaf=options.min_samples_split)
 
-    sample_weight = [w_number if i == w_name else 1 for i in y_train]
-    clf.fit(X_train, y_train, sample_weight=sample_weight)
+    clf.fit(X_train, y_train)
 
     print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -294,31 +293,29 @@ def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
 
     print("Calculating scores for test....")
     y_pred = clf.predict(X_test)
-    sample_weight = [w_number if i == w_name else 1 for i in y_pred]
     accuracy = sklearn.metrics.accuracy_score(
-        y_test, y_pred, sample_weight=sample_weight)
+        y_test, y_pred)
     precision = sklearn.metrics.precision_score(
-        y_test, y_pred, average="macro",sample_weight=sample_weight)
+        y_test, y_pred, average="macro")
     recall = sklearn.metrics.recall_score(
-        y_test, y_pred, average="macro", sample_weight=sample_weight)
+        y_test, y_pred, average="macro")
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
 
     print("Calculating scores for train....")
     y_pred_train = clf.predict(X_train)
-    sample_weight_train = [w_number if i == w_name else 1 for i in y_pred_train]
     train_accuracy = sklearn.metrics.accuracy_score(
-        y_train, y_pred_train, sample_weight=sample_weight_train)
+        y_train, y_pred_train)
     train_precision = sklearn.metrics.precision_score(
-        y_train, y_pred_train, average="macro",sample_weight=sample_weight_train)
+        y_train, y_pred_train, average="macro")
     train_recall = sklearn.metrics.recall_score(
-        y_train, y_pred_train, average="macro", sample_weight=sample_weight_train)
+        y_train, y_pred_train, average="macro")
     print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
         train_precision, train_recall, train_accuracy))
 
     if options.confusion:
         cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_test, y_pred=y_pred, sample_weight=sample_weight)
+            y_true=y_test, y_pred=y_pred)
 
         np.set_printoptions(precision=2)
 
@@ -333,7 +330,7 @@ def one_classifier(df_orig, features, to_predict, w_name, w_number, final):
             title='Normalized confusion matrix -- test')
 
         cnf_matrix_train = sklearn.metrics.confusion_matrix(
-            y_true=y_train, y_pred=y_pred_train, sample_weight=sample_weight_train)
+            y_true=y_train, y_pred=y_pred_train)
         # Plot normalized confusion matrix
         plot_confusion_matrix(
             cnf_matrix_train, classes=clf.classes_, normalize=True,
@@ -373,7 +370,7 @@ def rem_features(feat, to_remove):
 
 
 def calc_greedy_best_features(df, features):
-    top_feats = one_classifier(df, features, "x.class", "OK", 1, False)
+    top_feats = one_classifier(df, features, "x.class", False)
     if options.show:
         plt.show()
 
@@ -390,7 +387,7 @@ def calc_greedy_best_features(df, features):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            mysum = one_classifier(df, this_feats, "x.class", "OK", 1, True)
+            mysum = one_classifier(df, this_feats, "x.class", True)
             print("Reported mysum: ", mysum)
             if mysum > best_sum:
                 best_sum = mysum
@@ -465,7 +462,7 @@ def learn(fname):
     else:
         best_features = calc_greedy_best_features(df, features)
 
-    one_classifier(df, best_features, "x.class", "OK", 1, True)
+    one_classifier(df, best_features, "x.class", True)
 
     if options.show:
         plt.show()
