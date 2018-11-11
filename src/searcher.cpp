@@ -3482,8 +3482,6 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
                     uint64_t cl_ids = clauseID+((uint64_t)clid_plus_one)-varData[var].clid_at_picking;
                     uint64_t cls = conflicts + decision_based_cl - varData[var].num_decision_based_cl_till_now;
                     uint64_t outer_var = map_inter_to_outer(var);
-                    varData[var].total_conflicts_below_when_picked += conflicts;
-                    varData[var].total_decisions_below_when_picked += decisions;
 
                     solver->sqlStats->var_data(
                         solver
@@ -3494,6 +3492,9 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
                         , cls
                         , clauseID+((uint64_t)clid_plus_one)
                     );
+
+                    varData[var].total_conflicts_below_when_picked += conflicts;
+                    varData[var].total_decisions_below_when_picked += decisions;
                 }
                 /*
                 if (varData[var].reason == PropBy()) {
