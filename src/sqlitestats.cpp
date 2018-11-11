@@ -1298,7 +1298,6 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
 
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);
 
