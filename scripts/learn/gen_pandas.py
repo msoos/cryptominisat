@@ -573,10 +573,16 @@ class Query2 (QueryHelper):
         , v.conflicts_below
         , v.clauses_below
 
-        , v.decided/v.sum_decisions_at_picktime
-        , v.decided_pos/v.decided
-        , v.propagated/v.sum_propagations_at_picktime
-        , v.propagated_pos/v.propagated
+        , (v.decided*1.0)/(v.sum_decisions_at_picktime*1.0)
+        , (v.decided_pos*1.0)/(v.decided*1.0)
+        , (v.propagated*1.0)/(v.sum_propagations_at_picktime*1.0)
+        , (v.propagated_pos*1.0)/(v.propagated*1.0)
+
+        , v.decided
+        , v.decided_pos
+        , v.propagated
+        , v.propagated_pos
+
         , v.sum_decisions_at_picktime
         , v.sum_propagations_at_picktime
 
@@ -594,9 +600,18 @@ class Query2 (QueryHelper):
         FROM varData as v left join goodClausesFixed as cls
         on cls.clauseID >= v.clid_start_incl
         and cls.clauseID < v.clid_end_notincl and cls.runID = v.runID
+
+        -- avoid division by zero below
+        where
+        v.propagated > 0
+        and v.sum_propagations_at_picktime > 0
+        and v.decided > 0
+        and v.sum_decisions_at_picktime > 0
         group by var, conflicts
         ;
         """
+        if options.verbose:
+            print("query:", q);
         self.c.execute(q)
         print("varDataUse filled T: %-3.2f s" % (time.time() - t))
 

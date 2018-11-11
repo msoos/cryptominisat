@@ -377,10 +377,16 @@ create table `varDataUse` (
     `conflicts_below` int(20) NOT NULL,
     `clauses_below` int(20) NOT NULL,
 
-    `decided_avg` bigint(20) NOT NULL,
+    `decided_avg` double NOT NULL,
     `decided_pos_perc` double NOT NULL,
-    `propagated_avg` bigint(20) NOT NULL,
+    `propagated_avg` double NOT NULL,
     `propagated_pos_perc` double NOT NULL,
+
+    `propagated` bigint(20) NOT NULL,
+    `propagated_pos` bigint(20) NOT NULL,
+    `decided` bigint(20) NOT NULL,
+    `decided_pos` bigint(20) NOT NULL,
+
     `sum_decisions_at_picktime` bigint(20) NOT NULL,
     `sum_propagations_at_picktime` bigint(20) NOT NULL,
 
