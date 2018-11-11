@@ -1327,7 +1327,7 @@ lbool Searcher::new_decision()
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
     new_decision_level();
-    enqueue(next);
+    enqueue<update_bogoprops>(next);
 
     return l_Undef;
 }
