@@ -372,8 +372,9 @@ void update_config(SolverConf& conf, unsigned thread_num)
 DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
 {
     if (num <= 0) {
-        std::cerr << "ERROR: Number of threads must be at least 1" << endl;
-        throw std::runtime_error("ERROR: Number of threads must be at least 1");
+        const char err[] = "ERROR: Number of threads must be at least 1";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
     }
     if (num == 1) {
         return;
@@ -382,13 +383,15 @@ DLL_PUBLIC void SATSolver::set_num_threads(unsigned num)
     if (data->solvers[0]->drat->enabled() ||
         data->solvers[0]->conf.simulate_drat
     ) {
-        std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
-        throw std::runtime_error("ERROR: DRAT cannot be used in multi-threaded mode");
+        const char err[] = "ERROR: DRAT cannot be used in multi-threaded mode";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
     }
 
     if (data->cls > 0 || nVars() > 0) {
-        std::cerr << "ERROR: You must first call set_num_threads() and only then add clauses and variables" << endl;
-        throw std::runtime_error("ERROR: You must first call set_num_threads() and only then add clauses and variables");
+        const char err[] = "ERROR: You must first call set_num_threads() and only then add clauses and variables";
+        std::cerr << err << endl;
+        throw std::runtime_error(err);
     }
 
     data->cls_lits.reserve(CACHE_SIZE);
@@ -1135,4 +1138,26 @@ void DLL_PUBLIC SATSolver::end_getting_small_clauses()
 {
     assert(data->solvers.size() >= 1);
     data->solvers[0]->end_getting_small_clauses();
+}
+
+void DLL_PUBLIC SATSolver::set_up_for_scalmc()
+{
+    for (size_t i = 0; i < data->solvers.size(); i++) {
+        SolverConf conf = data->solvers[i]->getConf();
+        conf.gaussconf.max_num_matrixes = 2;
+        conf.gaussconf.autodisable = false;
+        conf.global_multiplier_multiplier_max = 3;
+        conf.global_timeout_multiplier_multiplier = 1.5;
+        uint32_t xor_cut = 4;
+        assert(xor_cut >= 3);
+        conf.xor_var_per_cut = xor_cut-2;
+
+        conf.simplify_at_startup = 1;
+        conf.varElimRatioPerIter = 1;
+        conf.restartType = Restart::geom;
+        conf.polarity_mode = CMSat::PolarityMode::polarmode_neg;
+        conf.maple = 0;
+        conf.do_simplify_problem = true;
+        data->solvers[i]->setConf(conf);
+    }
 }

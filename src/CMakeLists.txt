@@ -144,17 +144,11 @@ if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
-if (NOT STATICCOMPILE)
-    add_library(libcryptominisat5 SHARED
-        ${cryptoms_lib_files}
-        cryptominisat.cpp
-    )
-else()
-    add_library(libcryptominisat5 STATIC
-        ${cryptoms_lib_files}
-        cryptominisat.cpp
-    )
-endif()
+add_library(libcryptominisat5
+    ${cryptoms_lib_files}
+    cryptominisat.cpp
+)
+
 GENERATE_EXPORT_HEADER(libcryptominisat5
          BASE_NAME libcryptominisat5
          #EXPORT_MACRO_NAME libcryptominisat5_EXPORT
@@ -191,15 +185,9 @@ else()
 endif()
 
 if (IPASIR)
-    if (NOT STATICCOMPILE)
-        add_library(ipasircryptominisat5 SHARED
-            ipasir.cpp
-        )
-    else()
-        add_library(ipasircryptominisat5 STATIC
-            ipasir.cpp
-        )
-    endif()
+    add_library(ipasircryptominisat5
+        ipasir.cpp
+    )
     target_link_libraries(ipasircryptominisat5
         LINK_PUBLIC ${cryptoms_lib_link_libs} libcryptominisat5
     )
@@ -289,15 +277,9 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-if (STATICCOMPILE)
-    SET_TARGET_PROPERTIES(cryptominisat5_simple PROPERTIES LINK_SEARCH_START_STATIC 1)
-endif()
 set_target_properties(cryptominisat5_simple PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
-if (STATICCOMPILE)
-    SET_TARGET_PROPERTIES(cryptominisat5_simple PROPERTIES LINK_SEARCH_END_STATIC 1)
-endif()
 target_link_libraries(cryptominisat5_simple
     ${cryptoms_exec_link_libs}
 )
@@ -308,15 +290,9 @@ install(TARGETS cryptominisat5_simple
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    if (STATICCOMPILE)
-        SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_START_STATIC 1)
-    endif()
     set_target_properties(cryptominisat5 PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
-    if (STATICCOMPILE)
-        SET_TARGET_PROPERTIES(cryptominisat5 PROPERTIES LINK_SEARCH_END_STATIC 1)
-    endif()
     target_link_libraries(cryptominisat5
         ${cryptoms_exec_link_libs}
         ${Boost_LIBRARIES}

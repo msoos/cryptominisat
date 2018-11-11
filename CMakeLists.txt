@@ -97,10 +97,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
+# static compilation
+option(BUILD_SHARED_LIBS "Build the shared library" ON)
+option(STATICCOMPILE "Compile to static executable" OFF)
+if (STATICCOMPILE)
+    set(BUILD_SHARED_LIBS OFF)
+endif()
+
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
-    set(STATICCOMPILE OFF)
+    set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
 endif()
 
@@ -212,11 +219,13 @@ else()
 
     add_compile_options("$<$<CONFIG:DEBUG>:/Od>")
 
-    if (STATICCOMPILE)
+    if (NOT BUILD_SHARED_LIBS)
         # We statically link to reduce dependencies
         foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-            # /MD -- Causes the application to use the multithread-specific and DLL-specific version of the run-time library.
-            #        Defines _MT and _DLL and causes the compiler to place the library name MSVCRT.lib into the .obj file.
+            # /MD -- Causes the application to use the multithread-specific
+            #        and DLL-specific version of the run-time library.
+            #        Defines _MT and _DLL and causes the compiler to place
+            #        the library name MSVCRT.lib into the .obj file.
             if(${flag_var} MATCHES "/MD")
                 string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
             endif(${flag_var} MATCHES "/MD")
@@ -268,8 +277,8 @@ endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
 option(COVERAGE "Build with coverage check" OFF)
-option(STATICCOMPILE "Compile to static executable" OFF)
-if (COVERAGE AND NOT STATICCOMPILE)
+
+if (COVERAGE AND BUILD_SHARED_LIBS)
     MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
 endif()
 
@@ -326,7 +335,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND NOT SANITIZE)
 endif()
 
 if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-    if(STATICCOMPILE)
+    if(NOT BUILD_SHARED_LIBS)
         MESSAGE(STATUS "Compiling for static library use")
         if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -Wl,--whole-archive -ldl -lpthread -Wl,--no-whole-archive -static ")
@@ -350,7 +359,7 @@ if ((${CMAKE_SYSTEM_NAME} MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Dar
     endif()
 endif()
 
-if ((${CMAKE_SYSTEM_NAME} MATCHES "Windows") AND (STATICCOMPILE))
+if ((${CMAKE_SYSTEM_NAME} MATCHES "Windows") AND (NOT BUILD_SHARED_LIBS))
     set(Boost_USE_STATIC_LIBS ON)
 endif()
 
@@ -395,7 +404,7 @@ MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
 
 if (NOT ONLY_SIMPLE)
-    set (boost_components "")
+    set(boost_components "")
     set(boost_components ${boost_components} program_options)
     find_package( Boost 1.46 COMPONENTS ${boost_components})
 endif()
@@ -486,7 +495,7 @@ endif()
 option(NOZLIB "Don't use zlib" OFF)
 
 # cannot currently compile static zlib under Windows
-if (NOT NOZLIB AND NOT (STATICCOMPILE AND WIN32))
+if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     find_package(ZLIB)
     IF (ZLIB_FOUND)
         MESSAGE(STATUS "OK, Found ZLIB!")
@@ -567,13 +576,16 @@ endmacro()
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(FORCE_PYTHON2 OFF)
+message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
 if (NOT FORCE_PYTHON2)
     find_package(PythonInterp 3)
     find_package(PythonLibs 3)
-    message(STATUS "Python 3 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-    message(STATUS "Python 3 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
-    message(STATUS "Python 3 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
-    message(STATUS "Python 3 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+    if (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS)
+        message(STATUS "Python 3 -- PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+        message(STATUS "Python 3 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
+        message(STATUS "Python 3 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
+        message(STATUS "Python 3 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+    endif()
 endif()
 
 if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))

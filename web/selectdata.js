@@ -7,7 +7,7 @@ var maxConflRestart = new Array();
 function selected_runID(runID) {
     console.log("getting runid " + runID);
     clear_everything();
-    link = "get_data.php?id=" + runID;
+    var link = "get_data.php?id=" + runID;
     //runID = "/private/sat/dat/" + runID.replace(/^.*[\\\/]/, '') + ".dat"
     //link = runID;
     jQuery.getJSON(
