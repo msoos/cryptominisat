@@ -883,11 +883,6 @@ Clause* Searcher::analyze_conflict(
             bump_var_activities_based_on_implied_by_learnts<update_bogoprops>(out_btlevel);
         } else {
             uint32_t bump_by = 2;
-            if (conf.more_maple_bump_high_glue) {
-                if (glue <= 3) {
-                    bump_by = 1;
-                }
-            }
             assert(toClear.empty());
             const Lit p = learnt_clause[0];
             seen[p.var()] = true;
