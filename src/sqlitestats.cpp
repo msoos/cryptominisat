@@ -1226,7 +1226,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 10;
+    const size_t numElems = 16;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1240,6 +1240,13 @@ void SQLiteStats::init_var_data_STMT()
     ", `decisions_below`"
     ", `conflicts_below`"
     ", `clauses_below`"
+
+    ", `decided`"
+    ", `decided_pos`"
+    ", `propagated`"
+    ", `propagated_pos`"
+    ", `total_conflicts_below_when_picked`"
+    ", `total_decisions_below_when_picked`"
 
     ", `clid_start_incl`"
     ", `clid_end_notincl`"
@@ -1267,11 +1274,10 @@ void SQLiteStats::init_var_data_STMT()
 void SQLiteStats::var_data(
     const Solver* solver
     , const uint32_t var
-    , const uint32_t depth
+    , const VarData& vardata
     , const uint32_t decisions_below
     , const uint32_t conflicts_below
     , const uint32_t cls_below
-    , const uint64_t start_clid_incl
     , const uint64_t end_clid_notincl
 ) {
     int bindAt = 1;
@@ -1280,13 +1286,20 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumConflicts);
 
     sqlite3_bind_int   (stmt_var_data, bindAt++, var);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, depth);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.level);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, decisions_below);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, cls_below);
 
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided_pos);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
 
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, start_clid_incl);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);
 
     int rc = sqlite3_step(stmt_var_data);

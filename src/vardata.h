@@ -50,6 +50,12 @@ struct VarData
     bool is_bva = false;
     bool added_for_xor = false;
     #ifdef STATS_NEEDED
+    uint64_t num_propagated = 0;
+    uint64_t num_propagated_pos = 0;
+    uint64_t num_decided = 0;
+    uint64_t num_decided_pos = 0;
+    uint64_t total_conflicts_below_when_picked = 0;
+    uint64_t total_decisions_below_when_picked = 0;
     uint64_t clid_at_picking = std::numeric_limits<uint64_t>::max();
     uint64_t num_decisions_till_now = std::numeric_limits<uint64_t>::max();
     uint64_t num_conflicts_till_now = std::numeric_limits<uint64_t>::max();

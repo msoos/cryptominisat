@@ -346,6 +346,13 @@ create table `varData` (
     `conflicts_below` int(20) NOT NULL,
     `clauses_below` int(20) NOT NULL,
 
+    `decided` bigint(20) NOT NULL,
+    `decided_pos` bigint(20) NOT NULL,
+    `propagated` bigint(20) NOT NULL,
+    `propagated_pos` bigint(20) NOT NULL,
+    `total_conflicts_below_when_picked` bigint(20) NOT NULL,
+    `total_decisions_below_when_picked` bigint(20) NOT NULL,
+
     `clid_start_incl` bigint(20) NOT NULL,
     `clid_end_notincl` bigint(20) NOT NULL
 
@@ -364,6 +371,14 @@ create table `varDataUse` (
     `decisions_below` int(20) NOT NULL,
     `conflicts_below` int(20) NOT NULL,
     `clauses_below` int(20) NOT NULL,
+
+    `decided` bigint(20) NOT NULL,
+    `decided_pos` bigint(20) NOT NULL,
+    `propagated` bigint(20) NOT NULL,
+    `propagated_pos` bigint(20) NOT NULL,
+    `total_conflicts_below_when_picked` bigint(20) NOT NULL,
+    `total_decisions_below_when_picked` bigint(20) NOT NULL,
+
 
     `useful_clauses` int(20) DEFAULT NULL,
     `useful_clauses_used` int(20) DEFAULT NULL,
