@@ -920,7 +920,7 @@ Clause* Searcher::analyze_conflict(
                         varData[l.var()].inside_conflict_clause_antecedents++
                         varData[l.var()].conflicted+=bump_by;
                     }
-                    sumConflictClauseAntecedentsLits+=2;
+                    sumConflictClauseAntecedentsLits += 2;
                 }
             }
             for (Lit l: toClear) {
