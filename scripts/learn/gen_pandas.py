@@ -573,6 +573,18 @@ class Query2 (QueryHelper):
         , v.conflicts_below
         , v.clauses_below
 
+        , `v.decided/v.sum_decisions_at_picktime`
+        , `v.decided_pos/v.decided`
+        , `v.propagated/v.sum_propagations_at_picktime`
+        , `v.propagated_pos/v.propagated`
+        , `v.sum_decisions_at_picktime`
+        , `v.sum_propagations_at_picktime`
+
+        , `v.total_conflicts_below_when_picked`
+        , `v.total_decisions_below_when_picked`
+        , `v.avg_inside_per_confl_when_picked`
+        , `v.avg_inside_antecedents_when_picked`
+
         -- measures for good
         , count(cls.runID) as useful_clauses
         , sum(cls.num_used) as useful_clauses_used

@@ -106,6 +106,7 @@ public:
     Drat* drat;
     uint64_t sumConflicts = 0;
     uint64_t sumDecisions = 0;
+    uint64_t sumPropagations = 0;
     uint64_t sumConflictClauseLits = 0;
     uint64_t sumConflictClauseAntecedentsLits = 0;
     uint32_t latest_satzilla_feature_calc = 0;

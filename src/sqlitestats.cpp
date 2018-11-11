@@ -1226,7 +1226,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 18;
+    const size_t numElems = 20;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1245,6 +1245,9 @@ void SQLiteStats::init_var_data_STMT()
     ", `decided_pos`"
     ", `propagated`"
     ", `propagated_pos`"
+    ", `sum_decisions_at_picktime`"
+    ", `sum_propagations_at_picktime`"
+
     ", `total_conflicts_below_when_picked`"
     ", `total_decisions_below_when_picked`"
     ", `avg_inside_per_confl_when_picked`"
@@ -1293,15 +1296,29 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, cls_below);
 
+    /////
+    /////data at picked time data
+    /////
+
+    //these are not updated while working below.
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided_pos);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
+
+    //to average above data
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sum_decisions_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sum_propagations_at_picktime);
+
+    //data about stuff that's below
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
+
+    //data about variable in general
     sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
     sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
 
+    //to get usage data good cl/bad cl, etc.
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);
 

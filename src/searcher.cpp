@@ -898,7 +898,7 @@ Clause* Searcher::analyze_conflict(
                             seen[l.var()] = true;
                             toClear.push_back(l);
 
-                            varData[l.var()].inside_conflict_clause_antecedents++
+                            varData[l.var()].inside_conflict_clause_antecedents++;
                             varData[l.var()].conflicted+=bump_by;
                         }
                     }
@@ -909,7 +909,7 @@ Clause* Searcher::analyze_conflict(
                         seen[l.var()] = true;
                         toClear.push_back(l);
 
-                        varData[l.var()].inside_conflict_clause_antecedents++
+                        varData[l.var()].inside_conflict_clause_antecedents++;
                         varData[l.var()].conflicted+=bump_by;
                     }
                     l = Lit(v, false);
@@ -917,7 +917,7 @@ Clause* Searcher::analyze_conflict(
                         seen[l.var()] = true;
                         toClear.push_back(l);
 
-                        varData[l.var()].inside_conflict_clause_antecedents++
+                        varData[l.var()].inside_conflict_clause_antecedents++;
                         varData[l.var()].conflicted+=bump_by;
                     }
                     sumConflictClauseAntecedentsLits += 2;
@@ -3460,12 +3460,12 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
                 //WARNING but not a decision clause...
 
                 /*if (varData[var].reason == PropBy()) {
-                    uint64_t conf = sumConflicts - varData[var].num_conflicts_till_now;
+                    uint64_t conf = sumConflicts - varData[var].num_conflicts_at_picktime;
                     uint64_t cl_ids = clauseID+((uint64_t)clid_plus_one)-varData[var].clid_at_picking;
                     uint64_t cls = conf + decision_based_cl - varData[var].num_decision_based_cl_till_now;
                     if (cls < cl_ids ) {
                         cout << "SumConflicts " << sumConflicts << endl;
-                        cout << "varData[var].num_conflicts_till_now: " << varData[var].num_conflicts_till_now << endl;
+                        cout << "varData[var].num_conflicts_at_picktime: " << varData[var].num_conflicts_at_picktime << endl;
                         cout << "clauseID " << clauseID << endl;
                         cout << "varData[var].clid_at_picking: " << varData[var].clid_at_picking << endl;
                         cout << "OOps, conf: " << conf << " cls: " << cls << endl;
@@ -3477,8 +3477,8 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
                 if (dump_this_canceluntil
                     && varData[var].reason == PropBy()
                 ) {
-                    uint64_t conflicts = sumConflicts - varData[var].num_conflicts_till_now;
-                    uint64_t decisions = sumDecisions - varData[var].num_decisions_till_now;
+                    uint64_t conflicts = sumConflicts - varData[var].num_conflicts_at_picktime;
+                    uint64_t decisions = sumDecisions - varData[var].sum_decisions_at_picktime;
                     uint64_t cl_ids = clauseID+((uint64_t)clid_plus_one)-varData[var].clid_at_picking;
                     uint64_t cls = conflicts + decision_based_cl - varData[var].num_decision_based_cl_till_now;
                     uint64_t outer_var = map_inter_to_outer(var);
