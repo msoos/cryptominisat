@@ -237,19 +237,36 @@ def one_classifier(df_orig, features, to_predict, final):
     clf = None
     # clf = sklearn.linear_model.LogisticRegression()
     if final:
-        if options.final_is_tree:
-            clf = sklearn.tree.DecisionTreeClassifier(
+
+        clf_tree = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
                 min_samples_split=options.min_samples_split)
-        elif options.final_is_svm:
-            #clf = sklearn.svm.SVC(C=900, gamma=10**-7)
-            clf1 = sklearn.svm.SVC(C=500, gamma=10**-5)
-            clf = BaggingClassifier(clf1, n_estimators=3, max_samples=0.5, max_features=0.5)
-        else:
-            clf = sklearn.ensemble.RandomForestClassifier(
+
+        clf_svm_pre = sklearn.svm.SVC(C=500, gamma=10**-5)
+        clf_svm = BaggingClassifier(
+            clf_svm_pre
+            , n_estimators=3
+            , max_samples=0.5, max_features=0.5)
+
+        clf_logreg = sklearn.linear_model.LogisticRegression(
+            C=0.3
+            , penalty="l1")
+
+        clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=5
                 , min_samples_leaf=options.min_samples_split)
 
+        if options.final_is_tree:
+            clf = clf_tree
+        elif options.final_is_svm:
+            clf = clf_svm
+        elif options.final_is_logreg:
+            clf = clf_logreg
+        elif options.final_is_forest:
+            clf = clf_forest
+        else:
+            mylist = [["tree", clf_tree], ["svm", clf_svm], ["logreg", clf_logreg]]
+            clf = sklearn.ensemble.VotingClassifier(mylist)
     else:
         clf = sklearn.ensemble.RandomForestClassifier(
             n_estimators=80
@@ -502,10 +519,16 @@ if __name__ == "__main__":
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=40, type=int,
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
+
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
     parser.add_option("--svm", default=False, action="store_true",
                       dest="final_is_svm", help="Final predictor should be an svm")
+    parser.add_option("--lreg", default=False, action="store_true",
+                      dest="final_is_logreg", help="Final predictor should be a logistic regression")
+    parser.add_option("--forest", default=False, action="store_true",
+                      dest="final_is_forest", help="Final predictor should be a forest")
+
     parser.add_option("--funcname", default="should_keep", type=str,
                       dest="funcname", help="The finali function name")
 
