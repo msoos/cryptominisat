@@ -1226,7 +1226,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 16;
+    const size_t numElems = 18;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1247,6 +1247,8 @@ void SQLiteStats::init_var_data_STMT()
     ", `propagated_pos`"
     ", `total_conflicts_below_when_picked`"
     ", `total_decisions_below_when_picked`"
+    ", `avg_inside_per_confl_when_picked`"
+    ", `avg_inside_antecedents_when_picked`"
 
     ", `clid_start_incl`"
     ", `clid_end_notincl`"
@@ -1297,6 +1299,8 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
+    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
+    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
 
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);

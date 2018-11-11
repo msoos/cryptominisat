@@ -889,29 +889,38 @@ Clause* Searcher::analyze_conflict(
             toClear.push_back(p);
             for (int i = learnt_clause.size() - 1; i >= 0; i--) {
                 const uint32_t v = learnt_clause[i].var();
+                varData[v].inside_conflict_clause++;
                 if (varData[v].reason.isClause()) {
                     ClOffset offs = varData[v].reason.get_offset();
                     Clause* cl = cl_alloc.ptr(offs);
                     for (const Lit l: *cl) {
                         if (!seen[l.var()]) {
                             seen[l.var()] = true;
-                            varData[l.var()].conflicted+=bump_by;
                             toClear.push_back(l);
+
+                            varData[l.var()].inside_conflict_clause_antecedents++
+                            varData[l.var()].conflicted+=bump_by;
                         }
                     }
+                    sumConflictClauseAntecedentsLits += cl->size();
                 } else if (varData[v].reason.getType() == binary_t) {
                     Lit l = varData[v].reason.lit2();
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].conflicted+=bump_by;
                         toClear.push_back(l);
+
+                        varData[l.var()].inside_conflict_clause_antecedents++
+                        varData[l.var()].conflicted+=bump_by;
                     }
                     l = Lit(v, false);
                     if (!seen[l.var()]) {
                         seen[l.var()] = true;
-                        varData[l.var()].conflicted+=bump_by;
                         toClear.push_back(l);
+
+                        varData[l.var()].inside_conflict_clause_antecedents++
+                        varData[l.var()].conflicted+=bump_by;
                     }
+                    sumConflictClauseAntecedentsLits+=2;
                 }
             }
             for (Lit l: toClear) {
@@ -920,6 +929,7 @@ Clause* Searcher::analyze_conflict(
             toClear.clear();
         }
     }
+    sumConflictClauseLits += learnt_clause.size();
 
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     for(const Lit l: learnt_clause) {

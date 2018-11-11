@@ -433,6 +433,14 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
         varData[v].num_conflicts_till_now = sumConflicts;
         varData[v].num_decision_based_cl_till_now = decision_based_cl;
         varData[v].clid_at_picking = clauseID;
+
+        double avg_inside_per_confl_lit =
+        (double)varData[v].inside_conflict_clause/(double)sumConflictClauseLits;
+        varData[v].avg_inside_per_confl_when_picked = avg_inside_per_confl_lit;
+
+        double avg_inside_per_confl_atecedent_lits =
+        (double)varData[v].inside_conflict_clause_antecedents/(double)sumConflictClauseAntecedentsLits;
+        varData[v].avg_inside_antecedents_when_picked = avg_inside_per_confl_atecedent_lits;
     } else {
         varData[v].num_propagated++;
         if (!sign) varData[v].num_propagated_pos++;

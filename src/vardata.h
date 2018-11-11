@@ -60,6 +60,12 @@ struct VarData
     uint64_t num_decisions_till_now = std::numeric_limits<uint64_t>::max();
     uint64_t num_conflicts_till_now = std::numeric_limits<uint64_t>::max();
     uint64_t num_decision_based_cl_till_now = std::numeric_limits<uint64_t>::max();
+
+    uint64_t inside_conflict_clause = 0;
+    double avg_inside_per_confl_when_picked;
+
+    uint64_t inside_conflict_clause_antecedents = 0;
+    double avg_inside_antecedents_when_picked = 0;
     #endif
 };
 

@@ -352,6 +352,8 @@ create table `varData` (
     `propagated_pos` bigint(20) NOT NULL,
     `total_conflicts_below_when_picked` bigint(20) NOT NULL,
     `total_decisions_below_when_picked` bigint(20) NOT NULL,
+    `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
+    `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
 
     `clid_start_incl` bigint(20) NOT NULL,
     `clid_end_notincl` bigint(20) NOT NULL
@@ -378,7 +380,8 @@ create table `varDataUse` (
     `propagated_pos` bigint(20) NOT NULL,
     `total_conflicts_below_when_picked` bigint(20) NOT NULL,
     `total_decisions_below_when_picked` bigint(20) NOT NULL,
-
+    `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
+    `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
 
     `useful_clauses` int(20) DEFAULT NULL,
     `useful_clauses_used` int(20) DEFAULT NULL,
