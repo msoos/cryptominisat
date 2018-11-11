@@ -58,7 +58,7 @@ FIXED="30000"
 # FIXED="20000" #must use 4000 for lock-in
 
 # cleanup
-rm -f "$FNAMEOUT.db"
+rm -f "$FNAMEOUT.db*"
 rm -f "$FNAMEOUT.lemmas-*"
 rm -f "$FNAMEOUT.db*-pandas*"
 rm -f ../src/final_predictor*
@@ -72,6 +72,9 @@ rm -f ../src/final_predictor*
 ./add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.lemmas"
 
 ./gen_pandas.py "$FNAMEOUT.db" --fixed "$FIXED"
+# ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
+
+
 ./predict.py "$FNAMEOUT.db-short-pandasdata.dat" --final --conf --tree --code ../src/final_predictor_short.cpp --funcname should_keep_short --split 100
 ./predict.py "$FNAMEOUT.db-long-pandasdata.dat" --final --conf --tree --code ../src/final_predictor_long.cpp --funcname should_keep_long --split 100
 ./build_final_predictor.sh
