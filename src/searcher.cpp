@@ -3419,7 +3419,7 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
     bool dump_this_canceluntil = false;
     if (solver->sqlStats
         //we need a lot less of this data
-        && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.1
+        && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.2
     ) {
         dump_this_canceluntil = true;
         solver->sqlStats->begin_transaction();
