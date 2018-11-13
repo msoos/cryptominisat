@@ -758,18 +758,49 @@ class QueryCls (QueryHelper):
 
         return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad])
 
+class QueryVar (QueryHelper):
+    def __init__(self, dbfname):
+        super(QueryVar, self).__init__(dbfname)
+
+    def vardata(self):
+        q = """
+select
+*
+, (1.0*useful_clauses)/(1.0*clauses_below) as useful_ratio
+
+, CASE WHEN
+ (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
+THEN "OK"
+ELSE "BAD"
+END AS `class`
+
+from varDataUse
+where
+clauses_below > 10
+and avg_inside_per_confl_when_picked > 0
+"""
+
+        df = pd.read_sql_query(q, self.conn)
+        dump_dataframe(df, "vardata")
+
 
 def get_one_file(dbfname, long_or_short):
     print("Using sqlite3db file %s" % dbfname)
 
     df = None
-    with Query2(dbfname) as q:
+    with QueryCls(dbfname) as q:
         if not options.no_recreate_indexes:
             q.create_indexes()
             q.fill_last_prop()
             q.fill_good_clauses_fixed()
             q.fill_var_data_use()
 
+
+    with QueryVar(dbfname) as q:
+        q.vardata()
+    exit(0)
+
+    with QueryCls(dbfname) as q:
         ok, df = q.get_clstats(long_or_short)
         if not ok:
             return False, None
