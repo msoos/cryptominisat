@@ -613,6 +613,25 @@ class QueryCls (QueryHelper):
         if options.verbose:
             print("query:", q);
         self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_used = 0
+        WHERE useful_clauses_used IS NULL
+        """
+        self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_first_used = 0
+        WHERE useful_clauses_first_used IS NULL
+        """
+        self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_last_used = 0
+        WHERE useful_clauses_last_used IS NULL
+        """
+        self.c.execute(q)
+
         print("varDataUse filled T: %-3.2f s" % (time.time() - t))
 
     def get_ok(self, subfilter):
