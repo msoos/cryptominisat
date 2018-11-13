@@ -90,9 +90,9 @@ class QueryHelper:
         return runID
 
 
-class Query2 (QueryHelper):
+class QueryCls (QueryHelper):
     def __init__(self, dbfname):
-        super(Query2, self).__init__(dbfname)
+        super(QueryCls, self).__init__(dbfname)
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
         self.restart_dat = """
         -- , rst.`runID` as `rst.runID`
