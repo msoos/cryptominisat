@@ -688,8 +688,8 @@ bool Prober::try_this(const Lit lit, const bool first)
     }
 
     solver->cancelUntil<false, true>(0);
-    solver->add_otf_subsume_long_clauses();
-    solver->add_otf_subsume_implicit_clause();
+    solver->add_otf_subsume_long_clauses<true>();
+    solver->add_otf_subsume_implicit_clause<true>();
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
