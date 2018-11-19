@@ -1,10 +1,10 @@
-#!/usr/bin/bash
+#!/bin/bash
 
-for x in `ls | grep out-141617`; do
+for x in `ls | grep 7846479`; do
     (cd $x
     echo At $x
     pwd
-    /home/soos/cryptominisat/scripts/output_parser/solvetimes_from_output.sh
+    ../solvetimes_from_output.sh
     );
 done
 
