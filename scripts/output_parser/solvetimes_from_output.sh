@@ -1,24 +1,17 @@
 #!/bin/sh
 
-rm issues
 echo "checking for assert fail"
-zgrep --color -i "assert.*fail" `ls *.out.gz` >>issues
-echo "checking for signals"
-zgrep --color -i signal `ls *.out.gz` >> issues
-echo "checking for errors"
-zgrep --color -i error `ls *.out.gz` >> issues
-echo "checking for terminate"
-zgrep --color -i terminate `ls *.out.gz` >> issues
+zgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "terminate" `ls *.out.gz` > issues
 echo "checking for signal 4"
 zgrep "signal 4"  issues
 
 ls -- *.out.gz | sed 's/gz.*/gz/' > allFiles
 
 # 1500 cutoff
-# echo "Getting solveTimes"
-# zgrep "Total" *.out.gz | awk '{print $5}' > solveTimes
-# echo "Getting problems solved under 1500"
-# zgrep "Total" *.out.gz | awk '{if ($5 < 1500) {print $1}}' | sed 's/:c.*$//' | sort > solved_under_1500_full_list
+echo "Getting solveTimes"
+zgrep "Total" *.out.gz | awk '{print $5}' > solveTimes
+echo "Getting problems solved under 1500"
+zgrep "Total" *.out.gz | awk '{if ($5 < 1500) {print $1}}' | sed 's/:c.*$//' | sort > solved_under_1500_full_list
 
 
 # for normal
