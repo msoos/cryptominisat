@@ -105,6 +105,13 @@ class Query:
         self.cur_good_ids = []
         self.cur_good_ids_num = 0
 
+    def vacuum(self):
+        q = """
+        vacuum;
+        """
+        self.c.execute(q)
+        print("Vacuumed database")
+
     def find_runID(self):
         q = """
         SELECT runID
@@ -148,6 +155,8 @@ it was good or not."""
 
     with Query(dbfname) as q:
         q.parse_and_add_lemmas(lemmafname)
+        q.vacuum()
 
     print("Finished adding good lemma indicators to db %s" % dbfname)
+
     exit(0)
