@@ -87,7 +87,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , print_all_restarts (false)
         , verbStats        (0)
         , do_print_times(1)
-        , print_restart_line_every_n_confl(4096)
+        , print_restart_line_every_n_confl(8192)
 
         //Limits
         , maxTime          (std::numeric_limits<double>::max())
