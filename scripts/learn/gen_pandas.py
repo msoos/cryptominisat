@@ -798,7 +798,6 @@ def get_one_file(dbfname, long_or_short):
 
     with QueryVar(dbfname) as q:
         q.vardata()
-    exit(0)
 
     with QueryCls(dbfname) as q:
         ok, df = q.get_clstats(long_or_short)
