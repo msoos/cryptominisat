@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
-  `restarts` bigint(20) NOT NULL,
+  `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `runtime` float NOT NULL,
 
@@ -35,7 +35,7 @@ DROP TABLE IF EXISTS `restart`;
 CREATE TABLE `restart` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
-  `restarts` bigint(20) NOT NULL,
+  `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
   `runtime` float NOT NULL,
@@ -148,7 +148,7 @@ DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
-  `restarts` bigint(20) NOT NULL,
+  `restarts` int(20) NOT NULL,
   `prev_restart` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
@@ -231,7 +231,7 @@ DROP TABLE IF EXISTS `satzilla_features`;
 CREATE TABLE `satzilla_features` (
   `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
-  `restarts` bigint(20) NOT NULL,
+  `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `latest_satzilla_feature_calc` int(20) NOT NULL,
 
