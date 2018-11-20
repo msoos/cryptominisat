@@ -263,7 +263,9 @@ class Searcher : public HyperEngine
         void  attach_and_enqueue_learnt_clause(Clause* cl, bool enq = true);
         void  print_learning_debug_info() const;
         void  print_learnt_clause() const;
+        template<bool update_bogoprops>
         void  add_otf_subsume_long_clauses();
+        template<bool update_bogoprops>
         void  add_otf_subsume_implicit_clause();
         Clause* handle_last_confl_otf_subsumption(
             Clause* cl

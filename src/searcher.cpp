@@ -1395,6 +1395,7 @@ void Searcher::check_need_restart()
     }
 }
 
+template<bool update_bogoprops>
 void Searcher::add_otf_subsume_long_clauses()
 {
     //Hande long OTF subsumption
@@ -1426,7 +1427,7 @@ void Searcher::add_otf_subsume_long_clauses()
 
         if (at == 0) {
             //If none found, we have a propagating clause_t
-            enqueue(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
+            enqueue<update_bogoprops>(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
 
             //Drat
             if (decisionLevel() == 0) {
@@ -1449,6 +1450,7 @@ void Searcher::add_otf_subsume_long_clauses()
     otf_subsuming_long_cls.clear();
 }
 
+template<bool update_bogoprops>
 void Searcher::add_otf_subsume_implicit_clause()
 {
     //Handle implicit OTF subsumption
@@ -1493,7 +1495,7 @@ void Searcher::add_otf_subsume_implicit_clause()
             }
 
             //Enqueue this literal, finally
-            enqueue(
+            enqueue<update_bogoprops>(
                 it->lits[0]
                 , by
             );
@@ -1919,8 +1921,8 @@ bool Searcher::handle_conflict(const PropBy confl)
     uint32_t old_decision_level = decisionLevel();
     cancelUntil<true, update_bogoprops>(backtrack_level, true);
 
-    add_otf_subsume_long_clauses();
-    add_otf_subsume_implicit_clause();
+    add_otf_subsume_long_clauses<update_bogoprops>();
+    add_otf_subsume_implicit_clause<update_bogoprops>();
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());

@@ -31,7 +31,6 @@ Docker usage
 To run on file `myfile.cnf`:
 
 ```
-docker pull msoos/cryptominisat
 cat myfile.cnf | docker run --rm -i msoos/cryptominisat
 ```
 
@@ -45,7 +44,6 @@ echo "1 2 0" | docker run --rm -i msoos/cryptominisat
 To run on the file `/home/myfolder/myfile.cnf.gz` by mounting it (may be faster):
 
 ```
-docker pull msoos/cryptominisat
 docker run --rm -v /home/myfolder/myfile.cnf.gz:/f msoos/cryptominisat f
 ```
 

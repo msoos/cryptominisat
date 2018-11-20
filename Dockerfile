@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:16.04 as builder
 
 LABEL maintainer="Mate Soos"
 LABEL version="5.0"
@@ -30,15 +30,15 @@ COPY . /home/solver/cms
 WORKDIR /home/solver/cms
 RUN mkdir build
 WORKDIR /home/solver/cms/build
-RUN cmake .. \
+RUN cmake -DSTATICCOMPILE=ON .. \
     && make -j6 \
     && make install \
     && rm -rf *
 
 # set up for running
-USER solver
-WORKDIR /home/solver/
-ENTRYPOINT ["cryptominisat5"]
+FROM alpine:latest
+COPY --from=builder /usr/local/bin/cryptominisat5 /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/cryptominisat5"]
 
 # --------------------
 # HOW TO USE
