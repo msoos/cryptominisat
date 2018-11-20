@@ -8,7 +8,7 @@ wc -l *${check}*/solvedSAT | sort -n
 echo "On SATCOMP 17 nolimits problems:"
 rm tmp
 for f in $(ls | grep ${check}); do
-	g=$(grep -f out-new-${check}.wlm01-1/allFiles $f/solved | wc -l)
+	g=$(grep -f out-new-${check}.wlm01-5/allFiles $f/solved | wc -l)
 	echo "$g for $f" >> tmp
 done
 sort -n tmp
