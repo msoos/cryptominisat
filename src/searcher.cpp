@@ -1829,6 +1829,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (solver->sqlStats
         && drat
         && conf.dump_individual_restarts_and_clauses
+        && cl
     ) {
         if (dump_this_many_cldata_in_stream <= 0) {
             double myrnd = mtrand.randDblExc();
@@ -1838,14 +1839,15 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         }
 
         if (dump_this_many_cldata_in_stream >= 0) {
-            if (cl) {
-                cl->stats.dump_number = 0;
-            }
+            cl->stats.dump_number = 0;
             dump_this_many_cldata_in_stream--;
             dump_sql_clause_data(
                 glue
                 , old_decision_level
             );
+        } else {
+            //don't dump data about this clause into goodClauses
+            cl->stats.ID = 0;
         }
     }
     clauseID++;
