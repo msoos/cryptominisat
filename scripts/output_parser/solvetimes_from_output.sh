@@ -11,7 +11,7 @@ ls -- *.out.gz | sed 's/gz.*/gz/' > allFiles
 echo "Getting solveTimes"
 zgrep "Total" *.out.gz | awk '{print $5}' > solveTimes
 echo "Getting problems solved under 1500"
-zgrep "Total" *.out.gz | awk '{if ($5 < 1500) {print $1}}' | sed 's/:c.*$//' | sort > solved_under_1500_full_list
+zgrep "Total" *.out.gz | awk '{if ($7 < 1500) {print $1}}' | sed 's/:c.*$//' | sort > solved_under_1500_full_list
 
 
 # for normal
