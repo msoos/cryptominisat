@@ -889,7 +889,9 @@ Clause* Searcher::analyze_conflict(
             toClear.push_back(p);
             for (int i = learnt_clause.size() - 1; i >= 0; i--) {
                 const uint32_t v = learnt_clause[i].var();
+                #ifdef STATS_NEEDED
                 varData[v].inside_conflict_clause++;
+                #endif
                 if (varData[v].reason.isClause()) {
                     ClOffset offs = varData[v].reason.get_offset();
                     Clause* cl = cl_alloc.ptr(offs);
@@ -898,7 +900,9 @@ Clause* Searcher::analyze_conflict(
                             seen[l.var()] = true;
                             toClear.push_back(l);
 
+                            #ifdef STATS_NEEDED
                             varData[l.var()].inside_conflict_clause_antecedents++;
+                            #endif
                             varData[l.var()].conflicted+=bump_by;
                         }
                     }
@@ -909,7 +913,9 @@ Clause* Searcher::analyze_conflict(
                         seen[l.var()] = true;
                         toClear.push_back(l);
 
+                        #ifdef STATS_NEEDED
                         varData[l.var()].inside_conflict_clause_antecedents++;
+                        #endif
                         varData[l.var()].conflicted+=bump_by;
                     }
                     l = Lit(v, false);
@@ -917,7 +923,9 @@ Clause* Searcher::analyze_conflict(
                         seen[l.var()] = true;
                         toClear.push_back(l);
 
+                        #ifdef STATS_NEEDED
                         varData[l.var()].inside_conflict_clause_antecedents++;
+                        #endif
                         varData[l.var()].conflicted+=bump_by;
                     }
                     sumConflictClauseAntecedentsLits += 2;
