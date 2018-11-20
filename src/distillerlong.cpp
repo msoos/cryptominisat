@@ -428,7 +428,6 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
             << "c --> orig shortened cl:" << cl << endl;
         }
         #endif
-        runStats.numClShorten++;
         maxNumProps -= 20;
         lits.clear();
         if (True_confl) {
