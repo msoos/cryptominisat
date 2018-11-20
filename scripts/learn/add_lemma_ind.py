@@ -109,7 +109,11 @@ class Query:
         q = """
         vacuum;
         """
+
+        lev = self.conn.isolation_level
+        self.conn.isolation_level = None
         self.c.execute(q)
+        self.conn.isolation_level = lev
         print("Vacuumed database")
 
     def find_runID(self):
