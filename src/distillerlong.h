@@ -40,7 +40,7 @@ class Clause;
 class DistillerLong {
     public:
         explicit DistillerLong(Solver* solver);
-        bool distill(const bool red);
+        bool distill(const bool red, bool fullstats = true);
 
         struct Stats
         {

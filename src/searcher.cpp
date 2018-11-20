@@ -2265,7 +2265,7 @@ lbool Searcher::solve(
             solver->conf.do_distill_clauses &&
             sumConflicts > next_distill
         ) {
-            if (!solver->distill_long_cls->distill(true)) {
+            if (!solver->distill_long_cls->distill(true, false)) {
                 status = l_False;
                 goto end;
             }
