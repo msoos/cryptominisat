@@ -25,11 +25,11 @@ cat solvedSAT >> solved
 
 # 1500 cutoff
 echo "Getting 1500 UNSAT"
-# zgrep "^s UNSATISFIABLE" $(cat solved_under_1500_full_list) | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedUNSAT1500
+zgrep "^s UNSATISFIABLE" $(cat solved_under_1500_full_list) | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedUNSAT1500
 echo "Getting 1500 SAT"
-# zgrep "^s SATISFIABLE" $(cat solved_under_1500_full_list)   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT1500
+zgrep "^s SATISFIABLE" $(cat solved_under_1500_full_list)   | sed 's/:s.*$//' | sed 's/gz.*/gz/' | sort > solvedSAT1500
 rm -f solved1500
-# cat solvedUNSAT1500 > solved1500
-# cat solvedSAT1500 >> solved1500
+cat solvedUNSAT1500 > solved1500
+cat solvedSAT1500 >> solved1500
 
 # rm solved_under_1500_full_list
