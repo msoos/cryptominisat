@@ -701,11 +701,11 @@ class QueryCls (QueryHelper):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
-            distrib = 0.7
+            distrib = 0.7 #prefer OK by a factor of 0.7
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
-            fixed_mult = 0.2
-            distrib = 0.1
+            fixed_mult = 0.1
+            distrib = 0.1 #prefer BAD by a factor of 0.9
         print("Distrib OK vs BAD set to %s " % distrib)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
