@@ -65,6 +65,7 @@ rm -f "$FNAMEOUT.lemmas-1"
 rm -f "$FNAMEOUT.lemmas-2"
 rm -f "$FNAMEOUT.db-short-pandasdata.dat"
 rm -f "$FNAMEOUT.db-long-pandasdata.dat"
+rm -f "$FNAMEOUT.db-vardata-pandasdata.dat"
 rm -f ../src/final_predictor*
 
 # get data
