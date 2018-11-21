@@ -836,7 +836,6 @@ def get_one_file(dbfname, long_or_short):
             q.fill_good_clauses_fixed()
             q.fill_var_data_use()
 
-
     with QueryVar(dbfname) as q:
         q.vardata()
 
