@@ -972,9 +972,6 @@ def one_dataframe(dbfname, long_or_short):
     if not ok:
         return False, None
 
-    cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
-    cleanname += "-"+long_or_short
-
     if options.verbose:
         print("Describing----")
         dat = df.describe()
@@ -989,6 +986,8 @@ def one_dataframe(dbfname, long_or_short):
         print(df.describe())
         print("Describe done.---")
 
+    cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+    cleanname += "-"+long_or_short
     dump_dataframe(df, cleanname)
 
     return True, df
