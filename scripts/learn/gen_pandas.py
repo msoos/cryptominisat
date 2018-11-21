@@ -552,8 +552,46 @@ class QueryCls (QueryHelper):
         print("Filling var data use...")
 
         t = time.time()
+        q = "DROP TABLE IF EXISTS `varDataUse`;"
+        self.c.execute(q)
         q = """
-        delete from varDataUse
+        create table `varDataUse` (
+            `runID` bigint(20) NOT NULL,
+            `restarts` int(20) NOT NULL,
+            `conflicts` bigint(20) NOT NULL,
+
+            `var` int(20) NOT NULL,
+            `dec_depth` int(20) NOT NULL,
+            `decisions_below` int(20) NOT NULL,
+            `conflicts_below` int(20) NOT NULL,
+            `clauses_below` int(20) NOT NULL,
+
+            `decided_avg` double NOT NULL,
+            `decided_pos_perc` double NOT NULL,
+            `propagated_avg` double NOT NULL,
+            `propagated_pos_perc` double NOT NULL,
+
+            `propagated` bigint(20) NOT NULL,
+            `propagated_pos` bigint(20) NOT NULL,
+            `decided` bigint(20) NOT NULL,
+            `decided_pos` bigint(20) NOT NULL,
+
+            `sum_decisions_at_picktime` bigint(20) NOT NULL,
+            `sum_propagations_at_picktime` bigint(20) NOT NULL,
+
+            `total_conflicts_below_when_picked` bigint(20) NOT NULL,
+            `total_decisions_below_when_picked` bigint(20) NOT NULL,
+            `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
+            `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
+
+            `useful_clauses` int(20) DEFAULT NULL,
+            `useful_clauses_used` int(20) DEFAULT NULL,
+            `useful_clauses_first_used` int(20) DEFAULT NULL,
+            `useful_clauses_last_used` int(20) DEFAULT NULL
+
+            -- features when picked
+            --`activity` double NOT NULL
+        );
         """
         self.c.execute(q)
         print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
