@@ -333,7 +333,6 @@ class QueryCls (QueryHelper):
         and rst.runID = {runid}
         and tags.tagname = "filename"
         and tags.runID = {runid}
-        and cl.conflicts > {start_confl}
         """
 
         self.common_limits = """
@@ -456,7 +455,6 @@ class QueryCls (QueryHelper):
         and rdb1.runID = cl.runID
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
-        and rdb0.dump_no <= {num_times_bad} -- only mark this as throw-away TWICE
         """
         self.q_bad += self.common_restrictions
 
@@ -468,8 +466,6 @@ class QueryCls (QueryHelper):
             "satzfeat_dat": self.satzfeat_dat,
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
-            "start_confl": options.start_conflicts,
-            "num_times_bad": options.num_times_bad
             }
 
     def create_indexes(self):
@@ -675,8 +671,6 @@ class QueryCls (QueryHelper):
     def get_ok(self, subfilter):
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
-        if subfilter == "BAD":
-            q += " and rdb0.dump_no <= %d" % options.num_times_bad
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:")
@@ -756,7 +750,7 @@ class QueryCls (QueryHelper):
         df_ok_ok = pd.read_sql_query(q, self.conn)
 
         # OK-BAD
-        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD' and rdb0.dump_no <= %d" % options.num_times_bad
+        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
             if self.myformat["limit"] > num_lines_ok_bad:
@@ -1008,12 +1002,6 @@ if __name__ == "__main__":
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
-
-    parser.add_option("--start", default=-1, type=int,
-                      dest="start_conflicts", help="Only consider clauses from conflicts that are at least this high")
-
-    parser.add_option("--badnum", default=10000, type=int,
-                      dest="num_times_bad", help="How many times at most should a BAD clause be in the data. Basically, we can count them only once, the first time they are in. But that introduces a weird bias.")
 
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes",
