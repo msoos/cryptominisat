@@ -819,7 +819,10 @@ and avg_inside_per_confl_when_picked > 0
 """
 
         df = pd.read_sql_query(q, self.conn)
-        dump_dataframe(df, "vardata")
+
+        cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+        cleanname += "-vardata"
+        dump_dataframe(df, cleanname)
 
 
 def get_one_file(dbfname, long_or_short):
