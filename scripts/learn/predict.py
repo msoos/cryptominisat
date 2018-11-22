@@ -456,18 +456,19 @@ def learn(fname):
         best_features = ['rdb0.used_for_uip_creation']
         best_features.append('rdb1.used_for_uip_creation')
         best_features.append('cl.size')
+        best_features.append('cl.size_rel')
         best_features.append('cl.glue_rel_long')
         best_features.append('cl.glue_rel_queue')
         best_features.append('cl.glue')
         best_features.append('rdb0.act_ranking_top_10')
         best_features.append('rdb0.act_ranking')
         best_features.append('rdb0.last_touched_diff')
-        best_features.append('rdb1.act_ranking_top_10')
-        best_features.append('rdb1.act_ranking')
-        best_features.append('rdb1.last_touched_diff')
-
+        #best_features.append('rdb1.act_ranking_top_10')
+        #best_features.append('rdb1.act_ranking')
+        #best_features.append('rdb1.last_touched_diff')
+        #best_features.append('cl.num_antecedents_rel') # should we?
         best_features.append('cl.num_overlap_literals')
-        best_features.append('cl.num_overlap_literals_rel')
+        #best_features.append('cl.num_overlap_literals_rel')
 
         #best_features.append('cl.cur_restart_type')
 
