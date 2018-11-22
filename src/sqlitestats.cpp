@@ -1077,7 +1077,7 @@ void SQLiteStats::init_clause_stats_STMT()
 
 void SQLiteStats::dump_clause_stats(
     const Solver* solver
-    , uint64_t clauseID
+    , uint64_t clid
     , uint32_t glue
     , uint32_t backtrack_level
     , uint32_t size
@@ -1104,7 +1104,7 @@ void SQLiteStats::dump_clause_stats(
     }
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumConflicts);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, clauseID);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, clid);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);

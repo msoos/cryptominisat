@@ -632,7 +632,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                         tmp_clause,
                         solver->sumConflicts
                         #ifdef STATS_NEEDED
-                        , solver->clauseID++
+                        , 0
                         #endif
                     );
                     cla->set_gauss_temp_cl();
@@ -822,7 +822,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                                     tmp_clause,
                                     solver->sumConflicts
                                     #ifdef STATS_NEEDED
-                                    , solver->clauseID++
+                                    , 0
                                     #endif
                                 );
                                 cla->set_gauss_temp_cl();

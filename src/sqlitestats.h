@@ -85,7 +85,7 @@ public:
 
     void dump_clause_stats(
         const Solver* solver
-        , uint64_t clauseID
+        , uint64_t clid
         , uint32_t glue
         , const uint32_t backtrack_level
         , uint32_t size

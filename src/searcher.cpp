@@ -1644,6 +1644,7 @@ void Searcher::print_learnt_clause() const
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
     , const uint32_t old_decision_level
+    , const uint64_t clid
 ) {
     vector<double> last_dec_var_act;
     for(int i = (int)decisionLevel()-1; i >= 0; i--) {
@@ -1677,7 +1678,7 @@ void Searcher::dump_sql_clause_data(
 
     solver->sqlStats->dump_clause_stats(
         solver
-        , clauseID
+        , clid
         , glue
         , decisionLevel()
         , learnt_clause.size()
@@ -1752,6 +1753,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     old_decision_level
     #endif
 ) {
+    bool to_dump = false;
     if (learnt_clause.size() <= 2 ||
         cl == NULL ||
         cl->gauss_temp_cl() ||
@@ -1761,16 +1763,21 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (learnt_clause.size() <= 2) {
             *drat << add << learnt_clause
             #ifdef STATS_NEEDED
-            << clauseID
+            << 0
             << sumConflicts
             #endif
             << fin;
             cl = NULL;
         } else {
+            double myrnd = mtrand.randDblExc();
+            if (myrnd <= conf.dump_individual_cldata_ratio) {
+                to_dump = true;
+            }
+
             cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
             #ifdef STATS_NEEDED
-            , clauseID
+            , to_dump ? clauseID++ : 0
             #endif
             );
             cl->makeRed(glue);
@@ -1822,9 +1829,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (cl->red() && cl->stats.glue > glue) {
             cl->stats.glue = glue;
         }
-        #ifdef STATS_NEEDED
-        cl->stats.ID = clauseID;
-        #endif
+        //it should stay the same clauseID
+        //#ifdef STATS_NEEDED
+        //cl->stats.ID = clauseID;
+        //#endif
 
         *drat << add << *cl
         #ifdef STATS_NEEDED
@@ -1838,27 +1846,16 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         && drat
         && conf.dump_individual_restarts_and_clauses
         && cl
+        && to_dump
     ) {
-        if (dump_this_many_cldata_in_stream <= 0) {
-            double myrnd = mtrand.randDblExc();
-            if (myrnd <= conf.dump_individual_cldata_ratio) {
-                dump_this_many_cldata_in_stream = conf.dump_individual_cldata_stream;
-            }
-        }
-
-        if (dump_this_many_cldata_in_stream >= 0) {
-            cl->stats.dump_number = 0;
-            dump_this_many_cldata_in_stream--;
-            dump_sql_clause_data(
-                glue
-                , old_decision_level
-            );
-        } else {
-            //don't dump data about this clause into goodClauses
-            cl->stats.ID = 0;
-        }
+        cl->stats.dump_number = 0;
+        dump_this_many_cldata_in_stream--;
+        dump_sql_clause_data(
+            glue
+            , old_decision_level
+            , cl->stats.ID
+        );
     }
-    clauseID++;
     #endif
 
     #ifdef FINAL_PREDICTOR
@@ -2900,7 +2897,7 @@ llbool Searcher::Gauss_elimination()
                     gqd.conflict_clause_gauss,
                     gqd.xorEqualFalse_gauss
                     #ifdef STATS_NEEDED
-                    , clauseID++
+                    , 0
                     #endif
                 );
 

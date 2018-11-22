@@ -435,6 +435,7 @@ class Searcher : public HyperEngine
         void dump_sql_clause_data(
             const uint32_t glue
             , const uint32_t old_decision_level
+            , const uint64_t clid
         );
         int dump_this_many_cldata_in_stream = 0;
         #endif
