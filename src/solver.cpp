@@ -2968,15 +2968,6 @@ void Solver::add_in_partial_solving_stats()
     sumPropStats += propStats;
 }
 
-unsigned long Solver::get_sql_id() const
-{
-    if (sqlStats == NULL) {
-        return 0;
-    }
-
-    return sqlStats->get_runID();
-}
-
 bool Solver::add_clause_outer(const vector<Lit>& lits, bool red)
 {
     if (!ok) {

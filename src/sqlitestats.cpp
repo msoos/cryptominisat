@@ -99,7 +99,15 @@ bool SQLiteStats::setup(const Solver* solver)
         return false;
     }
 
-    getID(solver);
+    //TODO check if data is in any table
+    if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
+        cerr << "ERROR: Couln't create table structure for SQLite: "
+        << sqlite3_errmsg(db)
+        << endl;
+        std::exit(-1);
+    }
+
+    add_solverrun(solver);
     addStartupData();
     initRestartSTMT();
     initReduceDBSTMT();
@@ -112,8 +120,22 @@ bool SQLiteStats::setup(const Solver* solver)
     return true;
 }
 
+
+bool file_exists (const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
+
 bool SQLiteStats::connectServer(const int verbosity)
 {
+    if (file_exists(filename)) {
+        cout << "ERROR -- the database file already exists. We cannot store more than one run in the same database"
+        << endl
+        << "Exiting." << endl;
+        exit(-1);
+    }
+
     int rc = sqlite3_open(filename.c_str(), &db);
     if(rc) {
         cout << "c Cannot open sqlite database: " << sqlite3_errmsg(db) << endl;
@@ -159,13 +181,12 @@ void SQLiteStats::end_transaction()
     }
 }
 
-bool SQLiteStats::tryIDInSQL(const Solver* solver)
+bool SQLiteStats::add_solverrun(const Solver* solver)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO solverRun (runID, `runtime`, `gitrev`) values ("
-    << runID
-    << ", " << time(NULL)
+    << "INSERT INTO solverRun (`runtime`, `gitrev`) values ("
+    << time(NULL)
     << ", '" << solver->get_version_sha1() << "'"
     << ");";
 
@@ -183,46 +204,12 @@ bool SQLiteStats::tryIDInSQL(const Solver* solver)
     return true;
 }
 
-void SQLiteStats::getID(const Solver* solver)
-{
-    bool created_tablestruct = false;
-    size_t numTries = 0;
-    getRandomID();
-    while(!tryIDInSQL(solver)) {
-        getRandomID();
-        numTries++;
-
-        //Check if we have been in this loop for too long
-        if (numTries > 15) {
-            if (created_tablestruct) {
-                cerr << "ERROR: Couldn't get random runID. "
-                << "Something is probably off with your sqlite database. "
-                << "Try deleting it."
-                << endl;
-                std::exit(-1);
-            }
-            if (sqlite3_exec(db, cmsat_tablestructure_sql, NULL, NULL, NULL)) {
-                cerr << "ERROR: Couln't create table structure for SQLite: "
-                << sqlite3_errmsg(db)
-                << endl;
-                std::exit(-1);
-            }
-            created_tablestruct = true;
-        }
-    }
-
-    if (solver->getConf().verbosity) {
-        cout << "c SQL runID is " << runID << endl;
-    }
-}
-
 void SQLiteStats::add_tag(const std::pair<string, string>& tag)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `tags` (`runID`, `tagname`, `tag`) VALUES("
-    << runID
-    << ", '" << tag.first << "'"
+    << "INSERT INTO `tags` (`tagname`, `tag`) VALUES("
+    << "'" << tag.first << "'"
     << ", '" << tag.second << "'"
     << ");";
 
@@ -238,8 +225,7 @@ void SQLiteStats::addStartupData()
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `startup` (`runID`, `startTime`) VALUES ("
-    << runID << ","
+    << "INSERT INTO `startup` (`startTime`) VALUES ("
     << "datetime('now')"
     << ");";
 
@@ -255,8 +241,7 @@ void SQLiteStats::finishup(const lbool status)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `finishup` (`runID`, `endTime`, `status`) VALUES ("
-    << runID << ","
+    << "INSERT INTO `finishup` (`endTime`, `status`) VALUES ("
     << "datetime('now') , "
     << "'" << status << "'"
     << ");";
@@ -287,13 +272,13 @@ void SQLiteStats::writeQuestionMarks(
 
 void SQLiteStats::initMemUsedSTMT()
 {
-    const size_t numElems = 6;
+    const size_t numElems = 5;
 
     std::stringstream ss;
     ss << "insert into `memused`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `conflicts`, `runtime`"
+    << "  `simplifications`, `conflicts`, `runtime`"
 
     //memory stats
     << ", `name`, `MB`"
@@ -326,7 +311,6 @@ void SQLiteStats::mem_used(
 ) {
     int bindAt = 1;
     //Position
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, runID);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
@@ -358,13 +342,13 @@ void SQLiteStats::mem_used(
 
 void SQLiteStats::initTimePassedSTMT()
 {
-    const size_t numElems = 8;
+    const size_t numElems = 7;
 
     std::stringstream ss;
     ss << "insert into `timepassed`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `conflicts`, `runtime`"
+    << "  `simplifications`, `conflicts`, `runtime`"
 
     //Clause stats
     << ", `name`, `elapsed`, `timeout`, `percenttimeremain`"
@@ -398,7 +382,6 @@ void SQLiteStats::time_passed(
 ) {
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
@@ -435,7 +418,6 @@ void SQLiteStats::time_passed_min(
     , double time_passed
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, runID);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
@@ -467,13 +449,13 @@ void SQLiteStats::time_passed_min(
 }
 
 void SQLiteStats::init_satzilla_features() {
-    const size_t numElems = 67;
+    const size_t numElems = 66;
 
     std::stringstream ss;
     ss << "insert into `satzilla_features`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
+    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
 
     //Base data
     << ", `numVars`"
@@ -574,13 +556,13 @@ void SQLiteStats::init_satzilla_features() {
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT()
 {
-    const size_t numElems = 67;
+    const size_t numElems = 66;
 
     std::stringstream ss;
     ss << "insert into `restart`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
+    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
     << ", `runtime` "
 
     //Clause stats
@@ -645,7 +627,6 @@ void SQLiteStats::satzilla_features(
     , const SatZillaFeatures& satzilla_feat
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64(stmtFeat, bindAt++, runID);
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
@@ -760,7 +741,6 @@ void SQLiteStats::restart(
     const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtRst, bindAt++, runID);
     sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
@@ -880,13 +860,13 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 21;
+    const size_t numElems = 20;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
     << "("
     //Position
-    << "  `runID`, `simplifications`, `restarts`, `conflicts`, `runtime`"
+    << "  `simplifications`, `restarts`, `conflicts`, `runtime`"
 
     //data
     << ", `clauseID`"
@@ -936,7 +916,6 @@ void SQLiteStats::reduceDB(
     assert(cl->stats.dump_number != std::numeric_limits<uint32_t>::max());
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, runID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
@@ -993,12 +972,11 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 67;
+    const size_t numElems = 66;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
     << "("
-    << " `runID`,"
     << " `simplifications`,"
     << " `restarts`,"
     << " `prev_restart`,"
@@ -1117,7 +1095,6 @@ void SQLiteStats::dump_clause_stats(
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, runID);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
     if (solver->sumRestarts() == 0) {
@@ -1226,13 +1203,13 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 20;
+    const size_t numElems = 19;
 
     std::stringstream ss;
     ss << "insert into `varData`"
     << "("
     //Position
-    << "  `runID`, `restarts`, `conflicts`"
+    << "  `restarts`, `conflicts`"
 
     //data
     ", `var`"
@@ -1286,7 +1263,6 @@ void SQLiteStats::var_data(
     , const uint64_t end_clid_notincl
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64(stmt_var_data, bindAt++, runID);
     sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumConflicts);
 

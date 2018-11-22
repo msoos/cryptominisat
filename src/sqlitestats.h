@@ -118,8 +118,7 @@ public:
 private:
 
     bool connectServer(const int verbosity);
-    void getID(const Solver* solver);
-    bool tryIDInSQL(const Solver* solver);
+    bool add_solverrun(const Solver* solver);
 
     void addStartupData();
     void initRestartSTMT();

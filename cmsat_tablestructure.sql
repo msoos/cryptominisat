@@ -1,13 +1,11 @@
 DROP TABLE IF EXISTS `tags`;
 CREATE TABLE `tags` (
-  `runID` bigint(20) NOT NULL,
   `tagname` varchar(500) NOT NULL,
   `tag` varchar(500) NOT NULL
 );
 
 DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
@@ -33,7 +31,6 @@ CREATE TABLE `reduceDB` (
 
 DROP TABLE IF EXISTS `restart`;
 CREATE TABLE `restart` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
@@ -104,7 +101,6 @@ CREATE TABLE `restart` (
 
 DROP TABLE IF EXISTS `timepassed`;
 CREATE TABLE `timepassed` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `runtime` float NOT NULL,
@@ -116,7 +112,6 @@ CREATE TABLE `timepassed` (
 
 DROP TABLE IF EXISTS `memused`;
 CREATE TABLE `memused` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` bigint(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
   `runtime` float NOT NULL,
@@ -126,27 +121,23 @@ CREATE TABLE `memused` (
 
 DROP TABLE IF EXISTS `solverRun`;
 CREATE TABLE `solverRun` (
-  `runID` bigint(20) NOT NULL,
   `runtime` float NOT NULL,
   `gitrev` varchar(100) NOT NULL
 );
 
 DROP TABLE IF EXISTS `startup`;
 CREATE TABLE `startup` (
-  `runID` bigint(20) NOT NULL,
   `startTime` datetime NOT NULL
 );
 
 DROP TABLE IF EXISTS `finishup`;
 CREATE TABLE `finishup` (
-  `runID` bigint(20) NOT NULL,
   `endTime` datetime NOT NULL,
   `status` varchar(255) NOT NULL
 );
 
 DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `prev_restart` bigint(20) NOT NULL,
@@ -229,7 +220,6 @@ CREATE TABLE `clauseStats` (
 
 DROP TABLE IF EXISTS `satzilla_features`;
 CREATE TABLE `satzilla_features` (
-  `runID` bigint(20) NOT NULL,
   `simplifications` int(20) NOT NULL,
   `restarts` int(20) NOT NULL,
   `conflicts` bigint(20) NOT NULL,
@@ -314,7 +304,6 @@ CREATE TABLE `satzilla_features` (
 
 DROP TABLE IF EXISTS `goodClauses`;
 create table `goodClauses` (
-    `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
     `num_used` bigint(20) NOT NULL,
     `first_confl_used` bigint(20) NOT NULL,
@@ -325,7 +314,6 @@ create table `goodClauses` (
 
 DROP TABLE IF EXISTS `goodClausesFixed`;
 create table `goodClausesFixed` (
-    `runID` bigint(20) NOT NULL,
     `clauseID` bigint(20) NOT NULL,
     `num_used` bigint(20) NOT NULL,
     `first_confl_used` bigint(20) NOT NULL,
@@ -336,7 +324,6 @@ create table `goodClausesFixed` (
 
 DROP TABLE IF EXISTS `varData`;
 create table `varData` (
-    `runID` bigint(20) NOT NULL,
     `restarts` int(20) NOT NULL,
     `conflicts` bigint(20) NOT NULL,
 
@@ -367,7 +354,6 @@ create table `varData` (
 
 DROP TABLE IF EXISTS `varDataUse`;
 create table `varDataUse` (
-    `runID` bigint(20) NOT NULL,
     `restarts` int(20) NOT NULL,
     `conflicts` bigint(20) NOT NULL,
 
@@ -403,14 +389,3 @@ create table `varDataUse` (
     -- features when picked
     --`activity` double NOT NULL
 );
-
-
--- create index `idx6` on `restart` (`runID`,`simplifications`);
--- create index `idx7` on `timepassed` (`runID`,`conflicts`);
--- create index `idx7_2` on `memused` (`runID`,`conflicts`);
--- create index `idx9` on `solverRun` (`runID`);
--- create index `idx10` on `startup` (`runID`);
--- create index `idx11` on `finishup` (`runID`);
--- create index `idx3` on `tags` (`runID`);
--- create index `idx4` on `reduceDB` (`runID`,`conflicts`);
--- create index `idx12` on `sum_clause_stats` (`runID`,`reduceDB`);

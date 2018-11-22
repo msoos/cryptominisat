@@ -28,14 +28,6 @@ import pandas as pd
 import numpy as np
 import os.path
 
-from sklearn.model_selection import train_test_split
-import sklearn.tree
-import sklearn.svm
-import sklearn.ensemble
-import sklearn.metrics
-from sklearn.preprocessing import LabelEncoder
-
-
 ##############
 # HOW TO GET A NICE LIST
 ##############
@@ -62,7 +54,6 @@ class QueryHelper:
 
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
-        self.runID = self.find_runID()
 
     def __enter__(self):
         return self
@@ -71,31 +62,12 @@ class QueryHelper:
         self.conn.commit()
         self.conn.close()
 
-    def find_runID(self):
-        q = """
-        SELECT runID
-        FROM startUp
-        order by startTime desc
-        limit 1
-        """
-
-        runID = None
-        for row in self.c.execute(q):
-            if runID is not None:
-                print("ERROR: More than one RUN IDs in file!")
-                exit(-1)
-            runID = int(row[0])
-
-        print("runID: %d" % runID)
-        return runID
-
 
 class QueryCls (QueryHelper):
     def __init__(self, dbfname):
         super(QueryCls, self).__init__(dbfname)
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
         self.restart_dat = """
-        -- , rst.`runID` as `rst.runID`
         -- , rst.`simplifications` as `rst.simplifications`
         -- , rst.`restarts` as `rst.restarts`
         -- , rst.`conflicts` as `rst.conflicts`
@@ -164,7 +136,6 @@ class QueryCls (QueryHelper):
         """
 
         self.rdb0_dat = """
-        -- , rdb0.`runID` as `rdb0.runID`
         -- , rdb0.`simplifications` as `rdb0.simplifications`
         -- , rdb0.`restarts` as `rdb0.restarts`
         , rdb0.`conflicts` as `rdb0.conflicts`
@@ -189,7 +160,6 @@ class QueryCls (QueryHelper):
         """
 
         self.clause_dat = """
-        -- , cl.`runID` as `cl.runID`
         -- , cl.`simplifications` as `cl.simplifications`
         -- , cl.`restarts` as `cl.restarts`
         -- , cl.`prev_restart` as `cl.prev_restart`
@@ -326,13 +296,9 @@ class QueryCls (QueryHelper):
 
         self.common_restrictions = """
         and cl.restarts > 1 -- to avoid history being invalid
-        and cl.runID = {runid}
-        and szfeat.runID = {runid}
         and szfeat.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
         and rst.restarts = cl.prev_restart
-        and rst.runID = {runid}
         and tags.tagname = "filename"
-        and tags.runID = {runid}
         """
 
         self.common_limits = """
@@ -409,11 +375,8 @@ class QueryCls (QueryHelper):
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 0
-        and cl.runID = goodcl.runID
-        and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
 
-        and rdb1.runID = cl.runID
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
         and rdb0.dump_no > 0
@@ -437,7 +400,6 @@ class QueryCls (QueryHelper):
         self.q_bad = """
         FROM clauseStats as cl left join goodClausesFixed as goodcl
         on cl.clauseID = goodcl.clauseID
-        and cl.runID = goodcl.runID
         , restart as rst
         , satzilla_features as szfeat
         , reduceDB as rdb0
@@ -446,20 +408,16 @@ class QueryCls (QueryHelper):
         WHERE
 
         goodcl.clauseID is NULL
-        and goodcl.runID is NULL
         and cl.clauseID != 0
         and cl.clauseID is not NULL
-        and rdb0.runID = cl.runID
         and rdb0.clauseID = cl.clauseID
 
-        and rdb1.runID = cl.runID
         and rdb1.clauseID = cl.clauseID
         and rdb1.dump_no = rdb0.dump_no-1
         """
         self.q_bad += self.common_restrictions
 
         self.myformat = {
-            "runid": self.runID,
             "limit": 1000*1000*1000,
             "restart_dat": self.restart_dat,
             "clause_dat": self.clause_dat,
@@ -481,14 +439,14 @@ class QueryCls (QueryHelper):
         drop index if exists `idxclid7`;
         drop index if exists `idxclid8`;
 
-        create index `idxclid` on `clauseStats` (`runID`,`clauseID`);
-        create index `idxclid2` on `clauseStats` (`runID`,`prev_restart`);
-        create index `idxclid3` on `goodClauses` (`runID`,`clauseID`);
-        create index `idxclid4` on `restart` (`runID`, `restarts`);
-        create index `idxclid5` on `tags` (`runID`, `tagname`);
-        create index `idxclid6` on `reduceDB` (`runID`,`clauseID`, `dump_no`);
-        create index `idxclid7` on `reduceDB` (`runID`,`clauseID`, `propagations_made`);
-        create index `idxclid8` on `varData` (`runID`, `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
+        create index `idxclid` on `clauseStats` (`clauseID`);
+        create index `idxclid2` on `clauseStats` (`prev_restart`);
+        create index `idxclid3` on `goodClauses` (`clauseID`);
+        create index `idxclid4` on `restart` ( `restarts`);
+        create index `idxclid5` on `tags` ( `tagname`);
+        create index `idxclid6` on `reduceDB` (`clauseID`, `dump_no`);
+        create index `idxclid7` on `reduceDB` (`clauseID`, `propagations_made`);
+        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -505,7 +463,6 @@ class QueryCls (QueryHelper):
             from reduceDB
             where reduceDB.clauseID = goodClauses.clauseID
                 and reduceDB.propagations_made > 0
-                and reduceDB.runID = goodClauses.runID
         );
         """
         self.c.execute(q)
@@ -524,21 +481,20 @@ class QueryCls (QueryHelper):
         t = time.time()
         q = """insert into goodClausesFixed
         select
-        runID
-        , clauseID
+        clauseID
         , sum(num_used)
         , min(first_confl_used)
         , max(last_confl_used)
         , max(last_confl_used2)
         , max(last_prop_used)
-        from goodClauses as c group by runID, clauseID;"""
+        from goodClauses as c group by clauseID;"""
         self.c.execute(q)
         print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
         drop index if exists `idxclid20`;
-        create index `idxclid20` on `goodClausesFixed` (`runID`,`clauseID`);
+        create index `idxclid20` on `goodClausesFixed` (`clauseID`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -552,7 +508,6 @@ class QueryCls (QueryHelper):
         self.c.execute(q)
         q = """
         create table `varDataUse` (
-            `runID` bigint(20) NOT NULL,
             `restarts` int(20) NOT NULL,
             `conflicts` bigint(20) NOT NULL,
 
@@ -596,8 +551,7 @@ class QueryCls (QueryHelper):
         q = """
         insert into varDataUse
         select
-        v.runID
-        , v.restarts
+        v.restarts
         , v.conflicts
 
         -- data about var
@@ -626,14 +580,14 @@ class QueryCls (QueryHelper):
         , v.avg_inside_antecedents_when_picked
 
         -- measures for good
-        , count(cls.runID) as useful_clauses
+        , count(cls.num_used) as useful_clauses
         , sum(cls.num_used) as useful_clauses_used
         , min(cls.first_confl_used) as useful_clauses_first_used
         , max(cls.last_confl_used) as useful_clauses_last_used
 
         FROM varData as v left join goodClausesFixed as cls
         on cls.clauseID >= v.clid_start_incl
-        and cls.clauseID < v.clid_end_notincl and cls.runID = v.runID
+        and cls.clauseID < v.clid_end_notincl
 
         -- avoid division by zero below
         where

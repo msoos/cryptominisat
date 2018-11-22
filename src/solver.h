@@ -130,7 +130,6 @@ class Solver : public Searcher
         uint32_t num_active_vars() const;
         void print_mem_stats() const;
         uint64_t print_watch_mem_used(uint64_t totalMem) const;
-        unsigned long get_sql_id() const;
         const SolveStats& get_solve_stats() const;
         const SearchStats& get_stats() const;
         void add_in_partial_solving_stats();

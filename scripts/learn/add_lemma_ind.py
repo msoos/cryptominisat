@@ -28,7 +28,6 @@ class Query:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
-        self.runID = self.find_runID()
         # zero out goodClauses
         self.c.execute('delete from goodClauses;')
         self.cur_good_ids_num = 0
@@ -86,7 +85,7 @@ class Query:
 
         # append to cur_good_ids
         self.cur_good_ids.append(
-            (self.runID, myid, num_used, first_used, last_used, last_used2))
+            (myid, num_used, first_used, last_used, last_used2))
 
         # don't run out of memory, dump early
         if self.cur_good_ids_num > 10000:
@@ -95,13 +94,12 @@ class Query:
     def dump_ids(self):
         self.c.executemany("""
         INSERT INTO goodClauses (
-        `runID`
-        , `clauseID`
+        `clauseID`
         , `num_used`
         , `first_confl_used`
         , `last_confl_used`
         , `last_confl_used2`)
-        VALUES (?, ?, ?, ?, ?, ?);""", self.cur_good_ids)
+        VALUES (?, ?, ?, ?, ?);""", self.cur_good_ids)
         self.cur_good_ids = []
         self.cur_good_ids_num = 0
 
@@ -115,23 +113,6 @@ class Query:
         self.c.execute(q)
         self.conn.isolation_level = lev
         print("Vacuumed database")
-
-    def find_runID(self):
-        q = """
-        SELECT runID
-        FROM startUp
-        order by startTime desc
-        """
-
-        runID = None
-        for row in self.c.execute(q):
-            if runID is not None:
-                print("ERROR: More than one RUN in the SQL, can't add lemmas!")
-                exit(-1)
-            runID = int(row[0])
-
-        print("runID: %d" % runID)
-        return runID
 
 
 if __name__ == "__main__":

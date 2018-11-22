@@ -117,16 +117,7 @@ public:
 
     virtual bool setup(const Solver* solver) = 0;
     virtual void finishup(lbool status) = 0;
-    uint64_t get_runID() const
-    {
-        return runID;
-    }
     virtual void add_tag(const std::pair<std::string, std::string>& tag) = 0;
-
-protected:
-
-    void getRandomID();
-    unsigned long runID;
 };
 
 } //end namespace

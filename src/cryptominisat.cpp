@@ -995,7 +995,7 @@ DLL_PUBLIC std::vector<Lit> SATSolver::get_zero_assigned_lits() const
 
 DLL_PUBLIC unsigned long SATSolver::get_sql_id() const
 {
-    return data->solvers[0]->get_sql_id();
+    return 0;
 }
 
 DLL_PUBLIC bool SATSolver::okay() const

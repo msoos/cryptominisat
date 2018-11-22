@@ -24,7 +24,7 @@ class Query:
         select tags.tag, name, elapsed
         from timepassed,tags
         where name != 'search' and elapsed > %d and
-        tags.tagname="filename" and tags.runID = timepassed.runID
+        tags.tagname="filename"
         order by elapsed desc;
         """ % (options.maxtime)
 
@@ -41,7 +41,6 @@ class Query:
         select tags.tag, memused.name, max(memused.MB)
         from memused,tags
         where  tags.tagname="filename"
-        and tags.runID = memused.runID
         and memused.MB > %d
         and memused.name != 'vm'
         and memused.name != 'rss'
@@ -63,7 +62,6 @@ class Query:
         select tags.tag, memused.name, max(memused.MB)
         from memused,tags
         where  tags.tagname="filename"
-        and tags.runID = memused.runID
         and memused.MB > %d
         and memused.name == 'rss'
         group by tags.tag, memused.name
@@ -83,19 +81,18 @@ class Query:
             a.mysum as counted, b.rss as total
         from tags,
 
-        (select runID, `runtime`, sum(MB) as mysum
+        (select `runtime`, sum(MB) as mysum
         from memused
         where name != 'rss'
         and name != 'vm'
-        group by `runtime`, runID) as a,
+        group by `runtime`) as a,
 
-        (select runID, name, `runtime`, MB as rss
+        (select name, `runtime`, MB as rss
         from memused
         where name = 'rss') as b
 
-        where tags.runID = a.runID
-        and tags.tagname="filename"
-        and a.runID = b.runID
+        where
+        tags.tagname="filename"
         and a.`runtime` = b.`runtime`
         and total > %d
 
@@ -205,42 +202,34 @@ class Query:
 
         #last conflict > 60000, UNSAT, solvetime under 500s
         query = """
-        select a.runID, tags.tag, a.maxtime, a.maxconfl, mems.maxmem from
-
-            (select runID, max(conflicts) as maxconfl, max(`runtime`) as maxtime
+        select tags.tag, a.maxtime, a.maxconfl, mems.maxmem from
+            (select max(conflicts) as maxconfl, max(`runtime`) as maxtime
             from timepassed
-            group by runID
             ) as a,
-            (select runID
+            (select *
             from finishup
             where status = "l_False"
             ) as b,
-            (select runID, max(MB) as maxmem
+            (select max(MB) as maxmem
             from memused
-            group by runID
             ) as mems, tags
 
             where a.maxconfl > 20000
             and a.maxconfl < 400000
             and a.maxtime < 400
             and a.maxtime > 10
-            and a.runID = b.runID
-            and tags.runID = a.runID
             and tags.tagname = "filename"
-            and mems.runID = a.runID
             order by maxtime desc
         """
 
-        runIDs = []
         for row in self.c.execute(query):
             fname = row[1].split("/")
             fname = fname[len(fname)-1]
-            runID = int(row[0])
-            t = row[2]
-            confl = row[3]
-            mb = row[4]
-            print("runID %-10d  t(mins): %-6.1f  confl(K): %-6.1f  mem(GB): %-6.1f  fname: %s" %
-                  (runID, t/60.0, confl/(1000.0), mb/1024.0, fname))
+            t = row[1]
+            confl = row[2]
+            mb = row[3]
+            print("t(mins): %-6.1f  confl(K): %-6.1f  mem(GB): %-6.1f  fname: %s" %
+                  (t/60.0, confl/(1000.0), mb/1024.0, fname))
 
 
 if __name__ == "__main__":
