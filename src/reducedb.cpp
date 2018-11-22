@@ -188,7 +188,7 @@ void ReduceDB::dump_sql_cl_data()
         Clause* cl = solver->cl_alloc.ptr(offs);
 
         //Only if selected to be dumped
-        if (cl->stats.dump_number < 50000) {
+        if (cl->stats.dump_number != std::numeric_limits<uint32_t>::max()) {
             const bool locked = solver->clause_locked(*cl, offs);
             const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
             //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
@@ -209,7 +209,6 @@ void ReduceDB::dump_sql_cl_data()
     if (solver->conf.verbosity) {
         cout << "c [sql] added to DB " << added_to_db
         << " dump-ratio: " << solver->conf.dump_individual_cldata_ratio
-        << " dumped-in-stream: " << solver->conf.dump_individual_cldata_stream
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
