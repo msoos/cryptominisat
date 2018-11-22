@@ -733,6 +733,7 @@ class QueryCls (QueryHelper):
             return False, None
 
         # OK-OK
+        print("OK-OK")
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * distrib)
@@ -750,6 +751,7 @@ class QueryCls (QueryHelper):
         df_ok_ok = pd.read_sql_query(q, self.conn)
 
         # OK-BAD
+        print("OK-BAD")
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
@@ -766,6 +768,7 @@ class QueryCls (QueryHelper):
         df_ok_bad = pd.read_sql_query(q, self.conn)
 
         # BAD-BAD
+        print("BAD-BAD")
         q = self.q_bad_select + self.q_bad
         if options.fixed*fixed_mult != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
