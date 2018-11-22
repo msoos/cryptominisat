@@ -58,14 +58,14 @@ FIXED="30000"
 # FIXED="20000" #must use 4000 for lock-in
 
 # cleanup
-rm -f "$FNAMEOUT.db"
-rm -f "$FNAMEOUT.lemmas"
-rm -f "$FNAMEOUT.lemmas-0"
-rm -f "$FNAMEOUT.lemmas-1"
-rm -f "$FNAMEOUT.lemmas-2"
-rm -f "$FNAMEOUT.db-short-pandasdata.dat"
-rm -f "$FNAMEOUT.db-long-pandasdata.dat"
-rm -f "$FNAMEOUT.db-vardata-pandasdata.dat"
+rm -f $FNAMEOUT.d*
+rm -f $FNAMEOUT.lemmas
+rm -f $FNAMEOUT.lemmas-0
+rm -f $FNAMEOUT.lemmas-1
+rm -f $FNAMEOUT.lemmas-2
+rm -f $FNAMEOUT.db-short-pandasdata.dat
+rm -f $FNAMEOUT.db-long-pandasdata.dat
+rm -f $FNAMEOUT.db-vardata-pandasdata.dat
 rm -f ../src/final_predictor*
 
 # get data
