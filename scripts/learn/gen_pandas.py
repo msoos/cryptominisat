@@ -990,4 +990,4 @@ if __name__ == "__main__":
                 exit(0)
 
             final_df = pd.concat(dfs)
-            dump_dataframe(final_df, "final")
+            dump_dataframe(final_df, "final-"+long_or_short)
