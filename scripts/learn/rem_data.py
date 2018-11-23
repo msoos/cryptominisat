@@ -126,7 +126,7 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
 
-    parser.add_option("--limit", default=60000, type=int,
+    parser.add_option("--limit", default=30000, type=int,
                       dest="limit", help="Number of clauses to limit ourselves to")
     (options, args) = parser.parse_args()
 
