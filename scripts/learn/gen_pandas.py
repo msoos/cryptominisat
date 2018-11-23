@@ -984,7 +984,7 @@ if __name__ == "__main__":
             exit(-1)
 
         if len(args) > 1:
-            print("----- FINAL predictor %S -------" % long_or_short)
+            print("----- FINAL predictor %s -------" % long_or_short)
             if len(dfs) == 0:
                 print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
                 exit(0)
