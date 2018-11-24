@@ -139,6 +139,7 @@ class QueryCls (QueryHelper):
         -- , rdb0.`simplifications` as `rdb0.simplifications`
         -- , rdb0.`restarts` as `rdb0.restarts`
         , rdb0.`conflicts` as `rdb0.conflicts`
+        , rdb0.`restart_type` as `rdb0.restart_type`
         -- , rdb0.`runtime` as `rdb0.runtime`
 
         -- , rdb0.`clauseID` as `rdb0.clauseID`
@@ -297,6 +298,7 @@ class QueryCls (QueryHelper):
         self.common_restrictions = """
         and cl.restarts > 1 -- to avoid history being invalid
         and szfeat.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
+        and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
         and rst.restarts = cl.prev_restart
         and tags.tagname = "filename"
         """
@@ -355,6 +357,7 @@ class QueryCls (QueryHelper):
         {clause_dat}
         {restart_dat}
         {satzfeat_dat}
+        {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
         , goodcl.num_used as `x.num_used`
@@ -368,6 +371,7 @@ class QueryCls (QueryHelper):
         , goodClausesFixed as goodcl
         , restart as rst
         , satzilla_features as szfeat
+        , satzilla_features as szfeat_cur
         , reduceDB as rdb0
         , reduceDB as rdb1
         , tags
@@ -390,6 +394,7 @@ class QueryCls (QueryHelper):
         {clause_dat}
         {restart_dat}
         {satzfeat_dat}
+        {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
         , 0 as `x.num_used`
@@ -402,6 +407,7 @@ class QueryCls (QueryHelper):
         on cl.clauseID = goodcl.clauseID
         , restart as rst
         , satzilla_features as szfeat
+        , satzilla_features as szfeat_cur
         , reduceDB as rdb0
         , reduceDB as rdb1
         , tags
@@ -422,6 +428,7 @@ class QueryCls (QueryHelper):
             "restart_dat": self.restart_dat,
             "clause_dat": self.clause_dat,
             "satzfeat_dat": self.satzfeat_dat,
+            "satzfeat_dat_cur": self.satzfeat_dat.replace("satzfeat.", "satzfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             }

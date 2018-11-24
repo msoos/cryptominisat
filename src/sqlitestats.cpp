@@ -860,13 +860,13 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 20;
+    const size_t numElems = 21;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
     << "("
     //Position
-    << "  `simplifications`, `restarts`, `conflicts`, `runtime`"
+    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`, `runtime`"
 
     //data
     << ", `clauseID`"
@@ -919,6 +919,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->latest_satzilla_feature_calc);
     sqlite3_bind_double(stmtReduceDB, bindAt++, cpuTime());
 
     //data
