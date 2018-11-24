@@ -72,7 +72,7 @@ class QueryDatRem(QueryHelper):
 
         print("Recreated usedClauseIDs table")
 
-    def fill_used_cl_ids_table(self):
+    def fill_used_cl_ids_table_cheat(self):
         val = int(options.limit)
         q = """
         insert into usedClauseIDs
@@ -89,6 +89,17 @@ class QueryDatRem(QueryHelper):
         from clauseStats left join goodClauses
         on clauseStats.clauseID = goodClauses.clauseID
         where goodClauses.clauseID is NULL
+        order by random() limit %d;
+        """ % val
+        self.c.execute(q)
+
+    def fill_used_cl_ids_table_full(self):
+        val = int(options.limit)
+        q = """
+        insert into usedClauseIDs
+        select
+        clauseStats.clauseID
+        from clauseStats
         order by random() limit %d;
         """ % val
         self.c.execute(q)
@@ -126,7 +137,7 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
 
-    parser.add_option("--limit", default=30000, type=int,
+    parser.add_option("--limit", default=60000, type=int,
                       dest="limit", help="Number of clauses to limit ourselves to")
     (options, args) = parser.parse_args()
 
@@ -137,6 +148,6 @@ if __name__ == "__main__":
 
     with QueryDatRem(args[0]) as q:
         q.create_used_ID_table()
-        q.fill_used_cl_ids_table()
+        q.fill_used_cl_ids_table_cheat()
         q.filter_tables()
         q.vacuum()
