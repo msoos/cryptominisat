@@ -23,6 +23,7 @@ import pickle
 import sklearn
 import sklearn.svm
 import sklearn.tree
+import sklearn.cluster
 import optparse
 import numpy as np
 import sklearn.metrics
@@ -421,10 +422,7 @@ def calc_greedy_best_features(df, features):
     return best_features
 
 
-def learn(fname):
-    with open(fname, "rb") as f:
-        df = pickle.load(f)
-
+def learn(df):
     if options.check_row_data:
         check_too_large_or_nan_values(df)
 
@@ -485,6 +483,46 @@ def learn(fname):
     if options.show:
         plt.show()
 
+def cluster(df_orig):
+    features = df_orig.columns.values.flatten().tolist()
+    sz_all = []
+    for x in features:
+        if "szfeat" in x:
+            sz_all.append(x)
+    print(sz_all)
+
+    #_, df = train_test_split(df_orig, test_size=options.only_pecr)
+    df = df_orig
+
+    sz = []
+    sz.append("szfeat.avg_branch_depth")
+    sz.append("szfeat.avg_num_resolutions")
+    sz.append("szfeat.numVars")
+    sz.append("szfeat.numClauses")
+    sz.append("szfeat.avg_confl_glue")
+    sz.append("szfeat.red_glue_distr_mean")
+    sz.append("szfeat.binary")
+    sz.append("szfeat.irred_size_distr_var")
+    df2 = df[sz_all]
+
+    print(df2)
+    n_clusters = 7
+    clust = sklearn.cluster.KMeans(n_clusters=n_clusters)
+    clust.fit(df2)
+    print(clust.labels_)
+    dist = {}
+    for x in clust.labels_:
+        if x not in dist:
+            dist[x] = 1
+        else:
+            dist[x] += 1
+
+    print(dist)
+    print(clust.cluster_centers_)
+    df_orig["clust"] = clust.labels_
+
+    for clust in range(n_clusters):
+        learn(df_orig[(df_orig.clust == clust)])
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] file.pandas"
@@ -539,4 +577,10 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    learn(args[0])
+    fname = args[0]
+    with open(fname, "rb") as f:
+        df = pickle.load(f)
+
+        cluster(df)
+        exit(0)
+        learn(df)
