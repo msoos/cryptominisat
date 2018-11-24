@@ -317,7 +317,7 @@ def one_classifier(df_orig, features, to_predict, final):
         y_test, y_pred, average="macro")
     recall = sklearn.metrics.recall_score(
         y_test, y_pred, average="macro")
-    print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
+    print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
         precision, recall, accuracy, (time.time() - t)))
 
     print("Calculating scores for train....")
@@ -328,7 +328,7 @@ def one_classifier(df_orig, features, to_predict, final):
         y_train, y_pred_train, average="macro")
     train_recall = sklearn.metrics.recall_score(
         y_train, y_pred_train, average="macro")
-    print("prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+    print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
         train_precision, train_recall, train_accuracy))
 
     if options.confusion:
@@ -489,7 +489,7 @@ def cluster(df_orig):
     for x in features:
         if "szfeat" in x:
             sz_all.append(x)
-    print(sz_all)
+    #print(sz_all)
 
     #_, df = train_test_split(df_orig, test_size=options.only_pecr)
     df = df_orig
