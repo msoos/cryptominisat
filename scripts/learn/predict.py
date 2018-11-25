@@ -566,20 +566,6 @@ def cluster(df_orig):
     sz_all.remove("szfeat.conflicts")
     sz_all.remove("szfeat.var_cl_ratio")
 
-    # features from C++ code
-    sz_all2 = ["numClauses", "numVars", "binary", "horn", "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread", "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread", "avg_confl_size", "confl_size_min", "confl_size_max", "avg_confl_glue", "confl_glue_min", "confl_glue_max", "avg_num_resolutions", "num_resolutions_min", "num_resolutions_max", "learnt_bins_per_confl", "avg_branch_depth", "branch_depth_min", "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min", "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl", "confl_per_restart", "decisions_per_conflict", "irred_size_distr_mean", "irred_size_distr_var", "red_glue_distr_mean", "red_glue_distr_var", "red_size_distr_mean", "red_size_distr_var"]
-    sz_all2_fixed = []
-    for x in sz_all2:
-        sz_all2_fixed.append("szfeat." + x)
-
-    # check the two are equivalent
-    sz_all = sorted(sz_all)
-    sz_all2_fixed = sorted(sz_all2_fixed)
-    for a,b in zip(sz_all, sz_all2_fixed):
-        if a != b:
-            print("!!!")
-    assert len(sz_all) == len(sz_all2_fixed)
-
     # fit
     df2 = df[sz_all]
     clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
