@@ -634,7 +634,7 @@ void SQLiteStats::satzilla_features(
 
     sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numVars);
     sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numClauses);
-    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.var_cl_ratio);
+    sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.var_cl_ratio);
 
     //Clause distribution
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.binary);

@@ -483,45 +483,126 @@ def learn(df):
     if options.show:
         plt.show()
 
+def create_code_for_cluster_centers(clust, sz_feats):
+    f = open("../src/clustering.h", 'w')
+
+    sz_feats_clean = []
+    for x in sz_feats:
+        c = x
+        if c[:4] == "red_":
+            c = c.replace("red_", "red_cl_distrib.")
+        if c[:6] == "irred_":
+            c = c.replace("irred_", "irred_cl_distrib.")
+        sz_feats_clean.append(c)
+
+    f.write("""
+#include "satzilla_features.h"
+#include <cmath>
+
+namespace CMSat {
+class Clustering {
+    SatZillaFeatures center[%d];
+
+""" % options.clusters)
+
+    f.write("    void set_up_centers() {\n");
+    for i in range(options.clusters):
+        f.write("\n        // Doing cluster center %d\n" % i)
+        for i2 in range(len(sz_feats_clean)):
+            feat = sz_feats_clean[i2]
+            center = clust.cluster_centers_[i][i2]
+            f.write("        center[{num}].{feat} = {center};\n".format(num=i,feat=feat,center=center))
+    f.write("    }\n")
+
+    f.write("""
+    int which_is_closest(const SatZillaFeatures& p) {
+
+        double closest_dist = std::numeric_limits<double>::max();
+        int closest = -1;
+        for (int i = 0; i < %d; i++) {
+            dist = center[i].norm_dist(p);
+            if (dist < closest_dist) {
+                closest_dist = dist;
+                closest = i;
+            }
+        }
+        return closest;
+    }
+""" % options.clusters)
+
+
+    f.write("""
+    double sq(double x) const {
+        return x*x;
+    }
+
+    double norm_dist(const SatZillaFeatures& other) const {
+        double dist = 0;
+""")
+
+    for feat in sz_feats_clean:
+        f.write("        dist+=sq({feat}-other.{feat});\n".format(feat=feat))
+
+    f.write("""
+        return dist;
+    }
+};
+
+
+} //end namespace
+""")
+
+    exit(0)
+
 def cluster(df_orig):
     features = df_orig.columns.values.flatten().tolist()
+    df = df_orig
+
+    # features from dataframe
     sz_all = []
     for x in features:
         if "szfeat" in x:
             sz_all.append(x)
-    #print(sz_all)
+    sz_all.remove("szfeat.conflicts")
+    sz_all.remove("szfeat.var_cl_ratio")
 
-    #_, df = train_test_split(df_orig, test_size=options.only_pecr)
-    df = df_orig
+    # features from C++ code
+    sz_all2 = ["numClauses", "numVars", "binary", "horn", "horn_mean", "horn_std", "horn_min", "horn_max", "horn_spread", "vcg_var_mean", "vcg_var_std", "vcg_var_min", "vcg_var_max", "vcg_var_spread", "vcg_cls_mean", "vcg_cls_std", "vcg_cls_min", "vcg_cls_max", "vcg_cls_spread", "pnr_var_mean", "pnr_var_std", "pnr_var_min", "pnr_var_max", "pnr_var_spread", "pnr_cls_mean", "pnr_cls_std", "pnr_cls_min", "pnr_cls_max", "pnr_cls_spread", "avg_confl_size", "confl_size_min", "confl_size_max", "avg_confl_glue", "confl_glue_min", "confl_glue_max", "avg_num_resolutions", "num_resolutions_min", "num_resolutions_max", "learnt_bins_per_confl", "avg_branch_depth", "branch_depth_min", "branch_depth_max", "avg_trail_depth_delta", "trail_depth_delta_min", "trail_depth_delta_max", "avg_branch_depth_delta", "props_per_confl", "confl_per_restart", "decisions_per_conflict", "irred_size_distr_mean", "irred_size_distr_var", "red_glue_distr_mean", "red_glue_distr_var", "red_size_distr_mean", "red_size_distr_var"]
+    sz_all2_fixed = []
+    for x in sz_all2:
+        sz_all2_fixed.append("szfeat." + x)
 
-    sz = []
-    sz.append("szfeat.avg_branch_depth")
-    sz.append("szfeat.avg_num_resolutions")
-    sz.append("szfeat.numVars")
-    sz.append("szfeat.numClauses")
-    sz.append("szfeat.avg_confl_glue")
-    sz.append("szfeat.red_glue_distr_mean")
-    sz.append("szfeat.binary")
-    sz.append("szfeat.irred_size_distr_var")
+    # check the two are equivalent
+    sz_all = sorted(sz_all)
+    sz_all2_fixed = sorted(sz_all2_fixed)
+    for a,b in zip(sz_all, sz_all2_fixed):
+        if a != b:
+            print("!!!")
+    assert len(sz_all) == len(sz_all2_fixed)
+
+    # fit
     df2 = df[sz_all]
-
-    print(df2)
-    n_clusters = 7
-    clust = sklearn.cluster.KMeans(n_clusters=n_clusters)
+    clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
     clust.fit(df2)
-    print(clust.labels_)
+
+    # print distribution
     dist = {}
     for x in clust.labels_:
         if x not in dist:
             dist[x] = 1
         else:
             dist[x] += 1
-
     print(dist)
-    print(clust.cluster_centers_)
-    df_orig["clust"] = clust.labels_
 
-    for clust in range(n_clusters):
+    # print information about the clusters
+    print(clust.labels_)
+    print(clust.cluster_centers_)
+    print(clust.get_params())
+    create_code_for_cluster_centers(clust, sz_all2)
+
+    # predict based on the cluster
+    df_orig["clust"] = clust.labels_
+    for clust in range(options.clusters):
         learn(df_orig[(df_orig.clust == clust)])
 
 if __name__ == "__main__":
@@ -558,6 +639,8 @@ if __name__ == "__main__":
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=40, type=int,
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
+    parser.add_option("--clusters", default=7, type=int,
+                      dest="clusters", help="How many clusters to use")
 
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")

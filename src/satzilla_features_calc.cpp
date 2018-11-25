@@ -364,7 +364,7 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
             satzilla_feat.numVars++;
         }
     }
-    if (satzilla_feat.numVars > 0) {
+    if (satzilla_feat.numVars > 0 && satzilla_feat.numClauses > 0) {
         satzilla_feat.var_cl_ratio = (double)satzilla_feat.numVars/ (double)satzilla_feat.numClauses;
     }
 
