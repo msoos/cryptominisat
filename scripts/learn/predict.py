@@ -35,6 +35,30 @@ import sklearn.ensemble
 import sklearn.model_selection
 
 
+def write_mit_header(f):
+    f.write("""/******************************************
+Copyright (c) 2018, Mate Soos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+***********************************************/\n\n""")
+
+
 class Learner:
     def __init__(self, df, funcname, fname):
         self.df = df
@@ -102,6 +126,7 @@ class Learner:
     class CodeWriter:
         def __init__(self, clf, features, funcname, code_file):
             self.f = open(code_file, 'w')
+            write_mit_header(self.f)
             self.clf = clf
             self.feat = features
             self.funcname = funcname
@@ -109,7 +134,6 @@ class Learner:
         def print_full_code(self):
             self.f.write("""#include "clause.h"
 #include "reducedb.h"
-using namespace CMSat;
 
 namespace CMSat {
     """)
@@ -118,11 +142,11 @@ namespace CMSat {
             if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
                 self.f.write("""
 static double estimator_{funcname}_0(
-    const Clause* cl
+    const CMSat::Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
-) {\n""".format(funcname=self.funcname))
+) {{\n""".format(funcname=self.funcname))
                 print(self.clf)
                 print(self.clf.get_params())
                 self.get_code(self.clf, 1)
@@ -132,22 +156,22 @@ static double estimator_{funcname}_0(
                 for tree, i in zip(self.clf.estimators_, range(200)):
                     self.f.write("""
 static double estimator_{funcname}_{est_num}(
-    const Clause* cl
+    const CMSat::Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
-) {\n""".format(est_num=i, funcname=self.funcname))
+) {{\n""".format(est_num=i, funcname=self.funcname))
                     self.get_code(tree, 1)
                     self.f.write("}\n")
 
             # Final tally
             self.f.write("""
-bool {funcname}(
-    const Clause* cl
+static bool {funcname}(
+    const CMSat::Clause* cl
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
-) {\n""".format(funcname=self.funcname))
+) {{\n""".format(funcname=self.funcname))
             self.f.write("    int votes = 0;\n")
             for i in range(num_trees):
                 self.f.write("""    votes += estimator_{funcname}_{est_num}(
@@ -231,7 +255,7 @@ bool {funcname}(
 
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
         df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
-        train, test = self.train_test_split(df, test_size=0.33)
+        train, test = sklearn.model_selection.train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
 
@@ -309,7 +333,7 @@ bool {funcname}(
         if options.dot is not None and final:
             self.output_to_dot(clf, features)
 
-        if options.code_file is not None:
+        if options.produce_code:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
@@ -486,6 +510,7 @@ class Clustering:
 
     def create_code_for_cluster_centers(self, clust, sz_feats):
         f = open("../src/clustering.h", 'w')
+        write_mit_header(f)
 
         sz_feats_clean = []
         for x in sz_feats:
@@ -588,9 +613,10 @@ class Clustering:
         print(dist)
 
         # print information about the clusters
-        print(clust.labels_)
-        print(clust.cluster_centers_)
-        print(clust.get_params())
+        if options.verbose:
+            print(clust.labels_)
+            print(clust.cluster_centers_)
+            print(clust.get_params())
         self.create_code_for_cluster_centers(clust, sz_all)
 
         # predict based on the cluster
@@ -602,26 +628,38 @@ class Clustering:
             funcname="should_keep_short%d" % clust
             functs.append(funcname)
 
-            fname="../src/final_predictor_short%d.h" % clust
+            fname="final_predictor_short%d.h" % clust
             fnames.append(fname)
 
             learner = Learner(
                 self.df[(self.df.clust == clust)],
                 funcname,
-                fname)
+                "../src/"+fname)
             learner.learn()
 
-        f = open("../src/all_predictors.h")
-        f.write("typedef bool (*f)(Clause*, uint32_t, uint32_t, uint32_t);")
-        for fname in range(fnames):
-            f.write('#include "%s' % fname)
-        f.write("f should_keep_short_funcs[%d] = {" % options.clusters)
+        f = open("../src/all_predictors.h", "w")
+        write_mit_header(f)
+        f.write("""///auto-generated code. Under MIT license.
+#ifndef ALL_PREDICTORS_H
+#define ALL_PREDICTORS_H\n\n""")
+        f.write('#include "clause.h"\n\n')
+        for fname in fnames:
+            f.write('#include "%s"\n\n' % fname)
+
+        f.write("namespace CMSat {\n")
+        f.write("typedef bool (*keep_func_type)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n")
+        f.write("\nkeep_func_type should_keep_short_funcs[%d] = {\n" % options.clusters)
         for i in range(len(functs)):
             func = functs[i];
-            f.write("%s" % func)
+            f.write("    CMSat::%s" % func)
             if i < len(functs)-1:
-                f.write(",")
-        f.write("};")
+                f.write(",\n")
+            else:
+                f.write("\n")
+        f.write("};\n\n")
+
+        f.write("} //end namespace\n")
+        f.write("#endif //ALL_PREDICTORS\n")
 
 
 if __name__ == "__main__":
@@ -644,8 +682,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
-    parser.add_option("--code", default=None, type=str,
-                      dest="code_file", help="Get raw C-like code")
+    parser.add_option("--code", action="store_true", default=False,
+                      dest="produce_code", help="Get raw C-like code")
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",

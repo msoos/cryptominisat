@@ -338,7 +338,7 @@ void ReduceDB::handle_lev1_final_predictor()
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
                 && !cl->stats.locked_long
-                && !should_keep_short_funcs[clust](
+                && !should_keep_short_funcs[cluster](
                     cl
                     , last_touched_diff
                     , i
