@@ -2205,8 +2205,9 @@ void Searcher::rebuildOrderHeap()
 
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
-    if (solver->sqlStats)
-        check_calc_satzilla_features();
+    #if defined(STATS_NEEDED) or defined(FINAL_PREDICTOR)
+    check_calc_satzilla_features();
+    #endif
 
     print_restart_header();
     dump_search_sql(myTime);

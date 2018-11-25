@@ -24,9 +24,11 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solverconf.h"
 #include "sqlstats.h"
-#include "clustering.h"
 #ifdef FINAL_PREDICTOR
-#include "all_predictors.h"
+#include "clustering_short.h"
+#include "clustering_long.h"
+#include "all_predictors_short.h"
+#include "all_predictors_long.h"
 #endif
 
 #include <functional>
@@ -308,8 +310,10 @@ void ReduceDB::handle_lev1_final_predictor()
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
-    Clustering clust;
-    int cluster = clust.which_is_closest(solver->last_solve_satzilla_feature);
+    Clustering_long long_clust;
+    int long_cluster = long_clust.which_is_closest(solver->last_solve_satzilla_feature);
+    Clustering_short short_clust;
+    int short_cluster = short_clust.which_is_closest(solver->last_solve_satzilla_feature);
 
     size_t j = 0;
     for(size_t i = 0
@@ -338,7 +342,7 @@ void ReduceDB::handle_lev1_final_predictor()
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
                 && !cl->stats.locked_long
-                && !should_keep_short_funcs[cluster](
+                && !should_keep_short_funcs[short_cluster](
                     cl
                     , last_touched_diff
                     , i
@@ -358,7 +362,7 @@ void ReduceDB::handle_lev1_final_predictor()
                     kept_due_to_lock++;
                     cl->stats.locked_long--;
                 } else {
-                    if (cl->stats.dump_number > 0 && should_keep_long(
+                    if (cl->stats.dump_number > 0 && should_keep_long_funcs[long_cluster](
                         cl
                         , last_touched_diff
                         , i
@@ -405,16 +409,15 @@ void ReduceDB::handle_lev1_final_predictor()
         << endl;
 
         cout << "c [DBCL pred]"
+        << " Sclust:" << short_cluster
+        << " Lclust:" << long_cluster
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
-
-        << endl;
-        cout << "c [DBCL pred]"
-        << " moved_w0: " << moved_w0
         << " maxdump_no:" << largest_dump_no
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
+    assert(moved_w0 == 0);
 
     if (solver->sqlStats) {
         solver->sqlStats->time_passed_min(

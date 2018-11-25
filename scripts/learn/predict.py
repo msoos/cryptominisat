@@ -509,7 +509,7 @@ class Clustering:
         self.df = df
 
     def create_code_for_cluster_centers(self, clust, sz_feats):
-        f = open("../src/clustering.h", 'w')
+        f = open("../src/clustering_{basename}.h".format(basename=options.basename), 'w')
         write_mit_header(f)
 
         sz_feats_clean = []
@@ -523,20 +523,23 @@ class Clustering:
             sz_feats_clean.append(c)
 
         f.write("""
-    #include "satzilla_features.h"
-    #include <cmath>
+#ifndef CLUSTERING_{basename}_H
+#define CLUSTERING_{basename}_H
 
-    namespace CMSat {
-    class Clustering {
+#include "satzilla_features.h"
+#include <cmath>
 
-    public:
-        Clustering() {
-            set_up_centers();
-        }
+namespace CMSat {{
+class Clustering_{basename} {{
 
-        SatZillaFeatures center[%d];
+public:
+    Clustering_{basename}() {{
+        set_up_centers();
+    }}
 
-    """ % options.clusters)
+    SatZillaFeatures center[{clusters}];
+
+""".format(clusters=options.clusters, basename=options.basename))
 
         f.write("    void set_up_centers() {\n")
         for i in range(options.clusters):
@@ -550,42 +553,43 @@ class Clustering:
         f.write("    }\n")
 
         f.write("""
-        double sq(double x) const {
-            return x*x;
-        }
+    double sq(double x) const {
+        return x*x;
+    }
 
-        double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
-            double dist = 0;
-    """)
+    double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
+        double dist = 0;
+""")
         for feat in sz_feats_clean:
             f.write("        dist+=sq(a.{feat}-b.{feat});\n".format(feat=feat))
 
         f.write("""
-            return dist;
-        }\n""")
+        return dist;
+    }\n""")
 
         f.write("""
-        int which_is_closest(const SatZillaFeatures& p) {
-
-            double closest_dist = std::numeric_limits<double>::max();
-            int closest = -1;
-            for (int i = 0; i < %d; i++) {
-                double dist = norm_dist(center[i], p);
-                if (dist < closest_dist) {
-                    closest_dist = dist;
-                    closest = i;
-                }
+    int which_is_closest(const SatZillaFeatures& p) {
+        double closest_dist = std::numeric_limits<double>::max();
+        int closest = -1;
+        for (int i = 0; i < %d; i++) {
+            double dist = norm_dist(center[i], p);
+            if (dist < closest_dist) {
+                closest_dist = dist;
+                closest = i;
             }
-            return closest;
         }
-    """ % options.clusters)
+        return closest;
+    }
+""" % options.clusters)
 
         f.write("""
-    };
+};
 
 
-    } //end namespace
-    """)
+} //end namespace
+
+#endif //header guard
+""")
 
     def cluster(self):
         features = self.df.columns.values.flatten().tolist()
@@ -640,15 +644,17 @@ class Clustering:
         f = open("../src/all_predictors_%s.h" % options.basename, "w")
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_H
-#define ALL_PREDICTORS_H\n\n""")
+#ifndef ALL_PREDICTORS_{basename}_H
+#define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
         f.write('#include "clause.h"\n\n')
         for fname in fnames:
-            f.write('#include "%s"\n\n' % fname)
+            f.write('#include "%s"\n' % fname)
 
         f.write("namespace CMSat {\n")
-        f.write("typedef bool (*keep_func_type)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n")
-        f.write("\nkeep_func_type should_keep_short_funcs[%d] = {\n" % options.clusters)
+        f.write("typedef bool (*keep_func_type_%s)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n" % options.basename)
+        f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
+            basename=options.basename, clusters=options.clusters))
+
         for i in range(len(functs)):
             func = functs[i];
             f.write("    CMSat::%s" % func)
@@ -658,7 +664,7 @@ class Clustering:
                 f.write("\n")
         f.write("};\n\n")
 
-        f.write("} //end namespace\n")
+        f.write("} //end namespace\n\n")
         f.write("#endif //ALL_PREDICTORS\n")
 
 

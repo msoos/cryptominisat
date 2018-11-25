@@ -60,7 +60,11 @@ bool DistillerLong::distill(const bool red, bool fullstats)
         other = runStats;
     } else {
         runStats.clear();
-        if (!distill_long_cls_all(solver->longRedCls[0], 10.0)) {
+        int lev_to_distill = 0;
+        #ifdef FINAL_PREDICTOR
+        lev_to_distill = 1;
+        #endif
+        if (!distill_long_cls_all(solver->longRedCls[lev_to_distill], 10.0)) {
             goto end;
         }
 //         if (!distill_long_cls_all(solver->longRedCls[1], 10.0)) {

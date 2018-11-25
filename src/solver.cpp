@@ -3177,7 +3177,7 @@ SatZillaFeatures Solver::calculate_satzilla_features()
     satzilla_feat.num_gates_found_last = sumSearchStats.num_gates_found_last;
     satzilla_feat.num_xors_found_last = sumSearchStats.num_xors_found_last;
 
-    if (conf.verbosity) {
+    if (conf.verbosity > 2) {
         satzilla_feat.print_stats();
     }
 
