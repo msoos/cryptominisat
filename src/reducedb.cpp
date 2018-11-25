@@ -203,7 +203,6 @@ void ReduceDB::dump_sql_cl_data()
                 solver
                 , locked
                 , cl
-                , solver->latest_satzilla_feature_calc
                 , act_ranking_top_10
                 , i
             );
