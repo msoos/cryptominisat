@@ -312,9 +312,9 @@ class QueryCls (QueryHelper):
         CASE WHEN
 
         -- used a lot
-        (goodcl.last_confl_used > rdb0.conflicts and `goodcl`.`num_used` > 5)
+        (goodcl.last_confl_used > rdb0.conflicts and `goodcl`.`num_used` > 3)
         or (goodcl.last_confl_used > rdb0.conflicts
-            AND `goodcl`.`num_used` <= 5
+            AND `goodcl`.`num_used` <= 3
             AND goodcl.last_confl_used-rdb0.conflicts < 10000)
         THEN "OK"
         ELSE "BAD"
@@ -639,7 +639,7 @@ class QueryCls (QueryHelper):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
-            distrib = 0.4 #prefer OK by a factor of this
+            distrib = 0.5 #prefer OK by a factor of this. If < 0.5 then preferring BAD
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.1
