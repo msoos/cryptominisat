@@ -130,7 +130,8 @@ bool file_exists (const std::string& name) {
 bool SQLiteStats::connectServer(const int verbosity)
 {
     if (file_exists(filename)) {
-        cout << "ERROR -- the database file already exists. We cannot store more than one run in the same database"
+        cout << "ERROR -- the database already exists: " << filename << endl;
+        cout << "ERROR -- We cannot store more than one run in the same database"
         << endl
         << "Exiting." << endl;
         exit(-1);
@@ -860,13 +861,17 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 21;
+    const size_t numElems = 22;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
     << "("
     //Position
-    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`, `runtime`"
+    << "  `simplifications`, `restarts`"
+    << ", `conflicts`"
+    << ", `latest_satzilla_feature_calc`"
+    << ", `cur_restart_type`"
+    << ", `runtime`"
 
     //data
     << ", `clauseID`"
@@ -910,6 +915,7 @@ void SQLiteStats::reduceDB(
     const Solver* solver
     , const bool locked
     , const Clause* cl
+    , const string& cur_restart_type
     , const uint32_t act_ranking_top_10
     , const uint32_t act_ranking
 ) {
@@ -920,6 +926,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->latest_satzilla_feature_calc);
+    sqlite3_bind_text(stmtReduceDB, bindAt++, cur_restart_type.c_str(), -1, NULL);
     sqlite3_bind_double(stmtReduceDB, bindAt++, cpuTime());
 
     //data

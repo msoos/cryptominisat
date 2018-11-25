@@ -40,7 +40,7 @@ public:
     void handle_lev1();
     void handle_lev2();
     void handle_lev1_final_predictor();
-    void dump_sql_cl_data();
+    void dump_sql_cl_data(const string& cur_rst_type);
     bool should_keep_short(
         const Clause* cl
         , const uint32_t rdb0_last_touched_diff

@@ -2136,7 +2136,7 @@ void Searcher::reduce_db_if_needed()
         && sumConflicts >= next_lev1_reduce
     ) {
         if (solver->sqlStats) {
-            solver->reduceDB->dump_sql_cl_data();
+            solver->reduceDB->dump_sql_cl_data(restart_type_to_short_string(params.rest_type));
         }
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;

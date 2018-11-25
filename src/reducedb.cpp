@@ -169,7 +169,7 @@ void ReduceDB::handle_lev2()
     last_reducedb_num_conflicts = solver->sumConflicts;
 }
 
-void ReduceDB::dump_sql_cl_data()
+void ReduceDB::dump_sql_cl_data(const string& cur_rst_type)
 {
     #ifdef STATS_NEEDED
     double myTime = cpuTime();
@@ -203,6 +203,7 @@ void ReduceDB::dump_sql_cl_data()
                 solver
                 , locked
                 , cl
+                , cur_rst_type
                 , act_ranking_top_10
                 , i
             );

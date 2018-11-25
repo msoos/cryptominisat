@@ -83,6 +83,7 @@ public:
         const Solver* solver
         , const bool locked
         , const Clause* cl
+        , const string& cur_restart_type
         , const uint32_t act_ranking_top_10
         , const uint32_t act_ranking
     ) = 0;

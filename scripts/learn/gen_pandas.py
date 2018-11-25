@@ -139,7 +139,7 @@ class QueryCls (QueryHelper):
         -- , rdb0.`simplifications` as `rdb0.simplifications`
         -- , rdb0.`restarts` as `rdb0.restarts`
         , rdb0.`conflicts` as `rdb0.conflicts`
-        , rdb0.`restart_type` as `rdb0.restart_type`
+        , rdb0.`cur_restart_type` as `rdb0.cur_restart_type`
         -- , rdb0.`runtime` as `rdb0.runtime`
 
         -- , rdb0.`clauseID` as `rdb0.clauseID`
