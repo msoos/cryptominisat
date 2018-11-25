@@ -643,7 +643,7 @@ class QueryCls (QueryHelper):
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.1
-            distrib = 0.1 #prefer BAD by a factor of 1-this
+            distrib = 0.1 #prefer OK by a factor of this. If < 0.5 then preferring BAD
         print("Distrib OK vs BAD set to %s " % distrib)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
