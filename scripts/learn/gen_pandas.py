@@ -311,31 +311,14 @@ class QueryCls (QueryHelper):
         self.case_stmt_10k = """
         CASE WHEN
 
-        -- if NULL, just stick with last_confl_used
-        (goodcl.last_confl_used > rdb0.conflicts AND goodcl.last_confl_used2 is NULL)
-        OR
-        (
-            -- if it's close by, wait for last_confl_used
-            (
-            goodcl.last_confl_used < (goodcl.last_confl_used2+1) AND
-            goodcl.last_confl_used > rdb0.conflicts
-            )
-            -- otherwise, just terminate at goodcl.last_confl_used2
-            OR goodcl.last_confl_used2 > rdb0.conflicts
-        )
-        -- and `goodcl`.`num_used` > 5
-        -- or `goodcl`.`last_prop_used` > rdb0.conflicts
+        -- used a lot
+        (goodcl.last_confl_used > rdb0.conflicts and `goodcl`.`num_used` > 5)
+        or (goodcl.last_confl_used > rdb0.conflicts
+            AND `goodcl`.`num_used` <= 5
+            AND goodcl.last_confl_used-rdb0.conflicts < 10000)
         THEN "OK"
         ELSE "BAD"
         END AS `x.class`
-        """
-
-        self.case_stmt_10k = """
-        CASE WHEN
-            goodcl.last_confl_used > rdb0.conflicts
-            THEN "OK"
-            ELSE "BAD"
-            END AS `x.class`
         """
 
         self.case_stmt_100k = """
@@ -656,11 +639,11 @@ class QueryCls (QueryHelper):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
-            distrib = 0.7 #prefer OK by a factor of 0.7
+            distrib = 0.4 #prefer OK by a factor of this
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.1
-            distrib = 0.1 #prefer BAD by a factor of 0.9
+            distrib = 0.1 #prefer BAD by a factor of 1-this
         print("Distrib OK vs BAD set to %s " % distrib)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
