@@ -488,7 +488,8 @@ def create_code_for_cluster_centers(clust, sz_feats):
 
     sz_feats_clean = []
     for x in sz_feats:
-        c = x
+        #removing "szfeat."
+        c = x[7:]
         if c[:4] == "red_":
             c = c.replace("red_", "red_cl_distrib.")
         if c[:6] == "irred_":
@@ -501,6 +502,11 @@ def create_code_for_cluster_centers(clust, sz_feats):
 
 namespace CMSat {
 class Clustering {
+
+    Clustering() {
+        set_up_centers();
+    }
+
     SatZillaFeatures center[%d];
 
 """ % options.clusters)
@@ -515,12 +521,27 @@ class Clustering {
     f.write("    }\n")
 
     f.write("""
+    double sq(double x) const {
+        return x*x;
+    }
+
+    double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
+        double dist = 0;
+""")
+    for feat in sz_feats_clean:
+        f.write("        dist+=sq(a.{feat}-b.{feat});\n".format(feat=feat))
+
+    f.write("""
+        return dist;
+    }\n""")
+
+    f.write("""
     int which_is_closest(const SatZillaFeatures& p) {
 
         double closest_dist = std::numeric_limits<double>::max();
         int closest = -1;
         for (int i = 0; i < %d; i++) {
-            dist = center[i].norm_dist(p);
+            dist = norm_dist(center[i], p);
             if (dist < closest_dist) {
                 closest_dist = dist;
                 closest = i;
@@ -530,22 +551,7 @@ class Clustering {
     }
 """ % options.clusters)
 
-
     f.write("""
-    double sq(double x) const {
-        return x*x;
-    }
-
-    double norm_dist(const SatZillaFeatures& other) const {
-        double dist = 0;
-""")
-
-    for feat in sz_feats_clean:
-        f.write("        dist+=sq({feat}-other.{feat});\n".format(feat=feat))
-
-    f.write("""
-        return dist;
-    }
 };
 
 
@@ -584,7 +590,7 @@ def cluster(df_orig):
     print(clust.labels_)
     print(clust.cluster_centers_)
     print(clust.get_params())
-    create_code_for_cluster_centers(clust, sz_all2)
+    create_code_for_cluster_centers(clust, sz_all)
 
     # predict based on the cluster
     df_orig["clust"] = clust.labels_
