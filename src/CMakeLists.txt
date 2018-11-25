@@ -90,7 +90,6 @@ set(cryptoms_lib_files
     completedetachreattacher.cpp
     searcher.cpp
     solver.cpp
-    sqlstats.cpp
     implcache.cpp
     stamp.cpp
     compfinder.cpp
