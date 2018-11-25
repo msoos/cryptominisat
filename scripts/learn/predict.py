@@ -514,8 +514,10 @@ class Clustering:
 
         sz_feats_clean = []
         for x in sz_feats:
-            #removing "szfeat."
-            c = x[7:]
+            assert "szfeat_cur.conflicts" not in x
+
+            #removing "szfeat_cur."
+            c = x[11:]
             if c[:4] == "red_":
                 c = c.replace("red_", "red_cl_distrib.")
             if c[:6] == "irred_":
@@ -597,10 +599,11 @@ public:
         # features from dataframe
         sz_all = []
         for x in features:
-            if "szfeat" in x:
+            if "szfeat_cur" in x:
                 sz_all.append(x)
-        sz_all.remove("szfeat.conflicts")
-        sz_all.remove("szfeat.var_cl_ratio")
+        print(sz_all)
+        sz_all.remove("szfeat_cur.conflicts")
+        sz_all.remove("szfeat_cur.var_cl_ratio")
 
         # fit to slice that only includes CNF features
         df2 = self.df[sz_all]

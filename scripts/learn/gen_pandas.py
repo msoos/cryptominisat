@@ -411,7 +411,7 @@ class QueryCls (QueryHelper):
             "restart_dat": self.restart_dat,
             "clause_dat": self.clause_dat,
             "satzfeat_dat": self.satzfeat_dat,
-            "satzfeat_dat_cur": self.satzfeat_dat.replace("satzfeat.", "satzfeat_cur."),
+            "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             }
