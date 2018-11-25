@@ -333,7 +333,7 @@ static bool {funcname}(
         if options.dot is not None and final:
             self.output_to_dot(clf, features)
 
-        if options.produce_code:
+        if options.basename is not None:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
@@ -625,10 +625,10 @@ class Clustering:
         fnames = []
         functs = []
         for clust in range(options.clusters):
-            funcname="should_keep_short%d" % clust
+            funcname="should_keep_{basename}{clust}".format(clust=clust, basename=options.basename)
             functs.append(funcname)
 
-            fname="final_predictor_short%d.h" % clust
+            fname="final_predictor_{basename}{clust}.h".format(clust=clust, basename=options.basename)
             fnames.append(fname)
 
             learner = Learner(
@@ -637,7 +637,7 @@ class Clustering:
                 "../src/"+fname)
             learner.learn()
 
-        f = open("../src/all_predictors.h", "w")
+        f = open("../src/all_predictors_%s.h" % options.basename, "w")
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
 #ifndef ALL_PREDICTORS_H
@@ -682,8 +682,8 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
-    parser.add_option("--code", action="store_true", default=False,
-                      dest="produce_code", help="Get raw C-like code")
+    parser.add_option("--code", default=None, type=str,
+                      dest="basename", help="Get raw C-like code into this function and file name")
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
