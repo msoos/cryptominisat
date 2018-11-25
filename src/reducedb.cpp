@@ -24,6 +24,11 @@ THE SOFTWARE.
 #include "solver.h"
 #include "solverconf.h"
 #include "sqlstats.h"
+#include "clustering.h"
+#ifdef FINAL_PREDICTOR
+#include "all_predictors.h"
+#endif
+
 #include <functional>
 #include <cmath>
 
@@ -303,6 +308,9 @@ void ReduceDB::handle_lev1_final_predictor()
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
+    Clustering clust;
+    int cluster = clust.which_is_closest(solver->last_solve_satzilla_feature);
+
     size_t j = 0;
     for(size_t i = 0
         ; i < solver->longRedCls[1].size()
@@ -330,7 +338,7 @@ void ReduceDB::handle_lev1_final_predictor()
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
                 && !cl->stats.locked_long
-                && !should_keep_short(
+                && !should_keep_short_funcs[clust](
                     cl
                     , last_touched_diff
                     , i
