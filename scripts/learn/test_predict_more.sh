@@ -80,8 +80,8 @@ rm -f ../src/final_predictor*
 # ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
 
 
-./predict.py "$FNAMEOUT.db-short-pandasdata.dat" --final --conf --tree --code ../src/final_predictor_short.cpp --funcname should_keep_short --split 100
-./predict.py "$FNAMEOUT.db-long-pandasdata.dat" --final --conf --tree --code ../src/final_predictor_long.cpp --funcname should_keep_long --split 100
+./predict.py "$FNAMEOUT.db-short-pandasdata.dat" --final --conf --tree --code short --split 100 --clust 1
+./predict.py "$FNAMEOUT.db-long-pandasdata.dat"  --final --conf --tree --code long  --split 100 --clust 1
 ./build_final_predictor.sh
 ./cryptominisat5 "$FNAME"
 
