@@ -79,13 +79,11 @@ class Query:
         num_used = int(line[1])
         first_used = int(line[2])
         last_used = int(line[3])
-        last_used2 = int(line[4])
-        if last_used2 == -1:
-            last_used2 = None
+        sum_hist_used = int(line[4])
 
         # append to cur_good_ids
         self.cur_good_ids.append(
-            (myid, num_used, first_used, last_used, last_used2))
+            (myid, num_used, first_used, last_used, sum_hist_used))
 
         # don't run out of memory, dump early
         if self.cur_good_ids_num > 10000:
@@ -98,7 +96,7 @@ class Query:
         , `num_used`
         , `first_confl_used`
         , `last_confl_used`
-        , `last_confl_used2`)
+        , `sum_hist_used`)
         VALUES (?, ?, ?, ?, ?);""", self.cur_good_ids)
         self.cur_good_ids = []
         self.cur_good_ids_num = 0
