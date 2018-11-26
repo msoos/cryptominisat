@@ -312,9 +312,9 @@ class QueryCls (QueryHelper):
         CASE WHEN
 
         -- used a lot
-        (goodcl.last_confl_used > rdb0.conflicts and `goodcl`.`num_used` > 3)
+        (goodcl.last_confl_used > rdb0.conflicts and goodcl.num_used > 3)
         or (goodcl.last_confl_used > rdb0.conflicts
-            AND `goodcl`.`num_used` <= 3
+            AND goodcl.num_used <= 3
             AND goodcl.last_confl_used-rdb0.conflicts < 10000)
         THEN "OK"
         ELSE "BAD"
