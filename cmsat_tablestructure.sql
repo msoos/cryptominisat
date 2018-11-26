@@ -385,6 +385,7 @@ create table `varDataUse` (
 
     `useful_clauses` int(20) DEFAULT NULL,
     `useful_clauses_used` int(20) DEFAULT NULL,
+    `useful_clauses_sum_hist_used` int(20) DEFAULT NULL,
     `useful_clauses_first_used` int(20) DEFAULT NULL,
     `useful_clauses_last_used` int(20) DEFAULT NULL
 

@@ -475,7 +475,7 @@ class QueryCls (QueryHelper):
         , sum(num_used)
         , min(first_confl_used)
         , max(last_confl_used)
-        , max(last_confl_used2)
+        , sum(sum_hist_used)
         , max(last_prop_used)
         from goodClauses as c group by clauseID;"""
         self.c.execute(q)
@@ -494,46 +494,7 @@ class QueryCls (QueryHelper):
         print("Filling var data use...")
 
         t = time.time()
-        q = "DROP TABLE IF EXISTS `varDataUse`;"
-        self.c.execute(q)
-        q = """
-        create table `varDataUse` (
-            `restarts` int(20) NOT NULL,
-            `conflicts` bigint(20) NOT NULL,
-
-            `var` int(20) NOT NULL,
-            `dec_depth` int(20) NOT NULL,
-            `decisions_below` int(20) NOT NULL,
-            `conflicts_below` int(20) NOT NULL,
-            `clauses_below` int(20) NOT NULL,
-
-            `decided_avg` double NOT NULL,
-            `decided_pos_perc` double NOT NULL,
-            `propagated_avg` double NOT NULL,
-            `propagated_pos_perc` double NOT NULL,
-
-            `propagated` bigint(20) NOT NULL,
-            `propagated_pos` bigint(20) NOT NULL,
-            `decided` bigint(20) NOT NULL,
-            `decided_pos` bigint(20) NOT NULL,
-
-            `sum_decisions_at_picktime` bigint(20) NOT NULL,
-            `sum_propagations_at_picktime` bigint(20) NOT NULL,
-
-            `total_conflicts_below_when_picked` bigint(20) NOT NULL,
-            `total_decisions_below_when_picked` bigint(20) NOT NULL,
-            `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
-            `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
-
-            `useful_clauses` int(20) DEFAULT NULL,
-            `useful_clauses_used` int(20) DEFAULT NULL,
-            `useful_clauses_first_used` int(20) DEFAULT NULL,
-            `useful_clauses_last_used` int(20) DEFAULT NULL
-
-            -- features when picked
-            --`activity` double NOT NULL
-        );
-        """
+        q = "delete from `varDataUse`;"
         self.c.execute(q)
         print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
 
@@ -572,6 +533,7 @@ class QueryCls (QueryHelper):
         -- measures for good
         , count(cls.num_used) as useful_clauses
         , sum(cls.num_used) as useful_clauses_used
+        , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
         , min(cls.first_confl_used) as useful_clauses_first_used
         , max(cls.last_confl_used) as useful_clauses_last_used
 
