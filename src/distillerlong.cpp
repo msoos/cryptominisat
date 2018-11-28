@@ -142,6 +142,12 @@ bool DistillerLong::go_through_clauses(
             goto copy;
         }
         #endif
+        #ifdef FINAL_PREDICTOR
+        if (cl.red() && !cl.stats.locked_long) {
+            offset2 = offset;
+            goto copy;
+        }
+        #endif
 
         //Time to dereference
         maxNumProps -= 5;
@@ -173,9 +179,7 @@ bool DistillerLong::go_through_clauses(
             , cl.stats
         );
 
-        #ifdef USE_GAUSS
         copy:
-        #endif
         if (offset2 != CL_OFFSET_MAX) {
             *j++ = offset2;
         }

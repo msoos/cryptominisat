@@ -80,9 +80,6 @@ class DistillerLong {
             , const ClauseStats& stats
         );
         bool distill_long_cls_all(vector<ClOffset>& offs, double time_mult);
-
-        //Actual algorithms used
-        bool distill_long_irred_cls();
         bool go_through_clauses(vector<ClOffset>& cls);
         Solver* solver;
 
