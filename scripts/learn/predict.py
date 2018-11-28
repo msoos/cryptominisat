@@ -262,6 +262,12 @@ static bool {funcname}(
         X_test = test[features]
         y_test = test[to_predict]
 
+        # calculate split point
+        split_point = int(float(df.shape[0])*options.min_samples_split)
+        if split_point < 20:
+            split_point = 20
+        print("Split point: ", split_point)
+
         t = time.time()
         clf = None
         # clf = sklearn.linear_model.LogisticRegression()
@@ -269,7 +275,7 @@ static bool {funcname}(
 
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                     max_depth=options.tree_depth,
-                    min_samples_split=options.min_samples_split)
+                    min_samples_split=split_point)
 
             clf_svm_pre = sklearn.svm.SVC(C=500, gamma=10**-5)
             clf_svm = sklearn.ensemble.BaggingClassifier(
@@ -283,7 +289,7 @@ static bool {funcname}(
 
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                     n_estimators=5,
-                    min_samples_leaf=options.min_samples_split)
+                    min_samples_leaf=split_point)
 
             if options.final_is_tree:
                 clf = clf_tree
@@ -299,7 +305,7 @@ static bool {funcname}(
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=80,
-                min_samples_leaf=options.min_samples_split)
+                min_samples_leaf=split_point)
 
         clf.fit(X_train, y_train)
 
