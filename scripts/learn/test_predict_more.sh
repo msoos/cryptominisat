@@ -12,7 +12,7 @@ set -e
 FNAME="UTI-20-10p0.cnf-unz"
 FNAMEOUT="mystuff2"
 RATIO="0.20"
-FIXED="150000"
+FIXED="15000"
 
 # orig: 101s
 # prop inside learned: 120s
@@ -20,15 +20,15 @@ FIXED="150000"
 # locking in: 131s
 FNAME="countbitswegner064.cnf"
 FNAMEOUT="mystuff2"
-RATIO="0.30" #ratio before 0.6
-FIXED="70000" #used before 70k
+RATIO="0.30"
+FIXED="30000"
 
 # orig: 27s
 # prop inside learnt: 29
 # FNAME="goldb-heqc-i10mul.cnf"
 # FNAMEOUT="mystuff2"
 # RATIO="0.60"
-# FIXED="20000"
+# FIXED="10000"
 
 # orig time: 70.84
 # no prop inside 33.24
@@ -42,10 +42,10 @@ FIXED="70000" #used before 70k
 # prop inside learnt: 82s
 # no prop inside: 95s
 # locked: 69s -- 737d7a5dcf32c2c2e07e2f5edf09819ee5fb0dfb
-FNAME="AProVE07-16.cnf"
-FNAMEOUT="mystuff2"
-RATIO="0.60"
-FIXED="30000"
+# FNAME="AProVE07-16.cnf"
+# FNAMEOUT="mystuff2"
+# RATIO="0.60"
+# FIXED="30000"
 
 
 # orig: 197.10
@@ -70,20 +70,29 @@ rm -f ../src/final_predictor*
 
 # get data
 ./build_stats.sh
-./cryptominisat5 --gluecut0 100 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "$FNAME"
+mkdir "$FNAME-dir"
+
+(
+cd "$FNAME-dir"
+../cryptominisat5 --gluecut0 100 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME"
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 
-./tests/drat-trim/drat-trim "$FNAME" "$FNAMEOUT.drat" -x $FNAMEOUT.lemmas -i
-./add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.lemmas"
+../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x $FNAMEOUT.lemmas -i
+../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.lemmas"
 
-./gen_pandas.py "$FNAMEOUT.db" --fixed "$FIXED"
+../gen_pandas.py "$FNAMEOUT.db" --fixed "$FIXED"
 # ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
 
 
-./predict.py "$FNAMEOUT.db-short-pandasdata.dat" --final --conf --tree --code short --split 100 --clust 1
-./predict.py "$FNAMEOUT.db-long-pandasdata.dat"  --final --conf --tree --code long  --split 100 --clust 1
-./build_final_predictor.sh
-./cryptominisat5 "$FNAME"
+../predict.py "$FNAMEOUT.db-short-pandasdata.dat" --basedir "../../src/" --final --conf --tree --code short --split 100 --clust 1
+../predict.py "$FNAMEOUT.db-long-pandasdata.dat"  --basedir "../../src/" --final --conf --tree --code long  --split 100 --clust 1
+)
 
+./build_final_predictor.sh
+
+(
+cd "$FNAME-dir"
+../cryptominisat5 "../$FNAME"
+)
 
 #--bva 0 --updateglueonanalysis 0 --otfsubsume 0

@@ -509,7 +509,8 @@ class Clustering:
         self.df = df
 
     def create_code_for_cluster_centers(self, clust, sz_feats):
-        f = open("../src/clustering_{basename}.h".format(basename=options.basename), 'w')
+        f = open("{basedir}/clustering_{basename}.h".format(
+            basedir=options.basedir, basename=options.basename), 'w')
         write_mit_header(f)
 
         sz_feats_clean = []
@@ -632,19 +633,20 @@ public:
         fnames = []
         functs = []
         for clust in range(options.clusters):
-            funcname="should_keep_{basename}{clust}".format(clust=clust, basename=options.basename)
+            funcname = "should_keep_{basename}{clust}".format(clust=clust, basename=options.basename)
             functs.append(funcname)
 
-            fname="final_predictor_{basename}{clust}.h".format(clust=clust, basename=options.basename)
+            fname = "final_predictor_{basename}{clust}.h".format(clust=clust, basename=options.basename)
             fnames.append(fname)
 
             learner = Learner(
                 self.df[(self.df.clust == clust)],
                 funcname,
-                "../src/"+fname)
+                options.basedir+"/"+fname)
             learner.learn()
 
-        f = open("../src/all_predictors_%s.h" % options.basename, "w")
+        f = open("{basedir}/all_predictors_{basename}.h".format(
+            basedir=options.basedir, basename=options.basename), "w")
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
 #ifndef ALL_PREDICTORS_{basename}_H
@@ -693,6 +695,8 @@ if __name__ == "__main__":
                       dest="raw_data_plots", help="Display raw data plots")
     parser.add_option("--code", default=None, type=str,
                       dest="basename", help="Get raw C-like code into this function and file name")
+    parser.add_option("--basedir", type=str,
+                      dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
@@ -722,6 +726,12 @@ if __name__ == "__main__":
     if len(args) < 1:
         print("ERROR: You must give the pandas file!")
         exit(-1)
+
+    if options.basename is not None:
+        if options.basedir is None:
+            print("ERROR: You must give the source code directory of CryptoMiniSat.")
+            print("->For example: '--basedir ../src/' or '--basedir /home/mydir/cryptominisat/src/'")
+            exit(-1)
 
     fname = args[0]
     with open(fname, "rb") as f:
