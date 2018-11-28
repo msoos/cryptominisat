@@ -339,7 +339,7 @@ static bool {funcname}(
         if options.dot is not None and final:
             self.output_to_dot(clf, features)
 
-        if options.basename is not None:
+        if options.basedir:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
@@ -515,15 +515,11 @@ class Clustering:
         self.df = df
 
     def create_code_for_cluster_centers(self, clust, sz_feats):
-        f = open("{basedir}/clustering_{basename}.h".format(
-            basedir=options.basedir, basename=options.basename), 'w')
-        write_mit_header(f)
-
         sz_feats_clean = []
         for x in sz_feats:
             assert "szfeat_cur.conflicts" not in x
 
-            #removing "szfeat_cur."
+            # removing "szfeat_cur."
             c = x[11:]
             if c[:4] == "red_":
                 c = c.replace("red_", "red_cl_distrib.")
@@ -531,6 +527,9 @@ class Clustering:
                 c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
 
+        f = open("{basedir}/clustering_{basename}.h".format(
+            basedir=options.basedir, basename=options.basename), 'w')
+        write_mit_header(f)
         f.write("""
 #ifndef CLUSTERING_{basename}_H
 #define CLUSTERING_{basename}_H
@@ -600,6 +599,34 @@ public:
 #endif //header guard
 """)
 
+    def write_all_predictors_file(self):
+        f = open("{basedir}/all_predictors_{basename}.h".format(
+                basedir=options.basedir, basename=options.basename), "w")
+        write_mit_header(f)
+        f.write("""///auto-generated code. Under MIT license.
+#ifndef ALL_PREDICTORS_{basename}_H
+#define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
+        f.write('#include "clause.h"\n\n')
+        for fname in fnames:
+            f.write('#include "%s"\n' % fname)
+
+        f.write("namespace CMSat {\n")
+        f.write("typedef bool (*keep_func_type_%s)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n" % options.basename)
+        f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
+            basename=options.basename, clusters=options.clusters))
+
+        for i in range(len(functs)):
+            func = functs[i];
+            f.write("    CMSat::%s" % func)
+            if i < len(functs)-1:
+                f.write(",\n")
+            else:
+                f.write("\n")
+        f.write("};\n\n")
+
+        f.write("} //end namespace\n\n")
+        f.write("#endif //ALL_PREDICTORS\n")
+
     def cluster(self):
         features = self.df.columns.values.flatten().tolist()
 
@@ -631,52 +658,31 @@ public:
             print(clust.labels_)
             print(clust.cluster_centers_)
             print(clust.get_params())
-        self.create_code_for_cluster_centers(clust, sz_all)
 
         # predict based on the cluster
         self.df["clust"] = clust.labels_
 
         fnames = []
         functs = []
-        for clust in range(options.clusters):
-            funcname = "should_keep_{basename}{clust}".format(clust=clust, basename=options.basename)
+        for clno in range(options.clusters):
+            funcname = "should_keep_{basename}{clno}".format(clno=clno, basename=options.basename)
             functs.append(funcname)
 
-            fname = "final_predictor_{basename}{clust}.h".format(clust=clust, basename=options.basename)
+            fname = "final_predictor_{basename}{clno}.h".format(clno=clno, basename=options.basename)
             fnames.append(fname)
 
+            if options.basedir is not None:
+                f = options.basedir+"/"+fname
+            else:
+                f = None
             learner = Learner(
-                self.df[(self.df.clust == clust)],
-                funcname,
-                options.basedir+"/"+fname)
+                self.df[(self.df.clust == clno)],
+                funcname, f)
             learner.learn()
 
-        f = open("{basedir}/all_predictors_{basename}.h".format(
-            basedir=options.basedir, basename=options.basename), "w")
-        write_mit_header(f)
-        f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_{basename}_H
-#define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
-        f.write('#include "clause.h"\n\n')
-        for fname in fnames:
-            f.write('#include "%s"\n' % fname)
-
-        f.write("namespace CMSat {\n")
-        f.write("typedef bool (*keep_func_type_%s)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n" % options.basename)
-        f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
-            basename=options.basename, clusters=options.clusters))
-
-        for i in range(len(functs)):
-            func = functs[i];
-            f.write("    CMSat::%s" % func)
-            if i < len(functs)-1:
-                f.write(",\n")
-            else:
-                f.write("\n")
-        f.write("};\n\n")
-
-        f.write("} //end namespace\n\n")
-        f.write("#endif //ALL_PREDICTORS\n")
+        if options.basedir is not None:
+            self.create_code_for_cluster_centers(clust, sz_all)
+            self.write_all_predictors_file()
 
 
 if __name__ == "__main__":
@@ -733,11 +739,12 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    if options.basename is not None:
-        if options.basedir is None:
-            print("ERROR: You must give the source code directory of CryptoMiniSat.")
-            print("->For example: '--basedir ../src/' or '--basedir /home/mydir/cryptominisat/src/'")
-            exit(-1)
+
+    if options.basename is None:
+        print("ERROR: You must give short or long")
+        exit(-1)
+
+    assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
 
     fname = args[0]
     with open(fname, "rb") as f:
