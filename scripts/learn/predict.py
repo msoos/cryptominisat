@@ -715,8 +715,8 @@ if __name__ == "__main__":
                       dest="no_rdb1", help="Delete RDB1 data")
     parser.add_option("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
-    parser.add_option("--split", default=80, type=int,
-                      dest="min_samples_split", help="Split in tree if this many samples or above. Haved for forests, as there it's the leaf limit")
+    parser.add_option("--split", default=0.1, type=float,
+                      dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_option("--greedybest", default=40, type=int,
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=40, type=int,
