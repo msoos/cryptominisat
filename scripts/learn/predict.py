@@ -255,6 +255,9 @@ static bool {funcname}(
 
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
         df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
+        df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+        df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
+
         train, test = sklearn.model_selection.train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
