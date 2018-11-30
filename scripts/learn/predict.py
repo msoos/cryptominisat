@@ -599,7 +599,7 @@ public:
 #endif //header guard
 """)
 
-    def write_all_predictors_file(self):
+    def write_all_predictors_file(self, fnames, functs):
         f = open("{basedir}/all_predictors_{basename}.h".format(
                 basedir=options.basedir, basename=options.basename), "w")
         write_mit_header(f)
@@ -635,7 +635,6 @@ public:
         for x in features:
             if "szfeat_cur" in x:
                 sz_all.append(x)
-        print(sz_all)
         sz_all.remove("szfeat_cur.conflicts")
         sz_all.remove("szfeat_cur.var_cl_ratio")
 
@@ -655,6 +654,7 @@ public:
 
         # print information about the clusters
         if options.verbose:
+            print(sz_all)
             print(clust.labels_)
             print(clust.cluster_centers_)
             print(clust.get_params())
@@ -682,7 +682,7 @@ public:
 
         if options.basedir is not None:
             self.create_code_for_cluster_centers(clust, sz_all)
-            self.write_all_predictors_file()
+            self.write_all_predictors_file(fnames, functs)
 
 
 if __name__ == "__main__":
