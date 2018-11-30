@@ -1735,7 +1735,7 @@ void Searcher::set_clause_data(
     cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
     cl->stats.num_overlap_literals = num_overlap_literals;
     cl->stats.overlap = overlap;
-    cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
+    cl->stats.antec_num_total_lits_rel = (double)num_total_lits_antecedents/(double)hist.antec_data_sum_sizeHistLT.avg();
     cl->stats.overlap_rel = (double)overlap/(double)antec_overlap_hist;
     cl->stats.size_rel = (double)cl->size() / (double)size_hist;
 

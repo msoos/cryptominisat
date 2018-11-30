@@ -142,7 +142,7 @@ struct ClauseStats
     bool        glue_smaller_than_hist_queue= 0;
     uint32_t    num_overlap_literals        = 0;
     uint32_t    overlap                     = 0;
-    uint32_t    num_total_lits_antecedents  = 0;
+    float       antec_num_total_lits_rel    = 0;
     float       overlap_rel                 = 0;
     float       size_rel                    = 0;
     uint32_t    rdb1_used_for_uip_creation  = 0; //special
