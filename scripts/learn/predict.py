@@ -77,10 +77,10 @@ class Learner:
         print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
         print("gwenview {fname}.png".format(fname=fname))
 
-    def plot_confusion_matrix(self, cm, classes,
-                              normalize=False,
-                              title='Confusion matrix',
-                              cmap=plt.cm.Blues):
+    def print_confusion_matrix(self, cm, classes,
+                               normalize=False,
+                               title='Confusion matrix',
+                               cmap=plt.cm.Blues):
         """
         This function prints and plots the confusion matrix.
         Normalization can be applied by setting `normalize=True`.
@@ -368,28 +368,22 @@ static bool {funcname}(
         print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
             train_precision, train_recall, train_accuracy))
 
-        if options.confusion:
-            cnf_matrix = sklearn.metrics.confusion_matrix(
-                y_true=y_test, y_pred=y_pred)
+        # Plot "test" confusion matrix
+        cnf_matrix = sklearn.metrics.confusion_matrix(
+            y_true=y_test, y_pred=y_pred)
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_,
+            title='Confusion matrix, without normalization -- test')
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_, normalize=True,
+            title='Normalized confusion matrix -- test')
 
-            np.set_printoptions(precision=2)
-
-            # Plot non-normalized confusion matrix
-            self.plot_confusion_matrix(
-                cnf_matrix, classes=clf.classes_,
-                title='Confusion matrix, without normalization -- test')
-
-            # Plot normalized confusion matrix
-            self.plot_confusion_matrix(
-                cnf_matrix, classes=clf.classes_, normalize=True,
-                title='Normalized confusion matrix -- test')
-
-            cnf_matrix_train = sklearn.metrics.confusion_matrix(
-                y_true=y_train, y_pred=y_pred_train)
-            # Plot normalized confusion matrix
-            self.plot_confusion_matrix(
-                cnf_matrix_train, classes=clf.classes_, normalize=True,
-                title='Normalized confusion matrix -- train')
+        # Plot "train" confusion matrix
+        cnf_matrix_train = sklearn.metrics.confusion_matrix(
+            y_true=y_train, y_pred=y_pred_train)
+        self.print_confusion_matrix(
+            cnf_matrix_train, classes=clf.classes_, normalize=True,
+            title='Normalized confusion matrix -- train')
 
         # TODO do L1 regularization
 
@@ -700,8 +694,6 @@ if __name__ == "__main__":
                       dest="tree_depth", help="Depth of the tree to create")
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
-    parser.add_option("--conf", action="store_true", default=False,
-                      dest="confusion", help="Create confusion matrix")
     parser.add_option("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
     parser.add_option("--check", action="store_true", default=False,
@@ -741,7 +733,6 @@ if __name__ == "__main__":
     if len(args) < 1:
         print("ERROR: You must give the pandas file!")
         exit(-1)
-
 
     if options.basename is None:
         print("ERROR: You must give short or long")
