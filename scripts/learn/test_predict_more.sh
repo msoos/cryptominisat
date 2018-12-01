@@ -58,6 +58,9 @@ FIXED="30000"
 # FIXED="20000" #must use 4000 for lock-in
 
 # cleanup
+(
+mkdir "$FNAME-dir"
+cd "$FNAME-dir"
 rm -f $FNAMEOUT.d*
 rm -f $FNAMEOUT.lemmas
 rm -f $FNAMEOUT.lemmas-0
@@ -67,10 +70,10 @@ rm -f $FNAMEOUT.db-short-pandasdata.dat
 rm -f $FNAMEOUT.db-long-pandasdata.dat
 rm -f $FNAMEOUT.db-vardata-pandasdata.dat
 rm -f ../src/final_predictor*
+)
 
 # get data
 ./build_stats.sh
-mkdir "$FNAME-dir"
 
 (
 cd "$FNAME-dir"
