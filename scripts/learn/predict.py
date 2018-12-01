@@ -543,12 +543,14 @@ public:
     }}
 
     SatZillaFeatures center[{clusters}];
+    std::vector<int> used_clusters;
 
 """.format(clusters=options.clusters, basename=options.basename))
 
         f.write("    void set_up_centers() {\n")
-        for i in range(options.clusters):
+        for i in self.used_clusters:
             f.write("\n        // Doing cluster center %d\n" % i)
+            f.write("\n        used_clusters.push_back(%d)\n" % i);
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
@@ -576,7 +578,7 @@ public:
     int which_is_closest(const SatZillaFeatures& p) {
         double closest_dist = std::numeric_limits<double>::max();
         int closest = -1;
-        for (int i = 0; i < %d; i++) {
+        for (int i: used_clusters) {
             double dist = norm_dist(center[i], p);
             if (dist < closest_dist) {
                 closest_dist = dist;
@@ -585,7 +587,7 @@ public:
         }
         return closest;
     }
-""" % options.clusters)
+""")
 
         f.write("""
 };
@@ -612,10 +614,20 @@ public:
         f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
             basename=options.basename, clusters=options.clusters))
 
-        for i in range(len(functs)):
-            func = functs[i];
-            f.write("    CMSat::%s" % func)
-            if i < len(functs)-1:
+        functs_at = 0
+        for i in range(options.clusters):
+            dummy = ""
+            if i not in self.used_clusters:
+                # just use a dummy one. will never be called
+                func = functs[functs_at]
+                dummy = " /*dummy function, cluster too small*/"
+            else:
+                # use the correct one
+                func = functs[functs_at]
+                functs_at += 1
+
+            f.write("    CMSat::{func} {dummy}".format(func=func, dummy=dummy))
+            if i < options.clusters-1:
                 f.write(",\n")
             else:
                 f.write("\n")
@@ -634,12 +646,12 @@ public:
                 dist[x] += 1
         print(dist)
 
-        used_clusters = []
+        self.used_clusters = []
         for clust_num, clauses in dist.items():
             if clauses < 1000:
                 print("== !! Will skip cluster %d !! ==" % clust_num)
             else:
-                used_clusters.append(clust_num)
+                self.used_clusters.append(clust_num)
 
         for clno in range(options.clusters):
             x = self.df[(self.df.clust == clno)]
@@ -652,14 +664,14 @@ public:
                     fname_dist[fname] += 1
 
             skipped = "SKIPPED"
-            if clno in used_clusters:
+            if clno in self.used_clusters:
                 skipped = ""
             print("** File name distribution in {skipped} cluster {clno} **".format(
                 clno=clno, skipped=skipped))
             for a, b in fname_dist.items():
                 print("--> %25s : %s" % (a, b))
 
-        return used_clusters
+        self.used_clusters = sorted(self.used_clusters)
 
     def cluster(self):
         features = self.df.columns.values.flatten().tolist()
@@ -691,16 +703,18 @@ public:
             print(clust.labels_)
             print(clust.cluster_centers_)
             print(clust.get_params())
-        used_clusters = self.check_clust_distr(clust)
+        self.check_clust_distr(clust)
         print(clust.cluster_centers_)
 
         fnames = []
         functs = []
-        for clno in range(options.clusters):
-            funcname = "should_keep_{basename}{clno}".format(clno=clno, basename=options.basename)
+        for clno in self.used_clusters:
+            funcname = "should_keep_{basename}{clno}".format(
+                clno=clno, basename=options.basename)
             functs.append(funcname)
 
-            fname = "final_predictor_{basename}{clno}.h".format(clno=clno, basename=options.basename)
+            fname = "final_predictor_{basename}{clno}.h".format(
+                clno=clno, basename=options.basename)
             fnames.append(fname)
 
             if options.basedir is not None:
@@ -710,6 +724,8 @@ public:
             learner = Learner(
                 self.df[(self.df.clust == clno)],
                 funcname, f)
+
+            print(" ---- cluster %d ----- " % clno)
             learner.learn()
 
         if options.basedir is not None:
