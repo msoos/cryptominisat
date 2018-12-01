@@ -343,7 +343,7 @@ class QueryCls (QueryHelper):
 
         self.q_ok_select = """
         SELECT
-        tags.tag as "fname"
+        tags.tag as `fname`
         {clause_dat}
         {restart_dat}
         {satzfeat_dat}

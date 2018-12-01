@@ -276,7 +276,6 @@ static bool {funcname}(
         clf = None
         # clf = sklearn.linear_model.LogisticRegression()
         if final:
-
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                     max_depth=options.tree_depth,
                     min_samples_split=split_point)
@@ -625,22 +624,7 @@ public:
         f.write("} //end namespace\n\n")
         f.write("#endif //ALL_PREDICTORS\n")
 
-    def cluster(self):
-        features = self.df.columns.values.flatten().tolist()
-
-        # features from dataframe
-        sz_all = []
-        for x in features:
-            if "szfeat_cur" in x:
-                sz_all.append(x)
-        sz_all.remove("szfeat_cur.conflicts")
-        sz_all.remove("szfeat_cur.var_cl_ratio")
-
-        # fit to slice that only includes CNF features
-        df2 = self.df[sz_all]
-        clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
-        clust.fit(df2)
-
+    def check_clust_distr(self, clust):
         # print distribution
         dist = {}
         for x in clust.labels_:
@@ -650,15 +634,65 @@ public:
                 dist[x] += 1
         print(dist)
 
+        used_clusters = []
+        for clust_num, clauses in dist.items():
+            if clauses < 1000:
+                print("== !! Will skip cluster %d !! ==" % clust_num)
+            else:
+                used_clusters.append(clust_num)
+
+        for clno in range(options.clusters):
+            x = self.df[(self.df.clust == clno)]
+            fname_dist = {}
+            for _, d in x.iterrows():
+                fname = d['fname']
+                if fname not in fname_dist:
+                    fname_dist[fname] = 1
+                else:
+                    fname_dist[fname] += 1
+
+            skipped = "SKIPPED"
+            if clno in used_clusters:
+                skipped = ""
+            print("** File name distribution in {skipped} cluster {clno} **".format(
+                clno=clno, skipped=skipped))
+            for a, b in fname_dist.items():
+                print("--> %25s : %s" % (a, b))
+
+        return used_clusters
+
+    def cluster(self):
+        features = self.df.columns.values.flatten().tolist()
+
+        # features from dataframe
+        sz_all = []
+        for x in features:
+            if "szfeat_cur" in x:
+                sz_all.append(x)
+        sz_all.remove("szfeat_cur.conflicts")
+        if options.verbose:
+            print(sz_all)
+
+        sz_all = []
+        sz_all.append("szfeat_cur.var_cl_ratio")
+        sz_all.append("szfeat_cur.numClauses")
+        sz_all.append("szfeat_cur.avg_num_resolutions")
+        sz_all.append("szfeat_cur.irred_size_distr_mean")
+
+        # fit to slice that only includes CNF features
+        df2 = self.df[sz_all]
+        clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
+        clust.fit(df2)
+        self.df["clust"] = clust.labels_
+
         # print information about the clusters
         if options.verbose:
             print(sz_all)
             print(clust.labels_)
             print(clust.cluster_centers_)
             print(clust.get_params())
-
-        # predict based on the cluster
-        self.df["clust"] = clust.labels_
+        used_clusters = self.check_clust_distr(clust)
+        print(clust.cluster_centers_)
 
         fnames = []
         functs = []
