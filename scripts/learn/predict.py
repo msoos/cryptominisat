@@ -91,6 +91,7 @@ class Learner:
         else:
             print('%s without normalization' % title)
 
+        np.set_printoptions(precision=2)
         print(cm)
 
         if options.show:
