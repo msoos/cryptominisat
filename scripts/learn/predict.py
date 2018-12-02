@@ -612,7 +612,7 @@ public:
 #ifndef ALL_PREDICTORS_{basename}_H
 #define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
         f.write('#include "clause.h"\n\n')
-        for fname in fnames:
+        for _, fname in fnames.items():
             f.write('#include "%s"\n' % fname)
 
         f.write("namespace CMSat {\n")
