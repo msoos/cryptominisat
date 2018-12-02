@@ -559,7 +559,7 @@ public:
         f.write("    void set_up_centers() {\n")
         for i in self.used_clusters:
             f.write("\n        // Doing cluster center %d\n" % i)
-            f.write("\n        used_clusters.push_back(%d)\n" % i);
+            f.write("\n        used_clusters.push_back(%d);\n" % i);
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
@@ -623,17 +623,15 @@ public:
         f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
             basename=options.basename, clusters=options.clusters))
 
-        functs_at = 0
         for i in range(options.clusters):
             dummy = ""
             if i not in self.used_clusters:
                 # just use a dummy one. will never be called
-                func = functs[functs_at]
+                func = next(iter(functs.values()))
                 dummy = " /*dummy function, cluster too small*/"
             else:
                 # use the correct one
-                func = functs[functs_at]
-                functs_at += 1
+                func = functs[i]
 
             f.write("    CMSat::{func} {dummy}".format(func=func, dummy=dummy))
             if i < options.clusters-1:
@@ -713,18 +711,17 @@ public:
             print(clust.cluster_centers_)
             print(clust.get_params())
         self.check_clust_distr(clust)
-        print(clust.cluster_centers_)
 
-        fnames = []
-        functs = []
+        fnames = {}
+        functs = {}
         for clno in self.used_clusters:
             funcname = "should_keep_{basename}{clno}".format(
                 clno=clno, basename=options.basename)
-            functs.append(funcname)
+            functs[clno] = funcname
 
             fname = "final_predictor_{basename}{clno}.h".format(
                 clno=clno, basename=options.basename)
-            fnames.append(fname)
+            fnames[clno] = fname
 
             if options.basedir is not None:
                 f = options.basedir+"/"+fname
