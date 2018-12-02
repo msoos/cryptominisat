@@ -127,6 +127,7 @@ class Learner:
     class CodeWriter:
         def __init__(self, clf, features, funcname, code_file):
             self.f = open(code_file, 'w')
+            self.code_file = code_file
             write_mit_header(self.f)
             self.clf = clf
             self.feat = features
@@ -148,8 +149,9 @@ static double estimator_{funcname}_0(
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
 ) {{\n""".format(funcname=self.funcname))
-                print(self.clf)
-                print(self.clf.get_params())
+                if options.verbose:
+                    print(self.clf)
+                    print(self.clf.get_params())
                 self.get_code(self.clf, 1)
                 self.f.write("}\n")
             else:
@@ -165,6 +167,7 @@ static double estimator_{funcname}_{est_num}(
                     self.get_code(tree, 1)
                     self.f.write("}\n")
 
+            #######################
             # Final tally
             self.f.write("""
 static bool {funcname}(
@@ -184,6 +187,7 @@ static bool {funcname}(
             self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
             self.f.write("}\n")
             self.f.write("}\n")
+            print("Wrote code to: ", self.code_file)
 
         def recurse(self, left, right, threshold, features, node, tabs):
             tabsize = tabs*"    "
