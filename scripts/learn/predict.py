@@ -258,7 +258,6 @@ static bool {funcname}(
         _, df_tmp = sklearn.model_selection.train_test_split(self.df, test_size=options.only_pecr)
         df = df_tmp.copy()
 
-        print("================ predicting %s ================" % to_predict)
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", df.shape)
         print("-> Predicting          :", to_predict)
@@ -460,8 +459,6 @@ static bool {funcname}(
     def learn(self):
         if options.check_row_data:
             self.check_too_large_or_nan_values(self.df)
-
-        print("total samples: %5d" % self.df.shape[0])
 
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
@@ -731,7 +728,7 @@ public:
                 self.df[(self.df.clust == clno)],
                 funcname, f)
 
-            print(" ---- cluster %d ----- " % clno)
+            print("================ Cluster %3d ================" % clno)
             learner.learn()
 
         if options.basedir is not None:
