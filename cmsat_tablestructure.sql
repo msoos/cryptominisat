@@ -314,6 +314,12 @@ create table `goodClauses` (
     `last_prop_used` bigint(20) DEFAULT NULL
 );
 
+DROP TABLE IF EXISTS `usedClauses`;
+create table `usedClauses` (
+    `clauseID` bigint(20) NOT NULL,
+    `used_at` bigint(20) NOT NULL
+);
+
 DROP TABLE IF EXISTS `goodClausesFixed`;
 create table `goodClausesFixed` (
     `clauseID` bigint(20) NOT NULL,

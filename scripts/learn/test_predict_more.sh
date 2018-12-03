@@ -80,8 +80,8 @@ cd "$FNAME-dir"
 ../cryptominisat5 --gluecut0 100 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME"
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 
-../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x $FNAMEOUT.lemmas -i
-../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.lemmas"
+../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
 
 ../gen_pandas.py "$FNAMEOUT.db" --fixed "$FIXED"
 # ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv

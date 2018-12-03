@@ -22,6 +22,7 @@ from __future__ import print_function
 import sqlite3
 import optparse
 import os
+import struct
 
 
 class Query:
@@ -30,9 +31,13 @@ class Query:
         self.c = self.conn.cursor()
         # zero out goodClauses
         self.c.execute('delete from goodClauses;')
-        self.cur_good_ids_num = 0
-        self.num_goods_total = 0
-        self.cur_good_ids = []
+        self.good_ids = []
+        self.good_ids_num = 0
+        self.good_ids_total = 0
+
+        self.cl_used = []
+        self.cl_used_num = 0
+        self.cl_used_total = 0
 
     def __enter__(self):
         return self
@@ -41,35 +46,34 @@ class Query:
         self.conn.commit()
         self.conn.close()
 
-    def parse_and_add_lemmas(self, lemmafname):
+    def get_last_good(self, basefname):
         last_good = 0
         for i in range(100):
-            tfname = "%s-%d" % (lemmafname, i)
-            print("Checking if lemma file %s exists" % tfname)
+            tfname = "%s-%d" % (basefname, i)
+            print("Checking if file %s exists" % tfname)
             if not os.path.isfile(tfname):
                 break
+            last_good = i
 
-            print("Checking if lemma file %s 'Finished'" % tfname)
-            with open(tfname, "r") as f:
-                for line in f:
-                    if "Finished" in line:
-                        last_good = i
+        return last_good
 
-        tfname = "%s-%d" % (lemmafname, last_good)
-        print("Using lemma file", tfname)
+    def add_goodClauses(self, goodClFname):
+        last_good = self.get_last_good(goodClFname)
+        tfname = "%s-%d" % (goodClFname, last_good)
+        print("Using goodClauses file", tfname)
         with open(tfname, "r") as f:
             for line in f:
                 line = line.strip().split(" ")
                 self.parse_one_line(line)
 
         # final dump
-        self.dump_ids()
+        self.dump_goodClauses()
 
-        print("Parsed %d number of good lemmas" % self.num_goods_total)
+        print("Parsed %d number of good lemmas" % self.good_ids_total)
 
     def parse_one_line(self, line):
-        self.cur_good_ids_num += 1
-        self.num_goods_total += 1
+        self.good_ids_num += 1
+        self.good_ids_total += 1
 
         # get ID
         myid = int(line[0])
@@ -81,15 +85,29 @@ class Query:
         last_used = int(line[3])
         sum_hist_used = int(line[4])
 
-        # append to cur_good_ids
-        self.cur_good_ids.append(
+        # append to good_ids
+        self.good_ids.append(
             (myid, num_used, first_used, last_used, sum_hist_used))
 
         # don't run out of memory, dump early
-        if self.cur_good_ids_num > 10000:
-            self.dump_ids()
+        if self.good_ids_num > 10000:
+            self.dump_goodClauses()
 
-    def dump_ids(self):
+    def delete_goodClauses(self):
+        q = """
+        delete from goodClauses;
+        """
+        self.c.execute(q)
+        print("Deleted data from goodClauses")
+
+    def delete_usedClauses(self):
+        q = """
+        delete from usedClauses;
+        """
+        self.c.execute(q)
+        print("Deleted data from usedClauses")
+
+    def dump_goodClauses(self):
         self.c.executemany("""
         INSERT INTO goodClauses (
         `clauseID`
@@ -97,9 +115,9 @@ class Query:
         , `first_confl_used`
         , `last_confl_used`
         , `sum_hist_used`)
-        VALUES (?, ?, ?, ?, ?);""", self.cur_good_ids)
-        self.cur_good_ids = []
-        self.cur_good_ids_num = 0
+        VALUES (?, ?, ?, ?, ?);""", self.good_ids)
+        self.good_ids = []
+        self.good_ids_num = 0
 
     def vacuum(self):
         q = """
@@ -112,12 +130,45 @@ class Query:
         self.conn.isolation_level = lev
         print("Vacuumed database")
 
+    def add_usedClauses(self, usedClFname):
+        last_good = self.get_last_good(usedClFname)
+        tfname = "%s-%d" % (usedClFname, last_good)
+        print("Using usedClauses file", tfname)
+
+        self.cl_used = []
+        self.cl_used_num = 0
+        self.cl_used_total = 0
+        with open(tfname, "rb") as f:
+            while True:
+                b1 = f.read(8)
+                if not b1:
+                    break
+                b2 = f.read(8)
+                cl_id = struct.unpack("<q", b1)[0]
+                conf = struct.unpack("<q", b2)[0]
+                self.cl_used.append((cl_id, conf))
+                self.cl_used_num += 1
+                self.cl_used_total += 1
+                if self.cl_used_num > 10000:
+                    self.dump_usedClauses()
+
+        self.dump_usedClauses()
+        print("Added used data:", self.cl_used_total)
+
+    def dump_usedClauses(self):
+        self.c.executemany("""
+        INSERT INTO usedClauses (
+        `clauseID`
+        , `used_at`)
+        VALUES (?, ?);""", self.cl_used)
+        self.cl_used = []
+        self.cl_used_num = 0
+
 
 if __name__ == "__main__":
-    usage = """usage: %prog [options] sqlite_db lemmas
+    usage = """usage: %prog [options] sqlite_db goodClFname usedClFname
 
-It adds lemma indices from "lemmas" to the SQLite database, indicating whether
-it was good or not."""
+It adds goodClauses and usedClauses to the SQLite database"""
 
     parser = optparse.OptionParser(usage=usage)
 
@@ -126,18 +177,25 @@ it was good or not."""
 
     (options, args) = parser.parse_args()
 
-    if len(args) != 2:
+    if len(args) != 3:
         print("Error. Please follow usage")
         print(usage)
         exit(-1)
 
     dbfname = args[0]
-    lemmafname = args[1]
+    goodClFname = args[1]
+    usedClFname = args[2]
     print("Using sqlite3db file %s" % dbfname)
-    print("Base lemma file is %s" % lemmafname)
+    print("Base goodClauses file is %s" % goodClFname)
+    print("Base usedClauses file is %s" % usedClFname)
 
     with Query(dbfname) as q:
-        q.parse_and_add_lemmas(lemmafname)
+        q.delete_goodClauses()
+        q.add_goodClauses(goodClFname)
+
+        q.delete_usedClauses()
+        q.add_usedClauses(usedClFname)
+
         q.vacuum()
 
     print("Finished adding good lemma indicators to db %s" % dbfname)
