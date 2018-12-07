@@ -651,7 +651,7 @@ public:
         print(dist)
 
         self.used_clusters = []
-        minimum = int(self.df.shape[0]*0.1)
+        minimum = int(self.df.shape[0]*0.05)
         for clust_num, clauses in dist.items():
             if clauses < minimum:
                 print("== !! Will skip cluster %d !! ==" % clust_num)
