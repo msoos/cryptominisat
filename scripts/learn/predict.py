@@ -462,7 +462,7 @@ static bool {funcname}(
 
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
-            features, ["x.num_used", "x.class", "x.lifetime", "fname", "dump_no"])
+            features, ["x.num_used", "x.class", "x.lifetime", "fname"])
         if options.no_rdb1:
             features = self.rem_features(features, ["rdb1", "rdb.rel"])
             features = self.rem_features(features, ["rdb.rel"])
