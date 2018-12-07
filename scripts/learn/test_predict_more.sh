@@ -59,6 +59,7 @@ FIXED="30000"
 
 # cleanup
 (
+rm -rf "$FNAME-dir"
 mkdir "$FNAME-dir"
 cd "$FNAME-dir"
 rm -f $FNAMEOUT.d*
