@@ -318,7 +318,7 @@ class QueryCls (QueryHelper):
         (   (goodcl.num_used > 5
                 and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
             )
-            or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 10000)
+            or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
                 AND goodcl.first_confl_used-cl.conflicts < 10000
             )
         )
