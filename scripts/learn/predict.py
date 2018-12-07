@@ -33,6 +33,7 @@ import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import sklearn.model_selection
+import re
 
 
 def write_mit_header(f):
@@ -133,6 +134,12 @@ class Learner:
             self.feat = features
             self.funcname = funcname
 
+        def define_avg_for_cls(self):
+            self.f.write("""
+    double rdb0_avg_confl = ((double)cl->stats.sum_uip1_used)/((double)cl->stats.sum_delta_confl_uip1_used);
+    double rdb0_used_per_confl = ((double)cl->stats.sum_uip1_used)/((double)sumConflicts-(double)cl->stats.introduced_at_conflict);
+""")
+
         def print_full_code(self):
             self.f.write("""#include "clause.h"
 #include "reducedb.h"
@@ -145,6 +152,7 @@ namespace CMSat {
                 self.f.write("""
 static double estimator_{funcname}_0(
     const CMSat::Clause* cl
+    , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
@@ -152,6 +160,7 @@ static double estimator_{funcname}_0(
                 if options.verbose:
                     print(self.clf)
                     print(self.clf.get_params())
+                self.define_avg_for_cls()
                 self.get_code(self.clf, 1)
                 self.f.write("}\n")
             else:
@@ -160,6 +169,7 @@ static double estimator_{funcname}_0(
                     self.f.write("""
 static double estimator_{funcname}_{est_num}(
     const CMSat::Clause* cl
+    , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
@@ -172,6 +182,7 @@ static double estimator_{funcname}_{est_num}(
             self.f.write("""
 static bool {funcname}(
     const CMSat::Clause* cl
+    , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
@@ -180,6 +191,7 @@ static bool {funcname}(
             for i in range(num_trees):
                 self.f.write("""    votes += estimator_{funcname}_{est_num}(
     cl
+    , sumConflicts
     , rdb0_last_touched_diff
     , rdb0_act_ranking
     , rdb0_act_ranking_top_10
@@ -207,9 +219,14 @@ static bool {funcname}(
                     pass
                 elif feat_name == "rdb0_act_ranking":
                     pass
+                elif feat_name == "rdb0_avg_confl":
+                    pass
+                elif feat_name == "rdb0_used_per_confl":
+                    pass
                 else:
                     feat_name = "cl->stats." + feat_name
 
+                feat_name = re.sub(r"dump_no", r"dump_number", feat_name)
                 feat_name = feat_name.replace("cl->stats.rdb0_", "cl->stats.")
 
                 self.f.write("{tabs}if ( {feat} <= {threshold}f ) {{\n".format(
@@ -616,7 +633,13 @@ public:
             f.write('#include "%s"\n' % fname)
 
         f.write("namespace CMSat {\n")
-        f.write("typedef bool (*keep_func_type_%s)(const CMSat::Clause*, const uint32_t, const uint32_t, const uint32_t);\n" % options.basename)
+        f.write("""typedef bool (*keep_func_type_{basename})(
+    const CMSat::Clause*,
+    const uint64_t,
+    const uint32_t,
+    const uint32_t,
+    const uint32_t);\n""".format(basename=options.basename))
+
         f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
             basename=options.basename, clusters=options.clusters))
 

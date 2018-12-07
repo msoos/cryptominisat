@@ -344,6 +344,7 @@ void ReduceDB::handle_lev1_final_predictor()
                 && !cl->stats.locked_long
                 && !should_keep_short_funcs[short_cluster](
                     cl
+                    , solver->sumConflicts
                     , last_touched_diff
                     , i
                     , act_ranking_top_10
@@ -364,6 +365,7 @@ void ReduceDB::handle_lev1_final_predictor()
                 } else {
                     if (cl->stats.dump_number > 0 && should_keep_long_funcs[long_cluster](
                         cl
+                        , solver->sumConflicts
                         , last_touched_diff
                         , i
                         , act_ranking_top_10

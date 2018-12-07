@@ -464,6 +464,8 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             antec_data.size_longs.push(cl->size());
             if (!update_bogoprops) {
                 cl->stats.used_for_uip_creation++;
+                cl->stats.sum_uip1_used++;
+                cl->stats.sum_delta_confl_uip1_used += sumConflicts - cl->stats.introduced_at_conflict;
             }
             #endif
 
@@ -1731,6 +1733,8 @@ void Searcher::set_clause_data(
     cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;
     cl->stats.glue_rel_long = (double)cl->stats.glue/glue_hist_long;
     cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
+
+    cl->stats.num_antecedents_rel = (double)antec_data.num()/hist.numResolutionsHistLT.avg();
     cl->stats.glue_smaller_than_hist_lt = (double)cl->stats.glue < glue_hist;
     cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
     cl->stats.num_overlap_literals = num_overlap_literals;

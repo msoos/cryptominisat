@@ -158,13 +158,15 @@ class QueryCls (QueryHelper):
         , rdb0.`ttl` as `rdb0.ttl`
         , rdb0.`act_ranking_top_10` as `rdb0.act_ranking_top_10`
         , rdb0.`act_ranking` as `rdb0.act_ranking`
+        , rdb0.`sum_uip1_used` as `rdb0.sum_uip1_used`
+        , rdb0.`sum_delta_confl_uip1_used` as `rdb0.sum_delta_confl_uip1_used`
         """
 
         self.clause_dat = """
         -- , cl.`simplifications` as `cl.simplifications`
         -- , cl.`restarts` as `cl.restarts`
         -- , cl.`prev_restart` as `cl.prev_restart`
-        -- , cl.`conflicts` as `cl.conflicts`
+        , cl.`conflicts` as `cl.conflicts`
         -- , cl.`latest_satzilla_feature_calc` as `cl.latest_satzilla_feature_calc`
         -- , cl.`clauseID` as `cl.clauseID`
         , cl.`glue` as `cl.glue`
@@ -845,6 +847,10 @@ def transform(df):
     df["cl.overlap_smaller_than_hist"] = (df["cl.num_overlap_literals"]<df["cl.antec_overlap_hist"]).astype(int)
     df["cl.branch_smaller_than_hist_queue"] = (df["cl.decision_level"]<df["cl.branch_depth_hist_queue"]).astype(int)
 
+    df["rdb0.avg_confl"] = df["rdb0.sum_uip1_used"]/df["rdb0.sum_delta_confl_uip1_used"]
+    df["rdb0.avg_confl"].fillna(0, inplace=True)
+    df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
+    df["rdb0.used_per_confl"].fillna(0, inplace=True)
 
 
     # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]

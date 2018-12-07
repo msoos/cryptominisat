@@ -41,18 +41,6 @@ public:
     void handle_lev2();
     void handle_lev1_final_predictor();
     void dump_sql_cl_data(const string& cur_rst_type);
-    bool should_keep_short(
-        const Clause* cl
-        , const uint32_t rdb0_last_touched_diff
-        , const uint32_t rdb0_act_ranking
-        , const uint32_t rdb0_act_ranking_top_10
-    );
-    bool should_keep_long(
-        const Clause* cl
-        , const uint32_t rdb0_last_touched_diff
-        , const uint32_t rdb0_act_ranking
-        , const uint32_t rdb0_act_ranking_top_10
-    );
     uint64_t nbReduceDB_lev1 = 0;
     uint64_t nbReduceDB_lev2 = 0;
 

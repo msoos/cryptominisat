@@ -141,23 +141,36 @@ struct ClauseStats
     bool        glue_smaller_than_hist_lt   = 0;
     bool        glue_smaller_than_hist_queue= 0;
     uint32_t    num_overlap_literals        = 0;
-    uint32_t    overlap                     = 0;
     float       antec_num_total_lits_rel    = 0;
-    float       overlap_rel                 = 0;
     float       size_rel                    = 0;
+    double      num_antecedents_rel         = 0;
+    //division of:
+    // cl.num_antecedents -- antec_data.num()
+    // cl.num_antecedents_hist -- hist.numResolutionsHistLT.avg()
+
+
     uint32_t    rdb1_used_for_uip_creation  = 0; //special
+
+
+    //for locking in for long
+    uint16_t    locked_long = 0;
     #endif
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+
+    //for average and sum stats
+    uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
+    uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
+
+    //below resets
     uint64_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t sum_of_branch_depth_conflict = 0;
     uint64_t propagations_made = 0; ///<Number of times caused propagation
     uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
-    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation
+    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
     AtecedentData<uint16_t> antec_data;
-    uint16_t locked_long = 0;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
