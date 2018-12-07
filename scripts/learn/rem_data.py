@@ -61,16 +61,26 @@ class QueryDatRem(QueryHelper):
         """
         self.c.execute(q)
 
-
-        q = """
-        drop index if exists `idxclid30`;
-        """
-        self.c.execute(q)
-
-        q="create index `idxclid30` on `usedClauseIDs` (`clauseID`);"
-        self.c.execute(q)
-
         print("Recreated usedClauseIDs table")
+
+        queries = """
+        drop index if exists `idxclid30`;
+        drop index if exists `idxclid31`;
+        drop index if exists `idxclid32`;
+        drop index if exists `idxclid33`;
+        drop index if exists `idxclid34`;
+
+        create index `idxclid30` on `usedClauseIDs` (`clauseID`);
+        create index `idxclid31` on `clauseStats` (`clauseID`);
+        create index `idxclid32` on `reduceDB` (`clauseID`);
+        create index `idxclid33` on `goodClauses` (`clauseID`);
+        create index `idxclid34` on `usedClauses` (`clauseID`);
+        """
+
+        for q in queries.split("\n"):
+            self.c.execute(q)
+
+        print("Recreated indexes needed")
 
     def fill_used_cl_ids_table_cheat(self):
         val = int(options.limit)
@@ -80,6 +90,11 @@ class QueryDatRem(QueryHelper):
         clauseID from goodClauses order by random() limit %d;
         """ % val
         self.c.execute(q)
+
+        ret = self.c.execute("select count() from usedClauseIDs")
+        rows = self.c.fetchall()
+        good_ids = rows[0][0]
+        print("IDs from goodClauses: %d" % good_ids)
 
         val = int(options.limit)*0.7
         q = """
@@ -93,6 +108,11 @@ class QueryDatRem(QueryHelper):
         """ % val
         self.c.execute(q)
 
+        ret = self.c.execute("select count() from usedClauseIDs")
+        rows = self.c.fetchall()
+        all_ids = rows[0][0]
+        print("IDs from clauseStats that are not in good: %d" % (all_ids-good_ids))
+
     def fill_used_cl_ids_table_full(self):
         val = int(options.limit)
         q = """
@@ -104,24 +124,29 @@ class QueryDatRem(QueryHelper):
         """ % val
         self.c.execute(q)
 
-
     def filter_tables(self):
+        tables = ["clauseStats", "reduceDB", "goodClauses", "usedClauses"]
         q = """
-        DELETE FROM clauseStats WHERE clauseID NOT IN
+        DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from usedClauseIDs );"""
-        self.c.execute(q)
 
-        q = """
-        DELETE FROM reduceDB WHERE clauseID NOT IN
-        (SELECT clauseID from usedClauseIDs );"""
-        self.c.execute(q)
-
-        q = """
-        DELETE FROM goodClauses WHERE clauseID NOT IN
-        (SELECT clauseID from usedClauseIDs );"""
-        self.c.execute(q)
+        for table in tables:
+            self.c.execute(q.format(table=table))
+            print("Filtered table {table}".format(table=table))
 
     def vacuum(self):
+        queries = """
+        drop index if exists `idxclid30`;
+        drop index if exists `idxclid31`;
+        drop index if exists `idxclid32`;
+        drop index if exists `idxclid33`;
+        drop index if exists `idxclid34`;
+        """
+        for q in queries.split("\n"):
+            self.c.execute(q)
+
+        print("Deleted indexes")
+
         q = """
         vacuum;
         """
