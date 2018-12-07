@@ -83,13 +83,15 @@ cd "$FNAME-dir"
 
 ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 ../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
+cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
+../rem_data.py "$FNAMEOUT-min.db" --limit 60000
 
-../gen_pandas.py "$FNAMEOUT.db" --fixed "$FIXED"
+../gen_pandas.py "$FNAMEOUT-min.db" --fixed "$FIXED"
 # ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
 
 
-../predict.py "$FNAMEOUT.db-short-pandasdata.dat" --basedir "../../src/" --final --tree --code short --split 0.1 --clust 1
-../predict.py "$FNAMEOUT.db-long-pandasdata.dat"  --basedir "../../src/" --final --tree --code long  --split 0.1 --clust 1
+../predict.py "$FNAMEOUT-min.db-short-pandasdata.dat" --basedir "../../src/" --final --tree --code short --split 0.1 --clust 1
+../predict.py "$FNAMEOUT-min.db-long-pandasdata.dat"  --basedir "../../src/" --final --tree --code long  --split 0.1 --clust 1
 )
 
 ./build_final_predictor.sh
