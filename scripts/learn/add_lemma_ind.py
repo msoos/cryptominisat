@@ -47,13 +47,17 @@ class Query:
         self.conn.close()
 
     def get_last_good(self, basefname):
-        last_good = 0
+        last_good = -1
         for i in range(100):
             tfname = "%s-%d" % (basefname, i)
             print("Checking if file %s exists" % tfname)
             if not os.path.isfile(tfname):
                 break
             last_good = i
+
+        if last_good == -1:
+            print("ERROR: file does not exist at all")
+            exit(-1)
 
         return last_good
 
