@@ -59,7 +59,7 @@ bool CardFinder::find_connector(Lit lit1, Lit lit2) const
 
 void CardFinder::find_cards()
 {
-    vector<uint8_t>& seen = solver->seen2;
+    vector<uint16_t>& seen = solver->seen;
     vector<Lit>& toClear = solver->toClear;
 
     cards.clear();
@@ -96,22 +96,74 @@ void CardFinder::find_cards()
                 cout << "c [cardfind] Found card of size " << lits_in_card.size()
                 << " for lit " << l << endl;
             }
-            for(const Lit l_c: lits_in_card) {
-                seen[l_c.toInt()] = 1;
-                toClear.push_back(l_c);
-            }
+
             lits_in_card.push_back(l);
-            cards.push_back(lits_in_card);
+            for(const Lit l_c: lits_in_card) {
+                if (!seen[l_c.toInt()]) {
+                    toClear.push_back(l_c);
+                }
+                seen[l_c.toInt()]++;
+                solver->watches[l_c].push(Watched(cards.size()));
+                solver->watches.smudge(l_c);
+            }
             total_sizes+=lits_in_card.size();
+            std::sort(lits_in_card.begin(), lits_in_card.end());
+
+            //fast push-back
+            cards.resize(cards.size()+1);
+            std::swap(cards[cards.size()-1], lits_in_card);
+
         } else {
             //cout << "lits_in_card.size():" << lits_in_card.size() << endl;
             //cout << "Found none for " << l << endl;
         }
     }
+
+    std::sort(toClear.begin(), toClear.end());
+    for(Lit lit: toClear) {
+        if (seen[lit.toInt()]+seen[(~lit).toInt()] <= 1) {
+            continue;
+        }
+
+        cout << "Clash on lit " << lit << endl;
+        for(auto ws: solver->watches[lit]) {
+            if (ws.isIdx()) {
+                cout << "IDX " << ws.get_idx() << ": ";
+                for(Lit x: cards[ws.get_idx()]) {
+                    cout << x << ", ";
+                }
+                cout << endl;
+            }
+        }
+        for(auto ws: solver->watches[~lit]) {
+            if (ws.isIdx()) {
+                cout << "IDX " << ws.get_idx() << ": ";
+                for(Lit x: cards[ws.get_idx()]) {
+                    cout << x << ", ";
+                }
+                cout << endl;
+            }
+        }
+    }
+
+    //clean indexes
+    for(auto& lit: solver->watches.get_smudged_list()) {
+        auto& ws = solver->watches[lit];
+        size_t j = 0;
+        for(size_t i = 0; i < ws.size(); i++) {
+            if (!ws[i].isIdx()) {
+                ws[j++] = ws[i];
+            }
+        }
+        ws.resize(j);
+    }
+    solver->watches.clear_smudged();
     for(const Lit x: toClear) {
         seen[x.toInt()] = 0;
     }
     toClear.clear();
+
+
 
     if (solver->conf.verbosity) {
         double avg = 0;
