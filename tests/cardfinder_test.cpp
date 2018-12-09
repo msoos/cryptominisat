@@ -37,7 +37,7 @@ struct card_finder : public ::testing::Test {
         SolverConf conf;
         //conf.verbosity = 1;
         s = new Solver(&conf, &must_inter);
-        s->new_vars(30);
+        s->new_vars(50);
         finder =  new CardFinder(s);
     }
     ~card_finder()
@@ -67,6 +67,42 @@ TEST_F(card_finder, find_one)
 
     finder->find_cards();
     EXPECT_EQ(finder->get_cards().size(), 1U);
+}
+
+TEST_F(card_finder, find_one_4)
+{
+    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->add_clause_outer(str_to_cl("-1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3"));
+    s->add_clause_outer(str_to_cl("-2, -4"));
+    s->add_clause_outer(str_to_cl("-3, -4"));
+
+    finder->find_cards();
+    ASSERT_EQ(finder->get_cards().size(), 1U);
+    vector<Lit> lits = finder->get_cards()[0];
+    std::sort(lits.begin(), lits.end());
+    EXPECT_EQ(lits, str_to_cl("1,2,3,4"));
+}
+
+TEST_F(card_finder, find_two)
+{
+    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->add_clause_outer(str_to_cl("-1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3"));
+    s->add_clause_outer(str_to_cl("-2, -4"));
+    s->add_clause_outer(str_to_cl("-3, -4"));
+
+    s->add_clause_outer(str_to_cl("-11, -21"));
+    s->add_clause_outer(str_to_cl("-11, -31"));
+    s->add_clause_outer(str_to_cl("-11, -41"));
+    s->add_clause_outer(str_to_cl("-21, -31"));
+    s->add_clause_outer(str_to_cl("-21, -41"));
+    s->add_clause_outer(str_to_cl("-31, -41"));
+
+    finder->find_cards();
+    ASSERT_EQ(finder->get_cards().size(), 2U);
 }
 
 int main(int argc, char **argv) {
