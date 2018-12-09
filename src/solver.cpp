@@ -2077,13 +2077,17 @@ void Solver::print_prop_confl_stats(
 
 void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_total) const
 {
-    cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
-    if (conf.do_print_times)
-    print_stats_line("c UIP search time"
-        , sumSearchStats.cpu_time
-        , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
-        , "% time"
-    );
+    if (conf.verbStats >= 1) {
+        cout << "c ------- FINAL TOTAL SEARCH STATS ---------" << endl;
+    }
+
+    if (conf.do_print_times) {
+        print_stats_line("c UIP search time"
+            , sumSearchStats.cpu_time
+            , stats_line_percent(sumSearchStats.cpu_time, cpu_time)
+            , "% time"
+        );
+    }
 
     if (conf.verbStats >= 3) {
         print_full_restart_stat(cpu_time, cpu_time_total);
