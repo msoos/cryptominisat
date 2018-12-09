@@ -2085,11 +2085,11 @@ void CMSat::Solver::print_stats(const double cpu_time, const double cpu_time_tot
         , "% time"
     );
 
-    if (conf.verbStats >= 2) {
+    if (conf.verbStats >= 3) {
         print_full_restart_stat(cpu_time, cpu_time_total);
-    } else if (conf.verbStats == 1) {
+    } else if (conf.verbStats == 2) {
         print_norm_stats(cpu_time, cpu_time_total);
-    } else {
+    } else if (conf.verbStats == 1) {
         print_min_stats(cpu_time, cpu_time_total);
     }
 }

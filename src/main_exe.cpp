@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     try {
         Main main(argc, argv);
         main.conf.verbosity = 1;
-        main.conf.verbStats = 1;
+        main.conf.verbStats = 2;
         main.parseCommandLine();
 
         signal(SIGINT, SIGINT_handler);

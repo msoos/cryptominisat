@@ -588,7 +588,7 @@ void Main::add_supported_options()
     po::options_description printOptions("Printing options");
     printOptions.add_options()
     ("verbstat", po::value(&conf.verbStats)->default_value(conf.verbStats)
-        , "Change verbosity of statistics at the end of the solving [0..2]")
+        , "Change verbosity of statistics at the end of the solving [0..3]")
     ("verbrestart", po::value(&conf.print_full_restart_stat)->default_value(conf.print_full_restart_stat)
         , "Print more thorough, but different stats")
     ("verballrestarts", po::value(&conf.print_all_restarts)->default_value(conf.print_all_restarts)
