@@ -292,6 +292,9 @@ class DLL_PUBLIC SolverConf
         int      allow_elim_xor_vars;
         unsigned xor_var_per_cut;
 
+        //Cardinality
+        int      doFindCard;
+
         //Var-replacement
         int doFindAndReplaceEqLits;
         int doExtendedSCC;

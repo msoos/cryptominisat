@@ -172,6 +172,7 @@ set (MY_TESTS
     dump_test
     searcher_test
     solver_test
+    cardfinder_test
 #    undefine_test
 )
 

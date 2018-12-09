@@ -163,6 +163,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
 
+        //Cardinality
+        , doFindCard(0)
+
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
@@ -181,6 +184,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-backw-sub-str, occ-xor,"
+            "card-find,"
             "scc-vrepl,"
             "sub-cls-with-bin,"
         )
@@ -192,6 +196,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, "//occ-gates,"
             "occ-xor,"
+            "card-find,"
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
         )

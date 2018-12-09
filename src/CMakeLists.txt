@@ -106,6 +106,7 @@ set(cryptoms_lib_files
     satzilla_features.cpp
     searchstats.cpp
     xorfinder.cpp
+    cardfinder.cpp
     cryptominisat_c.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
