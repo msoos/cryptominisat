@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "watchalgos.h"
 
 #include <limits>
+#include <sstream>
 
 using namespace CMSat;
 using std::cout;
@@ -34,7 +35,21 @@ using std::endl;
 
 CardFinder::CardFinder(Solver* _solver) :
     solver(_solver)
+    , seen(solver->seen)
+    , toClear(solver->toClear)
 {
+}
+
+std::string CardFinder::print_card(const vector<Lit>& lits) const {
+    std::stringstream ss;
+    for(size_t i = 0; i < lits.size(); i++) {
+        ss << lits[i];
+        if (i != lits.size()-1) {
+            ss << ", ";
+        }
+    }
+
+    return ss.str();
 }
 
 bool CardFinder::find_connector(Lit lit1, Lit lit2) const
@@ -57,11 +72,113 @@ bool CardFinder::find_connector(Lit lit1, Lit lit2) const
     return false;
 }
 
+void CardFinder::get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& clash) const {
+    Lit last_lit = lit_Undef;
+    for(const Lit x: lits) {
+        if (x == ~last_lit) {
+            clash.push_back(x.var());
+        }
+        last_lit = x;
+    }
+}
+
+void CardFinder::print_cards(const vector<vector<Lit>>& card_constraints) const {
+    for(const auto& card: card_constraints) {
+        if (card.size() > 0) {
+            cout << "c [cardfind] " << print_card(card) << endl;
+        }
+    }
+}
+
+
+void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
+
+    vector<uint32_t> idx_pos;
+    vector<uint32_t> idx_neg;
+
+    for(uint32_t var: clash) {
+        Lit lit = Lit(var, false);
+        if (seen[lit.toInt()]+seen[(~lit).toInt()] <= 1) {
+            continue;
+        }
+
+        cout << "c [cardfind] Clash on var " << lit << endl;
+        for(auto ws: solver->watches[lit]) {
+            if (ws.isIdx()) {
+                idx_pos.push_back(ws.get_idx());
+                if (solver->conf.verbosity > 5) {
+                    cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
+                    << print_card(cards[ws.get_idx()]) << endl;
+                }
+            }
+        }
+        for(auto ws: solver->watches[~lit]) {
+            if (ws.isIdx()) {
+                idx_neg.push_back(ws.get_idx());
+                if (solver->conf.verbosity > 5) {
+                    cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
+                    << print_card(cards[ws.get_idx()]) << endl;
+                }
+            }
+        }
+
+        //resolve each with each
+        for(uint32_t pos: idx_pos) {
+            for(uint32_t neg: idx_neg) {
+                assert(pos != neg);
+                //one has been removed already
+                if (cards[pos].empty() || cards[neg].empty()) {
+                    continue;
+                }
+
+                vector<Lit> new_card;
+                bool found = false;
+                for(Lit l: cards[pos]) {
+                    if (l == lit) {
+                        found = true;
+                    } else {
+                        new_card.push_back(l);
+                    }
+                }
+                assert(found);
+
+                for(Lit l: cards[neg]) {
+                    if (l == ~lit) {
+                        found = true;
+                    } else {
+                        new_card.push_back(l);
+                    }
+                }
+                assert(found);
+
+                std::sort(new_card.begin(), new_card.end());
+                if (solver->conf.verbosity > 5) {
+                    cout << "c [cardfind] -> Combined card: " << print_card(new_card) << endl;
+                }
+
+                //add the new cardinality constraint
+                for(Lit l: new_card) {
+                    solver->watches[l].push(Watched(cards.size()));
+                }
+                cards.push_back(new_card);
+            }
+        }
+
+        //clear old cardinality constraints
+        for(uint32_t pos: idx_pos) {
+            cards[pos].clear();
+        }
+        for(uint32_t neg: idx_neg) {
+            cards[neg].clear();
+        }
+
+        idx_pos.clear();
+        idx_neg.clear();
+    }
+}
+
 void CardFinder::find_cards()
 {
-    vector<uint16_t>& seen = solver->seen;
-    vector<Lit>& toClear = solver->toClear;
-
     cards.clear();
     double myTime = cpuTime();
     assert(toClear.size() == 0);
@@ -92,11 +209,6 @@ void CardFinder::find_cards()
             }
         }
         if (lits_in_card.size() > 1) {
-            if (solver->conf.verbosity > 5) {
-                cout << "c [cardfind] Found card of size " << lits_in_card.size()
-                << " for lit " << l << endl;
-            }
-
             lits_in_card.push_back(l);
             for(const Lit l_c: lits_in_card) {
                 if (!seen[l_c.toInt()]) {
@@ -109,6 +221,13 @@ void CardFinder::find_cards()
             total_sizes+=lits_in_card.size();
             std::sort(lits_in_card.begin(), lits_in_card.end());
 
+            if (solver->conf.verbosity > 5) {
+                cout << "c [cardfind]"
+                << " Found card of size " << lits_in_card.size()
+                << " for lit " << l << ": "
+                << print_card(lits_in_card) << endl;
+            }
+
             //fast push-back
             cards.resize(cards.size()+1);
             std::swap(cards[cards.size()-1], lits_in_card);
@@ -120,31 +239,12 @@ void CardFinder::find_cards()
     }
 
     std::sort(toClear.begin(), toClear.end());
-    for(Lit lit: toClear) {
-        if (seen[lit.toInt()]+seen[(~lit).toInt()] <= 1) {
-            continue;
-        }
+    vector<uint32_t> vars_with_clash;
+    get_vars_with_clash(toClear, vars_with_clash);
+    deal_with_clash(vars_with_clash);
 
-        cout << "Clash on lit " << lit << endl;
-        for(auto ws: solver->watches[lit]) {
-            if (ws.isIdx()) {
-                cout << "IDX " << ws.get_idx() << ": ";
-                for(Lit x: cards[ws.get_idx()]) {
-                    cout << x << ", ";
-                }
-                cout << endl;
-            }
-        }
-        for(auto ws: solver->watches[~lit]) {
-            if (ws.isIdx()) {
-                cout << "IDX " << ws.get_idx() << ": ";
-                for(Lit x: cards[ws.get_idx()]) {
-                    cout << x << ", ";
-                }
-                cout << endl;
-            }
-        }
-    }
+    cout << "c [cardfind] All constraints below:" << endl;
+    print_cards(cards);
 
     //clean indexes
     for(auto& lit: solver->watches.get_smudged_list()) {

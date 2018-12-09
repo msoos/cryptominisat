@@ -49,9 +49,18 @@ public:
     const vector<vector<Lit>>& get_cards() const;
 
 private:
+    void get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& vars) const;
+    void deal_with_clash(vector<uint32_t>& vars);
     bool find_connector(Lit lit1, Lit lit2) const;
-    Solver* solver;
+    std::string print_card(const vector<Lit>& lits) const;
+    void print_cards(const vector<vector<Lit>>& card_constraints) const;
 
+    //from solver
+    Solver* solver;
+    vector<uint16_t>& seen;
+    vector<Lit>& toClear;
+
+    //internal data
     vector<vector<Lit>> cards;
     uint64_t total_sizes = 0;
 };

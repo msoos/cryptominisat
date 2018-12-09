@@ -105,6 +105,45 @@ TEST_F(card_finder, find_two)
     ASSERT_EQ(finder->get_cards().size(), 2U);
 }
 
+
+TEST_F(card_finder, find_large)
+{
+    s->add_clause_outer(str_to_cl("-1, -2"));
+    s->add_clause_outer(str_to_cl("-1, -3"));
+    s->add_clause_outer(str_to_cl("-1, -4"));
+    s->add_clause_outer(str_to_cl("-2, -3"));
+    s->add_clause_outer(str_to_cl("-2, -4"));
+    s->add_clause_outer(str_to_cl("-3, -4"));
+
+    s->add_clause_outer(str_to_cl("4, -5"));
+    s->add_clause_outer(str_to_cl("4, -6"));
+    s->add_clause_outer(str_to_cl("4, -7"));
+    s->add_clause_outer(str_to_cl("-5, -6"));
+    s->add_clause_outer(str_to_cl("-5, -7"));
+    s->add_clause_outer(str_to_cl("-6, -7"));
+
+    s->add_clause_outer(str_to_cl("-11, -12"));
+    s->add_clause_outer(str_to_cl("-11, -13"));
+    s->add_clause_outer(str_to_cl("-11, -14"));
+    s->add_clause_outer(str_to_cl("-12, -13"));
+    s->add_clause_outer(str_to_cl("-12, -14"));
+    s->add_clause_outer(str_to_cl("-13, -14"));
+
+    s->add_clause_outer(str_to_cl("14, -15"));
+    s->add_clause_outer(str_to_cl("14, -16"));
+    s->add_clause_outer(str_to_cl("14, -17"));
+    s->add_clause_outer(str_to_cl("-15, -16"));
+    s->add_clause_outer(str_to_cl("-15, -17"));
+    s->add_clause_outer(str_to_cl("-16, -17"));
+
+    s->add_clause_outer(str_to_cl("1, 11"));
+    s->add_clause_outer(str_to_cl("1, -20"));
+    s->add_clause_outer(str_to_cl("11, -20"));
+
+    finder->find_cards();
+    ASSERT_EQ(finder->get_cards().size(), 1U);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
