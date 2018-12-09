@@ -82,6 +82,78 @@ void CardFinder::get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& 
     }
 }
 
+void CardFinder::two_complement_finder() {
+    for(const vector<Lit>& card_row: cards) {
+        if (card_row.empty()) {
+            continue;
+        }
+        Lit r = card_row[0];
+
+        //find min(NAG(r))
+        Lit l = lit_Undef;
+        for(const auto& ws: solver->watches[r]) {
+            if (!ws.isBin()) continue;
+
+            //should be the smallest here actually...
+            //TODO
+            l = ws.lit2();
+            break;
+        }
+        if (l == lit_Undef) {
+            continue;
+        }
+
+        //find the column
+        for(const auto& ws: solver->watches[l]) {
+            if (ws.isBin()) {
+                Lit c = ws.lit2();
+                if (c == r) continue;
+                for(const auto& ws2: solver->watches[c]) {
+                    if (ws2.isIdx()) {
+                        vector<Lit>& card_col = cards[ws2.get_idx()];
+                        if (card_col.empty()) continue;
+
+                        cout << "c [cardfind] Potential card for"
+                        << " row: " << print_card(card_row)
+                        << " -- col: " << print_card(card_col)
+                        << endl;
+
+                        //mark all lits in row's bin-connected graph
+                        for(const Lit row: card_row) {
+                            for(const auto& ws3: solver->watches[row]) {
+                                if (ws3.isBin()) {
+                                    seen[ws3.lit2().toInt()] = 1;
+                                }
+                            }
+                        }
+
+                        //find matching column
+                        for(const Lit col: card_col) {
+                            for(const auto& ws3: solver->watches[col]) {
+                                if (ws3.isBin()) {
+                                    Lit conn_lit = ws3.lit2();
+                                    if (seen[conn_lit.toInt()]) {
+                                        cout << "part of card: " << conn_lit << endl;
+                                    }
+                                }
+                            }
+                        }
+
+                        //unmark
+                        for(const Lit row: card_row) {
+                            for(const auto& ws3: solver->watches[row]) {
+                                if (ws3.isBin()) {
+                                    seen[ws3.lit2().toInt()] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void CardFinder::print_cards(const vector<vector<Lit>>& card_constraints) const {
     for(const auto& card: card_constraints) {
         if (card.size() > 0) {
@@ -106,19 +178,17 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
         for(auto ws: solver->watches[lit]) {
             if (ws.isIdx()) {
                 idx_pos.push_back(ws.get_idx());
-                if (solver->conf.verbosity > 5) {
-                    cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
-                    << print_card(cards[ws.get_idx()]) << endl;
-                }
+
+                cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
+                << print_card(cards[ws.get_idx()]) << endl;
             }
         }
         for(auto ws: solver->watches[~lit]) {
             if (ws.isIdx()) {
                 idx_neg.push_back(ws.get_idx());
-                if (solver->conf.verbosity > 5) {
-                    cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
-                    << print_card(cards[ws.get_idx()]) << endl;
-                }
+
+                cout << "c [cardfind] -> IDX " << ws.get_idx() << ": "
+                << print_card(cards[ws.get_idx()]) << endl;
             }
         }
 
@@ -152,9 +222,7 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
                 assert(found);
 
                 std::sort(new_card.begin(), new_card.end());
-                if (solver->conf.verbosity > 5) {
-                    cout << "c [cardfind] -> Combined card: " << print_card(new_card) << endl;
-                }
+                cout << "c [cardfind] -> Combined card: " << print_card(new_card) << endl;
 
                 //add the new cardinality constraint
                 for(Lit l: new_card) {
@@ -242,6 +310,12 @@ void CardFinder::find_cards()
     vector<uint32_t> vars_with_clash;
     get_vars_with_clash(toClear, vars_with_clash);
     deal_with_clash(vars_with_clash);
+    for(const Lit x: toClear) {
+        seen[x.toInt()] = 0;
+    }
+    toClear.clear();
+
+    two_complement_finder();
 
     cout << "c [cardfind] All constraints below:" << endl;
     print_cards(cards);
@@ -258,10 +332,6 @@ void CardFinder::find_cards()
         ws.resize(j);
     }
     solver->watches.clear_smudged();
-    for(const Lit x: toClear) {
-        seen[x.toInt()] = 0;
-    }
-    toClear.clear();
 
 
 
