@@ -55,10 +55,12 @@ private:
     std::string print_card(const vector<Lit>& lits) const;
     void print_cards(const vector<vector<Lit>>& card_constraints) const;
     void two_complement_finder();
+    void clean_empty_cards();
 
     //from solver
     Solver* solver;
     vector<uint16_t>& seen;
+    vector<uint8_t>& seen2;
     vector<Lit>& toClear;
 
     //internal data

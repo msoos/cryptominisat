@@ -144,6 +144,55 @@ TEST_F(card_finder, find_large)
     ASSERT_EQ(finder->get_cards().size(), 1U);
 }
 
+TEST_F(card_finder, find_two_product)
+{
+    //c x1..x9
+    //c rows: x 20..x22
+    //c cols: x 30..x32
+    //c --------------
+    s->add_clause_outer(str_to_cl("-1, 20"));
+    s->add_clause_outer(str_to_cl("-1, 30"));
+    s->add_clause_outer(str_to_cl("-2, 21"));
+    s->add_clause_outer(str_to_cl("-2, 30"));
+    s->add_clause_outer(str_to_cl("-3, 22"));
+    s->add_clause_outer(str_to_cl("-3, 30"));
+    s->add_clause_outer(str_to_cl("-4, 20"));
+    s->add_clause_outer(str_to_cl("-4, 31"));
+    s->add_clause_outer(str_to_cl("-5, 21"));
+    s->add_clause_outer(str_to_cl("-5, 31"));
+    s->add_clause_outer(str_to_cl("-6, 22"));
+    s->add_clause_outer(str_to_cl("-6, 31"));
+    s->add_clause_outer(str_to_cl("-7, 20"));
+    s->add_clause_outer(str_to_cl("-7, 32"));
+    s->add_clause_outer(str_to_cl("-8, 21"));
+    s->add_clause_outer(str_to_cl("-8, 32"));
+    s->add_clause_outer(str_to_cl("-9, 22"));
+    s->add_clause_outer(str_to_cl("-9, 32"));
+
+    //c ------ rows
+    s->add_clause_outer(str_to_cl("-20, -21"));
+    s->add_clause_outer(str_to_cl("-20, -22"));
+    s->add_clause_outer(str_to_cl("-21, -22"));
+
+    //c ------ cols
+    s->add_clause_outer(str_to_cl("-30, -31"));
+    s->add_clause_outer(str_to_cl("-30, -32"));
+    s->add_clause_outer(str_to_cl("-31, -32"));
+
+    finder->find_cards();
+    ASSERT_EQ(finder->get_cards().size(), 3U);
+
+    vector<Lit> lits;
+    lits = finder->get_cards()[0];
+    EXPECT_EQ(lits, str_to_cl("20, 21, 22"));
+
+    lits = finder->get_cards()[1];
+    EXPECT_EQ(lits, str_to_cl("30, 31, 32"));
+
+    lits = finder->get_cards()[2];
+    EXPECT_EQ(lits, str_to_cl("1, 2, 3, 4, 5, 6, 7, 8, 9"));
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

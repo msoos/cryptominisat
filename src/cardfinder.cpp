@@ -36,6 +36,7 @@ using std::endl;
 CardFinder::CardFinder(Solver* _solver) :
     solver(_solver)
     , seen(solver->seen)
+    , seen2(solver->seen2)
     , toClear(solver->toClear)
 {
 }
@@ -83,7 +84,10 @@ void CardFinder::get_vars_with_clash(const vector<Lit>& lits, vector<uint32_t>& 
 }
 
 void CardFinder::two_complement_finder() {
-    for(const vector<Lit>& card_row: cards) {
+    vector<vector<Lit>> new_cards;
+    for(size_t at_row = 0; at_row < cards.size(); at_row++) {
+        vector<Lit>& card_row = cards[at_row];
+        seen2[at_row] = 1;
         if (card_row.empty()) {
             continue;
         }
@@ -110,13 +114,21 @@ void CardFinder::two_complement_finder() {
                 if (c == r) continue;
                 for(const auto& ws2: solver->watches[c]) {
                     if (ws2.isIdx()) {
-                        vector<Lit>& card_col = cards[ws2.get_idx()];
+                        size_t at_col = ws2.get_idx();
+                        if (seen2[at_col]) {
+                            //only do row1->row2, it's good enough
+                            //don't do reverse too
+                            continue;
+                        }
+                        vector<Lit>& card_col = cards[at_col];
                         if (card_col.empty()) continue;
 
                         cout << "c [cardfind] Potential card for"
                         << " row: " << print_card(card_row)
                         << " -- col: " << print_card(card_col)
                         << endl;
+
+                        vector<Lit> card;
 
                         //mark all lits in row's bin-connected graph
                         for(const Lit row: card_row) {
@@ -133,10 +145,15 @@ void CardFinder::two_complement_finder() {
                                 if (ws3.isBin()) {
                                     Lit conn_lit = ws3.lit2();
                                     if (seen[conn_lit.toInt()]) {
-                                        cout << "part of card: " << conn_lit << endl;
+                                        cout << "part of card: " << ~conn_lit << endl;
+                                        card.push_back(~conn_lit);
                                     }
                                 }
                             }
+                        }
+
+                        if (card.size() > 2) {
+                            new_cards.push_back(card);
                         }
 
                         //unmark
@@ -152,13 +169,24 @@ void CardFinder::two_complement_finder() {
             }
         }
     }
+
+    size_t old_size = cards.size();
+    cards.resize(cards.size()+new_cards.size());
+    for(auto& card: new_cards) {
+        std::sort(card.begin(), card.end());
+        std::swap(cards[old_size], card);
+        old_size++;
+    }
+
+    //clear seen2
+    for(size_t at_row = 0; at_row < cards.size(); at_row++) {
+        seen2[at_row] = 0;
+    }
 }
 
 void CardFinder::print_cards(const vector<vector<Lit>>& card_constraints) const {
     for(const auto& card: card_constraints) {
-        if (card.size() > 0) {
-            cout << "c [cardfind] " << print_card(card) << endl;
-        }
+        cout << "c [cardfind] " << print_card(card) << endl;
     }
 }
 
@@ -245,6 +273,18 @@ void CardFinder::deal_with_clash(vector<uint32_t>& clash) {
     }
 }
 
+void CardFinder::clean_empty_cards()
+{
+    size_t j = 0;
+    for(size_t i = 0; i < cards.size(); i++) {
+        if (!cards[i].empty()) {
+            std::swap(cards[j], cards[i]);
+            j++;
+        }
+    }
+    cards.resize(j);
+}
+
 void CardFinder::find_cards()
 {
     cards.clear();
@@ -317,6 +357,8 @@ void CardFinder::find_cards()
 
     two_complement_finder();
 
+    //print result
+    clean_empty_cards();
     cout << "c [cardfind] All constraints below:" << endl;
     print_cards(cards);
 
