@@ -54,7 +54,7 @@ private:
     bool find_connector(Lit lit1, Lit lit2) const;
     std::string print_card(const vector<Lit>& lits) const;
     void print_cards(const vector<vector<Lit>>& card_constraints) const;
-    void two_complement_finder();
+    void two_product_finder();
     void clean_empty_cards();
 
     //from solver

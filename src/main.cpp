@@ -485,7 +485,7 @@ void Main::add_supported_options()
         , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
     ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
         , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
-    ("findcard", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
+    ("cardfind", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
         , "Find cardinality constraints")
     ;
 
