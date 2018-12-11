@@ -80,10 +80,11 @@ if(NOT ONLY_SIMPLE)
 endif()
 
 add_sanitize_flags()
-if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
-    add_subdirectory(simp-checks)
-endif()
+# below is expensive tests, let's not run it
+# if (PYTHON_EXECUTABLE AND ZLIB_FOUND AND NOT STATS_NEEDED AND NOT ONLY_SIMPLE)
+#     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat_only_elim_and_subsume minisat_only_elim_and_subsume)
+#     add_subdirectory(simp-checks)
+# endif()
 
 
 include_directories(
