@@ -693,7 +693,7 @@ public:
         print(dist)
 
         self.used_clusters = []
-        minimum = int(self.df.shape[0]*0.05)
+        minimum = int(self.df.shape[0]*options.minimum_cluster_rel)
         for clust_num, clauses in dist.items():
             if clauses < minimum:
                 print("== !! Will skip cluster %d !! ==" % clust_num)
@@ -815,6 +815,8 @@ if __name__ == "__main__":
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
     parser.add_option("--clusters", default=7, type=int,
                       dest="clusters", help="How many clusters to use")
+    parser.add_option("--clustmin", default=0.05, type=float,
+                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data")
 
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
