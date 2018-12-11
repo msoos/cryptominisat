@@ -524,6 +524,7 @@ static bool {funcname}(
 
             best_features.append('cl.glue_smaller_than_hist_queue')
             best_features.append('cl.num_overlap_literals')
+            best_features.append('cl.num_overlap_literals_rel')
 
             best_features.append('rdb0.sum_uip1_used')
             best_features.append('rdb0.sum_delta_confl_uip1_used')

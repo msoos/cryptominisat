@@ -145,10 +145,16 @@ struct ClauseStats
     uint32_t    num_overlap_literals        = 0;
     float       antec_num_total_lits_rel    = 0;
     float       size_rel                    = 0;
+
     double      num_antecedents_rel         = 0;
     //division of:
     // cl.num_antecedents -- antec_data.num()
     // cl.num_antecedents_hist -- hist.numResolutionsHistLT.avg()
+
+    float       num_overlap_literals_rel    = 0;
+    //df["cl.num_overlap_literals_rel"] = df["cl.num_overlap_literals"]/df["cl.antec_overlap_hist"]
+    //where df["cl.antec_overlap_hist"] =  hist.overlapHistLT.avg()
+
 
 
     uint32_t    rdb1_used_for_uip_creation  = 0; //special
