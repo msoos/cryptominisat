@@ -136,8 +136,20 @@ class Learner:
 
         def define_avg_for_cls(self):
             self.f.write("""
-    double rdb0_avg_confl = ((double)cl->stats.sum_uip1_used)/((double)cl->stats.sum_delta_confl_uip1_used);
-    double rdb0_used_per_confl = ((double)cl->stats.sum_uip1_used)/((double)sumConflicts-(double)cl->stats.introduced_at_conflict);
+
+    double rdb0_avg_confl;
+    if (cl->stats.sum_delta_confl_uip1_used == 0) {
+        rdb0_avg_confl = 0;
+    } else {
+        rdb0_avg_confl = ((double)cl->stats.sum_uip1_used)/((double)cl->stats.sum_delta_confl_uip1_used);
+    }
+
+    double rdb0_used_per_confl;
+    if (cl->stats.introduced_at_conflict == 0) {
+        rdb0_used_per_confl = 0;
+    } else {
+        rdb0_used_per_confl = ((double)cl->stats.sum_uip1_used)/((double)sumConflicts-(double)cl->stats.introduced_at_conflict);
+    }
 """)
 
         def print_full_code(self):
