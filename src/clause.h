@@ -145,6 +145,9 @@ struct ClauseStats
     uint32_t    num_overlap_literals        = 0;
     float       antec_num_total_lits_rel    = 0;
     float       size_rel                    = 0;
+    float       antecedents_glue_long_reds_var = 0.0;
+    uint32_t    num_total_lits_antecedents = 0;
+
 
     double      num_antecedents_rel         = 0;
     //division of:

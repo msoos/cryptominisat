@@ -532,8 +532,10 @@ static bool {funcname}(
             best_features.append('rdb0.avg_confl')
             best_features.append('rdb0.used_per_confl')
 
+            best_features.append('cl.antecedents_glue_long_reds_var')
+            best_features.append('cl.num_total_lits_antecedents')
+
             # best_features.append('rdb0.sum_of_branch_depth_conflict')
-            #best_features.append('cl.num_overlap_literals_rel')
             #best_features.append('cl.cur_restart_type')
 
             if options.no_rdb1:
