@@ -151,7 +151,7 @@ if (IPASIR)
     )
 endif()
 
-#google test harness
+# unit tests
 set (MY_TESTS
 #     clause_alloc_test
     basic_test
