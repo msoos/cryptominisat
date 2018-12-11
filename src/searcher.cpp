@@ -1722,13 +1722,24 @@ void Searcher::set_clause_data(
     cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
 
     cl->stats.num_antecedents_rel = (double)antec_data.num()/hist.numResolutionsHistLT.avg();
-    cl->stats.glue_smaller_than_hist_lt = (double)cl->stats.glue < glue_hist;
-    cl->stats.glue_smaller_than_hist_queue = (double)cl->stats.glue < glue_hist_queue;
     cl->stats.num_overlap_literals = num_overlap_literals;
-    cl->stats.num_overlap_literals_rel = hist.overlapHistLT.avg()/(double)num_overlap_literals;
+    if (num_overlap_literals == 0) {
+        cl->stats.num_overlap_literals_rel = 0;
+    } else {
+        cl->stats.num_overlap_literals_rel = hist.overlapHistLT.avg()/(double)num_overlap_literals;
+    }
     cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
-    cl->stats.antec_num_total_lits_rel = (double)num_total_lits_antecedents/(double)hist.antec_data_sum_sizeHistLT.avg();
-    cl->stats.size_rel = (double)cl->size() / (double)size_hist;
+    if (hist.antec_data_sum_sizeHistLT.avg() == 0) {
+        cl->stats.antec_num_total_lits_rel = 0;
+    } else {
+        cl->stats.antec_num_total_lits_rel = (double)num_total_lits_antecedents/hist.antec_data_sum_sizeHistLT.avg();
+    }
+
+    if (size_hist == 0) {
+        cl->stats.size_rel = 0;
+    } else {
+        cl->stats.size_rel = (double)cl->size() / (double)size_hist;
+    }
     cl->stats.antecedents_glue_long_reds_var = antec_data.glue_long_reds.var();
 
 //     cout << "cl->stats.glue: " << cl->stats.glue << endl;
