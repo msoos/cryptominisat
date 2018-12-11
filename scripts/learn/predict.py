@@ -368,13 +368,14 @@ static bool {funcname}(
                 best_features.append(features[indices[f]])
 
             # Plot the feature importances of the clf
-            plt.figure()
-            plt.title("Feature importances")
-            plt.bar(range(myrange), importances[indices],
-                    color="r", align="center",
-                    yerr=std[indices])
-            plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
-            plt.xlim([-1, myrange])
+            if options.show:
+                plt.figure()
+                plt.title("Feature importances")
+                plt.bar(range(myrange), importances[indices],
+                        color="r", align="center",
+                        yerr=std[indices])
+                plt.xticks(range(myrange), [features[x] for x in indices], rotation=45)
+                plt.xlim([-1, myrange])
 
         if options.dot is not None and final:
             self.output_to_dot(clf, features)
