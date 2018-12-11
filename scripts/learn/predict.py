@@ -452,11 +452,7 @@ static bool {funcname}(
 
         return feat_less
 
-    def calc_greedy_best_features(self, features):
-        top_feats = self.one_classifier(features, "x.class", False)
-        if options.show:
-            plt.show()
-
+    def calc_greedy_best_features(self, top_feats):
         best_features = [top_feats[0]]
         for i in range(options.get_best_topn_feats-1):
             print("*** Round %d Best feature set until now: %s"
@@ -542,7 +538,14 @@ static bool {funcname}(
             if options.no_rdb1:
                 best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
         else:
-            best_features = self.calc_greedy_best_features(features)
+            top_feats = self.one_classifier(features, "x.class", False)
+            if options.show:
+                plt.show()
+
+            if options.calc_best_feats:
+                best_features = self.calc_greedy_best_features(top_feats)
+            else:
+                return
 
         self.one_classifier(best_features, "x.class", True)
 
@@ -808,6 +811,8 @@ if __name__ == "__main__":
                       dest="no_rdb1", help="Delete RDB1 data")
     parser.add_option("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
+    parser.add_option("--greedy", default=False, action="store_true",
+                      dest="calc_best_feats", help="Calculate the greedy best features")
     parser.add_option("--split", default=0.1, type=float,
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_option("--greedybest", default=40, type=int,
