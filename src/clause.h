@@ -109,7 +109,9 @@ struct AtecedentData
     AvgCalc<double, double> vsids_all_incoming_vars;
     AvgCalc<double, double> vsids_vars;
     AvgCalc<double, double> vsids_of_resolving_literals;
+    #ifdef STATS_NEEDED
     AvgCalc<double, double> vsids_of_ants;
+    #endif
 };
 
 struct ClauseStats
@@ -165,24 +167,29 @@ struct ClauseStats
     uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
 
     //below resets
-    uint64_t conflicts_made = 0; ///<Number of times caused conflict
-    uint64_t sum_of_branch_depth_conflict = 0;
-    uint64_t propagations_made = 0; ///<Number of times caused propagation
-    uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
+    #endif
+
+    #ifdef STATS_NEEDED
     AtecedentData<uint16_t> antec_data;
+    uint64_t conflicts_made = 0; ///<Number of times caused conflict
+    uint64_t propagations_made = 0; ///<Number of times caused propagation
+    uint64_t sum_of_branch_depth_conflict = 0;
+    uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     void reset_rdb_stats()
     {
         ttl = 0;
-        conflicts_made = 0;
+        used_for_uip_creation = 0;
+        #if defined(STATS_NEEDED)
+        clause_looked_at = 0;
         sum_of_branch_depth_conflict = 0;
         propagations_made = 0;
-        clause_looked_at = 0;
-        used_for_uip_creation = 0;
+        conflicts_made = 0;
         antec_data.clear();
+        #endif
     }
     #endif
 
@@ -194,15 +201,20 @@ struct ClauseStats
         //Combine stats
         ret.glue = std::min(first.glue, second.glue);
         ret.activity = std::max(first.activity, second.activity);
+
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
+        ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
+        ret.ID = 0; //don't track combined clauses
+        #endif
+
+        #ifdef STATS_NEEDED
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
-        ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
-        ret.ID = 0; //don't track combined clauses
         #endif
+
         ret.which_red_array = std::min(first.which_red_array, second.which_red_array);
 
         return ret;
@@ -215,10 +227,12 @@ inline std::ostream& operator<<(std::ostream& os, const ClauseStats& stats)
     os << "glue " << stats.glue << " ";
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     os << "conflIntro " << stats.introduced_at_conflict<< " ";
+    os << "used_for_uip_creation" << stats.used_for_uip_creation << " ";
+    #endif
+    #ifdef STATS_NEEDED
     os << "numConfl " << stats.conflicts_made<< " ";
     os << "numProp " << stats.propagations_made<< " ";
     os << "numLook " << stats.clause_looked_at<< " ";
-    os << "used_for_uip_creation" << stats.used_for_uip_creation << " ";
     #endif
 
     return os;

@@ -448,8 +448,10 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
                 stats.resolvs.longRed++;
-                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+                #ifdef STATS_NEEDED
                 antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
+                #endif
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 antec_data.longRed++;
                 antec_data.age_long_reds.push(sumConflicts - cl->stats.introduced_at_conflict);
                 antec_data.glue_long_reds.push(cl->stats.glue);
@@ -1219,7 +1221,7 @@ lbool Searcher::search()
                 }
             }
 
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            #ifdef STATS_NEEDED
             stats.conflStats.update(lastConflictCausedBy);
             #endif
 
@@ -1606,7 +1608,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
             bump_cl_act<update_bogoprops>(cl);
 
-            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
             #endif
 
@@ -1704,30 +1706,15 @@ void Searcher::set_clause_data(
     , const uint32_t glue
     , const uint32_t old_decision_level
 ) {
-    /* used:
-     * , glue
-        , decisionLevel()
-        , learnt_clause.size()
-        , antec_data
-        , old_decision_level
-        , trail.size()
-        , params.conflictsDoneThisRestart
-        , restart_type_to_short_string(params.rest_type)
-        , hist
-    */
-
-    //definitely a BUG here I think -- should be 2*antec_data.num(), no?
-    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
-
     double glue_hist = hist.glueHistLT.avg();
     double glue_hist_long = hist.glueHist.getLongtTerm().avg();
     double glue_hist_queue = hist.glueHist.avg_nocheck();
     double size_hist = hist.conflSizeHistLT.avg();
 
     uint32_t num_total_lits_antecedents = antec_data.sum_size();
-    uint32_t num_antecedents = antec_data.num();
-    uint32_t overlap = num_total_lits_antecedents-cl->size()-2*num_antecedents;
-    double antec_overlap_hist = hist.overlapHistLT.avg();
+    //definitely a BUG here I think -- should be 2*antec_data.num(), no?
+    //however, it's the same as how it's dumped in sqlitestats.cpp
+    uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
     cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;

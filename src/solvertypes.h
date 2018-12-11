@@ -447,10 +447,12 @@ struct ConflStats
 
     ConflStats& operator+=(const ConflStats& other)
     {
+        #ifdef STATS_NEEDED
         conflsBinIrred += other.conflsBinIrred;
         conflsBinRed += other.conflsBinRed;
         conflsLongIrred += other.conflsLongIrred;
         conflsLongRed += other.conflsLongRed;
+        #endif
 
         numConflicts += other.numConflicts;
 
@@ -459,16 +461,19 @@ struct ConflStats
 
     ConflStats& operator-=(const ConflStats& other)
     {
+        #ifdef STATS_NEEDED
         conflsBinIrred -= other.conflsBinIrred;
         conflsBinRed -= other.conflsBinRed;
         conflsLongIrred -= other.conflsLongIrred;
         conflsLongRed -= other.conflsLongRed;
+        #endif
 
         numConflicts -= other.numConflicts;
 
         return *this;
     }
 
+    #ifdef STATS_NEEDED
     void update(const ConflCausedBy lastConflictCausedBy)
     {
         switch(lastConflictCausedBy) {
@@ -488,6 +493,7 @@ struct ConflStats
                 assert(false);
         }
     }
+    #endif
 
     void print_short(double cpu_time, bool do_print_times) const
     {
@@ -508,6 +514,7 @@ struct ConflStats
         cout << "c CONFLS stats" << endl;
         print_short(cpu_time, do_print_times);
 
+        #ifdef STATS_NEEDED
         print_stats_line("c conflsBinIrred", conflsBinIrred
             , stats_line_percent(conflsBinIrred, numConflicts)
             , "%"
@@ -546,12 +553,15 @@ struct ConflStats
 
             //assert(diff == 0);
         }
+        #endif
     }
 
+    #ifdef STATS_NEEDED
     uint64_t conflsBinIrred = 0;
     uint64_t conflsBinRed = 0;
     uint64_t conflsLongIrred = 0;
     uint64_t conflsLongRed = 0;
+    #endif
 
     ///Number of conflicts
     uint64_t  numConflicts = 0;

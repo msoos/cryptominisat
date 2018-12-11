@@ -59,10 +59,12 @@ struct ClauseUsageStats
     #endif
     ) {
         num++;
-        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+        #if defined(STATS_NEEDED)
         sumConfl += cl.stats.conflicts_made;
         sumProp += cl.stats.propagations_made;
         sumLookedAt += cl.stats.clause_looked_at;
+        #endif
+        #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
         sumUsedUIP += cl.stats.used_for_uip_creation;
         #endif
     }
