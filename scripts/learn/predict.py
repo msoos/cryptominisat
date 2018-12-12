@@ -656,7 +656,7 @@ public:
 #define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
         f.write('#include "clause.h"\n\n')
         for _, fname in fnames.items():
-            f.write('#include "%s"\n' % fname)
+            f.write('#include "predict/%s"\n' % fname)
 
         f.write("namespace CMSat {\n")
         f.write("""typedef bool (*keep_func_type_{basename})(

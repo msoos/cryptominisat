@@ -26,7 +26,8 @@ THE SOFTWARE.
 
 #include "solver.h"
 #ifdef FINAL_PREDICTOR
-#include "clustering_short.h"
+#include "predict/clustering_short.h"
+#include "predict/clustering_long.h"
 #endif
 
 #include "satzilla_features_calc.h"
@@ -396,9 +397,13 @@ SatZillaFeatures SatZillaFeaturesCalc::extract()
 
     #ifdef FINAL_PREDICTOR
     if (solver->conf.verbosity) {
-        Clustering_short c;
-        const int cluster = c.which_is_closest(satzilla_feat);
-        cout << "c [szfeat] closest short cluster: " << cluster << endl;
+        Clustering_short cshort;
+        const int cluster_short = cshort.which_is_closest(satzilla_feat);
+        cout << "c [szfeat] closest short cluster: " << cluster_short << endl;
+
+        Clustering_long clong;
+        const int cluster_long = clong.which_is_closest(satzilla_feat);
+        cout << "c [szfeat] closest long cluster: " << cluster_long << endl;
     }
     #endif
 

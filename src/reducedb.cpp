@@ -25,10 +25,10 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
-#include "clustering_short.h"
-#include "clustering_long.h"
-#include "all_predictors_short.h"
-#include "all_predictors_long.h"
+#include "predict/clustering_short.h"
+#include "predict/clustering_long.h"
+#include "predict/all_predictors_short.h"
+#include "predict/all_predictors_long.h"
 #endif
 
 #include <functional>

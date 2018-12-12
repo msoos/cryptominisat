@@ -90,8 +90,8 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 # ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
 
 
-../predict.py "$FNAMEOUT-min.db-short-pandasdata.dat" --basedir "../../src/" --final --tree --code short --split 0.1 --clust 1
-../predict.py "$FNAMEOUT-min.db-long-pandasdata.dat"  --basedir "../../src/" --final --tree --code long  --split 0.1 --clust 1
+../predict.py "$FNAMEOUT-min.db-short-pandasdata.dat" --basedir "../../src/predict/" --final --tree --code short --split 0.1 --clusters 1
+../predict.py "$FNAMEOUT-min.db-long-pandasdata.dat"  --basedir "../../src/predict/" --final --tree --code long  --split 0.1 --clusters 1
 )
 
 ./build_final_predictor.sh
