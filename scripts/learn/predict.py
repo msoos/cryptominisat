@@ -157,7 +157,7 @@ class Learner:
 #include "reducedb.h"
 
 namespace CMSat {
-    """)
+""")
 
             num_trees = 1
             if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
