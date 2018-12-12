@@ -295,6 +295,9 @@ class DLL_PUBLIC SolverConf
         //Cardinality
         int      doFindCard;
 
+        //Predictor system
+        int pred_conf_n;
+
         //Var-replacement
         int doFindAndReplaceEqLits;
         int doExtendedSCC;

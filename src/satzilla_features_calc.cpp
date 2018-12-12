@@ -26,8 +26,8 @@ THE SOFTWARE.
 
 #include "solver.h"
 #ifdef FINAL_PREDICTOR
-#include "predict/clustering_short.h"
-#include "predict/clustering_long.h"
+#include "predict/clustering_short_0.h"
+#include "predict/clustering_long_0.h"
 #endif
 
 #include "satzilla_features_calc.h"

@@ -573,8 +573,10 @@ class Clustering:
                 c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
 
-        f = open("{basedir}/clustering_{basename}.h".format(
-            basedir=options.basedir, basename=options.basename), 'w')
+        f = open("{basedir}/clustering_{basename}_{conf_num}.h".format(
+            basedir=options.basedir, basename=options.basename,
+            conf_num=options.conf_num), 'w')
+
         write_mit_header(f)
         f.write("""
 #ifndef CLUSTERING_{basename}_H
@@ -648,26 +650,24 @@ public:
 """)
 
     def write_all_predictors_file(self, fnames, functs):
-        f = open("{basedir}/all_predictors_{basename}.h".format(
-                basedir=options.basedir, basename=options.basename), "w")
+        f = open("{basedir}/all_predictors_{basename}_{conf_num}.h".format(
+                basedir=options.basedir, basename=options.basename,
+                conf_num=options.conf_num), "w")
+
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
 #ifndef ALL_PREDICTORS_{basename}_H
 #define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
-        f.write('#include "clause.h"\n\n')
+        f.write('#include "clause.h"\n')
+        f.write('#include "predict_func_type.h"\n\n')
+
         for _, fname in fnames.items():
             f.write('#include "predict/%s"\n' % fname)
 
         f.write("namespace CMSat {\n")
-        f.write("""typedef bool (*keep_func_type_{basename})(
-    const CMSat::Clause*,
-    const uint64_t,
-    const uint32_t,
-    const uint32_t,
-    const uint32_t);\n""".format(basename=options.basename))
 
-        f.write("\nkeep_func_type_{basename} should_keep_{basename}_funcs[{clusters}] = {{\n".format(
-            basename=options.basename, clusters=options.clusters))
+        f.write("\nvector<keep_func_type> should_keep_{basename}_{conf_num}_funcs = {{\n".format(
+            conf_num=options.conf_num, basename=options.basename, clusters=options.clusters))
 
         for i in range(options.clusters):
             dummy = ""
@@ -762,12 +762,12 @@ public:
         fnames = {}
         functs = {}
         for clno in self.used_clusters:
-            funcname = "should_keep_{basename}{clno}".format(
-                clno=clno, basename=options.basename)
+            funcname = "should_keep_{basename}_{conf_num}_{clno}".format(
+                clno=clno, basename=options.basename, conf_num=options.conf_num)
             functs[clno] = funcname
 
-            fname = "final_predictor_{basename}{clno}.h".format(
-                clno=clno, basename=options.basename)
+            fname = "final_predictor_{basename}_{conf_num}_{clno}.h".format(
+                clno=clno, basename=options.basename, conf_num=options.conf_num)
             fnames[clno] = fname
 
             if options.basedir is not None:
@@ -835,6 +835,8 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
+    parser.add_option("--conf", default=0, type=int,
+                      dest="conf_num", help="Final predictor should be a forest")
 
     (options, args) = parser.parse_args()
 

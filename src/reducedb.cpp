@@ -25,10 +25,10 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
-#include "predict/clustering_short.h"
-#include "predict/clustering_long.h"
-#include "predict/all_predictors_short.h"
-#include "predict/all_predictors_long.h"
+#include "predict/clustering_short_0.h"
+#include "predict/clustering_long_0.h"
+#include "predict/all_predictors_short_0.h"
+#include "predict/all_predictors_long_0.h"
 #endif
 
 #include <functional>
@@ -314,6 +314,8 @@ void ReduceDB::handle_lev1_final_predictor()
     int long_cluster = long_clust.which_is_closest(solver->last_solve_satzilla_feature);
     Clustering_short short_clust;
     int short_cluster = short_clust.which_is_closest(solver->last_solve_satzilla_feature);
+    const keep_func_type short_pred = should_keep_short_0_funcs[short_cluster];
+    const keep_func_type long_pred = should_keep_long_0_funcs[long_cluster];
 
     size_t j = 0;
     for(size_t i = 0
@@ -342,7 +344,7 @@ void ReduceDB::handle_lev1_final_predictor()
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
                 && !cl->stats.locked_long
-                && !should_keep_short_funcs[short_cluster](
+                && !short_pred(
                     cl
                     , solver->sumConflicts
                     , last_touched_diff
@@ -363,7 +365,7 @@ void ReduceDB::handle_lev1_final_predictor()
                     kept_due_to_lock++;
                     cl->stats.locked_long--;
                 } else {
-                    if (cl->stats.dump_number > 0 && should_keep_long_funcs[long_cluster](
+                    if (cl->stats.dump_number > 0 && long_pred(
                         cl
                         , solver->sumConflicts
                         , last_touched_diff

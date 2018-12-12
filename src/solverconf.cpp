@@ -166,6 +166,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Cardinality
         , doFindCard(0)
 
+        //Predict system
+        , pred_conf_n(0)
+
         //Var-replacer
         , doFindAndReplaceEqLits(true)
         , doExtendedSCC         (true)
