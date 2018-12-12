@@ -379,7 +379,7 @@ void CardFinder::find_cards()
 
 
 
-    if (solver->conf.verbosity) {
+    //if (solver->conf.verbosity) {
         double avg = 0;
         if (cards.size() > 0) {
             avg = (double)total_sizes/(double)cards.size();
@@ -390,5 +390,6 @@ void CardFinder::find_cards()
         << " avg size: " << avg
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
-    }
+    //}
+    exit(0);
 }
