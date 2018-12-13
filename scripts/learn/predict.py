@@ -579,26 +579,31 @@ class Clustering:
 
         write_mit_header(f)
         f.write("""
-#ifndef CLUSTERING_{basename}_H
-#define CLUSTERING_{basename}_H
+#ifndef CLUSTERING_{basename}_{conf_num}_H
+#define CLUSTERING_{basename}_{conf_num}_H
 
 #include "satzilla_features.h"
+#include "clustering.h"
 #include <cmath>
 
 namespace CMSat {{
-class Clustering_{basename} {{
+class Clustering_{basename}_{conf_num}: public Clustering {{
 
 public:
-    Clustering_{basename}() {{
+    Clustering_{basename}_{conf_num}() {{
         set_up_centers();
+    }}
+
+    virtual ~Clustering_{basename}_{conf_num}() {{
     }}
 
     SatZillaFeatures center[{clusters}];
     std::vector<int> used_clusters;
 
-""".format(clusters=options.clusters, basename=options.basename))
+""".format(clusters=options.clusters, basename=options.basename,
+           conf_num=options.conf_num))
 
-        f.write("    void set_up_centers() {\n")
+        f.write("    virtual void set_up_centers() {\n")
         for i in self.used_clusters:
             f.write("\n        // Doing cluster center %d\n" % i)
             f.write("\n        used_clusters.push_back(%d);\n" % i);
@@ -615,7 +620,7 @@ public:
         return x*x;
     }
 
-    double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
+    virtual double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
         double dist = 0;
 """)
         for feat in sz_feats_clean:
@@ -626,7 +631,7 @@ public:
     }\n""")
 
         f.write("""
-    int which_is_closest(const SatZillaFeatures& p) {
+    virtual int which_is_closest(const SatZillaFeatures& p) const {
         double closest_dist = std::numeric_limits<double>::max();
         int closest = -1;
         for (int i: used_clusters) {
@@ -656,13 +661,15 @@ public:
 
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_{basename}_H
-#define ALL_PREDICTORS_{basename}_H\n\n""".format(basename=options.basename))
+#ifndef ALL_PREDICTORS_{basename}_{conf_num}_H
+#define ALL_PREDICTORS_{basename}_{conf_num}_H\n\n""".format(basename=options.basename, conf_num=options.conf_num))
         f.write('#include "clause.h"\n')
         f.write('#include "predict_func_type.h"\n\n')
-
         for _, fname in fnames.items():
             f.write('#include "predict/%s"\n' % fname)
+
+        f.write('#include <vector>"\n')
+        f.write('using std::vector;\n\n')
 
         f.write("namespace CMSat {\n")
 

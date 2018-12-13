@@ -25,10 +25,8 @@ THE SOFTWARE.
 #include "solverconf.h"
 #include "sqlstats.h"
 #ifdef FINAL_PREDICTOR
-#include "predict/clustering_short_0.h"
-#include "predict/clustering_long_0.h"
-#include "predict/all_predictors_short_0.h"
-#include "predict/all_predictors_long_0.h"
+#include "all_predictors.h"
+#include "clustering.h"
 #endif
 
 #include <functional>
@@ -310,12 +308,13 @@ void ReduceDB::handle_lev1_final_predictor()
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
-    Clustering_long long_clust;
-    int long_cluster = long_clust.which_is_closest(solver->last_solve_satzilla_feature);
-    Clustering_short short_clust;
-    int short_cluster = short_clust.which_is_closest(solver->last_solve_satzilla_feature);
-    const keep_func_type short_pred = should_keep_short_0_funcs[short_cluster];
-    const keep_func_type long_pred = should_keep_long_0_funcs[long_cluster];
+    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf_n);
+    int long_cluster = long_clust->which_is_closest(solver->last_solve_satzilla_feature);
+    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf_n);
+    int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
+
+    const keep_func_type short_pred = get_short_pred_funcs(solver->conf.pred_conf_n)[short_cluster];
+    const keep_func_type long_pred = get_long_pred_funcs(solver->conf.pred_conf_n)[long_cluster];
 
     size_t j = 0;
     for(size_t i = 0
