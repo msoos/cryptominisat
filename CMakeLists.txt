@@ -138,6 +138,15 @@ macro(add_cxx_flag_if_supported flagname)
   endif()
 endmacro()
 
+include(CheckCCompilerFlag)
+macro(add_c_flag_if_supported flagname)
+  check_c_compiler_flag("${flagname}" HAVE_FLAG_${flagname})
+
+  if(HAVE_FLAG_${flagname})
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${flagname}" )
+  endif()
+endmacro()
+
 macro(add_sanitize_flags)
 if (SANITIZE)
     MESSAGE(WARNING "Using clang sanitizers -- you MUST use clang++ or the compile WILL fail")
@@ -311,6 +320,9 @@ if (NOT WIN32)
         add_cxx_flag_if_supported("-Wparentheses")
         add_cxx_flag_if_supported("-Wunreachable-code")
         add_cxx_flag_if_supported("-ggdb3")
+
+        # Apparently needed before OS X Maverics (2013)
+        #add_c_flag_if_supported("-stdlib=libc++")
     endif()
 endif()
 
