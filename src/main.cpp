@@ -285,6 +285,7 @@ void Main::printResultFunc(
     }
 }
 
+/* clang-format off */
 void Main::add_supported_options()
 {
     // Declare the supported options.
@@ -721,6 +722,7 @@ void Main::add_supported_options()
     .add(miscOptions)
     ;
 }
+/* clang-format on */
 
 string remove_last_comma_if_exists(std::string s)
 {
