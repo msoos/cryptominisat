@@ -296,7 +296,7 @@ class DLL_PUBLIC SolverConf
         int      doFindCard;
 
         //Predictor system
-        int pred_conf_n;
+        int pred_conf;
 
         //Var-replacement
         int doFindAndReplaceEqLits;

@@ -167,7 +167,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindCard(0)
 
         //Predict system
-        , pred_conf_n(0)
+        , pred_conf(0)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)

@@ -308,13 +308,13 @@ void ReduceDB::handle_lev1_final_predictor()
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
-    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf_n);
+    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf);
     int long_cluster = long_clust->which_is_closest(solver->last_solve_satzilla_feature);
-    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf_n);
+    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf);
     int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
 
-    const keep_func_type short_pred = get_short_pred_funcs(solver->conf.pred_conf_n)[short_cluster];
-    const keep_func_type long_pred = get_long_pred_funcs(solver->conf.pred_conf_n)[long_cluster];
+    const keep_func_type short_pred = get_short_pred_funcs(solver->conf.pred_conf)[short_cluster];
+    const keep_func_type long_pred = get_long_pred_funcs(solver->conf.pred_conf)[long_cluster];
 
     size_t j = 0;
     for(size_t i = 0

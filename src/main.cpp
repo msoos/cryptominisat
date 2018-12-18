@@ -317,6 +317,10 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     #endif
+    #ifdef FINAL_PREDICTOR
+    ("pred", po::value(&conf.pred_conf)->default_value(conf.pred_conf)
+        , "Predictor config to use")
+    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
