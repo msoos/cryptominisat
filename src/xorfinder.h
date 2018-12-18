@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <set>
 #include <limits>
+#include "constants.h"
 #include "xor.h"
 #include "cset.h"
 #include "watcharray.h"
@@ -63,7 +64,8 @@ class PossibleXor
             cout << "Trying to create XOR from clause: " << cl << endl;
             #endif
 
-            assert(cl.size() <= sizeof(origCl)/sizeof(Lit));
+            assert(cl.size() <= sizeof(origCl)/sizeof(Lit)
+            && "The XOR being recovered is larger than MAX_XOR_RECOVER_SIZE");
             for(size_t i = 0; i < size; i++) {
                 origCl[i] = cl[i];
                 if (i > 0)
@@ -129,7 +131,7 @@ class PossibleXor
         // 0 1 0
         // 0 0 1
         vector<char> foundComb;
-        Lit origCl[8];
+        Lit origCl[MAX_XOR_RECOVER_SIZE];
         cl_abst_type abst;
         uint32_t size;
         bool rhs;

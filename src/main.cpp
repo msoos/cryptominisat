@@ -954,6 +954,11 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
+        cout << "ERROR: The '--maxxorsize' parameter cannot be lager than " << MAX_XOR_RECOVER_SIZE << endl;
+        exit(-1);
+    }
+
     if (conf.shortTermHistorySize <= 0) {
         cout
         << "You MUST give a short term history size (\"--gluehist\")" << endl

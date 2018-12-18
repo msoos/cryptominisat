@@ -69,6 +69,8 @@ THE SOFTWARE.
 #define EFFECTIVELY_USEABLE_BITS 30
 #endif
 
+#define MAX_XOR_RECOVER_SIZE 8
+
 #if defined _WIN32
     #define DLL_PUBLIC __declspec(dllexport)
 #else
