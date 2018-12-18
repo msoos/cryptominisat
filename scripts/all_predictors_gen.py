@@ -12,7 +12,8 @@ output_path = sys.argv[1]
 def write_cluster(clusters, out, name):
     nums = []
     for cl in clusters:
-        num = re.findall(r"clustering_{name}_(.*).h".format(name=name), cl)
+        num = re.findall(r"clustering_{name}_conf([0-9]+).h".format(
+            name=name), cl)
         if len(num) > 0:
             nums.append(int(num[0]))
 
@@ -25,7 +26,8 @@ def write_cluster(clusters, out, name):
 def write_predictors(predictors, out, name):
     nums = []
     for pred in predictors:
-        num = re.findall(r"all_predictors_{name}_(.*).h".format(name=name), pred)
+        num = re.findall(r"all_predictors_{name}_conf([0-9]+).h".format(
+            name=name), pred)
         if len(num) > 0:
             nums.append(int(num[0]))
 
