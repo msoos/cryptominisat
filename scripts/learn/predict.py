@@ -816,7 +816,6 @@ if __name__ == "__main__":
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
 
-
     parser.add_option("--name", default=None, type=str,
                       dest="name", help="Get raw C-like code into this function and file name")
     parser.add_option("--basedir", type=str,

@@ -927,7 +927,7 @@ if __name__ == "__main__":
                       dest="dump_csv", help="Dump CSV (for weka)")
 
     parser.add_option("--sql", action="store_true", default=False,
-                      dest="dump_sql", help="Dump SQL query")
+                      dest="dump_sql", help="Dump SQL queries")
 
     parser.add_option("--fixed", default=-1, type=int,
                       dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
