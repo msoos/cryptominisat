@@ -686,7 +686,7 @@ public:
                 # use the correct one
                 func = functs[i]
 
-            f.write("    CMSat::{func} {dummy}".format(func=func, dummy=dummy))
+            f.write("    CMSat::{func}{dummy}".format(func=func, dummy=dummy))
             if i < options.clusters-1:
                 f.write(",\n")
             else:
