@@ -733,6 +733,7 @@ and avg_inside_per_confl_when_picked > 0
         df = pd.read_sql_query(q, self.conn)
 
         cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+        cleanname = re.sub(r'\.db$', '', dbfname)
         cleanname += "-vardata"
         dump_dataframe(df, cleanname)
 
@@ -878,7 +879,7 @@ def dump_dataframe(df, name):
         print("Dumping CSV data to:", fname)
         df.to_csv(fname, index=False, columns=sorted(list(df)))
 
-    fname = "%s-pandasdata.dat" % name
+    fname = "%s.dat" % name
     print("Dumping pandas data to:", fname)
     with open(fname, "wb") as f:
         pickle.dump(df, f)
@@ -903,8 +904,13 @@ def one_dataframe(dbfname, long_or_short):
         print(df.describe())
         print("Describe done.---")
 
-    cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
-    cleanname += "-"+long_or_short
+    cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
+    cleanname = re.sub(r'\.db$', '', dbfname)
+    cleanname = "{cleanname}-{long_or_short}-conf-{conf}".format(
+        cleanname=cleanname,
+        long_or_short=long_or_short,
+        conf=options.conf)
+
     dump_dataframe(df, cleanname)
 
     return True, df
@@ -929,6 +935,9 @@ if __name__ == "__main__":
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
+
+    parser.add_option("--conf", default=0, type=int,
+                      dest="conf", help="Config to generate. Default: %default")
 
     (options, args) = parser.parse_args()
 
