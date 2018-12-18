@@ -606,7 +606,7 @@ public:
         f.write("    virtual void set_up_centers() {\n")
         for i in self.used_clusters:
             f.write("\n        // Doing cluster center %d\n" % i)
-            f.write("\n        used_clusters.push_back(%d);\n" % i);
+            f.write("\n        used_clusters.push_back(%d);\n" % i)
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
