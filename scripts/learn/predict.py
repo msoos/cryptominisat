@@ -573,34 +573,34 @@ class Clustering:
                 c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
 
-        f = open("{basedir}/clustering_{basename}_{conf_num}.h".format(
-            basedir=options.basedir, basename=options.basename,
+        f = open("{basedir}/clustering_{name}_{conf_num}.h".format(
+            basedir=options.basedir, name=options.name,
             conf_num=options.conf_num), 'w')
 
         write_mit_header(f)
         f.write("""
-#ifndef CLUSTERING_{basename}_{conf_num}_H
-#define CLUSTERING_{basename}_{conf_num}_H
+#ifndef CLUSTERING_{name}_{conf_num}_H
+#define CLUSTERING_{name}_{conf_num}_H
 
 #include "satzilla_features.h"
 #include "clustering.h"
 #include <cmath>
 
 namespace CMSat {{
-class Clustering_{basename}_{conf_num}: public Clustering {{
+class Clustering_{name}_{conf_num}: public Clustering {{
 
 public:
-    Clustering_{basename}_{conf_num}() {{
+    Clustering_{name}_{conf_num}() {{
         set_up_centers();
     }}
 
-    virtual ~Clustering_{basename}_{conf_num}() {{
+    virtual ~Clustering_{name}_{conf_num}() {{
     }}
 
     SatZillaFeatures center[{clusters}];
     std::vector<int> used_clusters;
 
-""".format(clusters=options.clusters, basename=options.basename,
+""".format(clusters=options.clusters, name=options.name,
            conf_num=options.conf_num))
 
         f.write("    virtual void set_up_centers() {\n")
@@ -655,14 +655,14 @@ public:
 """)
 
     def write_all_predictors_file(self, fnames, functs):
-        f = open("{basedir}/all_predictors_{basename}_{conf_num}.h".format(
-                basedir=options.basedir, basename=options.basename,
+        f = open("{basedir}/all_predictors_{name}_{conf_num}.h".format(
+                basedir=options.basedir, name=options.name,
                 conf_num=options.conf_num), "w")
 
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_{basename}_{conf_num}_H
-#define ALL_PREDICTORS_{basename}_{conf_num}_H\n\n""".format(basename=options.basename, conf_num=options.conf_num))
+#ifndef ALL_PREDICTORS_{name}_{conf_num}_H
+#define ALL_PREDICTORS_{name}_{conf_num}_H\n\n""".format(name=options.name, conf_num=options.conf_num))
         f.write('#include "clause.h"\n')
         f.write('#include "predict_func_type.h"\n\n')
         for _, fname in fnames.items():
@@ -673,8 +673,8 @@ public:
 
         f.write("namespace CMSat {\n")
 
-        f.write("\nvector<keep_func_type> should_keep_{basename}_{conf_num}_funcs = {{\n".format(
-            conf_num=options.conf_num, basename=options.basename, clusters=options.clusters))
+        f.write("\nvector<keep_func_type> should_keep_{name}_{conf_num}_funcs = {{\n".format(
+            conf_num=options.conf_num, name=options.name, clusters=options.clusters))
 
         for i in range(options.clusters):
             dummy = ""
@@ -769,12 +769,12 @@ public:
         fnames = {}
         functs = {}
         for clno in self.used_clusters:
-            funcname = "should_keep_{basename}_{conf_num}_{clno}".format(
-                clno=clno, basename=options.basename, conf_num=options.conf_num)
+            funcname = "should_keep_{name}_{conf_num}_{clno}".format(
+                clno=clno, name=options.name, conf_num=options.conf_num)
             functs[clno] = funcname
 
-            fname = "final_predictor_{basename}_{conf_num}_{clno}.h".format(
-                clno=clno, basename=options.basename, conf_num=options.conf_num)
+            fname = "final_predictor_{name}_{conf_num}_{clno}.h".format(
+                clno=clno, name=options.name, conf_num=options.conf_num)
             fnames[clno] = fname
 
             if options.basedir is not None:
@@ -811,8 +811,10 @@ if __name__ == "__main__":
                       dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_option("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
-    parser.add_option("--code", default=None, type=str,
-                      dest="basename", help="Get raw C-like code into this function and file name")
+
+
+    parser.add_option("--name", default=None, type=str,
+                      dest="name", help="Get raw C-like code into this function and file name")
     parser.add_option("--basedir", type=str,
                       dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
     parser.add_option("--only", default=0.999, type=float,
@@ -851,7 +853,7 @@ if __name__ == "__main__":
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    if options.basename is None:
+    if options.name is None:
         print("ERROR: You must give short or long")
         exit(-1)
 
