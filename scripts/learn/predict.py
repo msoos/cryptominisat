@@ -800,9 +800,13 @@ if __name__ == "__main__":
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
+    # tree options
     parser.add_option("--depth", default=None, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
+    parser.add_option("--split", default=0.1, type=float,
+                      dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
 
+    # generation of predictor
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
     parser.add_option("--show", action="store_true", default=False,
@@ -817,25 +821,32 @@ if __name__ == "__main__":
                       dest="name", help="Get raw C-like code into this function and file name")
     parser.add_option("--basedir", type=str,
                       dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
+    parser.add_option("--conf", default=0, type=int,
+                      dest="conf_num", help="Which predict configuration this is")
+
+    # data handling
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
                       dest="no_rdb1", help="Delete RDB1 data")
+
+    # final generator
     parser.add_option("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
     parser.add_option("--greedy", default=False, action="store_true",
                       dest="calc_best_feats", help="Calculate the greedy best features")
-    parser.add_option("--split", default=0.1, type=float,
-                      dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_option("--greedybest", default=40, type=int,
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_option("--top", default=40, type=int,
                       dest="top_num_features", help="Top N features to take to generate the final predictor")
+
+    # clustering
     parser.add_option("--clusters", default=7, type=int,
                       dest="clusters", help="How many clusters to use")
     parser.add_option("--clustmin", default=0.05, type=float,
                       dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data")
 
+    # type of predictor
     parser.add_option("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
     parser.add_option("--svm", default=False, action="store_true",
@@ -844,8 +855,6 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
-    parser.add_option("--conf", default=0, type=int,
-                      dest="conf_num", help="Which predict configuration this is")
 
     (options, args) = parser.parse_args()
 
