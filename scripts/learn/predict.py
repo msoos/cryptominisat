@@ -843,7 +843,7 @@ if __name__ == "__main__":
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
     parser.add_option("--conf", default=0, type=int,
-                      dest="conf_num", help="Final predictor should be a forest")
+                      dest="conf_num", help="Which predict configuration this is")
 
     (options, args) = parser.parse_args()
 
