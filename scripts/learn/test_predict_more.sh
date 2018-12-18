@@ -86,12 +86,21 @@ cd "$FNAME-dir"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db" --limit 60000
 
-../gen_pandas.py "$FNAMEOUT-min.db" --fixed "$FIXED"
-# ./gen_pandas.py "$FNAMEOUT.db" --fixed "10000" --csv
 
+for CONF in {0..0}
+do
+    echo "Doing config ${CONF}"
+    ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf "${CONF}"
 
-../predict.py "$FNAMEOUT-min.db-short-pandasdata.dat" --basedir "../../src/predict/" --final --tree --name short --split 0.1 --clusters 1
-../predict.py "$FNAMEOUT-min.db-long-pandasdata.dat"  --basedir "../../src/predict/" --final --tree --name long  --split 0.1 --clusters 1
+done
+
+rm ../../src/predict/*.h
+rm ../../src/predict/*.cpp
+for CONF in {0..0}
+do
+    ../predict.py "${FNAMEOUT}-min-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
+    ../predict.py "${FNAMEOUT}-min-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
+done
 )
 
 ./build_final_predictor.sh
