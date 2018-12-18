@@ -19,7 +19,7 @@ def write_cluster(clusters, out, name):
     for num in sorted(nums):
         out.write("""
     if (conf == {num}) {{
-        return new Clustering_{name}_{num};
+        return new Clustering_{name}_conf{num};
     }}\n""".format(num=num, name=name))
 
 def write_predictors(predictors, out, name):
@@ -35,7 +35,7 @@ def write_predictors(predictors, out, name):
 
     out.write("""    should_keep_short_funcs.resize(%d);\n""" % (max(nums)+1))
     for num in sorted(nums):
-        out.write("""    should_keep_{name}_funcs[{num}] =should_keep_{name}_{num}_funcs;\n""".format(num=num, name=name))
+        out.write("""    should_keep_{name}_funcs[{num}] =should_keep_{name}_conf{num}_funcs;\n""".format(num=num, name=name))
 
 
 with open(output_path, 'w') as out:

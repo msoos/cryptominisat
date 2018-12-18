@@ -573,28 +573,28 @@ class Clustering:
                 c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
 
-        f = open("{basedir}/clustering_{name}_{conf_num}.h".format(
+        f = open("{basedir}/clustering_{name}_conf{conf_num}.h".format(
             basedir=options.basedir, name=options.name,
             conf_num=options.conf_num), 'w')
 
         write_mit_header(f)
         f.write("""
-#ifndef CLUSTERING_{name}_{conf_num}_H
-#define CLUSTERING_{name}_{conf_num}_H
+#ifndef CLUSTERING_{name}_conf{conf_num}_H
+#define CLUSTERING_{name}_conf{conf_num}_H
 
 #include "satzilla_features.h"
 #include "clustering.h"
 #include <cmath>
 
 namespace CMSat {{
-class Clustering_{name}_{conf_num}: public Clustering {{
+class Clustering_{name}_conf{conf_num}: public Clustering {{
 
 public:
-    Clustering_{name}_{conf_num}() {{
+    Clustering_{name}_conf{conf_num}() {{
         set_up_centers();
     }}
 
-    virtual ~Clustering_{name}_{conf_num}() {{
+    virtual ~Clustering_{name}_conf{conf_num}() {{
     }}
 
     SatZillaFeatures center[{clusters}];
@@ -655,25 +655,25 @@ public:
 """)
 
     def write_all_predictors_file(self, fnames, functs):
-        f = open("{basedir}/all_predictors_{name}_{conf_num}.h".format(
+        f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
                 basedir=options.basedir, name=options.name,
                 conf_num=options.conf_num), "w")
 
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
-#ifndef ALL_PREDICTORS_{name}_{conf_num}_H
-#define ALL_PREDICTORS_{name}_{conf_num}_H\n\n""".format(name=options.name, conf_num=options.conf_num))
+#ifndef ALL_PREDICTORS_{name}_conf{conf_num}_H
+#define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=options.name, conf_num=options.conf_num))
         f.write('#include "clause.h"\n')
         f.write('#include "predict_func_type.h"\n\n')
         for _, fname in fnames.items():
             f.write('#include "predict/%s"\n' % fname)
 
-        f.write('#include <vector>"\n')
+        f.write('#include <vector>\n')
         f.write('using std::vector;\n\n')
 
         f.write("namespace CMSat {\n")
 
-        f.write("\nvector<keep_func_type> should_keep_{name}_{conf_num}_funcs = {{\n".format(
+        f.write("\nvector<keep_func_type> should_keep_{name}_conf{conf_num}_funcs = {{\n".format(
             conf_num=options.conf_num, name=options.name, clusters=options.clusters))
 
         for i in range(options.clusters):
@@ -769,11 +769,11 @@ public:
         fnames = {}
         functs = {}
         for clno in self.used_clusters:
-            funcname = "should_keep_{name}_{conf_num}_{clno}".format(
+            funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
                 clno=clno, name=options.name, conf_num=options.conf_num)
             functs[clno] = funcname
 
-            fname = "final_predictor_{name}_{conf_num}_{clno}.h".format(
+            fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
                 clno=clno, name=options.name, conf_num=options.conf_num)
             fnames[clno] = fname
 
