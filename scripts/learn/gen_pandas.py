@@ -310,33 +310,123 @@ class QueryCls (QueryHelper):
         limit {limit}
         """
 
-        self.case_stmt_10k = """
-        CASE WHEN
+        if options.conf == 0 or options.conf >= 4:
+            self.case_stmt_10k = """
+            CASE WHEN
 
-        -- used a lot
-        goodcl.last_confl_used > rdb0.conflicts and
-        (   (goodcl.num_used > 5
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
+            -- used a lot
+            goodcl.last_confl_used > rdb0.conflicts and
+            (   (goodcl.num_used > 5
+                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
+                )
+                or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
+                    AND goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 10000
+                )
             )
-            or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
-                AND goodcl.first_confl_used-cl.conflicts < 10000
-            )
-        )
-        THEN "OK"
-        ELSE "BAD"
-        END AS `x.class`
-        """
-
-        self.case_stmt_100k = """
-        CASE WHEN
-            goodcl.last_confl_used > (rdb0.conflicts+100000)
-            and goodcl.num_used > 5
-            and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
-
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-        """
+            """
+        elif options.conf == 1:
+            self.case_stmt_10k = """
+            CASE WHEN
+
+            -- used a lot
+            goodcl.last_confl_used > rdb0.conflicts and
+            (   (goodcl.num_used > 8
+                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 40000
+                )
+                or ((goodcl.num_used <= 8 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 40000)
+                    AND goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 10000
+                )
+            )
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif options.conf == 2:
+            self.case_stmt_10k = """
+            CASE WHEN
+
+            -- used a lot
+            goodcl.last_confl_used > rdb0.conflicts and
+            (   (goodcl.num_used > 3
+                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 20000
+                )
+                or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
+                    AND goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 20000
+                )
+            )
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif options.conf == 3:
+            self.case_stmt_10k = """
+            CASE WHEN
+
+            -- used a lot
+            goodcl.last_confl_used > rdb0.conflicts and
+            (   (goodcl.num_used > 12
+                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
+                )
+                or ((goodcl.num_used <= 12 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 50000)
+                    AND goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 20000
+                )
+            )
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+
+        if options.conf < 4:
+            self.case_stmt_100k = """
+            CASE WHEN
+                goodcl.last_confl_used > (rdb0.conflicts+100000)
+                and goodcl.num_used > 5
+                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
+
+                THEN "OK"
+                ELSE "BAD"
+                END AS `x.class`
+            """
+        elif options.conf == 4:
+            self.case_stmt_100k = """
+            CASE WHEN
+                goodcl.last_confl_used > (rdb0.conflicts+100000)
+                and goodcl.num_used > 4
+                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
+
+                THEN "OK"
+                ELSE "BAD"
+                END AS `x.class`
+            """
+        elif options.conf == 5:
+            self.case_stmt_100k = """
+            CASE WHEN
+                goodcl.last_confl_used > (rdb0.conflicts+100000)
+                and goodcl.num_used > 8
+                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 70000
+
+                THEN "OK"
+                ELSE "BAD"
+                END AS `x.class`
+            """
+        elif options.conf == 6:
+            self.case_stmt_100k = """
+            CASE WHEN
+                goodcl.last_confl_used > (rdb0.conflicts+100000)
+                and goodcl.num_used > 10
+                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 40000
+
+                THEN "OK"
+                ELSE "BAD"
+                END AS `x.class`
+            """
 
         self.q_count = """
         SELECT count(*) as count,
