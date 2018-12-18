@@ -799,10 +799,10 @@ if __name__ == "__main__":
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
-    parser.add_option("--cross", action="store_true", default=False,
-                      dest="cross_validate", help="Cross-validate prec/recall/acc against training data")
+
     parser.add_option("--depth", default=None, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
+
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
     parser.add_option("--show", action="store_true", default=False,
