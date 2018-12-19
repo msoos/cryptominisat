@@ -84,19 +84,13 @@ cd "$FNAME-dir"
 ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 ../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-../rem_data.py "$FNAMEOUT-min.db" --limit 60000
+../rem_data.py "$FNAMEOUT-min.db"
 
 
-for CONF in {0..0}
-do
-    echo "Doing config ${CONF}"
-    ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf "${CONF}"
-
-done
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs 7
 
 rm ../../src/predict/*.h
-rm ../../src/predict/*.cpp
-for CONF in {0..0}
+for CONF in {0..6}
 do
     ../predict.py "${FNAMEOUT}-min-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
     ../predict.py "${FNAMEOUT}-min-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
@@ -107,7 +101,11 @@ done
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME"
+../cryptominisat5 "../$FNAME" --pred 0
+../cryptominisat5 "../$FNAME" --pred 1
+../cryptominisat5 "../$FNAME" --pred 2
+../cryptominisat5 "../$FNAME" --pred 3
+../cryptominisat5 "../$FNAME" --pred 4
 )
 
 #--bva 0 --updateglueonanalysis 0 --otfsubsume 0

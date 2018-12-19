@@ -27,6 +27,7 @@ import re
 import pandas as pd
 import numpy as np
 import os.path
+import sys
 
 ##############
 # HOW TO GET A NICE LIST
@@ -63,9 +64,192 @@ class QueryHelper:
         self.conn.close()
 
 
-class QueryCls (QueryHelper):
+class QueryFill (QueryHelper):
     def __init__(self, dbfname):
+        super(QueryFill, self).__init__(dbfname)
+
+    def create_indexes(self):
+        print("Recreating indexes...")
+        t = time.time()
+        q = """
+        drop index if exists `idxclid1`;
+        drop index if exists `idxclid1-2`;
+        drop index if exists `idxclid1-3`;
+        drop index if exists `idxclid1-4`;
+        drop index if exists `idxclid1-5`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
+        drop index if exists `idxclid6-2`;
+        drop index if exists `idxclid6-3`;
+        drop index if exists `idxclid7`;
+        drop index if exists `idxclid8`;
+
+        create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
+        create index `idxclid1-2` on `clauseStats` (`clauseID`);
+        create index `idxclid1-3` on `clauseStats` (`clauseID`, restarts);
+        create index `idxclid1-4` on `clauseStats` (`clauseID`, restarts, prev_restart);
+        create index `idxclid1-5` on `clauseStats` (`clauseID`, prev_restart);
+        create index `idxclid2` on `clauseStats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
+        create index `idxclid3` on `goodClauses` (`clauseID`);
+        create index `idxclid4` on `restart` ( `restarts`);
+        create index `idxclid5` on `tags` ( `tagname`);
+        create index `idxclid6` on `reduceDB` (`clauseID`, `dump_no`, conflicts, latest_satzilla_feature_calc);
+        create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
+        create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`);
+        create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
+        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
+        """
+        for l in q.split('\n'):
+            if options.verbose:
+                print("Executing: ", l)
+            self.c.execute(l)
+
+        print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def fill_last_prop(self):
+        print("Adding last prop...")
+        t = time.time()
+        q = """
+        update goodClauses
+        set last_prop_used =
+        (select max(conflicts)
+            from reduceDB
+            where reduceDB.clauseID = goodClauses.clauseID
+                and reduceDB.propagations_made > 0
+        );
+        """
+        self.c.execute(q)
+        print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
+
+    def fill_good_clauses_fixed(self):
+        print("Filling good clauses fixed...")
+
+        t = time.time()
+        q = """
+        delete from goodClausesFixed;
+        """
+        self.c.execute(q)
+        print("goodClausesFixed deleted T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """insert into goodClausesFixed
+        select
+        clauseID
+        , sum(num_used)
+        , min(first_confl_used)
+        , max(last_confl_used)
+        , sum(sum_hist_used)
+        , max(last_prop_used)
+        from goodClauses as c group by clauseID;"""
+        self.c.execute(q)
+        print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        drop index if exists `idxclid20`;
+        drop index if exists `idxclid21`;
+        drop index if exists `idxclid22`;
+        create index `idxclid20` on `goodClausesFixed` (`clauseID`, first_confl_used, last_confl_used, num_used);
+        create index `idxclid21` on `goodClausesFixed` (`clauseID`);
+        create index `idxclid22` on `goodClausesFixed` (`clauseID`, last_confl_used);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
+
+    def fill_var_data_use(self):
+        print("Filling var data use...")
+
+        t = time.time()
+        q = "delete from `varDataUse`;"
+        self.c.execute(q)
+        print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        insert into varDataUse
+        select
+        v.restarts
+        , v.conflicts
+
+        -- data about var
+        , v.var
+        , v.dec_depth
+        , v.decisions_below
+        , v.conflicts_below
+        , v.clauses_below
+
+        , (v.decided*1.0)/(v.sum_decisions_at_picktime*1.0)
+        , (v.decided_pos*1.0)/(v.decided*1.0)
+        , (v.propagated*1.0)/(v.sum_propagations_at_picktime*1.0)
+        , (v.propagated_pos*1.0)/(v.propagated*1.0)
+
+        , v.decided
+        , v.decided_pos
+        , v.propagated
+        , v.propagated_pos
+
+        , v.sum_decisions_at_picktime
+        , v.sum_propagations_at_picktime
+
+        , v.total_conflicts_below_when_picked
+        , v.total_decisions_below_when_picked
+        , v.avg_inside_per_confl_when_picked
+        , v.avg_inside_antecedents_when_picked
+
+        -- measures for good
+        , count(cls.num_used) as useful_clauses
+        , sum(cls.num_used) as useful_clauses_used
+        , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
+        , min(cls.first_confl_used) as useful_clauses_first_used
+        , max(cls.last_confl_used) as useful_clauses_last_used
+
+        FROM varData as v left join goodClausesFixed as cls
+        on cls.clauseID >= v.clid_start_incl
+        and cls.clauseID < v.clid_end_notincl
+
+        -- avoid division by zero below
+        where
+        v.propagated > 0
+        and v.sum_propagations_at_picktime > 0
+        and v.decided > 0
+        and v.sum_decisions_at_picktime > 0
+        group by var, conflicts
+        ;
+        """
+        if options.verbose:
+            print("query:", q);
+        self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_used = 0
+        WHERE useful_clauses_used IS NULL
+        """
+        self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_first_used = 0
+        WHERE useful_clauses_first_used IS NULL
+        """
+        self.c.execute(q)
+
+        q = """
+        UPDATE varDataUse SET useful_clauses_last_used = 0
+        WHERE useful_clauses_last_used IS NULL
+        """
+        self.c.execute(q)
+
+        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
+
+
+class QueryCls (QueryHelper):
+    def __init__(self, dbfname, conf):
         super(QueryCls, self).__init__(dbfname)
+        self.conf = conf
+
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
         self.restart_dat = """
         -- , rst.`simplifications` as `rst.simplifications`
@@ -310,7 +494,7 @@ class QueryCls (QueryHelper):
         limit {limit}
         """
 
-        if options.conf == 0 or options.conf >= 4:
+        if self.conf == 0 or self.conf >= 3:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -328,7 +512,7 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-        elif options.conf == 1:
+        elif self.conf == 1:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -346,7 +530,7 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-        elif options.conf == 2:
+        elif self.conf == 2:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -364,26 +548,8 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-        elif options.conf == 3:
-            self.case_stmt_10k = """
-            CASE WHEN
 
-            -- used a lot
-            goodcl.last_confl_used > rdb0.conflicts and
-            (   (goodcl.num_used > 12
-                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
-                )
-                or ((goodcl.num_used <= 12 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 50000)
-                    AND goodcl.first_confl_used > cl.conflicts
-                    AND goodcl.first_confl_used-cl.conflicts < 20000
-                )
-            )
-            THEN "OK"
-            ELSE "BAD"
-            END AS `x.class`
-            """
-
-        if options.conf < 4:
+        if self.conf < 4 or conf >= 5:
             self.case_stmt_100k = """
             CASE WHEN
                 goodcl.last_confl_used > (rdb0.conflicts+100000)
@@ -394,34 +560,12 @@ class QueryCls (QueryHelper):
                 ELSE "BAD"
                 END AS `x.class`
             """
-        elif options.conf == 4:
+        elif self.conf == 4:
             self.case_stmt_100k = """
             CASE WHEN
                 goodcl.last_confl_used > (rdb0.conflicts+100000)
                 and goodcl.num_used > 4
                 and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
-
-                THEN "OK"
-                ELSE "BAD"
-                END AS `x.class`
-            """
-        elif options.conf == 5:
-            self.case_stmt_100k = """
-            CASE WHEN
-                goodcl.last_confl_used > (rdb0.conflicts+100000)
-                and goodcl.num_used > 8
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 70000
-
-                THEN "OK"
-                ELSE "BAD"
-                END AS `x.class`
-            """
-        elif options.conf == 6:
-            self.case_stmt_100k = """
-            CASE WHEN
-                goodcl.last_confl_used > (rdb0.conflicts+100000)
-                and goodcl.num_used > 10
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 40000
 
                 THEN "OK"
                 ELSE "BAD"
@@ -438,7 +582,6 @@ class QueryCls (QueryHelper):
         tags.tag as `fname`
         {clause_dat}
         {restart_dat}
-        {satzfeat_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
@@ -475,7 +618,6 @@ class QueryCls (QueryHelper):
         tags.tag as "fname"
         {clause_dat}
         {restart_dat}
-        {satzfeat_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
@@ -509,171 +651,14 @@ class QueryCls (QueryHelper):
             "limit": 1000*1000*1000,
             "restart_dat": self.restart_dat,
             "clause_dat": self.clause_dat,
-            "satzfeat_dat": self.satzfeat_dat,
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             }
 
-    def create_indexes(self):
-        print("Recreating indexes...")
-        t = time.time()
-        q = """
-        drop index if exists `idxclid`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-        drop index if exists `idxclid7`;
-        drop index if exists `idxclid8`;
-
-        create index `idxclid` on `clauseStats` (`clauseID`);
-        create index `idxclid2` on `clauseStats` (`prev_restart`);
-        create index `idxclid3` on `goodClauses` (`clauseID`);
-        create index `idxclid4` on `restart` ( `restarts`);
-        create index `idxclid5` on `tags` ( `tagname`);
-        create index `idxclid6` on `reduceDB` (`clauseID`, `dump_no`);
-        create index `idxclid7` on `reduceDB` (`clauseID`, `propagations_made`);
-        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-
-        print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def fill_last_prop(self):
-        print("Adding last prop...")
-        t = time.time()
-        q = """
-        update goodClauses
-        set last_prop_used =
-        (select max(conflicts)
-            from reduceDB
-            where reduceDB.clauseID = goodClauses.clauseID
-                and reduceDB.propagations_made > 0
-        );
-        """
-        self.c.execute(q)
-        print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
-
-    def fill_good_clauses_fixed(self):
-        print("Filling good clauses fixed...")
-
-        t = time.time()
-        q = """
-        delete from goodClausesFixed;
-        """
-        self.c.execute(q)
-        print("goodClausesFixed deleted T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """insert into goodClausesFixed
-        select
-        clauseID
-        , sum(num_used)
-        , min(first_confl_used)
-        , max(last_confl_used)
-        , sum(sum_hist_used)
-        , max(last_prop_used)
-        from goodClauses as c group by clauseID;"""
-        self.c.execute(q)
-        print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        drop index if exists `idxclid20`;
-        create index `idxclid20` on `goodClausesFixed` (`clauseID`);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
-
-    def fill_var_data_use(self):
-        print("Filling var data use...")
-
-        t = time.time()
-        q = "delete from `varDataUse`;"
-        self.c.execute(q)
-        print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        insert into varDataUse
-        select
-        v.restarts
-        , v.conflicts
-
-        -- data about var
-        , v.var
-        , v.dec_depth
-        , v.decisions_below
-        , v.conflicts_below
-        , v.clauses_below
-
-        , (v.decided*1.0)/(v.sum_decisions_at_picktime*1.0)
-        , (v.decided_pos*1.0)/(v.decided*1.0)
-        , (v.propagated*1.0)/(v.sum_propagations_at_picktime*1.0)
-        , (v.propagated_pos*1.0)/(v.propagated*1.0)
-
-        , v.decided
-        , v.decided_pos
-        , v.propagated
-        , v.propagated_pos
-
-        , v.sum_decisions_at_picktime
-        , v.sum_propagations_at_picktime
-
-        , v.total_conflicts_below_when_picked
-        , v.total_decisions_below_when_picked
-        , v.avg_inside_per_confl_when_picked
-        , v.avg_inside_antecedents_when_picked
-
-        -- measures for good
-        , count(cls.num_used) as useful_clauses
-        , sum(cls.num_used) as useful_clauses_used
-        , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
-        , min(cls.first_confl_used) as useful_clauses_first_used
-        , max(cls.last_confl_used) as useful_clauses_last_used
-
-        FROM varData as v left join goodClausesFixed as cls
-        on cls.clauseID >= v.clid_start_incl
-        and cls.clauseID < v.clid_end_notincl
-
-        -- avoid division by zero below
-        where
-        v.propagated > 0
-        and v.sum_propagations_at_picktime > 0
-        and v.decided > 0
-        and v.sum_decisions_at_picktime > 0
-        group by var, conflicts
-        ;
-        """
-        if options.verbose:
-            print("query:", q);
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_used = 0
-        WHERE useful_clauses_used IS NULL
-        """
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_first_used = 0
-        WHERE useful_clauses_first_used IS NULL
-        """
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_last_used = 0
-        WHERE useful_clauses_last_used IS NULL
-        """
-        self.c.execute(q)
-
-        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
-
     def get_ok(self, subfilter):
+        t = time.time()
+
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
         q = q.format(**self.myformat)
@@ -681,34 +666,55 @@ class QueryCls (QueryHelper):
             print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
-        print("Num datapoints OK -- %s (K): %-3.5f" % (subfilter, (num_lines/1000.0)))
+        print("Num datapoints OK-%s (K): %-3.5f T: %-3.1f" % (
+            subfilter, (num_lines/1000.0), time.time()-t))
         return num_lines
 
     def get_bad(self):
+        t = time.time()
         q = self.q_count + self.q_bad
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
-        print("Num datpoints BAD (K): %-3.5f" % (num_lines/1000.0))
+        print("Num datpoints BAD-BAD (K): %-3.5f T: %-3.1f" % (
+            (num_lines/1000.0), time.time()-t))
         return num_lines
 
     def one_query(self, name, q):
         q = q.format(**self.myformat)
         t = time.time()
-        print("Running query for %s..." % name)
+        sys.stdout.write("Running query for %s..." % name)
+        sys.stdout.flush()
         if options.verbose:
             print("query:", q)
         df = pd.read_sql_query(q, self.conn)
-        print("T: %-3.2f" % (time.time() - t))
+        print("T: %-3.1f" % (time.time() - t))
         return df
 
-    def get_clstats(self, long_or_short):
+    def compute_one_ok_bad_bad_data(self, long_or_short):
+        df = None
+        ok, df = self.get_ok_bad_bad_data(long_or_short)
+        if not ok:
+            return False, None
+
+        if options.verbose:
+            print("Printing head:")
+            print(df.head())
+            print("Print head done.")
+
+        return True, df
+
+    def get_ok_bad_bad_data(self, long_or_short):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
-            distrib = 0.4 #prefer OK by a factor of this. If < 0.5 then preferring BAD
+            distrib = 0.4  # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            if self.conf == 5:
+                distrib = 0.5
+            if self.conf == 6:
+                distrib = 0.3
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.1
@@ -822,34 +828,6 @@ and avg_inside_per_confl_when_picked > 0
         cleanname = re.sub(r'\.db$', '', dbfname)
         cleanname += "-vardata"
         dump_dataframe(df, cleanname)
-
-
-def get_one_file(dbfname, long_or_short):
-    print("Using sqlite3db file %s" % dbfname)
-
-    df = None
-    with QueryCls(dbfname) as q:
-        if not options.no_recreate_indexes:
-            q.create_indexes()
-            q.fill_last_prop()
-            q.fill_good_clauses_fixed()
-            q.fill_var_data_use()
-
-    with QueryVar(dbfname) as q:
-        q.vardata()
-
-    with QueryCls(dbfname) as q:
-        ok, df = q.get_clstats(long_or_short)
-        if not ok:
-            return False, None
-
-        if options.verbose:
-            print("Printing head:")
-            print(df.head())
-            print("Print head done.")
-
-    return True, df
-
 
 def transform(df):
     def check_clstat_row(self, row):
@@ -971,35 +949,50 @@ def dump_dataframe(df, name):
         pickle.dump(df, f)
 
 
-def one_dataframe(dbfname, long_or_short):
-    ok, df = get_one_file(dbfname, long_or_short)
-    if not ok:
-        return False, None
+def one_database(dbfname):
+    with QueryFill(dbfname) as q:
+        if not options.no_recreate_indexes:
+            q.create_indexes()
+            q.fill_last_prop()
+            q.fill_good_clauses_fixed()
+            q.fill_var_data_use()
 
-    if options.verbose:
-        print("Describing----")
-        dat = df.describe()
-        print(dat)
-        print("Describe done.---")
-        print("Features: ", df.columns.values.flatten().tolist())
+    # with QueryVar(dbfname) as q:
+    #    q.vardata()
 
-    df = transform(df)
+    print("Using sqlite3db file %s" % dbfname)
+    for long_or_short in ["short", "long"]:
+        for conf in range(options.confs):
+            with QueryCls(dbfname, conf) as q:
+                ok, df = q.compute_one_ok_bad_bad_data(long_or_short)
 
-    if options.verbose:
-        print("Describing post-transform ----")
-        print(df.describe())
-        print("Describe done.---")
+            if not ok:
+                print("Couldn't generate data!")
+                exit(-1)
 
-    cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-    cleanname = re.sub(r'\.db$', '', dbfname)
-    cleanname = "{cleanname}-{long_or_short}-conf-{conf}".format(
-        cleanname=cleanname,
-        long_or_short=long_or_short,
-        conf=options.conf)
+            if options.verbose:
+                print("Describing----")
+                dat = df.describe()
+                print(dat)
+                print("Describe done.---")
+                print("Features: ", df.columns.values.flatten().tolist())
 
-    dump_dataframe(df, cleanname)
+            df = transform(df)
 
-    return True, df
+            if options.verbose:
+                print("Describing post-transform ----")
+                print(df.describe())
+                print("Describe done.---")
+                print("Features: ", df.columns.values.flatten().tolist())
+
+            cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
+            cleanname = re.sub(r'\.db$', '', dbfname)
+            cleanname = "{cleanname}-{long_or_short}-conf-{conf}".format(
+                cleanname=cleanname,
+                long_or_short=long_or_short,
+                conf=conf)
+
+            dump_dataframe(df, cleanname)
 
 
 if __name__ == "__main__":
@@ -1022,8 +1015,8 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    parser.add_option("--conf", default=0, type=int,
-                      dest="conf", help="Config to generate. Default: %default")
+    parser.add_option("--confs", default=5, type=int,
+                      dest="confs", help="Number of configs to generate. Default: %default")
 
     (options, args) = parser.parse_args()
 
@@ -1032,23 +1025,6 @@ if __name__ == "__main__":
         exit(-1)
 
     np.random.seed(2097483)
-    for long_or_short in ["short", "long"]:
-        dfs = []
-        for dbfname in args:
-            print("----- INTERMEDIATE data %s -------" % long_or_short)
-            ok, df = one_dataframe(dbfname, long_or_short)
-            if ok:
-                dfs.append(df)
-
-        if len(dfs) == 0:
-            print("Error, nothing got ingested, something is off")
-            exit(-1)
-
-        if len(args) > 1:
-            print("----- FINAL predictor %s -------" % long_or_short)
-            if len(dfs) == 0:
-                print("Ooops, final predictor is None, probably no meaningful data. Exiting.")
-                exit(0)
-
-            final_df = pd.concat(dfs)
-            dump_dataframe(final_df, "final-"+long_or_short)
+    for dbfname in args:
+        print("----- FILE %s -------" % dbfname)
+        one_database(dbfname)

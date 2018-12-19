@@ -32,10 +32,11 @@ def write_predictors(predictors, out, name):
             nums.append(int(num[0]))
 
     if len(nums) == 0:
-        print("ERROR: long must be specified")
+        print("ERROR: we don't know how many predictors of name %s are there" % name)
         exit(-1)
 
-    out.write("""    should_keep_short_funcs.resize(%d);\n""" % (max(nums)+1))
+    out.write("""    should_keep_{name}_funcs.resize({num});\n""".format(
+        num =max(nums)+1, name=name))
     for num in sorted(nums):
         out.write("""    should_keep_{name}_funcs[{num}] =should_keep_{name}_conf{num}_funcs;\n""".format(num=num, name=name))
 
