@@ -694,6 +694,16 @@ class QueryCls (QueryHelper):
         print("Num datpoints BAD (K): %-3.5f" % (num_lines/1000.0))
         return num_lines
 
+    def one_query(self, name, q):
+        q = q.format(**self.myformat)
+        t = time.time()
+        print("Running query for %s..." % name)
+        if options.verbose:
+            print("query:", q)
+        df = pd.read_sql_query(q, self.conn)
+        print("T: %-3.2f" % (time.time() - t))
+        return df
+
     def get_clstats(self, long_or_short):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
@@ -747,11 +757,7 @@ class QueryCls (QueryHelper):
             q += self.common_limits
 
         print("limit for OK-OK:", self.myformat["limit"])
-        q = q.format(**self.myformat)
-        print("Running query for OK-OK...")
-        if options.verbose:
-            print("query:", q)
-        df_ok_ok = pd.read_sql_query(q, self.conn)
+        df_ok_ok = self.one_query("OK-OK", q)
 
         # OK-BAD
         print("OK-BAD")
@@ -764,11 +770,7 @@ class QueryCls (QueryHelper):
                 return False, None
             q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
-        q = q.format(**self.myformat)
-        print("Running query for OK-BAD...")
-        if options.verbose:
-            print("query:", q)
-        df_ok_bad = pd.read_sql_query(q, self.conn)
+        df_ok_bad = self.one_query("OK-BAD", q)
 
         # BAD-BAD
         print("BAD-BAD")
@@ -782,11 +784,7 @@ class QueryCls (QueryHelper):
             q += self.common_limits
 
         print("limit for bad:", self.myformat["limit"])
-        q = q.format(**self.myformat)
-        print("Running query for BAD...")
-        if options.verbose:
-            print("query:", q)
-        df_bad_bad = pd.read_sql_query(q, self.conn)
+        df_bad_bad = self.one_query("BAD-BAD", q)
         print("Queries finished. T: %-3.2f" % (time.time() - t))
 
         if options.dump_sql:
