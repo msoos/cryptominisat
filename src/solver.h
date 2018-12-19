@@ -348,6 +348,7 @@ class Solver : public Searcher
         //Renumberer
         double calc_renumber_saving();
         void free_unused_watches();
+        uint64_t last_full_watch_consolidate = 0;
         void save_on_var_memory(uint32_t newNumVars);
         void unSaveVarMem();
         size_t calculate_interToOuter_and_outerToInter(

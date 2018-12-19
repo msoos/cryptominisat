@@ -2913,7 +2913,12 @@ void Solver::free_unused_watches()
         }
     }
 
-    consolidate_watches();
+    if ((sumConflicts - last_full_watch_consolidate) > 2ULL*1000ULL*1000ULL) {
+        last_full_watch_consolidate = sumConflicts;
+        consolidate_watches(true);
+    } else {
+        consolidate_watches(false);
+    }
 }
 
 bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)

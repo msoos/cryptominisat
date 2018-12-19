@@ -152,6 +152,14 @@ public:
         watches.shrink_to_fit();
     }
 
+    void full_consolidate()
+    {
+        for(auto& ws: watches) {
+            ws.shrink_to_fit();
+        }
+        watches.shrink_to_fit();
+    }
+
     void print_stat()
     {
     }
