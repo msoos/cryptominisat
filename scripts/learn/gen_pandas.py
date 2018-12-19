@@ -678,8 +678,7 @@ class QueryCls (QueryHelper):
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
         q = q.format(**self.myformat)
         if options.verbose:
-            print("query:")
-            print(q)
+            print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
         print("Num datapoints OK -- %s (K): %-3.5f" % (subfilter, (num_lines/1000.0)))
@@ -689,8 +688,7 @@ class QueryCls (QueryHelper):
         q = self.q_count + self.q_bad
         q = q.format(**self.myformat)
         if options.verbose:
-            print("query:")
-            print(q)
+            print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
         print("Num datpoints BAD (K): %-3.5f" % (num_lines/1000.0))
