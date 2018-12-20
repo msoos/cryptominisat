@@ -763,7 +763,6 @@ class QueryCls (QueryHelper):
             return False, None
 
         # OK-OK
-        print("OK-OK")
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
         if options.fixed != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * distrib)
@@ -777,7 +776,6 @@ class QueryCls (QueryHelper):
         df_ok_ok = self.one_query("OK-OK", q)
 
         # OK-BAD
-        print("OK-BAD")
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
         if options.fixed != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
@@ -790,7 +788,6 @@ class QueryCls (QueryHelper):
         df_ok_bad = self.one_query("OK-BAD", q)
 
         # BAD-BAD
-        print("BAD-BAD")
         q = self.q_bad_select + self.q_bad
         if options.fixed*fixed_mult != -1:
             self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
@@ -974,6 +971,7 @@ def one_database(dbfname):
     print("Using sqlite3db file %s" % dbfname)
     for long_or_short in ["short", "long"]:
         for conf in range(options.confs):
+            print("------> Doing config {conf}".format(conf=conf))
             with QueryCls(dbfname, conf) as q:
                 ok, df = q.compute_one_ok_bad_bad_data(long_or_short)
 
