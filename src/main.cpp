@@ -709,7 +709,7 @@ void Main::add_supported_options()
     .add(simplificationOptions)
     .add(eqLitOpts)
     .add(componentOptions)
-    #if defined(USE_M4RI) or defined(USE_GAUSS)
+    #if defined(USE_M4RI) || defined(USE_GAUSS)
     .add(xorOptions)
     #endif
     .add(gateOptions)
