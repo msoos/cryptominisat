@@ -82,6 +82,7 @@ struct SortRedClsAct
 ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
 {
+    fill_funcs();
 }
 
 void ReduceDB::sort_red_cls(ClauseClean clean_type)
@@ -430,6 +431,9 @@ void ReduceDB::handle_lev1_final_predictor()
         );
     }
     total_time += cpuTime()-myTime;
+
+    delete long_clust;
+    delete short_clust;
 }
 #endif
 
