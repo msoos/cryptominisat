@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "propbyforgraph.h"
 #include <algorithm>
+#include <sstream>
 #include <cstddef>
 #include <cmath>
 #include <ratio>
@@ -2208,7 +2209,7 @@ void Searcher::rebuildOrderHeap()
 
 inline void Searcher::dump_search_loop_stats(double myTime)
 {
-    #if defined(STATS_NEEDED) or defined(FINAL_PREDICTOR)
+    #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     check_calc_satzilla_features();
     #endif
 
@@ -3194,23 +3195,30 @@ void Searcher::update_var_decay_vsids()
     }
 }
 
-void Searcher::consolidate_watches()
+void Searcher::consolidate_watches(const bool full)
 {
     double t = cpuTime();
-    watches.consolidate();
+    if (full) {
+        watches.full_consolidate();
+    } else {
+        watches.consolidate();
+    }
     double time_used = cpuTime() - t;
 
     if (conf.verbosity) {
         cout
-        << "c [consolidate]"
+        << "c [consolidate] "
+        << (full ? "full" : "mini")
         << conf.print_times(time_used)
         << endl;
     }
 
+    std::stringstream ss;
+    ss << "consolidate " << (full ? "full" : "mini") << " watches";
     if (sqlStats) {
         sqlStats->time_passed_min(
             solver
-            , "consolidate watches"
+            , ss.str()
             , time_used
         );
     }

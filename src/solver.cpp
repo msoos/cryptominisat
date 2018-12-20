@@ -1297,8 +1297,13 @@ void Solver::check_xor_cut_config_sanity() const
         exit(-1);
     }
 
-    if (conf.xor_var_per_cut > 10) {
-        std::cerr << "ERROR: Too high cutting number. High numbers entail huge memory use." << endl;
+    if (MAX_XOR_RECOVER_SIZE < 4) {
+        std::cerr << "ERROR: MAX_XOR_RECOVER_SIZE  must be at least 4. It's currently: " << MAX_XOR_RECOVER_SIZE << endl;
+        exit(-1);
+    }
+
+    if (conf.xor_var_per_cut+2 > MAX_XOR_RECOVER_SIZE) {
+        std::cerr << "ERROR: Too high cutting number, we will not be able to recover cut XORs due to MAX_XOR_RECOVER_SIZE only being " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);
     }
 }
@@ -2928,7 +2933,12 @@ void Solver::free_unused_watches()
         }
     }
 
-    consolidate_watches();
+    if ((sumConflicts - last_full_watch_consolidate) > 2ULL*1000ULL*1000ULL) {
+        last_full_watch_consolidate = sumConflicts;
+        consolidate_watches(true);
+    } else {
+        consolidate_watches(false);
+    }
 }
 
 bool Solver::fully_enqueue_these(const vector<Lit>& toEnqueue)

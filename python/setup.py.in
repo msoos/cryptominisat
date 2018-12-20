@@ -122,7 +122,7 @@ modules = dict(
     extra_compile_args = cconf + ['-I${PROJECT_SOURCE_DIR}', '-I${PROJECT_BINARY_DIR}/cmsat5-src'],
     extra_link_args = extra_link_args,
     language = "c++",
-    library_dirs=['.', '${PROJECT_BINARY_DIR}/lib'],
+    library_dirs=['.', '${PROJECT_BINARY_DIR}/lib', '${PROJECT_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}'],
     runtime_library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'],
     libraries = [libname]
 )

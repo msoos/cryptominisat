@@ -714,7 +714,7 @@ void Main::add_supported_options()
     .add(simplificationOptions)
     .add(eqLitOpts)
     .add(componentOptions)
-    #if defined(USE_M4RI) or defined(USE_GAUSS)
+    #if defined(USE_M4RI) || defined(USE_GAUSS)
     .add(xorOptions)
     #endif
     .add(gateOptions)
@@ -960,6 +960,11 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
+        cout << "ERROR: The '--maxxorsize' parameter cannot be larger than " << MAX_XOR_RECOVER_SIZE << endl;
+        exit(-1);
+    }
+
     if (conf.shortTermHistorySize <= 0) {
         cout
         << "You MUST give a short term history size (\"--gluehist\")" << endl

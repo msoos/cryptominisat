@@ -122,7 +122,7 @@ class Searcher : public HyperEngine
         bool check_order_heap_sanity() const;
 
         SQLStats* sqlStats = NULL;
-        void consolidate_watches();
+        void consolidate_watches(const bool full);
 
         //Gauss
         #ifdef USE_GAUSS
