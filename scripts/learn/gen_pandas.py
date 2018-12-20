@@ -494,7 +494,7 @@ class QueryCls (QueryHelper):
         limit {limit}
         """
 
-        if self.conf == 0 or self.conf >= 3:
+        if self.conf != 1 and self.conf != 2:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -549,12 +549,23 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
 
-        if self.conf < 4 or conf >= 5:
+        if self.conf != 3 and self.conf != 4:
             self.case_stmt_100k = """
             CASE WHEN
                 goodcl.last_confl_used > (rdb0.conflicts+100000)
                 and goodcl.num_used > 5
                 and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
+
+                THEN "OK"
+                ELSE "BAD"
+                END AS `x.class`
+            """
+        elif self.conf == 3:
+            self.case_stmt_100k = """
+            CASE WHEN
+                goodcl.last_confl_used > (rdb0.conflicts+100000)
+                and goodcl.num_used > 7
+                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 25000
 
                 THEN "OK"
                 ELSE "BAD"
