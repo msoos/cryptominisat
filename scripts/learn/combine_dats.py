@@ -25,6 +25,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sys
+import sklearn.model_selection
 
 
 if __name__ == "__main__":
@@ -44,10 +45,6 @@ if __name__ == "__main__":
 
     if options.out is None and options.csv is None:
         print("ERROR: you must either dump CSV or Pandas. Give either '--out' or '--csv' options")
-        exit(-1)
-
-    if len(args) < 2:
-        print("ERROR: You must give at least 2 files to combine")
         exit(-1)
 
     if options.csvratio > 1.0:
@@ -74,7 +71,7 @@ if __name__ == "__main__":
 
     if options.csv is not None:
         fname = options.csv
-        print("Dumpiing CSV ratio: %f" % options.csvratio)
-        _, df_tmp = sklearn.model_selection.train_test_split(self.df, test_size=options.csvperc)
+        print("Dumpiing CSV ratio: %-3.2f" % options.csvratio)
+        _, df_tmp = sklearn.model_selection.train_test_split(df_full, test_size=options.csvratio)
         print("Dumping {num} datapoint CSV data to: {fname}".format(num=df_tmp.shape[0], fname=fname))
         df_tmp.to_csv(fname, index=False, columns=sorted(list(df_tmp)))
