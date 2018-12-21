@@ -83,6 +83,7 @@ class QueryDatRem(QueryHelper):
         print("Recreated indexes needed")
 
     def fill_used_cl_ids_table_cheat(self):
+        t = time.time()
         val = int(options.limit)
         q = """
         insert into usedClauseIDs
@@ -94,7 +95,8 @@ class QueryDatRem(QueryHelper):
         ret = self.c.execute("select count() from usedClauseIDs")
         rows = self.c.fetchall()
         good_ids = rows[0][0]
-        print("IDs from goodClauses: %d" % good_ids)
+        print("IDs from goodClauses: {ids} T: {time}".format(
+            ids=good_ids, time=time.time()-t))
 
         val = int(options.limit)*0.7
         q = """
@@ -131,8 +133,10 @@ class QueryDatRem(QueryHelper):
         (SELECT clauseID from usedClauseIDs );"""
 
         for table in tables:
+            t = time.time()
             self.c.execute(q.format(table=table))
-            print("Filtered table {table}".format(table=table))
+            print("Filtered table {table} T: {time}".format(
+                table=table, time=time.time()-t))
 
     def vacuum(self):
         queries = """
