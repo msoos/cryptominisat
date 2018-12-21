@@ -79,7 +79,7 @@ before_build:
   - echo "Building boost.."
   - bootstrap.bat --with-libraries=program_options
   - cat project-config.jam
-  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release %BOOST_OPTIONS% threading=multi  install --prefix="C:\projects\cryptominisat\boost_1_59_0_install" > boost_install.out
+  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release %BOOST_OPTIONS% threading=multi  install --prefix=%BOOST_ROOT% > boost_install.out
 
   # zlib
   # TODO check out http://stackoverflow.com/questions/10507893/libzip-with-visual-studio-2010
@@ -103,8 +103,9 @@ before_build:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%STATICCOMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 ..
+  - cmake -G %CMAKE_GENERATOR% -DBOOST_ROOT=%BOOST_ROOT% %EXTRA_FLAGS% -DENABLE_TESTING=%STATICCOMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe ..
   - ls
+  - cmake --build . --config Release
 
 after_build:
   - call ctest -V -C %CONFIGURATION%
@@ -114,13 +115,6 @@ after_build:
   - echo %APPVEYOR_BUILD_FOLDER%
   - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
   - cd c:\projects\cryptominisat
-
-
-build:
-  project: build\INSTALL.vcxproj
-  parallel: true
-  verbosity: minimal
-
 
 artifacts:
   - path: cryptominisat.zip
