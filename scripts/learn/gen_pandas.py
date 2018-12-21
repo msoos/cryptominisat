@@ -136,12 +136,22 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """insert into goodClausesFixed
+        (
+        `clauseID`,
+        `num_used`,
+        `first_confl_used`,
+        `last_confl_used`,
+        `sum_hist_used`,
+        `avg_hist_used`,
+        `last_prop_used`
+        )
         select
         clauseID
         , sum(num_used)
         , min(first_confl_used)
         , max(last_confl_used)
         , sum(sum_hist_used)
+        , (1.0*sum(sum_hist_used))/(1.0*sum(num_used))
         , max(last_prop_used)
         from goodClauses as c group by clauseID;"""
         self.c.execute(q)
@@ -151,14 +161,34 @@ class QueryFill (QueryHelper):
         q = """
         drop index if exists `idxclid20`;
         drop index if exists `idxclid21`;
+        drop index if exists `idxclid21-2`;
         drop index if exists `idxclid22`;
-        create index `idxclid20` on `goodClausesFixed` (`clauseID`, first_confl_used, last_confl_used, num_used);
+
+        create index `idxclid20` on `goodClausesFixed` (`clauseID`, first_confl_used, last_confl_used, num_used, avg_hist_used);
         create index `idxclid21` on `goodClausesFixed` (`clauseID`);
+        create index `idxclid21-2` on `goodClausesFixed` (`clauseID`, avg_hist_used);
         create index `idxclid22` on `goodClausesFixed` (`clauseID`, last_confl_used);
         """
         for l in q.split('\n'):
             self.c.execute(l)
         print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """update goodClausesFixed
+        set `var_hist_used` = (
+        select
+        sum(1.0*(used_at-cs.conflicts-avg_hist_used)*(used_at-cs.conflicts-avg_hist_used))/(num_used*1.0)
+        from
+        goodClausesFixed as c,
+        clauseStats as cs,
+        usedClauses as u
+        where c.clauseID = u.clauseID
+        and goodClausesFixed.clauseID = u.clauseID
+        and cs.clauseID = u.clauseID
+        group by c.clauseID );
+        """
+        self.c.execute(q)
+        print("goodClausesFixed added variance T: %-3.2f s" % (time.time() - t))
 
     def fill_var_data_use(self):
         print("Filling var data use...")
