@@ -530,10 +530,9 @@ class QueryCls (QueryHelper):
 
             -- used a lot
             goodcl.last_confl_used > rdb0.conflicts and
-            (   (goodcl.num_used > 5
-                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
-                )
-                or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
+            (   (goodcl.num_used > 5 and goodcl.avg_hist_used > 30000)
+                or (
+                    (goodcl.num_used <= 3 or goodcl.avg_hist_used <= 20000)
                     AND goodcl.first_confl_used > cl.conflicts
                     AND goodcl.first_confl_used-cl.conflicts < 10000
                 )
@@ -542,18 +541,33 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+        #elif self.conf == 1:
+            #self.case_stmt_10k = """
+            #CASE WHEN
+
+            #-- used a lot
+            #goodcl.last_confl_used > rdb0.conflicts and
+            #(      (goodcl.num_used > 5 and goodcl.var_hist_used > 1000000)
+                #or (goodcl.num_used > 10 and goodcl.avg_hist_used > 30000)
+                #or ((goodcl.num_used <= 10 or goodcl.var_hist_used < 1000000)
+                    #AND (goodcl.first_confl_used+10000 < cl.conflicts)
+                #)
+            #)
+            #THEN "OK"
+            #ELSE "BAD"
+            #END AS `x.class`
+            #"""
         elif self.conf == 1:
             self.case_stmt_10k = """
             CASE WHEN
 
             -- used a lot
             goodcl.last_confl_used > rdb0.conflicts and
-            (   (goodcl.num_used > 8
-                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 40000
+            (   (goodcl.num_used > 7 and goodcl.avg_hist_used > 40000
                 )
-                or ((goodcl.num_used <= 8 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 40000)
+                or ((goodcl.num_used <= 7 or goodcl.avg_hist_used <= 30000)
                     AND goodcl.first_confl_used > cl.conflicts
-                    AND goodcl.first_confl_used-cl.conflicts < 10000
+                    AND goodcl.first_confl_used < cl.conflicts+20000
                 )
             )
             THEN "OK"
@@ -566,12 +580,11 @@ class QueryCls (QueryHelper):
 
             -- used a lot
             goodcl.last_confl_used > rdb0.conflicts and
-            (   (goodcl.num_used > 3
-                    and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 20000
+            (   (goodcl.num_used > 3 and goodcl.avg_hist_used > 20000
                 )
-                or ((goodcl.num_used <= 3 or (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) <= 20000)
+                or ((goodcl.num_used <= 3 or goodcl.avg_hist_used <= 20000)
                     AND goodcl.first_confl_used > cl.conflicts
-                    AND goodcl.first_confl_used-cl.conflicts < 20000
+                    AND goodcl.first_confl_used < cl.conflicts+20000
                 )
             )
             THEN "OK"
@@ -582,9 +595,9 @@ class QueryCls (QueryHelper):
         if self.conf != 3 and self.conf != 4:
             self.case_stmt_100k = """
             CASE WHEN
-                goodcl.last_confl_used > (rdb0.conflicts+100000)
-                and goodcl.num_used > 5
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 50000
+                goodcl.last_confl_used > rdb0.conflicts+100000
+                and goodcl.num_used > 15
+                and goodcl.avg_hist_used > 50000
 
                 THEN "OK"
                 ELSE "BAD"
@@ -593,9 +606,9 @@ class QueryCls (QueryHelper):
         elif self.conf == 3:
             self.case_stmt_100k = """
             CASE WHEN
-                goodcl.last_confl_used > (rdb0.conflicts+100000)
-                and goodcl.num_used > 7
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 25000
+                goodcl.last_confl_used > rdb0.conflicts+100000
+                and goodcl.num_used > 25
+                and goodcl.avg_hist_used > 75000
 
                 THEN "OK"
                 ELSE "BAD"
@@ -605,8 +618,8 @@ class QueryCls (QueryHelper):
             self.case_stmt_100k = """
             CASE WHEN
                 goodcl.last_confl_used > (rdb0.conflicts+100000)
-                and goodcl.num_used > 4
-                and (1.0*goodcl.sum_hist_used)/(1.0*goodcl.num_used) > 30000
+                and goodcl.num_used > 8
+                and goodcl.avg_hist_used > 30000
 
                 THEN "OK"
                 ELSE "BAD"
@@ -759,7 +772,12 @@ class QueryCls (QueryHelper):
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.1
-            distrib = 0.1 #prefer OK by a factor of this. If < 0.5 then preferring BAD
+            distrib = 0.1  # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            if self.conf == 5:
+                distrib = 0.2
+            if self.conf == 6:
+                distrib = 0.03
+
         print("Distrib OK vs BAD set to %s " % distrib)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
