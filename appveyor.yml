@@ -37,19 +37,23 @@ environment:
     MSBUILD_FLAGS: /maxcpucount /nologo /property:WarningLevel=1
   matrix:
   # No Gauss
-  - STATICCOMPILE_SETTING: OFF
+  - DYNAMIC_COMPILE_SETTING: OFF
+    STATICCOMPILE_SETTING: ON
+    EXTRA_FLAGS:
+    BOOST_OPTIONS: runtime-link=static  link=static
+  - DYNAMIC_COMPILE_SETTING: ON
+    STATICCOMPILE_SETTING: OFF
     EXTRA_FLAGS:
     BOOST_OPTIONS: link=shared runtime-link=shared
-  - STATICCOMPILE_SETTING: ON
-    EXTRA_FLAGS:
-    BOOST_OPTIONS: runtime-link=static  link=static
   # Gauss ---
-  - STATICCOMPILE_SETTING: ON
-    BOOST_OPTIONS: runtime-link=static  link=static
+  - DYNAMIC_COMPILE_SETTING: ON
+    STATICCOMPILE_SETTING: OFF
+    BOOST_OPTIONS: link=shared runtime-link=shared
     EXTRA_FLAGS: -DUSE_GAUSS=ON
   # Largemem ---
-  - STATICCOMPILE_SETTING: ON
-    BOOST_OPTIONS: runtime-link=static  link=static
+  - DYNAMIC_COMPILE_SETTING: ON
+    STATICCOMPILE_SETTING: OFF
+    BOOST_OPTIONS: link=shared runtime-link=shared
     EXTRA_FLAGS: -DLARGEMEM=ON
 
 configuration:
@@ -103,14 +107,14 @@ before_build:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%STATICCOMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 ..
+  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%DYNAMIC_COMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 ..
   - ls
 
 after_build:
   - call ctest -V -C %CONFIGURATION%
     # - call DUMPBIN C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe /ALL
     # - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
-  - if %STATICCOMPILE_SETTING%==ON call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
+  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
   - echo %APPVEYOR_BUILD_FOLDER%
   - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
   - cd c:\projects\cryptominisat
