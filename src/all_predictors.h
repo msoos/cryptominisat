@@ -38,6 +38,12 @@ const vector<keep_func_type>& get_long_pred_funcs(size_t conf);
 const Clustering* get_short_cluster(size_t conf);
 const Clustering* get_long_cluster(size_t conf);
 
+bool check_pred_conf_exists(const size_t conf)
+{
+    return (CMSat::get_short_cluster(conf) != NULL
+        && CMSat::get_long_cluster(conf) != NULL);
+}
+
 }
 
 #endif //ALL_PREDICTORS_H

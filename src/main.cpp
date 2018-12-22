@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include <thread>
 
 #include "main.h"
+#include "all_predictors.h"
 #include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
@@ -960,6 +961,13 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    #ifdef FINAL_PREDICTOR
+    if (!check_pred_conf_exists(conf.pred_conf)) {
+        cout << "ERROR: The config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf << endl;
+        exit(-1);
+    }
+    #endif
+
     if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
         cout << "ERROR: The '--maxxorsize' parameter cannot be larger than " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);
