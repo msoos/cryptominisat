@@ -36,25 +36,28 @@ environment:
     # https://stackoverflow.com/questions/1023858/how-to-suppress-specific-msbuild-warning
     MSBUILD_FLAGS: /maxcpucount /nologo /property:WarningLevel=1
   matrix:
-  # No Gauss
+  # Normal
   - DYNAMIC_COMPILE_SETTING: OFF
     STATICCOMPILE_SETTING: ON
     EXTRA_FLAGS:
     BOOST_OPTIONS: link=static runtime-link=static
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    EXTRA_FLAGS:
-    BOOST_OPTIONS: link=shared runtime-link=shared
-  # Gauss ---
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    BOOST_OPTIONS: link=shared runtime-link=shared
-    EXTRA_FLAGS: -DUSE_GAUSS=ON
-  # Largemem ---
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    BOOST_OPTIONS: link=shared runtime-link=shared
+
+  # Largemem
+  - DYNAMIC_COMPILE_SETTING: OFF
+    STATICCOMPILE_SETTING: ON
+    BOOST_OPTIONS: link=static runtime-link=static
     EXTRA_FLAGS: -DLARGEMEM=ON
+
+  # Gauss
+  - DYNAMIC_COMPILE_SETTING: OFF
+    STATICCOMPILE_SETTING: ON
+    BOOST_OPTIONS: link=static runtime-link=static
+    EXTRA_FLAGS: -DUSE_GAUSS=ON
+
+  #- DYNAMIC_COMPILE_SETTING: ON
+    #STATICCOMPILE_SETTING: OFF
+    #EXTRA_FLAGS:
+    #BOOST_OPTIONS: link=shared runtime-link=shared
 
 configuration:
   - Release
@@ -114,6 +117,8 @@ before_build:
 
   - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS%  -DENABLE_PYTHON_INTERFACE=%DYNAMIC_COMPILE_SETTING% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBOOST_ROOT=%BOOST_ROOT% ..
   - ls
+
+build:
   - cmake --build . --config Release
 
 after_build:
