@@ -86,6 +86,7 @@ class QueryFill (QueryHelper):
         drop index if exists `idxclid6-3`;
         drop index if exists `idxclid7`;
         drop index if exists `idxclid8`;
+        drop index if exists `idxclidUCLS-1`;
 
         create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
@@ -101,6 +102,7 @@ class QueryFill (QueryHelper):
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`);
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
         create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
+        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`);
         """
         for l in q.split('\n'):
             if options.verbose:
@@ -189,13 +191,11 @@ class QueryFill (QueryHelper):
         select
         sum(1.0*(used_at-cs.conflicts-avg_hist_used)*(used_at-cs.conflicts-avg_hist_used))/(num_used*1.0)
         from
-        goodClausesFixed as c,
         clauseStats as cs,
         usedClauses as u
-        where c.clauseID = u.clauseID
-        and goodClausesFixed.clauseID = u.clauseID
+        where goodClausesFixed.clauseID = u.clauseID
         and cs.clauseID = u.clauseID
-        group by c.clauseID );
+        group by u.clauseID );
         """
         self.c.execute(q)
         print("goodClausesFixed added variance T: %-3.2f s" % (time.time() - t))
