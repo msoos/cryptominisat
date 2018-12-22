@@ -40,7 +40,7 @@ environment:
   - DYNAMIC_COMPILE_SETTING: OFF
     STATICCOMPILE_SETTING: ON
     EXTRA_FLAGS:
-    BOOST_OPTIONS: runtime-link=static  link=static
+    BOOST_OPTIONS: link=static runtime-link=static
   - DYNAMIC_COMPILE_SETTING: ON
     STATICCOMPILE_SETTING: OFF
     EXTRA_FLAGS:
