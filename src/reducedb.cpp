@@ -312,8 +312,17 @@ void ReduceDB::handle_lev1_final_predictor()
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
     const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf);
+    if (long_clust == NULL) {
+        cout << "ERROR: You gave a config number in '--pred' that does not exist for LONG" << endl;
+        exit(-1);
+    }
     int long_cluster = long_clust->which_is_closest(solver->last_solve_satzilla_feature);
+
     const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf);
+    if (short_clust == NULL) {
+        cout << "ERROR: You gave a config number in '--pred' that does not exist for SHORT" << endl;
+        exit(-1);
+    }
     int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
 
     const keep_func_type short_pred = get_short_pred_funcs(solver->conf.pred_conf)[short_cluster];
@@ -415,8 +424,9 @@ void ReduceDB::handle_lev1_final_predictor()
         << endl;
 
         cout << "c [DBCL pred]"
-        << " Sclust:" << short_cluster
-        << " Lclust:" << long_cluster
+        << " Sclust: " << short_cluster
+        << " Lclust: " << long_cluster
+        << " conf: " << conf.pred_conf
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
         << " maxdump_no:" << largest_dump_no
