@@ -1031,8 +1031,9 @@ def one_database(dbfname):
                 ok, df = q.compute_one_ok_bad_bad_data(long_or_short)
 
             if not ok:
-                print("Couldn't generate data!")
-                exit(-1)
+                print("-> Skipping file {file} config {conf} {ls}".format(
+                    conf=conf, file=dbfname, ls=long_or_short))
+                continue
 
             if options.verbose:
                 print("Describing----")
