@@ -29,7 +29,7 @@ if (MSVC)
 
     # Make sure this test-suite runs when "test" is target
     add_test(NAME CNF
-            COMMAND ${LIT_TOOL} ${LIT_ARGS} .
+            COMMAND "${PYTHON_EXECUTABLE}" "-m" "lit.main" ${LIT_ARGS} .
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/"
     )
 else()
@@ -40,7 +40,7 @@ else()
 
     # Make sure this test-suite runs when "test" is target
     add_test(NAME CNF
-            COMMAND ${LIT_TOOL} ${LIT_ARGS} .
+            COMMAND "${PYTHON_EXECUTABLE}" "-m" "lit.main" ${LIT_ARGS} .
             WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
 endif()
