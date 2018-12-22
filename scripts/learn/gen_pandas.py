@@ -261,7 +261,7 @@ class QueryFill (QueryHelper):
         ;
         """
         if options.verbose:
-            print("query:", q);
+            print("query:", q)
         self.c.execute(q)
 
         q = """
@@ -890,7 +890,7 @@ and avg_inside_per_confl_when_picked > 0
 
         df = pd.read_sql_query(q, self.conn)
 
-        cleanname = re.sub('\.cnf.gz.sqlite$', '', dbfname)
+        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
         cleanname = re.sub(r'\.db$', '', dbfname)
         cleanname += "-vardata"
         dump_dataframe(df, cleanname)
@@ -982,9 +982,6 @@ def transform(df):
     df["rdb0.avg_confl"].fillna(0, inplace=True)
     df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
     df["rdb0.used_per_confl"].fillna(0, inplace=True)
-
-
-    # df["cl.vsids_vars_rel"] = df["cl.vsids_vars_avg"] / df["cl.vsids_vars_hist"]
 
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
