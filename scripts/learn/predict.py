@@ -803,7 +803,7 @@ if __name__ == "__main__":
     # tree options
     parser.add_option("--depth", default=None, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
-    parser.add_option("--split", default=0.1, type=float,
+    parser.add_option("--split", default=0.1, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
 
     # generation of predictor
@@ -834,16 +834,16 @@ if __name__ == "__main__":
                       dest="only_final", help="Only generate final predictor")
     parser.add_option("--greedy", default=False, action="store_true",
                       dest="calc_best_feats", help="Calculate the greedy best features")
-    parser.add_option("--greedybest", default=40, type=int,
+    parser.add_option("--greedybest", default=15, type=int, metavar="TOPN",
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_option("--top", default=40, type=int,
-                      dest="top_num_features", help="Top N features to take to generate the final predictor")
+    parser.add_option("--top", default=40, type=int, metavar="TOPN",
+                      dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # clustering
     parser.add_option("--clusters", default=7, type=int,
                       dest="clusters", help="How many clusters to use")
-    parser.add_option("--clustmin", default=0.05, type=float,
-                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data")
+    parser.add_option("--clustmin", default=0.05, type=float, metavar="RATIO",
+                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data. Default: %default")
 
     # type of predictor
     parser.add_option("--tree", default=False, action="store_true",
