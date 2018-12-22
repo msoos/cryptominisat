@@ -82,7 +82,7 @@ namespace CMSat {
 vector<vector<keep_func_type>> should_keep_short_funcs;
 vector<vector<keep_func_type>> should_keep_long_funcs;
 
-void fill_funcs() {
+void fill_pred_funcs() {
     //automated\n""")
     write_predictors(predictors, out, "short")
     out.write("""\n""")

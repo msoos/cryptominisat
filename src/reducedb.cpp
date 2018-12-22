@@ -82,7 +82,9 @@ struct SortRedClsAct
 ReduceDB::ReduceDB(Solver* _solver) :
     solver(_solver)
 {
-    fill_funcs();
+    #ifdef FINAL_PREDICTOR
+    fill_pred_funcs();
+    #endif
 }
 
 void ReduceDB::sort_red_cls(ClauseClean clean_type)
