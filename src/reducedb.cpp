@@ -426,7 +426,7 @@ void ReduceDB::handle_lev1_final_predictor()
         cout << "c [DBCL pred]"
         << " Sclust: " << short_cluster
         << " Lclust: " << long_cluster
-        << " conf: " << conf.pred_conf
+        << " conf: " << solver->conf.pred_conf
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
         << " maxdump_no:" << largest_dump_no
