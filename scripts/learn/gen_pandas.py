@@ -129,8 +129,17 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        delete from goodClausesFixed;
-        """
+        DROP TABLE IF EXISTS `goodClausesFixed`;
+create table `goodClausesFixed` (
+    `clauseID` bigint(20) NOT NULL,
+    `num_used` bigint(20) NOT NULL,
+    `first_confl_used` bigint(20) NOT NULL,
+    `last_confl_used` bigint(20) NOT NULL,
+    `sum_hist_used` bigint(20) DEFAULT NULL,
+    `avg_hist_used` double NOT NULL,
+    `var_hist_used` double DEFAULT NULL,
+    `last_prop_used` bigint(20) DEFAULT NULL
+);"""
         self.c.execute(q)
         print("goodClausesFixed deleted T: %-3.2f s" % (time.time() - t))
 
