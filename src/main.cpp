@@ -46,7 +46,9 @@ THE SOFTWARE.
 #include <thread>
 
 #include "main.h"
+#ifdef FINAL_PREDICTOR
 #include "all_predictors.h"
+#endif
 #include "main_common.h"
 #include "time_mem.h"
 #include "dimacsparser.h"
