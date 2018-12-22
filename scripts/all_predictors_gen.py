@@ -32,7 +32,9 @@ def write_predictors(predictors, out, name):
             nums.append(int(num[0]))
 
     if len(nums) == 0:
-        print("ERROR: we don't know how many predictors of name %s are there" % name)
+        print("ERROR: Cannot calculate number of predictors '{name}'"
+              .format(name=name))
+        print("ERROR: Maybe you didn't generate the predictors?")
         exit(-1)
 
     out.write("""    should_keep_{name}_funcs.resize({num});\n""".format(
