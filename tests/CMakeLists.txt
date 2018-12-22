@@ -182,8 +182,8 @@ foreach(F ${MY_TESTS})
         ${F}.cpp
     )
     target_link_libraries(${F}
-        ${GTEST_BOTH_LIBRARIES}
         libcryptominisat5
+        ${GTEST_BOTH_LIBRARIES}
     )
     add_test (
         NAME ${F}
