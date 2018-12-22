@@ -1052,6 +1052,7 @@ def one_database(dbfname):
 
             cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
             cleanname = re.sub(r'\.db$', '', dbfname)
+            cleanname = re.sub(r'\.sqlitedb$', '', dbfname)
             cleanname = "{cleanname}-{long_or_short}-conf-{conf}".format(
                 cleanname=cleanname,
                 long_or_short=long_or_short,
