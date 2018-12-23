@@ -12,6 +12,6 @@ mkdir ../src/predict
 rm ../src/predict/*.h
 for CONF in {0..6}
 do
-    ./predict.py "final/short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --tree --split 0.1 --clusters 9 --conf "${CONF}" --clustmin 0.03
-    ./predict.py "final/short-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --tree --split 0.1 --clusters 9 --conf "${CONF}" --clustmin 0.03
+    ./predict.py "final/short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+    ./predict.py "final/short-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
 done

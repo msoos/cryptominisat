@@ -541,9 +541,9 @@ class QueryCls (QueryHelper):
             -- used a lot
             goodcl.last_confl_used > rdb0.conflicts and
             (   (goodcl.num_used > 5 and goodcl.avg_hist_used > 30000)
-                or (
-                    (goodcl.num_used <= 3 or goodcl.avg_hist_used <= 20000)
-                    AND goodcl.first_confl_used > cl.conflicts
+
+                -- at least let the 1st conflict be reached
+                or (goodcl.first_confl_used > cl.conflicts
                     AND goodcl.first_confl_used-cl.conflicts < 10000
                 )
             )
@@ -564,8 +564,8 @@ class QueryCls (QueryHelper):
                 or (goodcl.num_used > 10 and goodcl.last_confl_used < cl.conflicts+30000)
 
                 -- at least let the 1st conflict be reached
-                or ((goodcl.num_used <= 10 or goodcl.var_hist_used < 1000000)
-                    and (goodcl.first_confl_used+10000 < cl.conflicts)
+                or (goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 10000
                 )
             )
             THEN "OK"
@@ -577,11 +577,16 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             goodcl.last_confl_used > rdb0.conflicts and
-            (   (goodcl.num_used > 5 and goodcl.avg_hist_used > 30000)
-                or (
-                    (goodcl.num_used <= 3 or goodcl.avg_hist_used <= 30000)
-                    AND goodcl.first_confl_used > cl.conflicts
-                    AND goodcl.first_confl_used-cl.conflicts < 10000
+            (
+                -- used rarely but over a wide range
+                   (goodcl.num_used > 3 and goodcl.var_hist_used > 1500000)
+
+                -- used quite a bit but not too far from here
+                or (goodcl.num_used > 7 and goodcl.last_confl_used < cl.conflicts+40000)
+
+                -- at least let the 1st conflict be reached
+                or (goodcl.first_confl_used > cl.conflicts
+                    AND goodcl.first_confl_used-cl.conflicts < 15000
                 )
             )
             THEN "OK"
@@ -609,8 +614,8 @@ class QueryCls (QueryHelper):
                 -- used a lot over a wide range
                    (goodcl.num_used > 10 and goodcl.var_hist_used > 1000000)
 
-                -- used quite a bit but not too far from here
-                or (goodcl.num_used > 20 and goodcl.last_confl_used < cl.conflicts+30000)
+                -- used quite a bit but less dispersion
+                or (goodcl.num_used > 15 and goodcl.var_hist_used > 500000)
                 )
             )
             THEN "OK"
@@ -624,11 +629,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (goodcl.num_used > 20 and goodcl.var_hist_used > 1000000)
+                   (goodcl.num_used > 15 and goodcl.var_hist_used > 1500000)
 
-                -- used quite a bit but not too far from here
-                or (goodcl.num_used > 30 and goodcl.last_confl_used < cl.conflicts+30000)
-                )
+                -- used quite a bit but less dispersion
+                or (goodcl.num_used > 20 and goodcl.var_hist_used > 700000)
             )
             THEN "OK"
             ELSE "BAD"
@@ -773,10 +777,18 @@ class QueryCls (QueryHelper):
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
             distrib = 0.4  # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            if self.conf == 5:
+                distrib = 0.7
+            if self.conf == 6:
+                distrib = 0.2
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
-            fixed_mult = 0.1
+            fixed_mult = 0.15
             distrib = 0.1  # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            if self.conf == 5:
+                distrib = 0.3
+            if self.conf == 6:
+                distrib = 0.03
 
         print("Distrib OK vs BAD set to %s " % distrib)
         print("Fixed multiplier set to  %s " % fixed_mult)
