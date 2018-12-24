@@ -912,12 +912,14 @@ def transform(df):
         return row
 
     # relative overlaps
+    print("Relative overlaps...")
     df["cl.num_overlap_literals_rel"] = df["cl.num_overlap_literals"]/df["cl.antec_overlap_hist"]
     df["cl.antec_num_total_lits_rel"] = df["cl.num_total_lits_antecedents"]/df["cl.antec_sum_size_hist"]
     df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
     df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
 
     # relative RDB
+    print("Relative RDB...")
     df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
     df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
     df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
@@ -928,6 +930,7 @@ def transform(df):
     # ************
     # TODO decision level and branch depth are the same, right???
     # ************
+    print("size/glue/trail rel...")
     df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
     df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
     df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
@@ -936,12 +939,14 @@ def transform(df):
     df["cl.branch_depth_rel_queue"] = df["cl.decision_level"]/df["cl.branch_depth_hist_queue"]
 
     # smaller-than larger-than for glue and size
+    print("smaller-than larger-than for glue and size...")
     df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
     df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
     df["cl.glue_smaller_than_hist_lt"] = (df["cl.glue"] < df["cl.glue_hist_long"]).astype(int)
     df["cl.glue_smaller_than_hist_queue"] = (df["cl.glue"] < df["cl.glue_hist_queue"]).astype(int)
 
     # relative decisions
+    print("relative decisions...")
     df["cl.decision_level_rel"] = df["cl.decision_level"]/df["cl.decision_level_hist"]
     df["cl.decision_level_pre1_rel"] = df["cl.decision_level_pre1"]/df["cl.decision_level_hist"]
     df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
@@ -950,6 +955,7 @@ def transform(df):
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"]/df["cl.decision_level_hist"]
 
     # relative props
+    print("relative props...")
     df["rst.all_props"] = df["rst.propBinRed"] + df["rst.propBinIrred"] + df["rst.propLongRed"] + df["rst.propLongIrred"]
     df["rst.propBinRed_ratio"] = df["rst.propBinRed"]/df["rst.all_props"]
     df["rst.propBinIrred_ratio"] = df["rst.propBinIrred"]/df["rst.all_props"]
@@ -959,6 +965,7 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["rst.free"]
 
     # relative resolutions
+    print("relative resolutions...")
     df["rst.resolBinIrred_ratio"] = df["rst.resolBinIrred"]/df["rst.resolutions"]
     df["rst.resolBinRed_ratio"] = df["rst.resolBinRed"]/df["rst.resolutions"]
     df["rst.resolLRed_ratio"] = df["rst.resolLRed"]/df["rst.resolutions"]
@@ -970,6 +977,7 @@ def transform(df):
     df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / df["cl.backtrack_level_hist"]
 
     # smaller-or-greater comparisons
+    print("smaller-or-greater comparisons...")
     df["cl.decision_level_smaller_than_hist"] = (df["cl.decision_level"] < df["cl.decision_level_hist"]).astype(int)
     df["cl.backtrack_level_smaller_than_hist"] = (df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]).astype(int)
     df["cl.trail_depth_level_smaller_than_hist"] = (df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]).astype(int)
@@ -979,11 +987,16 @@ def transform(df):
     df["cl.overlap_smaller_than_hist"] = (df["cl.num_overlap_literals"]<df["cl.antec_overlap_hist"]).astype(int)
     df["cl.branch_smaller_than_hist_queue"] = (df["cl.decision_level"]<df["cl.branch_depth_hist_queue"]).astype(int)
 
+    # avg conf/used_per confl
+    print("avg conf/used_per confl 1...")
     df["rdb0.avg_confl"] = df["rdb0.sum_uip1_used"]/df["rdb0.sum_delta_confl_uip1_used"]
     df["rdb0.avg_confl"].fillna(0, inplace=True)
+
+    print("avg conf/used_per confl 2...")
     df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
     df["rdb0.used_per_confl"].fillna(0, inplace=True)
 
+    print("flatten/list...")
     old = set(df.columns.values.flatten().tolist())
     df = df.dropna(how="all")
     new = set(df.columns.values.flatten().tolist())
@@ -1043,6 +1056,7 @@ def one_database(dbfname):
                 print("Describe done.---")
                 print("Features: ", df.columns.values.flatten().tolist())
 
+            print("Transforming...")
             df = transform(df)
 
             if options.verbose:
