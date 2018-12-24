@@ -11,13 +11,13 @@ location=data-sing
 ###############
 if [[ -s ./gen_pandas.py ]]; then
     echo "ERROR we need ./gen_pandas.ph"
-    exit -1
-done
+    exit 255
+fi
 
 if [[ -s ./combine_dats.py ]]; then
     echo "ERROR we need ./combine_dats.py"
-    exit -1
-done
+    exit 255
+fi
 
 ###############
 # Create todos
@@ -54,7 +54,7 @@ done
 
 for (( i = 0; i < numthreads; i++))
 do
-    ./gen_pandas.py $(cat "files${i}") --fixed 2000 --confs $numconfs 2>&1 > "gen_pandas_${i}" &
+    ./gen_pandas.py $(cat "files${i}") --fixed 2000 --confs $numconfs > "gen_pandas_${i}" 2>&1  &
 done
 
 # wait all threads
@@ -78,13 +78,13 @@ then
     echo "All went well!"
 else
     echo "FAIL of one of the threads! ($FAIL)"
-    exit -1
+    exit 255
 fi
 
 # exit in case of errors
 if [[ -s error ]]; then
     echo "ERROR: Issues occurred!"
-    exit -1
+    exit 255
 else
     echo "OK, no errors"
 fi
@@ -98,8 +98,8 @@ do
     rm -f "comb-short-conf-${CONF}.dat"
     rm -f "comb-long-conf-${CONF}.dat"
 
-    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat 2>&1 > "combine_out_short_${CONF}" &
-    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  2>&1 > "combine_out_long_${CONF}" &
+    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "combine_out_short_${CONF}" 2>&1 &
+    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "combine_out_long_${CONF}" 2>&1 &
 done
 
 # wait all threads
@@ -116,7 +116,7 @@ then
     echo "All went well!"
 else
     echo "FAIL of one of the threads! ($FAIL)"
-    exit -1
+    exit 255
 fi
 
 rm -f error
@@ -130,7 +130,7 @@ done
 # exit in case of errors
 if [[ -s error ]]; then
     echo "ERROR: Issues occurred!"
-    exit -1
+    exit 255
 else
     echo "OK, no errors"
 fi
@@ -160,7 +160,7 @@ then
     echo "All went well!"
 else
     echo "FAIL of one of the threads! ($FAIL)"
-    exit -1
+    exit 255
 fi
 
 
