@@ -2,49 +2,54 @@
 set -e
 set -x
 
-rm -f data-sing/*.dat
-
-ls data-sing/*.sqlitedb > files
 numthreads=4
-numlines=`wc -l files | awk '{print $1}'`
+numconfs=7
+location=data-sing
+
+rm -f ${location}/*.dat
+ls ${location}/*.sqlitedb > files
+numlines=$(wc -l files | awk '{print $1}')
 numper=$((numlines/numthreads))
-echo "$numper"
+echo "numper: $numper"
+shuf files > files_shuf
 
 numthreadsminone=$((numthreads-1))
 
 untilnow=0
-for (( i = 0; i < $numthreads; i++))
+for (( i = 0; i < numthreads; i++))
 do
     if [[ $i -lt $numthreadsminone ]]; then
         toprint=$numper
+        echo "toprint: ${toprint}"
     else
-        echo "Else activated"
         toprint=$((numlines-untilnow))
+        echo "Else activated, toprint: ${toprint}"
     fi
     skipplus=$((untilnow+toprint))
     echo "at $i: skipplus $skipplus  -- toprint $toprint"
-    head -n $skipplus files | tail -n $toprint > "files${i}"
+    head -n $skipplus files_shuf | tail -n $toprint > "files${i}"
     untilnow=$((untilnow+toprint))
     echo "And the final file length is: "
     wc -l files${i}
 done
 
 # run all threads
-for (( i = 0; i < $numthreads; i++))
+for (( i = 0; i < numthreads; i++))
 do
-    ./gen_pandas.py `cat files${i}` --fixed 2000 --confs 7 2>&1 > "gen_pandas_${i}" &
+    ./gen_pandas.py $(cat "files${i}") --fixed 2000 --confs $numconfs 2>&1 > "gen_pandas_${i}" &
 done
 
 # wait all threads
-for job in `jobs -p`
+FAIL=0
+for job in $(jobs -p)
 do
-echo $job
-    wait $job || let "FAIL+=1"
+    echo "waiting for job '$job' ..."
+    wait "${job}" || FAIL=$((FAIL+=1))
 done
 
 # check thread output
 rm error
-for (( i = 0; i < $numthreads; i++))
+for (( i = 0; i < numthreads; i++))
 do
     egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
 done
@@ -59,26 +64,31 @@ else
 fi
 
 # exit in case of errors
-if [[ -s diff error ]]; then
+if [[ -s $(diff error) ]]; then
     echo "OK, no errors"
 else
     echo "ERROR: Issues occurred!"
     exit -1
 fi
 
-rm final/short-conf-${CONF}.dat
-rm final/long-conf-${CONF}.dat
-
-for CONF in {0..6}
+for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ./combine_dats.py -o final/short-conf-${CONF}.dat data-sing/*-short-conf-${CONF}.dat --fixed 2000 > "combine_out_short_${CONF}"
-    ./combine_dats.py -o final/long-conf-${CONF}.dat  data-sing/*-long-conf-${CONF}.dat  --fixed 2000 > "combine_out_long_${CONF}"
+    rm combine_out_short_${CONF}.dat
+    rm combine_out_long_${CONF}.dat
+
+    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "combine_out_short_${CONF}"
+    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "combine_out_long_${CONF}"
+done
+
+for (( i = 0; i < numthreads; i++))
+do
+    egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
 done
 
 mkdir ../src/predict
 rm ../src/predict/*.h
-for CONF in {0..6}
+for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ./predict.py "final/short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
-    ./predict.py "final/short-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+    ./predict.py "comb-short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+    ./predict.py "comb-long-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
 done
