@@ -98,7 +98,7 @@ class QueryDatRem(QueryHelper):
         print("IDs from goodClauses: {ids} T: {time}".format(
             ids=good_ids, time=time.time()-t))
 
-        val = int(options.limit)*0.5
+        val = int(options.limit)*0.3
         q = """
         insert into usedClauseIDs
         select
