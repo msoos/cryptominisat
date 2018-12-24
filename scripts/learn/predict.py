@@ -523,7 +523,7 @@ static bool {funcname}(
             best_features.append('cl.num_antecedents_rel') # should we?
             best_features.append('cl.antec_num_total_lits_rel')
 
-            best_features.append('cl.glue_smaller_than_hist_queue')
+            # best_features.append('cl.glue_smaller_than_hist_queue')
             best_features.append('cl.num_overlap_literals')
             best_features.append('cl.num_overlap_literals_rel')
 
