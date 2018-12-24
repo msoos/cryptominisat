@@ -51,7 +51,7 @@ done
 rm error
 for (( i = 0; i < numthreads; i++))
 do
-    egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
+    egrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
 done
 
 # check for FAILs
@@ -64,31 +64,45 @@ else
 fi
 
 # exit in case of errors
-if [[ -s $(diff error) ]]; then
-    echo "OK, no errors"
-else
+if [[ -s error ]]; then
     echo "ERROR: Issues occurred!"
     exit -1
+else
+    echo "OK, no errors"
 fi
 
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    rm combine_out_short_${CONF}.dat
-    rm combine_out_long_${CONF}.dat
+    rm -f "comb-short-conf-${CONF}.dat"
+    rm -f "comb-long-conf-${CONF}.dat"
 
-    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "combine_out_short_${CONF}"
-    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "combine_out_long_${CONF}"
+    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat 2>&1 > "combine_out_short_${CONF}"
+    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  2>&1 > "combine_out_long_${CONF}"
 done
 
-for (( i = 0; i < numthreads; i++))
-do
-    egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
-done
-
-mkdir ../src/predict
-rm ../src/predict/*.h
+rm -f error
+touch error
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ./predict.py "comb-short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
-    ./predict.py "comb-long-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+    egrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "combine_out_short_${CONF}" 2>&1 | tee -a error
+    egrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "combine_out_long_${CONF}" 2>&1 | tee -a error
+
+    xz "combine_out_long_${CONF}"
+    xz "combine_out_short_${CONF}"
 done
+
+# exit in case of errors
+if [[ -s error ]]; then
+    echo "ERROR: Issues occurred!"
+    exit -1
+else
+    echo "OK, no errors"
+fi
+
+# mkdir -f ../src/predict
+# rm -f ../src/predict/*.h
+# for (( CONF = 0; CONF < numconfs; CONF++))
+# do
+#     ./predict.py "comb-short-conf-${CONF}.dat" --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+#     ./predict.py "comb-long-conf-${CONF}.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03
+# done
