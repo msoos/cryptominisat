@@ -43,17 +43,26 @@ echo $job
 done
 
 # check thread output
+rm error
 for (( i = 0; i < $numthreads; i++))
 do
-    egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}"
+    egrep xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "gen_pandas_${i}" | tee -a error
 done
 
-
+# check for FAILs
 if [ "$FAIL" == "0" ];
 then
     echo "All went well!"
 else
     echo "FAIL of one of the threads! ($FAIL)"
+    exit -1
+fi
+
+# exit in case of errors
+if [[ -s diff error ]]; then
+    echo "OK, no errors"
+else
+    echo "ERROR: Issues occurred!"
     exit -1
 fi
 
