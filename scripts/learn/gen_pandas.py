@@ -616,7 +616,6 @@ class QueryCls (QueryHelper):
 
                 -- used quite a bit but less dispersion
                 or (goodcl.num_used > 15 and goodcl.var_hist_used > 500000)
-                )
             )
             THEN "OK"
             ELSE "BAD"
