@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "checking for assert fail"
+echo "checking for assert/signal/error/terminate fail"
 xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "terminate" `ls *.out.xz` > issues
 echo "checking for signal 4"
 xzgrep "signal 4"  issues
