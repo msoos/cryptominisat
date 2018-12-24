@@ -57,8 +57,8 @@ rm final/long-conf-${CONF}.dat
 
 for CONF in {0..6}
 do
-    ./combine_dats.py -o final/short-conf-${CONF}.dat data-sing/*-short-conf-${CONF}.dat
-    ./combine_dats.py -o final/long-conf-${CONF}.dat  data-sing/*-long-conf-${CONF}.dat
+    ./combine_dats.py -o final/short-conf-${CONF}.dat data-sing/*-short-conf-${CONF}.dat --fixed 2000
+    ./combine_dats.py -o final/long-conf-${CONF}.dat  data-sing/*-long-conf-${CONF}.dat  --fixed 2000
 done
 
 mkdir ../src/predict
