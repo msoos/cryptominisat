@@ -25,7 +25,6 @@ import pickle
 import pandas as pd
 import numpy as np
 import sys
-import sklearn.model_selection
 
 
 if __name__ == "__main__":
@@ -70,6 +69,8 @@ if __name__ == "__main__":
             pickle.dump(df_full, f)
 
     if options.csv is not None:
+        import sklearn.model_selection
+
         fname = options.csv
         print("Dumpiing CSV ratio: %-3.2f" % options.csvratio)
         _, df_tmp = sklearn.model_selection.train_test_split(df_full, test_size=options.csvratio)
