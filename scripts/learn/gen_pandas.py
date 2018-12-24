@@ -896,6 +896,7 @@ and avg_inside_per_confl_when_picked > 0
         cleanname += "-vardata"
         dump_dataframe(df, cleanname)
 
+
 def transform(df):
     def check_clstat_row(self, row):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
