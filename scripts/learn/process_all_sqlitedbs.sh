@@ -32,7 +32,7 @@ done
 # run all threads
 for (( i = 0; i < $numthreads; i++))
 do
-    ./gen_pandas.py `cat files${i}` --confs 7 > "gen_pandas_${i}" &
+    ./gen_pandas.py `cat files${i}` --confs 7 > "gen_pandas_${i}" --fixed 2000 &
 done
 
 # wait all threads
