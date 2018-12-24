@@ -53,10 +53,9 @@ if __name__ == "__main__":
     dfs = []
     for fname in args:
         print("----- Reading file %s -------" % fname)
-        with open(fname, "rb") as f:
-            df = pickle.load(f)
-            print("Read {num} datapoints from {file}".format(num=df.shape[0], file=fname))
-            dfs.append(df)
+        df = pd.read_pickle(fname)
+        print("Read {num} datapoints from {file}".format(num=df.shape[0], file=fname))
+        dfs.append(df)
 
     print("Concatenating dataframes...")
     df_full = pd.concat(dfs)
