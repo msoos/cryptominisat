@@ -29,19 +29,28 @@ do
     wc -l files${i}
 done
 
-#run all threads
+# run all threads
 for (( i = 0; i < $numthreads; i++))
 do
     ./gen_pandas.py `cat files${i}` --confs 7 &
-    pids[${i}]=$!
 done
 
-# wait for all pids
-for pid in ${pids[*]}; do
-    wait $pid
+# wait all threads
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
 done
 
-exit 0
+if [ "$FAIL" == "0" ];
+then
+    echo "All went well!"
+else
+    echo "FAIL of one of the threads! ($FAIL)"
+    exit -1
+fi
+
+
 
 rm final/short-conf-${CONF}.dat
 rm final/long-conf-${CONF}.dat
