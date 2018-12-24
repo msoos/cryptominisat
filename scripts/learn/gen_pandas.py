@@ -1039,7 +1039,7 @@ def one_database(dbfname):
     #    q.vardata()
 
     print("Using sqlite3db file %s" % dbfname)
-    for long_or_short in ["short", "long"]:
+    for long_or_short in ["long", "short"]:
         for conf in range(options.confs):
             print("------> Doing config {conf}".format(conf=conf))
             with QueryCls(dbfname, conf) as q:
