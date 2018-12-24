@@ -186,6 +186,7 @@ static double estimator_{funcname}_{est_num}(
     , const uint32_t rdb0_act_ranking
     , const uint32_t rdb0_act_ranking_top_10
 ) {{\n""".format(est_num=i, funcname=self.funcname))
+                    self.define_avg_for_cls()
                     self.get_code(tree, 1)
                     self.f.write("}\n")
 
