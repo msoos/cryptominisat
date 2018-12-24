@@ -6,6 +6,22 @@ numthreads=4
 numconfs=7
 location=data-sing
 
+###############
+# Check executables
+###############
+if [[ -s ./gen_pandas.py ]]; then
+    echo "ERROR we need ./gen_pandas.ph"
+    exit -1
+done
+
+if [[ -s ./combine_dats.py ]]; then
+    echo "ERROR we need ./combine_dats.py"
+    exit -1
+done
+
+###############
+# Create todos
+###############
 rm -f ${location}/*.dat
 ls ${location}/*.sqlitedb > files
 numlines=$(wc -l files | awk '{print $1}')
@@ -14,7 +30,6 @@ echo "numper: $numper"
 shuf files > files_shuf
 
 numthreadsminone=$((numthreads-1))
-
 untilnow=0
 for (( i = 0; i < numthreads; i++))
 do
