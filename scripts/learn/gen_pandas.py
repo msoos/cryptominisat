@@ -558,10 +558,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts and
             (
                 -- used rarely but over a wide range
-                   (goodcl.num_used > 5 and goodcl.var_hist_used > 1000000)
+                   (goodcl.num_used > 3 and goodcl.var_hist_used > 500000)
 
                 -- used quite a bit but not too far from here
-                or (goodcl.num_used > 10 and goodcl.last_confl_used < cl.conflicts+30000)
+                or (goodcl.num_used > 5 and goodcl.last_confl_used < cl.conflicts+30000)
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > cl.conflicts
@@ -579,10 +579,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts and
             (
                 -- used rarely but over a wide range
-                   (goodcl.num_used > 3 and goodcl.var_hist_used > 1500000)
+                   (goodcl.num_used >= 2 and goodcl.var_hist_used > 200000)
 
                 -- used quite a bit but not too far from here
-                or (goodcl.num_used > 7 and goodcl.last_confl_used < cl.conflicts+40000)
+                or (goodcl.num_used > 4 and goodcl.last_confl_used < cl.conflicts+35000)
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > cl.conflicts
@@ -595,17 +595,6 @@ class QueryCls (QueryHelper):
             """
 
         if self.conf != 3 and self.conf != 4:
-            self.case_stmt_100k = """
-            CASE WHEN
-                goodcl.last_confl_used > rdb0.conflicts+100000
-                and goodcl.num_used > 15
-                and goodcl.avg_hist_used > 50000
-
-                THEN "OK"
-                ELSE "BAD"
-                END AS `x.class`
-            """
-        elif self.conf == 3:
             self.case_stmt_100k = """
             CASE WHEN
 
@@ -621,6 +610,22 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+        elif self.conf == 3:
+            self.case_stmt_100k = """
+            CASE WHEN
+
+            goodcl.last_confl_used > rdb0.conflicts+100000 and
+            (
+                -- used a lot over a wide range
+                   (goodcl.num_used > 9 and goodcl.var_hist_used > 800000)
+
+                -- used quite a bit but less dispersion
+                or (goodcl.num_used > 12 and goodcl.var_hist_used > 400000)
+            )
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
         elif self.conf == 4:
             self.case_stmt_100k = """
             CASE WHEN
@@ -628,10 +633,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (goodcl.num_used > 15 and goodcl.var_hist_used > 1500000)
+                   (goodcl.num_used > 6 and goodcl.var_hist_used > 600000)
 
                 -- used quite a bit but less dispersion
-                or (goodcl.num_used > 20 and goodcl.var_hist_used > 700000)
+                or (goodcl.num_used > 9 and goodcl.var_hist_used > 200000)
             )
             THEN "OK"
             ELSE "BAD"
@@ -777,7 +782,7 @@ class QueryCls (QueryHelper):
             fixed_mult = 1.0
             distrib = 0.4  # prefer OK by a factor of this. If < 0.5 then preferring BAD
             if self.conf == 5:
-                distrib = 0.7
+                distrib = 0.3
             if self.conf == 6:
                 distrib = 0.2
         else:
@@ -785,7 +790,7 @@ class QueryCls (QueryHelper):
             fixed_mult = 0.15
             distrib = 0.1  # prefer OK by a factor of this. If < 0.5 then preferring BAD
             if self.conf == 5:
-                distrib = 0.3
+                distrib = 0.06
             if self.conf == 6:
                 distrib = 0.03
 
