@@ -614,7 +614,7 @@ public:
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
-                f.write("        center[{num}].{feat} = {center};\n".format(
+                f.write("        center[{num}].{feat} = {center}L;\n".format(
                     num=i, feat=feat, center=center))
 
         f.write("    }\n")
