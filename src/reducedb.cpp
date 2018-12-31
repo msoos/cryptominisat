@@ -325,8 +325,8 @@ void ReduceDB::handle_lev1_final_predictor()
     }
     int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
 
-    const keep_func_type short_pred = get_short_pred_funcs(solver->conf.pred_conf)[short_cluster];
-    const keep_func_type long_pred = get_long_pred_funcs(solver->conf.pred_conf)[long_cluster];
+    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf)[short_cluster];
+    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf)[long_cluster];
 
     size_t j = 0;
     for(size_t i = 0
@@ -348,17 +348,31 @@ void ReduceDB::handle_lev1_final_predictor()
             } else {
                 last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
             }
-            //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
+
+            if (cl->stats.dump_number > 0
+                && cl->stats.locked_long == 0
+                && solver->conf.pred_run_long
+                && long_pred_keep(
+                cl
+                , solver->sumConflicts
+                , last_touched_diff
+                , i
+                , act_ranking_top_10)
+            ) {
+                marked_long_keep++;
+                cl->stats.locked_long = 10;
+            }
+
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.dump_number > 0
-                && !cl->stats.locked_long
-                && !short_pred(
+                && cl->stats.locked_long == 0
+                && !(solver->conf.pred_run_short && short_pred_keep(
                     cl
                     , solver->sumConflicts
                     , last_touched_diff
                     , i
                     , act_ranking_top_10
-                )
+                ))
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
@@ -369,29 +383,15 @@ void ReduceDB::handle_lev1_final_predictor()
                 cl->setRemoved();
                 delayed_clause_free.push_back(offset);
             } else {
-                if (cl->stats.locked_long) {
+                if (cl->stats.locked_long > 0) {
                     kept_due_to_lock++;
                     cl->stats.locked_long--;
+                } else if (cl->stats.dump_number == 0) {
+                    kept_first++;
+                } else if (solver->clause_locked(*cl, offset)){
+                    kept_locked++;
                 } else {
-                    if (cl->stats.dump_number > 0 && long_pred(
-                        cl
-                        , solver->sumConflicts
-                        , last_touched_diff
-                        , i
-                        , act_ranking_top_10
-                    )) {
-                        marked_long_keep++;
-                        cl->stats.locked_long = 10;
-                    }
-
-
-                    if (cl->stats.dump_number == 0) {
-                        kept_first++;
-                    } else if (solver->clause_locked(*cl, offset)){
-                        kept_locked++;
-                    } else {
-                        kept++;
-                    }
+                    kept++;
                 }
                 solver->longRedCls[1][j++] = offset;
                 cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;

@@ -108,11 +108,11 @@ const Clustering* get_long_cluster(size_t conf) {
     out.write("""    return NULL;
 }
 
-const vector<keep_func_type>& get_short_pred_funcs(size_t conf) {
+const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf) {
     return should_keep_short_funcs[conf];
 }
 
-const vector<keep_func_type>& get_long_pred_funcs(size_t conf) {
+const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf) {
     return should_keep_short_funcs[conf];
 }
 

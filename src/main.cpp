@@ -320,13 +320,21 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     #endif
-    #ifdef FINAL_PREDICTOR
-    ("pred", po::value(&conf.pred_conf)->default_value(conf.pred_conf)
-        , "Predictor config to use")
-    #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
     ;
+
+    #ifdef FINAL_PREDICTOR
+    po::options_description predictOptions("Predict options");
+    predictOptions.add_options()
+    ("pred", po::value(&conf.pred_conf)->default_value(conf.pred_conf)
+        , "Predictor config to use")
+    ("prshort", po::value(&conf.pred_run_short)->default_value(conf.pred_run_short)
+        , "Run short predictor")
+    ("prlong", po::value(&conf.pred_run_long)->default_value(conf.pred_run_long)
+        , "Run long predictor")
+    ;
+    #endif
 
     std::ostringstream s_blocking_multip;
     s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
@@ -706,6 +714,9 @@ void Main::add_supported_options()
     .add(sqlOptions)
     #endif
     .add(restartOptions)
+    #if defined(FINAL_PREDICTOR)
+    .add(predictOptions)
+    #endif
     .add(printOptions)
     .add(propOptions)
     .add(reduceDBOptions)

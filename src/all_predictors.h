@@ -32,8 +32,8 @@ using std::vector;
 namespace CMSat {
 
 void fill_pred_funcs();
-const vector<keep_func_type>& get_short_pred_funcs(size_t conf);
-const vector<keep_func_type>& get_long_pred_funcs(size_t conf);
+const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf);
+const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf);
 
 const Clustering* get_short_cluster(size_t conf);
 const Clustering* get_long_cluster(size_t conf);

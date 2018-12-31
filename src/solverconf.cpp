@@ -172,6 +172,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Predict system
         , pred_conf(0)
+        , pred_run_short(1)
+        , pred_run_long(1)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
