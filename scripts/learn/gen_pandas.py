@@ -29,24 +29,6 @@ import numpy as np
 import os.path
 import sys
 
-##############
-# HOW TO GET A NICE LIST
-##############
-# go into .stdout.gz outputs:
-# zgrep "s UNSAT" * | cut -d ":" -f 1 > ../candidate_files_large_fixed_adjust_guess-12-April
-#
-# --> edit file to have the format:
-# zgrep -H "Total" large_hybr-12-April-2016-VAGTY-e4119a1b0-tout-1500-mout-1600/1dlx_c_iq57_a.cnf.gz.stdout.gz
-#
-# run:
-# ./candidate_files_large_hybr-12-April-2016-VAGTY.sh | awk '{if ($5 < 600 && $5 > 200) print $1 " -- " $5}' | cut -d "/" -f 2 | cut -d ":" -f 1 | sed "s/.stdout.*//" > ../unsat_small_candidates2.txt
-
-
-################
-# EXAMPLE TO RUN THIS AGAINST
-################
-# 6s153.cnf.gz
-
 class QueryHelper:
     def __init__(self, dbfname):
         if not os.path.isfile(dbfname):
