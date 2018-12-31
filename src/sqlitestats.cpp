@@ -633,8 +633,8 @@ void SQLiteStats::satzilla_features(
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
     sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_satzilla_feature_calc);
 
-    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numVars);
-    sqlite3_bind_int64(stmtFeat, bindAt++, satzilla_feat.numClauses);
+    sqlite3_bind_int64(stmtFeat, bindAt++, (uint64_t)satzilla_feat.numVars);
+    sqlite3_bind_int64(stmtFeat, bindAt++, (uint64_t)satzilla_feat.numClauses);
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.var_cl_ratio);
 
     //Clause distribution
