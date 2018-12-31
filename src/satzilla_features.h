@@ -37,8 +37,10 @@ struct SatZillaFeatures
     //Some parameter
     double eps = 0.00001;
 
-    int numVars;
-    int numClauses;
+    //these two are "double" because it's easier to do clustering with
+    double numVars;
+    double numClauses;
+
     double var_cl_ratio;
 
     //Clause distribution

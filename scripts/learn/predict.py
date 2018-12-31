@@ -24,6 +24,7 @@ import sklearn
 import sklearn.svm
 import sklearn.tree
 import sklearn.cluster
+from sklearn.preprocessing import StandardScaler
 import optparse
 import numpy as np
 import sklearn.metrics
@@ -34,6 +35,7 @@ import matplotlib.pyplot as plt
 import sklearn.ensemble
 import sklearn.model_selection
 import re
+import operator
 
 
 def write_mit_header(f):
@@ -561,18 +563,19 @@ class Clustering:
     def __init__(self, df):
         self.df = df
 
-    def create_code_for_cluster_centers(self, clust, sz_feats):
+    def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
         sz_feats_clean = []
-        for x in sz_feats:
-            assert "szfeat_cur.conflicts" not in x
+        for feat in sz_feats:
+            assert "szfeat_cur.conflicts" not in feat
 
             # removing "szfeat_cur."
-            c = x[11:]
+            c = feat[11:]
             if c[:4] == "red_":
                 c = c.replace("red_", "red_cl_distrib.")
             if c[:6] == "irred_":
                 c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
+        assert len(sz_feats_clean) == len(sz_feats)
 
         f = open("{basedir}/clustering_{name}_conf{conf_num}.h".format(
             basedir=options.basedir, name=options.name,
@@ -623,9 +626,12 @@ public:
 
     virtual double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
         double dist = 0;
+        double tmp;
 """)
-        for feat in sz_feats_clean:
-            f.write("        dist+=sq(a.{feat}-b.{feat});\n".format(feat=feat))
+        for feat, i in zip(sz_feats_clean, range(100)):
+            f.write("        tmp = (a.%s-%-3.8f)/%-3.8f;\n" %
+                    (feat, scaler.mean_[i], scaler.scale_[i]))
+            f.write("        dist+=sq(tmp-b.{feat});\n\n".format(feat=feat))
 
         f.write("""
         return dist;
@@ -636,7 +642,7 @@ public:
         double closest_dist = std::numeric_limits<double>::max();
         int closest = -1;
         for (int i: used_clusters) {
-            double dist = norm_dist(center[i], p);
+            double dist = norm_dist(p, center[i]);
             if (dist < closest_dist) {
                 closest_dist = dist;
                 closest = i;
@@ -698,6 +704,8 @@ public:
         f.write("#endif //ALL_PREDICTORS\n")
 
     def check_clust_distr(self, clust):
+        print("Checking cluster distribution....")
+
         # print distribution
         dist = {}
         for x in clust.labels_:
@@ -715,6 +723,7 @@ public:
             else:
                 self.used_clusters.append(clust_num)
 
+        print("Exact class contents follow")
         for clno in range(options.clusters):
             x = self.df[(self.df.clust == clno)]
             fname_dist = {}
@@ -728,10 +737,12 @@ public:
             skipped = "SKIPPED"
             if clno in self.used_clusters:
                 skipped = ""
-            print("** File name distribution in {skipped} cluster {clno} **".format(
+            print("\n\nFile name distribution in {skipped} cluster {clno} **".format(
                 clno=clno, skipped=skipped))
-            for a, b in fname_dist.items():
-                print("--> %25s : %s" % (a, b))
+
+            sorted_x = sorted(fname_dist.items(), key=operator.itemgetter(0))
+            for a, b in sorted_x:
+                print("--> %-10s : %s" % (b, a))
 
         self.used_clusters = sorted(self.used_clusters)
 
@@ -745,18 +756,49 @@ public:
                 sz_all.append(x)
         sz_all.remove("szfeat_cur.conflicts")
         if options.verbose:
-            print(sz_all)
+            print("All features would be: ", sz_all)
 
         sz_all = []
         sz_all.append("szfeat_cur.var_cl_ratio")
-        sz_all.append("szfeat_cur.numClauses")
+        #sz_all.append("szfeat_cur.numClauses")
+        sz_all.append("szfeat_cur.avg_confl_glue")
         sz_all.append("szfeat_cur.avg_num_resolutions")
         sz_all.append("szfeat_cur.irred_size_distr_mean")
+        sz_all.append("szfeat_cur.irred_size_distr_var")
+        if options.verbose:
+            print("Using features for clustering: ", sz_all)
 
         # fit to slice that only includes CNF features
-        df2 = self.df[sz_all]
+        df_clust = self.df[sz_all].astype(float).copy()
+        scaler = StandardScaler()
+        scaler.fit(df_clust)
+        if options.verbose:
+            print("Scaler:")
+            print(" -- ", scaler.mean_)
+            print(" -- ", scaler.scale_)
+
+        df_clust_back = df_clust.copy()
+        df_clust[sz_all] = scaler.transform(df_clust)
+
+        if options.verbose:
+            # we rely on this later in code generation
+            # for scaler.mean_
+            # for scaler.scale_
+            # for cluster.cluster_centers_
+            for i in range(df_clust_back.shape[1]):
+                assert df_clust_back.columns[i] == sz_all[i]
+
+            # checking that scaler works as expected
+            for feat in range(df_clust_back.shape[1]):
+                df_clust_back[df_clust_back.columns[feat]] -= scaler.mean_[feat]
+                df_clust_back[df_clust_back.columns[feat]] /= scaler.scale_[feat]
+
+            print(df_clust_back.head()-df_clust.head())
+            print(df_clust_back.head())
+            print(df_clust.head())
+
         clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
-        clust.fit(df2)
+        clust.fit(df_clust)
         self.df["clust"] = clust.labels_
 
         # print information about the clusters
@@ -790,7 +832,7 @@ public:
             learner.learn()
 
         if options.basedir is not None:
-            self.create_code_for_cluster_centers(clust, sz_all)
+            self.create_code_for_cluster_centers(clust, scaler, sz_all)
             self.write_all_predictors_file(fnames, functs)
 
 
