@@ -41,6 +41,9 @@ CardFinder::CardFinder(Solver* _solver) :
 {
 }
 
+//TODO order encoding!
+//Also, convert to order encoding.
+
 std::string CardFinder::print_card(const vector<Lit>& lits) const {
     std::stringstream ss;
     for(size_t i = 0; i < lits.size(); i++) {
