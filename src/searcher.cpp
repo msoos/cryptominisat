@@ -1804,7 +1804,8 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             #if defined(FINAL_PREDICTOR)
-            which_arr = 1;
+            if (which_arr != 0)
+                which_arr = 1;
             #endif
 
             cl->stats.which_red_array = which_arr;

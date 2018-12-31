@@ -306,7 +306,7 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t kept_due_to_lock = 0;
 
     #ifdef FINAL_PREDICTOR_TOTAL
-    assert(solver->longRedCls[0].size() == 0);
+    assert(solver->conf.glue_put_lev0_if_below_or_eq > 0 || solver->longRedCls[0].size() == 0);
     assert(solver->longRedCls[2].size() == 0);
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
@@ -336,13 +336,10 @@ void ReduceDB::handle_lev1_final_predictor()
         const ClOffset offset = solver->longRedCls[1][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
-        #ifndef FINAL_PREDICTOR_TOTAL
         if (cl->stats.which_red_array == 0) {
             solver->longRedCls[0].push_back(offset);
             moved_w0++;
-        } else
-        #endif
-        {
+        } else {
             const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)solver->longRedCls[1].size()/10.0));
 
             uint32_t last_touched_diff;
