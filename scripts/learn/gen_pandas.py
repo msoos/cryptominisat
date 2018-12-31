@@ -290,6 +290,10 @@ class QueryCls (QueryHelper):
         super(QueryCls, self).__init__(dbfname)
         self.conf = conf
 
+        self.goodcls = """
+        , goodcl.*
+    """
+
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
         self.restart_dat = """
         -- , rst.`simplifications` as `rst.simplifications`
@@ -655,6 +659,7 @@ class QueryCls (QueryHelper):
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
+        {goodcls}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
         , {case_stmt}
@@ -691,6 +696,7 @@ class QueryCls (QueryHelper):
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
+        {goodcls}
         , 0 as `x.num_used`
         , 0 as `x.lifetime`
         , "BAD" as `x.class`
@@ -724,6 +730,7 @@ class QueryCls (QueryHelper):
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
+            "goodcls": self.goodcls
             }
 
     def get_ok(self, subfilter):
