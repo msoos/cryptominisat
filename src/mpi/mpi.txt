@@ -1,0 +1,156 @@
+
+CMakeLists:
+--------------
+find_package(MPI)
+if (MPI_FOUND)
+    add_definitions( -DUSE_MPI )
+    set( CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER} )
+    #enable_language( CXX )
+else (MPI_FOUND)
+     MESSAGE(STATUS "No suitable C++ MPI implementation found. CryptoMiniSat will not be distributed.")
+endif(MPI_FOUND)
+--------------
+
+
+#ifdef USE_MPI
+#include "mpi.h"
+#include "DataSyncServer.h"
+#endif //USE_MPI
+
+
+const int Main::solve()
+{
+    #ifdef USE_MPI
+    int err, mpiRank, mpiSize;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    assert(err == MPI_SUCCESS);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    assert(err == MPI_SUCCESS);
+    if (mpiSize > 1 && mpiRank > 1) {
+        conf.verbosity = 0;
+        conf.origSeed = mpiRank;
+        conf.simpStartMult *= 0.9;
+        conf.simpStartMMult *= 0.9;
+        if (mpiRank % 6 == 3) {
+            conf.polarity_mode = polarity_false;
+            conf.fixRestartType = dynamic_restart;
+        }
+        if (mpiRank % 6 == 4) {
+            conf.polarity_mode = polarity_true;
+            conf.fixRestartType = dynamic_restart;
+        }
+    }
+    #endif //USE_MPI
+
+    if ((conf.verbosity >= 1)
+        #ifdef USE_MPI
+        && (mpiSize == 1 || (mpiSize>1 && mpiRank == 1))
+        #endif
+        ){
+        if (twoFileNamesPresent) {
+            std::cout << "c Outputting solution to file: " << argv[argc-1] << std::endl;
+        } else {
+            std::cout << "c Outputting solution to console" << std::endl;
+        }
+    }
+
+    MTSolver solver(numThreads, conf, gaussconfig);
+    solversToInterrupt = &solver;
+
+    printVersionInfo(conf.verbosity);
+    solver.printNumThreads();
+    setDoublePrecision(conf.verbosity);
+
+    parseInAllFiles(solver);
+    FILE* res = openOutputFile();
+
+    unsigned long current_nr_of_solutions = 0;
+    lbool ret = l_True;
+    while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
+        ret = solver.solve();
+        current_nr_of_solutions++;
+
+        if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
+            if (conf.verbosity >= 1) std::cout << "c Prepare for next run..." << std::endl;
+            printResultFunc(solver, ret, res);
+
+            vec<Lit> lits;
+            for (Var var = 0; var != solver.nVars(); var++) {
+                if (solver.model[var] != l_Undef) {
+                    lits.push( Lit(var, (solver.model[var] == l_True)? true : false) );
+                }
+            }
+            solver.addClause(lits);
+        }
+    }
+
+    #ifdef USE_MPI
+    if (mpiSize == 1 || mpiRank == 1) {
+    #endif
+        if (conf.needToDumpLearnts) {
+            solver.dumpSortedLearnts(conf.learntsFilename, conf.maxDumpLearntsSize);
+            std::cout << "c Sorted learnt clauses dumped to file '" << conf.learntsFilename << "'" << std::endl;
+        }
+        if (conf.needToDumpOrig) {
+            solver.dumpOrigClauses(conf.origFilename);
+            std::cout << "c Simplified original clauses dumped to file '" << conf.origFilename << "'" << std::endl;
+        }
+        if (ret == l_Undef && conf.verbosity >= 1) {
+            std::cout << "c Not finished running -- maximum restart reached" << std::endl;
+        }
+    #ifdef USE_MPI
+    }
+    #endif
+
+    #ifdef USE_MPI
+    if (mpiSize > 1) {
+        char* buf = NULL;
+        err = MPI_Send((unsigned*)buf, 0, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD);
+        assert(err == MPI_SUCCESS);
+    }
+    #endif
+
+    if (conf.verbosity >= 1) solver.printStats();
+    printResultFunc(solver, ret, res);
+
+    return correctReturnValue(ret);
+}
+
+
+int main(int argc, char** argv)
+{
+    int ret;
+#ifdef USE_MPI
+    int err;
+    err = MPI_Init(&argc, &argv);
+    assert(err == MPI_SUCCESS);
+
+    int mpiRank, mpiSize;
+    err = MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    assert(err == MPI_SUCCESS);
+
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    assert(err == MPI_SUCCESS);
+
+    if (mpiSize > 1 && mpiRank == 0) {
+        DataSyncServer server;
+        ret = server.actAsServer();
+        if (!ret) {
+            FILE *f;
+            f = fopen("finish", "w");
+            fprintf(f, "UNSAT sync");
+            fclose(f);
+        }
+    } else {
+#endif //USE_MPI
+        Main main(argc, argv);
+        main.parseCommandLine();
+        signal(SIGINT, SIGINT_handler);
+        //signal(SIGHUP,SIGINT_handler);
+        ret = main.solve();
+#ifdef USE_MPI
+    }
+
+    err = MPI_Finalize();
+    assert(err == MPI_SUCCESS);
+#endif //USE_MPI
