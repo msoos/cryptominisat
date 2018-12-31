@@ -629,7 +629,7 @@ public:
         double tmp;
 """)
         for feat, i in zip(sz_feats_clean, range(100)):
-            f.write("        tmp = (a.%s-%-3.8f)/%-3.8f;\n" %
+            f.write("        tmp = (a.%s-%-3.9fL)/%-3.8fL;\n" %
                     (feat, scaler.mean_[i], scaler.scale_[i]))
             f.write("        dist+=sq(tmp-b.{feat});\n\n".format(feat=feat))
 
