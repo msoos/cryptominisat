@@ -800,12 +800,6 @@ class QueryCls (QueryHelper):
 
         total_lines = num_lines_ok + num_lines_bad
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
-        if options.fixed != -1:
-            if options.fixed*fixed_mult > total_lines:
-                print("WARNING -- Your fixed num datapoints is too high:", options.fixed*fixed_mult)
-                print("WARNING -- We only have:", total_lines)
-                print("WARNING --> Not returning data.")
-                return False, None
 
         if total_lines == 0:
             print("WARNING: Total number of datapoints is 0. Potential issues:")
@@ -815,50 +809,72 @@ class QueryCls (QueryHelper):
             print(" --> Something went wrong")
             return False, None
 
+        if num_lines_ok == 0 or num_lines_bad == 0:
+            print("WARNING: Either OK or BAD has 0 datapoints.")
+            print("num_lines_ok: %d num_lines_bad: %d" % (num_lines_ok, num_lines_bad))
+            print(" Potential issues:")
+            print(" --> Minimum no. conflicts set too high")
+            print(" --> Less than 1 restarts were made")
+            print(" --> No conflicts in SQL")
+            print(" --> Something went wrong")
+            return False, None
+
+        this_fixed = options.fixed
+        this_fixed *= fixed_mult
+        print("this_fixed is set to:", this_fixed)
+        if this_fixed > total_lines:
+            print("WARNING -- Your fixed num datapoints is too high:", this_fixed)
+            print("        -- We only have in total:", total_lines)
+            this_fixed = int(total_lines)
+            print("        -- this_fixed is now ", this_fixed)
+
+        # checking OK-OK
+        lim = this_fixed * distrib
+        if lim > num_lines_ok_ok:
+            print("WARNING -- Your fixed num datapoints is too high for OK-OK")
+            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_ok))
+            this_fixed = num_lines_ok_ok/(distrib)
+            print("        -- this_fixed is now ", this_fixed)
+
+        # checking OK-BAD
+        lim = this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib)
+        if lim > num_lines_ok_bad:
+            print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
+            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_bad))
+            this_fixed = num_lines_ok_bad/(num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
+            print("        -- this_fixed is now ", this_fixed)
+
+        # checking BAD-BAD
+        lim = this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib)
+        if lim > num_lines_bad_bad:
+            print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
+            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_bad_bad))
+            this_fixed = num_lines_bad_bad/(num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
+            print("        -- this_fixed is now ", this_fixed)
+
         # OK-OK
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
-        if options.fixed != -1:
-            self.myformat["limit"] = int(options.fixed*fixed_mult * distrib)
-            if self.myformat["limit"] > num_lines_ok_ok:
-                print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-OK")
-                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_ok))
-                return False, None
-            q += self.common_limits
-
+        self.myformat["limit"] = int(this_fixed * distrib)
+        q += self.common_limits
         print("limit for OK-OK:", self.myformat["limit"])
         df_ok_ok = self.one_query("OK-OK", q)
 
         # OK-BAD
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
-        if options.fixed != -1:
-            self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
-            if self.myformat["limit"] > num_lines_ok_bad:
-                print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
-                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_ok_bad))
-                return False, None
-            q += self.common_limits
+        self.myformat["limit"] = int(this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
+        q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
         df_ok_bad = self.one_query("OK-BAD", q)
 
         # BAD-BAD
         q = self.q_bad_select + self.q_bad
-        if options.fixed*fixed_mult != -1:
-            self.myformat["limit"] = int(options.fixed*fixed_mult * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
-            if self.myformat["limit"] > num_lines_bad_bad:
-                print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
-                print("        -- Wanted to create %d but only had %d" % (self.myformat["limit"], num_lines_bad_bad))
-                return False, None
-            q += self.common_limits
-
+        self.myformat["limit"] = int(this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
+        q += self.common_limits
         print("limit for bad:", self.myformat["limit"])
         df_bad_bad = self.one_query("BAD-BAD", q)
+
+        # finish up
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-
-        if options.dump_sql:
-            print("-- query starts --")
-            print(q)
-            print("-- query ends --")
-
         return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad])
 
 class QueryVar (QueryHelper):
@@ -1084,7 +1100,7 @@ if __name__ == "__main__":
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL queries")
 
-    parser.add_option("--fixed", default=-1, type=int,
+    parser.add_option("--fixed", default=5000, type=int,
                       dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
 
     parser.add_option("--noind", action="store_true", default=False,
