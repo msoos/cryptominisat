@@ -3,7 +3,7 @@ set -e
 set -x
 
 numconfs=7
-location="out-dats-8074972.wlm01"
+location="out-dats-8090574.wlm01"
 
 ###############
 # Combine

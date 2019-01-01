@@ -157,10 +157,6 @@ struct ClauseStats
     //where df["cl.antec_overlap_hist"] =  hist.overlapHistLT.avg()
 
 
-
-    uint32_t    rdb1_used_for_uip_creation  = 0; //special
-
-
     //for locking in for long
     uint16_t    locked_long = 0;
     #endif

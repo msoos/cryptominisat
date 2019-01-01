@@ -507,7 +507,7 @@ static bool {funcname}(
         best_features = []
         if options.only_final:
             best_features = ['rdb0.used_for_uip_creation']
-            best_features.append('rdb1.used_for_uip_creation')
+            # best_features.append('rdb1.used_for_uip_creation')
             best_features.append('cl.size')
             best_features.append('cl.size_rel')
             best_features.append('cl.glue_rel_long')
@@ -760,26 +760,34 @@ public:
 
         sz_all = []
         sz_all.append("szfeat_cur.var_cl_ratio")
-        #sz_all.append("szfeat_cur.numClauses")
-        sz_all.append("szfeat_cur.avg_confl_glue")
+        sz_all.append("szfeat_cur.numClauses")
+        # sz_all.append("szfeat_cur.avg_confl_glue")
         sz_all.append("szfeat_cur.avg_num_resolutions")
         sz_all.append("szfeat_cur.irred_size_distr_mean")
-        sz_all.append("szfeat_cur.irred_size_distr_var")
+        # sz_all.append("szfeat_cur.irred_size_distr_var")
         if options.verbose:
             print("Using features for clustering: ", sz_all)
 
         # fit to slice that only includes CNF features
         df_clust = self.df[sz_all].astype(float).copy()
-        scaler = StandardScaler()
-        scaler.fit(df_clust)
-        if options.verbose:
-            print("Scaler:")
-            print(" -- ", scaler.mean_)
-            print(" -- ", scaler.scale_)
+        if options.scale:
+            scaler = StandardScaler()
+            scaler.fit(df_clust)
+            if options.verbose:
+                print("Scaler:")
+                print(" -- ", scaler.mean_)
+                print(" -- ", scaler.scale_)
 
-        df_clust_back = df_clust.copy()
-        df_clust[sz_all] = scaler.transform(df_clust)
+            df_clust_back = df_clust.copy()
+            df_clust[sz_all] = scaler.transform(df_clust)
+        else:
+            class ScalerNone:
+                def __init__(self):
+                    self.mean_ = [0.0 for n in range(df_clust.shape[1])]
+                    self.scale_ = [1.0 for n in range(df_clust.shape[1])]
+            scaler = ScalerNone()
 
+        # test scaler's code generation
         if options.verbose:
             # we rely on this later in code generation
             # for scaler.mean_
@@ -824,9 +832,7 @@ public:
                 f = options.basedir+"/"+fname
             else:
                 f = None
-            learner = Learner(
-                self.df[(self.df.clust == clno)],
-                funcname, f)
+            learner = Learner(self.df[(self.df.clust == clno)], funcname, f)
 
             print("================ Cluster %3d ================" % clno)
             learner.learn()
@@ -887,6 +893,8 @@ if __name__ == "__main__":
                       dest="clusters", help="How many clusters to use")
     parser.add_option("--clustmin", default=0.05, type=float, metavar="RATIO",
                       dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data. Default: %default")
+    parser.add_option("--scale", default=False, action="store_true",
+                      dest="scale", help="Scale clustering")
 
     # type of predictor
     parser.add_option("--tree", default=False, action="store_true",

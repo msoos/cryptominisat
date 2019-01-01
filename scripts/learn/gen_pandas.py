@@ -29,6 +29,7 @@ import numpy as np
 import os.path
 import sys
 
+
 class QueryHelper:
     def __init__(self, dbfname):
         if not os.path.isfile(dbfname):
@@ -79,8 +80,8 @@ class QueryFill (QueryHelper):
         create index `idxclid3` on `goodClauses` (`clauseID`);
         create index `idxclid4` on `restart` ( `restarts`);
         create index `idxclid5` on `tags` ( `tagname`);
-        create index `idxclid6` on `reduceDB` (`clauseID`, `dump_no`, conflicts, latest_satzilla_feature_calc);
-        create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
+        create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
+        create index `idxclid6-2` on `reduceDB` (`clauseID`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`);
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
         create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
@@ -353,7 +354,6 @@ class QueryCls (QueryHelper):
         -- , rdb0.`runtime` as `rdb0.runtime`
 
         -- , rdb0.`clauseID` as `rdb0.clauseID`
-        , rdb0.`dump_no` as `rdb0.dump_no`
         , rdb0.`conflicts_made` as `rdb0.conflicts_made`
         , rdb0.`sum_of_branch_depth_conflict` as `rdb0.sum_of_branch_depth_conflict`
         , rdb0.`propagations_made` as `rdb0.propagations_made`
@@ -640,7 +640,6 @@ class QueryCls (QueryHelper):
         {restart_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
-        {rdb1_dat}
         {goodcls}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
@@ -655,17 +654,12 @@ class QueryCls (QueryHelper):
         , satzilla_features as szfeat
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
-        , reduceDB as rdb1
         , tags
         WHERE
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 0
         and rdb0.clauseID = cl.clauseID
-
-        and rdb1.clauseID = cl.clauseID
-        and rdb1.dump_no = rdb0.dump_no-1
-        and rdb0.dump_no > 0
         """
         self.q_ok += self.common_restrictions
 
@@ -677,7 +671,6 @@ class QueryCls (QueryHelper):
         {restart_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
-        {rdb1_dat}
         {goodcls}
         , 0 as `x.num_used`
         , 0 as `x.lifetime`
@@ -691,7 +684,6 @@ class QueryCls (QueryHelper):
         , satzilla_features as szfeat
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
-        , reduceDB as rdb1
         , tags
         WHERE
 
@@ -699,9 +691,6 @@ class QueryCls (QueryHelper):
         and cl.clauseID != 0
         and cl.clauseID is not NULL
         and rdb0.clauseID = cl.clauseID
-
-        and rdb1.clauseID = cl.clauseID
-        and rdb1.dump_no = rdb0.dump_no-1
         """
         self.q_bad += self.common_restrictions
 
@@ -711,7 +700,6 @@ class QueryCls (QueryHelper):
             "clause_dat": self.clause_dat,
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
-            "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "goodcls": self.goodcls
             }
 
@@ -930,13 +918,13 @@ def transform(df):
     df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
 
     # relative RDB
-    print("Relative RDB...")
-    df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
-    df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
-    df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
-    df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
-    df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
-    df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
+    #print("Relative RDB...")
+    #df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
+    #df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
+    #df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
+    #df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
+    #df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
+    #df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
 
     # ************
     # TODO decision level and branch depth are the same, right???
