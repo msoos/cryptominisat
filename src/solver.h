@@ -101,6 +101,7 @@ class Solver : public Searcher
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(bool elongate);
+        bool get_decision_reaching_valid() const;
 
         //get learnt clauses
         void start_getting_small_clauses(uint32_t max_len, uint32_t max_glue);
@@ -617,6 +618,11 @@ inline lbool Solver::model_value (const uint32_t p) const
 inline void Solver::testing_set_solver_not_fresh()
 {
     fresh_solver = false;
+}
+
+inline bool Solver::get_decision_reaching_valid() const
+{
+    return decisions_reaching_model_valid;
 }
 
 } //end namespace

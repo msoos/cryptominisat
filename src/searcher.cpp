@@ -2393,8 +2393,10 @@ void Searcher::finish_up_solve(const lbool status)
         #endif
         model = assigns;
 
-        for(size_t at: trail_lim) {
-            decisions_reaching_model.push_back(trail[at]);
+        if (conf.need_decisions_reaching) {
+            for(size_t at: trail_lim) {
+                decisions_reaching_model.push_back(trail[at]);
+            }
         }
 
         if (conf.greedy_undef) {

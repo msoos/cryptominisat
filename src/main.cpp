@@ -218,8 +218,8 @@ void Main::parseInAllFiles(SATSolver* solver2)
     //First read normal extra files
     if (!debugLib.empty() && filesToRead.size() > 1) {
         cout
-        << "debugLib must be OFF"
-        << "to parse in more than one file"
+        << "ERROR: debugLib must be OFF"
+        << " to parse in more than one file"
         << endl;
 
         std::exit(-1);
@@ -980,6 +980,14 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
+    if (!decisions_for_model_fname.empty()) {
+        conf.need_decisions_reaching = true;
+    }
+
+    if (max_nr_of_solutions > 1) {
+        conf.need_decisions_reaching = true;
+    }
+
     if (conf.preprocess != 0) {
         conf.simplify_at_startup = 1;
         conf.varelim_time_limitM *= 5;
@@ -1050,7 +1058,7 @@ void Main::manually_parse_some_options()
             cout
             << "ERROR: Couldn't open file '"
             << resultFilename
-            << "' for writing!"
+            << "' for writing result!"
             << endl;
             std::exit(-1);
         }
@@ -1087,6 +1095,10 @@ void Main::manually_parse_some_options()
         conf.solution_file = solution[0];
     } else if (vm.count("input")) {
         filesToRead = vm["input"].as<vector<string> >();
+        if (conf.preprocess == 1) {
+            filesToRead.resize(1);
+        }
+
         if (!vm.count("sqlitedb")) {
             sqlite_filename = filesToRead[0] + ".sqlite";
         } else {
@@ -1098,11 +1110,25 @@ void Main::manually_parse_some_options()
     }
 
     if (conf.preprocess == 1) {
-        if (!vm.count("drat")) {
+        if (vm["input"].as<vector<string> >().size() + vm.count("drat") > 2) {
             cout << "ERROR: When preprocessing, you must give the simplified file name as 2nd argument" << endl;
-            std::exit(-1);
+            cout << "You gave this many inputs: "
+                << vm["input"].as<vector<string> >().size()+vm.count("drat")
+                << endl;
+
+            for(string s: vm["input"].as<vector<string> >()) {
+                cout << " --> " << s << endl;
+            }
+            if (vm.count("drat")) {
+                cout << " --> " << vm["drat"].as<string>() << endl;
+            }
+            exit(-1);
         }
-        conf.simplified_cnf = vm["drat"].as<string>();
+        if (vm["input"].as<vector<string> >().size() > 1) {
+            conf.simplified_cnf = vm["input"].as<vector<string> >()[1];
+        } else {
+            conf.simplified_cnf = vm["drat"].as<string>();
+        }
     }
 
     if (conf.preprocess == 2) {
@@ -1187,7 +1213,7 @@ void Main::dump_red_file()
         cout
         << "ERROR: Couldn't open file '"
         << resultFilename
-        << "' for writing!"
+        << "' for writing redundant clauses!"
         << endl;
         std::exit(-1);
     }
@@ -1280,10 +1306,16 @@ void Main::dump_decisions_for_model()
         cout
         << "ERROR: Couldn't open file '"
         << decisions_for_model_fname
-        << "' for writing!"
+        << "' for writing decisions!"
         << endl;
         std::exit(-1);
     }
+
+    if (!solver->get_decision_reaching_valid()) {
+        decfile << "INVALID" << endl;
+        return;
+    }
+
     if (conf.verbosity) {
         cout << "c size of get_decisions_reaching_model: "
         << solver->get_decisions_reaching_model().size()
@@ -1292,7 +1324,6 @@ void Main::dump_decisions_for_model()
     for(const Lit l: solver->get_decisions_reaching_model()) {
         decfile << l << " 0" << endl;
     }
-    decfile.close();
 }
 
 lbool Main::multi_solutions()
@@ -1302,7 +1333,7 @@ lbool Main::multi_solutions()
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
         ret = solver->solve(NULL, only_indep_solution);
         current_nr_of_solutions++;
-        if (ret == l_True) {
+        if (ret == l_True && !decisions_for_model_fname.empty()) {
             dump_decisions_for_model();
         }
 
@@ -1325,9 +1356,19 @@ lbool Main::multi_solutions()
             //Banning found solution
             vector<Lit> lits;
             if (independent_vars.empty()) {
-              for (Lit lit: solver->get_decisions_reaching_model()) {
-                  lits.push_back(~lit);
-              }
+                if (solver->get_decision_reaching_valid()) {
+                    //only decision vars
+                    for (Lit lit: solver->get_decisions_reaching_model()) {
+                      lits.push_back(~lit);
+                    }
+                } else {
+                    //all of the solution
+                    for (uint32_t var = 0; var < solver->nVars(); var++) {
+                        if (solver->get_model()[var] != l_Undef) {
+                            lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
+                        }
+                    }
+                }
             } else {
               for (const uint32_t var: independent_vars) {
                   if (solver->get_model()[var] != l_Undef) {

@@ -100,6 +100,10 @@ def set_up_parser():
     parser.add_option("--tout", "-t", dest="maxtime", type=int, default=35,
                       help="Max time to run. Default: %default")
 
+    parser.add_option("--nopreproc", dest="nopreproc", default=False,
+                      action="store_true",
+                      help="Don't run preprocessing check only NORMAL")
+
     parser.add_option("--textra", dest="maxtimediff", type=int, default=10,
                       help="Extra time on top of timeout for processing."
                       " Default: %default")
@@ -146,7 +150,7 @@ class create_fuzz:
             fixed = random.getrandbits(1) == 1
 
             for _ in range(random.randrange(2, 4)):
-                fname2 = unique_file("fuzzTest")
+                fname2 = unique_file("fuzzTest-multipart")
                 fnames_multi.append(fname2)
 
                 # chose a ranom fuzzer, not multipart
@@ -211,6 +215,10 @@ class Tester:
         self.only_indep = False
         self.indep_vars = []
         self.dump_red = None
+        self.decisions_dumpfile = None
+        self.this_gauss_on = False
+        self.num_threads = 1
+        self.preproc = False
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -281,6 +289,9 @@ class Tester:
         self.sqlitedbfname = None
         self.clid_added = False
         cmd = " --zero-exit-status "
+        if self.decisions_dumpfile is None:
+            self.decisions_dumpfile = unique_file("fuzz-decdump", ".txt")
+            cmd += "--dumpdecformodel %s " % self.decisions_dumpfile
 
         # disable gauss when gauss is compiled in but asked not to be used
         if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
@@ -379,7 +390,6 @@ class Tester:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
                 cmd += "--sqlitedb %s " % self.sqlitedbfname
-                cmd += "--sqlresttime %d " % random.randint(0, 1)
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
@@ -423,10 +433,10 @@ class Tester:
         command += options.extra_options + " "
         command += fixed_opts + " "
         if fname is not None:
-            command += fname
+            command += "--input %s " % fname
         if fname2:
             if self.drat:
-                command += " %s " % fname2
+                command += " --drat %s " % fname2
             else:
                 command += " %s --savedstate %s-savedstate.dat " % (fname2, fname2)
 
@@ -476,6 +486,75 @@ class Tester:
                   (os.getpid(), resource.getrlimit(resource.RLIMIT_CPU)))
 
         return consoleOutput, retcode
+
+    def check_decisions(self, solution, fname):
+
+        with open(self.decisions_dumpfile, "r") as f:
+            for line in f:
+                if "INVALID" in line:
+                    print("Cannot check decisions, as it's INVALID")
+                    return
+
+        x = Tester()
+        x.needDebugLib = False
+        consoleOutput, retcode = x.execute(
+            fname,
+            fixed_opts=" --zero-exit-status --input %s " % self.decisions_dumpfile,
+            rnd_opts=" ")
+
+        if retcode != 0:
+            print("ERROR while running decision-injected solver, retcode: ", retcode)
+            exit(-1)
+
+        unsat, solution2, _ = x.sol_parser.parse_solution_from_output(
+            consoleOutput.split("\n"), ignoreNoSolution=False)
+
+        if unsat:
+            print("ERROR: after injecting the decisions, the problem is UNSAT")
+            exit(-1)
+
+        bad = False
+        for key, val in solution.items():
+            if key not in solution2:
+                bad = True
+                print("ERROR: variable %d is not in the second solution" % key)
+                break
+            if solution[key] != solution2[key]:
+                print("ERROR: variable %d does not have the same solutions." % key)
+                print("ERROR: original: %s" % solution[key])
+                print("ERROR: decision-injected: %s" % solution2[key])
+                bad = True
+
+        if bad:
+            print("The solution is not the same after injecting decisions!")
+            print("Original solution:", solution)
+            print("New      solution:", solution2)
+            exit(-1)
+
+        print("OK, decisions verified")
+
+        x = Tester()
+        x.needDebugLib = False
+        consoleOutput, retcode = x.execute(
+            fname,
+            fixed_opts=" --zero-exit-status --input %s --maxsol 10 " % self.decisions_dumpfile,
+            rnd_opts=" ")
+
+        found_one = False
+        for line in consoleOutput.split("\n"):
+            m = re.match(r".*Number of solutions found until now:[ ]*([^ ]+)", line)
+            if m is not None:
+                num = int(m.group(1))
+                if num == 1:
+                    found_one = True
+                if num > 1:
+                    print("ERROR: we found more than 1 solution given the set of decisions")
+                    exit(-1)
+        if not found_one:
+            print("ERROR: Did not even find one solution for multi-solution with decisions")
+            exit(-1)
+
+        print("OK, number of decision-restricted solutions verified")
 
     def check(self, fname, fname2=None,
               checkAgainst=None,
@@ -533,7 +612,19 @@ class Tester:
             if self.dump_red:
                 self.check_dumped_clauses(fname)
 
+            if self.decisions_dumpfile is not None and checkAgainst == fname:
+                if len(self.indep_vars) == 0:
+                    self.check_decisions(solution, fname)
+
+            if self.decisions_dumpfile is not None:
+                os.unlink(self.decisions_dumpfile)
+                self.decisions_dumpfile = None
+
             return
+
+        if self.decisions_dumpfile is not None:
+            os.unlink(self.decisions_dumpfile)
+            self.decisions_dumpfile = None
 
         # it's UNSAT, let's check with DRAT
         if fname2:
@@ -614,6 +705,7 @@ class Tester:
 
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
+        self.decisions_dumpfile = None
         self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
@@ -663,7 +755,7 @@ class Tester:
         if not self.drat and not self.only_indep and not self.dump_red:
             print("->Multipart test")
             self.needDebugLib = True
-            interspersed_fname = unique_file("fuzzTest")
+            interspersed_fname = unique_file("fuzzTest-interspersed")
             seed_for_inters = random.randint(0, 1000000)
             intersperse(fname, interspersed_fname, seed_for_inters)
             print("Interspersed: ./intersperse.py %s %s %d" % (fname,
@@ -713,11 +805,13 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
+        self.decisions_dumpfile = True  # so it is not None
         self.this_gauss_on = False  # don't do gauss on preproc
+        assert self == tester
         tester.needDebugLib = False
         fuzzer = random.choice(fuzzers_drat)
         self.num_threads = 1
-        fname = unique_file("fuzzTest")
+        fname = unique_file("fuzzTest-preproc")
         self.drat = False
         self.preproc = True
         self.only_indep = False
@@ -757,9 +851,11 @@ class Tester:
             if ret is not None:
                 # didn't time out, so let's reconstruct the solution
                 savedstate = "%s-savedstate.dat" % simp
-                self.check(fname=solution, checkAgainst=fname,
-                           fixed_opts="--preproc 2 --savedstate %s" % savedstate,
-                           rnd_opts=rnd_opts)
+                x = Tester()
+                x.needDebugLib = False
+                x.check(fname=solution, checkAgainst=fname,
+                        fixed_opts="--preproc 2 --savedstate %s" % savedstate,
+                        rnd_opts=rnd_opts)
                 os.unlink(savedstate)
                 os.unlink(solution)
 
@@ -856,6 +952,8 @@ if __name__ == "__main__":
             toexec += "--indep "
         if options.only_dump:
             toexec += "--dump "
+        if options.nopreproc:
+            toexec += "--nopreproc "
         toexec += "-m %d " % options.max_threads
 
         print("")
@@ -863,10 +961,13 @@ if __name__ == "__main__":
         print("--> To re-create fuzz-test below: %s" % toexec)
 
         random.seed(rnd_seed)
-        if random.randint(0, 10) == 0:
-            tester.fuzz_test_preproc()
-        else:
+        if options.nopreproc:
             tester.fuzz_test_one()
+        else:
+            if random.randint(0, 10) == 0:
+                tester.fuzz_test_preproc()
+            else:
+                tester.fuzz_test_one()
         rnd_seed += 1
         num += 1
         if options.fuzz_test_lim is not None and num >= options.fuzz_test_lim:
