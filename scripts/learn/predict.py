@@ -297,7 +297,6 @@ static bool {funcname}(
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
         df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
         df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
-        df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
 
         train, test = sklearn.model_selection.train_test_split(df, test_size=0.33)
         X_train = train[features]
@@ -513,7 +512,7 @@ static bool {funcname}(
             best_features.append('cl.glue_rel_long')
             best_features.append('cl.glue_rel_queue')
             best_features.append('cl.glue')
-            best_features.append('rdb0.dump_no')
+            # best_features.append('rdb0.dump_no')
             best_features.append('rdb0.act_ranking_top_10')
             best_features.append('rdb0.act_ranking')
             best_features.append('rdb0.last_touched_diff')
