@@ -87,13 +87,13 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs 7
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs 3
 
 rm ../../src/predict/*.h
-for CONF in {0..6}
+for CONF in {0..4}
 do
-    ../predict.py "${FNAMEOUT}-min-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
-    ../predict.py "${FNAMEOUT}-min-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --tree --split 0.1 --clusters 1 --conf "${CONF}"
+    ../predict.py "${FNAMEOUT}-min.db-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
+    ../predict.py "${FNAMEOUT}-min.db-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
 done
 )
 
