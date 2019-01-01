@@ -371,7 +371,7 @@ void ReduceDB::handle_lev1_final_predictor()
                     kept_due_to_lock++;
                     cl->stats.locked_long--;
                 } else {
-                    if (cl->stats.dump_number > 0 && long_pred(
+                    if (cl->stats.dump_number > 0 && long_pred_keep(
                         cl
                         , solver->sumConflicts
                         , last_touched_diff
