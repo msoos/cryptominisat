@@ -274,7 +274,14 @@ class QueryCls (QueryHelper):
         self.conf = conf
 
         self.goodcls = """
-        , goodcl.*
+        , goodcl.`clauseID` as `goodcl.clauseID`
+        , goodcl.`num_used` as `goodcl.num_used`
+        , goodcl.`first_confl_used` as `goodcl.first_confl_used`
+        , goodcl.`last_confl_used` as `goodcl.last_confl_used`
+        , goodcl.`sum_hist_used` as `goodcl.sum_hist_used`
+        , goodcl.`avg_hist_used` as `goodcl.avg_hist_used`
+        , goodcl.`var_hist_used` as `goodcl.var_hist_used`
+        , goodcl.`last_prop_used` as `goodcl.last_prop_used`
     """
 
         # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
