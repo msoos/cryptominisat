@@ -856,6 +856,11 @@ DLL_PUBLIC const vector< lbool >& SATSolver::get_model() const
     return data->solvers[data->which_solved]->get_model();
 }
 
+DLL_PUBLIC const std::vector<Lit>& SATSolver::get_decisions_reaching_model() const
+{
+    return data->solvers[data->which_solved]->get_decisions_reaching_model();
+}
+
 DLL_PUBLIC const std::vector<Lit>& SATSolver::get_conflict() const
 {
 

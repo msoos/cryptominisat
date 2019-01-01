@@ -57,6 +57,7 @@ void SolutionExtender::extend()
         ) {
             //any setting would work, let's set to l_False (MiniSat default)
             solver->model[i] = l_False;
+            solver->decisions_reaching_model.push_back(Lit(i, true));
         }
     }
 
@@ -101,6 +102,7 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     }
 
     solver->model[blockedOn] = l_False;
+    solver->decisions_reaching_model.push_back(Lit(blockedOn, true));
 }
 
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)

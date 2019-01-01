@@ -1225,12 +1225,11 @@ void Solver::extend_solution(const bool only_indep_solution)
 
     const double myTime = cpuTime();
     model = back_number_solution_from_inter_to_outer(model);
-    full_model = back_number_solution_from_inter_to_outer(full_model);
+    map_inter_to_outer(decisions_reaching_model);
 
     //Extend solution to stored solution in component handler
     if (compHandler) {
-        compHandler->addSavedState(model);
-        compHandler->addSavedState(full_model);
+        compHandler->addSavedState(model, decisions_reaching_model);
     }
 
     if (!only_indep_solution) {
@@ -1240,7 +1239,14 @@ void Solver::extend_solution(const bool only_indep_solution)
         solver->varReplacer->extend_model_already_set();
     }
 
+    //map back without BVA
     model = map_back_to_without_bva(model);
+    const vector<uint32_t> my_map = build_outer_to_without_bva_map();
+    updateLitsMap(decisions_reaching_model, my_map);
+    for(const Lit lit: decisions_reaching_model) {
+        assert(lit.var() < nVarsOutside());
+    }
+
     if (only_indep_solution) {
         assert(conf.independent_vars);
         for(uint32_t var: *conf.independent_vars) {
@@ -1350,6 +1356,7 @@ lbool Solver::simplify_problem_outside()
         test_all_clause_attached();
     }
     #endif
+    decisions_reaching_model.clear();
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
 
@@ -1375,6 +1382,7 @@ lbool Solver::solve_with_assumptions(
     const bool only_indep_solution
 ) {
     fresh_solver = false;
+    decisions_reaching_model.clear();
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
     if (ok) {
@@ -1435,7 +1443,6 @@ lbool Solver::solve_with_assumptions(
                 cout << "ERROR loading in solution from file '" << conf.solution_file << "'. Please check solution file for correctness" << endl;
                 exit(-1);
             }
-            full_model = model;
         }
     }
 

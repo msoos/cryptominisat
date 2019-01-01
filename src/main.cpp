@@ -668,6 +668,8 @@ void Main::add_supported_options()
         , "The maximum for scc search depth")
     ("simdrat", po::value(&conf.simulate_drat)->default_value(conf.simulate_drat)
         , "The maximum for scc search depth")
+    ("dumpdecformodel", po::value(&decisions_for_model_fname)->default_value(decisions_for_model_fname)
+        , "Decisions for model will be dumped here")
     ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
         , "Independent vars, separated by comma")
     ("onlyindep", po::bool_switch(&only_indep_solution)
@@ -973,6 +975,11 @@ void Main::manually_parse_some_options()
         exit(-1);
     }
 
+    if (!decisions_for_model_fname.empty() && max_nr_of_solutions > 1) {
+        std::cerr << "ERROR: dumping decisions for multi-solution makes no sense. Exiting." << endl;
+        std::exit(-1);
+    }
+
     if (conf.preprocess != 0) {
         conf.simplify_at_startup = 1;
         conf.varelim_time_limitM *= 5;
@@ -999,6 +1006,11 @@ void Main::manually_parse_some_options()
 
         if (max_nr_of_solutions > 1) {
             std::cerr << "ERROR: multi-solutions make no sense with preprocessing. Exiting." << endl;
+            std::exit(-1);
+        }
+
+        if (!decisions_for_model_fname.empty()) {
+            std::cerr << "ERROR: dumping decisions for model make no sense with preprocessing. Exiting." << endl;
             std::exit(-1);
         }
 
@@ -1257,6 +1269,32 @@ int Main::solve()
     return correctReturnValue(ret);
 }
 
+void Main::dump_decisions_for_model()
+{
+    assert(max_nr_of_solutions == 1);
+    assert(solver->okay());
+
+    std::ofstream decfile;
+    decfile.open(decisions_for_model_fname.c_str());
+    if (!(decfile)) {
+        cout
+        << "ERROR: Couldn't open file '"
+        << decisions_for_model_fname
+        << "' for writing!"
+        << endl;
+        std::exit(-1);
+    }
+    if (conf.verbosity) {
+        cout << "c size of get_decisions_reaching_model: "
+        << solver->get_decisions_reaching_model().size()
+        << endl;;
+    }
+    for(const Lit l: solver->get_decisions_reaching_model()) {
+        decfile << l << " 0" << endl;
+    }
+    decfile.close();
+}
+
 lbool Main::multi_solutions()
 {
     unsigned long current_nr_of_solutions = 0;
@@ -1264,6 +1302,9 @@ lbool Main::multi_solutions()
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
         ret = solver->solve(NULL, only_indep_solution);
         current_nr_of_solutions++;
+        if (ret == l_True) {
+            dump_decisions_for_model();
+        }
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
             printResultFunc(&cout, false, ret);
@@ -1284,10 +1325,8 @@ lbool Main::multi_solutions()
             //Banning found solution
             vector<Lit> lits;
             if (independent_vars.empty()) {
-              for (uint32_t var = 0; var < solver->nVars(); var++) {
-                  if (solver->get_model()[var] != l_Undef) {
-                      lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
-                  }
+              for (Lit lit: solver->get_decisions_reaching_model()) {
+                  lits.push_back(~lit);
               }
             } else {
               for (const uint32_t var: independent_vars) {

@@ -97,6 +97,7 @@ class Solver : public Searcher
         lbool full_model_value (const Lit p) const;  ///<Found model value for lit
         lbool full_model_value (const uint32_t p) const;  ///<Found model value for var
         const vector<lbool>& get_model() const;
+        const vector<Lit>& get_decisions_reaching_model() const;
         const vector<Lit>& get_final_conflict() const;
         vector<pair<Lit, Lit> > get_all_binary_xors() const;
         vector<Xor> get_recovered_xors(bool elongate);
@@ -576,6 +577,11 @@ inline const vector<lbool>& Solver::get_model() const
     return model;
 }
 
+inline const vector<Lit>& Solver::get_decisions_reaching_model() const
+{
+    return decisions_reaching_model;
+}
+
 inline const vector<Lit>& Solver::get_final_conflict() const
 {
     return conflict;
@@ -606,16 +612,6 @@ inline lbool Solver::model_value (const Lit p) const
 inline lbool Solver::model_value (const uint32_t p) const
 {
     return model[p];
-}
-
-inline lbool Solver::full_model_value (const Lit p) const
-{
-    return full_model[p.var()] ^ p.sign();
-}
-
-inline lbool Solver::full_model_value  (const uint32_t p) const
-{
-    return full_model[p];
 }
 
 inline void Solver::testing_set_solver_not_fresh()
