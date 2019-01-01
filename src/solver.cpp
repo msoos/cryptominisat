@@ -1374,16 +1374,6 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_indep_solution
 ) {
-    num_solve_called_without_simplify++;
-
-    if (nVars() > 0 && conf.do_simplify_problem &&
-        num_solve_called_without_simplify > 1000)
-    {
-        lbool ret = simplify_problem_outside();
-        if (ret == l_False)
-            return ret;
-    }
-
     fresh_solver = false;
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
@@ -2000,7 +1990,6 @@ lbool Solver::simplify_problem(const bool startup)
     clearEnGaussMatrixes();
     #endif
 
-    num_solve_called_without_simplify = 0;
     if (conf.verbosity >= 6) {
         cout
         << "c " <<  __func__ << " called"

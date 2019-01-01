@@ -296,7 +296,6 @@ class Solver : public Searcher
         void set_assumptions();
 
         lbool simplify_problem_outside();
-        uint32_t num_solve_called_without_simplify = 0;
         void move_to_outside_assumps(const vector<Lit>* assumps);
         vector<Lit> back_number_from_outside_to_outer_tmp;
         void back_number_from_outside_to_outer(const vector<Lit>& lits)
