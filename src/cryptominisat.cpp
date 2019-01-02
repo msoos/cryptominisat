@@ -1161,3 +1161,25 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
         data->solvers[i]->setConf(conf);
     }
 }
+
+DLL_PUBLIC const std::vector<Lit>& SATSolver::get_decisions_reaching_model() const
+{
+    if (!get_decision_reaching_valid()) {
+        cout << "ERROR: you called get_decisions_reaching_model() but it's not a valid decision set!" << endl;
+        exit(-1);
+    }
+    return data->solvers[data->which_solved]->get_decisions_reaching_model();
+}
+
+DLL_PUBLIC void SATSolver::set_need_decisions_reaching()
+{
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.need_decisions_reaching = true;
+    }
+}
+
+DLL_PUBLIC bool SATSolver::get_decision_reaching_valid() const
+{
+    return data->solvers[data->which_solved]->get_decision_reaching_valid();
+}

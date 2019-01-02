@@ -640,7 +640,7 @@ void CompHandler::moveClausesImplicit(
     solver->binTri.redBins -= numRemovedHalfRed/2;
 }
 
-void CompHandler::addSavedState(vector<lbool>& solution)
+void CompHandler::addSavedState(vector<lbool>& solution, vector<Lit>& decisions)
 {
     //Enqueue them. They may need to be extended, so enqueue is needed
     //manipulating "model" may not be good enough
@@ -654,6 +654,7 @@ void CompHandler::addSavedState(vector<lbool>& solution)
             const lbool val = savedState[var];
             assert(solution[var] == l_Undef);
             solution[var] = val;
+            decisions.push_back(Lit(var, val == l_False));
             //cout << "Solution to var " << var + 1 << " has been added: " << val << endl;
 
             solver->varData[interVar].polarity = (val == l_True);

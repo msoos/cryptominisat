@@ -36,25 +36,28 @@ environment:
     # https://stackoverflow.com/questions/1023858/how-to-suppress-specific-msbuild-warning
     MSBUILD_FLAGS: /maxcpucount /nologo /property:WarningLevel=1
   matrix:
-  # No Gauss
+  # Normal
   - DYNAMIC_COMPILE_SETTING: OFF
     STATICCOMPILE_SETTING: ON
     EXTRA_FLAGS:
-    BOOST_OPTIONS: runtime-link=static  link=static
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    EXTRA_FLAGS:
-    BOOST_OPTIONS: link=shared runtime-link=shared
-  # Gauss ---
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    BOOST_OPTIONS: link=shared runtime-link=shared
-    EXTRA_FLAGS: -DUSE_GAUSS=ON
-  # Largemem ---
-  - DYNAMIC_COMPILE_SETTING: ON
-    STATICCOMPILE_SETTING: OFF
-    BOOST_OPTIONS: link=shared runtime-link=shared
+    BOOST_OPTIONS: link=static runtime-link=static
+
+  # Largemem
+  - DYNAMIC_COMPILE_SETTING: OFF
+    STATICCOMPILE_SETTING: ON
+    BOOST_OPTIONS: link=static runtime-link=static
     EXTRA_FLAGS: -DLARGEMEM=ON
+
+  # Gauss
+  - DYNAMIC_COMPILE_SETTING: OFF
+    STATICCOMPILE_SETTING: ON
+    BOOST_OPTIONS: link=static runtime-link=static
+    EXTRA_FLAGS: -DUSE_GAUSS=ON
+
+  #- DYNAMIC_COMPILE_SETTING: ON
+    #STATICCOMPILE_SETTING: OFF
+    #EXTRA_FLAGS:
+    #BOOST_OPTIONS: link=shared runtime-link=shared
 
 configuration:
   - Release
@@ -83,7 +86,7 @@ before_build:
   - echo "Building boost.."
   - bootstrap.bat --with-libraries=program_options
   - cat project-config.jam
-  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release %BOOST_OPTIONS% threading=multi  install --prefix="C:\projects\cryptominisat\boost_1_59_0_install" > boost_install.out
+  - b2 --with-program_options address-model=64 toolset=msvc-14.0 variant=release %BOOST_OPTIONS% threading=multi  install --prefix=%BOOST_ROOT% > boost_install.out
 
   # zlib
   # TODO check out http://stackoverflow.com/questions/10507893/libzip-with-visual-studio-2010
@@ -107,28 +110,29 @@ before_build:
   - mkdir build
   - cd build
   - cmake --version
-  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS% -DENABLE_TESTING=%DYNAMIC_COMPILE_SETTING%  -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DENABLE_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 ..
+
+  # :(((
+  # cannot enable testing becasue of visibility issues: -DENABLE_TESTING=%DYNAMIC_COMPILE_SETTING%
+  # :(((
+
+  - cmake -G %CMAKE_GENERATOR% %EXTRA_FLAGS%  -DENABLE_PYTHON_INTERFACE=%DYNAMIC_COMPILE_SETTING% -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DSTATICCOMPILE=%STATICCOMPILE_SETTING% -DZLIB_ROOT=%ZLIB_ROOT% -DPYTHON_LIBRARY=%PYTHON%/libs -DPYTHON_INCLUDE_DIR=%PYTHON%/include -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON%/python.exe -DBoost_DEBUG=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBOOST_ROOT=%BOOST_ROOT% ..
   - ls
 
+build_script:
+  - cmake --build . --config Release
+
 after_build:
-  - call ctest -V -C %CONFIGURATION%
-    # - call DUMPBIN C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe /ALL
-    # - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
-  - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
+  #- call ctest -V -C %CONFIGURATION%
+  # - call DUMPBIN C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe /ALL
+  # - call "C:\Program Files\cryptominisat5\bin\cryptominisat5_simple.exe" --help
+  # - call "C:\Program Files\cryptominisat5\bin\cryptominisat5.exe" --help
   - echo %APPVEYOR_BUILD_FOLDER%
-  - 7z a c:\projects\cryptominisat\cryptominisat.zip %APPVEYOR_BUILD_FOLDER%\build -tzip
+  - 7z a c:\projects\cryptominisat\cryptominisat5.zip %APPVEYOR_BUILD_FOLDER%\build\Release\cryptominisat5.exe -tzip
   - cd c:\projects\cryptominisat
 
-
-build:
-  project: build\INSTALL.vcxproj
-  parallel: true
-  verbosity: minimal
-
-
 artifacts:
-  - path: cryptominisat.zip
-    name: cryptominisat.zip
+  - path: cryptominisat5.zip
+    name: cryptominisat5.zip
 
 deploy_script:
   #- cd c:\projects\cryptominisat

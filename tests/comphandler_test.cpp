@@ -111,7 +111,8 @@ TEST_F(comp_handle, check_solution_zero_lev_assign)
     EXPECT_EQ(chandle->get_num_components_solved(), 2u);
     EXPECT_EQ(chandle->get_num_vars_removed(), 0u);
     vector<lbool> solution(s->nVarsOuter(), l_Undef);
-    chandle->addSavedState(solution);
+    vector<Lit> decisions;
+    chandle->addSavedState(solution, decisions);
     check_zero_assigned_lits_contains(s, "1");
     check_zero_assigned_lits_contains(s, "1");
     check_zero_assigned_lits_contains(s, "11");
@@ -139,7 +140,8 @@ TEST_F(comp_handle, check_solution_non_zero_lev_assign)
     EXPECT_EQ(chandle->get_num_components_solved(), 3u);
     EXPECT_EQ(chandle->get_num_vars_removed(), 7u);
     vector<lbool> solution(s->nVarsOuter(), l_Undef);
-    chandle->addSavedState(solution);
+    vector<Lit> decisions;
+    chandle->addSavedState(solution, decisions);
     EXPECT_TRUE(clause_satisfied("1, 2", solution));
     EXPECT_TRUE(clause_satisfied("-1, 2", solution));
     EXPECT_TRUE(clause_satisfied("11, 12", solution));

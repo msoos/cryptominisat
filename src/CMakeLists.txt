@@ -313,7 +313,7 @@ if (NOT ONLY_SIMPLE)
         INSTALL_RPATH_USE_LINK_PATH TRUE)
     target_link_libraries(cryptominisat5
         ${cryptoms_exec_link_libs}
-        ${Boost_LIBRARIES}
+        "${Boost_LIBRARIES}"
     )
     install(TARGETS cryptominisat5
         EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}

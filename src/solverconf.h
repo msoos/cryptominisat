@@ -381,6 +381,7 @@ class DLL_PUBLIC SolverConf
         unsigned reconfigure_at;
         unsigned preprocess;
         int      simulate_drat;
+        int      need_decisions_reaching;
         std::string simplified_cnf;
         std::string solution_file;
         std::string saved_state_file;

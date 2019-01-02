@@ -145,8 +145,8 @@ install:
 
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then curl --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py -o get-pip.py; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then sudo python get-pip.py; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo -H pip install --upgrade pip; fi
-  - pip install --user lit
+  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" != "NORMAL_PYTHON2") ]]; then sudo -H pip3 install --upgrade pip; pip3 install --user lit; fi
+  - if [[ ("$TRAVIS_OS_NAME" == "linux") && ("$CMS_CONFIG" == "NORMAL_PYTHON2") ]]; then sudo -H pip install --upgrade pip; pip install --user lit; fi
   - echo $PATH
   - export PATH=$PATH:/Users/travis/Library/Python/2.7/bin
   - lit --version

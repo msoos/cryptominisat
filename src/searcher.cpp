@@ -2484,7 +2484,13 @@ void Searcher::finish_up_solve(const lbool status)
         check_order_heap_sanity();
         #endif
         model = assigns;
-        full_model = assigns;
+
+        if (conf.need_decisions_reaching) {
+            for(size_t at: trail_lim) {
+                decisions_reaching_model.push_back(trail[at]);
+            }
+        }
+
         if (conf.greedy_undef) {
             assert(false && "Greedy undef is broken");
             vector<uint32_t> trail_lim_vars;
@@ -3376,7 +3382,6 @@ void Searcher::save_state(SimpleOutFile& f, const lbool status) const
     f.put_vector(var_act_vsids);
     f.put_vector(var_act_maple);
     f.put_vector(model);
-    f.put_vector(full_model);
     f.put_vector(conflict);
 
     //Clauses
@@ -3405,7 +3410,6 @@ void Searcher::load_state(SimpleInFile& f, const lbool status)
         }
     }
     f.get_vector(model);
-    f.get_vector(full_model);
     f.get_vector(conflict);
 
     //Clauses
