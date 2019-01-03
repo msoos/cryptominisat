@@ -235,6 +235,9 @@ class DLL_PUBLIC SolverConf
         int       otfHyperbin;
         int       doOTFSubsume;
         int       doOTFSubsumeOnlyAtOrBelowGlue;
+        int       do_decision_based_cl;
+        uint32_t  decision_based_cl_max_levels;
+        uint32_t  decision_based_cl_min_learned_size;
 
         //SQL
         bool      dump_individual_restarts_and_clauses;

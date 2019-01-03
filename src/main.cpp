@@ -554,6 +554,12 @@ void Main::add_supported_options()
         , "Always strong-minimise clause")
     ("otfsubsume", po::value(&conf.doOTFSubsume)->default_value(conf.doOTFSubsume)
         , "Perform on-the-fly subsumption")
+    ("decbased", po::value(&conf.do_decision_based_cl)->default_value(conf.do_decision_based_cl)
+        , "Create decision-based conflict clauses when the UIP clause is too large")
+    ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
+        , "Create decision-based conflict if the maximum level is below or equal to this")
+    ("decbasemaxlev", po::value(&conf.decision_based_cl_min_learned_size)->default_value(conf.decision_based_cl_min_learned_size)
+        , "Create decision-based conflict if the learnt clause is larger than this")
     ;
 
     po::options_description propOptions("Propagation options");

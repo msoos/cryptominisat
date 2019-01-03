@@ -102,6 +102,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
+        , do_decision_based_cl(1)
+        , decision_based_cl_max_levels(9)
+        , decision_based_cl_min_learned_size(50)
 
         //SQL
         , dump_individual_restarts_and_clauses(true)
