@@ -216,7 +216,7 @@ class DLL_PUBLIC SolverConf
         unsigned max_num_lits_more_more_red_min;
 
         //Verbosity
-        int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
+        int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2)
         int  doPrintGateDot; ///< Print DOT file of gates
         int  print_full_restart_stat;
         int  print_all_restarts;
