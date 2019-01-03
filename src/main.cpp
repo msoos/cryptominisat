@@ -558,7 +558,7 @@ void Main::add_supported_options()
         , "Create decision-based conflict clauses when the UIP clause is too large")
     ("decbasemaxlev", po::value(&conf.decision_based_cl_max_levels)->default_value(conf.decision_based_cl_max_levels)
         , "Create decision-based conflict if the maximum level is below or equal to this")
-    ("decbasemaxlev", po::value(&conf.decision_based_cl_min_learned_size)->default_value(conf.decision_based_cl_min_learned_size)
+    ("decbaseminsz", po::value(&conf.decision_based_cl_min_learned_size)->default_value(conf.decision_based_cl_min_learned_size)
         , "Create decision-based conflict if the learnt clause is larger than this")
     ;
 
