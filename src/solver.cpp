@@ -2929,7 +2929,7 @@ void Solver::free_unused_watches()
         }
     }
 
-    if ((sumConflicts - last_full_watch_consolidate) > 2ULL*1000ULL*1000ULL) {
+    if ((sumConflicts - last_full_watch_consolidate) > conf.full_watch_consolidate_every_n_confl) {
         last_full_watch_consolidate = sumConflicts;
         consolidate_watches(true);
     } else {

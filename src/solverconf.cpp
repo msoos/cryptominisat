@@ -234,6 +234,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Memory savings
         , doRenumberVars   (true)
         , doSaveMem        (true)
+        , full_watch_consolidate_every_n_confl (2ULL*1000ULL*1000ULL)
 
         //Component finding
         , doCompHandler    (false)
