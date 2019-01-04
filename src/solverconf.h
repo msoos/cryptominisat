@@ -235,6 +235,8 @@ class DLL_PUBLIC SolverConf
         int       otfHyperbin;
         int       doOTFSubsume;
         int       doOTFSubsumeOnlyAtOrBelowGlue;
+
+        //decision-based conflict clause generation
         int       do_decision_based_cl;
         uint32_t  decision_based_cl_max_levels;
         uint32_t  decision_based_cl_min_learned_size;
