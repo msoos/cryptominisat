@@ -102,6 +102,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , otfHyperbin      (true)
         , doOTFSubsume     (false)
         , doOTFSubsumeOnlyAtOrBelowGlue(5)
+
+        //decision-based clause generation. These values have been validated
+        //see 8099966.wlm01
         , do_decision_based_cl(1)
         , decision_based_cl_max_levels(9)
         , decision_based_cl_min_learned_size(50)
