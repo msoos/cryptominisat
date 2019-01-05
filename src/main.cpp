@@ -405,7 +405,7 @@ void Main::add_supported_options()
     po::options_description iterativeOptions("Iterative solve options");
     iterativeOptions.add_options()
     ("maxsol", po::value(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
-        , "Search for given amount of solutions")
+        , "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea")
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
