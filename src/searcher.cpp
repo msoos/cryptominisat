@@ -1911,8 +1911,9 @@ bool Searcher::handle_conflict(const PropBy confl)
     //Add decision-based clause in case it's short
     decision_clause.clear();
     if (!update_bogoprops
-        && learnt_clause.size() > 50 //TODO MAGIC parameter
-        && decisionLevel() <= 9
+        && conf.do_decision_based_cl
+        && learnt_clause.size() > conf.decision_based_cl_min_learned_size
+        && decisionLevel() <= conf.decision_based_cl_max_levels
         && decisionLevel() >= 2
     ) {
         for(int i = (int)trail_lim.size()-1; i >= 0; i--) {

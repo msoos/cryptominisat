@@ -213,7 +213,7 @@ class DLL_PUBLIC SolverConf
         unsigned max_num_lits_more_more_red_min;
 
         //Verbosity
-        int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2) preferentiality is turned off (i.e. picked randomly between [0, all])
+        int  verbosity;  ///<Verbosity level. 0=silent, 1=some progress report, 2=lots of report, 3 = all report       (default 2)
         int  doPrintGateDot; ///< Print DOT file of gates
         int  print_full_restart_stat;
         int  print_all_restarts;
@@ -232,6 +232,11 @@ class DLL_PUBLIC SolverConf
         int       otfHyperbin;
         int       doOTFSubsume;
         int       doOTFSubsumeOnlyAtOrBelowGlue;
+
+        //decision-based conflict clause generation
+        int       do_decision_based_cl;
+        uint32_t  decision_based_cl_max_levels;
+        uint32_t  decision_based_cl_min_learned_size;
 
         //SQL
         bool      dump_individual_restarts_and_clauses;
@@ -336,6 +341,7 @@ class DLL_PUBLIC SolverConf
         //Memory savings
         int       doRenumberVars;
         int       doSaveMem;
+        uint64_t  full_watch_consolidate_every_n_confl;
 
         //Component handling
         int       doCompHandler;
