@@ -192,6 +192,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl,"
             "sub-cls-with-bin,"
         )
+
+        //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
