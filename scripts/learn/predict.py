@@ -69,7 +69,7 @@ class Learner:
         self.fname = fname
 
     def output_to_dot(self, clf, features):
-        fname = options.dot
+        fname = options.dot + "-" + self.funcname
         sklearn.tree.export_graphviz(clf, out_file=fname,
                                      feature_names=features,
                                      class_names=clf.classes_,
