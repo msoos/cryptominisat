@@ -674,8 +674,17 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+        #elif self.conf == 5:
+            #self.case_stmt_10k = """
+            #CASE WHEN
 
-        if True:  # self.conf not in [3, 4]:
+            #goodcl.last_confl_used > rdb0.conflicts
+            #THEN "OK"
+            #ELSE "BAD"
+            #END AS `x.class`
+            #"""
+
+        if self.conf not in []:
             self.case_stmt_100k = """
             CASE WHEN
 
@@ -691,6 +700,15 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+        #elif self.conf == 5:
+            #self.case_stmt_100k = """
+            #CASE WHEN
+
+            #goodcl.last_confl_used > rdb0.conflicts+100000
+            #THEN "OK"
+            #ELSE "BAD"
+            #END AS `x.class`
+            #"""
 
         self.q_count = """
         SELECT count(*) as count,
