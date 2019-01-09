@@ -538,7 +538,7 @@ class QueryCls (QueryHelper):
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used-rdb0.conflicts < 10000
+                    AND goodcl.first_confl_used < rdb0.conflicts+10000
                 )
             )
             THEN "OK"
@@ -572,7 +572,7 @@ class QueryCls (QueryHelper):
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used-rdb0.conflicts < 10000
+                    AND goodcl.first_confl_used < rdb0.conflicts+10000
                 )
 
                 -- let the last confl be reached if close by
@@ -636,7 +636,7 @@ class QueryCls (QueryHelper):
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used-rdb0.conflicts < 20000
+                    AND goodcl.first_confl_used < rdb0.conflicts+20000
                 )
 
                 -- let the last confl be reached if close by
@@ -663,7 +663,7 @@ class QueryCls (QueryHelper):
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used-rdb0.conflicts < 10000
+                    AND goodcl.first_confl_used < rdb0.conflicts+10000
                 )
 
                 -- let the last confl be reached if close by
