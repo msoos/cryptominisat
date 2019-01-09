@@ -531,11 +531,11 @@ static bool {funcname}(
             best_features.append('cl.num_overlap_literals')
             best_features.append('cl.num_overlap_literals_rel')
 
-            best_features.append('rdb0.sum_uip1_used')
-            best_features.append('rdb0.sum_delta_confl_uip1_used')
-
-            best_features.append('rdb0.avg_confl')
-            best_features.append('rdb0.used_per_confl')
+            # these don't allow for "fresh" claues to be correctly dealt with
+            # best_features.append('rdb0.sum_uip1_used')
+            # best_features.append('rdb0.sum_delta_confl_uip1_used')
+            # best_features.append('rdb0.avg_confl')
+            # best_features.append('rdb0.used_per_confl')
 
             best_features.append('cl.antecedents_glue_long_reds_var')
             best_features.append('cl.num_total_lits_antecedents')
