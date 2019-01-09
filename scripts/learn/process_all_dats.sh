@@ -77,17 +77,17 @@ rm -f out_pred_long_*
 # scaler conf
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
-    ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
+    ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
+    ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
     wait_threads
     check_fails
 done
 
 
-# no scaler conf 0 (using conf 0)
+# no scaler conf 1 (using conf 1)
 CONF=5
-./predict.py "comb-long-conf-0.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
-./predict.py "comb-short-conf-0.dat" --name short  --basedir "../src/predict/" --final --forest --split 0.02 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
+./predict.py "comb-long-conf-0.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
+./predict.py "comb-short-conf-0.dat" --name short  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
 wait_threads
 check_fails
 
