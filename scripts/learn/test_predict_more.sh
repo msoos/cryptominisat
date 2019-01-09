@@ -87,10 +87,11 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs 3
+numconfs=6
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs ${numconfs}
 
 rm ../../src/predict/*.h
-for CONF in {0..4}
+for (( CONF = 0; CONF < numconfs; CONF++))
 do
     ../predict.py "${FNAMEOUT}-min.db-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
     ../predict.py "${FNAMEOUT}-min.db-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
@@ -101,11 +102,12 @@ done
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --pred 0
-../cryptominisat5 "../$FNAME" --pred 1
-../cryptominisat5 "../$FNAME" --pred 2
-../cryptominisat5 "../$FNAME" --pred 3
-../cryptominisat5 "../$FNAME" --pred 4
+for (( CONF = 0; CONF < numconfs; CONF++))
+do
+    ../cryptominisat5 "../$FNAME" --pred $CONF | tee cms-final-run.out-${CONF}
 )
 
-#--bva 0 --updateglueonanalysis 0 --otfsubsume 0
+exit
+
+./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
+./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
