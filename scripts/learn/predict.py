@@ -380,6 +380,9 @@ static bool {funcname}(
                 plt.xlim([-1, myrange])
 
         if options.dot is not None and final:
+            if not options.final_is_tree:
+                print("ERROR: You cannot use the DOT function on non-trees")
+                exit(-1)
             self.output_to_dot(clf, features)
 
         if options.basedir:
