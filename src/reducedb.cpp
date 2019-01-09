@@ -299,10 +299,10 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t kept = 0;
     uint32_t kept_locked = 0;
     double myTime = cpuTime();
-    uint32_t largest_dump_no = 0;
+    uint32_t tot_dump_no = 0;
     uint32_t moved_w0 = 0;
     uint32_t marked_long_keep = 0;
-    uint32_t kept_due_to_lock = 0;
+    uint32_t kept_due_to_long_lock = 0;
 
     #ifdef FINAL_PREDICTOR_TOTAL
     assert(solver->conf.glue_put_lev0_if_below_or_eq > 0 || solver->longRedCls[0].size() == 0);
@@ -368,7 +368,7 @@ void ReduceDB::handle_lev1_final_predictor()
                 delayed_clause_free.push_back(offset);
             } else {
                 if (cl->stats.locked_long > 0) {
-                    kept_due_to_lock++;
+                    kept_due_to_long_lock++;
                     cl->stats.locked_long--;
                 } else {
                     if (cl->stats.dump_number > 0 && long_pred_keep(
@@ -388,8 +388,7 @@ void ReduceDB::handle_lev1_final_predictor()
                     }
                 }
                 solver->longRedCls[1][j++] = offset;
-                if (cl->stats.dump_number > largest_dump_no)
-                    largest_dump_no = cl->stats.dump_number;
+                tot_dump_no += cl->stats.dump_number;
                 cl->stats.dump_number++;
                 cl->stats.reset_rdb_stats();
             }
@@ -409,7 +408,7 @@ void ReduceDB::handle_lev1_final_predictor()
         cout << "c [DBCL pred]"
         << " del: " << deleted
         << " kept: " << kept
-        << " kept-long: " << kept_due_to_lock
+        << " kept-long: " << kept_due_to_long_lock
         << endl;
 
         cout << "c [DBCL pred]"
@@ -418,7 +417,8 @@ void ReduceDB::handle_lev1_final_predictor()
         << " conf: " << solver->conf.pred_conf
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
-        << " maxdump_no:" << largest_dump_no
+        << " avg dump_no:" << std::fixed << std::setprecision(2)
+        << ratio_for_stat(tot_dump_no, solver->longRedCls[1].size())
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
