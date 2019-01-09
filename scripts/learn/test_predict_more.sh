@@ -109,6 +109,14 @@ do
 
 exit
 
-rm ../../src/predict/*.h
+rm ../src/predict/*.h
 ./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
 ./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
+./build_final_predictor.sh
+
+exit
+
+rm ../src/predict/*.h
+./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --forest --split 0.01 --clusters 9 --conf 1 --clustmin 0.03
+./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --forest --split 0.01 --clusters 9 --conf 1 --clustmin 0.03
+./build_final_predictor.sh
