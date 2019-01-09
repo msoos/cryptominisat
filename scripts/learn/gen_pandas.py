@@ -839,13 +839,19 @@ class QueryCls (QueryHelper):
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
-            distrib = 0.4  # prefer OK by a factor of this. If < 0.5 then preferring BAD
+
+            # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            # 0.7 might also work?
+            prefer_ok_ok = 0.4
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.2
-            distrib = 0.1  # prefer OK by a factor of this. If < 0.5 then preferring BAD
 
-        print("Distrib OK vs BAD set to %s " % distrib)
+            # prefer OK by a factor of this. If < 0.5 then preferring BAD
+            # 0.4 might also work
+            prefer_ok_ok = 0.1
+
+        print("Distrib OK vs BAD set to %s " % prefer_ok_ok)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
         t = time.time()
@@ -891,46 +897,46 @@ class QueryCls (QueryHelper):
             print("        -- this_fixed is now ", this_fixed)
 
         # checking OK-OK
-        lim = this_fixed * distrib
+        lim = this_fixed * prefer_ok_ok
         if lim > num_lines_ok_ok:
             print("WARNING -- Your fixed num datapoints is too high for OK-OK")
             print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_ok))
-            this_fixed = num_lines_ok_ok/(distrib)
+            this_fixed = num_lines_ok_ok/(prefer_ok_ok)
             print("        -- this_fixed is now ", this_fixed)
 
         # checking OK-BAD
-        lim = this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib)
+        lim = this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok)
         if lim > num_lines_ok_bad:
             print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
             print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_bad))
-            this_fixed = num_lines_ok_bad/(num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
+            this_fixed = num_lines_ok_bad/(num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
             print("        -- this_fixed is now ", this_fixed)
 
         # checking BAD-BAD
-        lim = this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib)
+        lim = this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok)
         if lim > num_lines_bad_bad:
             print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
             print("        -- Wanted to create %d but only had %d" % (lim, num_lines_bad_bad))
-            this_fixed = num_lines_bad_bad/(num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
+            this_fixed = num_lines_bad_bad/(num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
             print("        -- this_fixed is now ", this_fixed)
 
         # OK-OK
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
-        self.myformat["limit"] = int(this_fixed * distrib)
+        self.myformat["limit"] = int(this_fixed * prefer_ok_ok)
         q += self.common_limits
         print("limit for OK-OK:", self.myformat["limit"])
         df_ok_ok = self.one_query("OK-OK", q)
 
         # OK-BAD
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
-        self.myformat["limit"] = int(this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-distrib))
+        self.myformat["limit"] = int(this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
         q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
         df_ok_bad = self.one_query("OK-BAD", q)
 
         # BAD-BAD
         q = self.q_bad_select + self.q_bad
-        self.myformat["limit"] = int(this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-distrib))
+        self.myformat["limit"] = int(this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
         q += self.common_limits
         print("limit for bad:", self.myformat["limit"])
         df_bad_bad = self.one_query("BAD-BAD", q)
