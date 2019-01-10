@@ -1153,9 +1153,17 @@ def one_database(dbfname):
     # with QueryVar(dbfname) as q:
     #    q.vardata()
 
+    match = re.match(r"^([0-9]*)-([0-9]*)$", options.confs)
+    if not match:
+        print("ERROR: we cannot parse your config options: '%s'")
+        exit(-1)
+
+    conf_from = int(match.group(1))
+    conf_to = int(match.group(2))+1
+    print("Running configs:", range(conf_from, conf_to))
     print("Using sqlite3db file %s" % dbfname)
     for long_or_short in ["long", "short"]:
-        for conf in range(options.confs):
+        for conf in range(conf_from, conf_to):
             print("------> Doing config {conf}".format(conf=conf))
             with QueryCls(dbfname, conf) as q:
                 ok, df = q.compute_one_ok_bad_bad_data(long_or_short)
@@ -1212,8 +1220,8 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    parser.add_option("--confs", default=5, type=int,
-                      dest="confs", help="Number of configs to generate. Default: %default")
+    parser.add_option("--confs", default="0-5", type=str,
+                      dest="confs", help="Configs to generate. Default: %default")
 
     (options, args) = parser.parse_args()
 
