@@ -528,6 +528,7 @@ class QueryCls (QueryHelper):
         limit {limit}
         """
 
+        # TODO magic queries
         if self.conf not in [1, 2, 3, 4]:
             self.case_stmt_10k = """
             CASE WHEN
@@ -711,6 +712,14 @@ class QueryCls (QueryHelper):
             #END AS `x.class`
             #"""
 
+        self.dump_no_is_zero = """
+        and rdb0.dump_no = 0
+        """
+
+        self.dump_no_larger_than_zero = """
+        and rdb0.dump_no > 0
+        """
+
         self.q_count = """
         SELECT count(*) as count,
         {case_stmt}
@@ -786,11 +795,20 @@ class QueryCls (QueryHelper):
             "goodcls": self.goodcls
             }
 
-    def get_ok(self, subfilter):
+    def add_dump_no_filter(self, q, dump_no_is_zero):
+        if dump_no_is_zero:
+            q += self.dump_no_is_zero
+        else:
+            q += self.dump_no_larger_than_zero
+
+        return q
+
+    def get_ok(self, subfilter, dump_no_is_zero):
         t = time.time()
 
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
+        q = self.add_dump_no_filter(q, dump_no_is_zero)
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:\n %s" % q)
@@ -800,9 +818,10 @@ class QueryCls (QueryHelper):
             subfilter, (num_lines/1000.0), time.time()-t))
         return num_lines
 
-    def get_bad(self):
+    def get_bad(self, dump_no_is_zero):
         t = time.time()
         q = self.q_count + self.q_bad
+        q = self.add_dump_no_filter(q, dump_no_is_zero)
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:\n %s" % q)
@@ -825,18 +844,31 @@ class QueryCls (QueryHelper):
 
     def compute_one_ok_bad_bad_data(self, long_or_short):
         df = None
-        ok, df = self.get_ok_bad_bad_data(long_or_short)
+        print("**Running dump_no zero")
+        ok, df_dump_no_0, this_fixed = self.get_ok_bad_bad_data(
+            long_or_short, dump_no_is_zero=True)
+        if not ok:
+            return False, None
+        print("**Running dump_no non-zero")
+        # TODO magic number -- multiplier for non-zero dump_no
+        ok, df_dump_no_not0, _ = self.get_ok_bad_bad_data(
+            long_or_short, dump_no_is_zero=False,
+            this_fixed=int(this_fixed*0.3))
         if not ok:
             return False, None
 
         if options.verbose:
             print("Printing head:")
-            print(df.head())
+            print(df_dump_no_0.head())
+            print(df_dump_no_not0.head())
             print("Print head done.")
 
-        return True, df
+        return True, pd.concat([df_dump_no_0, df_dump_no_not0])
 
-    def get_ok_bad_bad_data(self, long_or_short):
+    def get_ok_bad_bad_data(self, long_or_short, dump_no_is_zero, this_fixed=None):
+        # TODO magic numbers
+        # preferece OK-BAD
+        # SHORT vs LONG data availability guess
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k
             fixed_mult = 1.0
@@ -860,9 +892,9 @@ class QueryCls (QueryHelper):
         num_lines_ok = 0
         num_lines_bad = 0
 
-        num_lines_ok_ok = self.get_ok("OK")
-        num_lines_ok_bad = self.get_ok("BAD")
-        num_lines_bad_bad = self.get_bad()
+        num_lines_ok_ok = self.get_ok("OK", dump_no_is_zero)
+        num_lines_ok_bad = self.get_ok("BAD", dump_no_is_zero)
+        num_lines_bad_bad = self.get_bad(dump_no_is_zero)
 
         num_lines_bad = num_lines_ok_bad + num_lines_bad_bad
         num_lines_ok = num_lines_ok_ok
@@ -888,8 +920,9 @@ class QueryCls (QueryHelper):
             print(" --> Something went wrong")
             return False, None
 
-        this_fixed = options.fixed
-        this_fixed *= fixed_mult
+        if this_fixed == None:
+            this_fixed = options.fixed
+            this_fixed *= fixed_mult
         print("this_fixed is set to:", this_fixed)
         if this_fixed > total_lines:
             print("WARNING -- Your fixed num datapoints is too high:", this_fixed)
@@ -923,6 +956,7 @@ class QueryCls (QueryHelper):
 
         # OK-OK
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
+        q = self.add_dump_no_filter(q, dump_no_is_zero)
         self.myformat["limit"] = int(this_fixed * prefer_ok_ok)
         q += self.common_limits
         print("limit for OK-OK:", self.myformat["limit"])
@@ -930,6 +964,7 @@ class QueryCls (QueryHelper):
 
         # OK-BAD
         q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
+        q = self.add_dump_no_filter(q, dump_no_is_zero)
         self.myformat["limit"] = int(this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
         q += self.common_limits
         print("limit for OK-BAD:", self.myformat["limit"])
@@ -937,6 +972,7 @@ class QueryCls (QueryHelper):
 
         # BAD-BAD
         q = self.q_bad_select + self.q_bad
+        q = self.add_dump_no_filter(q, dump_no_is_zero)
         self.myformat["limit"] = int(this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
         q += self.common_limits
         print("limit for bad:", self.myformat["limit"])
@@ -944,7 +980,7 @@ class QueryCls (QueryHelper):
 
         # finish up
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad])
+        return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad]), this_fixed
 
 class QueryVar (QueryHelper):
     def __init__(self, dbfname):
