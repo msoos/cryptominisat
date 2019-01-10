@@ -87,8 +87,8 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-numconfs=6
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs ${numconfs}
+numconfs=5
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs "0-${numconfs}"
 
 rm ../../src/predict/*.h
 for (( CONF = 0; CONF < numconfs; CONF++))
