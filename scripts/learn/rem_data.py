@@ -82,6 +82,7 @@ class QueryDatRem(QueryHelper):
 
         print("Recreated indexes needed")
 
+    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
     def fill_used_cl_ids_table_cheat(self):
         t = time.time()
         val = int(options.limit)
