@@ -361,6 +361,7 @@ class QueryCls (QueryHelper):
         -- , rdb0.`runtime` as `rdb0.runtime`
 
         -- , rdb0.`clauseID` as `rdb0.clauseID`
+        , rdb0.`dump_no` as `rdb0.dump_no`
         , rdb0.`conflicts_made` as `rdb0.conflicts_made`
         , rdb0.`sum_of_branch_depth_conflict` as `rdb0.sum_of_branch_depth_conflict`
         , rdb0.`propagations_made` as `rdb0.propagations_made`
