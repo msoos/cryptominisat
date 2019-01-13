@@ -300,6 +300,8 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t kept_locked = 0;
     double myTime = cpuTime();
     uint32_t tot_dump_no = 0;
+    uint32_t dump_no_zero = 0;
+    uint32_t dump_no_nonz = 0;
     uint32_t moved_w0 = 0;
     uint32_t marked_long_keep = 0;
     uint32_t kept_due_to_long_lock = 0;
@@ -389,6 +391,8 @@ void ReduceDB::handle_lev1_final_predictor()
                 }
                 solver->longRedCls[1][j++] = offset;
                 tot_dump_no += cl->stats.dump_number;
+                dump_no_zero += (cl->stats.dump_number == 0);
+                dump_no_nonz += (cl->stats.dump_number != 0);
                 cl->stats.dump_number++;
                 cl->stats.reset_rdb_stats();
             }
@@ -417,8 +421,10 @@ void ReduceDB::handle_lev1_final_predictor()
         << " conf: " << solver->conf.pred_conf
         << " locked: " << kept_locked
         << " marked-long: " << marked_long_keep
-        << " avg dump_no:" << std::fixed << std::setprecision(2)
+        << " avg dump_no: " << std::fixed << std::setprecision(2)
         << ratio_for_stat(tot_dump_no, solver->longRedCls[1].size())
+        << " dump_no_zero: " << dump_no_zero
+        << " dump_no_nonz: " << dump_no_nonz
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
