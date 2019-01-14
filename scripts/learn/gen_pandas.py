@@ -796,6 +796,9 @@ class QueryCls (QueryHelper):
             }
 
     def add_dump_no_filter(self, q, dump_no_is_zero):
+        if dump_no_is_zero is None:
+            return q
+
         if dump_no_is_zero:
             q += self.dump_no_is_zero
         else:
@@ -844,28 +847,38 @@ class QueryCls (QueryHelper):
 
     def compute_one_ok_bad_bad_data(self, long_or_short):
         df = None
-        print("**Running dump_no zero")
-        ok, df_dump_no_0, this_fixed = self.get_ok_bad_bad_data(
-            long_or_short, dump_no_is_zero=True)
-        if not ok:
-            return False, None
-        print("**Running dump_no non-zero")
+
         # TODO magic number -- multiplier for non-zero dump_no
-        ok, df_dump_no_not0, _ = self.get_ok_bad_bad_data(
-            long_or_short, dump_no_is_zero=False,
-            this_fixed=int(this_fixed*0.3))
-        if not ok:
-            return False, None
+        if False:
+            print("**Running dump_no zero")
+            ok, df_dump_no_0, this_fixed = self.get_ok_bad_bad_data(
+                long_or_short, dump_no_is_zero=True)
+            if not ok:
+                return False, None
+            print("**Running dump_no non-zero")
+            ok, df_dump_no_not0, _ = self.get_ok_bad_bad_data(
+                long_or_short, dump_no_is_zero=False,
+                this_fixed=int(this_fixed*0.3))
+            if not ok:
+                return False, None
+
+            df = pd.concat([df_dump_no_0, df_dump_no_not0])
+        else:
+            ok, df, this_fixed = self.get_ok_bad_bad_data(
+                long_or_short, dump_no_is_zero=None)
+            if not ok:
+                return False, None
 
         if options.verbose:
             print("Printing head:")
-            print(df_dump_no_0.head())
-            print(df_dump_no_not0.head())
+            print(df.head())
             print("Print head done.")
 
-        return True, pd.concat([df_dump_no_0, df_dump_no_not0])
+        return True, df
 
-    def get_ok_bad_bad_data(self, long_or_short, dump_no_is_zero, this_fixed=None):
+
+    def get_ok_bad_bad_data(self, long_or_short, dump_no_is_zero=None,
+                            this_fixed=None):
         # TODO magic numbers
         # preferece OK-BAD
         # SHORT vs LONG data availability guess
