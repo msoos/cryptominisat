@@ -161,6 +161,7 @@ struct ClauseStats
     uint16_t    locked_long = 0;
     #endif
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    bool marked_for_random_deletion = false;
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced

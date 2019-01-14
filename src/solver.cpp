@@ -1836,6 +1836,7 @@ bool Solver::execute_inprocess_strategy(
         ) {
             return ok;
         }
+        consolidate_watches(true);
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
         assert(okay());
@@ -2029,6 +2030,7 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     if (startup) {
+        consolidate_watches(true);
         execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
     } else {
         execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);

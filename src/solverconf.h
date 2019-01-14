@@ -304,6 +304,7 @@ class DLL_PUBLIC SolverConf
         int pred_conf;
         int pred_run_short;
         int pred_run_long;
+        double prob_random_delete;
 
         //Var-replacement
         int doFindAndReplaceEqLits;

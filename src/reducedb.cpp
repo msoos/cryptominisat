@@ -526,3 +526,51 @@ void ReduceDB::remove_cl_from_lev2() {
     }
     solver->longRedCls[2].resize(j);
 }
+
+#ifdef STATS_NEEDED
+void ReduceDB::delete_randomly_marked_clauses() {
+    uint64_t num_removed_randomly = 0;
+    assert(delayed_clause_free.empty());
+    for (auto& longRedCls: solver->longRedCls) {
+        size_t i, j;
+        for (i = j = 0
+            ; i < longRedCls.size()
+            ; i++
+        ) {
+            ClOffset offset = longRedCls[i];
+            Clause* cl = solver->cl_alloc.ptr(offset);
+            assert(cl->size() > 2);
+
+            if (solver->clause_locked(*cl, offset)
+                || !cl->stats.marked_for_random_deletion
+            ) {
+                longRedCls[j++] = offset;
+                continue;
+            }
+
+            //Stats Update
+            num_removed_randomly++;
+            solver->watches.smudge((*cl)[0]);
+            solver->watches.smudge((*cl)[1]);
+            solver->litStats.redLits -= cl->size();
+
+            *solver->drat << del << *cl << fin;
+            cl->setRemoved();
+            delayed_clause_free.push_back(offset);
+        }
+        longRedCls.resize(j);
+    }
+
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    for(ClOffset offset: delayed_clause_free) {
+        solver->cl_alloc.clauseFree(offset);
+    }
+    delayed_clause_free.clear();
+
+    if (solver->conf.verbosity) {
+        cout << "c [DBCL rnd del]"
+        << " del: " << num_removed_randomly
+        << endl;
+    }
+}
+#endif

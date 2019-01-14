@@ -1847,6 +1847,11 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     }
 
     #ifdef STATS_NEEDED
+    double rand = mtrand.randDblExc();
+    if (cl && conf.prob_random_delete > rand && !to_dump) {
+        cl->stats.marked_for_random_deletion = true;
+    }
+
     if (solver->sqlStats
         && drat
         && conf.dump_individual_restarts_and_clauses
@@ -2144,6 +2149,9 @@ void Searcher::reduce_db_if_needed()
         if (solver->sqlStats) {
             solver->reduceDB->dump_sql_cl_data(restart_type_to_short_string(params.rest_type));
         }
+        #ifdef STATS_NEEDED
+        solver->reduceDB->delete_randomly_marked_clauses();
+        #endif
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }

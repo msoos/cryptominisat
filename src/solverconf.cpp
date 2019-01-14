@@ -180,6 +180,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , pred_conf(0)
         , pred_run_short(1)
         , pred_run_long(1)
+        , prob_random_delete(0.0)
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
