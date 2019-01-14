@@ -483,13 +483,10 @@ bool OccSimplifier::complete_clean_clause(Clause& cl)
 
 uint64_t OccSimplifier::calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const
 {
-     uint64_t memUsage = 0;
-    for (vector<ClOffset>::const_iterator
-        it = toAdd.begin(), end = toAdd.end()
-        ; it !=  end
-        ; ++it
-    ) {
-        Clause* cl = solver->cl_alloc.ptr(*it);
+    uint64_t memUsage = 0;
+    for (const ClOffset offs: toAdd) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+
         //*2 because of the overhead of allocation
         memUsage += cl->size()*sizeof(Watched)*2;
     }
