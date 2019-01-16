@@ -289,8 +289,11 @@ public:
         //assert(ps.size() > 2);
 
         stats.last_touched = _introduced_at_conflict;
-        #ifdef STATS_NEEDED
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
         stats.introduced_at_conflict = _introduced_at_conflict;
+        #endif
+
+        #ifdef STATS_NEEDED
         stats.ID = _ID;
         assert(_ID >= 0);
         #endif
