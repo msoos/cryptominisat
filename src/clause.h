@@ -160,18 +160,22 @@ struct ClauseStats
     //for locking in for long
     uint16_t    locked_long = 0;
     #endif
-    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+
+    #if defined(STATS_NEEDED)
     uint32_t keep_for_n_rounds = std::numeric_limits<uint32_t>::max();
-    uint32_t dump_number = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
+    #endif
+
+    #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+    uint32_t dump_number = std::numeric_limits<uint32_t>::max();
 
     //for average and sum stats
     uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
     uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
 
     //below resets
-    uint64_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
+    uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
     #endif
 
     #ifdef STATS_NEEDED
@@ -209,10 +213,10 @@ struct ClauseStats
         #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
         ret.introduced_at_conflict = std::min(first.introduced_at_conflict, second.introduced_at_conflict);
         ret.used_for_uip_creation = first.used_for_uip_creation + second.used_for_uip_creation;
-        ret.ID = 0; //don't track combined clauses
         #endif
 
         #ifdef STATS_NEEDED
+        ret.ID = 0; //don't track combined clauses
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
         ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
         ret.propagations_made = first.propagations_made + second.propagations_made;
