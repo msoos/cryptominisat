@@ -542,8 +542,9 @@ void ReduceDB::delete_randomly_marked_clauses() {
             assert(cl->size() > 2);
 
             if (solver->clause_locked(*cl, offset)
-                || !cl->stats.marked_for_random_deletion
+                || cl->stats.keep_for_n_rounds > 0
             ) {
+                cl->stats.keep_for_n_rounds--;
                 longRedCls[j++] = offset;
                 continue;
             }

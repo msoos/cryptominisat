@@ -1849,7 +1849,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     #ifdef STATS_NEEDED
     double rand = mtrand.randDblExc();
     if (cl && conf.prob_random_delete > rand && !to_dump) {
-        cl->stats.marked_for_random_deletion = true;
+        cl->stats.keep_for_n_rounds = 3;
     }
 
     if (solver->sqlStats

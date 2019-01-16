@@ -320,7 +320,7 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     ("probdel", po::value(&conf.prob_random_delete)->default_value(conf.prob_random_delete)
-        , "Probability for marking a learnt clause for random deletion which will happen within the next round")
+        , "Ratio of randomly marking a learnt clause for deletion in 3 rounds")
     #endif
     //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
     //    , "Greedily unbound variables that are not needed for SAT")
