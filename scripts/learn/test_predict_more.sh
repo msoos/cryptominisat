@@ -105,6 +105,7 @@ cd "$FNAME-dir"
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
     ../cryptominisat5 "../$FNAME" --pred $CONF | tee cms-final-run.out-${CONF}
+done
 )
 
 exit
