@@ -867,7 +867,7 @@ if __name__ == "__main__":
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
-    parser.add_option("--mindump", "-v", default=20, type=float,
+    parser.add_option("--mindump", default=20, type=float,
                       dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # tree options
