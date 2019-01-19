@@ -1169,7 +1169,7 @@ def one_database(dbfname):
 
     match = re.match(r"^([0-9]*)-([0-9]*)$", options.confs)
     if not match:
-        print("ERROR: we cannot parse your config options: '%s'")
+        print("ERROR: we cannot parse your config options: '%s'" % options.confs)
         exit(-1)
 
     conf_from = int(match.group(1))
