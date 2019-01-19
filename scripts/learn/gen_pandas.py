@@ -725,6 +725,7 @@ class QueryCls (QueryHelper):
         {case_stmt}
         """
 
+        # GOOD clauses
         self.q_ok_select = """
         SELECT
         tags.tag as `fname`
