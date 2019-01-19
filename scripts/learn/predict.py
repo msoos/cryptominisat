@@ -288,10 +288,9 @@ static bool {funcname}(
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
         _, df_tmp = sklearn.model_selection.train_test_split(self.df, test_size=options.only_pecr)
-        df = df_tmp.copy()
 
         print("-> Number of features  :", len(features))
-        print("-> Number of datapoints:", df.shape)
+        print("-> Number of datapoints:", df_tmp.shape)
         print("-> Predicting          :", to_predict)
 
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
@@ -748,6 +747,24 @@ public:
 
         self.used_clusters = sorted(self.used_clusters)
 
+    def filter_min_avg_dump_no(self):
+        print("Filtering to minimum average dump_no of {min_avg_dumpno}...".format(
+            min_avg_dumpno=options.min_avg_dumpno))
+        print("Pre-filter number of datapoints:", self.df.shape)
+
+        df = self.df.copy()
+        df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
+        df.fillna(0, inplace=True)
+        # print(df[["fname", "goodcl.num_used"]])
+        files = df[["fname", "rdb0.dump_no"]].groupby("fname").mean()
+        fs = files[files["rdb0.dump_no"] > options.min_avg_dumpno].index.values
+        filenames = list(fs)
+        print("Left with {num} files".format(num=len(filenames)))
+        df = self.df[self.df["fname"].isin(fs)]
+        self.df = df.copy()
+
+        print("Post-filter number of datapoints:", self.df.shape)
+
     def cluster(self):
         features = self.df.columns.values.flatten().tolist()
 
@@ -850,6 +867,8 @@ if __name__ == "__main__":
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--mindump", "-v", default=20, type=float,
+                      dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # tree options
     parser.add_option("--depth", default=None, type=int,
@@ -925,4 +944,5 @@ if __name__ == "__main__":
         df = pickle.load(f)
 
         c = Clustering(df)
+        c.filter_min_avg_dump_no()
         c.cluster()
