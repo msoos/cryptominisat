@@ -34,6 +34,16 @@ function check_error {
     fi
 }
 
+function populate_error {
+    rm -f error
+    touch error
+    for (( CONF = 0; CONF < numconfs; CONF++))
+    do
+        grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "${1}_${CONF}" 2>&1 | tee -a error
+        grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "${2}_${CONF}" 2>&1 | tee -a error
+    done
+}
+
 ###############
 # Combine
 ###############
@@ -55,13 +65,7 @@ do
 done
 
 # populate error
-rm -f error
-touch error
-for (( CONF = 0; CONF < numconfs; CONF++))
-do
-    grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "out_combine_short_${CONF}" 2>&1 | tee -a error
-    grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "out_combine_long_${CONF}" 2>&1 | tee -a error
-done
+populate_error "out_combine_short" "out_combine_long"
 check_error
 
 
@@ -83,21 +87,6 @@ do
     check_fails
 done
 
-
-# no scaler conf 1 (using conf 1)
-CONF=5
-./predict.py "comb-long-conf-0.dat" --name long  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
-./predict.py "comb-short-conf-0.dat" --name short  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
-wait_threads
-check_fails
-
-
 # populate error
-rm -f error
-touch error
-for (( CONF = 0; CONF < numconfs+1; CONF++))
-do
-    grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "out_pred_long_${CONF}" 2>&1 | tee -a error
-    grep -E --color -i -e "assert.*fail" -e "signal" -e "error" -e "kill" -e "terminate" "out_pred_short_${CONF}" 2>&1 | tee -a error
-done
+populate_error "out_pred_long" "out_pred_short"
 check_error
