@@ -38,6 +38,7 @@ os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
 cconf = """${PY_C_CONFIG}""".split(" ")
 is_apple = """${APPLE}"""
 
+
 def cleanup(dat):
     ret = []
     for elem in dat:
