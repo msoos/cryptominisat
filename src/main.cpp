@@ -682,7 +682,7 @@ void Main::add_supported_options()
     ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
         , "Independent vars, separated by comma")
     ("onlyindep", po::bool_switch(&only_indep_solution)
-        , "Independent vars, separated by comma")
+        , "Print solution only in terms of variables declared in 'c ind' or as --indep '...'")
     ;
 
 #ifdef USE_GAUSS
