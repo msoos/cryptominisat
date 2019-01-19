@@ -529,7 +529,7 @@ class QueryCls (QueryHelper):
         """
 
         # TODO magic queries
-        if self.conf not in [1, 2, 3, 4]:
+        if self.conf not in [1, 2, 3, 4, 5]:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -676,17 +676,17 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-        #elif self.conf == 5:
-            #self.case_stmt_10k = """
-            #CASE WHEN
+        elif self.conf == 5:
+            self.case_stmt_10k = """
+            CASE WHEN
 
-            #goodcl.last_confl_used > rdb0.conflicts
-            #THEN "OK"
-            #ELSE "BAD"
-            #END AS `x.class`
-            #"""
+            goodcl.last_confl_used > rdb0.conflicts
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
 
-        if self.conf not in []:
+        if self.conf not in [5]:
             self.case_stmt_100k = """
             CASE WHEN
 
@@ -702,15 +702,15 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-        #elif self.conf == 5:
-            #self.case_stmt_100k = """
-            #CASE WHEN
+        elif self.conf == 5:
+            self.case_stmt_100k = """
+            CASE WHEN
 
-            #goodcl.last_confl_used > rdb0.conflicts+100000
-            #THEN "OK"
-            #ELSE "BAD"
-            #END AS `x.class`
-            #"""
+            goodcl.last_confl_used > rdb0.conflicts+100000
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
 
         self.dump_no_is_zero = """
         and rdb0.dump_no = 0
