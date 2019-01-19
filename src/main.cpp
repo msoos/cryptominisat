@@ -213,6 +213,7 @@ void Main::readInStandardInput(SATSolver* solver2)
 
 void Main::parseInAllFiles(SATSolver* solver2)
 {
+    const double myTimeTotal = cpuTimeTotal();
     const double myTime = cpuTime();
 
     //First read normal extra files
@@ -235,11 +236,19 @@ void Main::parseInAllFiles(SATSolver* solver2)
     }
 
     if (conf.verbosity) {
-        cout
-        << "c Parsing time: "
-        << std::fixed << std::setprecision(2)
-        << (cpuTime() - myTime)
-        << " s" << endl;
+        if (num_threads > 1) {
+            cout
+            << "c Sum parsing time among all threads (wall time will differ): "
+            << std::fixed << std::setprecision(2)
+            << (cpuTimeTotal() - myTimeTotal)
+            << " s" << endl;
+        } else {
+            cout
+            << "c Parsing time: "
+            << std::fixed << std::setprecision(2)
+            << (cpuTime() - myTime)
+            << " s" << endl;
+        }
     }
 }
 
