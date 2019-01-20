@@ -116,11 +116,18 @@ class Learner:
             plt.xlabel('Predicted label')
 
     # to check for too large or NaN values:
-    def check_too_large_or_nan_values(self, df):
-        features = df.columns.values.flatten().tolist()
+    def check_too_large_or_nan_values(self, df, features):
+        # features = df.columns.values.flatten().tolist()
         index = 0
-        for index, row in df.iterrows():
+        for index, row in df[features].iterrows():
             for x, name in zip(row, features):
+                try:
+                    np.isfinite(x)
+                except:
+                    print("Name:", name)
+                    print("Prolbem with value:", x)
+                    print(row)
+
                 if not np.isfinite(x) or x > np.finfo(np.float32).max:
                     print("issue with data for features: ", name, x)
                 index += 1
