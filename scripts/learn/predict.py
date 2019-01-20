@@ -90,9 +90,7 @@ class Learner:
         """
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            print(title)
-        else:
-            print('%s without normalization' % title)
+        print(title)
 
         np.set_printoptions(precision=2)
         print(cm)
