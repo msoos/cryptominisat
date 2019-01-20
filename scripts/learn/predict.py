@@ -832,7 +832,8 @@ public:
                 print(" -- ", scaler.mean_)
                 print(" -- ", scaler.scale_)
 
-            df_clust_back = df_clust.copy()
+            if options.verbose:
+                df_clust_back = df_clust.copy()
             df_clust[sz_all] = scaler.transform(df_clust)
         else:
             class ScalerNone:
