@@ -355,7 +355,6 @@ static bool {funcname}(
         X_train = train[features]
         y_train = train[to_predict]
 
-
         split_point = self.calc_min_split_point(df)
 
         t = time.time()
