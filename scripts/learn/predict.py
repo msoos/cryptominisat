@@ -295,7 +295,7 @@ static bool {funcname}(
         df = df_tmp.copy()
 
         print("-> Number of features  :", len(features))
-        print("-> Number of datapoints:", df_tmp.shape)
+        print("-> Number of datapoints:", df.shape)
         print("-> Predicting          :", to_predict)
 
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
