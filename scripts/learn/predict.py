@@ -318,7 +318,7 @@ static bool {funcname}(
         split_point = int(float(df.shape[0])*options.min_samples_split)
         if split_point < 20:
             split_point = 20
-        print("Split point: ", split_point)
+        print("Minimum split point: ", split_point)
 
         t = time.time()
         clf = None
