@@ -63,10 +63,11 @@ THE SOFTWARE.
 
 
 class Learner:
-    def __init__(self, df, funcname, fname):
+    def __init__(self, df, funcname, fname, df_nofilter):
         self.df = df
         self.funcname = funcname
         self.fname = fname
+        self.df_nofilter = df_nofilter
 
     def output_to_dot(self, clf, features):
         fname = options.dot + "-" + self.funcname
@@ -295,6 +296,42 @@ static bool {funcname}(
         print("Minimum split point: ", split_point)
         return split_point
 
+    def conf_matrixes(self, dump_no, test, features, to_predict, clf):
+        if dump_no is not None:
+            print("Calculating confusion matrix -- dump_no == %s" % dump_no)
+            test2 = test[test["rdb0.dump_no"] == dump_no]
+        else:
+            print("Calculating confusion matrix -- ALL dump_no")
+            test2 = test
+
+        X_test = test2[features]
+        y_test = test2[to_predict]
+        y_pred = clf.predict(X_test)
+        print("Number of elements:", X_test.shape)
+
+        # calc acc, precision, recall
+        accuracy = sklearn.metrics.accuracy_score(
+            y_test, y_pred)
+        precision = sklearn.metrics.precision_score(
+            y_test, y_pred, average="macro")
+        recall = sklearn.metrics.recall_score(
+            y_test, y_pred, average="macro")
+        print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+            precision, recall, accuracy))
+
+        # Plot "test" confusion matrix
+        cnf_matrix = sklearn.metrics.confusion_matrix(
+            y_true=y_test, y_pred=y_pred)
+        # if options.verbose:
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_,
+            title='Confusion matrix, without normalization -- test')
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_, normalize=True,
+            title='Normalized confusion matrix -- test')
+
+        return precision, recall, accuracy
+
     def one_classifier(self, features, to_predict, final):
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
@@ -399,43 +436,30 @@ static bool {funcname}(
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
-        for i in [0, 1, 3, 10]:
-            print("Calculating scores for confusion matrix -- dump_no == %s" % i)
-            test2 = test[test["rdb0.dump_no"] == i]
-            X_test = test2[features]
-            y_test = test2[to_predict]
-            y_pred = clf.predict(X_test)
-            accuracy = sklearn.metrics.accuracy_score(
-                y_test, y_pred)
-            precision = sklearn.metrics.precision_score(
-                y_test, y_pred, average="macro")
-            recall = sklearn.metrics.recall_score(
-                y_test, y_pred, average="macro")
-            print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
-                precision, recall, accuracy, (time.time() - t)))
+        # filtered data == filtered to avg_dump_no and on cluster
+        print("---  Filtered data  --- ")
+        for dump_no in [0, 1, 3, 10, 20, 40, None]:
+            prec, recall, acc = self.conf_matrixes(
+                dump_no, test, features, to_predict, clf)
 
-            print("Calculating scores for train....")
-            y_pred_train = clf.predict(X_train)
-            train_accuracy = sklearn.metrics.accuracy_score(
-                y_train, y_pred_train)
-            train_precision = sklearn.metrics.precision_score(
-                y_train, y_pred_train, average="macro")
-            train_recall = sklearn.metrics.recall_score(
-                y_train, y_pred_train, average="macro")
-            print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-                train_precision, train_recall, train_accuracy))
-
-            # Plot "test" confusion matrix
-            cnf_matrix = sklearn.metrics.confusion_matrix(
-                y_true=y_test, y_pred=y_pred)
-            self.print_confusion_matrix(
-                cnf_matrix, classes=clf.classes_,
-                title='Confusion matrix, without normalization -- test')
-            self.print_confusion_matrix(
-                cnf_matrix, classes=clf.classes_, normalize=True,
-                title='Normalized confusion matrix -- test')
+        # not filtered data == not filtered to avg_dump_no, and not filtered on cluster
+        print("---  Unfiltered data  --- ")
+        for dump_no in [None, 0, 1]:
+            self.conf_matrixes(
+                dump_no, self.df_nofilter, features, to_predict, clf)
 
         # Plot "train" confusion matrix
+        print("---  Train data  --- ")
+        y_pred_train = clf.predict(X_train)
+        train_accuracy = sklearn.metrics.accuracy_score(
+            y_train, y_pred_train)
+        train_precision = sklearn.metrics.precision_score(
+            y_train, y_pred_train, average="macro")
+        train_recall = sklearn.metrics.recall_score(
+            y_train, y_pred_train, average="macro")
+        print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+            train_precision, train_recall, train_accuracy))
+
         cnf_matrix_train = sklearn.metrics.confusion_matrix(
             y_true=y_train, y_pred=y_pred_train)
         self.print_confusion_matrix(
@@ -447,7 +471,7 @@ static bool {funcname}(
         if not final:
             return best_features
         else:
-            return precision+recall+accuracy
+            return prec+recall+acc
 
     def remove_old_clause_features(self, features):
         todel = []
@@ -763,17 +787,16 @@ public:
         print("Filtering to minimum average dump_no of {min_avg_dumpno}...".format(
             min_avg_dumpno=options.min_avg_dumpno))
         print("Pre-filter number of datapoints:", self.df.shape)
+        self.df_nofilter = self.df.copy()
 
-        df = self.df.copy()
-        df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
-        df.fillna(0, inplace=True)
+        self.df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
+        self.df.fillna(0, inplace=True)
         # print(df[["fname", "goodcl.num_used"]])
         files = df[["fname", "rdb0.dump_no"]].groupby("fname").mean()
-        fs = files[files["rdb0.dump_no"] > options.min_avg_dumpno].index.values
+        fs = files[files["rdb0.dump_no"] >= options.min_avg_dumpno].index.values
         filenames = list(fs)
         print("Left with {num} files".format(num=len(filenames)))
-        df = self.df[self.df["fname"].isin(fs)]
-        self.df = df.copy()
+        self.df = self.df[self.df["fname"].isin(fs)]
 
         print("Post-filter number of datapoints:", self.df.shape)
 
@@ -863,7 +886,7 @@ public:
                 f = options.basedir+"/"+fname
             else:
                 f = None
-            learner = Learner(self.df[(self.df.clust == clno)], funcname, f)
+            learner = Learner(self.df[(self.df.clust == clno)], funcname, f, self.df_nofilter)
 
             print("================ Cluster %3d ================" % clno)
             learner.learn()
