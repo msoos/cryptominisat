@@ -301,6 +301,11 @@ static bool {funcname}(
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
         df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
         df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+        df['goodcl.avg_hist_used'].replace(['None'], 0, inplace=True)
+        df.fillna(0, inplace=True)
+
+        if options.check_row_data:
+            self.check_too_large_or_nan_values(df, features)
 
         train, test = sklearn.model_selection.train_test_split(df, test_size=0.33)
         X_train = train[features]
@@ -492,9 +497,6 @@ static bool {funcname}(
         return best_features
 
     def learn(self):
-        if options.check_row_data:
-            self.check_too_large_or_nan_values(self.df)
-
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
             features, ["x.num_used", "x.class", "x.lifetime", "fname"])
