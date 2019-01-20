@@ -44,49 +44,47 @@ function populate_error {
     done
 }
 
-###############
-# Combine
-###############
+function combine {
+    rm -f out_combine_short_*
+    rm -f comb-short-conf-*.dat
+    rm -f out_combine_long_*
+    rm -f comb-long-conf-*.dat
+    for (( CONF = 0; CONF < numconfs; CONF++))
+    do
+        rm -f "comb-short-conf-${CONF}.dat"
+        rm -f "comb-long-conf-${CONF}.dat"
 
-rm -f out_combine_short_*
-rm -f comb-short-conf-*.dat
-rm -f out_combine_long_*
-rm -f comb-long-conf-*.dat
-for (( CONF = 0; CONF < numconfs; CONF++))
-do
-    rm -f "comb-short-conf-${CONF}.dat"
-    rm -f "comb-long-conf-${CONF}.dat"
+        ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "out_combine_short_${CONF}" 2>&1 &
+        ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "out_combine_long_${CONF}" 2>&1 &
 
-    ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "out_combine_short_${CONF}" 2>&1 &
-    ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "out_combine_long_${CONF}" 2>&1 &
+        wait_threads
+        check_fails
+    done
 
-    wait_threads
-    check_fails
-done
+    populate_error "out_combine_short" "out_combine_long"
+    check_error
+}
 
-# populate error
-populate_error "out_combine_short" "out_combine_long"
-check_error
+function predict {
+    mkdir -p ../src/predict
+    rm -f ../src/predict/*.h
+    rm -f out_pred_short_*
+    rm -f out_pred_long_*
+    for (( CONF = 0; CONF < numconfs; CONF++))
+    do
+        ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --split 0.03 --clusters 1 --conf "${CONF}" --clustmin 0.10 > "out_pred_long_${CONF}" 2>&1 &
+        ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --split 0.03 --clusters 1 --conf "${CONF}" --clustmin 0.10 > "out_pred_short_${CONF}" 2>&1 &
+        wait_threads
+        check_fails
+    done
 
+    populate_error "out_pred_long" "out_pred_short"
+    check_error
+}
 
-#################
-# predict.py
-#################
+################
+# running
+################
 
-mkdir -p ../src/predict
-rm -f ../src/predict/*.h
-rm -f out_pred_short_*
-rm -f out_pred_long_*
-
-# scaler conf
-for (( CONF = 0; CONF < numconfs; CONF++))
-do
-    ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_long_${CONF}" 2>&1 &
-    ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --split 0.01 --clusters 9 --conf "${CONF}" --clustmin 0.03 > "out_pred_short_${CONF}" 2>&1 &
-    wait_threads
-    check_fails
-done
-
-# populate error
-populate_error "out_pred_long" "out_pred_short"
-check_error
+combine
+predict
