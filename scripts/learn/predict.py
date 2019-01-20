@@ -875,8 +875,6 @@ if __name__ == "__main__":
 
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
-    parser.add_option("--mindump", default=20, type=float,
-                      dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # tree options
     parser.add_option("--depth", default=None, type=int,
@@ -901,11 +899,13 @@ if __name__ == "__main__":
     parser.add_option("--conf", default=0, type=int,
                       dest="conf_num", help="Which predict configuration this is")
 
-    # data handling
+    # data filtering
     parser.add_option("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
                       dest="no_rdb1", help="Delete RDB1 data")
+    parser.add_option("--mindump", default=20, type=float,
+                      dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # final generator
     parser.add_option("--final", default=False, action="store_true",
