@@ -906,7 +906,7 @@ if __name__ == "__main__":
     # tree options
     parser.add_option("--depth", default=None, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
-    parser.add_option("--split", default=0.1, type=float, metavar="RATIO",
+    parser.add_option("--split", default=0.05, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
 
     # generation of predictor
