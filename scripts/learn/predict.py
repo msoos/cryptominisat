@@ -311,9 +311,6 @@ static bool {funcname}(
         X_train = train[features]
         y_train = train[to_predict]
 
-        X_test = test[features]
-        y_test = test[to_predict]
-
         # calculate split point
         split_point = int(float(df.shape[0])*options.min_samples_split)
         if split_point < 20:
@@ -398,37 +395,41 @@ static bool {funcname}(
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
-        print("Calculating scores for test....")
-        y_pred = clf.predict(X_test)
-        accuracy = sklearn.metrics.accuracy_score(
-            y_test, y_pred)
-        precision = sklearn.metrics.precision_score(
-            y_test, y_pred, average="macro")
-        recall = sklearn.metrics.recall_score(
-            y_test, y_pred, average="macro")
-        print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
-            precision, recall, accuracy, (time.time() - t)))
+        for i in [0, 1, 3, 10]:
+            print("Calculating scores for confusion matrix -- dump_no == %s" % i)
+            test2 = test[test["rdb0.dump_no"] == i]
+            X_test = test2[features]
+            y_test = test2[to_predict]
+            y_pred = clf.predict(X_test)
+            accuracy = sklearn.metrics.accuracy_score(
+                y_test, y_pred)
+            precision = sklearn.metrics.precision_score(
+                y_test, y_pred, average="macro")
+            recall = sklearn.metrics.recall_score(
+                y_test, y_pred, average="macro")
+            print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f T: %-3.2f" % (
+                precision, recall, accuracy, (time.time() - t)))
 
-        print("Calculating scores for train....")
-        y_pred_train = clf.predict(X_train)
-        train_accuracy = sklearn.metrics.accuracy_score(
-            y_train, y_pred_train)
-        train_precision = sklearn.metrics.precision_score(
-            y_train, y_pred_train, average="macro")
-        train_recall = sklearn.metrics.recall_score(
-            y_train, y_pred_train, average="macro")
-        print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            train_precision, train_recall, train_accuracy))
+            print("Calculating scores for train....")
+            y_pred_train = clf.predict(X_train)
+            train_accuracy = sklearn.metrics.accuracy_score(
+                y_train, y_pred_train)
+            train_precision = sklearn.metrics.precision_score(
+                y_train, y_pred_train, average="macro")
+            train_recall = sklearn.metrics.recall_score(
+                y_train, y_pred_train, average="macro")
+            print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+                train_precision, train_recall, train_accuracy))
 
-        # Plot "test" confusion matrix
-        cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_test, y_pred=y_pred)
-        self.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization -- test')
-        self.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix -- test')
+            # Plot "test" confusion matrix
+            cnf_matrix = sklearn.metrics.confusion_matrix(
+                y_true=y_test, y_pred=y_pred)
+            self.print_confusion_matrix(
+                cnf_matrix, classes=clf.classes_,
+                title='Confusion matrix, without normalization -- test')
+            self.print_confusion_matrix(
+                cnf_matrix, classes=clf.classes_, normalize=True,
+                title='Normalized confusion matrix -- test')
 
         # Plot "train" confusion matrix
         cnf_matrix_train = sklearn.metrics.confusion_matrix(
