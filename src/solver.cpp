@@ -1836,7 +1836,6 @@ bool Solver::execute_inprocess_strategy(
         ) {
             return ok;
         }
-        consolidate_watches(true);
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
         assert(okay());
