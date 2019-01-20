@@ -289,10 +289,10 @@ static bool {funcname}(
             self.recurse(left, right, threshold, features, 0, starttab)
 
     def one_classifier(self, features, to_predict, final):
-
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
         _, df_tmp = sklearn.model_selection.train_test_split(self.df, test_size=options.only_pecr)
+        df = df_tmp.copy()
 
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", df_tmp.shape)
