@@ -843,7 +843,7 @@ public:
             scaler = ScalerNone()
 
         # test scaler's code generation
-        if options.verbose:
+        if options.scale and options.verbose:
             # we rely on this later in code generation
             # for scaler.mean_
             # for scaler.scale_
