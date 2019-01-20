@@ -288,6 +288,13 @@ static bool {funcname}(
 
             self.recurse(left, right, threshold, features, 0, starttab)
 
+    def calc_min_split_point(self, df):
+        split_point = int(float(df.shape[0])*options.min_samples_split)
+        if split_point < 10:
+            split_point = 10
+        print("Minimum split point: ", split_point)
+        return split_point
+
     def one_classifier(self, features, to_predict, final):
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
@@ -311,11 +318,8 @@ static bool {funcname}(
         X_train = train[features]
         y_train = train[to_predict]
 
-        # calculate split point
-        split_point = int(float(df.shape[0])*options.min_samples_split)
-        if split_point < 20:
-            split_point = 20
-        print("Minimum split point: ", split_point)
+
+        split_point = self.calc_min_split_point(df)
 
         t = time.time()
         clf = None
