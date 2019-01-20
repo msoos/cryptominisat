@@ -2,8 +2,8 @@
 set -e
 set -x
 
-numconfs=5
-location="out-dats-8091519.wlm01"
+numconfs=6
+location="out-dats-8145576.wlm01"
 
 function wait_threads {
     FAIL=0
