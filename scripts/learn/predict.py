@@ -500,7 +500,7 @@ static bool {funcname}(
     def learn(self):
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
-            features, ["x.num_used", "x.class", "x.lifetime", "fname"])
+            features, ["x.num_used", "x.class", "x.lifetime", "fname", "clust", "goodcl"])
         if options.no_rdb1:
             features = self.rem_features(features, ["rdb1", "rdb.rel"])
             features = self.rem_features(features, ["rdb.rel"])
