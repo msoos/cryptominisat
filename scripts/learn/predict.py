@@ -980,7 +980,7 @@ if __name__ == "__main__":
 
     fname = args[0]
     with open(fname, "rb") as f:
-        df = pickle.load(f)
+        df = pd.read_pickle(f)
 
         c = Clustering(df)
         c.filter_min_avg_dump_no()
