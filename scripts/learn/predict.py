@@ -153,7 +153,7 @@ class Learner:
     }
 
     double rdb0_used_per_confl;
-    if (cl->stats.introduced_at_conflict == 0) {
+    if (sumConflicts-cl->stats.introduced_at_conflict == 0) {
         rdb0_used_per_confl = 0;
     } else {
         rdb0_used_per_confl = ((double)cl->stats.sum_uip1_used)/((double)sumConflicts-(double)cl->stats.introduced_at_conflict);
