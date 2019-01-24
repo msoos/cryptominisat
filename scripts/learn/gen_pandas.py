@@ -896,7 +896,7 @@ class QueryCls (QueryHelper):
 
             # prefer OK by a factor of this. If < 0.5 then preferring BAD
             # 0.4 might also work
-            prefer_ok_ok = 0.1
+            prefer_ok_ok = 0.2
 
         print("Distrib OK vs BAD set to %s " % prefer_ok_ok)
         print("Fixed multiplier set to  %s " % fixed_mult)

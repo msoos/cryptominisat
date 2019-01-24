@@ -72,8 +72,8 @@ function predict {
     rm -f out_pred_long_*
     for (( CONF = 0; CONF < numconfs; CONF++))
     do
-        ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --clusters 1 --split 0.005 --conf "${CONF}" --clustmin 0.10 --mindump 19  --prefok 2.5 > "out_pred_long_${CONF}" 2>&1 &
-        ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --clusters 1 --split 0.005 --conf "${CONF}" --clustmin 0.10 --mindump 19 --prefok 1.5 > "out_pred_short_${CONF}" 2>&1 &
+        ./predict.py "comb-long-conf-${CONF}.dat" --scale --name long  --basedir "../src/predict/" --final --forest --clusters 1 --split 0.005 --conf "${CONF}" --clustmin 0.10 --mindump 19  --prefok 1 > "out_pred_long_${CONF}" 2>&1 &
+        ./predict.py "comb-short-conf-${CONF}.dat" --scale --name short --basedir "../src/predict/" --final --forest --clusters 1 --split 0.005 --conf "${CONF}" --clustmin 0.10 --mindump 19 --prefok 1 > "out_pred_short_${CONF}" 2>&1 &
         wait_threads
         check_fails
     done
