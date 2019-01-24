@@ -161,11 +161,6 @@ struct ClauseStats
     uint16_t    locked_long = 0;
     #endif
 
-    #if defined(STATS_NEEDED)
-    uint32_t keep_for_n_rounds = std::numeric_limits<uint32_t>::max();
-    int64_t ID = 0;
-    #endif
-
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
@@ -179,6 +174,9 @@ struct ClauseStats
     #endif
 
     #ifdef STATS_NEEDED
+    uint32_t keep_for_n_rounds = std::numeric_limits<uint32_t>::max();
+    int64_t ID = 0;
+
     AtecedentData<uint16_t> antec_data;
     uint64_t conflicts_made = 0; ///<Number of times caused conflict
     uint64_t propagations_made = 0; ///<Number of times caused propagation
