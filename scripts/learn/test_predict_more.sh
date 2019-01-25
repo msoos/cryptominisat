@@ -93,8 +93,8 @@ numconfs=5
 rm ../../src/predict/*.h
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ../predict.py "${FNAMEOUT}-min.db-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
-    ../predict.py "${FNAMEOUT}-min.db-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --conf "${CONF}"
+    ../predict.py "${FNAMEOUT}-min.db-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf "${CONF}"
+    ../predict.py "${FNAMEOUT}-min.db-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf "${CONF}"
 done
 )
 
