@@ -297,6 +297,7 @@ static bool {funcname}(
         return split_point
 
     def conf_matrixes(self, dump_no, test, features, to_predict, clf):
+        # filter test data
         if dump_no is not None:
             print("Calculating confusion matrix -- dump_no == %s" % dump_no)
             test2 = test[test["rdb0.dump_no"] == dump_no]
@@ -304,10 +305,16 @@ static bool {funcname}(
             print("Calculating confusion matrix -- ALL dump_no")
             test2 = test
 
+        # get test data
         X_test = test2[features]
         y_test = test2[to_predict]
-        y_pred = clf.predict(X_test)
         print("Number of elements:", X_test.shape)
+        if test2.shape[0] == 0:
+            print("Cannot calculate confusion matrix, too few elements")
+            return 0, 0, 0
+
+        # Preform prediction
+        y_pred = clf.predict(X_test)
 
         # calc acc, precision, recall
         accuracy = sklearn.metrics.accuracy_score(
