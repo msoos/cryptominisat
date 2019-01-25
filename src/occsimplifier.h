@@ -311,6 +311,7 @@ private:
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
     int64_t  varelim_sub_str_limit;
+    int64_t  varelim_linkin_limit_bytes;
     int64_t* limit_to_decrease;
 
     //Start-up

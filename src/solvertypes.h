@@ -194,12 +194,12 @@ inline double stats_line_percent(double num, double total)
     }
 }
 
-inline void print_value_kilo_mega(const uint64_t value)
+inline void print_value_kilo_mega(const int64_t value)
 {
-    if (value > 20*1000ULL*1000ULL) {
-        cout << " " << std::setw(4) << value/(1000ULL*1000ULL) << "M";
-    } else if (value > 20ULL*1000ULL) {
-        cout << " " << std::setw(4) << value/1000 << "K";
+    if (value > 20*1000LL*1000LL) {
+        cout << " " << std::setw(4) << value/(1000LL*1000LL) << "M";
+    } else if (value > 20LL*1000LL) {
+        cout << " " << std::setw(4) << value/1000LL << "K";
     } else {
         cout << " " << std::setw(5) << value;
     }
