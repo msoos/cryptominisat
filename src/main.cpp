@@ -216,6 +216,7 @@ void Main::readInStandardInput(SATSolver* solver2)
 
 void Main::parseInAllFiles(SATSolver* solver2)
 {
+    const double myTimeTotal = cpuTimeTotal();
     const double myTime = cpuTime();
 
     //First read normal extra files
@@ -238,11 +239,19 @@ void Main::parseInAllFiles(SATSolver* solver2)
     }
 
     if (conf.verbosity) {
-        cout
-        << "c Parsing time: "
-        << std::fixed << std::setprecision(2)
-        << (cpuTime() - myTime)
-        << " s" << endl;
+        if (num_threads > 1) {
+            cout
+            << "c Sum parsing time among all threads (wall time will differ): "
+            << std::fixed << std::setprecision(2)
+            << (cpuTimeTotal() - myTimeTotal)
+            << " s" << endl;
+        } else {
+            cout
+            << "c Parsing time: "
+            << std::fixed << std::setprecision(2)
+            << (cpuTime() - myTime)
+            << " s" << endl;
+        }
     }
 }
 
@@ -700,7 +709,7 @@ void Main::add_supported_options()
     ("assump", po::value(&assump_filename)->default_value(assump_filename)
         , "Assumptions file")
     ("onlyindep", po::bool_switch(&only_indep_solution)
-        , "Independent vars, separated by comma")
+        , "Print and ban(!) solutions only in terms of variables declared in 'c ind' or as --indep '...'")
     ;
 
 #ifdef USE_GAUSS

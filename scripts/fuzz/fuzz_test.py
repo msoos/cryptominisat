@@ -289,7 +289,7 @@ class Tester:
         self.sqlitedbfname = None
         self.clid_added = False
         cmd = " --zero-exit-status "
-        if self.decisions_dumpfile is None:
+        if self.decisions_dumpfile is None and not preproc:
             self.decisions_dumpfile = unique_file("fuzz-decdump", ".txt")
             cmd += "--dumpdecformodel %s " % self.decisions_dumpfile
 
@@ -575,6 +575,7 @@ class Tester:
         # and that is why there is no solution
         diff_time = time.time() - curr_time
         if diff_time > (options.maxtime - options.maxtimediff) / self.num_threads:
+            self.delete_decisions_dumpfile()
             print("Too much time to solve, aborted!")
             return None
 
@@ -601,6 +602,7 @@ class Tester:
             f = open(dump_output_fname, "w")
             f.write(consoleOutput)
             f.close()
+            self.delete_decisions_dumpfile()
             return True
 
         if not unsat:
@@ -616,15 +618,10 @@ class Tester:
                 if len(self.indep_vars) == 0:
                     self.check_decisions(solution, fname)
 
-            if self.decisions_dumpfile is not None:
-                os.unlink(self.decisions_dumpfile)
-                self.decisions_dumpfile = None
-
+            self.delete_decisions_dumpfile()
             return
 
-        if self.decisions_dumpfile is not None:
-            os.unlink(self.decisions_dumpfile)
-            self.decisions_dumpfile = None
+        self.delete_decisions_dumpfile()
 
         # it's UNSAT, let's check with DRAT
         if fname2:
@@ -670,6 +667,11 @@ class Tester:
         else:
             print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
             exit()
+
+    def delete_decisions_dumpfile(self):
+        if self.decisions_dumpfile is not None:
+            os.unlink(self.decisions_dumpfile)
+            self.decisions_dumpfile = None
 
     def check_dumped_clauses(self, fname):
         assert self.dump_red is not None
@@ -805,7 +807,7 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
-        self.decisions_dumpfile = True  # so it is not None
+        assert self.decisions_dumpfile == None
         self.this_gauss_on = False  # don't do gauss on preproc
         assert self == tester
         tester.needDebugLib = False

@@ -3314,33 +3314,6 @@ void Searcher::read_long_cls(
     }
 }
 
-unsigned Searcher::guess_clause_array(
-    const ClauseStats& /*cl_stats*/
-    , uint32_t /*backtrack_lev*/
-) const {
-    /*
-    uint32_t votes = 0;
-    //double trail_depth_rel = (double)trail.size()/hist.trailDepthHistLT.avg();
-    double dec_lev_rel = (double)decisionLevel()/hist.decisionLevelHistLT.avg();
-    if (dec_lev_rel < 0.10) {
-        votes++;
-    }
-
-    double backtrack_lev_rel = (double)backtrack_lev/hist.decisionLevelHistLT.avg();
-    if (backtrack_lev_rel < 0.10) {
-        votes++;
-    }
-
-    if (antec_data.glue_long_reds.avg() > 12) {
-        votes += 1;
-    }
-
-    if (votes > 2) {
-        return true;
-    }*/
-    return false;
-}
-
 void Searcher::write_binary_cls(
     SimpleOutFile& f
     , bool red
