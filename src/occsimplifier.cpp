@@ -2357,8 +2357,6 @@ bool OccSimplifier::add_varelim_resolvent(
 
         // 8 = watch space
         varelim_linkin_limit_bytes -= finalLits.size()*(8);
-    } else {
-        assert(false);
     }
 
     //Touch every var of the new clause, so we re-estimate
