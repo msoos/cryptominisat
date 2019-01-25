@@ -2495,8 +2495,16 @@ void Searcher::finish_up_solve(const lbool status)
         model = assigns;
 
         if (conf.need_decisions_reaching) {
-            for(size_t at: trail_lim) {
-                decisions_reaching_model.push_back(trail[at]);
+            for(size_t i = 0; i < trail_lim.size(); i++) {
+                size_t at = trail_lim[i];
+
+                //we need this due to dummy decision levels
+                //that could create a situation where new_decision_level()
+                //has been called, but then no variable needs to be decided
+                //for SAT.
+                if (at < trail.size()) {
+                    decisions_reaching_model.push_back(trail[at]);
+                }
             }
         }
 
