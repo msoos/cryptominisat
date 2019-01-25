@@ -1862,7 +1862,7 @@ void OccSimplifier::set_limits()
     varelim_sub_str_limit *= 10;
 
     varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
-    varelim_linkin_limit_bytes = 1000LL*1000LL*1000LL;
+    varelim_linkin_limit_bytes = 1000LL*1000LL*1000LL*solver->conf.var_and_mem_out_mult;
 
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;
