@@ -1714,7 +1714,12 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
         while(at < blockedClauses[i].size()) {
             const Lit l = blockedClauses[i].at(at, blkcls);
             if (l == lit_Undef) {
-                if (!(lits.size() <= 2 && (solver->conf.doCache|| solver->conf.doStamp))) {
+                if (
+                    !(lits.size() <= 2 && (solver->conf.doCache|| solver->conf.doStamp))
+                    //for the decision reaching we need it because otherwise we cannot prove
+                    //the SAT
+                    && !solver->conf.need_decisions_reaching
+                ) {
                     (*solver->drat) << del << lits << fin;
                 }
 
