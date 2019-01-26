@@ -255,12 +255,12 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             } else if (!satisfied) {
                 Lit l = it->at(at, blkcls);
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
+                lits.push_back(l);
 
                 //Blocked clause can be skipped, it's satisfied
                 if (solver->model_value(l) == l_True) {
                     satisfied = true;
                 }
-                lits.push_back(l);
             }
             at++;
         }
