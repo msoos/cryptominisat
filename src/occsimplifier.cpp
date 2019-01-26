@@ -237,6 +237,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         size_t at = 1;
         bool satisfied = false;
         while(at < it->size()) {
+            //built clause, reached marker, "lits" is now valid
             if (it->at(at, blkcls) == lit_Undef) {
                 if (!satisfied) {
                     bool var_set = extender->addClause(lits, blockedOn.var());
@@ -250,6 +251,8 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                 }
                 satisfied = false;
                 lits.clear();
+
+            //Building clause, "lits" is not yet valid
             } else if (!satisfied) {
                 Lit l = it->at(at, blkcls);
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
