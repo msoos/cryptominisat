@@ -1374,6 +1374,7 @@ lbool Main::multi_solutions()
         current_nr_of_solutions++;
         if (ret == l_True && !decisions_for_model_fname.empty()) {
             dump_decisions_for_model();
+            assert(max_nr_of_solutions == 1);
         }
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
