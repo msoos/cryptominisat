@@ -2350,7 +2350,6 @@ bool OccSimplifier::add_varelim_resolvent(
         // 8 = watch space
         varelim_linkin_limit_bytes -= finalLits.size()*(4+8);
         varelim_linkin_limit_bytes -= sizeof(Clause);
-
     } else if (finalLits.size() == 2) {
         added_bin_cl.push_back(std::make_pair(finalLits[0], finalLits[1]));
         n_occurs[finalLits[0].toInt()]++;
