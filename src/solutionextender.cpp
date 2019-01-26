@@ -184,6 +184,8 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
         } else {
             if (model_value == l_Undef) {
                 all_values_false = false;
+            } else {
+                assert(model_value == l_False);
             }
         }
     }
