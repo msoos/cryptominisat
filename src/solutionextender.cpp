@@ -180,7 +180,10 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
         }
     }
     assert(actual_lit != lit_Undef);
-    solver->model[blockedOn] = actual_lit.sign() ? l_False : l_True;
+    lbool val = actual_lit.sign() ? l_False : l_True;
+    solver->model[blockedOn] = val;
+    solver->decisions_reaching_model.push_back(Lit(blockedOn, val == l_False));
+
     if (solver->conf.verbosity >= 10) {
         cout << "Extending VELIM cls. -- setting model for var "
         << blockedOn + 1 << " to " << solver->model[blockedOn] << endl;
