@@ -136,6 +136,7 @@ namespace CMSat {
 
         void print_stats() const; //print solving stats. Call after solve()/simplify()
         void set_drat(std::ostream* os, bool set_ID); //set drat to ostream, e.g. stdout or a file
+        void add_empty_cl_to_drat(); // allows to treat SAT as UNSAT and perform learning
         void interrupt_asap(); //call this asynchronously, and the solver will try to cleanly abort asap
         void dump_irred_clauses(std::ostream *out) const; //dump irredundant clauses to this stream when solving finishes
         void dump_red_clauses(std::ostream *out) const; //dump redundant ("learnt") clauses to this stream when solving finishes

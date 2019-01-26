@@ -1396,6 +1396,7 @@ lbool Main::multi_solutions()
         current_nr_of_solutions++;
         if (ret == l_True && !decisions_for_model_fname.empty()) {
             dump_decisions_for_model();
+            solver->add_empty_cl_to_drat();
         }
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {

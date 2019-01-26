@@ -4161,3 +4161,15 @@ void Solver::learnt_clausee_query_map_without_bva(vector<Lit>& cl)
         l = Lit(learnt_clause_query_outer_to_without_bva_map[l.var()], l.sign());
     }
 }
+
+void Solver::add_empty_cl_to_drat()
+{
+    *drat << add
+    #ifdef STATS_NEEDED
+    << 0
+    << sumConflicts
+    #endif
+    << fin;
+    drat->flush();
+    cout << "DONE ADDING EMPTY CLAUSE!" << endl;
+}

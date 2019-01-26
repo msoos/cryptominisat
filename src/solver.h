@@ -92,6 +92,9 @@ class Solver : public Searcher
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
         void  set_shared_data(SharedData* shared_data);
 
+        //drat for SAT problems
+        void add_empty_cl_to_drat();
+
         //Querying model
         lbool model_value (const Lit p) const;  ///<Found model value for lit
         lbool model_value (const uint32_t p) const;  ///<Found model value for var
