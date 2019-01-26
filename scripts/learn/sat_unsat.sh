@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 set -e
-# set -x
+set -x
 
 function run_tmp {
     # cp stuff.cnf tmp
