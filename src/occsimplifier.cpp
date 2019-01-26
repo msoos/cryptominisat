@@ -236,6 +236,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         Lit blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, blkcls));
         size_t at = 1;
         bool satisfied = false;
+        lits.clear();
         while(at < it->size()) {
             if (it->at(at, blkcls) == lit_Undef) {
                 if (!satisfied) {
