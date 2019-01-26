@@ -125,6 +125,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , varElimRatioPerIter(1.60)
         , skip_some_bve_resolvents(true) //based on gates
         , velim_resolvent_too_large(20)
+        , var_linkin_limit_MB(1000)
 
         //Subs, str limits for simplifier
         , subsumption_time_limitM(300)

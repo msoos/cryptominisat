@@ -236,6 +236,7 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
         Lit blockedOn = solver->varReplacer->get_lit_replaced_with_outer(it->at(0, blkcls));
         size_t at = 1;
         bool satisfied = false;
+        lits.clear();
         while(at < it->size()) {
             //built clause, reached marker, "lits" is now valid
             if (it->at(at, blkcls) == lit_Undef) {
@@ -245,8 +246,9 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
                     #ifndef DEBUG_VARELIM
                     //all should be satisfied in fact
                     //no need to go any further
-                    if (var_set)
+                    if (var_set) {
                         break;
+                    }
                     #endif
                 }
                 satisfied = false;
@@ -256,12 +258,12 @@ void OccSimplifier::extend_model(SolutionExtender* extender)
             } else if (!satisfied) {
                 Lit l = it->at(at, blkcls);
                 l = solver->varReplacer->get_lit_replaced_with_outer(l);
+                lits.push_back(l);
 
                 //Blocked clause can be skipped, it's satisfied
                 if (solver->model_value(l) == l_True) {
                     satisfied = true;
                 }
-                lits.push_back(l);
             }
             at++;
         }
@@ -1866,7 +1868,7 @@ void OccSimplifier::set_limits()
     varelim_sub_str_limit *= 10;
 
     varelim_num_limit = ((double)solver->get_num_free_vars() * solver->conf.varElimRatioPerIter);
-    varelim_linkin_limit_bytes = 1000LL*1000LL*1000LL*solver->conf.var_and_mem_out_mult;
+    varelim_linkin_limit_bytes = solver->conf.var_linkin_limit_MB *1000LL*1000LL*solver->conf.var_and_mem_out_mult;
 
     if (!solver->conf.do_strengthen_with_occur) {
         strengthening_time_limit = 0;

@@ -454,8 +454,8 @@ void Main::add_supported_options()
     std::ostringstream ssERatio;
     ssERatio << std::setprecision(4) << "norm: " << conf.varElimRatioPerIter << " preproc: " << 1.0;
 
-    po::options_description simplificationOptions("Simplification options");
-    simplificationOptions.add_options()
+    po::options_description simp_schedules("Simplification sedules");
+    simp_schedules.add_options()
     ("schedsimp", po::value(&conf.do_simplify_problem)->default_value(conf.do_simplify_problem)
         , "Perform simplification rounds. If 0, we never perform any.")
     ("presimp", po::value(&conf.simplify_at_startup)->default_value(conf.simplify_at_startup)
@@ -478,16 +478,31 @@ void Main::add_supported_options()
         , "Start first simplification after this many conflicts")
     ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc)
         , "Simp rounds increment by this power of N")
-    ("varelim", po::value(&conf.doVarElim)->default_value(conf.doVarElim)
-        , "Perform variable elimination as per Een and Biere")
-    ("varelimto", po::value(&conf.varelim_time_limitM)->default_value(conf.varelim_time_limitM)
-        , "Var elimination bogoprops M time limit")
-    ("varelimover", po::value(&conf.min_bva_gain)->default_value(conf.min_bva_gain)
-        , "Do BVE until the resulting no. of clause increase is less than X. Only power of 2 makes sense, i.e. 2,4,8...")
-    ("emptyelim", po::value(&conf.do_empty_varelim)->default_value(conf.do_empty_varelim)
-        , "Perform empty resolvent elimination using bit-map trick")
+    ;
+
+
+    po::options_description simp_limits("Simplification limits");
+    simp_limits.add_options()
+    ("occredmax", po::value(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
+        , "Don't add to occur list any redundant clause larger than this")
+    ("occredmaxmb", po::value(&conf.maxOccurRedMB)->default_value(conf.maxOccurRedMB)
+        , "Don't allow redundant occur size to be beyond this many MB")
+    ("occirredmaxmb", po::value(&conf.maxOccurIrredMB)->default_value(conf.maxOccurIrredMB)
+        , "Don't allow irredundant occur size to be beyond this many MB")
+    ;
+
+    po::options_description simp_opts("Simplification generic options");
+    simp_opts.add_options()
     ("strengthen", po::value(&conf.do_strengthen_with_occur)->default_value(conf.do_strengthen_with_occur)
         , "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system")
+    ("substimelim", po::value(&conf.subsumption_time_limitM)->default_value(conf.subsumption_time_limitM)
+        , "Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur")
+    ("strstimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
+        , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
+    ;
+
+    po::options_description bva_options("BVA options");
+    bva_options.add_options()
     ("bva", po::value(&conf.do_bva)->default_value(conf.do_bva)
         , "Perform bounded variable addition")
     ("bvalim", po::value(&conf.bva_limit_per_call)->default_value(conf.bva_limit_per_call)
@@ -496,20 +511,24 @@ void Main::add_supported_options()
         , "BVA with 2-lit difference hack, too. Beware, this reduces the effectiveness of 1-lit diff")
     ("bvato", po::value(&conf.bva_time_limitM)->default_value(conf.bva_time_limitM)
         , "BVA time limit in bogoprops M")
+    ;
+
+    po::options_description bve_options("BVE options");
+    bve_options.add_options()
+    ("varelim", po::value(&conf.doVarElim)->default_value(conf.doVarElim)
+        , "Perform variable elimination as per Een and Biere")
+    ("varelimto", po::value(&conf.varelim_time_limitM)->default_value(conf.varelim_time_limitM)
+        , "Var elimination bogoprops M time limit")
+    ("varelimover", po::value(&conf.min_bva_gain)->default_value(conf.min_bva_gain)
+        , "Do BVE until the resulting no. of clause increase is less than X. Only power of 2 makes sense, i.e. 2,4,8...")
+    ("emptyelim", po::value(&conf.do_empty_varelim)->default_value(conf.do_empty_varelim)
+        , "Perform empty resolvent elimination using bit-map trick")
+    ("varelimmaxmb", po::value(&conf.var_linkin_limit_MB)->default_value(conf.var_linkin_limit_MB)
+        , "Maximum extra MB of memory to use for new clauses during varelim")
     ("eratio", po::value(&conf.varElimRatioPerIter)->default_value(conf.varElimRatioPerIter, ssERatio.str())
         , "Eliminate this ratio of free variables at most per variable elimination iteration")
     ("skipresol", po::value(&conf.skip_some_bve_resolvents)->default_value(conf.skip_some_bve_resolvents)
         , "Skip BVE resolvents in case they belong to a gate")
-    ("occredmax", po::value(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
-        , "Don't add to occur list any redundant clause larger than this")
-    ("occirredmaxmb", po::value(&conf.maxOccurIrredMB)->default_value(conf.maxOccurIrredMB)
-        , "Don't allow irredundant occur size to be beyond this many MB")
-    ("occredmaxmb", po::value(&conf.maxOccurRedMB)->default_value(conf.maxOccurRedMB)
-        , "Don't allow redundant occur size to be beyond this many MB")
-    ("substimelim", po::value(&conf.subsumption_time_limitM)->default_value(conf.subsumption_time_limitM)
-        , "Time-out in bogoprops M of subsumption of long clauses with long clauses, after computing occur")
-    ("strstimelim", po::value(&conf.strengthening_time_limitM)->default_value(conf.strengthening_time_limitM)
-        , "Time-out in bogoprops M of strengthening of long clauses with long clauses, after computing occur")
     ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
         , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
     ("cardfind", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
@@ -747,7 +766,11 @@ void Main::add_supported_options()
     .add(iterativeOptions)
     .add(probeOptions)
     .add(stampOptions)
-    .add(simplificationOptions)
+    .add(simp_schedules)
+    .add(simp_limits)
+    .add(simp_opts)
+    .add(bve_options)
+    .add(bva_options)
     .add(eqLitOpts)
     .add(componentOptions)
     #if defined(USE_M4RI) || defined(USE_GAUSS)
@@ -1397,6 +1420,7 @@ lbool Main::multi_solutions()
         if (ret == l_True && !decisions_for_model_fname.empty()) {
             dump_decisions_for_model();
             solver->add_empty_cl_to_drat();
+            assert(max_nr_of_solutions == 1);
         }
 
         if (ret == l_True && current_nr_of_solutions < max_nr_of_solutions) {
