@@ -93,16 +93,14 @@ void SolutionExtender::dummyBlocked(const uint32_t blockedOn)
     if (solver->model_value(blockedOn) != l_Undef)
         return;
 
+    //Picking l_False because MiniSat likes False solutions. Could pick anything.
+    solver->model[blockedOn] = l_False;
+    solver->decisions_reaching_model.push_back(Lit(blockedOn, true));
 
     //If var is replacing something else, it MUST be set.
     if (solver->varReplacer->var_is_replacing(blockedOn)) {
-        //Picking l_False because MiniSat likes False solutions. Could pick anything.
-        solver->model[blockedOn] = l_False;
         solver->varReplacer->extend_model(blockedOn);
     }
-
-    solver->model[blockedOn] = l_False;
-    solver->decisions_reaching_model.push_back(Lit(blockedOn, true));
 }
 
 bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blockedOn)
