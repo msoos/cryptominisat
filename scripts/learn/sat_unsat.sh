@@ -2,10 +2,7 @@
 set -e
 # set -x
 
-function run_random {
-    echo ""
-    echo "------ Run $c random $1 -----------"
-    ../utils/cnf-utils/cnf-fuzz-brummayer.py -s $1 -l 3 -i 90 -I 180  > tmp
+function run_tmp {
     # cp stuff.cnf tmp
     ./cryptominisat5 --zero-exit-status --dumpdecformodel b tmp drat.out > out.sat
     grep "c conflicts" out.sat
@@ -16,7 +13,7 @@ function run_random {
     if [[ retval -eq 1 ]]; then
         echo "-> UNSAT"
         ../utils/cnf-utils/xor_to_cnf.py tmp final_good.cnf
-        ./tests/drat-trim/drat-trim final_good.cnf drat.out > out.drat
+        ./tests/drat-trim/drat-trim final_good.cnf drat.out |tee out.drat
         grep "VERIFIED" out.drat
         grep "resol.*steps" out.drat
         continue
@@ -30,7 +27,7 @@ function run_random {
     cat b >> final.cnf
     grep ^v out.sat | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
     ../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ./cryptominisat5 --zero-exit-status --verb 0 final_good.cnf > out.unsat
+    ./cryptominisat5 --zero-exit-status --verb 0 final_good.cnf | tee out.unsat
     set +e
     a=$(grep "s UNSATIS" out.unsat)
     retval=$?
@@ -40,20 +37,34 @@ function run_random {
         exit -1
     fi
 
-    ./tests/drat-trim/drat-trim final_good.cnf drat.out > out.drat
+    ./tests/drat-trim/drat-trim final_good.cnf drat.out |tee out.drat
     grep "VERIFIED" out.drat
     grep "resol.*steps" out.drat
 }
 
 if [[ $1 == "" ]]; then
     echo "No arguments, standard run"
-    for(( c=1; c < 10; c++ ))
+    for(( c=1; c < 10000; c++ ))
     do
         r=$((1 + RANDOM % 999999))
-        run_random $r
-        # exit 0
+        echo ""
+        echo "------ Run $c random $r -----------"
+        # ../utils/cnf-utils/cnf-fuzz-brummayer.py -s $r -l 3 -i 90 -I 180  > tmp
+        ../utils/cnf-utils/cnf-fuzz-brummayer.py -s $r > tmp
+        run_tmp
     done
 else
-    echo "Seed run"
-    run_random $1
+    if [[ $1 == "--file" ]]; then
+        echo "Using file $2"
+        rm -f tmp.gz
+        rm -f tmp
+        cp $2 tmp.gz
+        gunzip tmp.gz
+        run_tmp
+    else
+        echo "Seed run"
+        ../utils/cnf-utils/cnf-fuzz-brummayer.py -s $1 -l 3 -i 90 -I 180  > tmp
+        run_tmp
+        exit 0
+    fi
 fi
