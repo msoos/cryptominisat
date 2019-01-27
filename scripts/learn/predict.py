@@ -349,9 +349,9 @@ static bool {funcname}(
         accuracy = sklearn.metrics.accuracy_score(
             y_test, y_pred)
         precision = sklearn.metrics.precision_score(
-            y_test, y_pred, average="macro")
+            y_test, y_pred, pos_label="OK", average="macro")
         recall = sklearn.metrics.recall_score(
-            y_test, y_pred, average="macro")
+            y_test, y_pred, pos_label="OK", average="macro")
         print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
             precision, recall, accuracy))
 
