@@ -489,9 +489,9 @@ static bool {funcname}(
         train_accuracy = sklearn.metrics.accuracy_score(
             y_train, y_pred_train)
         train_precision = sklearn.metrics.precision_score(
-            y_train, y_pred_train, average="macro")
+            y_train, y_pred_train, pos_label="OK", average="macro")
         train_recall = sklearn.metrics.recall_score(
-            y_train, y_pred_train, average="macro")
+            y_train, y_pred_train, pos_label="OK", average="macro")
         print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
             train_precision, train_recall, train_accuracy))
 
