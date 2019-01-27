@@ -831,7 +831,7 @@ public:
         fs = files[files["rdb0.dump_no"] >= options.min_avg_dumpno].index.values
         filenames = list(fs)
         print("Left with {num} files".format(num=len(filenames)))
-        self.df = self.df[self.df["fname"].isin(fs)]
+        self.df = self.df[self.df["fname"].isin(fs)].copy()
 
         print("Post-filter number of datapoints:", self.df.shape)
 
