@@ -1014,9 +1014,7 @@ if __name__ == "__main__":
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
 
     fname = args[0]
-    with open(fname, "rb") as f:
-        df = pd.read_pickle(f)
-
-        c = Clustering(df)
-        c.filter_min_avg_dump_no()
-        c.cluster()
+    df = pd.read_pickle(fname)
+    c = Clustering(df)
+    c.filter_min_avg_dump_no()
+    c.cluster()
