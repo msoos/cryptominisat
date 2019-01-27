@@ -371,7 +371,7 @@ static bool {funcname}(
     def one_classifier(self, features, to_predict, final):
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
-        _, df_tmp = sklearn.model_selection.train_test_split(self.df, test_size=options.only_pecr)
+        _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
         df = df_tmp.copy()
 
         print("-> Number of features  :", len(features))
@@ -387,7 +387,7 @@ static bool {funcname}(
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)
 
-        train, test = sklearn.model_selection.train_test_split(df, test_size=0.33)
+        train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
 
