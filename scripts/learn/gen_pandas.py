@@ -535,12 +535,22 @@ class QueryCls (QueryHelper):
 
             goodcl.last_confl_used > rdb0.conflicts and
             (
-                -- used quite a bit over a wide area
-                (goodcl.num_used > 5 and goodcl.avg_hist_used > 30000)
+                -----------------
+                -- SHORT---------
+                -----------------
+
+                -- used quite a bit, let it run in case the end is not too far
+                   (goodcl.num_used > 5
+                    AND goodcl.avg_hist_used > 30000
+                )
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
                     AND goodcl.first_confl_used < rdb0.conflicts+10000
+                )
+
+                -- let the last confl be reached if close by
+                or (goodcl.last_confl_used < rdb0.conflicts+10000
                 )
             )
             THEN "OK"
@@ -591,22 +601,12 @@ class QueryCls (QueryHelper):
 
             goodcl.last_confl_used > rdb0.conflicts and
             (
-                -----------------
-                -- SHORT---------
-                -----------------
-
-                -- used quite a bit, let it run in case the end is not too far
-                   (goodcl.num_used > 5
-                    AND goodcl.avg_hist_used > 30000
-                )
+                -- used quite a bit over a wide area
+                (goodcl.num_used > 5 and goodcl.avg_hist_used > 30000)
 
                 -- at least let the 1st conflict be reached
                 or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used-rdb0.conflicts < 10000
-                )
-
-                -- let the last confl be reached if close by
-                or (goodcl.last_confl_used < rdb0.conflicts+10000
+                    AND goodcl.first_confl_used < rdb0.conflicts+10000
                 )
             )
             THEN "OK"
