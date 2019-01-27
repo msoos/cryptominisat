@@ -2,8 +2,7 @@
 set -e
 set -x
 
-numconfs=6
-location="out-dats-8145576.wlm01"
+numconfs=1
 
 function wait_threads {
     FAIL=0
@@ -54,8 +53,8 @@ function combine {
         rm -f "comb-short-conf-${CONF}.dat"
         rm -f "comb-long-conf-${CONF}.dat"
 
-        ./combine_dats.py -o "comb-short-conf-${CONF}.dat" ${location}/*-short-conf-${CONF}.dat > "out_combine_short_${CONF}" 2>&1 &
-        ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  ${location}/*-long-conf-${CONF}.dat  > "out_combine_long_${CONF}" 2>&1 &
+        ./combine_dats.py -o "comb-short-conf-${CONF}.dat" $1/*-short-conf-${CONF}.dat > "out${2}_combine_short_${CONF}" 2>&1 &
+        ./combine_dats.py -o "comb-long-conf-${CONF}.dat"  $1/*-long-conf-${CONF}.dat  > "out${2}_combine_long_${CONF}" 2>&1 &
 
         wait_threads
         check_fails
@@ -86,5 +85,6 @@ function predict {
 # running
 ################
 
-combine
+combine out-dats-8145576.wlm01 noclean
+combine out-dats-8160767.wlm01 normal
 predict
