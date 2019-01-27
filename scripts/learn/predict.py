@@ -33,10 +33,12 @@ import itertools
 import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
-import sklearn.model_selection
+if sklearn.__version__ == "0.20.0":
+    from sklearn.model_selection import train_test_split
+else:
+    from sklearn.cross_validation import train_test_split
 import re
 import operator
-import dtreeviz.trees
 
 
 def write_mit_header(f):
@@ -95,8 +97,9 @@ class Learner:
         return df2
 
     def output_to_dot(self, clf, features, to_predict):
-        # df = self.df[self.df["rdb0.dump_no"] == 0]
-        df2 = self.filter_percentile(self.df, features, 0.05)
+        import dtreeviz.trees
+        # df = self.df[self.df["rdb0.dump_no"] <= 1]
+        df2 = self.filter_percentile(df, features, 0.05)
         X_train = df2[features]
         y_train = df2[to_predict]
 
