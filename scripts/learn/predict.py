@@ -36,6 +36,7 @@ import sklearn.ensemble
 import sklearn.model_selection
 import re
 import operator
+import dtreeviz.trees
 
 
 def write_mit_header(f):
@@ -69,7 +70,7 @@ class Learner:
         self.fname = fname
         self.df_nofilter = df_nofilter
 
-    def output_to_dot(self, clf, features):
+    def output_to_classical_dot(self, clf, features):
         fname = options.dot + "-" + self.funcname
         sklearn.tree.export_graphviz(clf, out_file=fname,
                                      feature_names=features,
@@ -80,6 +81,31 @@ class Learner:
         print("Run dot:")
         print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
         print("gwenview {fname}.png".format(fname=fname))
+
+    def filter_percentile(self, df, features, perc=0.01):
+        low = df.quantile(perc, axis=0)
+        high = df.quantile(1.0-perc, axis=0)
+        df2 = df.copy()
+        for i in features:
+            df2 = df2[(df2[i] >= low[i]) & (df2[i] <= high[i])]
+            print(df2.shape)
+
+        print("Original size:", df.shape)
+        print("New size:", df2.shape)
+        return df2
+
+    def output_to_dot(self, clf, features, to_predict):
+        # df = self.df[self.df["rdb0.dump_no"] == 0]
+        df2 = self.filter_percentile(self.df, features, 0.05)
+        X_train = df2[features]
+        y_train = df2[to_predict]
+
+        values2nums = {'OK': 1, 'BAD': 0}
+        y_train = y_train.map(values2nums)
+        viz = dtreeviz.trees.dtreeviz(
+            clf, X_train, y_train, target_name="keep",
+            feature_names=features, class_names=list(clf.classes_))
+        viz.view()
 
     def print_confusion_matrix(self, cm, classes,
                                normalize=False,
@@ -436,7 +462,7 @@ static bool {funcname}(
             if not options.final_is_tree:
                 print("ERROR: You cannot use the DOT function on non-trees")
                 exit(-1)
-            self.output_to_dot(clf, features)
+            self.output_to_dot(clf, features, to_predict)
 
         if options.basedir:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
