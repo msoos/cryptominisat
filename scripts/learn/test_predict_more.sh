@@ -37,6 +37,13 @@ FIXED="30000"
 # RATIO="0.60"
 # FIXED="40000"
 
+FNAME="snw_13_9_preOpt_pre.cnf"
+FNAME="MD5-27-4.cnf"
+FNAME="g2-mizh-md5-48-2.cnf"
+FNAMEOUT="mystuff2"
+RATIO="1.0"
+FIXED="10000"
+
 
 # # orig: 98s
 # prop inside learnt: 82s
@@ -78,16 +85,32 @@ rm -f ../src/final_predictor*
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 --gluecut0 100 --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+# --gluecut0 100
+../cryptominisat5 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
+grep "c conflicts" cms-pred-run.out
+set +e
+a=$(grep "s SATIS" cms-pred-run.out)
+retval=$?
+set -e
+if [[ retval -eq 1 ]]; then
+    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+else
+    rm -f final.cnf
+    touch final.cnf
+    cat "../$FNAME" >> final.cnf
+    cat dec_list >> final.cnf
+    grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
+    ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
+    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+fi
 
-../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 ../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-numconfs=5
+numconfs=1
 ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs "0-${numconfs}"
 
 rm ../../src/predict/*.h
@@ -104,7 +127,7 @@ done
 cd "$FNAME-dir"
 for (( CONF = 0; CONF < numconfs; CONF++))
 do
-    ../cryptominisat5 "../$FNAME" --pred $CONF | tee cms-final-run.out-${CONF}
+    ../cryptominisat5 "../$FNAME" --printsol 0 --pred $CONF | tee cms-final-run.out-${CONF}
 done
 )
 
