@@ -89,6 +89,7 @@ class ClauseAllocator {
         void consolidate(
             Solver* solver
             , const bool force = false
+            , bool lower_verb = false
         );
 
         size_t mem_used() const;

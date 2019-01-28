@@ -1960,6 +1960,8 @@ bool Solver::execute_inprocess_strategy(
                     conf.doCache = false;
                 }
             }
+        } else if (token == "cl-consolidate") {
+            cl_alloc.consolidate(this, false, true);
         } else if (token == "renumber" || token == "must-renumber") {
             if (conf.doRenumberVars) {
                 //Clean cache before renumber -- very important, otherwise

@@ -202,6 +202,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-backw-sub-str, occ-xor,"
             "card-find,"
+            "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
         )
@@ -216,6 +217,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, "//occ-gates,"
             "occ-xor,"
             "card-find,"
+            "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
         )
@@ -226,6 +228,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
             //"occ-gates,"
+            "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "str-impl, sub-impl, sub-str-cls-with-bin,"
             "intree-probe, probe,"
