@@ -243,6 +243,7 @@ stacks, updates all pointers and offsets, and frees the original stacks.
 void ClauseAllocator::consolidate(
     Solver* solver
     , const bool force
+    , bool lower_verb
 ) {
     //If re-allocation is not really neccessary, don't do it
     //Neccesities:
@@ -252,7 +253,9 @@ void ClauseAllocator::consolidate(
     if (!force
         && (float_div(currentlyUsedSize, size) > 0.8 || currentlyUsedSize < (100ULL*1000ULL))
     ) {
-        if (solver->conf.verbosity >= 3) {
+        if (solver->conf.verbosity >= 3
+            || (lower_verb && solver->conf.verbosity)
+        ) {
             cout << "c Not consolidating memory." << endl;
         }
         return;
@@ -339,7 +342,9 @@ void ClauseAllocator::consolidate(
     dataStart = newDataStart;
 
     const double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 2) {
+    if (solver->conf.verbosity >= 2
+        || (lower_verb && solver->conf.verbosity)
+    ) {
         cout << "c [mem] consolidate ";
         cout << " old-sz: "; print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE));
         cout << " new-sz: "; print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE));
