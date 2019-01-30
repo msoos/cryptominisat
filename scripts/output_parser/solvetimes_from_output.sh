@@ -61,3 +61,4 @@ xzgrep -v -f signals_files.csv allFiles.csv | awk '{print $1 " -1"}' >> signals.
 sort signals.csv > signals_sorted.csv
 rm signals.csv signals_files.csv
 mv signals_sorted.csv signals.csv
+grep " 11" signals.csv
