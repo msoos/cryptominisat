@@ -24,7 +24,9 @@ xzgrep "^s SATISFIABLE" $(cat solved_xz.csv)   | sed 's/:s.*$//' | sed 's/.gz.*/
 
 # adjusting solved.csv, solveTimes.csv, solveTimes_rev.csv
 echo "Getting solveTimes_rev.csv"
-grep -v -f solved.csv allFiles.csv | sed "s/.gz.*/.gz/" > unsolved.csv
+sed "s/^/\^/" solved.csv | sed "s/$/\$/"  > solved_filtering.csv
+grep -v -f solved_filtering.csv allFiles.csv | sed "s/.gz.*/.gz/" > unsolved.csv
+rm solved_filtering.csv
 grep -v -f solved_xz.csv allFiles_xz.csv > unsolved_xz.csv
 cat unsolved.csv | awk '{print "5000.00 " $1}' >> solveTimes.csv
 awk '{print $2 " " $1}' solveTimes.csv | sort > solveTimes_rev.csv
@@ -32,7 +34,9 @@ awk '{print $2 " " $1}' solveTimes.csv | sort > solveTimes_rev.csv
 # memory out
 echo "Getting memout..."
 xzgrep "what.*bad.*alloc" $(cat unsolved_xz.csv) | sed "s/.gz.*/.gz/" | sort > memout.csv
-grep -v -f memout.csv allFiles.csv | sed "s/.gz/.gz OK/" > memout2.csv
+sed "s/^/\^/" memout.csv | sed "s/$/\$/"  > memout_filtering.csv
+grep -v -f memout_filtering.csv allFiles.csv | sed "s/.gz/.gz OK/" > memout2.csv
+rm memout_filtering.csv
 cat memout.csv | sed "s/.gz/.gz BAD/" >> memout2.csv
 sort memout2.csv > memout3.csv
 rm memout.csv memout2.csv
@@ -56,8 +60,10 @@ mv solved_sol2.csv solved_sol.csv
 
 
 xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)/ \1/" > signals.csv
-xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*//" > signals_files.csv
-xzgrep -v -f signals_files.csv allFiles.csv | awk '{print $1 " -1"}' >> signals.csv
+xzgrep signal  *.timeout.xz | sed -E "s/.timeout.*signal (.*)//" > signals_files.csv
+sed "s/^/\^/" signals_files.csv | sed "s/$/\$/"  > signals_files_filtering.csv
+grep -v -f signals_files_filtering.csv allFiles.csv | awk '{print $1 " -1"}' >> signals.csv
+rm signals_files_filtering.csv
 sort signals.csv > signals_sorted.csv
 rm signals.csv signals_files.csv
 mv signals_sorted.csv signals.csv

@@ -21,9 +21,9 @@
 import collections
 
 infiles = []
-infiles.append(open("solveTimes_rev.csv", "r"))
 infiles.append(open("memout.csv", "r"))
 infiles.append(open("signals.csv", "r"))
+infiles.append(open("solveTimes_rev.csv", "r"))
 infiles.append(open("solved_sol.csv", "r"))
 allfiles = open("allFiles.csv", "r")
 files = {}
