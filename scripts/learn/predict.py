@@ -84,13 +84,13 @@ class Learner:
         print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
         print("gwenview {fname}.png".format(fname=fname))
 
-    def filter_percentile(self, df, features, perc=0.01):
-        low = df.quantile(perc, axis=0)
+    def filter_percentile(self, df, features, perc):
+        low = df.quantile(perc , axis=0)
         high = df.quantile(1.0-perc, axis=0)
         df2 = df.copy()
         for i in features:
             df2 = df2[(df2[i] >= low[i]) & (df2[i] <= high[i])]
-            print(df2.shape)
+            print("Filtered to %d on %-30s, shape now: %s" %(options.filter_dot, i, df2.shape))
 
         print("Original size:", df.shape)
         print("New size:", df2.shape)
@@ -99,7 +99,7 @@ class Learner:
     def output_to_dot(self, clf, features, to_predict):
         import dtreeviz.trees
         # df = self.df[self.df["rdb0.dump_no"] <= 1]
-        df2 = self.filter_percentile(df, features, 0.05)
+        df2 = self.filter_percentile(df, features, options.filter_dot)
         X_train = df2[features]
         y_train = df2[to_predict]
 
@@ -997,6 +997,9 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
+    parser.add_option("--filterdot", default=0.05, type=float,
+                      dest="filter_dot", help="Filter the DOT output so the graph looks nicer")
+
 
     parser.add_option("--prefok", default=1, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
