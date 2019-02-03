@@ -358,7 +358,6 @@ static bool {funcname}(
         # Plot "test" confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_test, y_pred=y_pred)
-        # if options.verbose:
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
             title='Confusion matrix, without normalization -- test')
