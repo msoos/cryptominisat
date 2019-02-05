@@ -96,19 +96,25 @@ class Learner:
         print("New size:", df2.shape)
         return df2
 
-    def output_to_dot(self, clf, features, to_predict):
+    def output_to_dot(self, clf, features, to_predict, name, df):
         import dtreeviz.trees
-        # df = self.df[self.df["rdb0.dump_no"] <= 1]
         df2 = self.filter_percentile(df, features, options.filter_dot)
         X_train = df2[features]
         y_train = df2[to_predict]
 
         values2nums = {'OK': 1, 'BAD': 0}
         y_train = y_train.map(values2nums)
-        viz = dtreeviz.trees.dtreeviz(
-            clf, X_train, y_train, target_name="keep",
-            feature_names=features, class_names=list(clf.classes_))
-        viz.view()
+
+        try:
+            viz = dtreeviz.trees.dtreeviz(
+                clf, X_train, y_train, target_name=name,
+                feature_names=features, class_names=list(clf.classes_))
+            viz.view()
+        except:
+            print("It doesn't have both OK or BAD -- it instead has:")
+            print("y_train head:", y_train.head())
+        del df
+        del df2
 
     def print_confusion_matrix(self, cm, classes,
                                normalize=False,
