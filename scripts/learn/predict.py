@@ -395,8 +395,8 @@ static bool {funcname}(
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-
         split_point = self.calc_min_split_point(df)
+        del df
 
         t = time.time()
         clf = None
