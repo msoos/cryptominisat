@@ -12,8 +12,8 @@ function run_tmp {
     set -e
     if [[ retval -eq 1 ]]; then
         echo "-> UNSAT"
-        ../utils/cnf-utils/xor_to_cnf.py tmp final_good.cnf
-        ./tests/drat-trim/drat-trim final_good.cnf drat.out |tee out.drat
+        ../utils/cnf-utils/xor_to_cnf.py tmp final.cnf
+        ./tests/drat-trim/drat-trim final.cnf drat.out |tee out.drat
         grep "VERIFIED" out.drat
         grep "resol.*steps" out.drat
         continue
@@ -25,9 +25,13 @@ function run_tmp {
     touch final.cnf
     cat tmp >> final.cnf
     cat b >> final.cnf
+    cp final.cnf final_without_ban.cnf
+    ../utils/cnf-utils/xor_to_cnf.py final_without_ban.cnf final_without_ban.cnf2
+    mv final_without_ban.cnf2 final_without_ban.cnf
     grep ^v out.sat | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
-    ../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ./cryptominisat5 --zero-exit-status --verb 0 final_good.cnf | tee out.unsat
+    ../utils/cnf-utils/xor_to_cnf.py final.cnf final2.cnf
+    mv final2.cnf final.cnf
+    ./cryptominisat5 --zero-exit-status --verb 0 final.cnf | tee out.unsat
     set +e
     a=$(grep "s UNSATIS" out.unsat)
     retval=$?
@@ -37,7 +41,7 @@ function run_tmp {
         exit -1
     fi
 
-    ./tests/drat-trim/drat-trim final_good.cnf drat.out |tee out.drat
+    ./tests/drat-trim/drat-trim final.cnf drat.out |tee out.drat
     grep "VERIFIED" out.drat
     grep "resol.*steps" out.drat
 }
