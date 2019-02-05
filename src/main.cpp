@@ -1197,7 +1197,13 @@ void Main::manually_parse_some_options()
         if (vm["input"].as<vector<string> >().size() > 1) {
             conf.simplified_cnf = vm["input"].as<vector<string> >()[1];
         } else {
-            conf.simplified_cnf = vm["drat"].as<string>();
+            try {
+                conf.simplified_cnf = vm["drat"].as<string>();
+            } catch (boost::bad_any_cast &e) {
+                std::cerr
+                << "ERROR! Did you give a simplified CNF as a 2nd argument? You are preprocessing! So you must (and it must be a string)" << endl;
+                exit(-1);
+            }
         }
     }
 
