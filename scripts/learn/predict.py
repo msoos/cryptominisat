@@ -470,7 +470,12 @@ static bool {funcname}(
             if not options.final_is_tree:
                 print("ERROR: You cannot use the DOT function on non-trees")
                 exit(-1)
-            self.output_to_dot(clf, features, to_predict)
+            for filt in [0, 1, 3, 20, 10000]:
+                x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
+                print(x)
+                xdf = self.df[self.df["rdb0.dump_no"] <= filt]
+                self.output_to_dot(clf, features, to_predict, x, xdf)
+                del xdf
 
         if options.basedir:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
@@ -953,6 +958,8 @@ if __name__ == "__main__":
     # generation of predictor
     parser.add_option("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
+    parser.add_option("--filterdot", default=0.05, type=float,
+                      dest="filter_dot", help="Filter the DOT output from outliers so the graph looks nicer")
     parser.add_option("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
     parser.add_option("--check", action="store_true", default=False,
@@ -1002,9 +1009,6 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
-    parser.add_option("--filterdot", default=0.05, type=float,
-                      dest="filter_dot", help="Filter the DOT output so the graph looks nicer")
-
 
     parser.add_option("--prefok", default=1, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
