@@ -1023,6 +1023,10 @@ if __name__ == "__main__":
         print("ERROR: You must give short or long")
         exit(-1)
 
+    if options.clusters <= 0:
+        print("ERROR: You must give a '--clusters' option that is greater than 0")
+        exit(-1)
+
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
 
     fname = args[0]
