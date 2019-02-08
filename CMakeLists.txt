@@ -715,10 +715,7 @@ set(CRYPTOMINISAT5_STATIC_DEPS
 )
 
 # Export targets
-set(MY_TARGETS cryptominisat5 cryptominisat5_simple-bin)
-if (NOT ONLY_SIMPLE)
-    set(MY_TARGETS ${MY_TARGETS} cryptominisat5-bin)
-endif()
+set(MY_TARGETS cryptominisat5)
 if (IPASIR)
     set(MY_TARGETS ${MY_TARGETS} ipasircryptominisat5)
 endif()
