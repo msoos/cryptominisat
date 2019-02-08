@@ -248,8 +248,10 @@ if (EMSCRIPTEN)
         main_emscripten.cpp
     )
 
-    set_target_properties(
-      cryptominisat5_simple-bin PROPERTIES LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+    set_target_properties(cryptominisat5_simple-bin
+    PROPERTIES
+    OUTPUT_NAME cryptominisat5_simple
+    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
@@ -270,6 +272,7 @@ IF (ZLIB_FOUND)
 ENDIF()
 
 set_target_properties(cryptominisat5_simple-bin PROPERTIES
+    OUTPUT_NAME cryptominisat5_simple
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
 target_link_libraries(cryptominisat5_simple-bin
@@ -283,6 +286,7 @@ SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
     set_target_properties(cryptominisat5-bin PROPERTIES
+        OUTPUT_NAME cryptominisat5
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
     target_link_libraries(cryptominisat5-bin
