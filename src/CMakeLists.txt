@@ -163,7 +163,6 @@ target_link_libraries(cryptominisat5
 
 if (NOT WIN32)
     set_target_properties(cryptominisat5 PROPERTIES
-        OUTPUT_NAME cryptominisat5
         PUBLIC_HEADER "${cryptominisat5_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -237,7 +236,7 @@ install(TARGETS cryptominisat5
 )
 
 if (NOT ONLY_SIMPLE)
-    add_executable(cryptominisat5
+    add_executable(cryptominisat5-bin
         main.cpp
         main_exe.cpp
         signalcode.cpp
@@ -245,19 +244,19 @@ if (NOT ONLY_SIMPLE)
 endif()
 
 if (EMSCRIPTEN)
-    add_executable(cryptominisat5_simple
+    add_executable(cryptominisat5_simple-bin
         main_emscripten.cpp
     )
 
     set_target_properties(
-      cryptominisat5_simple PROPERTIES LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+      cryptominisat5_simple-bin PROPERTIES LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
         PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 else()
-    add_executable(cryptominisat5_simple
+    add_executable(cryptominisat5_simple-bin
         main_simple.cpp
     )
 endif()
@@ -270,28 +269,28 @@ IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-set_target_properties(cryptominisat5_simple PROPERTIES
+set_target_properties(cryptominisat5_simple-bin PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
-target_link_libraries(cryptominisat5_simple
+target_link_libraries(cryptominisat5_simple-bin
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat5_simple
-    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+install(TARGETS cryptominisat5_simple-bin
+    # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat5 PROPERTIES
+    set_target_properties(cryptominisat5-bin PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
-    target_link_libraries(cryptominisat5
+    target_link_libraries(cryptominisat5-bin
         ${cryptoms_exec_link_libs}
         "${Boost_LIBRARIES}"
     )
-    install(TARGETS cryptominisat5
-        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+    install(TARGETS cryptominisat5-bin
+        # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")

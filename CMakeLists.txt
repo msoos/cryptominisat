@@ -453,13 +453,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         if (NOT ONLY_SIMPLE)
             ADD_CUSTOM_TARGET(man_cms5
                 ALL
-                DEPENDS cryptominisat5
+                DEPENDS cryptominisat5-bin
             )
 
             ADD_CUSTOM_COMMAND(
                 TARGET man_cms5
                 COMMAND help2man
-                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1 --name="SAT solver"
+                ARGS --version-string=${CMS_FULL_VERSION} --help-option="--hhelp" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5-bin> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5.1 --name="SAT solver"
             )
 
             INSTALL(
@@ -470,13 +470,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         endif()
         ADD_CUSTOM_TARGET(man_cms5_simple
             ALL
-            DEPENDS cryptominisat5_simple
+            DEPENDS cryptominisat5_simple-bin
         )
 
         ADD_CUSTOM_COMMAND(
             TARGET man_cms5_simple
             COMMAND help2man
-            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5_simple> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1 --name="SAT solver"
+            ARGS --version-string=${CMS_FULL_VERSION} --help-option="-h" --include ${PROJECT_SOURCE_DIR}/manpage-extras $<TARGET_FILE:cryptominisat5_simple-bin> -o ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5_simple.1 --name="SAT solver"
         )
 
         INSTALL(
@@ -717,7 +717,7 @@ set(CRYPTOMINISAT5_STATIC_DEPS
 # Export targets
 set(MY_TARGETS cryptominisat5 cryptominisat5_simple-bin)
 if (NOT ONLY_SIMPLE)
-    set(MY_TARGETS ${MY_TARGETS} cryptominisat5)
+    set(MY_TARGETS ${MY_TARGETS} cryptominisat5-bin)
 endif()
 if (IPASIR)
     set(MY_TARGETS ${MY_TARGETS} ipasircryptominisat5)
