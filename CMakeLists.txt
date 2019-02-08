@@ -715,7 +715,7 @@ set(CRYPTOMINISAT5_STATIC_DEPS
 )
 
 # Export targets
-set(MY_TARGETS libcryptominisat5 cryptominisat5_simple)
+set(MY_TARGETS cryptominisat5 cryptominisat5_simple-bin)
 if (NOT ONLY_SIMPLE)
     set(MY_TARGETS ${MY_TARGETS} cryptominisat5)
 endif()
