@@ -156,20 +156,20 @@ if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${SQLITE3_LIBRARIES})
 endif ()
 
-add_library(libcryptominisat5
+add_library(cryptominisat5
     ${cryptoms_lib_files}
     cryptominisat.cpp
 )
 
-GENERATE_EXPORT_HEADER(libcryptominisat5
-         BASE_NAME libcryptominisat5
-         #EXPORT_MACRO_NAME libcryptominisat5_EXPORT
+GENERATE_EXPORT_HEADER(cryptominisat5
+         BASE_NAME cryptominisat5
+         #EXPORT_MACRO_NAME cryptominisat5_EXPORT
          #EXPORT_FILE_NAME MyLibrary_Export.h
          #STATIC_DEFINE MyLibrary_BUILT_AS_STATIC
 )
 
 if (SQLITE3_FOUND AND STATS)
-    add_dependencies(libcryptominisat5
+    add_dependencies(cryptominisat5
         tablestruct
     )
 endif()
@@ -181,20 +181,19 @@ if (FINAL_PREDICTOR)
 endif()
 
 # indicate that we depend on pthread, and compile in the actual library
-target_link_libraries(libcryptominisat5
+target_link_libraries(cryptominisat5
     LINK_PUBLIC ${cryptoms_lib_link_libs}
     LINK_PUBLIC ${CMAKE_THREAD_LIBS_INIT}
 )
 
 if (NOT WIN32)
-    set_target_properties(libcryptominisat5 PROPERTIES
-        OUTPUT_NAME cryptominisat5
+    set_target_properties(cryptominisat5 PROPERTIES
         PUBLIC_HEADER "${cryptominisat5_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     )
 else()
-    set_target_properties(libcryptominisat5 PROPERTIES
+    set_target_properties(cryptominisat5 PROPERTIES
         OUTPUT_NAME cryptominisat5win
         PUBLIC_HEADER "${cryptominisat5_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -207,7 +206,7 @@ if (IPASIR)
         ipasir.cpp
     )
     target_link_libraries(ipasircryptominisat5
-        LINK_PUBLIC ${cryptoms_lib_link_libs} libcryptominisat5
+        LINK_PUBLIC ${cryptoms_lib_link_libs} cryptominisat5
     )
     set_target_properties(ipasircryptominisat5 PROPERTIES
         OUTPUT_NAME ipasircryptominisat5
@@ -225,11 +224,11 @@ if (IPASIR)
 
 endif()
 
-cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
-cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
-cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
-cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
-cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/dimacsparser.h )
+cmsat_add_public_header(cryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuffer.h )
 
 # -----------------------------------------------------------------------------
 # Copy public headers into build directory include directory.
@@ -238,7 +237,7 @@ cmsat_add_public_header(libcryptominisat5 ${CMAKE_CURRENT_SOURCE_DIR}/streambuff
 # -----------------------------------------------------------------------------
 set(HEADER_DEST "${PROJECT_BINARY_DIR}/include/cryptominisat5")
 add_custom_target(CopyPublicHeaders ALL)
-get_target_property(cryptominisat5_public_headers libcryptominisat5 PUBLIC_HEADER)
+get_target_property(cryptominisat5_public_headers cryptominisat5 PUBLIC_HEADER)
 foreach(public_header ${cryptominisat5_public_headers})
     get_filename_component(HEADER_NAME ${public_header} NAME)
     add_custom_command(TARGET CopyPublicHeaders PRE_BUILD
@@ -253,7 +252,7 @@ foreach(public_header ${cryptominisat5_public_headers})
                       )
 endforeach()
 
-install(TARGETS libcryptominisat5
+install(TARGETS cryptominisat5
     EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -262,7 +261,7 @@ install(TARGETS libcryptominisat5
 )
 
 if (NOT ONLY_SIMPLE)
-    add_executable(cryptominisat5
+    add_executable(cryptominisat5-bin
         main.cpp
         main_exe.cpp
         signalcode.cpp
@@ -270,53 +269,57 @@ if (NOT ONLY_SIMPLE)
 endif()
 
 if (EMSCRIPTEN)
-    add_executable(cryptominisat5_simple
+    add_executable(cryptominisat5_simple-bin
         main_emscripten.cpp
     )
 
-    set_target_properties(
-      cryptominisat5_simple PROPERTIES LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
+    set_target_properties(cryptominisat5_simple-bin
+    PROPERTIES
+    OUTPUT_NAME cryptominisat5_simple
+    LINK_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 
     SET_SOURCE_FILES_PROPERTIES(main_emscripten.cpp
         PROPERTIES COMPILE_FLAGS "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'  -s LINKABLE=1 -s EXPORT_ALL=1"
     )
 else()
-    add_executable(cryptominisat5_simple
+    add_executable(cryptominisat5_simple-bin
         main_simple.cpp
     )
 endif()
 
 set(cryptoms_exec_link_libs
-    libcryptominisat5
+    cryptominisat5
 )
 
 IF (ZLIB_FOUND)
     SET(cryptoms_exec_link_libs ${cryptoms_exec_link_libs} ${ZLIB_LIBRARY})
 ENDIF()
 
-set_target_properties(cryptominisat5_simple PROPERTIES
+set_target_properties(cryptominisat5_simple-bin PROPERTIES
+    OUTPUT_NAME cryptominisat5_simple
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE)
-target_link_libraries(cryptominisat5_simple
+target_link_libraries(cryptominisat5_simple-bin
     ${cryptoms_exec_link_libs}
 )
-install(TARGETS cryptominisat5_simple
-    EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+install(TARGETS cryptominisat5_simple-bin
+    # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5_simple")
 
 if (NOT ONLY_SIMPLE)
-    set_target_properties(cryptominisat5 PROPERTIES
+    set_target_properties(cryptominisat5-bin PROPERTIES
+        OUTPUT_NAME cryptominisat5
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
         INSTALL_RPATH_USE_LINK_PATH TRUE)
-    target_link_libraries(cryptominisat5
+    target_link_libraries(cryptominisat5-bin
         ${cryptoms_exec_link_libs}
         "${Boost_LIBRARIES}"
     )
-    install(TARGETS cryptominisat5
-        EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
+    install(TARGETS cryptominisat5-bin
+        # EXPORT ${CRYPTOMINISAT5_EXPORT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")

@@ -68,13 +68,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(OUTPUT ${OUTPUT}/timestamp
        COMMAND ${PYTHON_EXECUTABLE}
        ARGS setup.py build_ext --inplace
-       DEPENDS libcryptominisat5
+       DEPENDS cryptominisat5
    )
 else()
     add_custom_command(OUTPUT ${OUTPUT}/timestamp
        COMMAND ${PYTHON_EXECUTABLE}
        ARGS setup.py build_ext --inplace --rpath ../lib
-       DEPENDS libcryptominisat5
+       DEPENDS cryptominisat5
    )
 endif()
 

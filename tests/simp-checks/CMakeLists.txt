@@ -25,7 +25,7 @@
 #         COMMAND "${PYTHON_EXECUTABLE}"
 #             "${CMAKE_CURRENT_SOURCE_DIR}/check_bve.py"
 #             "--minisat" $<TARGET_FILE:minisatoeas_simp>
-#             "--cms" $<TARGET_FILE:cryptominisat5>
+#             "--cms" $<TARGET_FILE:cryptominisat5-bin>
 #             "--threads" "1"
 #             "${CMAKE_CURRENT_SOURCE_DIR}/simplifiy_testfiles/"
 #         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
