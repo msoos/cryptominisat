@@ -596,7 +596,12 @@ static bool {funcname}(
             best_features.append('cl.glue_rel_queue')
             best_features.append('cl.glue')
             best_features.append('rdb0.act_ranking_top_10')
-            best_features.append('rdb0.act_ranking')
+
+            # must NOT be used!!
+            # this depends on how many clauses are in the database and that will DEFINIETELY
+            # not be the same during a "normal" run!
+            # best_features.append('rdb0.act_ranking')
+
             best_features.append('rdb0.last_touched_diff')
             #best_features.append('rdb1.act_ranking_top_10')
             #best_features.append('rdb1.act_ranking')
