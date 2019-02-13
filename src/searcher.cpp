@@ -2181,7 +2181,6 @@ bool Searcher::must_abort(const lbool status) {
 
 lbool Searcher::solve(
     const uint64_t _max_confls
-    , const unsigned upper_level_iteration_num
 ) {
     assert(ok);
     assert(qhead == trail.size());
