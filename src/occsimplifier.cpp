@@ -1340,7 +1340,6 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
 
         #ifdef SLOW_DEBUG
-        check_clid_correct();
         solver->check_implicit_stats(true);
         #endif
         if (!solver->propagate_occur()) {
@@ -3286,16 +3285,4 @@ void OccSimplifier::load_state(SimpleInFile& f)
             assert(solver->value(i) == l_Undef);
         }
     }
-}
-
-void OccSimplifier::check_clid_correct() const
-{
-    #ifdef STATS_NEEDED
-    for(auto offs: clauses) {
-        Clause * cl = solver->cl_alloc.ptr(offs);
-        if (!cl->freed() && !cl->getRemoved()) {
-            assert(!(cl->stats.ID == 0 && cl->red()));
-        }
-    }
-    #endif
 }
