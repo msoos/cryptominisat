@@ -290,7 +290,8 @@ private:
     //Ternary resolution
     bool ternary_res();
     bool perform_ternary(Clause* cl, ClOffset offs);
-    bool check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
+    void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
+    vector<vector<Lit>> cl_to_add_ternary;
 
     //debug
     bool subsetReverse(const Clause& B) const;

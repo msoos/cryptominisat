@@ -1516,6 +1516,11 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
 bool OccSimplifier::ternary_res()
 {
     assert(solver->okay());
+    assert(cl_to_add_ternary.empty());
+    if (clauses.empty()) {
+        return solver->okay();
+    }
+
     double myTime = cpuTime();
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
     limit_to_decrease = &ternary_res_time_limit;
@@ -1563,6 +1568,7 @@ bool OccSimplifier::ternary_res()
 
 bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 {
+    assert(cl_to_add_ternary.empty());
     *limit_to_decrease -= 3;
     for(const Lit l: *cl) {
         seen[l.toInt()] = 1;
@@ -1582,10 +1588,8 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         if (l == dont_check) {
             continue;
         }
-        if (!check_ternary_cl(cl, offs, solver->watches[l]))
-            break;
-        if (!check_ternary_cl(cl, offs, solver->watches[~l]))
-            break;
+        check_ternary_cl(cl, offs, solver->watches[l]);
+        check_ternary_cl(cl, offs, solver->watches[~l]);
     }
 
     //clean up
@@ -1593,10 +1597,31 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         seen[l.toInt()] = 0;
     }
 
+    for(vector<Lit>& newcl: cl_to_add_ternary) {
+        Clause* newCl = solver->add_clause_int(
+            newcl //Literals in new clause
+            , true //Is the new clause redundant?
+            , ClauseStats() //Statistics for this new clause (usage, etc.)
+            , false //Should clause be attached if long?
+        );
+        *limit_to_decrease-=20;
+
+        if (!solver->ok)
+            break;
+
+        if (newCl != NULL) {
+            newCl->stats.glue = 3;
+            linkInClause(*newCl);
+            ClOffset offset = solver->cl_alloc.get_offset(newCl);
+            clauses.push_back(offset);
+        }
+    }
+    cl_to_add_ternary.clear();
+
     return solver->okay();
 }
 
-bool OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws)
+void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws)
 {
     *limit_to_decrease -= ws.size()*2;
     for (Watched& w: ws) {
@@ -1644,29 +1669,12 @@ bool OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
                     newcl.push_back(l);
                 }
             }
-
+            cl_to_add_ternary.push_back(newcl);
+            *limit_to_decrease-=20;
             runStats.ternary_added++;
             //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
-            Clause* newCl = solver->add_clause_int(
-                newcl //Literals in new clause
-                , true //Is the new clause redundant?
-                , ClauseStats() //Statistics for this new clause (usage, etc.)
-                , false //Should clause be attached if long?
-            );
-
-            if (!solver->ok)
-                return false;
-
-            if (newCl != NULL) {
-                newCl->stats.glue = 3;
-                linkInClause(*newCl);
-                ClOffset offset = solver->cl_alloc.get_offset(newCl);
-                clauses.push_back(offset);
-            }
         }
     }
-
-    return true;
 }
 
 bool OccSimplifier::backward_sub_str()
