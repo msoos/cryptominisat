@@ -116,6 +116,9 @@ bool BVA::bounded_var_addition()
             , time_remain
         );
     }
+    runStats.time_used = time_used;
+    globalStats += runStats;
+    runStats.reset();
 
     return solver->okay();
 }

@@ -454,7 +454,7 @@ void Main::add_supported_options()
     std::ostringstream ssERatio;
     ssERatio << std::setprecision(4) << "norm: " << conf.varElimRatioPerIter << " preproc: " << 1.0;
 
-    po::options_description simp_schedules("Simplification sedules");
+    po::options_description simp_schedules("Simplification schedules");
     simp_schedules.add_options()
     ("schedsimp", po::value(&conf.do_simplify_problem)->default_value(conf.do_simplify_problem)
         , "Perform simplification rounds. If 0, we never perform any.")
@@ -480,9 +480,16 @@ void Main::add_supported_options()
         , "Simp rounds increment by this power of N")
     ;
 
+    po::options_description tern_res_options("Ternary resolution");
+    tern_res_options.add_options()
+    ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
+        , "Perform Ternary resolution'")
+    ("terntimelim", po::value(&conf.ternary_res_time_limitM)->default_value(conf.ternary_res_time_limitM)
+        , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
+    ;
 
-    po::options_description simp_limits("Simplification limits");
-    simp_limits.add_options()
+    po::options_description occ_mem_limits("Occ-based simplification memory limits");
+    occ_mem_limits.add_options()
     ("occredmax", po::value(&conf.maxRedLinkInSize)->default_value(conf.maxRedLinkInSize)
         , "Don't add to occur list any redundant clause larger than this")
     ("occredmaxmb", po::value(&conf.maxOccurRedMB)->default_value(conf.maxOccurRedMB)
@@ -491,8 +498,8 @@ void Main::add_supported_options()
         , "Don't allow irredundant occur size to be beyond this many MB")
     ;
 
-    po::options_description simp_opts("Simplification generic options");
-    simp_opts.add_options()
+    po::options_description sub_str_time_limits("Occ-based subsumption and strengthening time limits");
+    sub_str_time_limits.add_options()
     ("strengthen", po::value(&conf.do_strengthen_with_occur)->default_value(conf.do_strengthen_with_occur)
         , "Perform clause contraction through self-subsuming resolution as part of the occurrence-subsumption system")
     ("substimelim", po::value(&conf.subsumption_time_limitM)->default_value(conf.subsumption_time_limitM)
@@ -767,8 +774,9 @@ void Main::add_supported_options()
     .add(probeOptions)
     .add(stampOptions)
     .add(simp_schedules)
-    .add(simp_limits)
-    .add(simp_opts)
+    .add(occ_mem_limits)
+    .add(tern_res_options)
+    .add(sub_str_time_limits)
     .add(bve_options)
     .add(bva_options)
     .add(eqLitOpts)

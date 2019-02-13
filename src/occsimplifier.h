@@ -108,7 +108,6 @@ struct BVEStats
     int64_t numVarsElimed = 0;
     uint64_t varElimTimeOut = 0;
     uint64_t clauses_elimed_long = 0;
-    uint64_t clauses_elimed_tri = 0;
     uint64_t clauses_elimed_bin = 0;
     uint64_t clauses_elimed_sumsize = 0;
     uint64_t longRedClRemThroughElim = 0;
@@ -181,15 +180,12 @@ struct BVEStats
         print_stats_line("c cl-elim-bin"
             , clauses_elimed_bin);
 
-        print_stats_line("c cl-elim-tri"
-            , clauses_elimed_tri);
-
         print_stats_line("c cl-elim-long"
             , clauses_elimed_long);
 
         print_stats_line("c cl-elim-avg-s",
             ((double)clauses_elimed_sumsize
-            /(double)(clauses_elimed_bin + clauses_elimed_tri + clauses_elimed_long))
+            /(double)(clauses_elimed_bin + clauses_elimed_long))
         );
 
         print_stats_line("c v-elim-sub"
@@ -236,18 +232,20 @@ public:
 
     struct Stats
     {
-        void print(const size_t nVars) const;
-        void print_short() const;
+        void print(const size_t nVars, OccSimplifier* occs) const;
+        void print_extra_times() const;
         Stats& operator+=(const Stats& other);
         void clear();
-        double total_time() const;
+        double total_time(OccSimplifier* occs) const;
 
         uint64_t numCalls = 0;
+        uint64_t ternary_added = 0;
 
         //Time stats
         double linkInTime = 0;
-        double blockTime = 0;
         double varElimTime = 0;
+        double xorTime = 0;
+        double triresolveTime = 0;
         double finalCleanupTime = 0;
 
         //General stat
@@ -258,7 +256,6 @@ public:
     BVEStats bvestats_global;
 
     const Stats& get_stats() const;
-    const SubsumeStrengthen* getSubsumeStrengthen() const;
     void check_elimed_vars_are_unassigned() const;
     void check_clid_correct() const;
     bool getAnythingHasBeenBlocked() const;
@@ -290,6 +287,12 @@ private:
     bool backward_sub_str();
     bool execute_simplifier_strategy(const string& strategy);
 
+    //Ternary resolution
+    bool ternary_res();
+    bool perform_ternary(Clause* cl, ClOffset offs);
+    void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
+    vector<vector<Lit>> cl_to_add_ternary;
+
     //debug
     bool subsetReverse(const Clause& B) const;
 
@@ -303,7 +306,7 @@ private:
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()
 
-    //Limits
+    //Time Limits
     uint64_t clause_lits_added;
     int64_t  strengthening_time_limit;              ///<Max. number self-subsuming resolution tries to do this run
     int64_t  subsumption_time_limit;              ///<Max. number backward-subsumption tries to do this run
@@ -311,8 +314,11 @@ private:
     int64_t  empty_varelim_time_limit;
     int64_t  varelim_num_limit;
     int64_t  varelim_sub_str_limit;
-    int64_t  varelim_linkin_limit_bytes;
+    int64_t  ternary_res_time_limit;
     int64_t* limit_to_decrease;
+
+    //Memory limits
+    int64_t  varelim_linkin_limit_bytes;
 
     //Start-up
     bool fill_occur();
@@ -567,11 +573,6 @@ inline bool OccSimplifier::subsetReverse(const Clause& B) const
             return false;
     }
     return true;
-}
-
-inline const SubsumeStrengthen* OccSimplifier::getSubsumeStrengthen() const
-{
-    return sub_str;
 }
 
 } //end namespace
