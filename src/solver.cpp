@@ -2033,7 +2033,6 @@ lbool Solver::simplify_problem(const bool startup)
     }
 
     if (startup) {
-        consolidate_watches(true);
         execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
     } else {
         execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
