@@ -469,7 +469,7 @@ void Main::add_supported_options()
     ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
         , "Perform Ternary resolution'")
     ("terntimelim", po::value(&conf.ternary_res_time_limitM)->default_value(conf.ternary_res_time_limitM)
-        , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisability Problems'")
+        , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");
