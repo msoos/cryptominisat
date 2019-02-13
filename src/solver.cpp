@@ -458,10 +458,11 @@ Clause* Solver::add_clause_int(
             if (attach_long) {
                 attachClause(*c);
             } else {
-                if (red)
+                if (red) {
                     litStats.redLits += ps.size();
-                else
+                } else {
                     litStats.irredLits += ps.size();
+                }
             }
 
             return c;
@@ -479,10 +480,11 @@ void Solver::attachClause(
     #endif
 
     //Update stats
-    if (cl.red())
+    if (cl.red()) {
         litStats.redLits += cl.size();
-    else
+    } else {
         litStats.irredLits += cl.size();
+    }
 
     //Call Solver's function for heavy-lifting
     PropEngine::attachClause(cl, checkAttach);
