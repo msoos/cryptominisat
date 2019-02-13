@@ -42,12 +42,31 @@ public:
     bool bounded_var_addition();
     size_t mem_used() const;
 
+    struct Stats
+    {
+        double time_used = 0;
+
+        Stats& operator +=(const Stats& other) {
+            time_used += other.time_used;
+            return *this;
+        }
+
+        void reset()
+        {
+            *this = Stats();
+        }
+    };
+
+    const Stats& get_stats() const;
+
 private:
     Solver* solver;
     OccSimplifier* simplifier;
     vector<uint16_t>& seen;
     vector<uint8_t>& seen2;
 
+    Stats runStats;
+    Stats globalStats;
     bool bva_verbosity = 0;
     size_t bva_worked;
     size_t bva_simp_size;
@@ -170,6 +189,11 @@ private:
 
     int64_t bounded_var_elim_time_limit;
 };
+
+inline const BVA::Stats& BVA::get_stats() const
+{
+    return globalStats;
+}
 
 }
 

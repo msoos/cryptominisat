@@ -2129,8 +2129,8 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
-            , occsimplifier->get_stats().total_time()
-            , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
+            , occsimplifier->get_stats().total_time(occsimplifier)
+            , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
             , "% time"
         );
     }
@@ -2232,11 +2232,11 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
-            , occsimplifier->get_stats().total_time()
-            , stats_line_percent(occsimplifier->get_stats().total_time() ,cpu_time)
+            , occsimplifier->get_stats().total_time(occsimplifier)
+            , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
             , "% time"
         );
-        occsimplifier->get_stats().print_short();
+        occsimplifier->get_stats().print_extra_times();
     }
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
@@ -2323,12 +2323,12 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
     if (conf.perform_occur_based_simp) {
         if (conf.do_print_times)
         print_stats_line("c OccSimplifier time"
-            , occsimplifier->get_stats().total_time()
-            , stats_line_percent(occsimplifier->get_stats().total_time(), cpu_time)
+            , occsimplifier->get_stats().total_time(occsimplifier)
+            , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier), cpu_time)
             , "% time"
         );
 
-        occsimplifier->get_stats().print(nVarsOuter());
+        occsimplifier->get_stats().print(nVarsOuter(), occsimplifier);
     }
 
     //TODO after TRI to LONG conversion

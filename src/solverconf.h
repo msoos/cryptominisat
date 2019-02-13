@@ -265,6 +265,10 @@ class DLL_PUBLIC SolverConf
         long long strengthening_time_limitM;
         long long aggressive_elim_time_limitM;
 
+        //Ternary resolution
+        bool doTernary;
+        long long ternary_res_time_limitM;
+
         //BVA
         int      do_bva;
         int min_bva_gain;

@@ -1208,9 +1208,9 @@ end:
     }
     if (solver->conf.verbosity) {
         if (solver->conf.verbosity >= 3)
-            runStats.print(solver->nVarsOuter());
+            runStats.print(solver->nVarsOuter(), this);
         else
-            runStats.print_short();
+            runStats.print_extra_times();
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -1378,6 +1378,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     n_occurs[lit.toInt()] = calc_occ_data(lit);
                     n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
                 }
+                runStats.xorTime += finder.get_stats().findTime;
             }
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
@@ -1844,6 +1845,8 @@ void OccSimplifier::set_limits()
     empty_varelim_time_limit   = 200LL*1000LL*solver->conf.empty_varelim_time_limitM
         *solver->conf.global_timeout_multiplier;
     varelim_sub_str_limit      = 1000ULL*1000ULL*solver->conf.varelim_sub_str_limit
+        *solver->conf.global_timeout_multiplier;
+    ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;
 
     //If variable elimination isn't going so well
@@ -2980,10 +2983,15 @@ void OccSimplifier::linkInClause(Clause& cl)
     }
 }*/
 
-double OccSimplifier::Stats::total_time() const
+double OccSimplifier::Stats::total_time(OccSimplifier* occs) const
 {
-    return linkInTime + blockTime
-        + varElimTime + finalCleanupTime;
+    return linkInTime + varElimTime + xorTime + triresolveTime
+        + finalCleanupTime
+        + occs->sub_str->get_stats().subsumeTime
+        + occs->sub_str->get_stats().strengthenTime
+        + occs->bvestats_global.timeUsed
+        + occs->bva->get_stats().time_used;
+        ;
 }
 
 void OccSimplifier::Stats::clear()
@@ -2998,10 +3006,12 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
 
     //Time
     linkInTime += other.linkInTime;
-    blockTime += other.blockTime;
     varElimTime += other.varElimTime;
+    xorTime += other.xorTime;
+    triresolveTime += other.triresolveTime;
     finalCleanupTime += other.finalCleanupTime;
     zeroDepthAssings += other.zeroDepthAssings;
+    ternary_added += other.ternary_added;
 
     return *this;
 }
@@ -3011,7 +3021,6 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     numVarsElimed += other.numVarsElimed;
     varElimTimeOut += other.varElimTimeOut;
     clauses_elimed_long += other.clauses_elimed_long;
-    clauses_elimed_tri += other.clauses_elimed_tri;
     clauses_elimed_bin += other.clauses_elimed_bin;
     clauses_elimed_sumsize += other.clauses_elimed_sumsize;
     longRedClRemThroughElim += other.longRedClRemThroughElim;
@@ -3025,7 +3034,7 @@ BVEStats& BVEStats::operator+=(const BVEStats& other)
     return *this;
 }
 
-void OccSimplifier::Stats::print_short() const
+void OccSimplifier::Stats::print_extra_times() const
 {
 
     cout
@@ -3038,18 +3047,18 @@ void OccSimplifier::Stats::print_short() const
     << endl;
 }
 
-void OccSimplifier::Stats::print(const size_t nVars) const
+void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
 {
     cout << "c -------- OccSimplifier STATS ----------" << endl;
     print_stats_line("c time"
-        , total_time()
-        , stats_line_percent(varElimTime, total_time())
+        , total_time(occs)
+        , stats_line_percent(varElimTime, total_time(occs))
         , "% var-elim"
     );
 
     print_stats_line("c called"
         ,  numCalls
-        , float_div(total_time(), numCalls)
+        , float_div(total_time(occs), numCalls)
         , "s per call"
     );
 
