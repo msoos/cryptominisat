@@ -66,7 +66,6 @@ public:
         , const vector<uint32_t>& interToOuter2
         , vector<uint16_t>& seen
     );
-    void clearStamps();
     void save_on_var_memory(const uint32_t newNumVars);
 
     uint64_t stampingTime = 0;

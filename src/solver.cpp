@@ -2135,6 +2135,7 @@ void Solver::print_min_stats(const double cpu_time, const double cpu_time_total)
             , stats_line_percent(occsimplifier->get_stats().total_time(occsimplifier) ,cpu_time)
             , "% time"
         );
+        occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
     if (conf.do_print_times)
     print_stats_line("c SCC time"
@@ -2239,6 +2240,7 @@ void Solver::print_norm_stats(const double cpu_time, const double cpu_time_total
             , "% time"
         );
         occsimplifier->get_stats().print_extra_times();
+        occsimplifier->get_sub_str()->get_stats().print_short(this);
     }
     print_stats_line("c SCC time"
         , varReplacer->get_scc_finder()->get_stats().cpu_time
@@ -2331,6 +2333,7 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
         );
 
         occsimplifier->get_stats().print(nVarsOuter(), occsimplifier);
+        occsimplifier->get_sub_str()->get_stats().print();
     }
 
     //TODO after TRI to LONG conversion

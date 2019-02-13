@@ -572,36 +572,6 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
     return link_in_data;
 }
 
-bool OccSimplifier::decide_occur_limit(bool irred, uint64_t memUsage)
-{
-    //over + irred -> exit
-    if (irred
-        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurIrredMB
-    ) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [simp] Not linking in irred due to excessive expected memory usage"
-            << endl;
-        }
-        return false;
-    }
-
-    //over + red -> don't link
-    if (!irred
-        && (double)memUsage/(1024.0*1024.0) >= solver->conf.maxOccurRedMB
-    ) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [simp] Not linking in red due to excessive expected memory usage"
-            << endl;
-        }
-
-        return false;
-    }
-
-    return true;
-}
-
 bool OccSimplifier::check_varelim_when_adding_back_cl(const Clause* cl) const
 {
     bool notLinkedNeedFree = false;
@@ -2055,13 +2025,6 @@ void OccSimplifier::set_limits()
 //     varelim_sub_str_limit    = std::numeric_limits<int64_t>::max();
 }
 
-void OccSimplifier::cleanBlockedClausesIfDirty()
-{
-    if (can_remove_blocked_clauses) {
-        cleanBlockedClauses();
-    }
-}
-
 void OccSimplifier::cleanBlockedClauses()
 {
     assert(solver->decisionLevel() == 0);
@@ -3115,13 +3078,6 @@ size_t OccSimplifier::mem_used_bva() const
         return 0;
 }
 
-
-void OccSimplifier::freeXorMem()
-{
-    delete topLevelGauss;
-    topLevelGauss = NULL;
-}
-
 void OccSimplifier::linkInClause(Clause& cl)
 {
     assert(cl.size() > 2);
@@ -3229,9 +3185,6 @@ void OccSimplifier::Stats::print(const size_t nVars, OccSimplifier* occs) const
         , float_div(total_time(occs), numCalls)
         , "s per call"
     );
-
-
-
 
     print_stats_line("c 0-depth assigns"
         , zeroDepthAssings

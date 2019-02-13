@@ -256,9 +256,9 @@ public:
     BVEStats bvestats_global;
 
     const Stats& get_stats() const;
+    const SubsumeStrengthen* get_sub_str() const;
     void check_elimed_vars_are_unassigned() const;
     bool getAnythingHasBeenBlocked() const;
-    void freeXorMem();
     void sort_occurs_and_set_abst();
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
@@ -275,7 +275,6 @@ public:
         , bool only_set_is_removed = false
     );
     void free_clauses_to_free();
-    void cleanBlockedClausesIfDirty();
 
 private:
     friend class SubsumeStrengthen;
@@ -348,7 +347,6 @@ private:
     uint64_t calc_mem_usage_of_occur(const vector<ClOffset>& toAdd) const;
     void     print_mem_usage_of_occur(uint64_t memUsage) const;
     void     print_linkin_data(const LinkInData link_in_data) const;
-    bool     decide_occur_limit(bool irred, uint64_t memUsage);
     OccSimplifier::LinkInData link_in_clauses(
         const vector<ClOffset>& toAdd
         , bool alsoOccur
@@ -572,6 +570,11 @@ inline bool OccSimplifier::subsetReverse(const Clause& B) const
             return false;
     }
     return true;
+}
+
+inline const SubsumeStrengthen* OccSimplifier::get_sub_str() const
+{
+    return sub_str;
 }
 
 } //end namespace

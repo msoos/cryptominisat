@@ -45,7 +45,6 @@ class ClauseCleaner
 
         void clean_implicit_clauses();
         void remove_and_clean_all();
-        bool satisfied(const Clause& c) const;
         bool clean_xor_clauses(vector<Xor>& xors);
 
     private:

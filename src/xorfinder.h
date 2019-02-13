@@ -170,7 +170,6 @@ public:
 
     const Stats& get_stats() const;
     size_t mem_used() const;
-    void free_mem();
     void grab_mem();
     void add_xors_to_solver();
     vector<Xor> remove_xors_without_connecting_vars(const vector<Xor>& this_xors);

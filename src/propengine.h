@@ -160,7 +160,6 @@ protected:
         , const Lit p
         , PropBy& confl
     );*/
-    PropBy propagateIrredBin();  ///<For debug purposes, to test binary clause removal
     PropResult prop_normal_helper(
         Clause& c
         , ClOffset offset

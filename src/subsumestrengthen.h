@@ -48,7 +48,6 @@ public:
 
     //Called from simplifier at resolvent-adding of var-elim
     uint32_t subsume_and_unlink_and_markirred(const ClOffset offset);
-    uint32_t backw_sub_long_with_implicit(const vector<Lit>& lits);
     bool backw_sub_str_long_with_bins_watch(
         const Lit lit
         , const bool redundant_too = false
