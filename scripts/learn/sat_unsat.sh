@@ -42,7 +42,7 @@ function run_tmp {
     fi
 
     ./tests/drat-trim/drat-trim final.cnf drat.out |tee out.drat
-    grep "VERIFIED" out.drat
+    grep "VERIFIED" out.drat || exit -1
     grep "resol.*steps" out.drat
 }
 
