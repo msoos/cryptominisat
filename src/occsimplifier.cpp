@@ -1520,9 +1520,10 @@ bool OccSimplifier::ternary_res()
     int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
     limit_to_decrease = &ternary_res_time_limit;
 
-    //NOTE: the "clasues" here will change in size as we add resolvents
-    for(size_t i = 0; i<  clauses.size(); i++) {
-        ClOffset offs = clauses[i];
+    //NOTE: the "clauses" here will change in size as we add resolvents
+    size_t at = solver->mtrand.randInt(clauses.size()-1);
+    for(size_t i = 0; i < clauses.size(); i++) {
+        ClOffset offs = clauses[(at+i) % clauses.size()];
         Clause * cl = solver->cl_alloc.ptr(offs);
         *limit_to_decrease -= 10;
         if (!cl->freed()
