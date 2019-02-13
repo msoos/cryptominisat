@@ -50,13 +50,11 @@ public:
     }
 
     void write_unsat(std::ostream *out);
-    void write_sat(std::ostream *out);
     void dump_irred_clauses_preprocessor(std::ostream *out);
     void dump_irred_clauses(std::ostream *out);
     void dump_red_clauses(std::ostream *out);
 
     void open_file_and_write_unsat(const std::string& fname);
-    void open_file_and_write_sat(const std::string& fname);
     void open_file_and_dump_irred_clauses_preprocessor(const std::string& fname);
     void open_file_and_dump_irred_clauses(const std::string& fname);
     void open_file_and_dump_red_clauses(const std::string& fname);

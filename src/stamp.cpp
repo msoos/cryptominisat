@@ -198,14 +198,3 @@ std::pair<size_t, size_t> Stamp::stampBasedLitRem(
 
     return std::make_pair(remLitTimeStamp, remLitTimeStampInv);
 }
-
-void Stamp::clearStamps()
-{
-    for(vector<Timestamp>::iterator
-        it = tstamp.begin(), end = tstamp.end()
-        ; it != end
-        ; ++it
-    ) {
-        *it = Timestamp();
-    }
-}

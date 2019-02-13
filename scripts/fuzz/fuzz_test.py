@@ -397,7 +397,7 @@ class Tester:
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "tern"]
 
             if "xor" in self.extra_opts_supported:
                 opts.append("xor")

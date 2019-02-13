@@ -834,12 +834,6 @@ void XorFinder::grab_mem()
     occcnt.resize(solver->nVars(), 0);
 }
 
-void XorFinder::free_mem()
-{
-    occcnt.clear();
-    occcnt.shrink_to_fit();
-}
-
 void XorFinder::Stats::print_short(const Solver* solver, double time_remain) const
 {
     cout

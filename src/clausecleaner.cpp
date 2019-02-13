@@ -229,14 +229,6 @@ inline bool ClauseCleaner::clean_clause(Clause& cl)
     return false;
 }
 
-bool ClauseCleaner::satisfied(const Clause& cl) const
-{
-    for (uint32_t i = 0; i != cl.size(); i++)
-        if (solver->value(cl[i]) == l_True)
-            return true;
-    return false;
-}
-
 void ClauseCleaner::ImplicitData::update_solver_stats(Solver* solver)
 {
     for(const BinaryClause& bincl: toAttach) {

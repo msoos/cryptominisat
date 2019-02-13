@@ -454,28 +454,6 @@ inline void PropEngine::updateWatch(
     }
 }
 
-PropBy PropEngine::propagateIrredBin()
-{
-    PropBy confl;
-    while (qhead < trail.size()) {
-        Lit p = trail[qhead++];
-        watch_subarray ws = watches[~p];
-        for(Watched* k = ws.begin(), *end = ws.end(); k != end; k++) {
-
-            //If not binary, or is redundant, skip
-            if (!k->isBin() || k->red())
-                continue;
-
-            //Propagate, if conflict, exit
-            if (!prop_bin_cl(k, p, confl))
-                return confl;
-        }
-    }
-
-    //No conflict, propagation done
-    return PropBy();
-}
-
 void PropEngine::print_trail()
 {
     for(size_t i = trail_lim[0]; i < trail.size(); i++) {

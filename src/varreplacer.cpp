@@ -339,28 +339,6 @@ bool VarReplacer::replace_xor_clauses()
     return solver->okay();
 }
 
-void VarReplacer::newBinClause(
-    Lit origLit1
-    , Lit origLit2
-    , Lit origLit3
-    , Lit lit1
-    , Lit lit2
-    , bool red
-) {
-    //Only attach once
-    if (origLit1 < origLit2
-        && origLit2 < origLit3
-    ){
-        delayed_attach_bin.push_back(BinaryClause(lit1, lit2, red));
-        (*solver->drat) << add << lit1 << lit2
-        #ifdef STATS_NEEDED
-        << 0
-        << solver->sumConflicts
-        #endif
-        << fin;
-    }
-}
-
 inline void VarReplacer::updateBin(
     Watched* i
     , Watched*& j

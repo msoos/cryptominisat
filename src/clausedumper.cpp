@@ -43,18 +43,6 @@ void ClauseDumper::open_file_and_write_unsat(const std::string& fname)
     outfile = NULL;
 }
 
-void ClauseDumper::write_sat(std::ostream *out) {
-    *out << "p cnf 0 0\n";
-}
-
-void ClauseDumper::open_file_and_write_sat(const std::string& fname)
-{
-    open_dump_file(fname);
-    write_sat(outfile);
-    delete outfile;
-    outfile = NULL;
-}
-
 void ClauseDumper::dump_irred_clauses(std::ostream *out) {
     if (!solver->okay()) {
         write_unsat(out);

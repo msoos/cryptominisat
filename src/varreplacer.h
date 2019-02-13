@@ -209,14 +209,6 @@ class VarReplacer
             , Lit lit1
             , Lit lit2
         );
-        void newBinClause(
-            Lit origLit1
-            , Lit origLit2
-            , Lit origLit3
-            , Lit lit1
-            , Lit lit2
-            , bool red
-        );
         void updateStatsFromImplStats();
 
         bool handleUpdatedClause(Clause& c, const Lit origLit1, const Lit origLit2);

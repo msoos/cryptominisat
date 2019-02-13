@@ -99,7 +99,6 @@ public:
         , const uint32_t leaveOut //Leave this literal out
         , vector<uint16_t>& seen
     );
-    void makeAllRed();
 
     void updateVars(
         const std::vector< uint32_t >& outerToInter
@@ -131,7 +130,6 @@ public:
     void print_stats(const Solver* solver) const;
     void print_statsSort(const Solver* solver) const;
     size_t mem_used() const;
-    void makeAllRed();
     void save_on_var_memorys(uint32_t newNumVars)
     {
         implCache.resize(newNumVars*2);

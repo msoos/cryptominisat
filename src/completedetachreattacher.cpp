@@ -104,15 +104,6 @@ bool CompleteDetachReatacher::reattachLongs(bool removeStatsFirst)
     return solver->okay();
 }
 
-
-void CompleteDetachReatacher::reattachLongsNoClean()
-{
-    attachClauses(solver->longIrredCls);
-    for(auto& lredcls: solver->longRedCls) {
-        attachClauses(lredcls);
-    }
-}
-
 void CompleteDetachReatacher::attachClauses(
     vector<ClOffset>& cs
 ) {
