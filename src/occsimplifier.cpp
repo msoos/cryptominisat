@@ -1352,6 +1352,10 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
         }
         if (token == "occ-backw-sub-str") {
             backward_sub_str();
+        } else if (token == "occ-ternary-res") {
+            if (solver->conf.doTernary) {
+                ternary_res();
+            }
         } else if (token == "occ-xor") {
             if (solver->conf.doFindXors) {
                 XorFinder finder(this, solver);
@@ -1507,6 +1511,161 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     finishUp(origTrailSize);
 
     return solver->okay();
+}
+
+bool OccSimplifier::ternary_res()
+{
+    assert(solver->okay());
+    double myTime = cpuTime();
+    int64_t orig_ternary_res_time_limit = ternary_res_time_limit;
+    limit_to_decrease = &ternary_res_time_limit;
+
+    //NOTE: the "clasues" here will change in size as we add resolvents
+    for(size_t i = 0; i<  clauses.size(); i++) {
+        ClOffset offs = clauses[i];
+        Clause * cl = solver->cl_alloc.ptr(offs);
+        *limit_to_decrease -= 10;
+        if (!cl->freed()
+            && !cl->getRemoved()
+            && cl->size() == 3
+            && !cl->red()
+            && *limit_to_decrease > 0
+        ) {
+            if (!perform_ternary(cl, offs))
+                break;
+        }
+    }
+
+    //Update global stats
+    const double time_used = cpuTime() - myTime;
+    const bool time_out = (*limit_to_decrease <= 0);
+    const double time_remain =  float_div(*limit_to_decrease, orig_ternary_res_time_limit);
+    if (solver->conf.verbosity) {
+        cout
+        << "c [occ-ternary-res] Ternary res added: " << runStats.ternary_added
+        << solver->conf.print_times(time_used, time_out, time_remain)
+        << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed(
+            solver
+            , "ternary res"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+    runStats.triresolveTime += time_used;
+
+    return solver->okay();
+}
+
+bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
+{
+    *limit_to_decrease -= 3;
+    for(const Lit l: *cl) {
+        seen[l.toInt()] = 1;
+    }
+
+    size_t largest = 0;
+    Lit dont_check = lit_Undef;
+    for(const Lit l: *cl) {
+        size_t sz = n_occurs[l.toInt()] + n_occurs[(~l).toInt()];
+        if (sz > largest) {
+            largest = sz;
+            dont_check = l;
+        }
+    }
+
+    for(const Lit l: *cl) {
+        if (l == dont_check) {
+            continue;
+        }
+        if (!check_ternary_cl(cl, offs, solver->watches[l]))
+            break;
+        if (!check_ternary_cl(cl, offs, solver->watches[~l]))
+            break;
+    }
+
+    //clean up
+    for(const Lit l: *cl) {
+        seen[l.toInt()] = 0;
+    }
+
+    return solver->okay();
+}
+
+bool OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws)
+{
+    *limit_to_decrease -= ws.size()*2;
+    for (Watched& w: ws) {
+        if (!w.isClause() || w.get_offset() == offs)
+            continue;
+
+        ClOffset offs2 = w.get_offset();
+        Clause * cl2 = solver->cl_alloc.ptr(offs2);
+        *limit_to_decrease -= 10;
+        if (!cl2->freed()
+            && !cl2->getRemoved()
+            && cl2->size() == 3
+            && !cl2->red()
+        ) {
+            uint32_t num_lits = 3;
+            uint32_t num_vars = 3;
+            Lit lit_clash = lit_Undef;
+            for(Lit l2: *cl2) {
+                num_vars += !(seen[l2.toInt()] | seen[(~l2).toInt()]);
+                num_lits += !seen[l2.toInt()];
+                if (seen[(~l2).toInt()]) {
+                    lit_clash = l2;
+
+                    //It's symmetric so only do it one way
+                    if (!lit_clash.sign()) {
+                        lit_clash = lit_Error;
+                        break;
+                    }
+                }
+            }
+
+            //Not tri resolveeable or the wrong side of the symmetry
+            if (num_vars != 4 || num_lits != 5 || lit_clash == lit_Error) {
+                continue;
+            }
+            vector<Lit> newcl;
+            for(Lit l: *cl) {
+                if (l.var() != lit_clash.var())
+                    newcl.push_back(l);
+            }
+            for(Lit l: *cl2) {
+                if (l.var() != lit_clash.var()
+                    && !seen[l.toInt()]
+                ) {
+                    newcl.push_back(l);
+                }
+            }
+
+            runStats.ternary_added++;
+            //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
+            Clause* newCl = solver->add_clause_int(
+                newcl //Literals in new clause
+                , true //Is the new clause redundant?
+                , ClauseStats() //Statistics for this new clause (usage, etc.)
+                , false //Should clause be attached if long?
+            );
+
+            if (!solver->ok)
+                return false;
+
+            if (newCl != NULL) {
+                newCl->stats.glue = 3;
+                linkInClause(*newCl);
+                ClOffset offset = solver->cl_alloc.get_offset(newCl);
+                clauses.push_back(offset);
+            }
+        }
+    }
+
+    return true;
 }
 
 bool OccSimplifier::backward_sub_str()

@@ -287,6 +287,11 @@ private:
     bool backward_sub_str();
     bool execute_simplifier_strategy(const string& strategy);
 
+    //Ternary resolution
+    bool ternary_res();
+    bool perform_ternary(Clause* cl, ClOffset offs);
+    bool check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
+
     //debug
     bool subsetReverse(const Clause& B) const;
 

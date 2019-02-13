@@ -129,6 +129,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , strengthening_time_limitM(300)
         , aggressive_elim_time_limitM(300)
 
+
+        //Ternary resolution
+        , doTernary(true)
+        , ternary_res_time_limitM(100)
+
         //Bounded variable addition
         , do_bva(false)
         #ifdef USE_GAUSS
@@ -188,7 +193,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , simplify_schedule_startup(
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
-            "occ-backw-sub-str, occ-xor,"
+            "occ-ternary-res, occ-backw-sub-str, occ-xor, "
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
@@ -201,8 +206,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva, "//occ-gates,"
-            "occ-xor,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"//occ-gates,"
+            "occ-ternary-res, occ-xor,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
@@ -212,7 +217,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
-            "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
+            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"
+            "occ-ternary-res, occ-xor,"
             //"occ-gates,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
