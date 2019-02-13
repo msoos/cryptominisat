@@ -268,6 +268,7 @@ public:
     bool satisfied_cl(const T& cl) const;
     template<typename T> bool no_duplicate_lits(const T& lits) const;
     void check_no_duplicate_lits_anywhere() const;
+    void check_clid_correct() const;
     void print_all_clauses() const;
     template<class T> void clean_xor_no_prop(T& ps, bool& rhs);
     template<class T> void clean_xor_vars_no_prop(T& ps, bool& rhs);
@@ -553,6 +554,18 @@ inline void CNF::check_no_duplicate_lits_anywhere() const
             assert(no_duplicate_lits((*cl)));
         }
     }
+}
+
+inline void CNF::check_clid_correct() const
+{
+    #ifdef STATS_NEEDED
+    for(auto l: longRedCls) {
+        for(ClOffset offs: l) {
+            Clause * cl = cl_alloc.ptr(offs);
+            assert(!(cl->stats.ID == 0 && cl->red()));
+        }
+    }
+    #endif
 }
 
 template<class T>
