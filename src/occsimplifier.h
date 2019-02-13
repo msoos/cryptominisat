@@ -257,7 +257,6 @@ public:
 
     const Stats& get_stats() const;
     void check_elimed_vars_are_unassigned() const;
-    void check_clid_correct() const;
     bool getAnythingHasBeenBlocked() const;
     void freeXorMem();
     void sort_occurs_and_set_abst();
