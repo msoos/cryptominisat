@@ -1597,6 +1597,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
         seen[l.toInt()] = 0;
     }
 
+    //Add new ternary resolvents
     for(vector<Lit>& newcl: cl_to_add_ternary) {
         Clause* newCl = solver->add_clause_int(
             newcl //Literals in new clause
