@@ -3198,16 +3198,8 @@ void Searcher::read_long_cls(
         attachClause(*cl);
         const ClOffset offs = cl_alloc.get_offset(cl);
         if (red) {
-            cl->stats.which_red_array = 2;
-            if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
-                cl->stats.which_red_array = 0;
-            } else if (cl->stats.glue <= conf.glue_put_lev1_if_below_or_eq
-                && conf.glue_put_lev1_if_below_or_eq != 0
-            ) {
-                cl->stats.which_red_array = 1;
-            }
-
-            longRedCls[0].push_back(cl->stats.which_red_array);
+            assert(cl->stats.which_red_array < longRedCls.size());
+            longRedCls[cl->stats.which_red_array].push_back(offs);
             litStats.redLits += cl->size();
         } else {
             longIrredCls.push_back(offs);
