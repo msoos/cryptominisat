@@ -1397,7 +1397,6 @@ lbool Solver::solve_with_assumptions(
     move_to_outside_assumps(_assumptions);
     #ifdef SLOW_DEBUG
     if (ok) {
-        check_clid_correct();
         assert(check_order_heap_sanity());
         check_implicit_stats();
         find_all_attach();
@@ -1693,10 +1692,6 @@ lbool Solver::iterate_until_solved()
         && cpuTime() < conf.maxTime
         && sumConflicts < (uint64_t)conf.max_confl
     ) {
-        #ifdef SLOW_DEBUG
-        check_clid_correct();
-        #endif
-
         iteration_num++;
         if (conf.verbosity && iteration_num >= 2) {
             print_clause_size_distrib();
@@ -1832,7 +1827,6 @@ bool Solver::execute_inprocess_strategy(
         check_wrong_attach();
         #ifdef SLOW_DEBUG
         check_stats();
-        check_clid_correct();
         check_no_duplicate_lits_anywhere();
         #endif
 
