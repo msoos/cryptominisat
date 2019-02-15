@@ -110,25 +110,18 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-numconfs=1
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --confs "0-${numconfs}"
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED"
 
 rm ../../src/predict/*.h
-for (( CONF = 0; CONF < numconfs; CONF++))
-do
-    ../predict.py "${FNAMEOUT}-min.db-short-conf-${CONF}.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf "${CONF}"
-    ../predict.py "${FNAMEOUT}-min.db-long-conf-${CONF}.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf "${CONF}"
-done
+../predict.py "${FNAMEOUT}-min.db-short-conf-0.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf 0
+../predict.py "${FNAMEOUT}-min.db-long-conf-0.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf 0
 )
 
 ./build_final_predictor.sh
 
 (
 cd "$FNAME-dir"
-for (( CONF = 0; CONF < numconfs; CONF++))
-do
-    ../cryptominisat5 "../$FNAME" --printsol 0 --pred $CONF | tee cms-final-run.out-${CONF}
-done
+../cryptominisat5 "../$FNAME" --printsol 0 --pred $CONF | tee cms-final-run.out-${CONF}
 )
 
 exit

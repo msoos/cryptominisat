@@ -1035,7 +1035,7 @@ if __name__ == "__main__":
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    parser.add_option("--confs", default="0-5", type=str,
+    parser.add_option("--confs", default="0-0", type=str,
                       dest="confs", help="Configs to generate. Default: %default")
 
     (options, args) = parser.parse_args()
