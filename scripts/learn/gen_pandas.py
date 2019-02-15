@@ -119,11 +119,11 @@ class QueryFill (QueryHelper):
         create table `goodClausesFixed` (
             `clauseID` bigint(20) NOT NULL,
             `num_used` bigint(20) NOT NULL,
-            `first_confl_used` bigint(20) NOT NULL,
-            `last_confl_used` bigint(20) NOT NULL,
+            `first_confl_used` bigint(20),
+            `last_confl_used` bigint(20),
             `sum_hist_used` bigint(20) DEFAULT NULL,
-            `avg_hist_used` double NOT NULL,
-            `var_hist_used` double DEFAULT NULL,
+            `avg_hist_used` double,
+            `var_hist_used` double,
             `last_prop_used` bigint(20) DEFAULT NULL
         );"""
         self.c.execute(q)
@@ -183,6 +183,34 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
         print("goodClausesFixed added variance T: %-3.2f s" % (time.time() - t))
 
+        t = time.time()
+        q="""
+        insert into goodClausesFixed
+        (
+        `clauseID`,
+        `num_used`,
+        `first_confl_used`,
+        `last_confl_used`,
+        `sum_hist_used`,
+        `avg_hist_used`,
+        `last_prop_used`
+        )
+        select cl.clauseID,
+        0,     --  `num_used`,
+        NULL,   --  `first_confl_used`,
+        NULL,   --  `last_confl_used`,
+        0,      --  `sum_hist_used`,
+        NULL,   --  `avg_hist_used`,
+        NULL   --  `last_prop_used`
+        from clauseStats as cl left join goodClausesFixed as goodcl
+        on cl.clauseID = goodcl.clauseID
+        where
+        goodcl.clauseID is NULL
+        and cl.clauseID != 0;
+        """
+        self.c.execute(q)
+        print("goodClausesFixed added bad claues T: %-3.2f s" % (time.time() - t))
+
     def fill_var_data_use(self):
         print("Filling var data use...")
 
@@ -230,7 +258,7 @@ class QueryFill (QueryHelper):
         , min(cls.first_confl_used) as useful_clauses_first_used
         , max(cls.last_confl_used) as useful_clauses_last_used
 
-        FROM varData as v left join goodClausesFixed as cls
+        FROM varData as v join goodClausesFixed as cls
         on cls.clauseID >= v.clid_start_incl
         and cls.clauseID < v.clid_end_notincl
 
@@ -756,37 +784,6 @@ class QueryCls (QueryHelper):
         """
         self.q_ok += self.common_restrictions
 
-        # BAD caluses
-        self.q_bad_select = """
-        SELECT
-        tags.tag as "fname"
-        {clause_dat}
-        {restart_dat}
-        {satzfeat_dat_cur}
-        {rdb0_dat}
-        {goodcls}
-        , 0 as `x.num_used`
-        , 0 as `x.lifetime`
-        , "BAD" as `x.class`
-        """
-
-        self.q_bad = """
-        FROM clauseStats as cl left join goodClausesFixed as goodcl
-        on cl.clauseID = goodcl.clauseID
-        , restart as rst
-        , satzilla_features as szfeat
-        , satzilla_features as szfeat_cur
-        , reduceDB as rdb0
-        , tags
-        WHERE
-
-        goodcl.clauseID is NULL
-        and cl.clauseID != 0
-        and cl.clauseID is not NULL
-        and rdb0.clauseID = cl.clauseID
-        """
-        self.q_bad += self.common_restrictions
-
         self.myformat = {
             "limit": 1000*1000*1000,
             "restart_dat": self.restart_dat,
@@ -807,38 +804,24 @@ class QueryCls (QueryHelper):
 
         return q
 
-    def get_ok(self, subfilter, dump_no_is_zero):
+    def get_ok(self, dump_no_is_zero):
         t = time.time()
 
         # calc OK -> which can be both BAD and OK
-        q = self.q_count + self.q_ok + " and `x.class` == '%s'" % subfilter
+        q = self.q_count + self.q_ok
         q = self.add_dump_no_filter(q, dump_no_is_zero)
         q = q.format(**self.myformat)
         if options.verbose:
             print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
-        print("Num datapoints OK-%s (K): %-3.5f T: %-3.1f" % (
-            subfilter, (num_lines/1000.0), time.time()-t))
+        print("Num datapoints (K): %-3.5f T: %-3.1f" % ((num_lines/1000.0), time.time()-t))
         return num_lines
 
-    def get_bad(self, dump_no_is_zero):
-        t = time.time()
-        q = self.q_count + self.q_bad
-        q = self.add_dump_no_filter(q, dump_no_is_zero)
-        q = q.format(**self.myformat)
-        if options.verbose:
-            print("query:\n %s" % q)
-        cur = self.conn.execute(q.format(**self.myformat))
-        num_lines = int(cur.fetchone()[0])
-        print("Num datpoints BAD-BAD (K): %-3.5f T: %-3.1f" % (
-            (num_lines/1000.0), time.time()-t))
-        return num_lines
-
-    def one_query(self, name, q):
+    def one_query(self, q):
         q = q.format(**self.myformat)
         t = time.time()
-        sys.stdout.write("Running query for %s..." % name)
+        sys.stdout.write("Running query...")
         sys.stdout.flush()
         if options.verbose:
             print("query:", q)
@@ -846,18 +829,18 @@ class QueryCls (QueryHelper):
         print("T: %-3.1f" % (time.time() - t))
         return df
 
-    def compute_one_ok_bad_bad_data(self, long_or_short):
+    def get_one_data_all_dumpnos(self, long_or_short):
         df = None
 
         # TODO magic number -- multiplier for non-zero dump_no
         if False:
             print("**Running dump_no zero")
-            ok, df_dump_no_0, this_fixed = self.get_ok_bad_bad_data(
+            ok, df_dump_no_0, this_fixed = self.get_data(
                 long_or_short, dump_no_is_zero=True)
             if not ok:
                 return False, None
             print("**Running dump_no non-zero")
-            ok, df_dump_no_not0, _ = self.get_ok_bad_bad_data(
+            ok, df_dump_no_not0, _ = self.get_data(
                 long_or_short, dump_no_is_zero=False,
                 this_fixed=int(this_fixed*0.3))
             if not ok:
@@ -865,7 +848,7 @@ class QueryCls (QueryHelper):
 
             df = pd.concat([df_dump_no_0, df_dump_no_not0])
         else:
-            ok, df, this_fixed = self.get_ok_bad_bad_data(
+            ok, df, this_fixed = self.get_data(
                 long_or_short, dump_no_is_zero=None)
             if not ok:
                 return False, None
@@ -878,7 +861,7 @@ class QueryCls (QueryHelper):
         return True, df
 
 
-    def get_ok_bad_bad_data(self, long_or_short, dump_no_is_zero=None,
+    def get_data(self, long_or_short, dump_no_is_zero=None,
                             this_fixed=None):
         # TODO magic numbers
         # preferece OK-BAD
@@ -889,31 +872,20 @@ class QueryCls (QueryHelper):
 
             # prefer OK by a factor of this. If < 0.5 then preferring BAD
             # 0.7 might also work?
-            prefer_ok_ok = 0.4
+            #prefer_ok_ok = 0.4
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k
             fixed_mult = 0.2
 
             # prefer OK by a factor of this. If < 0.5 then preferring BAD
             # 0.4 might also work
-            prefer_ok_ok = 0.2
+            #prefer_ok_ok = 0.2
 
-        print("Distrib OK vs BAD set to %s " % prefer_ok_ok)
         print("Fixed multiplier set to  %s " % fixed_mult)
 
         t = time.time()
 
-        num_lines_ok = 0
-        num_lines_bad = 0
-
-        num_lines_ok_ok = self.get_ok("OK", dump_no_is_zero)
-        num_lines_ok_bad = self.get_ok("BAD", dump_no_is_zero)
-        num_lines_bad_bad = self.get_bad(dump_no_is_zero)
-
-        num_lines_bad = num_lines_ok_bad + num_lines_bad_bad
-        num_lines_ok = num_lines_ok_ok
-
-        total_lines = num_lines_ok + num_lines_bad
+        total_lines = self.get_ok(dump_no_is_zero)
         print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
 
         if total_lines == 0:
@@ -922,21 +894,12 @@ class QueryCls (QueryHelper):
             print(" --> Less than 1 restarts were made")
             print(" --> No conflicts in SQL")
             print(" --> Something went wrong")
-            return False, None
+            return False, None, None
 
-        if num_lines_ok == 0 or num_lines_bad == 0:
-            print("WARNING: Either OK or BAD has 0 datapoints.")
-            print("num_lines_ok: %d num_lines_bad: %d" % (num_lines_ok, num_lines_bad))
-            print(" Potential issues:")
-            print(" --> Minimum no. conflicts set too high")
-            print(" --> Less than 1 restarts were made")
-            print(" --> No conflicts in SQL")
-            print(" --> Something went wrong")
-            return False, None
-
-        if this_fixed == None:
+        if this_fixed is None:
             this_fixed = options.fixed
             this_fixed *= fixed_mult
+
         print("this_fixed is set to:", this_fixed)
         if this_fixed > total_lines:
             print("WARNING -- Your fixed num datapoints is too high:", this_fixed)
@@ -944,57 +907,14 @@ class QueryCls (QueryHelper):
             this_fixed = int(total_lines)
             print("        -- this_fixed is now ", this_fixed)
 
-        # checking OK-OK
-        lim = this_fixed * prefer_ok_ok
-        if lim > num_lines_ok_ok:
-            print("WARNING -- Your fixed num datapoints is too high for OK-OK")
-            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_ok))
-            this_fixed = num_lines_ok_ok/(prefer_ok_ok)
-            print("        -- this_fixed is now ", this_fixed)
-
-        # checking OK-BAD
-        lim = this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok)
-        if lim > num_lines_ok_bad:
-            print("WARNING -- Your fixed num datapoints is too high, cannot generate OK-BAD")
-            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_ok_bad))
-            this_fixed = num_lines_ok_bad/(num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
-            print("        -- this_fixed is now ", this_fixed)
-
-        # checking BAD-BAD
-        lim = this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok)
-        if lim > num_lines_bad_bad:
-            print("WARNING -- Your fixed num datapoints is too high, cannot generate BAD-BAD")
-            print("        -- Wanted to create %d but only had %d" % (lim, num_lines_bad_bad))
-            this_fixed = num_lines_bad_bad/(num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
-            print("        -- this_fixed is now ", this_fixed)
-
-        # OK-OK
-        q = self.q_ok_select + self.q_ok + " and `x.class` == 'OK'"
+        q = self.q_ok_select + self.q_ok
         q = self.add_dump_no_filter(q, dump_no_is_zero)
-        self.myformat["limit"] = int(this_fixed * prefer_ok_ok)
+        self.myformat["limit"] = this_fixed
         q += self.common_limits
-        print("limit for OK-OK:", self.myformat["limit"])
-        df_ok_ok = self.one_query("OK-OK", q)
+        df = self.one_query(q)
 
-        # OK-BAD
-        q = self.q_ok_select + self.q_ok + " and `x.class` == 'BAD'"
-        q = self.add_dump_no_filter(q, dump_no_is_zero)
-        self.myformat["limit"] = int(this_fixed * num_lines_ok_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
-        q += self.common_limits
-        print("limit for OK-BAD:", self.myformat["limit"])
-        df_ok_bad = self.one_query("OK-BAD", q)
-
-        # BAD-BAD
-        q = self.q_bad_select + self.q_bad
-        q = self.add_dump_no_filter(q, dump_no_is_zero)
-        self.myformat["limit"] = int(this_fixed * num_lines_bad_bad/float(num_lines_bad) * (1.0-prefer_ok_ok))
-        q += self.common_limits
-        print("limit for bad:", self.myformat["limit"])
-        df_bad_bad = self.one_query("BAD-BAD", q)
-
-        # finish up
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df_ok_ok, df_ok_bad, df_bad_bad]), this_fixed
+        return True, df, this_fixed
 
 class QueryVar (QueryHelper):
     def __init__(self, dbfname):
@@ -1180,7 +1100,7 @@ def one_database(dbfname):
         for conf in range(conf_from, conf_to):
             print("------> Doing config {conf}".format(conf=conf))
             with QueryCls(dbfname, conf) as q:
-                ok, df = q.compute_one_ok_bad_bad_data(long_or_short)
+                ok, df = q.get_one_data_all_dumpnos(long_or_short)
 
             if not ok:
                 print("-> Skipping file {file} config {conf} {ls}".format(

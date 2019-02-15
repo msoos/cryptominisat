@@ -392,6 +392,29 @@ static bool {funcname}(
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)
 
+        # count good and bad
+        files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
+        if files["rdb0.dump_no"].index[0] == "BAD":
+            bad = files["rdb0.dump_no"][0]
+            good = files["rdb0.dump_no"][1]
+        else:
+            bad = files["rdb0.dump_no"][1]
+            good = files["rdb0.dump_no"][0]
+
+        assert bad > 0, "No need to train, data only contains BAD"
+        assert good > 0, "No need to train, data only contains GOOD"
+        print("Number of BAD  elements        : %-6d" % bad)
+        print("Number of GOOD elements        : %-6d" % good)
+
+        # balance it out
+        prefer_ok = float(good+bad)/float(good)
+        print("Balanced OK preferance would be: %-6.3f" % prefer_ok)
+
+        # apply inbalance from option given
+        prefer_ok *= options.prefer_ok
+        print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
+        print("Final OK preferance is         : %-6.3f" % prefer_ok)
+
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
@@ -401,9 +424,11 @@ static bool {funcname}(
         t = time.time()
         clf = None
         # clf = sklearn.linear_model.LogisticRegression()
+
         if final:
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                     max_depth=options.tree_depth,
+                    class_weight={"OK": prefer_ok, "BAD": 1},
                     min_samples_split=split_point)
 
             clf_svm_pre = sklearn.svm.SVC(C=500, gamma=10**-5)
@@ -417,7 +442,8 @@ static bool {funcname}(
                 penalty="l1")
 
             clf_forest = sklearn.ensemble.RandomForestClassifier(
-                    n_estimators=5, class_weight={"OK": options.prefer_ok, "BAD": 1},
+                    n_estimators=5,
+                    class_weight={"OK": prefer_ok, "BAD": 1},
                     min_samples_leaf=split_point)
 
             if options.final_is_tree:
