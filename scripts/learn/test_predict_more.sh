@@ -121,7 +121,7 @@ rm ../../src/predict/*.h
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --pred $CONF | tee cms-final-run.out-${CONF}
+../cryptominisat5 "../$FNAME" --printsol 0 --pred 0 | tee cms-final-run.out
 )
 
 exit
