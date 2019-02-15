@@ -33,6 +33,7 @@ import itertools
 import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
+import os
 if sklearn.__version__ == "0.20.0":
     from sklearn.model_selection import train_test_split
 else:
@@ -856,6 +857,7 @@ public:
             sorted_x = sorted(fname_dist.items(), key=operator.itemgetter(0))
             for a, b in sorted_x:
                 print("--> %-10s : %s" % (b, a))
+        print("\n\nClass contents finished.\n")
 
         self.used_clusters = sorted(self.used_clusters)
 
@@ -1061,6 +1063,9 @@ if __name__ == "__main__":
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
 
     fname = args[0]
+    if not os.path.isfile(fname):
+        print("ERROR: '%s' is not a file" % fname)
+        exit(-1)
     df = pd.read_pickle(fname)
     c = Clustering(df)
     c.filter_min_avg_dump_no()
