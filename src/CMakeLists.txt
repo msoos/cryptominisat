@@ -175,7 +175,7 @@ if (SQLITE3_FOUND AND STATS)
 endif()
 
 if (FINAL_PREDICTOR)
-    add_dependencies(libcryptominisat5
+    add_dependencies(cryptominisat5
         all_preds
     )
 endif()
