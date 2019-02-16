@@ -323,11 +323,23 @@ class QueryFill (QueryHelper):
         print("usedlater10k recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
+        q = """DROP TABLE IF EXISTS `usedlater100k`;"""
+        self.c.execute(q)
+        q = """
+        create table `usedlater100k` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later100k` bigint(20)
+        );"""
+        self.c.execute(q)
+        print("usedlater100k recreated T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
         q="""insert into usedlater
         (
         `clauseID`,
-        `rdb0conflicts`
-        `used_later`,
+        `rdb0conflicts`,
+        `used_later`
         )
         SELECT
         cl.clauseID
@@ -338,13 +350,13 @@ class QueryFill (QueryHelper):
         join clauseStats as cl
         on rdb0.clauseID = cl.clauseID)
         left join usedClauses as ucl
-        on (ucl.clauseID = cl.clauseID)
+
+        -- for any later and this 10k usage
+        on (ucl.clauseID = cl.clauseID
+            and ucl.used_at > rdb0.conflicts)
 
         WHERE
         cl.clauseID != 0
-
-        -- for any later and this 10k usage
-        and (ucl.used_at > rdb0.conflicts or ucl.used_at is NULL)
 
         group by cl.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -355,8 +367,8 @@ class QueryFill (QueryHelper):
         insert into usedlater10k
         (
         `clauseID`,
-        `rdb0conflicts`
-        `used_later10k`,
+        `rdb0conflicts`,
+        `used_later10k`
         )
         SELECT
         cl.clauseID
@@ -368,27 +380,56 @@ class QueryFill (QueryHelper):
         join clauseStats as cl
         on rdb0.clauseID = cl.clauseID)
         left join usedClauses as ucl10k
-        on (ucl10k.clauseID = cl.clauseID)
+        on (ucl10k.clauseID = cl.clauseID
+            and ucl10k.used_at > rdb0.conflicts
+            and ucl10k.used_at <= (rdb0.conflicts+10000))
 
         WHERE
         cl.clauseID != 0
 
-        -- for any later and this 10k usage
-        and (ucl10k.used_at > rdb0.conflicts or ucl10k.used_at is NULL)
-        and (ucl10k.used_at <= (rdb0.conflicts+10000) or ucl10k.used_at is NULL)
-
         group by cl.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
         print("usedlater10k filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q="""
+        insert into usedlater100k
+        (
+        `clauseID`,
+        `rdb0conflicts`,
+        `used_later100k`
+        )
+        SELECT
+        cl.clauseID
+        , rdb0.conflicts
+        , count(ucl100k.used_at) as `used_later100k`
+
+        FROM
+        (reduceDB as rdb0
+        join clauseStats as cl
+        on rdb0.clauseID = cl.clauseID)
+        left join usedClauses as ucl100k
+        on (ucl100k.clauseID = cl.clauseID
+            and ucl100k.used_at > rdb0.conflicts
+            and ucl100k.used_at <= (rdb0.conflicts+100000))
+
+        WHERE
+        cl.clauseID != 0
+
+        group by cl.clauseID, rdb0.conflicts;"""
+        self.c.execute(q)
+        print("usedlater100k filled T: %-3.2f s" % (time.time() - t))
 
 
         t = time.time()
         q = """
         drop index if exists `usedlater_idx1`;
         drop index if exists `usedlater10k_idx1`;
+        drop index if exists `usedlater100k_idx1`;
 
         create index `usedlater_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
         create index `usedlater10k_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
+        create index `usedlater100k_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -644,7 +685,6 @@ class QueryCls (QueryHelper):
 
         self.common_restrictions = """
         and cl.restarts > 1 -- to avoid history being invalid
-        and szfeat.latest_satzilla_feature_calc = cl.latest_satzilla_feature_calc
         and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
         and rst.restarts = cl.prev_restart
         and tags.tagname = "filename"
@@ -693,10 +733,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (goodcl.num_used > 9 and goodcl.var_hist_used > 800000)
+                   (usedlater100k.used_later100k > 9 and goodcl.var_hist_used > 800000)
 
                 -- used quite a bit but less dispersion
-                or (goodcl.num_used > 12 and goodcl.var_hist_used > 400000)
+                or (usedlater100k.used_later100k > 12 and goodcl.var_hist_used > 400000)
             )
             THEN "OK"
             ELSE "BAD"
@@ -744,15 +784,20 @@ class QueryCls (QueryHelper):
         , tags
         , usedlater
         , usedlater10k
+        , usedlater100k
         WHERE
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 0
         and rdb0.clauseID = cl.clauseID
         and usedlater.clauseID = cl.clauseID
-        and usedlater10k.clauseID = cl.clauseID
         and usedlater.rdb0conflicts = rdb0.conflicts
+
+        and usedlater10k.clauseID = cl.clauseID
         and usedlater10k.rdb0conflicts = rdb0.conflicts
+
+        and usedlater100k.clauseID = cl.clauseID
+        and usedlater100k.rdb0conflicts = rdb0.conflicts
         """
         self.q_ok += self.common_restrictions
 
@@ -861,11 +906,21 @@ class QueryCls (QueryHelper):
             this_fixed *= fixed_mult
         print("this_fixed is set to:", this_fixed)
 
-        q = self.q_ok_select + self.q_ok + self.group_by
+        q = self.q_ok_select + self.q_ok
         q = self.add_dump_no_filter(q, dump_no_is_zero)
         self.myformat["limit"] = this_fixed
         q += self.common_limits
         df = self.one_query(q)
+        print("size of data:", df.shape)
+        files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
+        if files["rdb0.dump_no"].index[0] == "BAD":
+            bad = files["rdb0.dump_no"][0]
+            good = files["rdb0.dump_no"][1]
+        else:
+            bad = files["rdb0.dump_no"][1]
+            good = files["rdb0.dump_no"][0]
+        print("Good:", good)
+        print("Bad :", bad)
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
         return True, df, this_fixed
