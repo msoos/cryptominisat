@@ -70,6 +70,7 @@ class QueryFill (QueryHelper):
         drop index if exists `idxclid7`;
         drop index if exists `idxclid8`;
         drop index if exists `idxclidUCLS-1`;
+        drop index if exists `idxclidUCLS-2`;
 
         create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
@@ -85,7 +86,8 @@ class QueryFill (QueryHelper):
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`);
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
         create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
-        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`);
+        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
         """
         for l in q.split('\n'):
             if options.verbose:
@@ -127,7 +129,7 @@ class QueryFill (QueryHelper):
             `last_prop_used` bigint(20) DEFAULT NULL
         );"""
         self.c.execute(q)
-        print("goodClausesFixed deleted T: %-3.2f s" % (time.time() - t))
+        print("goodClausesFixed recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """insert into goodClausesFixed
@@ -294,6 +296,103 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
 
         print("varDataUse filled T: %-3.2f s" % (time.time() - t))
+
+    def fill_later_useful_data(self):
+        t = time.time()
+        q = """DROP TABLE IF EXISTS `usedlater`;"""
+        self.c.execute(q)
+        q = """
+        create table `usedlater` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later` bigint(20)
+        );"""
+        self.c.execute(q)
+        print("usedlater recreated T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """DROP TABLE IF EXISTS `usedlater10k`;"""
+        self.c.execute(q)
+        q = """
+        create table `usedlater10k` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later10k` bigint(20)
+        );"""
+        self.c.execute(q)
+        print("usedlater10k recreated T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q="""insert into usedlater
+        (
+        `clauseID`,
+        `rdb0conflicts`
+        `used_later`,
+        )
+        SELECT
+        cl.clauseID
+        , rdb0.conflicts
+        , count(ucl.used_at) as `useful_later`
+        FROM
+        (reduceDB as rdb0
+        join clauseStats as cl
+        on rdb0.clauseID = cl.clauseID)
+        left join usedClauses as ucl
+        on (ucl.clauseID = cl.clauseID)
+
+        WHERE
+        cl.clauseID != 0
+
+        -- for any later and this 10k usage
+        and (ucl.used_at > rdb0.conflicts or ucl.used_at is NULL)
+
+        group by cl.clauseID, rdb0.conflicts;"""
+        self.c.execute(q)
+        print("usedlater filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q="""
+        insert into usedlater10k
+        (
+        `clauseID`,
+        `rdb0conflicts`
+        `used_later10k`,
+        )
+        SELECT
+        cl.clauseID
+        , rdb0.conflicts
+        , count(ucl10k.used_at) as `used_later10k`
+
+        FROM
+        (reduceDB as rdb0
+        join clauseStats as cl
+        on rdb0.clauseID = cl.clauseID)
+        left join usedClauses as ucl10k
+        on (ucl10k.clauseID = cl.clauseID)
+
+        WHERE
+        cl.clauseID != 0
+
+        -- for any later and this 10k usage
+        and (ucl10k.used_at > rdb0.conflicts or ucl10k.used_at is NULL)
+        and (ucl10k.used_at <= (rdb0.conflicts+10000) or ucl10k.used_at is NULL)
+
+        group by cl.clauseID, rdb0.conflicts;"""
+        self.c.execute(q)
+        print("usedlater10k filled T: %-3.2f s" % (time.time() - t))
+
+
+        t = time.time()
+        q = """
+        drop index if exists `usedlater_idx1`;
+        drop index if exists `usedlater10k_idx1`;
+
+        create index `usedlater_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
+        create index `usedlater10k_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("usedlater indexes added T: %-3.2f s" % (time.time() - t))
 
 
 class QueryCls (QueryHelper):
@@ -567,19 +666,11 @@ class QueryCls (QueryHelper):
                 -- SHORT---------
                 -----------------
 
-                -- used quite a bit, let it run in case the end is not too far
-                   (goodcl.num_used > 5
-                    AND goodcl.avg_hist_used > 30000
-                )
+                -- useful in the next round
+                   usedlater10k.used_later10k > 3
 
-                -- at least let the 1st conflict be reached
-                or (goodcl.first_confl_used > rdb0.conflicts
-                    AND goodcl.first_confl_used < rdb0.conflicts+10000
-                )
-
-                -- let the last confl be reached if close by
-                or (goodcl.last_confl_used < rdb0.conflicts+10000
-                )
+                -- Useful later in the long run
+                or usedlater.used_later > 10
             )
             THEN "OK"
             ELSE "BAD"
@@ -629,11 +720,6 @@ class QueryCls (QueryHelper):
         and rdb0.dump_no > 0
         """
 
-        self.q_count = """
-        SELECT count(*) as count,
-        {case_stmt}
-        """
-
         # GOOD clauses
         self.q_ok_select = """
         SELECT
@@ -653,15 +739,20 @@ class QueryCls (QueryHelper):
         clauseStats as cl
         , goodClausesFixed as goodcl
         , restart as rst
-        , satzilla_features as szfeat
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
         , tags
+        , usedlater
+        , usedlater10k
         WHERE
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 0
         and rdb0.clauseID = cl.clauseID
+        and usedlater.clauseID = cl.clauseID
+        and usedlater10k.clauseID = cl.clauseID
+        and usedlater.rdb0conflicts = rdb0.conflicts
+        and usedlater10k.rdb0conflicts = rdb0.conflicts
         """
         self.q_ok += self.common_restrictions
 
@@ -692,7 +783,7 @@ class QueryCls (QueryHelper):
         q = self.q_count + self.q_ok
         q = self.add_dump_no_filter(q, dump_no_is_zero)
         q = q.format(**self.myformat)
-        if options.verbose:
+        if options.dump_sql:
             print("query:\n %s" % q)
         cur = self.conn.execute(q.format(**self.myformat))
         num_lines = int(cur.fetchone()[0])
@@ -704,7 +795,7 @@ class QueryCls (QueryHelper):
         t = time.time()
         sys.stdout.write("Running query...")
         sys.stdout.flush()
-        if options.verbose:
+        if options.dump_sql:
             print("query:", q)
         df = pd.read_sql_query(q, self.conn)
         print("T: %-3.1f" % (time.time() - t))
@@ -765,30 +856,12 @@ class QueryCls (QueryHelper):
         print("Fixed multiplier set to  %s " % fixed_mult)
 
         t = time.time()
-
-        total_lines = self.get_ok(dump_no_is_zero)
-        print("Total number of datapoints (K): %-3.2f" % (total_lines/1000.0))
-
-        if total_lines == 0:
-            print("WARNING: Total number of datapoints is 0. Potential issues:")
-            print(" --> Minimum no. conflicts set too high")
-            print(" --> Less than 1 restarts were made")
-            print(" --> No conflicts in SQL")
-            print(" --> Something went wrong")
-            return False, None, None
-
         if this_fixed is None:
             this_fixed = options.fixed
             this_fixed *= fixed_mult
-
         print("this_fixed is set to:", this_fixed)
-        if this_fixed > total_lines:
-            print("WARNING -- Your fixed num datapoints is too high:", this_fixed)
-            print("        -- We only have in total:", total_lines)
-            this_fixed = int(total_lines)
-            print("        -- this_fixed is now ", this_fixed)
 
-        q = self.q_ok_select + self.q_ok
+        q = self.q_ok_select + self.q_ok + self.group_by
         q = self.add_dump_no_filter(q, dump_no_is_zero)
         self.myformat["limit"] = this_fixed
         q += self.common_limits
@@ -963,6 +1036,7 @@ def one_database(dbfname):
             q.create_indexes()
             q.fill_last_prop()
             q.fill_good_clauses_fixed()
+            q.fill_later_useful_data()
             q.fill_var_data_use()
 
     # with QueryVar(dbfname) as q:
