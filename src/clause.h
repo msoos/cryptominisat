@@ -259,6 +259,7 @@ public:
     uint16_t isRemoved:1; ///<Is this clause queued for removal?
     uint16_t isFreed:1; ///<Has this clause been marked as freed by the ClauseAllocator ?
     uint16_t is_distilled:1;
+    uint16_t is_ternary_resolved:1;
     uint16_t occurLinked:1;
     uint16_t must_recalc_abst:1;
     uint16_t _used_in_xor:1;
@@ -305,6 +306,7 @@ public:
         isRed = false;
         isRemoved = false;
         is_distilled = false;
+        is_ternary_resolved = false;
         must_recalc_abst = true;
         _used_in_xor = false;
         _gauss_temp_cl = false;
@@ -378,9 +380,8 @@ public:
     void setStrenghtened()
     {
         must_recalc_abst = true;
-        /*#ifdef STATS_NEEDED
-        stats.ID = 0;
-        #endif*/
+        is_ternary_resolved = false;
+        //is_distilled = false; //TODO?
     }
 
     void recalc_abst_if_needed()

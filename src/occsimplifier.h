@@ -210,7 +210,6 @@ public:
     ~OccSimplifier();
 
     //Called from main
-    bool setup();
     bool simplify(const bool _startup, const std::string schedule);
     void new_var(const uint32_t orig_outer);
     void new_vars(const size_t n);
@@ -276,6 +275,13 @@ public:
     );
     void free_clauses_to_free();
 
+    //Setup and teardown. Should be private, but testing needs it to be public
+    bool setup();
+    void finishUp(size_t origTrailSize);
+
+    //Ternary resolution. Should be private but testing needs it to be public
+    bool ternary_res();
+
 private:
     friend class SubsumeStrengthen;
     SubsumeStrengthen* sub_str;
@@ -286,7 +292,6 @@ private:
     bool execute_simplifier_strategy(const string& strategy);
 
     //Ternary resolution
-    bool ternary_res();
     bool perform_ternary(Clause* cl, ClOffset offs);
     void check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray ws);
     vector<vector<Lit>> cl_to_add_ternary;
@@ -321,7 +326,6 @@ private:
     //Start-up
     bool fill_occur();
     bool fill_occur_and_print_stats();
-    void finishUp(size_t origTrailSize);
     struct LinkInData
     {
         LinkInData()

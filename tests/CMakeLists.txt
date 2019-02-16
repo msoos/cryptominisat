@@ -169,6 +169,7 @@ set (MY_TESTS
     searcher_test
     solver_test
     cardfinder_test
+    ternary_resolve_test
 #    undefine_test
 )
 

@@ -1506,10 +1506,12 @@ bool OccSimplifier::ternary_res()
         *limit_to_decrease -= 10;
         if (!cl->freed()
             && !cl->getRemoved()
+            && !cl->is_ternary_resolved
             && cl->size() == 3
             && !cl->red()
             && *limit_to_decrease > 0
         ) {
+            cl->is_ternary_resolved = true;
             if (!perform_ternary(cl, offs))
                 break;
         }

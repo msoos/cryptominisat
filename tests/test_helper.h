@@ -327,6 +327,21 @@ void check_red_cls_contains(const Solver* s, const string& data)
     EXPECT_TRUE(found_cl);
 }
 
+unsigned get_num_red_cls_contains(const Solver* s, const string& data)
+{
+    unsigned found_cl = 0;
+    vector<Lit> looking_for = str_to_cl(data);
+    vector<vector<Lit> > cls = get_red_cls(s);
+
+    for(auto cl: cls) {
+        if (cl == looking_for) {
+            found_cl++;
+        }
+    }
+
+    return found_cl;
+}
+
 
 void check_irred_cls_doesnt_contain(const Solver* s, const string& data)
 {
