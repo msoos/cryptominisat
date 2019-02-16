@@ -350,8 +350,22 @@ void ReduceDB::handle_lev1_final_predictor()
                 last_touched_diff = solver->sumConflicts-cl->stats.last_touched;
             }
 
-            if (!solver->clause_locked(*cl, offset)
-                && cl->stats.locked_long == 0
+            //Check for long keep
+            if (cl->stats.locked_long == 0
+                && (cl->stats.dump_number > 0 && long_pred_keep(
+                cl
+                , solver->sumConflicts
+                , last_touched_diff
+                , i
+                , act_ranking_top_10
+            ))) {
+                marked_long_keep++;
+                cl->stats.locked_long = 10; //will be immediately decremented below
+            }
+
+            if (cl->stats.locked_long == 0
+                && cl->stats.dump_number > 0 //don't delete 1st time around
+                && !solver->clause_locked(*cl, offset)
                 && !(solver->conf.pred_run_short && short_pred_keep(
                     cl
                     , solver->sumConflicts
@@ -373,16 +387,6 @@ void ReduceDB::handle_lev1_final_predictor()
                     kept_due_to_long_lock++;
                     cl->stats.locked_long--;
                 } else {
-                    if (cl->stats.dump_number > 0 && long_pred_keep(
-                        cl
-                        , solver->sumConflicts
-                        , last_touched_diff
-                        , i
-                        , act_ranking_top_10
-                    )) {
-                        marked_long_keep++;
-                        cl->stats.locked_long = 10;
-                    }
                     if (solver->clause_locked(*cl, offset)){
                         kept_locked++;
                     } else {
