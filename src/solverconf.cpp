@@ -131,7 +131,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(true)
+        , doTernary(false)
         , ternary_res_time_limitM(100)
 
         //Bounded variable addition
