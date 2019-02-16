@@ -1012,7 +1012,7 @@ if __name__ == "__main__":
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_option("--nordb1", default=False, action="store_true",
                       dest="no_rdb1", help="Delete RDB1 data")
-    parser.add_option("--mindump", default=20, type=float,
+    parser.add_option("--mindump", default=0, type=float,
                       dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # final generator
