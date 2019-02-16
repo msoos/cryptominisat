@@ -708,9 +708,6 @@ class QueryCls (QueryHelper):
 
                 -- useful in the next round
                    usedlater10k.used_later10k > 3
-
-                -- Useful later in the long run
-                or usedlater.used_later > 10
             )
             THEN "OK"
             ELSE "BAD"
@@ -733,10 +730,10 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (usedlater100k.used_later100k > 9 and goodcl.var_hist_used > 800000)
+                   (usedlater100k.used_later100k > 10 and usedlater.used_later > 20)
 
                 -- used quite a bit but less dispersion
-                or (usedlater100k.used_later100k > 12 and goodcl.var_hist_used > 400000)
+                or (usedlater100k.used_later100k > 6 and usedlater.used_later > 30)
             )
             THEN "OK"
             ELSE "BAD"
