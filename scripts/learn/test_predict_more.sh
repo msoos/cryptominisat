@@ -37,12 +37,11 @@ FIXED="30000"
 # RATIO="0.60"
 # FIXED="40000"
 
-FNAME="snw_13_9_preOpt_pre.cnf"
-FNAME="MD5-27-4.cnf"
-FNAME="g2-mizh-md5-48-2.cnf"
-FNAMEOUT="mystuff2"
-RATIO="1.0"
-FIXED="10000"
+# SATISFIABLE
+# FNAME="g2-mizh-md5-48-2.cnf"
+# FNAMEOUT="mystuff2"
+# RATIO="1.0"
+# FIXED="10000"
 
 
 # # orig: 98s
