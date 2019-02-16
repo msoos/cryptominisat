@@ -4171,5 +4171,4 @@ void Solver::add_empty_cl_to_drat()
     #endif
     << fin;
     drat->flush();
-    cout << "DONE ADDING EMPTY CLAUSE!" << endl;
 }
