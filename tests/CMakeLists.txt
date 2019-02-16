@@ -167,6 +167,7 @@ set (MY_TESTS
     dump_test
     searcher_test
     solver_test
+    ternary_resolve_test
 #    undefine_test
 )
 
