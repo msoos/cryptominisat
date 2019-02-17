@@ -178,20 +178,15 @@ int WalkSAT::main()
 
 void WalkSAT::WalkSAT::flipvar(int toflip)
 {
-    int i, j;
+    int i;
     int toenforce;
     int cli;
     int lit;
     int numocc;
-    int sz;
     int *litptr;
     int *occptr;
     int temp;
 
-    if (numflip - changed[toflip] <= undo_age)
-        undo_count++;
-
-    changed[toflip] = numflip;
     if (assigns[toflip] > 0)
         toenforce = -toflip;
     else
@@ -284,8 +279,6 @@ void WalkSAT::init()
         numtruelit[i] = 0;
     numfalse = 0;
     for (i = 1; i < numvars + 1; i++) {
-        changed[i] =
-            -i - 1000; /* ties in age between unchanged variables broken for lowest-numbered */
         breakcount[i] = 0;
         makecount[i] = 0;
         assigns[i] = RANDMOD(2);
@@ -364,7 +357,6 @@ void WalkSAT::initprob()
     numoccurrence = (int *)calloc(sizeof(int), (2 * numvars + 1));
     assigns = (int *)calloc(sizeof(int), (numvars + 1));
     solution = (int *)calloc(sizeof(int), (numvars + 1));
-    changed = (int64_t *)calloc(sizeof(int64_t), (numvars + 1));
     breakcount = (int *)calloc(sizeof(int), (numvars + 1));
     makecount = (int *)calloc(sizeof(int), (numvars + 1));
     freebielist = (int *)calloc(sizeof(int), (numvars + 1));
@@ -498,11 +490,7 @@ void WalkSAT::print_statistics_header()
 
 void WalkSAT::update_statistics_start_try()
 {
-    int i;
-
     lowbad = numfalse;
-    undo_count = 0;
-
     sample_size = 0;
     sumfalse = 0.0;
     sumfalse_squared = 0.0;
@@ -574,7 +562,8 @@ void WalkSAT::update_and_print_statistics_end_try()
         r = 0;
     }
 
-    undo_fraction = ((double)undo_count) / numflip;
+    //MSOOS: this has been removed, uses memory, only stats
+    undo_fraction = 0;
 
     printf(" %9i %9i %9.2f %9.2f %9.2f %9" BIGFORMAT " %9.6f %9i", lowbad, numfalse, avgfalse,
            std_dev_avgfalse, ratio_avgfalse, numflip, undo_fraction,
@@ -656,7 +645,7 @@ void WalkSAT::print_statistics_final()
                nonsuc_ratio_mean_avgfalse);
     }
 
-    if (found_solution > 0) {
+    if (found_solution) {
         printf("ASSIGNMENT FOUND\n");
         if (printsolcnf == true)
             print_sol_cnf();

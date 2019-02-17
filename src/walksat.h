@@ -105,7 +105,6 @@ private:
 
     int *assigns;         /* value of each var */
     int *solution;     /* value of solution */
-    int64_t *changed;   /* step at which var was last flipped */
     int *breakcount;   /* number of clauses that become unsat if var if flipped */
     int *makecount;    /* number of clauses that become sat if var if flipped */
     int *freebielist;  /* list of freebies */
@@ -152,7 +151,6 @@ private:
     int tail = 10;
     int tail_start_flip;
     int undo_age = 1;
-    int64_t undo_count;
 
     /* Statistics */
 
