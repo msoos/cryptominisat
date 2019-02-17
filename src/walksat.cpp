@@ -128,7 +128,7 @@ int longestclause;
 
 /* Data structures for atoms: arrays of size numvars+1 indexed by atom */
 
-int *atom;         /* value of each atom */
+int *assigns;         /* value of each atom */
 int *lowatom;      /* value of best state found so far */
 int *solution;     /* value of solution */
 int64_t *changed;   /* step at which atom was last flipped */
@@ -168,9 +168,7 @@ int64_t numflip;        /* number of changes so far */
 int numrun = 10;
 int64_t cutoff = 100000;
 int64_t base_cutoff = 100000;
-int target = 0;
 int numtry = 0;   /* total attempts at solutions */
-int numsol = BIG; /* stop after this many tries succeeds */
 int superlinear = false;
 int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
 char initfile[MAXFILENAME] = {0};
@@ -221,24 +219,15 @@ int64_t flips_this_solution;
 int lowbad;                  /* lowest number of bad clauses during try */
 int64_t totalflip = 0;        /* total number of flips in all tries so far */
 int64_t totalsuccessflip = 0; /* total number of flips in all tries which succeeded so far */
-int numsuccesstry = 0;       /* total found solutions */
+bool found_solution = 0;       /* total found solutions */
 int64_t x;
 int64_t integer_sum_x = 0;
 double sum_x = 0.0;
-double sum_x_squared = 0.0;
 double mean_x;
-double second_moment_x;
-double variance_x;
-double std_dev_x;
-double std_error_mean_x;
 double seconds_per_flip;
 int r;
 int sum_r = 0;
-double sum_r_squared = 0.0;
 double mean_r;
-double variance_r;
-double std_dev_r;
-double std_error_mean_r;
 double avgfalse;
 double sumfalse;
 double sumfalse_squared;
@@ -370,7 +359,7 @@ int main(int argc, char *argv[])
     signal(SIGINT, handle_interrupt);
     abort_flag = false;
 
-    while (!abort_flag && numsuccesstry < numsol && numtry < numrun) {
+    while (!abort_flag && !found_solution && numtry < numrun) {
         numtry++;
         init();
         update_statistics_start_try();
@@ -378,7 +367,7 @@ int main(int argc, char *argv[])
         if (superlinear)
             cutoff = base_cutoff * super(numtry);
 
-        while ((numfalse > target) && (numflip < cutoff)) {
+        while ((numfalse > 0) && (numflip < cutoff)) {
             print_statistics_start_flip();
             numflip++;
 
@@ -413,12 +402,12 @@ void flipatom(int toflip)
         undo_count++;
 
     changed[toflip] = numflip;
-    if (atom[toflip] > 0)
+    if (assigns[toflip] > 0)
         toenforce = -toflip;
     else
         toenforce = toflip;
 
-    atom[toflip] = 1 - atom[toflip];
+    assigns[toflip] = 1 - assigns[toflip];
 
     numocc = numoccurrence[numvars - toenforce];
     occptr = occurrence[numvars - toenforce];
@@ -458,7 +447,7 @@ void flipatom(int toflip)
             while (1) {
                 /* lit = clause[cli][j]; */
                 lit = *(litptr++);
-                if ((lit > 0) == atom[ABS(lit)]) {
+                if ((lit > 0) == assigns[ABS(lit)]) {
                     breakcount[ABS(lit)]++;
 
                     if (maxfreebie) {
@@ -519,7 +508,7 @@ void flipatom(int toflip)
             while (1) {
                 /* lit = clause[cli][j]; */
                 lit = *(litptr++);
-                if (((lit > 0) == atom[ABS(lit)]) && (toflip != ABS(lit))) {
+                if (((lit > 0) == assigns[ABS(lit)]) && (toflip != ABS(lit))) {
                     breakcount[ABS(lit)]--;
 
                     if (maxfreebie) {
@@ -543,8 +532,6 @@ void parse_parameters(int argc, char *argv[])
     heuristic = BEST;
     cnfStream = stdin;
     base_cutoff = cutoff;
-    if (numsol > numrun)
-        numsol = numrun;
     numerator = (int)(walk_probability * denominator);
 }
 
@@ -575,7 +562,7 @@ void init(void)
             -i - 1000; /* ties in age between unchanged variables broken for lowest-numbered */
         breakcount[i] = 0;
         makecount[i] = 0;
-        atom[i] = RANDMOD(2);
+        assigns[i] = RANDMOD(2);
     }
 
     if (initfile[0]) {
@@ -591,9 +578,9 @@ void init(void)
                 exit(1);
             }
             if (lit < 0)
-                atom[-lit] = 0;
+                assigns[-lit] = 0;
             else
-                atom[lit] = 1;
+                assigns[lit] = 1;
         }
         if (i == 0) {
             fprintf(stderr, "Bad init file %s\n", initfile);
@@ -605,7 +592,7 @@ void init(void)
     /* Initialize breakcount and makecount */
     for (i = 0; i < numclauses; i++) {
         for (j = 0; j < clsize[i]; j++) {
-            if ((clause[i][j] > 0) == atom[ABS(clause[i][j])]) {
+            if ((clause[i][j] > 0) == assigns[ABS(clause[i][j])]) {
                 numtruelit[i]++;
                 thetruelit = clause[i][j];
             }
@@ -651,6 +638,7 @@ void initprob(void)
     int storeused;
     int *storeptr;
 
+    //skip header
     while ((lastc = getc(cnfStream)) == 'c') {
         while ((nextc = getc(cnfStream)) != EOF && nextc != '\n')
             ;
@@ -663,6 +651,8 @@ void initprob(void)
 
     clause = (int **)calloc(sizeof(int *), (numclauses + 1));
     clsize = (int *)calloc(sizeof(int), (numclauses + 1));
+
+    //false-true lits
     false_cls = (int *)calloc(sizeof(int), (numclauses + 1));
     lowfalse = (int *)calloc(sizeof(int), (numclauses + 1));
     wherefalse = (int *)calloc(sizeof(int), (numclauses + 1));
@@ -670,7 +660,7 @@ void initprob(void)
 
     occurrence = (int **)calloc(sizeof(int *), (2 * numvars + 1));
     numoccurrence = (int *)calloc(sizeof(int), (2 * numvars + 1));
-    atom = (int *)calloc(sizeof(int), (numvars + 1));
+    assigns = (int *)calloc(sizeof(int), (numvars + 1));
     lowatom = (int *)calloc(sizeof(int), (numvars + 1));
     solution = (int *)calloc(sizeof(int), (numvars + 1));
     changed = (int64_t *)calloc(sizeof(int64_t), (numvars + 1));
@@ -896,7 +886,7 @@ void update_and_print_statistics_end_try(void)
         sum_std_dev_avgfalse += std_dev_avgfalse;
         number_sampled_runs += 1;
 
-        if (numfalse <= target) {
+        if (numfalse == 0) {
             suc_number_sampled_runs += 1;
             suc_sum_avgfalse += avgfalse;
             suc_sum_std_dev_avgfalse += std_dev_avgfalse;
@@ -912,26 +902,16 @@ void update_and_print_statistics_end_try(void)
         ratio_avgfalse = 0;
     }
 
-    if (numfalse <= target) {
+    if (numfalse == 0) {
         status_flag = 0;
         save_solution();
-        numsuccesstry++;
+        found_solution = true;
         totalsuccessflip += numflip;
         integer_sum_x += x;
         sum_x = (double)integer_sum_x;
-        sum_x_squared += ((double)x) * ((double)x);
-        mean_x = sum_x / numsuccesstry;
-        if (numsuccesstry > 1) {
-            second_moment_x = sum_x_squared / numsuccesstry;
-            variance_x = second_moment_x - (mean_x * mean_x);
-            /* Adjustment for small small sample size */
-            variance_x = (variance_x * numsuccesstry) / (numsuccesstry - 1);
-            std_dev_x = sqrt(variance_x);
-            std_error_mean_x = std_dev_x / sqrt((double)numsuccesstry);
-        }
+        mean_x = sum_x / found_solution;
         sum_r += r;
-        mean_r = ((double)sum_r) / numsuccesstry;
-        sum_r_squared += ((double)r) * ((double)r);
+        mean_r = ((double)sum_r) / (double)found_solution;
         x = 0;
         r = 0;
     }
@@ -940,13 +920,10 @@ void update_and_print_statistics_end_try(void)
 
     printf(" %9i %9i %9.2f %9.2f %9.2f %9" BIGFORMAT " %9.6f %9i", lowbad, numfalse, avgfalse,
            std_dev_avgfalse, ratio_avgfalse, numflip, undo_fraction,
-           (numsuccesstry * 100) / numtry);
-    if (numsuccesstry > 0) {
-        printf(" %9" BIGFORMAT, totalsuccessflip / numsuccesstry);
+           ((int)found_solution * 100) / numtry);
+    if (found_solution) {
+        printf(" %9" BIGFORMAT, totalsuccessflip / (int)found_solution);
         printf(" %11.2f", mean_x);
-        if (numsuccesstry > 1) {
-            printf(" %11.2f", std_dev_x);
-        }
     }
     printf("\n");
 
@@ -974,38 +951,18 @@ void print_statistics_final(void)
     printf("\ntotal elapsed seconds = %f\n", expertime);
     printf("num tries: %d\n", numtry);
     printf("average flips per second = %f\n", ((double)totalflip) / expertime);
-    printf("number solutions found = %i\n", numsuccesstry);
-    printf("final success rate = %f\n", ((double)numsuccesstry * 100.0) / numtry);
+    printf("number solutions found = %i\n", found_solution);
+    printf("final success rate = %f\n", ((double)found_solution * 100.0) / numtry);
     printf("average length successful tries = %" BIGFORMAT "\n",
-           numsuccesstry ? (totalsuccessflip / numsuccesstry) : 0);
-    if (numsuccesstry > 0) {
+           found_solution ? (totalsuccessflip / found_solution) : 0);
+    if (found_solution) {
         printf("average flips per assign (over all runs) = %f\n",
-               ((double)totalflip) / numsuccesstry);
+               ((double)totalflip) / found_solution);
         printf("average seconds per assign (over all runs) = %f\n",
-               (((double)totalflip) / numsuccesstry) * seconds_per_flip);
+               (((double)totalflip) / found_solution) * seconds_per_flip);
         printf("mean flips until assign = %f\n", mean_x);
-        if (numsuccesstry > 1) {
-            printf("  variance = %f\n", variance_x);
-            printf("  standard deviation = %f\n", std_dev_x);
-            printf("  standard error of mean = %f\n", std_error_mean_x);
-        }
         printf("mean seconds until assign = %f\n", mean_x * seconds_per_flip);
-        if (numsuccesstry > 1) {
-            printf("  variance = %f\n", variance_x * seconds_per_flip * seconds_per_flip);
-            printf("  standard deviation = %f\n", std_dev_x * seconds_per_flip);
-            printf("  standard error of mean = %f\n", std_error_mean_x * seconds_per_flip);
-        }
         printf("mean restarts until assign = %f\n", mean_r);
-        if (numsuccesstry > 1) {
-            variance_r = (sum_r_squared / numsuccesstry) - (mean_r * mean_r);
-            if (numsuccesstry > 1)
-                variance_r = (variance_r * numsuccesstry) / (numsuccesstry - 1);
-            std_dev_r = sqrt(variance_r);
-            std_error_mean_r = std_dev_r / sqrt((double)numsuccesstry);
-            printf("  variance = %f\n", variance_r);
-            printf("  standard deviation = %f\n", std_dev_r);
-            printf("  standard error of mean = %f\n", std_error_mean_r);
-        }
     }
 
     if (number_sampled_runs) {
@@ -1051,7 +1008,7 @@ void print_statistics_final(void)
                nonsuc_ratio_mean_avgfalse);
     }
 
-    if (numsuccesstry > 0) {
+    if (found_solution > 0) {
         printf("ASSIGNMENT FOUND\n");
         if (printsolcnf == true)
             print_sol_cnf();
@@ -1093,7 +1050,7 @@ void print_current_assign(void)
 
     printf("Begin assign at flip = %" BIGFORMAT "\n", numflip);
     for (i = 1; i <= numvars; i++) {
-        printf(" %i", atom[i] == 0 ? -i : i);
+        printf(" %i", assigns[i] == 0 ? -i : i);
         if (i % 10 == 0)
             printf("\n");
     }
@@ -1107,7 +1064,7 @@ void save_solution(void)
     int i;
 
     for (i = 1; i <= numvars; i++)
-        solution[i] = atom[i];
+        solution[i] = assigns[i];
 }
 
 /*******************************************************/
@@ -1200,7 +1157,7 @@ int countunsat(void)
         for (j = 0; j < clsize[i]; j++) {
             lit = clause[i][j];
             sign = lit > 0 ? 1 : 0;
-            if (atom[ABS(lit)] == sign) {
+            if (assigns[ABS(lit)] == sign) {
                 bad = false;
                 break;
             }
