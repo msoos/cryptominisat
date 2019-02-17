@@ -31,10 +31,6 @@ class WalkSAT {
 public:
 
 private:
-    int onfreebielist(int v);
-    void addtofreebielist(int v);
-    void removefromfreebielist(int v);
-
     /************************************/
     /* Main                             */
     /************************************/
@@ -86,9 +82,7 @@ private:
     int numvars;     /* number of vars */
     int numclauses;   /* number of clauses */
     int numliterals; /* number of instances of literals across all clauses */
-
     int numfalse;   /* number of false clauses */
-    int numfreebie; /* number of freebies */
 
     /* Data structures for clauses */
 
@@ -107,8 +101,6 @@ private:
     int *solution;     /* value of solution */
     int *breakcount;   /* number of clauses that become unsat if var if flipped */
     int *makecount;    /* number of clauses that become sat if var if flipped */
-    int *freebielist;  /* list of freebies */
-    int *wherefreebie; /* where var appears in freebies list, -1 if it does not appear */
 
     /* Data structures literals: arrays of size 2*numvars+1, indexed by literal+numvars */
 

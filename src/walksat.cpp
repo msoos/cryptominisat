@@ -112,36 +112,6 @@ static inline int MAX(int x, int y)
     return x > y ? x : y;
 }
 
-inline int WalkSAT::onfreebielist(int v)
-{
-    return wherefreebie[v] != -1;
-}
-
-inline void WalkSAT::addtofreebielist(int v)
-{
-    freebielist[numfreebie] = v;
-    wherefreebie[v] = numfreebie++;
-}
-
-inline void WalkSAT::removefromfreebielist(int v)
-{
-    int wherev;
-
-    if (numfreebie < 1 || wherefreebie[v] < 0) {
-        fprintf(stderr, "Freebie list error!\n");
-        exit(-1);
-    }
-    numfreebie--;
-    wherev = wherefreebie[v];
-    wherefreebie[v] = -1;
-    if (wherev == numfreebie)
-        return;
-
-    int swapv = freebielist[numfreebie];
-    freebielist[wherev] = swapv;
-    wherefreebie[swapv] = wherev;
-}
-
 /************************************/
 /* Main                             */
 /************************************/
@@ -303,22 +273,6 @@ void WalkSAT::init()
             breakcount[ABS(thetruelit)]++;
         }
     }
-
-    /* Create freebie list */
-    numfreebie = 0;
-    for (var = 1; var <= numvars; var++)
-        wherefreebie[var] = -1;
-    for (var = 1; var <= numvars; var++) {
-        if (makecount[var] > 0 && breakcount[var] == 0) {
-            wherefreebie[var] = numfreebie;
-            freebielist[numfreebie++] = var;
-        }
-    }
-
-#ifdef DEBUG
-    for (i = 0; i < numfreebie; i++)
-        printf(" %d at %d \n", freebielist[i], wherefreebie[freebielist[i]]);
-#endif
 }
 
 void WalkSAT::initprob()
@@ -359,8 +313,6 @@ void WalkSAT::initprob()
     solution = (int *)calloc(sizeof(int), (numvars + 1));
     breakcount = (int *)calloc(sizeof(int), (numvars + 1));
     makecount = (int *)calloc(sizeof(int), (numvars + 1));
-    freebielist = (int *)calloc(sizeof(int), (numvars + 1));
-    wherefreebie = (int *)calloc(sizeof(int), (numvars + 1));
 
     numliterals = 0;
     longestclause = 0;
@@ -510,9 +462,6 @@ void WalkSAT::update_statistics_end_flip()
 
 void WalkSAT::update_and_print_statistics_end_try()
 {
-    int i;
-    double undo_fraction;
-
     totalflip += numflip;
     x += numflip;
     r++;
@@ -563,7 +512,7 @@ void WalkSAT::update_and_print_statistics_end_try()
     }
 
     //MSOOS: this has been removed, uses memory, only stats
-    undo_fraction = 0;
+    double undo_fraction = 0;
 
     printf(" %9i %9i %9.2f %9.2f %9.2f %9" BIGFORMAT " %9.6f %9i", lowbad, numfalse, avgfalse,
            std_dev_avgfalse, ratio_avgfalse, numflip, undo_fraction,
