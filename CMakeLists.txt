@@ -97,6 +97,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
+# walksat
+option(WALKSAT_BINARY "Compile walksat separate binary -- DEBUG ONLY" OFF)
+
 # static compilation
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
