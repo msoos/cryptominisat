@@ -55,8 +55,6 @@ private:
     void update_and_print_statistics_end_try();
     void print_statistics_final();
     void print_sol_cnf();
-    void save_solution();
-    int printsolcnf = true;
 
     /*******************************************************/
     /* Utility Functions                                   */
@@ -98,7 +96,6 @@ private:
     /* Data structures for vars: arrays of size numvars+1 indexed by var */
 
     int *assigns;         /* value of each var */
-    int *solution;     /* value of solution */
     int *breakcount;   /* number of clauses that become unsat if var if flipped */
     int *makecount;    /* number of clauses that become sat if var if flipped */
 
@@ -122,7 +119,6 @@ private:
 
     /* Options */
     FILE *cnfStream;
-    int status_flag = 0; /* value returned from main procedure */
 
     int numerator; /* make random flip with numerator/denominator frequency */
     double walk_probability = 0.5;

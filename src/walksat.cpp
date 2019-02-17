@@ -21,10 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-/************************************/
-/* Compilation flags                */
-/************************************/
-
 /********************************************************************/
 /* Following tests set exactly one of the following flags to 1:     */
 /*    BSD:   BSD Unix                                               */
@@ -143,7 +139,7 @@ int WalkSAT::main()
     }
     expertime = cpuTime();
     print_statistics_final();
-    return status_flag;
+    return found_solution;
 }
 
 void WalkSAT::WalkSAT::flipvar(int toflip)
@@ -305,7 +301,6 @@ void WalkSAT::initprob()
     occurrence = (int **)calloc(sizeof(int *), (2 * numvars + 1));
     numoccurrence = (int *)calloc(sizeof(int), (2 * numvars + 1));
     assigns = (int *)calloc(sizeof(int), (numvars + 1));
-    solution = (int *)calloc(sizeof(int), (numvars + 1));
     breakcount = (int *)calloc(sizeof(int), (numvars + 1));
 
     numliterals = 0;
@@ -492,8 +487,6 @@ void WalkSAT::update_and_print_statistics_end_try()
     }
 
     if (numfalse == 0) {
-        status_flag = 0;
-        save_solution();
         found_solution = true;
         totalsuccessflip += numflip;
         integer_sum_x += x;
@@ -590,25 +583,15 @@ void WalkSAT::print_statistics_final()
 
     if (found_solution) {
         printf("ASSIGNMENT FOUND\n");
-        if (printsolcnf == true)
-            print_sol_cnf();
+        print_sol_cnf();
     } else
         printf("ASSIGNMENT NOT FOUND\n");
 }
 
 void WalkSAT::print_sol_cnf()
 {
-    int i;
-    for (i = 1; i < numvars + 1; i++)
-        printf("v %i\n", solution[i] == 1 ? i : -i);
-}
-
-void WalkSAT::save_solution()
-{
-    int i;
-
-    for (i = 1; i <= numvars; i++)
-        solution[i] = assigns[i];
+    for (int i = 1; i < numvars + 1; i++)
+        printf("v %i\n", assigns[i] == 1 ? i : -i);
 }
 
 /*******************************************************/
