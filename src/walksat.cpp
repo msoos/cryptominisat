@@ -287,11 +287,6 @@ static inline int MAX(int x, int y)
     return x > y ? x : y;
 }
 
-static inline int MIN(int x, int y)
-{
-    return x < y ? x : y;
-}
-
 static inline int onfreebielist(int v)
 {
     return wherefreebie[v] != -1;
@@ -406,11 +401,11 @@ void flipatom(int toflip)
 {
     int i, j;
     int toenforce;
-    register int cli;
-    register int lit;
+    int cli;
+    int lit;
     int numocc;
-    register int sz;
-    register int *litptr;
+    int sz;
+    int *litptr;
     int *occptr;
     int temp;
 
@@ -1234,9 +1229,9 @@ int pickbest(void)
     int tofix;
     int clausesize;
     int i;
-    register int numbest;
-    register int bestvalue;
-    register int var;
+    int numbest;
+    int bestvalue;
+    int var;
 
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
