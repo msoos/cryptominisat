@@ -108,7 +108,7 @@ THE SOFTWARE.
 /* Two dimensional arrays are dynamically allocated in */
 /* the second dimension only.  */
 
-int numvars;     /* number of atoms */
+int numvars;     /* number of vars */
 int numclauses;   /* number of clauses */
 int numliterals; /* number of instances of literals across all clauses */
 
@@ -126,16 +126,15 @@ int *wherefalse; /* where each clause is listed in false */
 int *numtruelit; /* number of true literals in each clause */
 int longestclause;
 
-/* Data structures for atoms: arrays of size numvars+1 indexed by atom */
+/* Data structures for vars: arrays of size numvars+1 indexed by var */
 
-int *assigns;         /* value of each atom */
-int *lowatom;      /* value of best state found so far */
+int *assigns;         /* value of each var */
 int *solution;     /* value of solution */
-int64_t *changed;   /* step at which atom was last flipped */
+int64_t *changed;   /* step at which var was last flipped */
 int *breakcount;   /* number of clauses that become unsat if var if flipped */
 int *makecount;    /* number of clauses that become sat if var if flipped */
 int *freebielist;  /* list of freebies */
-int *wherefreebie; /* where atom appears in freebies list, -1 if it does not appear */
+int *wherefreebie; /* where var appears in freebies list, -1 if it does not appear */
 
 /* Data structures literals: arrays of size 2*numvars+1, indexed by literal+numvars */
 
@@ -326,7 +325,7 @@ void scanonell(int argc, char *argv[], int i, int64_t *varptr);
 void scanoned(int argc, char *argv[], int i, double *varptr);
 void init(void);
 void initprob(void);
-void flipatom(int toflip);
+void flipvar(int toflip);
 void save_solution(void);
 void print_current_assign(void);
 void handle_interrupt(int sig);
@@ -376,7 +375,7 @@ int main(int argc, char *argv[])
                 a = freebielist[RANDMOD(numfreebie)];
             else
                 a = (pickcode[heuristic])();
-            flipatom(a);
+            flipvar(a);
             update_statistics_end_flip();
         }
         update_and_print_statistics_end_try();
@@ -386,7 +385,7 @@ int main(int argc, char *argv[])
     return status_flag;
 }
 
-void flipatom(int toflip)
+void flipvar(int toflip)
 {
     int i, j;
     int toenforce;
@@ -661,7 +660,6 @@ void initprob(void)
     occurrence = (int **)calloc(sizeof(int *), (2 * numvars + 1));
     numoccurrence = (int *)calloc(sizeof(int), (2 * numvars + 1));
     assigns = (int *)calloc(sizeof(int), (numvars + 1));
-    lowatom = (int *)calloc(sizeof(int), (numvars + 1));
     solution = (int *)calloc(sizeof(int), (numvars + 1));
     changed = (int64_t *)calloc(sizeof(int64_t), (numvars + 1));
     breakcount = (int *)calloc(sizeof(int), (numvars + 1));
