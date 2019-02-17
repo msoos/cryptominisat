@@ -155,12 +155,12 @@ inline void WalkSAT::removefromfreebielist(int v)
 /* Main                             */
 /************************************/
 
-int WalkSAT::main(int argc, char *argv[])
+int WalkSAT::main()
 {
     seed = 0;
-    parse_parameters(argc, argv);
+    parse_parameters();
     srandom(seed);
-    print_parameters(argc, argv);
+    print_parameters();
     initprob();
     initialize_statistics();
     print_statistics_header();
@@ -335,7 +335,7 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
 /* Initialization                   */
 /************************************/
 
-void WalkSAT::WalkSAT::parse_parameters(int /*argc*/, char *argv[])
+void WalkSAT::parse_parameters()
 {
     cnfStream = stdin;
     base_cutoff = cutoff;
@@ -559,16 +559,9 @@ void WalkSAT::initprob()
 /* Printing and Statistics          */
 /************************************/
 
-void WalkSAT::print_parameters(int argc, char *argv[])
+void WalkSAT::print_parameters()
 {
-    int i;
-
-    printf("WALKSAT v56");
-    printf("command line =");
-    for (i = 0; i < argc; i++) {
-        printf(" %s", argv[i]);
-    }
-    printf("\n");
+    printf("WALKSAT v56\n");
     printf("seed = %u\n", seed);
     printf("cutoff = %" BIGFORMAT "\n", cutoff);
     printf("tries = %i\n", numrun);
@@ -871,54 +864,6 @@ long super(int i)
     if (power == (i + 1))
         return (power / 2);
     return (super(i - (power / 2) + 1));
-}
-
-void WalkSAT::scanone(int argc, char *argv[], int i, int *varptr)
-{
-    int64_t n;
-    scanonell(argc, argv, i, &n);
-    *varptr = (int)n;
-}
-
-void WalkSAT::scanoned(int argc, char *argv[], int i, double *varptr)
-{
-    if (i >= argc || sscanf(argv[i], "%lf", varptr) != 1) {
-        fprintf(stderr, "Bad argument %s\n", i < argc ? argv[i] : argv[argc - 1]);
-        exit(-1);
-    }
-}
-
-void WalkSAT::scanonell(int argc, char *argv[], int i, int64_t *varptr)
-{
-    char buf[25];
-    int factor = 1;
-    int64_t n;
-
-    if (i >= argc || strlen(argv[i]) > 24) {
-        fprintf(stderr, "Bad argument %s\n", i < argc ? argv[i] : argv[argc - 1]);
-        exit(-1);
-    }
-    strcpy(buf, argv[i]);
-    switch (buf[strlen(buf) - 1]) {
-        case 'K':
-            factor = 1000;
-            buf[strlen(buf) - 1] = 0;
-            break;
-        case 'M':
-            factor = 1000000;
-            buf[strlen(buf) - 1] = 0;
-            break;
-        case 'B':
-            factor = 1000000000;
-            buf[strlen(buf) - 1] = 0;
-            break;
-    }
-    if (sscanf(argv[i], "%" BIGFORMAT, &n) != 1) {
-        fprintf(stderr, "Bad argument %s\n", i < argc ? argv[i] : argv[argc - 1]);
-        exit(-1);
-    }
-    n = n * factor;
-    *varptr = n;
 }
 
 int WalkSAT::countunsat()

@@ -21,6 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
+#ifndef WALKSAT_H
+#define WALKSAT_H
+
+
 namespace CMSat {
 
 class WalkSAT {
@@ -30,75 +34,46 @@ private:
     int onfreebielist(int v);
     void addtofreebielist(int v);
     void removefromfreebielist(int v);
-    void parse_parameters(int argc, char *argv[]);
-    void print_parameters(int argc, char *argv[]);
-    int pickrandom(void);
-    int pickbest(void);
-    int pickalternate(void);
-
-    int countunsat(void);
-    void scanone(int argc, char *argv[], int i, int *varptr);
-    void scanonell(int argc, char *argv[], int i, int64_t *varptr);
-    void scanoned(int argc, char *argv[], int i, double *varptr);
-    void init(void);
-    void initprob(void);
-    void flipvar(int toflip);
-    void save_solution(void);
-    void print_current_assign(void);
-    void handle_interrupt(int sig);
-    long super(int i);
-    void print_sol_file(char *filename);
-    void print_statistics_header(void);
-    void initialize_statistics(void);
-    void update_statistics_start_try(void);
-    void print_statistics_start_flip(void);
-    void update_and_print_statistics_end_try(void);
-    void update_statistics_end_flip(void);
-    void print_statistics_final(void);
-    void print_sol_cnf(void);
 
     /************************************/
     /* Main                             */
     /************************************/
-    int main(int argc, char *argv[]);
+    int main();
     void flipvar(int toflip);
 
     /************************************/
     /* Initialization                   */
     /************************************/
-    void parse_parameters(int argc, char *argv[]);
-    void init(void);
-    void initprob(void);
+    void parse_parameters();
+    void init();
+    void initprob();
 
     /************************************/
     /* Printing and Statistics          */
     /************************************/
-    void print_parameters(int argc, char *argv[]);
-    void initialize_statistics(void);
-    void print_statistics_header(void);
-    void update_statistics_start_try(void);
-    void print_statistics_start_flip(void);
-    void update_statistics_end_flip(void);
-    void update_and_print_statistics_end_try(void);
-    void print_statistics_final(void);
-    void print_sol_cnf(void);
+    void print_parameters();
+    void initialize_statistics();
+    void print_statistics_header();
+    void update_statistics_start_try();
+    void print_statistics_start_flip();
+    void update_statistics_end_flip();
+    void update_and_print_statistics_end_try();
+    void print_statistics_final();
+    void print_sol_cnf();
     void print_sol_file(char *filename);
-    void print_current_assign(void);
-    void save_solution(void);
+    void print_current_assign();
+    void save_solution();
 
     /*******************************************************/
     /* Utility Functions                                   */
     /*******************************************************/
     long super(int i);
-    void scanone(int argc, char *argv[], int i, int *varptr);
-    void scanoned(int argc, char *argv[], int i, double *varptr);
-    void scanonell(int argc, char *argv[], int i, int64_t *varptr);
-    int countunsat(void);
+    int countunsat();
 
     /****************************************************************/
     /*                  Heuristics                                  */
     /****************************************************************/
-    int pickbest(void);
+    int pickbest();
 
     /************************************/
     /* Main data structures             */
@@ -250,6 +225,8 @@ private:
     double nonsuc_mean_std_dev_avgfalse;
     int nonsuc_number_sampled_runs = 0;
     double nonsuc_ratio_mean_avgfalse;
-}
+};
 
 }
+
+#endif //WALKSAT_H
