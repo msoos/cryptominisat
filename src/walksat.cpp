@@ -36,7 +36,6 @@ THE SOFTWARE.
 /*    Clock ticks per second fixed at 1 for POSIX                   */
 /********************************************************************/
 
-#include <cstdint>
 #include "time_mem.h"
 
 #if __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __bsdi__ || _SYSTYPE_BSD
@@ -62,13 +61,10 @@ THE SOFTWARE.
 /* Standard includes                */
 /************************************/
 
-#include <limits.h>
-#include <math.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
+#include <limits>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
 #include "walksat.h"
 
 #ifdef WINDOWS
@@ -350,10 +346,7 @@ void WalkSAT::initprob()
         clause[i] = &(storebase[j]);
         j += clsize[i];
     }
-
     best = (int*) calloc(sizeof(int), longestclause);
-    besttabu = (int*) calloc(sizeof(int), longestclause);
-    any = (int*) calloc(sizeof(int), longestclause);
 
     /* Create the occurence lists for each literal */
 

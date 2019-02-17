@@ -24,17 +24,19 @@ THE SOFTWARE.
 #ifndef WALKSAT_H
 #define WALKSAT_H
 
+#include <cstdint>
+#include <cstdio>
 
 namespace CMSat {
 
 class WalkSAT {
 public:
+    int main();
 
 private:
     /************************************/
     /* Main                             */
     /************************************/
-    int main();
     void flipvar(int toflip);
 
     /************************************/
@@ -107,10 +109,7 @@ private:
     /* indexed as numoccurrence[literal+numvars]              */
 
     /* Data structures for lists of clauses used in heuristics */
-
     int *best;
-    int *besttabu;
-    int *any;
 
     /************************************/
     /* Global flags and parameters      */

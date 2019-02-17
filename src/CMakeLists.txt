@@ -301,6 +301,10 @@ if (NOT ONLY_SIMPLE)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 endif()
 
+add_executable(walksat
+    walksat.cpp
+    walksat_main.cpp
+)
 
 if (FEEDBACKFUZZ)
     add_executable(cms_feedback_fuzz
