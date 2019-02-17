@@ -155,9 +155,8 @@ int WalkSAT::main()
     initprob();
     initialize_statistics();
     print_statistics_header();
-    abort_flag = false;
 
-    while (!abort_flag && !found_solution && numtry < numrun) {
+    while (!found_solution && numtry < numrun) {
         numtry++;
         init();
         update_statistics_start_try();

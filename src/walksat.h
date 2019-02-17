@@ -133,7 +133,6 @@ private:
     /* Options */
     FILE *cnfStream;
     int status_flag = 0; /* value returned from main procedure */
-    int abort_flag;
 
     int numerator; /* make random flip with numerator/denominator frequency */
     double walk_probability = 0.5;
