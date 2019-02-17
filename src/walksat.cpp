@@ -169,12 +169,7 @@ int WalkSAT::main()
             print_statistics_start_flip();
             numflip++;
 
-            int a;
-            if (maxfreebie && numfreebie > 0 &&
-                (freebienoise == 0 || RANDMOD(denominator) > freebienoise))
-                a = freebielist[RANDMOD(numfreebie)];
-            else
-                a = pickbest();
+            int a = pickbest();
             flipvar(a);
             update_statistics_end_flip();
         }
@@ -221,11 +216,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             /* Decrement toflip's breakcount */
             breakcount[toflip]--;
 
-            if (maxfreebie) {
-                if (breakcount[toflip] == 0 && makecount[toflip] > 0 && !onfreebielist(toflip))
-                    addtofreebielist(toflip);
-            }
-
             if (makeflag) {
                 /* Increment the makecount of all vars in the clause */
                 sz = clsize[cli];
@@ -234,10 +224,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
                     /* lit = clause[cli][j]; */
                     lit = *(litptr++);
                     makecount[ABS(lit)]++;
-                    if (maxfreebie) {
-                        if (breakcount[ABS(lit)] == 0 && !onfreebielist(ABS(lit)))
-                            addtofreebielist(ABS(lit));
-                    }
                 }
             }
         } else if (numtruelit[cli] == 1) {
@@ -248,11 +234,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
                 lit = *(litptr++);
                 if ((lit > 0) == assigns[ABS(lit)]) {
                     breakcount[ABS(lit)]++;
-
-                    if (maxfreebie) {
-                        if (onfreebielist(ABS(lit)))
-                            removefromfreebielist(ABS(lit));
-                    }
 
                     /* Swap lit into first position in clause */
                     if ((--litptr) != clause[cli]) {
@@ -280,11 +261,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
 
-            if (maxfreebie) {
-                if (onfreebielist(toflip))
-                    removefromfreebielist(toflip);
-            }
-
             if (makeflag) {
                 /* Decrement the makecount of all vars in the clause */
                 sz = clsize[cli];
@@ -293,11 +269,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
                     /* lit = clause[cli][j]; */
                     lit = *(litptr++);
                     makecount[ABS(lit)]--;
-
-                    if (maxfreebie) {
-                        if (onfreebielist(ABS(lit)) && makecount[ABS(lit)] == 0)
-                            removefromfreebielist(ABS(lit));
-                    }
                 }
             }
         } else if (numtruelit[cli] == 2) {
@@ -309,12 +280,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
                 lit = *(litptr++);
                 if (((lit > 0) == assigns[ABS(lit)]) && (toflip != ABS(lit))) {
                     breakcount[ABS(lit)]--;
-
-                    if (maxfreebie) {
-                        if (breakcount[ABS(lit)] == 0 && makecount[ABS(lit)] > 0 &&
-                            !onfreebielist(ABS(lit)))
-                            addtofreebielist(ABS(lit));
-                    }
                     break;
                 }
             }
@@ -339,11 +304,6 @@ void WalkSAT::init()
     int j;
     int var;
     int thetruelit;
-    FILE *infile;
-    int lit;
-
-    alternate_run_remaining = 0;
-    alternate_greedy_state = false;
 
     /* initialize truth assignment and changed time */
     for (i = 0; i < numclauses; i++)
@@ -863,7 +823,7 @@ int WalkSAT::pickbest()
         }
     }
 
-    if ((nofreebie || bestvalue > 0) && (RANDMOD(denominator) < numerator))
+    if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
         return ABS(clause[tofix][RANDMOD(clausesize)]);
     return ABS(best[RANDMOD(numbest)]);
 }

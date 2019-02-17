@@ -146,23 +146,9 @@ private:
     int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
     int initoptions = false;
 
-    int nofreebie = false;
-    int maxfreebie = false;
     int freebienoise = 0;
-    double freebienoise_prob = 0.0;
-
-    int alternate_greedy = -1;
-    int alternate_walk = -1;
-    int alternate_greedy_state = false;
-    int alternate_run_remaining = 0;
-
-    int stagnation_timer;        /* number of remaining flips until stagnation check is performed */
-    int last_adaptive_objective; /* number of unsat clauses last time noise was adaptively updated */
-    double adaptive_phi;
-    double adaptive_theta;
 
     /* Random seed */
-
     unsigned int seed; /* Sometimes defined as an unsigned long int */
 
     /* Histogram of tail */
