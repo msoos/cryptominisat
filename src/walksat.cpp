@@ -241,7 +241,6 @@ void WalkSAT::init()
 {
     int i;
     int j;
-    int var;
     int thetruelit;
 
     /* initialize truth assignment and changed time */
@@ -250,11 +249,10 @@ void WalkSAT::init()
     numfalse = 0;
     for (i = 1; i < numvars + 1; i++) {
         breakcount[i] = 0;
-        makecount[i] = 0;
         assigns[i] = RANDMOD(2);
     }
 
-    /* Initialize breakcount and makecount */
+    /* Initialize breakcount  */
     for (i = 0; i < numclauses; i++) {
         for (j = 0; j < clsize[i]; j++) {
             if ((clause[i][j] > 0) == assigns[ABS(clause[i][j])]) {
@@ -266,9 +264,6 @@ void WalkSAT::init()
             wherefalse[i] = numfalse;
             false_cls[numfalse] = i;
             numfalse++;
-            for (j = 0; j < clsize[i]; j++) {
-                makecount[ABS(clause[i][j])]++;
-            }
         } else if (numtruelit[i] == 1) {
             breakcount[ABS(thetruelit)]++;
         }
@@ -312,7 +307,6 @@ void WalkSAT::initprob()
     assigns = (int *)calloc(sizeof(int), (numvars + 1));
     solution = (int *)calloc(sizeof(int), (numvars + 1));
     breakcount = (int *)calloc(sizeof(int), (numvars + 1));
-    makecount = (int *)calloc(sizeof(int), (numvars + 1));
 
     numliterals = 0;
     longestclause = 0;
