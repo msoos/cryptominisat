@@ -166,7 +166,7 @@ private:
     unsigned int seed; /* Sometimes defined as an unsigned long int */
 
     /* Histogram of tail */
-
+    static const int HISTMAX=64;         /* length of histogram of tail */
     int64_t tailhist[HISTMAX]; /* histogram of num unsat in tail of run */
     long histtotal;
     int tail = 10;
@@ -181,7 +181,6 @@ private:
     int printhist = false;
     int printtrace = false;
     int trace_assign = false;
-    char outfile[MAXFILENAME] = {0};
 
     /* Statistics */
 

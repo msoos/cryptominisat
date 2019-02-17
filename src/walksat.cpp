@@ -85,7 +85,6 @@ THE SOFTWARE.
 /************************************/
 
 #define BIG 1000000000     /* a number bigger that the possible number of violated clauses */
-#define HISTMAX 64         /* length of histogram of tail */
 #define MAXATTEMPT 10      /* max number of times to attempt to find a non-tabu variable to flip */
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
 #define ONE_PERCENT 1000   /* ONE_PERCENT / denominator = 0.01 */
@@ -792,7 +791,7 @@ void WalkSAT::save_solution()
 /* Utility Functions                                   */
 /*******************************************************/
 
-long super(int i)
+long WalkSAT::super(int i)
 {
     long power;
     int k;
