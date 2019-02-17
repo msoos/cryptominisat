@@ -358,30 +358,6 @@ void WalkSAT::init()
         assigns[i] = RANDMOD(2);
     }
 
-    if (initfile[0]) {
-        if ((infile = fopen(initfile, "r")) == NULL) {
-            fprintf(stderr, "Cannot open %s\n", initfile);
-            exit(1);
-        }
-        i = 0;
-        while (fscanf(infile, " %i", &lit) == 1) {
-            i++;
-            if (ABS(lit) > numvars) {
-                fprintf(stderr, "Bad init file %s\n", initfile);
-                exit(1);
-            }
-            if (lit < 0)
-                assigns[-lit] = 0;
-            else
-                assigns[lit] = 1;
-        }
-        if (i == 0) {
-            fprintf(stderr, "Bad init file %s\n", initfile);
-            exit(1);
-        }
-        fclose(infile);
-    }
-
     /* Initialize breakcount and makecount */
     for (i = 0; i < numclauses; i++) {
         for (j = 0; j < clsize[i]; j++) {
@@ -778,8 +754,6 @@ void WalkSAT::print_statistics_final()
         printf("ASSIGNMENT FOUND\n");
         if (printsolcnf == true)
             print_sol_cnf();
-        if (outfile[0])
-            print_sol_file(outfile);
     } else
         printf("ASSIGNMENT NOT FOUND\n");
 }
@@ -789,25 +763,6 @@ void WalkSAT::print_sol_cnf()
     int i;
     for (i = 1; i < numvars + 1; i++)
         printf("v %i\n", solution[i] == 1 ? i : -i);
-}
-
-void WalkSAT::print_sol_file(char *filename)
-{
-    FILE *fp;
-    int i;
-
-    if ((fp = fopen(filename, "w")) == NULL) {
-        fprintf(stderr, "Cannot open output file\n");
-        exit(-1);
-    }
-    for (i = 1; i < numvars + 1; i++) {
-        fprintf(fp, " %i", solution[i] == 1 ? i : -i);
-        if (i % 10 == 0)
-            fprintf(fp, "\n");
-    }
-    if ((i - 1) % 10 != 0)
-        fprintf(fp, "\n");
-    fclose(fp);
 }
 
 void WalkSAT::print_current_assign()

@@ -60,7 +60,6 @@ private:
     void update_and_print_statistics_end_try();
     void print_statistics_final();
     void print_sol_cnf();
-    void print_sol_file(char *filename);
     void print_current_assign();
     void save_solution();
 
@@ -145,7 +144,6 @@ private:
     int numtry = 0;   /* total attempts at solutions */
     int superlinear = false;
     int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
-    char initfile[MAXFILENAME] = {0};
     int initoptions = false;
 
     int nofreebie = false;
