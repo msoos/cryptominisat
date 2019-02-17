@@ -1,5 +1,6 @@
 /******************************************
 Copyright (c) 2018, Henry Kautz <henry.kautz@gmail.com>
+Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -62,7 +63,7 @@ THE SOFTWARE.
    limit size of cutoffs that can be specified. */
 
 #if BSD || OSX || LINUX
-#define BIGFORMAT "lli"
+#define BIGFORMAT "li"
 #elif WINDOWS
 #define BIGFORMAT "I64d"
 #endif
@@ -96,161 +97,10 @@ THE SOFTWARE.
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
 #define ONE_PERCENT 1000   /* ONE_PERCENT / denominator = 0.01 */
 
+#include "walksat.h"
+using namespace CMSat;
+
 /* #define DEBUG */
-
-/************************************/
-/* Main data structures             */
-/************************************/
-
-/* Atoms start at 1 */
-/* Not a is recorded as -1 * a */
-/* One dimensional arrays are statically allocated. */
-/* Two dimensional arrays are dynamically allocated in */
-/* the second dimension only.  */
-
-int numvars;     /* number of vars */
-int numclauses;   /* number of clauses */
-int numliterals; /* number of instances of literals across all clauses */
-
-int numfalse;   /* number of false clauses */
-int numfreebie; /* number of freebies */
-
-/* Data structures for clauses */
-
-int **clause; /* clauses to be satisfied */
-/* indexed as clause[clause_num][literal_num] */
-int *clsize;       /* length of each clause */
-int * false_cls;     /* clauses which are false */
-int *lowfalse;   /* clauses that are false in the best solution found so far */
-int *wherefalse; /* where each clause is listed in false */
-int *numtruelit; /* number of true literals in each clause */
-int longestclause;
-
-/* Data structures for vars: arrays of size numvars+1 indexed by var */
-
-int *assigns;         /* value of each var */
-int *solution;     /* value of solution */
-int64_t *changed;   /* step at which var was last flipped */
-int *breakcount;   /* number of clauses that become unsat if var if flipped */
-int *makecount;    /* number of clauses that become sat if var if flipped */
-int *freebielist;  /* list of freebies */
-int *wherefreebie; /* where var appears in freebies list, -1 if it does not appear */
-
-/* Data structures literals: arrays of size 2*numvars+1, indexed by literal+numvars */
-
-int **occurrence; /* where each literal occurs, size 2*numvars+1            */
-/* indexed as occurrence[literal+numvars][occurrence_num] */
-
-int *numoccurrence; /* number of times each literal occurs, size 2*numvars+1  */
-/* indexed as numoccurrence[literal+numvars]              */
-
-/* Data structures for lists of clauses used in heuristics */
-
-int *best;
-int *besttabu;
-int *any;
-
-/************************************/
-/* Global flags and parameters      */
-/************************************/
-
-/* Options */
-
-FILE *cnfStream;
-int status_flag = 0; /* value returned from main procedure */
-int abort_flag;
-int heuristic; /* heuristic to be used */
-
-int numerator; /* make random flip with numerator/denominator frequency */
-double walk_probability = 0.5;
-int64_t numflip;        /* number of changes so far */
-int numrun = 10;
-int64_t cutoff = 100000;
-int64_t base_cutoff = 100000;
-int numtry = 0;   /* total attempts at solutions */
-int superlinear = false;
-int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
-char initfile[MAXFILENAME] = {0};
-int initoptions = false;
-
-int nofreebie = false;
-int maxfreebie = false;
-int freebienoise = 0;
-double freebienoise_prob = 0.0;
-
-int alternate_greedy = -1;
-int alternate_walk = -1;
-int alternate_greedy_state = false;
-int alternate_run_remaining = 0;
-
-int adaptive = false;        /* update noise level adaptively during search */
-int stagnation_timer;        /* number of remaining flips until stagnation check is performed */
-int last_adaptive_objective; /* number of unsat clauses last time noise was adaptively updated */
-double adaptive_phi;
-double adaptive_theta;
-
-/* Random seed */
-
-unsigned int seed; /* Sometimes defined as an unsigned long int */
-
-/* Histogram of tail */
-
-int64_t tailhist[HISTMAX]; /* histogram of num unsat in tail of run */
-long histtotal;
-int tail = 10;
-int tail_start_flip;
-int undo_age = 1;
-int64_t undo_count;
-
-/* Printing options */
-
-int printonlysol = false;
-int printsolcnf = false;
-int printhist = false;
-int printtrace = false;
-int trace_assign = false;
-char outfile[MAXFILENAME] = {0};
-
-/* Statistics */
-
-double expertime;
-int64_t flips_this_solution;
-int lowbad;                  /* lowest number of bad clauses during try */
-int64_t totalflip = 0;        /* total number of flips in all tries so far */
-int64_t totalsuccessflip = 0; /* total number of flips in all tries which succeeded so far */
-bool found_solution = 0;       /* total found solutions */
-int64_t x;
-int64_t integer_sum_x = 0;
-double sum_x = 0.0;
-double mean_x;
-double seconds_per_flip;
-int r;
-int sum_r = 0;
-double mean_r;
-double avgfalse;
-double sumfalse;
-double sumfalse_squared;
-double second_moment_avgfalse, variance_avgfalse, std_dev_avgfalse, ratio_avgfalse;
-double f;
-double sample_size;
-double sum_avgfalse = 0.0;
-double sum_std_dev_avgfalse = 0.0;
-double mean_avgfalse;
-double mean_std_dev_avgfalse;
-int number_sampled_runs = 0;
-double ratio_mean_avgfalse;
-double suc_sum_avgfalse = 0.0;
-double suc_sum_std_dev_avgfalse = 0.0;
-double suc_mean_avgfalse;
-double suc_mean_std_dev_avgfalse;
-int suc_number_sampled_runs = 0;
-double suc_ratio_mean_avgfalse;
-double nonsuc_sum_avgfalse = 0.0;
-double nonsuc_sum_std_dev_avgfalse = 0.0;
-double nonsuc_mean_avgfalse;
-double nonsuc_mean_std_dev_avgfalse;
-int nonsuc_number_sampled_runs = 0;
-double nonsuc_ratio_mean_avgfalse;
 
 /**************************************/
 /* Inline utility functions           */
@@ -263,11 +113,7 @@ static inline int ABS(int x)
 
 static inline int RANDMOD(int x)
 {
-#if OSX || BSD
     return x > 1 ? random() % x : 0;
-#else
-    return x > 1 ? random() % x : 0;
-#endif
 }
 
 static inline int MAX(int x, int y)
@@ -275,20 +121,19 @@ static inline int MAX(int x, int y)
     return x > y ? x : y;
 }
 
-static inline int onfreebielist(int v)
+inline int WalkSAT::onfreebielist(int v)
 {
     return wherefreebie[v] != -1;
 }
 
-static inline void addtofreebielist(int v)
+inline void WalkSAT::addtofreebielist(int v)
 {
     freebielist[numfreebie] = v;
     wherefreebie[v] = numfreebie++;
 }
 
-static inline void removefromfreebielist(int v)
+inline void WalkSAT::removefromfreebielist(int v)
 {
-    int swapv;
     int wherev;
 
     if (numfreebie < 1 || wherefreebie[v] < 0) {
@@ -300,54 +145,18 @@ static inline void removefromfreebielist(int v)
     wherefreebie[v] = -1;
     if (wherev == numfreebie)
         return;
-    swapv = freebielist[numfreebie];
+
+    int swapv = freebielist[numfreebie];
     freebielist[wherev] = swapv;
     wherefreebie[swapv] = wherev;
 }
 
 /************************************/
-/* Forward declarations             */
-/************************************/
-
-void parse_parameters(int argc, char *argv[]);
-void print_parameters(int argc, char *argv[]);
-
-int pickrandom(void);
-int pickbest(void);
-int pickalternate(void);
-
-enum heuristics { RANDOM, BEST};
-static int (*pickcode[])(void) = {pickrandom,   pickbest};
-
-int countunsat(void);
-void scanone(int argc, char *argv[], int i, int *varptr);
-void scanonell(int argc, char *argv[], int i, int64_t *varptr);
-void scanoned(int argc, char *argv[], int i, double *varptr);
-void init(void);
-void initprob(void);
-void flipvar(int toflip);
-void save_solution(void);
-void print_current_assign(void);
-void handle_interrupt(int sig);
-long super(int i);
-void print_sol_file(char *filename);
-void print_statistics_header(void);
-void initialize_statistics(void);
-void update_statistics_start_try(void);
-void print_statistics_start_flip(void);
-void update_and_print_statistics_end_try(void);
-void update_statistics_end_flip(void);
-void print_statistics_final(void);
-void print_sol_cnf(void);
-
-/************************************/
 /* Main                             */
 /************************************/
 
-int main(int argc, char *argv[])
+int WalkSAT::main(int argc, char *argv[])
 {
-    int a;
-
     seed = 0;
     parse_parameters(argc, argv);
     srandom(seed);
@@ -355,7 +164,6 @@ int main(int argc, char *argv[])
     initprob();
     initialize_statistics();
     print_statistics_header();
-    signal(SIGINT, handle_interrupt);
     abort_flag = false;
 
     while (!abort_flag && !found_solution && numtry < numrun) {
@@ -370,11 +178,12 @@ int main(int argc, char *argv[])
             print_statistics_start_flip();
             numflip++;
 
+            int a;
             if (maxfreebie && numfreebie > 0 &&
                 (freebienoise == 0 || RANDMOD(denominator) > freebienoise))
                 a = freebielist[RANDMOD(numfreebie)];
             else
-                a = (pickcode[heuristic])();
+                a = pickbest();
             flipvar(a);
             update_statistics_end_flip();
         }
@@ -385,7 +194,7 @@ int main(int argc, char *argv[])
     return status_flag;
 }
 
-void flipvar(int toflip)
+void WalkSAT::WalkSAT::flipvar(int toflip)
 {
     int i, j;
     int toenforce;
@@ -502,7 +311,7 @@ void flipvar(int toflip)
             }
         } else if (numtruelit[cli] == 2) {
             /* Find the lit in this clause other than toflip that makes it true,
-		 and decrement its breakcount */
+             * and decrement its breakcount */
             litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
@@ -526,15 +335,14 @@ void flipvar(int toflip)
 /* Initialization                   */
 /************************************/
 
-void parse_parameters(int argc, char *argv[])
+void WalkSAT::WalkSAT::parse_parameters(int /*argc*/, char *argv[])
 {
-    heuristic = BEST;
     cnfStream = stdin;
     base_cutoff = cutoff;
     numerator = (int)(walk_probability * denominator);
 }
 
-void init(void)
+void WalkSAT::init()
 {
     int i;
     int j;
@@ -545,12 +353,6 @@ void init(void)
 
     alternate_run_remaining = 0;
     alternate_greedy_state = false;
-    if (adaptive) {
-        walk_probability = 0.0;
-        numerator = (int)(walk_probability * denominator);
-        stagnation_timer = (int)(numclauses * adaptive_theta);
-        last_adaptive_objective = BIG;
-    }
 
     /* initialize truth assignment and changed time */
     for (i = 0; i < numclauses; i++)
@@ -625,7 +427,7 @@ void init(void)
 #endif
 }
 
-void initprob(void)
+void WalkSAT::initprob()
 {
     int i;
     int j;
@@ -757,7 +559,7 @@ void initprob(void)
 /* Printing and Statistics          */
 /************************************/
 
-void print_parameters(int argc, char *argv[])
+void WalkSAT::print_parameters(int argc, char *argv[])
 {
     int i;
 
@@ -774,7 +576,7 @@ void print_parameters(int argc, char *argv[])
     printf("\n");
 }
 
-void initialize_statistics(void)
+void WalkSAT::initialize_statistics()
 {
     x = 0;
     r = 0;
@@ -782,7 +584,7 @@ void initialize_statistics(void)
     printf("tail starts after flip = %i\n", tail_start_flip);
 }
 
-void print_statistics_header(void)
+void WalkSAT::print_statistics_header()
 {
     printf("numvars = %i, numclauses = %i, numliterals = %i\n", numvars, numclauses, numliterals);
     printf("wff read in\n\n");
@@ -800,7 +602,7 @@ void print_statistics_header(void)
     fflush(stdout);
 }
 
-void update_statistics_start_try(void)
+void WalkSAT::update_statistics_start_try()
 {
     int i;
 
@@ -818,7 +620,7 @@ void update_statistics_start_try(void)
     }
 }
 
-void print_statistics_start_flip(void)
+void WalkSAT::print_statistics_start_flip()
 {
     if (printtrace && (numflip % printtrace == 0)) {
         printf(" %9i %9i                     %9" BIGFORMAT "\n", lowbad, numfalse, numflip);
@@ -828,27 +630,8 @@ void print_statistics_start_flip(void)
     }
 }
 
-void update_statistics_end_flip(void)
+void WalkSAT::update_statistics_end_flip()
 {
-    if (adaptive) {
-        /* Reference for adaptie noise option:
-	   An Adaptive Noise Mechanism for WalkSAT (Corrected). Holger H. Hoos.
-	*/
-
-        if (numfalse < last_adaptive_objective) {
-            last_adaptive_objective = numfalse;
-            stagnation_timer = (int)(numclauses * adaptive_theta);
-            numerator = (int)((1.0 - adaptive_phi / 2.0) * numerator);
-        } else {
-            stagnation_timer = stagnation_timer - 1;
-            if (stagnation_timer <= 0) {
-                last_adaptive_objective = numfalse;
-                stagnation_timer = (int)(numclauses * adaptive_theta);
-                numerator = numerator + (int)((denominator - numerator) * adaptive_phi);
-            }
-        }
-    }
-
     if (numfalse < lowbad) {
         lowbad = numfalse;
     }
@@ -860,7 +643,7 @@ void update_statistics_end_flip(void)
     }
 }
 
-void update_and_print_statistics_end_try(void)
+void WalkSAT::update_and_print_statistics_end_try()
 {
     int i;
     double undo_fraction;
@@ -943,7 +726,7 @@ void update_and_print_statistics_end_try(void)
     fflush(stdout);
 }
 
-void print_statistics_final(void)
+void WalkSAT::print_statistics_final()
 {
     seconds_per_flip = expertime / totalflip;
     printf("\ntotal elapsed seconds = %f\n", expertime);
@@ -1016,14 +799,14 @@ void print_statistics_final(void)
         printf("ASSIGNMENT NOT FOUND\n");
 }
 
-void print_sol_cnf(void)
+void WalkSAT::print_sol_cnf()
 {
     int i;
     for (i = 1; i < numvars + 1; i++)
         printf("v %i\n", solution[i] == 1 ? i : -i);
 }
 
-void print_sol_file(char *filename)
+void WalkSAT::print_sol_file(char *filename)
 {
     FILE *fp;
     int i;
@@ -1042,7 +825,7 @@ void print_sol_file(char *filename)
     fclose(fp);
 }
 
-void print_current_assign(void)
+void WalkSAT::print_current_assign()
 {
     int i;
 
@@ -1057,7 +840,7 @@ void print_current_assign(void)
     printf("End assign\n");
 }
 
-void save_solution(void)
+void WalkSAT::save_solution()
 {
     int i;
 
@@ -1090,21 +873,14 @@ long super(int i)
     return (super(i - (power / 2) + 1));
 }
 
-void handle_interrupt(int /*signal*/)
-{
-    if (abort_flag)
-        exit(-1);
-    abort_flag = true;
-}
-
-void scanone(int argc, char *argv[], int i, int *varptr)
+void WalkSAT::scanone(int argc, char *argv[], int i, int *varptr)
 {
     int64_t n;
     scanonell(argc, argv, i, &n);
     *varptr = (int)n;
 }
 
-void scanoned(int argc, char *argv[], int i, double *varptr)
+void WalkSAT::scanoned(int argc, char *argv[], int i, double *varptr)
 {
     if (i >= argc || sscanf(argv[i], "%lf", varptr) != 1) {
         fprintf(stderr, "Bad argument %s\n", i < argc ? argv[i] : argv[argc - 1]);
@@ -1112,7 +888,7 @@ void scanoned(int argc, char *argv[], int i, double *varptr)
     }
 }
 
-void scanonell(int argc, char *argv[], int i, int64_t *varptr)
+void WalkSAT::scanonell(int argc, char *argv[], int i, int64_t *varptr)
 {
     char buf[25];
     int factor = 1;
@@ -1145,7 +921,7 @@ void scanonell(int argc, char *argv[], int i, int64_t *varptr)
     *varptr = n;
 }
 
-int countunsat(void)
+int WalkSAT::countunsat()
 {
     int i, j, unsat, bad, lit, sign;
 
@@ -1170,15 +946,7 @@ int countunsat(void)
 /*                  Heuristics                                  */
 /****************************************************************/
 
-int pickrandom(void)
-{
-    int tofix;
-
-    tofix = false_cls[RANDMOD(numfalse)];
-    return ABS(clause[tofix][RANDMOD(tofix)]);
-}
-
-int pickbest(void)
+int WalkSAT::pickbest()
 {
     int numbreak;
     int tofix;
