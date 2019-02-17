@@ -55,13 +55,7 @@ THE SOFTWARE.
 #define POSIX 1
 #endif
 
-/* Define int64_t to be the type used for the "cutoff" variable.
-   Under gcc "long long int" gives a 64 bit integer.
-   Under Windows __int64 gives a 64 bit integer.
-   No way under POSIX to guarantee long int is 64 bits.
-   Program will still function using a 32-bit value, but it
-   limit size of cutoffs that can be specified. */
-
+//printing
 #if BSD || OSX || LINUX
 #define BIGFORMAT "li"
 #elif WINDOWS
@@ -79,8 +73,9 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include "walksat.h"
 
-#if POSIX || WINDOWS
+#ifdef WINDOWS
 #define random() rand()
 #define srandom(seed) srand(seed)
 #endif
@@ -89,15 +84,12 @@ THE SOFTWARE.
 /* Constant parameters              */
 /************************************/
 
-#define MAXFILENAME 2048
-#define BIG 1000000000 /* a number bigger that the possible number of violated clauses */
-
+#define BIG 1000000000     /* a number bigger that the possible number of violated clauses */
 #define HISTMAX 64         /* length of histogram of tail */
 #define MAXATTEMPT 10      /* max number of times to attempt to find a non-tabu variable to flip */
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
 #define ONE_PERCENT 1000   /* ONE_PERCENT / denominator = 0.01 */
 
-#include "walksat.h"
 using namespace CMSat;
 
 /* #define DEBUG */
