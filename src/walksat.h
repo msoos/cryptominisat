@@ -60,6 +60,7 @@ private:
     void print_statistics_final();
     void print_sol_cnf();
     void save_solution();
+    int printsolcnf = true;
 
     /*******************************************************/
     /* Utility Functions                                   */
@@ -152,11 +153,6 @@ private:
     int tail_start_flip;
     int undo_age = 1;
     int64_t undo_count;
-
-    /* Printing options */
-
-    int printonlysol = false;
-    int printsolcnf = false;
 
     /* Statistics */
 
