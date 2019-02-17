@@ -733,9 +733,9 @@ void initprob(void)
         j += clsize[i];
     }
 
-    best = calloc(sizeof(int), longestclause);
-    besttabu = calloc(sizeof(int), longestclause);
-    any = calloc(sizeof(int), longestclause);
+    best = (int*) calloc(sizeof(int), longestclause);
+    besttabu = (int*) calloc(sizeof(int), longestclause);
+    any = (int*) calloc(sizeof(int), longestclause);
 
     /* Create the occurence lists for each literal */
 
@@ -778,20 +778,7 @@ void print_parameters(int argc, char *argv[])
 {
     int i;
 
-    printf("WALKSAT v56 compiled for %s\n",
-#if OSX
-           "OSX"
-#elif BSD
-           "BSD"
-#elif LINUX
-           "Linux"
-#elif WINDOWS
-           "Windows"
-#else
-           "POSIX"
-#endif
-    );
-
+    printf("WALKSAT v56");
     printf("command line =");
     for (i = 0; i < argc; i++) {
         printf(" %s", argv[i]);
@@ -868,24 +855,12 @@ void update_statistics_end_flip(void)
         if (numfalse < last_adaptive_objective) {
             last_adaptive_objective = numfalse;
             stagnation_timer = (int)(numclauses * adaptive_theta);
-            /* p = p - p * (phi)/2
-               p = (1 - phi/2) * p
-               p = (1 - phi/2) * (numerator / denominator)
-               p (denominator) = (1 - phi/2) * numerator
-               numerator = (1 - phi/2) * numerator
-	    */
             numerator = (int)((1.0 - adaptive_phi / 2.0) * numerator);
         } else {
             stagnation_timer = stagnation_timer - 1;
             if (stagnation_timer <= 0) {
                 last_adaptive_objective = numfalse;
                 stagnation_timer = (int)(numclauses * adaptive_theta);
-                /* p = p + (1 - p) * phi
-		   denominator * p = denominator * p + denominator * (1 - p) * phi
- 		   numerator = numerator + denominator * (1 - p) * phi;
- 		   numerator = numerator + denominator * (1 - numerator/denominator) * phi;
- 		   numerator = numerator + (denominator - numerator) * phi;
-		*/
                 numerator = numerator + (int)((denominator - numerator) * adaptive_phi);
             }
         }
