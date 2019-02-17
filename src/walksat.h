@@ -55,12 +55,10 @@ private:
     void initialize_statistics();
     void print_statistics_header();
     void update_statistics_start_try();
-    void print_statistics_start_flip();
     void update_statistics_end_flip();
     void update_and_print_statistics_end_try();
     void print_statistics_final();
     void print_sol_cnf();
-    void print_current_assign();
     void save_solution();
 
     /*******************************************************/
@@ -143,7 +141,6 @@ private:
     int numtry = 0;   /* total attempts at solutions */
     int superlinear = false;
     int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
-    int initoptions = false;
 
     int freebienoise = 0;
 
@@ -152,7 +149,6 @@ private:
 
     /* Histogram of tail */
     static const int HISTMAX=64;         /* length of histogram of tail */
-    int64_t tailhist[HISTMAX]; /* histogram of num unsat in tail of run */
     long histtotal;
     int tail = 10;
     int tail_start_flip;
@@ -163,9 +159,6 @@ private:
 
     int printonlysol = false;
     int printsolcnf = false;
-    int printhist = false;
-    int printtrace = false;
-    int trace_assign = false;
 
     /* Statistics */
 

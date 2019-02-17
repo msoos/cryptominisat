@@ -165,7 +165,6 @@ int WalkSAT::main()
             cutoff = base_cutoff * super(numtry);
 
         while ((numfalse > 0) && (numflip < cutoff)) {
-            print_statistics_start_flip();
             numflip++;
 
             int a = pickbest();
@@ -531,22 +530,6 @@ void WalkSAT::update_statistics_start_try()
     sample_size = 0;
     sumfalse = 0.0;
     sumfalse_squared = 0.0;
-
-    for (i = 0; i < HISTMAX; i++)
-        tailhist[i] = 0;
-    if (tail_start_flip == 0) {
-        tailhist[numfalse < HISTMAX ? numfalse : HISTMAX - 1]++;
-    }
-}
-
-void WalkSAT::print_statistics_start_flip()
-{
-    if (printtrace && (numflip % printtrace == 0)) {
-        printf(" %9i %9i                     %9" BIGFORMAT "\n", lowbad, numfalse, numflip);
-        if (trace_assign)
-            print_current_assign();
-        fflush(stdout);
-    }
 }
 
 void WalkSAT::update_statistics_end_flip()
@@ -555,7 +538,6 @@ void WalkSAT::update_statistics_end_flip()
         lowbad = numfalse;
     }
     if (numflip >= tail_start_flip) {
-        tailhist[(numfalse < HISTMAX) ? numfalse : (HISTMAX - 1)]++;
         sumfalse += numfalse;
         sumfalse_squared += numfalse * numfalse;
         sample_size++;
@@ -626,16 +608,6 @@ void WalkSAT::update_and_print_statistics_end_try()
         printf(" %11.2f", mean_x);
     }
     printf("\n");
-
-    if (printhist) {
-        printf("histogram: ");
-        for (i = 0; i < HISTMAX; i++) {
-            printf(" %" BIGFORMAT "(%i)", tailhist[i], i);
-            if ((i + 1) % 10 == 0)
-                printf("\n           ");
-        }
-        printf("\n");
-    }
 
     if (numfalse == 0 && countunsat() != 0) {
         fprintf(stderr, "Program error, verification of solution fails!\n");
@@ -721,21 +693,6 @@ void WalkSAT::print_sol_cnf()
     int i;
     for (i = 1; i < numvars + 1; i++)
         printf("v %i\n", solution[i] == 1 ? i : -i);
-}
-
-void WalkSAT::print_current_assign()
-{
-    int i;
-
-    printf("Begin assign at flip = %" BIGFORMAT "\n", numflip);
-    for (i = 1; i <= numvars; i++) {
-        printf(" %i", assigns[i] == 0 ? -i : i);
-        if (i % 10 == 0)
-            printf("\n");
-    }
-    if ((i - 1) % 10 != 0)
-        printf("\n");
-    printf("End assign\n");
 }
 
 void WalkSAT::save_solution()
