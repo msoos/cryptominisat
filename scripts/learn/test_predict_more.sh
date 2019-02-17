@@ -8,11 +8,6 @@ set -e
 # FNAMEOUT="mystuff2"
 # RATIO="1"
 # FIXED="6000"
-#
-FNAME="UTI-20-10p0.cnf-unz"
-FNAMEOUT="mystuff2"
-RATIO="0.20"
-FIXED="15000"
 
 # orig: 101s
 # prop inside learned: 120s
@@ -25,10 +20,10 @@ FIXED="30000"
 
 # orig: 27s
 # prop inside learnt: 29
-# FNAME="goldb-heqc-i10mul.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="0.60"
-# FIXED="10000"
+FNAME="goldb-heqc-i10mul.cnf"
+FNAMEOUT="mystuff2"
+RATIO="0.60"
+FIXED="10000"
 
 # orig time: 70.84
 # no prop inside 33.24
@@ -37,7 +32,7 @@ FIXED="30000"
 # RATIO="0.60"
 # FIXED="40000"
 
-# SATISFIABLE
+# !!SATISFIABLE!!
 # FNAME="g2-mizh-md5-48-2.cnf"
 # FNAMEOUT="mystuff2"
 # RATIO="1.0"
@@ -48,11 +43,15 @@ FIXED="30000"
 # prop inside learnt: 82s
 # no prop inside: 95s
 # locked: 69s -- 737d7a5dcf32c2c2e07e2f5edf09819ee5fb0dfb
-# FNAME="AProVE07-16.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="0.60"
-# FIXED="30000"
+FNAME="AProVE07-16.cnf"
+FNAMEOUT="mystuff2"
+RATIO="0.60"
+FIXED="30000"
 
+FNAME="UTI-20-10p0.cnf-unz"
+FNAMEOUT="mystuff2"
+RATIO="0.20"
+FIXED="15000"
 
 # orig: 197.10
 # prop inside learnt: 181.35
