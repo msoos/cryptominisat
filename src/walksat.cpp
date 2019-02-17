@@ -161,8 +161,6 @@ int WalkSAT::main()
         init();
         update_statistics_start_try();
         numflip = 0;
-        if (superlinear)
-            cutoff = base_cutoff * super(numtry);
 
         while ((numfalse > 0) && (numflip < cutoff)) {
             numflip++;
@@ -213,17 +211,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             numfalse++;
             /* Decrement toflip's breakcount */
             breakcount[toflip]--;
-
-            if (makeflag) {
-                /* Increment the makecount of all vars in the clause */
-                sz = clsize[cli];
-                litptr = clause[cli];
-                for (j = 0; j < sz; j++) {
-                    /* lit = clause[cli][j]; */
-                    lit = *(litptr++);
-                    makecount[ABS(lit)]++;
-                }
-            }
         } else if (numtruelit[cli] == 1) {
             /* Find the lit in this clause that makes it true, and inc its breakcount */
             litptr = clause[cli];
@@ -258,17 +245,6 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             wherefalse[false_cls[numfalse]] = wherefalse[cli];
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
-
-            if (makeflag) {
-                /* Decrement the makecount of all vars in the clause */
-                sz = clsize[cli];
-                litptr = clause[cli];
-                for (j = 0; j < sz; j++) {
-                    /* lit = clause[cli][j]; */
-                    lit = *(litptr++);
-                    makecount[ABS(lit)]--;
-                }
-            }
         } else if (numtruelit[cli] == 2) {
             /* Find the lit in this clause other than toflip that makes it true,
              * and decrement its breakcount */

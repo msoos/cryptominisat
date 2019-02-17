@@ -139,8 +139,6 @@ private:
     int64_t cutoff = 100000;
     int64_t base_cutoff = 100000;
     int numtry = 0;   /* total attempts at solutions */
-    int superlinear = false;
-    int makeflag = false; /* set to true by heuristics that require the make values to be calculated */
 
     int freebienoise = 0;
 
