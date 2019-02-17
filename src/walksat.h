@@ -88,7 +88,6 @@ private:
     /* indexed as clause[clause_num][literal_num] */
     int *clsize;       /* length of each clause */
     int * false_cls;     /* clauses which are false */
-    int *lowfalse;   /* clauses that are false in the best solution found so far */
     int *wherefalse; /* where each clause is listed in false */
     int *numtruelit; /* number of true literals in each clause */
     int longestclause;

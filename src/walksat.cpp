@@ -294,7 +294,6 @@ void WalkSAT::initprob()
 
     //false-true lits
     false_cls = (int *)calloc(sizeof(int), (numclauses + 1));
-    lowfalse = (int *)calloc(sizeof(int), (numclauses + 1));
     wherefalse = (int *)calloc(sizeof(int), (numclauses + 1));
     numtruelit = (int *)calloc(sizeof(int), (numclauses + 1));
 
