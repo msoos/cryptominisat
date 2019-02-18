@@ -101,7 +101,7 @@ namespace CMSat {
         void set_no_bva(); //No bounded variable addition
         void set_no_bve(); //No bounded variable elimination
         void set_greedy_undef(); //Try to set variables to l_Undef in solution
-        void set_independent_vars(std::vector<uint32_t>* ind_vars);
+        void set_sampling_vars(std::vector<uint32_t>* sampl_vars);
         void set_timeout_all_calls(double secs); //max timeout on all subsequent solve() or simplify
         void set_up_for_scalmc(); //used to set the solver up for ScalMC configuration
         void set_need_decisions_reaching(); //set it before calling solve()

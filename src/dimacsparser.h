@@ -41,7 +41,7 @@ class DimacsParser
 
         template <class T> bool parse_DIMACS(T input_stream, const bool strict_header);
         uint64_t max_var = std::numeric_limits<uint64_t>::max();
-        vector<uint32_t> independent_vars;
+        vector<uint32_t> sampling_vars;
         const std::string dimacs_spec = "http://www.satcompetition.org/2009/format-benchmarks2009.html";
         const std::string please_read_dimacs = "\nPlease read DIMACS specification at http://www.satcompetition.org/2009/format-benchmarks2009.html";
 
@@ -522,7 +522,7 @@ bool DimacsParser<C>::parseIndependentSet(C& in)
             break;
         }
         uint32_t var = std::abs(parsed_lit) - 1;
-        independent_vars.push_back(var);
+        sampling_vars.push_back(var);
     }
     return true;
 }

@@ -116,10 +116,10 @@ class Main
         string sqlite_filename;
         string decisions_for_model_fname;
 
-        //Independent vars
-        vector<uint32_t> independent_vars;
-        std::string independent_vars_str = "";
-        bool only_indep_solution = false;
+        //Sampling vars
+        vector<uint32_t> sampling_vars;
+        std::string sampling_vars_str = "";
+        bool only_sampling_solution = false;
 
 
         //Files to read & write

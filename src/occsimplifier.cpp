@@ -122,16 +122,16 @@ OccSimplifier::~OccSimplifier()
 void OccSimplifier::new_var(const uint32_t /*orig_outer*/)
 {
     n_occurs.insert(n_occurs.end(), 2, 0);
-    if (solver->conf.independent_vars) {
-        indep_vars.insert(indep_vars.end(), 1, 0);
+    if (solver->conf.sampling_vars) {
+        sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), 1, 0);
     }
 }
 
 void OccSimplifier::new_vars(size_t n)
 {
     n_occurs.insert(n_occurs.end(), n*2ULL, 0);
-    if (solver->conf.independent_vars) {
-        indep_vars.insert(indep_vars.end(), n, 0);
+    if (solver->conf.sampling_vars) {
+        sampling_vars_occsimp.insert(sampling_vars_occsimp.end(), n, 0);
     }
 }
 
@@ -731,9 +731,9 @@ void OccSimplifier::eliminate_empty_resolvent_vars()
 bool OccSimplifier::can_eliminate_var(const uint32_t var) const
 {
     #ifdef SLOW_DEBUG
-    if (solver->conf.independent_vars) {
+    if (solver->conf.sampling_vars) {
         assert(var < solver->nVars());
-        assert(var < indep_vars.size());
+        assert(var < sampling_vars_occsimp.size());
     }
     #endif
 
@@ -741,7 +741,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
         || solver->var_inside_assumptions(var)
-        || (solver->conf.independent_vars && indep_vars[var])
+        || (solver->conf.sampling_vars && sampling_vars_occsimp[var])
         //|| (!solver->conf.allow_elim_xor_vars && solver->varData[var].added_for_xor)
     ) {
         return false;
@@ -1459,19 +1459,19 @@ bool OccSimplifier::simplify(const bool _startup, const std::string schedule)
     const size_t origTrailSize = solver->trail_size();
 
 
-    indep_vars.clear();
-    if (solver->conf.independent_vars) {
-        indep_vars.resize(solver->nVars(), false);
-        for(uint32_t outside_var: *solver->conf.independent_vars) {
+    sampling_vars_occsimp.clear();
+    if (solver->conf.sampling_vars) {
+        sampling_vars_occsimp.resize(solver->nVars(), false);
+        for(uint32_t outside_var: *solver->conf.sampling_vars) {
             uint32_t outer_var = solver->map_to_with_bva(outside_var);
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = solver->map_outer_to_inter(outer_var);
             if (int_var < solver->nVars()) {
-                indep_vars[int_var] = true;
+                sampling_vars_occsimp[int_var] = true;
             }
         }
     } else {
-        indep_vars.shrink_to_fit();
+        sampling_vars_occsimp.shrink_to_fit();
     }
 
     execute_simplifier_strategy(schedule);
@@ -3059,7 +3059,7 @@ size_t OccSimplifier::mem_used() const
     b += varElimComplexity.capacity()*sizeof(int)*2;
     b += elim_calc_need_update.mem_used();
     b += clauses.capacity()*sizeof(ClOffset);
-    b += indep_vars.capacity();
+    b += sampling_vars_occsimp.capacity();
 
     return b;
 }

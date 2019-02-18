@@ -602,11 +602,11 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
     }
 }
 
-DLL_PUBLIC void SATSolver::set_independent_vars(vector<uint32_t>* ind_vars)
+DLL_PUBLIC void SATSolver::set_sampling_vars(vector<uint32_t>* sampl_vars)
 {
     for (size_t i = 0; i < data->solvers.size(); ++i) {
         Solver& s = *data->solvers[i];
-        s.conf.independent_vars = ind_vars;
+        s.conf.sampling_vars = sampl_vars;
     }
 }
 
@@ -703,12 +703,12 @@ struct OneThreadCalc
         DataForThread& _data_for_thread,
         size_t _tid,
         bool _solve,
-        bool _only_indep_solution
+        bool _only_sampling_solution
     ) :
         data_for_thread(_data_for_thread)
         , tid(_tid)
         , solve(_solve)
-        , only_indep_solution(_only_indep_solution)
+        , only_sampling_solution(_only_sampling_solution)
     {}
 
     void operator()()
@@ -724,7 +724,7 @@ struct OneThreadCalc
         cls_adder();
         lbool ret;
         if (solve) {
-            ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions, only_indep_solution);
+            ret = data_for_thread.solvers[tid]->solve_with_assumptions(data_for_thread.assumptions, only_sampling_solution);
         } else {
             ret = data_for_thread.solvers[tid]->simplify_with_assumptions(data_for_thread.assumptions);
         }
@@ -756,13 +756,13 @@ struct OneThreadCalc
     const size_t tid;
     double start_time;
     bool solve;
-    bool only_indep_solution;
+    bool only_sampling_solution;
 };
 
 lbool calc(
     const vector< Lit >* assumptions,
     bool solve, CMSatPrivateData *data,
-    bool only_indep_solution = false
+    bool only_sampling_solution = false
 ) {
     //Reset the interrupt signal if it was set
     data->must_interrupt->store(false, std::memory_order_relaxed);
@@ -798,7 +798,7 @@ lbool calc(
 
         lbool ret ;
         if (solve) {
-            ret = data->solvers[0]->solve_with_assumptions(assumptions, only_indep_solution);
+            ret = data->solvers[0]->solve_with_assumptions(assumptions, only_sampling_solution);
         } else {
             ret = data->solvers[0]->simplify_with_assumptions(assumptions);
         }
@@ -814,7 +814,7 @@ lbool calc(
         ; i < data->solvers.size()
         ; i++
     ) {
-        thds.push_back(thread(OneThreadCalc(data_for_thread, i, solve, only_indep_solution)));
+        thds.push_back(thread(OneThreadCalc(data_for_thread, i, solve, only_sampling_solution)));
     }
     for(std::thread& thread : thds){
         thread.join();
@@ -831,14 +831,14 @@ lbool calc(
     return real_ret;
 }
 
-DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_indep_solution)
+DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sampling_solution)
 {
     //set information data (props, confl, dec)
     data->previous_sum_conflicts = get_sum_conflicts();
     data->previous_sum_propagations = get_sum_propagations();
     data->previous_sum_decisions = get_sum_decisions();
 
-    return calc(assumptions, true, data, only_indep_solution);
+    return calc(assumptions, true, data, only_sampling_solution);
 }
 
 DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)

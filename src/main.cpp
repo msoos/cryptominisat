@@ -130,40 +130,40 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         exit(-1);
     }
 
-    if (!independent_vars_str.empty() && !parser.independent_vars.empty()) {
-        cerr << "ERROR! Independent vars set in console but also in CNF." << endl;
+    if (!sampling_vars_str.empty() && !parser.sampling_vars.empty()) {
+        cerr << "ERROR! Sampling vars set in console but also in CNF." << endl;
         exit(-1);
     }
 
-    if (!independent_vars_str.empty()) {
-        assert(independent_vars.empty());
+    if (!sampling_vars_str.empty()) {
+        assert(sampling_vars.empty());
 
-        std::stringstream ss(independent_vars_str);
+        std::stringstream ss(sampling_vars_str);
         uint32_t i;
         while (ss >> i)
         {
             const uint32_t var = i-1;
-            independent_vars.push_back(var);
+            sampling_vars.push_back(var);
 
             if (ss.peek() == ',' || ss.peek() == ' ')
                 ss.ignore();
         }
     } else {
-        independent_vars.swap(parser.independent_vars);
+        sampling_vars.swap(parser.sampling_vars);
     }
 
-    if (independent_vars.empty()) {
-        if (only_indep_solution) {
-            cout << "ERROR: only independent vars are requested in the solution, but no independent vars have been set!" << endl;
+    if (sampling_vars.empty()) {
+        if (only_sampling_solution) {
+            cout << "ERROR: only sampling vars are requested in the solution, but no sampling vars have been set!" << endl;
             exit(-1);
         }
     } else {
-        solver2->set_independent_vars(&independent_vars);
-        cout << "c Independent vars set: ";
-        for(size_t i = 0; i < independent_vars.size(); i++) {
-            const uint32_t v = independent_vars[i];
+        solver2->set_sampling_vars(&sampling_vars);
+        cout << "c Sampling vars set: ";
+        for(size_t i = 0; i < sampling_vars.size(); i++) {
+            const uint32_t v = sampling_vars[i];
             cout << v+1;
-            if (i+1 != independent_vars.size())
+            if (i+1 != sampling_vars.size())
                 cout << ",";
         }
         cout << endl;
@@ -284,8 +284,8 @@ void Main::printResultFunc(
         } else {
             const uint32_t num_undef = print_model(os, solver);
             if (num_undef && !toFile && conf.verbosity) {
-                if (only_indep_solution) {
-                    cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the independent set's values: '--onlyindep'" << endl;
+                if (only_sampling_solution) {
+                    cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the sampling set's values: '--onlysampling'" << endl;
                 } else {
                    cout << "c NOTE: " << num_undef << " variables are NOT set" << endl;
                 }
@@ -713,10 +713,10 @@ void Main::add_supported_options()
         , "Simulate DRAT")
     ("dumpdecformodel", po::value(&decisions_for_model_fname)->default_value(decisions_for_model_fname)
         , "Decisions for model will be dumped here")
-    ("indep", po::value(&independent_vars_str)->default_value(independent_vars_str)
-        , "Independent vars, separated by comma")
-    ("onlyindep", po::bool_switch(&only_indep_solution)
-        , "Print and ban(!) solutions only in terms of variables declared in 'c ind' or as --indep '...'")
+    ("sampling", po::value(&sampling_vars_str)->default_value(sampling_vars_str)
+        , "Sampling vars, separated by comma")
+    ("onlysampling", po::bool_switch(&only_sampling_solution)
+        , "Print and ban(!) solutions only in terms of variables declared in 'c ind' or as --sampling '...'")
 
     //these a kind of special and determine positional options' meanings
     ("input", po::value< vector<string> >(), "file(s) to read")
@@ -1385,7 +1385,7 @@ lbool Main::multi_solutions()
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {
-        ret = solver->solve(NULL, only_indep_solution);
+        ret = solver->solve(NULL, only_sampling_solution);
         current_nr_of_solutions++;
         if (ret == l_True && !decisions_for_model_fname.empty()) {
             dump_decisions_for_model();
@@ -1410,7 +1410,7 @@ lbool Main::multi_solutions()
 
             //Banning found solution
             vector<Lit> lits;
-            if (independent_vars.empty()) {
+            if (sampling_vars.empty()) {
                 if (solver->get_decision_reaching_valid()) {
                     //only decision vars
                     for (Lit lit: solver->get_decisions_reaching_model()) {
@@ -1425,7 +1425,7 @@ lbool Main::multi_solutions()
                     }
                 }
             } else {
-              for (const uint32_t var: independent_vars) {
+              for (const uint32_t var: sampling_vars) {
                   if (solver->get_model()[var] != l_Undef) {
                       lits.push_back( Lit(var, (solver->get_model()[var] == l_True)? true : false) );
                   }

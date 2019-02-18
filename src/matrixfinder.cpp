@@ -134,10 +134,10 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     }
 
     if (xors.size() > solver->conf.gaussconf.max_gauss_xor_clauses
-        && solver->conf.independent_vars->size() > 0
+        && solver->conf.sampling_vars->size() > 0
     ) {
         if (solver->conf.verbosity) {
-            cout << "c WARNING independent vars have been given but there"
+            cout << "c WARNING sampling vars have been given but there"
             "are too many XORs and it would take too much time to put them"
             "into matrixes. Skipping!" << endl;
             return true;
@@ -228,8 +228,8 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
 
 uint32_t MatrixFinder::setMatrixes()
 {
-    if (solver->conf.independent_vars) {
-        uint32_t size_at_least = (double)solver->conf.independent_vars->size()*3;
+    if (solver->conf.sampling_vars) {
+        uint32_t size_at_least = (double)solver->conf.sampling_vars->size()*3;
         if (solver->conf.gaussconf.max_matrix_rows < size_at_least) {
             solver->conf.gaussconf.max_matrix_rows = size_at_least;
             if (solver->conf.verbosity) {
@@ -289,23 +289,25 @@ uint32_t MatrixFinder::setMatrixes()
             continue;
         }
 
-        double ratio_indep = 0;
-        if (solver->conf.independent_vars) {
-            uint32_t indep_var_inside_matrix = 0;
+        //calculate sampling var ratio
+        //for statistics ONLY
+        double ratio_sampling = 0;
+        if (solver->conf.sampling_vars) {
+            uint32_t sampling_var_inside_matrix = 0;
 
             //'seen' with what is in Matrix
             for(uint32_t int_var: reverseTable[i]) {
                 solver->seen[int_var] = true;
             }
 
-            for(uint32_t outside_var: *solver->conf.independent_vars) {
+            for(uint32_t outside_var: *solver->conf.sampling_vars) {
                 uint32_t outer_var = solver->map_to_with_bva(outside_var);
                 outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
                 uint32_t int_var = solver->map_outer_to_inter(outer_var);
                 if (int_var < solver->nVars()
                     && solver->seen[int_var]
                 ) {
-                    indep_var_inside_matrix++;
+                    sampling_var_inside_matrix++;
                 }
             }
 
@@ -314,13 +316,13 @@ uint32_t MatrixFinder::setMatrixes()
                 solver->seen[int_var] = false;
             }
 
-            ratio_indep = (double)indep_var_inside_matrix/(double)reverseTable[i].size();
+            ratio_sampling = (double)sampling_var_inside_matrix/(double)reverseTable[i].size();
         }
 
 
         bool use_matrix = false;
-        if (solver->conf.independent_vars) {
-            if (ratio_indep > 1.0) { //TODO Magic constant
+        if (solver->conf.sampling_vars) {
+            if (ratio_sampling > 1.0) { //TODO Magic constant
                 use_matrix = true;
             }
         }
@@ -357,8 +359,8 @@ uint32_t MatrixFinder::setMatrixes()
             << std::setw(5) << std::fixed << std::setprecision(1) << m.density << "%"
             << "  xorlen avg: "
             << std::setw(5) << std::fixed << std::setprecision(2)  << avg
-            << "  perc indep: "
-            << std::setw(5) << std::fixed << std::setprecision(3) << ratio_indep*100.0 << " %"
+            << "  perc sampl: "
+            << std::setw(5) << std::fixed << std::setprecision(3) << ratio_sampling*100.0 << " %"
             << endl;
         }
     }

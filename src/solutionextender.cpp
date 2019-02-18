@@ -212,9 +212,9 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
 size_t SolutionExtender::count_num_unset_model() const
 {
     size_t num_unset = 0;
-    if (solver->conf.independent_vars) {
-        for(size_t i = 0; i < solver->conf.independent_vars->size(); i++) {
-            uint32_t var = (*solver->conf.independent_vars)[i];
+    if (solver->conf.sampling_vars) {
+        for(size_t i = 0; i < solver->conf.sampling_vars->size(); i++) {
+            uint32_t var = (*solver->conf.sampling_vars)[i];
             if (solver->model_value(var) == l_Undef) {
                 num_unset++;
             }

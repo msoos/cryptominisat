@@ -304,7 +304,7 @@ private:
     vector<uint16_t>& seen;
     vector<uint8_t>& seen2;
     vector<Lit>& toClear;
-    vector<bool> indep_vars;
+    vector<bool> sampling_vars_occsimp;
 
     //Temporaries
     vector<Lit>     dummy;       ///<Used by merge()

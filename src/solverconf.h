@@ -369,7 +369,7 @@ class DLL_PUBLIC SolverConf
 
         //Greedy undef
         int      greedy_undef;
-        std::vector<uint32_t>* independent_vars;
+        std::vector<uint32_t>* sampling_vars;
 
         //Timeouts
         double orig_global_timeout_multiplier;

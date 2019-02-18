@@ -906,7 +906,7 @@ TEST(propagate, prop_complex)
     EXPECT_EQ(lits.size(), 5);
 }
 
-TEST(independent, indep1)
+TEST(sampling, indep1)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
@@ -917,7 +917,7 @@ TEST(independent, indep1)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x{4U};
-    s.set_independent_vars(&x);
+    s.set_sampling_vars(&x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);
@@ -932,7 +932,7 @@ TEST(independent, indep1)
     EXPECT_NE(s.get_model()[4], l_Undef);
 }
 
-TEST(independent, indep2)
+TEST(sampling, indep2)
 {
     SolverConf conf;
     conf.simplify_at_startup = true;
@@ -943,7 +943,7 @@ TEST(independent, indep2)
     s.add_clause(str_to_cl("-5, 6"));
 
     vector<uint32_t> x{0U,1U,2U,3U,4U,5U};
-    s.set_independent_vars(&x);
+    s.set_sampling_vars(&x);
 
     lbool ret = s.solve(NULL, true);
     EXPECT_EQ(ret, l_True);
