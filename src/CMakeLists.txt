@@ -109,6 +109,7 @@ set(cryptoms_lib_files
     xorfinder.cpp
     cardfinder.cpp
     cryptominisat_c.cpp
+    walksat.cpp
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
 )
@@ -325,6 +326,12 @@ if (NOT ONLY_SIMPLE)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 endif()
 
+if (WALKSAT_BINARY)
+    add_executable(walksat
+        walksat.cpp
+        walksat_main.cpp
+    )
+endif()
 
 if (FEEDBACKFUZZ)
     add_executable(cms_feedback_fuzz

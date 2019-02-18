@@ -3560,8 +3560,8 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
 
 inline bool Searcher::check_order_heap_sanity() const
 {
-    if (conf.independent_vars) {
-        for(uint32_t outside_var: *conf.independent_vars) {
+    if (conf.sampling_vars) {
+        for(uint32_t outside_var: *conf.sampling_vars) {
             uint32_t outer_var = map_to_with_bva(outside_var);
             outer_var = solver->varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);

@@ -284,7 +284,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Greedy Undef
         , greedy_undef(false)
-        , independent_vars(NULL)
+        , sampling_vars(NULL)
 
         //Timeouts
         , orig_global_timeout_multiplier(4.0)

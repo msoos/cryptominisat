@@ -1213,16 +1213,16 @@ void Solver::check_minimization_effectiveness(const lbool status)
     }
 }
 
-void Solver::extend_solution(const bool only_indep_solution)
+void Solver::extend_solution(const bool only_sampling_solution)
 {
     #ifdef DEBUG_IMPLICIT_STATS
     check_stats();
     #endif
 
     #ifdef SLOW_DEBUG
-    //Check that independent vars are all assigned
-    if (conf.independent_vars) {
-        for(uint32_t outside_var: *conf.independent_vars) {
+    //Check that sampling vars are all assigned
+    if (conf.sampling_vars) {
+        for(uint32_t outside_var: *conf.sampling_vars) {
             uint32_t outer_var = map_to_with_bva(outside_var);
             outer_var = varReplacer->get_var_replaced_with_outer(outer_var);
             uint32_t int_var = map_outer_to_inter(outer_var);
@@ -1248,7 +1248,7 @@ void Solver::extend_solution(const bool only_indep_solution)
         compHandler->addSavedState(model, decisions_reaching_model);
     }
 
-    if (!only_indep_solution) {
+    if (!only_sampling_solution) {
         SolutionExtender extender(this, occsimplifier);
         extender.extend();
     } else {
@@ -1268,11 +1268,11 @@ void Solver::extend_solution(const bool only_indep_solution)
         }
     }
 
-    if (only_indep_solution) {
-        assert(conf.independent_vars);
-        for(uint32_t var: *conf.independent_vars) {
+    if (only_sampling_solution) {
+        assert(conf.sampling_vars);
+        for(uint32_t var: *conf.sampling_vars) {
             if (model[var] == l_Undef) {
-                cout << "ERROR: variable " << var+1 << " is set as independent but is unset!" << endl;
+                cout << "ERROR: variable " << var+1 << " is set as sampling but is unset!" << endl;
                 cout << "NOTE: var " << var + 1 << " has removed value: "
                 << removed_type_to_string(varData[var].removed)
                 << " and is set to " << value(var) << endl;
@@ -1355,9 +1355,9 @@ void Solver::check_config_parameters() const
     }
 
     #ifdef SLOW_DEBUG
-    if (solver->conf.independent_vars)
+    if (solver->conf.sampling_vars)
     {
-        for(uint32_t v: *solver->conf.independent_vars) {
+        for(uint32_t v: *solver->conf.sampling_vars) {
             assert(v < nVarsOutside());
         }
     }
@@ -1401,7 +1401,7 @@ lbool Solver::simplify_problem_outside()
 
 lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
-    const bool only_indep_solution
+    const bool only_sampling_solution
 ) {
     fresh_solver = false;
     decisions_reaching_model.clear();
@@ -1516,7 +1516,7 @@ lbool Solver::solve_with_assumptions(
         << endl;
     }
 
-    handle_found_solution(status, only_indep_solution);
+    handle_found_solution(status, only_sampling_solution);
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
     conf.max_confl = std::numeric_limits<long>::max();
@@ -1788,10 +1788,10 @@ void Solver::check_too_many_low_glues()
     }
 }
 
-void Solver::handle_found_solution(const lbool status, const bool only_indep_solution)
+void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution)
 {
     if (status == l_True) {
-        extend_solution(only_indep_solution);
+        extend_solution(only_sampling_solution);
         cancelUntil(0);
 
         #ifdef DEBUG_ATTACH_MORE
@@ -1874,7 +1874,7 @@ bool Solver::execute_inprocess_strategy(
         }
 
         if (token == "find-comps" &&
-            conf.independent_vars == NULL //no point finding, cannot be handled
+            conf.sampling_vars == NULL //no point finding, cannot be handled
         ) {
             if (get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult) {
                 CompFinder findParts(this);
@@ -1883,7 +1883,7 @@ bool Solver::execute_inprocess_strategy(
         } else if (token == "handle-comps") {
             if (compHandler
                 && conf.doCompHandler
-                && conf.independent_vars == NULL
+                && conf.sampling_vars == NULL
                 && get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult
                 && solveStats.numSimplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
@@ -3763,7 +3763,7 @@ void Solver::undef_fill_potentials()
         if (model_value(v) != l_Undef && assumptionsSet[v] == false) {
             assert(undef->can_be_unset[v] == 0);
             undef->can_be_unset[v] ++;
-            if (conf.independent_vars == NULL) {
+            if (conf.sampling_vars == NULL) {
                 undef->can_be_unset[v] ++;
                 undef->can_be_unsetSum++;
             }
@@ -3775,13 +3775,13 @@ void Solver::undef_fill_potentials()
         cout << "-" << endl;
     }
 
-    //If independent_vars is set, only care about those, nothing else.
-    if (conf.independent_vars) {
-        for(uint32_t v: *conf.independent_vars) {
+    //If sampling_vars is set, only care about those, nothing else.
+    if (conf.sampling_vars) {
+        for(uint32_t v: *conf.sampling_vars) {
             if (v > nVarsOutside()) {
-                cout << "ERROR: Variable in independent set, " << v+1
+                cout << "ERROR: Variable in sampling set, " << v+1
                 << " is bigger than any variable inside the solver! " << endl
-                << " Please examine the call set_independent_vars or the CNF"
+                << " Please examine the call set_sampling_vars or the CNF"
                 " lines starting with 'c ind'"
                 << endl;
                 std::exit(-1);
@@ -3797,7 +3797,7 @@ void Solver::undef_fill_potentials()
             }
         }
 
-        //Only those with a setting of both independent_vars and in trail
+        //Only those with a setting of both sampling_vars and in trail
         //can be unset
         for(auto& v: undef->can_be_unset) {
             if (v < 2) {

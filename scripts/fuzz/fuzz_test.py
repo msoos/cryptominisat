@@ -87,9 +87,9 @@ def set_up_parser():
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
-    parser.add_option("--indep", dest="only_indep", default=False,
+    parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
-                      help="Concentrate fuzzing independent variables")
+                      help="Concentrate fuzzing sampling variables")
     parser.add_option("--dump", dest="only_dump", default=False,
                       action="store_true",
                       help="Concentrate fuzzing dumped clauses")
@@ -212,8 +212,8 @@ class Tester:
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.clid_added = False
-        self.only_indep = False
-        self.indep_vars = []
+        self.only_sampling = False
+        self.sampling_vars = []
         self.dump_red = None
         self.decisions_dumpfile = None
         self.this_gauss_on = False
@@ -308,10 +308,10 @@ class Tester:
             cmd += "--dumpredmaxlen %d " % random.choice([2, 10, 100, 100000])
             cmd += "--dumpredmaxglue %d " % random.choice([2, 10, 100, 100000])
 
-        if self.only_indep:
-            cmd += "--onlyindep "
-            cmd += "--indep "
-            cmd += ",".join(["%s" % x for x in self.indep_vars]) + " "
+        if self.only_sampling:
+            cmd += "--onlysampling "
+            cmd += "--sampling "
+            cmd += ",".join(["%s" % x for x in self.sampling_vars]) + " "
 
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             cmd += "--varsperxorcut %d " % random.randint(4, 6)
@@ -606,8 +606,8 @@ class Tester:
             return True
 
         if not unsat:
-            if len(self.indep_vars) != 0:
-                self.sol_parser.indep_vars_solution_check(fname, self.indep_vars, solution)
+            if len(self.sampling_vars) != 0:
+                self.sol_parser.sampling_vars_solution_check(fname, self.sampling_vars, solution)
             else:
                 self.sol_parser.test_found_solution(solution, checkAgainst)
 
@@ -615,7 +615,7 @@ class Tester:
                 self.check_dumped_clauses(fname)
 
             if self.decisions_dumpfile is not None and checkAgainst == fname:
-                if len(self.indep_vars) == 0:
+                if len(self.sampling_vars) == 0:
                     self.check_decisions(solution, fname)
 
             self.delete_decisions_dumpfile()
@@ -697,8 +697,8 @@ class Tester:
 
         self.old_dump_red = str(self.dump_red)
         self.dump_red = None
-        self.indep_vars = []
-        self.only_indep = False
+        self.sampling_vars = []
+        self.only_sampling = False
         self.check(tmpfname, checkAgainst=fname)
 
         os.unlink(tmpfname)
@@ -721,15 +721,15 @@ class Tester:
         self.dump_red = random.choice([None, None, None, None, None, True])
         if self.dump_red is not None:
             self.dump_red = unique_file("fuzzTest-dump")
-        self.only_indep = random.choice([True, False, False, False, False]) and not self.drat
+        self.only_sampling = random.choice([True, False, False, False, False]) and not self.drat
 
-        if options.only_indep:
+        if options.only_sampling:
             self.drat = False
-            self.only_indep = True
+            self.only_sampling = True
 
         if options.only_dump:
             self.drat = False
-            self.only_indep = False
+            self.only_sampling = False
             if self.dump_red is None:
                 self.dump_red = unique_file("fuzzTest-dump")
 
@@ -754,7 +754,7 @@ class Tester:
         if status != 0:
             fuzzer_call_failed(fname)
 
-        if not self.drat and not self.only_indep and not self.dump_red:
+        if not self.drat and not self.only_sampling and not self.dump_red:
             print("->Multipart test")
             self.needDebugLib = True
             interspersed_fname = unique_file("fuzzTest-interspersed")
@@ -768,23 +768,23 @@ class Tester:
             self.needDebugLib = False
             interspersed_fname = fname
 
-        # calculate indep vars
-        self.indep_vars = []
-        if self.only_indep:
+        # calculate sampling vars
+        self.sampling_vars = []
+        if self.only_sampling:
             max_vars = self.sol_parser.max_vars_in_file(fname)
             assert max_vars > 0
 
-            self.indep_vars = []
+            self.sampling_vars = []
             myset = {}
             for _ in range(random.randint(1, 50)):
                 x = random.randint(1, max_vars)
                 if x not in myset:
-                    self.indep_vars.append(x)
+                    self.sampling_vars.append(x)
                     myset[x] = 1
 
-            # don't do it for 0-length indep vars
-            if len(self.indep_vars) == 0:
-                self.only_indep = False
+            # don't do it for 0-length sampling vars
+            if len(self.sampling_vars) == 0:
+                self.only_sampling = False
 
         self.check(fname=interspersed_fname, fname2=fname_drat)
 
@@ -816,8 +816,8 @@ class Tester:
         fname = unique_file("fuzzTest-preproc")
         self.drat = False
         self.preproc = True
-        self.only_indep = False
-        self.indep_vars = []
+        self.only_sampling = False
+        self.sampling_vars = []
         assert self.dump_red is None
         self.dump_red = None
 
@@ -950,8 +950,8 @@ if __name__ == "__main__":
             toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
-        if options.only_indep:
-            toexec += "--indep "
+        if options.only_sampling:
+            toexec += "--sampling "
         if options.only_dump:
             toexec += "--dump "
         if options.nopreproc:

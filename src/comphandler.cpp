@@ -133,7 +133,7 @@ vector<pair<uint32_t, uint32_t> > CompHandler::get_component_sizes() const
 
 bool CompHandler::handle()
 {
-    assert(solver->conf.independent_vars == NULL && "Cannot handle components when indep vars is set");
+    assert(solver->conf.sampling_vars == NULL && "Cannot handle components when sampling vars is set");
     assert(solver->okay());
     double myTime = cpuTime();
 
@@ -395,7 +395,7 @@ SolverConf CompHandler::configureNewSolver(
 ) const {
     SolverConf conf(solver->conf);
     conf.origSeed = solver->mtrand.randInt();
-    conf.independent_vars = NULL;
+    conf.sampling_vars = NULL;
     if (numVars < 60) {
         conf.do_simplify_problem = false;
         conf.doStamp = false;

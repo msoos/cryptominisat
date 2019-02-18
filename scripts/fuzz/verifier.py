@@ -111,18 +111,18 @@ class solution_parser:
         f.close()
         print("Verified %d original xor&regular clauses" % clauses)
 
-    def indep_vars_solution_check(self, fname, indep_vars, solution):
-        assert len(indep_vars) > 0
+    def sampling_vars_solution_check(self, fname, sampling_vars, solution):
+        assert len(sampling_vars) > 0
         a = XorToCNF()
         tmpfname = unique_file("tmp_for_xor_to_cnf_convert")
         a.convert(fname, tmpfname)
 
         with open(tmpfname, "a") as f:
             # NOTE: the "p cnf..." header will be wrong
-            for i in indep_vars:
+            for i in sampling_vars:
                 if i not in solution:
-                    print("ERROR: solution does not contain independent var %d" % i)
-                    print("Independent vars were: %s" % indep_vars)
+                    print("ERROR: solution does not contain sampling var %d" % i)
+                    print("Sampling vars were: %s" % sampling_vars)
                     exit(-1)
 
                 if solution[i]:
@@ -159,7 +159,7 @@ class solution_parser:
         otherSolverUNSAT, _, _ = self.parse_solution_from_output(
             consoleOutput2.split("\n"))
 
-        # check if the other solver finds a solution with the independent vars
+        # check if the other solver finds a solution with the sampling vars
         # set as per partial solution returned
         if otherSolverUNSAT is True:
             print("ERROR; The other solver did NOT find a solution with the partial solution given")
