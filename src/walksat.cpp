@@ -127,8 +127,8 @@ int WalkSAT::main()
         while ((numfalse > 0) && (numflip < cutoff)) {
             numflip++;
 
-            int a = pickbest();
-            flipvar(a);
+            uint32_t var = pickbest();
+            flipvar(var);
             update_statistics_end_flip();
         }
         update_and_print_statistics_end_try();
@@ -138,31 +138,33 @@ int WalkSAT::main()
     return found_solution;
 }
 
-void WalkSAT::WalkSAT::flipvar(int toflip)
+void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
-    int i;
-    int toenforce;
-    int cli;
-    int lit;
-    int numocc;
-    int *litptr;
-    int *occptr;
-    int temp;
+    uint32_t i;
+    Lit toenforce;
+    uint32_t cli;
+    uint32_t numocc;
+    Lit *litptr;
+    uint32_t *occptr;
 
-    if (assigns[toflip] > 0)
-        toenforce = -toflip;
+    if (assigns[toflip] == l_True)
+        toenforce = Lit(toflip, true);
     else
-        toenforce = toflip;
+        toenforce = Lit(toflip, false);
 
-    assigns[toflip] = 1 - assigns[toflip];
+    assert(value(toflip) != l_Undef);
+    assigns[toflip] = assigns[toflip] ^ true;
 
-    numocc = numoccurrence[numvars - toenforce];
-    occptr = occurrence[numvars - toenforce];
+    //True made into False
+    numocc = numoccurrence[(~toenforce).toInt()];
+    occptr = occurrence[(~toenforce).toInt()];
     for (i = 0; i < numocc; i++) {
-        /* cli = occurrence[numvars-toenforce][i]; */
+        /* cli = occurrence[(~toenforce).toInt()][i]; */
         cli = *(occptr++);
 
-        if (--numtruelit[cli] == 0) {
+        assert(numtruelit[cli] > 0);
+        numtruelit[cli]--;
+        if (numtruelit[cli] == 0) {
             false_cls[numfalse] = cli;
             wherefalse[cli] = numfalse;
             numfalse++;
@@ -173,13 +175,13 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
-                lit = *(litptr++);
-                if ((lit > 0) == assigns[ABS(lit)]) {
-                    breakcount[ABS(lit)]++;
+                Lit lit = *(litptr++);
+                if (value(lit) == l_True) {
+                    breakcount[lit.var()]++;
 
                     /* Swap lit into first position in clause */
                     if ((--litptr) != clause[cli]) {
-                        temp = clause[cli][0];
+                        Lit temp = clause[cli][0];
                         clause[cli][0] = *(litptr);
                         *(litptr) = temp;
                     }
@@ -189,14 +191,14 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
         }
     }
 
-    numocc = numoccurrence[numvars + toenforce];
-
-    occptr = occurrence[numvars + toenforce];
+    numocc = numoccurrence[toenforce.toInt()];
+    occptr = occurrence[toenforce.toInt()];
     for (i = 0; i < numocc; i++) {
         /* cli = occurrence[numvars+toenforce][i]; */
         cli = *(occptr++);
 
-        if (++numtruelit[cli] == 1) {
+        numtruelit[cli]++;
+        if (numtruelit[cli] == 1) {
             numfalse--;
             false_cls[wherefalse[cli]] = false_cls[numfalse];
             wherefalse[false_cls[numfalse]] = wherefalse[cli];
@@ -208,9 +210,10 @@ void WalkSAT::WalkSAT::flipvar(int toflip)
             litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
-                lit = *(litptr++);
-                if (((lit > 0) == assigns[ABS(lit)]) && (toflip != ABS(lit))) {
-                    breakcount[ABS(lit)]--;
+                Lit lit = *(litptr++);
+                if (value(lit) == l_True && (toflip != lit.var())) {
+                    assert(breakcount[lit.var()] > 0);
+                    breakcount[lit.var()]--;
                     break;
                 }
             }
@@ -231,23 +234,21 @@ void WalkSAT::parse_parameters()
 
 void WalkSAT::init()
 {
-    int i;
-    int j;
-    int thetruelit;
-
     /* initialize truth assignment and changed time */
-    for (i = 0; i < numclauses; i++)
+    for (uint32_t i = 0; i < numclauses; i++)
         numtruelit[i] = 0;
+
     numfalse = 0;
-    for (i = 1; i < numvars + 1; i++) {
+    for (uint32_t i = 0; i < numvars; i++) {
         breakcount[i] = 0;
-        assigns[i] = RANDMOD(2);
+        assigns[i] = RANDMOD(2)==0 ? l_False : l_True;
     }
 
     /* Initialize breakcount  */
-    for (i = 0; i < numclauses; i++) {
-        for (j = 0; j < clsize[i]; j++) {
-            if ((clause[i][j] > 0) == assigns[ABS(clause[i][j])]) {
+    for (uint32_t i = 0; i < numclauses; i++) {
+        Lit thetruelit;
+        for (uint32_t j = 0; j < clsize[i]; j++) {
+            if (value(clause[i][j]) == l_True) {
                 numtruelit[i]++;
                 thetruelit = clause[i][j];
             }
@@ -257,22 +258,21 @@ void WalkSAT::init()
             false_cls[numfalse] = i;
             numfalse++;
         } else if (numtruelit[i] == 1) {
-            breakcount[ABS(thetruelit)]++;
+            breakcount[thetruelit.var()]++;
         }
     }
 }
 
 void WalkSAT::initprob()
 {
-    int i;
-    int j;
+    uint32_t i;
+    uint32_t j;
     int lastc;
     int nextc;
-    int lit;
-    int *storebase;
-    int storesize;
-    int storeused;
-    int *storeptr;
+    Lit *storebase;
+    uint32_t storesize;
+    uint32_t storeused;
+    Lit *storeptr;
 
     //skip header
     while ((lastc = getc(cnfStream)) == 'c') {
@@ -285,18 +285,18 @@ void WalkSAT::initprob()
         exit(-1);
     }
 
-    clause = (int **)calloc(sizeof(int *), (numclauses + 1));
-    clsize = (int *)calloc(sizeof(int), (numclauses + 1));
+    clause = (Lit **)calloc(sizeof(Lit *), numclauses);
+    clsize = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
 
     //false-true lits
-    false_cls = (int *)calloc(sizeof(int), (numclauses + 1));
-    wherefalse = (int *)calloc(sizeof(int), (numclauses + 1));
-    numtruelit = (int *)calloc(sizeof(int), (numclauses + 1));
+    false_cls = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
+    wherefalse = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
+    numtruelit = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
 
-    occurrence = (int **)calloc(sizeof(int *), (2 * numvars + 1));
-    numoccurrence = (int *)calloc(sizeof(int), (2 * numvars + 1));
-    assigns = (int *)calloc(sizeof(int), (numvars + 1));
-    breakcount = (int *)calloc(sizeof(int), (numvars + 1));
+    occurrence = (uint32_t **)calloc(sizeof(uint32_t *), (2 * numvars));
+    numoccurrence = (uint32_t *)calloc(sizeof(uint32_t), (2 * numvars));
+    assigns = (lbool *)calloc(sizeof(lbool), numvars);
+    breakcount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
 
     numliterals = 0;
     longestclause = 0;
@@ -305,12 +305,14 @@ void WalkSAT::initprob()
     storesize = 1024;
     storeused = 0;
     printf("Reading formula\n");
-    storebase = (int *)calloc(sizeof(int), 1024);
+    storebase = (Lit *)calloc(sizeof(Lit), 1024);
 
-    for (i = 0; i < 2 * numvars + 1; i++)
+    for (i = 0; i < 2 * numvars; i++)
         numoccurrence[i] = 0;
+
     for (i = 0; i < numclauses; i++) {
         clsize[i] = 0;
+        int lit;
         do {
             if (fscanf(cnfStream, "%i ", &lit) != 1) {
                 fprintf(stderr, "Bad input file\n");
@@ -319,18 +321,21 @@ void WalkSAT::initprob()
             if (lit != 0) {
                 if (storeused >= storesize) {
                     storeptr = storebase;
-                    storebase = (int *)calloc(sizeof(int), storesize * 2);
+                    storebase = (Lit *)calloc(sizeof(Lit), storesize * 2);
                     for (j = 0; j < storesize; j++)
                         storebase[j] = storeptr[j];
                     free((void *)storeptr);
                     storesize *= 2;
                 }
                 clsize[i]++;
-                storebase[storeused++] = lit;
+                const uint32_t var = std::abs(lit)-1;
+                Lit real_lit = (lit > 0) ? Lit(var, false) : Lit(var, true);
+                storebase[storeused++] = real_lit;
                 numliterals++;
-                numoccurrence[lit + numvars]++;
+                numoccurrence[real_lit.toInt()]++;
             }
         } while (lit != 0);
+
         if (clsize[i] == 0) {
             fprintf(stderr, "Bad input file\n");
             exit(-1);
@@ -351,32 +356,31 @@ void WalkSAT::initprob()
     /* Create the occurence lists for each literal */
 
     /* First, allocate enough storage for occurrence lists */
-    storebase = (int *)calloc(sizeof(int), numliterals);
+    uint32_t* storebase2 = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
 
     /* printf("numliterals = %d\n", numliterals); fflush(stdout); */
 
     /* Second, allocate occurence lists */
     i = 0;
-    for (lit = -numvars; lit <= numvars; lit++) {
+    for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
+        const Lit lit = Lit::toLit(i2);
         /* printf("lit = %d    i = %d\n", lit, i); fflush(stdout); */
 
-        if (lit != 0) {
-            if (i > numliterals) {
-                fprintf(stderr, "Code error, allocating occurrence lists\n");
-                exit(-1);
-            }
-            occurrence[lit + numvars] = &(storebase[i]);
-            i += numoccurrence[lit + numvars];
-            numoccurrence[lit + numvars] = 0;
+        if (i > numliterals) {
+            fprintf(stderr, "Code error, allocating occurrence lists\n");
+            exit(-1);
         }
+        occurrence[lit.toInt()] = &(storebase2[i]);
+        i += numoccurrence[lit.toInt()];
+        numoccurrence[lit.toInt()] = 0;
     }
 
     /* Third, fill in the occurence lists */
     for (i = 0; i < numclauses; i++) {
         for (j = 0; j < clsize[i]; j++) {
-            lit = clause[i][j];
-            occurrence[lit + numvars][numoccurrence[lit + numvars]] = i;
-            numoccurrence[lit + numvars]++;
+            Lit lit = clause[i][j];
+            occurrence[lit.toInt()][numoccurrence[lit.toInt()]] = i;
+            numoccurrence[lit.toInt()]++;
         }
     }
 }
@@ -582,46 +586,22 @@ void WalkSAT::print_statistics_final()
 
 void WalkSAT::print_sol_cnf()
 {
-    for (int i = 1; i < numvars + 1; i++)
-        printf("v %i\n", assigns[i] == 1 ? i : -i);
+    for (uint32_t i = 0; i < numvars; i++)
+        printf("v %i\n", assigns[i] == l_True? ((int)i+1) : -1*((int)i+1));
 }
 
 /*******************************************************/
 /* Utility Functions                                   */
 /*******************************************************/
 
-long WalkSAT::super(int i)
+uint32_t WalkSAT::countunsat()
 {
-    long power;
-    int k;
-
-    if (i <= 0) {
-        fprintf(stderr, "bad argument super(%i)\n", i);
-        exit(1);
-    }
-    /* let 2^k be the least power of 2 >= (i+1) */
-    k = 1;
-    power = 2;
-    while (power < (i + 1)) {
-        k += 1;
-        power *= 2;
-    }
-    if (power == (i + 1))
-        return (power / 2);
-    return (super(i - (power / 2) + 1));
-}
-
-int WalkSAT::countunsat()
-{
-    int i, j, unsat, bad, lit, sign;
-
-    unsat = 0;
-    for (i = 0; i < numclauses; i++) {
-        bad = true;
-        for (j = 0; j < clsize[i]; j++) {
-            lit = clause[i][j];
-            sign = lit > 0 ? 1 : 0;
-            if (assigns[ABS(lit)] == sign) {
+    uint32_t unsat = 0;
+    for (uint32_t i = 0; i < numclauses; i++) {
+        bool bad = true;
+        for (uint32_t j = 0; j < clsize[i]; j++) {
+            Lit lit = clause[i][j];
+            if (value(lit) == l_True) {
                 bad = false;
                 break;
             }
@@ -636,24 +616,20 @@ int WalkSAT::countunsat()
 /*                  Heuristics                                  */
 /****************************************************************/
 
-int WalkSAT::pickbest()
+uint32_t WalkSAT::pickbest()
 {
-    int numbreak;
-    int tofix;
-    int clausesize;
-    int i;
-    int numbest;
-    int bestvalue;
-    int var;
+    uint32_t tofix;
+    uint32_t clausesize;
+    uint32_t i;
 
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
-    numbest = 0;
-    bestvalue = BIG;
+    uint32_t numbest = 0;
+    uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
 
     for (i = 0; i < clausesize; i++) {
-        var = ABS(clause[tofix][i]);
-        numbreak = breakcount[var];
+        uint32_t var = clause[tofix][i].var();
+        uint32_t numbreak = breakcount[var];
         if (numbreak <= bestvalue) {
             if (numbreak < bestvalue)
                 numbest = 0;
@@ -663,6 +639,7 @@ int WalkSAT::pickbest()
     }
 
     if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
-        return ABS(clause[tofix][RANDMOD(clausesize)]);
+        return clause[tofix][RANDMOD(clausesize)].var();
+
     return ABS(best[RANDMOD(numbest)]);
 }

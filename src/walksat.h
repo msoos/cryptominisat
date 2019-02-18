@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 #include <cstdint>
 #include <cstdio>
+#include "solvertypes.h"
 
 namespace CMSat {
 
@@ -37,7 +38,7 @@ private:
     /************************************/
     /* Main                             */
     /************************************/
-    void flipvar(int toflip);
+    void flipvar(uint32_t toflip);
 
     /************************************/
     /* Initialization                   */
@@ -61,13 +62,12 @@ private:
     /*******************************************************/
     /* Utility Functions                                   */
     /*******************************************************/
-    long super(int i);
-    int countunsat();
+    uint32_t countunsat();
 
     /****************************************************************/
     /*                  Heuristics                                  */
     /****************************************************************/
-    int pickbest();
+    uint32_t pickbest();
 
     /************************************/
     /* Main data structures             */
@@ -79,33 +79,33 @@ private:
     /* Two dimensional arrays are dynamically allocated in */
     /* the second dimension only.  */
 
-    int numvars;     /* number of vars */
-    int numclauses;   /* number of clauses */
-    int numliterals; /* number of instances of literals across all clauses */
-    int numfalse;   /* number of false clauses */
+    uint32_t numvars;     /* number of vars */
+    uint32_t numclauses;   /* number of clauses */
+    uint32_t numliterals; /* number of instances of literals across all clauses */
+    uint32_t numfalse;   /* number of false clauses */
 
     /* Data structures for clauses */
 
-    int **clause; /* clauses to be satisfied */
+    Lit **clause; /* clauses to be satisfied */
     /* indexed as clause[clause_num][literal_num] */
-    int *clsize;       /* length of each clause */
-    int * false_cls;     /* clauses which are false */
-    int *wherefalse; /* where each clause is listed in false */
-    int *numtruelit; /* number of true literals in each clause */
-    int longestclause;
+    uint32_t *clsize;       /* length of each clause */
+    uint32_t * false_cls;     /* clauses which are false */
+    uint32_t *wherefalse; /* where each clause is listed in false */
+    uint32_t *numtruelit; /* number of true literals in each clause */
+    uint32_t longestclause;
 
-    /* Data structures for vars: arrays of size numvars+1 indexed by var */
+    /* Data structures for vars: arrays of size numvars indexed by var */
 
-    int *assigns;         /* value of each var */
-    int *breakcount;   /* number of clauses that become unsat if var if flipped */
-    int *makecount;    /* number of clauses that become sat if var if flipped */
+    lbool *assigns;         /* value of each var */
+    uint32_t *breakcount;   /* number of clauses that become unsat if var if flipped */
+    uint32_t *makecount;    /* number of clauses that become sat if var if flipped */
 
-    /* Data structures literals: arrays of size 2*numvars+1, indexed by literal+numvars */
+    /* Data structures literals: arrays of size 2*numvars, indexed by literal+numvars */
 
-    int **occurrence; /* where each literal occurs, size 2*numvars+1            */
+    uint32_t **occurrence; /* where each literal occurs, size 2*numvars            */
     /* indexed as occurrence[literal+numvars][occurrence_num] */
 
-    int *numoccurrence; /* number of times each literal occurs, size 2*numvars+1  */
+    uint32_t *numoccurrence; /* number of times each literal occurs, size 2*numvars  */
     /* indexed as numoccurrence[literal+numvars]              */
 
     /* Data structures for lists of clauses used in heuristics */
@@ -142,7 +142,7 @@ private:
 
     double expertime;
     int64_t flips_this_solution;
-    int lowbad;                  /* lowest number of bad clauses during try */
+    uint32_t lowbad;                  /* lowest number of bad clauses during try */
     int64_t totalflip = 0;        /* total number of flips in all tries so far */
     int64_t totalsuccessflip = 0; /* total number of flips in all tries which succeeded so far */
     bool found_solution = 0;       /* total found solutions */
@@ -178,6 +178,14 @@ private:
     double nonsuc_mean_std_dev_avgfalse;
     int nonsuc_number_sampled_runs = 0;
     double nonsuc_ratio_mean_avgfalse;
+
+    //helpers
+    lbool value(const uint32_t var) const {
+        return assigns[var];
+    }
+    lbool value(const Lit l) const {
+        return assigns[l.var()] ^ l.sign();
+    }
 };
 
 }
