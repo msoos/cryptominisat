@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cstdint>
 #include <cstdio>
 #include "solvertypes.h"
+#include "MersenneTwister.h"
 
 namespace CMSat {
 
@@ -63,6 +64,7 @@ private:
     /* Utility Functions                                   */
     /*******************************************************/
     uint32_t countunsat();
+    uint32_t RANDMOD(uint32_t x);
 
     /****************************************************************/
     /*                  Heuristics                                  */
@@ -109,7 +111,7 @@ private:
     /* indexed as numoccurrence[literal+numvars]              */
 
     /* Data structures for lists of clauses used in heuristics */
-    int *best;
+    uint32_t *best;
 
     /************************************/
     /* Global flags and parameters      */
@@ -118,7 +120,7 @@ private:
     /* Options */
     FILE *cnfStream;
 
-    int numerator; /* make random flip with numerator/denominator frequency */
+    uint32_t numerator; /* make random flip with numerator/denominator frequency */
     double walk_probability = 0.5;
     int64_t numflip;        /* number of changes so far */
     int numrun = 10;
@@ -127,9 +129,6 @@ private:
     int numtry = 0;   /* total attempts at solutions */
 
     int freebienoise = 0;
-
-    /* Random seed */
-    unsigned int seed; /* Sometimes defined as an unsigned long int */
 
     /* Histogram of tail */
     static const int HISTMAX=64;         /* length of histogram of tail */
@@ -178,6 +177,7 @@ private:
     double nonsuc_mean_std_dev_avgfalse;
     int nonsuc_number_sampled_runs = 0;
     double nonsuc_ratio_mean_avgfalse;
+    MTRand mtrand;
 
     //helpers
     lbool value(const uint32_t var) const {

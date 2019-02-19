@@ -21,82 +21,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-/********************************************************************/
-/* Following tests set exactly one of the following flags to 1:     */
-/*    BSD:   BSD Unix                                               */
-/*    OSX:   Apple OS X                                           */
-/*    LINUX: Linux Unix                                           */
-/*    WINDOWS: Windows and DOS. Linking requires -l Winmm.lib       */
-/*    POSIX: Other POSIX OS                                         */
-/* Platform dependent differences:                                  */
-/*    WINDOWS and POSIX use rand() instead of random()              */
-/*    Clock ticks per second determined by sysconf(_SC_CLK_TCK)     */
-/*        for BSD, OSX, and LINUX                                   */
-/*    Clock ticks per second fixed at 1000 for Windows              */
-/*    Clock ticks per second fixed at 1 for POSIX                   */
-/********************************************************************/
-
 #include "time_mem.h"
-
-#if __FreeBSD__ || __NetBSD__ || __OpenBSD__ || __bsdi__ || _SYSTYPE_BSD
-#define BSD 1
-#elif __APPLE__ && __MACH__
-#define OSX 1
-#elif __unix__ || __unix || unix || __gnu_linux__ || linux || __linux
-#define LINUX 1
-#elif _WIN64 || _WIN23 || _WIN16 || __MSDOS__ || MSDOS || _MSDOS || __DOS__
-#define NT 1
-#else
-#define POSIX 1
-#endif
-
-//printing
-#if BSD || OSX || LINUX
-#define BIGFORMAT "li"
-#elif WINDOWS
-#define BIGFORMAT "I64d"
-#endif
-
-/************************************/
-/* Standard includes                */
-/************************************/
-
 #include <limits>
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
 #include "walksat.h"
 
-#ifdef WINDOWS
-#define random() rand()
-#define srandom(seed) srand(seed)
-#endif
-
 /************************************/
 /* Constant parameters              */
 /************************************/
 
-#define BIG 1000000000     /* a number bigger that the possible number of violated clauses */
-#define MAXATTEMPT 10      /* max number of times to attempt to find a non-tabu variable to flip */
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
-#define ONE_PERCENT 1000   /* ONE_PERCENT / denominator = 0.01 */
 
 using namespace CMSat;
 
 /* #define DEBUG */
 
-/**************************************/
-/* Inline utility functions           */
-/**************************************/
-
-static inline int ABS(int x)
+uint32_t WalkSAT::RANDMOD(uint32_t x)
 {
-    return x < 0 ? -x : x;
-}
-
-static inline int RANDMOD(int x)
-{
-    return x > 1 ? random() % x : 0;
+    return x > 1 ? mtrand.randInt(x-1) : 0;
 }
 
 static inline int MAX(int x, int y)
@@ -104,15 +48,10 @@ static inline int MAX(int x, int y)
     return x > y ? x : y;
 }
 
-/************************************/
-/* Main                             */
-/************************************/
-
 int WalkSAT::main()
 {
-    seed = 0;
     parse_parameters();
-    srandom(seed);
+    mtrand.seed(1U);
     print_parameters();
     initprob();
     initialize_statistics();
@@ -281,7 +220,7 @@ void WalkSAT::initprob()
     }
     ungetc(lastc, cnfStream);
     if (fscanf(cnfStream, "p cnf %i %i", &numvars, &numclauses) != 2) {
-        fprintf(stderr, "Bad input file\n");
+        cout << "Bad input file" << endl;
         exit(-1);
     }
 
@@ -304,7 +243,7 @@ void WalkSAT::initprob()
     /* Read in the clauses and set number of occurrences of each literal */
     storesize = 1024;
     storeused = 0;
-    printf("Reading formula\n");
+    cout << "Reading formula" << endl;
     storebase = (Lit *)calloc(sizeof(Lit), 1024);
 
     for (i = 0; i < 2 * numvars; i++)
@@ -315,7 +254,7 @@ void WalkSAT::initprob()
         int lit;
         do {
             if (fscanf(cnfStream, "%i ", &lit) != 1) {
-                fprintf(stderr, "Bad input file\n");
+                cout << "Bad input file" << endl;
                 exit(-1);
             }
             if (lit != 0) {
@@ -337,13 +276,13 @@ void WalkSAT::initprob()
         } while (lit != 0);
 
         if (clsize[i] == 0) {
-            fprintf(stderr, "Bad input file\n");
+            cout << "Bad input file" << endl;
             exit(-1);
         }
         longestclause = MAX(longestclause, clsize[i]);
     }
 
-    printf("Creating data structures\n");
+    cout << "Creating data structures" << endl;
 
     /* Have to wait to set the clause[i] ptrs to the end, since store might move */
     j = 0;
@@ -351,23 +290,21 @@ void WalkSAT::initprob()
         clause[i] = &(storebase[j]);
         j += clsize[i];
     }
-    best = (int*) calloc(sizeof(int), longestclause);
+    best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
 
     /* Create the occurence lists for each literal */
 
     /* First, allocate enough storage for occurrence lists */
     uint32_t* storebase2 = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
 
-    /* printf("numliterals = %d\n", numliterals); fflush(stdout); */
+    /* cout << "numliterals = %d" << numliterals); fflush(stdout); */
 
     /* Second, allocate occurence lists */
     i = 0;
     for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
         const Lit lit = Lit::toLit(i2);
-        /* printf("lit = %d    i = %d\n", lit, i); fflush(stdout); */
-
         if (i > numliterals) {
-            fprintf(stderr, "Code error, allocating occurrence lists\n");
+            cout << "Code error, allocating occurrence lists" << endl;
             exit(-1);
         }
         occurrence[lit.toInt()] = &(storebase2[i]);
@@ -391,12 +328,12 @@ void WalkSAT::initprob()
 
 void WalkSAT::print_parameters()
 {
-    printf("WALKSAT v56\n");
-    printf("seed = %u\n", seed);
-    printf("cutoff = %" BIGFORMAT "\n", cutoff);
-    printf("tries = %i\n", numrun);
-    printf("walk probabability = %5.3f\n", walk_probability);
-    printf("\n");
+    cout << "WALKSAT v56" << endl;
+    cout << "cutoff = %" << cutoff << endl;
+    cout << "tries = " << numrun << endl;
+    cout << "walk probabability = "
+    << std::fixed << std::setprecision(2) << walk_probability << endl;
+    cout << endl;
 }
 
 void WalkSAT::initialize_statistics()
@@ -404,25 +341,25 @@ void WalkSAT::initialize_statistics()
     x = 0;
     r = 0;
     tail_start_flip = tail * numvars;
-    printf("tail starts after flip = %i\n", tail_start_flip);
+    cout << "tail starts after flip = " << tail_start_flip << endl;
 }
 
 void WalkSAT::print_statistics_header()
 {
-    printf("numvars = %i, numclauses = %i, numliterals = %i\n", numvars, numclauses, numliterals);
-    printf("wff read in\n\n");
+    cout << "numvars = " << numvars << ", numclauses = "
+    << numclauses << ", numliterals = " << numliterals;
 
-    printf(
+    cout << "wff read in\n" << endl;
+    cout <<
         "    lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
-        "length       flips       flips\n");
-    printf(
+        "length       flips" << endl;
+    cout <<
         "      this       end     unsat       avg     ratio      this      flip   success   "
-        "success       until         std\n");
-    printf(
+        "success       until" << endl;
+    cout <<
         "       try       try      tail     unsat      tail       try  fraction      rate     "
-        "tries      assign         dev\n\n");
-
-    fflush(stdout);
+        "tries      assign" << endl;
+    cout << endl;
 }
 
 void WalkSAT::update_statistics_start_try()
@@ -497,17 +434,23 @@ void WalkSAT::update_and_print_statistics_end_try()
     //MSOOS: this has been removed, uses memory, only stats
     double undo_fraction = 0;
 
-    printf(" %9i %9i %9.2f %9.2f %9.2f %9" BIGFORMAT " %9.6f %9i", lowbad, numfalse, avgfalse,
-           std_dev_avgfalse, ratio_avgfalse, numflip, undo_fraction,
-           ((int)found_solution * 100) / numtry);
+    cout
+    << std::setw(9) << lowbad
+    << std::setw(9) << numfalse
+    << std::setw(9+2) << avgfalse
+    << std::setw(9+2) << std_dev_avgfalse
+    << std::setw(9+2) << ratio_avgfalse
+    << std::setw(9) << numflip
+    << std::setw(9) << undo_fraction
+    << std::setw(9+2) << (((int)found_solution * 100) / numtry);
     if (found_solution) {
-        printf(" %9" BIGFORMAT, totalsuccessflip / (int)found_solution);
-        printf(" %11.2f", mean_x);
+        cout << std::setw(9+2) << totalsuccessflip / (int)found_solution;
+        cout << std::setw(9+2) << mean_x;
     }
-    printf("\n");
+    cout << endl;
 
     if (numfalse == 0 && countunsat() != 0) {
-        fprintf(stderr, "Program error, verification of solution fails!\n");
+        cout << "Program error, verification of solution fails!" << endl;
         exit(-1);
     }
 
@@ -517,21 +460,21 @@ void WalkSAT::update_and_print_statistics_end_try()
 void WalkSAT::print_statistics_final()
 {
     seconds_per_flip = expertime / totalflip;
-    printf("\ntotal elapsed seconds = %f\n", expertime);
-    printf("num tries: %d\n", numtry);
-    printf("average flips per second = %f\n", ((double)totalflip) / expertime);
-    printf("number solutions found = %i\n", found_solution);
-    printf("final success rate = %f\n", ((double)found_solution * 100.0) / numtry);
-    printf("average length successful tries = %" BIGFORMAT "\n",
-           found_solution ? (totalsuccessflip / found_solution) : 0);
+    cout << "\ntotal elapsed seconds = " <<  expertime << endl;
+    cout << "num tries: " <<  numtry  << endl;
+    cout << "average flips per second = " << ((double)totalflip) / expertime << endl;
+    cout << "number solutions found = " << found_solution << endl;
+    cout << "final success rate = " << ((double)found_solution * 100.0) / numtry  << endl;
+    cout << "average length successful tries = %" <<
+           (found_solution ? (totalsuccessflip / found_solution) : 0) << endl;
     if (found_solution) {
-        printf("average flips per assign (over all runs) = %f\n",
-               ((double)totalflip) / found_solution);
-        printf("average seconds per assign (over all runs) = %f\n",
-               (((double)totalflip) / found_solution) * seconds_per_flip);
-        printf("mean flips until assign = %f\n", mean_x);
-        printf("mean seconds until assign = %f\n", mean_x * seconds_per_flip);
-        printf("mean restarts until assign = %f\n", mean_r);
+        cout << "average flips per assign (over all runs) = " <<
+               ((double)totalflip) / found_solution << endl;
+        cout << "average seconds per assign (over all runs) = " <<
+               (((double)totalflip) / found_solution) * seconds_per_flip << endl;
+        cout << "mean flips until assign = " << mean_x << endl;
+        cout << "mean seconds until assign = " << mean_x * seconds_per_flip << endl;
+        cout << "mean restarts until assign = " << mean_r << endl;
     }
 
     if (number_sampled_runs) {
@@ -559,35 +502,38 @@ void WalkSAT::print_statistics_final()
             nonsuc_ratio_mean_avgfalse = 0;
         }
 
-        printf("final numbad level statistics\n");
-        printf("    statistics over all runs:\n");
-        printf("      overall mean average numbad = %f\n", mean_avgfalse);
-        printf("      overall mean meanbad std deviation = %f\n", mean_std_dev_avgfalse);
-        printf("      overall ratio mean numbad to mean std dev = %f\n", ratio_mean_avgfalse);
-        printf("    statistics on successful runs:\n");
-        printf("      successful mean average numbad = %f\n", suc_mean_avgfalse);
-        printf("      successful mean numbad std deviation = %f\n", suc_mean_std_dev_avgfalse);
-        printf("      successful ratio mean numbad to mean std dev = %f\n",
-               suc_ratio_mean_avgfalse);
-        printf("    statistics on nonsuccessful runs:\n");
-        printf("      nonsuccessful mean average numbad level = %f\n", nonsuc_mean_avgfalse);
-        printf("      nonsuccessful mean numbad std deviation = %f\n",
-               nonsuc_mean_std_dev_avgfalse);
-        printf("      nonsuccessful ratio mean numbad to mean std dev = %f\n",
-               nonsuc_ratio_mean_avgfalse);
+        cout << "final numbad level statistics"  << endl;
+        cout << "    statistics over all runs:"  << endl;
+        cout << "      overall mean average numbad = " << mean_avgfalse << endl;
+        cout << "      overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
+        cout << "      overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
+        cout << "    statistics on successful runs:"  << endl;
+        cout << "      successful mean average numbad = " << suc_mean_avgfalse << endl;
+        cout << "      successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
+        cout << "      successful ratio mean numbad to mean std dev = " <<
+               suc_ratio_mean_avgfalse  << endl;
+        cout << "    statistics on nonsuccessful runs:"  << endl;
+        cout << "      nonsuccessful mean average numbad level = " << nonsuc_mean_avgfalse  << endl;
+        cout << "      nonsuccessful mean numbad std deviation = " <<
+               nonsuc_mean_std_dev_avgfalse  << endl;
+        cout << "      nonsuccessful ratio mean numbad to mean std dev = " <<
+               nonsuc_ratio_mean_avgfalse  << endl;
     }
 
     if (found_solution) {
-        printf("ASSIGNMENT FOUND\n");
+        cout << "ASSIGNMENT FOUND"  << endl;
         print_sol_cnf();
     } else
-        printf("ASSIGNMENT NOT FOUND\n");
+        cout << "ASSIGNMENT NOT FOUND"  << endl;
 }
 
 void WalkSAT::print_sol_cnf()
 {
-    for (uint32_t i = 0; i < numvars; i++)
-        printf("v %i\n", assigns[i] == l_True? ((int)i+1) : -1*((int)i+1));
+    cout << "v ";
+    for (uint32_t i = 0; i < numvars; i++) {
+         cout << (assigns[i] == l_True? ((int)i+1) : -1*((int)i+1)) << " ";
+    }
+    cout << "0" << endl;
 }
 
 /*******************************************************/
@@ -641,5 +587,5 @@ uint32_t WalkSAT::pickbest()
     if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
         return clause[tofix][RANDMOD(clausesize)].var();
 
-    return ABS(best[RANDMOD(numbest)]);
+    return best[RANDMOD(numbest)];
 }
