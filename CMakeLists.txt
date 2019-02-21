@@ -105,6 +105,8 @@ option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
 if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
+    set(ENABLE_PYTHON_INTERFACE OFF)
+    set(ENABLE_TESTING OFF)
 endif()
 
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
