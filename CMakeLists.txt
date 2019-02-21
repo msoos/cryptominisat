@@ -210,12 +210,11 @@ if (NOT MSVC)
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:-g0>")
 
-    add_compile_options("-fPIE")
     add_compile_options("$<$<CONFIG:DEBUG>:-O0>")
 
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -O2")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2 -pie")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O2")
     endif()
 
 else()
