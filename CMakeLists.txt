@@ -224,10 +224,10 @@ else()
     # /ZI = include debug info
     # /Wall = all warnings
 
-    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/Ox>")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/O2>")
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/ZI>")
 
-    add_compile_options("$<$<CONFIG:RELEASE>:/Ox>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:/D>")
     add_compile_options("$<$<CONFIG:RELEASE>:/NDEBUG>")
 
