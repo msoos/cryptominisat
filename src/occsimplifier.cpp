@@ -547,10 +547,21 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
         Clause* cl = solver->cl_alloc.ptr(offs);
         cl->recalc_abst_if_needed();
         assert(cl->abst == calcAbstraction(*cl));
+        #ifdef FINAL_PREDICTOR_TOTAL
+        bool locked_long = true;
+        if (cl->red()) {
+            if (!cl->stats.locked_long) {
+                locked_long = false;
+            }
+        }
+        #endif
 
         if (alsoOccur
             && cl->size() < max_size
             && link_in_lit_limit > 0
+            #ifdef FINAL_PREDICTOR_TOTAL
+            && locked_long
+            #endif
         ) {
             linkInClause(*cl);
             link_in_data.cl_linked++;
@@ -1736,16 +1747,20 @@ bool OccSimplifier::fill_occur()
         linkin = false;
     }
     //Sort, so we get the shortest ones in at least
-    std::sort(solver->longRedCls[0].begin(), solver->longRedCls[0].end()
+    uint32_t arr_to_link = 0;
+    #ifdef FINAL_PREDICTOR_TOTAL
+    arr_to_link = 1;
+    #endif
+    std::sort(solver->longRedCls[arr_to_link].begin(), solver->longRedCls[arr_to_link].end()
         , ClauseSizeSorter(solver->cl_alloc));
 
     link_in_data_red = link_in_clauses(
-        solver->longRedCls[0]
+        solver->longRedCls[arr_to_link]
         , linkin
         , solver->conf.maxRedLinkInSize
         , solver->conf.maxOccurRedLitLinkedM*1000ULL*1000ULL*solver->conf.var_and_mem_out_mult
     );
-    solver->longRedCls[0].clear();
+    solver->longRedCls[arr_to_link].clear();
 
     //Don't really link in the rest
     for(auto& lredcls: solver->longRedCls) {
