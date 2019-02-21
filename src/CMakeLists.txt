@@ -170,7 +170,7 @@ if (NOT WIN32)
     )
 else()
     set_target_properties(cryptominisat5 PROPERTIES
-        OUTPUT_NAME cryptominisat5win
+        OUTPUT_NAME cryptominisat5
         PUBLIC_HEADER "${cryptominisat5_public_headers}"
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
