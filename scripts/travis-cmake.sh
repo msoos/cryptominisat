@@ -273,7 +273,7 @@ else
     make -j2 VERBOSE=1
 fi
 
-if [ "$CMS_CONFIG" == "NOTEST" ]; then
+if [ "$CMS_CONFIG" == "NOTEST" ] || [ "$CMS_CONFIG" == "STATICCOMPILE" ]; then
     sudo make install VERBOSE=1
     exit 0
 fi

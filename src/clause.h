@@ -380,7 +380,7 @@ public:
     void setStrenghtened()
     {
         must_recalc_abst = true;
-        is_ternary_resolved = false;
+        //is_ternary_resolved = false; //probably not a good idea
         //is_distilled = false; //TODO?
     }
 

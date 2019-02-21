@@ -633,18 +633,10 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
-                    cl->stats.which_red_array = 0;
-                } else if (
-                    cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
-                    && solver->conf.glue_put_lev1_if_below_or_eq != 0
-                ) {
-                    cl->stats.which_red_array = 1;
-                }
                 #ifdef FINAL_PREDICTOR_TOTAL
-                if (cl->stats.which_red_array != 0)
-                    cl->stats.which_red_array = 1;
+                assert(cl->stats.which_red_array == 1);
                 #endif
+                assert(cl->stats.which_red_array < solver->longRedCls.size());
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {
                 solver->longIrredCls.push_back(offs);
@@ -1510,6 +1502,7 @@ bool OccSimplifier::ternary_res()
             && cl->size() == 3
             && !cl->red()
             && *limit_to_decrease > 0
+            && ternary_res_cls_limit > 0
         ) {
             cl->is_ternary_resolved = true;
             if (!perform_ternary(cl, offs))
@@ -1581,12 +1574,14 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             , false //Should clause be attached if long?
         );
         *limit_to_decrease-=20;
+        ternary_res_cls_limit--;
 
         if (!solver->ok)
             break;
 
         if (newCl != NULL) {
             newCl->stats.glue = 3;
+            newCl->stats.which_red_array = 1;
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);
@@ -1997,6 +1992,7 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;
+    ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.var_and_mem_out_mult;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0

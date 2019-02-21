@@ -222,10 +222,10 @@ else()
     # /ZI = include debug info
     # /Wall = all warnings
 
-    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/Ox>")
+    add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/O2>")
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:/ZI>")
 
-    add_compile_options("$<$<CONFIG:RELEASE>:/Ox>")
+    add_compile_options("$<$<CONFIG:RELEASE>:/O2>")
     add_compile_options("$<$<CONFIG:RELEASE>:/D>")
     add_compile_options("$<$<CONFIG:RELEASE>:/NDEBUG>")
 
@@ -289,6 +289,9 @@ endif()
 
 option(ENABLE_TESTING "Enable testing" OFF)
 option(COVERAGE "Build with coverage check" OFF)
+if (STATICCOMPILE)
+    set(ENABLE_TESTING OFF)
+endif()
 
 if (COVERAGE AND BUILD_SHARED_LIBS)
     MESSAGE(FATAL_ERROR "Coverage can only be computed on static compilation")
@@ -408,7 +411,7 @@ if (GIT_EXECUTABLE)
 else()
   set(GIT_SHA "GIT-hash-notfound")
 endif()
-set(CMS_FULL_VERSION "5.6.7")
+set(CMS_FULL_VERSION "5.6.8")
 
 string(REPLACE "." ";" CMS_FULL_VERSION_LIST ${CMS_FULL_VERSION})
 SetVersionNumber("PROJECT" ${CMS_FULL_VERSION_LIST})
@@ -591,6 +594,10 @@ endmacro()
 # Look for python
 # -----------------------------------------------------------------------------
 option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
+if (STATICCOMPILE)
+    set(ENABLE_PYTHON_INTERFACE OFF)
+endif()
+
 option(FORCE_PYTHON2 OFF)
 message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
 if (NOT FORCE_PYTHON2)
