@@ -213,6 +213,8 @@ vector<vector<Lit> > get_red_cls(const Solver* s)
 {
     vector<vector<Lit> > ret;
     add_cls(ret, s, s->longRedCls[0]);
+    add_cls(ret, s, s->longRedCls[1]);
+    add_cls(ret, s, s->longRedCls[2]);
     add_impl_cls(ret, s, false, true);
 
     return ret;
