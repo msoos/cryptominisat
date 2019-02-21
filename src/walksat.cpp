@@ -38,9 +38,9 @@ using namespace CMSat;
 
 /* #define DEBUG */
 
-uint32_t WalkSAT::RANDMOD(uint32_t x)
+uint32_t WalkSAT::RANDMOD(uint32_t d)
 {
-    return x > 1 ? mtrand.randInt(x-1) : 0;
+    return d > 1 ? mtrand.randInt(d-1) : 0;
 }
 
 static inline int MAX(int x, int y)
