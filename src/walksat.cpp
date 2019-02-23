@@ -28,15 +28,8 @@ THE SOFTWARE.
 #include <cstdlib>
 #include "walksat.h"
 
-/************************************/
-/* Constant parameters              */
-/************************************/
-
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
-
 using namespace CMSat;
-
-/* #define DEBUG */
 
 uint32_t WalkSAT::RANDMOD(uint32_t d)
 {
