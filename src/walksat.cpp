@@ -74,8 +74,6 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
     Lit toenforce;
     uint32_t numocc;
-    Lit *litptr;
-    uint32_t *occptr;
 
     if (assigns[toflip] == l_True)
         toenforce = Lit(toflip, true);
@@ -100,7 +98,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
             breakcount[toflip]--;
         } else if (numtruelit[cli] == 1) {
             /* Find the lit in this clause that makes it true, and inc its breakcount */
-            litptr = clause[cli];
+            Lit *litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
                 Lit lit = *(litptr++);
@@ -142,7 +140,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         } else if (numtruelit[cli] == 2) {
             /* Find the lit in this clause other than toflip that makes it true,
              * and decrement its breakcount */
-            litptr = clause[cli];
+            Lit *litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
                 Lit lit = *(litptr++);
