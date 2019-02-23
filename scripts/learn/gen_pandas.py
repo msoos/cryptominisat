@@ -702,10 +702,6 @@ class QueryCls (QueryHelper):
 
             goodcl.last_confl_used > rdb0.conflicts and
             (
-                -----------------
-                -- SHORT---------
-                -----------------
-
                 -- useful in the next round
                    usedlater10k.used_later10k > 3
             )

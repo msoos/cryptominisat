@@ -4,6 +4,7 @@ CREATE TABLE `tags` (
   `tag` varchar(500) NOT NULL
 );
 
+-- TODO Add more features here!
 DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
   `simplifications` int(20) NOT NULL,
