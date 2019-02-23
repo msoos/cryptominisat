@@ -74,7 +74,6 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
     uint32_t i;
     Lit toenforce;
-    uint32_t cli;
     uint32_t numocc;
     Lit *litptr;
     uint32_t *occptr;
@@ -89,10 +88,8 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
     //True made into False
     numocc = numoccurrence[(~toenforce).toInt()];
-    occptr = occurrence[(~toenforce).toInt()];
     for (i = 0; i < numocc; i++) {
-        /* cli = occurrence[(~toenforce).toInt()][i]; */
-        cli = *(occptr++);
+        uint32_t cli = occurrence[(~toenforce).toInt()][i];
 
         assert(numtruelit[cli] > 0);
         numtruelit[cli]--;
@@ -123,17 +120,24 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         }
     }
 
+    //made into TRUE
     numocc = numoccurrence[toenforce.toInt()];
-    occptr = occurrence[toenforce.toInt()];
     for (i = 0; i < numocc; i++) {
-        /* cli = occurrence[numvars+toenforce][i]; */
-        cli = *(occptr++);
+        uint32_t cli = occurrence[toenforce.toInt()][i];
 
         numtruelit[cli]++;
         if (numtruelit[cli] == 1) {
+            const uint32_t last_false_cl = false_cls[numfalse-1];
+            uint32_t position_in_false_cls = map_cl_to_false_cls[cli];
             numfalse--;
-            false_cls[map_cl_to_false_cls[cli]] = false_cls[numfalse];
-            map_cl_to_false_cls[false_cls[numfalse]] = map_cl_to_false_cls[cli];
+
+            //the postiion in false_cls where this clause was is now replaced with
+            //the one at the end
+            false_cls[position_in_false_cls] = last_false_cl;
+
+            //update map_cl_to_false_cls of the clause
+            map_cl_to_false_cls[last_false_cl] = position_in_false_cls;
+
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
         } else if (numtruelit[cli] == 2) {
