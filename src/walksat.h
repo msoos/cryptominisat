@@ -46,7 +46,7 @@ private:
     /************************************/
     void parse_parameters();
     void init();
-    void initprob();
+    void init_problem();
 
     /************************************/
     /* Printing and Statistics          */

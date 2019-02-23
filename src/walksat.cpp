@@ -46,7 +46,7 @@ int WalkSAT::main()
     parse_parameters();
     mtrand.seed(1U);
     print_parameters();
-    initprob();
+    init_problem();
     initialize_statistics();
     print_statistics_header();
 
@@ -195,7 +195,7 @@ void WalkSAT::init()
     }
 }
 
-void WalkSAT::initprob()
+void WalkSAT::init_problem()
 {
     uint32_t i;
     uint32_t j;
