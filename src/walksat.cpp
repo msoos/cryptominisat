@@ -237,11 +237,12 @@ void WalkSAT::initprob()
     storesize = 1024;
     storeused = 0;
     cout << "Reading formula" << endl;
-    storebase = (Lit *)calloc(sizeof(Lit), 1024);
 
     for (i = 0; i < 2 * numvars; i++)
         numoccurrence[i] = 0;
 
+    //where all clauses' literals are
+    storebase = (Lit *)calloc(sizeof(Lit), 1024);
     for (i = 0; i < numclauses; i++) {
         clsize[i] = 0;
         int lit;
@@ -285,14 +286,9 @@ void WalkSAT::initprob()
     }
     best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
 
-    /* Create the occurence lists for each literal */
 
-    /* First, allocate enough storage for occurrence lists */
-    uint32_t* storebase2 = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
-
-    /* cout << "numliterals = %d" << numliterals); fflush(stdout); */
-
-    /* Second, allocate occurence lists */
+    /* allocate occurence lists */
+    uint32_t* occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
     i = 0;
     for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
         const Lit lit = Lit::toLit(i2);
@@ -300,7 +296,7 @@ void WalkSAT::initprob()
             cout << "Code error, allocating occurrence lists" << endl;
             exit(-1);
         }
-        occurrence[lit.toInt()] = &(storebase2[i]);
+        occurrence[lit.toInt()] = &(occur_list_alloc[i]);
         i += numoccurrence[lit.toInt()];
         numoccurrence[lit.toInt()] = 0;
     }
@@ -532,7 +528,7 @@ void WalkSAT::print_sol_cnf()
 /*******************************************************/
 /* Utility Functions                                   */
 /*******************************************************/
-
+//ONLY used for checking solution
 uint32_t WalkSAT::countunsat()
 {
     uint32_t unsat = 0;
@@ -559,13 +555,13 @@ uint32_t WalkSAT::pickbest()
 {
     uint32_t tofix;
     uint32_t clausesize;
-    uint32_t i;
 
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
     uint32_t numbest = 0;
     uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
 
+    uint32_t i;
     for (i = 0; i < clausesize; i++) {
         uint32_t var = clause[tofix][i].var();
         uint32_t numbreak = breakcount[var];
