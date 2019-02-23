@@ -72,7 +72,6 @@ int WalkSAT::main()
 
 void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
-    uint32_t i;
     Lit toenforce;
     uint32_t numocc;
     Lit *litptr;
@@ -88,7 +87,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
     //True made into False
     numocc = numoccurrence[(~toenforce).toInt()];
-    for (i = 0; i < numocc; i++) {
+    for (uint32_t i = 0; i < numocc; i++) {
         uint32_t cli = occurrence[(~toenforce).toInt()][i];
 
         assert(numtruelit[cli] > 0);
@@ -122,7 +121,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
     //made into TRUE
     numocc = numoccurrence[toenforce.toInt()];
-    for (i = 0; i < numocc; i++) {
+    for (uint32_t i = 0; i < numocc; i++) {
         uint32_t cli = occurrence[toenforce.toInt()][i];
 
         numtruelit[cli]++;
