@@ -420,11 +420,8 @@ MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
 MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
-
 if (NOT ONLY_SIMPLE)
-    set(boost_components "")
-    set(boost_components ${boost_components} program_options)
-    find_package( Boost 1.46 COMPONENTS ${boost_components})
+    find_package( Boost 1.46 COMPONENTS program_options)
 endif()
 
 option(STATS "Don't use statistics at all" OFF)
