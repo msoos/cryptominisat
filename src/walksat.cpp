@@ -559,12 +559,11 @@ uint32_t WalkSAT::pickbest()
     //pick a random false clause to fix
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
-    uint32_t numbest = 0;
-    uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
 
     //pick the literal to flip in this clause
-    uint32_t i;
-    for (i = 0; i < clausesize; i++) {
+    uint32_t numbest = 0;
+    uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
+    for (uint32_t i = 0; i < clausesize; i++) {
         uint32_t var = clause[tofix][i].var();
         uint32_t numbreak = breakcount[var];
         if (numbreak <= bestvalue) {
