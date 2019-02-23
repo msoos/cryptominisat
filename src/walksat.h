@@ -92,7 +92,7 @@ private:
     /* indexed as clause[clause_num][literal_num] */
     uint32_t *clsize;       /* length of each clause */
     uint32_t * false_cls;     /* clauses which are false */
-    uint32_t *wherefalse; /* where each clause is listed in false */
+    uint32_t *map_cl_to_false_cls; /* where each clause is listed in false */
     uint32_t *numtruelit; /* number of true literals in each clause */
     uint32_t longestclause;
 

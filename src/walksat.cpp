@@ -98,7 +98,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         numtruelit[cli]--;
         if (numtruelit[cli] == 0) {
             false_cls[numfalse] = cli;
-            wherefalse[cli] = numfalse;
+            map_cl_to_false_cls[cli] = numfalse;
             numfalse++;
             /* Decrement toflip's breakcount */
             breakcount[toflip]--;
@@ -132,8 +132,8 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         numtruelit[cli]++;
         if (numtruelit[cli] == 1) {
             numfalse--;
-            false_cls[wherefalse[cli]] = false_cls[numfalse];
-            wherefalse[false_cls[numfalse]] = wherefalse[cli];
+            false_cls[map_cl_to_false_cls[cli]] = false_cls[numfalse];
+            map_cl_to_false_cls[false_cls[numfalse]] = map_cl_to_false_cls[cli];
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
         } else if (numtruelit[cli] == 2) {
@@ -186,7 +186,7 @@ void WalkSAT::init()
             }
         }
         if (numtruelit[i] == 0) {
-            wherefalse[i] = numfalse;
+            map_cl_to_false_cls[i] = numfalse;
             false_cls[numfalse] = i;
             numfalse++;
         } else if (numtruelit[i] == 1) {
@@ -222,7 +222,7 @@ void WalkSAT::init_problem()
 
     //false-true lits
     false_cls = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
-    wherefalse = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
+    map_cl_to_false_cls = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
     numtruelit = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
 
     occurrence = (uint32_t **)calloc(sizeof(uint32_t *), (2 * numvars));
