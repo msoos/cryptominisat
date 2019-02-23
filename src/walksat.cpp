@@ -556,11 +556,13 @@ uint32_t WalkSAT::pickbest()
     uint32_t tofix;
     uint32_t clausesize;
 
+    //pick a random false clause to fix
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
     uint32_t numbest = 0;
     uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
 
+    //pick the literal to flip in this clause
     uint32_t i;
     for (i = 0; i < clausesize; i++) {
         uint32_t var = clause[tofix][i].var();
@@ -573,8 +575,14 @@ uint32_t WalkSAT::pickbest()
         }
     }
 
+    //in case there is no literal where the best break is 0 (i.e. free flip)
+    //then half of the time we pick a random literal to flip
+
+    /* walk probability is 0.5, and
+       numerator = (int)(walk_probability * denominator); */
     if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
         return clause[tofix][RANDMOD(clausesize)].var();
 
+    //pick one of the best (least breaking one) to flip
     return best[RANDMOD(numbest)];
 }
