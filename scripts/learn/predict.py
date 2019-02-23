@@ -105,15 +105,17 @@ class Learner:
 
         values2nums = {'OK': 1, 'BAD': 0}
         y_train = y_train.map(values2nums)
+        print("clf.classes_:", clf.classes_)
 
-        try:
-            viz = dtreeviz.trees.dtreeviz(
-                clf, X_train, y_train, target_name=name,
-                feature_names=features, class_names=list(clf.classes_))
-            viz.view()
-        except:
-            print("It doesn't have both OK or BAD -- it instead has:")
-            print("y_train head:", y_train.head())
+
+        #try:
+        viz = dtreeviz.trees.dtreeviz(
+            clf, X_train, y_train, target_name=name,
+            feature_names=features, class_names=list(clf.classes_))
+        viz.view()
+        #except:
+            #print("It doesn't have both OK or BAD -- it instead has:")
+            #print("y_train head:", y_train.head())
         del df
         del df2
 
@@ -404,6 +406,7 @@ static bool {funcname}(
 
         assert bad > 0, "No need to train, data only contains BAD"
         assert good > 0, "No need to train, data only contains GOOD"
+
         print("Number of BAD  elements        : %-6d" % bad)
         print("Number of GOOD elements        : %-6d" % good)
 
@@ -497,12 +500,15 @@ static bool {funcname}(
             if not options.final_is_tree:
                 print("ERROR: You cannot use the DOT function on non-trees")
                 exit(-1)
-            for filt in [0, 1, 3, 20, 10000]:
-                x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
-                print(x)
-                xdf = self.df[self.df["rdb0.dump_no"] <= filt]
-                self.output_to_dot(clf, features, to_predict, x, xdf)
-                del xdf
+
+            #for filt in [1, 3, 10, 10000]:
+                #x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
+                #print(x)
+                #xdf = df[df["rdb0.dump_no"] <= filt]
+                #self.output_to_dot(clf, features, to_predict, x, xdf)
+                #del xdf
+
+            self.output_to_classical_dot(clf, features)
 
         if options.basedir:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
