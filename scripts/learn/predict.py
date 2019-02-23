@@ -91,7 +91,7 @@ class Learner:
         df2 = df.copy()
         for i in features:
             df2 = df2[(df2[i] >= low[i]) & (df2[i] <= high[i])]
-            print("Filtered to %d on %-30s, shape now: %s" %(options.filter_dot, i, df2.shape))
+            print("Filtered to %f on %-30s, shape now: %s" %(perc, i, df2.shape))
 
         print("Original size:", df.shape)
         print("New size:", df2.shape)
