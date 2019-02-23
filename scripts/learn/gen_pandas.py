@@ -745,10 +745,6 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
 
-        self.dump_no_is_zero = """
-        and rdb0.dump_no = 0
-        """
-
         self.dump_no_larger_than_zero = """
         and rdb0.dump_no > 0
         """
@@ -803,23 +799,16 @@ class QueryCls (QueryHelper):
             "goodcls": self.goodcls
             }
 
-    def add_dump_no_filter(self, q, dump_no_is_zero):
-        if dump_no_is_zero is None:
-            return q
-
-        if dump_no_is_zero:
-            q += self.dump_no_is_zero
-        else:
-            q += self.dump_no_larger_than_zero
-
+    def add_dump_no_filter(self, q):
+        q += self.dump_no_larger_than_zero
         return q
 
-    def get_ok(self, dump_no_is_zero):
+    def get_ok(self):
         t = time.time()
 
         # calc OK -> which can be both BAD and OK
         q = self.q_count + self.q_ok
-        q = self.add_dump_no_filter(q, dump_no_is_zero)
+        q = self.add_dump_no_filter(q)
         q = q.format(**self.myformat)
         if options.dump_sql:
             print("query:\n %s" % q)
@@ -842,26 +831,9 @@ class QueryCls (QueryHelper):
     def get_one_data_all_dumpnos(self, long_or_short):
         df = None
 
-        # TODO magic number -- multiplier for non-zero dump_no
-        if False:
-            print("**Running dump_no zero")
-            ok, df_dump_no_0, this_fixed = self.get_data(
-                long_or_short, dump_no_is_zero=True)
-            if not ok:
-                return False, None
-            print("**Running dump_no non-zero")
-            ok, df_dump_no_not0, _ = self.get_data(
-                long_or_short, dump_no_is_zero=False,
-                this_fixed=int(this_fixed*0.3))
-            if not ok:
-                return False, None
-
-            df = pd.concat([df_dump_no_0, df_dump_no_not0])
-        else:
-            ok, df, this_fixed = self.get_data(
-                long_or_short, dump_no_is_zero=None)
-            if not ok:
-                return False, None
+        ok, df, this_fixed = self.get_data(long_or_short)
+        if not ok:
+            return False, None
 
         if options.verbose:
             print("Printing head:")
@@ -871,8 +843,7 @@ class QueryCls (QueryHelper):
         return True, df
 
 
-    def get_data(self, long_or_short, dump_no_is_zero=None,
-                            this_fixed=None):
+    def get_data(self, long_or_short, this_fixed=None):
         # TODO magic numbers
         # preferece OK-BAD
         # SHORT vs LONG data availability guess
@@ -900,7 +871,7 @@ class QueryCls (QueryHelper):
         print("this_fixed is set to:", this_fixed)
 
         q = self.q_ok_select + self.q_ok
-        q = self.add_dump_no_filter(q, dump_no_is_zero)
+        q = self.add_dump_no_filter(q)
         self.myformat["limit"] = this_fixed
         q += self.common_limits
         df = self.one_query(q)
