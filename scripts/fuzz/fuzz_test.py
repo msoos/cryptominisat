@@ -913,8 +913,6 @@ fuzzers_xor = [
 
 
 if __name__ == "__main__":
-    global fuzzers_drat
-    global fuzzers_nodrat
     if not os.path.isdir("out"):
         print("Directory for outputs, 'out' not present, creating it.")
         os.mkdir("out")
