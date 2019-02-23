@@ -340,6 +340,7 @@ class DLL_PUBLIC SolverConf
         int       doRenumberVars;
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
+        int       static_mem_consolidate_order;
 
         //Component handling
         int       doCompHandler;

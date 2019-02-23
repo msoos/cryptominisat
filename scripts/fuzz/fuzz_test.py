@@ -319,6 +319,7 @@ class Tester:
             if random.choice([True, True, True, False]):
                 self.clid_added = True
                 cmd += "--clid "
+            cmd += "--consolidatestaticorder %d " % random.choice([0, 1])
             cmd += "--locgmult %.12f " % random.gammavariate(0.5, 0.7)
             cmd += "--varelimover %d " % random.gammavariate(1, 20)
             cmd += "--memoutmult %0.12f " % random.gammavariate(0.03, 50)
