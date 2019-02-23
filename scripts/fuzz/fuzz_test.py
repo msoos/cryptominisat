@@ -807,7 +807,7 @@ class Tester:
 
     def fuzz_test_preproc(self):
         print("--- PREPROC TESTING ---")
-        assert self.decisions_dumpfile == None
+        assert self.decisions_dumpfile is None
         self.this_gauss_on = False  # don't do gauss on preproc
         assert self == tester
         tester.needDebugLib = False
@@ -913,8 +913,6 @@ fuzzers_xor = [
 
 
 if __name__ == "__main__":
-    global fuzzers_drat
-    global fuzzers_nodrat
     if not os.path.isdir("out"):
         print("Directory for outputs, 'out' not present, creating it.")
         os.mkdir("out")

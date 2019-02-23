@@ -273,7 +273,7 @@ else
     make -j2 VERBOSE=1
 fi
 
-if [ "$CMS_CONFIG" == "NOTEST" ] || [ "$CMS_CONFIG" == "STATICCOMPILE" ]; then
+if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install VERBOSE=1
     exit 0
 fi
@@ -313,6 +313,10 @@ if [ "$CMS_CONFIG" = "STATIC" ] ; then
         ! (otool -L ./cryptominisat5  | grep "libz");
         ! (otool -L ./cryptominisat5  | grep "libboost");
     fi
+fi
+
+if [ "$CMS_CONFIG" == "ONLY_SIMPLE_STATIC" ] || [ "$CMS_CONFIG" == "STATIC" ]; then
+    exit 0
 fi
 
 ctest -V
