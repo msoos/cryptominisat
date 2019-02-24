@@ -100,7 +100,6 @@ private:
 
     lbool *assigns;         /* value of each var */
     uint32_t *breakcount;   /* number of clauses that become unsat if var if flipped */
-    uint32_t *makecount;    /* number of clauses that become sat if var if flipped */
 
     /* Data structures literals: arrays of size 2*numvars, indexed by literal+numvars */
 
