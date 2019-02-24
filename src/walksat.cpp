@@ -41,6 +41,30 @@ static inline int MAX(int x, int y)
     return x > y ? x : y;
 }
 
+WalkSAT::WalkSAT()
+{
+    //test
+}
+
+WalkSAT::~WalkSAT()
+{
+    free(storebase);
+    free(clause);
+    free(clsize);
+
+    free(false_cls);
+    free(map_cl_to_false_cls);
+    free(numtruelit);
+
+    free(occur_list_alloc);
+    free(occurrence);
+    free(numoccurrence);
+    free(assigns);
+    free(breakcount);
+    free(best);
+}
+
+
 int WalkSAT::main()
 {
     parse_parameters();
@@ -202,10 +226,8 @@ void WalkSAT::init_problem()
     uint32_t j;
     int lastc;
     int nextc;
-    Lit *storebase;
     uint32_t storesize;
     uint32_t storeused;
-    Lit *storeptr;
 
     //skip header
     while ((lastc = getc(cnfStream)) == 'c') {
@@ -243,7 +265,7 @@ void WalkSAT::init_problem()
         numoccurrence[i] = 0;
 
     //where all clauses' literals are
-    storebase = (Lit *)calloc(sizeof(Lit), 1024);
+    storebase = (Lit *)malloc(1024*sizeof(Lit));
     for (i = 0; i < numclauses; i++) {
         clsize[i] = 0;
         int lit;
@@ -254,12 +276,8 @@ void WalkSAT::init_problem()
             }
             if (lit != 0) {
                 if (storeused >= storesize) {
-                    storeptr = storebase;
-                    storebase = (Lit *)calloc(sizeof(Lit), storesize * 2);
-                    for (j = 0; j < storesize; j++)
-                        storebase[j] = storeptr[j];
-                    free((void *)storeptr);
                     storesize *= 2;
+                    storebase = (Lit *)realloc(storebase, storesize * 2*sizeof(Lit));
                 }
                 clsize[i]++;
                 const uint32_t var = std::abs(lit)-1;
@@ -289,7 +307,7 @@ void WalkSAT::init_problem()
 
 
     /* allocate occurence lists */
-    uint32_t* occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
+    occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
     i = 0;
     for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
         const Lit lit = Lit::toLit(i2);

@@ -34,6 +34,8 @@ namespace CMSat {
 class WalkSAT {
 public:
     int main();
+    WalkSAT();
+    ~WalkSAT();
 
 private:
     /************************************/
@@ -88,6 +90,7 @@ private:
 
     /* Data structures for clauses */
 
+    Lit *storebase; //all the literals of all the clauses
     Lit **clause; /* clauses to be satisfied */
     /* indexed as clause[clause_num][literal_num] */
     uint32_t *clsize;       /* length of each clause */
@@ -103,7 +106,11 @@ private:
 
     /* Data structures literals: arrays of size 2*numvars, indexed by literal+numvars */
 
+    //TODO make this half the size by using offsets
     uint32_t **occurrence; /* where each literal occurs, size 2*numvars            */
+
+
+    uint32_t* occur_list_alloc;
     /* indexed as occurrence[literal+numvars][occurrence_num] */
 
     uint32_t *numoccurrence; /* number of times each literal occurs, size 2*numvars  */
