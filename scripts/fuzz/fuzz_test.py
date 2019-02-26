@@ -315,6 +315,7 @@ class Tester:
 
         if random.choice([True, False]) and "clid" in self.extra_opts_supported:
             cmd += "--varsperxorcut %d " % random.randint(4, 6)
+            cmd += "--tern %d " % random.choice([0, 1])
             cmd += "--xorcache %d " % random.choice([0, 1])
             if random.choice([True, True, True, False]):
                 self.clid_added = True
@@ -398,7 +399,7 @@ class Tester:
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
-                    "gorshort", "gandrem", "gateeqlit", "schedsimp", "tern"]
+                    "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 
             if "xor" in self.extra_opts_supported:
                 opts.append("xor")
