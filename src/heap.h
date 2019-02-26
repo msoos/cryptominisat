@@ -87,7 +87,7 @@ class Heap {
 public:
     Heap(const Comp& c) : lt(c) { }
 
-    int  size      ()          const
+    uint32_t  size      ()          const
     {
         return heap.size();
     }

@@ -31,11 +31,17 @@ THE SOFTWARE.
 
 namespace CMSat {
 
+class Solver;
 class WalkSAT {
 public:
-    int main();
+    lbool main();
+    uint64_t mem_needed();
+    WalkSAT(Solver* _solver);
+    ~WalkSAT();
 
 private:
+    Solver* solver;
+
     /************************************/
     /* Main                             */
     /************************************/
@@ -46,7 +52,7 @@ private:
     /************************************/
     void parse_parameters();
     void init();
-    void initprob();
+    void init_problem();
 
     /************************************/
     /* Printing and Statistics          */
@@ -58,7 +64,6 @@ private:
     void update_statistics_end_flip();
     void update_and_print_statistics_end_try();
     void print_statistics_final();
-    void print_sol_cnf();
 
     /*******************************************************/
     /* Utility Functions                                   */
@@ -88,11 +93,12 @@ private:
 
     /* Data structures for clauses */
 
+    Lit *storebase; //all the literals of all the clauses
     Lit **clause; /* clauses to be satisfied */
     /* indexed as clause[clause_num][literal_num] */
     uint32_t *clsize;       /* length of each clause */
-    uint32_t * false_cls;     /* clauses which are false */
-    uint32_t *wherefalse; /* where each clause is listed in false */
+    uint32_t *false_cls;     /* clauses which are false */
+    uint32_t *map_cl_to_false_cls; /* where each clause is listed in false */
     uint32_t *numtruelit; /* number of true literals in each clause */
     uint32_t longestclause;
 
@@ -100,11 +106,14 @@ private:
 
     lbool *assigns;         /* value of each var */
     uint32_t *breakcount;   /* number of clauses that become unsat if var if flipped */
-    uint32_t *makecount;    /* number of clauses that become sat if var if flipped */
 
     /* Data structures literals: arrays of size 2*numvars, indexed by literal+numvars */
 
+    //TODO make this half the size by using offsets
     uint32_t **occurrence; /* where each literal occurs, size 2*numvars            */
+
+
+    uint32_t* occur_list_alloc;
     /* indexed as occurrence[literal+numvars][occurrence_num] */
 
     uint32_t *numoccurrence; /* number of times each literal occurs, size 2*numvars  */
@@ -116,30 +125,22 @@ private:
     /************************************/
     /* Global flags and parameters      */
     /************************************/
-
-    /* Options */
-    FILE *cnfStream;
-
     uint32_t numerator; /* make random flip with numerator/denominator frequency */
     double walk_probability = 0.5;
-    int64_t numflip;        /* number of changes so far */
-    int numrun = 10;
-    int64_t cutoff = 100000;
-    int64_t base_cutoff = 100000;
-    int numtry = 0;   /* total attempts at solutions */
-
-    int freebienoise = 0;
+    uint64_t numflip;        /* number of changes so far */
+    uint32_t max_runs = 10;
+    uint64_t cutoff = 100000;
+    uint64_t base_cutoff = 100000;
+    uint32_t numtry = 0;   /* total attempts at solutions */
 
     /* Histogram of tail */
-    static const int HISTMAX=64;         /* length of histogram of tail */
-    long histtotal;
-    int tail = 10;
-    int tail_start_flip;
-    int undo_age = 1;
+    uint32_t tail = 10;
+    uint32_t tail_start_flip;
 
     /* Statistics */
 
-    double expertime;
+    double startTime;
+    double totalTime = 0;
     int64_t flips_this_solution;
     uint32_t lowbad;                  /* lowest number of bad clauses during try */
     int64_t totalflip = 0;        /* total number of flips in all tries so far */

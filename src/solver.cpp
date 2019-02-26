@@ -66,6 +66,7 @@ THE SOFTWARE.
 #include "drat.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
+#include "walksat.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1392,7 +1393,10 @@ lbool Solver::simplify_problem_outside()
 
     lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
+        bool backup = conf.doWalkSAT;
+        conf.doWalkSAT = false;
         status = simplify_problem(false);
+        conf.doWalkSAT = backup;
     }
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
@@ -1815,7 +1819,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     #endif
 }
 
-bool Solver::execute_inprocess_strategy(
+lbool Solver::execute_inprocess_strategy(
     const bool startup
     , const string& strategy
 ) {
@@ -1831,7 +1835,7 @@ bool Solver::execute_inprocess_strategy(
             || nVars() == 0
             || !okay()
         ) {
-            return ok;
+            break;
         }
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
@@ -1862,7 +1866,7 @@ bool Solver::execute_inprocess_strategy(
                 || nVars() == 0
                 || !ok
             ) {
-                return ok;
+                break;
             }
             #ifdef SLOW_DEBUG
             solver->check_stats();
@@ -1912,6 +1916,21 @@ bool Solver::execute_inprocess_strategy(
             //subsume BIN with BIN
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
+            }
+        } else if (token == "walksat") {
+            assert(conf.walksat_every_n > 0);
+            if (conf.doWalkSAT
+                && !(drat->enabled() || conf.simulate_drat)
+                && solveStats.numSimplify % conf.walksat_every_n == (conf.walksat_every_n-1)
+            ) {
+                WalkSAT walk(this);
+                double mem_needed_mb = (double)walk.mem_needed()/(1000.0*1000.0);
+                if (mem_needed_mb < 1000) {
+                    lbool ret = walk.main();
+                    if (ret == l_True) {
+                        return l_True;
+                    }
+                }
             }
         } else if (token == "intree-probe") {
             if (conf.doIntreeProbe) {
@@ -1966,12 +1985,12 @@ bool Solver::execute_inprocess_strategy(
                     bool setSomething = true;
                     while(setSomething) {
                         if (!implCache.clean(this, &setSomething))
-                            return false;
+                            return l_False;
                     }
                 }
 
                 if (!renumber_variables(token == "must-renumber")) {
-                    return false;
+                    return l_False;
                 }
             }
         } else if (token == "") {
@@ -1989,12 +2008,12 @@ bool Solver::execute_inprocess_strategy(
         #endif
 
         if (!ok) {
-            return ok;
+            return l_False;
         }
         check_wrong_attach();
     }
 
-    return ok;
+    return ok ? l_Undef : l_False;
 }
 
 /**
@@ -2026,10 +2045,11 @@ lbool Solver::simplify_problem(const bool startup)
         << endl;
     }
 
+    lbool ret;
     if (startup) {
-        execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
+        ret = execute_inprocess_strategy(startup, conf.simplify_schedule_startup);
     } else {
-        execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
+        ret = execute_inprocess_strategy(startup, conf.simplify_schedule_nonstartup);
     }
 
     //Free unused watch memory
@@ -2049,9 +2069,10 @@ lbool Solver::simplify_problem(const bool startup)
 
     solveStats.numSimplify++;
 
-    if (!ok) {
+    assert(!(ok == false && ret != l_False));
+    if (!ok || ret == l_False) {
         return l_False;
-    } else {
+    } else if (ret == l_Undef) {
         check_stats();
         check_implicit_propagated();
         rebuildOrderHeap();
@@ -2061,7 +2082,11 @@ lbool Solver::simplify_problem(const bool startup)
         #endif
         check_wrong_attach();
 
-        return l_Undef;
+        return ret;
+    } else {
+        assert(ret == l_True);
+        finish_up_solve(ret);
+        return ret;
     }
 }
 

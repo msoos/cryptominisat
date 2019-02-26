@@ -232,6 +232,28 @@ ClOffset ClauseAllocator::move_cl(
     return new_offset;
 }
 
+void ClauseAllocator::move_one_watchlist(
+    watch_subarray& ws, ClOffset* newDataStart, ClOffset*& new_ptr)
+{
+    for(Watched& w: ws) {
+        if (w.isClause()) {
+            Clause* old = ptr(w.get_offset());
+            assert(!old->freed());
+            Lit blocked = w.getBlockedLit();
+            if (old->reloced) {
+                ClOffset new_offset = (*old)[0].toInt();
+                #ifdef LARGE_OFFSETS
+                new_offset += ((uint64_t)(*old)[1].toInt())<<32;
+                #endif
+                w = Watched(new_offset, blocked);
+            } else {
+                ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
+                w = Watched(new_offset, blocked);
+            }
+        }
+    }
+}
+
 /**
 @brief If needed, compacts stacks, removing unused clauses
 
@@ -267,22 +289,28 @@ void ClauseAllocator::consolidate(
     BASE_DATA_TYPE * new_ptr = newDataStart;
 
     assert(sizeof(BASE_DATA_TYPE) % sizeof(Lit) == 0);
-    for(auto& ws: solver->watches) {
-        for(Watched& w: ws) {
-            if (w.isClause()) {
-                Clause* old = ptr(w.get_offset());
-                assert(!old->freed());
-                Lit blocked = w.getBlockedLit();
-                if (old->reloced) {
-                    ClOffset new_offset = (*old)[0].toInt();
-                    #ifdef LARGE_OFFSETS
-                    new_offset += ((uint64_t)(*old)[1].toInt())<<32;
-                    #endif
-                    w = Watched(new_offset, blocked);
-                } else {
-                    ClOffset new_offset = move_cl(newDataStart, new_ptr, old);
-                    w = Watched(new_offset, blocked);
-                }
+
+    vector<bool> visited(solver->watches.size(), 0);
+    Heap<Solver::VarOrderLt> &order_heap = solver->VSIDS ? solver->order_heap_vsids : solver->order_heap_maple;
+    if (solver->conf.static_mem_consolidate_order) {
+        for(auto& ws: solver->watches) {
+            move_one_watchlist(ws, newDataStart, new_ptr);
+        }
+    } else {
+        for(uint32_t i = 0; i < order_heap.size(); i++) {
+            for(uint32_t i2 = 0; i2 < 2; i2++) {
+                Lit lit = Lit(order_heap[i], i2);
+                assert(lit.toInt() < solver->watches.size());
+                move_one_watchlist(solver->watches[lit], newDataStart, new_ptr);
+                visited[lit.toInt()] = 1;
+            }
+        }
+        for(uint32_t i = 0; i < solver->watches.size(); i++) {
+            Lit lit = Lit::toLit(i);
+            watch_subarray ws = solver->watches[lit];
+            if (!visited[lit.toInt()]) {
+                move_one_watchlist(ws, newDataStart, new_ptr);
+                visited[lit.toInt()] = 1;
             }
         }
     }

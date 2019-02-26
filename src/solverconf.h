@@ -338,6 +338,10 @@ class DLL_PUBLIC SolverConf
         double maxOccurRedLitLinkedM;
         double   subsume_gothrough_multip;
 
+        //Walksat
+        int doWalkSAT;
+        uint32_t walksat_every_n;
+
         //Distillation
         int      do_distill_clauses;
         unsigned long long distill_long_cls_time_limitM;
@@ -348,6 +352,7 @@ class DLL_PUBLIC SolverConf
         int       doRenumberVars;
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
+        int       static_mem_consolidate_order;
 
         //Component handling
         int       doCompHandler;

@@ -326,17 +326,6 @@ if (NOT ONLY_SIMPLE)
     SET(CPACK_PACKAGE_EXECUTABLES "cryptominisat5")
 endif()
 
-if (WALKSAT_BINARY)
-    add_executable(walksat
-        walksat.cpp
-        walksat_main.cpp
-    )
-    set_target_properties(walksat PROPERTIES
-    OUTPUT_NAME walksat
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
-    INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif()
-
 if (FEEDBACKFUZZ)
     add_executable(cms_feedback_fuzz
         fuzz.cpp

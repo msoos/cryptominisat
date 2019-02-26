@@ -214,6 +214,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
+            "walksat," //MUST be first because the others mess up the variable polarities
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
@@ -250,6 +251,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(2.0)
 
+        //WalkSAT
+        , doWalkSAT(false)
+        , walksat_every_n(2)
+
         //Distillation
         , do_distill_clauses(true)
         , distill_long_cls_time_limitM(20ULL)
@@ -260,6 +265,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doRenumberVars   (true)
         , doSaveMem        (true)
         , full_watch_consolidate_every_n_confl (4ULL*1000ULL*1000ULL) //validated in run 8113323.wlm01
+        , static_mem_consolidate_order(true)
 
         //Component finding
         , doCompHandler    (false)

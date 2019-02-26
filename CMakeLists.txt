@@ -97,9 +97,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package (Threads REQUIRED)
 
-# walksat
-option(WALKSAT_BINARY "Compile walksat separate binary -- DEBUG ONLY" OFF)
-
 # static compilation
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
@@ -421,11 +418,8 @@ MESSAGE(STATUS "PROJECT_VERSION_MINOR: ${PROJECT_VERSION_MINOR}")
 MESSAGE(STATUS "PROJECT_VERSION_PATCH: ${PROJECT_VERSION_PATCH}")
 
 option(ONLY_SIMPLE "Only build very simplistic executable -- no Boost needed" OFF)
-
 if (NOT ONLY_SIMPLE)
-    set(boost_components "")
-    set(boost_components ${boost_components} program_options)
-    find_package( Boost 1.46 COMPONENTS ${boost_components})
+    find_package( Boost 1.46 COMPONENTS program_options)
 endif()
 
 option(FINAL_PREDICTOR "Use final predictor" OFF)

@@ -27,43 +27,57 @@ THE SOFTWARE.
 #include <cmath>
 #include <cstdlib>
 #include "walksat.h"
-
-/************************************/
-/* Constant parameters              */
-/************************************/
+#include "solver.h"
 
 #define denominator 100000 /* denominator used in fractions to represent probabilities */
-
 using namespace CMSat;
-
-/* #define DEBUG */
 
 uint32_t WalkSAT::RANDMOD(uint32_t d)
 {
-    return d > 1 ? mtrand.randInt(d-1) : 0;
+    return d > 1 ? solver->mtrand.randInt(d-1) : 0;
 }
 
-static inline int MAX(int x, int y)
+WalkSAT::WalkSAT(Solver* _solver) :
+    solver(_solver)
 {
-    return x > y ? x : y;
+    //test
 }
 
-int WalkSAT::main()
+WalkSAT::~WalkSAT()
+{
+    free(storebase);
+    free(clause);
+    free(clsize);
+
+    free(false_cls);
+    free(map_cl_to_false_cls);
+    free(numtruelit);
+
+    free(occur_list_alloc);
+    free(occurrence);
+    free(numoccurrence);
+    free(assigns);
+    free(breakcount);
+    free(best);
+}
+
+lbool WalkSAT::main()
 {
     parse_parameters();
     mtrand.seed(1U);
     print_parameters();
-    initprob();
+    init_problem();
     initialize_statistics();
     print_statistics_header();
+    startTime = cpuTime();
 
-    while (!found_solution && numtry < numrun) {
+    while (!found_solution && numtry < max_runs) {
         numtry++;
         init();
         update_statistics_start_try();
         numflip = 0;
 
-        while ((numfalse > 0) && (numflip < cutoff)) {
+        while (!found_solution && (numfalse > 0) && (numflip < cutoff)) {
             numflip++;
 
             uint32_t var = pickbest();
@@ -72,19 +86,17 @@ int WalkSAT::main()
         }
         update_and_print_statistics_end_try();
     }
-    expertime = cpuTime();
     print_statistics_final();
-    return found_solution;
+    if (found_solution)
+        return l_True;
+    else
+        return l_Undef;
 }
 
 void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
-    uint32_t i;
     Lit toenforce;
-    uint32_t cli;
     uint32_t numocc;
-    Lit *litptr;
-    uint32_t *occptr;
 
     if (assigns[toflip] == l_True)
         toenforce = Lit(toflip, true);
@@ -96,22 +108,20 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
     //True made into False
     numocc = numoccurrence[(~toenforce).toInt()];
-    occptr = occurrence[(~toenforce).toInt()];
-    for (i = 0; i < numocc; i++) {
-        /* cli = occurrence[(~toenforce).toInt()][i]; */
-        cli = *(occptr++);
+    for (uint32_t i = 0; i < numocc; i++) {
+        uint32_t cli = occurrence[(~toenforce).toInt()][i];
 
         assert(numtruelit[cli] > 0);
         numtruelit[cli]--;
         if (numtruelit[cli] == 0) {
             false_cls[numfalse] = cli;
-            wherefalse[cli] = numfalse;
+            map_cl_to_false_cls[cli] = numfalse;
             numfalse++;
             /* Decrement toflip's breakcount */
             breakcount[toflip]--;
         } else if (numtruelit[cli] == 1) {
             /* Find the lit in this clause that makes it true, and inc its breakcount */
-            litptr = clause[cli];
+            Lit *litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
                 Lit lit = *(litptr++);
@@ -130,23 +140,30 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         }
     }
 
+    //made into TRUE
     numocc = numoccurrence[toenforce.toInt()];
-    occptr = occurrence[toenforce.toInt()];
-    for (i = 0; i < numocc; i++) {
-        /* cli = occurrence[numvars+toenforce][i]; */
-        cli = *(occptr++);
+    for (uint32_t i = 0; i < numocc; i++) {
+        uint32_t cli = occurrence[toenforce.toInt()][i];
 
         numtruelit[cli]++;
         if (numtruelit[cli] == 1) {
+            const uint32_t last_false_cl = false_cls[numfalse-1];
+            uint32_t position_in_false_cls = map_cl_to_false_cls[cli];
             numfalse--;
-            false_cls[wherefalse[cli]] = false_cls[numfalse];
-            wherefalse[false_cls[numfalse]] = wherefalse[cli];
+
+            //the postiion in false_cls where this clause was is now replaced with
+            //the one at the end
+            false_cls[position_in_false_cls] = last_false_cl;
+
+            //update map_cl_to_false_cls of the clause
+            map_cl_to_false_cls[last_false_cl] = position_in_false_cls;
+
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
         } else if (numtruelit[cli] == 2) {
             /* Find the lit in this clause other than toflip that makes it true,
              * and decrement its breakcount */
-            litptr = clause[cli];
+            Lit *litptr = clause[cli];
             while (1) {
                 /* lit = clause[cli][j]; */
                 Lit lit = *(litptr++);
@@ -166,13 +183,15 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
 void WalkSAT::parse_parameters()
 {
-    cnfStream = stdin;
     base_cutoff = cutoff;
     numerator = (int)(walk_probability * denominator);
 }
 
 void WalkSAT::init()
 {
+    assert(solver->decisionLevel() == 0);
+    assert(solver->okay());
+
     /* initialize truth assignment and changed time */
     for (uint32_t i = 0; i < numclauses; i++)
         numtruelit[i] = 0;
@@ -180,7 +199,11 @@ void WalkSAT::init()
     numfalse = 0;
     for (uint32_t i = 0; i < numvars; i++) {
         breakcount[i] = 0;
-        assigns[i] = RANDMOD(2)==0 ? l_False : l_True;
+        if (solver->value(i) != l_Undef) {
+            assigns[i] = solver->value(i);
+        } else {
+            assigns[i] = solver->varData[i].polarity ? l_True: l_False;
+        }
     }
 
     /* Initialize breakcount  */
@@ -193,7 +216,7 @@ void WalkSAT::init()
             }
         }
         if (numtruelit[i] == 0) {
-            wherefalse[i] = numfalse;
+            map_cl_to_false_cls[i] = numfalse;
             false_cls[numfalse] = i;
             numfalse++;
         } else if (numtruelit[i] == 1) {
@@ -202,34 +225,60 @@ void WalkSAT::init()
     }
 }
 
-void WalkSAT::initprob()
+uint64_t WalkSAT::mem_needed()
+{
+    uint64_t needed = 0;
+
+    //LIT storage (all clause data)
+    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
+
+    //NOTE: this is underreporting here, but by VERY little
+    //best -> longestclause = ??
+    //needed += sizeof(uint32_t) * longestclause;
+
+    //clause
+    needed += sizeof(Lit *) * numclauses;
+    //clsize
+    needed += sizeof(uint32_t) * numclauses;
+
+    //false_cls
+    needed += sizeof(uint32_t) * numclauses;
+    //map_cl_to_false_cls
+    needed += sizeof(uint32_t) * numclauses;
+    //numtruelit
+    needed += sizeof(uint32_t) * numclauses;
+
+    //occurrence
+    needed += sizeof(uint32_t *) * (2 * numvars);
+    //numoccurrence
+    needed += sizeof(uint32_t) * (2 * numvars);
+    //assigns
+    needed += sizeof(lbool) * numvars;
+    //breakcount
+    needed += sizeof(uint32_t) * numvars;
+
+    //occur_list_alloc
+    needed += sizeof(uint32_t) * numliterals;
+
+    return needed;
+}
+
+void WalkSAT::init_problem()
 {
     uint32_t i;
     uint32_t j;
-    int lastc;
-    int nextc;
-    Lit *storebase;
-    uint32_t storesize;
-    uint32_t storeused;
-    Lit *storeptr;
+    //TODO simplify by the assumptions!
+    //Then we will automatically get the right solution if we get one :)
 
-    //skip header
-    while ((lastc = getc(cnfStream)) == 'c') {
-        while ((nextc = getc(cnfStream)) != EOF && nextc != '\n')
-            ;
-    }
-    ungetc(lastc, cnfStream);
-    if (fscanf(cnfStream, "p cnf %i %i", &numvars, &numclauses) != 2) {
-        cout << "Bad input file" << endl;
-        exit(-1);
-    }
+    numvars = solver->nVars();
+    numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
 
     clause = (Lit **)calloc(sizeof(Lit *), numclauses);
     clsize = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
 
     //false-true lits
     false_cls = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
-    wherefalse = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
+    map_cl_to_false_cls = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
     numtruelit = (uint32_t *)calloc(sizeof(uint32_t), numclauses);
 
     occurrence = (uint32_t **)calloc(sizeof(uint32_t *), (2 * numvars));
@@ -241,65 +290,58 @@ void WalkSAT::initprob()
     longestclause = 0;
 
     /* Read in the clauses and set number of occurrences of each literal */
-    storesize = 1024;
-    storeused = 0;
-    cout << "Reading formula" << endl;
-    storebase = (Lit *)calloc(sizeof(Lit), 1024);
-
+    uint32_t storeused = 0;
     for (i = 0; i < 2 * numvars; i++)
         numoccurrence[i] = 0;
 
-    for (i = 0; i < numclauses; i++) {
-        clsize[i] = 0;
-        int lit;
-        do {
-            if (fscanf(cnfStream, "%i ", &lit) != 1) {
-                cout << "Bad input file" << endl;
-                exit(-1);
-            }
-            if (lit != 0) {
-                if (storeused >= storesize) {
-                    storeptr = storebase;
-                    storebase = (Lit *)calloc(sizeof(Lit), storesize * 2);
-                    for (j = 0; j < storesize; j++)
-                        storebase[j] = storeptr[j];
-                    free((void *)storeptr);
-                    storesize *= 2;
-                }
-                clsize[i]++;
-                const uint32_t var = std::abs(lit)-1;
-                Lit real_lit = (lit > 0) ? Lit(var, false) : Lit(var, true);
-                storebase[storeused++] = real_lit;
-                numliterals++;
-                numoccurrence[real_lit.toInt()]++;
-            }
-        } while (lit != 0);
+    //where all clauses' literals are
+    solver->check_stats();
+    const uint32_t storesize = solver->litStats.irredLits+solver->binTri.irredBins*2;
+    storebase = (Lit *)malloc(storesize*sizeof(Lit));
+    i = 0;
+    for(ClOffset offs: solver->longIrredCls) {
+        const Clause* cl = solver->cl_alloc.ptr(offs);
+        assert(!cl->freed());
+        assert(!cl->getRemoved());
+        assert(storeused+cl->size() <= storesize);
 
-        if (clsize[i] == 0) {
-            cout << "Bad input file" << endl;
-            exit(-1);
+        clause[i] = storebase + storeused;
+        clsize[i] = cl->size();
+        numliterals += cl->size();
+
+        for(Lit l: *cl) {
+            storebase[storeused++] = l;
+            numoccurrence[l.toInt()]++;
         }
-        longestclause = MAX(longestclause, clsize[i]);
+        longestclause = std::max(longestclause, clsize[i]);
+        i++;
     }
+    for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
+        Lit lit = Lit::toLit(i2);
+        for(const Watched& w: solver->watches[lit]) {
+            if (w.isBin() && !w.red() && lit < w.lit2()) {
+                assert(storeused+2 <= storesize);
 
-    cout << "Creating data structures" << endl;
+                clause[i] = storebase + storeused;
+                clsize[i] = 2;
+                numliterals += 2;
 
-    /* Have to wait to set the clause[i] ptrs to the end, since store might move */
-    j = 0;
-    for (i = 0; i < numclauses; i++) {
-        clause[i] = &(storebase[j]);
-        j += clsize[i];
+                storebase[storeused++] = lit;
+                storebase[storeused++] = w.lit2();
+                numoccurrence[lit.toInt()]++;
+                numoccurrence[w.lit2().toInt()]++;
+                longestclause = std::max(longestclause, clsize[i]);
+                i++;
+            }
+        }
     }
+    assert(storeused == storesize);
+    assert(i == numclauses);
+
     best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
 
-    /* Create the occurence lists for each literal */
-
-    /* First, allocate enough storage for occurrence lists */
-    uint32_t* storebase2 = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
-
-    /* cout << "numliterals = %d" << numliterals); fflush(stdout); */
-
-    /* Second, allocate occurence lists */
+    /* allocate occurence lists */
+    occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
     i = 0;
     for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
         const Lit lit = Lit::toLit(i2);
@@ -307,15 +349,18 @@ void WalkSAT::initprob()
             cout << "Code error, allocating occurrence lists" << endl;
             exit(-1);
         }
-        occurrence[lit.toInt()] = &(storebase2[i]);
+        occurrence[lit.toInt()] = &(occur_list_alloc[i]);
         i += numoccurrence[lit.toInt()];
         numoccurrence[lit.toInt()] = 0;
     }
+    assert(i == numliterals);
 
     /* Third, fill in the occurence lists */
     for (i = 0; i < numclauses; i++) {
         for (j = 0; j < clsize[i]; j++) {
-            Lit lit = clause[i][j];
+            const Lit lit = clause[i][j];
+            assert(lit.var() < numvars);
+
             occurrence[lit.toInt()][numoccurrence[lit.toInt()]] = i;
             numoccurrence[lit.toInt()]++;
         }
@@ -328,12 +373,11 @@ void WalkSAT::initprob()
 
 void WalkSAT::print_parameters()
 {
-    cout << "WALKSAT v56" << endl;
-    cout << "cutoff = %" << cutoff << endl;
-    cout << "tries = " << numrun << endl;
-    cout << "walk probabability = "
+    cout << "c [walksat] WALKSAT v56" << endl;
+    cout << "c [walksat] cutoff = %" << cutoff << endl;
+    cout << "c [walksat] tries = " << max_runs << endl;
+    cout << "c [walksat] walk probabability = "
     << std::fixed << std::setprecision(2) << walk_probability << endl;
-    cout << endl;
 }
 
 void WalkSAT::initialize_statistics()
@@ -341,25 +385,23 @@ void WalkSAT::initialize_statistics()
     x = 0;
     r = 0;
     tail_start_flip = tail * numvars;
-    cout << "tail starts after flip = " << tail_start_flip << endl;
+    cout << "c [walksat] tail starts after flip = " << tail_start_flip << endl;
 }
 
 void WalkSAT::print_statistics_header()
 {
-    cout << "numvars = " << numvars << ", numclauses = "
-    << numclauses << ", numliterals = " << numliterals;
+    cout << "c [walksat] numvars = " << numvars << ", numclauses = "
+    << numclauses << ", numliterals = " << numliterals << endl;
 
-    cout << "wff read in\n" << endl;
     cout <<
-        "    lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
+        "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
         "length       flips" << endl;
     cout <<
-        "      this       end     unsat       avg     ratio      this      flip   success   "
+        "c [walksat]       this       end     unsat       avg     ratio      this      flip   success   "
         "success       until" << endl;
     cout <<
-        "       try       try      tail     unsat      tail       try  fraction      rate     "
+        "c [walksat]        try       try      tail     unsat      tail       try  fraction      rate     "
         "tries      assign" << endl;
-    cout << endl;
 }
 
 void WalkSAT::update_statistics_start_try()
@@ -435,6 +477,7 @@ void WalkSAT::update_and_print_statistics_end_try()
     double undo_fraction = 0;
 
     cout
+    << "c [walksat] "
     << std::setw(9) << lowbad
     << std::setw(9) << numfalse
     << std::setw(9+2) << avgfalse
@@ -453,28 +496,27 @@ void WalkSAT::update_and_print_statistics_end_try()
         cout << "Program error, verification of solution fails!" << endl;
         exit(-1);
     }
-
-    fflush(stdout);
 }
 
 void WalkSAT::print_statistics_final()
 {
-    seconds_per_flip = expertime / totalflip;
-    cout << "\ntotal elapsed seconds = " <<  expertime << endl;
-    cout << "num tries: " <<  numtry  << endl;
-    cout << "average flips per second = " << ((double)totalflip) / expertime << endl;
-    cout << "number solutions found = " << found_solution << endl;
-    cout << "final success rate = " << ((double)found_solution * 100.0) / numtry  << endl;
-    cout << "average length successful tries = %" <<
-           (found_solution ? (totalsuccessflip / found_solution) : 0) << endl;
+    totalTime = cpuTime() - startTime;
+    seconds_per_flip = ratio_for_stat(totalTime, totalflip);
+    cout << "c [walksat] total elapsed seconds = " <<  totalTime << endl;
+    cout << "c [walksat] num tries: " <<  numtry  << endl;
+    cout << "c [walksat] avg flips per second = " << ratio_for_stat(totalflip, totalTime) << endl;
+    cout << "c [walksat] number solutions found = " << found_solution << endl;
+    cout << "c [walksat] final success rate = " << stats_line_percent(found_solution, numtry)  << endl;
+    cout << "c [walksat] avg length successful tries = %" <<
+           ratio_for_stat(totalsuccessflip,found_solution) << endl;
     if (found_solution) {
-        cout << "average flips per assign (over all runs) = " <<
-               ((double)totalflip) / found_solution << endl;
-        cout << "average seconds per assign (over all runs) = " <<
-               (((double)totalflip) / found_solution) * seconds_per_flip << endl;
-        cout << "mean flips until assign = " << mean_x << endl;
-        cout << "mean seconds until assign = " << mean_x * seconds_per_flip << endl;
-        cout << "mean restarts until assign = " << mean_r << endl;
+        cout << "c [walksat] avg flips per assign (over all runs) = " <<
+               ratio_for_stat(totalflip, found_solution) << endl;
+        cout << "c [walksat] avg seconds per assign (over all runs) = " <<
+               ratio_for_stat(totalflip, found_solution) * seconds_per_flip << endl;
+        cout << "c [walksat] mean flips until assign = " << mean_x << endl;
+        cout << "c [walksat] mean seconds until assign = " << mean_x * seconds_per_flip << endl;
+        cout << "c [walksat] mean restarts until assign = " << mean_r << endl;
     }
 
     if (number_sampled_runs) {
@@ -502,44 +544,51 @@ void WalkSAT::print_statistics_final()
             nonsuc_ratio_mean_avgfalse = 0;
         }
 
-        cout << "final numbad level statistics"  << endl;
-        cout << "    statistics over all runs:"  << endl;
-        cout << "      overall mean average numbad = " << mean_avgfalse << endl;
-        cout << "      overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
-        cout << "      overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
-        cout << "    statistics on successful runs:"  << endl;
-        cout << "      successful mean average numbad = " << suc_mean_avgfalse << endl;
-        cout << "      successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
-        cout << "      successful ratio mean numbad to mean std dev = " <<
+        cout << "c [walksat] final numbad level statistics"  << endl;
+        cout << "c [walksat]     statistics over all runs:"  << endl;
+        cout << "c [walksat]       overall mean avg numbad = " << mean_avgfalse << endl;
+        cout << "c [walksat]       overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
+        cout << "c [walksat]       overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
+        cout << "c [walksat]     statistics on successful runs:"  << endl;
+        cout << "c [walksat]       successful mean avg numbad = " << suc_mean_avgfalse << endl;
+        cout << "c [walksat]       successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
+        cout << "c [walksat]       successful ratio mean numbad to mean std dev = " <<
                suc_ratio_mean_avgfalse  << endl;
-        cout << "    statistics on nonsuccessful runs:"  << endl;
-        cout << "      nonsuccessful mean average numbad level = " << nonsuc_mean_avgfalse  << endl;
-        cout << "      nonsuccessful mean numbad std deviation = " <<
+        cout << "c [walksat]     statistics on nonsuccessful runs:"  << endl;
+        cout << "c [walksat]       nonsuccessful mean avg numbad level = " << nonsuc_mean_avgfalse  << endl;
+        cout << "c [walksat]       nonsuccessful mean numbad std deviation = " <<
                nonsuc_mean_std_dev_avgfalse  << endl;
-        cout << "      nonsuccessful ratio mean numbad to mean std dev = " <<
+        cout << "c [walksat]       nonsuccessful ratio mean numbad to mean std dev = " <<
                nonsuc_ratio_mean_avgfalse  << endl;
     }
 
     if (found_solution) {
-        cout << "ASSIGNMENT FOUND"  << endl;
-        print_sol_cnf();
-    } else
-        cout << "ASSIGNMENT NOT FOUND"  << endl;
-}
+        cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
 
-void WalkSAT::print_sol_cnf()
-{
-    cout << "v ";
-    for (uint32_t i = 0; i < numvars; i++) {
-         cout << (assigns[i] == l_True? ((int)i+1) : -1*((int)i+1)) << " ";
-    }
-    cout << "0" << endl;
+        //TODO: assumptions!! -- we have removed them from the CNF
+        //TODO: so we must now re-add them as 1+ level decisions.
+        assert(solver->decisionLevel() == 0);
+        for(size_t i = 0; i < solver->nVars(); i++) {
+            //this will get set automatically anyway, skip
+            if (solver->varData[i].removed != Removed::none) {
+                continue;
+            }
+            if (solver->value(i) != l_Undef) {
+                assert(solver->value(i) == value(i));
+                continue;
+            }
+
+            solver->new_decision_level();
+            solver->enqueue(Lit(i, value(i) == l_False));
+        }
+    } else
+        cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
 }
 
 /*******************************************************/
 /* Utility Functions                                   */
 /*******************************************************/
-
+//ONLY used for checking solution
 uint32_t WalkSAT::countunsat()
 {
     uint32_t unsat = 0;
@@ -552,8 +601,9 @@ uint32_t WalkSAT::countunsat()
                 break;
             }
         }
-        if (bad)
+        if (bad) {
             unsat++;
+        }
     }
     return unsat;
 }
@@ -566,14 +616,15 @@ uint32_t WalkSAT::pickbest()
 {
     uint32_t tofix;
     uint32_t clausesize;
-    uint32_t i;
 
+    //pick a random false clause to fix
     tofix = false_cls[RANDMOD(numfalse)];
     clausesize = clsize[tofix];
+
+    //pick the literal to flip in this clause
     uint32_t numbest = 0;
     uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
-
-    for (i = 0; i < clausesize; i++) {
+    for (uint32_t i = 0; i < clausesize; i++) {
         uint32_t var = clause[tofix][i].var();
         uint32_t numbreak = breakcount[var];
         if (numbreak <= bestvalue) {
@@ -584,8 +635,14 @@ uint32_t WalkSAT::pickbest()
         }
     }
 
+    //in case there is no literal where the best break is 0 (i.e. free flip)
+    //then half of the time we pick a random literal to flip
+
+    /* walk probability is 0.5, and
+       numerator = (int)(walk_probability * denominator); */
     if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
         return clause[tofix][RANDMOD(clausesize)].var();
 
+    //pick one of the best (least breaking one) to flip
     return best[RANDMOD(numbest)];
 }

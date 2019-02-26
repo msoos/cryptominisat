@@ -162,14 +162,21 @@ void Main::readInAFile(SATSolver* solver2, const string& filename)
         }
     } else {
         solver2->set_sampling_vars(&sampling_vars);
-        cout << "c Sampling vars set: ";
-        for(size_t i = 0; i < sampling_vars.size(); i++) {
-            const uint32_t v = sampling_vars[i];
-            cout << v+1;
-            if (i+1 != sampling_vars.size())
-                cout << ",";
+        if (sampling_vars.size() > 100) {
+            cout
+            << "c Sampling var set contains over 100 variables, not displaying"
+            << endl;
+        } else {
+            cout << "c Sampling vars set (total num: "
+            << sampling_vars.size() << " ) : ";
+            for(size_t i = 0; i < sampling_vars.size(); i++) {
+                const uint32_t v = sampling_vars[i];
+                cout << v+1;
+                if (i+1 != sampling_vars.size())
+                    cout << ",";
+            }
+            cout << endl;
         }
-        cout << endl;
     }
     call_after_parse();
 
@@ -325,6 +332,10 @@ void Main::add_supported_options()
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
+    ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
+        , "Run WalkSAT during simplification")
+    ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
+        , "Run WalkSAT every N simplifications only")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
@@ -684,17 +695,24 @@ void Main::add_supported_options()
         , "Maximum time in bogoprops M for distillation")
     ;
 
-    po::options_description miscOptions("Misc options");
-    miscOptions.add_options()
-    //("noparts", "Don't find&solve subproblems with subsolvers")
-    ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
-        , "Maximum number of Mega-bogoprops(~time) to spend on vivifying long irred cls through watches, cache and stamps")
+    po::options_description mem_save_opts("Memory saving options");
+    mem_save_opts.add_options()
     ("renumber", po::value(&conf.doRenumberVars)->default_value(conf.doRenumberVars)
         , "Renumber variables to increase CPU cache efficiency")
     ("savemem", po::value(&conf.doSaveMem)->default_value(conf.doSaveMem)
         , "Save memory by deallocating variable space after renumbering. Only works if renumbering is active.")
     ("fullwatchconseveryn", po::value(&conf.full_watch_consolidate_every_n_confl)->default_value(conf.full_watch_consolidate_every_n_confl)
         , "Consolidate watchlists fully once every N conflicts. Scheduled during simplification rounds.")
+    ("consolidatestaticorder", po::value(&conf.static_mem_consolidate_order)->default_value(conf.static_mem_consolidate_order)
+        , "Consolidate clause memory in static order. If set to 0, it's consolidated in activity order")
+    ;
+
+    po::options_description miscOptions("Misc options");
+    miscOptions.add_options()
+    //("noparts", "Don't find&solve subproblems with subsolvers")
+    ("strcachemaxm", po::value(&conf.watch_cache_stamp_based_str_time_limitM)->default_value(conf.watch_cache_stamp_based_str_time_limitM)
+        , "Maximum number of Mega-bogoprops(~time) to spend on vivifying long irred cls through watches, cache and stamps")
+
 
     ("implicitmanip", po::value(&conf.doStrSubImplicit)->default_value(conf.doStrSubImplicit)
         , "Subsume and strengthen implicit clauses with each other")
@@ -788,6 +806,7 @@ void Main::add_supported_options()
     .add(bva_options)
     .add(eqLitOpts)
     .add(componentOptions)
+    .add(mem_save_opts)
     #if defined(USE_M4RI) || defined(USE_GAUSS)
     .add(xorOptions)
     #endif
