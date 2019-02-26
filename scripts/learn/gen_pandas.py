@@ -817,10 +817,14 @@ class QueryCls (QueryHelper):
         print("Num datapoints (K): %-3.5f T: %-3.1f" % ((num_lines/1000.0), time.time()-t))
         return num_lines
 
-    def one_query(self, q):
+    def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
+        q = "select * from ( %s ) where `x.class`='%s' " % (q, ok_or_bad)
+        q += self.common_limits
+        q = q.format(**self.myformat)
+
         t = time.time()
-        sys.stdout.write("Running query...")
+        sys.stdout.write("Running query for %s..." % ok_or_bad)
         sys.stdout.flush()
         if options.dump_sql:
             print("query:", q)
@@ -873,21 +877,17 @@ class QueryCls (QueryHelper):
         q = self.q_ok_select + self.q_ok
         q = self.add_dump_no_filter(q)
         self.myformat["limit"] = this_fixed
-        q += self.common_limits
-        df = self.one_query(q)
-        print("size of data:", df.shape)
-        files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
-        if files["rdb0.dump_no"].index[0] == "BAD":
-            bad = files["rdb0.dump_no"][0]
-            good = files["rdb0.dump_no"][1]
-        else:
-            bad = files["rdb0.dump_no"][1]
-            good = files["rdb0.dump_no"][0]
-        print("Good:", good)
-        print("Bad :", bad)
+
+        #get OK data
+        df_ok = self.one_query(q, "OK")
+        print("size of data:", df_ok.shape)
+
+        #get BAD data
+        df_bad = self.one_query(q, "BAD")
+        print("size of data:", df_bad.shape)
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, df, this_fixed
+        return True, pd.concat([df_ok, df_bad]), this_fixed
 
 class QueryVar (QueryHelper):
     def __init__(self, dbfname):
