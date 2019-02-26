@@ -302,7 +302,7 @@ class Tester:
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
         cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
-        cmd += "--walksat %d " % random.choice([0, 1, 1, 1, 1, 1, 1])
+        #cmd += "--walksat %d " % random.choice([0, 1, 1, 1, 1, 1, 1])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
