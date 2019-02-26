@@ -201,6 +201,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
+            "walksat," //MUST be first because the others mess up the variable polarities
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
@@ -235,6 +236,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , maxOccurRedMB    (600)
         , maxOccurRedLitLinkedM(50)
         , subsume_gothrough_multip(2.0)
+
+        //WalkSAT
+        , doWalkSAT(false)
+        , walksat_every_n(2)
 
         //Distillation
         , do_distill_clauses(true)

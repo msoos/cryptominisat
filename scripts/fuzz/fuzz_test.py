@@ -302,6 +302,7 @@ class Tester:
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
         cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        cmd += "--walksat %d " % random.choice([0, 1, 1, 1, 1, 1, 1])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
@@ -901,6 +902,7 @@ fuzzers_noxor = [
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
+    ["../../build/tests/cnf-utils/makewff -cnf 3 400 1700", "-seed"],
     ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
     ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],

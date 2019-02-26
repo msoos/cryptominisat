@@ -322,7 +322,7 @@ class Solver : public Searcher
         void print_full_restart_stat(const double cpu_time, const double cpu_time_total) const;
 
         lbool simplify_problem(const bool startup);
-        bool execute_inprocess_strategy(const bool startup, const string& strategy);
+        lbool execute_inprocess_strategy(const bool startup, const string& strategy);
         SolveStats solveStats;
         void check_minimization_effectiveness(lbool status);
         void check_recursive_minimization_effectiveness(const lbool status);
