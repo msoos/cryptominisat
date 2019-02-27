@@ -698,17 +698,41 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts and
             (
                 -- useful in the next round
-                   usedlater10k.used_later10k > 3
+                   used_later10k.used_later10k > 3
+
+                   or
+                   (used_later10k.used_later10k > 2 and used_later100k.used_later100k > 40)
             )
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
             """
-        elif self.conf == 5:
+        elif self.conf == 1:
             self.case_stmt_10k = """
             CASE WHEN
 
-            goodcl.last_confl_used > rdb0.conflicts
+            -- useful in the next round
+                   used_later10k.used_later10k > 5
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif self.conf == 2:
+            self.case_stmt_10k = """
+            CASE WHEN
+
+            -- useful in the next round
+                   used_later10k.used_later10k > {avg_used_later10k}
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif self.conf == 3:
+            self.case_stmt_10k = """
+            CASE WHEN
+
+            -- useful in the next round
+                   used_later10k.used_later10k > {avg_used_later10k}*2
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -721,20 +745,47 @@ class QueryCls (QueryHelper):
             goodcl.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (usedlater100k.used_later100k > 10 and usedlater.used_later > 20)
+                   (used_later100k.used_later100k > 10 and used_later.used_later > 20)
 
                 -- used quite a bit but less dispersion
-                or (usedlater100k.used_later100k > 6 and usedlater.used_later > 30)
+                or (used_later100k.used_later100k > 6 and used_later.used_later > 30)
             )
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
             """
-        elif self.conf == 5:
+        elif self.conf == 1:
             self.case_stmt_100k = """
             CASE WHEN
 
-            goodcl.last_confl_used > rdb0.conflicts+100000
+            goodcl.last_confl_used > rdb0.conflicts+100000 and
+            (
+                -- used a lot over a wide range
+                   (used_later100k.used_later100k > 13 and used_later.used_later > 24)
+
+                -- used quite a bit but less dispersion
+                or (used_later100k.used_later100k > 8 and used_later.used_later > 40)
+            )
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif self.conf == 2:
+            self.case_stmt_100k = """
+            CASE WHEN
+
+           -- useful in the next round
+               used_later100k.used_later100k > {avg_used_later100k}
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif self.conf == 3:
+            self.case_stmt_100k = """
+            CASE WHEN
+
+           -- useful in the next round
+               used_later100k.used_later100k > {avg_used_later100k}*2
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
