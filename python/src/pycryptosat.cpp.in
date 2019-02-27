@@ -73,6 +73,10 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
     std::vector<Lit> tmp_cl_lits;
+
+    int verbose;
+    double time_limit;
+    long confl_limit;
 } Solver;
 
 static const char solver_create_docstring[] = \
@@ -89,41 +93,43 @@ Create Solver object.\n\
 :type confl_limit: <long>\n\
 :type threads: <int>";
 
-static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
+static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "time_limit", "confl_limit", "threads", NULL};
 
-    int verbose = 0;
     int num_threads = 1;
-    double time_limit = std::numeric_limits<double>::max();
-    long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
-        return NULL;
+    self->cmsat = NULL;
+    self->verbose = 0;
+    self->time_limit = std::numeric_limits<double>::max();
+    self->confl_limit = std::numeric_limits<long>::max();
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &self->verbose, &self->time_limit, &self->confl_limit, &num_threads)) {
+        return;
     }
-    if (verbose < 0) {
+    if (self->verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
-        return NULL;
+        return;
     }
-    if (time_limit < 0) {
+    if (self->time_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "time_limit must be at least 0");
-        return NULL;
+        return;
     }
-    if (confl_limit < 0) {
+    if (self->confl_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
-        return NULL;
+        return;
     }
     if (num_threads <= 0) {
         PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
-        return NULL;
+        return;
     }
 
-    SATSolver *cmsat = new SATSolver;
-    cmsat->set_max_time(time_limit);
-    cmsat->set_max_confl(confl_limit);
-    cmsat->set_verbosity(verbose);
-    cmsat->set_num_threads(num_threads);
+    self->cmsat = new SATSolver;
+    self->cmsat->set_verbosity(self->verbose);
+    self->cmsat->set_max_time(self->time_limit);
+    self->cmsat->set_max_confl(self->confl_limit);
+    self->cmsat->set_num_threads(num_threads);
 
-    return cmsat;
+    return;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -991,7 +997,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->cmsat = setup_solver(args, kwds);
+        setup_solver(self, args, kwds);
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -1003,7 +1009,11 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
-    self->cmsat = setup_solver(args, kwds);
+    if (self->cmsat != NULL) {
+        delete self->cmsat;
+    }
+
+    setup_solver(self, args, kwds);
     if (!self->cmsat) {
         return -1;
     }
