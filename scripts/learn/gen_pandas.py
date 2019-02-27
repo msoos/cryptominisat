@@ -67,6 +67,7 @@ class QueryFill (QueryHelper):
         drop index if exists `idxclid6`;
         drop index if exists `idxclid6-2`;
         drop index if exists `idxclid6-3`;
+        drop index if exists `idxclid6-4`;
         drop index if exists `idxclid7`;
         drop index if exists `idxclid8`;
         drop index if exists `idxclidUCLS-1`;
@@ -82,8 +83,9 @@ class QueryFill (QueryHelper):
         create index `idxclid4` on `restart` ( `restarts`);
         create index `idxclid5` on `tags` ( `tagname`);
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
-        create index `idxclid6-2` on `reduceDB` (`clauseID`);
-        create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`);
+        create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
+        create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
+        create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
         create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
@@ -299,141 +301,141 @@ class QueryFill (QueryHelper):
 
     def fill_later_useful_data(self):
         t = time.time()
-        q = """DROP TABLE IF EXISTS `usedlater`;"""
-        self.c.execute(q)
         q = """
-        create table `usedlater` (
+        DROP TABLE IF EXISTS `used_later`;
+        DROP TABLE IF EXISTS `used_later10k`;
+        DROP TABLE IF EXISTS `used_later100k`;
+        DROP TABLE IF EXISTS `usedlater`;
+        DROP TABLE IF EXISTS `usedlater10k`;
+        DROP TABLE IF EXISTS `usedlater100k`;
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("used_later dropped T: %-3.2f s" % (time.time() - t))
+
+        q = """
+        create table `used_later` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later` bigint(20)
         );"""
         self.c.execute(q)
-        print("usedlater recreated T: %-3.2f s" % (time.time() - t))
+        print("used_later recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q = """DROP TABLE IF EXISTS `usedlater10k`;"""
-        self.c.execute(q)
         q = """
-        create table `usedlater10k` (
+        create table `used_later10k` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later10k` bigint(20)
         );"""
         self.c.execute(q)
-        print("usedlater10k recreated T: %-3.2f s" % (time.time() - t))
+        print("used_later10k recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q = """DROP TABLE IF EXISTS `usedlater100k`;"""
-        self.c.execute(q)
         q = """
-        create table `usedlater100k` (
+        create table `used_later100k` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
             `used_later100k` bigint(20)
         );"""
         self.c.execute(q)
-        print("usedlater100k recreated T: %-3.2f s" % (time.time() - t))
+        print("used_later100k recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""insert into usedlater
+        q="""insert into used_later
         (
         `clauseID`,
         `rdb0conflicts`,
         `used_later`
         )
         SELECT
-        cl.clauseID
+        rdb0.clauseID
         , rdb0.conflicts
         , count(ucl.used_at) as `useful_later`
         FROM
-        (reduceDB as rdb0
-        join clauseStats as cl
-        on rdb0.clauseID = cl.clauseID)
+        reduceDB as rdb0
         left join usedClauses as ucl
 
-        -- for any later and this 10k usage
-        on (ucl.clauseID = cl.clauseID
+        -- for any point later than now
+        on (ucl.clauseID = rdb0.clauseID
             and ucl.used_at > rdb0.conflicts)
 
         WHERE
-        cl.clauseID != 0
+        rdb0.clauseID != 0
 
-        group by cl.clauseID, rdb0.conflicts;"""
+        group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
-        print("usedlater filled T: %-3.2f s" % (time.time() - t))
+        print("used_later filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q="""
-        insert into usedlater10k
+        insert into used_later10k
         (
         `clauseID`,
         `rdb0conflicts`,
         `used_later10k`
         )
         SELECT
-        cl.clauseID
+        rdb0.clauseID
         , rdb0.conflicts
         , count(ucl10k.used_at) as `used_later10k`
 
         FROM
-        (reduceDB as rdb0
-        join clauseStats as cl
-        on rdb0.clauseID = cl.clauseID)
+        reduceDB as rdb0
         left join usedClauses as ucl10k
-        on (ucl10k.clauseID = cl.clauseID
+        on (ucl10k.clauseID = rdb0.clauseID
             and ucl10k.used_at > rdb0.conflicts
             and ucl10k.used_at <= (rdb0.conflicts+10000))
 
         WHERE
-        cl.clauseID != 0
+        rdb0.clauseID != 0
 
-        group by cl.clauseID, rdb0.conflicts;"""
+        group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
-        print("usedlater10k filled T: %-3.2f s" % (time.time() - t))
+        print("used_later10k filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q="""
-        insert into usedlater100k
+        insert into used_later100k
         (
         `clauseID`,
         `rdb0conflicts`,
         `used_later100k`
         )
         SELECT
-        cl.clauseID
+        rdb0.clauseID
         , rdb0.conflicts
         , count(ucl100k.used_at) as `used_later100k`
 
         FROM
-        (reduceDB as rdb0
-        join clauseStats as cl
-        on rdb0.clauseID = cl.clauseID)
+        reduceDB as rdb0
         left join usedClauses as ucl100k
-        on (ucl100k.clauseID = cl.clauseID
+        on (ucl100k.clauseID = rdb0.clauseID
             and ucl100k.used_at > rdb0.conflicts
             and ucl100k.used_at <= (rdb0.conflicts+100000))
 
         WHERE
-        cl.clauseID != 0
+        rdb0.clauseID != 0
 
-        group by cl.clauseID, rdb0.conflicts;"""
+        group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
-        print("usedlater100k filled T: %-3.2f s" % (time.time() - t))
+        print("used_later100k filled T: %-3.2f s" % (time.time() - t))
 
 
         t = time.time()
         q = """
-        drop index if exists `usedlater_idx1`;
-        drop index if exists `usedlater10k_idx1`;
-        drop index if exists `usedlater100k_idx1`;
+        drop index if exists `used_later_idx1`;
+        drop index if exists `used_later10k_idx1`;
+        drop index if exists `used_later100k_idx1`;
 
-        create index `usedlater_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
-        create index `usedlater10k_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
-        create index `usedlater100k_idx1` on `usedlater` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later10k_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later100k_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         """
         for l in q.split('\n'):
             self.c.execute(l)
-        print("usedlater indexes added T: %-3.2f s" % (time.time() - t))
+        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
 
 class QueryCls (QueryHelper):
@@ -683,13 +685,6 @@ class QueryCls (QueryHelper):
         -- , szfeat.`irred_activity_distr_var` as `szfeat.irred_activity_distr_var`
         """
 
-        self.common_restrictions = """
-        and cl.restarts > 1 -- to avoid history being invalid
-        and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
-        and rst.restarts = cl.prev_restart
-        and tags.tagname = "filename"
-        """
-
         self.common_limits = """
         order by random()
         limit {limit}
@@ -757,6 +752,7 @@ class QueryCls (QueryHelper):
         {restart_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
+        {rdb1_dat}
         {goodcls}
         , goodcl.num_used as `x.num_used`
         , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
@@ -770,25 +766,33 @@ class QueryCls (QueryHelper):
         , restart as rst
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
+        , reduceDB as rdb1
         , tags
-        , usedlater
-        , usedlater10k
-        , usedlater100k
+        , used_later
+        , used_later10k
+        , used_later100k
         WHERE
 
         cl.clauseID = goodcl.clauseID
         and cl.clauseID != 0
+        and used_later.clauseID = cl.clauseID
+        and used_later.rdb0conflicts = rdb0.conflicts
+
         and rdb0.clauseID = cl.clauseID
-        and usedlater.clauseID = cl.clauseID
-        and usedlater.rdb0conflicts = rdb0.conflicts
+        and rdb1.clauseID = cl.clauseID
+        and rdb0.dump_no = rdb1.dump_no+1
 
-        and usedlater10k.clauseID = cl.clauseID
-        and usedlater10k.rdb0conflicts = rdb0.conflicts
+        and used_later10k.clauseID = cl.clauseID
+        and used_later10k.rdb0conflicts = rdb0.conflicts
 
-        and usedlater100k.clauseID = cl.clauseID
-        and usedlater100k.rdb0conflicts = rdb0.conflicts
+        and used_later100k.clauseID = cl.clauseID
+        and used_later100k.rdb0conflicts = rdb0.conflicts
+
+        and cl.restarts > 1 -- to avoid history being invalid
+        and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
+        and rst.restarts = cl.prev_restart
+        and tags.tagname = "filename"
         """
-        self.q_ok += self.common_restrictions
 
         self.myformat = {
             "limit": 1000*1000*1000,
@@ -796,6 +800,7 @@ class QueryCls (QueryHelper):
             "clause_dat": self.clause_dat,
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
+            "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "goodcls": self.goodcls
             }
 
@@ -816,6 +821,19 @@ class QueryCls (QueryHelper):
         num_lines = int(cur.fetchone()[0])
         print("Num datapoints (K): %-3.5f T: %-3.1f" % ((num_lines/1000.0), time.time()-t))
         return num_lines
+
+    def get_avg_used_later(self, long_or_short):
+        cur = self.conn.cursor()
+        if long_or_short == "short":
+            q = "select avg(used_later10k) from used_later10k, used_later where used_later.clauseID = used_later10k.clauseID and used_later > 0;"
+        else:
+            q = "select avg(used_later100k) from used_later100k, used_later where used_later.clauseID = used_later100k.clauseID and used_later > 0;"
+        cur.execute(q)
+        rows = cur.fetchall()
+        assert len(rows) == 1
+        avg = float(rows[0][0])
+        print("%s avg is used_later is: %f"  % (long_or_short, avg))
+        return avg
 
     def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
@@ -848,23 +866,16 @@ class QueryCls (QueryHelper):
 
 
     def get_data(self, long_or_short, this_fixed=None):
-        # TODO magic numbers
-        # preferece OK-BAD
-        # SHORT vs LONG data availability guess
+        # TODO magic numbers: SHORT vs LONG data availability guess
+        subformat = {}
+        subformat["avg_used_later10k"] = self.get_avg_used_later("short");
+        subformat["avg_used_later100k"] = self.get_avg_used_later("long");
         if long_or_short == "short":
-            self.myformat["case_stmt"] = self.case_stmt_10k
+            self.myformat["case_stmt"] = self.case_stmt_10k.format(**subformat)
             fixed_mult = 1.0
-
-            # prefer OK by a factor of this. If < 0.5 then preferring BAD
-            # 0.7 might also work?
-            #prefer_ok_ok = 0.4
         else:
-            self.myformat["case_stmt"] = self.case_stmt_100k
+            self.myformat["case_stmt"] = self.case_stmt_100k.format(**subformat)
             fixed_mult = 0.2
-
-            # prefer OK by a factor of this. If < 0.5 then preferring BAD
-            # 0.4 might also work
-            #prefer_ok_ok = 0.2
 
         print("Fixed multiplier set to  %s " % fixed_mult)
 
@@ -942,13 +953,13 @@ def transform(df):
     df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
 
     # relative RDB
-    #print("Relative RDB...")
-    #df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
-    #df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
-    #df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
-    #df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
-    #df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
-    #df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
+    print("Relative RDB...")
+    df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
+    df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
+    df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
+    df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
+    df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
+    df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
 
     # ************
     # TODO decision level and branch depth are the same, right???

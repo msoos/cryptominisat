@@ -389,6 +389,8 @@ static bool {funcname}(
         values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
         df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
         df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+        if not options.no_rdb1:
+            df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
         df['goodcl.avg_hist_used'].replace(['None'], 0, inplace=True)
         df.fillna(0, inplace=True)
 
@@ -634,11 +636,13 @@ static bool {funcname}(
             # this depends on how many clauses are in the database and that will DEFINIETELY
             # not be the same during a "normal" run!
             # best_features.append('rdb0.act_ranking')
+            # best_features.append('rdb1.act_ranking')
 
+            best_features.append('rdb0.act_ranking_top_10')
             best_features.append('rdb0.last_touched_diff')
-            #best_features.append('rdb1.act_ranking_top_10')
-            #best_features.append('rdb1.act_ranking')
-            #best_features.append('rdb1.last_touched_diff')
+            best_features.append('rdb1.act_ranking_top_10')
+            best_features.append('rdb1.last_touched_diff')
+            best_features.append('rdb.rel_used_for_uip_creation')
 
             # expensive, not really useful?
             best_features.append('cl.num_antecedents_rel') # should we?
@@ -649,7 +653,7 @@ static bool {funcname}(
             best_features.append('cl.num_overlap_literals_rel')
 
             # these don't allow for "fresh" claues to be correctly dealt with
-            #best_features.append('rdb0.dump_no')
+            best_features.append('rdb0.dump_no')
             best_features.append('rdb0.sum_uip1_used')
             best_features.append('rdb0.sum_delta_confl_uip1_used')
             best_features.append('rdb0.avg_confl')

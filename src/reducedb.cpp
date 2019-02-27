@@ -378,6 +378,7 @@ void ReduceDB::handle_lev1_final_predictor()
                 solver->watches.smudge((*cl)[0]);
                 solver->watches.smudge((*cl)[1]);
                 solver->litStats.redLits -= cl->size();
+                assert(cl->stats.dump_number && "or rdb1 data is wrong!");
 
                 *solver->drat << del << *cl << fin;
                 cl->setRemoved();
@@ -398,6 +399,8 @@ void ReduceDB::handle_lev1_final_predictor()
                 dumpno_zero += (cl->stats.dump_number == 0);
                 dumpno_nonz += (cl->stats.dump_number != 0);
                 cl->stats.dump_number++;
+                cl->stats.last_touched_diff_rdb1 = last_touched_diff;
+                cl->stats.sum_uip1_used_rdb1 = cl->stats.sum_uip1_used;
                 cl->stats.reset_rdb_stats();
             }
         }

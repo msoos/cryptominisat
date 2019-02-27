@@ -164,10 +164,12 @@ struct ClauseStats
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
+    uint32_t last_touched_diff_rdb1 = 0;
 
     //for average and sum stats
-    uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
-    uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict - generation_conflicts)
+    uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict)
+    uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict -- this RDB)
+    uint32_t sum_uip1_used_rdb1 = 0; //<Sum of (UIP1 conflict - last RDB)
 
     //below resets
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
