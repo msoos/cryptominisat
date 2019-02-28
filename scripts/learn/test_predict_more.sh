@@ -23,7 +23,7 @@ FIXED="30000"
 FNAME="goldb-heqc-i10mul.cnf"
 FNAMEOUT="mystuff2"
 RATIO="0.60"
-FIXED="10000"
+FIXED="30000"
 
 # orig time: 70.84
 # no prop inside 33.24
@@ -51,7 +51,7 @@ FIXED="30000"
 FNAME="UTI-20-10p0.cnf-unz"
 FNAMEOUT="mystuff2"
 RATIO="0.20"
-FIXED="15000"
+FIXED="30000"
 
 # orig: 197.10
 # prop inside learnt: 181.35
@@ -111,8 +111,8 @@ CONF=3
 ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf $CONF-$CONF
 
 rm ../../src/predict/*.h
-../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf $CONF
-../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --clusters 1 --mindump 0 --conf $CONF
+../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 )
 
 ./build_final_predictor.sh
