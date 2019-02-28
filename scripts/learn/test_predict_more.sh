@@ -107,7 +107,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-CONF=1
+CONF=3
 ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf $CONF-$CONF
 
 rm ../../src/predict/*.h
