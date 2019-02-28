@@ -1186,7 +1186,7 @@ if __name__ == "__main__":
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL queries")
 
-    parser.add_option("--fixed", default=5000, type=int,
+    parser.add_option("--fixed", default=20000, type=int,
                       dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
 
     parser.add_option("--noind", action="store_true", default=False,
