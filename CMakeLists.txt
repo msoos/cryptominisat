@@ -725,8 +725,12 @@ set(CRYPTOMINISAT5_TARGETS_FILENAME "cryptominisat5Targets.cmake")
 set(CRYPTOMINISAT5_CONFIG_FILENAME "cryptominisat5Config.cmake")
 set(CRYPTOMINISAT5_STATIC_DEPS
     ${SQLITE3_LIBRARIES}
-    ${M4RI_LIBRARIES}
 )
+IF (M4RI_FOUND)
+    set(CRYPTOMINISAT5_STATIC_DEPS
+        ${CRYPTOMINISAT5_STATIC_DEPS} ${M4RI_LIBRARIES}
+        )
+endif()
 
 # Export targets
 set(MY_TARGETS cryptominisat5)

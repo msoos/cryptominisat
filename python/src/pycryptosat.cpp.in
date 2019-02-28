@@ -73,6 +73,10 @@ typedef struct {
     /* Type-specific fields go here. */
     SATSolver* cmsat;
     std::vector<Lit> tmp_cl_lits;
+
+    int verbose;
+    double time_limit;
+    long confl_limit;
 } Solver;
 
 static const char solver_create_docstring[] = \
@@ -89,41 +93,43 @@ Create Solver object.\n\
 :type confl_limit: <long>\n\
 :type threads: <int>";
 
-static SATSolver* setup_solver(PyObject *args, PyObject *kwds)
+static void setup_solver(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {"verbose", "time_limit", "confl_limit", "threads", NULL};
 
-    int verbose = 0;
     int num_threads = 1;
-    double time_limit = std::numeric_limits<double>::max();
-    long confl_limit = std::numeric_limits<long>::max();
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &verbose, &time_limit, &confl_limit, &num_threads)) {
-        return NULL;
+    self->cmsat = NULL;
+    self->verbose = 0;
+    self->time_limit = std::numeric_limits<double>::max();
+    self->confl_limit = std::numeric_limits<long>::max();
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|idli", kwlist, &self->verbose, &self->time_limit, &self->confl_limit, &num_threads)) {
+        return;
     }
-    if (verbose < 0) {
+    if (self->verbose < 0) {
         PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
-        return NULL;
+        return;
     }
-    if (time_limit < 0) {
+    if (self->time_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "time_limit must be at least 0");
-        return NULL;
+        return;
     }
-    if (confl_limit < 0) {
+    if (self->confl_limit < 0) {
         PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
-        return NULL;
+        return;
     }
     if (num_threads <= 0) {
         PyErr_SetString(PyExc_ValueError, "number of threads must be at least 1");
-        return NULL;
+        return;
     }
 
-    SATSolver *cmsat = new SATSolver;
-    cmsat->set_max_time(time_limit);
-    cmsat->set_max_confl(confl_limit);
-    cmsat->set_verbosity(verbose);
-    cmsat->set_num_threads(num_threads);
+    self->cmsat = new SATSolver;
+    self->cmsat->set_verbosity(self->verbose);
+    self->cmsat->set_max_time(self->time_limit);
+    self->cmsat->set_max_confl(self->confl_limit);
+    self->cmsat->set_num_threads(num_threads);
 
-    return cmsat;
+    return;
 }
 
 static int convert_lit_to_sign_and_var(PyObject* lit, long& var, bool& sign)
@@ -691,7 +697,7 @@ static int parse_assumption_lits(PyObject* assumptions, SATSolver* cmsat, std::v
 }
 
 PyDoc_STRVAR(solve_doc,
-"solve(assumptions=None)\n\
+"solve(assumptions=None, verbose=None, time_limit=None, confl_limit=None)\n\
 Solve the system of equations that have been added with add_clause();\n\
 \n\
 .. example:: \n\
@@ -715,12 +721,21 @@ Solve the system of equations that have been added with add_clause();\n\
     >>> print solution\n\
     None\n\
 \n\
-:param arg1: (Optional) Allows the user to set values to specific variables\n\
-    in the solver in a temporary fashion. This means that in case the problem\n\
-    is satisfiable but e.g it's unsatisfiable if variable 2 is FALSE, then\n\
-    solve([-2]) will return UNSAT. However, a subsequent call to solve() will\n\
-    still return a solution.\n\
-:type arg1: <list>\n\
+:param assumptions: (Optional) Allows the user to set values to specific\n\
+    ariables in the solver in a temporary fashion. This means that in case\n\
+    the problem is satisfiable but e.g it's unsatisfiable if variable 2 is\n\
+    FALSE, then solve([-2]) will return UNSAT. However, a subsequent call to\n\
+    solve() will still return a solution.\n\
+:type assumptions: <list>\n\
+:param verbose: (Optional) Allows the user to set a verbosity for just this\n\
+    solve.\n\
+:type verbose: <int>\n\
+:param time_limit: (Optional) Allows the user to set a timeout for just this\n\
+    solve.\n\
+:type time_limit: <double>\n\
+:param confl_limit: (Optional) Allows the user to set a conflict limit for just\n\
+    this solve.\n\
+:type confl_limit: <long>\n\
 :return: A tuple. First part of the tuple indicates whether the problem\n\
     is satisfiable. The second part is a tuple contains the solution,\n\
     preceded by None, so you can index into it with the variable number.\n\
@@ -731,8 +746,25 @@ Solve the system of equations that have been added with add_clause();\n\
 static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
 {
     PyObject* assumptions = NULL;
-    static char* kwlist[] = {"assumptions", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &assumptions)) {
+
+    int verbose = self->verbose;
+    double time_limit = self->time_limit;
+    long confl_limit = self->confl_limit;
+
+    static char* kwlist[] = {"assumptions", "verbose", "time_limit", "confl_limit", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Oidl", kwlist, &assumptions, &verbose, &time_limit, &confl_limit)) {
+        return NULL;
+    }
+    if (verbose < 0) {
+        PyErr_SetString(PyExc_ValueError, "verbosity must be at least 0");
+        return NULL;
+    }
+    if (time_limit < 0) {
+        PyErr_SetString(PyExc_ValueError, "time_limit must be at least 0");
+        return NULL;
+    }
+    if (confl_limit < 0) {
+        PyErr_SetString(PyExc_ValueError, "conflict limit must be at least 0");
         return NULL;
     }
 
@@ -742,6 +774,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
             return 0;
         }
     }
+
+    self->cmsat->set_verbosity(verbose);
+    self->cmsat->set_max_time(time_limit);
+    self->cmsat->set_max_confl(confl_limit);
 
     PyObject *result = PyTuple_New((Py_ssize_t) 2);
     if (result == NULL) {
@@ -753,6 +789,10 @@ static PyObject* solve(Solver *self, PyObject *args, PyObject *kwds)
     Py_BEGIN_ALLOW_THREADS      /* release GIL */
     res = self->cmsat->solve(&assumption_lits);
     Py_END_ALLOW_THREADS
+
+    self->cmsat->set_verbosity(self->verbose);
+    self->cmsat->set_max_time(self->time_limit);
+    self->cmsat->set_max_confl(self->confl_limit);
 
     if (res == l_True) {
         PyObject* solution = get_solution(self->cmsat);
@@ -991,7 +1031,7 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
     self = (Solver *)type->tp_alloc(type, 0);
     if (self != NULL) {
-        self->cmsat = setup_solver(args, kwds);
+        setup_solver(self, args, kwds);
         if (self->cmsat == NULL) {
             Py_DECREF(self);
             return NULL;
@@ -1003,7 +1043,11 @@ Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
-    self->cmsat = setup_solver(args, kwds);
+    if (self->cmsat != NULL) {
+        delete self->cmsat;
+    }
+
+    setup_solver(self, args, kwds);
     if (!self->cmsat) {
         return -1;
     }
