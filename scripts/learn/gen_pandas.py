@@ -28,6 +28,7 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
+import math
 
 
 class QueryHelper:
@@ -722,7 +723,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k > {avg_used_later10k}
+                   used_later10k.used_later10k >= {avg_used_later10k}
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -732,7 +733,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k > {avg_used_later10k}*2
+                   used_later10k.used_later10k >= {avg_used_later10k}/2
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -775,7 +776,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k > {avg_used_later100k}
+               used_later100k.used_later100k >= {avg_used_later100k}
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -785,7 +786,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k > {avg_used_later100k}*2
+               used_later100k.used_later100k >= {avg_used_later100k}/2
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -883,8 +884,8 @@ class QueryCls (QueryHelper):
         rows = cur.fetchall()
         assert len(rows) == 1
         avg = float(rows[0][0])
-        print("%s avg is used_later is: %f"  % (long_or_short, avg))
-        return avg
+        print("%s avg used_later is: %f -- rounding down to %d"  % (long_or_short, avg, math.floor(avg)))
+        return math.floor(avg)
 
     def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
