@@ -1036,7 +1036,7 @@ if __name__ == "__main__":
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # clustering
-    parser.add_option("--clusters", default=7, type=int,
+    parser.add_option("--clusters", default=1, type=int,
                       dest="clusters", help="How many clusters to use")
     parser.add_option("--clustmin", default=0.05, type=float, metavar="RATIO",
                       dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data. Default: %default")
