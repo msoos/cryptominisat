@@ -1135,7 +1135,9 @@ def one_database(dbfname):
     print("Using sqlite3db file %s" % dbfname)
     for long_or_short in ["long", "short"]:
         for conf in range(conf_from, conf_to):
-            print("------> Doing config {conf}".format(conf=conf))
+            print("------> Doing config {conf} -- {long_or_short}".format(
+                conf=conf, long_or_short=long_or_short))
+
             with QueryCls(dbfname, conf) as q:
                 ok, df = q.get_one_data_all_dumpnos(long_or_short)
 
