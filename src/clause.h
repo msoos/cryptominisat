@@ -145,6 +145,8 @@ struct ClauseStats
     float       size_rel                    = 0;
     float       antecedents_glue_long_reds_var = 0.0;
     uint32_t    num_total_lits_antecedents = 0;
+    uint32_t    rdb1_act_ranking_top_10;
+    uint32_t    rdb1_last_touched_diff;
 
 
     double      num_antecedents_rel         = 0;
@@ -164,7 +166,6 @@ struct ClauseStats
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
     uint32_t dump_number = std::numeric_limits<uint32_t>::max();
-    uint32_t last_touched_diff_rdb1 = 0;
 
     //for average and sum stats
     uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict)

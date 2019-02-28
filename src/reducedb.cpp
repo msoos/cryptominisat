@@ -399,8 +399,9 @@ void ReduceDB::handle_lev1_final_predictor()
                 dumpno_zero += (cl->stats.dump_number == 0);
                 dumpno_nonz += (cl->stats.dump_number != 0);
                 cl->stats.dump_number++;
-                cl->stats.last_touched_diff_rdb1 = last_touched_diff;
                 cl->stats.sum_uip1_used_rdb1 = cl->stats.sum_uip1_used;
+                cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
+                cl->stats.rdb1_last_touched_diff = last_touched_diff;
                 cl->stats.reset_rdb_stats();
             }
         }
