@@ -418,10 +418,10 @@ void ReduceDB::handle_lev1_final_predictor()
     //Stats
     if (solver->conf.verbosity >= 0) {
         cout << "c [DBCL pred]"
-        << " del: " << deleted
-        << " kept: " << kept
-        << " kept-long: " << kept_due_to_long_lock
-        << endl;
+        << " del: "; print_value_kilo_mega(deleted);
+        cout << " kept: "; print_value_kilo_mega(kept);
+        cout << " kept-long: "; print_value_kilo_mega(kept_due_to_long_lock);
+        cout << endl;
 
         cout << "c [DBCL pred]"
         << " Sclust: " << short_cluster
