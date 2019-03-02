@@ -737,8 +737,18 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
+        elif self.conf == 4:
+            self.case_stmt_10k = """
+            CASE WHEN
 
-        if self.conf not in [5]:
+            -- useful in the next round
+                   used_later10k.used_later10k >= cast({avg_used_later10k}*1.5 as int)
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+
+        if self.conf not in [1, 2, 3, 4, 5]:
             self.case_stmt_100k = """
             CASE WHEN
 
@@ -786,6 +796,16 @@ class QueryCls (QueryHelper):
 
            -- useful in the next round
                used_later100k.used_later100k >= cast({avg_used_later100k}/2 as int)
+            THEN "OK"
+            ELSE "BAD"
+            END AS `x.class`
+            """
+        elif self.conf == 4:
+            self.case_stmt_100k = """
+            CASE WHEN
+
+           -- useful in the next round
+               used_later100k.used_later100k >= cast({avg_used_later100k}*1.5 as int)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
