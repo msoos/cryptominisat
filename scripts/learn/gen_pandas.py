@@ -1158,6 +1158,10 @@ def one_database(dbfname):
 
     conf_from = int(match.group(1))
     conf_to = int(match.group(2))+1
+    if conf_to <= conf_from:
+        print("ERROR: Conf range is not increasing")
+        exit(-1)
+
     print("Running configs:", range(conf_from, conf_to))
     print("Using sqlite3db file %s" % dbfname)
     for long_or_short in ["long", "short"]:
