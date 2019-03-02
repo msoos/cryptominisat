@@ -902,9 +902,11 @@ class QueryCls (QueryHelper):
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) == 1
+        if rows[0][0] is None:
+            return False, None
         avg = float(rows[0][0])
         print("%s avg used_later is: %.2f"  % (long_or_short, avg))
-        return avg
+        return True, avg
 
     def one_query(self, q, ok_or_bad):
         q = q.format(**self.myformat)
@@ -939,8 +941,14 @@ class QueryCls (QueryHelper):
     def get_data(self, long_or_short, this_fixed=None):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        subformat["avg_used_later10k"] = self.get_avg_used_later("short");
-        subformat["avg_used_later100k"] = self.get_avg_used_later("long");
+        ok, subformat["avg_used_later10k"] = self.get_avg_used_later("short");
+        if not ok:
+            return False, None, None
+
+        ok, subformat["avg_used_later100k"] = self.get_avg_used_later("long");
+        if not ok:
+            return False, None, None
+
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k.format(**subformat)
             fixed_mult = 1.0
