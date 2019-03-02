@@ -113,7 +113,7 @@ const vector<keep_func_type>& get_short_pred_keep_funcs(size_t conf) {
 }
 
 const vector<keep_func_type>& get_long_pred_keep_funcs(size_t conf) {
-    return should_keep_short_funcs[conf];
+    return should_keep_long_funcs[conf];
 }
 
 }
