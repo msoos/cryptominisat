@@ -107,19 +107,20 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
-CONF=3
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf $CONF-$CONF
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4
 
 rm ../../src/predict/*.h
+for CONF in {0..4}; do
 ../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+done
 )
 
 ./build_final_predictor.sh
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --pred $CONF | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 0 | tee cms-final-run.out
 )
 
 exit

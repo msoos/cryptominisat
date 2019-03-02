@@ -183,9 +183,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doFindCard(0)
 
         //Predict system
-        , pred_conf(0)
-        , pred_run_short(1)
-        , pred_run_long(1)
+        , pred_conf_short(0)
+        , pred_conf_long(0)
         , prob_random_delete(0.0)
 
         //Var-replacer

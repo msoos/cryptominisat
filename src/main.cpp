@@ -349,12 +349,10 @@ void Main::add_supported_options()
     #ifdef FINAL_PREDICTOR
     po::options_description predictOptions("Predict options");
     predictOptions.add_options()
-    ("pred", po::value(&conf.pred_conf)->default_value(conf.pred_conf)
-        , "Predictor config to use")
-    ("prshort", po::value(&conf.pred_run_short)->default_value(conf.pred_run_short)
-        , "Run short predictor")
-    ("prlong", po::value(&conf.pred_run_long)->default_value(conf.pred_run_long)
-        , "Run long predictor")
+    ("predshort", po::value(&conf.pred_conf_short)->default_value(conf.pred_conf_short)
+        , "Predictor SHORT config to use")
+    ("predlong", po::value(&conf.pred_conf_long)->default_value(conf.pred_conf_long)
+        , "Predictor LONG config to use")
     ;
     #endif
 
@@ -1054,8 +1052,12 @@ void Main::parse_polarity_type()
 void Main::manually_parse_some_options()
 {
     #ifdef FINAL_PREDICTOR
-    if (!check_pred_conf_exists(conf.pred_conf)) {
-        cout << "ERROR: The config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf << endl;
+    if (!check_pred_conf_exists_short(conf.pred_conf_short)) {
+        cout << "ERROR: The SHORT config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf_short << endl;
+        exit(-1);
+    }
+    if (!check_pred_conf_exists_long(conf.pred_conf_long)) {
+        cout << "ERROR: The LONG config for '--pred' that you gave does not exist. Generate it first then recompile. You gave: " << conf.pred_conf_long << endl;
         exit(-1);
     }
     #endif

@@ -306,9 +306,8 @@ class DLL_PUBLIC SolverConf
         int      doFindCard;
 
         //Predictor system
-        int pred_conf;
-        int pred_run_short;
-        int pred_run_long;
+        int pred_conf_short;
+        int pred_conf_long;
         double prob_random_delete;
 
         //Var-replacement

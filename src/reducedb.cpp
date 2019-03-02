@@ -298,6 +298,7 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t deleted = 0;
     uint32_t kept_short = 0;
     uint32_t kept_locked = 0;
+    uint32_t kept_dump_no = 0;
     double myTime = cpuTime();
     uint32_t tot_dumpno = 0;
     uint32_t dumpno_zero = 0;
@@ -306,28 +307,30 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t marked_long_keep = 0;
     uint32_t kept_long = 0;
 
+    uint32_t tot_short_keep = 0;
+
     #ifdef FINAL_PREDICTOR_TOTAL
     assert(solver->conf.glue_put_lev0_if_below_or_eq > 0 || solver->longRedCls[0].size() == 0);
     assert(solver->longRedCls[2].size() == 0);
     #endif
     std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
 
-    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf);
+    const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf_long);
     if (long_clust == NULL) {
         cout << "ERROR: You gave a config number in '--pred' that does not exist for LONG" << endl;
         exit(-1);
     }
     int long_cluster = long_clust->which_is_closest(solver->last_solve_satzilla_feature);
 
-    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf);
+    const Clustering* short_clust = get_short_cluster(solver->conf.pred_conf_short);
     if (short_clust == NULL) {
         cout << "ERROR: You gave a config number in '--pred' that does not exist for SHORT" << endl;
         exit(-1);
     }
     int short_cluster = short_clust->which_is_closest(solver->last_solve_satzilla_feature);
 
-    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf)[short_cluster];
-    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf)[long_cluster];
+    const keep_func_type short_pred_keep = get_short_pred_keep_funcs(solver->conf.pred_conf_short)[short_cluster];
+    const keep_func_type long_pred_keep = get_long_pred_keep_funcs(solver->conf.pred_conf_long)[long_cluster];
 
     size_t j = 0;
     for(size_t i = 0
@@ -352,33 +355,49 @@ void ReduceDB::handle_lev1_final_predictor()
 
             //Check for long keep
             if (cl->stats.locked_long == 0
-                && (cl->stats.dump_number > 0 && long_pred_keep(
+                && cl->stats.dump_number > 0
+                && long_pred_keep(
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
                 , i
                 , act_ranking_top_10
-            ))) {
+            )) {
                 marked_long_keep++;
                 cl->stats.locked_long = 10; //will be immediately decremented below
             }
 
+            const bool short_keep  = short_pred_keep(
+                cl
+                , solver->sumConflicts
+                , last_touched_diff
+                , i
+                , act_ranking_top_10
+            );
+            const bool locked = solver->clause_locked(*cl, offset);
+            tot_short_keep += short_keep;
+            if (short_keep) {
+                /*if (short_keep && locked) {
+                    cout << "short + locked" << endl;
+                } else if (short_keep && cl->stats.locked_long > 0) {
+                    cout << "short + locked long" << endl;
+                } else if (short_keep && cl->stats.dump_number == 0) {
+                    cout << "short + dump no is 0" << endl;
+                } else {
+                    cout << "WTFFFFFFFFFFFFFFFFFFFFFFF" << endl;
+                }*/
+            }
+
             if (cl->stats.locked_long == 0
                 && cl->stats.dump_number > 0 //don't delete 1st time around
-                && !solver->clause_locked(*cl, offset)
-                && !(solver->conf.pred_run_short && short_pred_keep(
-                    cl
-                    , solver->sumConflicts
-                    , last_touched_diff
-                    , i
-                    , act_ranking_top_10
-                ))
+                && !locked
+                && !short_keep
             ) {
                 deleted++;
                 solver->watches.smudge((*cl)[0]);
                 solver->watches.smudge((*cl)[1]);
                 solver->litStats.redLits -= cl->size();
-                assert(cl->stats.dump_number && "or rdb1 data is wrong!");
+                assert(cl->stats.dump_number > 0 && "or rdb1 data is wrong!");
 
                 *solver->drat << del << *cl << fin;
                 cl->setRemoved();
@@ -387,12 +406,13 @@ void ReduceDB::handle_lev1_final_predictor()
                 if (cl->stats.locked_long > 0) {
                     kept_long++;
                     cl->stats.locked_long--;
+                } else if (locked) {
+                    kept_locked++;
+                } else if (cl->stats.dump_number == 0) {
+                    kept_dump_no++;
                 } else {
-                    if (solver->clause_locked(*cl, offset)){
-                        kept_locked++;
-                    } else {
-                        kept_short++;
-                    }
+                    assert(short_keep);
+                    kept_short++;
                 }
                 solver->longRedCls[1][j++] = offset;
                 tot_dumpno += cl->stats.dump_number;
@@ -419,20 +439,26 @@ void ReduceDB::handle_lev1_final_predictor()
     if (solver->conf.verbosity >= 0) {
         cout << "c [DBCL pred]"
         << " del: "; print_value_kilo_mega(deleted);
-        cout << " kept-short: "; print_value_kilo_mega(kept_short);
-        cout << " kept-long: "; print_value_kilo_mega(kept_long);
+        cout << " kshort: "; print_value_kilo_mega(kept_short);
+        cout << " klong: "; print_value_kilo_mega(kept_long);
+        cout << " kdump0: "; print_value_kilo_mega(kept_dump_no);
+        cout << " klock: "; print_value_kilo_mega(kept_locked);
         cout << endl;
 
         cout << "c [DBCL pred]"
         << " marked-long: "; print_value_kilo_mega(marked_long_keep);
         cout << " Sclust: " << short_cluster
         << " Lclust: " << long_cluster
-        << " conf: " << solver->conf.pred_conf
-        << " locked: " << kept_locked
+        << " conf-short: " << solver->conf.pred_conf_short
+        << " conf-long: " << solver->conf.pred_conf_long
+        << endl;
+
+        cout << "c [DBCL pred]"
         << " avg dumpno: " << std::fixed << std::setprecision(2)
         << ratio_for_stat(tot_dumpno, solver->longRedCls[1].size())
         << " dumpno_zero: "; print_value_kilo_mega(dumpno_zero);
         cout << " dumpno_nonz: "; print_value_kilo_mega(dumpno_nonz);
+        cout << " tot_short_keep:"; print_value_kilo_mega(tot_short_keep);
         cout << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
