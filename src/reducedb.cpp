@@ -296,7 +296,7 @@ void ReduceDB::handle_lev1_final_predictor()
     assert(delayed_clause_free.empty());
     nbReduceDB_lev1++;
     uint32_t deleted = 0;
-    uint32_t kept = 0;
+    uint32_t kept_short = 0;
     uint32_t kept_locked = 0;
     double myTime = cpuTime();
     uint32_t tot_dumpno = 0;
@@ -304,7 +304,7 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t dumpno_nonz = 0;
     uint32_t moved_w0 = 0;
     uint32_t marked_long_keep = 0;
-    uint32_t kept_due_to_long_lock = 0;
+    uint32_t kept_long = 0;
 
     #ifdef FINAL_PREDICTOR_TOTAL
     assert(solver->conf.glue_put_lev0_if_below_or_eq > 0 || solver->longRedCls[0].size() == 0);
@@ -385,13 +385,13 @@ void ReduceDB::handle_lev1_final_predictor()
                 delayed_clause_free.push_back(offset);
             } else {
                 if (cl->stats.locked_long > 0) {
-                    kept_due_to_long_lock++;
+                    kept_long++;
                     cl->stats.locked_long--;
                 } else {
                     if (solver->clause_locked(*cl, offset)){
                         kept_locked++;
                     } else {
-                        kept++;
+                        kept_short++;
                     }
                 }
                 solver->longRedCls[1][j++] = offset;
@@ -419,21 +419,21 @@ void ReduceDB::handle_lev1_final_predictor()
     if (solver->conf.verbosity >= 0) {
         cout << "c [DBCL pred]"
         << " del: "; print_value_kilo_mega(deleted);
-        cout << " kept: "; print_value_kilo_mega(kept);
-        cout << " kept-long: "; print_value_kilo_mega(kept_due_to_long_lock);
+        cout << " kept-short: "; print_value_kilo_mega(kept_short);
+        cout << " kept-long: "; print_value_kilo_mega(kept_long);
         cout << endl;
 
         cout << "c [DBCL pred]"
-        << " Sclust: " << short_cluster
+        << " marked-long: "; print_value_kilo_mega(marked_long_keep);
+        cout << " Sclust: " << short_cluster
         << " Lclust: " << long_cluster
         << " conf: " << solver->conf.pred_conf
         << " locked: " << kept_locked
-        << " marked-long: " << marked_long_keep
         << " avg dumpno: " << std::fixed << std::setprecision(2)
         << ratio_for_stat(tot_dumpno, solver->longRedCls[1].size())
-        << " dumpno_zero: " << dumpno_zero
-        << " dumpno_nonz: " << dumpno_nonz
-        << solver->conf.print_times(cpuTime()-myTime)
+        << " dumpno_zero: "; print_value_kilo_mega(dumpno_zero);
+        cout << " dumpno_nonz: "; print_value_kilo_mega(dumpno_nonz);
+        cout << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
     assert(moved_w0 == 0);
