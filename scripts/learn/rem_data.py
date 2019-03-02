@@ -82,6 +82,213 @@ class QueryDatRem(QueryHelper):
 
         print("Recreated indexes needed")
 
+    def create_indexes(self):
+        print("Recreating indexes...")
+        t = time.time()
+        q = """
+        drop index if exists `idxclid1`;
+        drop index if exists `idxclid1-2`;
+        drop index if exists `idxclid1-3`;
+        drop index if exists `idxclid1-4`;
+        drop index if exists `idxclid1-5`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
+        drop index if exists `idxclid6-2`;
+        drop index if exists `idxclid6-3`;
+        drop index if exists `idxclid6-4`;
+        drop index if exists `idxclid7`;
+        drop index if exists `idxclid8`;
+        drop index if exists `idxclidUCLS-1`;
+        drop index if exists `idxclidUCLS-2`;
+
+        create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
+        create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
+        create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
+        """
+        for l in q.split('\n'):
+            t2 = time.time()
+
+            if options.verbose:
+                print("Creating index: ", l)
+            self.c.execute(l)
+            if options.verbose:
+                print("Index creation T: %-3.2f s" % (time.time() - t2))
+
+        print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def fill_later_useful_data(self):
+        t = time.time()
+        q = """
+        DROP TABLE IF EXISTS `used_later`;
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("used_later dropped T: %-3.2f s" % (time.time() - t))
+
+        q = """
+        create table `used_later` (
+            `clauseID` bigint(20) NOT NULL,
+            `rdb0conflicts` bigint(20) NOT NULL,
+            `used_later` bigint(20)
+        );"""
+        self.c.execute(q)
+        print("used_later recreated T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q="""insert into used_later
+        (
+        `clauseID`,
+        `rdb0conflicts`,
+        `used_later`
+        )
+        SELECT
+        rdb0.clauseID
+        , rdb0.conflicts
+        , count(ucl.used_at) as `useful_later`
+        FROM
+        reduceDB as rdb0
+        left join usedClauses as ucl
+
+        -- for any point later than now
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > rdb0.conflicts)
+
+        WHERE
+        rdb0.clauseID != 0
+
+        group by rdb0.clauseID, rdb0.conflicts;"""
+        self.c.execute(q)
+        print("used_later filled T: %-3.2f s" % (time.time() - t))
+
+
+        t = time.time()
+        q = """
+        drop index if exists `used_later_idx1`;
+        drop index if exists `used_later_idx2`;
+
+        create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
+
+    def delete_too_many_rdb_rows(self):
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from reduceDB")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("Have %d lines of RDB" % (rdb_rows))
+
+        if rdb_rows <= options.goal_rdb:
+            print("Num RDB rows: %d which is OK already, goal is %d" %
+                  (rdb_rows, options.goal_rdb));
+            return
+
+        ratio_needed = float(options.goal_rdb)/float(rdb_rows)*100.0
+        q = """DELETE FROM reduceDB WHERE (abs(random()) %% 100) > %d""" % int(ratio_needed)
+        self.c.execute(q)
+        print("Kept only %.3f %% of RDB: T: %.3f" % (ratio_needed, time.time()-t))
+
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from reduceDB")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("Only %d RDB rows remain" % rdb_rows)
+
+    def delete_too_many_rdb_rows_cheat(self):
+        ret = self.c.execute("drop index if exists `idxclid32`;")
+
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from reduceDB")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("Have %d lines of RDB" % (rdb_rows))
+
+        q = """
+        drop table if exists stuff;
+        """
+        self.c.execute(q)
+
+        t = time.time()
+        q = """create table stuff (
+            id bigint(20) not null
+        );"""
+        self.c.execute(q)
+        print("Created stuff T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        insert into stuff (id)
+        select
+        rdb0.rowid
+        from reduceDB as rdb0, used_later
+        where
+        used_later.clauseID=rdb0.clauseID
+        and used_later.rdb0conflicts=rdb0.conflicts
+        and used_later.used_later > 0
+        order by random()
+        limit %d""" % options.goal_rdb
+        self.c.execute(q)
+        print("Insert good to stuff T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from stuff")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("We now have %d lines stuff" % (rdb_rows))
+
+        t = time.time()
+        q = """
+        insert into stuff (id)
+        select
+        rdb0.rowid
+        from reduceDB as rdb0
+        order by random()
+        limit %d""" % options.goal_rdb
+        self.c.execute(q)
+        print("Insert random to stuff T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from stuff")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("We now have %d lines stuff" % (rdb_rows))
+
+
+        t = time.time()
+        q = """
+        drop index if exists `idx_bbb`;
+        drop index if exists `idxclid6-4`; -- the other index on reduceDB
+
+        create index `idx_bbb` on `stuff` (`id`);
+        """
+        for l in q.split('\n'):
+            self.c.execute(l)
+        print("used_later indexes added T: %-3.2f s" % (time.time() - t))
+
+        q = """
+        delete from reduceDB
+        where reduceDB.rowid not in (select id from stuff)
+        """
+        self.c.execute(q)
+        print("Delete from reduceDB T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        ret = self.c.execute("select count() from reduceDB")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("Finally have %d lines of RDB" % (rdb_rows))
+
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
     def fill_used_cl_ids_table_cheat(self):
         t = time.time()
@@ -96,10 +303,10 @@ class QueryDatRem(QueryHelper):
         ret = self.c.execute("select count() from usedClauseIDs")
         rows = self.c.fetchall()
         good_ids = rows[0][0]
-        print("IDs from goodClauses: {ids} T: {time}".format(
-            ids=good_ids, time=time.time()-t))
+        print("IDs from goodClauses: %d   T: %-3.2f s" % (good_ids, time.time() - t))
 
-        val = int(options.limit)*0.3
+        t = time.time()
+        val = int(options.limit)
         q = """
         insert into usedClauseIDs
         select
@@ -114,20 +321,9 @@ class QueryDatRem(QueryHelper):
         ret = self.c.execute("select count() from usedClauseIDs")
         rows = self.c.fetchall()
         all_ids = rows[0][0]
-        print("IDs from clauseStats that are not in good: %d" % (all_ids-good_ids))
+        print("IDs from clauseStats that are not in good: %d  T: %-3.2f s" % ((all_ids-good_ids), time.time() - t))
 
-    def fill_used_cl_ids_table_full(self):
-        val = int(options.limit)
-        q = """
-        insert into usedClauseIDs
-        select
-        clauseStats.clauseID
-        from clauseStats
-        order by random() limit %d;
-        """ % val
-        self.c.execute(q)
-
-    def filter_tables(self):
+    def filter_tables_of_ids(self):
         tables = ["clauseStats", "reduceDB", "goodClauses", "usedClauses"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
@@ -136,39 +332,104 @@ class QueryDatRem(QueryHelper):
         for table in tables:
             t = time.time()
             self.c.execute(q.format(table=table))
-            print("Filtered table {table} T: {time}".format(
-                table=table, time=time.time()-t))
+            print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
 
     def vacuum(self):
+        t = time.time()
         queries = """
+        drop index if exists `idx_aaa`;
+        drop index if exists `idx_bbb`;
         drop index if exists `idxclid30`;
         drop index if exists `idxclid31`;
         drop index if exists `idxclid32`;
         drop index if exists `idxclid33`;
         drop index if exists `idxclid34`;
+        drop index if exists `idxclid1`;
+        drop index if exists `idxclid1-2`;
+        drop index if exists `idxclid1-3`;
+        drop index if exists `idxclid1-4`;
+        drop index if exists `idxclid1-5`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
+        drop index if exists `idxclid6-2`;
+        drop index if exists `idxclid6-3`;
+        drop index if exists `idxclid6-4`;
+        drop index if exists `idxclid7`;
+        drop index if exists `idxclid8`;
+        drop index if exists `idxclidUCLS-1`;
+        drop index if exists `idxclidUCLS-2`;
+        drop index if exists `idxclid20`;
+        drop index if exists `idxclid21`;
+        drop index if exists `idxclid21-2`;
+        drop index if exists `idxclid22`;
+        drop index if exists `used_later_idx1`;
+        drop index if exists `used_later_idx2`;
+        drop index if exists `idxclid6-4`;
+        drop index if exists `idxclid1`;
+        drop index if exists `idxclid1-2`;
+        drop index if exists `idxclid1-3`;
+        drop index if exists `idxclid1-4`;
+        drop index if exists `idxclid1-5`;
+        drop index if exists `idxclid2`;
+        drop index if exists `idxclid3`;
+        drop index if exists `idxclid4`;
+        drop index if exists `idxclid5`;
+        drop index if exists `idxclid6`;
+        drop index if exists `idxclid6-2`;
+        drop index if exists `idxclid6-3`;
+        drop index if exists `idxclid6-4`;
+        drop index if exists `idxclid7`;
+        drop index if exists `idxclid8`;
+        drop index if exists `idxclidUCLS-1`;
+        drop index if exists `idxclidUCLS-2`;
+        drop index if exists `idxclid20`;
+        drop index if exists `idxclid21`;
+        drop index if exists `idxclid21-2`;
+        drop index if exists `idxclid22`;
+
+        DROP TABLE IF EXISTS `used_later`;
+        DROP TABLE IF EXISTS `used_later10k`;
+        DROP TABLE IF EXISTS `used_later100k`;
+        DROP TABLE IF EXISTS `usedlater`;
+        DROP TABLE IF EXISTS `usedlater10k`;
+        DROP TABLE IF EXISTS `usedlater100k`;
+
+        DROP TABLE IF EXISTS `used_later`;
+        DROP TABLE IF EXISTS `usedlater`;
+        DROP TABLE IF EXISTS `goodClausesFixed`;
+        DROP TABLE IF EXISTS `stuff`;
+        DROP TABLE IF EXISTS `usedClauseIDs`;
         """
         for q in queries.split("\n"):
             self.c.execute(q)
-
-        print("Deleted indexes")
+        print("Deleted indexes and misc tables T: %-3.2f s" % (time.time() - t))
 
         q = """
         vacuum;
         """
 
+        t = time.time()
         lev = self.conn.isolation_level
         self.conn.isolation_level = None
         self.c.execute(q)
         self.conn.isolation_level = lev
-        print("Vacuumed database")
+        print("Vacuumed database T: %-3.2f s" % (time.time() - t))
 
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
 
-    parser.add_option("--limit", default=100000, type=int,
+    parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Number of clauses to limit ourselves to")
+    parser.add_option("--goalrdb", default=200000, type=int,
+                      dest="goal_rdb", help="Number of RDB neeeded")
+    parser.add_option("--verbose", "-v", action="store_true", default=False,
+                      dest="verbose", help="Print more output")
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
@@ -177,7 +438,15 @@ if __name__ == "__main__":
 
 
     with QueryDatRem(args[0]) as q:
+        q.vacuum()
+        q.create_indexes()
         q.create_used_ID_table()
         q.fill_used_cl_ids_table_cheat()
-        q.filter_tables()
+        q.filter_tables_of_ids()
+        q.vacuum()
+
+        q.create_indexes()
+        q.fill_later_useful_data()
+        q.delete_too_many_rdb_rows_cheat();
+
         q.vacuum()
