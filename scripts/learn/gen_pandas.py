@@ -691,7 +691,7 @@ class QueryCls (QueryHelper):
         """
 
         # TODO magic queries
-        if self.conf not in [1, 2, 3, 4, 5]:
+        if self.conf == 0:
             self.case_stmt_10k = """
             CASE WHEN
 
@@ -748,7 +748,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
 
-        if self.conf not in [1, 2, 3, 4, 5]:
+        if self.conf == 0:
             self.case_stmt_100k = """
             CASE WHEN
 
