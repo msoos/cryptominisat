@@ -92,9 +92,13 @@ class QueryFill (QueryHelper):
         create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
         """
         for l in q.split('\n'):
+            t2 = time.time()
+
             if options.verbose:
-                print("Executing: ", l)
+                print("Creating index: ", l)
             self.c.execute(l)
+            if options.verbose:
+                print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
 
