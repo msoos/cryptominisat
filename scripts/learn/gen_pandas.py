@@ -430,12 +430,18 @@ class QueryFill (QueryHelper):
         t = time.time()
         q = """
         drop index if exists `used_later_idx1`;
+        drop index if exists `used_later_idx2`;
         drop index if exists `used_later10k_idx1`;
+        drop index if exists `used_later10k_idx2`;
         drop index if exists `used_later100k_idx1`;
+        drop index if exists `used_later100k_idx2`;
 
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later10k_idx1` on `used_later` (`clauseID`, rdb0conflicts);
-        create index `used_later100k_idx1` on `used_later` (`clauseID`, rdb0conflicts);
+        create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
+        create index `used_later10k_idx1` on `used_later10k` (`clauseID`, rdb0conflicts);
+        create index `used_later10k_idx2` on `used_later10k` (`clauseID`, rdb0conflicts, used_later10k);
+        create index `used_later100k_idx1` on `used_later100k` (`clauseID`, rdb0conflicts);
+        create index `used_later100k_idx2` on `used_later100k` (`clauseID`, rdb0conflicts, used_later100k);
         """
         for l in q.split('\n'):
             self.c.execute(l)
