@@ -421,7 +421,7 @@ static bool {funcname}(
         print("Number of GOOD elements        : %-6d" % good)
 
         # balance it out
-        prefer_ok = float(good+bad)/float(good)
+        prefer_ok = float(bad)/float(good)
         print("Balanced OK preferance would be: %-6.3f" % prefer_ok)
 
         # apply inbalance from option given
@@ -1061,7 +1061,7 @@ if __name__ == "__main__":
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
 
-    parser.add_option("--prefok", default=1, type=float,
+    parser.add_option("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
 
     (options, args) = parser.parse_args()
