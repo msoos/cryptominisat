@@ -1112,12 +1112,12 @@ def transform(df):
 
     # avg conf/used_per confl
     print("avg conf/used_per confl 1...")
-    df["rdb0.avg_confl"] = df["rdb0.sum_uip1_used"]/df["rdb0.sum_delta_confl_uip1_used"]
-    df["rdb0.avg_confl"].fillna(0, inplace=True)
+    # df["rdb0.avg_confl"] = df["rdb0.sum_uip1_used"]/df["rdb0.sum_delta_confl_uip1_used"]
+    # df["rdb0.avg_confl"].fillna(0, inplace=True)
 
     print("avg conf/used_per confl 2...")
-    df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
-    df["rdb0.used_per_confl"].fillna(0, inplace=True)
+    # df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
+    # df["rdb0.used_per_confl"].fillna(0, inplace=True)
 
     print("flatten/list...")
     old = set(df.columns.values.flatten().tolist())
