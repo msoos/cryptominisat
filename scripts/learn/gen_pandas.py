@@ -732,7 +732,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= cast({avg_used_later10k} as int)
+                   used_later10k.used_later10k >= max(cast({avg_used_later10k}+0.5 as int),1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -742,7 +742,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= cast({avg_used_later10k}/2 as int)
+                   used_later10k.used_later10k >= max(cast({avg_used_later10k}/2+0.5 as int),1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -752,7 +752,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= cast({avg_used_later10k}*1.5 as int)
+                   used_later10k.used_later10k >= max(cast({avg_used_later10k}*1.5+0.5 as int),1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -795,7 +795,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= cast({avg_used_later100k} as int)
+               used_later100k.used_later100k >= max(cast({avg_used_later100k}+0.5 as int), 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -805,7 +805,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= cast({avg_used_later100k}/2 as int)
+               used_later100k.used_later100k >= max(cast({avg_used_later100k}/2+0.5 as int), 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -815,7 +815,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= cast({avg_used_later100k}*1.5 as int)
+               used_later100k.used_later100k >= max(cast({avg_used_later100k}*1.5+0.5 as int), 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
