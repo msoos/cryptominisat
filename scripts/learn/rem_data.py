@@ -291,14 +291,41 @@ class QueryDatRem(QueryHelper):
 
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
     def fill_used_cl_ids_table_cheat(self):
+
         t = time.time()
         val = int(options.limit)
         q = """
         insert into usedClauseIDs
         select
-        clauseID from goodClauses order by random() limit %d;
+        clauseID from goodClauses
+        where num_used > 20
+        order by random() limit %d;
+        """ % int(val/4)
+        self.c.execute(q)
+        print("Added >20 from goodClauses T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        q = """
+        insert into usedClauseIDs
+        select
+        clauseID from goodClauses
+        where num_used > 5
+        order by random() limit %d;
+        """ % int(val/2)
+        self.c.execute(q)
+        print("Added >5 from goodClauses T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        q = """
+        insert into usedClauseIDs
+        select
+        clauseID from goodClauses
+        order by random() limit %d;
         """ % val
         self.c.execute(q)
+        print("Added any from goodClauses T: %-3.2f s" % (time.time() - t))
 
         ret = self.c.execute("select count() from usedClauseIDs")
         rows = self.c.fetchall()
