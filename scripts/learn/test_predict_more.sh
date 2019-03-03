@@ -111,8 +111,9 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 
 rm ../../src/predict/*.h
 for CONF in {0..4}; do
-../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
-../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+    ../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
+
+    ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 done
 )
 
@@ -120,7 +121,7 @@ done
 
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 0 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 3 | tee cms-final-run.out
 )
 
 exit
