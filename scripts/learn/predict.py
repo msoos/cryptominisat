@@ -422,12 +422,12 @@ static bool {funcname}(
 
         # balance it out
         prefer_ok = float(bad)/float(good)
-        print("Balanced OK preferance would be: %-6.3f" % prefer_ok)
+        print("Balanced OK preference would be: %-6.3f" % prefer_ok)
 
         # apply inbalance from option given
         prefer_ok *= options.prefer_ok
         print("Option to prefer OK is set to  : %-6.3f" % options.prefer_ok)
-        print("Final OK preferance is         : %-6.3f" % prefer_ok)
+        print("Final OK preference is         : %-6.3f" % prefer_ok)
 
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
