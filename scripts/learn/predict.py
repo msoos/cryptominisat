@@ -182,6 +182,12 @@ class Learner:
 
         def define_avg_for_cls(self):
             self.f.write("""
+    double rdb_rel_used_for_uip_creation = 0;
+    if (cl->stats.used_for_uip_creation > cl->stats.rdb1_used_for_uip_creation) {
+        rdb_rel_used_for_uip_creation = 1.0;
+    } else {
+        rdb_rel_used_for_uip_creation = 0.0;
+    }
 
     double rdb0_avg_confl;
     if (cl->stats.sum_delta_confl_uip1_used == 0) {
@@ -281,6 +287,8 @@ static bool {funcname}(
                 elif feat_name == "rdb0_avg_confl":
                     pass
                 elif feat_name == "rdb0_used_per_confl":
+                    pass
+                elif feat_name == "rdb_rel_used_for_uip_creation":
                     pass
                 else:
                     feat_name = "cl->stats." + feat_name
@@ -624,7 +632,7 @@ static bool {funcname}(
         best_features = []
         if options.only_final:
             best_features = ['rdb0.used_for_uip_creation']
-            # best_features.append('rdb1.used_for_uip_creation')
+            best_features.append('rdb1.used_for_uip_creation')
             best_features.append('cl.size')
             best_features.append('cl.size_rel')
             best_features.append('cl.glue_rel_long')

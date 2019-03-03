@@ -422,6 +422,7 @@ void ReduceDB::handle_lev1_final_predictor()
                 cl->stats.sum_uip1_used_rdb1 = cl->stats.sum_uip1_used;
                 cl->stats.rdb1_act_ranking_top_10 = act_ranking_top_10;
                 cl->stats.rdb1_last_touched_diff = last_touched_diff;
+                cl->stats.rdb1_used_for_uip_creation = cl->stats.used_for_uip_creation;
                 cl->stats.reset_rdb_stats();
             }
         }

@@ -174,6 +174,7 @@ struct ClauseStats
 
     //below resets
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
+    uint32_t rdb1_used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
     #endif
 
     #ifdef STATS_NEEDED
