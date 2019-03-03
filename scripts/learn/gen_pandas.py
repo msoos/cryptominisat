@@ -51,6 +51,19 @@ class QueryFill (QueryHelper):
     def __init__(self, dbfname):
         super(QueryFill, self).__init__(dbfname)
 
+    def measure_size(self):
+        t = time.time()
+        ret = self.c.execute("select count() from reduceDB")
+        rows = self.c.fetchall()
+        rdb_rows = rows[0][0]
+        print("We have %d lines of RDB" % (rdb_rows))
+
+        t = time.time()
+        ret = self.c.execute("select count() from clauseStats")
+        rows = self.c.fetchall()
+        clss_rows = rows[0][0]
+        print("We have %d lines of clauseStats" % (clss_rows))
+
     def create_indexes(self):
         print("Recreating indexes...")
         t = time.time()
@@ -1151,6 +1164,7 @@ def dump_dataframe(df, name):
 
 def one_database(dbfname):
     with QueryFill(dbfname) as q:
+        q.measure_size()
         if not options.no_recreate_indexes:
             q.create_indexes()
             q.fill_last_prop()
