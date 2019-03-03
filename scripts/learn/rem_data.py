@@ -48,6 +48,11 @@ class QueryDatRem(QueryHelper):
     def __init__(self, dbfname):
         super(QueryDatRem, self).__init__(dbfname)
 
+    def dangerous(self):
+        self.c.execute("PRAGMA journal_mode = MEMORY")
+        self.c.execute("PRAGMA synchronous = OFF")
+        pass
+
     def create_used_ID_table(self):
         q = """
         DROP TABLE IF EXISTS `usedClauseIDs`;
@@ -465,12 +470,16 @@ if __name__ == "__main__":
 
 
     with QueryDatRem(args[0]) as q:
+        q.dangerous()
         q.vacuum()
+
+        q.dangerous()
         q.create_indexes()
         q.create_used_ID_table()
         q.fill_used_cl_ids_table_cheat()
         q.filter_tables_of_ids()
         q.vacuum()
+        q.dangerous()
 
         q.create_indexes()
         q.fill_later_useful_data()
