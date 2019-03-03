@@ -22,10 +22,7 @@ from __future__ import print_function
 import sqlite3
 import optparse
 import time
-import pickle
 import re
-import pandas as pd
-import numpy as np
 import os.path
 
 class QueryHelper:
@@ -183,7 +180,6 @@ class QueryDatRem(QueryHelper):
 
     def delete_too_many_rdb_rows(self):
         t = time.time()
-        val = int(options.limit)
         ret = self.c.execute("select count() from reduceDB")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
