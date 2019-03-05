@@ -765,7 +765,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= max(cast({avg_used_later10k}*1.5+0.5 as int),1)
+                   used_later10k.used_later10k >= max({median_used_later10k},1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -828,7 +828,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= max(cast({avg_used_later100k}*1.5+0.5 as int), 1)
+               used_later100k.used_later100k >= max({median_used_later100k}, 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -918,10 +918,31 @@ class QueryCls (QueryHelper):
 
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
-        if long_or_short == "short":
-            q = "select avg(used_later10k) from used_later10k, used_later where used_later.clauseID = used_later10k.clauseID and used_later > 0;"
-        else:
-            q = "select avg(used_later100k) from used_later100k, used_later where used_later.clauseID = used_later100k.clauseID and used_later > 0;"
+        q = "select avg(used_later10k) from used_later10k, used_later where used_later.clauseID = used_later10k.clauseID and used_later > 0;"
+        if long_or_short == "long":
+            q = q.replace("used_later10k", "used_later100k")
+        cur.execute(q)
+        rows = cur.fetchall()
+        assert len(rows) == 1
+        if rows[0][0] is None:
+            return False, None
+        avg = float(rows[0][0])
+        print("%s avg used_later is: %.2f"  % (long_or_short, avg))
+        return True, avg
+
+    def get_median_used_later(self, long_or_short):
+        cur = self.conn.cursor()
+        q = """select used_later10k
+            from used_later10k
+            where used_later10k > 0
+            order by used_later10k
+            limit 1
+            OFFSET (
+            SELECT count(*) from used_later10k
+            where used_later10k > 0
+            ) / 2;"""
+        if long_or_short == "long":
+            q = q.replace("used_later10k", "used_later100k")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) == 1
@@ -964,12 +985,11 @@ class QueryCls (QueryHelper):
     def get_data(self, long_or_short, this_fixed=None):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok, subformat["avg_used_later10k"] = self.get_avg_used_later("short");
-        if not ok:
-            return False, None, None
-
-        ok, subformat["avg_used_later100k"] = self.get_avg_used_later("long");
-        if not ok:
+        ok0, subformat["avg_used_later100k"] = self.get_avg_used_later("long");
+        ok1, subformat["avg_used_later10k"] = self.get_avg_used_later("short");
+        ok2, subformat["median_used_later100k"] = self.get_median_used_later("long");
+        ok3, subformat["median_used_later10k"] = self.get_median_used_later("short");
+        if not ok0 or not ok1 or not ok2 or not ok3:
             return False, None, None
 
         if long_or_short == "short":
