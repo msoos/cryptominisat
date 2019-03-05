@@ -325,9 +325,9 @@ PyDoc_STRVAR(add_clause_doc,
 "add_clause(clause)\n\
 Add a clause to the solver.\n\
 \n\
-:param arg1: A clause contains literals (ints)\n\
+:param clause: A clause contains literals (ints)\n\
+:type clause: <list>\n\
 :return: None\n\
-:type arg1: <list>\n\
 :rtype: <None>"
 );
 
@@ -491,11 +491,13 @@ PyDoc_STRVAR(add_clauses_doc,
 "add_clauses(clauses)\n\
 Add iterable of clauses to the solver.\n\
 \n\
-:param arg1: List of clauses. Each clause contains literals (ints)\n\
+:param clauses: List of clauses. Each clause contains literals (ints)\n\
     Alternatively, this can be a flat array.array (typecode 'i', 'l', or 'q')\n\
     of zero separated and terminated clauses of literals (ints).\n\
+:type clauses: <list> or <array.array>\n\
+:param max_var: Hint about the maximum variable number.\n\
+:type max_var: <int>\n\
 :return: None\n\
-:type arg1: <list> or <array.array>\n\
 :rtype: <None>"
 );
 
@@ -874,17 +876,17 @@ previous solution found will be banned.\n\
     This way, you will not get spurious solutions that don't differ in \n\
     the main, important variables.\n\
 \n\
-:param arg1: Maximum number of solutions before stop the search\n\
-:param arg2: Variables for which the solver must find different solutions\n\
-:param arg3: (Optional) Format of literals for each solution returned. \n\
+:param max_nr_of_solutions: Maximum number of solutions before stop the search\n\
+:type max_nr_of_solutions: <int>\n\
+:param var_selected: Variables for which the solver must find different solutions\n\
+:type var_selected: <list>\n\
+:param raw: (Optional) Format of literals for each solution returned. \n\
     If set to True, lists of literals will be returned;\n\
     .. example:: [(1, -2, -3, -4, -5, -6, -7, -8, -9, 10,),]\n\
     if set to False, tuples of booleans will be returned,\n\
     with None at the first position.\n\
     .. example:: [(None, True, False, True,),]\n\
-:type arg1: <int>\n\
-:type arg2: <list>\n\
-:type arg3: <boolean>\n\
+:type raw: <boolean>\n\
 :return: List of solutions (list of tuples of literals)\n\
 :rtype: <list <tuple>>"
 );
