@@ -945,9 +945,10 @@ class QueryCls (QueryHelper):
             q = q.replace("used_later10k", "used_later100k")
         cur.execute(q)
         rows = cur.fetchall()
-        assert len(rows) == 1
-        if rows[0][0] is None:
+        assert len(rows) <= 1
+        if len(rows) == 0 or rows[0][0] is None:
             return False, None
+
         avg = float(rows[0][0])
         print("%s avg used_later is: %.2f"  % (long_or_short, avg))
         return True, avg
