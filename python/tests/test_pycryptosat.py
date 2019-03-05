@@ -204,9 +204,10 @@ class TestSolve(unittest.TestCase):
         self.assertTrue(check_solution(clauses1, solution))
 
     def test_add_clauses(self):
-        self.solver.add_clauses([[1], [-1]])
+        self.solver.add_clauses(clauses=[[1], [-1]], max_var=100)
         res, solution = self.solver.solve()
         self.assertEqual(res, False)
+        self.assertEqual(self.solver.nb_vars(), 100)
 
     def test_add_clauses_wrong_zero(self):
         self.assertRaises(TypeError, self.solver.add_clause, [[1, 0], [-1]])
