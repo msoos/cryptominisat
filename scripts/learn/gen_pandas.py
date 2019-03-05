@@ -926,6 +926,7 @@ class QueryCls (QueryHelper):
         assert len(rows) == 1
         if rows[0][0] is None:
             return False, None
+
         avg = float(rows[0][0])
         print("%s avg used_later is: %.2f"  % (long_or_short, avg))
         return True, avg
