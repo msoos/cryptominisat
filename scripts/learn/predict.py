@@ -662,8 +662,9 @@ static bool {funcname}(
 
             # these don't allow for "fresh" claues to be correctly dealt with
             best_features.append('rdb0.dump_no')
-            best_features.append('rdb0.sum_uip1_used')
-            best_features.append('rdb0.sum_delta_confl_uip1_used')
+            if options.name != "short":
+                best_features.append('rdb0.sum_uip1_used')
+                best_features.append('rdb0.sum_delta_confl_uip1_used')
             # best_features.append('rdb0.avg_confl')
             # best_features.append('rdb0.used_per_confl')
 
