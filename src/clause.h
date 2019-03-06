@@ -145,11 +145,8 @@ struct ClauseStats
     float       size_rel                    = 0;
     float       antecedents_glue_long_reds_var = 0.0;
     uint32_t    num_total_lits_antecedents = 0;
-    uint32_t    rdb1_act_ranking_top_10;
     uint32_t    rdb1_last_touched_diff;
-
-
-    double      num_antecedents_rel         = 0;
+    float      num_antecedents_rel         = 0;
     //division of:
     // cl.num_antecedents -- antec_data.num()
     // cl.num_antecedents_hist -- hist.numResolutionsHistLT.avg()
@@ -160,17 +157,17 @@ struct ClauseStats
 
 
     //for locking in for long
-    uint16_t    locked_long = 0;
+    uint8_t    locked_long = 0;
+    uint8_t    rdb1_act_ranking_top_10;
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
+    uint16_t dump_number = 0;
     uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
-    uint32_t dump_number = std::numeric_limits<uint32_t>::max();
 
     //for average and sum stats
     uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict)
     uint32_t sum_uip1_used = 0; //<Sum of (UIP1 conflict -- this RDB)
-    uint32_t sum_uip1_used_rdb1 = 0; //<Sum of (UIP1 conflict - last RDB)
 
     //below resets
     uint32_t used_for_uip_creation = 0; ///Number of times the claue was using during 1st UIP generation in this RDB
