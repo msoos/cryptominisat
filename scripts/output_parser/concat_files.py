@@ -39,10 +39,11 @@ for f in infiles:
         # print("appending to %s : %s" % (l[0], l[1]))
         files[l[0]].append(l[1])
 
+print("fname,memout,signal,time,res")
 od = collections.OrderedDict(sorted(files.items()))
 for k, v in od.items():
     toprint = ""
     for datpoint in v:
         toprint += "%s," % datpoint
     toprint = toprint.rstrip(",")
-    print(" %s,%s" % (k, toprint))
+    print("%s,%s" % (k, toprint))
