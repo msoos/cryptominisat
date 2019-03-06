@@ -495,22 +495,16 @@ Add iterable of clauses to the solver.\n\
     Alternatively, this can be a flat array.array (typecode 'i', 'l', or 'q')\n\
     of zero separated and terminated clauses of literals (ints).\n\
 :type clauses: <list> or <array.array>\n\
-:param max_var: Hint about the maximum variable number.\n\
-:type max_var: <int>\n\
 :return: None\n\
 :rtype: <None>"
 );
 
 static PyObject* add_clauses(Solver *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {"clauses", "max_var", NULL};
+    static char* kwlist[] = {"clauses", NULL};
     PyObject *clauses;
-    long int max_var = 0;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|l", kwlist, &clauses, &max_var)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &clauses)) {
         return NULL;
-    }
-    if (max_var > (long int)self->cmsat->nVars()) {
-        self->cmsat->new_vars(max_var-(long int)self->cmsat->nVars());
     }
 
     if (
