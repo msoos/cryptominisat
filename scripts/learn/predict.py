@@ -646,7 +646,6 @@ static bool {funcname}(
             # best_features.append('rdb0.act_ranking')
             # best_features.append('rdb1.act_ranking')
 
-            best_features.append('rdb0.act_ranking_top_10')
             best_features.append('rdb0.last_touched_diff')
             best_features.append('rdb1.act_ranking_top_10')
             best_features.append('rdb1.last_touched_diff')
