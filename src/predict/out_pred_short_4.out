@@ -1,0 +1,330 @@
+Filtering to minimum average dump_no of 5.0...
+Pre-filter number of datapoints: (717499, 239)
+Left with 219 files
+Post-filter number of datapoints: (652089, 239)
+Checking cluster distribution....
+{0: 652089}
+Exact class contents follow
+
+
+File name distribution in  cluster 0 **
+--> 3000       : 10pipe_k.cnf
+--> 3000       : 10pipe_q0_k.cnf
+--> 3000       : 11pipe_11_ooo.cnf
+--> 3000       : 11pipe_k.cnf
+--> 3000       : 11pipe_q0_k.cnf
+--> 3000       : 12pipe_q0_k.cnf
+--> 3000       : 13pipe_q0_k.cnf
+--> 3000       : 14pipe_q0_k.cnf
+--> 3000       : 15pipe_q0_k.cnf
+--> 3000       : 6s10.cnf
+--> 3000       : 6s11-opt.cnf
+--> 3000       : 6s123.cnf
+--> 3000       : 6s126-opt.cnf
+--> 3000       : 6s13-opt.cnf
+--> 3000       : 6s130-opt.cnf
+--> 3000       : 6s131-opt.cnf
+--> 3000       : 6s133.cnf
+--> 3000       : 6s137.cnf
+--> 3000       : 6s153.cnf
+--> 3000       : 6s16-opt.cnf
+--> 3000       : 6s16.cnf
+--> 1942       : 6s165-nonopt.cnf
+--> 3000       : 6s167-opt.cnf
+--> 2278       : 6s168-opt.cnf
+--> 3000       : 6s169-opt.cnf
+--> 3000       : 6s17-opt.cnf
+--> 3000       : 6s184.cnf
+--> 3000       : 6s9.cnf
+--> 2172       : 7pipe_k.cnf
+--> 2665       : 8pipe_k.cnf
+--> 3000       : 9dlx_vliw_at_b_iq3.cnf
+--> 3000       : 9dlx_vliw_at_b_iq4.cnf
+--> 3000       : 9dlx_vliw_at_b_iq4.used-as.sat04-345.cnf
+--> 3000       : 9dlx_vliw_at_b_iq6.used-as.sat04-347.cnf
+--> 3000       : 9dlx_vliw_at_b_iq7.cnf
+--> 3000       : 9dlx_vliw_at_b_iq9.used-as.sat04-719.cnf
+--> 3000       : ACG-15-10p0.cnf
+--> 3000       : ACG-20-10p0.cnf
+--> 3000       : AProVE07-03.cnf
+--> 3000       : AProVE07-08.cnf
+--> 3000       : AProVE07-27.cnf
+--> 3000       : AProVE11-06.cnf
+--> 3000       : E00N23.cnf
+--> 3000       : IBM_FV_2004_rule_batch_1_31_1_SAT_dat.k40.debugged.cnf
+--> 3000       : SAT_dat.k100-24_1_rule_1.cnf
+--> 3000       : SAT_dat.k100-24_1_rule_2.cnf
+--> 3000       : SAT_dat.k100-24_1_rule_3.cnf
+--> 3000       : SAT_dat.k35-31_2_rule_2.cnf
+--> 3000       : SAT_dat.k70-24_1_rule_1.cnf
+--> 3000       : SAT_dat.k70-24_1_rule_3.cnf
+--> 3000       : SAT_dat.k75-24_1_rule_3.cnf
+--> 3000       : SAT_dat.k80-24_1_rule_1.cnf
+--> 3000       : SAT_dat.k80-24_1_rule_2.cnf
+--> 3000       : SAT_dat.k85-24_1_rule_1.cnf
+--> 3000       : SAT_dat.k85-24_1_rule_2.cnf
+--> 3000       : SAT_dat.k85-24_1_rule_3.cnf
+--> 3000       : SAT_dat.k90.debugged.cnf
+--> 3000       : SAT_dat.k95-24_1_rule_1.cnf
+--> 3000       : SAT_dat.k95-24_1_rule_2.cnf
+--> 3000       : SAT_dat.k95-24_1_rule_3.cnf
+--> 3000       : Sz512_15127_3.smt2-cvc4.cnf
+--> 3000       : UCG-20-10p0.cnf
+--> 3000       : UR-15-10p0.cnf
+--> 3000       : UR-20-10p0.cnf
+--> 3000       : UR-20-5p0.cnf
+--> 3000       : UTI-20-10p0.cnf
+--> 3000       : aaai10-planning-ipc5-TPP-21-step11.cnf
+--> 3000       : aaai10-planning-ipc5-pathways-13-step17.cnf
+--> 3000       : aaai10-planning-ipc5-pathways-17-step20.cnf
+--> 3000       : ablmulub2x32o.cnf
+--> 3000       : atco_enc1_opt2_05_4.cnf
+--> 3000       : atco_enc1_opt2_10_14.cnf
+--> 3000       : atco_enc1_opt2_10_15.cnf
+--> 3000       : atco_enc1_opt2_20_12.cnf
+--> 3000       : atco_enc2_opt1_20_11.cnf
+--> 3000       : atco_enc2_opt2_05_4.cnf
+--> 3000       : atco_enc2_opt2_20_11.cnf
+--> 3000       : atco_enc3_opt2_10_12.cnf
+--> 3000       : atco_enc3_opt2_10_14.cnf
+--> 3000       : beempgsol2b1.cnf
+--> 3000       : beempgsol5b1.cnf
+--> 3000       : bjrb07amba10andenv.cnf
+--> 3000       : blocks-blocks-37-1.130-NOTKNOWN.cnf
+--> 3000       : bob12m02-opt.cnf
+--> 3000       : bob12m02.cnf
+--> 3000       : bob12m09-opt.cnf
+--> 2907       : bob12s02.cnf
+--> 3000       : bob12s09-opt.cnf
+--> 3000       : c10bi_i.cnf
+--> 3000       : countbitssrl032.cnf
+--> 3000       : cube-11-h13-unsat.cnf
+--> 3000       : dated-10-11-u.cnf
+--> 3000       : dated-10-13-u.cnf
+--> 3000       : dated-10-17-u.cnf
+--> 3000       : eq.atree.braun.11.unsat.cnf
+--> 3000       : g2-hwmcc15deep-6s105-k35.cnf
+--> 3000       : g2-hwmcc15deep-6s179-k17.cnf
+--> 3000       : g2-hwmcc15deep-6s188-k44.cnf
+--> 3000       : g2-hwmcc15deep-6s188-k46.cnf
+--> 3000       : g2-hwmcc15deep-6s33-k33.cnf
+--> 3000       : g2-hwmcc15deep-6s33-k34.cnf
+--> 3000       : g2-hwmcc15deep-6s340rb63-k16.cnf
+--> 3000       : g2-hwmcc15deep-6s340rb63-k22.cnf
+--> 2830       : g2-hwmcc15deep-6s341r-k19.cnf
+--> 3000       : g2-hwmcc15deep-6s366r-k72.cnf
+--> 3000       : g2-hwmcc15deep-6s44-k38.cnf
+--> 3000       : g2-hwmcc15deep-6s44-k40.cnf
+--> 3000       : g2-hwmcc15deep-6s516r-k17.cnf
+--> 3000       : g2-hwmcc15deep-beembkry8b1-k45.cnf
+--> 3000       : g2-hwmcc15deep-beemhanoi4b1-k32.cnf
+--> 3000       : g2-hwmcc15deep-beemlifts3b1-k29.cnf
+--> 3000       : g2-hwmcc15deep-beemloyd3b1-k31.cnf
+--> 3000       : g2-hwmcc15deep-oski15a10b10s-k20.cnf
+--> 3000       : g2-hwmcc15deep-oski15a14b04s-k16.cnf
+--> 3000       : g2-hwmcc15deep-oski15a14b30s-k24.cnf
+--> 3000       : g2-test_v5_r10_vr10_c1_s21502.smt2-cvc4.cnf
+--> 3000       : gus-md5-10.cnf
+--> 3000       : gus-md5-12.cnf
+--> 3000       : hwmcc10-timeframe-expansion-k45-pdtpmsgoodbakery-tseitin.cnf
+--> 3000       : jgiraldezlevy.2200.9086.08.40.109.cnf
+--> 3000       : jgiraldezlevy.2200.9086.08.40.46.cnf
+--> 3000       : k2mul.miter.cnf
+--> 3000       : korf-17.cnf
+--> 3000       : korf-18.cnf
+--> 3000       : manol-pipe-c10nid_i.cnf
+--> 3000       : manol-pipe-c10nidw.cnf
+--> 3000       : manol-pipe-c8nidw.cnf
+--> 3000       : manol-pipe-g10bid_i.cnf
+--> 3000       : manthey_single-ordered-initialized-w40-b10.cnf
+--> 3000       : manthey_single-ordered-initialized-w40-b8.cnf
+--> 3000       : manthey_single-ordered-initialized-w42-b8.cnf
+--> 3000       : manthey_single-ordered-initialized-w42-b9.cnf
+--> 3000       : manthey_single-ordered-initialized-w44-b6.cnf
+--> 3000       : manthey_single-ordered-initialized-w44-b7.cnf
+--> 3000       : manthey_single-ordered-initialized-w44-b9.cnf
+--> 3000       : manthey_single-ordered-initialized-w46-b7.cnf
+--> 3000       : manthey_single-ordered-initialized-w46-b8.cnf
+--> 3000       : manthey_single-ordered-initialized-w50-b6.cnf
+--> 3000       : manthey_single-ordered-initialized-w50-b7.cnf
+--> 3000       : manthey_single-ordered-initialized-w52-b6.cnf
+--> 3000       : maxxor032.cnf
+--> 3000       : maxxororand032.cnf
+--> 3000       : minandmaxor128.cnf
+--> 3000       : minxor128.cnf
+--> 3000       : minxorminand064.cnf
+--> 3000       : minxorminand128.cnf
+--> 3000       : mp1-Nb5T06.cnf
+--> 3000       : mp1-Nb6T06.cnf
+--> 3000       : mp1-blockpuzzle_5x10_s2_free5.cnf
+--> 3000       : mp1-blockpuzzle_5x10_s3_free4.cnf
+--> 3000       : mp1-blockpuzzle_5x10_s5_free3.cnf
+--> 3000       : mp1-blockpuzzle_5x10_s7_free4.cnf
+--> 3000       : mp1-blockpuzzle_5x10_s8_free3.cnf
+--> 3000       : mp1-blockpuzzle_5x12_s6_free3.cnf
+--> 3000       : mp1-blockpuzzle_7x10_s10_free4.cnf
+--> 3000       : mp1-blockpuzzle_7x10_s9_free6.cnf
+--> 3000       : mp1-blockpuzzle_8x8_s1_free4.cnf
+--> 3000       : mp1-blockpuzzle_9x9_s4_free3.cnf
+--> 3000       : mp1-blockpuzzle_9x9_s5_free3.cnf
+--> 3000       : mp1-blockpuzzle_9x9_s8_free3.cnf
+--> 3000       : mp1-bsat180-648.cnf
+--> 3000       : mp1-bsat192-689.cnf
+--> 3000       : mp1-bsat201-707.cnf
+--> 2659       : mp1-bsat210-739.cnf
+--> 3000       : mp1-klieber2017s-1600-022-eq.cnf
+--> 2260       : mp1-ps_5000_21250_3_0_0.8_0_1.50_0.cnf
+--> 3000       : mp1-ps_5000_21250_3_0_0.8_0_1.50_2.cnf
+--> 3000       : mp1-ps_5000_21250_3_0_0.8_0_1.50_4.cnf
+--> 2757       : mp1-ps_5000_21250_3_0_0.8_0_1.50_6.cnf
+--> 3000       : mp1-ps_5000_21250_3_0_0.8_0_1.50_8.cnf
+--> 2619       : mp1-ps_5000_21250_3_0_0.8_0_1.55_2.cnf
+--> 3000       : mp1-rubikcube101.cnf
+--> 3000       : mp1-rubikcube301.cnf
+--> 3000       : mp1-rubikcube601.cnf
+--> 3000       : mp1-rubikcube701.cnf
+--> 3000       : mp1-rubikcube901.cnf
+--> 3000       : mp1-squ_any_s09x07_c27_sinz_UNS.cnf
+--> 3000       : mp1-tri_ali_s11_c35_abio_UNS.cnf
+--> 3000       : mp1-tri_ali_s11_c35_abix_UNS.cnf
+--> 3000       : mp1-tri_ali_s11_c35_bail_UNS.cnf
+--> 3000       : mp1-tri_ali_s11_c35_sinx_UNS.cnf
+--> 3000       : mp1-tri_ali_s11_c35_sinz_UNS.cnf
+--> 3000       : newton.2.2.i.smt2-cvc4.cnf
+--> 3000       : newton.2.3.i.smt2-stp212.cnf
+--> 3000       : newton.3.3.i.smt2-stp212.cnf
+--> 3000       : newton.4.3.i.smt2-stp212.cnf
+--> 3000       : pb_300_10_lb_07.cnf
+--> 3000       : pb_300_10_lb_08.cnf
+--> 3000       : post-c32s-ss-8.cnf
+--> 3000       : post-cbmc-aes-d-r2-noholes.cnf
+--> 3000       : post-cbmc-aes-d-r2.cnf
+--> 3000       : post-cbmc-aes-ee-r2-noholes.cnf
+--> 3000       : q_query_3_L100_coli.sat.cnf
+--> 3000       : q_query_3_L150_coli.sat.cnf
+--> 3000       : q_query_3_L200_coli.sat.cnf
+--> 3000       : q_query_3_l45_lambda.cnf
+--> 3000       : q_query_3_l46_lambda.cnf
+--> 3000       : q_query_3_l48_lambda.cnf
+--> 3000       : reg_s_2_unknown.cnf
+--> 3000       : rpoc_xits_08_UNSAT.cnf
+--> 3000       : schup-l2s-bc56s-1-k391.cnf
+--> 3000       : snw_13_8_CCSEncnopre.cnf
+--> 3000       : snw_13_8_pre.cnf
+--> 3000       : snw_16_8_nopre.cnf
+--> 3000       : snw_16_8_pre.cnf
+--> 3000       : snw_16_8_preOpt_pre.cnf
+--> 3000       : sokoban-p16.sas.cr.37.cnf
+--> 3000       : sokoban-p16.sas.ex.15.cnf
+--> 3000       : sokoban-p20.sas.cr.23.cnf
+--> 3000       : sokoban-p20.sas.cr.25.cnf
+--> 3000       : sokoban-p20.sas.cr.27.cnf
+--> 3000       : sokoban-p20.sas.ex.11.cnf
+--> 3000       : test_v7_r12_vr1_c1_s22787.smt2-cvc4.cnf
+--> 3000       : test_v7_r17_vr1_c1_s30331.smt2-stp212.cnf
+--> 3000       : total-10-13-u.cnf
+--> 3000       : valves-gates-1-k617-unsat.cnf
+--> 3000       : velev-vliw-uns-2.0-uq5.cnf
+--> 3000       : velev-vliw-uns-4.0-9-i1.cnf
+--> 3000       : velev-vliw-uns-4.0-9.cnf
+
+
+Class contents finished.
+
+================ Cluster   0 ================
+-> Number of features  : 20
+-> Number of datapoints: (651437, 240)
+-> Predicting          : x.class
+Number of BAD  elements        : 328166
+Number of GOOD elements        : 323271
+Balanced OK preference would be: 1.015 
+Option to prefer OK is set to  : 2.000 
+Final OK preference is         : 2.030 
+Minimum split point:  651
+Training finished. T: 8.93
+Wrote code to:  headers//final_predictor_short_conf4_cluster0.h
+---  Filtered data  --- 
+Calculating confusion matrix -- dump_no == 0
+Number of elements: (0, 20)
+Cannot calculate confusion matrix, too few elements
+Calculating confusion matrix -- dump_no == 1
+Number of elements: (16073, 20)
+test prec : 0.6883  recall: 0.9658 accuracy: 0.7273
+Confusion matrix, without normalization -- test
+[[2713 4065]
+ [ 318 8977]]
+Normalized confusion matrix -- test
+[[ 0.4   0.6 ]
+ [ 0.03  0.97]]
+Calculating confusion matrix -- dump_no == 3
+Number of elements: (12511, 20)
+test prec : 0.7013  recall: 0.9223 accuracy: 0.7517
+Confusion matrix, without normalization -- test
+[[3316 2593]
+ [ 513 6089]]
+Normalized confusion matrix -- test
+[[ 0.56  0.44]
+ [ 0.08  0.92]]
+Calculating confusion matrix -- dump_no == 10
+Number of elements: (6266, 20)
+test prec : 0.7142  recall: 0.8768 accuracy: 0.7771
+Confusion matrix, without normalization -- test
+[[2285 1034]
+ [ 363 2584]]
+Normalized confusion matrix -- test
+[[ 0.69  0.31]
+ [ 0.12  0.88]]
+Calculating confusion matrix -- dump_no == 20
+Number of elements: (3262, 20)
+test prec : 0.7227  recall: 0.8606 accuracy: 0.7842
+Confusion matrix, without normalization -- test
+[[1268  495]
+ [ 209 1290]]
+Normalized confusion matrix -- test
+[[ 0.72  0.28]
+ [ 0.14  0.86]]
+Calculating confusion matrix -- dump_no == 40
+Number of elements: (1140, 20)
+test prec : 0.6708  recall: 0.8465 accuracy: 0.7465
+Confusion matrix, without normalization -- test
+[[421 211]
+ [ 78 430]]
+Normalized confusion matrix -- test
+[[ 0.67  0.33]
+ [ 0.15  0.85]]
+Calculating confusion matrix -- ALL dump_no
+Number of elements: (214975, 20)
+test prec : 0.7092  recall: 0.8892 accuracy: 0.7637
+Confusion matrix, without normalization -- test
+[[69110 38970]
+ [11839 95056]]
+Normalized confusion matrix -- test
+[[ 0.64  0.36]
+ [ 0.11  0.89]]
+---  Unfiltered data  --- 
+Calculating confusion matrix -- ALL dump_no
+Number of elements: (717499, 20)
+test prec : 0.6847  recall: 0.8938 accuracy: 0.7538
+Confusion matrix, without normalization -- test
+[[235904 140444]
+ [ 36217 304934]]
+Normalized confusion matrix -- test
+[[ 0.63  0.37]
+ [ 0.11  0.89]]
+Calculating confusion matrix -- dump_no == 0
+Number of elements: (0, 20)
+Cannot calculate confusion matrix, too few elements
+Calculating confusion matrix -- dump_no == 1
+Number of elements: (72854, 20)
+test prec : 0.5945  recall: 0.9634 accuracy: 0.6774
+Confusion matrix, without normalization -- test
+[[16701 22264]
+ [ 1242 32647]]
+Normalized confusion matrix -- test
+[[ 0.43  0.57]
+ [ 0.04  0.96]]
+---  Train data  --- 
+train prec: 0.7087  recall: 0.8916 accuracy: 0.7645
+Normalized confusion matrix -- train
+[[ 0.64  0.36]
+ [ 0.11  0.89]]
