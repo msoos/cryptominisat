@@ -456,7 +456,7 @@ static bool {funcname}(
                 penalty="l1")
 
             clf_forest = sklearn.ensemble.RandomForestClassifier(
-                    n_estimators=5,
+                    n_estimators=options.num_trees,
                     class_weight={"OK": prefer_ok, "BAD": 1},
                     min_samples_leaf=split_point)
 
@@ -1061,6 +1061,9 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_option("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
+
+    parser.add_option("--numtrees", default=5, type=int,
+                      dest="num_trees", help="How many trees to generate for the forest")
 
     parser.add_option("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
