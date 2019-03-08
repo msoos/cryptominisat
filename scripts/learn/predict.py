@@ -855,27 +855,28 @@ public:
             else:
                 self.used_clusters.append(clust_num)
 
-        print("Exact class contents follow")
-        for clno in range(options.clusters):
-            x = self.df[(self.df.clust == clno)]
-            fname_dist = {}
-            for _, d in x.iterrows():
-                fname = d['fname']
-                if fname not in fname_dist:
-                    fname_dist[fname] = 1
-                else:
-                    fname_dist[fname] += 1
+        if options.show_class_dist:
+            print("Exact class contents follow")
+            for clno in range(options.clusters):
+                x = self.df[(self.df.clust == clno)]
+                fname_dist = {}
+                for _, d in x.iterrows():
+                    fname = d['fname']
+                    if fname not in fname_dist:
+                        fname_dist[fname] = 1
+                    else:
+                        fname_dist[fname] += 1
 
-            skipped = "SKIPPED"
-            if clno in self.used_clusters:
-                skipped = ""
-            print("\n\nFile name distribution in {skipped} cluster {clno} **".format(
-                clno=clno, skipped=skipped))
+                skipped = "SKIPPED"
+                if clno in self.used_clusters:
+                    skipped = ""
+                print("\n\nFile name distribution in {skipped} cluster {clno} **".format(
+                    clno=clno, skipped=skipped))
 
-            sorted_x = sorted(fname_dist.items(), key=operator.itemgetter(0))
-            for a, b in sorted_x:
-                print("--> %-10s : %s" % (b, a))
-        print("\n\nClass contents finished.\n")
+                sorted_x = sorted(fname_dist.items(), key=operator.itemgetter(0))
+                for a, b in sorted_x:
+                    print("--> %-10s : %s" % (b, a))
+            print("\n\nClass contents finished.\n")
 
         self.used_clusters = sorted(self.used_clusters)
 
@@ -1050,6 +1051,8 @@ if __name__ == "__main__":
                       dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data. Default: %default")
     parser.add_option("--scale", default=False, action="store_true",
                       dest="scale", help="Scale clustering")
+    parser.add_option("--distr", default=False, action="store_true",
+                      dest="show_class_dist", help="Show class distribution")
 
     # type of predictor
     parser.add_option("--tree", default=False, action="store_true",
