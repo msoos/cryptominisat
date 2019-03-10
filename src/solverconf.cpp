@@ -191,18 +191,17 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , simplify_schedule_startup(
-            "walksat," //MUST be first because the others mess up the variable polarities
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor, "
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
+            "walksat,"
         )
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "walksat," //MUST be first because the others mess up the variable polarities
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
@@ -213,6 +212,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
+            "walksat,"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
