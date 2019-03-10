@@ -57,20 +57,32 @@ WalkSAT::~WalkSAT()
     free(numoccurrence);
     free(assigns);
     free(breakcount);
+    free(makecount);
     free(best);
+    free(changed);
 }
 
 lbool WalkSAT::main()
 {
+    //It might not work well with few number of variables
+    //rnovelty could also die/exit(-1), etc.
+    if (solver->nVars() < 50) {
+        return l_Undef;
+    }
+
     parse_parameters();
     mtrand.seed(solver->mtrand.randInt());
     print_parameters();
-    init_problem();
+    if (!init_problem()) {
+        //it's actually l_False under assumptions
+        //but we'll set the real SAT solver deal with that
+        return l_Undef;
+    }
     initialize_statistics();
     print_statistics_header();
     startTime = cpuTime();
 
-    while (!found_solution && numtry < max_runs) {
+    while (!found_solution && numtry < solver->conf.walk_max_runs) {
         numtry++;
         init();
         update_statistics_start_try();
@@ -79,7 +91,8 @@ lbool WalkSAT::main()
         while (!found_solution && (numfalse > 0) && (numflip < cutoff)) {
             numflip++;
 
-            uint32_t var = pickbest();
+            //uint32_t var = pickbest();
+            uint32_t var = pickrnovelty();
             flipvar(var);
             update_statistics_end_flip();
         }
@@ -96,6 +109,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 {
     Lit toenforce;
     uint32_t numocc;
+    changed[toflip] = numflip;
 
     if (assigns[toflip] == l_True)
         toenforce = Lit(toflip, true);
@@ -117,7 +131,17 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
             map_cl_to_false_cls[cli] = numfalse;
             numfalse++;
             /* Decrement toflip's breakcount */
+            assert(breakcount[toflip] > 0);
             breakcount[toflip]--;
+
+            /* Increment the makecount of all vars in the clause */
+            uint32_t sz = clsize[cli];
+            Lit* litptr = clause[cli];
+            for (uint32_t j = 0; j < sz; j++) {
+                Lit lit = *(litptr++);
+                makecount[lit.var()]++;
+            }
+
         } else if (numtruelit[cli] == 1) {
             /* Find the lit in this clause that makes it true, and inc its breakcount */
             Lit *litptr = clause[cli];
@@ -148,6 +172,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
         if (numtruelit[cli] == 1) {
             const uint32_t last_false_cl = false_cls[numfalse-1];
             uint32_t position_in_false_cls = map_cl_to_false_cls[cli];
+            assert(numfalse > 0);
             numfalse--;
 
             //the postiion in false_cls where this clause was is now replaced with
@@ -159,6 +184,17 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
             /* Increment toflip's breakcount */
             breakcount[toflip]++;
+
+            /* Decrement the makecount of all vars in the clause */
+            uint32_t sz = clsize[cli];
+            Lit* litptr = clause[cli];
+            for (uint32_t j = 0; j < sz; j++) {
+                /* lit = clause[cli][j]; */
+                Lit lit = *(litptr++);
+                assert(makecount[lit.var()] > 0);
+                makecount[lit.var()]--;
+            }
+
         } else if (numtruelit[cli] == 2) {
             /* Find the lit in this clause other than toflip that makes it true,
              * and decrement its breakcount */
@@ -182,8 +218,7 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
 void WalkSAT::parse_parameters()
 {
-    base_cutoff = cutoff;
-    numerator = (int)(walk_probability * denominator);
+    numerator = walk_probability * denominator;
 }
 
 void WalkSAT::init()
@@ -198,6 +233,7 @@ void WalkSAT::init()
     numfalse = 0;
     for (uint32_t i = 0; i < numvars; i++) {
         breakcount[i] = 0;
+        makecount[i] = 0;
         if (solver->value(i) != l_Undef) {
             assigns[i] = solver->value(i);
         } else {
@@ -218,6 +254,9 @@ void WalkSAT::init()
             map_cl_to_false_cls[i] = numfalse;
             false_cls[numfalse] = i;
             numfalse++;
+            for (uint32_t j = 0; j < clsize[i]; j++) {
+                makecount[clause[i][j].var()]++;
+            }
         } else if (numtruelit[i] == 1) {
             breakcount[thetruelit.var()]++;
         }
@@ -262,7 +301,52 @@ uint64_t WalkSAT::mem_needed()
     return needed;
 }
 
-void WalkSAT::init_problem()
+template<class T>
+WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused) {
+    uint32_t sz = 0;
+    for(size_t i3 = 0; i3 < cl.size(); i3++) {
+        Lit lit = cl[i3];
+        assert(solver->varData[lit.var()].removed == Removed::none);
+        lbool val = l_Undef;
+        if (solver->value(lit) != l_Undef) {
+            val = solver->value(lit);
+        } else {
+            val = solver->lit_inside_assumptions(lit);
+        }
+        if (val == l_True) {
+            //clause is SAT, skip!
+            assumed_triggered = true;
+            for(uint32_t i2 = 0; i2 < i3; i2++) {
+                numoccurrence[cl[i2].toInt()]--;
+            }
+            return add_cl_ret::skipped_cl;
+        } else if (val == l_False) {
+            assumed_triggered = true;
+            continue;
+        }
+        storebase[storeused+sz] = lit;
+        numoccurrence[lit.toInt()]++;
+        sz++;
+    }
+    if (sz == 0) {
+        //it's unsat because of assumptions
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] UNSAT because of assumptions in clause: " << cl << endl;
+        }
+        return add_cl_ret::unsat;
+    }
+
+    clause[i] = storebase + storeused;
+    storeused += sz;
+    clsize[i] = sz;
+    numliterals += sz;
+    longestclause = std::max(longestclause, sz);
+    i++;
+
+    return add_cl_ret::added_cl;
+}
+
+bool WalkSAT::init_problem()
 {
     uint32_t i;
     uint32_t j;
@@ -284,6 +368,14 @@ void WalkSAT::init_problem()
     numoccurrence = (uint32_t *)calloc(sizeof(uint32_t), (2 * numvars));
     assigns = (lbool *)calloc(sizeof(lbool), numvars);
     breakcount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
+    changed = (int64_t *)calloc(sizeof(int64_t), numvars);
+    makecount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
+    best = NULL;
+    occur_list_alloc = NULL;
+    for(uint32_t i2 = 0; i2 < numvars; i2 ++) {
+        /* ties in age between unchanged variables broken for lowest-numbered */
+        changed[i2] = -i2-1000;
+    }
 
     numliterals = 0;
     longestclause = 0;
@@ -294,48 +386,40 @@ void WalkSAT::init_problem()
         numoccurrence[i] = 0;
 
     //where all clauses' literals are
+    vector<Lit> this_clause;
     solver->check_stats();
-    const uint32_t storesize = solver->litStats.irredLits+solver->binTri.irredBins*2;
+    uint32_t storesize = solver->litStats.irredLits+solver->binTri.irredBins*2;
     storebase = (Lit *)malloc(storesize*sizeof(Lit));
     i = 0;
+    for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
+        Lit lit = Lit::toLit(i2);
+        for(const Watched& w: solver->watches[lit]) {
+            if (w.isBin() && !w.red() && lit < w.lit2()) {
+                assert(storeused+2 <= storesize);
+                this_clause.clear();
+                this_clause.push_back(lit);
+                this_clause.push_back(w.lit2());
+
+                if (add_this_clause(this_clause, i, storeused) == add_cl_ret::unsat) {
+                    return false;
+                }
+            }
+        }
+    }
     for(ClOffset offs: solver->longIrredCls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
         assert(!cl->getRemoved());
         assert(storeused+cl->size() <= storesize);
 
-        clause[i] = storebase + storeused;
-        clsize[i] = cl->size();
-        numliterals += cl->size();
-
-        for(Lit l: *cl) {
-            storebase[storeused++] = l;
-            numoccurrence[l.toInt()]++;
-        }
-        longestclause = std::max(longestclause, clsize[i]);
-        i++;
-    }
-    for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
-        Lit lit = Lit::toLit(i2);
-        for(const Watched& w: solver->watches[lit]) {
-            if (w.isBin() && !w.red() && lit < w.lit2()) {
-                assert(storeused+2 <= storesize);
-
-                clause[i] = storebase + storeused;
-                clsize[i] = 2;
-                numliterals += 2;
-
-                storebase[storeused++] = lit;
-                storebase[storeused++] = w.lit2();
-                numoccurrence[lit.toInt()]++;
-                numoccurrence[w.lit2().toInt()]++;
-                longestclause = std::max(longestclause, clsize[i]);
-                i++;
-            }
+        if (add_this_clause(*cl, i, storeused) == add_cl_ret::unsat) {
+            return false;
         }
     }
-    assert(storeused == storesize);
-    assert(i == numclauses);
+    assert(storeused == storesize || (assumed_triggered && storeused < storesize));
+    storesize = storeused;
+    assert(i == numclauses || (assumed_triggered && i < numclauses));
+    numclauses = i;
 
     best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
 
@@ -364,6 +448,8 @@ void WalkSAT::init_problem()
             numoccurrence[lit.toInt()]++;
         }
     }
+
+    return true;
 }
 
 /************************************/
@@ -374,7 +460,7 @@ void WalkSAT::print_parameters()
 {
     cout << "c [walksat] WALKSAT v56" << endl;
     cout << "c [walksat] cutoff = %" << cutoff << endl;
-    cout << "c [walksat] tries = " << max_runs << endl;
+    cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
     cout << "c [walksat] walk probabability = "
     << std::fixed << std::setprecision(2) << walk_probability << endl;
 }
@@ -577,6 +663,11 @@ void WalkSAT::print_statistics_final()
                 continue;
             }
 
+            //fix these up, they may have been flipped
+            if (solver->var_inside_assumptions(i) != l_Undef) {
+                assigns[i] = solver->var_inside_assumptions(i);
+            }
+
             solver->new_decision_level();
             solver->enqueue(Lit(i, value(i) == l_False));
         }
@@ -644,4 +735,100 @@ uint32_t WalkSAT::pickbest()
 
     //pick one of the best (least breaking one) to flip
     return best[RANDMOD(numbest)];
+}
+
+
+uint32_t WalkSAT::pickrnovelty()
+{
+    uint32_t tofix = false_cls[RANDMOD(numfalse)];
+    uint32_t clausesize = clsize[tofix];
+    if (clausesize == 1)
+        return clause[tofix][0].var();
+
+    if ((numflip % 100) == 0) {
+        return clause[tofix][RANDMOD(clausesize)].var();
+    }
+
+    int64_t youngest_birthdate = std::numeric_limits<int64_t>::min();
+    int64_t best_diff = std::numeric_limits<int64_t>::min();
+    int64_t second_best_diff = std::numeric_limits<int64_t>::min();
+    uint32_t bbest = var_Undef;
+    uint32_t second_best = var_Undef;
+    uint32_t youngest = var_Undef;
+    bool best_set = false;
+    bool second_best_set = false;
+
+    for (uint32_t i = 0; i < clausesize; i++) {
+        uint32_t var = clause[tofix][i].var();
+        int64_t diff = (int64_t)makecount[var] - (int64_t)breakcount[var];
+        int64_t birthdate = changed[var];
+        if (birthdate > youngest_birthdate) {
+            youngest_birthdate = birthdate;
+            youngest = var;
+        }
+        if (!best_set
+            || diff > best_diff
+            || (diff == best_diff && changed[var] < changed[bbest])
+        ) {
+            /* found new best, demote best to 2nd best */
+            if (best_set) {
+                second_best = bbest;
+                second_best_diff = best_diff;
+                second_best_set = true;
+            }
+            best_set = true;
+            bbest = var;
+            best_diff = diff;
+        } else if (
+            diff > second_best_diff
+            || (diff == second_best_diff && changed[var] < changed[second_best])
+        ) {
+            /* found new second bbest */
+            second_best = var;
+            second_best_diff = diff;
+            second_best_set = true;
+        }
+    }
+    assert(best_set);
+    assert(second_best_set);
+    if (bbest != youngest)
+        return bbest;
+
+    /* If best is youngest, then second best must be strictly worse */
+    if (best_diff < second_best_diff) {
+        cout << "c [walksat] rnovelty+ code error!" << endl;
+        cout << "c [walksat] diffdiff = " << best_diff - second_best_diff << endl;
+        cout << "c [walksat] best = " << bbest
+        << "   best_diff = " << best_diff
+        << "   second_best = " << second_best
+        << "   second_best_diff = " << second_best_diff
+        << endl;
+        assert(best_diff >= second_best_diff);
+        exit(-1);
+    }
+    int64_t diffdiff = best_diff - second_best_diff;
+
+    /* (1) p < 0.5 and n > 1 */
+    if (numerator * 2 < denominator && diffdiff > 1)
+        return bbest;
+
+    /* (2) p < 0.5 and n = 1                                 */
+    /*     with probability 2p pick 2nd best, otherwise best */
+    if (numerator * 2 < denominator && diffdiff == 1) {
+        if ((RANDMOD(denominator)) < 2 * numerator)
+            return second_best;
+        return bbest;
+    }
+
+    /* (3) p >= 0.5 and n = 1 */
+    if (diffdiff == 1)
+        return second_best;
+
+    /* (4) p >= 0.5 and n > 1 (only remaining case)                   */
+    /*     with probability 2(p-0.5) pick second best, otherwise best */
+
+    if ((RANDMOD(denominator)) < 2 * (numerator - (denominator / 2)))
+        return second_best;
+
+    return bbest;
 }

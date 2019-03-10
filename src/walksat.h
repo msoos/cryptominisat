@@ -52,7 +52,12 @@ private:
     /************************************/
     void parse_parameters();
     void init();
-    void init_problem();
+    bool init_problem();
+
+    enum class add_cl_ret {added_cl, skipped_cl, unsat};
+    template<class T>
+    add_cl_ret add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused);
+    bool assumed_triggered = false;
 
     /************************************/
     /* Printing and Statistics          */
@@ -75,6 +80,7 @@ private:
     /*                  Heuristics                                  */
     /****************************************************************/
     uint32_t pickbest();
+    uint32_t pickrnovelty();
 
     /************************************/
     /* Main data structures             */
@@ -93,34 +99,36 @@ private:
 
     /* Data structures for clauses */
 
-    Lit *storebase; //all the literals of all the clauses
-    Lit **clause; /* clauses to be satisfied */
+    Lit *storebase = NULL; //all the literals of all the clauses
+    Lit **clause = NULL; /* clauses to be satisfied */
     /* indexed as clause[clause_num][literal_num] */
-    uint32_t *clsize;       /* length of each clause */
-    uint32_t *false_cls;     /* clauses which are false */
-    uint32_t *map_cl_to_false_cls; /* where each clause is listed in false */
-    uint32_t *numtruelit; /* number of true literals in each clause */
+    uint32_t *clsize = NULL;       /* length of each clause */
+    uint32_t *false_cls = NULL;     /* clauses which are false */
+    uint32_t *map_cl_to_false_cls = NULL; /* where each clause is listed in false */
+    uint32_t *numtruelit = NULL; /* number of true literals in each clause */
     uint32_t longestclause;
 
     /* Data structures for vars: arrays of size numvars indexed by var */
 
-    lbool *assigns;         /* value of each var */
-    uint32_t *breakcount;   /* number of clauses that become unsat if var if flipped */
+    lbool *assigns = NULL;         /* value of each var */
+    uint32_t *breakcount = NULL;   /* number of clauses that become unsat if var if flipped */
+    uint32_t *makecount = NULL;    /* number of clauses that become sat if var if flipped */
 
     /* Data structures literals: arrays of size 2*numvars, indexed by literal+numvars */
 
-    //TODO make this half the size by using offsets
-    uint32_t **occurrence; /* where each literal occurs, size 2*numvars            */
+    ///TODO make this half the size by using offsets
+    /** where each literal occurs, size 2*numvars
+       indexed as occurrence[literal+numvars][occurrence_num] */
+    uint32_t **occurrence = NULL;
+    uint32_t* occur_list_alloc = NULL;
 
-
-    uint32_t* occur_list_alloc;
-    /* indexed as occurrence[literal+numvars][occurrence_num] */
-
-    uint32_t *numoccurrence; /* number of times each literal occurs, size 2*numvars  */
-    /* indexed as numoccurrence[literal+numvars]              */
+    /** number of times each literal occurs, size 2*numvars
+        indexed as numoccurrence[literal+numvars]              */
+    uint32_t *numoccurrence = NULL;
 
     /* Data structures for lists of clauses used in heuristics */
-    uint32_t *best;
+    uint32_t *best = NULL;
+    int64_t *changed = NULL;   /* step at which variable was last flipped */
 
     /************************************/
     /* Global flags and parameters      */
@@ -128,9 +136,9 @@ private:
     uint32_t numerator; /* make random flip with numerator/denominator frequency */
     double walk_probability = 0.5;
     uint64_t numflip;        /* number of changes so far */
-    uint32_t max_runs = 10;
-    uint64_t cutoff = 100000;
-    uint64_t base_cutoff = 100000;
+    static constexpr uint64_t cutoff = 100000;
+    static constexpr uint32_t denominator = 100000; /* denominator used in fractions to represent probabilities */
+    static constexpr uint32_t one_percent = 1000;   /* ONE_PERCENT / denominator = 0.01 */
     uint32_t numtry = 0;   /* total attempts at solutions */
 
     /* Histogram of tail */
