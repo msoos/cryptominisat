@@ -29,12 +29,11 @@ THE SOFTWARE.
 #include "walksat.h"
 #include "solver.h"
 
-#define denominator 100000 /* denominator used in fractions to represent probabilities */
 using namespace CMSat;
 
 uint32_t WalkSAT::RANDMOD(uint32_t d)
 {
-    return d > 1 ? solver->mtrand.randInt(d-1) : 0;
+    return d > 1 ? mtrand.randInt(d-1) : 0;
 }
 
 WalkSAT::WalkSAT(Solver* _solver) :
