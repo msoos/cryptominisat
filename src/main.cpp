@@ -426,8 +426,6 @@ void Main::add_supported_options()
         , "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea")
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
-    ("dumpresult", po::value(&resultFilename)
-        , "Write solution(s) to this file")
     ;
 
     po::options_description walk_options("WalkSAT options");
@@ -659,6 +657,8 @@ void Main::add_supported_options()
         , "Print assignment if solution is SAT")
     ("restartprint", po::value(&conf.print_restart_line_every_n_confl)->default_value(conf.print_restart_line_every_n_confl)
         , "Print restart status lines at least every N conflicts")
+    ("dumpresult", po::value(&resultFilename)
+        , "Write solution(s) to this file")
     ;
 
     po::options_description componentOptions("Component options");
