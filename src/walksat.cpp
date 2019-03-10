@@ -63,7 +63,7 @@ WalkSAT::~WalkSAT()
 lbool WalkSAT::main()
 {
     parse_parameters();
-    mtrand.seed(1U);
+    mtrand.seed(solver->mtrand.randInt());
     print_parameters();
     init_problem();
     initialize_statistics();
