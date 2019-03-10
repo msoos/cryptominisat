@@ -741,7 +741,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     assert(var < solver->nVars());
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        || solver->var_inside_assumptions(var)
+        || solver->var_inside_assumptions(var) != l_Undef
         || (solver->conf.sampling_vars && sampling_vars_occsimp[var])
         //|| (!solver->conf.allow_elim_xor_vars && solver->varData[var].added_for_xor)
     ) {

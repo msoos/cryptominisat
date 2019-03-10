@@ -100,7 +100,7 @@ void CompHandler::createRenumbering(const vector<uint32_t>& vars)
 bool CompHandler::assumpsInsideComponent(const vector<uint32_t>& vars)
 {
     for(uint32_t var: vars) {
-        if (solver->var_inside_assumptions(var)) {
+        if (solver->var_inside_assumptions(var) != l_Undef) {
             return true;
         }
     }

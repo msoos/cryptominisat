@@ -111,13 +111,26 @@ class Searcher : public HyperEngine
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
 
         ///Returns 0 if not inside, 1 if TRUE and 2 if FALSE
-        char var_inside_assumptions(const uint32_t var) const
+        lbool var_inside_assumptions(const uint32_t var) const
         {
             #ifdef SLOW_DEBUG
             assert(var < nVars());
             assert(var < assumptionsSet.size());
             #endif
             return assumptionsSet.at(var);
+        }
+        lbool lit_inside_assumptions(const Lit lit) const
+        {
+            #ifdef SLOW_DEBUG
+            assert(lit.var() < nVars());
+            assert(lit.var() < assumptionsSet.size());
+            #endif
+            if (assumptionsSet.at(lit.var()) == l_Undef) {
+                return l_Undef;
+            } else {
+                lbool val = assumptionsSet.at(lit.var());
+                return val ^ lit.sign();
+            }
         }
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
@@ -155,7 +168,7 @@ class Searcher : public HyperEngine
         void testing_fill_assumptions_set()
         {
             assumptionsSet.clear();
-            assumptionsSet.resize(nVars(), 0);
+            assumptionsSet.resize(nVars(), l_Undef);
         }
         double get_cla_inc() const
         {
@@ -233,7 +246,7 @@ class Searcher : public HyperEngine
         ///we cannot eliminate / component-handle such vars
         ///Needed so checking is fast.
         ///0 = not an assumptions, 1 == TRUE, 2 == FALSE
-        vector<char> assumptionsSet;
+        vector<lbool> assumptionsSet;
 
         //Note that this array can have the same internal variable more than
         //once, in case one has been replaced with the other. So if var 1 =  var 2

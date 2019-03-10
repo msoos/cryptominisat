@@ -1035,7 +1035,7 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
     }
 
     if (bva) {
-        assumptionsSet.push_back(0);
+        assumptionsSet.push_back(l_Undef);
     }
 
     //Too expensive
@@ -1086,7 +1086,7 @@ void Solver::set_assumptions()
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-    assumptionsSet.resize(nVars(), 0);
+    assumptionsSet.resize(nVars(), l_Undef);
     if (outside_assumptions.empty()) {
         return;
     }
@@ -1797,7 +1797,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
 
         for(const Lit lit: conflict) {
             if (value(lit) == l_Undef) {
-                assert(var_inside_assumptions(lit.var()));
+                assert(var_inside_assumptions(lit.var()) != l_Undef);
             }
         }
         update_assump_conflict_to_orig_outside(conflict);
@@ -2072,6 +2072,7 @@ lbool Solver::simplify_problem(const bool startup)
     } else {
         assert(ret == l_True);
         finish_up_solve(ret);
+        rebuildOrderHeap();
         return ret;
     }
 }
@@ -3115,7 +3116,7 @@ void Solver::update_assumptions_after_varreplace()
     //Update assumptions
     for(AssumptionPair& lit_pair: assumptions) {
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = 0;
+            assumptionsSet[lit_pair.lit_inter.var()] = l_Undef;
         } else {
             assert(value(lit_pair.lit_inter) != l_Undef
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
@@ -3125,12 +3126,12 @@ void Solver::update_assumptions_after_varreplace()
         lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
         //remove old from set
         if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
-            assumptionsSet[orig.var()] = 0;
+            assumptionsSet[orig.var()] = l_Undef;
         }
 
         //add new to set
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = lit_pair.lit_inter.sign() ? 2: 1;
+            assumptionsSet[lit_pair.lit_inter.var()] = lit_pair.lit_inter.sign() ? l_False: l_True;
         }
     }
 }
@@ -3776,7 +3777,7 @@ void Solver::undef_fill_potentials()
 
         assert(varData[v].removed == Removed::none);
         assert(assumptionsSet.size() > v);
-        if (model_value(v) != l_Undef && assumptionsSet[v] == false) {
+        if (model_value(v) != l_Undef && assumptionsSet[v] == l_Undef) {
             assert(undef->can_be_unset[v] == 0);
             undef->can_be_unset[v] ++;
             if (conf.sampling_vars == NULL) {
