@@ -923,7 +923,7 @@ fuzzers_noxor = [
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
 fuzzers_noxor_walksat = [
-    ["../../build/tests/cnf-utils/makewff -cnf 3 300 1700", "-seed"],
+    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1080", "-seed"],
 ]
 
 fuzzers_xor = [
