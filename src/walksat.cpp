@@ -610,7 +610,7 @@ void WalkSAT::update_and_print_statistics_end_try()
         }
         std_dev_avgfalse = sqrt(variance_avgfalse);
 
-        ratio_avgfalse = avgfalse / std_dev_avgfalse;
+        ratio_avgfalse = ratio_for_stat(avgfalse, std_dev_avgfalse);
 
         sum_avgfalse += avgfalse;
         sum_std_dev_avgfalse += std_dev_avgfalse;
