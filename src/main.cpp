@@ -328,10 +328,6 @@ void Main::add_supported_options()
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
-    ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
-        , "Run WalkSAT during simplification")
-    ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
-        , "Run WalkSAT every N simplifications only")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
@@ -432,6 +428,16 @@ void Main::add_supported_options()
         , "MainSolver at specific 'solve()' points in CNF file")
     ("dumpresult", po::value(&resultFilename)
         , "Write solution(s) to this file")
+    ;
+
+    po::options_description walk_options("WalkSAT options");
+    walk_options.add_options()
+    ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
+        , "Run WalkSAT during simplification")
+    ("walkruns", po::value(&conf.walk_max_runs)->default_value(conf.walk_max_runs)
+        , "Run WalkSAT during simplification")
+    ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
+        , "Run WalkSAT every N simplifications only")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -774,6 +780,7 @@ void Main::add_supported_options()
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)
+    .add(walk_options)
     .add(stampOptions)
     .add(simp_schedules)
     .add(occ_mem_limits)
@@ -1029,6 +1036,16 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
+    if (conf.walk_max_runs < 1) {
+        cout << "ERROR: '--walkruns' must be at least 1" << endl;
+        exit(-1);
+    }
+
+    if (conf.walksat_every_n < 1) {
+        cout << "ERROR: '--walkeveryn' must be at least 1" << endl;
+        exit(-1);
+    }
+
     if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
         cout << "ERROR: The '--maxxorsize' parameter cannot be larger than " << MAX_XOR_RECOVER_SIZE << endl;
         exit(-1);

@@ -311,11 +311,16 @@ class Tester:
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
         cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        walksat = 0
         if options.walksat:
-            cmd += "--walksat 1 "
+            walksat = 1
         else:
-            cmd += "--walksat %d " % random.choice([0, 1, 1, 1, 1, 1, 1])
-        cmd += "--walkeveryn 1 "
+            walksat = random.choice([0, 1, 1, 1, 1, 1, 1])
+
+        cmd += "--walksat %d " % walksat
+        if walksat == 1:
+            cmd += "--walkeveryn %d " % random.randint(1, 3)
+            cmd += "--walkruns %d " % random.randint(1, 100)
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red

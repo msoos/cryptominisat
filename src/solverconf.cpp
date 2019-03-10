@@ -191,6 +191,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
         , simplify_schedule_startup(
+            "walksat," //MUST be first because the others mess up the variable polarities
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor, "
@@ -240,6 +241,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //WalkSAT
         , doWalkSAT(false)
         , walksat_every_n(2)
+        , walk_max_runs(50)
 
         //Distillation
         , do_distill_clauses(true)
