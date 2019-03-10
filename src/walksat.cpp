@@ -498,7 +498,7 @@ bool WalkSAT::init_problem()
     for (uint32_t i2 = 0; i2 < numvars*2; i2++) {
         const Lit lit = Lit::toLit(i2);
         if (i > numliterals) {
-            cout << "Code error, allocating occurrence lists" << endl;
+            cout << "ERROR: Walksat -- allocating occurrence lists is wrong" << endl;
             exit(-1);
         }
         occurrence[lit.toInt()] = &(occur_list_alloc[i]);
@@ -533,6 +533,10 @@ bool WalkSAT::init_problem()
 
 void WalkSAT::print_parameters()
 {
+    if (solver->conf.verbosity == 0) {
+        return;
+    }
+
     cout << "c [walksat] Mate Soos, based on WALKSAT v56 by Henry Kautz" << endl;
     cout << "c [walksat] cutoff = %" << cutoff << endl;
     cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
@@ -545,11 +549,18 @@ void WalkSAT::initialize_statistics()
     x = 0;
     r = 0;
     tail_start_flip = tail * numvars;
-    cout << "c [walksat] tail starts after flip = " << tail_start_flip << endl;
+
+    if (solver->conf.verbosity) {
+        cout << "c [walksat] tail starts after flip = " << tail_start_flip << endl;
+    }
 }
 
 void WalkSAT::print_statistics_header()
 {
+    if (solver->conf.verbosity) {
+        return;
+    }
+
     cout << "c [walksat] numvars = " << numvars << ", numclauses = "
     << numclauses << ", numliterals = " << numliterals << endl;
 
@@ -633,27 +644,29 @@ void WalkSAT::update_and_print_statistics_end_try()
         r = 0;
     }
 
-    //MSOOS: this has been removed, uses memory, only stats
-    double undo_fraction = 0;
+    if (solver->conf.verbosity) {
+        //MSOOS: this has been removed, uses memory, only stats
+        double undo_fraction = 0;
 
-    cout
-    << "c [walksat] "
-    << std::setw(9) << lowbad
-    << std::setw(9) << numfalse
-    << std::setw(9+2) << avgfalse
-    << std::setw(9+2) << std_dev_avgfalse
-    << std::setw(9+2) << ratio_avgfalse
-    << std::setw(9) << numflip
-    << std::setw(9) << undo_fraction
-    << std::setw(9+2) << (((int)found_solution * 100) / numtry);
-    if (found_solution) {
-        cout << std::setw(9+2) << totalsuccessflip / (int)found_solution;
-        cout << std::setw(9+2) << mean_x;
+        cout
+        << "c [walksat] "
+        << std::setw(9) << lowbad
+        << std::setw(9) << numfalse
+        << std::setw(9+2) << avgfalse
+        << std::setw(9+2) << std_dev_avgfalse
+        << std::setw(9+2) << ratio_avgfalse
+        << std::setw(9) << numflip
+        << std::setw(9) << undo_fraction
+        << std::setw(9+2) << (((int)found_solution * 100) / numtry);
+        if (found_solution) {
+            cout << std::setw(9+2) << totalsuccessflip / (int)found_solution;
+            cout << std::setw(9+2) << mean_x;
+        }
+        cout << endl;
     }
-    cout << endl;
 
     if (numfalse == 0 && countunsat() != 0) {
-        cout << "Program error, verification of solution fails!" << endl;
+        cout << "ERROR: WalkSAT -- verification of solution fails!" << endl;
         exit(-1);
     }
 }
@@ -662,21 +675,23 @@ void WalkSAT::print_statistics_final()
 {
     totalTime = cpuTime() - startTime;
     seconds_per_flip = ratio_for_stat(totalTime, totalflip);
-    cout << "c [walksat] total elapsed seconds = " <<  totalTime << endl;
-    cout << "c [walksat] num tries: " <<  numtry  << endl;
-    cout << "c [walksat] avg flips per second = " << ratio_for_stat(totalflip, totalTime) << endl;
-    cout << "c [walksat] number solutions found = " << found_solution << endl;
-    cout << "c [walksat] final success rate = " << stats_line_percent(found_solution, numtry)  << endl;
-    cout << "c [walksat] avg length successful tries = %" <<
-           ratio_for_stat(totalsuccessflip,found_solution) << endl;
-    if (found_solution) {
-        cout << "c [walksat] avg flips per assign (over all runs) = " <<
-               ratio_for_stat(totalflip, found_solution) << endl;
-        cout << "c [walksat] avg seconds per assign (over all runs) = " <<
-               ratio_for_stat(totalflip, found_solution) * seconds_per_flip << endl;
-        cout << "c [walksat] mean flips until assign = " << mean_x << endl;
-        cout << "c [walksat] mean seconds until assign = " << mean_x * seconds_per_flip << endl;
-        cout << "c [walksat] mean restarts until assign = " << mean_r << endl;
+    if (solver->conf.verbosity) {
+        cout << "c [walksat] total elapsed seconds = " <<  totalTime << endl;
+        cout << "c [walksat] num tries: " <<  numtry  << endl;
+        cout << "c [walksat] avg flips per second = " << ratio_for_stat(totalflip, totalTime) << endl;
+        cout << "c [walksat] number solutions found = " << found_solution << endl;
+        cout << "c [walksat] final success rate = " << stats_line_percent(found_solution, numtry)  << endl;
+        cout << "c [walksat] avg length successful tries = %" <<
+               ratio_for_stat(totalsuccessflip,found_solution) << endl;
+        if (found_solution) {
+            cout << "c [walksat] avg flips per assign (over all runs) = " <<
+                   ratio_for_stat(totalflip, found_solution) << endl;
+            cout << "c [walksat] avg seconds per assign (over all runs) = " <<
+                   ratio_for_stat(totalflip, found_solution) * seconds_per_flip << endl;
+            cout << "c [walksat] mean flips until assign = " << mean_x << endl;
+            cout << "c [walksat] mean seconds until assign = " << mean_x * seconds_per_flip << endl;
+            cout << "c [walksat] mean restarts until assign = " << mean_r << endl;
+        }
     }
 
     if (number_sampled_runs) {
@@ -704,26 +719,30 @@ void WalkSAT::print_statistics_final()
             nonsuc_ratio_mean_avgfalse = 0;
         }
 
-        cout << "c [walksat] final numbad level statistics"  << endl;
-        cout << "c [walksat]     statistics over all runs:"  << endl;
-        cout << "c [walksat]       overall mean avg numbad = " << mean_avgfalse << endl;
-        cout << "c [walksat]       overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
-        cout << "c [walksat]       overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
-        cout << "c [walksat]     statistics on successful runs:"  << endl;
-        cout << "c [walksat]       successful mean avg numbad = " << suc_mean_avgfalse << endl;
-        cout << "c [walksat]       successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
-        cout << "c [walksat]       successful ratio mean numbad to mean std dev = " <<
-               suc_ratio_mean_avgfalse  << endl;
-        cout << "c [walksat]     statistics on nonsuccessful runs:"  << endl;
-        cout << "c [walksat]       nonsuccessful mean avg numbad level = " << nonsuc_mean_avgfalse  << endl;
-        cout << "c [walksat]       nonsuccessful mean numbad std deviation = " <<
-               nonsuc_mean_std_dev_avgfalse  << endl;
-        cout << "c [walksat]       nonsuccessful ratio mean numbad to mean std dev = " <<
-               nonsuc_ratio_mean_avgfalse  << endl;
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] final numbad level statistics"  << endl;
+            cout << "c [walksat]     statistics over all runs:"  << endl;
+            cout << "c [walksat]       overall mean avg numbad = " << mean_avgfalse << endl;
+            cout << "c [walksat]       overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
+            cout << "c [walksat]       overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
+            cout << "c [walksat]     statistics on successful runs:"  << endl;
+            cout << "c [walksat]       successful mean avg numbad = " << suc_mean_avgfalse << endl;
+            cout << "c [walksat]       successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
+            cout << "c [walksat]       successful ratio mean numbad to mean std dev = " <<
+                   suc_ratio_mean_avgfalse  << endl;
+            cout << "c [walksat]     statistics on nonsuccessful runs:"  << endl;
+            cout << "c [walksat]       nonsuccessful mean avg numbad level = " << nonsuc_mean_avgfalse  << endl;
+            cout << "c [walksat]       nonsuccessful mean numbad std deviation = " <<
+                   nonsuc_mean_std_dev_avgfalse  << endl;
+            cout << "c [walksat]       nonsuccessful ratio mean numbad to mean std dev = " <<
+                   nonsuc_ratio_mean_avgfalse  << endl;
+        }
     }
 
     if (found_solution) {
-        cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
+        }
 
         //TODO: assumptions!! -- we have removed them from the CNF
         //TODO: so we must now re-add them as 1+ level decisions.
@@ -748,8 +767,11 @@ void WalkSAT::print_statistics_final()
             solver->new_decision_level();
             solver->enqueue(Lit(i, value(i) == l_False));
         }
-    } else
-        cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
+    } else {
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
+        }
+    }
 }
 
 /*******************************************************/
@@ -907,9 +929,9 @@ uint32_t WalkSAT::pickrnovelty()
 
     /* If best is youngest, then second best must be strictly worse */
     if (best_diff < second_best_diff) {
-        cout << "c [walksat] rnovelty+ code error!" << endl;
-        cout << "c [walksat] diffdiff = " << best_diff - second_best_diff << endl;
-        cout << "c [walksat] best = " << bbest
+        cout << "ERROR -- rnovelty+ code error!" << endl;
+        cout << " diffdiff = " << best_diff - second_best_diff << endl;
+        cout << " best = " << bbest
         << "   best_diff = " << best_diff
         << "   second_best = " << second_best
         << "   second_best_diff = " << second_best_diff
