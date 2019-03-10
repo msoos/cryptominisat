@@ -3125,7 +3125,7 @@ void Solver::update_assumptions_after_varreplace()
         lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
         //remove old from set
         if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
-                assumptionsSet[orig.var()] = 0;
+            assumptionsSet[orig.var()] = 0;
         }
 
         //add new to set
