@@ -84,6 +84,7 @@ lbool WalkSAT::main()
     print_statistics_header();
     startTime = cpuTime();
 
+    uint32_t last_low_bad = 1000;
     while (!found_solution && numtry < solver->conf.walk_max_runs) {
         numtry++;
         init_for_round();
@@ -102,12 +103,17 @@ lbool WalkSAT::main()
         check_make_break();
         #endif
         update_and_print_statistics_end_try();
-        if (numtry > 3 && lowbad > 100) {
+        int diff = (int)last_low_bad-(int)lowbad;
+        if ((numtry > 3 && lowbad > 1000)
+            || (numtry > 3 && lowbad > 300 && diff < 20 )
+            || (numtry > 10 && lowbad > 50)
+        ) {
             if (solver->conf.verbosity) {
                 cout << "c [walksat] abandoning, lowbad is too high" << endl;
             }
             break;
         }
+        last_low_bad = lowbad;
     }
     print_statistics_final();
     if (found_solution)
