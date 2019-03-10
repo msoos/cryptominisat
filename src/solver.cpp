@@ -1035,7 +1035,7 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
     }
 
     if (bva) {
-        assumptionsSet.push_back(false);
+        assumptionsSet.push_back(0);
     }
 
     //Too expensive
@@ -1058,7 +1058,9 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
-    assumptionsSet.resize(nVars(), false);
+
+    assert(assumptionsSet.size() >= nVars());
+    assumptionsSet.resize(nVars());
     assumptionsSet.shrink_to_fit();
 
     const double time_used = cpuTime() - myTime;
@@ -1084,7 +1086,7 @@ void Solver::set_assumptions()
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-    assumptionsSet.resize(nVars(), false);
+    assumptionsSet.resize(nVars(), 0);
     if (outside_assumptions.empty()) {
         return;
     }
@@ -3113,7 +3115,7 @@ void Solver::update_assumptions_after_varreplace()
     //Update assumptions
     for(AssumptionPair& lit_pair: assumptions) {
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = false;
+            assumptionsSet[lit_pair.lit_inter.var()] = 0;
         } else {
             assert(value(lit_pair.lit_inter) != l_Undef
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
@@ -3123,12 +3125,12 @@ void Solver::update_assumptions_after_varreplace()
         lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
         //remove old from set
         if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
-                assumptionsSet[orig.var()] = false;
+                assumptionsSet[orig.var()] = 0;
         }
 
         //add new to set
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = true;
+            assumptionsSet[lit_pair.lit_inter.var()] = lit_pair.lit_inter.sign() ? 2: 1;
         }
     }
 }

@@ -3047,7 +3047,8 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
                 //Assumption contains the same literal twice. Shouldn't really be allowed...
                 //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
             } else {
-                assumptionsSet[lit.var()] = true;
+                //1 if TRUE, 2 if FALSE
+                assumptionsSet[lit.var()] = lit.sign() ? 2 : 1;
             }
         } else {
             if (value(lit) == l_Undef) {
@@ -3088,14 +3089,14 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = false;
+            assumptionsSet[lit.var()] = 0;
         }
     }
 
     end:;
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
-        assert(!x);
+        assert(x == 0);
     }
     #endif
 }

@@ -109,7 +109,9 @@ class Searcher : public HyperEngine
 
         size_t hyper_bin_res_all(const bool check_for_set_values = true);
         std::pair<size_t, size_t> remove_useless_bins(bool except_marked = false);
-        bool var_inside_assumptions(const uint32_t var) const
+
+        ///Returns 0 if not inside, 1 if TRUE and 2 if FALSE
+        char var_inside_assumptions(const uint32_t var) const
         {
             #ifdef SLOW_DEBUG
             assert(var < nVars());
@@ -153,7 +155,7 @@ class Searcher : public HyperEngine
         void testing_fill_assumptions_set()
         {
             assumptionsSet.clear();
-            assumptionsSet.resize(nVars(), false);
+            assumptionsSet.resize(nVars(), 0);
         }
         double get_cla_inc() const
         {
@@ -228,8 +230,9 @@ class Searcher : public HyperEngine
         void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
         void unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from);
         void renumber_assumptions(const vector<uint32_t>& outerToInter);
-        //we cannot eliminate / component-handle such vars
-        //Needed so checking is fast
+        ///we cannot eliminate / component-handle such vars
+        ///Needed so checking is fast.
+        ///0 = not an assumptions, 1 == TRUE, 2 == FALSE
         vector<char> assumptionsSet;
 
         //Note that this array can have the same internal variable more than
