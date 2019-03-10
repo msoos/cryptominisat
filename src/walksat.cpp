@@ -26,8 +26,10 @@ THE SOFTWARE.
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
+#include "constants.h"
 #include "walksat.h"
 #include "solver.h"
+//#define SLOW_DEBUG
 
 using namespace CMSat;
 
@@ -84,7 +86,7 @@ lbool WalkSAT::main()
 
     while (!found_solution && numtry < solver->conf.walk_max_runs) {
         numtry++;
-        init();
+        init_for_round();
         update_statistics_start_try();
         numflip = 0;
 
@@ -96,7 +98,16 @@ lbool WalkSAT::main()
             flipvar(var);
             update_statistics_end_flip();
         }
+        #ifdef SLOW_DEBUG
+        check_make_break();
+        #endif
         update_and_print_statistics_end_try();
+        if (numtry > 3 && lowbad > 100) {
+            if (solver->conf.verbosity) {
+                cout << "c [walksat] abandoning, lowbad is too high" << endl;
+            }
+            break;
+        }
     }
     print_statistics_final();
     if (found_solution)
@@ -212,6 +223,44 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
     }
 }
 
+void WalkSAT::check_make_break() {
+    vector<uint32_t> makecount_check(numvars, 0);
+    vector<uint32_t> breakcount_check(numvars, 0);
+    vector<uint32_t> numtruelit_check(numclauses, 0);
+    uint32_t numfalse_check = 0;
+
+    /* Set makecount + breakcount  */
+    for (uint32_t i = 0; i < numclauses; i++) {
+        Lit thetruelit;
+        uint32_t sz = clsize[i];
+        assert(sz > 0);
+        for (uint32_t j = 0; j < sz; j++) {
+            if (value(clause[i][j]) == l_True) {
+                thetruelit = clause[i][j];
+                numtruelit_check[i]++;
+            }
+        }
+        if (numtruelit_check[i] == 0) {
+            numfalse_check++;
+            for (uint32_t j = 0; j < clsize[i]; j++) {
+                makecount_check[clause[i][j].var()]++;
+            }
+        } else if (numtruelit_check[i] == 1) {
+            breakcount_check[thetruelit.var()]++;
+        }
+    }
+
+    for(size_t i = 0; i < numvars; i++) {
+        assert(breakcount_check[i] == breakcount[i]);
+        assert(makecount_check[i] == makecount[i]);
+    }
+
+    for(size_t i = 0; i < numclauses; i++) {
+        assert(numtruelit_check[i] == numtruelit[i]);
+    }
+    assert(numfalse == numfalse_check);
+}
+
 /************************************/
 /* Initialization                   */
 /************************************/
@@ -221,30 +270,32 @@ void WalkSAT::parse_parameters()
     numerator = walk_probability * denominator;
 }
 
-void WalkSAT::init()
+void WalkSAT::init_for_round()
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
-    /* initialize truth assignment and changed time */
-    for (uint32_t i = 0; i < numclauses; i++)
-        numtruelit[i] = 0;
-
+    //reset makecount, breakcount and set random starting position
     numfalse = 0;
     for (uint32_t i = 0; i < numvars; i++) {
         breakcount[i] = 0;
         makecount[i] = 0;
-        if (solver->value(i) != l_Undef) {
-            assigns[i] = solver->value(i);
-        } else {
-            assigns[i] = solver->varData[i].polarity ? l_True: l_False;
-        }
+        //all assumed and already set variables have been removed
+        //from the problem already, so the stuff below is safe.
+        assigns[i] = mtrand.randInt(1) ? l_True: l_False;
     }
 
-    /* Initialize breakcount  */
+    /* initialize truth assignment and changed time */
     for (uint32_t i = 0; i < numclauses; i++) {
-        Lit thetruelit;
-        for (uint32_t j = 0; j < clsize[i]; j++) {
+        numtruelit[i] = 0;
+    }
+
+    /* Set makecount + breakcount  */
+    for (uint32_t i = 0; i < numclauses; i++) {
+        Lit thetruelit = lit_Undef;
+        uint32_t sz = clsize[i];
+        assert(sz >= 1);
+        for (uint32_t j = 0; j < sz; j++) {
             if (value(clause[i][j]) == l_True) {
                 numtruelit[i]++;
                 thetruelit = clause[i][j];
@@ -261,6 +312,10 @@ void WalkSAT::init()
             breakcount[thetruelit.var()]++;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    check_make_break();
+    #endif
 }
 
 uint64_t WalkSAT::mem_needed()
@@ -304,6 +359,7 @@ uint64_t WalkSAT::mem_needed()
 template<class T>
 WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused) {
     uint32_t sz = 0;
+    bool sat = false;
     for(size_t i3 = 0; i3 < cl.size(); i3++) {
         Lit lit = cl[i3];
         assert(solver->varData[lit.var()].removed == Removed::none);
@@ -313,20 +369,27 @@ WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t&
         } else {
             val = solver->lit_inside_assumptions(lit);
         }
+
         if (val == l_True) {
             //clause is SAT, skip!
-            assumed_triggered = true;
-            for(uint32_t i2 = 0; i2 < i3; i2++) {
-                numoccurrence[cl[i2].toInt()]--;
-            }
-            return add_cl_ret::skipped_cl;
+            cl_shortening_triggered = true;
+            sat = true;
+            continue;
         } else if (val == l_False) {
-            assumed_triggered = true;
+            cl_shortening_triggered = true;
             continue;
         }
         storebase[storeused+sz] = lit;
         numoccurrence[lit.toInt()]++;
         sz++;
+    }
+    if (sat) {
+        for(uint32_t i3 = 0; i3 < sz; i3++) {
+            Lit lit = storebase[storeused+i3];
+            assert(numoccurrence[lit.toInt()] > 0);
+            numoccurrence[lit.toInt()]--;
+        }
+        return add_cl_ret::skipped_cl;
     }
     if (sz == 0) {
         //it's unsat because of assumptions
@@ -416,12 +479,12 @@ bool WalkSAT::init_problem()
             return false;
         }
     }
-    assert(storeused == storesize || (assumed_triggered && storeused < storesize));
+    assert(storeused == storesize || (cl_shortening_triggered && storeused < storesize));
     storesize = storeused;
-    assert(i == numclauses || (assumed_triggered && i < numclauses));
+    assert(i == numclauses || (cl_shortening_triggered && i < numclauses));
     numclauses = i;
-
     best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
+
 
     /* allocate occurence lists */
     occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
@@ -436,11 +499,13 @@ bool WalkSAT::init_problem()
         i += numoccurrence[lit.toInt()];
         numoccurrence[lit.toInt()] = 0;
     }
-    assert(i == numliterals);
+    assert(i == numliterals || (cl_shortening_triggered && i < numliterals));
 
     /* Third, fill in the occurence lists */
     for (i = 0; i < numclauses; i++) {
-        for (j = 0; j < clsize[i]; j++) {
+        uint32_t sz = clsize[i];
+        assert(sz >= 1);
+        for (j = 0; j < sz; j++) {
             const Lit lit = clause[i][j];
             assert(lit.var() < numvars);
 
@@ -448,6 +513,10 @@ bool WalkSAT::init_problem()
             numoccurrence[lit.toInt()]++;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    check_num_occurs();
+    #endif
 
     return true;
 }
@@ -458,7 +527,7 @@ bool WalkSAT::init_problem()
 
 void WalkSAT::print_parameters()
 {
-    cout << "c [walksat] WALKSAT v56" << endl;
+    cout << "c [walksat] Mate Soos, based on WALKSAT v56 by Henry Kautz" << endl;
     cout << "c [walksat] cutoff = %" << cutoff << endl;
     cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
     cout << "c [walksat] walk probabability = "
@@ -659,7 +728,9 @@ void WalkSAT::print_statistics_final()
                 continue;
             }
             if (solver->value(i) != l_Undef) {
-                assert(solver->value(i) == value(i));
+                //this variable has been removed already
+                //so whatever value it sets, it doesn't matter
+                //the solution is still correct
                 continue;
             }
 
@@ -696,6 +767,40 @@ uint32_t WalkSAT::countunsat()
         }
     }
     return unsat;
+}
+
+void WalkSAT::check_num_occurs()
+{
+    vector<uint32_t> n_occur;
+    n_occur.resize(numvars*2, 0);
+    for (uint32_t i = 0; i < numclauses; i++) {
+        uint32_t sz = clsize[i];
+        assert(sz >= 1);
+        for (uint32_t j = 0; j < sz; j++) {
+            Lit lit = clause[i][j];
+            n_occur[lit.toInt()]++;
+        }
+    }
+    for (uint32_t i = 0; i < n_occur.size(); i++) {
+        assert(n_occur[i] == numoccurrence[i]);
+    }
+
+    /* Check every lit in the occurence lists */
+    for (uint32_t i = 0; i < numvars*2; i++) {
+        Lit lit = Lit::toLit(i);
+        for (uint32_t j = 0; j < numoccurrence[lit.toInt()]; j++) {
+            uint32_t clnum = occurrence[lit.toInt()][j];
+            Lit* cl = clause[clnum];
+            uint32_t sz = clsize[clnum];
+            bool found = false;
+            for(uint32_t k = 0; k < sz; k++) {
+                if (cl[k] == lit) {
+                    found = true;
+                }
+            }
+            assert(found);
+        }
+    }
 }
 
 /****************************************************************/

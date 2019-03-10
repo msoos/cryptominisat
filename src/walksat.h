@@ -51,13 +51,13 @@ private:
     /* Initialization                   */
     /************************************/
     void parse_parameters();
-    void init();
+    void init_for_round();
     bool init_problem();
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
     template<class T>
     add_cl_ret add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused);
-    bool assumed_triggered = false;
+    bool cl_shortening_triggered = false;
 
     /************************************/
     /* Printing and Statistics          */
@@ -75,6 +75,8 @@ private:
     /*******************************************************/
     uint32_t countunsat();
     uint32_t RANDMOD(uint32_t x);
+    void check_num_occurs();
+    void check_make_break();
 
     /****************************************************************/
     /*                  Heuristics                                  */
