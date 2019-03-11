@@ -41,7 +41,6 @@ uint32_t WalkSAT::RANDMOD(uint32_t d)
 WalkSAT::WalkSAT(Solver* _solver) :
     solver(_solver)
 {
-    //test
 }
 
 WalkSAT::~WalkSAT()
