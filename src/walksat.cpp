@@ -324,6 +324,8 @@ void WalkSAT::init_for_round()
 
 uint64_t WalkSAT::mem_needed()
 {
+    numvars = solver->nVars();
+    numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
     uint64_t needed = 0;
 
     //LIT storage (all clause data)

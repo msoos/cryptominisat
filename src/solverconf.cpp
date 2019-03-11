@@ -242,6 +242,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doWalkSAT(false)
         , walksat_every_n(2)
         , walk_max_runs(50)
+        , walksat_memoutMB(500)
 
         //Distillation
         , do_distill_clauses(true)

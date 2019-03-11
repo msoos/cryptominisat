@@ -1911,10 +1911,18 @@ lbool Solver::execute_inprocess_strategy(
             ) {
                 WalkSAT walk(this);
                 double mem_needed_mb = (double)walk.mem_needed()/(1000.0*1000.0);
-                if (mem_needed_mb < 1000) {
+                double maxmem = conf.walksat_memoutMB*conf.var_and_mem_out_mult;
+                if (mem_needed_mb < maxmem) {
                     lbool ret = walk.main();
                     if (ret == l_True) {
                         return l_True;
+                    }
+                } else {
+                    if (conf.verbosity) {
+                        cout << "c [walksat] would need "
+                        << std::setprecision(2) << std::fixed << mem_needed_mb
+                        << " MB but that's over limit of " << std::fixed << maxmem
+                        << " MB -- skipping" << endl;
                     }
                 }
             }

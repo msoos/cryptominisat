@@ -334,6 +334,7 @@ class DLL_PUBLIC SolverConf
         int doWalkSAT;
         uint32_t walksat_every_n;
         uint32_t walk_max_runs;
+        uint32_t walksat_memoutMB;
 
         //Distillation
         int      do_distill_clauses;
