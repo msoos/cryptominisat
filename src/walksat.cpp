@@ -108,6 +108,8 @@ lbool WalkSAT::main()
         check_make_break();
         #endif
         update_and_print_statistics_end_try();
+
+        //Trying to early exit in case it's not really working
         int diff = (int)last_low_bad-(int)lowbad;
         if ((numtry > 3 && lowbad > 1000)
             || (numtry > 3 && lowbad > 300 && diff < 20 )
