@@ -67,6 +67,10 @@ lbool WalkSAT::main()
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
     if (solver->nVars() < 50) {
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] too few variables for walksat"
+            << endl;
+        }
         return l_Undef;
     }
 
@@ -76,6 +80,10 @@ lbool WalkSAT::main()
     if (!init_problem()) {
         //it's actually l_False under assumptions
         //but we'll set the real SAT solver deal with that
+        if (solver->conf.verbosity) {
+            cout << "c [walksat] problem UNSAT under assumptions, returning to main solver"
+            << endl;
+        }
         return l_Undef;
     }
     initialize_statistics();
