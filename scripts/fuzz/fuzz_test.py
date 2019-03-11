@@ -315,9 +315,12 @@ class Tester:
         if options.walksat:
             walksat = 1
         else:
-            walksat = random.choice([0, 1, 1, 1, 1, 1, 1])
+            # it's kinda slow and using it all the time is probably not a good idea
+            walksat = random.choice([0, 0, 0, 1])
 
         cmd += "--walksat %d " % walksat
+        cmd += "--walkruns %d " % random.randint(1, 3)
+
         if walksat == 1:
             cmd += "--walkeveryn %d " % random.randint(1, 3)
             cmd += "--walkruns %d " % random.randint(1, 100)
