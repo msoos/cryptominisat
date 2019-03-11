@@ -342,6 +342,7 @@ uint64_t WalkSAT::mem_needed()
 {
     numvars = solver->nVars();
     numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
+    numliterals = solver->litStats.irredLits;
     uint64_t needed = 0;
 
     //LIT storage (all clause data)
@@ -376,6 +377,7 @@ uint64_t WalkSAT::mem_needed()
 
     //occur_list_alloc
     needed += sizeof(uint32_t) * numliterals;
+
 
     return needed;
 }
