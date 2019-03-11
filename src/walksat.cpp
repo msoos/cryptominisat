@@ -533,15 +533,13 @@ bool WalkSAT::init_problem()
 
 void WalkSAT::print_parameters()
 {
-    if (solver->conf.verbosity == 0) {
-        return;
+    if (solver->conf.verbosity) {
+        cout << "c [walksat] Mate Soos, based on WALKSAT v56 by Henry Kautz" << endl;
+        cout << "c [walksat] cutoff = %" << cutoff << endl;
+        cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
+        cout << "c [walksat] walk probabability = "
+        << std::fixed << std::setprecision(2) << walk_probability << endl;
     }
-
-    cout << "c [walksat] Mate Soos, based on WALKSAT v56 by Henry Kautz" << endl;
-    cout << "c [walksat] cutoff = %" << cutoff << endl;
-    cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
-    cout << "c [walksat] walk probabability = "
-    << std::fixed << std::setprecision(2) << walk_probability << endl;
 }
 
 void WalkSAT::initialize_statistics()
@@ -557,22 +555,20 @@ void WalkSAT::initialize_statistics()
 
 void WalkSAT::print_statistics_header()
 {
-    if (solver->conf.verbosity) {
-        return;
+    if (solver->conf.verbosity == 0) {
+        cout << "c [walksat] numvars = " << numvars << ", numclauses = "
+        << numclauses << ", numliterals = " << numliterals << endl;
+
+        cout <<
+            "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
+            "length       flips" << endl;
+        cout <<
+            "c [walksat]       this       end     unsat       avg     ratio      this      flip   success   "
+            "success       until" << endl;
+        cout <<
+            "c [walksat]        try       try      tail     unsat      tail       try  fraction      rate     "
+            "tries      assign" << endl;
     }
-
-    cout << "c [walksat] numvars = " << numvars << ", numclauses = "
-    << numclauses << ", numliterals = " << numliterals << endl;
-
-    cout <<
-        "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
-        "length       flips" << endl;
-    cout <<
-        "c [walksat]       this       end     unsat       avg     ratio      this      flip   success   "
-        "success       until" << endl;
-    cout <<
-        "c [walksat]        try       try      tail     unsat      tail       try  fraction      rate     "
-        "tries      assign" << endl;
 }
 
 void WalkSAT::update_statistics_start_try()
