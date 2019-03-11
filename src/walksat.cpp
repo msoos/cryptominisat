@@ -353,6 +353,8 @@ uint64_t WalkSAT::mem_needed()
     needed += sizeof(lbool) * numvars;
     //breakcount
     needed += sizeof(uint32_t) * numvars;
+    //makecount
+    needed += sizeof(uint32_t) * numvars;
 
     //occur_list_alloc
     needed += sizeof(uint32_t) * numliterals;
