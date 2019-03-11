@@ -94,7 +94,6 @@ lbool WalkSAT::main()
         while (!found_solution && (numfalse > 0) && (numflip < cutoff)) {
             numflip++;
 
-            //uint32_t var = pickbest();
             uint32_t var = pickrnovelty();
             flipvar(var);
             update_statistics_end_flip();
@@ -489,8 +488,6 @@ bool WalkSAT::init_problem()
     storesize = storeused;
     assert(i == numclauses || (cl_shortening_triggered && i < numclauses));
     numclauses = i;
-    best = (uint32_t*) calloc(sizeof(uint32_t), longestclause);
-
 
     /* allocate occurence lists */
     occur_list_alloc = (uint32_t *)calloc(sizeof(uint32_t), numliterals);
@@ -830,42 +827,6 @@ void WalkSAT::check_num_occurs()
 /****************************************************************/
 /*                  Heuristics                                  */
 /****************************************************************/
-
-uint32_t WalkSAT::pickbest()
-{
-    uint32_t tofix;
-    uint32_t clausesize;
-
-    //pick a random false clause to fix
-    tofix = false_cls[RANDMOD(numfalse)];
-    clausesize = clsize[tofix];
-
-    //pick the literal to flip in this clause
-    uint32_t numbest = 0;
-    uint32_t bestvalue = std::numeric_limits<uint32_t>::max();
-    for (uint32_t i = 0; i < clausesize; i++) {
-        uint32_t var = clause[tofix][i].var();
-        uint32_t numbreak = breakcount[var];
-        if (numbreak <= bestvalue) {
-            if (numbreak < bestvalue)
-                numbest = 0;
-            bestvalue = numbreak;
-            best[numbest++] = var;
-        }
-    }
-
-    //in case there is no literal where the best break is 0 (i.e. free flip)
-    //then half of the time we pick a random literal to flip
-
-    /* walk probability is 0.5, and
-       numerator = (int)(walk_probability * denominator); */
-    if ((bestvalue > 0) && (RANDMOD(denominator) < numerator))
-        return clause[tofix][RANDMOD(clausesize)].var();
-
-    //pick one of the best (least breaking one) to flip
-    return best[RANDMOD(numbest)];
-}
-
 
 uint32_t WalkSAT::pickrnovelty()
 {

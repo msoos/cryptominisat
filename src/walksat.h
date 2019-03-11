@@ -81,7 +81,6 @@ private:
     /****************************************************************/
     /*                  Heuristics                                  */
     /****************************************************************/
-    uint32_t pickbest();
     uint32_t pickrnovelty();
 
     /************************************/
@@ -129,7 +128,6 @@ private:
     uint32_t *numoccurrence = NULL;
 
     /* Data structures for lists of clauses used in heuristics */
-    uint32_t *best = NULL;
     int64_t *changed = NULL;   /* step at which variable was last flipped */
 
     /************************************/
