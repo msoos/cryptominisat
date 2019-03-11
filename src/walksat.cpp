@@ -570,19 +570,13 @@ void WalkSAT::initialize_statistics()
 
 void WalkSAT::print_statistics_header()
 {
-    if (solver->conf.verbosity == 0) {
+    if (solver->conf.verbosity) {
         cout << "c [walksat] numvars = " << numvars << ", numclauses = "
         << numclauses << ", numliterals = " << numliterals << endl;
 
-        cout <<
-            "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips      undo              "
-            "length       flips" << endl;
-        cout <<
-            "c [walksat]       this       end     unsat       avg     ratio      this      flip   success   "
-            "success       until" << endl;
-        cout <<
-            "c [walksat]        try       try      tail     unsat      tail       try  fraction      rate     "
-            "tries      assign" << endl;
+        cout << "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips     nume-" << endl;
+        cout << "c [walksat]       this       end     unsat       avg     ratio      this     rator" << endl;
+        cout << "c [walksat]        try       try      tail     unsat      tail       try          " << endl;
     }
 }
 
@@ -687,9 +681,6 @@ void WalkSAT::update_and_print_statistics_end_try()
     }
 
     if (solver->conf.verbosity) {
-        //MSOOS: this has been removed, uses memory, only stats
-        double undo_fraction = 0;
-
         cout
         << "c [walksat] "
         << std::setw(9) << lowbad
@@ -698,13 +689,8 @@ void WalkSAT::update_and_print_statistics_end_try()
         << std::setw(9+2) << std_dev_avgfalse
         << std::setw(9+2) << ratio_avgfalse
         << std::setw(9) << numflip
-        << std::setw(9) << undo_fraction
-        << std::setw(9+2) << (((int)found_solution * 100) / numtry);
-        if (found_solution) {
-            cout << std::setw(9+2) << totalsuccessflip / (int)found_solution;
-            cout << std::setw(9+2) << mean_x;
-        }
-        cout << endl;
+        << std::setw(9) << numerator
+        << endl;
     }
 
     if (numfalse == 0 && countunsat() != 0) {
@@ -726,6 +712,7 @@ void WalkSAT::print_statistics_final()
         cout << "c [walksat] avg length successful tries = %" <<
                ratio_for_stat(totalsuccessflip,found_solution) << endl;
         if (found_solution) {
+            cout << "c [walksat] total success flip = " << totalsuccessflip << endl;
             cout << "c [walksat] avg flips per assign (over all runs) = " <<
                    ratio_for_stat(totalflip, found_solution) << endl;
             cout << "c [walksat] avg seconds per assign (over all runs) = " <<
