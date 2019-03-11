@@ -288,6 +288,13 @@ void WalkSAT::init_for_round()
     assert(solver->decisionLevel() == 0);
     assert(solver->okay());
 
+    if (adaptive) {
+        walk_probability = 0.0;
+        numerator = (uint32_t)(walk_probability * denominator);
+        stagnation_timer = (uint32_t)(numclauses * adaptive_theta);
+        last_adaptive_objective = std::numeric_limits<uint32_t>::max();
+    }
+
     //reset makecount, breakcount and set random starting position
     numfalse = 0;
     for (uint32_t i = 0; i < numvars; i++) {
@@ -589,6 +596,37 @@ void WalkSAT::update_statistics_start_try()
 
 void WalkSAT::update_statistics_end_flip()
 {
+    if (adaptive) {
+        /* Reference for adaptie noise option:
+         * An Adaptive Noise Mechanism for WalkSAT (Corrected). Holger H. Hoos.
+         */
+
+        if (numfalse < last_adaptive_objective) {
+            last_adaptive_objective = numfalse;
+            stagnation_timer = (int)(numclauses * adaptive_theta);
+            /* p = p - p * (phi)/2
+               p = (1 - phi/2) * p
+               p = (1 - phi/2) * (numerator / denominator)
+               p (denominator) = (1 - phi/2) * numerator
+               numerator = (1 - phi/2) * numerator
+            */
+            numerator = (int)((1.0 - adaptive_phi / 2.0) * numerator);
+        } else {
+            stagnation_timer = stagnation_timer - 1;
+            if (stagnation_timer <= 0) {
+                last_adaptive_objective = numfalse;
+                stagnation_timer = (int)(numclauses * adaptive_theta);
+                /* p = p + (1 - p) * phi
+                 * denominator * p = denominator * p + denominator * (1 - p) * phi
+                 * numerator = numerator + denominator * (1 - p) * phi;
+                 * numerator = numerator + denominator * (1 - numerator/denominator) * phi;
+                 * numerator = numerator + (denominator - numerator) * phi;
+                 */
+                numerator = numerator + (int)((denominator - numerator) * adaptive_phi);
+            }
+        }
+    }
+
     if (numfalse < lowbad) {
         lowbad = numfalse;
     }

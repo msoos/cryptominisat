@@ -59,6 +59,13 @@ private:
     add_cl_ret add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused);
     bool cl_shortening_triggered = false;
 
+    ////////// adaptive //////////
+    bool adaptive = true;
+    uint32_t last_adaptive_objective; /* number of unsat clauses last time noise was adaptively updated */
+    static constexpr double adaptive_phi = 0.20;
+    static constexpr double adaptive_theta = 0.20;
+    uint32_t stagnation_timer; /* number of remaining flips until stagnation check is performed */
+
     /************************************/
     /* Printing and Statistics          */
     /************************************/
