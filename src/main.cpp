@@ -434,6 +434,8 @@ void Main::add_supported_options()
         , "Run WalkSAT during simplification")
     ("walkruns", po::value(&conf.walk_max_runs)->default_value(conf.walk_max_runs)
         , "Run WalkSAT during simplification")
+    ("walkmaxmem", po::value(&conf.walksat_memoutMB)->default_value(conf.walksat_memoutMB)
+        , "Maximum number of MB to give to WalkSAT. Doesn't run WalkSAT if the memory usage would be more than this.")
     ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
         , "Run WalkSAT every N simplifications only")
     ;
