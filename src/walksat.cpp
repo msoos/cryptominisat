@@ -60,7 +60,6 @@ WalkSAT::~WalkSAT()
     free(assigns);
     free(breakcount);
     free(makecount);
-    free(best);
     free(changed);
 }
 
@@ -438,7 +437,6 @@ bool WalkSAT::init_problem()
     breakcount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
     changed = (int64_t *)calloc(sizeof(int64_t), numvars);
     makecount = (uint32_t *)calloc(sizeof(uint32_t), numvars);
-    best = NULL;
     occur_list_alloc = NULL;
     for(uint32_t i2 = 0; i2 < numvars; i2 ++) {
         /* ties in age between unchanged variables broken for lowest-numbered */
