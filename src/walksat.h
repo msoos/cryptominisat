@@ -164,7 +164,6 @@ private:
     int64_t x;
     int64_t integer_sum_x = 0;
     double sum_x = 0.0;
-    double mean_x;
     double seconds_per_flip;
     int r;
     int sum_r = 0;

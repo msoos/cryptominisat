@@ -675,7 +675,6 @@ void WalkSAT::update_and_print_statistics_end_try()
         totalsuccessflip += numflip;
         integer_sum_x += x;
         sum_x = (double)integer_sum_x;
-        mean_x = sum_x / found_solution;
         sum_r += r;
         mean_r = ((double)sum_r) / (double)found_solution;
         x = 0;
@@ -715,25 +714,21 @@ void WalkSAT::print_statistics_final()
                ratio_for_stat(totalsuccessflip,found_solution) << endl;
         if (found_solution) {
             cout << "c [walksat] total success flip = " << totalsuccessflip << endl;
-            cout << "c [walksat] avg flips per assign (over all runs) = " <<
-                   ratio_for_stat(totalflip, found_solution) << endl;
-            cout << "c [walksat] avg seconds per assign (over all runs) = " <<
-                   ratio_for_stat(totalflip, found_solution) * seconds_per_flip << endl;
-            cout << "c [walksat] mean flips until assign = " << mean_x << endl;
-            cout << "c [walksat] mean seconds until assign = " << mean_x * seconds_per_flip << endl;
-            cout << "c [walksat] mean restarts until assign = " << mean_r << endl;
+            cout << "c [walksat] flips = " << totalflip << endl;
+            cout << "c [walksat] flips until assign = " << sum_x << endl;
+            cout << "c [walksat] restarts until assign = " << sum_r << endl;
         }
     }
 
     if (number_sampled_runs) {
         mean_avgfalse = sum_avgfalse / number_sampled_runs;
         mean_std_dev_avgfalse = sum_std_dev_avgfalse / number_sampled_runs;
-        ratio_mean_avgfalse = mean_avgfalse / mean_std_dev_avgfalse;
+        ratio_mean_avgfalse = ratio_for_stat(mean_avgfalse, mean_std_dev_avgfalse);
 
         if (suc_number_sampled_runs) {
             suc_mean_avgfalse = suc_sum_avgfalse / suc_number_sampled_runs;
             suc_mean_std_dev_avgfalse = suc_sum_std_dev_avgfalse / suc_number_sampled_runs;
-            suc_ratio_mean_avgfalse = suc_mean_avgfalse / suc_mean_std_dev_avgfalse;
+            suc_ratio_mean_avgfalse = ratio_for_stat(suc_mean_avgfalse, suc_mean_std_dev_avgfalse);
         } else {
             suc_mean_avgfalse = 0;
             suc_mean_std_dev_avgfalse = 0;
@@ -743,7 +738,7 @@ void WalkSAT::print_statistics_final()
         if (nonsuc_number_sampled_runs) {
             nonsuc_mean_avgfalse = nonsuc_sum_avgfalse / nonsuc_number_sampled_runs;
             nonsuc_mean_std_dev_avgfalse = nonsuc_sum_std_dev_avgfalse / nonsuc_number_sampled_runs;
-            nonsuc_ratio_mean_avgfalse = nonsuc_mean_avgfalse / nonsuc_mean_std_dev_avgfalse;
+            nonsuc_ratio_mean_avgfalse = ratio_for_stat(nonsuc_mean_avgfalse, nonsuc_mean_std_dev_avgfalse);
         } else {
             nonsuc_mean_avgfalse = 0;
             nonsuc_mean_std_dev_avgfalse = 0;
