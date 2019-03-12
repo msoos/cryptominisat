@@ -505,7 +505,6 @@ bool WalkSAT::init_problem()
         }
     }
     assert(storeused == storesize || (cl_shortening_triggered && storeused < storesize));
-    storesize = storeused;
     assert(i == numclauses || (cl_shortening_triggered && i < numclauses));
     numclauses = i;
 
