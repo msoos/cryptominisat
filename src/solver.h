@@ -262,6 +262,8 @@ class Solver : public Searcher
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
+        void check_assigns_for_assumptions() const;
+        bool check_assumptions_contradict_foced_assignement() const;
 
     private:
         friend class Prober;

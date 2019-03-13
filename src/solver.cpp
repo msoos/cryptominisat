@@ -4187,3 +4187,27 @@ void Solver::learnt_clausee_query_map_without_bva(vector<Lit>& cl)
         l = Lit(learnt_clause_query_outer_to_without_bva_map[l.var()], l.sign());
     }
 }
+
+
+void Solver::check_assigns_for_assumptions() const
+{
+    for (auto& ass: solver->assumptions) {
+        if (value(ass.lit_inter) != l_True) {
+            cout << "ERROR: Internal assumption " << ass.lit_inter
+            << " is not set to l_True, it's set to: " << value(ass.lit_inter)
+            << endl;
+            assert(lit_inside_assumptions(ass.lit_inter) == l_True);
+        }
+        assert(value(ass.lit_inter) == l_True);
+    }
+}
+
+bool Solver::check_assumptions_contradict_foced_assignement() const
+{
+    for (auto& ass: solver->assumptions) {
+        if (value(ass.lit_inter) == l_False) {
+            return true;
+        }
+    }
+    return false;
+}
