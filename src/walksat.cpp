@@ -437,6 +437,11 @@ WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t&
 
 bool WalkSAT::init_problem()
 {
+    if (solver->check_assumptions_contradict_foced_assignement())
+    {
+        return false;
+    }
+
     uint32_t i;
     uint32_t j;
     //TODO simplify by the assumptions!
