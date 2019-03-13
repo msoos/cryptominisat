@@ -773,8 +773,6 @@ void WalkSAT::print_statistics_final()
             cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
         }
 
-        //TODO: assumptions!! -- we have removed them from the CNF
-        //TODO: so we must now re-add them as 1+ level decisions.
         assert(solver->decisionLevel() == 0);
         for(size_t i = 0; i < solver->nVars(); i++) {
             //this will get set automatically anyway, skip
@@ -796,6 +794,9 @@ void WalkSAT::print_statistics_final()
             solver->new_decision_level();
             solver->enqueue(Lit(i, value(i) == l_False));
         }
+        #ifdef SLOW_DEBUG
+        solver->check_assigns_for_assumptions();
+        #endif
     } else {
         if (solver->conf.verbosity) {
             cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
