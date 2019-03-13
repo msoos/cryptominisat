@@ -1118,7 +1118,8 @@ void Solver::check_model_for_assumptions() const
         if (model_value(outside_lit) != l_True) {
             std::cerr
             << "ERROR, lit " << outside_lit
-            << " was in the assumptions, but it was set to its opposite value!"
+            << " was in the assumptions, but it was set to: "
+            << model_value(outside_lit)
             << endl;
         }
         assert(model_value(outside_lit) == l_True);
