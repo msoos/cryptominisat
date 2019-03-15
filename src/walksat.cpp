@@ -73,7 +73,7 @@ lbool WalkSAT::main()
         }
         return l_Undef;
     }
-
+    startTime = cpuTime();
     parse_parameters();
     mtrand.seed(solver->mtrand.randInt());
     print_parameters();
@@ -88,7 +88,6 @@ lbool WalkSAT::main()
     }
     initialize_statistics();
     print_statistics_header();
-    startTime = cpuTime();
 
     uint32_t last_low_bad = 1000;
     while (!found_solution && numtry < solver->conf.walk_max_runs) {
