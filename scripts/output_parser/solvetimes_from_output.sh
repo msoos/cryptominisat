@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "checking for assert/signal/error/terminate fail"
-xzgrep --color -i -e "assert.*fail" -e "signal" -e "error" -e "terminate" `ls *.out.xz` | tee issues.csv
+xzgrep --color -i -e "assert.*fail" -e "floating" -e "signal" -e "error" -e "terminate" `ls *.out.xz` | tee issues.csv
 echo "checking for signal 4"
 xzgrep "signal 4"  issues.csv
 
@@ -68,5 +68,26 @@ sort signals.csv > signals_sorted.csv
 rm signals.csv signals_files.csv
 mv signals_sorted.csv signals.csv
 grep " 11" signals.csv
+awk '{if ($1=="5000.00") {x+=10000} else {x += $1};} END {printf "%d\n", x}' solveTimes.csv > PAR2score
+echo "PAR2 score is: " `cat PAR2score`
+
+xzgrep "ASSIGNMENT FOUND" *.out.xz | sed "s/.out.*//" > walksat_sat.csv
+grep -v -f walksat_sat.csv allFiles.csv | sed "s/.gz/.gz FALL/" > walksat_nosat.csv
+sed "s/$/ WALK/" walksat_sat.csv > walksat_sat2.csv
+cat walksat_sat2.csv walksat_nosat.csv | sort > walksat.csv
+
+
 
 ../concat_files.py > combined.csv
+
+
+################
+
+# xzgrep "total elapsed seconds" *.out.xz  | awk '{if ($7 > 5) {print $1 " - " $7;}; a+=$7;} END {print a}'
+# 9093.88
+
+# expensive ones make up HALF of the time used:
+# xzgrep "total elapsed seconds" *.out.xz  | awk '{if ($7 > 5) {print $1 " - " $7; a+=$7;}} END {print a}'
+# 5417.6
+
+

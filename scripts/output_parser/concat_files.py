@@ -25,6 +25,7 @@ infiles.append(open("memout.csv", "r"))
 infiles.append(open("signals.csv", "r"))
 infiles.append(open("solveTimes_rev.csv", "r"))
 infiles.append(open("solved_sol.csv", "r"))
+infiles.append(open("walksat.csv", "r"))
 allfiles = open("allFiles.csv", "r")
 files = {}
 for l in allfiles:
@@ -39,7 +40,7 @@ for f in infiles:
         # print("appending to %s : %s" % (l[0], l[1]))
         files[l[0]].append(l[1])
 
-print("fname,memout,signal,time,res")
+print("fname,memout,signal,time,res,walksat")
 od = collections.OrderedDict(sorted(files.items()))
 for k, v in od.items():
     toprint = ""
