@@ -65,7 +65,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
-#include "walksat.h"
+#include "walksat_yalsat.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1910,7 +1910,7 @@ lbool Solver::execute_inprocess_strategy(
                 && !(drat->enabled() || conf.simulate_drat)
                 && solveStats.numSimplify % conf.walksat_every_n == (conf.walksat_every_n-1)
             ) {
-                WalkSAT walk(this);
+                WalkSATyalsat walk(this);
                 double mem_needed_mb = (double)walk.mem_needed()/(1000.0*1000.0);
                 double maxmem = conf.walksat_memoutMB*conf.var_and_mem_out_mult;
                 if (mem_needed_mb < maxmem) {
