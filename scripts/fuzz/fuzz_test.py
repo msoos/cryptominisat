@@ -265,7 +265,7 @@ class Tester:
                 sched.append("occ-xor")
 
         if options.walksat:
-            sched.append("walksat")
+            sched.append("sls")
 
         return sched
 
@@ -278,7 +278,7 @@ class Tester:
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "check-cache-size, renumber"
-        sched_opts += ", walksat"
+        sched_opts += ", sls"
 
         # type of schedule
         cmd = ""
