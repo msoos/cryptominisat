@@ -65,12 +65,8 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
-<<<<<<< HEAD
 #include "cardfinder.h"
-#include "walksat.h"
-=======
 #include "yalsat.h"
->>>>>>> master
 
 using namespace CMSat;
 using std::cout;

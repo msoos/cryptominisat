@@ -646,7 +646,7 @@ void OccSimplifier::add_back_to_solver()
             if (cl->red()) {
                 #ifdef FINAL_PREDICTOR_TOTAL
                 assert(cl->stats.which_red_array == 1);
-                #endif
+                #else
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
                 if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
@@ -656,6 +656,7 @@ void OccSimplifier::add_back_to_solver()
                 ) {
                     cl->stats.which_red_array = 1;
                 }
+                #endif
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {
                 solver->longIrredCls.push_back(offs);
