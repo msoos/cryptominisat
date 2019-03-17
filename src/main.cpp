@@ -432,8 +432,8 @@ void Main::add_supported_options()
     walk_options.add_options()
     ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
         , "Run WalkSAT during simplification")
-    ("walkruns", po::value(&conf.walk_max_runs)->default_value(conf.walk_max_runs)
-        , "Run WalkSAT during simplification")
+    ("walkmems", po::value(&conf.walk_max_mems)->default_value(conf.walk_max_mems)
+        , "Run yalsat with this many mems*million timeout")
     ("walkmaxmem", po::value(&conf.walksat_memoutMB)->default_value(conf.walksat_memoutMB)
         , "Maximum number of MB to give to WalkSAT. Doesn't run WalkSAT if the memory usage would be more than this.")
     ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
@@ -1038,8 +1038,8 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.walk_max_runs < 1) {
-        cout << "ERROR: '--walkruns' must be at least 1" << endl;
+    if (conf.walk_max_mems < 1) {
+        cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);
     }
 

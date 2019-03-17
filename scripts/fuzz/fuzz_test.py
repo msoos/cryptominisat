@@ -320,7 +320,7 @@ class Tester:
 
         cmd += "--walksat %d " % walksat
         cmd += "--walkeveryn %d " % random.randint(1, 3)
-        cmd += "--walkruns %d " % random.randint(1, 3)
+        cmd += "--walkmems %d " % random.choice([1, 10, 100, 300])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red

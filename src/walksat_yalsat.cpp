@@ -40,6 +40,12 @@ WalkSATyalsat::WalkSATyalsat(Solver* _solver) :
     solver(_solver)
 {
     yals = yals_new();
+    if (solver->conf.verbosity) {
+        yals_setopt (yals, "verbose", 1);
+    } else {
+        yals_setopt (yals, "verbose", 0);
+    }
+    //yals_setprefix (yals, "c 00 ");
 }
 
 WalkSATyalsat::~WalkSATyalsat()
@@ -113,20 +119,36 @@ lbool WalkSATyalsat::main()
         }
         return l_Undef;
     }
-    if (solver->conf.verbosity) {
-        yals_setopt (yals, "verbose", 1);
-    }
     //yals_setflipslimit(yals, 5*1000*1000);
-    yals_setmemslimit(yals, 150*1000*1000);
+    uint64_t mils = solver->conf.walk_max_mems*solver->conf.global_timeout_multiplier;
+    if (solver->conf.verbosity) {
+        cout << "c [yalsat] mems limit M: " << mils << endl;
+    }
+    yals_setmemslimit(yals, mils*1000*1000);
+    yals_srand(yals, solver->mtrand.randInt() % 1000);
+    for(int i = 0; i < (int)solver->nVars(); i++) {
+        int v = i+1;
+        if (solver->value(i) != l_Undef) {
+            if (solver->value(i) == l_False) {
+                v *= -1;
+            }
+        } else {
+            if (!solver->varData[i].polarity) {
+                v *= -1;
+            }
+        }
+        yals_setphase(yals, v);
+    }
+    //yals_srand(yals, 0);
     //yals_setopt (yals, "hitlim", 5*1000*1000); //every time the minimum (or lower) is hit
     //yals_setopt (yals, "hitlim", 50000000);
 
     int res = yals_sat(yals);
     lbool ret = deal_with_solution(res);
 
-    yals_stats(yals);
     if (solver->conf.verbosity) {
-        cout << "c [yals] time: " << (cpuTime()-startTime) << endl;
+        yals_stats(yals);
+        cout << "c [yalsat] time: " << (cpuTime()-startTime) << endl;
     }
     return ret;
 }
