@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <cmath>
 #include <cstdlib>
 #include "constants.h"
-#include "walksat_yalsat.h"
+#include "yalsat.h"
 #include "solver.h"
 extern "C" {
 #include "yals.h"
@@ -36,7 +36,7 @@ extern "C" {
 
 using namespace CMSat;
 
-WalkSATyalsat::WalkSATyalsat(Solver* _solver) :
+Yalsat::Yalsat(Solver* _solver) :
     solver(_solver)
 {
     yals = yals_new();
@@ -48,12 +48,12 @@ WalkSATyalsat::WalkSATyalsat(Solver* _solver) :
     //yals_setprefix (yals, "c 00 ");
 }
 
-WalkSATyalsat::~WalkSATyalsat()
+Yalsat::~Yalsat()
 {
     yals_del(yals);
 }
 
-uint64_t WalkSATyalsat::mem_needed()
+uint64_t Yalsat::mem_needed()
 {
     numvars = solver->nVars();
     numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
@@ -97,7 +97,7 @@ uint64_t WalkSATyalsat::mem_needed()
     return needed;
 }
 
-lbool WalkSATyalsat::main()
+lbool Yalsat::main()
 {
     //It might not work well with few number of variables
     //rnovelty could also die/exit(-1), etc.
@@ -120,7 +120,7 @@ lbool WalkSATyalsat::main()
         return l_Undef;
     }
     //yals_setflipslimit(yals, 5*1000*1000);
-    uint64_t mils = solver->conf.walk_max_mems*solver->conf.global_timeout_multiplier;
+    uint64_t mils = solver->conf.sls_max_mems*solver->conf.global_timeout_multiplier;
     if (solver->conf.verbosity) {
         cout << "c [yalsat] mems limit M: " << mils << endl;
     }
@@ -154,7 +154,7 @@ lbool WalkSATyalsat::main()
 }
 
 template<class T>
-WalkSATyalsat::add_cl_ret WalkSATyalsat::add_this_clause(const T& cl)
+Yalsat::add_cl_ret Yalsat::add_this_clause(const T& cl)
 {
     uint32_t sz = 0;
     bool sat = false;
@@ -201,7 +201,7 @@ WalkSATyalsat::add_cl_ret WalkSATyalsat::add_this_clause(const T& cl)
     return add_cl_ret::added_cl;
 }
 
-bool WalkSATyalsat::init_problem()
+bool Yalsat::init_problem()
 {
     if (solver->check_assumptions_contradict_foced_assignement())
     {
@@ -240,7 +240,7 @@ bool WalkSATyalsat::init_problem()
     return true;
 }
 
-lbool WalkSATyalsat::deal_with_solution(int res)
+lbool Yalsat::deal_with_solution(int res)
 {
     if (res == 20) {
         if (solver->conf.verbosity) {

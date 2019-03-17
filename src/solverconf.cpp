@@ -197,7 +197,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
-            "walksat,"
+            "sls,"
         )
 
         //validated with run 8114195.wlm01
@@ -212,7 +212,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
-            "walksat,"
+            "sls,"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
@@ -239,10 +239,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsume_gothrough_multip(2.0)
 
         //WalkSAT
-        , doWalkSAT(false)
-        , walksat_every_n(4)
-        , walk_max_mems(150)
-        , walksat_memoutMB(500)
+        , doSLS(false)
+        , sls_every_n(4)
+        , sls_max_mems(150)
+        , sls_memoutMB(500)
 
         //Distillation
         , do_distill_clauses(true)

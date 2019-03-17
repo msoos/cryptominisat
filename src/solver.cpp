@@ -65,7 +65,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
-#include "walksat_yalsat.h"
+#include "yalsat.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1384,10 +1384,10 @@ lbool Solver::simplify_problem_outside()
 
     lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
-        bool backup = conf.doWalkSAT;
-        conf.doWalkSAT = false;
+        bool backup = conf.doSLS;
+        conf.doSLS = false;
         status = simplify_problem(false);
-        conf.doWalkSAT = backup;
+        conf.doSLS = backup;
     }
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
@@ -1904,23 +1904,23 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
             }
-        } else if (token == "walksat") {
-            assert(conf.walksat_every_n > 0);
-            if (conf.doWalkSAT
+        } else if (token == "sls") {
+            assert(conf.sls_every_n > 0);
+            if (conf.doSLS
                 && !(drat->enabled() || conf.simulate_drat)
-                && solveStats.numSimplify % conf.walksat_every_n == (conf.walksat_every_n-1)
+                && solveStats.numSimplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
-                WalkSATyalsat walk(this);
-                double mem_needed_mb = (double)walk.mem_needed()/(1000.0*1000.0);
-                double maxmem = conf.walksat_memoutMB*conf.var_and_mem_out_mult;
+                Yalsat yalsat(this);
+                double mem_needed_mb = (double)yalsat.mem_needed()/(1000.0*1000.0);
+                double maxmem = conf.sls_memoutMB*conf.var_and_mem_out_mult;
                 if (mem_needed_mb < maxmem) {
-                    lbool ret = walk.main();
+                    lbool ret = yalsat.main();
                     if (ret == l_True) {
                         return l_True;
                     }
                 } else {
                     if (conf.verbosity) {
-                        cout << "c [walksat] would need "
+                        cout << "c [sls] would need "
                         << std::setprecision(2) << std::fixed << mem_needed_mb
                         << " MB but that's over limit of " << std::fixed << maxmem
                         << " MB -- skipping" << endl;

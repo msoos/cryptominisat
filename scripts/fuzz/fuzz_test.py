@@ -318,9 +318,9 @@ class Tester:
             # it's kinda slow and using it all the time is probably not a good idea
             walksat = random.choice([0, 0, 0, 1])
 
-        cmd += "--walksat %d " % walksat
-        cmd += "--walkeveryn %d " % random.randint(1, 3)
-        cmd += "--walkmems %d " % random.choice([1, 10, 100, 300])
+        cmd += "--sls %d " % walksat
+        cmd += "--slseveryn %d " % random.randint(1, 3)
+        cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red

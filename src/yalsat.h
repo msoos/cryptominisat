@@ -33,12 +33,12 @@ class Yals;
 namespace CMSat {
 
 class Solver;
-class WalkSATyalsat {
+class Yalsat {
 public:
     lbool main();
     uint64_t mem_needed();
-    WalkSATyalsat(Solver* _solver);
-    ~WalkSATyalsat();
+    Yalsat(Solver* _solver);
+    ~Yalsat();
 
 private:
     Solver* solver;

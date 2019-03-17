@@ -428,16 +428,16 @@ void Main::add_supported_options()
         , "MainSolver at specific 'solve()' points in CNF file")
     ;
 
-    po::options_description walk_options("WalkSAT options");
-    walk_options.add_options()
-    ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
-        , "Run WalkSAT during simplification")
-    ("walkmems", po::value(&conf.walk_max_mems)->default_value(conf.walk_max_mems)
-        , "Run yalsat with this many mems*million timeout")
-    ("walkmaxmem", po::value(&conf.walksat_memoutMB)->default_value(conf.walksat_memoutMB)
-        , "Maximum number of MB to give to WalkSAT. Doesn't run WalkSAT if the memory usage would be more than this.")
-    ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
-        , "Run WalkSAT every N simplifications only")
+    po::options_description sls_options("Stochastic Local Search options");
+    sls_options.add_options()
+    ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
+        , "Run SLS during simplification")
+    ("slsmems", po::value(&conf.sls_max_mems)->default_value(conf.sls_max_mems)
+        , "Run SLS with this many mems*million timeout")
+    ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
+        , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
+    ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
+        , "Run SLS solver every N simplifications only")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -782,7 +782,7 @@ void Main::add_supported_options()
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)
-    .add(walk_options)
+    .add(sls_options)
     .add(stampOptions)
     .add(simp_schedules)
     .add(occ_mem_limits)
@@ -1038,12 +1038,12 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.walk_max_mems < 1) {
+    if (conf.sls_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);
     }
 
-    if (conf.walksat_every_n < 1) {
+    if (conf.sls_every_n < 1) {
         cout << "ERROR: '--walkeveryn' must be at least 1" << endl;
         exit(-1);
     }

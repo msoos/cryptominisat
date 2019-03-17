@@ -331,10 +331,10 @@ class DLL_PUBLIC SolverConf
         double   subsume_gothrough_multip;
 
         //Walksat
-        int doWalkSAT;
-        uint32_t walksat_every_n;
-        uint32_t walk_max_mems;
-        uint32_t walksat_memoutMB;
+        int doSLS;
+        uint32_t sls_every_n;
+        uint32_t sls_max_mems;
+        uint32_t sls_memoutMB;
 
         //Distillation
         int      do_distill_clauses;
