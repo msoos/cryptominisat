@@ -332,10 +332,6 @@ void Main::add_supported_options()
         , "0 = normal run, 1 = preprocess and dump, 2 = read back dump and solution to produce final solution")
     ("polar", po::value<string>()->default_value("auto")
         , "{true,false,rnd,auto} Selects polarity mode. 'true' -> selects only positive polarity when branching. 'false' -> selects only negative polarity when branching. 'auto' -> selects last polarity used (also called 'caching')")
-    ("walksat", po::value(&conf.doWalkSAT)->default_value(conf.doWalkSAT)
-        , "Run WalkSAT during simplification")
-    ("walkeveryn", po::value(&conf.walksat_every_n)->default_value(conf.walksat_every_n)
-        , "Run WalkSAT every N simplifications only")
     #ifdef STATS_NEEDED
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
@@ -444,8 +440,18 @@ void Main::add_supported_options()
         , "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea")
     ("debuglib", po::value<string>(&debugLib)
         , "MainSolver at specific 'solve()' points in CNF file")
-    ("dumpresult", po::value(&resultFilename)
-        , "Write solution(s) to this file")
+    ;
+
+    po::options_description sls_options("Stochastic Local Search options");
+    sls_options.add_options()
+    ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
+        , "Run SLS during simplification")
+    ("slsmems", po::value(&conf.sls_max_mems)->default_value(conf.sls_max_mems)
+        , "Run SLS with this many mems*million timeout")
+    ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
+        , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
+    ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
+        , "Run SLS solver every N simplifications only")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -669,6 +675,8 @@ void Main::add_supported_options()
         , "Print assignment if solution is SAT")
     ("restartprint", po::value(&conf.print_restart_line_every_n_confl)->default_value(conf.print_restart_line_every_n_confl)
         , "Print restart status lines at least every N conflicts")
+    ("dumpresult", po::value(&resultFilename)
+        , "Write solution(s) to this file")
     ;
 
     po::options_description componentOptions("Component options");
@@ -795,6 +803,7 @@ void Main::add_supported_options()
     .add(conflOptions)
     .add(iterativeOptions)
     .add(probeOptions)
+    .add(sls_options)
     .add(stampOptions)
     .add(simp_schedules)
     .add(occ_mem_limits)
@@ -1061,6 +1070,16 @@ void Main::manually_parse_some_options()
         exit(-1);
     }
     #endif
+
+    if (conf.sls_max_mems < 1) {
+        cout << "ERROR: '--walkmems' must be at least 1" << endl;
+        exit(-1);
+    }
+
+    if (conf.sls_every_n < 1) {
+        cout << "ERROR: '--walkeveryn' must be at least 1" << endl;
+        exit(-1);
+    }
 
     if (conf.maxXorToFind > MAX_XOR_RECOVER_SIZE) {
         cout << "ERROR: The '--maxxorsize' parameter cannot be larger than " << MAX_XOR_RECOVER_SIZE << endl;

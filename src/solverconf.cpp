@@ -209,11 +209,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
             "sub-cls-with-bin,"
+            "sls,"
         )
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "walksat," //MUST be first because the others mess up the variable polarities
             "handle-comps,"
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
@@ -225,6 +225,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, check-cache-size, renumber,"
+            "sls,"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
@@ -251,8 +252,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsume_gothrough_multip(2.0)
 
         //WalkSAT
-        , doWalkSAT(false)
-        , walksat_every_n(2)
+        , doSLS(false)
+        , sls_every_n(4)
+        , sls_max_mems(150)
+        , sls_memoutMB(500)
 
         //Distillation
         , do_distill_clauses(true)

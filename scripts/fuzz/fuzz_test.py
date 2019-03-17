@@ -87,6 +87,9 @@ def set_up_parser():
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
+    parser.add_option("--walksat", dest="walksat", default=False,
+                      action="store_true",
+                      help="Concentrate fuzzing walksat")
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
@@ -261,6 +264,9 @@ class Tester:
             if random.choice([False, True, True, True]) and self.this_gauss_on:
                 sched.append("occ-xor")
 
+        if options.walksat:
+            sched.append("sls")
+
         return sched
 
     def rnd_schedule_all(self, preproc):
@@ -272,10 +278,13 @@ class Tester:
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "check-cache-size, renumber"
+        sched_opts += ", sls"
 
         # type of schedule
         cmd = ""
-        sched = ",".join(self.create_rnd_sched(sched_opts))
+        sched = self.create_rnd_sched(sched_opts)
+        sched = ",".join(sched)
+
         if sched != "" and not preproc:
             cmd += "--schedule %s " % sched
 
@@ -302,7 +311,16 @@ class Tester:
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
         cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
-        #cmd += "--walksat %d " % random.choice([0, 1, 1, 1, 1, 1, 1])
+        walksat = 0
+        if options.walksat:
+            walksat = 1
+        else:
+            # it's kinda slow and using it all the time is probably not a good idea
+            walksat = random.choice([0, 0, 0, 1])
+
+        cmd += "--sls %d " % walksat
+        cmd += "--slseveryn %d " % random.randint(1, 3)
+        cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
@@ -902,13 +920,17 @@ fuzzers_noxor = [
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
     ["../../build/tests/cnf-utils/cnf-fuzz-biere"],
-    ["../../build/tests/cnf-utils/makewff -cnf 3 400 1700", "-seed"],
+    ["../../build/tests/cnf-utils/makewff -cnf 3 300 1700", "-seed"],
     ["../../build/tests/cnf-utils/sgen4 -unsat -n 50", "-s"],
     ["../../build/tests/cnf-utils//sgen4 -sat -n 50", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-brummayer.py", "-s"],
     ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
+fuzzers_noxor_walksat = [
+    ["../../build/tests/cnf-utils/makewff -cnf 3 250 1080", "-seed"],
+]
+
 fuzzers_xor = [
     ["../../utils/cnf-utils/xortester.py", "--seed"],
     ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
@@ -933,6 +955,9 @@ if __name__ == "__main__":
     if options.small:
         fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
         fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
+    if options.walksat:
+        fuzzers_drat = fuzzers_noxor_walksat
+        fuzzers_nodrat = fuzzers_noxor_walksat
 
     print_version()
     tester = Tester()
@@ -952,6 +977,8 @@ if __name__ == "__main__":
             toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
+        if options.walksat:
+            toexec += "--walksat "
         if options.only_sampling:
             toexec += "--sampling "
         if options.only_dump:

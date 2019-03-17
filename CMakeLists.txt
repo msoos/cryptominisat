@@ -593,6 +593,12 @@ if (STATICCOMPILE)
 endif()
 
 option(FORCE_PYTHON2 OFF)
+option(FORCE_PYTHON3 OFF)
+
+if (FORCE_PYTHON3 AND FORCE_PYTHON2)
+    message(FATAL_ERROR "Cannot force both Python2 and Python3. Wrong options given.")
+endif()
+
 message(STATUS "In case your Python interpreter is not found, or a wrong one is found, please set it with '-DPYTHON_EXECUTABLE:FILEPATH=your path here'")
 if (NOT FORCE_PYTHON2)
     find_package(PythonInterp 3)
@@ -605,7 +611,11 @@ if (NOT FORCE_PYTHON2)
     endif()
 endif()
 
-if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
+if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND FORCE_PYTHON3)
+    message(FATAL_ERROR "Forced Python3 but did not find Python3")
+endif()
+
+if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND NOT FORCE_PYTHON3)
     unset(PYTHONLIBS_FOUND CACHE)
     unset(PYTHON_LIBRARIES CACHE)
     unset(PYTHON_INCLUDE_PATH CACHE)
@@ -625,6 +635,10 @@ if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS))
     message(STATUS "Python 2.7 -- PYTHON_LIBRARIES=${PYTHON_LIBRARIES}")
     message(STATUS "Python 2.7 -- PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
     message(STATUS "Python 2.7 -- PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}")
+endif()
+
+if (NOT (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND PYTHON_INCLUDE_DIRS) AND FORCE_PYTHON2)
+    message(FATAL_ERROR "Forced Python2 but did not find Python2")
 endif()
 
 

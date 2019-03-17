@@ -31,7 +31,7 @@ if(NOT("${RES}" STREQUAL "0"))
     message(STATUS "Output of LIT stdout: '${LIT_VER_OUT}'")
     message(STATUS "Output of LIT stderr: '${LIT_VER_ERR}'")
     message(STATUS "LIT result val is: '${RES}'")
-    message(FATAL_ERROR "Could not find 'lit' tool. You need to install it by e.g. 'pip install lit' or 'python -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
+    message(FATAL_ERROR "Could not find 'lit' tool for Python executable ${PYTHON_EXECUTABLE}. You need to install it for this Python version by running '${PYTHON_EXECUTABLE} -m pip install lit'. If it's already installed, set LIT_TOOL to the full path for lit")
 endif()
 
 set(LIT_ARGS -v CACHE STRING "Arguments to pass to lit")

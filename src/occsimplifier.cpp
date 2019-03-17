@@ -648,6 +648,14 @@ void OccSimplifier::add_back_to_solver()
                 assert(cl->stats.which_red_array == 1);
                 #endif
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
+                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
+                    cl->stats.which_red_array = 0;
+                } else if (
+                    cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
+                    && solver->conf.glue_put_lev1_if_below_or_eq != 0
+                ) {
+                    cl->stats.which_red_array = 1;
+                }
                 solver->longRedCls[cl->stats.which_red_array].push_back(offs);
             } else {
                 solver->longIrredCls.push_back(offs);
@@ -747,7 +755,7 @@ bool OccSimplifier::can_eliminate_var(const uint32_t var) const
     assert(var < solver->nVars());
     if (solver->value(var) != l_Undef
         || solver->varData[var].removed != Removed::none
-        || solver->var_inside_assumptions(var)
+        || solver->var_inside_assumptions(var) != l_Undef
         || (solver->conf.sampling_vars && sampling_vars_occsimp[var])
         //|| (!solver->conf.allow_elim_xor_vars && solver->varData[var].added_for_xor)
     ) {

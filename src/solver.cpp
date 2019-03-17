@@ -65,8 +65,12 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
+<<<<<<< HEAD
 #include "cardfinder.h"
 #include "walksat.h"
+=======
+#include "yalsat.h"
+>>>>>>> master
 
 using namespace CMSat;
 using std::cout;
@@ -1047,7 +1051,7 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
     }
 
     if (bva) {
-        assumptionsSet.push_back(false);
+        assumptionsSet.push_back(l_Undef);
     }
 
     //Too expensive
@@ -1070,7 +1074,9 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
         compHandler->save_on_var_memory();
     }
     datasync->save_on_var_memory();
-    assumptionsSet.resize(nVars(), false);
+
+    assert(assumptionsSet.size() >= nVars());
+    assumptionsSet.resize(nVars());
     assumptionsSet.shrink_to_fit();
 
     const double time_used = cpuTime() - myTime;
@@ -1096,7 +1102,7 @@ void Solver::set_assumptions()
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-    assumptionsSet.resize(nVars(), false);
+    assumptionsSet.resize(nVars(), l_Undef);
     if (outside_assumptions.empty()) {
         return;
     }
@@ -1128,7 +1134,8 @@ void Solver::check_model_for_assumptions() const
         if (model_value(outside_lit) != l_True) {
             std::cerr
             << "ERROR, lit " << outside_lit
-            << " was in the assumptions, but it was set to its opposite value!"
+            << " was in the assumptions, but it was set to: "
+            << model_value(outside_lit)
             << endl;
         }
         assert(model_value(outside_lit) == l_True);
@@ -1393,10 +1400,10 @@ lbool Solver::simplify_problem_outside()
 
     lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
-        bool backup = conf.doWalkSAT;
-        conf.doWalkSAT = false;
+        bool backup = conf.doSLS;
+        conf.doSLS = false;
         status = simplify_problem(false);
-        conf.doWalkSAT = backup;
+        conf.doSLS = backup;
     }
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
@@ -1807,7 +1814,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
 
         for(const Lit lit: conflict) {
             if (value(lit) == l_Undef) {
-                assert(var_inside_assumptions(lit.var()));
+                assert(var_inside_assumptions(lit.var()) != l_Undef);
             }
         }
         update_assump_conflict_to_orig_outside(conflict);
@@ -1917,18 +1924,26 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doStrSubImplicit) {
                 subsumeImplicit->subsume_implicit();
             }
-        } else if (token == "walksat") {
-            assert(conf.walksat_every_n > 0);
-            if (conf.doWalkSAT
+        } else if (token == "sls") {
+            assert(conf.sls_every_n > 0);
+            if (conf.doSLS
                 && !(drat->enabled() || conf.simulate_drat)
-                && solveStats.numSimplify % conf.walksat_every_n == (conf.walksat_every_n-1)
+                && solveStats.numSimplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
-                WalkSAT walk(this);
-                double mem_needed_mb = (double)walk.mem_needed()/(1000.0*1000.0);
-                if (mem_needed_mb < 1000) {
-                    lbool ret = walk.main();
+                Yalsat yalsat(this);
+                double mem_needed_mb = (double)yalsat.mem_needed()/(1000.0*1000.0);
+                double maxmem = conf.sls_memoutMB*conf.var_and_mem_out_mult;
+                if (mem_needed_mb < maxmem) {
+                    lbool ret = yalsat.main();
                     if (ret == l_True) {
                         return l_True;
+                    }
+                } else {
+                    if (conf.verbosity) {
+                        cout << "c [sls] would need "
+                        << std::setprecision(2) << std::fixed << mem_needed_mb
+                        << " MB but that's over limit of " << std::fixed << maxmem
+                        << " MB -- skipping" << endl;
                     }
                 }
             }
@@ -2086,6 +2101,7 @@ lbool Solver::simplify_problem(const bool startup)
     } else {
         assert(ret == l_True);
         finish_up_solve(ret);
+        rebuildOrderHeap();
         return ret;
     }
 }
@@ -3124,7 +3140,7 @@ void Solver::update_assumptions_after_varreplace()
     //Update assumptions
     for(AssumptionPair& lit_pair: assumptions) {
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = false;
+            assumptionsSet[lit_pair.lit_inter.var()] = l_Undef;
         } else {
             assert(value(lit_pair.lit_inter) != l_Undef
                 && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
@@ -3134,12 +3150,12 @@ void Solver::update_assumptions_after_varreplace()
         lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
         //remove old from set
         if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
-                assumptionsSet[orig.var()] = false;
+            assumptionsSet[orig.var()] = l_Undef;
         }
 
         //add new to set
         if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = true;
+            assumptionsSet[lit_pair.lit_inter.var()] = lit_pair.lit_inter.sign() ? l_False: l_True;
         }
     }
 }
@@ -3785,7 +3801,7 @@ void Solver::undef_fill_potentials()
 
         assert(varData[v].removed == Removed::none);
         assert(assumptionsSet.size() > v);
-        if (model_value(v) != l_Undef && assumptionsSet[v] == false) {
+        if (model_value(v) != l_Undef && assumptionsSet[v] == l_Undef) {
             assert(undef->can_be_unset[v] == 0);
             undef->can_be_unset[v] ++;
             if (conf.sampling_vars == NULL) {
@@ -4196,4 +4212,27 @@ void Solver::add_empty_cl_to_drat()
     #endif
     << fin;
     drat->flush();
+}
+
+void Solver::check_assigns_for_assumptions() const
+{
+    for (auto& ass: solver->assumptions) {
+        if (value(ass.lit_inter) != l_True) {
+            cout << "ERROR: Internal assumption " << ass.lit_inter
+            << " is not set to l_True, it's set to: " << value(ass.lit_inter)
+            << endl;
+            assert(lit_inside_assumptions(ass.lit_inter) == l_True);
+        }
+        assert(value(ass.lit_inter) == l_True);
+    }
+}
+
+bool Solver::check_assumptions_contradict_foced_assignement() const
+{
+    for (auto& ass: solver->assumptions) {
+        if (value(ass.lit_inter) == l_False) {
+            return true;
+        }
+    }
+    return false;
 }

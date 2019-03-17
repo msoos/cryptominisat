@@ -3137,7 +3137,7 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
 {
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
-        assert(!x);
+        assert(x == l_Undef);
     }
     #endif
 
@@ -3148,11 +3148,11 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
     for(const AssumptionPair lit_pair: assumptions) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()]) {
+            if (assumptionsSet[lit.var()] != l_Undef) {
                 //Assumption contains the same literal twice. Shouldn't really be allowed...
                 //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
             } else {
-                assumptionsSet[lit.var()] = true;
+                assumptionsSet[lit.var()] = lit.sign() ? l_False : l_True;
             }
         } else {
             if (value(lit) == l_Undef) {
@@ -3180,12 +3180,10 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
-            #ifdef SLOW_DEBUG
-            if (!assumptionsSet[lit.var()]) {
+            if (assumptionsSet[lit.var()] == l_Undef) {
                 cout << "ERROR: var " << lit.var() + 1 << " is in assumptions but not in assumptionsSet" << endl;
             }
-            #endif
-            assert(assumptionsSet[lit.var()]);
+            assert(assumptionsSet[lit.var()] != l_Undef);
         }
     }
 
@@ -3193,14 +3191,14 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     for(const AssumptionPair lit_pair: unfill_from) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = false;
+            assumptionsSet[lit.var()] = l_Undef;
         }
     }
 
     end:;
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
-        assert(!x);
+        assert(x == l_Undef);
     }
     #endif
 }
