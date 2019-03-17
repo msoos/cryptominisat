@@ -37,8 +37,6 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 
 #if defined(__linux__)
 #include <fpu_control.h>	// Set FPU to double precision on Linux.
@@ -560,14 +558,39 @@ static double yals_avg (double a, double b) { return b ? a/b : 0; }
 
 static double yals_pct (double a, double b) { return b ? 100.0 * a / b : 0; }
 
-double yals_process_time () {
+/*double yals_process_time () {
   struct rusage u;
   double res;
   if (getrusage (RUSAGE_SELF, &u)) return 0;
   res = u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
   res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec;
   return res;
+}*/
+
+// note: MinGW64 defines both __MINGW32__ and __MINGW64__
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
+#include <ctime>
+double yals_process_time(void)
+{
+    return (double)clock() / CLOCKS_PER_SEC;
 }
+
+#else //Linux or POSIX
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
+
+double yals_process_time(void)
+{
+    struct rusage u;
+    if (getrusage (RUSAGE_SELF, &u)) return 0;
+    double res;
+    res = u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
+    res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec;
+    return res;
+}
+#endif
+
 
 static double yals_time (Yals * yals) {
   if (yals && yals->cbs.time) return yals->cbs.time ();
