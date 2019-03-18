@@ -76,7 +76,7 @@ To build and install, issue:
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -201,7 +201,7 @@ The python module works with both Python 2 and Python 3. It must be compiled as 
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
 sudo apt-get install python3-setuptools python3-dev
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
@@ -364,7 +364,7 @@ To build the Rust binding, download the prerequisites as before, go into the "Ru
 ```
 sudo apt-get install build-essential cmake
 # not required but very useful
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 cd rust
@@ -455,7 +455,7 @@ For building with Gaussian Elimination, you need to build as per:
 
 ```
 sudo apt-get install build-essential cmake
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
 tar xzvf cryptominisat-version.tar.gz
 cd cryptominisat-version
 mkdir build && cd build
@@ -490,7 +490,7 @@ For testing you will need the GIT checkout and build as per:
 
 ```
 sudo apt-get install build-essential cmake git
-sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev
+sudo apt-get install zlib1g-dev libboost-program-options-dev libm4ri-dev libsqlite3-dev help2man
 sudo apt-get install git python3-pip python3-setuptools python3-dev
 sudo pip3 install --upgrade pip
 sudo pip3 install lit
