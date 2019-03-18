@@ -174,36 +174,36 @@ typedef unsigned Word;
 
 /*------------------------------------------------------------------------*/
 #ifndef NDEBUG
-#define LOG(ARGS...) \
+#define LOG(...) \
 do { \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   yals_log_end (yals); \
 } while (0)
-#define LOGLITS(LITS,ARGS...) \
+#define LOGLITS(LITS,...) \
 do { \
   const int * P; \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   fprintf (yals->out, " clause :"); \
   for (P = (LITS); *P; P++) \
     fprintf (yals->out, " %d", *P); \
   yals_log_end (yals); \
 } while (0)
-#define LOGCIDX(CIDX,ARGS...) \
+#define LOGCIDX(CIDX,...) \
 do { \
   const int * P, * LITS = yals_lits (yals, (CIDX)); \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   fprintf (yals->out, " clause %d :", (CIDX)); \
   for (P = (LITS); *P; P++) \
     fprintf (yals->out, " %d", *P); \
   yals_log_end (yals); \
 } while (0)
 #else
-#define LOG(ARGS...) do { } while (0)
-#define LOGLITS(ARGS...) do { } while (0)
-#define LOGCIDX(ARGS...) do { } while (0)
+#define LOG(...) do { } while (0)
+#define LOGLITS(...) do { } while (0)
+#define LOGCIDX(...) do { } while (0)
 #endif
 /*------------------------------------------------------------------------*/
 
