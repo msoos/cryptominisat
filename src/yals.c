@@ -573,7 +573,7 @@ static double yals_pct (double a, double b) { return b ? 100.0 * a / b : 0; }
 
 // note: MinGW64 defines both __MINGW32__ and __MINGW64__
 #if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
-#include <ctime>
+#include <time.h>
 double yals_process_time(void)
 {
     return (double)clock() / CLOCKS_PER_SEC;
