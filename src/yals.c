@@ -1133,7 +1133,7 @@ static int yals_pick_by_score (Yals * yals) {
 
   assert (sum > 0);
   lim = (yals_rand (yals) / (1.0 + (double) UINT_MAX))*sum;
-  assert (lim < sum);
+  assert (lim <= sum);
 
   LOG ("random choice %g mod %g", lim, sum);
 
