@@ -86,6 +86,7 @@ class Solver : public Searcher
         void new_external_vars(size_t n);
         bool add_clause_outer(const vector<Lit>& lits, bool red = false);
         bool add_xor_clause_outer(const vector<uint32_t>& vars, bool rhs);
+        void add_drat(std::ostream* os, bool add_ID);
 
         lbool solve_with_assumptions(const vector<Lit>* _assumptions, bool only_indep_solution);
         lbool simplify_with_assumptions(const vector<Lit>* _assumptions = NULL);
@@ -625,6 +626,18 @@ inline void Solver::testing_set_solver_not_fresh()
 inline bool Solver::get_decision_reaching_valid() const
 {
     return decisions_reaching_model_valid;
+}
+
+inline void Solver::add_drat(std::ostream* os, bool add_ID) {
+    if (drat)
+        delete drat;
+
+    if (add_ID) {
+        drat = new DratFile<true>(interToOuterMain);
+    } else {
+        drat = new DratFile<false>(interToOuterMain);
+    }
+    drat->setFile(os);
 }
 
 } //end namespace

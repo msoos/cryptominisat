@@ -990,15 +990,6 @@ void Main::handle_drat_option()
         conf.doFindXors = false;
     }
 
-    if (conf.doRenumberVars) {
-        if (conf.verbosity) {
-            cout
-            << "c Variable renumbering is not supported during DRAT, turning it off"
-            << endl;
-        }
-        conf.doRenumberVars = false;
-    }
-
     if (conf.doCompHandler) {
         if (conf.verbosity) {
             cout

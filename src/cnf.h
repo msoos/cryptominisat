@@ -75,7 +75,7 @@ public:
         if (_conf != NULL) {
             conf = *_conf;
         }
-        drat = new Drat();
+        drat = new Drat;
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
 
@@ -293,6 +293,8 @@ protected:
 
     void save_state(SimpleOutFile& f) const;
     void load_state(SimpleInFile& f);
+    vector<uint32_t> outerToInterMain;
+    vector<uint32_t> interToOuterMain;
 
 private:
     std::atomic<bool> *must_interrupt_inter; ///<Interrupt cleanly ASAP if true
@@ -300,8 +302,6 @@ private:
     void enlarge_nonminimial_datastructs(size_t n = 1);
     void swapVars(const uint32_t which, const int off_by = 0);
 
-    vector<uint32_t> outerToInterMain;
-    vector<uint32_t> interToOuterMain;
     size_t num_bva_vars = 0;
     vector<uint32_t> outer_to_with_bva_map;
 };

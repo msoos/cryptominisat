@@ -24,7 +24,10 @@ THE SOFTWARE.
 #define __DRAT_H__
 
 #include "clause.h"
+#include <vector>
 #include <iostream>
+
+using std::vector;
 
 namespace CMSat {
 
@@ -101,7 +104,8 @@ struct Drat
 template<bool add_ID>
 struct DratFile: public Drat
 {
-    DratFile()
+    DratFile(vector<uint32_t>& _interToOuterMain) :
+        interToOuterMain(_interToOuterMain)
     {
         drup_buf = new unsigned char[2 * 1024 * 1024];
         buf_ptr = drup_buf;
@@ -134,7 +138,9 @@ struct DratFile: public Drat
 
     void byteDRUPa(const Lit l)
     {
-        unsigned int u = 2 * (l.var() + 1) + l.sign();
+        uint32_t v = l.var();
+        v = interToOuterMain[v];
+        unsigned int u = 2 * (v + 1) + l.sign();
         do {
             *buf_ptr++ = (u & 0x7f) | 0x80;
             buf_len++;
@@ -153,9 +159,11 @@ struct DratFile: public Drat
         }
     }
 
-    void byteDRUPd(const Lit l)
+    void byteDRUPd(Lit l)
     {
-        unsigned int u = 2 * (l.var() + 1) + l.sign();
+        uint32_t v = l.var();
+        v = interToOuterMain[v];
+        unsigned int u = 2 * (v + 1) + l.sign();
         do {
             *del_ptr++ = (u & 0x7f) | 0x80;
             del_len++;
@@ -339,6 +347,7 @@ struct DratFile: public Drat
     }
 
     std::ostream* drup_file = NULL;
+    vector<uint32_t>& interToOuterMain;
     #ifdef STATS_NEEDED
     int64_t ID = 0;
     int64_t sumConflicts = std::numeric_limits<int64_t>::max();
