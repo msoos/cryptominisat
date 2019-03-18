@@ -38,6 +38,10 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#include "msvc/stdint.h"
+#endif
+
 #if defined(__linux__)
 #include <fpu_control.h>	// Set FPU to double precision on Linux.
 #endif
