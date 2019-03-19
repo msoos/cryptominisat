@@ -1353,6 +1353,16 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
                 }
                 runStats.xorTime += finder.get_stats().findTime;
+            } else {
+                //TODO this is something VERY fishy
+                if (solver->conf.verbosity) {
+                    cout << "c [occ-xor] simulating occ-xor with occur mangling and clause mark cleaning -- TODO very fishy" << endl;
+                }
+                sort_occurs_and_set_abst();
+                for(ClOffset offset: clauses) {
+                    Clause* cl = solver->cl_alloc.ptr(offset);
+                    cl->stats.marked_clause = false;
+                }
             }
         } else if (token == "occ-clean-implicit") {
             //BUG TODO

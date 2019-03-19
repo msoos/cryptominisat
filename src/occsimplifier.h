@@ -258,6 +258,8 @@ public:
     const SubsumeStrengthen* get_sub_str() const;
     void check_elimed_vars_are_unassigned() const;
     bool getAnythingHasBeenBlocked() const;
+
+    /// Used ONLY for XOR, changes occur setup
     void sort_occurs_and_set_abst();
     void save_state(SimpleOutFile& f);
     void load_state(SimpleInFile& f);
