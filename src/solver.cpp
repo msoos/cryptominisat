@@ -1984,7 +1984,7 @@ lbool Solver::execute_inprocess_strategy(
                     }
                 }
 
-                if (!renumber_variables(token == "must-renumber")) {
+                if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
             }

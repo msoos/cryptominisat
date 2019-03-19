@@ -252,6 +252,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //Memory savings
         , doRenumberVars   (true)
+        , must_renumber    (false)
         , doSaveMem        (true)
         , full_watch_consolidate_every_n_confl (4ULL*1000ULL*1000ULL) //validated in run 8113323.wlm01
         , static_mem_consolidate_order(true)

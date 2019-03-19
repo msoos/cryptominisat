@@ -344,6 +344,7 @@ class DLL_PUBLIC SolverConf
 
         //Memory savings
         int       doRenumberVars;
+        int       must_renumber; ///< if set, all "renumber" is treated as a "must-renumber"
         int       doSaveMem;
         uint64_t  full_watch_consolidate_every_n_confl;
         int       static_mem_consolidate_order;
