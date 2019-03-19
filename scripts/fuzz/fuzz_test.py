@@ -664,6 +664,9 @@ class Tester:
             foundVerif = False
             dratLine = ""
             for line in consoleOutput2.split('\n'):
+                if "deleted clause on" in line:
+                    print("ERROR: deleted clause cannot be found")
+                    exit()
                 if len(line) > 1 and line[:2] == "s ":
                     # print("verif: " , line)
                     foundVerif = True
