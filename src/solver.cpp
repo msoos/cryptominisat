@@ -2030,14 +2030,14 @@ lbool Solver::simplify_problem(const bool startup)
     assert(solver->no_marked_clauses());
     #endif
 
+    if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
+        return l_Undef;
+    }
+
     clear_order_heap();
     #ifdef USE_GAUSS
     clearEnGaussMatrixes();
     #endif
-
-    if (solveStats.num_simplify_this_solve_call > conf.max_num_simplify_per_solve_call) {
-        return l_Undef;
-    }
 
     if (conf.verbosity >= 6) {
         cout
