@@ -1909,7 +1909,6 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "sls") {
             assert(conf.sls_every_n > 0);
             if (conf.doSLS
-                && !(drat->enabled() || conf.simulate_drat)
                 && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
                 Yalsat yalsat(this);
