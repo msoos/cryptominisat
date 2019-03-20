@@ -469,6 +469,8 @@ void Main::add_supported_options()
         , "Perform simplification at EVERY start -- only matters in library mode")
     ("nonstop,n", po::value(&conf.never_stop_search)->default_value(conf.never_stop_search)
         , "Never stop the search() process in class SATSolver")
+    ("maxnumsimppersolve", po::value(&conf.max_num_simplify_per_solve_call)->default_value(conf.max_num_simplify_per_solve_call)
+        , "Maximum number of simplifiactions to perform for every solve() call. After this, no more inprocessing will take place.")
 
     ("schedule", po::value(&conf.simplify_schedule_nonstartup)
         , "Schedule for simplification during run")
