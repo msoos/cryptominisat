@@ -317,6 +317,7 @@ class DLL_PUBLIC SolverConf
         uint64_t num_conflicts_of_search;
         double   num_conflicts_of_search_inc;
         double   num_conflicts_of_search_inc_max;
+        uint32_t max_num_simplify_per_solve_call;
         string   simplify_schedule_startup;
         string   simplify_schedule_nonstartup;
         string   simplify_schedule_preproc;
