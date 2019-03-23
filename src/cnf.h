@@ -620,19 +620,6 @@ void CNF::clean_xor_vars_no_prop(T& ps, bool& rhs)
     ps.resize(ps.size() - (i - j));
 }
 
-inline void CNF::add_drat(std::ostream* os, bool add_ID) {
-    if (drat)
-        delete drat;
-
-    if (add_ID) {
-        drat = new DratFile<true>(interToOuterMain);
-    } else {
-        drat = new DratFile<false>(interToOuterMain);
-    }
-    drat->setFile(os);
-}
-
-
 }
 
 #endif //__CNF_H__
