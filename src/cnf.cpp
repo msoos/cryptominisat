@@ -711,9 +711,9 @@ void CNF::add_drat(std::ostream* os, bool add_ID) {
         delete drat;
 
     if (add_ID) {
-        drat = new DratFile<true>(outerToInterMain);
+        drat = new DratFile<true>(interToOuterMain);
     } else {
-        drat = new DratFile<false>(outerToInterMain);
+        drat = new DratFile<false>(interToOuterMain);
     }
     drat->setFile(os);
 }
