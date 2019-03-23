@@ -1871,7 +1871,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
 
                 lits.clear();
             } else {
-                lits.push_back(l);
+                lits.push_back(solver->map_outer_to_inter(l));
             }
             at++;
         }
