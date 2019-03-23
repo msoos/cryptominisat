@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <iostream>
 
 using std::vector;
+//#define DEBUG_DRAT
 
 namespace CMSat {
 
@@ -140,6 +141,9 @@ struct DratFile: public Drat
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
+#ifdef DEBUG_DRAT
+        cout << Lit(v, l.sign()) << " ";
+#endif
         unsigned int u = 2 * (v + 1) + l.sign();
         do {
             *buf_ptr++ = (u & 0x7f) | 0x80;
@@ -163,6 +167,9 @@ struct DratFile: public Drat
     {
         uint32_t v = l.var();
         v = interToOuterMain[v];
+#ifdef DEBUG_DRAT
+        cout << Lit(v, l.sign()) << " ";
+#endif
         unsigned int u = 2 * (v + 1) + l.sign();
         do {
             *del_ptr++ = (u & 0x7f) | 0x80;
@@ -233,11 +240,20 @@ struct DratFile: public Drat
     Drat& operator<<(const Clause& cl) override
     {
         if (must_delete_next) {
+#ifdef DEBUG_DRAT
+            cout << "d ";
+#endif
             for(const Lit l: cl)
                 byteDRUPd(l);
         } else {
+#ifdef DEBUG_DRAT
+            cout << "a ";
+#endif
             for(const Lit l: cl)
                 byteDRUPa(l);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
 
             #ifdef STATS_NEEDED
             id_set = true;
@@ -259,11 +275,23 @@ struct DratFile: public Drat
     Drat& operator<<(const vector<Lit>& cl) override
     {
         if (must_delete_next) {
+#ifdef DEBUG_DRAT
+            cout << "d ";
+#endif
             for(const Lit l: cl)
                 byteDRUPd(l);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
         } else {
+#ifdef DEBUG_DRAT
+            cout << "d ";
+#endif
             for(const Lit l: cl)
                 byteDRUPa(l);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
         }
 
         return *this;
