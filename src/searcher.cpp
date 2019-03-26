@@ -1486,9 +1486,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     }
     if (data.bOnlyOneLitFromHighest) {
         cancelUntil(data.nHighestLevel - 1);
-        //TODO fix
-        //continue;
-        assert(false);
+        return true;
     }
 
     uint32_t backtrack_level;
