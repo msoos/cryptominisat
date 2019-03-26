@@ -157,6 +157,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
+    , nDecisionLevel
 ) {
     #ifdef STATS_NEEDED
     antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc_vsids);
@@ -185,7 +186,7 @@ inline void Searcher::add_lit_to_learnt(
         }
     }
 
-    if (varData[var].level >= decisionLevel()) {
+    if (varData[var].level >= nDecisionLevel) {
         pathC++;
     } else {
         learnt_clause.push_back(lit);
@@ -428,6 +429,7 @@ template<bool update_bogoprops>
 Clause* Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
+    , int nDecisionLevel
 ) {
     #ifdef VERBOSE_DEBUG
     debug_print_resolving_clause(confl);
@@ -525,7 +527,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                 assert(false);
         }
         if (p == lit_Undef || i > 0) {
-            add_lit_to_learnt<update_bogoprops>(x);
+            add_lit_to_learnt<update_bogoprops>(x, nDecisionLevel);
         }
         i++;
     }
@@ -635,6 +637,22 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     int index = trail.size() - 1;
     Lit p = lit_Undef;
     Clause* last_resolved_cl = NULL;
+    Lit lit0 = lit_Error;
+    switch (confl.getType()) {
+        case binary_t : {
+            lit0 = failBinLit;
+            break;
+        }
+
+        case clause_t : {
+            lit0 = (*cl_alloc.ptr(confl.get_offset()))[0];
+            break;
+        }
+
+        default:
+            assert(false);
+    }
+    int nDecisionLevel = varData[lit0.var()].level;
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
@@ -658,13 +676,15 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
-        last_resolved_cl = add_literals_from_confl_to_learnt<update_bogoprops>(confl, p);
+        last_resolved_cl = add_literals_from_confl_to_learnt<update_bogoprops>(
+            confl, p, nDecisionLevel);
 
         // Select next implication to look at
-        while (!seen[trail[index--].var()]);
-
-        p = trail[index+1];
-        assert(p != lit_Undef);
+        do {
+            while (!seen[trail[index--].var()]);
+            p = trail[index+1];
+            assert(p != lit_Undef);
+        } while(varData[p.var()].level >= nDecisionLevel)
 
         if (!update_bogoprops
             && pathC > 1

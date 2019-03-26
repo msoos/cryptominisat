@@ -390,10 +390,10 @@ class Searcher : public HyperEngine
         void create_otf_subsuming_implicit_clause(const Clause& cl);
         void create_otf_subsuming_long_clause(Clause& cl, ClOffset offset);
         template<bool update_bogoprops>
-        Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p);
+        Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p, int nDecisionLevel);
         void debug_print_resolving_clause(const PropBy confl) const;
         template<bool update_bogoprops>
-        void add_lit_to_learnt(Lit lit);
+        void add_lit_to_learnt(Lit lit, int nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
         size_t tmp_learnt_clause_size;
         cl_abst_type tmp_learnt_clause_abst;
