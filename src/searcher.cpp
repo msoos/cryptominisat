@@ -3374,8 +3374,8 @@ void Searcher::cancelUntil(uint32_t blevel)
         trail.resize(trail_lim[blevel]);
         trail_lim.resize(blevel);
 
-        for (int nLitId = (int)add_tmp.size() - 1; nLitId >= 0; --nLitId) {
-            trail.push(add_tmp_canceluntil[nLitId]);
+        for (int nLitId = (int)add_tmp_canceluntil.size() - 1; nLitId >= 0; --nLitId) {
+            trail.push_back(add_tmp_canceluntil[nLitId]);
         }
 
         add_tmp_canceluntil.clear();
