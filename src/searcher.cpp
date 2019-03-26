@@ -157,7 +157,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
-    , nDecisionLevel
+    , int nDecisionLevel
 ) {
     #ifdef STATS_NEEDED
     antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc_vsids);
@@ -684,7 +684,7 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             while (!seen[trail[index--].var()]);
             p = trail[index+1];
             assert(p != lit_Undef);
-        } while(varData[p.var()].level >= nDecisionLevel)
+        } while(varData[p.var()].level >= nDecisionLevel);
 
         if (!update_bogoprops
             && pathC > 1
