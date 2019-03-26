@@ -231,8 +231,11 @@ class DLL_PUBLIC SolverConf
 
         //OTF stuff
         int       otfHyperbin;
-        int       doOTFSubsume;
-        int       doOTFSubsumeOnlyAtOrBelowGlue;
+
+        //chrono bt
+        int confl_to_chrono;
+        int chrono;
+
 
         //decision-based conflict clause generation
         int       do_decision_based_cl;

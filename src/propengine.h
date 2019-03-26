@@ -103,7 +103,9 @@ public:
     bool propagate_occur();
     PropStats propStats;
     template<bool update_bogoprops = true>
-    void enqueue(const Lit p, const PropBy from = PropBy());
+    void enqueue(const Lit p, const uint32_t level, const PropBy from = PropBy());
+    template<bool update_bogoprops = true>
+    void enqueue(const Lit p);
     void new_decision_level();
     vector<double> var_act_vsids;
     vector<double> var_act_maple;
@@ -243,6 +245,7 @@ private:
         const Watched* i
         , const Lit p
         , PropBy& confl
+        , uint32_t currLevel
     ); ///<Propagate 2-long clause
     template<bool update_bogoprops>
     bool prop_long_cl_any_order(
@@ -250,6 +253,7 @@ private:
         , Watched*& j
         , const Lit p
         , PropBy& confl
+        , uint32_t currLevel
     );
 };
 
@@ -382,7 +386,13 @@ inline PropResult PropEngine::handle_normal_prop_fail(
 }
 
 template<bool update_bogoprops>
-void PropEngine::enqueue(const Lit p, const PropBy from)
+void PropEngine::enqueue(const Lit p)
+{
+    enqueue<update_bogoprops>(p, decisionLevel(), PropBy());
+}
+
+template<bool update_bogoprops>
+void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
 {
     #ifdef DEBUG_ENQUEUE_LEVEL0
     #ifndef VERBOSE_DEBUG
@@ -423,7 +433,7 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
     const bool sign = p.sign();
     assigns[v] = boolToLBool(!sign);
     varData[v].reason = from;
-    varData[v].level = decisionLevel();
+    varData[v].level = level;
     if (!update_bogoprops) {
         varData[v].polarity = !sign;
         #ifdef STATS_NEEDED

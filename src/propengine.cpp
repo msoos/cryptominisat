@@ -51,9 +51,9 @@ PropEngine::PropEngine(
     const SolverConf* _conf, std::atomic<bool>* _must_interrupt_inter
 ) :
         CNF(_conf, _must_interrupt_inter)
-        , qhead(0)
         , order_heap_vsids(VarOrderLt(var_act_vsids))
         , order_heap_maple(VarOrderLt(var_act_maple))
+        , qhead(0)
 {
 }
 
@@ -138,6 +138,7 @@ inline bool PropEngine::prop_bin_cl(
     const Watched* i
     , const Lit p
     , PropBy& confl
+    , uint32_t currLevel
 ) {
     const lbool val = value(i->lit2());
     if (val == l_Undef) {
@@ -148,7 +149,7 @@ inline bool PropEngine::prop_bin_cl(
             propStats.propsBinIrred++;
         #endif
 
-        enqueue<update_bogoprops>(i->lit2(), PropBy(~p, i->red()));
+        enqueue<update_bogoprops>(i->lit2(), currLevel, PropBy(~p, i->red()));
     } else if (val == l_False) {
         #ifdef STATS_NEEDED
         if (i->red())
@@ -173,6 +174,7 @@ bool PropEngine::prop_long_cl_any_order(
     , Watched*& j
     , const Lit p
     , PropBy& confl
+    , uint32_t currLevel
 ) {
     //Blocked literal is satisfied, so clause is satisfied
     if (value(i->getBlockedLit()) == l_True) {
@@ -208,7 +210,28 @@ bool PropEngine::prop_long_cl_any_order(
             propStats.propsLongIrred++;
         #endif
 
-        enqueue<update_bogoprops>(c[0], PropBy(offset));
+        if (currLevel == decisionLevel()) {
+            enqueue<update_bogoprops>(c[0], currLevel, PropBy(offset));
+        } else {
+            uint32_t nMaxLevel = currLevel;
+            uint32_t nMaxInd = 1;
+            // pass over all the literals in the clause and find the one with the biggest level
+            for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
+                uint32_t nLevel = varData[c[nInd].var()].level;
+                if (nLevel > nMaxLevel) {
+                    nMaxLevel = nLevel;
+                    nMaxInd = nInd;
+                }
+            }
+
+            if (nMaxInd != 1) {
+                std::swap(c[1], c[nMaxInd]);
+                *j--; // undo last watch
+                watches[c[1]].push(*i);
+            }
+
+            enqueue<update_bogoprops>(c[0], nMaxLevel, PropBy(offset));
+        }
     }
 
     return true;
@@ -225,6 +248,7 @@ PropBy PropEngine::propagate_any_order_fast()
     int64_t num_props = 0;
     while (qhead < trail.size()) {
         const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
+        uint32_t currLevel = varData[p.var()].level;
         watch_subarray ws = watches[~p];
         Watched* i;
         Watched* j;
@@ -238,7 +262,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 *j++ = *i;
                 const lbool val = value(i->lit2());
                 if (val == l_Undef) {
-                    enqueue<false>(i->lit2(), PropBy(~p, i->red()));
+                    enqueue<false>(i->lit2(), currLevel, PropBy(~p, i->red()));
                     i++;
                 } else if (val == l_False) {
                     confl = PropBy(~p, i->red());
@@ -311,7 +335,28 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
-                enqueue<false>(c[0], PropBy(offset));
+                if (currLevel == decisionLevel()) {
+                    enqueue<false>(c[0], currLevel, PropBy(offset));
+                } else {
+                    uint32_t nMaxLevel = currLevel;
+                    uint32_t nMaxInd = 1;
+                    // pass over all the literals in the clause and find the one with the biggest level
+                    for (uint32_t nInd = 2; nInd < c.size(); ++nInd) {
+                        uint32_t nLevel = varData[c[nInd].var()].level;
+                        if (nLevel > nMaxLevel) {
+                            nMaxLevel = nLevel;
+                            nMaxInd = nInd;
+                        }
+                    }
+
+                    if (nMaxInd != 1) {
+                        std::swap(c[1], c[nMaxInd]);
+                        *j--; // undo last watch
+                        watches[c[1]].push(w);
+                    }
+
+                    enqueue<false>(c[0], nMaxLevel, PropBy(offset));
+                }
             }
 
             nextClause:;
@@ -341,6 +386,8 @@ PropBy PropEngine::propagate_any_order()
     while (qhead < trail.size() && confl.isNULL()) {
         const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
+        uint32_t currLevel = varData[p.var()].level;
+
         Watched* i = ws.begin();
         Watched* j = i;
         Watched* end = ws.end();
@@ -351,7 +398,7 @@ PropBy PropEngine::propagate_any_order()
         for (; i != end; i++) {
             if (likely(i->isBin())) {
                 *j++ = *i;
-                if (!prop_bin_cl<update_bogoprops>(i, p, confl)) {
+                if (!prop_bin_cl<update_bogoprops>(i, p, confl, currLevel)) {
                     i++;
                     break;
                 }
@@ -359,7 +406,7 @@ PropBy PropEngine::propagate_any_order()
             }
 
             //propagate normal clause
-            if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl)) {
+            if (!prop_long_cl_any_order<update_bogoprops>(i, j, p, confl, currLevel)) {
                 i++;
                 break;
             }

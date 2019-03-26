@@ -99,8 +99,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //OTF
         , otfHyperbin      (true)
-        , doOTFSubsume     (false)
-        , doOTFSubsumeOnlyAtOrBelowGlue(5)
+
+        , confl_to_chrono (4000)
+        , chrono (100)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01

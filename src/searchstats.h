@@ -81,11 +81,6 @@ public:
     uint64_t learntUnits = 0;
     uint64_t learntBins = 0;
     uint64_t learntLongs = 0;
-    uint64_t otfSubsumed = 0;
-    uint64_t otfSubsumedImplicit = 0;
-    uint64_t otfSubsumedLong = 0;
-    uint64_t otfSubsumedRed = 0;
-    uint64_t otfSubsumedLitsGained = 0;
     uint64_t cache_hit = 0;
     uint64_t red_cl_in_which0 = 0;
 

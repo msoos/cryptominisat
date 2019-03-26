@@ -178,12 +178,6 @@ inline void Searcher::add_lit_to_learnt(
         } else {
             varData[var].conflicted++;
         }
-
-        if (conf.doOTFSubsume) {
-            tmp_learnt_clause_size++;
-            seen2[lit.toInt()] = 1;
-            tmp_learnt_clause_abst |= abst_var(lit.var());
-        }
     }
 
     if (varData[var].level >= nDecisionLevel) {
@@ -210,106 +204,6 @@ inline void Searcher::recursiveConfClauseMin()
         }
     }
     learnt_clause.resize(j);
-}
-
-void Searcher::create_otf_subsuming_implicit_clause(const Clause& cl)
-{
-    OTFClause newCl;
-    newCl.size = 0;
-    for(const Lit
-        *it = cl.begin(), *end = cl.end()
-        ; it != end
-        ; ++it
-    ) {
-        if (seen2[it->toInt()]) {
-            assert(newCl.size < 3);
-            newCl.lits[newCl.size] = *it;
-            newCl.size++;
-        }
-    }
-    otf_subsuming_short_cls.push_back(newCl);
-    if (conf.verbosity >= 6) {
-        cout << "New implicit clause that subsumes a long clause:";
-        for(unsigned  i = 0; i < newCl.size; i++) {
-            cout
-            << newCl.lits[i] << " ";
-        }
-        cout  << endl;
-    }
-
-    if (drat->enabled() || solver->conf.simulate_drat) {
-        *drat << add
-        #ifdef STATS_NEEDED
-        << solver->clauseID++ << sumConflicts
-        #endif
-        ;
-        for(unsigned  i = 0; i < newCl.size; i++) {
-            *drat << newCl.lits[i];
-        }
-        *drat << fin;
-    }
-
-    stats.otfSubsumed++;
-    stats.otfSubsumedImplicit++;
-    stats.otfSubsumedRed += cl.red();
-    stats.otfSubsumedLitsGained += cl.size() - newCl.size;
-}
-
-void Searcher::create_otf_subsuming_long_clause(
-    Clause& cl
-    , const ClOffset offset
-) {
-    (*solver->drat) << deldelay << cl << fin;
-    solver->detachClause(cl, false);
-    stats.otfSubsumed++;
-    stats.otfSubsumedLong++;
-    stats.otfSubsumedRed += cl.red();
-    stats.otfSubsumedLitsGained += cl.size() - tmp_learnt_clause_size;
-
-    size_t i = 0;
-    size_t i2 = 0;
-    for (; i < cl.size(); i++) {
-        if (seen2[cl[i].toInt()]) {
-            cl[i2++] = cl[i];
-        }
-    }
-    cl.shrink(i-i2);
-    assert(cl.size() == tmp_learnt_clause_size);
-    if (conf.verbosity >= 6) {
-        cout
-        << "New smaller clause OTF:" << cl << endl;
-    }
-    #ifdef STATS_NEEDED
-    cl.stats.ID = clauseID;
-    #endif
-    *drat << add << cl
-    #ifdef STATS_NEEDED
-    << sumConflicts
-    #endif
-    << fin << findelay;
-    otf_subsuming_long_cls.push_back(offset);
-
-    #ifdef STATS_NEEDED
-    clauseID++;
-    #endif
-}
-
-void Searcher::check_otf_subsume(const ClOffset offset, Clause& cl)
-{
-    size_t num_lits_from_cl = 0;
-    for (const Lit lit: cl) {
-        if (seen2[lit.toInt()]) {
-            num_lits_from_cl++;
-        }
-    }
-    if (num_lits_from_cl != tmp_learnt_clause_size)
-        return;
-
-    if (num_lits_from_cl <= 2) {
-        create_otf_subsuming_implicit_clause(cl);
-    } else {
-        create_otf_subsuming_long_clause(cl, offset);
-    }
 }
 
 void Searcher::normalClMinim()
@@ -546,11 +440,6 @@ inline void Searcher::minimize_learnt_clause()
         normalClMinim();
     }
     for (const Lit lit: toClear) {
-        if (!update_bogoprops
-            && conf.doOTFSubsume
-        ) {
-            seen2[lit.toInt()] = 0;
-        }
         seen[lit.var()] = 0;
     }
     toClear.clear();
@@ -666,14 +555,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             #ifdef STATS_NEEDED
             antec_data.vsids_of_resolving_literals.push(var_act_vsids[p.var()]/var_inc_vsids);
             #endif
-            if (!update_bogoprops && conf.doOTFSubsume) {
-                tmp_learnt_clause_size--;
-                assert(seen2[(~p).toInt()] == 1);
-                seen2[(~p).toInt()] = 0;
-            }
-
-            //We MUST under-estimate
-            tmp_learnt_clause_abst &= ~(abst_var((~p).var()));
         }
 
         last_resolved_cl = add_literals_from_confl_to_learnt<update_bogoprops>(
@@ -685,27 +566,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
             p = trail[index+1];
             assert(p != lit_Undef);
         } while(varData[p.var()].level >= nDecisionLevel);
-
-        if (!update_bogoprops
-            && pathC > 1
-            && conf.doOTFSubsume
-            //A long clause
-            && last_resolved_cl != NULL
-            //Good enough clause to try to minimize
-            && (!last_resolved_cl->red() || last_resolved_cl->stats.glue <= conf.doOTFSubsumeOnlyAtOrBelowGlue)
-            //Must subsume, so must be smaller
-            && last_resolved_cl->size() > tmp_learnt_clause_size
-            //Must not be a temporary clause
-            && !last_resolved_cl->gauss_temp_cl()
-            && !last_resolved_cl->used_in_xor()
-        ) {
-            last_resolved_cl->recalc_abst_if_needed();
-            //Everything in learnt_cl_2 seems to be also in cl
-            if ((last_resolved_cl->abst & tmp_learnt_clause_abst) ==  tmp_learnt_clause_abst
-            ) {
-                check_otf_subsume(confl.get_offset(), *last_resolved_cl);
-            }
-        }
 
         confl = varData[p.var()].reason;
         assert(varData[p.var()].level > 0);
@@ -719,14 +579,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     } while (pathC > 0);
     assert(pathC == 0);
     learnt_clause[0] = ~p;
-
-    if (conf.doOTFSubsume
-        && !update_bogoprops
-    ) {
-        for(const Lit lit: learnt_clause) {
-            seen2[lit.toInt()] = 0;
-        }
-    }
 
     return last_resolved_cl;
 }
@@ -806,34 +658,6 @@ void Searcher::simple_create_learnt_clause(
         out_learnt.resize(until);
 }
 
-Clause* Searcher::otf_subsume_last_resolved_clause(Clause* last_resolved_cl)
-{
-    //We can only on-the-fly subsume with clauses that are not 2- or 3-long
-    //furthermore, we cannot subsume a clause that is marked for deletion
-    //due to its high glue value
-    if (!conf.doOTFSubsume
-        //Last was a lont clause
-        || last_resolved_cl == NULL
-        //Final clause will not be implicit
-        || learnt_clause.size() <= 2
-        //Larger or equivalent clauses cannot subsume the clause
-        || learnt_clause.size() >= last_resolved_cl->size()
-    ) {
-        return NULL;
-    }
-
-    //Does it subsume?
-    if (!subset(learnt_clause, *last_resolved_cl))
-        return NULL;
-
-    //on-the-fly subsumed the original clause
-    stats.otfSubsumed++;
-    stats.otfSubsumedLong++;
-    stats.otfSubsumedRed += last_resolved_cl->red();
-    stats.otfSubsumedLitsGained += last_resolved_cl->size() - learnt_clause.size();
-    return last_resolved_cl;
-}
-
 void Searcher::print_debug_resolution_data(const PropBy confl)
 {
 #ifndef DEBUG_RESOLV
@@ -860,10 +684,6 @@ Clause* Searcher::analyze_conflict(
     learnt_clause.clear();
     assert(toClear.empty());
     implied_by_learnts.clear();
-    otf_subsuming_short_cls.clear();
-    otf_subsuming_long_cls.clear();
-    tmp_learnt_clause_size = 0;
-    tmp_learnt_clause_abst = 0;
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
@@ -947,7 +767,7 @@ Clause* Searcher::analyze_conflict(
     }
     #endif
 
-    return otf_subsume_last_resolved_clause(last_resolved_cl);
+    return NULL;
 
 }
 
@@ -1404,137 +1224,6 @@ void Searcher::check_need_restart()
     }
 }
 
-template<bool update_bogoprops>
-void Searcher::add_otf_subsume_long_clauses()
-{
-    //Hande long OTF subsumption
-    for(size_t i = 0; i < otf_subsuming_long_cls.size(); i++) {
-        const ClOffset offset = otf_subsuming_long_cls[i];
-        Clause& cl = *solver->cl_alloc.ptr(offset);
-
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(cl[at], cl[0]);
-        assert(value(cl[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < cl.size(); i2++) {
-            if (value(cl[i2]) == l_Undef || value(cl[i2]) == l_True) {
-                at = i2;
-                break;
-            }
-        }
-        assert(cl.size() > 2);
-
-        if (at == 0) {
-            //If none found, we have a propagating clause_t
-            enqueue<update_bogoprops>(cl[0], decisionLevel() == 0 ? PropBy() : PropBy(offset));
-
-            //Drat
-            if (decisionLevel() == 0) {
-                *drat << add << cl[0]
-                #ifdef STATS_NEEDED
-                << cl.stats.ID
-                << sumConflicts
-                #endif
-                << fin;
-            }
-        } else {
-            //We have a non-propagating clause
-
-            std::swap(cl[at], cl[1]);
-            assert(value(cl[1]) == l_Undef || value(cl[1]) == l_True);
-        }
-        solver->attachClause(cl, false);
-        cl.setStrenghtened();
-    }
-    otf_subsuming_long_cls.clear();
-}
-
-template<bool update_bogoprops>
-void Searcher::add_otf_subsume_implicit_clause()
-{
-    //Handle implicit OTF subsumption
-    for(vector<OTFClause>::iterator
-        it = otf_subsuming_short_cls.begin(), end = otf_subsuming_short_cls.end()
-        ; it != end
-        ; ++it
-    ) {
-        assert(it->size > 1);
-        //Find the l_Undef
-        size_t at = std::numeric_limits<size_t>::max();
-        for(size_t i2 = 0; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef) {
-                at = i2;
-                break;
-            }
-        }
-        assert(at != std::numeric_limits<size_t>::max());
-        std::swap(it->lits[at], it->lits[0]);
-        assert(value(it->lits[0]) == l_Undef);
-
-        //Find another l_Undef or an l_True
-        at = 0;
-        for(size_t i2 = 1; i2 < it->size; i2++) {
-            if (value(it->lits[i2]) == l_Undef
-                || value(it->lits[i2]) == l_True
-            ) {
-                at = i2;
-                break;
-            }
-        }
-
-        if (at == 0) {
-            //If none found, we have a propagation
-            //Calculate reason
-            PropBy by = PropBy();
-
-            //if decision level is non-zero, we have to be more careful
-            if (decisionLevel() != 0) {
-                assert(it->size == 2);
-                by = PropBy(it->lits[1], true);
-            }
-
-            //Enqueue this literal, finally
-            enqueue<update_bogoprops>(
-                it->lits[0]
-                , by
-            );
-
-            //Drat
-            if (decisionLevel() == 0) {
-                *drat << add << it->lits[0]
-                #ifdef STATS_NEEDED
-                << clauseID++
-                << sumConflicts
-                #endif
-                << fin;
-            }
-        } else {
-            //We have a non-propagating clause
-            std::swap(it->lits[at], it->lits[1]);
-            assert(value(it->lits[1]) == l_Undef
-                || value(it->lits[1]) == l_True
-            );
-
-            //Attach new binary/tertiary clause
-            if (it->size == 2) {
-                solver->datasync->signalNewBinClause(it->lits);
-                solver->attach_bin_clause(it->lits[0], it->lits[1], true);
-            }
-        }
-    }
-    otf_subsuming_short_cls.clear();
-}
-
 void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 {
     assert(decisionLevel() > 0);
@@ -1570,7 +1259,8 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 }
 
 template<bool update_bogoprops>
-void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
+void Searcher::attach_and_enqueue_learnt_clause(
+    Clause* cl, uint32_t level, bool enq)
 {
     switch (learnt_clause.size()) {
         case 0:
@@ -1591,7 +1281,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntBins++;
             solver->datasync->signalNewBinClause(learnt_clause);
             solver->attach_bin_clause(learnt_clause[0], learnt_clause[1], true, enq);
-            if (enq) enqueue(learnt_clause[0], PropBy(learnt_clause[1], true));
+            if (enq) enqueue(learnt_clause[0], level, PropBy(learnt_clause[1], true));
 
             #ifdef STATS_NEEDED
             propStats.propsBinRed++;
@@ -1602,7 +1292,7 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             //Long learnt
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
-            if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
+            if (enq) enqueue(learnt_clause[0], level, PropBy(cl_alloc.get_offset(cl)));
             bump_cl_act<update_bogoprops>(cl);
 
             #ifdef STATS_NEEDED
@@ -1693,97 +1383,56 @@ void Searcher::dump_sql_clause_data(
 }
 #endif
 
-Clause* Searcher::handle_last_confl_otf_subsumption(
-    Clause* cl
-    , const uint32_t glue
+Clause* Searcher::handle_last_confl(
+    const uint32_t glue
     , const uint32_t
     #ifdef STATS_NEEDED
     old_decision_level
     #endif
 ) {
-    if (learnt_clause.size() <= 2 ||
-        cl == NULL ||
-        cl->gauss_temp_cl() ||
-        !conf.doOTFSubsume
-    ) {
-        //Cannot make a non-implicit into an implicit
-        if (learnt_clause.size() <= 2) {
-            *drat << add << learnt_clause
-            #ifdef STATS_NEEDED
-            << clauseID
-            << sumConflicts
-            #endif
-            << fin;
-            cl = NULL;
-        } else {
-            cl = cl_alloc.Clause_new(learnt_clause
-            , sumConflicts
-            #ifdef STATS_NEEDED
-            , clauseID
-            #endif
-            );
-            cl->makeRed(glue);
-            ClOffset offset = cl_alloc.get_offset(cl);
-            unsigned which_arr = 2;
-
-            if (glue <= conf.glue_put_lev0_if_below_or_eq) {
-                which_arr = 0;
-            } else if (
-                glue <= conf.glue_put_lev1_if_below_or_eq
-                && conf.glue_put_lev1_if_below_or_eq != 0
-            ) {
-                which_arr = 1;
-            } else {
-                which_arr = 2;
-            }
-
-            if (which_arr == 0) {
-                stats.red_cl_in_which0++;
-            }
-
-            /*if (conf.guess_cl_effectiveness) {
-                unsigned lower_it = guess_clause_array(cl->stats, decisionLevel());
-                if (lower_it) {
-                    stats.guess_different++;
-                    cl->stats.ttl = 1;
-                }
-            }*/
-
-            cl->stats.which_red_array = which_arr;
-            solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-            *drat << add << *cl
-            #ifdef STATS_NEEDED
-            << sumConflicts
-            #endif
-            << fin;
-        }
+    Clause* cl;
+    //Cannot make a non-implicit into an implicit
+    if (learnt_clause.size() <= 2) {
+        *drat << add << learnt_clause
+        #ifdef STATS_NEEDED
+        << clauseID
+        << sumConflicts
+        #endif
+        << fin;
+        cl = NULL;
     } else {
-        //On-the-fly subsumption
-        assert(cl->size() > 2);
-        *(solver->drat) << deldelay << *cl << fin;
-        solver->detachClause(*cl, false);
-
-        //Shrink clause
-        assert(cl->size() > learnt_clause.size());
-        for (uint32_t i = 0; i < learnt_clause.size(); i++) {
-            (*cl)[i] = learnt_clause[i];
-        }
-        cl->resize(learnt_clause.size());
-        assert(cl->size() == learnt_clause.size());
-
-        //Update stats
-        if (cl->red() && cl->stats.glue > glue) {
-            cl->stats.glue = glue;
-        }
+        cl = cl_alloc.Clause_new(learnt_clause
+        , sumConflicts
         #ifdef STATS_NEEDED
-        cl->stats.ID = clauseID;
+        , clauseID
         #endif
+        );
+        cl->makeRed(glue);
+        ClOffset offset = cl_alloc.get_offset(cl);
+        unsigned which_arr = 2;
 
-        *(solver->drat) << add << *cl
+        if (glue <= conf.glue_put_lev0_if_below_or_eq) {
+            which_arr = 0;
+        } else if (
+            glue <= conf.glue_put_lev1_if_below_or_eq
+            && conf.glue_put_lev1_if_below_or_eq != 0
+        ) {
+            which_arr = 1;
+        } else {
+            which_arr = 2;
+        }
+
+        if (which_arr == 0) {
+            stats.red_cl_in_which0++;
+        }
+
+        cl->stats.which_red_array = which_arr;
+        solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+        *drat << add << *cl
         #ifdef STATS_NEEDED
-        << solver->sumConflicts
+        << sumConflicts
         #endif
-         << fin << findelay;
+        << fin;
     }
 
     #ifdef STATS_NEEDED
@@ -1829,21 +1478,22 @@ bool Searcher::handle_conflict(const PropBy confl)
         conf.glue_put_lev0_if_below_or_eq += 2; //TODO magic constant
     }
 
-    /*if (sumConflicts > 50000) {
-        DISTANCE = 0;
-    }
-    if (VSIDS && DISTANCE) {
-        collectFirstUIP(confl);
-    }*/
-
     params.conflictsDoneThisRestart++;
 
-    if (decisionLevel() == 0)
+    ConflictData data = FindConflictLevel(confl);
+    if (data.nHighestLevel == 0) {
         return false;
+    }
+    if (data.bOnlyOneLitFromHighest) {
+        cancelUntil(data.nHighestLevel - 1);
+        //TODO fix
+        //continue;
+        assert(false);
+    }
 
     uint32_t backtrack_level;
     uint32_t glue;
-    Clause* subsumed_cl = analyze_conflict<update_bogoprops>(
+    analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
@@ -1873,17 +1523,27 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (!update_bogoprops) {
         update_history_stats(backtrack_level, glue);
     }
+
+    // check chrono backtrack condition
+    if (
+        (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= sumConflicts)
+        && solver->conf.chrono > -1
+        && (decisionLevel() - backtrack_level)
+    ) {
+        chrono_backtrack++;
+        cancelUntil(data.nHighestLevel -1);
+    } else { // default behavior
+        ++non_chrono_backtrack;
+        cancelUntil(backtrack_level);
+    }
+
     uint32_t old_decision_level = decisionLevel();
     cancelUntil<true, update_bogoprops>(backtrack_level);
-
-    add_otf_subsume_long_clauses<update_bogoprops>();
-    add_otf_subsume_implicit_clause<update_bogoprops>();
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_decision_level);
-    assert(learnt_clause.size() <= 2 || cl != NULL);
-    attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
+    Clause* cl = handle_last_confl(glue, old_decision_level);
+    attach_and_enqueue_learnt_clause<update_bogoprops>(cl, backtrack_level);
 
     //Add decision-based clause
     if (!update_bogoprops
@@ -1899,7 +1559,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         }
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
-        cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), decisionLevel());
+        cl = handle_last_confl(learnt_clause.size(), decisionLevel());
         attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 
@@ -2974,8 +2634,6 @@ template PropBy Searcher::propagate<false>();
 size_t Searcher::mem_used() const
 {
     size_t mem = HyperEngine::mem_used();
-    mem += otf_subsuming_short_cls.capacity()*sizeof(OTFClause);
-    mem += otf_subsuming_long_cls.capacity()*sizeof(ClOffset);
     mem += var_act_vsids.capacity()*sizeof(uint32_t);
     mem += var_act_maple.capacity()*sizeof(uint32_t);
     mem += order_heap_vsids.mem_used();
@@ -2989,16 +2647,6 @@ size_t Searcher::mem_used() const
     mem += assumptionsSet.capacity()*sizeof(char);
 
     if (conf.verbosity >= 3) {
-        cout
-        << "c otfMustAttach bytes: "
-        << otf_subsuming_short_cls.capacity()*sizeof(OTFClause)
-        << endl;
-
-        cout
-        << "c toAttachLater bytes: "
-        << otf_subsuming_long_cls.capacity()*sizeof(ClOffset)
-        << endl;
-
         cout
         << "c toclear bytes: "
         << toClear.capacity()*sizeof(Lit)
@@ -3409,21 +3057,23 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 }
 
-ConflictData Searcher::FindConflictLevel(ClOffset cind) {
+ConflictData Searcher::FindConflictLevel(const PropBy pb) {
     ConflictData data;
-    Clause& conflCls = *cl_alloc.ptr(cind);
-    data.nHighestLevel = varData[conflCls[0].var()].level;
+
+    assert(false && "TODO must handle pb being binary");
+    Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
+    data.nHighestLevel = varData[conflCl[0].var()].level;
     if (data.nHighestLevel == decisionLevel()
-        && varData[conflCls[1].var()].level == decisionLevel()
+        && varData[conflCl[1].var()].level == decisionLevel()
     ) {
         return data;
     }
 
-    int highestId = 0;
+    uint32_t highestId = 0;
     data.bOnlyOneLitFromHighest = true;
     // find the largest decision level in the clause
-    for (int nLitId = 1; nLitId < conflCls.size(); ++nLitId) {
-        int nLevel = varData[conflCls[nLitId].var()].level;
+    for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
+        int nLevel = varData[conflCl[nLitId].var()].level;
         if (nLevel > data.nHighestLevel) {
             highestId = nLitId;
             data.nHighestLevel = nLevel;
@@ -3434,13 +3084,13 @@ ConflictData Searcher::FindConflictLevel(ClOffset cind) {
     }
 
     if (highestId != 0) {
-        std::swap(conflCls[0], conflCls[highestId]);
+        std::swap(conflCl[0], conflCl[highestId]);
         if (highestId > 1) {
             //ws.smudge(~conflCls[highestId]);
-            if (conflCls.size() == 2) {
-                removeWBin(watches, conflCls[highestId], conflCls[1], true);
+            if (conflCl.size() == 2) {
+                removeWBin(watches, conflCl[highestId], conflCl[1], true);
             } else {
-                removeWCl(watches[conflCls[highestId]], cind);
+                removeWCl(watches[conflCl[highestId]], pb.get_offset());
             }
         }
     }

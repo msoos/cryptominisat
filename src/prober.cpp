@@ -688,8 +688,6 @@ bool Prober::try_this(const Lit lit, const bool first)
     }
 
     solver->cancelUntil<false, true>(0);
-    solver->add_otf_subsume_long_clauses<true>();
-    solver->add_otf_subsume_implicit_clause<true>();
     runStats.addedBin += solver->hyper_bin_res_all();
     std::pair<size_t, size_t> tmp = solver->remove_useless_bins();
     runStats.removedIrredBin += tmp.first;
@@ -721,6 +719,7 @@ bool Prober::try_this(const Lit lit, const bool first)
 
 bool Prober::propagate(Lit& failed)
 {
+    assert(solver->decisionLevel() == 1);
     if (solver->conf.otfHyperbin) {
         //Set timeout for ONE enqueue. This used so that in case ONE enqueue
         //takes too long (usually because of hyper-bin), we exit early
