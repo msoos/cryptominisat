@@ -1524,7 +1524,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (
         (solver->conf.confl_to_chrono < 0 || solver->conf.confl_to_chrono <= sumConflicts)
         && solver->conf.chrono > -1
-        && (decisionLevel() - backtrack_level)
+        && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.chrono)
     ) {
         chrono_backtrack++;
         cancelUntil(data.nHighestLevel -1);
