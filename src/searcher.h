@@ -132,6 +132,8 @@ class Searcher : public HyperEngine
                 return val ^ lit.sign();
             }
         }
+
+        vector<Lit> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;

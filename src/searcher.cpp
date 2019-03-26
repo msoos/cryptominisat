@@ -3307,7 +3307,7 @@ template
 void Searcher::cancelUntil<false, true>(uint32_t level);
 
 template<bool do_insert_var_order, bool update_bogoprops>
-void Searcher::cancelUntil(uint32_t level)
+void Searcher::cancelUntil(uint32_t blevel)
 {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
@@ -3315,7 +3315,8 @@ void Searcher::cancelUntil(uint32_t level)
     cout << endl;
     #endif
 
-    if (decisionLevel() > level) {
+    if (decisionLevel() > blevel) {
+        add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrixes)
             gauss->canceling(trail_lim[level]);
@@ -3324,7 +3325,7 @@ void Searcher::cancelUntil(uint32_t level)
         //Go through in reverse order, unassign & insert then
         //back to the vars to be branched upon
         for (int sublevel = trail.size()-1
-            ; sublevel >= (int)trail_lim[level]
+            ; sublevel >= (int)trail_lim[blevel]
             ; sublevel--
         ) {
             #ifdef VERBOSE_DEBUG
@@ -3341,33 +3342,43 @@ void Searcher::cancelUntil(uint32_t level)
             const uint32_t var = trail[sublevel].var();
             assert(value(var) != l_Undef);
 
-             if (!update_bogoprops && !VSIDS) {
-                assert(sumConflicts >= varData[var].last_picked);
-                uint32_t age = sumConflicts - varData[var].last_picked;
-                if (age > 0) {
-                    //adjusted reward -> higher if conflicted more or quicker
-                    double adjusted_reward = ((double)(varData[var].conflicted)) / ((double)age);
+            if (varData[var].level <= blevel) {
+                add_tmp_canceluntil.push_back(trail[sublevel]);
+            } else {
+                 if (!update_bogoprops && !VSIDS) {
+                    assert(sumConflicts >= varData[var].last_picked);
+                    uint32_t age = sumConflicts - varData[var].last_picked;
+                    if (age > 0) {
+                        //adjusted reward -> higher if conflicted more or quicker
+                        double adjusted_reward = ((double)(varData[var].conflicted)) / ((double)age);
 
-                    double old_activity = var_act_maple[var];
-                    var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
-                    if (order_heap_maple.inHeap(var)) {
-                        if (var_act_maple[var] > old_activity)
-                            order_heap_maple.decrease(var);
-                        else
-                            order_heap_maple.increase(var);
+                        double old_activity = var_act_maple[var];
+                        var_act_maple[var] = step_size * adjusted_reward + ((1.0 - step_size) * old_activity);
+                        if (order_heap_maple.inHeap(var)) {
+                            if (var_act_maple[var] > old_activity)
+                                order_heap_maple.decrease(var);
+                            else
+                                order_heap_maple.increase(var);
+                        }
                     }
+                    varData[var].cancelled = sumConflicts;
                 }
-                varData[var].cancelled = sumConflicts;
-            }
 
-            assigns[var] = l_Undef;
-            if (do_insert_var_order) {
-                insert_var_order(var);
+                assigns[var] = l_Undef;
+                if (do_insert_var_order) {
+                    insert_var_order(var);
+                }
             }
         }
-        qhead = trail_lim[level];
-        trail.resize(trail_lim[level]);
-        trail_lim.resize(level);
+        qhead = trail_lim[blevel];
+        trail.resize(trail_lim[blevel]);
+        trail_lim.resize(blevel);
+
+        for (int nLitId = (int)add_tmp.size() - 1; nLitId >= 0; --nLitId) {
+            trail.push(add_tmp_canceluntil[nLitId]);
+        }
+
+        add_tmp_canceluntil.clear();
     }
 
     #ifdef VERBOSE_DEBUG
