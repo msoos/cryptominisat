@@ -520,7 +520,7 @@ size_t Searcher::find_backtrack_level_of_learnt()
 }
 
 template<bool update_bogoprops>
-inline Clause* Searcher::create_learnt_clause(PropBy confl)
+inline void Searcher::create_learnt_clause(PropBy confl)
 {
     pathC = 0;
     int index = trail.size() - 1;
@@ -579,8 +579,6 @@ inline Clause* Searcher::create_learnt_clause(PropBy confl)
     } while (pathC > 0);
     assert(pathC == 0);
     learnt_clause[0] = ~p;
-
-    return last_resolved_cl;
 }
 
 void Searcher::simple_create_learnt_clause(
@@ -687,7 +685,7 @@ Clause* Searcher::analyze_conflict(
     assert(decisionLevel() > 0);
 
     print_debug_resolution_data(confl);
-    Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
+    create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();

@@ -333,7 +333,7 @@ class Searcher : public HyperEngine
         void bump_var_activities_based_on_implied_by_learnts(const uint32_t backtrack_level);
         void print_debug_resolution_data(const PropBy confl);
         template<bool update_bogoprops>
-        Clause* create_learnt_clause(PropBy confl);
+        void create_learnt_clause(PropBy confl);
         int pathC;
         #ifdef STATS_NEEDED
         AtecedentData<uint16_t> antec_data;
