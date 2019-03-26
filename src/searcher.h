@@ -65,6 +65,16 @@ struct VariableVariance
     double avgTrailLevelVar = 0;
 };
 
+struct ConflictData {
+    ConflictData() :
+        nHighestLevel(-1),
+        bOnlyOneLitFromHighest(false)
+    {}
+
+    int nHighestLevel;
+    bool bOnlyOneLitFromHighest;
+};
+
 class Searcher : public HyperEngine
 {
     public:
@@ -136,6 +146,7 @@ class Searcher : public HyperEngine
         vector<Lit> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
+        ConflictData FindConflictLevel(ClOffset cind);
         bool check_order_heap_sanity() const;
 
         SQLStats* sqlStats = NULL;

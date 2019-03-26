@@ -3389,6 +3389,45 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 }
 
+ConflictData Searcher::FindConflictLevel(ClOffset cind) {
+    ConflictData data;
+    Clause& conflCls = *cl_alloc.ptr(cind);
+    data.nHighestLevel = varData[conflCls[0].var()].level;
+    if (data.nHighestLevel == decisionLevel()
+        && varData[conflCls[1].var()].level == decisionLevel()
+    ) {
+        return data;
+    }
+
+    int highestId = 0;
+    data.bOnlyOneLitFromHighest = true;
+    // find the largest decision level in the clause
+    for (int nLitId = 1; nLitId < conflCls.size(); ++nLitId) {
+        int nLevel = varData[conflCls[nLitId].var()].level;
+        if (nLevel > data.nHighestLevel) {
+            highestId = nLitId;
+            data.nHighestLevel = nLevel;
+            data.bOnlyOneLitFromHighest = true;
+        } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
+            data.bOnlyOneLitFromHighest = false;
+        }
+    }
+
+    if (highestId != 0) {
+        std::swap(conflCls[0], conflCls[highestId]);
+        if (highestId > 1) {
+            //ws.smudge(~conflCls[highestId]);
+            if (conflCls.size() == 2) {
+                removeWBin(watches, conflCls[highestId], conflCls[1], true);
+            } else {
+                removeWCl(watches[conflCls[highestId]], cind);
+            }
+        }
+    }
+
+    return data;
+}
+
 inline bool Searcher::check_order_heap_sanity() const
 {
     if (conf.sampling_vars) {
