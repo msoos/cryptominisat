@@ -3056,7 +3056,6 @@ void Searcher::cancelUntil(uint32_t blevel)
 ConflictData Searcher::FindConflictLevel(const PropBy pb) {
     ConflictData data;
 
-    assert(false && "TODO must handle pb being binary");
     if (pb.getType() == PropByType::binary_t) {
         data.nHighestLevel = varData[failBinLit.var()].level;
 
