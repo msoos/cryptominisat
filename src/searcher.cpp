@@ -3057,35 +3057,56 @@ ConflictData Searcher::FindConflictLevel(const PropBy pb) {
     ConflictData data;
 
     assert(false && "TODO must handle pb being binary");
-    Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
-    data.nHighestLevel = varData[conflCl[0].var()].level;
-    if (data.nHighestLevel == decisionLevel()
-        && varData[conflCl[1].var()].level == decisionLevel()
-    ) {
-        return data;
-    }
+    if (pb.getType() == PropByType::binary_t) {
+        data.nHighestLevel = varData[failBinLit.var()].level;
 
-    uint32_t highestId = 0;
-    data.bOnlyOneLitFromHighest = true;
-    // find the largest decision level in the clause
-    for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
-        int nLevel = varData[conflCl[nLitId].var()].level;
+        if (data.nHighestLevel == decisionLevel()
+            && varData[pb.lit2().var()].level == decisionLevel()
+        ) {
+            return data;
+        }
+
+        data.bOnlyOneLitFromHighest = true;
+        // find the largest decision level in the clause
+        int nLevel = varData[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
-            highestId = nLitId;
             data.nHighestLevel = nLevel;
             data.bOnlyOneLitFromHighest = true;
         } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
             data.bOnlyOneLitFromHighest = false;
         }
-    }
 
-    if (highestId != 0) {
-        std::swap(conflCl[0], conflCl[highestId]);
-        if (highestId > 1) {
-            //ws.smudge(~conflCls[highestId]);
-            if (conflCl.size() == 2) {
-                removeWBin(watches, conflCl[highestId], conflCl[1], true);
-            } else {
+        //TODO
+        // we might want to swap here if highestID is not 0
+
+    } else {
+        assert(pb.getType() == PropByType::clause_t);
+        Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
+        data.nHighestLevel = varData[conflCl[0].var()].level;
+
+        if (data.nHighestLevel == decisionLevel()
+            && varData[conflCl[1].var()].level == decisionLevel()
+        ) {
+            return data;
+        }
+
+        uint32_t highestId = 0;
+        data.bOnlyOneLitFromHighest = true;
+        // find the largest decision level in the clause
+        for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
+            int nLevel = varData[conflCl[nLitId].var()].level;
+            if (nLevel > data.nHighestLevel) {
+                highestId = nLitId;
+                data.nHighestLevel = nLevel;
+                data.bOnlyOneLitFromHighest = true;
+            } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
+                data.bOnlyOneLitFromHighest = false;
+            }
+        }
+
+        if (highestId != 0) {
+            std::swap(conflCl[0], conflCl[highestId]);
+            if (highestId > 1) {
                 removeWCl(watches[conflCl[highestId]], pb.get_offset());
             }
         }
