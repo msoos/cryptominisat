@@ -1519,6 +1519,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     if (!update_bogoprops) {
         update_history_stats(backtrack_level, glue);
     }
+    uint32_t old_decision_level = decisionLevel();
 
     // check chrono backtrack condition
     if (
@@ -1527,14 +1528,12 @@ bool Searcher::handle_conflict(const PropBy confl)
         && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.chrono)
     ) {
         chrono_backtrack++;
-        cancelUntil(data.nHighestLevel -1);
+        cancelUntil<true, update_bogoprops>(data.nHighestLevel -1);
     } else { // default behavior
         ++non_chrono_backtrack;
-        cancelUntil(backtrack_level);
+        cancelUntil<true, update_bogoprops>(backtrack_level);
     }
 
-    uint32_t old_decision_level = decisionLevel();
-    cancelUntil<true, update_bogoprops>(backtrack_level);
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
