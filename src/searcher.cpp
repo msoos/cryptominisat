@@ -1481,6 +1481,9 @@ bool Searcher::handle_conflict(PropBy confl)
     }
     if (data.bOnlyOneLitFromHighest) {
         cancelUntil(data.nHighestLevel - 1);
+#ifdef CHRONO_PRINT
+        cout << "cancelUntil(data.nHighestLevel - 1);" << endl;
+#endif
         return true;
     }
 
@@ -1524,10 +1527,16 @@ bool Searcher::handle_conflict(PropBy confl)
         && solver->conf.chrono > -1
         && (((int)decisionLevel() - (int)backtrack_level) >= solver->conf.chrono)
     ) {
+#ifdef CHRONO_PRINT
+        cout << "chrono Backtracking to level " << backtrack_level << endl;
+#endif
         chrono_backtrack++;
         cancelUntil<true, update_bogoprops>(data.nHighestLevel -1);
     } else { // default behavior
         ++non_chrono_backtrack;
+#ifdef CHRONO_PRINT
+        cout << "non-chrono Backtracking to level " << backtrack_level << endl;
+#endif
         cancelUntil<true, update_bogoprops>(backtrack_level);
     }
 
