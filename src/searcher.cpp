@@ -563,7 +563,7 @@ inline void Searcher::create_learnt_clause(PropBy confl)
             while (!seen[trail[index--].var()]);
             p = trail[index+1];
             assert(p != lit_Undef);
-        } while(varData[p.var()].level >= nDecisionLevel);
+        } while(varData[p.var()].level < nDecisionLevel);
 
         confl = varData[p.var()].reason;
         assert(varData[p.var()].level > 0);
