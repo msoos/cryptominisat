@@ -1117,6 +1117,9 @@ void Searcher::dump_search_sql(const double myTime)
 template<bool update_bogoprops>
 lbool Searcher::new_decision()
 {
+#ifdef SLOW_DEBUG
+    assert(solver->prop_at_head());
+#endif
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
@@ -2077,6 +2080,7 @@ void Searcher::finish_up_solve(const lbool status)
         #ifdef SLOW_DEBUG
         check_order_heap_sanity();
         #endif
+        assert(qhead == trail.size());
         model = assigns;
 
         if (conf.need_decisions_reaching) {
@@ -2131,6 +2135,9 @@ void Searcher::finish_up_solve(const lbool status)
             ok = false;
         }
         cancelUntil(0);
+    } else if (status == l_Undef) {
+        assert(decisionLevel() == 0);
+        assert(solver->prop_at_head());
     }
 
     stats.cpu_time = cpuTime() - startTime;

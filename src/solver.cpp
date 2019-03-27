@@ -1519,6 +1519,9 @@ lbool Solver::solve_with_assumptions(
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
+    assert(decisionLevel()== 0);
+    assert(solver->prop_at_head());
+
     return status;
 }
 
@@ -1790,6 +1793,7 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
+        assert(solver->prop_at_head());
 
         #ifdef DEBUG_ATTACH_MORE
         find_all_attach();
