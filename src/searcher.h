@@ -135,7 +135,7 @@ class Searcher : public HyperEngine
         vector<Lit> add_tmp_canceluntil;
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
         void cancelUntil(uint32_t level); ///<Backtrack until a certain level.
-        ConflictData FindConflictLevel(const PropBy pb);
+        ConflictData FindConflictLevel(PropBy& pb);
         uint32_t chrono_backtrack = 0;
         uint32_t non_chrono_backtrack = 0;
 

@@ -1461,7 +1461,7 @@ Clause* Searcher::handle_last_confl(
 }
 
 template<bool update_bogoprops>
-bool Searcher::handle_conflict(const PropBy confl)
+bool Searcher::handle_conflict(PropBy confl)
 {
     stats.conflStats.numConflicts++;
     sumConflicts++;
@@ -3050,7 +3050,7 @@ void Searcher::cancelUntil(uint32_t blevel)
     #endif
 }
 
-ConflictData Searcher::FindConflictLevel(const PropBy pb) {
+ConflictData Searcher::FindConflictLevel(PropBy& pb) {
     ConflictData data;
 
     if (pb.getType() == PropByType::binary_t) {
@@ -3062,10 +3062,12 @@ ConflictData Searcher::FindConflictLevel(const PropBy pb) {
             return data;
         }
 
+        uint32_t highestId = 0;
         data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         int nLevel = varData[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
+            highestId = 1;
             data.nHighestLevel = nLevel;
             data.bOnlyOneLitFromHighest = true;
         } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
@@ -3074,6 +3076,11 @@ ConflictData Searcher::FindConflictLevel(const PropBy pb) {
 
         //TODO
         // we might want to swap here if highestID is not 0
+        if (highestId != 0) {
+            Lit back = pb.lit2();
+            pb = PropBy(failBinLit, pb.isRedStep());
+            failBinLit = back;
+        }
 
     } else {
         assert(pb.getType() == PropByType::clause_t);
