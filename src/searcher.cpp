@@ -2080,7 +2080,7 @@ void Searcher::finish_up_solve(const lbool status)
         #ifdef SLOW_DEBUG
         check_order_heap_sanity();
         #endif
-        assert(qhead == trail.size());
+        assert(solver->prop_at_head());
         model = assigns;
 
         if (conf.need_decisions_reaching) {
