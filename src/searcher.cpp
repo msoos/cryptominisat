@@ -1562,7 +1562,9 @@ bool Searcher::handle_conflict(PropBy confl)
             }
         }
         std::swap(decision_clause[0], decision_clause[i]);
+
         learnt_clause = decision_clause;
+        print_learnt_clause();
         cl = handle_last_confl(learnt_clause.size(), old_decision_level);
         attach_and_enqueue_learnt_clause<update_bogoprops>(cl, backtrack_level, false);
     }
