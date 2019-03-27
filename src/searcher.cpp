@@ -2129,6 +2129,10 @@ void Searcher::finish_up_solve(const lbool status)
         } else {
             cancelUntil(0);
         }
+        assert(decisionLevel() == 0);
+        PropBy confl = propagate<false>();
+        assert(confl.isNULL());
+        assert(solver->prop_at_head());
         print_solution_varreplace_status();
     } else if (status == l_False) {
         if (conflict.size() == 0) {
