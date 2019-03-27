@@ -322,7 +322,7 @@ class Tester:
         cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
-        cmd += "--conftochrono %d " % random.choice([-1, random.randint(1, 100000)])
+        cmd += "--conftochrono %d " % random.choice([-1, random.randint(1, 20000)])
         cmd += "--diffdeclevelchrono %d " % random.choice([1, random.randint(1, 1000), -1])
 
         if self.dump_red is not None:
