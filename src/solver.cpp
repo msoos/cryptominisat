@@ -1520,7 +1520,7 @@ lbool Solver::solve_with_assumptions(
     conf.maxTime = std::numeric_limits<double>::max();
     drat->flush();
     assert(decisionLevel()== 0);
-    assert(solver->prop_at_head());
+    assert(!ok || solver->prop_at_head());
 
     return status;
 }
