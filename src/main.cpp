@@ -627,9 +627,9 @@ void Main::add_supported_options()
     po::options_description chrono_bt_opts("Propagation options");
     chrono_bt_opts.add_options()
     ("conftochrono", po::value(&conf.confl_to_chrono)->default_value(conf.confl_to_chrono)
-        , "This many conflicts before chronological backtracking is turned on")
+        , "This many conflicts before chronological backtracking is turned on. Giving -1 means it's always on.")
     ("diffdeclevelchrono", po::value(&conf.diff_declev_for_chrono)->default_value(conf.diff_declev_for_chrono)
-        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking")
+        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking. Giving -1 means it is never turned on (overrides '--confltochrono -1' in this case).")
     ;
 
 
