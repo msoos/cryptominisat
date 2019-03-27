@@ -2090,6 +2090,9 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
+        PropBy confl = propagate<false>();
+        assert(confl.isNULL());
+
         finish_up_solve(ret);
         rebuildOrderHeap();
         return ret;
