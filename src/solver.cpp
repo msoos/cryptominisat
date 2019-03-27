@@ -2090,6 +2090,8 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
+        //nothing should happen here, we already have a full solution
+        //but let's check and put the propagation to HEAD
         PropBy confl = propagate<false>();
         assert(confl.isNULL());
 
