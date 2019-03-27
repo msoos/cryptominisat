@@ -1059,8 +1059,9 @@ void HyperEngine::enqueue_with_acestor_info(
     , const Lit ancestor
     , const bool redStep
 ) {
-    //only called at decision level 1, by Prober
-    enqueue(p, 1, PropBy(~ancestor, redStep, false, false));
+    //only called at decision level 1 during solving OR
+    //during intree probing
+    enqueue(p, decisionLevel(), PropBy(~ancestor, redStep, false, false));
 
     assert(varData[ancestor.var()].level != 0);
 
