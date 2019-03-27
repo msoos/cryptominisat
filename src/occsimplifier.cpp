@@ -1378,11 +1378,16 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 eliminate_vars();
             }
         } else if (token == "occ-bva") {
-            bva->bounded_var_addition();
-            added_bin_cl.clear();
-            added_cl_to_var.clear();
-            added_long_cl.clear();
-            solver->clean_occur_from_removed_clauses_only_smudged();
+            if (solver->conf.verbosity) {
+                cout << "c [occ-bva] global numcalls: " << globalStats.numCalls << endl;
+            }
+            if ((globalStats.numCalls % solver->conf.bva_every_n) == (solver->conf.bva_every_n-1)) {
+                bva->bounded_var_addition();
+                added_bin_cl.clear();
+                added_cl_to_var.clear();
+                added_long_cl.clear();
+                solver->clean_occur_from_removed_clauses_only_smudged();
+            }
         } /*else if (token == "occ-gates") {
             if (solver->conf.doCache
                 && solver->conf.doGateFind

@@ -145,6 +145,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , bva_also_twolit_diff(true)
         , bva_extra_lit_and_red_start(0)
         , bva_time_limitM(100)
+        , bva_every_n(1)
 
         //Probing
         , doProbe          (false)
