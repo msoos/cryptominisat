@@ -322,6 +322,7 @@ class Tester:
         cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
+        cmd += "--bva %d " % random.choice([1, 1, 1, 0])
         cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.dump_red is not None:
@@ -418,8 +419,13 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
+<<<<<<< HEAD
                     "stamp", "cache", "otfsubsume",
                     "renumber", "savemem", "moreminim", "gates", "bva",
+=======
+                    "stamp", "cache",
+                    "renumber", "savemem", "moreminim", "gates",
+>>>>>>> 8636717ad... BVA has been off for a while, so turning that back on
                     "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 
             if "xor" in self.extra_opts_supported:
