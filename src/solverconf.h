@@ -234,7 +234,7 @@ class DLL_PUBLIC SolverConf
 
         //chrono bt
         int confl_to_chrono;
-        int chrono;
+        int diff_declev_for_chrono;
 
 
         //decision-based conflict clause generation

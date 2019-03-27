@@ -100,8 +100,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //OTF
         , otfHyperbin      (true)
 
+        //Chono BT
         , confl_to_chrono (4000)
-        , chrono (100)
+        , diff_declev_for_chrono (100)
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01

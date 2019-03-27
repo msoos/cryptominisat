@@ -624,6 +624,14 @@ void Main::add_supported_options()
         , "Perform hyper-binary resolution at dec. level 1 after every restart and during probing")
     ;
 
+    po::options_description chrono_bt_opts("Propagation options");
+    chrono_bt_opts.add_options()
+    ("conftochrono", po::value(&conf.confl_to_chrono)->default_value(conf.confl_to_chrono)
+        , "This many conflicts before chronological backtracking is turned on")
+    ("diffdeclevelchrono", po::value(&conf.diff_declev_for_chrono)->default_value(conf.diff_declev_for_chrono)
+        , "Difference in decision level is more than this, perform chonological backtracking instead of non-chronological backtracking")
+    ;
+
 
     po::options_description stampOptions("Stamping options");
     stampOptions.add_options()
@@ -778,6 +786,7 @@ void Main::add_supported_options()
     .add(restartOptions)
     .add(printOptions)
     .add(propOptions)
+    .add(chrono_bt_opts)
     .add(reduceDBOptions)
     .add(red_cl_dump_opts)
     .add(varPickOptions)
