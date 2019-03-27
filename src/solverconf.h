@@ -279,6 +279,7 @@ class DLL_PUBLIC SolverConf
         int      bva_also_twolit_diff;
         long     bva_extra_lit_and_red_start;
         long long bva_time_limitM;
+        uint32_t  bva_every_n;
 
         //Probing
         int      doProbe;
