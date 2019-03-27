@@ -2130,6 +2130,8 @@ void Searcher::finish_up_solve(const lbool status)
             cancelUntil(0);
         }
         assert(decisionLevel() == 0);
+
+        //due to chrono BT we need to propagate once more
         PropBy confl = propagate<false>();
         assert(confl.isNULL());
         assert(solver->prop_at_head());
@@ -2139,6 +2141,11 @@ void Searcher::finish_up_solve(const lbool status)
             ok = false;
         }
         cancelUntil(0);
+        if (ok) {
+            //due to chrono BT we need to propagate once more
+            PropBy confl = propagate<false>();
+            assert(confl.isNULL());
+        }
     } else if (status == l_Undef) {
         assert(decisionLevel() == 0);
         assert(solver->prop_at_head());
