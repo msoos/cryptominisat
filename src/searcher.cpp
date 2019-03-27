@@ -1256,7 +1256,7 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
 
 template<bool update_bogoprops>
 void Searcher::attach_and_enqueue_learnt_clause(
-    Clause* cl, uint32_t level, bool enq)
+    Clause* cl, const uint32_t level, const bool enq)
 {
     switch (learnt_clause.size()) {
         case 0:
@@ -1544,7 +1544,7 @@ bool Searcher::handle_conflict(PropBy confl)
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
     Clause* cl = handle_last_confl(glue, old_decision_level);
-    attach_and_enqueue_learnt_clause<update_bogoprops>(cl, backtrack_level);
+    attach_and_enqueue_learnt_clause<update_bogoprops>(cl, backtrack_level, true);
 
     //Add decision-based clause
     if (!update_bogoprops
@@ -1560,8 +1560,8 @@ bool Searcher::handle_conflict(PropBy confl)
         }
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
-        cl = handle_last_confl(learnt_clause.size(), decisionLevel());
-        attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
+        cl = handle_last_confl(learnt_clause.size(), old_decision_level);
+        attach_and_enqueue_learnt_clause<update_bogoprops>(cl, backtrack_level, false);
     }
 
     if (!update_bogoprops) {
