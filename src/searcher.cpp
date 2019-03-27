@@ -3092,7 +3092,8 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
 
     } else {
         assert(pb.getType() == PropByType::clause_t);
-        Clause& conflCl = *cl_alloc.ptr(pb.get_offset());
+        const ClOffset offs = pb.get_offset();
+        Clause& conflCl = *cl_alloc.ptr(offs);
         data.nHighestLevel = varData[conflCl[0].var()].level;
 
         if (data.nHighestLevel == decisionLevel()
@@ -3119,6 +3120,7 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
             std::swap(conflCl[0], conflCl[highestId]);
             if (highestId > 1) {
                 removeWCl(watches[conflCl[highestId]], pb.get_offset());
+                watches[conflCl[0]].push(Watched(offs, conflCl[1]));
             }
         }
     }
