@@ -1264,8 +1264,7 @@ void Searcher::attach_and_enqueue_learnt_clause(
         case 1:
             //Unitary learnt
             stats.learntUnits++;
-            if (enq) enqueue(learnt_clause[0]);
-            assert(decisionLevel() == 0);
+            if (enq) enqueue(learnt_clause[0], level, PropBy());
 
             #ifdef STATS_NEEDED
             propStats.propsUnit++;
