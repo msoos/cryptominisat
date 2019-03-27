@@ -369,10 +369,10 @@ class Searcher : public HyperEngine
         MyStack<Lit> analyze_stack;
         uint32_t        abstractLevel(const uint32_t x) const;
         template<bool update_bogoprops>
-        Clause* add_literals_from_confl_to_learnt(const PropBy confl, const Lit p, int nDecisionLevel);
+        void add_literals_from_confl_to_learnt(const PropBy confl, const Lit p, uint32_t nDecisionLevel);
         void debug_print_resolving_clause(const PropBy confl) const;
         template<bool update_bogoprops>
-        void add_lit_to_learnt(Lit lit, int nDecisionLevel);
+        void add_lit_to_learnt(Lit lit, uint32_t nDecisionLevel);
         void analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& out_conflict);
 
         //Restarts

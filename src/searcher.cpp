@@ -157,7 +157,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 template<bool update_bogoprops>
 inline void Searcher::add_lit_to_learnt(
     const Lit lit
-    , int nDecisionLevel
+    , uint32_t nDecisionLevel
 ) {
     #ifdef STATS_NEEDED
     antec_data.vsids_all_incoming_vars.push(var_act_vsids[lit.var()]/var_inc_vsids);
@@ -320,10 +320,10 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
 }
 
 template<bool update_bogoprops>
-Clause* Searcher::add_literals_from_confl_to_learnt(
+void Searcher::add_literals_from_confl_to_learnt(
     const PropBy confl
     , const Lit p
-    , int nDecisionLevel
+    , uint32_t nDecisionLevel
 ) {
     #ifdef VERBOSE_DEBUG
     debug_print_resolving_clause(confl);
@@ -425,7 +425,6 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
         }
         i++;
     }
-    return cl;
 }
 
 template<bool update_bogoprops>
@@ -525,7 +524,6 @@ inline void Searcher::create_learnt_clause(PropBy confl)
     pathC = 0;
     int index = trail.size() - 1;
     Lit p = lit_Undef;
-    Clause* last_resolved_cl = NULL;
     Lit lit0 = lit_Error;
     switch (confl.getType()) {
         case binary_t : {
@@ -541,7 +539,7 @@ inline void Searcher::create_learnt_clause(PropBy confl)
         default:
             assert(false);
     }
-    int nDecisionLevel = varData[lit0.var()].level;
+    uint32_t nDecisionLevel = varData[lit0.var()].level;
 
     learnt_clause.push_back(lit_Undef); //make space for ~p
     do {
@@ -557,7 +555,7 @@ inline void Searcher::create_learnt_clause(PropBy confl)
             #endif
         }
 
-        last_resolved_cl = add_literals_from_confl_to_learnt<update_bogoprops>(
+        add_literals_from_confl_to_learnt<update_bogoprops>(
             confl, p, nDecisionLevel);
 
         // Select next implication to look at
