@@ -1318,8 +1318,11 @@ void Searcher::print_learnt_clause() const
     if (conf.verbosity >= 6) {
         cout
         << "c learnt clause: "
-        << learnt_clause
-        << endl;
+        ;
+        for(Lit l: learnt_clause) {
+            cout << l << ": " << value(l) << " ";
+        }
+        cout << endl;
     }
 }
 
