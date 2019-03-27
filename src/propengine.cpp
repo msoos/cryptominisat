@@ -226,7 +226,7 @@ bool PropEngine::prop_long_cl_any_order(
 
             if (nMaxInd != 1) {
                 std::swap(c[1], c[nMaxInd]);
-                *j--; // undo last watch
+                j--; // undo last watch
                 watches[c[1]].push(*i);
             }
 
@@ -351,7 +351,7 @@ PropBy PropEngine::propagate_any_order_fast()
 
                     if (nMaxInd != 1) {
                         std::swap(c[1], c[nMaxInd]);
-                        *j--; // undo last watch
+                        j--; // undo last watch
                         watches[c[1]].push(w);
                     }
 
