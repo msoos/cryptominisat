@@ -322,6 +322,7 @@ class Tester:
         cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
+        cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
