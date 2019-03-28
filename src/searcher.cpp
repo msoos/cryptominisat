@@ -1485,13 +1485,13 @@ bool Searcher::handle_conflict(PropBy confl)
     if (data.nHighestLevel == 0) {
         return false;
     }
-    if (data.bOnlyOneLitFromHighest) {
+    /*if (data.bOnlyOneLitFromHighest) {
         cancelUntil(data.nHighestLevel - 1);
 #ifdef CHRONO_PRINT
         cout << "cancelUntil(data.nHighestLevel - 1);" << endl;
 #endif
         return true;
-    }
+    }*/
 
     uint32_t backtrack_level;
     uint32_t glue;
@@ -3094,16 +3094,16 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
         uint32_t highestId = 0;
-        data.bOnlyOneLitFromHighest = true;
+        //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         int nLevel = varData[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
             highestId = 1;
             data.nHighestLevel = nLevel;
-            data.bOnlyOneLitFromHighest = true;
-        } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
+            //data.bOnlyOneLitFromHighest = true;
+        } /*else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
             data.bOnlyOneLitFromHighest = false;
-        }
+        }*/
 
         //TODO
         // we might want to swap here if highestID is not 0
@@ -3126,17 +3126,17 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         }
 
         uint32_t highestId = 0;
-        data.bOnlyOneLitFromHighest = true;
+        //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
             int nLevel = varData[conflCl[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
-                data.bOnlyOneLitFromHighest = true;
-            } else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
+                //data.bOnlyOneLitFromHighest = true;
+            } /*else if (nLevel == data.nHighestLevel && data.bOnlyOneLitFromHighest == true) {
                 data.bOnlyOneLitFromHighest = false;
-            }
+            }*/
         }
 
         if (highestId != 0) {

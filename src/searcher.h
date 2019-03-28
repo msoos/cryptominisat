@@ -61,7 +61,7 @@ struct VariableVariance
 
 struct ConflictData {
     uint32_t nHighestLevel;
-    bool bOnlyOneLitFromHighest = false;
+    //bool bOnlyOneLitFromHighest = false;
 };
 
 class Searcher : public HyperEngine
