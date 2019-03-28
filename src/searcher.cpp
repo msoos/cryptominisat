@@ -3096,7 +3096,7 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         uint32_t highestId = 0;
         //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
-        int nLevel = varData[pb.lit2().var()].level;
+        uint32_t nLevel = varData[pb.lit2().var()].level;
         if (nLevel > data.nHighestLevel) {
             highestId = 1;
             data.nHighestLevel = nLevel;
@@ -3129,7 +3129,7 @@ ConflictData Searcher::FindConflictLevel(PropBy& pb) {
         //data.bOnlyOneLitFromHighest = true;
         // find the largest decision level in the clause
         for (uint32_t nLitId = 1; nLitId < conflCl.size(); ++nLitId) {
-            int nLevel = varData[conflCl[nLitId].var()].level;
+            uint32_t nLevel = varData[conflCl[nLitId].var()].level;
             if (nLevel > data.nHighestLevel) {
                 highestId = nLitId;
                 data.nHighestLevel = nLevel;
