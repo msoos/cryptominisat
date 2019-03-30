@@ -571,7 +571,7 @@ void Prober::add_rest_of_lits_to_cache(Lit lit)
         ; c--
     ) {
         extraTime += 2;
-        const Lit thisLit = solver->trail[c];
+        const Lit thisLit = solver->trail[c].lit;
         tmp_lits.push_back(thisLit);
     }
 
@@ -668,7 +668,7 @@ bool Prober::try_this(const Lit lit, const bool first)
             ; c--
         ) {
             extraTime += 2;
-            const Lit thisLit = solver->trail[c];
+            const Lit thisLit = solver->trail[c].lit;
             const uint32_t var = thisLit.var();
 
             if (solver->conf.doBothProp) {

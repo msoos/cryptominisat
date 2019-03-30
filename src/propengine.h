@@ -70,6 +70,20 @@ enum PropResult {
     , PROP_TODO = 3
 };
 
+struct Trail {
+
+    Trail () {
+    }
+
+    Trail (Lit _lit, uint32_t _lev) :
+        lit(_lit)
+        , lev(_lev)
+    {}
+
+    Lit lit;
+    uint32_t lev;
+};
+
 /**
 @brief The propagating and conflict generation class
 
@@ -98,7 +112,7 @@ public:
         return trail.size();
     }
     Lit trail_at(size_t at) const {
-        return trail[at];
+        return trail[at].lit;
     }
     bool propagate_occur();
     PropStats propStats;
@@ -144,7 +158,7 @@ protected:
 
     // Solver state:
     //
-    vector<Lit>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
+    vector<Trail>         trail;            ///< Assignment stack; stores all assigments made in the order they were made.
     vector<uint32_t>    trail_lim;        ///< Separator indices for different decision levels in 'trail'.
     uint32_t            qhead;            ///< Head of queue (as index into the trail)
     Lit                 failBinLit;       ///< Used to store which watches[lit] we were looking through when conflict occured
@@ -444,7 +458,7 @@ void PropEngine::enqueue(const Lit p, const uint32_t level, const PropBy from)
         }
         #endif
     }
-    trail.push_back(p);
+    trail.push_back(Trail(p, level));
 
     if (update_bogoprops) {
         propStats.bogoProps += 1;

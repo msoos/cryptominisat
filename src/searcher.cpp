@@ -560,10 +560,10 @@ inline void Searcher::create_learnt_clause(PropBy confl)
 
         // Select next implication to look at
         do {
-            while (!seen[trail[index--].var()]);
-            p = trail[index+1];
+            while (!seen[trail[index--].lit.var()]);
+            p = trail[index+1].lit;
             assert(p != lit_Undef);
-        } while(varData[p.var()].level < nDecisionLevel);
+        } while(trail[index+1].lev < nDecisionLevel);
 
         confl = varData[p.var()].reason;
         assert(varData[p.var()].level > 0);
@@ -629,8 +629,9 @@ void Searcher::simple_create_learnt_clause(
         if (mypathC == 0) {
             break;
         }
+
         // Select next clause to look at:
-        while (!seen[trail[index--].var()]);
+        while (!seen[trail[index--].lit.var()]);
         // if the reason cr from the 0-level assigned var, we must break avoid move forth further;
         // but attention that maybe seen[x]=1 and never be clear. However makes no matter;
         if ((int)trail_lim[0] > index + 1
@@ -638,7 +639,7 @@ void Searcher::simple_create_learnt_clause(
         ) {
             until = out_learnt.size();
         }
-        p = trail[index + 1];
+        p = trail[index + 1].lit;
         confl = varData[p.var()].reason;
 
         //under normal circumstances this does not happen, but here, it can
@@ -897,12 +898,12 @@ void Searcher::analyze_final_confl_with_assumptions(const Lit p, vector<Lit>& ou
 
     assert(!trail_lim.empty());
     for (int64_t i = (int64_t)trail.size() - 1; i >= (int64_t)trail_lim[0]; i--) {
-        const uint32_t x = trail[i].var();
+        const uint32_t x = trail[i].lit.var();
         if (seen[x]) {
             const PropBy reason = varData[x].reason;
             if (reason.isNULL()) {
                 assert(varData[x].level > 0);
-                out_conflict.push_back(~trail[i]);
+                out_conflict.push_back(~trail[i].lit);
             } else {
                 switch(reason.getType()) {
                     case PropByType::clause_t : {
@@ -1511,7 +1512,7 @@ bool Searcher::handle_conflict(PropBy confl)
         && decisionLevel() >= 2
     ) {
         for(int i = (int)trail_lim.size()-1; i >= 0; i--) {
-            Lit l = ~trail[trail_lim[i]];
+            Lit l = ~trail[trail_lim[i]].lit;
             if (!seen[l.toInt()]) {
                 decision_clause.push_back(l);
                 seen[l.toInt()] = 1;
@@ -2092,7 +2093,7 @@ void Searcher::finish_up_solve(const lbool status)
                 //has been called, but then no variable needs to be decided
                 //for SAT.
                 if (at < trail.size()) {
-                    decisions_reaching_model.push_back(trail[at]);
+                    decisions_reaching_model.push_back(trail[at].lit);
                 }
             }
         }
@@ -2106,7 +2107,7 @@ void Searcher::finish_up_solve(const lbool status)
                 //Yes, it can be equal -- when dummy decision levels are added
                 //and a solution is found
                 if (at < trail.size()) {
-                    uint32_t v = trail[at].var();
+                    uint32_t v = trail[at].lit.var();
                     trail_lim_vars.push_back(v);
                     //cout << "var at " << i << " of trail_lim : "<< v+1 << endl;
                 }
@@ -2635,7 +2636,7 @@ PropBy Searcher::propagate() {
                 << endl;
             }
             #endif
-            *drat << add << trail[i]
+            *drat << add << trail[i].lit
             #ifdef STATS_NEEDED
             << clauseID++ << sumConflicts
             #endif
@@ -3031,10 +3032,10 @@ void Searcher::cancelUntil(uint32_t blevel)
             std:cerr << "u " << var << endl;
             #endif
 
-            const uint32_t var = trail[sublevel].var();
+            const uint32_t var = trail[sublevel].lit.var();
             assert(value(var) != l_Undef);
 
-            if (varData[var].level <= blevel) {
+            if (trail[sublevel].lev <= blevel) {
                 add_tmp_canceluntil.push_back(trail[sublevel]);
             } else {
                  if (!update_bogoprops && !VSIDS) {
@@ -3066,8 +3067,8 @@ void Searcher::cancelUntil(uint32_t blevel)
         trail.resize(trail_lim[blevel]);
         trail_lim.resize(blevel);
 
-        for (int nLitId = (int)add_tmp_canceluntil.size() - 1; nLitId >= 0; --nLitId) {
-            trail.push_back(add_tmp_canceluntil[nLitId]);
+        for (const Trail& t: add_tmp_canceluntil) {
+            trail.push_back(t);
         }
 
         add_tmp_canceluntil.clear();

@@ -245,10 +245,14 @@ PropBy PropEngine::propagate_any_order_fast()
     cout << "Fast Propagation started" << endl;
     #endif
 
+    //so we don't re-calculate it all the time
+    uint32_t declevel = decisionLevel();
+
     int64_t num_props = 0;
     while (qhead < trail.size()) {
-        const Lit p = trail[qhead++];     // 'p' is enqueued fact to propagate.
-        uint32_t currLevel = varData[p.var()].level;
+        const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
+        const uint32_t currLevel = trail[qhead].lev;
+        qhead++;
         watch_subarray ws = watches[~p];
         Watched* i;
         Watched* j;
@@ -335,7 +339,7 @@ PropBy PropEngine::propagate_any_order_fast()
                 assert(j <= end);
                 qhead = trail.size();
             } else {
-                if (currLevel == decisionLevel()) {
+                if (currLevel == declevel) {
                     enqueue<false>(c[0], currLevel, PropBy(offset));
                 } else {
                     uint32_t nMaxLevel = currLevel;
@@ -384,9 +388,9 @@ PropBy PropEngine::propagate_any_order()
     #endif
 
     while (qhead < trail.size() && confl.isNULL()) {
-        const Lit p = trail[qhead];     // 'p' is enqueued fact to propagate.
+        const Lit p = trail[qhead].lit;     // 'p' is enqueued fact to propagate.
         watch_subarray ws = watches[~p];
-        uint32_t currLevel = varData[p.var()].level;
+        uint32_t currLevel = trail[qhead].lev;
 
         Watched* i = ws.begin();
         Watched* j = i;
@@ -456,8 +460,8 @@ void PropEngine::updateVars(
     assert(decisionLevel() == 0);
 
     //Trail is NOT correct, only its length is correct
-    for(Lit& lit: trail) {
-        lit = lit_Undef;
+    for(Trail& t: trail) {
+        t.lit = lit_Undef;
     }
     updateBySwap(watches, seen, interToOuter2);
 
@@ -504,10 +508,11 @@ inline void PropEngine::updateWatch(
 void PropEngine::print_trail()
 {
     for(size_t i = trail_lim[0]; i < trail.size(); i++) {
+        assert(varData[trail[i].lit.var()].level == trail[i].lev);
         cout
-        << "trail " << i << ":" << trail[i]
-        << " lev: " << varData[trail[i].var()].level
-        << " reason: " << varData[trail[i].var()].reason
+        << "trail " << i << ":" << trail[i].lit
+        << " lev: " << trail[i].lev
+        << " reason: " << varData[trail[i].lit.var()].reason
         << endl;
     }
 }
@@ -516,9 +521,10 @@ void PropEngine::print_trail()
 bool PropEngine::propagate_occur()
 {
     assert(ok);
+    assert(decisionLevel() == 0);
 
     while (qhead < trail_size()) {
-        const Lit p = trail[qhead];
+        const Lit p = trail[qhead].lit;
         qhead++;
         watch_subarray ws = watches[~p];
 
