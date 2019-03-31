@@ -419,13 +419,8 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
-<<<<<<< HEAD
-                    "stamp", "cache", "otfsubsume",
-                    "renumber", "savemem", "moreminim", "gates", "bva",
-=======
                     "stamp", "cache",
                     "renumber", "savemem", "moreminim", "gates",
->>>>>>> 8636717ad... BVA has been off for a while, so turning that back on
                     "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 
             if "xor" in self.extra_opts_supported:
