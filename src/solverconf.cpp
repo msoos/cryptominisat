@@ -144,10 +144,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , min_bva_gain(32)
         #endif
         , bva_limit_per_call(150000)
-        , bva_also_twolit_diff(true)
+        , bva_also_twolit_diff(false)
         , bva_extra_lit_and_red_start(0)
-        , bva_time_limitM(100)
-        , bva_every_n(1)
+        , bva_time_limitM(50)
+        , bva_every_n(20)
 
         //Probing
         , doProbe          (false)
@@ -193,7 +193,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , num_conflicts_of_search(50ULL*1000ULL)
         , num_conflicts_of_search_inc(1.4)
         , num_conflicts_of_search_inc_max(10)
-        , max_num_simplify_per_solve_call(1000ULL*1000ULL)
+        , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
@@ -243,7 +243,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , subsume_gothrough_multip(2.0)
 
         //WalkSAT
-        , doSLS(false)
+        , doSLS(true)
         , sls_every_n(4)
         , sls_max_mems(150)
         , sls_memoutMB(500)
