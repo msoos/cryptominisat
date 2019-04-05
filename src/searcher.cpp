@@ -2462,7 +2462,7 @@ llbool Searcher::Gauss_elimination()
     assert(gqhead <= qhead);
 
     while (gqhead <  qhead) {
-        const Lit p = trail[gqhead++];
+        const Lit p = trail[gqhead++].lit;
         vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
@@ -3003,8 +3003,8 @@ template<bool do_insert_var_order, bool update_bogoprops>
 void Searcher::cancelUntil(uint32_t blevel)
 {
     #ifdef VERBOSE_DEBUG
-    cout << "Canceling until level " << level;
-    if (level > 0) cout << " sublevel: " << trail_lim[level];
+    cout << "Canceling until level " << blevel;
+    if (blevel > 0) cout << " sublevel: " << trail_lim[blevel];
     cout << endl;
     #endif
 
@@ -3012,7 +3012,7 @@ void Searcher::cancelUntil(uint32_t blevel)
         add_tmp_canceluntil.clear();
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrixes)
-            gauss->canceling(trail_lim[level]);
+            gauss->canceling(trail_lim[blevel]);
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then
