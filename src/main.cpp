@@ -432,12 +432,16 @@ void Main::add_supported_options()
     sls_options.add_options()
     ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
         , "Run SLS during simplification")
-    ("slsmems", po::value(&conf.sls_max_mems)->default_value(conf.sls_max_mems)
-        , "Run SLS with this many mems*million timeout")
+    ("slstype", po::value(&conf.which_sls)->default_value(conf.which_sls)
+        , "Which SLS to run. Allowed values: walksat, yalsat")
     ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
         , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
     ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
         , "Run SLS solver every N simplifications only")
+    ("yalsatmems", po::value(&conf.yalsat_max_mems)->default_value(conf.yalsat_max_mems)
+        , "Run Yalsat with this many mems*million timeout. Limits time of yalsat run")
+    ("walksatruns", po::value(&conf.walksat_max_runs)->default_value(conf.walksat_max_runs)
+        , "Max 'runs' for WalkSAT. Limits time of WalkSAT run")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -1035,7 +1039,14 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.sls_max_mems < 1) {
+    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat") {
+        cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
+        << " This is incorrect, we only accept 'yalsat' and 'walksat'"
+        << endl;
+        exit(-1);
+    }
+
+    if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);
     }

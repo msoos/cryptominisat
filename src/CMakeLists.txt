@@ -110,7 +110,8 @@ set(cryptoms_lib_files
     cryptominisat_c.cpp
     yalsat.cpp
     yals.c
-    # walksat.cpp
+    walksat.cpp
+    sls.cpp
 
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
