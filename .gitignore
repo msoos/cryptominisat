@@ -6,6 +6,7 @@
 *.log
 *.pdf
 *.out
+.gdb_history
 .directory
 build/
 scripts/fuzz/out/
