@@ -503,16 +503,17 @@ CMake Arguments
 -----
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
-- `-DSTATICCOMPILE=<ON/OFF>` -- build a statically linked library and binary
-- `-DUSE_GAUSS=<ON/OFF>` -- build with Gauss-Jordan Elimination support
-- `-DSTATS=<ON/OFF>` -- build with advanced statistics (slower)
-- `-DENABLE_TESTING=<ON/OFF>` -- build with test suite support
-- `-DMIT=<ON/OFF>` -- only build MIT licensed components
-- `-DNOM4RI=<ON/OFF>` -- build without toplevel Gauss-Jordan Elimination support
-- `-DREQUIRE_M4RI=<ON/OFF>` -- must build with M4RI
-- `-DNOZLIB=<ON/OFF>` -- build without gzip DIMACS input support
-- `-DONLY_SIMPLE=<ON/OFF>` -- build only the simple binary
-- `-DNOVALGRIND=<ON/OFF>` -- build without extended valgrind memory checking support
+- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary
+- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support
+- `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
+- `-DENABLE_TESTING=<ON/OFF>` -- test suite support
+- `-DMIT=<ON/OFF>` -- MIT licensed components only
+- `-DNOM4RI=<ON/OFF>` -- without toplevel Gauss-Jordan Elimination support
+- `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
+- `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
+- `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
+- `-DNOVALGRIND=<ON/OFF>` -- no extended valgrind memory checking support
+- `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
 
 
 Trying different configurations
