@@ -139,29 +139,6 @@ C:\cms\build> cmake --build --config Release .
 
 You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
-Compiling under Cygwin64 in Windows
------
-
-This is just a rough guide, but it should work. Compiling with Visual Studio may be easier, and better, though:
-
-```
-get boost from Boost.org e.g. boost_1_66_0.tar.gz
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ mkdir build
-$ cd build
-$ gunzip -c ../../boost_1_66_0.tar.gz | tar -xvof -
-$ cd boost_1_66_0/
-$ ./bootstrap.sh --with-libraries=program_options
-$ ./b2
-$ export BOOST_ROOT=$(pwd)
-$ cd ..
-$ cmake ..
-$ make
-$ make install
-$ cp ./boost_1_66_0/bin.v2/libs/program_options/build/gcc-gnu-6.4.0/release/threadapi-pthread/threading-multi/cygboost_program_options.dll /usr/local/bin
-```
-
 Command-line usage
 -----
 
