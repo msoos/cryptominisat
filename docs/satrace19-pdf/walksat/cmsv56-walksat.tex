@@ -18,8 +18,8 @@
 \usepackage[utf8]{inputenc} % allows to write Faugere correctly
 \usepackage[bookmarks=true, citecolor=black, linkcolor=black, colorlinks=true]{hyperref}
 \hypersetup{
-pdfauthor = {Mate Soos, Armin Biere},
-pdftitle = {CryptoMiniSat v5.6},
+pdfauthor = {Mate Soos, Bart Selman, Henry Kautz},
+pdftitle = {CryptoMiniSat v5.6 + walksat},
 pdfsubject = {SAT Race 2019},
 pdfkeywords = {SAT Solver, DPLL, SLS},
 pdfcreator = {PdfLaTeX with hyperref package},
@@ -30,19 +30,20 @@ pdfproducer = {PdfLaTex}}
 \usepackage{graphicx,epsfig,xcolor}
 
 \begin{document}
-\title{CryptoMiniSat 5.6 with YalSAT at the SAT Race 2019}
-\author{Mate Soos (National University of Singapore), Armin Biere (JKU Linz)}
+\title{CryptoMiniSat 5.6 with WalkSAT at the SAT Race 2019}
+\author{Mate Soos (National University of Singapore)\\
+Bart Selman (Cornell University), Henry Kautz (University of Rochester)}
 
 \maketitle
 \thispagestyle{empty}
 \pagestyle{empty}
 
 \section{Introduction}
-This paper presents the conflict-driven clause-learning (CLDL) SAT solver CryptoMiniSat v5.6 (\emph{CMS}) augmented with the Stochastic Local Search (SLS)~\cite{Selman95localsearch} solver YalSAT 03v as submitted to SAT Race 2019.
+This paper presents the conflict-driven clause-learning (CLDL) SAT solver CryptoMiniSat v5.6 (\emph{CMS}) augmented with the Stochastic Local Search (SLS)~\cite{Selman95localsearch} solver WalkSAT v56 as submitted to SAT Race 2019.
 
 CryptoMiniSat aims to be a modern, open source SAT solver using inprocessing techniques, optimized data structures and finely-tuned timeouts to have good control over both memory and time usage of inprocessing steps. It also supports, when compiled as such, to recover XOR constraints and perform Gauss-Jordan elimination on them at every decision level. For the competition, this option was disabled. CryptoMiniSat is authored by Mate Soos.
 
-Yet Another Local Search SAT Solver (YalSAT) implements several variants of ProbSAT's~\cite{probsat} algorithm and recent extensions~\cite{balint-improving-sls}. These variants are selected randomly at restarts, scheduled by a reluctant doubling scheme (Luby). For further details, see~\cite{sat-comp-2014-armin}. YalSAT is authored by Armin Biere.
+WalkSAT~\cite{DBLP:conf/aaai/KautzS96} is a standard system to solve satisfiability problems using Stochastic Local Search. The version inside CryptoMiniSat is functionally equivalent to the ``rnovelity'' heuristic of WalkSAT v56 using an adaptive noise heuristic~\cite{DBLP:conf/aaai/Hoos02}. It behaves exactly as WalkSAT with the minor modification of performing early-abort in case the ``lowbad'' statistic (i.e. the quality indicator of the current best solution) indicates the solution is far. In these cases, we early abort, let the CDCL solver work longer to simplify the problem, and come back to WalkSAT later. The only major modification to WalkSAT has been to allow it to import variables and clauses directly from the main solver taking into account assumptions given by the user.
 
 \subsection{Composing the Two Solvers}
 The two solvers are composed together in a way that does \emph{not} resemble portfolio solvers. The system runs the CDCL solver CryptoMiniSat, along with its periodic inprocessing, by default. However, at every N inprocessing step, CryptoMiniSat's irredundant clauses are pushed into the SLS solver (in case the predicted memory use is not too high). The SLS solver is then allowed to run for a predefined number of steps. In case the SLS solver finds a solution, this is given back to the CDCL solver, which then performs all the necessary extension to the solution (e.g. for Bounded Variable Elimination, BVE~\cite{BVE}) and then outputs the solution.
