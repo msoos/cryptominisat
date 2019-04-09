@@ -45,7 +45,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
         , glue_put_lev0_if_below_or_eq(3) // never removed
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
-        , min_num_uses_before_delete_lev2(150)
+        , min_num_uses_before_delete_lev2(0)
 
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
