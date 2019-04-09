@@ -339,6 +339,9 @@ void Main::add_supported_options()
     std::ostringstream s_blocking_multip;
     s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
 
+    std::ostringstream s_local_glue_multiplier;
+    s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier;
+
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
     ("restart", po::value<string>()
@@ -353,7 +356,7 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many conflicts")
-    ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier)
+    ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier, s_local_glue_multiplier.str())
         , "The multiplier used to determine if we should restart during glue-based restart")
     ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
         , "Should glue restart be broken as before 8e74cb5010bb4")
@@ -461,7 +464,10 @@ void Main::add_supported_options()
     ;
 
     std::ostringstream ssERatio;
-    ssERatio << std::setprecision(4) << "norm: " << conf.varElimRatioPerIter << " preproc: " << 1.0;
+    ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
+
+    std::ostringstream s_num_conflicts_of_search_inc;
+    s_num_conflicts_of_search_inc << std::setprecision(4) << conf.num_conflicts_of_search_inc;
 
     po::options_description simp_schedules("Simplification schedules");
     simp_schedules.add_options()
@@ -487,7 +493,7 @@ void Main::add_supported_options()
 
     ("confbtwsimp", po::value(&conf.num_conflicts_of_search)->default_value(conf.num_conflicts_of_search)
         , "Start first simplification after this many conflicts")
-    ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc)
+    ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc, s_num_conflicts_of_search_inc.str())
         , "Simp rounds increment by this power of N")
     ;
 
