@@ -454,6 +454,9 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
                 stats.resolvs.longRed++;
+                if (cl->usedt < 200) {
+                    cl->usedt++;
+                }
                 #ifdef STATS_NEEDED
                 antec_data.vsids_of_ants.push(cl->stats.antec_data.vsids_vars.avg());
                 antec_data.longRed++;
