@@ -454,7 +454,7 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             cl = cl_alloc.ptr(confl.get_offset());
             if (cl->red()) {
                 stats.resolvs.longRed++;
-                if (cl->usedt < 250) {
+                if (cl->usedt < 255) {
                     cl->usedt++;
                 }
                 #ifdef STATS_NEEDED
