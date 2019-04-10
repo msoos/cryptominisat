@@ -446,7 +446,8 @@ ENDIF ()
 # ----------
 # manpage
 # ----------
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+option(MANPAGE "Create manpage" ON)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND MANPAGE)
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
 
