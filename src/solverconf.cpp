@@ -49,6 +49,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
+        //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
+        //test conducted: out-drat-check-8359337.wlm01-1-drat0
 
         //maple
         , maple(true)
