@@ -173,7 +173,6 @@ class DLL_PUBLIC SolverConf
         unsigned protect_cl_if_improved_glue_below_this_glue_for_one_turn;
         unsigned glue_put_lev0_if_below_or_eq;
         unsigned glue_put_lev1_if_below_or_eq;
-        unsigned min_num_uses_before_delete_lev2;
         double    ratio_keep_clauses[2]; ///< Remove this ratio of clauses at every database reduction round
 
         double    clause_decay;

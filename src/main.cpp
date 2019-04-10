@@ -383,8 +383,6 @@ void Main::add_supported_options()
         , "Reduce lev2 clauses every N")
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
-    ("numlev2usedel", po::value(&conf.min_num_uses_before_delete_lev2)->default_value(conf.min_num_uses_before_delete_lev2)
-        , "Do not delete for lev2 if the clause was used less than this many times")
     ;
 
     po::options_description red_cl_dump_opts("Clause dumping after problem finishing");
