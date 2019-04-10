@@ -120,7 +120,7 @@ void printUsage(char** argv)
     cout << "  --verb          = [0...]  Sets verbosity level. Anything higher\n";
     cout << "                            than 2 will give debug log\n";
     cout << "  --drat          = {fname} DRAT dumped to file\n";
-    cout << "  --gluebreak     = {0,1}   Break the glue-based restarts\n";
+    cout << "  --sls           = {walksat,yalsat} Which SLS solver to use\n";
     cout << "  --threads       = [1...]  Sets number of threads\n";
     cout << "\n";
 }
@@ -162,25 +162,13 @@ int main(int argc, char** argv)
             if (num_threads > 16) {
                 conf.var_and_mem_out_mult *= 0.4;
             }
-        }else if ((value = hasPrefix(argv[i], "--otherconf="))){
-            int otherconf  = (int)strtol(value, NULL, 10);
-            if (otherconf == 0 && errno == EINVAL){
-                cout << "ERROR! illegal threads " << value << endl;
-                exit(0);
-            }
-            if (otherconf == 1) {
-                cout << "c other conf set" << endl;
-                conf.intree_time_limitM = 1500;
-                conf.min_bva_gain = 64;
-                conf.ratio_glue_geom = 5;
-            }
-        }else if ((value = hasPrefix(argv[i], "--gluebreak="))){
-            int gluebreak  = (int)strtol(value, NULL, 10);
-            if (gluebreak == 0 && errno == EINVAL){
-                cout << "ERROR! illegal gluebreak " << value << endl;
-                exit(0);
-            }
-            conf.broken_glue_restart = gluebreak;
+        }else if ((value = hasPrefix(argv[i], "--sls="))){
+            std::string sls;
+            sls = argv[i];
+            sls = sls.substr(6, 100);
+            conf.which_sls = sls;
+            conf.sls_every_n = 1;
+            cout << "c using SLS: '" << sls << "'" << endl;
         }else if ((value = hasPrefix(argv[i], "--reconf="))){
             long int reconf  = (int)strtol(value, NULL, 10);
             if (reconf == 0 && errno == EINVAL){
