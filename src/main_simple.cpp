@@ -167,7 +167,6 @@ int main(int argc, char** argv)
             sls = argv[i];
             sls = sls.substr(6, 100);
             conf.which_sls = sls;
-            conf.sls_every_n = 1;
             cout << "c using SLS: '" << sls << "'" << endl;
         }else if ((value = hasPrefix(argv[i], "--reconf="))){
             long int reconf  = (int)strtol(value, NULL, 10);
