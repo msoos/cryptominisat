@@ -117,6 +117,8 @@ public:
                 if (num_threads > 16) {
                     conf.var_and_mem_out_mult *= 0.4;
                 }
+            }else if ((value = hasPrefix(argv[i], "--bva="))){
+                conf.do_bva = (int)strtol(value, NULL, 10);
             }else if ((value = hasPrefix(argv[i], "--sls="))){
                 std::string sls;
                 sls = argv[i];
