@@ -798,7 +798,7 @@ void WalkSAT::print_statistics_final()
         #endif
     } else {
         if (solver->conf.verbosity) {
-            cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
+            cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
         }
     }
 }
