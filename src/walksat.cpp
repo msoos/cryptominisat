@@ -90,7 +90,7 @@ lbool WalkSAT::main()
     print_statistics_header();
 
     uint32_t last_low_bad = 1000;
-    while (!found_solution && numtry < solver->conf.walk_max_runs) {
+    while (!found_solution && numtry < solver->conf.walksat_max_runs) {
         numtry++;
         init_for_round();
         update_statistics_start_try();
@@ -556,7 +556,7 @@ void WalkSAT::print_parameters()
     if (solver->conf.verbosity) {
         cout << "c [walksat] Mate Soos, based on WALKSAT v56 by Henry Kautz" << endl;
         cout << "c [walksat] cutoff = %" << cutoff << endl;
-        cout << "c [walksat] tries = " << solver->conf.walk_max_runs << endl;
+        cout << "c [walksat] tries = " << solver->conf.walksat_max_runs << endl;
         cout << "c [walksat] walk probabability = "
         << std::fixed << std::setprecision(2) << walk_probability << endl;
     }
@@ -798,7 +798,7 @@ void WalkSAT::print_statistics_final()
         #endif
     } else {
         if (solver->conf.verbosity) {
-            cout << "c [walksat] ASSIGNMENT NOT FOUND"  << endl;
+            cout << "c [walksat] ASSIGNMENT FOUND"  << endl;
         }
     }
 }

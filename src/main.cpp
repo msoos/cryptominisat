@@ -289,7 +289,7 @@ void Main::printResultFunc(
             }
             *os << "0" << endl;
         } else {
-            const uint32_t num_undef = print_model(os, solver);
+            const uint32_t num_undef = print_model(solver, os);
             if (num_undef && !toFile && conf.verbosity) {
                 if (only_sampling_solution) {
                     cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the sampling set's values: '--onlysampling'" << endl;
@@ -339,6 +339,9 @@ void Main::add_supported_options()
     std::ostringstream s_blocking_multip;
     s_blocking_multip << std::setprecision(4) << conf.blocking_restart_multip;
 
+    std::ostringstream s_local_glue_multiplier;
+    s_local_glue_multiplier << std::setprecision(4) << conf.local_glue_multiplier;
+
     po::options_description restartOptions("Restart options");
     restartOptions.add_options()
     ("restart", po::value<string>()
@@ -353,7 +356,7 @@ void Main::add_supported_options()
         , "Multiplier used for blocking restart cut-off (called 'R' in Glucose 3.0)")
     ("lwrbndblkrest", po::value(&conf.lower_bound_for_blocking_restart)->default_value(conf.lower_bound_for_blocking_restart)
         , "Lower bound on blocking restart -- don't block before this many conflicts")
-    ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier)
+    ("locgmult" , po::value(&conf.local_glue_multiplier)->default_value(conf.local_glue_multiplier, s_local_glue_multiplier.str())
         , "The multiplier used to determine if we should restart during glue-based restart")
     ("brokengluerest", po::value(&conf.broken_glue_restart)->default_value(conf.broken_glue_restart)
         , "Should glue restart be broken as before 8e74cb5010bb4")
@@ -432,12 +435,16 @@ void Main::add_supported_options()
     sls_options.add_options()
     ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
         , "Run SLS during simplification")
-    ("slsmems", po::value(&conf.sls_max_mems)->default_value(conf.sls_max_mems)
-        , "Run SLS with this many mems*million timeout")
+    ("slstype", po::value(&conf.which_sls)->default_value(conf.which_sls)
+        , "Which SLS to run. Allowed values: walksat, yalsat")
     ("slsmaxmem", po::value(&conf.sls_memoutMB)->default_value(conf.sls_memoutMB)
         , "Maximum number of MB to give to SLS solver. Doesn't run SLS solver if the memory usage would be more than this.")
     ("slseveryn", po::value(&conf.sls_every_n)->default_value(conf.sls_every_n)
         , "Run SLS solver every N simplifications only")
+    ("yalsatmems", po::value(&conf.yalsat_max_mems)->default_value(conf.yalsat_max_mems)
+        , "Run Yalsat with this many mems*million timeout. Limits time of yalsat run")
+    ("walksatruns", po::value(&conf.walksat_max_runs)->default_value(conf.walksat_max_runs)
+        , "Max 'runs' for WalkSAT. Limits time of WalkSAT run")
     ;
 
     po::options_description probeOptions("Probing options");
@@ -457,7 +464,10 @@ void Main::add_supported_options()
     ;
 
     std::ostringstream ssERatio;
-    ssERatio << std::setprecision(4) << "norm: " << conf.varElimRatioPerIter << " preproc: " << 1.0;
+    ssERatio << std::setprecision(4) << conf.varElimRatioPerIter;
+
+    std::ostringstream s_num_conflicts_of_search_inc;
+    s_num_conflicts_of_search_inc << std::setprecision(4) << conf.num_conflicts_of_search_inc;
 
     po::options_description simp_schedules("Simplification schedules");
     simp_schedules.add_options()
@@ -483,7 +493,7 @@ void Main::add_supported_options()
 
     ("confbtwsimp", po::value(&conf.num_conflicts_of_search)->default_value(conf.num_conflicts_of_search)
         , "Start first simplification after this many conflicts")
-    ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc)
+    ("confbtwsimpinc", po::value(&conf.num_conflicts_of_search_inc)->default_value(conf.num_conflicts_of_search_inc, s_num_conflicts_of_search_inc.str())
         , "Simp rounds increment by this power of N")
     ;
 
@@ -964,55 +974,6 @@ void Main::check_options_correctness()
     }
 }
 
-void Main::handle_drat_option()
-{
-    if (!conf.simulate_drat) {
-        if (dratDebug) {
-            dratf = &cout;
-        } else {
-            std::ofstream* dratfTmp = new std::ofstream;
-            dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
-            if (!*dratfTmp) {
-                std::cerr
-                << "ERROR: Could not open DRAT file "
-                << dratfilname
-                << " for writing"
-                << endl;
-
-                std::exit(-1);
-            }
-            dratf = dratfTmp;
-        }
-    }
-
-    if (!conf.otfHyperbin) {
-        if (conf.verbosity) {
-            cout
-            << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
-            << endl;
-        }
-        conf.otfHyperbin = true;
-    }
-
-    if (conf.doFindXors) {
-        if (conf.verbosity) {
-            cout
-            << "c XOR manipulation is not supported in DRAT, turning it off"
-            << endl;
-        }
-        conf.doFindXors = false;
-    }
-
-    if (conf.doCompHandler) {
-        if (conf.verbosity) {
-            cout
-            << "c Component finding & solving is not supported during DRAT, turning it off"
-            << endl;
-        }
-        conf.doCompHandler = false;
-    }
-}
-
 void Main::parse_restart_type()
 {
     if (vm.count("restart")) {
@@ -1042,7 +1003,14 @@ void Main::parse_polarity_type()
 
 void Main::manually_parse_some_options()
 {
-    if (conf.sls_max_mems < 1) {
+    if (conf.which_sls != "yalsat" && conf.which_sls != "walksat") {
+        cout << "ERROR: you gave '" << conf.which_sls << " for SLS with the option '--slstype'."
+        << " This is incorrect, we only accept 'yalsat' and 'walksat'"
+        << endl;
+        exit(-1);
+    }
+
+    if (conf.yalsat_max_mems < 1) {
         cout << "ERROR: '--walkmems' must be at least 1" << endl;
         exit(-1);
     }
@@ -1066,11 +1034,6 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
-    if (!vm["savedstate"].defaulted() && conf.preprocess == 0) {
-        cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
-        exit(-1);
-    }
-
     if (!decisions_for_model_fname.empty() && max_nr_of_solutions > 1) {
         std::cerr << "ERROR: dumping decisions for multi-solution makes no sense. Exiting." << endl;
         std::exit(-1);
@@ -1082,6 +1045,10 @@ void Main::manually_parse_some_options()
 
     if (max_nr_of_solutions > 1) {
         conf.need_decisions_reaching = true;
+    }
+
+    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
+        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     if (conf.preprocess != 0) {
@@ -1145,6 +1112,11 @@ void Main::manually_parse_some_options()
         if (!vm.count("eratio")) {
             conf.varElimRatioPerIter = 2.0;
         }
+    } else {
+        if (!vm["savedstate"].defaulted()) {
+            cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
+            exit(-1);
+        }
     }
 
     if (vm.count("dumpresult")) {
@@ -1161,10 +1133,6 @@ void Main::manually_parse_some_options()
     }
 
     parse_polarity_type();
-
-    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
-    }
 
     //Conflict
     if (vm.count("maxdump") && redDumpFname.empty()) {

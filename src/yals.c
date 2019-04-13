@@ -40,6 +40,8 @@ SOFTWARE.
 
 #ifdef _MSC_VER
 #include "msvc/stdint.h"
+#else
+#include <stdint.h>
 #endif
 
 #if defined(__linux__) && !defined(__ANDROID__)

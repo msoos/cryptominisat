@@ -120,7 +120,7 @@ lbool Yalsat::main()
         return l_Undef;
     }
     //yals_setflipslimit(yals, 5*1000*1000);
-    uint64_t mils = solver->conf.sls_max_mems*solver->conf.global_timeout_multiplier;
+    uint64_t mils = solver->conf.yalsat_max_mems*solver->conf.global_timeout_multiplier;
     if (solver->conf.verbosity) {
         cout << "c [yalsat] mems limit M: " << mils << endl;
     }

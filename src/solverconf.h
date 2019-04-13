@@ -338,8 +338,10 @@ class DLL_PUBLIC SolverConf
         //Walksat
         int doSLS;
         uint32_t sls_every_n;
-        uint32_t sls_max_mems;
+        uint32_t yalsat_max_mems;
         uint32_t sls_memoutMB;
+        uint32_t walksat_max_runs;
+        string   which_sls;
 
         //Distillation
         int      do_distill_clauses;

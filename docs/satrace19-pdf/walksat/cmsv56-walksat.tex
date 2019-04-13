@@ -1,0 +1,83 @@
+%\documentclass[runningheads]{llncs}
+\documentclass[final]{ieee}
+
+\usepackage{microtype} %This gives MUCH better PDF results!
+%\usepackage[active]{srcltx} %DVI search
+\usepackage[cmex10]{amsmath}
+\usepackage{amssymb}
+\usepackage{fnbreak} %warn for split footnotes
+\usepackage{url}
+%\usepackage{qtree} %for drawing trees
+%\usepackage{fancybox} % if we need rounded corners
+%\usepackage{pict2e} % large circles can be drawn
+%\usepackage{courier} %for using courier in texttt{}
+%\usepackage{nth} %allows to \nth{4} to make 1st 2nd, etc.
+%\usepackage{subfigure} %allows to have side-by-side figures
+%\usepackage{booktabs} %nice tables
+%\usepackage{multirow} %allow multiple cells with rows in tabular
+\usepackage[utf8]{inputenc} % allows to write Faugere correctly
+\usepackage[bookmarks=true, citecolor=black, linkcolor=black, colorlinks=true]{hyperref}
+\hypersetup{
+pdfauthor = {Mate Soos, Bart Selman, Henry Kautz},
+pdftitle = {CryptoMiniSat v5.6 + walksat},
+pdfsubject = {SAT Race 2019},
+pdfkeywords = {SAT Solver, DPLL, SLS},
+pdfcreator = {PdfLaTeX with hyperref package},
+pdfproducer = {PdfLaTex}}
+%\usepackage{butterma}
+
+%\usepackage{pstricks}
+\usepackage{graphicx,epsfig,xcolor}
+
+\begin{document}
+\title{CryptoMiniSat 5.6 with WalkSAT at the SAT Race 2019}
+\author{Mate Soos (National University of Singapore)\\
+Bart Selman (Cornell University), Henry Kautz (University of Rochester)}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+\section{Introduction}
+This paper presents the conflict-driven clause-learning (CLDL) SAT solver CryptoMiniSat v5.6 (\emph{CMS}) augmented with the Stochastic Local Search (SLS)~\cite{Selman95localsearch} solver WalkSAT v56 as submitted to SAT Race 2019.
+
+CryptoMiniSat aims to be a modern, open source SAT solver using inprocessing techniques, optimized data structures and finely-tuned timeouts to have good control over both memory and time usage of inprocessing steps. It also supports, when compiled as such, to recover XOR constraints and perform Gauss-Jordan elimination on them at every decision level. For the competition, this option was disabled. CryptoMiniSat is authored by Mate Soos.
+
+WalkSAT~\cite{DBLP:conf/aaai/KautzS96} is a standard system to solve satisfiability problems using Stochastic Local Search. The version inside CryptoMiniSat is functionally equivalent to the ``rnovelity'' heuristic of WalkSAT v56 using an adaptive noise heuristic~\cite{DBLP:conf/aaai/Hoos02}. It behaves exactly as WalkSAT with the minor modification of performing early-abort in case the ``lowbad'' statistic (i.e. the quality indicator of the current best solution) indicates the solution is far. In these cases, we early abort, let the CDCL solver work longer to simplify the problem, and come back to WalkSAT later. The only major modification to WalkSAT has been to allow it to import variables and clauses directly from the main solver taking into account assumptions given by the user.
+
+\subsection{Composing the Two Solvers}
+The two solvers are composed together in a way that does \emph{not} resemble portfolio solvers. The system runs the CDCL solver CryptoMiniSat, along with its periodic inprocessing, by default. However, at every N inprocessing step, CryptoMiniSat's irredundant clauses are pushed into the SLS solver (in case the predicted memory use is not too high). The SLS solver is then allowed to run for a predefined number of steps. In case the SLS solver finds a solution, this is given back to the CDCL solver, which then performs all the necessary extension to the solution (e.g. for Bounded Variable Elimination, BVE~\cite{BVE}) and then outputs the solution.
+
+Note that the inclusion of the SLS solver is full in the sense that assumptions-based solving, library-based solver use, and all other uses of the SAT solver is fully supported with SLS solving enabled. Hence, this is not some form of portfolio where a simple shell script determines which solver to run and then runs that solver. Instead, the SLS solver is a full member of the CDCL solver, much like any other inprocessing system, and works in tandem with it. For example, in case an inprocessing step has reduced the number of variables through BVE or increased it through BVA~\cite{BVA}, the SLS solver will then try to solve the problem thus modified. In case the SLS solver finds a solution, the main solver will then correctly manipulate is to fit the needs of the ``outside world'', i.e. the caller.
+
+As the two solvers are well-coupled, the combination of the two solvers can solve problems that neither system can solve on its own. Hence, \emph{the system is more than just a union of its parts} which is not the case for traditional portfolio solvers.
+
+\section{Major Improvements}
+\subsection{Via Negativa}
+The system has been subjected to a thorough investigation whether all the different systems that have been implemented into it actually make the solver faster. In this spirit, failed literal probing~\cite{DBLP:conf/ictai/LynceS03}, stamping~\cite{stamping}, burst searching (random variable picking), and blocked clause elimination~\cite{TACAS-2010-JarvisaloBH} have all been disabled.
+
+\subsection{Chronological Backtracking}
+Chronological backtracking~\cite{chronobt} has been implemented into a branch of the solver. However, chronological backtracking (CBT) is a double-edged sword. Firstly, it slows down the solver's normal functionality as it adds a number of expensive checks to both the propagation and the backtracking code. Secondly, it changes the trail of the solver in ways that make it hard to reason about the current state of the solver. Finally, it seems only to help with satisfiable instances which are theoretically less interesting for the author of CryptoMiniSat. These issues make CBT a difficult addition.
+
+Currently, CryptoMiniSat by default does not implement CBT. The SAT Race has two versions submitted, clearly marked, one with, an one without CBT.
+
+\subsection{Cluster Tuning}
+The author has been generously given time on the ASPIRE-1 cluster of the National Supercomputing Center Singapore\cite{nscc}. This allowed experimentation and tuning that would have been impossible otherwise. Without this opportunity, CryptoMiniSat would not stand a chance at the SAT Race.
+
+\section{General Notes}
+\subsection{On-the-fly Gaussian Elimination}
+On-the-fly Gaussian elimination is again part of CryptoMiniSat. This is explicitly disabled for the competition, but the code is available and well-tested. This allows for special uses of the solver that other solvers, without on-the-fly Gaussian elimination, are not capable of.
+
+\subsection{Robustness}
+CMS aims to be usable in both industry and academia. CMS has over 150 test cases and over 2000 lines of Python just for fuzzing orchestration, and runs without fault under both the ASAN and UBSAN sanitisers of clang. It also compiles and runs under Windows, Linux and MacOS X. This is in contrast many academic winning SAT solvers that produce results that are non-reproducible, cannot be compiled on anything but a few select systems, and/or produce segmentation faults if used as a library. CryptoMiniSat has extensive fuzzing setup for library usage and is very robust under strange/unexpected use cases.
+
+\section{Thanks}
+This work was supported in part by NUS ODPRT Grant R-252-000-685-133 and AI Singapore Grant R-252- 000-A16-490. The computational work for this article was performed on resources of the National Supercomputing Center, Singapore\cite{nscc}. The author would also like to thank all the users of CryptoMiniSat who have submitted over 500 issues and many pull requests to the GitHub CMS repository\cite{CMS}.
+
+\bibliographystyle{splncs03}
+\bibliography{sigproc}
+
+\vfill
+\pagebreak
+
+\end{document}

@@ -139,29 +139,6 @@ C:\cms\build> cmake --build --config Release .
 
 You now have the static binary under `C:\cms\build\Release\cryptominisat5.exe`
 
-Compiling under Cygwin64 in Windows
------
-
-This is just a rough guide, but it should work. Compiling with Visual Studio may be easier, and better, though:
-
-```
-get boost from Boost.org e.g. boost_1_66_0.tar.gz
-$ tar xzvf cryptominisat-version.tar.gz
-$ cd cryptominisat-version
-$ mkdir build
-$ cd build
-$ gunzip -c ../../boost_1_66_0.tar.gz | tar -xvof -
-$ cd boost_1_66_0/
-$ ./bootstrap.sh --with-libraries=program_options
-$ ./b2
-$ export BOOST_ROOT=$(pwd)
-$ cd ..
-$ cmake ..
-$ make
-$ make install
-$ cp ./boost_1_66_0/bin.v2/libs/program_options/build/gcc-gnu-6.4.0/release/threadapi-pthread/threading-multi/cygboost_program_options.dll /usr/local/bin
-```
-
 Command-line usage
 -----
 
@@ -526,16 +503,17 @@ CMake Arguments
 -----
 The following arguments to cmake configure the generated build artifacts. To use, specify options prior to running make in a clean subdirectory: `cmake <options> ..`
 
-- `-DSTATICCOMPILE=<ON/OFF>` -- build a statically linked library and binary
-- `-DUSE_GAUSS=<ON/OFF>` -- build with Gauss-Jordan Elimination support
-- `-DSTATS=<ON/OFF>` -- build with advanced statistics (slower)
-- `-DENABLE_TESTING=<ON/OFF>` -- build with test suite support
-- `-DMIT=<ON/OFF>` -- only build MIT licensed components
-- `-DNOM4RI=<ON/OFF>` -- build without toplevel Gauss-Jordan Elimination support
-- `-DREQUIRE_M4RI=<ON/OFF>` -- must build with M4RI
-- `-DNOZLIB=<ON/OFF>` -- build without gzip DIMACS input support
-- `-DONLY_SIMPLE=<ON/OFF>` -- build only the simple binary
-- `-DNOVALGRIND=<ON/OFF>` -- build without extended valgrind memory checking support
+- `-DSTATICCOMPILE=<ON/OFF>` -- statically linked library and binary
+- `-DUSE_GAUSS=<ON/OFF>` -- Gauss-Jordan Elimination support
+- `-DSTATS=<ON/OFF>` -- advanced statistics (slower)
+- `-DENABLE_TESTING=<ON/OFF>` -- test suite support
+- `-DMIT=<ON/OFF>` -- MIT licensed components only
+- `-DNOM4RI=<ON/OFF>` -- without toplevel Gauss-Jordan Elimination support
+- `-DREQUIRE_M4RI=<ON/OFF>` -- abort if M4RI is not present
+- `-DNOZLIB=<ON/OFF>` -- no gzip DIMACS input support
+- `-DONLY_SIMPLE=<ON/OFF>` -- only the simple binary is built
+- `-DNOVALGRIND=<ON/OFF>` -- no extended valgrind memory checking support
+- `-DLARGEMEM=<ON/OFF>` -- more memory available for clauses (but slower on most problems)
 
 
 Trying different configurations

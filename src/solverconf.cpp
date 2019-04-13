@@ -49,6 +49,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , clause_decay(0.999)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
+        //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver
+        //test conducted: out-drat-check-8359337.wlm01-1-drat0
 
         //maple
         , maple(true)
@@ -245,8 +247,10 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //WalkSAT
         , doSLS(true)
         , sls_every_n(4)
-        , sls_max_mems(150)
+        , yalsat_max_mems(150)
         , sls_memoutMB(500)
+        , walksat_max_runs(50)
+        , which_sls("yalsat")
 
         //Distillation
         , do_distill_clauses(true)

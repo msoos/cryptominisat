@@ -65,7 +65,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
-#include "yalsat.h"
+#include "sls.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1915,21 +1915,10 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doSLS
                 && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
-                Yalsat yalsat(this);
-                double mem_needed_mb = (double)yalsat.mem_needed()/(1000.0*1000.0);
-                double maxmem = conf.sls_memoutMB*conf.var_and_mem_out_mult;
-                if (mem_needed_mb < maxmem) {
-                    lbool ret = yalsat.main();
-                    if (ret == l_True) {
-                        return l_True;
-                    }
-                } else {
-                    if (conf.verbosity) {
-                        cout << "c [sls] would need "
-                        << std::setprecision(2) << std::fixed << mem_needed_mb
-                        << " MB but that's over limit of " << std::fixed << maxmem
-                        << " MB -- skipping" << endl;
-                    }
+                SLS sls(this);
+                const lbool ret = sls.run();
+                if (ret == l_True) {
+                    return l_True;
                 }
             }
         } else if (token == "intree-probe") {
