@@ -63,7 +63,6 @@ class Main: public MainCommon
         int argc;
         char** argv;
         string var_elim_strategy;
-        string dratfilname;
         void check_options_correctness();
         void manually_parse_some_options();
         void parse_restart_type();
