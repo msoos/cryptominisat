@@ -289,7 +289,7 @@ void Main::printResultFunc(
             }
             *os << "0" << endl;
         } else {
-            const uint32_t num_undef = print_model(os, solver);
+            const uint32_t num_undef = print_model(solver, os);
             if (num_undef && !toFile && conf.verbosity) {
                 if (only_sampling_solution) {
                     cout << "c NOTE: some variables' value are NOT set -- you ONLY asked for the sampling set's values: '--onlysampling'" << endl;
@@ -967,55 +967,6 @@ void Main::check_options_correctness()
     }
 }
 
-void Main::handle_drat_option()
-{
-    if (!conf.simulate_drat) {
-        if (dratDebug) {
-            dratf = &cout;
-        } else {
-            std::ofstream* dratfTmp = new std::ofstream;
-            dratfTmp->open(dratfilname.c_str(), std::ofstream::out | std::ofstream::binary);
-            if (!*dratfTmp) {
-                std::cerr
-                << "ERROR: Could not open DRAT file "
-                << dratfilname
-                << " for writing"
-                << endl;
-
-                std::exit(-1);
-            }
-            dratf = dratfTmp;
-        }
-    }
-
-    if (!conf.otfHyperbin) {
-        if (conf.verbosity) {
-            cout
-            << "c OTF hyper-bin is needed for BProp in DRAT, turning it back"
-            << endl;
-        }
-        conf.otfHyperbin = true;
-    }
-
-    if (conf.doFindXors) {
-        if (conf.verbosity) {
-            cout
-            << "c XOR manipulation is not supported in DRAT, turning it off"
-            << endl;
-        }
-        conf.doFindXors = false;
-    }
-
-    if (conf.doCompHandler) {
-        if (conf.verbosity) {
-            cout
-            << "c Component finding & solving is not supported during DRAT, turning it off"
-            << endl;
-        }
-        conf.doCompHandler = false;
-    }
-}
-
 void Main::parse_restart_type()
 {
     if (vm.count("restart")) {
@@ -1076,11 +1027,6 @@ void Main::manually_parse_some_options()
         std::exit(-1);
     }
 
-    if (!vm["savedstate"].defaulted() && conf.preprocess == 0) {
-        cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
-        exit(-1);
-    }
-
     if (!decisions_for_model_fname.empty() && max_nr_of_solutions > 1) {
         std::cerr << "ERROR: dumping decisions for multi-solution makes no sense. Exiting." << endl;
         std::exit(-1);
@@ -1092,6 +1038,10 @@ void Main::manually_parse_some_options()
 
     if (max_nr_of_solutions > 1) {
         conf.need_decisions_reaching = true;
+    }
+
+    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
+        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
     }
 
     if (conf.preprocess != 0) {
@@ -1155,6 +1105,11 @@ void Main::manually_parse_some_options()
         if (!vm.count("eratio")) {
             conf.varElimRatioPerIter = 2.0;
         }
+    } else {
+        if (!vm["savedstate"].defaulted()) {
+            cout << "ERROR: It does not make sense to have --savedstate passed and not use preprocessing" << endl;
+            exit(-1);
+        }
     }
 
     if (vm.count("dumpresult")) {
@@ -1171,10 +1126,6 @@ void Main::manually_parse_some_options()
     }
 
     parse_polarity_type();
-
-    if (conf.random_var_freq < 0 || conf.random_var_freq > 1) {
-        throw WrongParam(lexical_cast<string>(conf.random_var_freq), "Illegal random var frequency ");
-    }
 
     //Conflict
     if (vm.count("maxdump") && redDumpFname.empty()) {
