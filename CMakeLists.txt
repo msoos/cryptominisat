@@ -305,13 +305,13 @@ if (NOT WIN32)
         #add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
+    add_cxx_flag_if_supported("-mtune=native")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
         #      on gcc version 7.3.0
         #add_cxx_flag_if_supported("-flto")
     else()
-        add_cxx_flag_if_supported("-mtune=native")
         add_cxx_flag_if_supported("-Wall")
         add_cxx_flag_if_supported("-Wextra")
         add_cxx_flag_if_supported("-Wunused")
