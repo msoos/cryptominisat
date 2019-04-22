@@ -762,6 +762,11 @@ configure_file(cryptominisat5Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
 )
 
+# Export this package to the CMake user package registry
+# Now the user can just use find_package(cryptominisat5) on their system
+export(PACKAGE cryptominisat5)
+
+set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 set(CRYPTOMINISAT5_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
     "Installation directory for cryptominisat5 CMake files")
 
