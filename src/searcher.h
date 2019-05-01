@@ -270,7 +270,6 @@ class Searcher : public HyperEngine
         /////////////////
         // Searching
         /// Search for a given number of conflicts.
-        template<bool update_bogoprops>
         lbool search();
         template<bool update_bogoprops>
         bool  handle_conflict(PropBy confl);// Handles the conflict clause

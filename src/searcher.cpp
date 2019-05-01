@@ -1172,7 +1172,6 @@ void Searcher::check_blocking_restart()
     }
 }
 
-template<bool update_bogoprops>
 lbool Searcher::search()
 {
     assert(ok);
@@ -1183,10 +1182,8 @@ lbool Searcher::search()
     const double myTime = cpuTime();
 
     //Stats reset & update
-    if (!update_bogoprops) {
-        stats.numRestarts++;
-        stats.clauseID_at_start_inclusive = clauseID;
-    }
+    stats.numRestarts++;
+    stats.clauseID_at_start_inclusive = clauseID;
     hist.clear();
     hist.reset_glue_hist_size(conf.shortTermHistorySize);
 
@@ -1202,24 +1199,18 @@ lbool Searcher::search()
         #ifdef USE_GAUSS
         gqhead = qhead;
         #endif
-        if (update_bogoprops) {
-            confl = propagate<update_bogoprops>();
-        } else {
-            confl = propagate_any_order_fast();
-        }
+        confl = propagate_any_order_fast();
 
         if (!confl.isNULL()) {
             //manipulate startup parameters
-            if (!update_bogoprops) {
-                if (VSIDS &&
-                    ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
-                    var_decay_vsids < conf.var_decay_vsids_max
-                ) {
-                    var_decay_vsids += 0.01;
-                }
-                if (!VSIDS && step_size > solver->conf.min_step_size) {
-                    step_size -= solver->conf.step_size_dec;
-                }
+            if (VSIDS &&
+                ((stats.conflStats.numConflicts & 0xfff) == 0xfff) &&
+                var_decay_vsids < conf.var_decay_vsids_max
+            ) {
+                var_decay_vsids += 0.01;
+            }
+            if (!VSIDS && step_size > solver->conf.min_step_size) {
+                step_size -= solver->conf.step_size_dec;
             }
 
             #ifdef STATS_NEEDED
@@ -1227,13 +1218,11 @@ lbool Searcher::search()
             #endif
 
             print_restart_stat();
-            if (!update_bogoprops) {
-                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
-                hist.trailDepthHist.push(trail.size());
-                #endif
-                hist.trailDepthHistLonger.push(trail.size());
-            }
-            if (!handle_conflict<update_bogoprops>(confl)) {
+            #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
+            hist.trailDepthHist.push(trail.size());
+            #endif
+            hist.trailDepthHistLonger.push(trail.size());
+            if (!handle_conflict<false>(confl)) {
                 dump_search_loop_stats(myTime);
                 return l_False;
             }
@@ -1241,16 +1230,14 @@ lbool Searcher::search()
         } else {
             assert(ok);
             #ifdef USE_GAUSS
-            if (!update_bogoprops) {
-                llbool ret = Gauss_elimination();
-                if (ret == l_Continue) {
-                    check_need_restart();
-                    continue;
-                //TODO conflict should be goto-d to "confl" label
-                } else if (ret != l_Nothing) {
-                    dump_search_loop_stats(myTime);
-                    return ret;
-                }
+            llbool ret = Gauss_elimination();
+            if (ret == l_Continue) {
+                check_need_restart();
+                continue;
+            //TODO conflict should be goto-d to "confl" label
+            } else if (ret != l_Nothing) {
+                dump_search_loop_stats(myTime);
+                return ret;
             }
             #endif //USE_GAUSS
 
@@ -1260,7 +1247,7 @@ lbool Searcher::search()
                 return l_False;
             };
             reduce_db_if_needed();
-            dec_ret = new_decision<update_bogoprops>();
+            dec_ret = new_decision<false>();
             if (dec_ret != l_Undef) {
                 dump_search_loop_stats(myTime);
                 return dec_ret;
@@ -1269,8 +1256,8 @@ lbool Searcher::search()
     }
     max_confl_this_phase -= (int64_t)params.conflictsDoneThisRestart;
 
-    cancelUntil<true, update_bogoprops>(0);
-    confl = propagate<update_bogoprops>();
+    cancelUntil<true, false>(0);
+    confl = propagate<false>();
     if (!confl.isNULL()) {
         ok = false;
         return l_False;
@@ -2341,7 +2328,7 @@ lbool Searcher::solve(
         lastRestartConfl = sumConflicts;
         params.clear();
         params.max_confl_to_do = max_confl_per_search_solve_call-stats.conflStats.numConflicts;
-        status = search<false>();
+        status = search();
         if (status == l_Undef) {
             adjust_phases_restarts();
         }
