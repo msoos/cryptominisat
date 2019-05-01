@@ -100,11 +100,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_confl         (std::numeric_limits<long>::max())
 
         //Glues
-#if !defined(FINAL_PREDICTOR_TOTAL) && !defined(STATS_NEEDED)
         , update_glues_on_analyze(true)
-#else
-        , update_glues_on_analyze(false)
-#endif
 
         //OTF
         , otfHyperbin      (true)

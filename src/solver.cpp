@@ -1411,6 +1411,15 @@ lbool Solver::solve_with_assumptions(
     const vector<Lit>* _assumptions,
     const bool only_sampling_solution
 ) {
+
+#if defined(FINAL_PREDICTOR_TOTAL) || defined(STATS_NEEDED)
+    update_glues_on_analyze = false;
+    do_decision_based_cl = 0;
+    if (conf.verbose) {
+        cout << "c [stats] glue update disabled, decision based clause disabled" << endl;
+    }
+#endif
+
     fresh_solver = false;
     decisions_reaching_model.clear();
     decisions_reaching_model_valid = false;

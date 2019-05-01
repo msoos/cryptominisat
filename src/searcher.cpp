@@ -3435,9 +3435,11 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
             assert(value(var) != l_Undef);
 
             #ifdef STATS_NEEDED
+            assert(solver->conf.decision_based_cl == false);
+
             if (!update_bogoprops) {
-                //WARNING
-                //WARNING We do not correctly count into the variable the decision clause, in case it's made.
+                //WARNING We do not correctly count into the variable the decision clause
+                //WARNING in case it's made.
                 //WARNING We assume a new clause will be created (hence the clid_plus_one),
                 //WARNING but not a decision clause...
 
