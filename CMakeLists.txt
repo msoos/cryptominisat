@@ -530,6 +530,14 @@ if (NOT NOVALGRIND)
     endif()
 endif()
 
+include(CheckFloatPrecision)
+check_float_precision()
+if (HAVE__FPU_SETCW)
+    add_definitions(-DYALSAT_FPU)
+    message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
+endif()
+
+
 # -----------------------------------------------------------------------------
 # Look for M4RI (for Gauss)
 # -----------------------------------------------------------------------------

@@ -44,7 +44,7 @@ SOFTWARE.
 #include <stdint.h>
 #endif
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(YALSAT_FPU)
 #include <fpu_control.h>	// Set FPU to double precision on Linux.
 #endif
 
@@ -411,7 +411,7 @@ typedef unsigned short U2;
 typedef unsigned int U4;
 
 typedef struct FPU {
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(YALSAT_FPU)
   fpu_control_t control;
 #endif
   int saved;
@@ -514,7 +514,7 @@ void yals_msg (Yals * yals, int level, const char * fmt, ...) {
 /*------------------------------------------------------------------------*/
 
 static void yals_set_fpu (Yals * yals) {
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(YALSAT_FPU)
   fpu_control_t control;
   _FPU_GETCW (yals->fpu.control);
   control = yals->fpu.control;
@@ -530,7 +530,7 @@ static void yals_set_fpu (Yals * yals) {
 static void yals_reset_fpu (Yals * yals) {
   (void) yals;
   assert (yals->fpu.saved);
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(YALSAT_FPU)
   _FPU_SETCW (yals->fpu.control);
   yals_msg (yals, 1, "reset FPU to original double precision mode");
 #endif
