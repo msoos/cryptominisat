@@ -171,7 +171,7 @@ p cnf 3 4
 
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
-Python usage
+Incremental Python Usage
 -----
 The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
 
@@ -189,7 +189,7 @@ sudo ldconfig
 
 ```
 
-You can then use it as:
+You can then use it in incremental mode as:
 
 ```
 >>> from pycryptosat import Solver
@@ -203,6 +203,17 @@ You can then use it as:
 True
 >>> print solution
 (None, True, False, True)
+>>> sat, solution = s.solve([-3])
+>> print sat
+False
+>>> sat, solution = s.solve()
+>>> print sat
+True
+>>> s.add_clause([-3])
+>>> sat, solution = s.solve()
+>>> print sat
+False
+
 ```
 
 We can also try to assume any variable values for a single solver run:
