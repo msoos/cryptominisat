@@ -1,6 +1,5 @@
 /******************************************
-Copyright (c) 2018, Henry Kautz <henry.kautz@gmail.com>
-Copyright (c) 2018, Mate Soos <soos.mate@gmail.com>
+Copyright (c) 2019, Mate Soos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,53 +20,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#ifndef CMS_YALSAT_H
-#define CMS_YALSAT_H
+#ifndef SLS_H_
+#define SLS_H_
 
-#include <cstdint>
-#include <cstdio>
 #include "solvertypes.h"
-#include "MersenneTwister.h"
-class Yals;
 
 namespace CMSat {
 
 class Solver;
-class Yalsat {
+
+class SLS {
 public:
-    lbool main();
-    uint64_t mem_needed();
-    Yalsat(Solver* _solver);
-    ~Yalsat();
+    SLS(Solver* solver);
+    ~SLS();
+    lbool run();
 
 private:
     Solver* solver;
 
-    /************************************/
-    /* Main                             */
-    /************************************/
-    void flipvar(uint32_t toflip);
-
-    /************************************/
-    /* Initialization                   */
-    /************************************/
-    void parse_parameters();
-    void init_for_round();
-    bool init_problem();
-    lbool deal_with_solution(int res);
-    Yals* yals;
-
-    enum class add_cl_ret {added_cl, skipped_cl, unsat};
-    template<class T>
-    add_cl_ret add_this_clause(const T& cl);
-    vector<int> yals_lits;
-
-    uint32_t numvars;     /* number of vars */
-    uint32_t numclauses;   /* number of clauses */
-    uint32_t numliterals; /* number of instances of literals across all clauses */
-    uint32_t numfalse;   /* number of false clauses */
+    lbool run_walksat();
+    lbool run_yalsat();
 };
 
-}
+} //end namespace CMSat
 
-#endif //CMS_WALKSAT_H
+#endif //SLS_H_

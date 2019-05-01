@@ -87,9 +87,9 @@ def set_up_parser():
     parser.add_option("--gauss", dest="gauss", default=False,
                       action="store_true",
                       help="Concentrate fuzzing gauss")
-    parser.add_option("--walksat", dest="walksat", default=False,
+    parser.add_option("--sls", dest="sls", default=False,
                       action="store_true",
-                      help="Concentrate fuzzing walksat")
+                      help="Concentrate fuzzing sls")
     parser.add_option("--sampling", dest="only_sampling", default=False,
                       action="store_true",
                       help="Concentrate fuzzing sampling variables")
@@ -264,7 +264,7 @@ class Tester:
             if random.choice([False, True, True, True]) and self.this_gauss_on:
                 sched.append("occ-xor")
 
-        if options.walksat:
+        if options.sls:
             sched.append("sls")
 
         return sched
@@ -277,7 +277,7 @@ class Tester:
         sched_opts += "sub-cls-with-bin,"
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
-        sched_opts += "check-cache-size, renumber"
+        sched_opts += "check-cache-size, renumber, must-renumber"
         sched_opts += ", sls"
 
         # type of schedule
@@ -311,16 +311,21 @@ class Tester:
         cmd += "--confbtwsimp %d " % random.choice([100, 1000])
         cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
         cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
-        walksat = 0
-        if options.walksat:
-            walksat = 1
+        sls = 0
+        if options.sls:
+            sls = 1
         else:
             # it's kinda slow and using it all the time is probably not a good idea
-            walksat = random.choice([0, 0, 0, 1])
+            sls = random.choice([0, 0, 0, 1])
 
-        cmd += "--sls %d " % walksat
+        cmd += "--sls %d " % sls
         cmd += "--slseveryn %d " % random.randint(1, 3)
-        cmd += "--slsmems %d " % random.choice([1, 10, 100, 300])
+        cmd += "--yalsatmems %d " % random.choice([1, 10, 100, 300])
+        cmd += "--walksatruns %d " % random.choice([1, 10, 100, 300])
+        cmd += "--slstype %s " % random.choice(["walksat", "yalsat"])
+        cmd += "--mustrenumber %d " % random.choice([0, 1])
+        cmd += "--bva %d " % random.choice([1, 1, 1, 0])
+        cmd += "--bvaeveryn %d " % random.choice([1, random.randint(1, 20)])
 
         if self.dump_red is not None:
             cmd += "--dumpred %s " % self.dump_red
@@ -416,8 +421,8 @@ class Tester:
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
-                    "stamp", "cache", "otfsubsume",
-                    "renumber", "savemem", "moreminim", "gates", "bva",
+                    "stamp", "cache",
+                    "renumber", "savemem", "moreminim", "gates",
                     "gorshort", "gandrem", "gateeqlit", "schedsimp"]
 
             if "xor" in self.extra_opts_supported:
@@ -663,6 +668,9 @@ class Tester:
             foundVerif = False
             dratLine = ""
             for line in consoleOutput2.split('\n'):
+                if "deleted clause on" in line:
+                    print("ERROR: deleted clause cannot be found")
+                    exit()
                 if len(line) > 1 and line[:2] == "s ":
                     # print("verif: " , line)
                     foundVerif = True
@@ -927,7 +935,7 @@ fuzzers_noxor = [
     ["../../utils/cnf-utils/cnf-fuzz-xor.py", "--seed"],
     ["../../utils/cnf-utils/multipart.py", "special"]
 ]
-fuzzers_noxor_walksat = [
+fuzzers_noxor_sls = [
     ["../../build/tests/cnf-utils/makewff -cnf 3 250 1080", "-seed"],
 ]
 
@@ -955,9 +963,9 @@ if __name__ == "__main__":
     if options.small:
         fuzzers_drat = filter_large_fuzzer(fuzzers_drat)
         fuzzers_nodrat = filter_large_fuzzer(fuzzers_nodrat)
-    if options.walksat:
-        fuzzers_drat = fuzzers_noxor_walksat
-        fuzzers_nodrat = fuzzers_noxor_walksat
+    if options.sls:
+        fuzzers_drat = fuzzers_noxor_sls
+        fuzzers_nodrat = fuzzers_noxor_sls
 
     print_version()
     tester = Tester()
@@ -977,8 +985,8 @@ if __name__ == "__main__":
             toexec += "--small "
         if options.gauss:
             toexec += "--gauss "
-        if options.walksat:
-            toexec += "--walksat "
+        if options.sls:
+            toexec += "--sls "
         if options.only_sampling:
             toexec += "--sampling "
         if options.only_dump:

@@ -37,10 +37,14 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 
-#if defined(__linux__)
+#ifdef _MSC_VER
+#include "msvc/stdint.h"
+#else
+#include <stdint.h>
+#endif
+
+#if defined(YALSAT_FPU)
 #include <fpu_control.h>	// Set FPU to double precision on Linux.
 #endif
 
@@ -176,36 +180,36 @@ typedef unsigned Word;
 
 /*------------------------------------------------------------------------*/
 #ifndef NDEBUG
-#define LOG(ARGS...) \
+#define LOG(...) \
 do { \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   yals_log_end (yals); \
 } while (0)
-#define LOGLITS(LITS,ARGS...) \
+#define LOGLITS(LITS,...) \
 do { \
   const int * P; \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   fprintf (yals->out, " clause :"); \
   for (P = (LITS); *P; P++) \
     fprintf (yals->out, " %d", *P); \
   yals_log_end (yals); \
 } while (0)
-#define LOGCIDX(CIDX,ARGS...) \
+#define LOGCIDX(CIDX,...) \
 do { \
   const int * P, * LITS = yals_lits (yals, (CIDX)); \
   if (!yals->opts.logging.val) break; \
-  yals_log_start (yals, ##ARGS); \
+  yals_log_start (yals, ##__VA_ARGS__); \
   fprintf (yals->out, " clause %d :", (CIDX)); \
   for (P = (LITS); *P; P++) \
     fprintf (yals->out, " %d", *P); \
   yals_log_end (yals); \
 } while (0)
 #else
-#define LOG(ARGS...) do { } while (0)
-#define LOGLITS(ARGS...) do { } while (0)
-#define LOGCIDX(ARGS...) do { } while (0)
+#define LOG(...) do { } while (0)
+#define LOGLITS(...) do { } while (0)
+#define LOGCIDX(...) do { } while (0)
 #endif
 /*------------------------------------------------------------------------*/
 
@@ -407,7 +411,7 @@ typedef unsigned short U2;
 typedef unsigned int U4;
 
 typedef struct FPU {
-#ifdef __linux__
+#if defined(YALSAT_FPU)
   fpu_control_t control;
 #endif
   int saved;
@@ -510,7 +514,7 @@ void yals_msg (Yals * yals, int level, const char * fmt, ...) {
 /*------------------------------------------------------------------------*/
 
 static void yals_set_fpu (Yals * yals) {
-#ifdef __linux__
+#if defined(YALSAT_FPU)
   fpu_control_t control;
   _FPU_GETCW (yals->fpu.control);
   control = yals->fpu.control;
@@ -526,7 +530,7 @@ static void yals_set_fpu (Yals * yals) {
 static void yals_reset_fpu (Yals * yals) {
   (void) yals;
   assert (yals->fpu.saved);
-#ifdef __linux__
+#if defined(YALSAT_FPU)
   _FPU_SETCW (yals->fpu.control);
   yals_msg (yals, 1, "reset FPU to original double precision mode");
 #endif
@@ -560,14 +564,39 @@ static double yals_avg (double a, double b) { return b ? a/b : 0; }
 
 static double yals_pct (double a, double b) { return b ? 100.0 * a / b : 0; }
 
-double yals_process_time () {
+/*double yals_process_time () {
   struct rusage u;
   double res;
   if (getrusage (RUSAGE_SELF, &u)) return 0;
   res = u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
   res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec;
   return res;
+}*/
+
+// note: MinGW64 defines both __MINGW32__ and __MINGW64__
+#if defined (_MSC_VER) || defined (__MINGW32__) || defined(_WIN32)
+#include <time.h>
+double yals_process_time(void)
+{
+    return (double)clock() / CLOCKS_PER_SEC;
 }
+
+#else //Linux or POSIX
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
+
+double yals_process_time(void)
+{
+    struct rusage u;
+    if (getrusage (RUSAGE_SELF, &u)) return 0;
+    double res;
+    res = u.ru_utime.tv_sec + 1e-6 * u.ru_utime.tv_usec;
+    res += u.ru_stime.tv_sec + 1e-6 * u.ru_stime.tv_usec;
+    return res;
+}
+#endif
+
 
 static double yals_time (Yals * yals) {
   if (yals && yals->cbs.time) return yals->cbs.time ();
@@ -1110,7 +1139,7 @@ static int yals_pick_by_score (Yals * yals) {
 
   assert (sum > 0);
   lim = (yals_rand (yals) / (1.0 + (double) UINT_MAX))*sum;
-  assert (lim < sum);
+  assert (lim <= sum);
 
   LOG ("random choice %g mod %g", lim, sum);
 

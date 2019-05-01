@@ -71,7 +71,8 @@ class InTree;
 
 struct SolveStats
 {
-    uint64_t numSimplify = 0;
+    uint32_t num_simplify = 0;
+    uint32_t num_simplify_this_solve_call = 0;
     uint32_t num_solve_calls = 0;
 };
 

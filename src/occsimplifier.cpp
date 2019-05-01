@@ -1368,6 +1368,16 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     n_occurs[(~lit).toInt()] = calc_occ_data(~lit);
                 }
                 runStats.xorTime += finder.get_stats().findTime;
+            } else {
+                //TODO this is something VERY fishy
+                if (solver->conf.verbosity) {
+                    cout << "c [occ-xor] simulating occ-xor with occur mangling and clause mark cleaning -- TODO very fishy" << endl;
+                }
+                sort_occurs_and_set_abst();
+                for(ClOffset offset: clauses) {
+                    Clause* cl = solver->cl_alloc.ptr(offset);
+                    cl->stats.marked_clause = false;
+                }
             }
         } else if (token == "occ-clean-implicit") {
             //BUG TODO
@@ -1383,11 +1393,16 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                 eliminate_vars();
             }
         } else if (token == "occ-bva") {
-            bva->bounded_var_addition();
-            added_bin_cl.clear();
-            added_cl_to_var.clear();
-            added_long_cl.clear();
-            solver->clean_occur_from_removed_clauses_only_smudged();
+            if (solver->conf.verbosity) {
+                cout << "c [occ-bva] global numcalls: " << globalStats.numCalls << endl;
+            }
+            if ((globalStats.numCalls % solver->conf.bva_every_n) == (solver->conf.bva_every_n-1)) {
+                bva->bounded_var_addition();
+                added_bin_cl.clear();
+                added_cl_to_var.clear();
+                added_long_cl.clear();
+                solver->clean_occur_from_removed_clauses_only_smudged();
+            }
         } /*else if (token == "occ-gates") {
             if (solver->conf.doCache
                 && solver->conf.doGateFind
@@ -1858,7 +1873,7 @@ bool OccSimplifier::uneliminate(uint32_t var)
 
 void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSize)
 {
-    if (!(*solver->drat).enabled())
+    if (! ((*solver->drat).enabled() || solver->conf.simulate_drat) )
         return;
 
     if (solver->conf.verbosity >= 6) {
@@ -1885,7 +1900,7 @@ void OccSimplifier::remove_by_drat_recently_blocked_clauses(size_t origBlockedSi
 
                 lits.clear();
             } else {
-                lits.push_back(l);
+                lits.push_back(solver->map_outer_to_inter(l));
             }
             at++;
         }

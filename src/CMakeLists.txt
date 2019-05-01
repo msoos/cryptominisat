@@ -111,7 +111,8 @@ set(cryptoms_lib_files
     cryptominisat_c.cpp
     yalsat.cpp
     yals.c
-    # walksat.cpp
+    walksat.cpp
+    sls.cpp
 
 #    watcharray.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
@@ -267,6 +268,7 @@ install(TARGETS cryptominisat5
 if (NOT ONLY_SIMPLE)
     add_executable(cryptominisat5-bin
         main.cpp
+        main_common.cpp
         main_exe.cpp
         signalcode.cpp
     )
@@ -275,6 +277,7 @@ endif()
 if (EMSCRIPTEN)
     add_executable(cryptominisat5_simple-bin
         main_emscripten.cpp
+        main_common.cpp
     )
 
     set_target_properties(cryptominisat5_simple-bin
@@ -289,6 +292,7 @@ if (EMSCRIPTEN)
 else()
     add_executable(cryptominisat5_simple-bin
         main_simple.cpp
+        main_common.cpp
     )
 endif()
 

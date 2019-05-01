@@ -66,7 +66,7 @@ THE SOFTWARE.
 #include "drat.h"
 #include "xorfinder.h"
 #include "cardfinder.h"
-#include "yalsat.h"
+#include "sls.h"
 
 using namespace CMSat;
 using std::cout;
@@ -1385,6 +1385,7 @@ lbool Solver::simplify_problem_outside()
     decisions_reaching_model_valid = false;
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
+    solveStats.num_simplify_this_solve_call = 0;
 
     if (!ok) {
         return l_False;
@@ -1435,6 +1436,7 @@ lbool Solver::solve_with_assumptions(
     var_decay_vsids = conf.var_decay_vsids_start;
     step_size = conf.orig_step_size;
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
+    solveStats.num_simplify_this_solve_call = 0;
     params.rest_type = conf.restartType;
     if (params.rest_type == Restart::glue_geom) {
         params.rest_type = Restart::geom;
@@ -1484,7 +1486,7 @@ lbool Solver::solve_with_assumptions(
         && nVars() > 0
         && conf.do_simplify_problem
         && conf.simplify_at_startup
-        && (solveStats.numSimplify == 0 || conf.simplify_at_every_startup)
+        && (solveStats.num_simplify == 0 || conf.simplify_at_every_startup)
     ) {
         status = simplify_problem(!conf.full_simplify_at_startup);
     }
@@ -1538,7 +1540,7 @@ void Solver::check_reconfigure()
         && longIrredCls.size() > 1
         && (binTri.irredBins + binTri.redBins) > 1
     ) {
-        if (solveStats.numSimplify == conf.reconfigure_at &&
+        if (solveStats.num_simplify == conf.reconfigure_at &&
             !already_reconfigured
         ) {
             check_calc_satzilla_features();
@@ -1892,9 +1894,9 @@ lbool Solver::execute_inprocess_strategy(
                 && conf.doCompHandler
                 && conf.sampling_vars == NULL
                 && get_num_free_vars() < conf.compVarLimit*solver->conf.var_and_mem_out_mult
-                && solveStats.numSimplify >= conf.handlerFromSimpNum
+                && solveStats.num_simplify >= conf.handlerFromSimpNum
                 //Only every 2nd, since it can be costly to find parts
-                && solveStats.numSimplify % 2 == 0 //TODO
+                && solveStats.num_simplify % 2 == 0 //TODO
             ) {
                 compHandler->handle();
             }
@@ -1923,24 +1925,12 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "sls") {
             assert(conf.sls_every_n > 0);
             if (conf.doSLS
-                && !(drat->enabled() || conf.simulate_drat)
-                && solveStats.numSimplify % conf.sls_every_n == (conf.sls_every_n-1)
+                && solveStats.num_simplify % conf.sls_every_n == (conf.sls_every_n-1)
             ) {
-                Yalsat yalsat(this);
-                double mem_needed_mb = (double)yalsat.mem_needed()/(1000.0*1000.0);
-                double maxmem = conf.sls_memoutMB*conf.var_and_mem_out_mult;
-                if (mem_needed_mb < maxmem) {
-                    lbool ret = yalsat.main();
-                    if (ret == l_True) {
-                        return l_True;
-                    }
-                } else {
-                    if (conf.verbosity) {
-                        cout << "c [sls] would need "
-                        << std::setprecision(2) << std::fixed << mem_needed_mb
-                        << " MB but that's over limit of " << std::fixed << maxmem
-                        << " MB -- skipping" << endl;
-                    }
+                SLS sls(this);
+                const lbool ret = sls.run();
+                if (ret == l_True) {
+                    return l_True;
                 }
             }
         } else if (token == "intree-probe") {
@@ -2000,7 +1990,7 @@ lbool Solver::execute_inprocess_strategy(
                     }
                 }
 
-                if (!renumber_variables(token == "must-renumber")) {
+                if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
             }
@@ -2045,6 +2035,10 @@ lbool Solver::simplify_problem(const bool startup)
     assert(solver->no_marked_clauses());
     #endif
 
+    if (solveStats.num_simplify_this_solve_call >= conf.max_num_simplify_per_solve_call) {
+        return l_Undef;
+    }
+
     clear_order_heap();
     #ifdef USE_GAUSS
     clearEnGaussMatrixes();
@@ -2078,7 +2072,8 @@ lbool Solver::simplify_problem(const bool startup)
     if (conf.verbosity)
         cout << "c global_timeout_multiplier: " << conf. global_timeout_multiplier << endl;
 
-    solveStats.numSimplify++;
+    solveStats.num_simplify++;
+    solveStats.num_simplify_this_solve_call++;
 
     assert(!(ok == false && ret != l_False));
     if (!ok || ret == l_False) {

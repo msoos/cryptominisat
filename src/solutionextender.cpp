@@ -44,7 +44,12 @@ void SolutionExtender::extend()
     #ifdef SLOW_DEBUG
     for(uint32_t i = 0; i < solver->varData.size(); i++) {
         uint32_t v_inter = solver->map_outer_to_inter(i);
-        if (solver->varData[v_inter].removed != Removed::none
+        if (
+            //decomposed's solution has beed added already, it SHOULD be set
+            //but everything else is NOT OK
+            (solver->varData[v_inter].removed != Removed::none
+                && solver->varData[v_inter].removed != Removed::decomposed
+            )
             && solver->model[i] != l_Undef
         ) {
             cout << "ERROR: variable " << i + 1

@@ -312,7 +312,7 @@ void SQLiteStats::mem_used(
 ) {
     int bindAt = 1;
     //Position
-    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtMemUsed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtMemUsed, bindAt++, given_time);
     //memory stats
@@ -383,7 +383,7 @@ void SQLiteStats::time_passed(
 ) {
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
@@ -419,7 +419,7 @@ void SQLiteStats::time_passed_min(
     , double time_passed
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtTimePassed, bindAt++, solver->sumConflicts);
     sqlite3_bind_double(stmtTimePassed, bindAt++, cpuTime());
     sqlite3_bind_text(stmtTimePassed, bindAt++, name.c_str(), -1, NULL);
@@ -628,7 +628,7 @@ void SQLiteStats::satzilla_features(
     , const SatZillaFeatures& satzilla_feat
 ) {
     int bindAt = 1;
-    sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtFeat, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtFeat, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtFeat, bindAt++, solver->sumConflicts);
     sqlite3_bind_int(stmtFeat, bindAt++, solver->latest_satzilla_feature_calc);
@@ -742,7 +742,7 @@ void SQLiteStats::restart(
     const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
     sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
     sqlite3_bind_int(stmtRst, bindAt++, solver->latest_satzilla_feature_calc);
@@ -924,7 +924,7 @@ void SQLiteStats::reduceDB(
     assert(cl->stats.dump_number != std::numeric_limits<uint32_t>::max());
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumRestarts());
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, solver->latest_satzilla_feature_calc);
@@ -1107,7 +1107,7 @@ void SQLiteStats::dump_clause_stats(
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().numSimplify);
+    sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->get_solve_stats().num_simplify);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, solver->sumRestarts());
     if (solver->sumRestarts() == 0) {
         sqlite3_bind_int64(stmt_clause_stats, bindAt++, 0);

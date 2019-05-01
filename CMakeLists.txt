@@ -57,7 +57,7 @@ set(CRYPTOMS_SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 set(build_types Debug Release RelWithDebInfo MinSizeRel)
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "You can choose the type of build, options are:${build_types}")
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE String
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
         "Options are ${build_types}"
         FORCE
     )
@@ -94,9 +94,6 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # generate JSON file of compile commands -- useful for code extension
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package (Threads REQUIRED)
-
 # static compilation
 option(BUILD_SHARED_LIBS "Build the shared library" ON)
 option(STATICCOMPILE "Compile to static executable" OFF)
@@ -104,11 +101,18 @@ if (STATICCOMPILE)
     set(BUILD_SHARED_LIBS OFF)
 endif()
 
+option(NOVALGRIND "Don't use valgrind" ON)
+option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 option(EMSCRIPTEN "Generate only emscripten JS" OFF)
 if (EMSCRIPTEN)
     set(ONLY_SIMPLE ON)
     set(BUILD_SHARED_LIBS ON)
     set(NOZLIB ON)
+    set(NOVALGRIND ON)
+    set(ENABLE_PYTHON_INTERFACE OFF)
+else()
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package (Threads REQUIRED)
 endif()
 
 option(FEEDBACKFUZZ "Use Clang coverage sanitizers" OFF)
@@ -202,6 +206,8 @@ if (NOT MSVC)
     add_compile_options( -g)
     add_compile_options( -pthread )
 
+    #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
+    #      on gcc version 7.3.0
     add_compile_options("$<$<CONFIG:RELWITHDEBINFO>:-O2>")
 
     add_compile_options("$<$<CONFIG:RELEASE>:-O2>")
@@ -299,11 +305,13 @@ if (NOT WIN32)
         #add_cxx_flag_if_supported("-fvisibility=hidden")
     endif()
     add_compile_options("-fPIC")
+    #add_cxx_flag_if_supported("-mtune=native")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        #NOTE: out-satrace19-8373595 has confirmed that O3+flto only hurts compared to O2
+        #      on gcc version 7.3.0
         #add_cxx_flag_if_supported("-flto")
     else()
-        add_cxx_flag_if_supported("-mtune=native")
         add_cxx_flag_if_supported("-Wall")
         add_cxx_flag_if_supported("-Wextra")
         add_cxx_flag_if_supported("-Wunused")
@@ -452,7 +460,8 @@ ENDIF ()
 # ----------
 # manpage
 # ----------
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+option(MANPAGE "Create manpage" ON)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND MANPAGE)
     find_program(HELP2MAN_FOUND help2man)
     if (HELP2MAN_FOUND)
 
@@ -520,28 +529,59 @@ if (NOT NOZLIB AND NOT ((NOT BUILD_SHARED_LIBS) AND WIN32))
     ENDIF (ZLIB_FOUND)
 endif()
 
-option(NOVALGRIND "Don't use valgrind" ON)
-find_package(Valgrind)
-if (VALGRIND_FOUND AND NOT NOVALGRIND)
-    message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
-    add_definitions(-DUSE_VALGRIND)
-    include_directories(${VALGRIND_INCLUDE_DIR})
-else()
-    message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
+if (NOT NOVALGRIND)
+    find_package(Valgrind)
+    if (VALGRIND_FOUND )
+        message(STATUS "OK, Found Valgrind. Using valgrind client requests to mark freed clauses in pool as undefined")
+        add_definitions(-DUSE_VALGRIND)
+        include_directories(${VALGRIND_INCLUDE_DIR})
+    else()
+        message(STATUS "Cannot find valgrind or it's disabled, we will not be able to mark memory pool objects as undefined")
+    endif()
 endif()
+
+include(CheckFloatPrecision)
+check_float_precision()
+if (HAVE__FPU_SETCW)
+    add_definitions(-DYALSAT_FPU)
+    message(STATUS "Found FPU code for yalsat: fpu_control.h, _FPU_SINGLE, _FPU_DOUBLE")
+endif()
+
 
 # -----------------------------------------------------------------------------
 # Look for M4RI (for Gauss)
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
+option(NOBOSPHORUS "Don't use Bosphorus" ON)
+option(REQUIRE_BOSPHORUS "Must use Bosphorus" OFF)
 option(MIT "Build with only MIT licensed components" OFF)
 if (MIT)
     set(NOM4RI ON)
+    set(NOBOSPHORUS ON)
     if(REQUIRE_M4RI)
         message(FATAL_ERROR "Cannot have both MIT and REQUIRE_M4RI at the same time")
     endif()
+    if(REQUIRE_BOSPHORUS)
+        message(FATAL_ERROR "Cannot have both MIT and REQUIRE_BOSPHORUS at the same time")
+    endif()
 endif()
+
+if (NOT NOBOSPHORUS)
+    find_package(bosphorus)
+    if (NOT BOSPHORUS_LIBRARIES)
+        if (REQUIRE_BOSPHORUS)
+            message(FATAL_ERROR "Bosphorus NOT found, but it was required with REQUIRE_BOSPHORUS")
+        else()
+            message(WARNING "Bosphorus NOT found")
+        endif()
+    else()
+        message(STATUS "Bosphorus -- found version ${BOSPHORUS_VERSION_MAJOR}.${BOSPHORUS_VERSION_MINOR}")
+        message(STATUS "Bosphorus -- libraries: ${BOSPHORUS_LIBRARIES}")
+        message(STATUS "Bosphorus -- include dirs: ${BOSPHORUS_INCLUDE_DIRS}")
+    endif()
+endif()
+
 
 if (NOT NOM4RI)
     find_package(M4RI)
@@ -587,7 +627,6 @@ endmacro()
 # -----------------------------------------------------------------------------
 # Look for python
 # -----------------------------------------------------------------------------
-option(ENABLE_PYTHON_INTERFACE "Enable Python interface" ON)
 if (STATICCOMPILE)
     set(ENABLE_PYTHON_INTERFACE OFF)
 endif()
@@ -763,6 +802,11 @@ configure_file(cryptominisat5Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${CRYPTOMINISAT5_CONFIG_FILENAME}" @ONLY
 )
 
+# Export this package to the CMake user package registry
+# Now the user can just use find_package(cryptominisat5) on their system
+export(PACKAGE cryptominisat5)
+
+set(DEF_INSTALL_CMAKE_DIR lib/cmake/cryptominisat5)
 set(CRYPTOMINISAT5_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
     "Installation directory for cryptominisat5 CMake files")
 

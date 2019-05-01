@@ -705,3 +705,15 @@ bool CNF::no_marked_clauses() const
 
     return true;
 }
+
+void CNF::add_drat(std::ostream* os, bool add_ID) {
+    if (drat)
+        delete drat;
+
+    if (add_ID) {
+        drat = new DratFile<true>(interToOuterMain);
+    } else {
+        drat = new DratFile<false>(interToOuterMain);
+    }
+    drat->setFile(os);
+}

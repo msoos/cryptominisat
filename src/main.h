@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <memory>
 #include <fstream>
 
+#include "main_common.h"
 #include "solverconf.h"
 #include "cryptominisat5/cryptominisat.h"
 
@@ -38,7 +39,7 @@ using std::vector;
 namespace po = boost::program_options;
 using namespace CMSat;
 
-class Main
+class Main: public MainCommon
 {
     public:
         Main(int argc, char** argv);
@@ -56,17 +57,14 @@ class Main
 
         void parseCommandLine();
         virtual int solve();
-        SolverConf conf;
 
     private:
         //arguments
         int argc;
         char** argv;
         string var_elim_strategy;
-        string dratfilname;
         void check_options_correctness();
         void manually_parse_some_options();
-        void handle_drat_option();
         void parse_restart_type();
         void parse_polarity_type();
         void dump_decisions_for_model();
@@ -105,12 +103,10 @@ class Main
         void dump_red_file();
 
         //Config
-        bool zero_exit_status = false;
         std::string resultFilename;
         std::string debugLib;
         int printResult = true;
         string commandLine;
-        unsigned num_threads = 1;
         uint32_t max_nr_of_solutions = 1;
         int sql = 0;
         string sqlite_filename;
@@ -133,8 +129,6 @@ class Main
         uint32_t dump_red_max_glue = 1000;
 
         //Drat checker
-        std::ostream* dratf = NULL;
-        bool dratDebug = false;
         bool clause_ID_needed = false;
 };
 

@@ -53,6 +53,8 @@ offset (as per ClauseAllocator ), in the case of long clauses
 */
 class Watched {
     public:
+        Watched(Watched const&) = default;
+
         /**
         @brief Constructor for a long (>3) clause
         */

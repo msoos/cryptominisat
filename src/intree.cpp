@@ -90,7 +90,7 @@ bool InTree::check_timeout_due_to_hyperbin()
     assert(!(solver->timedOutPropagateFull && solver->conf.simulate_drat));
 
     if (solver->timedOutPropagateFull
-        && !solver->drat->enabled()
+        && !(solver->drat->enabled() || solver->conf.simulate_drat)
     ) {
         if (solver->conf.verbosity) {
             cout

@@ -964,17 +964,12 @@ DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
         std::cerr << "ERROR: DRAT cannot be used in multi-threaded mode" << endl;
         exit(-1);
     }
-    Drat* drat = NULL;
-    if (add_ID) {
-        drat = new DratFile<true>;
-    } else {
-        drat = new DratFile<false>;
+    if (nVars() > 0) {
+        std::cerr << "ERROR: DRAT cannot be set after variables have been added" << endl;
+        exit(-1);
     }
-    drat->setFile(os);
-    if (data->solvers[0]->drat)
-        delete data->solvers[0]->drat;
 
-    data->solvers[0]->drat = drat;
+    data->solvers[0]->add_drat(os, add_ID);
 }
 
 DLL_PUBLIC void SATSolver::interrupt_asap()
