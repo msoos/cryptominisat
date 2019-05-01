@@ -41,9 +41,6 @@ public:
     void handle_lev2();
     void handle_lev1_final_predictor();
     void dump_sql_cl_data(const string& cur_rst_type);
-    #ifdef STATS_NEEDED
-    void delete_randomly_marked_clauses();
-    #endif
     uint64_t nbReduceDB_lev1 = 0;
     uint64_t nbReduceDB_lev2 = 0;
 

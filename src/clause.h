@@ -175,7 +175,6 @@ struct ClauseStats
     #endif
 
     #ifdef STATS_NEEDED
-    uint32_t keep_for_n_rounds = std::numeric_limits<uint32_t>::max();
     int64_t ID = 0;
 
     AtecedentData<uint16_t> antec_data;
