@@ -13,10 +13,9 @@ This system provides CryptoMiniSat, an advanced incremental SAT solver. The syst
 interfaces: command-line, C++ library and python. The command-line interface
 takes a [cnf](http://en.wikipedia.org/wiki/Conjunctive_normal_form) as an
 input in the [DIMACS](http://www.satcompetition.org/2009/format-benchmarks2009.html)
-format with the extension of XOR clauses. The C++ and pythong interface mimics this and also
-allows for incremental use: assumptions and multiple `solve()` calls.
-A C compatible wrapper is also provided. The python interface provides a high-level
-yet efficient API to use most of the C++ interface with ease.
+format with the extension of XOR clauses. The C++ and python interface mimics this and also
+allows for incremental use: assumptions and multiple `solve` calls.
+A C compatible wrapper is also provided.
 
 When citing, always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24), bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
