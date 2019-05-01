@@ -223,7 +223,7 @@ True
 For more detailed usage instructions, please see the README.rst under the `python`
 directory.
 
-Library usage
+Incremental Library Usage
 -----
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
@@ -247,16 +247,16 @@ int main()
     //We need 3 variables
     solver.new_vars(3);
 
-    //adds "1 0"
+    //add "1 0"
     clause.push_back(Lit(0, false));
     solver.add_clause(clause);
 
-    //adds "-2 0"
+    //add "-2 0"
     clause.clear();
     clause.push_back(Lit(1, true));
     solver.add_clause(clause);
 
-    //adds "-1 2 3 0"
+    //add "-1 2 3 0"
     clause.clear();
     clause.push_back(Lit(0, true));
     clause.push_back(Lit(1, false));
@@ -265,15 +265,30 @@ int main()
 
     lbool ret = solver.solve();
     assert(ret == l_True);
-    assert(solver.get_model()[0] == l_True);
-    assert(solver.get_model()[1] == l_False);
-    assert(solver.get_model()[2] == l_True);
     std::cout
     << "Solution is: "
     << solver.get_model()[0]
     << ", " << solver.get_model()[1]
     << ", " << solver.get_model()[2]
     << std::endl;
+
+    //assumes 3 = FALSE, no solutions left
+    vector<Lit> assumptions;
+    assumptions.push_back(Lit(2, true));
+    ret = solver.solve(&assumptions);
+    assert(ret == l_False);
+
+    //without assumptions we still have a solution
+    ret = solver.solve();
+    assert(ret == l_True);
+
+    //add "-3 0"
+    //No solutions left, UNSATISFIABLE returned
+    clause.clear();
+    clause.push_back(Lit(2, true));
+    solver.add_clause(clause);
+    ret = solver.solve();
+    assert(ret == l_False);
 
     return 0;
 }
