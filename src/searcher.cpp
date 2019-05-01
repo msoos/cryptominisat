@@ -476,14 +476,14 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
             //and set stats on all clauses
             if (!update_bogoprops
                 && cl->red()
-                #if not defined(STATS_NEEDED) && not defined(FINAL_PREDICTOR)
+                #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
                 && cl->stats.which_red_array != 0
                 #endif
             ) {
                 //don't update glues on final predictor
                 //but normal "stats", please do, so it doesn't behave much
                 //different than a normal run (except slower)
-                #if not defined(FINAL_PREDICTOR)
+                #if !defined(FINAL_PREDICTOR)
                 if (conf.update_glues_on_analyze) {
                     update_clause_glue_from_analysis(cl);
                 }
@@ -1611,9 +1611,6 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
-            #endif
-
-            #if defined(STATS_NEEDED)
             propStats.propsLongRed++;
             #endif
 

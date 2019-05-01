@@ -541,7 +541,7 @@ inline void Searcher::bump_cl_act(Clause* cl)
     cl->stats.activity = (float)new_val;
     if (cl->stats.activity > 1e20F ) {
         // Rescale. For STATS_NEEDED we rescale ALL
-        #if not defined(STATS_NEEDED) and not defined (FINAL_PREDICTOR)
+        #if !defined(STATS_NEEDED) && !defined (FINAL_PREDICTOR)
         for(ClOffset offs: longRedCls[2]) {
             cl_alloc.ptr(offs)->stats.activity *= static_cast<float>(1e-20);
         }
