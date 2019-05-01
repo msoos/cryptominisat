@@ -60,6 +60,7 @@ namespace CMSat {
 
         ////////////////////////////
         // Solving and simplifying
+        // You can call solve() multiple times: incremental mode is supported!
         ////////////////////////////
 
         lbool solve(const std::vector<Lit>* assumptions = 0, bool only_indep_solution = false); //solve the problem, optionally with assumptions. If only_indep_solution is set, only the independent variables set with set_independent_vars() are returned in the solution
