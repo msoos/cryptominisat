@@ -234,6 +234,33 @@ class TestSolve(unittest.TestCase):
                 return None
         self.assertRaises(TypeError, self.solver.add_clause, Liar())
 
+    def test_get_conflict(self):
+        self.solver.add_clauses([[-1], [2], [3], [-4]])
+        assume = [-2, 3, 4]
+
+        res, model = self.solver.solve(assumptions=assume)
+        self.assertEqual(res, False)
+
+        confl = self.solver.get_conflict()
+        self.assertEqual(isinstance(confl, list), True)
+        self.assertNotIn(3, confl)
+
+        if 2 in confl:
+            self.assertIn(2, confl)
+        elif -4 in confl:
+            self.assertIn(-4, confl)
+        else:
+            self.assertEqual(False, True, msg="Either -2 or 4 should be conflicting!")
+
+        assume = [2, 4]
+        res, model = self.solver.solve(assumptions=assume)
+        self.assertEqual(res, False)
+
+        confl = self.solver.get_conflict()
+        self.assertEqual(isinstance(confl, list), True)
+        self.assertNotIn(2, confl)
+        self.assertIn(-4, confl)
+
     def test_cnf2(self):
         for cl in clauses2:
             self.solver.add_clause(cl)
