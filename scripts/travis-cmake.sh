@@ -129,17 +129,6 @@ case $CMS_CONFIG in
                    "${SOURCE_DIR}"
     ;;
 
-    COVERAGE)
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
-        eval cmake -DENABLE_TESTING:BOOL=ON \
-                   -DCOVERAGE:BOOL=ON \
-                   -DUSE_GAUSS=ON \
-                   -DSTATS:BOOL=ON \
-                   -DSLOW_DEBUG:BOOL=ON \
-                   -DSTATICCOMPILE:BOOL=ON \
-                   "${SOURCE_DIR}"
-    ;;
-
     STATIC)
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libboost-program-options-dev; fi
         eval cmake -DENABLE_TESTING:BOOL=ON \
@@ -265,13 +254,7 @@ esac
 ##################
 # Run sonarqube
 ###################
-if [[ "$CMS_CONFIG" == "COVERAGE" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    (
-    build-wrapper-linux-x86-64 --out-dir bw-output make -j2 VERBOSE=1
-    )
-else
-    make -j2 VERBOSE=1
-fi
+make -j2 VERBOSE=1
 
 if [ "$CMS_CONFIG" == "NOTEST" ]; then
     sudo make install VERBOSE=1
@@ -422,7 +405,7 @@ fi
 
 
 #do fuzz testing
-if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "COVERAGE" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
+if [ "$CMS_CONFIG" != "ONLY_SIMPLE" ] && [ "$CMS_CONFIG" != "ONLY_SIMPLE_STATIC" ] && [ "$CMS_CONFIG" != "WEB" ] && [ "$CMS_CONFIG" != "NOPYTHON" ] && [ "$CMS_CONFIG" != "INTREE_BUILD" ] && [ "$CMS_CONFIG" != "STATS" ] && [ "$CMS_CONFIG" != "SQLITE" ] ; then
     cd ../scripts/fuzz/
     which ${MYPYTHON}
     ${MYPYTHON} ./fuzz_test.py --novalgrind --small --fuzzlim 30
@@ -454,38 +437,6 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         # sudo pip3 install sklearn
         # sudo pip3 install pandas
         # ./test_predict.sh
-    ;;
-
-    COVERAGE)
-        #we are now in the main dir, ./src dir is here
-        cd ..
-        pwd
-
-        if [[ 0 == 1 ]]; then
-            # capture coverage info
-            echo "Capturing coverage info"
-            lcov --directory build/cmsat5-src/CMakeFiles/libcryptominisat5.dir --capture --output-file coverage.info
-
-            # filter out system and test code
-            echo "Filtering out system and test code"
-            lcov --remove coverage.info 'tests/*' '/usr/*' 'scripts/*' 'utils/*' --output-file coverage.info
-
-            # debug before upload
-            echo "Debugging coverage (if enabled, disabled by default...)"
-            # lcov --list coverage.info
-
-            # only attempt upload if $COVERTOKEN is set
-            echo "Attempting to upload to coveralls"
-            if [ -n "$COVERTOKEN" ]; then
-                coveralls-lcov --repo-token "$COVERTOKEN" coverage.info # uploads to coveralls
-            fi
-        fi
-
-        # use sonarcloud instead
-        (
-        cd $SOURCE_DIR
-        sonar-scanner
-        )
     ;;
 
     *)

@@ -44,7 +44,6 @@ env:
     - CMS_CONFIG=SQLITE
     - CMS_CONFIG=M4RI
     - CMS_CONFIG=GAUSS
-    - CMS_CONFIG=COVERAGE
     - CMS_CONFIG=SLOW_DEBUG
     - CMS_CONFIG=INTREE_BUILD
     - CMS_CONFIG=NOTEST
@@ -55,10 +54,6 @@ matrix:
   exclude:
     - os: osx
       compiler: gcc
-
-    # COVERAGE scan should only run once
-    - compiler: clang
-      env: CMS_CONFIG=COVERAGE
 
     - compiler: clang
       env: CMS_CONFIG=STATS
@@ -81,9 +76,6 @@ matrix:
 
     - os: osx
       env: CMS_CONFIG=NOTEST
-
-    - os: osx
-      env: CMS_CONFIG=COVERAGE
 
     - os: osx
       env: CMS_CONFIG=NOSQLITE
