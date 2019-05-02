@@ -38,6 +38,13 @@ import sysconfig;
 print(sysconfig.get_config_var('LINKFORSHARED'), end = '')"
     OUTPUT_VARIABLE PY_LINKFORSHARED_CONFIG)
 
+if(DEFINED ENV{PYCRYPTOSAT_INSTALL_PATH})
+    set(PY_INSTALL_PREFIX "--prefix=$ENV{PYCRYPTOSAT_INSTALL_PATH}")
+elseif(DEFINED ENV{VIRTUAL_ENV})
+    set(PY_INSTALL_PREFIX "")
+else()
+    set(PY_INSTALL_PREFIX "--prefix=${CMAKE_INSTALL_PREFIX}")
+endif()
 
 string(REPLACE "\n" " " PY_C_CONFIG ${PY_C_CONFIG})
 string(REPLACE "\n" " " PY_LD_CONFIG ${PY_LD_CONFIG})
@@ -46,7 +53,7 @@ string(REPLACE "\n" " " PY_LINKFORSHARED_CONFIG ${PY_LINKFORSHARED_CONFIG})
 message(STATUS "Python CFLAGS:  '${PY_C_CONFIG}'")
 message(STATUS "Python LDFLAGS: '${PY_LD_CONFIG}'")
 message(STATUS "Python LINKFORSHARED flags: '${PY_LINKFORSHARED_CONFIG}'")
-message(STATUS "Python module will be installed to : '${CMAKE_INSTALL_PREFIX}'")
+message(STATUS "Python module installation prefix: ${PY_INSTALL_PREFIX}")
 
 set(PY_LD_CONFIG "${PY_LD_CONFIG} ${PY_LINKFORSHARED_CONFIG}")
 
@@ -82,7 +89,7 @@ add_custom_target(python_interface
                   ALL DEPENDS ${OUTPUT}/timestamp)
 
 install(CODE "execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR}/ --prefix=${CMAKE_INSTALL_PREFIX} --record files.txt
+    COMMAND ${PYTHON_EXECUTABLE} ${SETUP_PY} install --root=\$ENV{DESTDIR}/ ${PY_INSTALL_PREFIX} --record files.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
 )
 
