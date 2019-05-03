@@ -991,6 +991,40 @@ static PyObject* msolve_selected(Solver *self, PyObject *args, PyObject *kwds)
     return solutions;
 }
 
+PyDoc_STRVAR(get_conflict_doc,
+"get_conflict()\n\
+Returns the conflicts in the assumptions when the last call to solve(...)\n\
+was unsatisfiable.\n\
+\n\
+:return: Which assumptions (as passed to solve(...)) are incorrect\n\
+:rtype: <list <int>>"
+);
+
+static PyObject* get_conflict(Solver *self)
+{
+    const std::vector<Lit> conflicts = self->cmsat->get_conflict();
+    PyObject *result = PyList_New(0);
+
+    for (unsigned long i = 0; i < conflicts.size(); i++) {
+        Lit lit = conflicts[i];
+        long value = lit.var() + 1;
+
+        if (lit.sign()) {
+            value *= -1;
+        }
+
+        #ifdef IS_PY3K
+        PyObject *item = PyLong_FromLong(value);
+        #else
+        PyObject *item = PyInt_FromLong(value);
+        #endif
+
+        PyList_Append(result, item);
+    }
+
+    return result;
+}
+
 /*************************** Method definitions *************************/
 
 static PyMethodDef module_methods[] = {
@@ -1006,6 +1040,7 @@ static PyMethodDef Solver_methods[] = {
     //{"nb_clauses", (PyCFunction) nb_clauses, METH_VARARGS | METH_KEYWORDS, "returns number of clauses"},
     {"msolve_selected", (PyCFunction) msolve_selected, METH_VARARGS | METH_KEYWORDS, msolve_selected_doc},
     {"is_satisfiable", (PyCFunction) is_satisfiable, METH_VARARGS | METH_KEYWORDS, is_satisfiable_doc},
+    {"get_conflict", (PyCFunction) get_conflict, METH_VARARGS | METH_KEYWORDS, get_conflict_doc},
 
     {"start_getting_small_clauses", (PyCFunction) start_getting_small_clauses, METH_VARARGS | METH_KEYWORDS, start_getting_small_clauses_doc},
     {"get_next_small_clause", (PyCFunction) get_next_small_clause, METH_VARARGS | METH_KEYWORDS, get_next_small_clause_doc},

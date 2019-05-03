@@ -9,14 +9,13 @@
 CryptoMiniSat SAT solver
 ===========================================
 
-This system provides CryptoMiniSat, an advanced SAT solver. The system has 3
+This system provides CryptoMiniSat, an advanced incremental SAT solver. The system has 3
 interfaces: command-line, C++ library and python. The command-line interface
 takes a [cnf](http://en.wikipedia.org/wiki/Conjunctive_normal_form) as an
 input in the [DIMACS](http://www.satcompetition.org/2009/format-benchmarks2009.html)
-format with the extension of XOR clauses. The C++ interface mimics this except
-that it allows for a more efficient system, with assumptions and multiple
-`solve()` calls. A C compatible wrapper is also provided. The python interface provides
-a high-level yet efficient API to use most of the C++ interface with ease.
+format with the extension of XOR clauses. The C++ and python interface mimics this and also
+allows for incremental use: assumptions and multiple `solve` calls.
+A C compatible wrapper is also provided.
 
 When citing, always reference our [SAT 2009 conference paper](https://link.springer.com/chapter/10.1007%2F978-3-642-02777-2_24), bibtex record is [here](http://dblp.uni-trier.de/rec/bibtex/conf/sat/SoosNC09).
 
@@ -172,7 +171,7 @@ p cnf 3 4
 
 Then there is no solution and the solver returns `s UNSATISFIABLE`.
 
-Python usage
+Incremental Python Usage
 -----
 The python module works with both Python 2 and Python 3. It must be compiled as per (notice "python-dev"):
 
@@ -190,20 +189,30 @@ sudo ldconfig
 
 ```
 
-You can then use it as:
+You can then use it in incremental mode as:
 
 ```
 >>> from pycryptosat import Solver
 >>> s = Solver()
 >>> s.add_clause([1])
 >>> s.add_clause([-2])
->>> s.add_xor_clause([3])
 >>> s.add_clause([-1, 2, 3])
 >>> sat, solution = s.solve()
 >>> print sat
 True
 >>> print solution
 (None, True, False, True)
+>>> sat, solution = s.solve([-3])
+>> print sat
+False
+>>> sat, solution = s.solve()
+>>> print sat
+True
+>>> s.add_clause([-3])
+>>> sat, solution = s.solve()
+>>> print sat
+False
+
 ```
 
 We can also try to assume any variable values for a single solver run:
@@ -223,7 +232,7 @@ True
 For more detailed usage instructions, please see the README.rst under the `python`
 directory.
 
-Library usage
+Incremental Library Usage
 -----
 The library uses a variable numbering scheme that starts from 0. Since 0 cannot
 be negated, the class `Lit` is used as: `Lit(variable_number, is_negated)`. As
@@ -247,16 +256,16 @@ int main()
     //We need 3 variables
     solver.new_vars(3);
 
-    //adds "1 0"
+    //add "1 0"
     clause.push_back(Lit(0, false));
     solver.add_clause(clause);
 
-    //adds "-2 0"
+    //add "-2 0"
     clause.clear();
     clause.push_back(Lit(1, true));
     solver.add_clause(clause);
 
-    //adds "-1 2 3 0"
+    //add "-1 2 3 0"
     clause.clear();
     clause.push_back(Lit(0, true));
     clause.push_back(Lit(1, false));
@@ -265,15 +274,30 @@ int main()
 
     lbool ret = solver.solve();
     assert(ret == l_True);
-    assert(solver.get_model()[0] == l_True);
-    assert(solver.get_model()[1] == l_False);
-    assert(solver.get_model()[2] == l_True);
     std::cout
     << "Solution is: "
     << solver.get_model()[0]
     << ", " << solver.get_model()[1]
     << ", " << solver.get_model()[2]
     << std::endl;
+
+    //assumes 3 = FALSE, no solutions left
+    vector<Lit> assumptions;
+    assumptions.push_back(Lit(2, true));
+    ret = solver.solve(&assumptions);
+    assert(ret == l_False);
+
+    //without assumptions we still have a solution
+    ret = solver.solve();
+    assert(ret == l_True);
+
+    //add "-3 0"
+    //No solutions left, UNSATISFIABLE returned
+    clause.clear();
+    clause.push_back(Lit(2, true));
+    solver.add_clause(clause);
+    ret = solver.solve();
+    assert(ret == l_False);
 
     return 0;
 }
