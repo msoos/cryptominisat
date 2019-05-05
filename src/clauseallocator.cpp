@@ -373,10 +373,15 @@ void ClauseAllocator::consolidate(
     if (solver->conf.verbosity >= 2
         || (lower_verb && solver->conf.verbosity)
     ) {
+        size_t log_2_size = 0;
+        if (size > 0) {
+            //yes, it can be 0 (only binary clauses, for example)
+            std::log2(size);
+        }
         cout << "c [mem] consolidate ";
         cout << " old-sz: "; print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE));
         cout << " new-sz: "; print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE));
-        cout << " new bits offs: " << std::fixed << std::setprecision(2) << std::log2(size);
+        cout << " new bits offs: " << std::fixed << std::setprecision(2) << log_2_size;
         cout << solver->conf.print_times(time_used)
         << endl;
     }
