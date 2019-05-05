@@ -547,7 +547,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
         Clause* cl = solver->cl_alloc.ptr(offs);
         cl->recalc_abst_if_needed();
         assert(cl->abst == calcAbstraction(*cl));
-        #ifdef FINAL_PREDICTOR_TOTAL
+        #ifdef FINAL_PREDICTOR
         bool locked_long = true;
         if (cl->red()) {
             if (!cl->stats.locked_long) {
@@ -559,7 +559,7 @@ OccSimplifier::LinkInData OccSimplifier::link_in_clauses(
         if (alsoOccur
             && cl->size() < max_size
             && link_in_lit_limit > 0
-            #ifdef FINAL_PREDICTOR_TOTAL
+            #ifdef FINAL_PREDICTOR
             && locked_long
             #endif
         ) {

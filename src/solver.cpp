@@ -1412,7 +1412,7 @@ lbool Solver::solve_with_assumptions(
     const bool only_sampling_solution
 ) {
 
-#if defined(FINAL_PREDICTOR_TOTAL) || defined(STATS_NEEDED)
+#if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
     update_glues_on_analyze = false;
     do_decision_based_cl = 0;
     if (conf.verbose) {
