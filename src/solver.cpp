@@ -2075,8 +2075,8 @@ lbool Solver::simplify_problem(const bool startup)
         return ret;
     } else {
         assert(ret == l_True);
-        finish_up_solve(ret);
         rebuildOrderHeap();
+        finish_up_solve(ret);
         return ret;
     }
 }
