@@ -557,8 +557,10 @@ class Tester:
             print("New      solution:", solution2)
             exit(-1)
 
-        print("OK, decisions verified")
+        print("OK, decisions verified -- solution is the same, all good.")
 
+        # Now we will check if the number of solutions is exactly 1
+        # which it should be
         x = Tester()
         x.needDebugLib = False
         consoleOutput, retcode = x.execute(
