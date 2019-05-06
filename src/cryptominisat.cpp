@@ -869,11 +869,13 @@ DLL_PUBLIC uint32_t SATSolver::nVars() const
 
 DLL_PUBLIC uint32_t SATSolver::num_clauses_irred() const
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[0]->num_clauses_irred();
 }
 
 DLL_PUBLIC uint32_t SATSolver::num_clauses_red() const
 {
+    actually_add_clauses_to_threads(data);
     return data->solvers[0]->num_clauses_red();
 }
 
