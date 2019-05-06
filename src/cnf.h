@@ -226,6 +226,24 @@ public:
         return nVarsOuter() - num_bva_vars;
     }
 
+    uint32_t num_clauses_irred() const
+    {
+        uint64_t num = 0;
+        num += binTri.irredBins;
+        num += longIrredCls.size();
+        return num;
+    }
+
+    uint32_t num_clauses_red() const
+    {
+        uint64_t num = 0;
+        num += binTri.redBins;
+        for(auto l: longRedCls) {
+            num += l.size();
+        }
+        return num;
+    }
+
     Lit map_to_with_bva(const Lit lit) const
     {
         return Lit(outer_to_with_bva_map.at(lit.var()), lit.sign());
