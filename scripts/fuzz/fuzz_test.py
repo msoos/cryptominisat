@@ -222,6 +222,7 @@ class Tester:
         self.this_gauss_on = False
         self.num_threads = 1
         self.preproc = False
+        self.novalgrind = options.novalgrind
 
     def list_options_if_supported(self, tocheck):
         ret = []
@@ -447,7 +448,7 @@ class Tester:
 
         # construct command
         command = ""
-        if not options.novalgrind and random.randint(1, options.valgrind_freq) == 1:
+        if not self.novalgrind and random.randint(1, options.valgrind_freq) == 1:
             command += "valgrind -q --leak-check=full  --error-exitcode=9 "
         command += options.solver
         if rnd_opts is None:
@@ -563,6 +564,7 @@ class Tester:
         # which it should be
         x = Tester()
         x.needDebugLib = False
+        x.novalgrind = True
         consoleOutput, retcode = x.execute(
             fname,
             fixed_opts=" --zero-exit-status --input %s --maxsol 10 " % self.decisions_dumpfile,
