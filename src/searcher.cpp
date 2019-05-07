@@ -1757,10 +1757,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             << fin;
             cl = NULL;
         } else {
+            #ifdef STATS_NEEDED
             double myrnd = mtrand.randDblExc();
             if (myrnd <= conf.dump_individual_cldata_ratio) {
                 to_dump = true;
             }
+            #endif
 
             cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
