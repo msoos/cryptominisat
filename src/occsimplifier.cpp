@@ -2529,15 +2529,15 @@ bool OccSimplifier::add_varelim_resolvent(
 
         // 4 = clause itself
         // 8 = watch space
-        varelim_linkin_limit_bytes -= finalLits.size()*(4+8);
-        varelim_linkin_limit_bytes -= sizeof(Clause);
+        varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(4+8);
+        varelim_linkin_limit_bytes -= (int64_t)sizeof(Clause);
     } else if (finalLits.size() == 2) {
         added_bin_cl.push_back(std::make_pair(finalLits[0], finalLits[1]));
         n_occurs[finalLits[0].toInt()]++;
         n_occurs[finalLits[1].toInt()]++;
 
         // 8 = watch space
-        varelim_linkin_limit_bytes -= finalLits.size()*(8);
+        varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(8);
     }
 
     //Touch every var of the new clause, so we re-estimate
