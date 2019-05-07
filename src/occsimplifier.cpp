@@ -2926,7 +2926,12 @@ int OccSimplifier::check_empty_resolvent_action(
                         count += otherSize - num;
                         break;
                 }
-                at <<= 1U;
+
+                //this "if" is only here to avoid undefined shift-up error by
+                //clang sanitizer
+                if (action == ResolvCount::set) {
+                    at = at << 1U;
+                }
                 numCls++;
             }
             continue;
@@ -2965,7 +2970,11 @@ int OccSimplifier::check_empty_resolvent_action(
                             break;
                     }
                 }
-                at <<= 1U;
+                //this "if" is only here to avoid undefined shift-up error by
+                //clang sanitizer
+                if (action == ResolvCount::set) {
+                    at = at << 1U;
+                }
                 numCls++;
 
                 //Count using tmp
