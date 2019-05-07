@@ -466,7 +466,7 @@ bool WalkSAT::init_problem()
     occur_list_alloc = NULL;
     for(uint32_t i2 = 0; i2 < numvars; i2 ++) {
         /* ties in age between unchanged variables broken for lowest-numbered */
-        changed[i2] = -i2-1000;
+        changed[i2] = 0-(int32_t)i2-1000;
     }
 
     numliterals = 0;

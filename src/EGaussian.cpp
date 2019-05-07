@@ -113,7 +113,7 @@ EGaussian::~EGaussian() {
 
 void EGaussian::canceling(const uint32_t sublevel) {
     uint32_t a = 0;
-    for (int i = clauses_toclear.size() - 1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
+    for (int32_t i = (int32_t)clauses_toclear.size() - 1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
         solver->cl_alloc.clauseFree(clauses_toclear[i].first);
         a++;
     }
