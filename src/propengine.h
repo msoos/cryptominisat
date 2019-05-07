@@ -370,7 +370,6 @@ inline PropResult PropEngine::handle_normal_prop_fail(
     //Update stats
     #ifdef STATS_NEEDED
     c.stats.conflicts_made++;
-    c.stats.sum_of_branch_depth_conflict += decisionLevel() + 1;
     if (c.red())
         lastConflictCausedBy = ConflCausedBy::longred;
     else

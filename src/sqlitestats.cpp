@@ -877,7 +877,6 @@ void SQLiteStats::initReduceDBSTMT()
     << ", `clauseID`"
     << ", `dump_no`"
     << ", `conflicts_made`"
-    << ", `sum_of_branch_depth_conflict`"
     << ", `propagations_made`"
     << ", `clause_looked_at`"
     << ", `used_for_uip_creation`"
@@ -935,7 +934,6 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.ID);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.dump_number);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.conflicts_made);
-    sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.sum_of_branch_depth_conflict);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.propagations_made);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.clause_looked_at);
     sqlite3_bind_int64(stmtReduceDB, bindAt++, cl->stats.used_for_uip_creation);

@@ -17,7 +17,6 @@ CREATE TABLE `reduceDB` (
   `clauseID` int(20) NOT NULL,
   `dump_no` int(20) NOT NULL,
   `conflicts_made` bigint(20) NOT NULL,
-  `sum_of_branch_depth_conflict` bigint(20) NOT NULL,
   `propagations_made` bigint(20) NOT NULL,
   `clause_looked_at` bigint(20) NOT NULL,
   `used_for_uip_creation` bigint(20) NOT NULL,

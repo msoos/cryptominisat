@@ -106,11 +106,11 @@ struct AtecedentData
     AvgCalc<uint32_t> glue_long_reds;
     AvgCalc<uint32_t> size_longs;
     AvgCalc<uint32_t> age_long_reds;
-    AvgCalc<double, double> vsids_all_incoming_vars;
-    AvgCalc<double, double> vsids_vars;
-    AvgCalc<double, double> vsids_of_resolving_literals;
+    AvgCalc<float, float> vsids_all_incoming_vars;
+    AvgCalc<float, float> vsids_vars;
+    AvgCalc<float, float> vsids_of_resolving_literals;
     #ifdef STATS_NEEDED
-    AvgCalc<double, double> vsids_of_ants;
+    AvgCalc<float, float> vsids_of_ants;
     #endif
 };
 
@@ -163,7 +163,7 @@ struct ClauseStats
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
     uint16_t dump_number = 0;
-    uint64_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
+    uint32_t introduced_at_conflict = 0; ///<At what conflict number the clause  was introduced
 
     //for average and sum stats
     uint32_t sum_delta_confl_uip1_used = 0; //<Sum of (UIP1 conflict)
@@ -175,13 +175,12 @@ struct ClauseStats
     #endif
 
     #ifdef STATS_NEEDED
-    int64_t ID = 0;
+    int32_t ID = 0;
 
     AtecedentData<uint16_t> antec_data;
-    uint64_t conflicts_made = 0; ///<Number of times caused conflict
-    uint64_t propagations_made = 0; ///<Number of times caused propagation
-    uint64_t sum_of_branch_depth_conflict = 0;
-    uint64_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
+    uint32_t conflicts_made = 0; ///<Number of times caused conflict
+    uint32_t propagations_made = 0; ///<Number of times caused propagation
+    uint32_t clause_looked_at = 0; ///<Number of times the clause has been deferenced during propagation
     #endif
 
     #if defined(STATS_NEEDED) || defined (FINAL_PREDICTOR)
@@ -191,7 +190,6 @@ struct ClauseStats
         used_for_uip_creation = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;
-        sum_of_branch_depth_conflict = 0;
         propagations_made = 0;
         conflicts_made = 0;
         antec_data.clear();
@@ -216,7 +214,6 @@ struct ClauseStats
         #ifdef STATS_NEEDED
         ret.ID = 0; //don't track combined clauses
         ret.conflicts_made = first.conflicts_made + second.conflicts_made;
-        ret.sum_of_branch_depth_conflict = first.sum_of_branch_depth_conflict  + second.sum_of_branch_depth_conflict;
         ret.propagations_made = first.propagations_made + second.propagations_made;
         ret.clause_looked_at = first.clause_looked_at + second.clause_looked_at;
         #endif
