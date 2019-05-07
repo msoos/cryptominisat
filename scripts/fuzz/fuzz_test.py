@@ -492,15 +492,31 @@ class Tester:
         with open(err_fname, "r") as err_file:
             found_something = False
             for line in err_file:
-                print("Error line while executing: %s" % line.strip())
+                line = line.strip()
+                if line == "":
+                    continue
+
+                # let's not care about leaks for the moment
+                if "LeakSanitizer: detected memory leaks" in line:
+                    break
+
                 # don't error out on issues related to UBSAN/ASAN
                 # of clang of other projects
-                if "std::_Ios_Fmtflags" in line or "mzd.h" in line or "lexical_cast.hpp" in line or "MersenneTwister.h" in line:
-                    pass
-                else:
+                noprob = ["std::_Ios_Fmtflags", "mzd.h", "lexical_cast.hpp",
+                      "MersenneTwister.h", "boost::any::holder", "~~~~~",
+                      "SUMMARY", "process memory map", "==========="]
+
+                ok = False
+                for x in noprob:
+                    if x in line:
+                        ok = True
+
+                if not ok:
                     found_something = True
+                    errline = line
 
             if found_something:
+                print("Error line while executing: %s" % errline.strip())
                 exit(-1)
 
         os.unlink(err_fname)
