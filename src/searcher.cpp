@@ -2186,9 +2186,14 @@ void Searcher::rebuildOrderHeap()
 {
     vector<uint32_t> vs;
     for (uint32_t v = 0; v < nVars(); v++) {
-        if (varData[v].removed == Removed::none
-            && value(v) == l_Undef
+        if (varData[v].removed != Removed::none
+            //NOTE: the level==0 check is needed because SLS calls this
+            //when there is a solution already, but we should only skip
+            //level 0 assignements
+            || (value(v) != l_Undef && varData[v].level == 0)
         ) {
+            continue;
+        } else {
             vs.push_back(v);
         }
     }
