@@ -273,12 +273,27 @@ bool EGaussian::full_init(bool& created) {
         }
     }
 
+#ifdef SLOW_DEBUG
+    check_watchlist_sanity();
+#endif
+
     if (solver->conf.verbosity >= 2) {
         cout << "c [gauss] initialised matrix " << matrix_no << endl;
     }
 
     // std::cout << cpuTime() - GaussConstructTime << "    t";
     return true;
+}
+
+void EGaussian::check_watchlist_sanity()
+{
+    for(size_t i = 0; i < solver->nVars(); i++) {
+        for(auto w: solver->gwatches[i]) {
+            if (w.matrix_num == matrix_no) {
+                assert(i < var_to_col.size());
+            }
+        }
+    }
 }
 
 void EGaussian::eliminate(matrixset& m) {
@@ -481,7 +496,11 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint32_t r
 bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p,
                              const uint32_t row_n, GaussQData& gqd
 ) {
-    // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
+    //cout << "dd Matrix No: " << matrix_no << " Watch variable : " << p << "  ,  Wathch row num " << row_n  << " var_to_col.size(): " << var_to_col.size() << endl;
+#ifdef SLOW_DEBUG
+    assert(row_n < matrix.matrix.getSize());
+    assert(p < var_to_col.size());
+#endif
 
     uint32_t nb_var = 0;     // new nobasic variable
     bool orig_basic = false; // check invoked variable is basic or non-basic

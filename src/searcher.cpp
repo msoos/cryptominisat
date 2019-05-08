@@ -2320,6 +2320,16 @@ lbool Searcher::solve(
     if (!solver->init_all_matrixes()) {
         return l_False;
     }
+
+    #ifdef SLOW_DEBUG
+    for(size_t i = 0; i< solver->gmatrixes.size(); i++) {
+        if (solver->gmatrixes[i]) {
+            solver->gmatrixes[i]->check_watchlist_sanity();
+            assert(solver->gmatrixes[i]->get_matrix_no() == i);
+        }
+    }
+    #endif
+
     #endif //USE_GAUSS
 
     assert(solver->check_order_heap_sanity());

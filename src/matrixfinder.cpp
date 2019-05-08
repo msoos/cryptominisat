@@ -340,6 +340,7 @@ uint32_t MatrixFinder::setMatrixes()
                 cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             }
             realMatrixNum++;
+            assert(solver->gmatrixes.size() == realMatrixNum);
         } else {
             if (solver->conf.verbosity >= 3) {
                 cout << "c [matrix] UNused matrix   ";

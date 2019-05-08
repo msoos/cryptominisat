@@ -113,6 +113,8 @@ class EGaussian {
     ~EGaussian();
 
     // functiion
+    uint32_t get_matrix_no() const;
+    void check_watchlist_sanity();
     void canceling(const uint32_t sublevel); //functions used throughout the Solver
     bool full_init(bool& created);  // initial arrary. return true is fine , return false means solver already false;
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
@@ -135,6 +137,11 @@ class EGaussian {
 
     void Debug_funtion(); // used to debug
 };
+
+inline uint32_t EGaussian::get_matrix_no() const
+{
+    return matrix_no;
+}
 
 }
 
