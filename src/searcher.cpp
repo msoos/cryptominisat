@@ -1193,6 +1193,7 @@ lbool Searcher::search()
     blocked_restart = false;
     PropBy confl;
     lbool dec_ret = l_Undef;
+
     while (!params.needToStopSearch
         || !confl.isNULL() //always finish the last conflict
     ) {

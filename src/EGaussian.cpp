@@ -410,6 +410,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 // insert watch list
                 solver->gwatches[tmp_clause[0].var()].push(
                     GaussWatched(row_id, matrix_no)); // insert basic variable
+
                 solver->gwatches[nb_var].push(
                     GaussWatched(row_id, matrix_no)); // insert non-basic variable
                 m.nb_rows.push(nb_var);               // record in this row non_basic variable
@@ -508,6 +509,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
     gqd.e_var = std::numeric_limits<uint32_t>::max();
     gqd.e_row_n = std::numeric_limits<uint32_t>::max();
     gqd.do_eliminate = false;
+
     PackedMatrix::iterator rowIt =
         matrix.matrix.beginMatrix() + row_n; // gaussian watch invoke row
     PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
@@ -787,6 +789,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             matrix.nb_rows[num_row] = p;
                             break;
                         }
+
                         // update no_basic information
                         solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                         matrix.nb_rows[num_row] = p;
