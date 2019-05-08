@@ -317,6 +317,10 @@ void ClauseAllocator::consolidate(
 
     #ifdef USE_GAUSS
     for (EGaussian* gauss : solver->gmatrixes) {
+        if (gauss == NULL) {
+            continue;
+        }
+
         for(auto& gcl: gauss->clauses_toclear) {
             Clause* old = ptr(gcl.first);
             if (old->reloced) {
