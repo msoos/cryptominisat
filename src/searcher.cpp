@@ -2763,6 +2763,7 @@ llbool Searcher::Gauss_elimination()
 
     while (gqhead <  qhead) {
         const Lit p = trail[gqhead++];
+        assert(gwatches.size() > p.var());
         vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
@@ -3323,7 +3324,9 @@ void Searcher::cancelUntil(uint32_t level)
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrixes)
-            gauss->canceling(trail_lim[level]);
+            if (gauss) {
+                gauss->canceling(trail_lim[level]);
+            }
         #endif //USE_GAUSS
 
         //Go through in reverse order, unassign & insert then

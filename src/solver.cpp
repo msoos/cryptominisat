@@ -4035,7 +4035,6 @@ bool Solver::init_all_matrixes()
     assert(ok);
 
     vector<EGaussian*>::iterator i = gmatrixes.begin();
-    vector<EGaussian*>::iterator j = i;
     vector<EGaussian*>::iterator gend = gmatrixes.end();
     for (; i != gend; i++) {
         EGaussian* g = *i;
@@ -4048,17 +4047,11 @@ bool Solver::init_all_matrixes()
         if (!ok) {
             break;
         }
-        if (created) {
-            *j++=*i;
-        } else {
+        if (!created) {
             delete g;
+            *i = NULL;
         }
     }
-    while(i != gend) {
-        *j++ = *i++;
-    }
-    gmatrixes.resize(solver->gmatrixes.size()-(i-j));
-    gqueuedata.resize(gmatrixes.size());
     for(auto& gqd: gqueuedata) {
         gqd.reset_stats();
     }
