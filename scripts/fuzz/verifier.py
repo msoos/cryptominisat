@@ -503,6 +503,7 @@ class solution_parser:
                 print("var %d not set" % abs(numlit))
 
         print("Every other var set to FALSE")
+        print("Orig clause in DIMACS: ", lits)
         raise NameError("Error: clause '%s' not satisfied." % line)
 
     @staticmethod
