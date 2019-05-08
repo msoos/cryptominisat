@@ -61,7 +61,6 @@ static const uint32_t unassigned_col = std::numeric_limits<uint32_t>::max();
 EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _matrix_no,
                      const vector<Xor>& _xorclauses)
     : solver(_solver), config(_config), matrix_no(_matrix_no), xorclauses(_xorclauses) {
-    uint64_t num_unfound = 0;
     vector<Xor> xors;
     for (Xor& x : xorclauses) {
         xors.push_back(x);
@@ -70,39 +69,6 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
         x.sort();
     }
     std::sort(xors.begin(), xors.end());
-
-    //Incorrect ones ones
-    for (Xor& x : xors) {
-        for (uint32_t v : x) {
-            if (v > 165) {
-                num_unfound++;
-                if (solver->conf.verbosity >= 2) {
-                    cout << "c NOT OK: " << x << endl;
-                }
-                break;
-            }
-        }
-    }
-
-    if (solver->conf.verbosity >= 2) {
-        cout << "c num_unfound xor: " << num_unfound << endl;
-    }
-
-    //GOOD ones
-    for (Xor& x : xors) {
-        bool must_print = true;
-        for (uint32_t v : x) {
-            if (v > 165) {
-                must_print = false;
-                break;
-            }
-        }
-        if (must_print) {
-            if (solver->conf.verbosity >= 2) {
-                cout << "c --- OK: " << x << endl;
-            }
-        }
-    }
 }
 
 EGaussian::~EGaussian() {
