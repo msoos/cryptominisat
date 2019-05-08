@@ -113,7 +113,6 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat) {
             if (var_to_col[v] == unassigned_col) {
                 vars_needed.push_back(v);
                 var_to_col[v] = unassigned_col - 1;
-                ;
                 largest_used_var = std::max(largest_used_var, v);
             }
         }
