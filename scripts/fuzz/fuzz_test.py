@@ -540,6 +540,7 @@ class Tester:
 
         x = Tester()
         x.needDebugLib = False
+        x.novalgrind = True
         consoleOutput, retcode = x.execute(
             fname,
             fixed_opts=" --zero-exit-status --input %s " % self.decisions_dumpfile,
