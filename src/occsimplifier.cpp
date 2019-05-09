@@ -2893,7 +2893,7 @@ int OccSimplifier::check_empty_resolvent_action(
     watch_subarray_const watch_list = solver->watches[lit];
     *limit_to_decrease -= (long)watch_list.size()*2;
     for (const Watched& ws: watch_list) {
-        if (numCls >= 15
+        if (numCls >= 16
             && (action == ResolvCount::set
                 || action == ResolvCount::unset)
         ) {
