@@ -2528,7 +2528,7 @@ bool OccSimplifier::add_varelim_resolvent(
         added_long_cl.push_back(offset);
 
         // 4 = clause itself
-        // 8 = watch space
+        // 8 = watch (=occur) space
         varelim_linkin_limit_bytes -= (int64_t)finalLits.size()*(4+8);
         varelim_linkin_limit_bytes -= (int64_t)sizeof(Clause);
     } else if (finalLits.size() == 2) {
