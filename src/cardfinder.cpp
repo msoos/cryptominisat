@@ -337,9 +337,11 @@ void CardFinder::find_cards()
             total_sizes+=lits_in_card.size();
             std::sort(lits_in_card.begin(), lits_in_card.end());
 
-            cout << "c found simple card "
-            << print_card(lits_in_card)
-            << " on lit " << l << endl;
+            if (solver->conf.verbosity) {
+                cout << "c found simple card "
+                << print_card(lits_in_card)
+                << " on lit " << l << endl;
+            }
 
             //fast push-back
             cards.resize(cards.size()+1);
@@ -364,8 +366,10 @@ void CardFinder::find_cards()
 
     //print result
     clean_empty_cards();
-    cout << "c [cardfind] All constraints below:" << endl;
-    print_cards(cards);
+    if (solver->conf.verbosity) {
+        cout << "c [cardfind] All constraints below:" << endl;
+        print_cards(cards);
+    }
 
     //clean indexes
     for(auto& lit: solver->watches.get_smudged_list()) {
@@ -380,9 +384,7 @@ void CardFinder::find_cards()
     }
     solver->watches.clear_smudged();
 
-
-
-    //if (solver->conf.verbosity) {
+    if (solver->conf.verbosity) {
         double avg = 0;
         if (cards.size() > 0) {
             avg = (double)total_sizes/(double)cards.size();
@@ -393,6 +395,5 @@ void CardFinder::find_cards()
         << " avg size: " << avg
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
-    //}
-    exit(0);
+    }
 }

@@ -1917,6 +1917,7 @@ lbool Solver::execute_inprocess_strategy(
         } else if (token == "card-find") {
             if (conf.doFindCard) {
                 card_finder->find_cards();
+                exit(0);
             }
         } else if (token == "cache-clean") {
             if (conf.doCache) {
