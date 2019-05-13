@@ -37,3 +37,6 @@
 [submodule "tests/xor_cnf_tests"]
 	path = tests/xor_cnf_tests
 	url = https://github.com/msoos/xor_testfiles.git
+[submodule "tests/pbsugar"]
+	path = tests/pbsugar
+	url = https://github.com/msoos/pbsugar
