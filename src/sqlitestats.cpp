@@ -861,7 +861,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 24;
+    const size_t numElems = 23;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
