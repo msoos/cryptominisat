@@ -1148,10 +1148,10 @@ bool OccSimplifier::eliminate_vars()
                 || *limit_to_decrease < 0
             ) {
                 cout << "c [occ-bve] stopped varelim due to outage. "
-                << " varelim_num_limit: "; print_value_kilo_mega(varelim_num_limit);
-                cout << " varelim_linkin_limit_bytes: "; print_value_kilo_mega(varelim_linkin_limit_bytes);
-                cout << " *limit_to_decrease: "; print_value_kilo_mega(*limit_to_decrease);
-                cout << endl;
+                << " varelim_num_limit: " << print_value_kilo_mega(varelim_num_limit)
+                << " varelim_linkin_limit_bytes: " << print_value_kilo_mega(varelim_linkin_limit_bytes)
+                << " *limit_to_decrease: " << print_value_kilo_mega(*limit_to_decrease)
+                << endl;
             }
         }
 
@@ -1186,8 +1186,8 @@ end:
 
     if (solver->conf.verbosity) {
         cout
-        << "c  #try to eliminate: "; print_value_kilo_mega(wenThrough); cout << endl
-        << "c  #var-elim        : "; print_value_kilo_mega(vars_elimed); cout << endl
+        << "c  #try to eliminate: "<< print_value_kilo_mega(wenThrough) << endl
+        << "c  #var-elim        : "<< print_value_kilo_mega(vars_elimed) << endl
         << "c  #T-o: " << (time_out ? "Y" : "N") << endl
         << "c  #T-r: " << std::fixed << std::setprecision(2) << (time_remain*100.0) << "%" << endl
         << "c  #T  : " << time_used << endl;

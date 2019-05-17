@@ -437,17 +437,18 @@ void ReduceDB::handle_lev1_final_predictor()
 
     //Stats
     if (solver->conf.verbosity >= 0) {
-        cout << "c [DBCL pred]"
-        << " del: "; print_value_kilo_mega(deleted);
-        cout << " kshort: "; print_value_kilo_mega(kept_short);
-        cout << " klong: "; print_value_kilo_mega(kept_long);
-        cout << " kdump0: "; print_value_kilo_mega(kept_dump_no);
-        cout << " klock: "; print_value_kilo_mega(kept_locked);
-        cout << endl;
+        cout
+        << "c [DBCL pred]"
+        << " del: "    << print_value_kilo_mega(deleted)
+        << " kshort: " << print_value_kilo_mega(kept_short)
+        << " klong: "  << print_value_kilo_mega(kept_long)
+        << " kdump0: " << print_value_kilo_mega(kept_dump_no)
+        << " klock: "  << print_value_kilo_mega(kept_locked)
+        << endl;
 
         cout << "c [DBCL pred]"
-        << " marked-long: "; print_value_kilo_mega(marked_long_keep);
-        cout << " Sclust: " << short_cluster
+        << " marked-long: "<< print_value_kilo_mega(marked_long_keep)
+        << " Sclust: " << short_cluster
         << " Lclust: " << long_cluster
         << " conf-short: " << solver->conf.pred_conf_short
         << " conf-long: " << solver->conf.pred_conf_long
@@ -456,10 +457,10 @@ void ReduceDB::handle_lev1_final_predictor()
         cout << "c [DBCL pred]"
         << " avg dumpno: " << std::fixed << std::setprecision(2)
         << ratio_for_stat(tot_dumpno, solver->longRedCls[1].size())
-        << " dumpno_zero: "; print_value_kilo_mega(dumpno_zero);
-        cout << " dumpno_nonz: "; print_value_kilo_mega(dumpno_nonz);
-        cout << " tot_short_keep:"; print_value_kilo_mega(tot_short_keep);
-        cout << solver->conf.print_times(cpuTime()-myTime)
+        << " dumpno_zero: "   << print_value_kilo_mega(dumpno_zero)
+        << " dumpno_nonz: "   << print_value_kilo_mega(dumpno_nonz)
+        << " tot_short_keep:" << print_value_kilo_mega(tot_short_keep)
+        << solver->conf.print_times(cpuTime()-myTime)
         << endl;
     }
     assert(moved_w0 == 0);

@@ -383,9 +383,9 @@ void ClauseAllocator::consolidate(
             log_2_size = std::log2(size);
         }
         cout << "c [mem] consolidate ";
-        cout << " old-sz: "; print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE));
-        cout << " new-sz: "; print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE));
-        cout << " new bits offs: " << std::fixed << std::setprecision(2) << log_2_size;
+        cout << " old-sz: " << print_value_kilo_mega(old_size*sizeof(BASE_DATA_TYPE))
+        << " new-sz: " << print_value_kilo_mega(size*sizeof(BASE_DATA_TYPE))
+        << " new bits offs: " << std::fixed << std::setprecision(2) << log_2_size;
         cout << solver->conf.print_times(time_used)
         << endl;
     }

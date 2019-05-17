@@ -3614,14 +3614,16 @@ void Searcher::clearEnGaussMatrixes()
         }
 
         if (solver->conf.verbosity >= 2 && gqd.big_gaussnum > 0) {
-            cout << "c [gauss] big_propagate  : "; print_value_kilo_mega(gqd.big_propagate); cout << endl;
-            cout << "c [gauss] big_conflict   : "; print_value_kilo_mega(gqd.big_conflict); cout << endl;
-            cout << "c [gauss] big_gaussnum   : "; print_value_kilo_mega(gqd.big_gaussnum); cout << endl;
+            cout
+            << "c [gauss] big_propagate  : "<< print_value_kilo_mega(gqd.big_propagate) << endl
+            << "c [gauss] big_conflict   : "<< print_value_kilo_mega(gqd.big_conflict)  << endl
+            << "c [gauss] big_gaussnum   : "<< print_value_kilo_mega(gqd.big_gaussnum)  << endl;
 
-            cout << "c [gauss] - sumstats -" << endl;
-            cout << "c [gauss] sum_Enpropagate: "; print_value_kilo_mega(sum_Enpropagate); cout << endl;
-            cout << "c [gauss] sum_Enconflict : "; print_value_kilo_mega(sum_Enconflict); cout << endl;
-            cout << "c [gauss] sum_EnGauss    : "; print_value_kilo_mega(sum_EnGauss); cout << endl;
+            cout
+            << "c [gauss] - sumstats -"      << endl
+            << "c [gauss] sum_Enpropagate: " << print_value_kilo_mega(sum_Enpropagate) << endl
+            << "c [gauss] sum_Enconflict : " << print_value_kilo_mega(sum_Enconflict) << endl
+            << "c [gauss] sum_EnGauss    : " << print_value_kilo_mega(sum_EnGauss) << endl;
         }
         gqd.reset_stats();
     }

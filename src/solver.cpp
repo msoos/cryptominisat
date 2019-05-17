@@ -2848,8 +2848,8 @@ size_t Solver::get_num_free_vars() const
 void Solver::print_clause_stats() const
 {
     //Irredundant
-    print_value_kilo_mega(longIrredCls.size());
-    print_value_kilo_mega(binTri.irredBins);
+    cout << " " << print_value_kilo_mega(longIrredCls.size());
+    cout << " " << print_value_kilo_mega(binTri.irredBins);
     cout
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.irredLits, longIrredCls.size())
@@ -2861,11 +2861,11 @@ void Solver::print_clause_stats() const
     //Redundant
     size_t tot = 0;
     for(auto& lredcls: longRedCls) {
-        print_value_kilo_mega(lredcls.size());
+        cout << " " << print_value_kilo_mega(lredcls.size());
         tot += lredcls.size();
     }
 
-    print_value_kilo_mega(binTri.redBins);
+    cout << " " << print_value_kilo_mega(binTri.redBins);
     cout
     << " " << std::setw(7) << std::fixed << std::setprecision(2)
     << ratio_for_stat(litStats.redLits, tot)
