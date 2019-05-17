@@ -3456,8 +3456,6 @@ void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
             assert(value(var) != l_Undef);
 
             #ifdef STATS_NEEDED
-            assert(solver->conf.decision_based_cl == false);
-
             if (!update_bogoprops) {
                 //WARNING We do not correctly count into the variable the decision clause
                 //WARNING in case it's made.
