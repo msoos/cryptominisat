@@ -1231,7 +1231,7 @@ void Main::manually_parse_some_options()
         handle_drat_option();
     }
 
-    if (conf.verbosity) {
+    if (conf.verbosity >= 3) {
         cout << "c Outputting solution to console" << endl;
     }
 }
