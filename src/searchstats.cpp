@@ -177,11 +177,10 @@ void SearchStats::printCommon(uint64_t props, bool do_print_times) const
         , "% random"
     );
 
-    cout << "c propagations             :"
-    << print_value_kilo_mega(props)
-    << "  "
-    << print_value_kilo_mega(ratio_for_stat(props, cpu_time))
-    << " props/s" << endl;
+    print_stats_line("c propagations"
+                     , print_value_kilo_mega(props, false)
+                     , print_value_kilo_mega(ratio_for_stat(props, cpu_time), false),
+                     "props/s");
 
     print_stats_line("c decisions/conflicts"
         , float_div(decisions, conflStats.numConflicts)
