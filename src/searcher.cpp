@@ -2633,6 +2633,31 @@ Lit Searcher::pickBranchLit()
         assert(solver->varData[next.var()].removed == Removed::none);
     }
     #endif
+
+    //Below is code to check for when VSIDS scores are equal
+    //Useful when trying to replace VSIDS with something better
+    #if 0
+    if (next != lit_Undef && VSIDS) {
+        auto act_chosen = var_act_vsids[next.var()];
+        uint32_t num = 0;
+        for(uint32_t v = 0; v < var_act_vsids.size(); v++) {
+            auto act = var_act_vsids[v];
+            if (act == act_chosen
+                && varData[v].removed == Removed::none
+                && value(v) == l_Undef
+            ) {
+                num ++;
+            }
+        }
+        assert(num >=1);
+        if (num > 1) {
+            cout << "VSBAD";
+        } else {
+            cout << "VSGOOD";
+        }
+        cout << " num: " << num << " act:" << act_chosen << endl;
+    }
+    #endif
     return next;
 }
 
