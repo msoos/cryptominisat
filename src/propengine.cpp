@@ -288,8 +288,15 @@ PropBy PropEngine::propagate_any_order_fast()
             for (uint32_t k = 2; k < c.size(); k++) {
                 //Literal is either unset or satisfied, attach to other watchlist
                 if (likely(value(c[k]) != l_False)) {
+#ifndef ALTERNATE_WATCH
                     c[1] = c[k];
                     c[k] = false_lit;
+#else
+                    //code by Jo Devriendt
+                    std::swap(c[1], c[k]);
+                    std::swap(c[k/2+1], c[k]);
+#endif
+
                     watches[c[1]].push(w);
                     goto nextClause;
                 }
