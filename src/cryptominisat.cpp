@@ -1,5 +1,6 @@
 /******************************************
 Copyright (c) 2016, Mate Soos
+              2019, Andrew V. Jones
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -497,7 +498,10 @@ DLL_PUBLIC void SATSolver::set_max_time(double max_time)
   for (size_t i = 0; i < data->solvers.size(); ++i) {
     Solver& s = *data->solvers[i];
     if (max_time >= 0) {
-      s.conf.maxTime = s.get_stats().cpu_time + max_time;
+      // the main loop in solver.cpp is checks `maxTime`
+      // against `cpuTime`, so we specify `s.conf.maxTime`
+      // as an offset from `cpuTime`.
+      s.conf.maxTime = cpuTime() + max_time;
 
       //don't allow for overflow
       if (s.conf.maxTime < max_time)
