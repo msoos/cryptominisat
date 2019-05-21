@@ -683,9 +683,11 @@ class Tester:
             else:
                 assert self.clid_added == False, "Error: 'rate' DRAT checker cannot handle clids"
                 toexec = "rate {cnf} {dratf} {opt}"
-                opt = "--skip-unit-deletions "
-                if self.clid_added:
-                    opt += "-i "
+                # opt = "--skip-unit-deletions "
+                opt = ""
+
+            if self.clid_added:
+                opt += "-i "
             toexec = toexec.format(cnf=fname, dratf=fname2, opt=opt)
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
