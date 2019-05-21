@@ -111,9 +111,9 @@ def set_up_parser():
                       help="Extra time on top of timeout for processing."
                       " Default: %default")
 
-    parser.add_option("--clid", dest="clid", default=False,
+    parser.add_option("--rate", dest="rate", default=False,
                       action="store_true",
-                      help="Fuzz clid sometimes. Not compatible with 'rate' drat checker")
+                      help="Use the 'rate' DRAT checker")
     return parser
 
 
@@ -346,7 +346,7 @@ class Tester:
             cmd += "--varsperxorcut %d " % random.randint(4, 6)
             cmd += "--tern %d " % random.choice([0, 1])
             cmd += "--xorcache %d " % random.choice([0, 1])
-            if options.clid:
+            if not options.rate:
                 if random.choice([True, True, True, False]):
                     self.clid_added = True
                     cmd += "--clid "
@@ -677,12 +677,15 @@ class Tester:
 
         # it's UNSAT, let's check with DRAT
         if fname2:
-            # toexec = "../../build/tests/drat-trim/drat-trim {cnf} {dratf} {opt}"
-            # opt = ""
-            toexec = "rate {cnf} {dratf} {opt}"
-            opt = "--skip-unit-deletions "
-            if self.clid_added:
-                opt += "-i "
+            if not options.rate:
+                toexec = "../../build/tests/drat-trim/drat-trim {cnf} {dratf} {opt}"
+                opt = ""
+            else:
+                assert self.clid_added == False, "Error: 'rate' DRAT checker cannot handle clids"
+                toexec = "rate {cnf} {dratf} {opt}"
+                opt = "--skip-unit-deletions "
+                if self.clid_added:
+                    opt += "-i "
             toexec = toexec.format(cnf=fname, dratf=fname2, opt=opt)
             print("Checking DRAT...: ", toexec)
             p = subprocess.Popen(toexec.rsplit(),
