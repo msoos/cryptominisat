@@ -245,6 +245,9 @@ struct DratFile: public Drat
 #endif
             for(const Lit l: cl)
                 byteDRUPd(l);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
         } else {
 #ifdef DEBUG_DRAT
             cout << "a ";
