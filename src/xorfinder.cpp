@@ -424,13 +424,9 @@ vector<Xor> XorFinder::remove_xors_without_connecting_vars(const vector<Xor>& th
         }
     }
 
-    vector<Xor>::const_iterator i = this_xors.begin();
-    for(vector<Xor>::const_iterator end = this_xors.end()
-        ; i != end
-        ; i++
-    ) {
-        if (xor_has_interesting_var(*i)) {
-            ret.push_back(*i);
+    for(const Xor& x: this_xors) {
+        if (xor_has_interesting_var(x)) {
+            ret.push_back(x);
         }
     }
 
