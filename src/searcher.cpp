@@ -3436,8 +3436,12 @@ template
 void Searcher::cancelUntil<false, true>(uint32_t level, bool clid_plus_one);
 
 template<bool do_insert_var_order, bool update_bogoprops>
-void Searcher::cancelUntil(uint32_t level, bool clid_plus_one)
-{
+void Searcher::cancelUntil(uint32_t level
+    , bool
+    #ifdef STATS_NEEDED
+    clid_plus_one
+    #endif
+) {
     #ifdef VERBOSE_DEBUG
     cout << "Canceling until level " << level;
     if (level > 0) cout << " sublevel: " << trail_lim[level];
