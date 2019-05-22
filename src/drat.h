@@ -229,9 +229,21 @@ struct DratFile: public Drat
     Drat& operator<<(const Lit lit) override
     {
         if (must_delete_next) {
+#ifdef DEBUG_DRAT
+            cout << "dLIT ";
+#endif
             byteDRUPd(lit);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
         } else {
+#ifdef DEBUG_DRAT
+            cout << "aLIT ";
+#endif
             byteDRUPa(lit);
+#ifdef DEBUG_DRAT
+            cout << endl;
+#endif
         }
 
         return *this;
