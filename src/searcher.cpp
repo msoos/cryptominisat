@@ -1742,7 +1742,10 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     old_decision_level
     #endif
 ) {
+    #ifdef STATS_NEEDED
     bool to_dump = false;
+    #endif
+
     if (learnt_clause.size() <= 2 ||
         cl == NULL ||
         cl->gauss_temp_cl() ||
