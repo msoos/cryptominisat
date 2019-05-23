@@ -598,11 +598,6 @@ DLL_PUBLIC void SATSolver::set_greedy_undef()
     assert(false && "ERROR: Unfortunately, greedy undef is broken, please don't use it");
     std::cerr << "ERROR: Unfortunately, greedy undef is broken, please don't use it" << endl;
     exit(-1);
-
-    for (size_t i = 0; i < data->solvers.size(); ++i) {
-        Solver& s = *data->solvers[i];
-        s.conf.greedy_undef = true;
-    }
 }
 
 DLL_PUBLIC void SATSolver::set_sampling_vars(vector<uint32_t>* sampl_vars)

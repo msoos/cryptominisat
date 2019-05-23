@@ -385,8 +385,7 @@ class DLL_PUBLIC SolverConf
         GaussConf gaussconf;
         bool dont_elim_xor_vars;
 
-        //Greedy undef
-        int      greedy_undef;
+        //Sampling
         std::vector<uint32_t>* sampling_vars;
 
         //Timeouts

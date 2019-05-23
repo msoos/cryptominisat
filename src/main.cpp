@@ -322,8 +322,6 @@ void Main::add_supported_options()
         , "Stop solving after this much time (s)")
     ("maxconfl", po::value(&conf.max_confl)->default_value(conf.max_confl, "MAX")
         , "Stop solving after this many conflicts")
-//     ("undef", po::value(&conf.greedy_undef)->default_value(conf.greedy_undef)
-//         , "Set as many variables in solution to UNDEF as possible if solution is SAT")
     ("mult,m", po::value(&conf.orig_global_timeout_multiplier)->default_value(conf.orig_global_timeout_multiplier)
         , "Time multiplier for all simplification cutoffs")
     ("memoutmult", po::value(&conf.var_and_mem_out_mult)->default_value(conf.var_and_mem_out_mult)
@@ -336,8 +334,6 @@ void Main::add_supported_options()
     ("clid", po::bool_switch(&clause_ID_needed)
         , "Add clause IDs to DRAT output")
     #endif
-    //("greedyunbound", po::bool_switch(&conf.greedyUnbound)
-    //    , "Greedily unbound variables that are not needed for SAT")
     ;
 
     #ifdef FINAL_PREDICTOR

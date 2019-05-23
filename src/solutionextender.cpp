@@ -138,10 +138,6 @@ bool SolutionExtender::addClause(const vector<Lit>& lits, const uint32_t blocked
     assert(contains_var(lits, blockedOn));
     #endif
 
-    //Note: we need to do this even if solver->conf.greedy_undef is FALSE
-    //because the solution we are given (when used as a preprocessor)
-    //may not be full
-
     //Try to extend through setting variables that have been blocked but
     //were not required to be set until now
     /*for(Lit l: lits) {

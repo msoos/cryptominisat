@@ -368,28 +368,6 @@ class Solver : public Searcher
         void test_renumbering() const;
         bool clean_xor_clauses_from_duplicate_and_set_vars();
 
-        //Value Unsetter
-        struct FindUndef {
-            //If set to TRUE, then that clause already has only 1 lit that is true,
-            //so it can be skipped during updateFixNeed()
-            vector<char> dontLookAtClause;
-
-            vector<uint32_t> satisfies;
-            vector<unsigned char> can_be_unset;
-            vector<uint32_t>* trail_lim_vars;
-            int64_t can_be_unsetSum;
-            bool must_fix_at_least_one_var;
-            uint32_t num_fixed;
-            bool verbose = false;
-        };
-        FindUndef* undef = NULL;
-        bool undef_must_fix_var();
-        void undef_fill_potentials();
-        void undef_unset_potentials();
-        template<class C> bool undef_clause_surely_satisfied(const C c);
-
-
-
         /////////////////////////////
         // SAT solution verification
         bool verify_model() const;

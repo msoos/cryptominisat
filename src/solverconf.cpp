@@ -300,8 +300,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , shorten_with_gates_time_limitM(200)
         , remove_cl_with_gates_time_limitM(100)
 
-        //Greedy Undef
-        , greedy_undef(false)
+        //Sampling
         , sampling_vars(NULL)
 
         //Timeouts

@@ -2505,38 +2505,7 @@ void Searcher::finish_up_solve(const lbool status)
             }
         }
 
-        if (conf.greedy_undef) {
-            assert(false && "Greedy undef is broken");
-            vector<uint32_t> trail_lim_vars;
-            for(size_t i = 0; i < decisionLevel(); i++) {
-                uint32_t at = trail_lim[i];
-
-                //Yes, it can be equal -- when dummy decision levels are added
-                //and a solution is found
-                if (at < trail.size()) {
-                    uint32_t v = trail[at].var();
-                    trail_lim_vars.push_back(v);
-                    //cout << "var at " << i << " of trail_lim : "<< v+1 << endl;
-                }
-            }
-            cancelUntil(0);
-            const uint32_t unset = solver->undefine(trail_lim_vars);
-
-            if (conf.verbosity) {
-                cout << "c [undef] Freed up " << unset << " var(s)"
-                << conf.print_times(cpuTime()-myTime)
-                << endl;
-            }
-            if (sqlStats) {
-                sqlStats->time_passed_min(
-                    solver
-                    , "greedy undefine"
-                    , cpuTime()-myTime
-                );
-            }
-        } else {
-            cancelUntil(0);
-        }
+        cancelUntil(0);
         print_solution_varreplace_status();
     } else if (status == l_False) {
         if (conflict.size() == 0) {
