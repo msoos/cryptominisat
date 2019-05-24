@@ -757,7 +757,7 @@ bool Prober::propagate(Lit& failed)
         PropBy confl = solver->propagate<true>();
         if (!confl.isNULL()) {
             uint32_t  glue;
-            uint32_t  old_glue; //Arijit : Not sure whether this is true either
+            uint32_t  old_glue; 
             uint32_t  backtrack_level;
             solver->analyze_conflict<true>(
                 confl
