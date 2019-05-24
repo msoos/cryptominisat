@@ -842,6 +842,7 @@ Clause* Searcher::analyze_conflict(
     const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
+    , uint32_t& old_glue
 ) {
     //Set up environment
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
@@ -859,6 +860,7 @@ Clause* Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
+    old_glue = calc_glue(learnt_clause);
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
 
@@ -1038,10 +1040,12 @@ bool Searcher::litRedundant(const Lit p, uint32_t abstract_levels)
 template Clause* Searcher::analyze_conflict<true>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
+    , uint32_t& old_glue
 );
 template Clause* Searcher::analyze_conflict<false>(const PropBy confl
     , uint32_t& out_btlevel
     , uint32_t& glue
+    , uint32_t& old_glue
 );
 
 bool Searcher::subset(const vector<Lit>& A, const Clause& B)
@@ -1633,6 +1637,7 @@ void Searcher::print_learnt_clause() const
 #ifdef STATS_NEEDED
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
+    , const uint32_t old_glue
     , const uint32_t old_decision_level
     , const uint64_t clid
 ) {
@@ -1670,6 +1675,7 @@ void Searcher::dump_sql_clause_data(
         solver
         , clid
         , glue
+        , old_glue
         , decisionLevel()
         , learnt_clause.size()
         , antec_data
@@ -1737,6 +1743,7 @@ void Searcher::set_clause_data(
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
+    , const uint32_t old_glue
     , const uint32_t
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_decision_level
@@ -1848,6 +1855,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         dump_this_many_cldata_in_stream--;
         dump_sql_clause_data(
             glue
+            , old_glue
             , old_decision_level
             , cl->stats.ID
         );
@@ -1892,10 +1900,12 @@ bool Searcher::handle_conflict(const PropBy confl)
 
     uint32_t backtrack_level;
     uint32_t glue;
+    uint32_t old_glue;
     Clause* subsumed_cl = analyze_conflict<update_bogoprops>(
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
+        , old_glue             //return glue before minimization here
     );
     print_learnt_clause();
 
@@ -1930,7 +1940,7 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_decision_level);
+    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_glue, old_decision_level);
     assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
 
@@ -1949,7 +1959,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
         decision_based_cl++;
-        cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), decisionLevel());
+        cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), learnt_clause.size(), decisionLevel());  //Arijit : This is not sure
         attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 

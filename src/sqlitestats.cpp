@@ -982,7 +982,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 66;
+    const size_t numElems = 67;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -995,6 +995,7 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `clauseID`,"
     << ""
     << " `glue`,"
+    << " `old_glue`,"
     << " `size`,"
     << " `conflicts_this_restart`,"
     << " `num_overlap_literals`,"
@@ -1089,6 +1090,7 @@ void SQLiteStats::dump_clause_stats(
     const Solver* solver
     , uint64_t clid
     , uint32_t glue
+    , uint32_t old_glue
     , uint32_t backtrack_level
     , uint32_t size
     , AtecedentData<uint16_t> antec_data
@@ -1117,6 +1119,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, clid);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, glue);
+    sqlite3_bind_int(stmt_clause_stats, bindAt++, old_glue);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, size);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, conflicts_this_restart);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, num_overlap_literals);

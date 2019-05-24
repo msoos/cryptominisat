@@ -102,6 +102,7 @@ public:
         const Solver* solver
         , uint64_t clid
         , uint32_t glue
+        , uint32_t old_glue
         , uint32_t backtrack_level
         , uint32_t size
         , AtecedentData<uint16_t> resoltypes
