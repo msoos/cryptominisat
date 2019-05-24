@@ -285,6 +285,7 @@ class Searcher : public HyperEngine
         Clause* handle_last_confl_otf_subsumption(
             Clause* cl
             , const uint32_t glue
+            , const uint32_t old_glue
             , const uint32_t old_decision_level
         );
         template<bool update_bogoprops>
@@ -320,6 +321,7 @@ class Searcher : public HyperEngine
             PropBy confl //The conflict that we are investigating
             , uint32_t& out_btlevel      //backtrack level
             , uint32_t &glue         //glue of the learnt clause
+            , uint32_t &old_glue         //glue of the unminimised learnt clause
         );
         void update_clause_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
@@ -449,6 +451,7 @@ class Searcher : public HyperEngine
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(
             const uint32_t glue
+            , const uint32_t old_glue
             , const uint32_t old_decision_level
             , const uint64_t clid
         );
