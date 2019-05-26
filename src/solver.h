@@ -258,6 +258,9 @@ class Solver : public Searcher
         bool init_all_matrixes();
         #endif
 
+        //BreakID
+        void set_assumptions(vector<Lit> extra_assumps);
+
 
         //if set to TRUE, a clause has been removed during add_clause_int
         //that contained "lit, ~lit". So "lit" must be set to a value
@@ -302,7 +305,6 @@ class Solver : public Searcher
         void add_xor_clause_inter_cleaned_cut(const vector<Lit>& lits, bool attach, bool addDrat);
         unsigned num_bits_set(const size_t x, const unsigned max_size) const;
         void check_too_large_variable_number(const vector<Lit>& lits) const;
-        void set_assumptions();
 
         lbool simplify_problem_outside();
         void move_to_outside_assumps(const vector<Lit>* assumps);

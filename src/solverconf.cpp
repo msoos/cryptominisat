@@ -143,6 +143,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doTernary(false)
         , ternary_res_time_limitM(100)
 
+        //BreakID
+        , doBreakid(true)
+
         //Bounded variable addition
         , do_bva(true)
         #ifdef USE_GAUSS
@@ -212,6 +215,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor, "
+            "breakid, "
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
@@ -228,6 +232,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"//occ-gates,"
             "occ-ternary-res, occ-xor,"
+            "breakid, "
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
@@ -241,6 +246,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"
             "occ-ternary-res, occ-xor,"
+            "breakid, "
             //"occ-gates,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"

@@ -68,6 +68,10 @@ THE SOFTWARE.
 #include "cardfinder.h"
 #include "sls.h"
 
+#ifdef USE_BREAKID
+#include "cms_breakid.h"
+#endif
+
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -1087,7 +1091,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 }
 
 //Uneliminates, readds components, fills assumptionsSet, all the good stuff
-void Solver::set_assumptions()
+void Solver::set_assumptions(vector<Lit> extra_assumps)
 {
     assert(okay());
 
@@ -1098,15 +1102,22 @@ void Solver::set_assumptions()
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
+
+    inter_assumptions.insert(inter_assumptions.end(), extra_assumps.begin(), extra_assumps.end());
     assumptionsSet.resize(nVars(), l_Undef);
-    if (outside_assumptions.empty()) {
+    if (inter_assumptions.empty()) {
         return;
     }
 
-    assert(inter_assumptions.size() == outside_assumptions.size());
+    assert(inter_assumptions.size() ==
+        extra_assumps.size() + outside_assumptions.size());
+
     for(size_t i = 0; i < inter_assumptions.size(); i++) {
+        Lit outside_lit = lit_Undef;
         const Lit inter_lit = inter_assumptions[i];
-        const Lit outside_lit = outside_assumptions[i];
+        if (i < outside_assumptions.size()) {
+            outside_lit = outside_assumptions[i];
+        }
         assumptions.push_back(AssumptionPair(inter_lit, outside_lit));
     }
 
@@ -1388,7 +1399,7 @@ lbool Solver::simplify_problem_outside()
     conflict.clear();
     check_config_parameters();
     datasync->rebuild_bva_map();
-    set_assumptions();
+    set_assumptions(vector<Lit>());
 
     lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
@@ -1465,7 +1476,7 @@ lbool Solver::solve_with_assumptions(
 
     //Clean up as a startup
     datasync->rebuild_bva_map();
-    set_assumptions();
+    set_assumptions(vector<Lit>());
 
     if (conf.preprocess == 2) {
         status = load_state(conf.saved_state_file);
@@ -1996,6 +2007,21 @@ lbool Solver::execute_inprocess_strategy(
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
+            }
+        } else if (token == "breakid") {
+            if (conf.doBreakid
+                && solveStats.num_simplify % 2 == 1
+            ) {
+#ifdef USE_BREAKID
+                BreakID breakid(this);
+                bool ret = breakid.doit();
+                cout << "c [breakid] return val: " << ret << endl;
+                //exit(0);
+#else
+                if (conf.verbosity) {
+                    cout << "c [breakid] BreakID not compiled in, skipping" << endl;
+                }
+#endif
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore
