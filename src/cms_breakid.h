@@ -24,12 +24,13 @@ THE SOFTWARE.
 #define CMS_BREAKID_H
 
 #include <vector>
-
-#include "breakid/breakid.hpp"
 #include "cryptominisat5/solvertypesmini.h"
 
 using std::vector;
 
+namespace BID {
+class BreakID;
+}
 
 namespace CMSat {
 
@@ -42,6 +43,8 @@ public:
     void finished_solving();
 
 private:
+    void break_symms();
+
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
     template<class T>
     add_cl_ret add_this_clause(const T& cl);
@@ -50,7 +53,7 @@ private:
     bool already_called = false;
     uint32_t symm_var = var_Undef;
     Solver* solver;
-    BID::BreakID breakid;
+    BID::BreakID* breakid = NULL;
 };
 
 }

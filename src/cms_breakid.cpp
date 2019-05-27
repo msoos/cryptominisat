@@ -23,12 +23,14 @@ THE SOFTWARE.
 #include "cms_breakid.h"
 #include "solver.h"
 #include "clausecleaner.h"
+#include "breakid/breakid.hpp"
 
 using namespace CMSat;
 
 BreakID::BreakID(Solver* _solver):
     solver(_solver)
-{}
+{
+}
 
 template<class T>
 BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
@@ -68,7 +70,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
         return add_cl_ret::unsat;
     }
 
-    breakid.add_clause((BID::BLit*)brkid_lits.data(), brkid_lits.size());
+    breakid->add_clause((BID::BLit*)brkid_lits.data(), brkid_lits.size());
     brkid_lits.clear();
 
     return add_cl_ret::added_cl;
@@ -77,15 +79,20 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
 bool BreakID::doit()
 {
     solver->clauseCleaner->remove_and_clean_all();
+    double myTime = cpuTime();
 
-    breakid.set_verbosity(0);
-    // breakid.set_symBreakingFormLength(2);
+    assert(breakid == NULL);
+    breakid = new BID::BreakID;
+
+    breakid->set_verbosity(0);
+    // breakid->set_symBreakingFormLength(2);
     uint32_t ncls = solver->binTri.irredBins;
     ncls += solver->longIrredCls.size();
-    breakid.start_dynamic_cnf(solver->nVars(), ncls);
+    breakid->start_dynamic_cnf(solver->nVars(), ncls);
 
-    if (solver->check_assumptions_contradict_foced_assignement())
-    {
+    if (solver->check_assumptions_contradict_foced_assignement()) {
+        delete breakid;
+        breakid = NULL;
         return false;
     }
 
@@ -116,37 +123,53 @@ bool BreakID::doit()
             return false;
         }
     }
-    breakid.end_dynamic_cnf();
+    breakid->end_dynamic_cnf();
 
     if (solver->conf.verbosity > 3) {
-        breakid.print_graph();
+        breakid->print_graph();
     }
 
     if (solver->conf.verbosity) {
-        cout << "c [breakid] Num generators: " << breakid.get_num_generators() << endl;
-        //breakid.print_generators();
+        cout << "c [breakid] Num generators: " << breakid->get_num_generators() << endl;
+        //breakid->print_generators();
     }
 
     if (solver->conf.verbosity > 1) {
         cout << "c [breakid] Detecting subgroups..." << endl;
     }
-    breakid.detect_subgroups();
+    breakid->detect_subgroups();
 
     if (solver->conf.verbosity > 2) {
-        breakid.print_subgroups();
+        breakid->print_subgroups();
     }
 
-    breakid.clean_theory();
-    breakid.break_symm();
+    breakid->clean_theory();
+    breakid->break_symm();
 
-    if (breakid.get_num_break_cls() == 0) {
-        return false;
+    if (breakid->get_num_break_cls() != 0) {
+        break_symms();
+    }
+    delete breakid;
+    breakid = NULL;
+
+    double time_used = cpuTime() - myTime;
+    bool time_out = false;
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] finished "
+        << solver->conf.print_times(time_used, time_out)
+        << endl;
     }
 
-    cout << "c [breakid] Num breaking clasues: "<< breakid.get_num_break_cls() << endl;
-    cout << "c [breakid] Num aux vars: "<< breakid.get_num_aux_vars() << endl;
-    uint32_t num_vars_before = solver->nVars();
-    for(uint32_t i = 0; i < breakid.get_num_aux_vars(); i++) {
+    return true;
+}
+
+void BreakID::break_symms()
+{
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] Num breaking clasues: "<< breakid->get_num_break_cls() << endl;
+        cout << "c [breakid] Num aux vars: "<< breakid->get_num_aux_vars() << endl;
+    }
+    for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) {
         solver->new_var(true);
     }
     if (symm_var == var_Undef) {
@@ -159,7 +182,7 @@ bool BreakID::doit()
         assert(solver->varData[symm_var].removed == Removed::none);
     }
 
-    auto brk = breakid.get_brk_cls();
+    auto brk = breakid->get_brk_cls();
     for (auto cl: brk) {
         vector<Lit>* cl2 = (vector<Lit>*)&cl;
         cl2->push_back(Lit(symm_var, false));
@@ -178,9 +201,6 @@ bool BreakID::doit()
     }
 
     assert(solver->varData[symm_var].removed == Removed::none);
-    //cout << "c [breakid] exited with " << (solver->nVars()-num_vars_before) << " extra var(s)" << endl;
-
-    return true;
 }
 
 void BreakID::finished_solving()

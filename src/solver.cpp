@@ -2037,10 +2037,6 @@ lbool Solver::execute_inprocess_strategy(
 #ifdef USE_BREAKID
                 bool ret = breakid->doit();
                 cout << "c [breakid] return val: " << ret << endl;
-
-                ret = breakid->doit();
-                cout << "c [breakid] return val: " << ret << endl;
-                //exit(0);
 #else
                 if (conf.verbosity) {
                     cout << "c [breakid] BreakID not compiled in, skipping" << endl;
