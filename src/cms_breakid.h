@@ -39,6 +39,7 @@ class BreakID {
 public:
     BreakID(Solver* solver);
     bool doit();
+    void finished_solving();
 
 private:
     enum class add_cl_ret {added_cl, skipped_cl, unsat};

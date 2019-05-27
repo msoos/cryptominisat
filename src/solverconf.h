@@ -270,6 +270,7 @@ class DLL_PUBLIC SolverConf
 
         //BreakID
         bool doBreakid;
+        uint32_t breakid_every_n;
 
         //BVA
         int      do_bva;

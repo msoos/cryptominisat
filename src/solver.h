@@ -68,6 +68,7 @@ class DataSync;
 class SharedData;
 class ReduceDB;
 class InTree;
+class BreakID;
 
 struct SolveStats
 {
@@ -158,6 +159,7 @@ class Solver : public Searcher
         ReduceDB*              reduceDB = NULL;
         Prober*                prober = NULL;
         InTree*                intree = NULL;
+        BreakID*               breakid = NULL;
         OccSimplifier*         occsimplifier = NULL;
         DistillerLong*         distill_long_cls = NULL;
         DistillerLongWithImpl* dist_long_with_impl = NULL;

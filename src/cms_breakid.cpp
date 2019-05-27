@@ -139,14 +139,24 @@ bool BreakID::doit()
     breakid.clean_theory();
     breakid.break_symm();
 
+    if (breakid.get_num_break_cls() == 0) {
+        return false;
+    }
+
     cout << "c [breakid] Num breaking clasues: "<< breakid.get_num_break_cls() << endl;
     cout << "c [breakid] Num aux vars: "<< breakid.get_num_aux_vars() << endl;
+    uint32_t num_vars_before = solver->nVars();
     for(uint32_t i = 0; i < breakid.get_num_aux_vars(); i++) {
         solver->new_var(true);
     }
-    if (!already_called) {
+    if (symm_var == var_Undef) {
         solver->new_var(true);
         symm_var = solver->nVars()-1;
+
+        vector<Lit> ass;
+        ass.push_back(Lit(symm_var, true));
+        solver->set_assumptions(ass);
+        assert(solver->varData[symm_var].removed == Removed::none);
     }
 
     auto brk = breakid.get_brk_cls();
@@ -167,13 +177,13 @@ bool BreakID::doit()
         }
     }
 
-    if (!already_called) {
-        vector<Lit> ass;
-        ass.push_back(Lit(symm_var, true));
-        solver->set_assumptions(ass);
-        assert(solver->varData[symm_var].removed == Removed::none);
-    }
     assert(solver->varData[symm_var].removed == Removed::none);
+    //cout << "c [breakid] exited with " << (solver->nVars()-num_vars_before) << " extra var(s)" << endl;
 
     return true;
+}
+
+void BreakID::finished_solving()
+{
+    symm_var = var_Undef;
 }

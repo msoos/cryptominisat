@@ -439,6 +439,16 @@ void Main::add_supported_options()
         , "MainSolver at specific 'solve()' points in CNF file")
     ;
 
+#ifdef USE_BREAKID
+    po::options_description breakid_options("Breakid options");
+    breakid_options.add_options()
+    ("breakid", po::value(&conf.doBreakid)->default_value(conf.doBreakid)
+        , "Run BreakID to break symmetries.")
+    ("breakideveryn", po::value(&conf.breakid_every_n)->default_value(conf.breakid_every_n)
+        , "Run BreakID every N simplification iterations")
+    ;
+#endif
+
     po::options_description sls_options("Stochastic Local Search options");
     sls_options.add_options()
     ("sls", po::value(&conf.doSLS)->default_value(conf.doSLS)
@@ -814,6 +824,9 @@ void Main::add_supported_options()
     .add(iterativeOptions)
     .add(probeOptions)
     .add(sls_options)
+#ifdef USE_BREAKID
+    .add(breakid_options)
+#endif
     .add(stampOptions)
     .add(simp_schedules)
     .add(occ_mem_limits)

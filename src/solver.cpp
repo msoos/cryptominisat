@@ -95,6 +95,13 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
         prober = new Prober(this);
     }
     intree = new InTree(this);
+
+#ifdef USE_BREAKID
+    if (conf.doBreakid) {
+        breakid = new BreakID(this);
+    }
+#endif
+
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
     }
@@ -139,6 +146,7 @@ Solver::~Solver()
     delete datasync;
     delete reduceDB;
     delete card_finder;
+    delete breakid;
 }
 
 void Solver::set_sqlite(string
@@ -1128,6 +1136,11 @@ void Solver::check_model_for_assumptions() const
 {
     for(const AssumptionPair lit_pair: assumptions) {
         const Lit outside_lit = lit_pair.lit_orig_outside;
+        if (outside_lit.var() == var_Undef) {
+            //This is an assumption that is a BVA variable
+            //Currently, this can only be BreakID
+            continue;
+        }
         assert(outside_lit.var() < model.size());
 
         if (model_value(outside_lit) == l_Undef) {
@@ -1403,10 +1416,13 @@ lbool Solver::simplify_problem_outside()
 
     lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
-        bool backup = conf.doSLS;
+        bool backup_sls = conf.doSLS;
+        bool backup_breakid = conf.doBreakid;
         conf.doSLS = false;
+        conf.doBreakid = false;
         status = simplify_problem(false);
-        conf.doSLS = backup;
+        conf.doSLS = backup_sls;
+        conf.doBreakid = backup_breakid;
     }
     unfill_assumptions_set_from(assumptions);
     assumptions.clear();
@@ -1831,6 +1847,12 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         update_assump_conflict_to_orig_outside(conflict);
     }
 
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->finished_solving();
+    }
+    #endif
+
     //Too slow when running lots of small queries
     #ifdef DEBUG_IMPLICIT_STATS
     check_implicit_stats();
@@ -2010,11 +2032,13 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
-                && solveStats.num_simplify % 2 == 1
+                && solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)
             ) {
 #ifdef USE_BREAKID
-                BreakID breakid(this);
-                bool ret = breakid.doit();
+                bool ret = breakid->doit();
+                cout << "c [breakid] return val: " << ret << endl;
+
+                ret = breakid->doit();
                 cout << "c [breakid] return val: " << ret << endl;
                 //exit(0);
 #else

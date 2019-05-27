@@ -145,6 +145,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //BreakID
         , doBreakid(true)
+        , breakid_every_n(2)
 
         //Bounded variable addition
         , do_bva(true)
