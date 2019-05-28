@@ -38,7 +38,6 @@ XorFinder::XorFinder(OccSimplifier* _occsimplifier, Solver* _solver) :
     occsimplifier(_occsimplifier)
     , solver(_solver)
     , toClear(_solver->toClear)
-    , seen(_solver->seen)
 {
 }
 
@@ -566,7 +565,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 }
             } else {
                 uint32_t clash_num;
-                xor_two(this_xors[idxes[0]], this_xors[idxes[1]], clash_num);
+                vector<uint32_t> vars = xor_two(this_xors[idxes[0]], this_xors[idxes[1]], clash_num);
                 if (clash_num > 1) {
                     //add back to ws
                     ws.push(Watched(idxes[0]));
@@ -576,7 +575,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 occcnt[v] -= 2;
                 assert(occcnt[v] == 0);
 
-                Xor x_new(tmp_vars_xor_two, this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
+                Xor x_new(vars, this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {
@@ -763,38 +762,48 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     return solver->okay();
 }
 
-void XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
+vector<uint32_t> XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
 {
-    tmp_vars_xor_two.clear();
-
     clash_num = 0;
-    for(uint32_t v: x1) {
-        assert(seen[v] == 0);
-        seen[v] = 1;
-    }
+    x1.sort();
+    x2.sort();
+    vector<uint32_t> ret;
+    size_t x1_at = 0;
+    size_t x2_at = 0;
+    while(x1_at < x1.size() || x2_at < x2.size()) {
+        if (x1_at == x1.size()) {
+            ret.push_back(x2[x2_at]);
+            x2_at++;
+            continue;
+        }
 
-    for(uint32_t v: x2) {
-        assert(seen[v] != 2);
-        if (seen[v] == 1) {
-            tmp_vars_xor_two.push_back(v);
-        } else {
+        if (x2_at == x2.size()) {
+            ret.push_back(x1[x1_at]);
+            x1_at++;
+            continue;
+        }
+
+        const uint32_t a = x1[x1_at];
+        const uint32_t b = x2[x2_at];
+        if (a == b) {
             clash_num++;
+            x1_at++;
+            x2_at++;
+            continue;
         }
-        seen[v] = 2;
-    }
-    for(uint32_t v: x1) {
-        if (seen[v] != 2) {
-            tmp_vars_xor_two.push_back(v);
+
+        if (a < b) {
+            ret.push_back(a);
+            x1_at++;
+            continue;
+        } else {
+            ret.push_back(b);
+            x2_at++;
+            continue;
         }
-        seen[v] = 0;
     }
 
-    for(uint32_t v: x2) {
-        seen[v] = 0;
-    }
-    for(uint32_t v: x1) {
-        assert(seen[v] == 0);
-    }
+    return ret;
 }
 
 bool XorFinder::xor_has_interesting_var(const Xor& x)
