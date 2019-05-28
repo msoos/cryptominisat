@@ -4033,12 +4033,7 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 bool Solver::init_all_matrixes()
 {
     assert(ok);
-
-    vector<EGaussian*>::iterator i = gmatrixes.begin();
-    vector<EGaussian*>::iterator gend = gmatrixes.end();
-    for (; i != gend; i++) {
-        EGaussian* g = *i;
-
+    for (EGaussian*& g :gmatrixes) {
         bool created = false;
         // initial arrary. return true is fine , return false means solver already false;
         if (!g->full_init(created)) {
@@ -4049,7 +4044,10 @@ bool Solver::init_all_matrixes()
         }
         if (!created) {
             delete g;
-            *i = NULL;
+            if (conf.verbosity > 5) {
+                cout << "DELETED matrix" << endl;
+            }
+            g = NULL;
         }
     }
     for(auto& gqd: gqueuedata) {
