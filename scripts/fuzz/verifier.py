@@ -133,7 +133,7 @@ class solution_parser:
         print("-> added partial solution to temporary CNF file %s" % tmpfname)
 
         # execute with the other solver
-        toexec = "../../build/tests/minisat/minisat -verb=0 %s" % tmpfname
+        toexec = "lingeling %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
@@ -142,7 +142,7 @@ class solution_parser:
                                  preexec_fn=partial(setlimits, self.options.maxtime),
                                  universal_newlines=True)
         except OSError:
-            print("ERROR: Minisat didn't run... weird, it's included as a submodule")
+            print("ERROR: Lingeing didn't run... did you install it? It should be in the path as `lingeling`")
             raise
 
         consoleOutput2 = p.communicate()[0]
@@ -176,7 +176,7 @@ class solution_parser:
         a.convert(fname, tmpfname)
 
         # execute with the other solver
-        toexec = "../../build/tests/minisat/minisat -verb=0 %s" % tmpfname
+        toexec = "lingeling %s" % tmpfname
         print("Solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
@@ -185,7 +185,7 @@ class solution_parser:
                                  preexec_fn=partial(setlimits, self.options.maxtime),
                                  universal_newlines=True)
         except OSError:
-            print("ERROR: Minisat didn't run... weird, it's included as a submodule")
+            print("ERROR: Lingeling didn't run... did you install it? It should be in the path as `lingeling`")
             raise
 
         consoleOutput2 = p.communicate()[0]

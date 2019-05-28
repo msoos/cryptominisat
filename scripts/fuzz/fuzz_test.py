@@ -976,6 +976,10 @@ fuzzers_noxor_sls = [
 
 fuzzers_xor = [
     ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/xortester.py", "--seed"],
     ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
 ]
