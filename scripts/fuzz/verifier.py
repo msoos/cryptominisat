@@ -115,7 +115,7 @@ class solution_parser:
         assert len(sampling_vars) > 0
         a = XorToCNF()
         tmpfname = unique_file("tmp_for_xor_to_cnf_convert")
-        a.convert(fname, tmpfname)
+        a.convert(fname, tmpfname, len(sampling_vars))
 
         with open(tmpfname, "a") as f:
             # NOTE: the "p cnf..." header will be wrong
