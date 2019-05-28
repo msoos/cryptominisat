@@ -72,6 +72,7 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
 }
 
 EGaussian::~EGaussian() {
+    delete_gauss_watch_this_matrix();
     for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
         solver->cl_alloc.clauseFree(clauses_toclear[i].first);
     }
@@ -190,14 +191,18 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     GasVar_state.growTo(solver->nVars(), non_basic_var); // init varaible state
     origMat.nb_rows.clear();                             // clear non-basic
 
-    // delete gauss watch list for this matrix
-    for (size_t ii = 0; ii < solver->gwatches.size(); ii++) {
-        clear_gwatches(ii);
-    }
+    delete_gauss_watch_this_matrix();
     clause_state.resize(1, origMat.num_rows);
     PackedMatrix::iterator rowIt = clause_state.beginMatrix();
     (*rowIt).setZero(); // reset this row all zero
     // print_matrix(origMat);
+}
+
+void EGaussian::delete_gauss_watch_this_matrix()
+{
+    for (size_t ii = 0; ii < solver->gwatches.size(); ii++) {
+        clear_gwatches(ii);
+    }
 }
 
 void EGaussian::clear_gwatches(const uint32_t var) {
