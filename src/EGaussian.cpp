@@ -463,6 +463,14 @@ inline void EGaussian::conflict_twoclause(PropBy& confl) {
     Lit lit1 = tmp_clause[0];
     Lit lit2 = tmp_clause[1];
 
+#if 0
+    cout << "conflict twoclause: " << lit1 << " " << lit2
+    << " vals: " << solver->value(lit1) << " " << solver->value(lit2)
+    << " levels: " << solver->varData[lit1.var()].level << " " << solver->varData[lit2.var()].level
+    << " declevel: " << solver->decisionLevel()
+    << endl;
+#endif
+
     solver->attach_bin_clause(lit1, lit2, true, false);
     // solver->dataSync->signalNewBinClause(lit1, lit2);
 
@@ -562,7 +570,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 solver->gqhead = solver->trail.size();
 
                 // for tell outside solver
-                gqd.ret_gauss = 1; // gaussian matrix is unit_conflict
+                gqd.ret_gauss = 1; // gaussian matrix is binary conflict clause
                 gqd.conflict_size_gauss = 2;
                 solver->sum_Enunit++;
                 return false;
@@ -570,7 +578,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 // long conflict clause
                 *j++ = *i;
                 gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
-                gqd.ret_gauss = 0;                      // gaussian matrix is conflict
+                gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
                 gqd.conflict_size_gauss = tmp_clause.size();
                 gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(row_n).rhs();
 
@@ -611,7 +619,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                     GasVar_state[p] = basic_var;
                 }
 
-                gqd.ret_gauss = 3;                      // gaussian matrix is unit_propagation
+                gqd.ret_gauss = 3; // gaussian matrix is unit_propagation
                 solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
                 return false;
@@ -760,7 +768,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             solver->qhead = solver->trail.size();
                             solver->gqhead = solver->trail.size();
 
-                            // unit_conflict
+                            // gaussian matrix is unit conflict clause
                             gqd.ret_gauss = 1;
                             solver->sum_Enunit++;
 
