@@ -318,9 +318,13 @@ class Tester:
         sls = 0
         if options.sls:
             sls = 1
+            assert options.sls !=1, "--sls and --gauss do NOT work together"
         else:
             # it's kinda slow and using it all the time is probably not a good idea
             sls = random.choice([0, 0, 0, 1])
+
+        if options.gauss:
+            sls = 0
 
         cmd += "--sls %d " % sls
         cmd += "--slseveryn %d " % random.randint(1, 3)
@@ -412,7 +416,7 @@ class Tester:
                 cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
 
                 # Don't always use M4RI -- let G-J do toplevel, so fuzzing is more complete
-                cmd += "--m4ri %d " % random.choice([0, 0, 0, 1])
+                cmd += "--m4ri %d " % random.choice([0, 0, 0, 0, 1])
 
                 # Save matrix every Nth decision level."
                 cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
@@ -437,7 +441,7 @@ class Tester:
                 opts.append("xor")
 
             for opt in opts:
-                cmd += "--%s %d " % (opt, random.choice([0, 1, 1]))
+                cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1]))
 
             cmd += self.rnd_schedule_all(preproc)
 
