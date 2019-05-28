@@ -763,7 +763,9 @@ void XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
 {
     tmp_vars_xor_two.clear();
 
+#ifdef SLOW_DEBUG
     clash_num = 0;
+#endif
     for(uint32_t v: x1) {
         assert(seen[v] == 0);
         seen[v] = 1;
@@ -771,19 +773,30 @@ void XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
 
     for(uint32_t v: x2) {
         assert(seen[v] != 2);
-        if (seen[v] == 1) {
+        if (seen[v] == 0) {
             tmp_vars_xor_two.push_back(v);
         } else {
             clash_num++;
         }
         seen[v] = 2;
     }
+
+#ifdef SLOW_DEBUG
+    uint32_t other_clash = 0;
+#endif
     for(uint32_t v: x1) {
         if (seen[v] != 2) {
             tmp_vars_xor_two.push_back(v);
+        } else {
+#ifdef SLOW_DEBUG
+            other_clash++;
+#endif
         }
         seen[v] = 0;
     }
+#ifdef SLOW_DEBUG
+    assert(other_clash == clash_num);
+#endif
 
     for(uint32_t v: x2) {
         seen[v] = 0;
