@@ -189,7 +189,7 @@ private:
 
     ///xor two -- don't re-allocate memory all the time
     ///use tmp_vars_xor_two instead
-    void xor_two(Xor& x1, Xor& x2, uint32_t& clash_num);
+    uint32_t xor_two(Xor& x1, Xor& x2);
     vector<uint32_t> tmp_vars_xor_two;
 
     int64_t xor_find_time_limit;

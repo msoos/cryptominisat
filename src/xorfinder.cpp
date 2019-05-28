@@ -561,8 +561,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
             } else {
-                uint32_t clash_num;
-                xor_two(this_xors[idxes[0]], this_xors[idxes[1]], clash_num);
+                uint32_t clash_num = xor_two(this_xors[idxes[0]], this_xors[idxes[1]]);
                 if (clash_num > 1) {
                     //add back to ws
                     ws.push(Watched(idxes[0]));
@@ -759,13 +758,11 @@ bool XorFinder::add_new_truths_from_xors(vector<Xor>& this_xors, vector<Lit>* ou
     return solver->okay();
 }
 
-void XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
+uint32_t XorFinder::xor_two(Xor& x1, Xor& x2)
 {
     tmp_vars_xor_two.clear();
 
-#ifdef SLOW_DEBUG
-    clash_num = 0;
-#endif
+    uint32_t clash_num = 0;
     for(uint32_t v: x1) {
         assert(seen[v] == 0);
         seen[v] = 1;
@@ -804,6 +801,8 @@ void XorFinder::xor_two(Xor& x1, Xor& x2, uint32_t& clash_num)
     for(uint32_t v: x1) {
         assert(seen[v] == 0);
     }
+
+    return clash_num;
 }
 
 bool XorFinder::xor_has_interesting_var(const Xor& x)
