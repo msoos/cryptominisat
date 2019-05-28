@@ -427,7 +427,7 @@ class Tester:
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
-        if random.choice([True, False]):
+        if random.choice([True, False, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
                     "stamp", "cache",
                     "renumber", "savemem", "moreminim", "gates",
@@ -437,7 +437,7 @@ class Tester:
                 opts.append("xor")
 
             for opt in opts:
-                cmd += "--%s %d " % (opt, random.randint(0, 1))
+                cmd += "--%s %d " % (opt, random.choice([0, 1, 1]))
 
             cmd += self.rnd_schedule_all(preproc)
 
