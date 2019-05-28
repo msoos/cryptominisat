@@ -850,7 +850,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
         num_row++;
     }
 
-    // Debug_funtion();
+    // check_xor_reason_clauses_not_cleared();
 }
 
 void EGaussian::print_matrix(matrixset& m) const {
@@ -865,7 +865,7 @@ void EGaussian::print_matrix(matrixset& m) const {
     }
 }
 
-void EGaussian::Debug_funtion() {
+void EGaussian::check_xor_reason_clauses_not_cleared() {
     for (int i = clauses_toclear.size() - 1; i >= 0; i--) {
         ClOffset offs = clauses_toclear[i].first;
         Clause* cl = solver->cl_alloc.ptr(offs);

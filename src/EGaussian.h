@@ -135,7 +135,7 @@ class EGaussian {
         GaussQData& gqd
     );
 
-    void Debug_funtion(); // used to debug
+    void check_xor_reason_clauses_not_cleared();
 };
 
 inline uint32_t EGaussian::get_matrix_no() const
