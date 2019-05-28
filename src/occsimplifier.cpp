@@ -1355,7 +1355,9 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
                     return false;
 
                 #ifdef USE_M4RI
-                if (topLevelGauss != NULL) {
+                if (topLevelGauss != NULL
+                    && solver->conf.doM4RI
+                ) {
                     xors = finder.remove_xors_without_connecting_vars(xors);
                     topLevelGauss->toplevelgauss(xors, &out_changed_occur);
                 }

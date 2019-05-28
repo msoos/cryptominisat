@@ -412,6 +412,9 @@ class Tester:
                 # "Set minimum no. of rows for gaussian matrix.
                 cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
 
+                # Don't always use M4RI -- let G-J do toplevel, so fuzzing is more complete
+                cmd += "--m4ri %d " % random.choice([0, 1])
+
                 # Save matrix every Nth decision level."
                 cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
 

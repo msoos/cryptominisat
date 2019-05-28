@@ -388,6 +388,7 @@ class DLL_PUBLIC SolverConf
         //Gauss
         GaussConf gaussconf;
         bool dont_elim_xor_vars;
+        bool doM4RI;
 
         //Sampling
         std::vector<uint32_t>* sampling_vars;
