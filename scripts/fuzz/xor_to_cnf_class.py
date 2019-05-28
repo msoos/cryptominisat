@@ -43,7 +43,7 @@ class XorToCNF:
 
         return maxvar
 
-    def convert(self, infilename, outfilename, num_extra_cls):
+    def convert(self, infilename, outfilename, num_extra_cls=0):
         assert isinstance(self.cutsize, int)
         if self.cutsize <= 2:
             print("ERROR: The cut size MUST be larger or equal to 3")
