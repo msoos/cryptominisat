@@ -2761,6 +2761,7 @@ llbool Searcher::Gauss_elimination()
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
+    bool unit_conflict_in_some_matrix = false;
     while (gqhead <  qhead) {
         const Lit p = trail[gqhead++];
         assert(gwatches.size() > p.var());
@@ -2780,6 +2781,7 @@ llbool Searcher::Gauss_elimination()
                 continue;
             } else {
                 // only in conflict two variable
+                unit_conflict_in_some_matrix = true;
                 break;
             }
         }
@@ -2809,10 +2811,26 @@ llbool Searcher::Gauss_elimination()
             gqueuedata[0].big_gaussnum++;
             sum_EnGauss++;
         }
+
+        //There was a unit conflict but this is not that matrix.
+        //Just skip.
+        if (unit_conflict_in_some_matrix && gqd.ret_gauss !=1) {
+            continue;
+        }
+
+
         switch (gqd.ret_gauss) {
             case 1:{ // unit conflict
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
+#ifdef VERBOSE_DEBUG
+                cout << "Handled conflict"
+                << " conf level:" <<  varData[gqd.confl.lit2().var()].level
+                << " conf value: " << value(gqd.confl.lit2())
+                << " failbin level: " << varData[solver->failBinLit.var()].level
+                << " failbin value: " << value(solver->failBinLit)
+                << endl;
+#endif
 
                 gqd.big_conflict++;
                 sum_Enconflict++;

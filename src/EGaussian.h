@@ -118,7 +118,8 @@ class EGaussian {
     void fill_matrix(matrixset& origMat); // Fills the origMat matrix
     uint32_t select_columnorder(matrixset& origMat); // Fills var_to_col and col_to_var of the origMat matrix.
 
-    //execute gaussian
+    ///execute gaussian
+    ///return FALSE only in case of unit conflict
     bool  find_truths2(
         const GaussWatched* i,
         GaussWatched*& j,

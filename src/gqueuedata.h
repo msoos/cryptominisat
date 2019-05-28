@@ -31,7 +31,14 @@ struct GaussQData {
     uint32_t e_row_n ;         // do elimination row
     PropBy confl;              // for choosing better conflict
     uint32_t conflict_size_gauss; // for choosing better conflict
-    int ret_gauss;         // gauss matrix result
+
+    ///ret_gauss = 0; // gaussian matrix is long conflict
+    ///ret_gauss = 1; // gaussian matrix is unit conflict clause
+    ///ret_gauss = 2; // gaussian matrix is long propagation
+    ///ret_gauss = 3; // gaussian matrix is unit propagation
+    int ret_gauss;    // gauss matrix result
+
+
     bool xorEqualFalse_gauss;            // conflict xor clause xorEqualFalse
     vector<Lit> conflict_clause_gauss; // for gaussian elimination better conflict
 
