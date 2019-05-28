@@ -144,7 +144,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ternary_res_time_limitM(100)
 
         //BreakID
-        , doBreakid(true)
+        , doBreakid(false)
         , breakid_every_n(2)
 
         //Bounded variable addition
