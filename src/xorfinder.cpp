@@ -545,12 +545,20 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
             assert(at == 2);
             ws.resize(i2);
 
-            if (this_xors[idxes[0]] == this_xors[idxes[1]]) {
+            Xor& x1 = this_xors[idxes[0]];
+            Xor& x2 = this_xors[idxes[1]];
+            uint32_t clash_num = xor_two(x1, x2);
+
+            //If they are equivalent
+            if (x1.size() == x2.size()
+                && x1.rhs == x2.rhs
+                && clash_num == x1.size()
+            ) {
                 //Equivalent, so delete one
-                this_xors[idxes[0]] = Xor();
+                x1 = Xor();
 
                 //Re-attach the other, remove the occur of the one we deleted
-                const Xor& x = this_xors[idxes[1]];
+                const Xor& x = x2;
                 solver->watches[Lit(v, false)].push(Watched(idxes[1]));
                 for(uint32_t v2: x) {
                     Lit l(v2, false);
@@ -561,9 +569,8 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                     }
                 }
             } else {
-                uint32_t clash_num = xor_two(this_xors[idxes[0]], this_xors[idxes[1]]);
                 if (clash_num > 1) {
-                    //add back to ws
+                    //add back to ws, can't do much
                     ws.push(Watched(idxes[0]));
                     ws.push(Watched(idxes[1]));
                     continue;
@@ -571,7 +578,7 @@ bool XorFinder::xor_together_xors(vector<Xor>& this_xors)
                 occcnt[v] -= 2;
                 assert(occcnt[v] == 0);
 
-                Xor x_new(tmp_vars_xor_two, this_xors[idxes[0]].rhs ^ this_xors[idxes[1]].rhs);
+                Xor x_new(tmp_vars_xor_two, x1.rhs ^ x2.rhs);
                 changed = true;
                 this_xors.push_back(x_new);
                 for(uint32_t v2: x_new) {

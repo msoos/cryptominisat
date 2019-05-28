@@ -433,8 +433,8 @@ void check_xors_eq(const vector<Xor>& got_data, const std::string& expected)
     std::sort(expected_sorted.begin(), expected_sorted.end(), xorsort);
 
     vector<Xor> got_data_sorted = got_data;
-    for(auto t: got_data_sorted) {
-        std::sort(t.begin(), t.end());
+    for(Xor& t: got_data_sorted) {
+        t.sort();
     }
 
     std::sort(got_data_sorted.begin(), got_data_sorted.end(), xorsort);
@@ -449,8 +449,8 @@ void check_xors_contains(const vector<Xor>& got_data, const std::string& expecte
     std::sort(expectedX.begin(), expectedX.end());
 
     vector<Xor> got_data_sorted = got_data;
-    for(auto t: got_data_sorted) {
-        std::sort(t.begin(), t.end());
+    for(auto& t: got_data_sorted) {
+        t.sort();
     }
 
     bool found = false;
