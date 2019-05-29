@@ -606,16 +606,6 @@ if (NOT NOM4RI)
     ENDIF (M4RI_FOUND)
 endif()
 
-#query definitions
-get_directory_property( DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS )
-set(COMPILE_DEFINES)
-foreach( d ${DirDefs} )
-    # message( STATUS "Found Define: " ${d} )
-    set(COMPILE_DEFINES "${COMPILE_DEFINES} -D${d}")
-endforeach()
-message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
-
-
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
@@ -724,6 +714,15 @@ endif()
 # Provide an export name to be used by targets that wish to export themselves.
 # -----------------------------------------------------------------------------
 set(CRYPTOMINISAT5_EXPORT_NAME "cryptominisat5Targets")
+
+#query definitions
+get_directory_property( DirDefs DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS )
+set(COMPILE_DEFINES)
+foreach( d ${DirDefs} )
+    # message( STATUS "Found Define: " ${d} )
+    set(COMPILE_DEFINES "${COMPILE_DEFINES} -D${d}")
+endforeach()
+message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
 add_subdirectory(src cmsat5-src)
 
