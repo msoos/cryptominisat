@@ -130,7 +130,7 @@ bool BreakID::doit()
     }
 
     if (solver->conf.verbosity) {
-        cout << "c [breakid] Num generators: " << breakid->get_num_generators() << endl;
+        cout << "c [breakid] Generators: " << breakid->get_num_generators() << endl;
         //breakid->print_generators();
     }
 
@@ -166,8 +166,8 @@ bool BreakID::doit()
 void BreakID::break_symms()
 {
     if (solver->conf.verbosity) {
-        cout << "c [breakid] Num breaking clasues: "<< breakid->get_num_break_cls() << endl;
-        cout << "c [breakid] Num aux vars: "<< breakid->get_num_aux_vars() << endl;
+        cout << "c [breakid] Breaking cls: "<< breakid->get_num_break_cls() << endl;
+        cout << "c [breakid] Aux vars: "<< breakid->get_num_aux_vars() << endl;
     }
     for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) {
         solver->new_var(true);
