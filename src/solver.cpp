@@ -1386,6 +1386,11 @@ void Solver::check_config_parameters() const
     }
     #endif
 
+    if (conf.blocking_restart_trail_hist_length == 0) {
+        std::cerr << "ERROR: Blocking restart length must be at least 0" << endl;
+        exit(-1);
+    }
+
     check_xor_cut_config_sanity();
 }
 
