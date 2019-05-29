@@ -1417,6 +1417,11 @@ lbool Solver::simplify_problem_outside()
     conflict.clear();
     check_config_parameters();
     datasync->rebuild_bva_map();
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->start_new_solving();
+    }
+    #endif
     set_assumptions(vector<Lit>());
 
     lbool status = l_Undef;
@@ -1477,6 +1482,11 @@ lbool Solver::solve_with_assumptions(
     if (params.rest_type == Restart::glue_geom) {
         params.rest_type = Restart::geom;
     }
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->start_new_solving();
+    }
+    #endif
 
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;

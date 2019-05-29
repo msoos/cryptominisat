@@ -205,5 +205,21 @@ void BreakID::break_symms()
 
 void BreakID::finished_solving()
 {
+    //Nothing actually
+}
+
+void BreakID::start_new_solving()
+{
+    assert(solver->decisionLevel() == 0);
+    assert(solver->okay());
+    if (symm_var == var_Undef) {
+        return;
+    }
+
+    assert(solver->varData[symm_var].removed == Removed::none);
+    assert(solver->value(symm_var) == l_Undef);
+    solver->enqueue(Lit(symm_var, false));
+    PropBy ret = solver->propagate<false>();
+    assert(ret == PropBy() && "Must not fail on resetting symmetry var");
     symm_var = var_Undef;
 }

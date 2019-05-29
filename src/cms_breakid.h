@@ -41,6 +41,7 @@ public:
     BreakID(Solver* solver);
     bool doit();
     void finished_solving();
+    void start_new_solving();
 
 private:
     void break_symms();
