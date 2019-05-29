@@ -312,9 +312,11 @@ class Tester:
 
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
-        cmd += "--confbtwsimp %d " % random.choice([100, 1000])
-        cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
-        cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+        if not options.gauss:
+            cmd += "--confbtwsimp %d " % random.choice([100, 1000])
+            cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
+            cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
+
         sls = 0
         if options.sls:
             sls = 1
@@ -410,7 +412,7 @@ class Tester:
                 cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
 
                 # "Automatically disable gauss when performing badly")
-                cmd += "--autodisablegauss %s " % random.choice([0, 1])
+                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 1])
 
                 # "Set minimum no. of rows for gaussian matrix.
                 cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
@@ -430,6 +432,11 @@ class Tester:
                 cmd += "--sqlitedb %s " % self.sqlitedbfname
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
+        else:
+            if self.this_gauss_on:
+                # "Automatically disable gauss when performing badly")
+                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 1])
+
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False, False]):
             opts = ["scc", "varelim", "comps", "strengthen", "probe", "intree",
@@ -441,7 +448,10 @@ class Tester:
                 opts.append("xor")
 
             for opt in opts:
-                cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1]))
+                if opt == "xor" and self.this_gauss_on:
+                    continue
+
+                cmd += "--%s %d " % (opt, random.choice([0, 1, 1, 1, 1]))
 
             cmd += self.rnd_schedule_all(preproc)
 
@@ -645,7 +655,10 @@ class Tester:
 
         # if library debug is set, check it
         if (self.needDebugLib):
-            self.sol_parser.check_debug_lib(checkAgainst)
+            must_check_unsat = True
+            if options.gauss:
+                must_check_unsat = random.choice([False, False, False, False, True])
+            self.sol_parser.check_debug_lib(checkAgainst, must_check_unsat)
 
         if retcode != 0:
             print("Return code is not 0, error!")
@@ -725,6 +738,11 @@ class Tester:
                 assert foundVerif, "Cannot find DRAT verification code!"
             else:
                 print("OK, DRAT says: %s" % dratLine)
+
+        if options.gauss:
+            if random.choice([True, True, True, True, False]):
+                print("NOT verifying with other solver, it's Gauss so too expensive")
+                return
 
         # check with other solver
         ret = self.sol_parser.check_unsat(checkAgainst)
@@ -1037,6 +1055,7 @@ if __name__ == "__main__":
         if options.nopreproc:
             toexec += "--nopreproc "
         toexec += "-m %d " % options.max_threads
+        toexec += "-t %d " % options.maxtime
 
         print("")
         print("")

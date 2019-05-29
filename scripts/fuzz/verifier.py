@@ -205,7 +205,7 @@ class solution_parser:
         # check if the other solver agrees with us
         return otherSolverUNSAT
 
-    def check_debug_lib(self, fname):
+    def check_debug_lib(self, fname, must_check_unsat=True):
         largestPart = self._find_largest_debuglib_part(fname)
         for debugLibPart in range(1, largestPart + 1):
             fname_debug = "%s-debugLibPart%d.output" % (fname, debugLibPart)
@@ -229,21 +229,22 @@ class solution_parser:
                 self.test_found_solution(solution, fname, debugLibPart)
             else:
                 print("debugLib is UNSAT")
-                assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
-                self._check_assumps_inside_conflict(assumps, conflict)
-                tmpfname = unique_file("tmp_for_extract_libpart")
-                self._extract_lib_part(fname, debugLibPart, assumps, tmpfname)
+                if must_check_unsat:
+                    assert conflict is not None, "debugLibPart must create a conflict in case of UNSAT"
+                    self._check_assumps_inside_conflict(assumps, conflict)
+                    tmpfname = unique_file("tmp_for_extract_libpart")
+                    self._extract_lib_part(fname, debugLibPart, assumps, tmpfname)
 
-                # check with other solver
-                ret = self.check_unsat(tmpfname)
-                if ret is None:
-                    print("Cannot check, other solver took too much time")
-                elif ret is True:
-                    print("UNSAT verified by other solver")
-                else:
-                    print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
-                    exit(-1)
-                os.unlink(tmpfname)
+                    # check with other solver
+                    ret = self.check_unsat(tmpfname)
+                    if ret is None:
+                        print("Cannot check, other solver took too much time")
+                    elif ret is True:
+                        print("UNSAT verified by other solver")
+                    else:
+                        print("Grave bug: SAT-> UNSAT : Other solver found solution!!")
+                        exit(-1)
+                    os.unlink(tmpfname)
 
         self.remove_debuglib_files(fname)
 
