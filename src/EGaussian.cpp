@@ -773,7 +773,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         gqd.conflict_size_gauss = tmp_clause.size();
                         if (gqd.conflict_size_gauss == 2) {
                             // printf("%d:This row is conflict two in eliminate col    n",num_row);
-                            delete_gausswatch(false, num_row); // delete gauss matrix
+                            delete_gausswatch(false, num_row);
                             assert(GasVar_state[tmp_clause[0].var()] == basic_var);
                             assert(GasVar_state[tmp_clause[1].var()] == non_basic_var);
 

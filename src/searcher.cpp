@@ -2780,20 +2780,19 @@ llbool Searcher::Gauss_elimination()
             ) {
                 continue;
             } else {
-                // only in conflict two variable
+                //binary clause conflict
                 unit_conflict_in_some_matrix = true;
                 break;
             }
         }
 
-        if (i != end) {  // must conflict two variable
+        //binary clause conflict happened
+        if (i != end) {
             i++;
             //copy remaining watches
-            GaussWatched* j2 = j;
-            GaussWatched* i2 = i;
-            for(; i2 != end; i2++) {
-                *j2 = *i2;
-                j2++;
+            for(; i != end; i++) {
+                *j = *i;
+                j++;
             }
         }
         ws.shrink_(i-j);
