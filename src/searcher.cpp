@@ -2761,9 +2761,9 @@ llbool Searcher::Gauss_elimination()
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
-    bool unit_conflict_in_some_matrix = false;
+    bool unit_in_some_matrix = false;
     while (gqhead <  qhead
-        && !unit_conflict_in_some_matrix
+        && !unit_in_some_matrix
     ) {
         const Lit p = trail[gqhead++];
         assert(gwatches.size() > p.var());
@@ -2783,7 +2783,7 @@ llbool Searcher::Gauss_elimination()
                 continue;
             } else {
                 //binary clause
-                unit_conflict_in_some_matrix = true;
+                unit_in_some_matrix = true;
                 break;
             }
         }
@@ -2802,9 +2802,12 @@ llbool Searcher::Gauss_elimination()
             sum_EnGauss++;
         }
 
-        //There was a unit conflict but this is not that matrix.
+        //There was a unit conflict/prop but this is not that matrix.
         //Just skip.
-        if (unit_conflict_in_some_matrix && gqd.ret_gauss !=1) {
+        if (unit_conflict_in_some_matrix
+            && gqd.ret_gauss !=1
+            && gqd.ret_gauss !=3
+        ) {
             continue;
         }
 
