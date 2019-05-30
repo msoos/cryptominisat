@@ -584,15 +584,11 @@ bool EGaussian::find_truths2(
                 // printf("%d:This row is conflict two    n",row_n);
                 //WARNING !!!! if orig_basic is FALSE, this will delete
                 auto& ws = solver->gwatches[p];
-                if (i != end) {
-                    i++;
-                    //copy remaining watches
-                    for(; i != end; i++) {
-                        *j++ = *i;
-                    }
+                i++;
+                for(; i != end; i++) {
+                    *j++ = *i;
                 }
                 ws.shrink_(i-j);
-
                 delete_gausswatch(orig_basic, row_n, p);
 
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
@@ -655,6 +651,13 @@ bool EGaussian::find_truths2(
                 gqd.ret_gauss = 3; // gaussian matrix is unit_propagation
                 solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
+
+                auto& ws = solver->gwatches[p];
+                i++;
+                for(; i != end; i++) {
+                    *j++ = *i;
+                }
+                ws.shrink_(i-j);
                 return false;
             }
 

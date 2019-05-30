@@ -2762,7 +2762,9 @@ llbool Searcher::Gauss_elimination()
     assert(gqhead <= qhead);
 
     bool unit_conflict_in_some_matrix = false;
-    while (gqhead <  qhead) {
+    while (gqhead <  qhead
+        && !unit_conflict_in_some_matrix
+    ) {
         const Lit p = trail[gqhead++];
         assert(gwatches.size() > p.var());
         vec<GaussWatched>& ws = gwatches[p.var()];
@@ -2780,7 +2782,7 @@ llbool Searcher::Gauss_elimination()
             ) {
                 continue;
             } else {
-                //binary clause conflict
+                //binary clause
                 unit_conflict_in_some_matrix = true;
                 break;
             }
