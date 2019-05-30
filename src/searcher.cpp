@@ -2804,7 +2804,7 @@ llbool Searcher::Gauss_elimination()
 
         //There was a unit conflict/prop but this is not that matrix.
         //Just skip.
-        if (unit_conflict_in_some_matrix
+        if (unit_in_some_matrix
             && gqd.ret_gauss !=1
             && gqd.ret_gauss !=3
         ) {
