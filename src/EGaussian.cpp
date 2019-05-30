@@ -505,10 +505,15 @@ inline void EGaussian::conflict_twoclause(PropBy& confl) {
 }
 
 // Delete this row because we have already add to xor clause, nothing to do anymore
-inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint32_t row_n) {
+void EGaussian::delete_gausswatch(
+    const bool orig_basic
+    , const uint32_t row_n
+    , const uint32_t no_touch_var
+) {
     if (orig_basic) {
         // clear nonbasic value watch list
         bool debug_find = false;
+        assert(matrix.nb_rows[row_n] != no_touch_var);
         vec<GaussWatched>& ws_t = solver->gwatches[matrix.nb_rows[row_n]];
         for (int32_t tmpi = ws_t.size() - 1; tmpi >= 0; tmpi--) {
             if (ws_t[tmpi].row_id == row_n
@@ -522,6 +527,7 @@ inline void EGaussian::delete_gausswatch(const bool orig_basic, const uint32_t r
         }
         assert(debug_find);
     } else {
+        assert(tmp_clause[0].var() != no_touch_var);
         clear_gwatches(tmp_clause[0].var());
     }
 }
@@ -560,7 +566,7 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
         case gret::confl: {
             // printf("dd %d:This row is conflict %d    n",row_n , solver->level[p] );
             if (tmp_clause.size() >= gqd.conflict_size_gauss) { // choose perfect conflict clause
-                *j++ = *i;                                  // we need to leave this
+                *j++ = *i;
                 if (orig_basic) {                           // recover
                     GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
                     GasVar_state[p] = basic_var;
@@ -572,7 +578,9 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
             // binary conflict
             if (tmp_clause.size() == 2) {
                 // printf("%d:This row is conflict two    n",row_n);
-                delete_gausswatch(orig_basic, row_n);              // delete watch list
+                //WARNING !!!! if orig_basic is FALSE, this will delete
+                delete_gausswatch(orig_basic, row_n, p);
+
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
                 GasVar_state[tmp_clause[1].var()] = non_basic_var;
                 matrix.nb_rows[row_n] =
@@ -588,30 +596,29 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 gqd.conflict_size_gauss = 2;
                 solver->sum_Enunit++;
                 return false;
-            } else {
-                // long conflict clause
-                *j++ = *i;
-                gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
-                gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
-                gqd.conflict_size_gauss = tmp_clause.size();
-                gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(row_n).rhs();
-
-                if (orig_basic) { // recover
-                    GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
-                    GasVar_state[p] = basic_var;
-                }
-
-                return true;
             }
+
+            // long conflict clause
+            *j++ = *i;
+            gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
+            gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
+            gqd.conflict_size_gauss = tmp_clause.size();
+            gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(row_n).rhs();
+
+            if (orig_basic) { // recover
+                GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
+                GasVar_state[p] = basic_var;
+            }
+
+            return true;
         }
 
-        // propagation
         case gret::prop: {
             // printf("%d:This row is propagation : level: %d    n",row_n, solver->level[p]);
+            *j++ = *i;
 
             // Gaussian matrix is already conflict
             if (gqd.ret_gauss == 0) {
-                *j++ = *i;        // store watch list
                 if (orig_basic) { // recover
                     GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
                     GasVar_state[p] = basic_var;
@@ -619,8 +626,6 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 return true;
             }
 
-            // propagation
-            *j++ = *i; // store watch list
             if (solver->decisionLevel() == 0) {
                 if (tmp_clause.size() == 2) {
                     propagation_twoclause();
@@ -637,26 +642,26 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
                 solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
                 return false;
-            } else {
-                if (tmp_clause.size() == 2) {
-                    propagation_twoclause();
-                } else {
-                    Clause* cla = solver->cl_alloc.Clause_new(
-                        tmp_clause,
-                        solver->sumConflicts
-                        #ifdef STATS_NEEDED
-                        , solver->clauseID++
-                        #endif
-                    );
-                    cla->set_gauss_temp_cl();
-                    const ClOffset offs = solver->cl_alloc.get_offset(cla);
-                    clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
-                    assert(!cla->freed());
-                    assert(solver->value((*cla)[0].var()) == l_Undef);
-                    solver->enqueue((*cla)[0], PropBy(offs));
-                }
-                gqd.ret_gauss = 2; // gaussian matrix is  propagation
             }
+
+            if (tmp_clause.size() == 2) {
+                propagation_twoclause();
+            } else {
+                Clause* cla = solver->cl_alloc.Clause_new(
+                    tmp_clause,
+                    solver->sumConflicts
+                    #ifdef STATS_NEEDED
+                    , solver->clauseID++
+                    #endif
+                );
+                cla->set_gauss_temp_cl();
+                const ClOffset offs = solver->cl_alloc.get_offset(cla);
+                clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
+                assert(!cla->freed());
+                assert(solver->value((*cla)[0].var()) == l_Undef);
+                solver->enqueue((*cla)[0], PropBy(offs));
+            }
+            gqd.ret_gauss = 2; // gaussian matrix is  propagation
 
             if (orig_basic) { // recover
                 GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
@@ -682,9 +687,12 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
             assert(nb_var != std::numeric_limits<uint32_t>::max());
             if (orig_basic) {
                 /// clear watchlist, because only one basic value in watchlist
+                //WARNING !!!
+                assert(nb_var != p);
                 clear_gwatches(nb_var);
             }
-            // update gausWatch list
+            //WARNING !!!
+            assert(nb_var != p);
             solver->gwatches[nb_var].push(GaussWatched(row_n, matrix_no));
 
             if (!orig_basic) {

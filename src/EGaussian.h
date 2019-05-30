@@ -92,7 +92,9 @@ class EGaussian {
     bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
-    inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
+    void delete_gausswatch(const bool orig_basic,
+                           const uint32_t  row_n,
+                           uint32_t no_touch_var = var_Undef);
 
     void eliminate(matrixset& m);
     gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
