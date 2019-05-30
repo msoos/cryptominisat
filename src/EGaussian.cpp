@@ -527,13 +527,17 @@ void EGaussian::delete_gausswatch(
         }
         assert(debug_find);
     } else {
-        assert(tmp_clause[0].var() != no_touch_var);
         clear_gwatches(tmp_clause[0].var());
     }
 }
 
-bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p,
-                             const uint32_t row_n, GaussQData& gqd
+bool EGaussian::find_truths2(
+    GaussWatched*& i,
+    GaussWatched*& j,
+    const GaussWatched* end,
+    uint32_t p,
+    const uint32_t row_n,
+    GaussQData& gqd
 ) {
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
@@ -579,6 +583,16 @@ bool EGaussian::find_truths2(const GaussWatched* i, GaussWatched*& j, uint32_t p
             if (tmp_clause.size() == 2) {
                 // printf("%d:This row is conflict two    n",row_n);
                 //WARNING !!!! if orig_basic is FALSE, this will delete
+                auto& ws = solver->gwatches[p];
+                if (i != end) {
+                    i++;
+                    //copy remaining watches
+                    for(; i != end; i++) {
+                        *j++ = *i;
+                    }
+                }
+                ws.shrink_(i-j);
+
                 delete_gausswatch(orig_basic, row_n, p);
 
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;

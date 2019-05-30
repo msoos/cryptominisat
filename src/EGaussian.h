@@ -127,8 +127,9 @@ class EGaussian {
     ///execute gaussian
     ///return FALSE only in case of unit conflict
     bool  find_truths2(
-        const GaussWatched* i,
+        GaussWatched*& i,
         GaussWatched*& j,
+        const GaussWatched* end,
         uint32_t p,
         const uint32_t row_n,
         GaussQData& gqd

@@ -2776,7 +2776,7 @@ llbool Searcher::Gauss_elimination()
         for (; i != end; i++) {
             gqueuedata[i->matrix_num].enter_matrix = true;
             if (gmatrixes[i->matrix_num]->find_truths2(
-                i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
+                i, j, end, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
@@ -2785,17 +2785,6 @@ llbool Searcher::Gauss_elimination()
                 break;
             }
         }
-
-        //binary clause conflict happened
-        if (i != end) {
-            i++;
-            //copy remaining watches
-            for(; i != end; i++) {
-                *j = *i;
-                j++;
-            }
-        }
-        ws.shrink_(i-j);
 
         for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].do_eliminate) {
