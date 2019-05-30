@@ -1482,12 +1482,6 @@ lbool Solver::solve_with_assumptions(
     if (params.rest_type == Restart::glue_geom) {
         params.rest_type = Restart::geom;
     }
-    #ifdef USE_BREAKID
-    if (breakid) {
-        breakid->start_new_solving();
-    }
-    #endif
-
     if (conf.verbosity >= 6) {
         cout << "c " << __func__ << " called" << endl;
     }
@@ -1504,6 +1498,12 @@ lbool Solver::solve_with_assumptions(
     }
     assert(prop_at_head());
     assert(okay());
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->start_new_solving();
+    }
+    #endif
+
 
     //Clean up as a startup
     datasync->rebuild_bva_map();
