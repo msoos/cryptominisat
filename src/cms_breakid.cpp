@@ -59,7 +59,6 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
         sz++;
     }
     if (sat) {
-        assert(false && "let's not do this, this would lie about the number of clauses...");
         return add_cl_ret::skipped_cl;
     }
     if (sz == 0) {
@@ -86,9 +85,7 @@ bool BreakID::doit()
 
     breakid->set_verbosity(0);
     // breakid->set_symBreakingFormLength(2);
-    uint32_t ncls = solver->binTri.irredBins;
-    ncls += solver->longIrredCls.size();
-    breakid->start_dynamic_cnf(solver->nVars(), ncls);
+    breakid->start_dynamic_cnf(solver->nVars());
 
     if (solver->check_assumptions_contradict_foced_assignement()) {
         delete breakid;
