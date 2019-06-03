@@ -552,7 +552,7 @@ bool EGaussian::find_truths2(
 
     //if this clause is already satisfied
     if ((*clauseIt)[row_n]) {
-        *j++ = *i; // store watch list
+        *j++ = *i;
         return true;
     }
 
@@ -697,7 +697,7 @@ bool EGaussian::find_truths2(
             break;
         case gret::nothing: // this row already treu
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
-            *j++ = *i;        // store watch list
+            *j++ = *i;
             if (orig_basic) { // recover
                 GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
                 GasVar_state[p] = basic_var;
