@@ -590,6 +590,7 @@ bool EGaussian::find_truths2(
             }
 
             // long conflict clause
+            *j++ = *i;
             gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
             gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
             gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(row_n).rhs();
