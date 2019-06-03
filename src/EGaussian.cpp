@@ -204,6 +204,7 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat) {
 
 void EGaussian::fill_matrix(matrixset& origMat) {
     var_to_col.clear();
+    cout << "Fill matrix " << matrix_no << endl;
 
     // decide which variable in matrix column and the number of rows
     origMat.num_rows = select_columnorder(origMat);
@@ -568,27 +569,10 @@ bool EGaussian::find_truths2(
 
     switch (ret) {
         case gret::confl: {
-            // printf("dd %d:This row is conflict %d    n",row_n , solver->level[p] );
-            if (tmp_clause.size() >= gqd.conflict_size_gauss) { // choose perfect conflict clause
-                *j++ = *i;
-                if (orig_basic) {                           // recover
-                    GasVar_state[matrix.nb_rows[row_n]] = non_basic_var;
-                    GasVar_state[p] = basic_var;
-                }
-
-                return true;
-            }
-
             // binary conflict
             if (tmp_clause.size() == 2) {
                 // printf("%d:This row is conflict two    n",row_n);
                 //WARNING !!!! if orig_basic is FALSE, this will delete
-                auto& ws = solver->gwatches[p];
-                i++;
-                for(; i != end; i++) {
-                    *j++ = *i;
-                }
-                ws.shrink_(i-j);
                 delete_gausswatch(orig_basic, row_n, p);
 
                 GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
@@ -609,7 +593,6 @@ bool EGaussian::find_truths2(
             }
 
             // long conflict clause
-            *j++ = *i;
             gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
             gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
             gqd.conflict_size_gauss = tmp_clause.size();
@@ -620,7 +603,7 @@ bool EGaussian::find_truths2(
                 GasVar_state[p] = basic_var;
             }
 
-            return true;
+            return false;
         }
 
         case gret::prop: {
@@ -651,14 +634,7 @@ bool EGaussian::find_truths2(
                 gqd.ret_gauss = 3; // gaussian matrix is unit_propagation
                 solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
-
-                auto& ws = solver->gwatches[p];
-                i++;
-                for(; i != end; i++) {
-                    *j++ = *i;
-                }
-                ws.shrink_(i-j);
-                return false;
+                return true;
             }
 
             if (tmp_clause.size() == 2) {
@@ -745,7 +721,7 @@ bool EGaussian::find_truths2(
     return true;
 }
 
-void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
+bool EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     // cout << "eliminate this column :" << e_var  << " " << p << " " << e_row_n <<  endl;
     PackedMatrix::iterator this_row = matrix.matrix.beginMatrix() + gqd.e_row_n;
     PackedMatrix::iterator rowI = matrix.matrix.beginMatrix();
@@ -779,14 +755,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                 switch (ret) {
                     case gret::confl: {
-                        // printf("%d:This row is conflict in eliminate col    n",num_row);
-                        if (tmp_clause.size() >= gqd.conflict_size_gauss || gqd.ret_gauss == 3) {
-                            solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
-
-                            // update in this row non_basic variable
-                            matrix.nb_rows[num_row] = p;
-                            break;
-                        }
                         gqd.conflict_size_gauss = tmp_clause.size();
                         if (gqd.conflict_size_gauss == 2) {
                             // printf("%d:This row is conflict two in eliminate col    n",num_row);
@@ -810,6 +778,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             // gaussian matrix is unit conflict clause
                             gqd.ret_gauss = 1;
                             solver->sum_Enunit++;
+                            return false;
 
                         } else {
                             solver->gwatches[p].push(
@@ -827,6 +796,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             // immediately
                             solver->qhead = solver->trail.size();
                             solver->gqhead = solver->trail.size();
+                            return false;
                         }
                         break;
                     }
@@ -902,6 +872,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     }
 
     // Debug_funtion();
+    return true;
 }
 
 void EGaussian::print_matrix(matrixset& m) const {

@@ -1219,15 +1219,23 @@ lbool Searcher::search()
             assert(ok);
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
-                llbool ret = Gauss_elimination();
-                if (ret == l_Continue) {
+                gauss_ret ret = Gauss_elimination();
+                //cout << "ret: " << ret << " -- " << endl;
+                if (ret == gauss_ret::g_cont) {
+                    cout << "g_cont" << endl;
                     check_need_restart();
                     continue;
                 //TODO conflict should be goto-d to "confl" label
-                } else if (ret != l_Nothing) {
-                    dump_search_loop_stats(myTime);
-                    return ret;
                 }
+
+                if (ret == gauss_ret::g_false) {
+                    cout << "g_false" << endl;
+                    dump_search_loop_stats(myTime);
+                    return l_False;
+                }
+
+                assert(ret == gauss_ret::g_nothing);
+                //cout << "g_nothing" << endl;
             }
             #endif //USE_GAUSS
 
@@ -2731,20 +2739,19 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 }
 
 #ifdef USE_GAUSS
-llbool Searcher::Gauss_elimination()
+Searcher::gauss_ret Searcher::Gauss_elimination()
 {
     if (decisionLevel() > solver->conf.gaussconf.decision_until ||
         gqueuedata.size() == 0
     ) {
-        return l_Nothing;
+        return gauss_ret::g_nothing;
     }
 
     for(auto& gqd: gqueuedata) {
         gqd.reset();
 
         if (gqd.engaus_disable) {
-            //TODO
-            return l_Nothing;
+            continue;
         }
 
         if (solver->conf.gaussconf.autodisable &&
@@ -2761,9 +2768,9 @@ llbool Searcher::Gauss_elimination()
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
-    bool unit_in_some_matrix = false;
+    bool confl_in_gauss = false;
     while (gqhead <  qhead
-        && !unit_in_some_matrix
+        && !confl_in_gauss
     ) {
         const Lit p = trail[gqhead++];
         assert(gwatches.size() > p.var());
@@ -2776,37 +2783,48 @@ llbool Searcher::Gauss_elimination()
             continue;
 
         for (; i != end; i++) {
+            if (gqueuedata[i->matrix_num].engaus_disable)
+                continue;
+
             gqueuedata[i->matrix_num].enter_matrix = true;
             if (gmatrixes[i->matrix_num]->find_truths2(
                 i, j, end, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
-                //binary clause
-                unit_in_some_matrix = true;
-                break;
+                confl_in_gauss = true;
+                continue;
             }
         }
+        ws.shrink(i-j);
 
-        for (size_t g = 0; g < gqueuedata.size(); g++) {
+        for (size_t g = 0; g < gqueuedata.size() && !confl_in_gauss; g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
             if (gqueuedata[g].do_eliminate) {
-                gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
+                if (!gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g])) {
+                    confl_in_gauss = true;
+                }
             }
         }
     }
 
-    llbool finret = l_Nothing;
+    gauss_ret finret = gauss_ret::g_nothing;
     for (GaussQData& gqd: gqueuedata) {
+        if (gqd.engaus_disable)
+            continue;
+
         if (gqd.enter_matrix) {
             gqueuedata[0].big_gaussnum++;
             sum_EnGauss++;
         }
 
-        //There was a unit conflict/prop but this is not that matrix.
+        //There was a conflict but this is not that matrix.
         //Just skip.
-        if (unit_in_some_matrix
-            && gqd.ret_gauss !=1
-            && gqd.ret_gauss !=3
+        if (confl_in_gauss
+            && gqd.ret_gauss !=0 //long confl
+            && gqd.ret_gauss !=1 //short confl
         ) {
             continue;
         }
@@ -2828,8 +2846,8 @@ llbool Searcher::Gauss_elimination()
                 gqd.big_conflict++;
                 sum_Enconflict++;
 
-                if (!ret) return l_False;
-                return l_Continue;
+                if (!ret) return gauss_ret::g_false;
+                return gauss_ret::g_cont;
             }
             case 0:{  // conflict
                 gqd.big_conflict++;
@@ -2849,15 +2867,15 @@ llbool Searcher::Gauss_elimination()
 
                 bool ret = handle_conflict<false>(gqd.confl);
                 solver->cl_alloc.clauseFree(gqd.confl.get_offset());
-                if (!ret) return l_False;
-                return l_Continue;
+                if (!ret) return gauss_ret::g_false;
+                return gauss_ret::g_cont;
             }
 
             case 2:  // propagation
             case 3: // unit propagation
                 gqd.big_propagate++;
                 sum_Enpropagate++;
-                finret = l_Continue;
+                finret = gauss_ret::g_cont;
 
             case 4:
                 //nothing
@@ -2865,7 +2883,7 @@ llbool Searcher::Gauss_elimination()
 
             default:
                 assert(false);
-                return l_Nothing;
+                return gauss_ret::g_nothing;
         }
     }
     return finret;

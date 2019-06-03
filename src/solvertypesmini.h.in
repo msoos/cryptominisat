@@ -120,9 +120,6 @@ inline std::ostream& operator<<(std::ostream& co, const std::vector<Lit>& lits)
 #define l_False lbool((uint8_t)1)
 #define l_Undef lbool((uint8_t)2)
 
-
-class llbool;
-
 class lbool {
     uint8_t value;
 
@@ -131,7 +128,6 @@ public:
 
     lbool()       : value(0) { }
     explicit lbool(bool x) : value(!x) { }
-    inline lbool(llbool b);
 
     bool  operator == (lbool b) const {
         return ((b.value & 2) & (value & 2)) | (!(b.value & 2) & (value == b.value));
@@ -159,7 +155,6 @@ public:
 
     friend int   toInt  (lbool l);
     friend lbool toLbool(int   v);
-    friend class llbool;
 };
 
 inline lbool boolToLBool(const bool b)
@@ -168,38 +163,6 @@ inline lbool boolToLBool(const bool b)
         return l_True;
     else
         return l_False;
-}
-
-
-/**
-@brief A very hackish lbool that also supports l_Nothing and l_Continue
-*/
-class llbool
-{
-    char value;
-
-public:
-    llbool(): value(0) {}
-    llbool(lbool v) :
-            value(v.value) {}
-    llbool(char a) :
-            value(a) {}
-
-    inline bool operator!=(const llbool& v) const {
-        return (v.value != value);
-    }
-
-    inline bool operator==(const llbool& v) const {
-        return (v.value == value);
-    }
-
-    friend class lbool;
-};
-static const llbool l_Nothing  = llbool(2);
-static const llbool l_Continue = llbool(3);
-inline lbool::lbool(llbool b): value(b.value) {
-    assert(b != l_Nothing);
-    assert(b != l_Continue);
 }
 
 inline std::ostream& operator<<(std::ostream& cout, const lbool val)

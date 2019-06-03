@@ -142,7 +142,8 @@ class Searcher : public HyperEngine
         //Gauss
         #ifdef USE_GAUSS
         void clearEnGaussMatrixes();  //  clear Gaussian matrixes
-        llbool Gauss_elimination(); // gaussian elimination in DPLL
+        enum  class gauss_ret {g_cont, g_nothing, g_false};
+        gauss_ret Gauss_elimination(); // gaussian elimination in DPLL
         vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
         vector<GaussQData> gqueuedata;
 

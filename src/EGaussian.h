@@ -136,7 +136,7 @@ class EGaussian {
     );
 
     // when basic variable is touch , eliminate one col
-    void eliminate_col2(
+    bool eliminate_col2(
         uint32_t p,
         GaussQData& gqd
     );
