@@ -534,7 +534,6 @@ void EGaussian::delete_gausswatch(
 bool EGaussian::find_truths2(
     GaussWatched*& i,
     GaussWatched*& j,
-    const GaussWatched* end,
     uint32_t p,
     const uint32_t row_n,
     GaussQData& gqd

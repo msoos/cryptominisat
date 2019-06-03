@@ -2790,7 +2790,7 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
 
             gqueuedata[i->matrix_num].enter_matrix = true;
             if (gmatrixes[i->matrix_num]->find_truths2(
-                i, j, end, p.var(), i->row_id, gqueuedata[i->matrix_num])
+                i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
