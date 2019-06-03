@@ -204,7 +204,6 @@ uint32_t EGaussian::select_columnorder(matrixset& origMat) {
 
 void EGaussian::fill_matrix(matrixset& origMat) {
     var_to_col.clear();
-    cout << "Fill matrix " << matrix_no << endl;
 
     // decide which variable in matrix column and the number of rows
     origMat.num_rows = select_columnorder(origMat);
