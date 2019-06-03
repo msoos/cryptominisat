@@ -629,7 +629,7 @@ bool EGaussian::find_truths2(
                 }
 
                 gqd.ret_gauss = 3; // gaussian matrix is unit_propagation
-                solver->gqhead = solver->qhead; // quick break gaussian elimination
+                //solver->gqhead = solver->qhead; // quick break gaussian elimination
                 (*clauseIt).setBit(row_n);          // this clause arleady sat
                 return true;
             }
