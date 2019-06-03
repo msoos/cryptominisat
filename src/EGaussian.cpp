@@ -585,7 +585,6 @@ bool EGaussian::find_truths2(
 
                 // for tell outside solver
                 gqd.ret_gauss = 1; // gaussian matrix is binary conflict clause
-                gqd.conflict_size_gauss = 2;
                 solver->sum_Enunit++;
                 return false;
             }
@@ -593,7 +592,6 @@ bool EGaussian::find_truths2(
             // long conflict clause
             gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
             gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
-            gqd.conflict_size_gauss = tmp_clause.size();
             gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(row_n).rhs();
 
             if (orig_basic) { // recover
@@ -753,8 +751,7 @@ bool EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                 switch (ret) {
                     case gret::confl: {
-                        gqd.conflict_size_gauss = tmp_clause.size();
-                        if (gqd.conflict_size_gauss == 2) {
+                        if (tmp_clause.size() == 2) {
                             // printf("%d:This row is conflict two in eliminate col    n",num_row);
                             delete_gausswatch(false, num_row);
                             assert(GasVar_state[tmp_clause[0].var()] == basic_var);
@@ -787,7 +784,6 @@ bool EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             // for tell outside solver
                             gqd.conflict_clause_gauss = tmp_clause; // choose better conflice clause
                             gqd.ret_gauss = 0;                      // gaussian matrix is   conflict
-                            gqd.conflict_size_gauss = tmp_clause.size();
                             gqd.xorEqualFalse_gauss = !matrix.matrix.getMatrixAt(num_row).rhs();
 
                             // If conflict is happened in eliminaiton conflict, then we only return
