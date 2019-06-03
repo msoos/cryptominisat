@@ -2783,8 +2783,10 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
             continue;
 
         for (; i != end; i++) {
-            if (gqueuedata[i->matrix_num].engaus_disable)
+            if (gqueuedata[i->matrix_num].engaus_disable) {
+                //remove watch and continue
                 continue;
+            }
 
             gqueuedata[i->matrix_num].enter_matrix = true;
             if (gmatrixes[i->matrix_num]->find_truths2(
