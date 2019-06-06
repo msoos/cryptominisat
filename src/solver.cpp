@@ -948,6 +948,11 @@ bool Solver::renumber_variables(bool must_renumber)
     CNF::updateVars(outerToInter, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
+#ifdef USE_BREAKID
+    if (breakid) {
+        breakid->updateVars(outerToInter, interToOuter);
+    }
+#endif
 
     if (conf.doStamp) {
         stamp.updateVars(outerToInter, interToOuter2, seen);

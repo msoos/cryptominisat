@@ -42,6 +42,9 @@ public:
     bool doit();
     void finished_solving();
     void start_new_solving();
+    void updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& interToOuter);
 
 private:
     void break_symms();

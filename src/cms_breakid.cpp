@@ -24,12 +24,22 @@ THE SOFTWARE.
 #include "solver.h"
 #include "clausecleaner.h"
 #include "breakid/breakid.hpp"
+#include "varupdatehelper.h"
 
 using namespace CMSat;
 
 BreakID::BreakID(Solver* _solver):
     solver(_solver)
 {
+}
+
+void BreakID::updateVars(
+    const vector<uint32_t>& outerToInter
+    , const vector<uint32_t>& /*interToOuter*/)
+{
+    if (symm_var != var_Undef) {
+        symm_var = getUpdatedVar(symm_var, outerToInter);
+    }
 }
 
 template<class T>
