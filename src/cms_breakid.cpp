@@ -186,8 +186,8 @@ void BreakID::break_symms()
         vector<Lit> ass;
         ass.push_back(Lit(symm_var, true));
         solver->set_assumptions(ass);
-        assert(solver->varData[symm_var].removed == Removed::none);
     }
+    assert(solver->varData[symm_var].removed == Removed::none);
 
     auto brk = breakid->get_brk_cls();
     for (auto cl: brk) {
