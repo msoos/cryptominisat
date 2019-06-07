@@ -141,10 +141,10 @@ class Searcher : public HyperEngine
 
         //Gauss
         #ifdef USE_GAUSS
-        void clearEnGaussMatrixes();  //  clear Gaussian matrixes
-        enum  class gauss_ret {g_cont, g_nothing, g_false};
+        void clear_gauss_matrices();
+        enum class gauss_ret {g_cont, g_nothing, g_false};
         gauss_ret gauss_jordan_elim();
-        vector<EGaussian*> gmatrixes;   // enhance gaussian matrix
+        vector<EGaussian*> gmatrices;
         vector<GaussQData> gqueuedata;
 
         uint32_t sum_gauss_called;

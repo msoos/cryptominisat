@@ -98,7 +98,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 Searcher::~Searcher()
 {
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
 }
 
@@ -2239,7 +2239,7 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     {
         MatrixFinder finder(solver);
         ok = finder.findMatrixes();
@@ -2248,7 +2248,7 @@ lbool Searcher::solve(
             goto end;
         }
     }
-    if (!solver->init_all_matrixes()) {
+    if (!solver->init_all_matrices()) {
         return l_False;
     }
     #endif //USE_GAUSS
@@ -2796,7 +2796,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             }
 
             gqueuedata[i->matrix_num].enter_matrix = true;
-            if (gmatrixes[i->matrix_num]->find_truths2(
+            if (gmatrices[i->matrix_num]->find_truths2(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
@@ -2817,7 +2817,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 continue;
 
             if (gqueuedata[g].do_eliminate) {
-                gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
+                gmatrices[g]->eliminate_col2(p.var(), gqueuedata[g]);
                 confl_in_gauss = (
                     gqueuedata[g].ret == gauss_res::long_confl ||
                     gqueuedata[g].ret == gauss_res::bin_confl);
@@ -3376,7 +3376,7 @@ void Searcher::cancelUntil(uint32_t level)
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        for (EGaussian* gauss: gmatrixes)
+        for (EGaussian* gauss: gmatrices)
             if (gauss) {
                 gauss->canceling(trail_lim[level]);
             }
@@ -3488,7 +3488,7 @@ inline bool Searcher::check_order_heap_sanity() const
 }
 
 #ifdef USE_GAUSS
-void Searcher::clearEnGaussMatrixes()
+void Searcher::clear_gauss_matrices()
 {
     for(uint32_t i = 0; i < gqueuedata.size(); i++) {
         auto gqd = gqueuedata[i];
@@ -3517,14 +3517,14 @@ void Searcher::clearEnGaussMatrixes()
         gqd.reset_stats();
     }
 
-    //cout << "Clearing matrixes" << endl;
-    for(EGaussian* g: gmatrixes) {
+    //cout << "Clearing matrices" << endl;
+    for(EGaussian* g: gmatrices) {
         delete g;
     }
     for(auto& w: gwatches) {
         w.clear();
     }
-    gmatrixes.clear();
+    gmatrices.clear();
     gqueuedata.clear();
 }
 #endif

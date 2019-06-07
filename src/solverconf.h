@@ -115,7 +115,7 @@ class GaussConf
         , autodisable(true)
         , max_matrix_rows(5000)
         , min_matrix_rows(2)
-        , max_num_matrixes(5)
+        , max_num_matrices(5)
     {
     }
 
@@ -123,7 +123,7 @@ class GaussConf
     bool autodisable;
     uint32_t max_matrix_rows; //The maximum matrix size -- no. of rows
     uint32_t min_matrix_rows; //The minimum matrix size -- no. of rows
-    uint32_t max_num_matrixes; //Maximum number of matrixes
+    uint32_t max_num_matrices; //Maximum number of matrices
 
     //Matrix extraction config
     bool doMatrixFind = true;

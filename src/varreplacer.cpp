@@ -1001,7 +1001,7 @@ bool VarReplacer::replace_if_enough_is_found(const size_t limit, uint64_t* bogop
     }
 
     #ifdef USE_GAUSS
-    solver->clearEnGaussMatrixes();
+    solver->clear_gauss_matrices();
     #endif
 
     if (replaced)

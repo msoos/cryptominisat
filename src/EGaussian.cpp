@@ -695,7 +695,7 @@ bool EGaussian::find_truths2(
         assert(e_row_n != std::numeric_limits<uint32_t>::max());
         assert(orig_basic);
         assert(ret == 5 );*/
-    if (solver->gmatrixes.size() == 1) {
+    if (solver->gmatrices.size() == 1) {
         assert(solver->gwatches[gqd.e_var].size() == 1 && "Not sure about this assert");
     }
     gqd.do_eliminate = true;

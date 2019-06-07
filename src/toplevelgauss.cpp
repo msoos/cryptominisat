@@ -119,7 +119,7 @@ bool TopLevelGauss::extractInfo()
     runStats.blockCutTime += cpuTime() -myTime;
     myTime = cpuTime();
 
-    //These mappings will be needed for the matrixes, which will have far less
+    //These mappings will be needed for the matrices, which will have far less
     //variables than solver->nVars()
     outerToInterVarMap.clear();
     outerToInterVarMap.resize(solver->nVars(), std::numeric_limits<uint32_t>::max());

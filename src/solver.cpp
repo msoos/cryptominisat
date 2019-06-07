@@ -890,7 +890,7 @@ bool Solver::renumber_variables(bool must_renumber)
     }
 
     #ifdef USE_GAUSS
-    solver->clearEnGaussMatrixes();
+    solver->clear_gauss_matrices();
     #endif
 
     if (!must_renumber
@@ -1764,7 +1764,7 @@ lbool Solver::iterate_until_solved()
         }
     }
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
     return status;
 }
@@ -2030,7 +2030,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     clear_order_heap();
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
 
     if (conf.verbosity >= 6) {
@@ -4035,10 +4035,10 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 }
 
 #ifdef USE_GAUSS
-bool Solver::init_all_matrixes()
+bool Solver::init_all_matrices()
 {
     assert(ok);
-    for (EGaussian*& g :gmatrixes) {
+    for (EGaussian*& g :gmatrices) {
         bool created = false;
         // initial arrary. return true is fine , return false means solver already false;
         if (!g->full_init(created)) {

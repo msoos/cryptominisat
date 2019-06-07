@@ -316,7 +316,7 @@ void ClauseAllocator::consolidate(
     }
 
     #ifdef USE_GAUSS
-    for (EGaussian* gauss : solver->gmatrixes) {
+    for (EGaussian* gauss : solver->gmatrices) {
         if (gauss == NULL) {
             continue;
         }

@@ -251,7 +251,7 @@ class Solver : public Searcher
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS
-        bool init_all_matrixes();
+        bool init_all_matrices();
         #endif
 
 

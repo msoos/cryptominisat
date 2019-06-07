@@ -1371,7 +1371,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
                 solver->xorclauses.clear();
                 #ifdef USE_GAUSS
-                solver->clearEnGaussMatrixes();
+                solver->clear_gauss_matrices();
                 #endif
 
                 eliminate_empty_resolvent_vars();
