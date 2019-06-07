@@ -822,6 +822,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                         if (tmp_clause.size() == 2) {
                             propagation_twoclause();
+                            #ifdef VERBOSE_DEBUG
+                            cout << "-> Binary prop" << matrix_no << endl;
+                            #endif
                         } else {
                             Clause* cla = solver->cl_alloc.Clause_new(
                                 tmp_clause,
@@ -835,19 +838,19 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             clauses_toclear.push_back(std::make_pair(offs, solver->trail.size() - 1));
                             assert(solver->value((*cla)[0].var()) == l_Undef);
                             solver->enqueue((*cla)[0], PropBy(offs));
+                            #ifdef VERBOSE_DEBUG
+                            cout << "-> Long prop" << matrix_no << endl;
+                            #endif
                         }
                         gqd.ret = gauss_res::prop;
                         (*clauseIt).setBit(num_row); // this clause arleady sat
-                        #ifdef VERBOSE_DEBUG
-                        cout << "-> eliminate_col2 - Gauss normal prop matrix " << matrix_no << endl;
-                        #endif
                         break;
                     }
                     case gret::nothing_fnewwatch: // find new watch list
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> Nothing, clause not already satisfied, pushing in "
+                        cout << "-> Nothing, clause NOT already satisfied, pushing in "
                         << nb_var+1 << " as non-basic var ( "
-                        << num_row << " row)"
+                        << num_row << " row) "
                         <<  matrix_no << endl;
                         #endif
 
@@ -856,7 +859,10 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         break;
                     case gret::nothing: // this row already satisfied
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> Nothing to do, already satisfied " << matrix_no << endl;
+                        cout << "-> Nothing to do, already satisfied , pushing in "
+                        << p+1 << " as non-basic var ( "
+                        << num_row << " row) "
+                        << matrix_no << endl;
                         #endif
 
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
