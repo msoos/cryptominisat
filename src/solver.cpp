@@ -1079,7 +1079,7 @@ void Solver::set_assumptions()
 {
     assert(okay());
 
-    unfill_assumptions_set_from(assumptions);
+    unfill_assumptions_set();
     conflict.clear();
     assumptions.clear();
 
@@ -1395,7 +1395,7 @@ lbool Solver::simplify_problem_outside()
         status = simplify_problem(false);
         conf.doSLS = backup;
     }
-    unfill_assumptions_set_from(assumptions);
+    unfill_assumptions_set();
     assumptions.clear();
     return status;
 }
@@ -1519,7 +1519,7 @@ lbool Solver::solve_with_assumptions(
     }
 
     handle_found_solution(status, only_sampling_solution);
-    unfill_assumptions_set_from(assumptions);
+    unfill_assumptions_set();
     assumptions.clear();
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();

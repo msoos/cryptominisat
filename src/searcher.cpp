@@ -146,7 +146,7 @@ void Searcher::updateVars(
 
 void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
 {
-    solver->unfill_assumptions_set_from(assumptions);
+    solver->unfill_assumptions_set();
     for(AssumptionPair& lit_pair: assumptions) {
         assert(lit_pair.lit_inter.var() < outerToInter.size());
         lit_pair.lit_inter = getUpdatedLit(lit_pair.lit_inter, outerToInter);
@@ -3120,16 +3120,16 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
     }
 }
 
-void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from)
+void Searcher::unfill_assumptions_set()
 {
-    if (unfill_from.empty()) {
+    if (assumptions.empty()) {
         goto end;
     }
 
     //First check -- can't unset at the same time since the same
     //internal variable may be inside 'assumptions' -- in case the variables
     //have been replaced with each other.
-    for(const AssumptionPair lit_pair: unfill_from) {
+    for(const AssumptionPair lit_pair: assumptions) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()] == l_Undef) {
@@ -3141,7 +3141,7 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
     }
 
     //Then unset
-    for(const AssumptionPair lit_pair: unfill_from) {
+    for(const AssumptionPair lit_pair: assumptions) {
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
             assumptionsSet[lit.var()] = l_Undef;
