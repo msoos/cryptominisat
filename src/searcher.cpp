@@ -1222,14 +1222,14 @@ lbool Searcher::search()
                 gauss_ret ret = Gauss_elimination();
                 //cout << "ret: " << ret << " -- " << endl;
                 if (ret == gauss_ret::g_cont) {
-                    cout << "g_cont" << endl;
+                    //cout << "g_cont" << endl;
                     check_need_restart();
                     continue;
                 //TODO conflict should be goto-d to "confl" label
                 }
 
                 if (ret == gauss_ret::g_false) {
-                    cout << "g_false" << endl;
+                    //cout << "g_false" << endl;
                     dump_search_loop_stats(myTime);
                     return l_False;
                 }
@@ -2741,6 +2741,9 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 #ifdef USE_GAUSS
 Searcher::gauss_ret Searcher::Gauss_elimination()
 {
+    #ifdef VERBOSE_DEBUG
+    cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
+    #endif
     if (decisionLevel() > solver->conf.gaussconf.decision_until ||
         gqueuedata.size() == 0
     ) {
@@ -2779,9 +2782,6 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
         GaussWatched* j = i;
         const GaussWatched* end = ws.end();
 
-        if (i == end)
-            continue;
-
         for (; i != end; i++) {
             if (gqueuedata[i->matrix_num].engaus_disable) {
                 //remove watch and continue
@@ -2795,19 +2795,23 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
                 continue;
             } else {
                 confl_in_gauss = true;
-                continue;
+                i++;
+                break;
             }
+        }
+
+        for (; i != end; i++) {
+            *j++ = *i;
         }
         ws.shrink(i-j);
 
-        for (size_t g = 0; g < gqueuedata.size() && !confl_in_gauss; g++) {
+        for (size_t g = 0; g < gqueuedata.size(); g++) {
             if (gqueuedata[g].engaus_disable)
                 continue;
 
             if (gqueuedata[g].do_eliminate) {
-                if (!gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g])) {
-                    confl_in_gauss = true;
-                }
+                gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
+                confl_in_gauss = (gqueuedata[g].ret_gauss == 0 || gqueuedata[g].ret_gauss == 1);
             }
         }
     }
@@ -2833,7 +2837,8 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
 
 
         switch (gqd.ret_gauss) {
-            case 1:{ // unit conflict
+            // binary conflict
+            case 1:{
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
 #ifdef VERBOSE_DEBUG
@@ -2851,13 +2856,25 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
             }
-            case 0:{  // conflict
+
+            // long conflict
+            case 0:{
                 gqd.big_conflict++;
                 sum_Enconflict++;
 
+                #ifdef DEBUG_GAUSS
+                for(uint32_t i = 0; i < gqd.conflict_clause_gauss.size(); i++) {
+                    Lit& l = gqd.conflict_clause_gauss[i];
+                    if (value(l) != l_False) {
+                        cout << "about to fail, size: " << gqd.conflict_clause_gauss.size() << " i = " << i << " val: " << value(l) << endl;
+                    }
+                    assert(value(l) == l_False);
+                }
+                #endif
+
                 Clause* conflPtr = solver->cl_alloc.Clause_new(
                     gqd.conflict_clause_gauss,
-                    gqd.xorEqualFalse_gauss
+                    sumConflicts
                     #ifdef STATS_NEEDED
                     , clauseID++
                     #endif
@@ -2874,7 +2891,6 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
             }
 
             case 2:  // propagation
-            case 3: // unit propagation
                 gqd.big_propagate++;
                 sum_Enpropagate++;
                 finret = gauss_ret::g_cont;
