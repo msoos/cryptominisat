@@ -3102,7 +3102,7 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()] != l_Undef) {
                 //Assumption contains the same literal twice. Shouldn't really be allowed...
-                //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
+                //but variable replacement can mess with things, including this.
             } else {
                 assumptionsSet[lit.var()] = lit.sign() ? l_False : l_True;
             }
@@ -3133,7 +3133,8 @@ void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_
         const Lit lit = lit_pair.lit_inter;
         if (lit.var() < assumptionsSet.size()) {
             if (assumptionsSet[lit.var()] == l_Undef) {
-                cout << "ERROR: var " << lit.var() + 1 << " is in assumptions but not in assumptionsSet" << endl;
+                cout << "ERROR: var " << lit.var() + 1
+                << " is in assumptions but not in assumptionsSet" << endl;
             }
             assert(assumptionsSet[lit.var()] != l_Undef);
         }
