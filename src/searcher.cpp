@@ -2744,9 +2744,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
     #endif
-    if (decisionLevel() > solver->conf.gaussconf.decision_until ||
-        gqueuedata.size() == 0
-    ) {
+    if (gqueuedata.empty() || !solver->conf.gaussconf.enabled) {
         return gauss_ret::g_nothing;
     }
 

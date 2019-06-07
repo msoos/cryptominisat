@@ -124,11 +124,14 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     }
     finder.clean_equivalent_xors(xors);
 
-    if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses
-        || solver->conf.gaussconf.decision_until <= 0
-    ) {
-        if (solver->conf.verbosity >= 2)
-            cout << "c [matrix] too few xor clauses:" << xors.size() << endl;
+    if (!solver->conf.gaussconf.enabled) {
+        if (solver->conf.verbosity >= 2) {
+            cout << "c [matrix] GJ disabled, not using XOR clauses for GJ" << endl;
+        }
+        return true;
+    } else if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
+        if (solver->conf.verbosity)
+            cout << "c [matrix] too few xor clauses for GJ: " << xors.size() << endl;
 
         return true;
     }

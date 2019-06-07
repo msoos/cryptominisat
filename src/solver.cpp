@@ -1329,7 +1329,7 @@ void Solver::check_config_parameters() const
 
     #ifdef USE_GAUSS
     if ((drat->enabled() || solver->conf.simulate_drat) &&
-        conf.gaussconf.decision_until > 0
+        conf.gaussconf.enabled
     )  {
         std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
