@@ -1380,21 +1380,24 @@ lbool Solver::simplify_problem_outside()
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
 
+    lbool status = l_Undef;
     if (!ok) {
-        return l_False;
+        status = l_False;
+        goto end;
     }
     conflict.clear();
     check_config_parameters();
     datasync->rebuild_bva_map();
     set_assumptions();
 
-    lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
         bool backup = conf.doSLS;
         conf.doSLS = false;
         status = simplify_problem(false);
         conf.doSLS = backup;
     }
+
+    end:
     unfill_assumptions_set();
     assumptions.clear();
     return status;
