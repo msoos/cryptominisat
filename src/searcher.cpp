@@ -1219,7 +1219,7 @@ lbool Searcher::search()
             assert(ok);
             #ifdef USE_GAUSS
             if (!update_bogoprops) {
-                gauss_ret ret = Gauss_elimination();
+                gauss_ret ret = gauss_jordan_elim();
                 //cout << "ret: " << ret << " -- " << endl;
                 if (ret == gauss_ret::g_cont) {
                     //cout << "g_cont" << endl;
@@ -2739,7 +2739,7 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 }
 
 #ifdef USE_GAUSS
-Searcher::gauss_ret Searcher::Gauss_elimination()
+Searcher::gauss_ret Searcher::gauss_jordan_elim()
 {
     #ifdef VERBOSE_DEBUG
     cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
