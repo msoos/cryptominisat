@@ -71,7 +71,7 @@ class EGaussian {
     // basic    = TRUE  -- non-assigned var
     // non-basic= FALSE -- assigned var
     // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
-    vec<bool>         GasVar_state ;
+    vec<bool>         var_state ;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information

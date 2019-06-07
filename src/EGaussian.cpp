@@ -224,8 +224,8 @@ void EGaussian::fill_matrix(matrixset& origMat) {
     assert(origMat.num_rows == matrix_row);
 
     // reset  gaussian matrixt condition
-    GasVar_state.clear();                                // reset variable state
-    GasVar_state.growTo(solver->nVars(), non_basic_var); // init varaible state
+    var_state.clear();                                // reset variable state
+    var_state.growTo(solver->nVars(), non_basic_var); // init varaible state
     origMat.row_to_nb_var.clear();                             // clear non-basic
 
     delete_gauss_watch_this_matrix();
@@ -361,7 +361,7 @@ void EGaussian::eliminate(matrixset& m) {
             }
             i++;
             ++rowIt;
-            GasVar_state[m.col_to_var[j]] = basic_var; // this column is basic variable
+            var_state[m.col_to_var[j]] = basic_var; // this column is basic variable
             // printf("basic var:%d    n",m.col_to_var[j] + 1);
         }
         j++;
@@ -380,7 +380,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
     uint32_t adjust_zero = 0; //  elimination row
 
     while (rowIt != end) {
-        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, GasVar_state, nb_var);
+        const uint32_t popcnt = (*rowIt).find_watchVar(tmp_clause, matrix.col_to_var, var_state, nb_var);
         switch (popcnt) {
 
             //Conflict potentially
@@ -407,7 +407,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 //adjusting
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
-                GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
+                var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
 
                 solver->sum_initUnit++;
                 return gret::unit_prop;
@@ -425,7 +425,7 @@ gret EGaussian::adjust_matrix(matrixset& m) {
 
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
-                GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
+                var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
                 solver->sum_initTwo++;
                 break;
             }
@@ -544,7 +544,8 @@ bool EGaussian::find_truths2(
     const uint32_t row_n,
     GaussQData& gqd
 ) {
-    assert(gqd.ret_gauss != 0 && gqd.ret_gauss != 1);
+    assert(gqd.ret != gauss_res::long_confl &&
+    gqd.ret != gauss_res::bin_confl);
 
     // printf("dd Watch variable : %d  ,  Wathch row num %d    n", p , row_n);
 
@@ -565,14 +566,14 @@ bool EGaussian::find_truths2(
     }
 
     //swap basic and non_basic variable
-    if (GasVar_state[p] == basic_var) {
+    if (var_state[p] == basic_var) {
         orig_basic = true;
-        GasVar_state[matrix.row_to_nb_var[row_n]] = basic_var;
-        GasVar_state[p] = non_basic_var;
+        var_state[matrix.row_to_nb_var[row_n]] = basic_var;
+        var_state[p] = non_basic_var;
     }
 
     const gret ret = (*rowIt).propGause(
-        tmp_clause, solver->assigns, matrix.col_to_var, GasVar_state,
+        tmp_clause, solver->assigns, matrix.col_to_var, var_state,
         nb_var, var_to_col[p]);
 
     switch (ret) {
@@ -583,18 +584,15 @@ bool EGaussian::find_truths2(
                 //WARNING !!!! if orig_basic is FALSE, this will delete
                 delete_gausswatch(orig_basic, row_n, p);
 
-                GasVar_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
-                GasVar_state[tmp_clause[1].var()] = non_basic_var;
+                var_state[tmp_clause[0].var()] = non_basic_var; // delete value state;
+                var_state[tmp_clause[1].var()] = non_basic_var;
                 matrix.row_to_nb_var[row_n] =
                     std::numeric_limits<uint32_t>::max(); // delete non basic value in this row
-                (*rowIt).setZero();                       // reset this row all zero
+                (*rowIt).setZero();
 
-                conflict_twoclause(gqd.confl);            // get two conflict  clause
-                solver->qhead = solver->trail.size(); // quick break gaussian elimination
-                solver->gqhead = solver->trail.size();
+                conflict_twoclause(gqd.confl);
 
-                // for tell outside solver
-                gqd.ret_gauss = 1; // gaussian matrix is binary conflict clause
+                gqd.ret = gauss_res::bin_confl;
                 #ifdef VERBOSE_DEBUG
                 cout << "find_truths2 - Gauss binary conf matrix " << matrix_no << endl;
                 #endif
@@ -605,14 +603,14 @@ bool EGaussian::find_truths2(
             // long conflict clause
             *j++ = *i;
             gqd.conflict_clause_gauss = tmp_clause;
-            gqd.ret_gauss = 0;                      // gaussian matrix is long conflict
+            gqd.ret = gauss_res::long_confl;
             #ifdef VERBOSE_DEBUG
             cout << "find_truths2 - Gauss long conf matrix " << matrix_no << endl;
             #endif
 
             if (orig_basic) { // recover
-                GasVar_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                GasVar_state[p] = basic_var;
+                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
+                var_state[p] = basic_var;
             }
 
             return false;
@@ -638,15 +636,15 @@ bool EGaussian::find_truths2(
                 assert(solver->value((*cla)[0].var()) == l_Undef);
                 solver->enqueue((*cla)[0], PropBy(offs));
             }
-            gqd.ret_gauss = 2; // gaussian matrix is propagation
+            gqd.ret = gauss_res::prop;
             #ifdef VERBOSE_DEBUG
             cout << "find_truths2 - Gauss prop matrix " << matrix_no
             << " tmp_clause.size: " << tmp_clause.size() << endl;
             #endif
 
             if (orig_basic) { // recover
-                GasVar_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                GasVar_state[p] = basic_var;
+                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
+                var_state[p] = basic_var;
             }
 
             (*clauseIt).setBit(row_n); // this clause arleady sat
@@ -670,9 +668,9 @@ bool EGaussian::find_truths2(
                 matrix.row_to_nb_var[row_n] = nb_var; // update in this row non_basic variable
                 return true;
             }
-            GasVar_state[matrix.row_to_nb_var[row_n]] =
+            var_state[matrix.row_to_nb_var[row_n]] =
                 non_basic_var;                // recover non_basic variable
-            GasVar_state[nb_var] = basic_var; // set basic variable
+            var_state[nb_var] = basic_var; // set basic variable
             gqd.e_var = nb_var;                   // store the eliminate valuable
             gqd.e_row_n = row_n;
             break;
@@ -682,8 +680,8 @@ bool EGaussian::find_truths2(
             // printf("%d:This row is nothing( maybe already true)     n",row_n);
             *j++ = *i;
             if (orig_basic) { // recover
-                GasVar_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
-                GasVar_state[p] = basic_var;
+                var_state[matrix.row_to_nb_var[row_n]] = non_basic_var;
+                var_state[p] = basic_var;
             }
             (*clauseIt).setBit(row_n); // this clause arleady sat
             return true;
@@ -756,7 +754,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 const gret ret = (*rowI).propGause(
                     tmp_clause,
                     solver->assigns, matrix.col_to_var,
-                    GasVar_state, nb_var, ori_nb_col);
+                                     var_state, nb_var, ori_nb_col);
 
                 switch (ret) {
                     case gret::confl: {
@@ -765,13 +763,12 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         #endif
 
                         if (tmp_clause.size() == 2) {
-                            // printf("%d:This row is conflict two in eliminate col    n",num_row);
                             delete_gausswatch(false, num_row);
-                            assert(GasVar_state[tmp_clause[0].var()] == basic_var);
-                            assert(GasVar_state[tmp_clause[1].var()] == non_basic_var);
+                            assert(var_state[tmp_clause[0].var()] == basic_var);
+                            assert(var_state[tmp_clause[1].var()] == non_basic_var);
 
                             // delete value state
-                            GasVar_state[tmp_clause[0].var()] = non_basic_var;
+                            var_state[tmp_clause[0].var()] = non_basic_var;
 
                             // delete non basic value in this row
                             matrix.row_to_nb_var[num_row] = std::numeric_limits<uint32_t>::max();
@@ -779,11 +776,10 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
                             conflict_twoclause(gqd.confl);
 
-                            gqd.ret_gauss = 1; // gaussian matrix is binary_conflict
+                            gqd.ret = gauss_res::bin_confl;
                             solver->sum_Enunit++;
                             #ifdef VERBOSE_DEBUG
-                            cout << "eliminate_col2 - Gauss bin confl matrix " << matrix_no
-                            << " -> exiting eliminate_col2"
+                            cout << "-> Gauss bin confl matrix " << matrix_no
                             << endl;
                             #endif
 
@@ -797,10 +793,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             matrix.row_to_nb_var[num_row] = p;
 
                             gqd.conflict_clause_gauss = tmp_clause;
-                            gqd.ret_gauss = 0;    // gaussian matrix is conflict
+                            gqd.ret = gauss_res::long_confl;
                             #ifdef VERBOSE_DEBUG
-                            cout << "-> eliminate_col2 - Gauss long confl matrix " << matrix_no
-                            << " -> exiting eliminate_col2"
+                            cout << "-> Gauss long confl matrix " << matrix_no
                             << endl;
                             #endif
 
@@ -810,11 +805,13 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     }
                     case gret::prop: {
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> propagation during fixup"<< endl;
+                        cout << "-> propagation during fixup" << endl;
                         #endif
 
                         // if conflicted already, just update non_basic variable
-                        if (gqd.ret_gauss == 1 || gqd.ret_gauss == 0) {
+                        if (gqd.ret == gauss_res::bin_confl ||
+                            gqd.ret == gauss_res::long_confl
+                        ) {
                             solver->gwatches[p].push(GaussWatched(num_row, matrix_no));
                             matrix.row_to_nb_var[num_row] = p;
                             break;
@@ -839,7 +836,7 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             assert(solver->value((*cla)[0].var()) == l_Undef);
                             solver->enqueue((*cla)[0], PropBy(offs));
                         }
-                        gqd.ret_gauss = 2;
+                        gqd.ret = gauss_res::prop;
                         (*clauseIt).setBit(num_row); // this clause arleady sat
                         #ifdef VERBOSE_DEBUG
                         cout << "-> eliminate_col2 - Gauss normal prop matrix " << matrix_no << endl;

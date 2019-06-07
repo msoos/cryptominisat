@@ -2758,9 +2758,9 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
         }
 
         if (solver->conf.gaussconf.autodisable &&
-            (gqd.big_gaussnum > 1000 && gqd.big_conflict*2+gqd.big_propagate < (uint32_t)((double)gqd.big_gaussnum*0.01))
+            (gqd.big_gaussnum > 1000 && gqd.num_conflicts*2+gqd.num_props < (uint32_t)((double)gqd.big_gaussnum*0.01))
         ) {
-            const double perc = stats_line_percent(gqd.big_conflict*2+gqd.big_propagate, gqd.big_gaussnum);
+            const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.big_gaussnum);
             if (solver->conf.verbosity) {
                 cout << "c [matrix] Disabling ALL GJ-elim in this round. "
                 " Usefulness was: " << std::setprecision(2) << std::fixed << perc <<  "%" << endl;
@@ -2811,7 +2811,9 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
 
             if (gqueuedata[g].do_eliminate) {
                 gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
-                confl_in_gauss = (gqueuedata[g].ret_gauss == 0 || gqueuedata[g].ret_gauss == 1);
+                confl_in_gauss = (
+                    gqueuedata[g].ret == gauss_res::long_confl ||
+                    gqueuedata[g].ret == gauss_res::bin_confl);
             }
         }
     }
@@ -2829,16 +2831,15 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
         //There was a conflict but this is not that matrix.
         //Just skip.
         if (confl_in_gauss
-            && gqd.ret_gauss !=0 //long confl
-            && gqd.ret_gauss !=1 //short confl
+            && gqd.ret != gauss_res::long_confl
+            && gqd.ret != gauss_res::bin_confl
         ) {
             continue;
         }
 
 
-        switch (gqd.ret_gauss) {
-            // binary conflict
-            case 1:{
+        switch (gqd.ret) {
+            case gauss_res::bin_confl :{
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
 #ifdef VERBOSE_DEBUG
@@ -2850,16 +2851,15 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
                 << endl;
 #endif
 
-                gqd.big_conflict++;
+                gqd.num_conflicts++;
                 sum_Enconflict++;
 
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
             }
 
-            // long conflict
-            case 0:{
-                gqd.big_conflict++;
+            case gauss_res::long_confl :{
+                gqd.num_conflicts++;
                 sum_Enconflict++;
 
                 #ifdef DEBUG_GAUSS
@@ -2890,12 +2890,12 @@ Searcher::gauss_ret Searcher::Gauss_elimination()
                 return gauss_ret::g_cont;
             }
 
-            case 2:  // propagation
-                gqd.big_propagate++;
+            case gauss_res::prop:
+                gqd.num_props++;
                 sum_Enpropagate++;
                 finret = gauss_ret::g_cont;
 
-            case 4:
+            case gauss_res::none:
                 //nothing
                 break;
 
@@ -3486,13 +3486,13 @@ void Searcher::clearEnGaussMatrixes()
 {
     for (auto& gqd: gqueuedata) {
         if (solver->conf.verbosity && gqd.big_gaussnum > 0) {
-            cout << "c [gauss] big_conflict/big_gaussnum:" << (double)gqd.big_conflict/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
-            cout << "c [gauss] big_propagate/big_gaussnum:" << (double)gqd.big_propagate/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
+            cout << "c [gauss] big_conflict/big_gaussnum:" << (double)gqd.num_conflicts/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
+            cout << "c [gauss] big_propagate/big_gaussnum:" << (double)gqd.num_props/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
         }
 
         if (solver->conf.verbosity >= 2 && gqd.big_gaussnum > 0) {
-            cout << "c [gauss] big_propagate  : "; print_value_kilo_mega(gqd.big_propagate); cout << endl;
-            cout << "c [gauss] big_conflict   : "; print_value_kilo_mega(gqd.big_conflict); cout << endl;
+            cout << "c [gauss] big_propagate  : "; print_value_kilo_mega(gqd.num_props); cout << endl;
+            cout << "c [gauss] big_conflict   : "; print_value_kilo_mega(gqd.num_conflicts); cout << endl;
             cout << "c [gauss] big_gaussnum   : "; print_value_kilo_mega(gqd.big_gaussnum); cout << endl;
 
             cout << "c [gauss] - sumstats -" << endl;
