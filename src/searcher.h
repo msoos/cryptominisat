@@ -241,7 +241,7 @@ class Searcher : public HyperEngine
                 return ~lit_inter < ~other.lit_inter;
             }
         };
-        void fill_assumptions_set_from(const vector<AssumptionPair>& fill_from);
+        void fill_assumptions_set();
         void unfill_assumptions_set();
         void renumber_assumptions(const vector<uint32_t>& outerToInter);
         ///we cannot eliminate / component-handle such vars

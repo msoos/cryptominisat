@@ -1098,7 +1098,7 @@ void Solver::set_assumptions()
         assumptions.push_back(AssumptionPair(inter_lit, outside_lit));
     }
 
-    fill_assumptions_set_from(assumptions);
+    fill_assumptions_set();
 }
 
 void Solver::check_model_for_assumptions() const

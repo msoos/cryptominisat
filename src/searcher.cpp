@@ -151,7 +151,7 @@ void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
         assert(lit_pair.lit_inter.var() < outerToInter.size());
         lit_pair.lit_inter = getUpdatedLit(lit_pair.lit_inter, outerToInter);
     }
-    solver->fill_assumptions_set_from(assumptions);
+    solver->fill_assumptions_set();
 }
 
 template<bool update_bogoprops>
@@ -3085,7 +3085,7 @@ size_t Searcher::mem_used() const
     return mem;
 }
 
-void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)
+void Searcher::fill_assumptions_set()
 {
     #ifdef SLOW_DEBUG
     for(auto x: assumptionsSet) {
@@ -3093,7 +3093,7 @@ void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from
     }
     #endif
 
-    if (fill_from.empty()) {
+    if (assumptions.empty()) {
         return;
     }
 
