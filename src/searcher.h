@@ -117,7 +117,7 @@ class Searcher : public HyperEngine
             assert(var < nVars());
             assert(var < assumptionsSet.size());
             #endif
-            return assumptionsSet.at(var);
+            return varData[var].assumption;
         }
         lbool lit_inside_assumptions(const Lit lit) const
         {
@@ -125,10 +125,10 @@ class Searcher : public HyperEngine
             assert(lit.var() < nVars());
             assert(lit.var() < assumptionsSet.size());
             #endif
-            if (assumptionsSet.at(lit.var()) == l_Undef) {
+            if (varData[lit.var()].assumption == l_Undef) {
                 return l_Undef;
             } else {
-                lbool val = assumptionsSet.at(lit.var());
+                lbool val = varData[lit.var()].assumption;
                 return val ^ lit.sign();
             }
         }
@@ -166,15 +166,13 @@ class Searcher : public HyperEngine
         uint32_t sum_Enunit;            // the total sum of number getting two-variable xor clasue in  gaussian matrix
         uint32_t sum_EnGauss;        // the total sum of time entering gaussian matrix
 
-        void testing_fill_assumptions_set()
-        {
-            assumptionsSet.clear();
-            assumptionsSet.resize(nVars(), l_Undef);
-        }
         double get_cla_inc() const
         {
             return cla_inc;
         }
+
+        //Testing assumptions
+        void check_assumptions_sanity();
 
         //Needed for tests around renumbering
         void rebuildOrderHeap();
@@ -183,6 +181,8 @@ class Searcher : public HyperEngine
             order_heap_vsids.clear();
             order_heap_maple.clear();
         }
+
+
         template<bool update_bogoprops>
         void bump_cl_act(Clause* cl);
         void simple_create_learnt_clause(
@@ -226,28 +226,28 @@ class Searcher : public HyperEngine
 
 
         struct AssumptionPair {
-            AssumptionPair(const Lit _inter, const Lit _outer):
-                lit_inter(_inter)
-                , lit_orig_outside(_outer)
+            AssumptionPair(const Lit _outer, const Lit _outside):
+                lit_outer(_outer)
+                , lit_orig_outside(_outside)
             {
             }
 
-            Lit lit_inter;
+            Lit lit_outer;
             Lit lit_orig_outside; //not outer, but outside(!)
+
+            bool operator==(const AssumptionPair& other) const {
+                return other.lit_outer == lit_outer &&
+                other.lit_orig_outside == lit_orig_outside;
+            }
 
             bool operator<(const AssumptionPair& other) const
             {
                 //Yes, we need reverse in terms of inverseness
-                return ~lit_inter < ~other.lit_inter;
+                return ~lit_outer < ~other.lit_outer;
             }
         };
         void fill_assumptions_set();
         void unfill_assumptions_set();
-        void renumber_assumptions(const vector<uint32_t>& outerToInter);
-        ///we cannot eliminate / component-handle such vars
-        ///Needed so checking is fast.
-        ///0 = not an assumptions, 1 == TRUE, 2 == FALSE
-        vector<lbool> assumptionsSet;
 
         //Note that this array can have the same internal variable more than
         //once, in case one has been replaced with the other. So if var 1 =  var 2

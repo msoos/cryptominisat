@@ -140,18 +140,6 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
-
-    renumber_assumptions(outerToInter);
-}
-
-void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
-{
-    solver->unfill_assumptions_set();
-    for(AssumptionPair& lit_pair: assumptions) {
-        assert(lit_pair.lit_inter.var() < outerToInter.size());
-        lit_pair.lit_inter = getUpdatedLit(lit_pair.lit_inter, outerToInter);
-    }
-    solver->fill_assumptions_set();
 }
 
 template<bool update_bogoprops>
@@ -1104,7 +1092,13 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
         return;
     }
 
-    std::sort(assumptions.begin(), assumptions.end());
+    vector<AssumptionPair> inter_assumptions;
+    for(const auto& ass: assumptions) {
+        inter_assumptions.push_back(
+            AssumptionPair(map_outer_to_inter(ass.lit_outer), ass.lit_orig_outside));
+    }
+
+    std::sort(inter_assumptions.begin(), inter_assumptions.end());
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
     //They now are in the order where we can go through them linearly
@@ -1119,14 +1113,16 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     uint32_t at_assump = 0;
     for(size_t i = 0; i < out_conflict.size(); i++) {
         Lit& lit = out_conflict[i];
-        while(lit != ~assumptions[at_assump].lit_inter) {
+
+        //lit_outer is actually INTER here, because we updated above
+        while(lit != ~inter_assumptions[at_assump].lit_outer) {
             at_assump++;
-            assert(at_assump < assumptions.size() && "final conflict contains literals that are not from the assumptions!");
+            assert(at_assump < inter_assumptions.size() && "final conflict contains literals that are not from the assumptions!");
         }
-        assert(lit == ~assumptions[at_assump].lit_inter);
+        assert(lit == ~inter_assumptions[at_assump].lit_outer);
 
         //Update to correct outside lit
-        lit = ~assumptions[at_assump].lit_orig_outside;
+        lit = ~inter_assumptions[at_assump].lit_orig_outside;
     }
 }
 
@@ -1292,7 +1288,7 @@ lbool Searcher::new_decision()
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
-        Lit p = assumptions[decisionLevel()].lit_inter;
+        Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
         assert(varData[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
@@ -3023,7 +3019,6 @@ size_t Searcher::mem_used() const
     mem += model.capacity()*sizeof(lbool);
     mem += analyze_stack.mem_used();
     mem += assumptions.capacity()*sizeof(Lit);
-    mem += assumptionsSet.capacity()*sizeof(char);
 
     if (conf.verbosity >= 3) {
         cout
@@ -3088,70 +3083,27 @@ size_t Searcher::mem_used() const
 void Searcher::fill_assumptions_set()
 {
     #ifdef SLOW_DEBUG
-    for(auto x: assumptionsSet) {
-        assert(x == l_Undef);
+    for(auto x: varData) {
+        assert(x.assumption == l_Undef);
     }
     #endif
 
-    if (assumptions.empty()) {
-        return;
-    }
-
     for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()] != l_Undef) {
-                //Assumption contains the same literal twice. Shouldn't really be allowed...
-                //but variable replacement can mess with things, including this.
-            } else {
-                assumptionsSet[lit.var()] = lit.sign() ? l_False : l_True;
-            }
-        } else {
-            if (value(lit) == l_Undef) {
-                std::cerr
-                << "ERROR: Lit " << lit
-                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
-                << " value: " << value(lit)
-                << " -- value should NOT be l_Undef"
-                << endl;
-            }
-            assert(value(lit) != l_Undef);
-        }
+        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
+        varData[lit.var()].assumption = lit.sign() ? l_False : l_True;
     }
 }
 
 void Searcher::unfill_assumptions_set()
 {
-    if (assumptions.empty()) {
-        goto end;
-    }
-
-    //First check -- can't unset at the same time since the same
-    //internal variable may be inside 'assumptions' -- in case the variables
-    //have been replaced with each other.
     for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()] == l_Undef) {
-                cout << "ERROR: var " << lit.var() + 1
-                << " is in assumptions but not in assumptionsSet" << endl;
-            }
-            assert(assumptionsSet[lit.var()] != l_Undef);
-        }
+        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
+        varData[lit.var()].assumption = l_Undef;
     }
 
-    //Then unset
-    for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = l_Undef;
-        }
-    }
-
-    end:;
     #ifdef SLOW_DEBUG
-    for(auto x: assumptionsSet) {
-        assert(x == l_Undef);
+    for(auto x: varData) {
+        assert(x.assumption == l_Undef);
     }
     #endif
 }
@@ -3527,3 +3479,17 @@ void Searcher::clear_gauss_matrices()
     gqueuedata.clear();
 }
 #endif
+
+void Searcher::check_assumptions_sanity()
+{
+    for(AssumptionPair& lit_pair: assumptions) {
+        Lit inter_lit = map_outer_to_inter(lit_pair.lit_outer);
+        assert(inter_lit.var() < varData.size());
+        assert(varData[inter_lit.var()].removed == Removed::none);
+        if (varData[inter_lit.var()].assumption == l_Undef) {
+            cout << "Assump " << inter_lit << " has .assumption : "
+            << varData[inter_lit.var()].assumption << endl;
+        }
+        assert(varData[inter_lit.var()].assumption != l_Undef);
+    }
+}

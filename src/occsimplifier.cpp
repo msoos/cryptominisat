@@ -1308,6 +1308,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
         #ifdef SLOW_DEBUG
         solver->check_implicit_stats(true);
+        solver->check_assumptions_sanity();
         #endif
         if (!solver->propagate_occur()) {
             solver->ok = false;
