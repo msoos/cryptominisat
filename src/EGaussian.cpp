@@ -241,7 +241,6 @@ bool EGaussian::full_init(bool& created) {
 
     while (do_again_gauss) { // need to chekc
         do_again_gauss = false;
-        solver->sum_initEnGauss++; // to gather statistics
 
         if (!solver->clauseCleaner->clean_xor_clauses(xorclauses)) {
             return false;
@@ -261,13 +260,13 @@ bool EGaussian::full_init(bool& created) {
         switch (ret) {
             case gret::confl:
                 solver->ok = false;
-                solver->sum_Enconflict++;
+                solver->sum_gauss_confl++;
                 return false;
                 break;
             case gret::prop:
             case gret::unit_prop:
                 do_again_gauss = true;
-                solver->sum_Enpropagate++;
+                solver->sum_gauss_prop++;
 
                 assert(solver->decisionLevel() == 0);
                 solver->ok = (solver->propagate<false>().isNULL());
@@ -388,13 +387,11 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
-
-                solver->sum_initUnit++;
                 return gret::unit_prop;
             }
 
             //Binary XOR
-            case 2: { // this row have to variable
+            case 2: {
                 // printf("%d:This row have two variable!!!! in adjust matrix    n",row_id);
                 xorEqualFalse = !m.matrix.getMatrixAt(row_id).rhs();
 
@@ -406,7 +403,6 @@ gret EGaussian::adjust_matrix(matrixset& m) {
                 (*rowIt).setZero(); // reset this row all zero
                 m.row_to_nb_var.push(std::numeric_limits<uint32_t>::max()); // delete non basic value in this row
                 var_state[tmp_clause[0].var()] = non_basic_var; // delete basic value in this row
-                solver->sum_initTwo++;
                 break;
             }
 
@@ -582,7 +578,6 @@ bool EGaussian::find_truths2(
                 << "mat[" << matrix_no << "] "
                 << "find_truths2 - Gauss binary conf " << endl;
                 #endif
-                solver->sum_Enunit++;
                 return false;
             }
 
@@ -775,7 +770,6 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             conflict_twoclause(gqd.confl);
 
                             gqd.ret = gauss_res::bin_confl;
-                            solver->sum_Enunit++;
                             #ifdef VERBOSE_DEBUG
                             cout
                             << "mat[" << matrix_no << "] "

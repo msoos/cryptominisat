@@ -145,24 +145,16 @@ class Searcher : public HyperEngine
         vector<EGaussian*> gmatrices;
         vector<GaussQData> gqueuedata;
 
-        uint32_t sum_gauss_called;
-        uint32_t sum_gauss_confl;
-        uint32_t sum_gauss_prop;
-        uint32_t sum_gauss_unit_truths;
+        uint32_t sum_gauss_called = 0;
+        uint32_t sum_gauss_confl = 0;
+        uint32_t sum_gauss_prop = 0;
+        uint32_t sum_gauss_unit_truths = 0;
+        uint32_t sum_gauss_entered_mtx = 0;
         uint32_t get_sum_gauss_called() const;
         uint32_t get_sum_gauss_confl() const;
         uint32_t get_sum_gauss_prop() const;
         uint32_t get_sum_gauss_unit_truths() const;
         #endif
-
-        // stats
-        uint32_t sum_initEnGauss;      // the total sum of time calling "full_init"
-        uint32_t sum_initUnit;           // the total sum of number getting unit  xor clasue in  initial gaussian matrix
-        uint32_t sum_initTwo;           // the total sum of number getting two-variable xor clasue in  initial gaussian matrix
-        uint32_t sum_Enconflict;        // the total sum of conflict in gaussian matrix
-        uint32_t sum_Enpropagate;    // the total sum of propagation in gaussian matrx
-        uint32_t sum_Enunit;            // the total sum of number getting two-variable xor clasue in  gaussian matrix
-        uint32_t sum_EnGauss;        // the total sum of time entering gaussian matrix
 
         double get_cla_inc() const
         {
