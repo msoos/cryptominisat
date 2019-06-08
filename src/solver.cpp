@@ -908,15 +908,16 @@ bool Solver::clean_xor_clauses_from_duplicate_and_set_vars()
 //Beware. Cannot be called while Searcher is running.
 bool Solver::renumber_variables(bool must_renumber)
 {
+    assert(okay());
     assert(decisionLevel() == 0);
     if (nVars() == 0) {
-        return true;
+        return okay();
     }
 
     if (!must_renumber
         && calc_renumber_saving() < 0.2
     ) {
-        return true;
+        return okay();
     }
 
     #ifdef USE_GAUSS
