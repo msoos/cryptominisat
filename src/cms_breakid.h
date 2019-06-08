@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define CMS_BREAKID_H
 
 #include <vector>
-#include "cryptominisat5/solvertypesmini.h"
+#include "solvertypes.h"
 
 using std::vector;
 
@@ -46,6 +46,15 @@ public:
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter);
     void update_var_after_varreplace();
+
+    static uint32_t hash_clause(const Lit* lits, const uint32_t size) {
+        uint32_t seed = size;
+        for(uint32_t i = 0; i < size; i++) {
+            uint32_t val = lits[i].toInt();
+            seed ^= val + 0x9e3779b9 + (val << 6) + (val >> 2);
+        }
+        return seed;
+    }
 
 private:
     void break_symms();

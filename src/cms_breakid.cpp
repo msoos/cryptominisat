@@ -26,6 +26,8 @@ THE SOFTWARE.
 #include "breakid/breakid.hpp"
 #include "varupdatehelper.h"
 #include "varreplacer.h"
+#include "occsimplifier.h"
+#include "subsumeimplicit.h"
 
 using namespace CMSat;
 
@@ -86,13 +88,113 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
     return add_cl_ret::added_cl;
 }
 
+struct EqCls {
+    EqCls(ClauseAllocator& _alloc) :
+        cl_alloc(_alloc)
+    {}
+
+    bool operator()(ClOffset off1, ClOffset off2) {
+        Clause* cl1 = cl_alloc.ptr(off1);
+        Clause* cl2 = cl_alloc.ptr(off2);
+
+        if (cl1->stats.hash_val != cl2->stats.hash_val) {
+            return cl1->stats.hash_val < cl2->stats.hash_val;
+        }
+
+        if (cl1->size() != cl2->size()) {
+            return cl1->size() < cl2->size();
+        }
+
+        //same hash, same size
+        for(uint32_t i = 0; i < cl1->size(); i++) {
+            if (cl1->getData()[i] != cl2->getData()[i]) {
+                return (cl1->getData()[i] < cl2->getData()[i]);
+            }
+        }
+
+        //they are equivalent
+        return false;
+    }
+
+    ClauseAllocator& cl_alloc;
+};
+
+static bool equiv(Clause* cl1, Clause* cl2) {
+    if (cl1->stats.hash_val != cl2->stats.hash_val) {
+        return false;
+    }
+
+    if (cl1->size() != cl2->size()) {
+        return false;
+    }
+
+    for(uint32_t i = 0; i < cl1->size(); i++) {
+        if (cl1->getData()[i] != cl2->getData()[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool BreakID::doit()
 {
+    assert(solver->okay());
+    assert(solver->decisionLevel() == 0);
+
+    if (!solver->conf.doStrSubImplicit) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] cannot run BreakID without implicit submsumption, "
+            << "it would find too many (bad) symmetries"
+            << endl;
+        }
+        return true;
+    }
+
     solver->clauseCleaner->remove_and_clean_all();
     double myTime = cpuTime();
 
     assert(breakid == NULL);
     breakid = new BID::BreakID;
+
+    solver->subsumeImplicit->subsume_implicit();
+    vector<ClOffset> cls;
+    for(ClOffset offs: solver->occsimplifier->clauses) {
+        Clause* cl = solver->cl_alloc.ptr(offs);
+        if (cl->freed() || cl->getRemoved() || cl->red()) {
+            continue;
+        }
+        cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
+        cls.push_back(offs);
+
+        assert(std::is_sorted(cl->begin(), cl->end()));
+    }
+    std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
+
+    size_t old_size = cls.size();
+    if (cls.size() > 1 && true) {
+        vector<ClOffset>::iterator prev = cls.begin();
+        vector<ClOffset>::iterator i = cls.begin();
+        i++;
+        Clause* prevcl = solver->cl_alloc.ptr(*prev);
+        for(vector<ClOffset>::iterator end = cls.end(); i != end; i++) {
+            Clause* cl = solver->cl_alloc.ptr(*i);
+            if (!equiv(cl, prevcl)) {
+                prev++;
+                *prev = *i;
+                prevcl = cl;
+            }
+        }
+        prev++;
+        cls.resize(prev-cls.begin());
+    }
+    cout << "c [breakid] sorted cls"
+    << " dupl: " << print_value_kilo_mega(old_size-cls.size())
+    << solver->conf.print_times(cpuTime() - myTime)
+    <<  endl;
+
+
 
     breakid->set_verbosity(0);
     // breakid->set_symBreakingFormLength(2);

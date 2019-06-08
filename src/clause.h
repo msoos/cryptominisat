@@ -134,7 +134,10 @@ struct ClauseStats
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:2;
-    float   activity = 1.0;
+    union {
+        float   activity;
+        uint32_t hash_val;
+    };
     uint32_t last_touched = 0;
     #ifdef FINAL_PREDICTOR
     float       glue_rel                    = 0;
