@@ -554,7 +554,7 @@ DLL_PUBLIC void SATSolver::set_allow_otf_gauss()
         Solver& s = *data->solvers[i];
         //s.conf.reconfigure_at = 0;
         //s.conf.reconfigure_val = 15;
-        s.conf.gaussconf.max_num_matrixes = 10;
+        s.conf.gaussconf.max_num_matrices = 10;
         s.conf.gaussconf.autodisable = false;
         s.conf.allow_elim_xor_vars = false;
     }
@@ -1139,7 +1139,7 @@ void DLL_PUBLIC SATSolver::set_up_for_scalmc()
 {
     for (size_t i = 0; i < data->solvers.size(); i++) {
         SolverConf conf = data->solvers[i]->getConf();
-        conf.gaussconf.max_num_matrixes = 2;
+        conf.gaussconf.max_num_matrices = 2;
         conf.gaussconf.autodisable = false;
         conf.global_multiplier_multiplier_max = 3;
         conf.global_timeout_multiplier_multiplier = 1.5;

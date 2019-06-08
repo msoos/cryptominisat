@@ -40,7 +40,6 @@ struct comp_handle : public ::testing::Test {
         //conf.verbosity = 20;
         s = new Solver(&conf, &must_inter);
         s->new_vars(30);
-        s->testing_fill_assumptions_set();
         chandle = s->compHandler;
     }
     ~comp_handle()

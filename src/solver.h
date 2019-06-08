@@ -257,11 +257,11 @@ class Solver : public Searcher
         vector<Lit> get_toplevel_units_internal(bool outer_numbering) const;
 
         #ifdef USE_GAUSS
-        bool init_all_matrixes();
+        bool init_all_matrices();
         #endif
 
         //BreakID
-        void set_assumptions(vector<Lit> extra_assumps);
+        void set_assumptions(vector<Lit> extra_assumps = {});
 
 
         //if set to TRUE, a clause has been removed during add_clause_int

@@ -914,7 +914,7 @@ bool Solver::renumber_variables(bool must_renumber)
     }
 
     #ifdef USE_GAUSS
-    solver->clearEnGaussMatrixes();
+    solver->clear_gauss_matrices();
     #endif
 
     if (!must_renumber
@@ -1063,10 +1063,6 @@ void Solver::new_var(const bool bva, const uint32_t orig_outer)
         datasync->new_var(bva);
     }
 
-    if (bva) {
-        assumptionsSet.push_back(l_Undef);
-    }
-
     //Too expensive
     //test_reflectivity_of_renumbering();
 }
@@ -1088,10 +1084,6 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     }
     datasync->save_on_var_memory();
 
-    assert(assumptionsSet.size() >= nVars());
-    assumptionsSet.resize(nVars());
-    assumptionsSet.shrink_to_fit();
-
     const double time_used = cpuTime() - myTime;
     if (sqlStats) {
         sqlStats->time_passed_min(
@@ -1106,21 +1098,18 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 //Uneliminates, readds components, fills assumptionsSet, all the good stuff
 void Solver::set_assumptions(vector<Lit> extra_assumps)
 {
-    assert(okay());
+    assert(assumptions.empty());
+    #ifdef SLOW_DEBUG
+    for(auto x: varData) {
+        assert(x.assumption == l_Undef);
+    }
+    #endif
 
-    unfill_assumptions_set_from(assumptions);
     conflict.clear();
-    assumptions.clear();
-
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-
     inter_assumptions.insert(inter_assumptions.end(), extra_assumps.begin(), extra_assumps.end());
-    assumptionsSet.resize(nVars(), l_Undef);
-    if (inter_assumptions.empty()) {
-        return;
-    }
 
     assert(inter_assumptions.size() ==
         extra_assumps.size() + outside_assumptions.size());
@@ -1131,15 +1120,17 @@ void Solver::set_assumptions(vector<Lit> extra_assumps)
         if (i < outside_assumptions.size()) {
             outside_lit = outside_assumptions[i];
         }
-        assumptions.push_back(AssumptionPair(inter_lit, outside_lit));
+
+        const Lit outer_lit = map_inter_to_outer(inter_assumptions[i]);
+        assumptions.push_back(AssumptionPair(outer_lit, outside_lit));
     }
 
-    fill_assumptions_set_from(assumptions);
+    fill_assumptions_set();
 }
 
 void Solver::check_model_for_assumptions() const
 {
-    for(const AssumptionPair lit_pair: assumptions) {
+    for(const AssumptionPair& lit_pair: assumptions) {
         const Lit outside_lit = lit_pair.lit_orig_outside;
         if (outside_lit.var() == var_Undef) {
             //This is an assumption that is a BVA variable
@@ -1370,7 +1361,7 @@ void Solver::check_config_parameters() const
 
     #ifdef USE_GAUSS
     if ((drat->enabled() || solver->conf.simulate_drat) &&
-        conf.gaussconf.decision_until > 0
+        conf.gaussconf.enabled
     )  {
         std::cerr << "ERROR: Cannot have both DRAT and GAUSS on at the same time!" << endl;
         exit(-1);
@@ -1415,11 +1406,13 @@ lbool Solver::simplify_problem_outside()
 
     conf.global_timeout_multiplier = conf.orig_global_timeout_multiplier;
     solveStats.num_simplify_this_solve_call = 0;
+    set_assumptions();
 
+    lbool status = l_Undef;
     if (!ok) {
-        return l_False;
+        status = l_False;
+        goto end;
     }
-    conflict.clear();
     check_config_parameters();
     datasync->rebuild_bva_map();
     #ifdef USE_BREAKID
@@ -1427,9 +1420,7 @@ lbool Solver::simplify_problem_outside()
         breakid->start_new_solving();
     }
     #endif
-    set_assumptions(vector<Lit>());
 
-    lbool status = l_Undef;
     if (nVars() > 0 && conf.do_simplify_problem) {
         bool backup_sls = conf.doSLS;
         bool backup_breakid = conf.doBreakid;
@@ -1439,7 +1430,9 @@ lbool Solver::simplify_problem_outside()
         conf.doSLS = backup_sls;
         conf.doBreakid = backup_breakid;
     }
-    unfill_assumptions_set_from(assumptions);
+
+    end:
+    unfill_assumptions_set();
     assumptions.clear();
     return status;
 }
@@ -1461,6 +1454,7 @@ lbool Solver::solve_with_assumptions(
     decisions_reaching_model.clear();
     decisions_reaching_model_valid = false;
     move_to_outside_assumps(_assumptions);
+    set_assumptions();
     #ifdef SLOW_DEBUG
     if (ok) {
         assert(check_order_heap_sanity());
@@ -1471,7 +1465,6 @@ lbool Solver::solve_with_assumptions(
     #endif
 
     solveStats.num_solve_calls++;
-    conflict.clear();
     check_config_parameters();
     luby_loop_num = 0;
 
@@ -1509,10 +1502,8 @@ lbool Solver::solve_with_assumptions(
     }
     #endif
 
-
     //Clean up as a startup
     datasync->rebuild_bva_map();
-    set_assumptions(vector<Lit>());
 
     if (conf.preprocess == 2) {
         status = load_state(conf.saved_state_file);
@@ -1575,7 +1566,7 @@ lbool Solver::solve_with_assumptions(
     }
 
     handle_found_solution(status, only_sampling_solution);
-    unfill_assumptions_set_from(assumptions);
+    unfill_assumptions_set();
     assumptions.clear();
     conf.max_confl = std::numeric_limits<long>::max();
     conf.maxTime = std::numeric_limits<double>::max();
@@ -1820,7 +1811,7 @@ lbool Solver::iterate_until_solved()
         }
     }
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
     return status;
 }
@@ -1897,6 +1888,7 @@ lbool Solver::execute_inprocess_strategy(
         ) {
             break;
         }
+
         assert(watches.get_smudged_list().empty());
         assert(prop_at_head());
         assert(okay());
@@ -1904,6 +1896,7 @@ lbool Solver::execute_inprocess_strategy(
         #ifdef SLOW_DEBUG
         check_stats();
         check_no_duplicate_lits_anywhere();
+        check_assumptions_sanity();
         #endif
 
         token = trim(token);
@@ -1930,6 +1923,7 @@ lbool Solver::execute_inprocess_strategy(
             }
             #ifdef SLOW_DEBUG
             solver->check_stats();
+            check_assumptions_sanity();
             #endif
         }
 
@@ -2110,7 +2104,7 @@ lbool Solver::simplify_problem(const bool startup)
 
     clear_order_heap();
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
 
     if (conf.verbosity >= 6) {
@@ -3197,27 +3191,36 @@ vector<pair<Lit, Lit> > Solver::get_all_binary_xors() const
 
 void Solver::update_assumptions_after_varreplace()
 {
+    #ifdef SLOW_DEBUG
+    for(AssumptionPair& lit_pair: assumptions) {
+        const Lit inter_lit = map_outer_to_inter(lit_pair.lit_outer);
+        assert(inter_lit.var() < varData.size());
+        if (varData[inter_lit.var()].assumption == l_Undef) {
+            cout << "Assump " << inter_lit << " has .assumption : "
+            << varData[inter_lit.var()].assumption << endl;
+        }
+        assert(varData[inter_lit.var()].assumption != l_Undef);
+    }
+    #endif
+
     //Update assumptions
     for(AssumptionPair& lit_pair: assumptions) {
-        if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = l_Undef;
-        } else {
-            assert(value(lit_pair.lit_inter) != l_Undef
-                && "There can be NO other reason -- vars in assumptions cannot be elimed or decomposed");
-        }
+        const Lit orig = lit_pair.lit_outer;
+        lit_pair.lit_outer = varReplacer->get_lit_replaced_with_outer(orig);
 
-        Lit orig = lit_pair.lit_inter;
-        lit_pair.lit_inter = varReplacer->get_lit_replaced_with(lit_pair.lit_inter);
-        //remove old from set
-        if (orig != lit_pair.lit_inter && assumptionsSet.size() > orig.var()) {
-            assumptionsSet[orig.var()] = l_Undef;
-        }
-
-        //add new to set
-        if (assumptionsSet.size() > lit_pair.lit_inter.var()) {
-            assumptionsSet[lit_pair.lit_inter.var()] = lit_pair.lit_inter.sign() ? l_False: l_True;
+        //remove old from set + add new to set
+        if (orig != lit_pair.lit_outer) {
+            const Lit old_inter_lit = map_outer_to_inter(orig);
+            const Lit new_inter_lit = map_outer_to_inter(lit_pair.lit_outer);
+            varData[old_inter_lit.var()].assumption = l_Undef;
+            varData[new_inter_lit.var()].assumption =
+                new_inter_lit.sign() ? l_False: l_True;
         }
     }
+
+    #ifdef SLOW_DEBUG
+    check_assumptions_sanity();
+    #endif
 }
 
 //TODO later, this can be removed, get_num_free_vars() is MUCH cheaper to
@@ -3860,10 +3863,10 @@ void Solver::renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors
 }
 
 #ifdef USE_GAUSS
-bool Solver::init_all_matrixes()
+bool Solver::init_all_matrices()
 {
     assert(ok);
-    for (EGaussian*& g :gmatrixes) {
+    for (EGaussian*& g :gmatrices) {
         bool created = false;
         // initial arrary. return true is fine , return false means solver already false;
         if (!g->full_init(created)) {
@@ -4017,21 +4020,23 @@ void Solver::add_empty_cl_to_drat()
 
 void Solver::check_assigns_for_assumptions() const
 {
-    for (auto& ass: solver->assumptions) {
-        if (value(ass.lit_inter) != l_True) {
-            cout << "ERROR: Internal assumption " << ass.lit_inter
-            << " is not set to l_True, it's set to: " << value(ass.lit_inter)
+    for (const auto& ass: solver->assumptions) {
+        const Lit inter = map_outer_to_inter(ass.lit_outer);
+        if (value(inter) != l_True) {
+            cout << "ERROR: Internal assumption " << inter
+            << " is not set to l_True, it's set to: " << value(inter)
             << endl;
-            assert(lit_inside_assumptions(ass.lit_inter) == l_True);
+            assert(lit_inside_assumptions(inter) == l_True);
         }
-        assert(value(ass.lit_inter) == l_True);
+        assert(value(inter) == l_True);
     }
 }
 
 bool Solver::check_assumptions_contradict_foced_assignement() const
 {
     for (auto& ass: solver->assumptions) {
-        if (value(ass.lit_inter) == l_False) {
+        const Lit inter = map_outer_to_inter(ass.lit_outer);
+        if (value(inter) == l_False) {
             return true;
         }
     }

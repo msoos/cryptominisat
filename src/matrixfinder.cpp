@@ -98,7 +98,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
 {
     assert(solver->decisionLevel() == 0);
     assert(solver->ok);
-    assert(solver->gmatrixes.empty());
+    assert(solver->gmatrices.empty());
 
     table.clear();
     table.resize(solver->nVars(), var_Undef);
@@ -124,11 +124,14 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     }
     finder.clean_equivalent_xors(xors);
 
-    if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses
-        || solver->conf.gaussconf.decision_until <= 0
-    ) {
-        if (solver->conf.verbosity >= 2)
-            cout << "c [matrix] too few xor clauses:" << xors.size() << endl;
+    if (!solver->conf.gaussconf.enabled) {
+        if (solver->conf.verbosity >= 2) {
+            cout << "c [matrix] GJ disabled, not using XOR clauses for GJ" << endl;
+        }
+        return true;
+    } else if (xors.size() < solver->conf.gaussconf.min_gauss_xor_clauses) {
+        if (solver->conf.verbosity >= 4)
+            cout << "c [matrix] too few xor clauses for GJ: " << xors.size() << endl;
 
         return true;
     }
@@ -139,7 +142,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
         if (solver->conf.verbosity) {
             cout << "c WARNING sampling vars have been given but there"
             "are too many XORs and it would take too much time to put them"
-            "into matrixes. Skipping!" << endl;
+            "into matrices. Skipping!" << endl;
             return true;
         }
     }
@@ -148,8 +151,8 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
         if (solver->conf.verbosity >=1) {
             cout << "c Matrix finding disabled through switch. Putting all xors into matrix." << endl;
         }
-        solver->gmatrixes.push_back(new EGaussian(solver, solver->conf.gaussconf, 0, xors));
-        solver->gqueuedata.resize(solver->gmatrixes.size());
+        solver->gmatrices.push_back(new EGaussian(solver, solver->conf.gaussconf, 0, xors));
+        solver->gqueuedata.resize(solver->gmatrices.size());
         return true;
     }
 
@@ -210,7 +213,7 @@ bool MatrixFinder::findMatrixes(bool simplify_xors)
     const bool time_out =  false;
     const double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity) {
-        cout << "c Found matrixes: " << numMatrixes
+        cout << "c Found matrices: " << numMatrixes
         << " from " << xors.size() << " xors"
         << solver->conf.print_times(time_used, time_out)
         << endl;
@@ -327,20 +330,20 @@ uint32_t MatrixFinder::setMatrixes()
             }
         }
 
-        if (realMatrixNum <= solver->conf.gaussconf.max_num_matrixes) {
+        if (realMatrixNum <= solver->conf.gaussconf.max_num_matrices) {
             use_matrix = true;
         }
 
         if (use_matrix) {
-            solver->gmatrixes.push_back(
+            solver->gmatrices.push_back(
                 new EGaussian(solver, solver->conf.gaussconf, realMatrixNum, xorsInMatrix[i]));
-            solver->gqueuedata.resize(solver->gmatrixes.size());
+            solver->gqueuedata.resize(solver->gmatrices.size());
 
             if (solver->conf.verbosity) {
                 cout << "c [matrix] Good   matrix " << std::setw(2) << realMatrixNum;
             }
             realMatrixNum++;
-            assert(solver->gmatrixes.size() == realMatrixNum);
+            assert(solver->gmatrices.size() == realMatrixNum);
         } else {
             if (solver->conf.verbosity >= 3) {
                 cout << "c [matrix] UNused matrix   ";
@@ -367,7 +370,7 @@ uint32_t MatrixFinder::setMatrixes()
     }
 
     if (solver->conf.verbosity && unusedMatrix > 0) {
-        cout << "c [matrix] unused matrixes: " << unusedMatrix << endl;
+        cout << "c [matrix] unused matrices: " << unusedMatrix << endl;
     }
 
     return realMatrixNum;

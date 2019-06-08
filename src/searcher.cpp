@@ -99,7 +99,7 @@ Searcher::Searcher(const SolverConf *_conf, Solver* _solver, std::atomic<bool>* 
 Searcher::~Searcher()
 {
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     #endif
 }
 
@@ -141,18 +141,6 @@ void Searcher::updateVars(
 ) {
     updateArray(var_act_vsids, interToOuter);
     updateArray(var_act_maple, interToOuter);
-
-    renumber_assumptions(outerToInter);
-}
-
-void Searcher::renumber_assumptions(const vector<uint32_t>& outerToInter)
-{
-    solver->unfill_assumptions_set_from(assumptions);
-    for(AssumptionPair& lit_pair: assumptions) {
-        assert(lit_pair.lit_inter.var() < outerToInter.size());
-        lit_pair.lit_inter = getUpdatedLit(lit_pair.lit_inter, outerToInter);
-    }
-    solver->fill_assumptions_set_from(assumptions);
 }
 
 template<bool update_bogoprops>
@@ -1131,7 +1119,13 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
         return;
     }
 
-    std::sort(assumptions.begin(), assumptions.end());
+    vector<AssumptionPair> inter_assumptions;
+    for(const auto& ass: assumptions) {
+        inter_assumptions.push_back(
+            AssumptionPair(map_outer_to_inter(ass.lit_outer), ass.lit_orig_outside));
+    }
+
+    std::sort(inter_assumptions.begin(), inter_assumptions.end());
     std::sort(out_conflict.begin(), out_conflict.end());
     assert(out_conflict.size() <= assumptions.size());
     //They now are in the order where we can go through them linearly
@@ -1146,14 +1140,16 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     uint32_t at_assump = 0;
     for(size_t i = 0; i < out_conflict.size(); i++) {
         Lit& lit = out_conflict[i];
-        while(lit != ~assumptions[at_assump].lit_inter) {
+
+        //lit_outer is actually INTER here, because we updated above
+        while(lit != ~inter_assumptions[at_assump].lit_outer) {
             at_assump++;
-            assert(at_assump < assumptions.size() && "final conflict contains literals that are not from the assumptions!");
+            assert(at_assump < inter_assumptions.size() && "final conflict contains literals that are not from the assumptions!");
         }
-        assert(lit == ~assumptions[at_assump].lit_inter);
+        assert(lit == ~inter_assumptions[at_assump].lit_outer);
 
         //Update to correct outside lit
-        lit = ~assumptions[at_assump].lit_orig_outside;
+        lit = ~inter_assumptions[at_assump].lit_orig_outside;
     }
 }
 
@@ -1235,15 +1231,23 @@ lbool Searcher::search()
         } else {
             assert(ok);
             #ifdef USE_GAUSS
-            llbool ret = Gauss_elimination();
-            if (ret == l_Continue) {
+            gauss_ret ret = gauss_jordan_elim();
+            //cout << "ret: " << ret << " -- " << endl;
+            if (ret == gauss_ret::g_cont) {
+                //cout << "g_cont" << endl;
                 check_need_restart();
                 continue;
             //TODO conflict should be goto-d to "confl" label
-            } else if (ret != l_Nothing) {
-                dump_search_loop_stats(myTime);
-                return ret;
             }
+
+            if (ret == gauss_ret::g_false) {
+                //cout << "g_false" << endl;
+                dump_search_loop_stats(myTime);
+                return l_False;
+            }
+
+            assert(ret == gauss_ret::g_nothing);
+            //cout << "g_nothing" << endl;
             #endif //USE_GAUSS
 
             if (decisionLevel() == 0
@@ -1299,7 +1303,7 @@ lbool Searcher::new_decision()
     Lit next = lit_Undef;
     while (decisionLevel() < assumptions.size()) {
         // Perform user provided assumption:
-        Lit p = assumptions[decisionLevel()].lit_inter;
+        Lit p = map_outer_to_inter(assumptions[decisionLevel()].lit_outer);
         assert(varData[p.var()].removed == Removed::none);
 
         if (value(p) == l_True) {
@@ -2322,7 +2326,7 @@ lbool Searcher::solve(
     }
 
     #ifdef USE_GAUSS
-    clearEnGaussMatrixes();
+    clear_gauss_matrices();
     {
         MatrixFinder finder(solver);
         ok = finder.findMatrixes();
@@ -2331,7 +2335,7 @@ lbool Searcher::solve(
             goto end;
         }
     }
-    if (!solver->init_all_matrixes()) {
+    if (!solver->init_all_matrices()) {
         return l_False;
     }
 
@@ -2831,120 +2835,149 @@ size_t Searcher::hyper_bin_res_all(const bool check_for_set_values)
 }
 
 #ifdef USE_GAUSS
-llbool Searcher::Gauss_elimination()
+Searcher::gauss_ret Searcher::gauss_jordan_elim()
 {
-    if (decisionLevel() > solver->conf.gaussconf.decision_until ||
-        gqueuedata.size() == 0
-    ) {
-        return l_Nothing;
+    #ifdef VERBOSE_DEBUG
+    cout << "Gauss searcher::Gauss_elimination called, declevel: " << decisionLevel() << endl;
+    #endif
+    if (gqueuedata.empty() || !solver->conf.gaussconf.enabled) {
+        return gauss_ret::g_nothing;
     }
 
     for(auto& gqd: gqueuedata) {
         gqd.reset();
 
         if (gqd.engaus_disable) {
-            //TODO
-            return l_Nothing;
+            continue;
         }
 
         if (solver->conf.gaussconf.autodisable &&
-            (gqd.big_gaussnum > 1000 && gqd.big_conflict*2+gqd.big_propagate < (uint32_t)((double)gqd.big_gaussnum*0.01))
+            (gqd.num_entered_mtx & 0xff) == 0xff && //only check once in a while
+            gqd.num_entered_mtx > 1000
         ) {
-            const double perc = stats_line_percent(gqd.big_conflict*2+gqd.big_propagate, gqd.big_gaussnum);
-            if (solver->conf.verbosity) {
-                cout << "c [matrix] Disabling ALL GJ-elim in this round. "
-                " Usefulness was: " << std::setprecision(2) << std::fixed << perc <<  "%" << endl;
+            uint32_t limit = (double)gqd.num_entered_mtx*0.01;
+            uint32_t useful = 2*gqd.num_conflicts+gqd.num_props;
+            if (useful < limit) {
+                const double perc = stats_line_percent(gqd.num_conflicts*2+gqd.num_props, gqd.num_entered_mtx);
+                if (solver->conf.verbosity) {
+                    cout << "c [matrix] Disabling ALL GJ-elim in this round. "
+                    " Usefulness was: "
+                    << std::setprecision(2) << std::fixed << perc
+                    <<  "%" << endl;
+                }
+                gqd.engaus_disable = true;
             }
-            gqd.engaus_disable = true;
         }
     }
     assert(qhead == trail.size());
     assert(gqhead <= qhead);
 
-    bool unit_conflict_in_some_matrix = false;
-    while (gqhead <  qhead) {
+    bool confl_in_gauss = false;
+    while (gqhead <  qhead
+        && !confl_in_gauss
+    ) {
         const Lit p = trail[gqhead++];
         assert(gwatches.size() > p.var());
         vec<GaussWatched>& ws = gwatches[p.var()];
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
         const GaussWatched* end = ws.end();
-
-        if (i == end)
-            continue;
+        #ifdef VERBOSE_DEBUG
+        cout << "New GQHEAD: " << p << endl;
+        #endif
 
         for (; i != end; i++) {
+            if (gqueuedata[i->matrix_num].engaus_disable) {
+                //remove watch and continue
+                continue;
+            }
+
             gqueuedata[i->matrix_num].enter_matrix = true;
-            if (gmatrixes[i->matrix_num]->find_truths2(
+            if (gmatrices[i->matrix_num]->find_truths2(
                 i, j, p.var(), i->row_id, gqueuedata[i->matrix_num])
             ) {
                 continue;
             } else {
-                // only in conflict two variable
-                unit_conflict_in_some_matrix = true;
+                confl_in_gauss = true;
+                i++;
                 break;
             }
         }
 
-        if (i != end) {  // must conflict two variable
-            i++;
-            //copy remaining watches
-            GaussWatched* j2 = j;
-            GaussWatched* i2 = i;
-            for(; i2 != end; i2++) {
-                *j2 = *i2;
-                j2++;
-            }
+        for (; i != end; i++) {
+            *j++ = *i;
         }
-        ws.shrink_(i-j);
+        ws.shrink(i-j);
 
         for (size_t g = 0; g < gqueuedata.size(); g++) {
+            if (gqueuedata[g].engaus_disable)
+                continue;
+
             if (gqueuedata[g].do_eliminate) {
-                gmatrixes[g]->eliminate_col2(p.var(), gqueuedata[g]);
+                gmatrices[g]->eliminate_col2(p.var(), gqueuedata[g]);
+                confl_in_gauss |= (
+                    gqueuedata[g].ret == gauss_res::long_confl ||
+                    gqueuedata[g].ret == gauss_res::bin_confl);
             }
         }
     }
 
-    llbool finret = l_Nothing;
+    gauss_ret finret = gauss_ret::g_nothing;
     for (GaussQData& gqd: gqueuedata) {
+        if (gqd.engaus_disable)
+            continue;
+
         if (gqd.enter_matrix) {
-            gqueuedata[0].big_gaussnum++;
+            gqueuedata[0].num_entered_mtx++;
             sum_EnGauss++;
         }
 
-        //There was a unit conflict but this is not that matrix.
+        //There was a conflict but this is not that matrix.
         //Just skip.
-        if (unit_conflict_in_some_matrix && gqd.ret_gauss !=1) {
+        if (confl_in_gauss
+            && gqd.ret != gauss_res::long_confl
+            && gqd.ret != gauss_res::bin_confl
+        ) {
             continue;
         }
 
-
-        switch (gqd.ret_gauss) {
-            case 1:{ // unit conflict
+        switch (gqd.ret) {
+            case gauss_res::bin_confl :{
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
-#ifdef VERBOSE_DEBUG
-                cout << "Handled conflict"
+                #ifdef VERBOSE_DEBUG
+                cout << "Handled binary GJ conflict"
                 << " conf level:" <<  varData[gqd.confl.lit2().var()].level
                 << " conf value: " << value(gqd.confl.lit2())
                 << " failbin level: " << varData[solver->failBinLit.var()].level
                 << " failbin value: " << value(solver->failBinLit)
                 << endl;
-#endif
+                #endif
 
-                gqd.big_conflict++;
+                gqd.num_conflicts++;
                 sum_Enconflict++;
 
-                if (!ret) return l_False;
-                return l_Continue;
+                if (!ret) return gauss_ret::g_false;
+                return gauss_ret::g_cont;
             }
-            case 0:{  // conflict
-                gqd.big_conflict++;
+
+            case gauss_res::long_confl :{
+                gqd.num_conflicts++;
                 sum_Enconflict++;
+
+                #ifdef DEBUG_GAUSS
+                for(uint32_t i = 0; i < gqd.conflict_clause_gauss.size(); i++) {
+                    Lit& l = gqd.conflict_clause_gauss[i];
+                    if (value(l) != l_False) {
+                        cout << "about to fail, size: " << gqd.conflict_clause_gauss.size() << " i = " << i << " val: " << value(l) << endl;
+                    }
+                    assert(value(l) == l_False);
+                }
+                #endif
 
                 Clause* conflPtr = solver->cl_alloc.Clause_new(
                     gqd.conflict_clause_gauss,
-                    gqd.xorEqualFalse_gauss
+                    sumConflicts
                     #ifdef STATS_NEEDED
                     , 0
                     #endif
@@ -2955,26 +2988,32 @@ llbool Searcher::Gauss_elimination()
                 gqhead = qhead = trail.size();
 
                 bool ret = handle_conflict<false>(gqd.confl);
+                #ifdef VERBOSE_DEBUG
+                cout << "Handled long GJ conflict" << endl;
+                #endif
+
                 solver->cl_alloc.clauseFree(gqd.confl.get_offset());
-                if (!ret) return l_False;
-                return l_Continue;
+                if (!ret) return gauss_ret::g_false;
+                return gauss_ret::g_cont;
             }
 
-            case 2:  // propagation
-            case 3: // unit propagation
-                gqd.big_propagate++;
+            case gauss_res::prop:
+                gqd.num_props++;
                 sum_Enpropagate++;
-                finret = l_Continue;
+                finret = gauss_ret::g_cont;
 
-            case 4:
+            case gauss_res::none:
                 //nothing
                 break;
 
             default:
                 assert(false);
-                return l_Nothing;
+                return gauss_ret::g_nothing;
         }
     }
+    #ifdef VERBOSE_DEBUG
+    cout << "Exiting GJ" << endl;
+    #endif
     return finret;
 }
 #endif //USE_GAUSS
@@ -3092,7 +3131,6 @@ size_t Searcher::mem_used() const
     mem += model.capacity()*sizeof(lbool);
     mem += analyze_stack.mem_used();
     mem += assumptions.capacity()*sizeof(Lit);
-    mem += assumptionsSet.capacity()*sizeof(char);
 
     if (conf.verbosity >= 3) {
         cout
@@ -3154,72 +3192,30 @@ size_t Searcher::mem_used() const
     return mem;
 }
 
-void Searcher::fill_assumptions_set_from(const vector<AssumptionPair>& fill_from)
+void Searcher::fill_assumptions_set()
 {
     #ifdef SLOW_DEBUG
-    for(auto x: assumptionsSet) {
-        assert(x == l_Undef);
+    for(auto x: varData) {
+        assert(x.assumption == l_Undef);
     }
     #endif
 
-    if (fill_from.empty()) {
-        return;
-    }
-
     for(const AssumptionPair lit_pair: assumptions) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()] != l_Undef) {
-                //Assumption contains the same literal twice. Shouldn't really be allowed...
-                //assert(false && "Either the assumption set contains the same literal twice, or something is very wrong in the solver.");
-            } else {
-                assumptionsSet[lit.var()] = lit.sign() ? l_False : l_True;
-            }
-        } else {
-            if (value(lit) == l_Undef) {
-                std::cerr
-                << "ERROR: Lit " << lit
-                << " varData[lit.var()].removed: " << removed_type_to_string(varData[lit.var()].removed)
-                << " value: " << value(lit)
-                << " -- value should NOT be l_Undef"
-                << endl;
-            }
-            assert(value(lit) != l_Undef);
-        }
+        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
+        varData[lit.var()].assumption = lit.sign() ? l_False : l_True;
     }
 }
 
-void Searcher::unfill_assumptions_set_from(const vector<AssumptionPair>& unfill_from)
+void Searcher::unfill_assumptions_set()
 {
-    if (unfill_from.empty()) {
-        goto end;
+    for(const AssumptionPair lit_pair: assumptions) {
+        const Lit lit = map_outer_to_inter(lit_pair.lit_outer);
+        varData[lit.var()].assumption = l_Undef;
     }
 
-    //First check -- can't unset at the same time since the same
-    //internal variable may be inside 'assumptions' -- in case the variables
-    //have been replaced with each other.
-    for(const AssumptionPair lit_pair: unfill_from) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            if (assumptionsSet[lit.var()] == l_Undef) {
-                cout << "ERROR: var " << lit.var() + 1 << " is in assumptions but not in assumptionsSet" << endl;
-            }
-            assert(assumptionsSet[lit.var()] != l_Undef);
-        }
-    }
-
-    //Then unset
-    for(const AssumptionPair lit_pair: unfill_from) {
-        const Lit lit = lit_pair.lit_inter;
-        if (lit.var() < assumptionsSet.size()) {
-            assumptionsSet[lit.var()] = l_Undef;
-        }
-    }
-
-    end:;
     #ifdef SLOW_DEBUG
-    for(auto x: assumptionsSet) {
-        assert(x == l_Undef);
+    for(auto x: varData) {
+        assert(x.assumption == l_Undef);
     }
     #endif
 }
@@ -3458,7 +3454,7 @@ void Searcher::cancelUntil(uint32_t level
 
     if (decisionLevel() > level) {
         #ifdef USE_GAUSS
-        for (EGaussian* gauss: gmatrixes)
+        for (EGaussian* gauss: gmatrices)
             if (gauss) {
                 gauss->canceling(trail_lim[level]);
             }
@@ -3632,19 +3628,27 @@ inline bool Searcher::check_order_heap_sanity() const
 }
 
 #ifdef USE_GAUSS
-void Searcher::clearEnGaussMatrixes()
+void Searcher::clear_gauss_matrices()
 {
-    for (auto& gqd: gqueuedata) {
-        if (solver->conf.verbosity && gqd.big_gaussnum > 0) {
-            cout << "c [gauss] big_conflict/big_gaussnum:" << (double)gqd.big_conflict/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
-            cout << "c [gauss] big_propagate/big_gaussnum:" << (double)gqd.big_propagate/(double)gqd.big_gaussnum*100.0 << " %" <<endl;
+    for(uint32_t i = 0; i < gqueuedata.size(); i++) {
+        auto gqd = gqueuedata[i];
+        if (solver->conf.verbosity && gqd.num_entered_mtx > 0) {
+            cout << "c [gauss] < " << i << " > "
+            << "confl triggered:"
+            << stats_line_percent(gqd.num_conflicts, gqd.num_entered_mtx)
+            << " %" <<endl;
+
+            cout << "c [gauss] < " << i << " > "
+            << "prop triggered:"
+            << stats_line_percent(gqd.num_props, gqd.num_entered_mtx)
+            << " %" <<endl;
         }
 
-        if (solver->conf.verbosity >= 2 && gqd.big_gaussnum > 0) {
+        if (solver->conf.verbosity >= 2 && gqd.num_entered_mtx > 0) {
             cout
-            << "c [gauss] big_propagate  : "<< print_value_kilo_mega(gqd.big_propagate) << endl
-            << "c [gauss] big_conflict   : "<< print_value_kilo_mega(gqd.big_conflict)  << endl
-            << "c [gauss] big_gaussnum   : "<< print_value_kilo_mega(gqd.big_gaussnum)  << endl;
+            << "c [gauss] big_propagate  : "<< print_value_kilo_mega(gqd.num_props) << endl
+            << "c [gauss] big_conflict   : "<< print_value_kilo_mega(gqd.num_conflicts)  << endl
+            << "c [gauss] big_gaussnum   : "<< print_value_kilo_mega(gqd.num_entered_mtx)  << endl;
 
             cout
             << "c [gauss] - sumstats -"      << endl
@@ -3655,14 +3659,28 @@ void Searcher::clearEnGaussMatrixes()
         gqd.reset_stats();
     }
 
-    //cout << "Clearing matrixes" << endl;
-    for(EGaussian* g: gmatrixes) {
+    //cout << "Clearing matrices" << endl;
+    for(EGaussian* g: gmatrices) {
         delete g;
     }
     for(auto& w: gwatches) {
         w.clear();
     }
-    gmatrixes.clear();
+    gmatrices.clear();
     gqueuedata.clear();
 }
 #endif
+
+void Searcher::check_assumptions_sanity()
+{
+    for(AssumptionPair& lit_pair: assumptions) {
+        Lit inter_lit = map_outer_to_inter(lit_pair.lit_outer);
+        assert(inter_lit.var() < varData.size());
+        assert(varData[inter_lit.var()].removed == Removed::none);
+        if (varData[inter_lit.var()].assumption == l_Undef) {
+            cout << "Assump " << inter_lit << " has .assumption : "
+            << varData[inter_lit.var()].assumption << endl;
+        }
+        assert(varData[inter_lit.var()].assumption != l_Undef);
+    }
+}

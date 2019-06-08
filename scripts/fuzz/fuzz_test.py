@@ -308,7 +308,7 @@ class Tester:
 
         # disable gauss when gauss is compiled in but asked not to be used
         if not self.this_gauss_on and "autodisablegauss" in self.extra_opts_supported:
-            cmd += "--maxgaussdepth 0 "
+            cmd += "--gauss 0 "
 
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
         cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
@@ -405,14 +405,8 @@ class Tester:
                 # Reduce iteratively the matrix that is updated
                 cmd += "--iterreduce %s " % random.choice([0, 1])
 
-                # Only run Gaussian Elimination until this depth
-                cmd += "--maxgaussdepth %s " % int(random.gammavariate(1, 20.0))
-
                 # Set maximum no. of rows for gaussian matrix."
                 cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
-
-                # "Automatically disable gauss when performing badly")
-                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 1])
 
                 # "Set minimum no. of rows for gaussian matrix.
                 cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
@@ -435,7 +429,7 @@ class Tester:
         else:
             if self.this_gauss_on:
                 # "Automatically disable gauss when performing badly")
-                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 1])
+                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False, False]):

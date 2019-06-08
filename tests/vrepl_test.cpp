@@ -39,7 +39,6 @@ struct varreplace : public ::testing::Test {
         s = new Solver(&conf, &must_inter);
         s->new_vars(20);
         s->testing_set_solver_not_fresh();
-        s->testing_fill_assumptions_set();
         repl = s->varReplacer;
     }
     ~varreplace()

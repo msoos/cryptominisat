@@ -185,6 +185,7 @@ void BreakID::break_symms()
 
         vector<Lit> ass;
         ass.push_back(Lit(symm_var, true));
+        solver->unfill_assumptions_set();
         solver->set_assumptions(ass);
     }
     assert(solver->varData[symm_var].removed == Removed::none);

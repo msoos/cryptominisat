@@ -795,18 +795,18 @@ void Main::add_supported_options()
 #ifdef USE_GAUSS
     po::options_description gaussOptions("Gauss options");
     gaussOptions.add_options()
-    ("maxgaussdepth", po::value(&conf.gaussconf.decision_until)->default_value(conf.gaussconf.decision_until)
-        , "Only run Gaussian Elimination until this depth. You may want this depth to be relatively small, such as 120-30, though it depends on the complexity of the problem. It is best to experiment.")
+    ("gauss", po::value(&conf.gaussconf.enabled)->default_value(conf.gaussconf.enabled)
+        , "Enable Gauss-Jordan elimination")
      ("maxmatrixrows", po::value(&conf.gaussconf.max_matrix_rows)->default_value(conf.gaussconf.max_matrix_rows)
-        , "Set maximum no. of rows for gaussian matrix. Too large matrixes"
+        , "Set maximum no. of rows for gaussian matrix. Too large matrices"
         "should bee discarded for reasons of efficiency")
     ("autodisablegauss", po::value(&conf.gaussconf.autodisable)->default_value(conf.gaussconf.autodisable)
         , "Automatically disable gauss when performing badly")
     ("minmatrixrows", po::value(&conf.gaussconf.min_matrix_rows)->default_value(conf.gaussconf.min_matrix_rows)
         , "Set minimum no. of rows for gaussian matrix. Normally, too small"
-        " matrixes are discarded for reasons of efficiency")
-    ("maxnummatrixes", po::value(&conf.gaussconf.max_num_matrixes)->default_value(conf.gaussconf.max_num_matrixes)
-        , "Maximum number of matrixes to treat.")
+        " matrices are discarded for reasons of efficiency")
+    ("maxnummatrices", po::value(&conf.gaussconf.max_num_matrices)->default_value(conf.gaussconf.max_num_matrices)
+        , "Maximum number of matrices to treat.")
     ;
 #endif //USE_GAUSS
 

@@ -1323,6 +1323,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
 
         #ifdef SLOW_DEBUG
         solver->check_implicit_stats(true);
+        solver->check_assumptions_sanity();
         #endif
         if (!solver->propagate_occur()) {
             solver->ok = false;
@@ -1388,7 +1389,7 @@ bool OccSimplifier::execute_simplifier_strategy(const string& strategy)
             if (solver->conf.doVarElim && solver->conf.do_empty_varelim) {
                 solver->xorclauses.clear();
                 #ifdef USE_GAUSS
-                solver->clearEnGaussMatrixes();
+                solver->clear_gauss_matrices();
                 #endif
 
                 eliminate_empty_resolvent_vars();

@@ -71,17 +71,20 @@ class EGaussian {
     // basic    = TRUE  -- non-assigned var
     // non-basic= FALSE -- assigned var
     // we watch ONE basic(=unassigned) + ONE non-basic(=assigned) var
-    vec<bool>         GasVar_state ;
+    vec<bool>         var_state ;
 
     vector<uint32_t>  var_to_col;             // variable to column
     class matrixset { // matrix information
       public:
-        // added by hankf4
-        vec<uint32_t> nb_rows; // the non_basic value in each row
+        ///row_to_nb_var[ROW] gives the non-basic variable it's responsible for
+        vec<uint32_t> row_to_nb_var;
 
         // used in orignal matrix
         PackedMatrix matrix; // The matrix, updated to reflect variable assignements
-        vector<uint32_t> col_to_var; // col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
+
+        ///col_to_var[COL] tells which variable is at a given column in the matrix. Gives unassigned_var if the COL has been zeroed (i.e. the variable assigned)
+        vector<uint32_t> col_to_var;
+
         uint32_t num_rows; // number of active rows in the matrix. Unactive rows are rows that contain only zeros (and if they are conflicting, then the conflict has been treated)
         uint32_t num_cols; // number of active columns in the matrix. The columns at the end that have all be zeroed are no longer active
     };
@@ -92,7 +95,9 @@ class EGaussian {
     bool clean_xors();
     void clear_gwatches(const uint32_t var);
     void delete_gauss_watch_this_matrix();
-    inline void delete_gausswatch(const bool orig_basic, const uint32_t  row_n);
+    void delete_gausswatch(const bool orig_basic,
+                           const uint32_t  row_n,
+                           uint32_t no_touch_var = var_Undef);
 
     void eliminate(matrixset& m);
     gret adjust_matrix(matrixset& matrix); // adjust matrix, include watch, check row is zero, etc.
@@ -127,7 +132,7 @@ class EGaussian {
     ///execute gaussian
     ///return FALSE only in case of unit conflict
     bool  find_truths2(
-        const GaussWatched* i,
+        GaussWatched*& i,
         GaussWatched*& j,
         uint32_t p,
         const uint32_t row_n,
