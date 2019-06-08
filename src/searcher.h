@@ -115,7 +115,6 @@ class Searcher : public HyperEngine
         {
             #ifdef SLOW_DEBUG
             assert(var < nVars());
-            assert(var < assumptionsSet.size());
             #endif
             return varData[var].assumption;
         }
@@ -123,7 +122,6 @@ class Searcher : public HyperEngine
         {
             #ifdef SLOW_DEBUG
             assert(lit.var() < nVars());
-            assert(lit.var() < assumptionsSet.size());
             #endif
             if (varData[lit.var()].assumption == l_Undef) {
                 return l_Undef;
