@@ -45,6 +45,7 @@ public:
     void updateVars(
     const vector<uint32_t>& outerToInter
     , const vector<uint32_t>& interToOuter);
+    void update_var_after_varreplace();
 
 private:
     void break_symms();

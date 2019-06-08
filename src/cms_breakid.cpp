@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "clausecleaner.h"
 #include "breakid/breakid.hpp"
 #include "varupdatehelper.h"
+#include "varreplacer.h"
 
 using namespace CMSat;
 
@@ -230,4 +231,12 @@ void BreakID::start_new_solving()
     PropBy ret = solver->propagate<false>();
     assert(ret == PropBy() && "Must not fail on resetting symmetry var");
     symm_var = var_Undef;
+}
+
+
+void BreakID::update_var_after_varreplace()
+{
+    if (symm_var != var_Undef) {
+        symm_var = solver->varReplacer->get_var_replaced_with(symm_var);
+    }
 }
