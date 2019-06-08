@@ -989,6 +989,7 @@ fuzzers_xor = [
     ["../../utils/cnf-utils/xortester.py", "--seed"],
     ["../../utils/cnf-utils/xortester.py", "--seed"],
     ["../../utils/cnf-utils/xortester.py", "--seed"],
+    ["../../utils/cnf-utils/spacer_test.py", "--seed"],
     ["../../build/tests/sha1-sat/sha1-gen --xor --attack preimage --rounds 21",
      "--hash-bits", "--seed"],
 ]
