@@ -2782,6 +2782,9 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
         GaussWatched* i = ws.begin();
         GaussWatched* j = i;
         const GaussWatched* end = ws.end();
+        #ifdef VERBOSE_DEBUG
+        cout << "New GQHEAD: " << p << endl;
+        #endif
 
         for (; i != end; i++) {
             if (gqueuedata[i->matrix_num].engaus_disable) {
@@ -2842,14 +2845,14 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
             case gauss_res::bin_confl :{
                 //assert(confl.getType() == PropByType::binary_t && "this should hold, right?");
                 bool ret = handle_conflict<false>(gqd.confl);
-#ifdef VERBOSE_DEBUG
-                cout << "Handled conflict"
+                #ifdef VERBOSE_DEBUG
+                cout << "Handled binary GJ conflict"
                 << " conf level:" <<  varData[gqd.confl.lit2().var()].level
                 << " conf value: " << value(gqd.confl.lit2())
                 << " failbin level: " << varData[solver->failBinLit.var()].level
                 << " failbin value: " << value(solver->failBinLit)
                 << endl;
-#endif
+                #endif
 
                 gqd.num_conflicts++;
                 sum_Enconflict++;
@@ -2885,6 +2888,10 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 gqhead = qhead = trail.size();
 
                 bool ret = handle_conflict<false>(gqd.confl);
+                #ifdef VERBOSE_DEBUG
+                cout << "Handled long GJ conflict" << endl;
+                #endif
+
                 solver->cl_alloc.clauseFree(gqd.confl.get_offset());
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
@@ -2904,6 +2911,9 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 return gauss_ret::g_nothing;
         }
     }
+    #ifdef VERBOSE_DEBUG
+    cout << "Exiting GJ" << endl;
+    #endif
     return finret;
 }
 #endif //USE_GAUSS

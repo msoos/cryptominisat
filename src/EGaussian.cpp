@@ -528,7 +528,9 @@ void EGaussian::delete_gausswatch(
             }
         }
         #ifdef VERBOSE_DEBUG
-        cout << "Tried cleaning watch of var: "
+        cout
+        << "mat[" << matrix_no << "] "
+        << "Tried cleaning watch of var: "
         << matrix.row_to_nb_var[row_n]+1 << endl;
         #endif
         assert(debug_find);
@@ -594,7 +596,9 @@ bool EGaussian::find_truths2(
 
                 gqd.ret = gauss_res::bin_confl;
                 #ifdef VERBOSE_DEBUG
-                cout << "find_truths2 - Gauss binary conf matrix " << matrix_no << endl;
+                cout
+                << "mat[" << matrix_no << "] "
+                << "find_truths2 - Gauss binary conf " << endl;
                 #endif
                 solver->sum_Enunit++;
                 return false;
@@ -605,7 +609,9 @@ bool EGaussian::find_truths2(
             gqd.conflict_clause_gauss = tmp_clause;
             gqd.ret = gauss_res::long_confl;
             #ifdef VERBOSE_DEBUG
-            cout << "find_truths2 - Gauss long conf matrix " << matrix_no << endl;
+            cout
+            << "mat[" << matrix_no << "] "
+            << "find_truths2 - Gauss long conf " << endl;
             #endif
 
             if (orig_basic) { // recover
@@ -638,7 +644,9 @@ bool EGaussian::find_truths2(
             }
             gqd.ret = gauss_res::prop;
             #ifdef VERBOSE_DEBUG
-            cout << "find_truths2 - Gauss prop matrix " << matrix_no
+            cout
+            << "mat[" << matrix_no << "] "
+            << "find_truths2 - Gauss prop "
             << " tmp_clause.size: " << tmp_clause.size() << endl;
             #endif
 
@@ -714,7 +722,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
     PackedMatrix::iterator clauseIt = clause_state.beginMatrix();
 
     #ifdef VERBOSE_DEBUG
-    cout << "** eliminate this var's column: " << gqd.e_var+1
+    cout
+    << "mat[" << matrix_no << "] "
+    << "** eliminate this var's column: " << gqd.e_var+1
     << " p: " << p+1
     << " col: " << e_col
     << " e-row: " << gqd.e_row_n
@@ -735,7 +745,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
             ori_nb_col = var_to_col[ori_nb];
             assert((*rowI)[ori_nb_col]);
             #ifdef VERBOSE_DEBUG
-            cout << "This row " << num_row << " is non-basic for var: " << ori_nb + 1
+            cout
+            << "mat[" << matrix_no << "] "
+            << "This row " << num_row << " is non-basic for var: " << ori_nb + 1
             << " i.e. it contains '1' for this var's column"
             << endl;
             #endif
@@ -743,7 +755,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
             (*rowI).xorBoth(*this_row);
             if (!(*rowI)[ori_nb_col]) { // orignal non basic value is eliminated
                 #ifdef VERBOSE_DEBUG
-                cout << "-> This row " << num_row << " can no longer be non-basic, has no '1', "
+                cout
+                << "mat[" << matrix_no << "] "
+                << "-> This row " << num_row << " can no longer be non-basic, has no '1', "
                 << "fixing up..."<< endl;
                 #endif
 
@@ -759,7 +773,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 switch (ret) {
                     case gret::confl: {
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> conflict during fixup"<< endl;
+                        cout
+                        << "mat[" << matrix_no << "] "
+                        << "-> conflict during fixup"<< endl;
                         #endif
 
                         if (tmp_clause.size() == 2) {
@@ -779,7 +795,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             gqd.ret = gauss_res::bin_confl;
                             solver->sum_Enunit++;
                             #ifdef VERBOSE_DEBUG
-                            cout << "-> Gauss bin confl matrix " << matrix_no
+                            cout
+                            << "mat[" << matrix_no << "] "
+                            << "-> Gauss bin confl matrix " << matrix_no
                             << endl;
                             #endif
 
@@ -795,7 +813,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             gqd.conflict_clause_gauss = tmp_clause;
                             gqd.ret = gauss_res::long_confl;
                             #ifdef VERBOSE_DEBUG
-                            cout << "-> Gauss long confl matrix " << matrix_no
+                            cout
+                            << "mat[" << matrix_no << "] "
+                            << "-> Gauss long confl"
                             << endl;
                             #endif
 
@@ -805,7 +825,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     }
                     case gret::prop: {
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> propagation during fixup" << endl;
+                        cout
+                        << "mat[" << matrix_no << "] "
+                        << "-> propagation during fixup" << endl;
                         #endif
 
                         // if conflicted already, just update non_basic variable
@@ -823,7 +845,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         if (tmp_clause.size() == 2) {
                             propagation_twoclause();
                             #ifdef VERBOSE_DEBUG
-                            cout << "-> Binary prop" << matrix_no << endl;
+                            cout
+                            << "mat[" << matrix_no << "] "
+                            << "-> Binary prop" << endl;
                             #endif
                         } else {
                             Clause* cla = solver->cl_alloc.Clause_new(
@@ -839,7 +863,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                             assert(solver->value((*cla)[0].var()) == l_Undef);
                             solver->enqueue((*cla)[0], PropBy(offs));
                             #ifdef VERBOSE_DEBUG
-                            cout << "-> Long prop" << matrix_no << endl;
+                            cout
+                            << "mat[" << matrix_no << "] "
+                            << "-> Long prop"  << endl;
                             #endif
                         }
                         gqd.ret = gauss_res::prop;
@@ -848,10 +874,12 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                     }
                     case gret::nothing_fnewwatch: // find new watch list
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> Nothing, clause NOT already satisfied, pushing in "
+                        cout
+                        << "mat[" << matrix_no << "] "
+                        << "-> Nothing, clause NOT already satisfied, pushing in "
                         << nb_var+1 << " as non-basic var ( "
                         << num_row << " row) "
-                        <<  matrix_no << endl;
+                        << endl;
                         #endif
 
                         solver->gwatches[nb_var].push(GaussWatched(num_row, matrix_no));
@@ -859,10 +887,12 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                         break;
                     case gret::nothing: // this row already satisfied
                         #ifdef VERBOSE_DEBUG
-                        cout << "-> Nothing to do, already satisfied , pushing in "
+                        cout
+                        << "mat[" << matrix_no << "] "
+                        << "-> Nothing to do, already satisfied , pushing in "
                         << p+1 << " as non-basic var ( "
                         << num_row << " row) "
-                        << matrix_no << endl;
+                        << endl;
                         #endif
 
                         // printf("%d:This row is nothing( maybe already true) in eliminate col
@@ -879,7 +909,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
                 }
             } else {
                 #ifdef VERBOSE_DEBUG
-                cout << "-> OK, this row " << num_row
+                cout
+                << "mat[" << matrix_no << "] "
+                << "-> OK, this row " << num_row
                 << " still contains '1', can still be non-basic" << endl;
                 #endif
             }
@@ -890,7 +922,9 @@ void EGaussian::eliminate_col2(uint32_t p, GaussQData& gqd) {
 
     // Debug_funtion();
     #ifdef VERBOSE_DEBUG
-    cout << "eliminate_col2 - exiting. " << matrix_no << endl;
+    cout
+    << "mat[" << matrix_no << "] "
+    << "eliminate_col2 - exiting. " << endl;
     #endif
 }
 
