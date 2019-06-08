@@ -271,6 +271,8 @@ class DLL_PUBLIC SolverConf
         //BreakID
         bool doBreakid;
         uint32_t breakid_every_n;
+        uint64_t breakid_long_cls_limit_K;
+        uint64_t breakid_cls_limit_K;
 
         //BVA
         int      do_bva;

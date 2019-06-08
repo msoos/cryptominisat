@@ -446,6 +446,10 @@ void Main::add_supported_options()
         , "Run BreakID to break symmetries.")
     ("breakideveryn", po::value(&conf.breakid_every_n)->default_value(conf.breakid_every_n)
         , "Run BreakID every N simplification iterations")
+    ("breakidmaxlongcls", po::value(&conf.breakid_long_cls_limit_K)->default_value(conf.breakid_long_cls_limit_K)
+        , "Maximum number of long clauses in thousands. If exceeded, BreakID will not run")
+    ("breakidmaxcls", po::value(&conf.breakid_cls_limit_K)->default_value(conf.breakid_cls_limit_K)
+        , "Maximum number of clauses in thousands. If exceeded, BreakID will not run")
     ;
 #endif
 

@@ -170,6 +170,13 @@ bool BreakID::doit()
 
         assert(std::is_sorted(cl->begin(), cl->end()));
     }
+
+    if (cls.size() > solver->conf.breakid_long_cls_limit_K*1000ULL
+        || cls.size()+solver->binTri.irredBins > solver->conf.breakid_cls_limit_K*1000ULL
+    ) {
+        return true;
+    }
+
     std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
 
     size_t old_size = cls.size();
