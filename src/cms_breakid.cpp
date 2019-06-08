@@ -196,10 +196,12 @@ bool BreakID::doit()
         prev++;
         cls.resize(prev-cls.begin());
     }
-    cout << "c [breakid] sorted cls"
-    << " dupl: " << print_value_kilo_mega(old_size-cls.size(), false)
-    << solver->conf.print_times(cpuTime() - myTime)
-    <<  endl;
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [breakid] sorted cls"
+        << " dupl: " << print_value_kilo_mega(old_size-cls.size(), false)
+        << solver->conf.print_times(cpuTime() - myTime)
+        <<  endl;
+    }
 
 
 
