@@ -134,7 +134,7 @@ class solution_parser:
 
         # execute with the other solver
         toexec = "lingeling %s" % tmpfname
-        print("Solving with other solver: %s" % toexec)
+        print("sampling check -- solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
             p = subprocess.Popen(toexec.rsplit(),
@@ -177,7 +177,7 @@ class solution_parser:
 
         # execute with the other solver
         toexec = "lingeling %s" % tmpfname
-        print("Solving with other solver: %s" % toexec)
+        print("UNSAT check -- solving with other solver: %s" % toexec)
         curr_time = time.time()
         try:
             p = subprocess.Popen(toexec.rsplit(),

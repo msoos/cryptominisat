@@ -311,7 +311,7 @@ class Tester:
             cmd += "--gauss 0 "
 
         # note, presimp=0 is braindead for preproc but it's mostly 1 so OK
-        cmd += "--presimp %d " % random.choice([1, 1, 1, 1, 1, 1, 1, 0])
+        cmd += "--presimp %d " % random.choice([1]*10+[0])
         if not options.gauss:
             cmd += "--confbtwsimp %d " % random.choice([100, 1000])
             cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
@@ -323,10 +323,17 @@ class Tester:
             assert options.sls !=1, "--sls and --gauss do NOT work together"
         else:
             # it's kinda slow and using it all the time is probably not a good idea
-            sls = random.choice([0, 0, 0, 0, 1])
+            sls = random.choice([0]*4+[1])
 
         if options.gauss:
             sls = 0
+            cmd += "--autodisablegauss %s " % random.choice([0]*15+[1])
+
+            # Don't always use M4RI -- let G-J do toplevel, so fuzzing is more complete
+            cmd += "--m4ri %d " % random.choice([0, 0, 0, 0, 1])
+
+            # "Maximum number of matrixes to treat.")
+            cmd += "--maxnummatrices %s " % int(random.gammavariate(1.5, 20.0))
 
         cmd += "--sls %d " % sls
         cmd += "--slseveryn %d " % random.randint(1, 3)
@@ -402,34 +409,20 @@ class Tester:
             cmd += "--moremorealways %d " % random.choice([1, 1, 1, 0])
 
             if self.this_gauss_on:
-                # Reduce iteratively the matrix that is updated
-                cmd += "--iterreduce %s " % random.choice([0, 1])
-
                 # Set maximum no. of rows for gaussian matrix."
                 cmd += "--maxmatrixrows %s " % int(random.gammavariate(5, 15.0))
 
                 # "Set minimum no. of rows for gaussian matrix.
                 cmd += "--minmatrixrows %s " % int(random.gammavariate(3, 15.0))
 
-                # Don't always use M4RI -- let G-J do toplevel, so fuzzing is more complete
-                cmd += "--m4ri %d " % random.choice([0, 0, 0, 0, 1])
-
                 # Save matrix every Nth decision level."
                 cmd += "--savematrix %s " % (int(random.gammavariate(1, 15.0))+1)
-
-                # "Maximum number of matrixes to treat.")
-                cmd += "--maxnummatrixes %s " % int(random.gammavariate(1, 10.0))
 
             if "sql" in self.extra_opts_supported and random.randint(0, 3) > 0 and self.num_threads == 1 and not self.preproc:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
                 cmd += "--sqlitedb %s " % self.sqlitedbfname
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
-
-        else:
-            if self.this_gauss_on:
-                # "Automatically disable gauss when performing badly")
-                cmd += "--autodisablegauss %s " % random.choice([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
         # the most buggy ones, don't turn them off much, please
         if random.choice([True, False, False]):
@@ -651,7 +644,7 @@ class Tester:
         if (self.needDebugLib):
             must_check_unsat = True
             if options.gauss:
-                must_check_unsat = random.choice([False, False, False, False, True])
+                must_check_unsat = random.choice([False]*15+[True])
             self.sol_parser.check_debug_lib(checkAgainst, must_check_unsat)
 
         if retcode != 0:
