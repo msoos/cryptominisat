@@ -2815,7 +2815,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
 
             if (gqueuedata[g].do_eliminate) {
                 gmatrices[g]->eliminate_col2(p.var(), gqueuedata[g]);
-                confl_in_gauss = (
+                confl_in_gauss |= (
                     gqueuedata[g].ret == gauss_res::long_confl ||
                     gqueuedata[g].ret == gauss_res::bin_confl);
             }
