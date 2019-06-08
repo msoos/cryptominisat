@@ -913,15 +913,15 @@ bool Solver::renumber_variables(bool must_renumber)
         return true;
     }
 
-    #ifdef USE_GAUSS
-    solver->clear_gauss_matrices();
-    #endif
-
     if (!must_renumber
         && calc_renumber_saving() < 0.2
     ) {
         return true;
     }
+
+    #ifdef USE_GAUSS
+    solver->clear_gauss_matrices();
+    #endif
 
     double myTime = cpuTime();
     clauseCleaner->remove_and_clean_all();
