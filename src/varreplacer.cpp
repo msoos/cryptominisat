@@ -98,19 +98,8 @@ void VarReplacer::updateVars(
     const std::vector< uint32_t >& /*outerToInter*/
     , const std::vector< uint32_t >& /*interToOuter*/
 ) {
-
-    /*updateArray(table, interToOuter);
-    updateLitsMap(table, outerToInter);
-    map<uint32_t, vector<uint32_t> > newReverseTable;
-    for(map<uint32_t, vector<uint32_t> >::iterator
-        it = reverseTable.begin(), end = reverseTable.end()
-        ; it != end
-        ; ++it
-    ) {
-        updateArrayMapCopy(it->second, outerToInter);
-        newReverseTable[outerToInter.at(it->first)] = it->second;
-    }
-    reverseTable.swap(newReverseTable);*/
+    //Nothing to do, we keep OUTER in all these data structures
+    //hence, it needs no update
 }
 
 void VarReplacer::printReplaceStats() const
