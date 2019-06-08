@@ -1069,7 +1069,6 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
 //Uneliminates, readds components, fills assumptionsSet, all the good stuff
 void Solver::set_assumptions()
 {
-    assert(okay());
     assert(assumptions.empty());
     #ifdef SLOW_DEBUG
     for(auto x: varData) {
