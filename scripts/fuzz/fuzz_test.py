@@ -323,15 +323,15 @@ class Tester:
             assert options.sls !=1, "--sls and --gauss do NOT work together"
         else:
             # it's kinda slow and using it all the time is probably not a good idea
-            sls = random.choice([0, 0, 0, 1])
+            sls = random.choice([0, 0, 0, 0, 1])
 
         if options.gauss:
             sls = 0
 
         cmd += "--sls %d " % sls
         cmd += "--slseveryn %d " % random.randint(1, 3)
-        cmd += "--yalsatmems %d " % random.choice([1, 10, 100, 300])
-        cmd += "--walksatruns %d " % random.choice([1, 10, 100, 300])
+        cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
+        cmd += "--walksatruns %d " % random.choice([10, 100])
         cmd += "--slstype %s " % random.choice(["walksat", "yalsat"])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--bva %d " % random.choice([1, 1, 1, 0])
