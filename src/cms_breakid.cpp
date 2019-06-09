@@ -77,7 +77,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
     if (sz == 0) {
         //it's unsat because of assumptions
         if (solver->conf.verbosity) {
-            cout << "c [walksat] UNSAT because of assumptions in clause: " << cl << endl;
+            cout << "c [breakid] UNSAT because of assumptions in clause: " << cl << endl;
         }
         return add_cl_ret::unsat;
     }
