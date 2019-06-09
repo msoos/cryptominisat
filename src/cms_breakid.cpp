@@ -294,11 +294,7 @@ void BreakID::break_symms()
     if (symm_var == var_Undef) {
         solver->new_var(true);
         symm_var = solver->nVars()-1;
-
-        vector<Lit> ass;
-        ass.push_back(Lit(symm_var, true));
-        solver->unfill_assumptions_set();
-        solver->set_assumptions(ass);
+        solver->add_assumption(Lit(symm_var, true));
     }
     assert(solver->varData[symm_var].removed == Removed::none);
 

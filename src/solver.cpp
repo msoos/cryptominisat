@@ -1096,8 +1096,7 @@ void Solver::save_on_var_memory(const uint32_t newNumVars)
     //print_mem_stats();
 }
 
-//Uneliminates, readds components, fills assumptionsSet, all the good stuff
-void Solver::set_assumptions(vector<Lit> extra_assumps)
+void Solver::set_assumptions()
 {
     assert(assumptions.empty());
     #ifdef SLOW_DEBUG
@@ -1110,10 +1109,7 @@ void Solver::set_assumptions(vector<Lit> extra_assumps)
     back_number_from_outside_to_outer(outside_assumptions);
     vector<Lit> inter_assumptions = back_number_from_outside_to_outer_tmp;
     addClauseHelper(inter_assumptions);
-    inter_assumptions.insert(inter_assumptions.end(), extra_assumps.begin(), extra_assumps.end());
-
-    assert(inter_assumptions.size() ==
-        extra_assumps.size() + outside_assumptions.size());
+    assert(inter_assumptions.size() == outside_assumptions.size());
 
     for(size_t i = 0; i < inter_assumptions.size(); i++) {
         Lit outside_lit = lit_Undef;
@@ -1127,6 +1123,17 @@ void Solver::set_assumptions(vector<Lit> extra_assumps)
     }
 
     fill_assumptions_set();
+}
+
+void Solver::add_assumption(const Lit assump)
+{
+    assert(varData[assump.var()].assumption == l_Undef);
+    assert(varData[assump.var()].removed == Removed::none);
+    assert(value(assump) == l_Undef);
+
+    Lit outer_lit = map_inter_to_outer(assump);
+    assumptions.push_back(AssumptionPair(outer_lit, lit_Undef));
+    varData[assump.var()].assumption = assump.sign() ? l_False : l_True;
 }
 
 void Solver::check_model_for_assumptions() const
