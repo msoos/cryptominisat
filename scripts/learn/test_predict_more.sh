@@ -103,13 +103,15 @@ else
 fi
 
 ../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
+../clean_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
 
 ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4
 
-rm ../../src/predict/*.h
+mkdir -p ../../src/predict
+rm -f ../../src/predict/*.h
 for CONF in {0..4}; do
     ../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 
@@ -126,6 +128,8 @@ cd "$FNAME-dir"
 
 exit
 
+
+mkdir -p ../src/predict
 rm ../src/predict/*.h
 ./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
 ./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03

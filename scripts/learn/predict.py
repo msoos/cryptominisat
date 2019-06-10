@@ -34,10 +34,11 @@ import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
-if sklearn.__version__ == "0.20.0":
-    from sklearn.model_selection import train_test_split
-else:
+ver = sklearn.__version__.split(".")
+if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
+else:
+    from sklearn.model_selection import train_test_split
 import re
 import operator
 
@@ -670,7 +671,6 @@ static bool {funcname}(
             best_features.append('cl.antecedents_glue_long_reds_var')
             best_features.append('cl.num_total_lits_antecedents')
 
-            # best_features.append('rdb0.sum_of_branch_depth_conflict')
             #best_features.append('cl.cur_restart_type')
 
             if options.no_rdb1:

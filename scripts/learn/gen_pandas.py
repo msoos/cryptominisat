@@ -85,14 +85,15 @@ class QueryFill (QueryHelper):
         drop index if exists `idxclid8`;
         drop index if exists `idxclidUCLS-1`;
         drop index if exists `idxclidUCLS-2`;
+        drop index if exists `idxclid33`;
 
+        create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
         create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
         create index `idxclid1-3` on `clauseStats` (`clauseID`, restarts);
         create index `idxclid1-4` on `clauseStats` (`clauseID`, restarts, prev_restart);
         create index `idxclid1-5` on `clauseStats` (`clauseID`, prev_restart);
         create index `idxclid2` on `clauseStats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
-        create index `idxclid3` on `goodClauses` (`clauseID`);
         create index `idxclid4` on `restart` ( `restarts`);
         create index `idxclid5` on `tags` ( `tagname`);
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
@@ -114,123 +115,6 @@ class QueryFill (QueryHelper):
                 print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def fill_last_prop(self):
-        print("Adding last prop...")
-        t = time.time()
-        q = """
-        update goodClauses
-        set last_prop_used =
-        (select max(conflicts)
-            from reduceDB
-            where reduceDB.clauseID = goodClauses.clauseID
-                and reduceDB.propagations_made > 0
-        );
-        """
-        self.c.execute(q)
-        print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
-
-    def fill_good_clauses_fixed(self):
-        print("Filling good clauses fixed...")
-
-        t = time.time()
-        q = """DROP TABLE IF EXISTS `goodClausesFixed`;"""
-        self.c.execute(q)
-        q = """
-        create table `goodClausesFixed` (
-            `clauseID` bigint(20) NOT NULL,
-            `num_used` bigint(20) NOT NULL,
-            `first_confl_used` bigint(20),
-            `last_confl_used` bigint(20),
-            `sum_hist_used` bigint(20) DEFAULT NULL,
-            `avg_hist_used` double,
-            `var_hist_used` double,
-            `last_prop_used` bigint(20) DEFAULT NULL
-        );"""
-        self.c.execute(q)
-        print("goodClausesFixed recreated T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """insert into goodClausesFixed
-        (
-        `clauseID`,
-        `num_used`,
-        `first_confl_used`,
-        `last_confl_used`,
-        `sum_hist_used`,
-        `avg_hist_used`,
-        `last_prop_used`
-        )
-        select
-        clauseID
-        , sum(num_used)
-        , min(first_confl_used)
-        , max(last_confl_used)
-        , sum(sum_hist_used)
-        , (1.0*sum(sum_hist_used))/(1.0*sum(num_used))
-        , max(last_prop_used)
-        from goodClauses as c group by clauseID;"""
-        self.c.execute(q)
-        print("goodClausesFixed filled T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        drop index if exists `idxclid20`;
-        drop index if exists `idxclid21`;
-        drop index if exists `idxclid21-2`;
-        drop index if exists `idxclid22`;
-
-        create index `idxclid20` on `goodClausesFixed` (`clauseID`, first_confl_used, last_confl_used, num_used, avg_hist_used);
-        create index `idxclid21` on `goodClausesFixed` (`clauseID`);
-        create index `idxclid21-2` on `goodClausesFixed` (`clauseID`, avg_hist_used);
-        create index `idxclid22` on `goodClausesFixed` (`clauseID`, last_confl_used);
-        """
-        for l in q.split('\n'):
-            self.c.execute(l)
-        print("goodClausesFixed indexes added T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """update goodClausesFixed
-        set `var_hist_used` = (
-        select
-        sum(1.0*(used_at-cs.conflicts-avg_hist_used)*(used_at-cs.conflicts-avg_hist_used))/(num_used*1.0)
-        from
-        clauseStats as cs,
-        usedClauses as u
-        where goodClausesFixed.clauseID = u.clauseID
-        and cs.clauseID = u.clauseID
-        group by u.clauseID );
-        """
-        self.c.execute(q)
-        print("goodClausesFixed added variance T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q="""
-        insert into goodClausesFixed
-        (
-        `clauseID`,
-        `num_used`,
-        `first_confl_used`,
-        `last_confl_used`,
-        `sum_hist_used`,
-        `avg_hist_used`,
-        `last_prop_used`
-        )
-        select cl.clauseID,
-        0,     --  `num_used`,
-        NULL,   --  `first_confl_used`,
-        NULL,   --  `last_confl_used`,
-        0,      --  `sum_hist_used`,
-        NULL,   --  `avg_hist_used`,
-        NULL   --  `last_prop_used`
-        from clauseStats as cl left join goodClausesFixed as goodcl
-        on cl.clauseID = goodcl.clauseID
-        where
-        goodcl.clauseID is NULL
-        and cl.clauseID != 0;
-        """
-        self.c.execute(q)
-        print("goodClausesFixed added bad claues T: %-3.2f s" % (time.time() - t))
 
     def fill_var_data_use(self):
         print("Filling var data use...")
@@ -279,7 +163,7 @@ class QueryFill (QueryHelper):
         , min(cls.first_confl_used) as useful_clauses_first_used
         , max(cls.last_confl_used) as useful_clauses_last_used
 
-        FROM varData as v join goodClausesFixed as cls
+        FROM varData as v join sum_cl_use as cls
         on cls.clauseID >= v.clid_start_incl
         and cls.clauseID < v.clid_end_notincl
 
@@ -556,7 +440,6 @@ class QueryCls (QueryHelper):
         -- , rdb0.`clauseID` as `rdb0.clauseID`
         , rdb0.`dump_no` as `rdb0.dump_no`
         , rdb0.`conflicts_made` as `rdb0.conflicts_made`
-        , rdb0.`sum_of_branch_depth_conflict` as `rdb0.sum_of_branch_depth_conflict`
         , rdb0.`propagations_made` as `rdb0.propagations_made`
         , rdb0.`clause_looked_at` as `rdb0.clause_looked_at`
         , rdb0.`used_for_uip_creation` as `rdb0.used_for_uip_creation`
@@ -856,7 +739,7 @@ class QueryCls (QueryHelper):
         self.q_ok = """
         FROM
         clauseStats as cl
-        , goodClausesFixed as goodcl
+        , sum_cl_use as goodcl
         , restart as rst
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
@@ -1189,8 +1072,6 @@ def one_database(dbfname):
         q.measure_size()
         if not options.no_recreate_indexes:
             q.create_indexes()
-            q.fill_last_prop()
-            q.fill_good_clauses_fixed()
             q.fill_later_useful_data()
             q.fill_var_data_use()
 
