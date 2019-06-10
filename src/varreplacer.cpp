@@ -28,9 +28,6 @@ THE SOFTWARE.
 #include "clauseallocator.h"
 #include "sqlstats.h"
 #include "sccfinder.h"
-#ifdef USE_BREAKID
-#include "cms_breakid.h"
-#endif
 
 #include <iostream>
 #include <iomanip>
@@ -270,11 +267,6 @@ bool VarReplacer::perform_replace()
     }
 
     solver->update_assumptions_after_varreplace();
-#ifdef USE_BREAKID
-    if (solver->breakid) {
-        solver->breakid->update_var_after_varreplace();
-    }
-#endif
 
 end:
     delayed_attach_or_free.clear();

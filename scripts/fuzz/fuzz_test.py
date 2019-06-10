@@ -215,7 +215,7 @@ class Tester:
     def __init__(self):
         self.ignoreNoSolution = False
         self.extra_opts_supported = self.list_options_if_supported(
-            ["xor", "autodisablegauss", "sql", "clid", "breakid"])
+            ["xor", "autodisablegauss", "sql", "clid"])
         self.sol_parser = solution_parser(options)
         self.sqlitedbfname = None
         self.clid_added = False
@@ -316,10 +316,6 @@ class Tester:
             cmd += "--confbtwsimp %d " % random.choice([100, 1000])
             cmd += "--everylev1 %d " % random.choice([122, 1222, 12222])
             cmd += "--everylev2 %d " % random.choice([133, 1333, 14444])
-
-        if "breakid" in self.extra_opts_supported:
-            cmd += "--breakid %d " % random.choice([1]*10+[0])
-            cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
 
         sls = 0
         if options.sls:

@@ -268,12 +268,6 @@ class DLL_PUBLIC SolverConf
         bool doTernary;
         long long ternary_res_time_limitM;
 
-        //BreakID
-        bool doBreakid;
-        uint32_t breakid_every_n;
-        uint64_t breakid_long_cls_limit_K;
-        uint64_t breakid_cls_limit_K;
-
         //BVA
         int      do_bva;
         int min_bva_gain;
