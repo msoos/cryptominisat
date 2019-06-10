@@ -68,6 +68,10 @@ THE SOFTWARE.
 #include "cardfinder.h"
 #include "sls.h"
 
+#ifdef USE_BREAKID
+#include "cms_breakid.h"
+#endif
+
 using namespace CMSat;
 using std::cout;
 using std::endl;
@@ -91,6 +95,12 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
         prober = new Prober(this);
     }
     intree = new InTree(this);
+
+#ifdef USE_BREAKID
+    if (conf.doBreakid) {
+        breakid = new BreakID(this);
+    }
+#endif
 
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
@@ -136,6 +146,7 @@ Solver::~Solver()
     delete datasync;
     delete reduceDB;
     delete card_finder;
+    delete breakid;
 }
 
 void Solver::set_sqlite(string
@@ -938,6 +949,11 @@ bool Solver::renumber_variables(bool must_renumber)
     CNF::updateVars(outerToInter, interToOuter);
     PropEngine::updateVars(outerToInter, interToOuter, interToOuter2);
     Searcher::updateVars(outerToInter, interToOuter);
+#ifdef USE_BREAKID
+    if (breakid) {
+        breakid->updateVars(outerToInter, interToOuter);
+    }
+#endif
 
     if (conf.doStamp) {
         stamp.updateVars(outerToInter, interToOuter2, seen);
@@ -1407,12 +1423,20 @@ lbool Solver::simplify_problem_outside()
     }
     check_config_parameters();
     datasync->rebuild_bva_map();
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->start_new_solving();
+    }
+    #endif
 
     if (nVars() > 0 && conf.do_simplify_problem) {
         bool backup_sls = conf.doSLS;
+        bool backup_breakid = conf.doBreakid;
         conf.doSLS = false;
+        conf.doBreakid = false;
         status = simplify_problem(false);
         conf.doSLS = backup_sls;
+        conf.doBreakid = backup_breakid;
     }
 
     end:
@@ -1480,6 +1504,11 @@ lbool Solver::solve_with_assumptions(
     }
     assert(prop_at_head());
     assert(okay());
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->start_new_solving();
+    }
+    #endif
 
     //Clean up as a startup
     datasync->rebuild_bva_map();
@@ -1837,6 +1866,12 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
         update_assump_conflict_to_orig_outside(conflict);
     }
 
+    #ifdef USE_BREAKID
+    if (breakid) {
+        breakid->finished_solving();
+    }
+    #endif
+
     //Too slow when running lots of small queries
     #ifdef DEBUG_IMPLICIT_STATS
     check_implicit_stats();
@@ -2016,6 +2051,21 @@ lbool Solver::execute_inprocess_strategy(
                 if (!renumber_variables(token == "must-renumber" || conf.must_renumber)) {
                     return l_False;
                 }
+            }
+        } else if (token == "breakid") {
+            if (conf.doBreakid
+                && solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)
+            ) {
+#ifdef USE_BREAKID
+                bool ret = breakid->doit();
+                if (conf.verbosity) {
+                    cout << "c [breakid] return val: " << ret << endl;
+                }
+#else
+                if (conf.verbosity) {
+                    cout << "c [breakid] BreakID not compiled in, skipping" << endl;
+                }
+#endif
             }
         } else if (token == "") {
             //Nothing, just an empty comma, ignore

@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 include_directories( ${PROJECT_SOURCE_DIR} )
+include_directories( ${BOSPHORUS_INCLUDE_DIRS} )
 
 if (NOT WIN32)
     add_cxx_flag_if_supported("-Wno-bitfield-constant-conversion")
@@ -149,6 +150,13 @@ if (M4RI_FOUND)
     SET(cryptoms_lib_files ${cryptoms_lib_files} toplevelgauss.cpp)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${M4RI_LIBRARIES})
 endif (M4RI_FOUND)
+
+if (BREAKID_LIBRARIES)
+    include_directories( ${BREAKID_INCLUDE_DIRS} )
+
+    SET(cryptoms_lib_files ${cryptoms_lib_files} cms_breakid.cpp)
+    SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
+endif()
 
 if (SQLITE3_FOUND AND STATS)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
