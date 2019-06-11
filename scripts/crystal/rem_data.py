@@ -22,7 +22,6 @@ from __future__ import print_function
 import sqlite3
 import optparse
 import time
-import re
 import os.path
 
 class QueryHelper:
@@ -75,7 +74,7 @@ class QueryDatRem(QueryHelper):
         create index `idxclid30` on `usedClauseIDs` (`clauseID`);
         create index `idxclid31` on `clauseStats` (`clauseID`);
         create index `idxclid32` on `reduceDB` (`clauseID`);
-        create index `idxclid33` on `goodClauses` (`clauseID`);
+        create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `usedClauses` (`clauseID`);
         """
 
@@ -202,7 +201,7 @@ class QueryDatRem(QueryHelper):
         rdb_rows = rows[0][0]
         print("Only %d RDB rows remain" % rdb_rows)
 
-    def delete_too_many_rdb_rows_cheat(self):
+    def delete_too_many_rdb_rows(self):
         ret = self.c.execute("drop index if exists `idxclid32`;")
 
         t = time.time()
@@ -213,56 +212,57 @@ class QueryDatRem(QueryHelper):
         print("Have %d lines of RDB" % (rdb_rows))
 
         q = """
-        drop table if exists stuff;
+        drop table if exists only_keep_rdb;
         """
         self.c.execute(q)
 
         t = time.time()
-        q = """create table stuff (
+        q = """create table only_keep_rdb (
             id bigint(20) not null
         );"""
         self.c.execute(q)
-        print("Created stuff T: %-3.2f s" % (time.time() - t))
+        print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        t = time.time()
-        q = """
-        insert into stuff (id)
-        select
-        rdb0.rowid
-        from reduceDB as rdb0, used_later
-        where
-        used_later.clauseID=rdb0.clauseID
-        and used_later.rdb0conflicts=rdb0.conflicts
-        and used_later.used_later > 0
-        order by random()
-        limit %d""" % options.goal_rdb
-        self.c.execute(q)
-        print("Insert good to stuff T: %-3.2f s" % (time.time() - t))
+        if not options.fair:
+            t = time.time()
+            q = """
+            insert into only_keep_rdb (id)
+            select
+            rdb0.rowid
+            from reduceDB as rdb0, used_later
+            where
+            used_later.clauseID=rdb0.clauseID
+            and used_later.rdb0conflicts=rdb0.conflicts
+            and used_later.used_later > 0
+            order by random()
+            limit %d""" % options.goal_rdb
+            self.c.execute(q)
+            print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         val = int(options.limit)
-        ret = self.c.execute("select count() from stuff")
+        ret = self.c.execute("select count() from only_keep_rdb")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
-        print("We now have %d lines stuff" % (rdb_rows))
+        print("We now have %d lines only_keep_rdb" % (rdb_rows))
 
         t = time.time()
         q = """
-        insert into stuff (id)
+        insert into only_keep_rdb (id)
         select
         rdb0.rowid
         from reduceDB as rdb0
         order by random()
         limit %d""" % options.goal_rdb
         self.c.execute(q)
-        print("Insert random to stuff T: %-3.2f s" % (time.time() - t))
+        print("Insert random to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         val = int(options.limit)
-        ret = self.c.execute("select count() from stuff")
+        ret = self.c.execute("select count() from only_keep_rdb")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
-        print("We now have %d lines stuff" % (rdb_rows))
+        print("We now have %d lines only_keep_rdb" % (rdb_rows))
 
 
         t = time.time()
@@ -270,7 +270,7 @@ class QueryDatRem(QueryHelper):
         drop index if exists `idx_bbb`;
         drop index if exists `idxclid6-4`; -- the other index on reduceDB
 
-        create index `idx_bbb` on `stuff` (`id`);
+        create index `idx_bbb` on `only_keep_rdb` (`id`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -278,7 +278,7 @@ class QueryDatRem(QueryHelper):
 
         q = """
         delete from reduceDB
-        where reduceDB.rowid not in (select id from stuff)
+        where reduceDB.rowid not in (select id from only_keep_rdb)
         """
         self.c.execute(q)
         print("Delete from reduceDB T: %-3.2f s" % (time.time() - t))
@@ -291,47 +291,47 @@ class QueryDatRem(QueryHelper):
         print("Finally have %d lines of RDB" % (rdb_rows))
 
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
-    def fill_used_cl_ids_table_cheat(self):
+    def fill_used_cl_ids_table(self):
+        if not options.fair:
+            t = time.time()
+            val = int(options.limit)
+            q = """
+            insert into usedClauseIDs
+            select
+            clauseID from sum_cl_use
+            where num_used > 20
+            order by random() limit %d;
+            """ % int(val/4)
+            self.c.execute(q)
+            print("Added >20 from sum_cl_use T: %-3.2f s" % (time.time() - t))
+
+            t = time.time()
+            val = int(options.limit)
+            q = """
+            insert into usedClauseIDs
+            select
+            clauseID from sum_cl_use
+            where num_used > 5
+            order by random() limit %d;
+            """ % int(val/2)
+            self.c.execute(q)
+            print("Added >5 from sum_cl_use T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         val = int(options.limit)
         q = """
         insert into usedClauseIDs
         select
-        clauseID from goodClauses
-        where num_used > 20
-        order by random() limit %d;
-        """ % int(val/4)
-        self.c.execute(q)
-        print("Added >20 from goodClauses T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        val = int(options.limit)
-        q = """
-        insert into usedClauseIDs
-        select
-        clauseID from goodClauses
-        where num_used > 5
-        order by random() limit %d;
-        """ % int(val/2)
-        self.c.execute(q)
-        print("Added >5 from goodClauses T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        val = int(options.limit)
-        q = """
-        insert into usedClauseIDs
-        select
-        clauseID from goodClauses
+        clauseID from sum_cl_use
         order by random() limit %d;
         """ % val
         self.c.execute(q)
-        print("Added any from goodClauses T: %-3.2f s" % (time.time() - t))
+        print("Added any from sum_cl_use T: %-3.2f s" % (time.time() - t))
 
         ret = self.c.execute("select count() from usedClauseIDs")
         rows = self.c.fetchall()
         good_ids = rows[0][0]
-        print("IDs from goodClauses: %d   T: %-3.2f s" % (good_ids, time.time() - t))
+        print("IDs from sum_cl_use: %d   T: %-3.2f s" % (good_ids, time.time() - t))
 
         t = time.time()
         val = int(options.limit)
@@ -339,9 +339,9 @@ class QueryDatRem(QueryHelper):
         insert into usedClauseIDs
         select
         clauseStats.clauseID
-        from clauseStats left join goodClauses
-        on clauseStats.clauseID = goodClauses.clauseID
-        where goodClauses.clauseID is NULL
+        from clauseStats left join sum_cl_use
+        on clauseStats.clauseID = sum_cl_use.clauseID
+        where sum_cl_use.clauseID is NULL
         order by random() limit %d;
         """ % val
         self.c.execute(q)
@@ -352,7 +352,7 @@ class QueryDatRem(QueryHelper):
         print("IDs from clauseStats that are not in good: %d  T: %-3.2f s" % ((all_ids-good_ids), time.time() - t))
 
     def filter_tables_of_ids(self):
-        tables = ["clauseStats", "reduceDB", "goodClauses", "usedClauses"]
+        tables = ["clauseStats", "reduceDB", "sum_cl_use", "usedClauses"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
         (SELECT clauseID from usedClauseIDs );"""
@@ -417,6 +417,7 @@ class QueryDatRem(QueryHelper):
         drop index if exists `idxclid21`;
         drop index if exists `idxclid21-2`;
         drop index if exists `idxclid22`;
+        drop index if exists `idxclid33`;
 
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `used_later10k`;
@@ -427,8 +428,7 @@ class QueryDatRem(QueryHelper):
 
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `usedlater`;
-        DROP TABLE IF EXISTS `goodClausesFixed`;
-        DROP TABLE IF EXISTS `stuff`;
+        DROP TABLE IF EXISTS `only_keep_rdb`;
         DROP TABLE IF EXISTS `usedClauseIDs`;
         """
         for q in queries.split("\n"):
@@ -457,12 +457,20 @@ if __name__ == "__main__":
                       dest="goal_rdb", help="Number of RDB neeeded")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--fair", "-f", action="store_true", default=False,
+                      dest="fair", help="Fair sampling. NOT DEFAULT.")
 
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
         print("ERROR: You must give the sqlite file!")
         exit(-1)
+
+    if not options.fair:
+        print("NOTE: Sampling will NOT be fair.")
+        print("      This is because otherwise, DB will be huge")
+        print("      and we need lots of positive datapoints")
+        print("      most of which will be from clauses that are more used")
 
 
     with QueryDatRem(args[0]) as q:
@@ -472,13 +480,13 @@ if __name__ == "__main__":
         q.dangerous()
         q.create_indexes()
         q.create_used_ID_table()
-        q.fill_used_cl_ids_table_cheat()
+        q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
         q.vacuum()
         q.dangerous()
 
         q.create_indexes()
         q.fill_later_useful_data()
-        q.delete_too_many_rdb_rows_cheat();
+        q.delete_too_many_rdb_rows();
 
         q.vacuum()
