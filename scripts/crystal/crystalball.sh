@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 FNAMEOUT="mydata"
 FIXED="30000";
