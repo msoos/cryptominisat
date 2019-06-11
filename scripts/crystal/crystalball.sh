@@ -59,7 +59,6 @@ echo "--> Running on file                   $FNAME"
 echo "--> Outputting to data                $FNAMEOUT"
 echo "--> Using clause gather ratio of      $RATIO"
 echo "--> with fixed number of data points  $FIXED"
-exit
 
 if [ "$FNAMEOUT" == "" ]; then
     echo "Error: FNAMEOUT is not set, it's empty. Exiting."
