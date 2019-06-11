@@ -1,86 +1,91 @@
 #!/usr/bin/bash
-set -x
+
+FNAMEOUT="mydata"
+FIXED="30000";
+if [ "$1" == "" ]; then
+    while true; do
+        echo "No CNF command line parameter, running predefined CNFs"
+        echo "Options are:"
+        echo "1 -- countbitswegner064.cnf"
+        echo "2 -- goldb-heqc-i10mul.cnf"
+        echo "3 -- goldb-heqc-alu4mul.cnf"
+        echo "4 -- g2-mizh-md5-48-2.cnf"
+        echo "5 -- AProVE07-16.cnf"
+        echo "6 -- UTI-20-10p0.cnf-unz"
+        echo "7 -- UCG-20-5p0.cnf"
+
+        read -p "Which CNF do you want to run? " myinput
+        case $myinput in
+            ["1"]* )
+                ORIGTIME="101";
+                FNAME="countbitswegner064.cnf";
+                RATIO="0.30";
+                break;;
+            [2]* )
+                ORIGTIME="27";
+                FNAME="goldb-heqc-i10mul.cnf";
+                RATIO="0.60";
+                break;;
+            [3]* )
+                ORIGTIME="70.84";
+                FNAME="goldb-heqc-alu4mul.cnf";
+                RATIO="0.60";
+                break;;
+            [4]* )
+                # !!SATISFIABLE!!
+                FNAME="g2-mizh-md5-48-2.cnf";
+                RATIO="1.0";
+                FIXED="10000";
+                break;;
+            [5]* )
+                ORIGTIME="98s";
+                FNAME="AProVE07-16.cnf";
+                RATIO="0.60";
+                break;;
+            [6]* )
+                FNAME="UTI-20-10p0.cnf-unz";
+                RATIO="0.20";
+                break;;
+            [7]* )
+                ORIGTIME="197";
+                FNAME="UCG-20-5p0.cnf";
+                RATIO="0.10";
+                break;;
+            * ) echo "Please answer 1-7";;
+        esac
+    done
+else
+    FNAME="$1"
+    RATIO="0.60"
+    FIXED="20000"
+fi
+
 set -e
 
-# orig: 26s
-# prop inside learnt: 22s
-# FNAME="barman-pfile07-027.sas.cr.37.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="1"
-# FIXED="6000"
+echo "--> Running on file                   $FNAME"
+echo "--> Outputting to data                $FNAMEOUT"
+echo "--> Using clause gather ratio of      $RATIO"
+echo "--> with fixed number of data points  $FIXED"
+exit
 
-# orig: 101s
-# prop inside learned: 120s
-# no prop inside: 77s
-# locking in: 131s
-FNAME="countbitswegner064.cnf"
-FNAMEOUT="mystuff2"
-RATIO="0.30"
-FIXED="30000"
+if [ "$FNAMEOUT" == "" ]; then
+    echo "Error: FNAMEOUT is not set, it's empty. Exiting."
+    exit -1
+fi
 
-# orig: 27s
-# prop inside learnt: 29
-FNAME="goldb-heqc-i10mul.cnf"
-FNAMEOUT="mystuff2"
-RATIO="0.60"
-FIXED="30000"
-
-# orig time: 70.84
-# no prop inside 33.24
-# FNAME="goldb-heqc-alu4mul.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="0.60"
-# FIXED="40000"
-
-# !!SATISFIABLE!!
-# FNAME="g2-mizh-md5-48-2.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="1.0"
-# FIXED="10000"
-
-
-# # orig: 98s
-# prop inside learnt: 82s
-# no prop inside: 95s
-# locked: 69s -- 737d7a5dcf32c2c2e07e2f5edf09819ee5fb0dfb
-FNAME="AProVE07-16.cnf"
-FNAMEOUT="mystuff2"
-RATIO="0.60"
-FIXED="30000"
-
-FNAME="UTI-20-10p0.cnf-unz"
-FNAMEOUT="mystuff2"
-RATIO="0.20"
-FIXED="30000"
-
-# orig: 197.10
-# prop inside learnt: 181.35
-# no prop inside: 131.36
-# locking in: 158.23
-# FNAME="UCG-20-5p0.cnf"
-# FNAMEOUT="mystuff2"
-# RATIO="0.10" #used 0.6 before lock-in
-# FIXED="20000" #must use 4000 for lock-in
-
-# cleanup
+echo "Cleaning up"
 (
 rm -rf "$FNAME-dir"
 mkdir "$FNAME-dir"
 cd "$FNAME-dir"
 rm -f $FNAMEOUT.d*
-rm -f $FNAMEOUT.lemmas
-rm -f $FNAMEOUT.lemmas-0
-rm -f $FNAMEOUT.lemmas-1
-rm -f $FNAMEOUT.lemmas-2
-rm -f $FNAMEOUT.db-short-pandasdata.dat
-rm -f $FNAMEOUT.db-long-pandasdata.dat
-rm -f $FNAMEOUT.db-vardata-pandasdata.dat
-rm -f ../src/final_predictor*
+rm -f $FNAMEOUT.lemma*
 )
+
+set -x
 
 # get data
 ./build_stats.sh
-
 (
 cd "$FNAME-dir"
 ../cryptominisat5 --gluecut0 100 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
@@ -120,24 +125,9 @@ done
 )
 
 ./build_final_predictor.sh
-
 (
 cd "$FNAME-dir"
 ../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 3 | tee cms-final-run.out
 )
-
 exit
 
-
-mkdir -p ../src/predict
-rm ../src/predict/*.h
-./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
-./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --tree --split 0.01 --clusters 9 --conf 1 --dot x --clustmin 0.03
-./build_final_predictor.sh
-
-exit
-
-rm ../src/predict/*.h
-./predict.py --name short comb-short-conf-1.dat --basedir ../src/predict/ --final --forest --split 0.01 --clusters 9 --conf 1 --clustmin 0.03
-./predict.py --name long comb-long-conf-1.dat --basedir ../src/predict/ --final --forest --split 0.01 --clusters 9 --conf 1 --clustmin 0.03
-./build_final_predictor.sh
