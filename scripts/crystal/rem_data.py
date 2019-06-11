@@ -51,27 +51,23 @@ class QueryDatRem(QueryHelper):
 
     def create_used_ID_table(self):
         q = """
-        DROP TABLE IF EXISTS `usedClauseIDs`;
+        DROP TABLE IF EXISTS `used_cl_ids`;
         """
         self.c.execute(q)
 
         q = """
-        CREATE TABLE `usedClauseIDs` (
+        CREATE TABLE `used_cl_ids` (
           `clauseID` int(20) NOT NULL
         );
         """
         self.c.execute(q)
 
-        print("Recreated usedClauseIDs table")
+        print("Recreated used_cl_ids table")
 
+        print("Creating needed indexes...")
+        t = time.time()
         queries = """
-        drop index if exists `idxclid30`;
-        drop index if exists `idxclid31`;
-        drop index if exists `idxclid32`;
-        drop index if exists `idxclid33`;
-        drop index if exists `idxclid34`;
-
-        create index `idxclid30` on `usedClauseIDs` (`clauseID`);
+        create index `idxclid30` on `used_cl_ids` (`clauseID`);
         create index `idxclid31` on `clauseStats` (`clauseID`);
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
@@ -85,26 +81,19 @@ class QueryDatRem(QueryHelper):
 
     def create_indexes(self):
         print("Recreating indexes...")
-        t = time.time()
+        print("Getting indexes to drop...")
         q = """
-        drop index if exists `idxclid1`;
-        drop index if exists `idxclid1-2`;
-        drop index if exists `idxclid1-3`;
-        drop index if exists `idxclid1-4`;
-        drop index if exists `idxclid1-5`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-        drop index if exists `idxclid6-2`;
-        drop index if exists `idxclid6-3`;
-        drop index if exists `idxclid6-4`;
-        drop index if exists `idxclid7`;
-        drop index if exists `idxclid8`;
-        drop index if exists `idxclidUCLS-1`;
-        drop index if exists `idxclidUCLS-2`;
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
 
+        t = time.time()
+        queries += """
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
@@ -167,9 +156,6 @@ class QueryDatRem(QueryHelper):
 
         t = time.time()
         q = """
-        drop index if exists `used_later_idx1`;
-        drop index if exists `used_later_idx2`;
-
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
         """
@@ -178,32 +164,6 @@ class QueryDatRem(QueryHelper):
         print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
     def delete_too_many_rdb_rows(self):
-        t = time.time()
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Have %d lines of RDB" % (rdb_rows))
-
-        if rdb_rows <= options.goal_rdb:
-            print("Num RDB rows: %d which is OK already, goal is %d" %
-                  (rdb_rows, options.goal_rdb));
-            return
-
-        ratio_needed = float(options.goal_rdb)/float(rdb_rows)*100.0
-        q = """DELETE FROM reduceDB WHERE (abs(random()) %% 100) > %d""" % int(ratio_needed)
-        self.c.execute(q)
-        print("Kept only %.3f %% of RDB: T: %.3f" % (ratio_needed, time.time()-t))
-
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Only %d RDB rows remain" % rdb_rows)
-
-    def delete_too_many_rdb_rows(self):
-        ret = self.c.execute("drop index if exists `idxclid32`;")
-
         t = time.time()
         val = int(options.limit)
         ret = self.c.execute("select count() from reduceDB")
@@ -239,12 +199,12 @@ class QueryDatRem(QueryHelper):
             self.c.execute(q)
             print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from only_keep_rdb")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("We now have %d lines only_keep_rdb" % (rdb_rows))
+            t = time.time()
+            val = int(options.limit)
+            ret = self.c.execute("select count() from only_keep_rdb")
+            rows = self.c.fetchall()
+            rdb_rows = rows[0][0]
+            print("We now have %d lines only_keep_rdb" % (rdb_rows))
 
         t = time.time()
         q = """
@@ -296,7 +256,7 @@ class QueryDatRem(QueryHelper):
             t = time.time()
             val = int(options.limit)
             q = """
-            insert into usedClauseIDs
+            insert into used_cl_ids
             select
             clauseID from sum_cl_use
             where num_used > 20
@@ -308,7 +268,7 @@ class QueryDatRem(QueryHelper):
             t = time.time()
             val = int(options.limit)
             q = """
-            insert into usedClauseIDs
+            insert into used_cl_ids
             select
             clauseID from sum_cl_use
             where num_used > 5
@@ -320,7 +280,7 @@ class QueryDatRem(QueryHelper):
         t = time.time()
         val = int(options.limit)
         q = """
-        insert into usedClauseIDs
+        insert into used_cl_ids
         select
         clauseID from sum_cl_use
         order by random() limit %d;
@@ -328,34 +288,38 @@ class QueryDatRem(QueryHelper):
         self.c.execute(q)
         print("Added any from sum_cl_use T: %-3.2f s" % (time.time() - t))
 
-        ret = self.c.execute("select count() from usedClauseIDs")
-        rows = self.c.fetchall()
-        good_ids = rows[0][0]
-        print("IDs from sum_cl_use: %d   T: %-3.2f s" % (good_ids, time.time() - t))
-
-        t = time.time()
-        val = int(options.limit)
         q = """
-        insert into usedClauseIDs
-        select
-        clauseStats.clauseID
-        from clauseStats left join sum_cl_use
-        on clauseStats.clauseID = sum_cl_use.clauseID
-        where sum_cl_use.clauseID is NULL
-        order by random() limit %d;
-        """ % val
-        self.c.execute(q)
-
-        ret = self.c.execute("select count() from usedClauseIDs")
+        select count()
+        from used_cl_ids, sum_cl_use
+        where
+        used_cl_ids.clauseID = sum_cl_use.clauseID
+        and sum_cl_use.num_used > 0
+        """
+        ret = self.c.execute(q)
         rows = self.c.fetchall()
-        all_ids = rows[0][0]
-        print("IDs from clauseStats that are not in good: %d  T: %-3.2f s" % ((all_ids-good_ids), time.time() - t))
+        assert len(rows) == 1
+        good_ids = rows[0][0]
+
+        q = """
+        select count()
+        from used_cl_ids, sum_cl_use
+        where
+        used_cl_ids.clauseID = sum_cl_use.clauseID
+        and sum_cl_use.num_used = 0
+        """
+        ret = self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        bad_ids = rows[0][0]
+        print("IDs in used_cl_ids that are good: %d" % good_ids)
+        print("IDs in used_cl_ids that are bad : %d" % bad_ids)
+        print("   T: %-3.2f s" % (time.time() - t))
 
     def filter_tables_of_ids(self):
         tables = ["clauseStats", "reduceDB", "sum_cl_use", "usedClauses"]
         q = """
         DELETE FROM {table} WHERE clauseID NOT IN
-        (SELECT clauseID from usedClauseIDs );"""
+        (SELECT clauseID from used_cl_ids );"""
 
         for table in tables:
             t = time.time()
@@ -364,61 +328,18 @@ class QueryDatRem(QueryHelper):
 
     def vacuum(self):
         t = time.time()
-        queries = """
-        drop index if exists `idx_aaa`;
-        drop index if exists `idx_bbb`;
-        drop index if exists `idxclid30`;
-        drop index if exists `idxclid31`;
-        drop index if exists `idxclid32`;
-        drop index if exists `idxclid33`;
-        drop index if exists `idxclid34`;
-        drop index if exists `idxclid1`;
-        drop index if exists `idxclid1-2`;
-        drop index if exists `idxclid1-3`;
-        drop index if exists `idxclid1-4`;
-        drop index if exists `idxclid1-5`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-        drop index if exists `idxclid6-2`;
-        drop index if exists `idxclid6-3`;
-        drop index if exists `idxclid6-4`;
-        drop index if exists `idxclid7`;
-        drop index if exists `idxclid8`;
-        drop index if exists `idxclidUCLS-1`;
-        drop index if exists `idxclidUCLS-2`;
-        drop index if exists `idxclid20`;
-        drop index if exists `idxclid21`;
-        drop index if exists `idxclid21-2`;
-        drop index if exists `idxclid22`;
-        drop index if exists `used_later_idx1`;
-        drop index if exists `used_later_idx2`;
-        drop index if exists `idxclid6-4`;
-        drop index if exists `idxclid1`;
-        drop index if exists `idxclid1-2`;
-        drop index if exists `idxclid1-3`;
-        drop index if exists `idxclid1-4`;
-        drop index if exists `idxclid1-5`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-        drop index if exists `idxclid6-2`;
-        drop index if exists `idxclid6-3`;
-        drop index if exists `idxclid6-4`;
-        drop index if exists `idxclid7`;
-        drop index if exists `idxclid8`;
-        drop index if exists `idxclidUCLS-1`;
-        drop index if exists `idxclidUCLS-2`;
-        drop index if exists `idxclid20`;
-        drop index if exists `idxclid21`;
-        drop index if exists `idxclid21-2`;
-        drop index if exists `idxclid22`;
-        drop index if exists `idxclid33`;
 
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
+
+        queries += """
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `used_later10k`;
         DROP TABLE IF EXISTS `used_later100k`;
@@ -426,10 +347,9 @@ class QueryDatRem(QueryHelper):
         DROP TABLE IF EXISTS `usedlater10k`;
         DROP TABLE IF EXISTS `usedlater100k`;
 
-        DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `usedlater`;
         DROP TABLE IF EXISTS `only_keep_rdb`;
-        DROP TABLE IF EXISTS `usedClauseIDs`;
+        DROP TABLE IF EXISTS `used_cl_ids`;
         """
         for q in queries.split("\n"):
             self.c.execute(q)
@@ -487,6 +407,6 @@ if __name__ == "__main__":
 
         q.create_indexes()
         q.fill_later_useful_data()
-        q.delete_too_many_rdb_rows();
+        q.delete_too_many_rdb_rows()
 
         q.vacuum()
