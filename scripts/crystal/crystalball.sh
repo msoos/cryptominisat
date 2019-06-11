@@ -2,6 +2,8 @@
 
 FNAMEOUT="mydata"
 FIXED="30000"
+RATIO="0.60"
+
 if [ "$1" == "" ]; then
     while true; do
         echo "No CNF command line parameter, running predefined CNFs"
@@ -49,7 +51,6 @@ if [ "$1" == "" ]; then
     done
 else
     FNAME="$1"
-    RATIO="0.60"
 fi
 
 set -e
