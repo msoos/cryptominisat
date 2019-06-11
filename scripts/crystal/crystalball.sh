@@ -100,14 +100,14 @@ cd "$FNAME-dir"
 grep "c conflicts" cms-pred-run.out
 
 ########################
-# Check if it was UNSATISFIABLE
+# Run our own DRAT-Trim
 ########################
 set +e
 a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    echo "OK, UNSATISFIABLE problem"
+    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 else
     rm -f final.cnf
     touch final.cnf
@@ -117,11 +117,6 @@ else
     ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
     ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 fi
-
-########################
-# Run our own DRAT-Trim
-########################
-../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 
 ########################
 # Augment, fix up and sample the SQLite data
