@@ -9,10 +9,9 @@ if [ "$1" == "" ]; then
         echo "1 -- countbitswegner064.cnf"
         echo "2 -- goldb-heqc-i10mul.cnf"
         echo "3 -- goldb-heqc-alu4mul.cnf"
-        echo "4 -- g2-mizh-md5-48-2.cnf"
-        echo "5 -- AProVE07-16.cnf"
-        echo "6 -- UTI-20-10p0.cnf-unz"
-        echo "7 -- UCG-20-5p0.cnf"
+        echo "4 -- AProVE07-16.cnf"
+        echo "5 -- UTI-20-10p0.cnf-unz"
+        echo "6 -- UCG-20-5p0.cnf"
 
         read -p "Which CNF do you want to run? " myinput
         case $myinput in
@@ -32,21 +31,15 @@ if [ "$1" == "" ]; then
                 RATIO="0.60";
                 break;;
             [4]* )
-                # !!SATISFIABLE!!
-                FNAME="g2-mizh-md5-48-2.cnf";
-                RATIO="1.0";
-                FIXED="10000";
-                break;;
-            [5]* )
                 ORIGTIME="98s";
                 FNAME="AProVE07-16.cnf";
                 RATIO="0.60";
                 break;;
-            [6]* )
+            [5]* )
                 FNAME="UTI-20-10p0.cnf-unz";
                 RATIO="0.20";
                 break;;
-            [7]* )
+            [6]* )
                 ORIGTIME="197";
                 FNAME="UCG-20-5p0.cnf";
                 RATIO="0.10";
@@ -98,13 +91,9 @@ set -e
 if [[ retval -eq 1 ]]; then
     ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
 else
-    rm -f final.cnf
-    touch final.cnf
-    cat "../$FNAME" >> final.cnf
-    cat dec_list >> final.cnf
-    grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
-    ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+    echo "ERROR: The problem you gave is SATISFIABLE"
+    echo "ERROR: CrystalBall cannot work with satisfiable instances"
+    exit -1
 fi
 
 ../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
