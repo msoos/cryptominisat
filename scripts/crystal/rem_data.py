@@ -163,31 +163,7 @@ class QueryDatRem(QueryHelper):
             self.c.execute(l)
         print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
-    def delete_too_many_rdb_rows_fair(self):
-        t = time.time()
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Have %d lines of RDB" % (rdb_rows))
-
-        if rdb_rows <= options.goal_rdb:
-            print("Num RDB rows: %d which is OK already, goal is %d" %
-                  (rdb_rows, options.goal_rdb));
-            return
-
-        ratio_needed = float(options.goal_rdb)/float(rdb_rows)*100.0
-        q = """DELETE FROM reduceDB WHERE (abs(random()) %% 100) > %d""" % int(ratio_needed)
-        self.c.execute(q)
-        print("Kept only %.3f %% of RDB: T: %.3f" % (ratio_needed, time.time()-t))
-
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from reduceDB")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("Only %d RDB rows remain" % rdb_rows)
-
-    def delete_too_many_rdb_rows_unfair(self):
+    def delete_too_many_rdb_rows(self):
         t = time.time()
         val = int(options.limit)
         ret = self.c.execute("select count() from reduceDB")
@@ -223,12 +199,12 @@ class QueryDatRem(QueryHelper):
             self.c.execute(q)
             print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
-        t = time.time()
-        val = int(options.limit)
-        ret = self.c.execute("select count() from only_keep_rdb")
-        rows = self.c.fetchall()
-        rdb_rows = rows[0][0]
-        print("We now have %d lines only_keep_rdb" % (rdb_rows))
+            t = time.time()
+            val = int(options.limit)
+            ret = self.c.execute("select count() from only_keep_rdb")
+            rows = self.c.fetchall()
+            rdb_rows = rows[0][0]
+            print("We now have %d lines only_keep_rdb" % (rdb_rows))
 
         t = time.time()
         q = """
@@ -430,10 +406,7 @@ if __name__ == "__main__":
         q.dangerous()
 
         q.create_indexes()
-        if options.fair:
-            q.delete_too_many_rdb_rows_fair()
-        else:
-            q.fill_later_useful_data()
-            q.delete_too_many_rdb_rows_unfair()
+        q.fill_later_useful_data()
+        q.delete_too_many_rdb_rows()
 
         q.vacuum()
