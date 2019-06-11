@@ -46,13 +46,22 @@ class QueryFill (QueryHelper):
         super(QueryFill, self).__init__(dbfname)
 
     def create_indexes(self):
+        print("Getting indexes to drop")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        q = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            q += "drop index if exists `%s`;\n" % row[0]
+
         print("Creating needed indexes...")
         t = time.time()
-        q = """
-        drop index if exists`idxclid3`;
-        drop index if exists`idxclidM`;
+        q += """
         create index `idxclid3` on `goodClauses` (`clauseID`);
-        create index `idxclid1-2` on `clauseStats` (`clauseID`);
+        create index `idxclid1-2` on `clauseStats` (`clauseID`, `conflicts`);
         create index `idxclidM` on `reduceDB` (`clauseID`, `propagations_made`);
         """
 
@@ -127,15 +136,10 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        drop index if exists `idxclid20`;
-        drop index if exists `idxclid21`;
-        drop index if exists `idxclid21-2`;
-        drop index if exists `idxclid22`;
-
-        create index `idxclid20` on `sum_cl_use` (`clauseID`, first_confl_used, last_confl_used, num_used, avg_hist_used);
+        create index `idxclid20` on `sum_cl_use` (`clauseID`, num_used, avg_hist_used);
         create index `idxclid21` on `sum_cl_use` (`clauseID`);
         create index `idxclid21-2` on `sum_cl_use` (`clauseID`, avg_hist_used);
-        create index `idxclid22` on `sum_cl_use` (`clauseID`, last_confl_used);
+        create index `idxusedClauses` on `usedClauses` (`clauseID`, `used_at`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -145,7 +149,7 @@ class QueryFill (QueryHelper):
         q = """update sum_cl_use
         set `var_hist_used` = (
         select
-        sum(1.0*(used_at-cs.conflicts-avg_hist_used)*(used_at-cs.conflicts-avg_hist_used))/(num_used*1.0)
+        sum(1.0*(u.used_at-cs.conflicts-sum_cl_use.avg_hist_used)*(u.used_at-cs.conflicts-sum_cl_use.avg_hist_used))/(sum_cl_use.num_used*1.0)
         from
         clauseStats as cs,
         usedClauses as u
@@ -185,12 +189,22 @@ class QueryFill (QueryHelper):
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
 
     def drop_idxs_tables(self):
-        print("Dropping indexes/tables...")
-        t = time.time()
+        print("Dropping indexes/tables")
+        print("Getting indexes to drop...")
         q = """
-        drop index if exists`idxclidM`;
-        drop index if exists`idxclid1-2`;
-        drop table if exists goodClauses;
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        q = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            q += "drop index if exists `%s`;\n" % row[0]
+
+        t = time.time()
+        q += """
+        drop table if exists `goodClauses`;
+        drop table if exists `idxusedClauses`;
         """
 
         for l in q.split('\n'):

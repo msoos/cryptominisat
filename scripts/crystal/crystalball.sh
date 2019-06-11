@@ -80,7 +80,7 @@ set -x
 ./build_stats.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 --gluecut0 100 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+../cryptominisat5 --gluecut0 100 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 set +e
@@ -95,7 +95,8 @@ else
     exit -1
 fi
 
-../add_lemma_ind.py "$FNAMEOUT.db" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
+../add_lemma_ind.py "$FNAMEOUT.db-raw" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
+cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 ../clean_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
