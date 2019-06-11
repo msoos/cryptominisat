@@ -76,34 +76,59 @@ rm -f $FNAMEOUT.lemma*
 
 set -x
 
-# get data
+
+########################
+# Build statistics-gathering CryptoMiniSat
+########################
 ./build_stats.sh
+
+
 (
+########################
+# Obtain dynamic data in SQLite and DRAT info
+########################
 cd "$FNAME-dir"
 ../cryptominisat5 --gluecut0 100 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
+
+########################
+# Check if it was UNSATISFIABLE
+########################
 set +e
 a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+    echo "OK, UNSATISFIABLE problem"
 else
     echo "ERROR: The problem you gave is SATISFIABLE"
     echo "ERROR: CrystalBall cannot work with satisfiable instances"
     exit -1
 fi
 
+########################
+# Run our own DRAT-Trim
+########################
+../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+
+########################
+# Augment, fix up and sample the SQLite data
+########################
 ../add_lemma_ind.py "$FNAMEOUT.db-raw" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
 ../clean_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ../rem_data.py "$FNAMEOUT-min.db"
 
-
+########################
+# Denormalize the data into a Pandas Table, label it and sample it
+########################
 ../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4
 
+########################
+# Create the classifiers
+########################
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
 for CONF in {0..4}; do
@@ -113,10 +138,13 @@ for CONF in {0..4}; do
 done
 )
 
+
+########################
+# Build final CryptoMiniSat with the classifier
+########################
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
 ../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 3 | tee cms-final-run.out
 )
 exit
-
