@@ -200,7 +200,6 @@ class QueryDatRem(QueryHelper):
             print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
             t = time.time()
-            val = int(options.limit)
             ret = self.c.execute("select count() from only_keep_rdb")
             rows = self.c.fetchall()
             rdb_rows = rows[0][0]
@@ -218,7 +217,6 @@ class QueryDatRem(QueryHelper):
         print("Insert random to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        val = int(options.limit)
         ret = self.c.execute("select count() from only_keep_rdb")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
