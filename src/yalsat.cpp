@@ -63,9 +63,7 @@ uint64_t Yalsat::mem_needed()
     //LIT storage (all clause data)
     needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
 
-    //NOTE: this is underreporting here, but by VERY little
-    //best -> longestclause = ??
-    //needed += sizeof(uint32_t) * longestclause;
+    //This is just an estimation of yalsat's memory needs.
 
     //clause
     needed += sizeof(Lit *) * numclauses;

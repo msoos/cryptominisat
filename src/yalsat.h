@@ -65,7 +65,6 @@ private:
     uint32_t numvars;     /* number of vars */
     uint32_t numclauses;   /* number of clauses */
     uint32_t numliterals; /* number of instances of literals across all clauses */
-    uint32_t numfalse;   /* number of false clauses */
 };
 
 }
