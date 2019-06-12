@@ -322,6 +322,24 @@ class QueryDatRem(QueryHelper):
             self.c.execute(q.format(table=table))
             print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
 
+    def check_db_sanity(self):
+        print("Checking tables in DB...")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'table'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("-> We have table: ", row[0])
+            if row[0] == "used_later10k" or row[0] == "used_later100k":
+                print("ERROR: 'gen_pandas.py' has been already ran on this DB")
+                print("       this will be a mess. We cannot run. ")
+                print("       Exiting.")
+                exit(-1)
+
+        print("Tables seem OK")
+
     def vacuum(self):
         t = time.time()
 
@@ -337,9 +355,6 @@ class QueryDatRem(QueryHelper):
 
         queries += """
         DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later10k`;
-        DROP TABLE IF EXISTS `used_later100k`;
-
         DROP TABLE IF EXISTS `only_keep_rdb`;
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
@@ -386,6 +401,7 @@ if __name__ == "__main__":
 
 
     with QueryDatRem(args[0]) as q:
+        q.check_db_sanity()
         q.dangerous()
         q.vacuum()
 
