@@ -225,9 +225,7 @@ class QueryDatRem(QueryHelper):
 
         t = time.time()
         q = """
-        drop index if exists `idx_bbb`;
         drop index if exists `idxclid6-4`; -- the other index on reduceDB
-
         create index `idx_bbb` on `only_keep_rdb` (`id`);
         """
         for l in q.split('\n'):
