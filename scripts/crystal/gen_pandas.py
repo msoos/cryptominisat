@@ -197,9 +197,6 @@ class QueryFill (QueryHelper):
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `used_later10k`;
         DROP TABLE IF EXISTS `used_later100k`;
-        DROP TABLE IF EXISTS `usedlater`;
-        DROP TABLE IF EXISTS `usedlater10k`;
-        DROP TABLE IF EXISTS `usedlater100k`;
         """
         for l in q.split('\n'):
             self.c.execute(l)

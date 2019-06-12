@@ -343,11 +343,7 @@ class QueryDatRem(QueryHelper):
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `used_later10k`;
         DROP TABLE IF EXISTS `used_later100k`;
-        DROP TABLE IF EXISTS `usedlater`;
-        DROP TABLE IF EXISTS `usedlater10k`;
-        DROP TABLE IF EXISTS `usedlater100k`;
 
-        DROP TABLE IF EXISTS `usedlater`;
         DROP TABLE IF EXISTS `only_keep_rdb`;
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
