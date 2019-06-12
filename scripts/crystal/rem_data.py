@@ -327,16 +327,39 @@ class QueryDatRem(QueryHelper):
         q = """
         SELECT name FROM sqlite_master WHERE type == 'table'
         """
+        found_sum_cl_use = False
         self.c.execute(q)
         rows = self.c.fetchall()
-        queries = ""
         for row in rows:
+            if row[0] == "sum_cl_use":
+                found_sum_cl_use = True
+
             print("-> We have table: ", row[0])
             if row[0] == "used_later10k" or row[0] == "used_later100k":
                 print("ERROR: 'gen_pandas.py' has been already ran on this DB")
                 print("       this will be a mess. We cannot run. ")
                 print("       Exiting.")
                 exit(-1)
+
+        if not found_sum_cl_use:
+            print("ERROR: Did not find sum_cl_use table. You probably didn't run")
+            print("       the 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
+        q = """
+        SELECT count() FROM sum_cl_use where num_used = 0
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        num = int(rows[0][0])
+        print("Unused clauses in sum_cl_use: ", num)
+        if num == 0:
+            print("ERROR: You most likely didn't run 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
 
         print("Tables seem OK")
 
