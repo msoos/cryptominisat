@@ -590,7 +590,6 @@ void WalkSAT::update_statistics_start_try()
     lowbad = numfalse;
     sample_size = 0;
     sumfalse = 0.0;
-    sumfalse_squared = 0.0;
 }
 
 void WalkSAT::update_statistics_end_flip()
@@ -631,7 +630,6 @@ void WalkSAT::update_statistics_end_flip()
     }
     if (numflip >= tail_start_flip) {
         sumfalse += numfalse;
-        sumfalse_squared += numfalse * numfalse;
         sample_size++;
     }
 }
@@ -644,33 +642,19 @@ void WalkSAT::update_and_print_statistics_end_try()
 
     if (sample_size > 0) {
         avgfalse = sumfalse / sample_size;
-        second_moment_avgfalse = sumfalse_squared / sample_size;
-        variance_avgfalse = second_moment_avgfalse - (avgfalse * avgfalse);
-        if (sample_size > 1) {
-            variance_avgfalse = (variance_avgfalse * sample_size) / (sample_size - 1);
-        }
-        std_dev_avgfalse = sqrt(variance_avgfalse);
-
-        ratio_avgfalse = ratio_for_stat(avgfalse, std_dev_avgfalse);
 
         sum_avgfalse += avgfalse;
-        sum_std_dev_avgfalse += std_dev_avgfalse;
         number_sampled_runs += 1;
 
         if (numfalse == 0) {
             suc_number_sampled_runs += 1;
             suc_sum_avgfalse += avgfalse;
-            suc_sum_std_dev_avgfalse += std_dev_avgfalse;
         } else {
             nonsuc_number_sampled_runs += 1;
             nonsuc_sum_avgfalse += avgfalse;
-            nonsuc_sum_std_dev_avgfalse += std_dev_avgfalse;
         }
     } else {
         avgfalse = 0;
-        variance_avgfalse = 0;
-        std_dev_avgfalse = 0;
-        ratio_avgfalse = 0;
     }
 
     if (numfalse == 0) {
@@ -690,8 +674,6 @@ void WalkSAT::update_and_print_statistics_end_try()
         << std::setw(9) << lowbad
         << std::setw(9) << numfalse
         << std::setw(9+2) << avgfalse
-        << std::setw(9+2) << std_dev_avgfalse
-        << std::setw(9+2) << ratio_avgfalse
         << std::setw(9) << numflip
         << std::setw(9) << numerator
         << endl;
@@ -724,46 +706,27 @@ void WalkSAT::print_statistics_final()
 
     if (number_sampled_runs) {
         mean_avgfalse = sum_avgfalse / number_sampled_runs;
-        mean_std_dev_avgfalse = sum_std_dev_avgfalse / number_sampled_runs;
-        ratio_mean_avgfalse = ratio_for_stat(mean_avgfalse, mean_std_dev_avgfalse);
 
         if (suc_number_sampled_runs) {
             suc_mean_avgfalse = suc_sum_avgfalse / suc_number_sampled_runs;
-            suc_mean_std_dev_avgfalse = suc_sum_std_dev_avgfalse / suc_number_sampled_runs;
-            suc_ratio_mean_avgfalse = ratio_for_stat(suc_mean_avgfalse, suc_mean_std_dev_avgfalse);
         } else {
             suc_mean_avgfalse = 0;
-            suc_mean_std_dev_avgfalse = 0;
-            suc_ratio_mean_avgfalse = 0;
         }
 
         if (nonsuc_number_sampled_runs) {
             nonsuc_mean_avgfalse = nonsuc_sum_avgfalse / nonsuc_number_sampled_runs;
-            nonsuc_mean_std_dev_avgfalse = nonsuc_sum_std_dev_avgfalse / nonsuc_number_sampled_runs;
-            nonsuc_ratio_mean_avgfalse = ratio_for_stat(nonsuc_mean_avgfalse, nonsuc_mean_std_dev_avgfalse);
         } else {
             nonsuc_mean_avgfalse = 0;
-            nonsuc_mean_std_dev_avgfalse = 0;
-            nonsuc_ratio_mean_avgfalse = 0;
         }
 
         if (solver->conf.verbosity) {
             cout << "c [walksat] final numbad level statistics"  << endl;
             cout << "c [walksat]     statistics over all runs:"  << endl;
             cout << "c [walksat]       overall mean avg numbad = " << mean_avgfalse << endl;
-            cout << "c [walksat]       overall mean meanbad std deviation = " << mean_std_dev_avgfalse << endl;
-            cout << "c [walksat]       overall ratio mean numbad to mean std dev = " << ratio_mean_avgfalse << endl;
             cout << "c [walksat]     statistics on successful runs:"  << endl;
             cout << "c [walksat]       successful mean avg numbad = " << suc_mean_avgfalse << endl;
-            cout << "c [walksat]       successful mean numbad std deviation = " << suc_mean_std_dev_avgfalse << endl;
-            cout << "c [walksat]       successful ratio mean numbad to mean std dev = " <<
-                   suc_ratio_mean_avgfalse  << endl;
             cout << "c [walksat]     statistics on nonsuccessful runs:"  << endl;
             cout << "c [walksat]       nonsuccessful mean avg numbad level = " << nonsuc_mean_avgfalse  << endl;
-            cout << "c [walksat]       nonsuccessful mean numbad std deviation = " <<
-                   nonsuc_mean_std_dev_avgfalse  << endl;
-            cout << "c [walksat]       nonsuccessful ratio mean numbad to mean std dev = " <<
-                   nonsuc_ratio_mean_avgfalse  << endl;
         }
     }
 
