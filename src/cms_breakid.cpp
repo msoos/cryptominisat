@@ -261,8 +261,6 @@ bool BreakID::doit()
     if (solver->conf.verbosity > 2) {
         breakid->print_subgroups();
     }
-
-    breakid->clean_theory();
     breakid->break_symm();
 
     if (breakid->get_num_break_cls() != 0) {
