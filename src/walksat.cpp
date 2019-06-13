@@ -579,9 +579,9 @@ void WalkSAT::print_statistics_header()
         cout << "c [walksat] numvars = " << numvars << ", numclauses = "
         << numclauses << ", numliterals = " << numliterals << endl;
 
-        cout << "c [walksat]     lowbad     unsat       avg   std dev    sd/avg     flips     nume-" << endl;
-        cout << "c [walksat]       this       end     unsat       avg     ratio      this     rator" << endl;
-        cout << "c [walksat]        try       try      tail     unsat      tail       try          " << endl;
+        cout << "c [walksat]    lowbad    unsat        avg    flips    nume-" << endl;
+        cout << "c [walksat]      this      end      unsat     this    rator" << endl;
+        cout << "c [walksat]       try      try       tail      try         " << endl;
     }
 }
 
@@ -671,6 +671,7 @@ void WalkSAT::update_and_print_statistics_end_try()
     if (solver->conf.verbosity) {
         cout
         << "c [walksat] "
+        << std::right
         << std::setw(9) << lowbad
         << std::setw(9) << numfalse
         << std::setw(9+2) << avgfalse
