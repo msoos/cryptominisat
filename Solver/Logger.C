@@ -101,7 +101,7 @@ void Logger::set_group_name(const uint group, const char* name)
     
     if (groupnames[group].empty() || groupnames[group] == "Noname") {
         groupnames[group] = name;
-    } else if (name != '\0' && groupnames[group] != name) {
+    } else if (name[0] != '\0' && groupnames[group] != name) {
         printf("Error! Group no. %d has been named twice. First, as '%s', then second as '%s'. Name the same group the same always, or don't give a name to the second iteration of the same group (i.e just write 'c g groupnumber' on the line\n", group, groupnames[group].c_str(), name);
         exit(-1);
     }
