@@ -57,6 +57,15 @@ if [ "$1" == "" ]; then
         esac
     done
 else
+    if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        echo "You must give a CNF file as input"
+        exit
+    fi
+    initial="$(echo $1 | head -c 1)"
+    if [ "$1" == "-" ]; then
+        echo "Cannot understand opion, there are no options"
+        exit -1
+    fi
     FNAME="$1"
 fi
 

@@ -3580,8 +3580,8 @@ inline bool Searcher::check_order_heap_sanity() const
                 varData[int_var].removed == Removed::none &&
                 value(int_var) == l_Undef
             ) {
-                order_heap_vsids.inHeap(int_var);
-                order_heap_maple.inHeap(int_var);
+                assert(order_heap_vsids.inHeap(int_var));
+                assert(order_heap_maple.inHeap(int_var));
             }
         }
     }

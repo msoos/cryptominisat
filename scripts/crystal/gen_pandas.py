@@ -65,28 +65,19 @@ class QueryFill (QueryHelper):
         print("We have %d lines of clauseStats" % (clss_rows))
 
     def create_indexes(self):
-        print("Recreating indexes...")
+        print("Deleting & recreating indexes...")
         t = time.time()
         q = """
-        drop index if exists `idxclid1`;
-        drop index if exists `idxclid1-2`;
-        drop index if exists `idxclid1-3`;
-        drop index if exists `idxclid1-4`;
-        drop index if exists `idxclid1-5`;
-        drop index if exists `idxclid2`;
-        drop index if exists `idxclid3`;
-        drop index if exists `idxclid4`;
-        drop index if exists `idxclid5`;
-        drop index if exists `idxclid6`;
-        drop index if exists `idxclid6-2`;
-        drop index if exists `idxclid6-3`;
-        drop index if exists `idxclid6-4`;
-        drop index if exists `idxclid7`;
-        drop index if exists `idxclid8`;
-        drop index if exists `idxclidUCLS-1`;
-        drop index if exists `idxclidUCLS-2`;
-        drop index if exists `idxclid33`;
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
 
+        queries += """
         create index `idxclid33` on `sum_cl_use` (`clauseID`, `last_confl_used`);
         create index `idxclid1` on `clauseStats` (`clauseID`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
@@ -105,7 +96,7 @@ class QueryFill (QueryHelper):
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
         """
-        for l in q.split('\n'):
+        for l in queries.split('\n'):
             t2 = time.time()
 
             if options.verbose:
@@ -206,9 +197,6 @@ class QueryFill (QueryHelper):
         DROP TABLE IF EXISTS `used_later`;
         DROP TABLE IF EXISTS `used_later10k`;
         DROP TABLE IF EXISTS `used_later100k`;
-        DROP TABLE IF EXISTS `usedlater`;
-        DROP TABLE IF EXISTS `usedlater10k`;
-        DROP TABLE IF EXISTS `usedlater100k`;
         """
         for l in q.split('\n'):
             self.c.execute(l)

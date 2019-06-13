@@ -125,6 +125,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes python3-pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes libboost-test-dev; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --force-yes cmake3; fi
+  - if [[ "${COVERITY_SCAN}" == "1"    ]]; then sudo apt-get install -y --force-yes libboost-program-options-dev; fi
 
 install:
 #cmake

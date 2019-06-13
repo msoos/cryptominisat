@@ -407,7 +407,7 @@ static int _add_clauses_from_buffer_info(Solver *self, PyObject *buffer_info, co
         return 0;
     }
     const void *array_address = PyLong_AsVoidPtr(py_array_address);
-    if (py_array_address == NULL) {
+    if (array_address == NULL) {
         PyErr_SetString(PyExc_ValueError, "invalid clause array: could not get array address");
         return 0;
     }

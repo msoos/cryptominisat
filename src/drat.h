@@ -98,8 +98,8 @@ struct Drat
     }
 
     int buf_len;
-    unsigned char* drup_buf = 0;
-    unsigned char* buf_ptr;
+    unsigned char* drup_buf = NULL;
+    unsigned char* buf_ptr = NULL;
 };
 
 template<bool add_ID>

@@ -200,7 +200,6 @@ class QueryDatRem(QueryHelper):
             print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
             t = time.time()
-            val = int(options.limit)
             ret = self.c.execute("select count() from only_keep_rdb")
             rows = self.c.fetchall()
             rdb_rows = rows[0][0]
@@ -218,7 +217,6 @@ class QueryDatRem(QueryHelper):
         print("Insert random to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        val = int(options.limit)
         ret = self.c.execute("select count() from only_keep_rdb")
         rows = self.c.fetchall()
         rdb_rows = rows[0][0]
@@ -227,9 +225,7 @@ class QueryDatRem(QueryHelper):
 
         t = time.time()
         q = """
-        drop index if exists `idx_bbb`;
         drop index if exists `idxclid6-4`; -- the other index on reduceDB
-
         create index `idx_bbb` on `only_keep_rdb` (`id`);
         """
         for l in q.split('\n'):
@@ -326,6 +322,47 @@ class QueryDatRem(QueryHelper):
             self.c.execute(q.format(table=table))
             print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
 
+    def check_db_sanity(self):
+        print("Checking tables in DB...")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'table'
+        """
+        found_sum_cl_use = False
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        for row in rows:
+            if row[0] == "sum_cl_use":
+                found_sum_cl_use = True
+
+            print("-> We have table: ", row[0])
+            if row[0] == "used_later10k" or row[0] == "used_later100k":
+                print("ERROR: 'gen_pandas.py' has been already ran on this DB")
+                print("       this will be a mess. We cannot run. ")
+                print("       Exiting.")
+                exit(-1)
+
+        if not found_sum_cl_use:
+            print("ERROR: Did not find sum_cl_use table. You probably didn't run")
+            print("       the 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
+        q = """
+        SELECT count() FROM sum_cl_use where num_used = 0
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        num = int(rows[0][0])
+        print("Unused clauses in sum_cl_use: ", num)
+        if num == 0:
+            print("ERROR: You most likely didn't run 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
+
+        print("Tables seem OK")
+
     def vacuum(self):
         t = time.time()
 
@@ -341,13 +378,6 @@ class QueryDatRem(QueryHelper):
 
         queries += """
         DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later10k`;
-        DROP TABLE IF EXISTS `used_later100k`;
-        DROP TABLE IF EXISTS `usedlater`;
-        DROP TABLE IF EXISTS `usedlater10k`;
-        DROP TABLE IF EXISTS `usedlater100k`;
-
-        DROP TABLE IF EXISTS `usedlater`;
         DROP TABLE IF EXISTS `only_keep_rdb`;
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
@@ -394,6 +424,7 @@ if __name__ == "__main__":
 
 
     with QueryDatRem(args[0]) as q:
+        q.check_db_sanity()
         q.dangerous()
         q.vacuum()
 

@@ -342,7 +342,7 @@ class Tester:
         cmd += "--sls %d " % sls
         cmd += "--slseveryn %d " % random.randint(1, 3)
         cmd += "--yalsatmems %d " % random.choice([1, 10, 100])
-        cmd += "--walksatruns %d " % random.choice([10, 100])
+        cmd += "--walksatruns %d " % random.choice([2, 15, 20])
         cmd += "--slstype %s " % random.choice(["walksat", "yalsat"])
         cmd += "--mustrenumber %d " % random.choice([0, 1])
         cmd += "--bva %d " % random.choice([1, 1, 1, 0])
