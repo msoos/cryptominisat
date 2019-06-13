@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+if (NOT WIN32)
+    add_cxx_flag_if_supported("-Wno-sign-compare")
+endif()
+
 
 set (LIT_TOOL "${PYTHON_EXECUTABLE} -m lit.main")
 execute_process(
