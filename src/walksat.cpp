@@ -193,9 +193,9 @@ void WalkSAT::WalkSAT::flipvar(uint32_t toflip)
 
         numtruelit[cli]++;
         if (numtruelit[cli] == 1) {
+            assert(numfalse > 0);
             const uint32_t last_false_cl = false_cls[numfalse-1];
             uint32_t position_in_false_cls = map_cl_to_false_cls[cli];
-            assert(numfalse > 0);
             numfalse--;
 
             //the postiion in false_cls where this clause was is now replaced with
