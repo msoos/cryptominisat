@@ -74,7 +74,8 @@ class QueryFill (QueryHelper):
         rows = self.c.fetchall()
         queries = ""
         for row in rows:
-            print("Will delete index:", row[0])
+            if options.verbose:
+                print("Will delete index:", row[0])
             queries += "drop index if exists `%s`;\n" % row[0]
 
         queries += """
@@ -337,247 +338,103 @@ class QueryCls (QueryHelper):
     def __init__(self, dbfname, conf):
         super(QueryCls, self).__init__(dbfname)
         self.conf = conf
+        self.fill_sql_query()
 
-        self.goodcls = """
-        , goodcl.`clauseID` as `goodcl.clauseID`
-        , goodcl.`num_used` as `goodcl.num_used`
-        , goodcl.`first_confl_used` as `goodcl.first_confl_used`
-        , goodcl.`last_confl_used` as `goodcl.last_confl_used`
-        , goodcl.`sum_hist_used` as `goodcl.sum_hist_used`
-        , goodcl.`avg_hist_used` as `goodcl.avg_hist_used`
-        , goodcl.`var_hist_used` as `goodcl.var_hist_used`
-        , goodcl.`last_prop_used` as `goodcl.last_prop_used`
-    """
+    def get_columns(self, tablename):
+        q="SELECT name FROM PRAGMA_TABLE_INFO('%s');" % tablename
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        columns = []
+        for row in rows:
+            if options.verbose:
+                print("Using column in table {tablename}: {col}".format(
+                    tablename=tablename
+                    , col=row[0]))
+            columns.append(row[0])
 
-        # partially done with tablestruct_sql and SED: sed -e 's/`\(.*\)`.*/rst.`\1` as `rst.\1`/' ../tmp.txt
-        self.restart_dat = """
-        -- , rst.`simplifications` as `rst.simplifications`
-        -- , rst.`restarts` as `rst.restarts`
-        -- , rst.`conflicts` as `rst.conflicts`
-        -- , rst.`latest_satzilla_feature_calc` as `rst.latest_satzilla_feature_calc`
-        -- rst.`runtime` as `rst.runtime`
-        , rst.`numIrredBins` as `rst.numIrredBins`
-        , rst.`numIrredLongs` as `rst.numIrredLongs`
-        , rst.`numRedBins` as `rst.numRedBins`
-        , rst.`numRedLongs` as `rst.numRedLongs`
-        , rst.`numIrredLits` as `rst.numIrredLits`
-        , rst.`numredLits` as `rst.numredLits`
-        , rst.`glue` as `rst.glue`
-        , rst.`glueSD` as `rst.glueSD`
-        , rst.`glueMin` as `rst.glueMin`
-        , rst.`glueMax` as `rst.glueMax`
-        , rst.`size` as `rst.size`
-        , rst.`sizeSD` as `rst.sizeSD`
-        , rst.`sizeMin` as `rst.sizeMin`
-        , rst.`sizeMax` as `rst.sizeMax`
-        , rst.`resolutions` as `rst.resolutions`
-        , rst.`resolutionsSD` as `rst.resolutionsSD`
-        , rst.`resolutionsMin` as `rst.resolutionsMin`
-        , rst.`resolutionsMax` as `rst.resolutionsMax`
-        , rst.`branchDepth` as `rst.branchDepth`
-        , rst.`branchDepthSD` as `rst.branchDepthSD`
-        , rst.`branchDepthMin` as `rst.branchDepthMin`
-        , rst.`branchDepthMax` as `rst.branchDepthMax`
-        , rst.`branchDepthDelta` as `rst.branchDepthDelta`
-        , rst.`branchDepthDeltaSD` as `rst.branchDepthDeltaSD`
-        , rst.`branchDepthDeltaMin` as `rst.branchDepthDeltaMin`
-        , rst.`branchDepthDeltaMax` as `rst.branchDepthDeltaMax`
-        , rst.`trailDepth` as `rst.trailDepth`
-        , rst.`trailDepthSD` as `rst.trailDepthSD`
-        , rst.`trailDepthMin` as `rst.trailDepthMin`
-        , rst.`trailDepthMax` as `rst.trailDepthMax`
-        , rst.`trailDepthDelta` as `rst.trailDepthDelta`
-        , rst.`trailDepthDeltaSD` as `rst.trailDepthDeltaSD`
-        , rst.`trailDepthDeltaMin` as `rst.trailDepthDeltaMin`
-        , rst.`trailDepthDeltaMax` as `rst.trailDepthDeltaMax`
-        , rst.`propBinIrred` as `rst.propBinIrred`
-        , rst.`propBinRed` as `rst.propBinRed`
-        , rst.`propLongIrred` as `rst.propLongIrred`
-        , rst.`propLongRed` as `rst.propLongRed`
-        , rst.`conflBinIrred` as `rst.conflBinIrred`
-        , rst.`conflBinRed` as `rst.conflBinRed`
-        , rst.`conflLongIrred` as `rst.conflLongIrred`
-        , rst.`conflLongRed` as `rst.conflLongRed`
-        , rst.`learntUnits` as `rst.learntUnits`
-        , rst.`learntBins` as `rst.learntBins`
-        , rst.`learntLongs` as `rst.learntLongs`
-        , rst.`resolBinIrred` as `rst.resolBinIrred`
-        , rst.`resolBinRed` as `rst.resolBinRed`
-        , rst.`resolLIrred` as `rst.resolLIrred`
-        , rst.`resolLRed` as `rst.resolLRed`
-        -- , rst.`propagations` as `rst.propagations`
-        -- , rst.`decisions` as `rst.decisions`
-        -- , rst.`flipped` as `rst.flipped`
-        , rst.`varSetPos` as `rst.varSetPos`
-        , rst.`varSetNeg` as `rst.varSetNeg`
-        , rst.`free` as `rst.free`
-        -- , rst.`replaced` as `rst.replaced`
-        -- , rst.`eliminated` as `rst.eliminated`
-        -- , rst.`set` as `rst.set`
-        -- , rst.`clauseIDstartInclusive` as `rst.clauseIDstartInclusive`
-        -- , rst.`clauseIDendExclusive` as `rst.clauseIDendExclusive`
-        """
+        return columns
 
-        self.rdb0_dat = """
-        -- , rdb0.`simplifications` as `rdb0.simplifications`
-        -- , rdb0.`restarts` as `rdb0.restarts`
-        , rdb0.`conflicts` as `rdb0.conflicts`
-        , rdb0.`cur_restart_type` as `rdb0.cur_restart_type`
-        -- , rdb0.`runtime` as `rdb0.runtime`
+    def query_fragment(self, tablename, not_cols, short_name):
+        cols = self.get_columns(tablename)
+        filtered_cols = list(set(cols).difference(not_cols))
+        ret = ""
+        for col in filtered_cols:
+            ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
+                col=col
+                , short_name=short_name)
 
-        -- , rdb0.`clauseID` as `rdb0.clauseID`
-        , rdb0.`dump_no` as `rdb0.dump_no`
-        , rdb0.`conflicts_made` as `rdb0.conflicts_made`
-        , rdb0.`propagations_made` as `rdb0.propagations_made`
-        , rdb0.`clause_looked_at` as `rdb0.clause_looked_at`
-        , rdb0.`used_for_uip_creation` as `rdb0.used_for_uip_creation`
-        , rdb0.`last_touched_diff` as `rdb0.last_touched_diff`
-        , rdb0.`activity_rel` as `rdb0.activity_rel`
-        , rdb0.`locked` as `rdb0.locked`
-        , rdb0.`in_xor` as `rdb0.in_xor`
-        -- , rdb0.`glue` as `rdb0.glue`
-        -- , rdb0.`size` as `rdb0.size`
-        , rdb0.`ttl` as `rdb0.ttl`
-        , rdb0.`act_ranking_top_10` as `rdb0.act_ranking_top_10`
-        , rdb0.`act_ranking` as `rdb0.act_ranking`
-        , rdb0.`sum_uip1_used` as `rdb0.sum_uip1_used`
-        , rdb0.`sum_delta_confl_uip1_used` as `rdb0.sum_delta_confl_uip1_used`
-        """
+        if options.verbose:
+            print("query for short name {short_name}: {ret}".format(
+                short_name=short_name
+                , ret=ret))
 
-        self.clause_dat = """
-        -- , cl.`simplifications` as `cl.simplifications`
-        -- , cl.`restarts` as `cl.restarts`
-        -- , cl.`prev_restart` as `cl.prev_restart`
-        , cl.`conflicts` as `cl.conflicts`
-        -- , cl.`latest_satzilla_feature_calc` as `cl.latest_satzilla_feature_calc`
-        -- , cl.`clauseID` as `cl.clauseID`
-        , cl.`glue` as `cl.glue`
-        , cl.`size` as `cl.size`
-        , cl.`conflicts_this_restart` as `cl.conflicts_this_restart`
-        , cl.`num_overlap_literals` as `cl.num_overlap_literals`
-        , cl.`num_antecedents` as `cl.num_antecedents`
-        , cl.`num_total_lits_antecedents` as `cl.num_total_lits_antecedents`
-        , cl.`antecedents_avg_size` as `cl.antecedents_avg_size`
-        , cl.`backtrack_level` as `cl.backtrack_level`
-        , cl.`decision_level` as `cl.decision_level`
-        , cl.`decision_level_pre1` as `cl.decision_level_pre1`
-        , cl.`decision_level_pre2` as `cl.decision_level_pre2`
-        , cl.`trail_depth_level` as `cl.trail_depth_level`
-        , cl.`cur_restart_type` as `cl.cur_restart_type`
-        , cl.`atedecents_binIrred` as `cl.atedecents_binIrred`
-        , cl.`atedecents_binRed` as `cl.atedecents_binRed`
-        , cl.`atedecents_longIrred` as `cl.atedecents_longIrred`
-        , cl.`atedecents_longRed` as `cl.atedecents_longRed`
-        -- , cl.`vsids_vars_avg` as `cl.vsids_vars_avg`
-        -- , cl.`vsids_vars_var` as `cl.vsids_vars_var`
-        -- , cl.`vsids_vars_min` as `cl.vsids_vars_min`
-        -- , cl.`vsids_vars_max` as `cl.vsids_vars_max`
-        , cl.`antecedents_glue_long_reds_avg` as `cl.antecedents_glue_long_reds_avg`
-        , cl.`antecedents_glue_long_reds_var` as `cl.antecedents_glue_long_reds_var`
-        , cl.`antecedents_glue_long_reds_min` as `cl.antecedents_glue_long_reds_min`
-        , cl.`antecedents_glue_long_reds_max` as `cl.antecedents_glue_long_reds_max`
-        , cl.`antecedents_long_red_age_avg` as `cl.antecedents_long_red_age_avg`
-        , cl.`antecedents_long_red_age_var` as `cl.antecedents_long_red_age_var`
-        , cl.`antecedents_long_red_age_min` as `cl.antecedents_long_red_age_min`
-        , cl.`antecedents_long_red_age_max` as `cl.antecedents_long_red_age_max`
-        -- , cl.`vsids_of_resolving_literals_avg` as `cl.vsids_of_resolving_literals_avg`
-        -- , cl.`vsids_of_resolving_literals_var` as `cl.vsids_of_resolving_literals_var`
-        -- , cl.`vsids_of_resolving_literals_min` as `cl.vsids_of_resolving_literals_min`
-        -- , cl.`vsids_of_resolving_literals_max` as `cl.vsids_of_resolving_literals_max`
-        -- , cl.`vsids_of_all_incoming_lits_avg` as `cl.vsids_of_all_incoming_lits_avg`
-        -- , cl.`vsids_of_all_incoming_lits_var` as `cl.vsids_of_all_incoming_lits_var`
-        -- , cl.`vsids_of_all_incoming_lits_min` as `cl.vsids_of_all_incoming_lits_min`
-        -- , cl.`vsids_of_all_incoming_lits_max` as `cl.vsids_of_all_incoming_lits_max`
-        -- , cl.`antecedents_antecedents_vsids_avg` as `cl.antecedents_antecedents_vsids_avg`
-        , cl.`decision_level_hist` as `cl.decision_level_hist`
-        , cl.`backtrack_level_hist_lt` as `cl.backtrack_level_hist_lt`
-        , cl.`trail_depth_level_hist` as `cl.trail_depth_level_hist`
-        -- , cl.`vsids_vars_hist` as `cl.vsids_vars_hist`
-        , cl.`size_hist` as `cl.size_hist`
-        , cl.`glue_hist` as `cl.glue_hist`
-        , cl.`num_antecedents_hist` as `cl.num_antecedents_hist`
-        , cl.`antec_sum_size_hist` as `cl.antec_sum_size_hist`
-        , cl.`antec_overlap_hist` as `cl.antec_overlap_hist`
+        return ret
 
-        , cl.`branch_depth_hist_queue` as `cl.branch_depth_hist_queue`
-        , cl.`trail_depth_hist` as `cl.trail_depth_hist`
-        , cl.`trail_depth_hist_longer` as `cl.trail_depth_hist_longer`
-        , cl.`num_resolutions_hist` as `cl.num_resolutions_hist`
-        , cl.`confl_size_hist` as `cl.confl_size_hist`
-        , cl.`trail_depth_delta_hist` as `cl.trail_depth_delta_hist`
-        , cl.`backtrack_level_hist` as `cl.backtrack_level_hist`
-        , cl.`glue_hist_queue` as `cl.glue_hist_queue`
-        , cl.`glue_hist_long` as `cl.glue_hist_long`
-        """
+    def fill_sql_query(self):
+        # sum_cl_use
+        self.sum_cl_use = self.query_fragment("sum_cl_use", [], "sum_cl_use")
 
-        self.satzfeat_dat = """
-        -- , szfeat.`simplifications` as `szfeat.simplifications`
-        -- , szfeat.`restarts` as `szfeat.restarts`
-        , szfeat.`conflicts` as `szfeat.conflicts`
-        -- , szfeat.`latest_satzilla_feature_calc` as `szfeat.latest_satzilla_feature_calc`
-        , szfeat.`numVars` as `szfeat.numVars`
-        , szfeat.`numClauses` as `szfeat.numClauses`
-        , szfeat.`var_cl_ratio` as `szfeat.var_cl_ratio`
-        , szfeat.`binary` as `szfeat.binary`
-        , szfeat.`horn` as `szfeat.horn`
-        , szfeat.`horn_mean` as `szfeat.horn_mean`
-        , szfeat.`horn_std` as `szfeat.horn_std`
-        , szfeat.`horn_min` as `szfeat.horn_min`
-        , szfeat.`horn_max` as `szfeat.horn_max`
-        , szfeat.`horn_spread` as `szfeat.horn_spread`
-        , szfeat.`vcg_var_mean` as `szfeat.vcg_var_mean`
-        , szfeat.`vcg_var_std` as `szfeat.vcg_var_std`
-        , szfeat.`vcg_var_min` as `szfeat.vcg_var_min`
-        , szfeat.`vcg_var_max` as `szfeat.vcg_var_max`
-        , szfeat.`vcg_var_spread` as `szfeat.vcg_var_spread`
-        , szfeat.`vcg_cls_mean` as `szfeat.vcg_cls_mean`
-        , szfeat.`vcg_cls_std` as `szfeat.vcg_cls_std`
-        , szfeat.`vcg_cls_min` as `szfeat.vcg_cls_min`
-        , szfeat.`vcg_cls_max` as `szfeat.vcg_cls_max`
-        , szfeat.`vcg_cls_spread` as `szfeat.vcg_cls_spread`
-        , szfeat.`pnr_var_mean` as `szfeat.pnr_var_mean`
-        , szfeat.`pnr_var_std` as `szfeat.pnr_var_std`
-        , szfeat.`pnr_var_min` as `szfeat.pnr_var_min`
-        , szfeat.`pnr_var_max` as `szfeat.pnr_var_max`
-        , szfeat.`pnr_var_spread` as `szfeat.pnr_var_spread`
-        , szfeat.`pnr_cls_mean` as `szfeat.pnr_cls_mean`
-        , szfeat.`pnr_cls_std` as `szfeat.pnr_cls_std`
-        , szfeat.`pnr_cls_min` as `szfeat.pnr_cls_min`
-        , szfeat.`pnr_cls_max` as `szfeat.pnr_cls_max`
-        , szfeat.`pnr_cls_spread` as `szfeat.pnr_cls_spread`
-        , szfeat.`avg_confl_size` as `szfeat.avg_confl_size`
-        , szfeat.`confl_size_min` as `szfeat.confl_size_min`
-        , szfeat.`confl_size_max` as `szfeat.confl_size_max`
-        , szfeat.`avg_confl_glue` as `szfeat.avg_confl_glue`
-        , szfeat.`confl_glue_min` as `szfeat.confl_glue_min`
-        , szfeat.`confl_glue_max` as `szfeat.confl_glue_max`
-        , szfeat.`avg_num_resolutions` as `szfeat.avg_num_resolutions`
-        , szfeat.`num_resolutions_min` as `szfeat.num_resolutions_min`
-        , szfeat.`num_resolutions_max` as `szfeat.num_resolutions_max`
-        , szfeat.`learnt_bins_per_confl` as `szfeat.learnt_bins_per_confl`
-        , szfeat.`avg_branch_depth` as `szfeat.avg_branch_depth`
-        , szfeat.`branch_depth_min` as `szfeat.branch_depth_min`
-        , szfeat.`branch_depth_max` as `szfeat.branch_depth_max`
-        , szfeat.`avg_trail_depth_delta` as `szfeat.avg_trail_depth_delta`
-        , szfeat.`trail_depth_delta_min` as `szfeat.trail_depth_delta_min`
-        , szfeat.`trail_depth_delta_max` as `szfeat.trail_depth_delta_max`
-        , szfeat.`avg_branch_depth_delta` as `szfeat.avg_branch_depth_delta`
-        , szfeat.`props_per_confl` as `szfeat.props_per_confl`
-        , szfeat.`confl_per_restart` as `szfeat.confl_per_restart`
-        , szfeat.`decisions_per_conflict` as `szfeat.decisions_per_conflict`
-        , szfeat.`red_glue_distr_mean` as `szfeat.red_glue_distr_mean`
-        , szfeat.`red_glue_distr_var` as `szfeat.red_glue_distr_var`
-        , szfeat.`red_size_distr_mean` as `szfeat.red_size_distr_mean`
-        , szfeat.`red_size_distr_var` as `szfeat.red_size_distr_var`
-        -- , szfeat.`red_activity_distr_mean` as `szfeat.red_activity_distr_mean`
-        -- , szfeat.`red_activity_distr_var` as `szfeat.red_activity_distr_var`
-        -- , szfeat.`irred_glue_distr_mean` as `szfeat.irred_glue_distr_mean`
-        -- , szfeat.`irred_glue_distr_var` as `szfeat.irred_glue_distr_var`
-        , szfeat.`irred_size_distr_mean` as `szfeat.irred_size_distr_mean`
-        , szfeat.`irred_size_distr_var` as `szfeat.irred_size_distr_var`
-        -- , szfeat.`irred_activity_distr_mean` as `szfeat.irred_activity_distr_mean`
-        -- , szfeat.`irred_activity_distr_var` as `szfeat.irred_activity_distr_var`
-        """
+        # restart data
+        not_cols =[
+            "simplifications"
+            , "restarts"
+            , "conflicts"
+            , "latest_satzilla_feature_calc"
+            , "runtime"
+            , "propagations"
+            , "decisions"
+            , "flipped"
+            , "replaced"
+            , "eliminated"
+            , "set"
+            , "clauseIDstartInclusive"
+            , "clauseIDendExclusive"]
+        self.restart_dat = self.query_fragment("restart", not_cols, "rst")
+
+        # RDB data
+        not_cols = [
+            "simplifications"
+            , "restarts"
+            , "runtime"
+            , "clauseID"
+            , "glue"
+            , "size"]
+        self.rdb0_dat = self.query_fragment("reduceDB", not_cols, "rdb0")
+
+        # clause data
+        not_cols = [
+            "simplifications"
+            , "restarts"
+            , "prev_restart"
+            , "latest_satzilla_feature_calc"
+            , "clauseID"
+            , "vsids_vars_avg"
+            , "vsids_vars_var"
+            , "vsids_vars_min"
+            , "vsids_vars_max"
+            , "vsids_of_resolving_literals_avg"
+            , "vsids_of_resolving_literals_var"
+            , "vsids_of_resolving_literals_min"
+            , "vsids_of_resolving_literals_max"
+            , "vsids_of_all_incoming_lits_avg"
+            , "vsids_of_all_incoming_lits_var"
+            , "vsids_of_all_incoming_lits_min"
+            , "vsids_of_all_incoming_lits_max"
+            , "antecedents_antecedents_vsids_avg"]
+        self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
+
+
+        not_cols = [
+            "simplifications"
+            , "restarts"
+            , "latest_satzilla_feature_calc"
+            , "red_activity_distr_mean"
+            , "red_activity_distr_var"
+            , "irred_glue_distr_mean"
+            , "irred_glue_distr_var"
+            , "irred_activity_distr_mean"
+            , "irred_activity_distr_var"]
+        self.satzfeat_dat = self.query_fragment("satzilla_features", not_cols, "szfeat")
 
         self.common_limits = """
         order by random()
@@ -589,7 +446,7 @@ class QueryCls (QueryHelper):
             self.case_stmt_10k = """
             CASE WHEN
 
-            goodcl.last_confl_used > rdb0.conflicts and
+            sum_cl_use.last_confl_used > rdb0.conflicts and
             (
                 -- useful in the next round
                    used_later10k.used_later10k > 3
@@ -646,7 +503,7 @@ class QueryCls (QueryHelper):
             self.case_stmt_100k = """
             CASE WHEN
 
-            goodcl.last_confl_used > rdb0.conflicts+100000 and
+            sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
                    (used_later100k.used_later100k > 10 and used_later.used_later > 20)
@@ -662,7 +519,7 @@ class QueryCls (QueryHelper):
             self.case_stmt_100k = """
             CASE WHEN
 
-            goodcl.last_confl_used > rdb0.conflicts+100000 and
+            sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
                    (used_later100k.used_later100k > 13 and used_later.used_later > 24)
@@ -718,16 +575,16 @@ class QueryCls (QueryHelper):
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
-        {goodcls}
-        , goodcl.num_used as `x.num_used`
-        , `goodcl`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
+        {sum_cl_use}
+        , sum_cl_use.num_used as `x.num_used`
+        , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
         , {case_stmt}
         """
 
         self.q_ok = """
         FROM
         clauseStats as cl
-        , sum_cl_use as goodcl
+        , sum_cl_use as sum_cl_use
         , restart as rst
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
@@ -738,7 +595,7 @@ class QueryCls (QueryHelper):
         , used_later100k
         WHERE
 
-        cl.clauseID = goodcl.clauseID
+        cl.clauseID = sum_cl_use.clauseID
         and cl.clauseID != 0
         and used_later.clauseID = cl.clauseID
         and used_later.rdb0conflicts = rdb0.conflicts
@@ -766,7 +623,7 @@ class QueryCls (QueryHelper):
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
-            "goodcls": self.goodcls
+            "sum_cl_use": self.sum_cl_use
             }
 
     def add_dump_no_filter(self, q):
