@@ -27,6 +27,8 @@ Please read LICENSE.txt for a discussion. Everything that is needed to build is 
 CrystalBall
 -----
 
+Build and use instructions below. Please see the [associated blog post](https://www.msoos.org/2019/06/crystalball-sat-solving-data-gathering-and-machine-learning/) for more information.
+
 ```
 # prerequisites on a modern Debian/Ubuntu installation
 sudo apt-get install build-essential cmake git
