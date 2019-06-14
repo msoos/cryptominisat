@@ -93,7 +93,6 @@ class QueryFill (QueryHelper):
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
         create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
-        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
         """
@@ -107,90 +106,6 @@ class QueryFill (QueryHelper):
                 print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def fill_var_data_use(self):
-        print("Filling var data use...")
-
-        t = time.time()
-        q = "delete from `varDataUse`;"
-        self.c.execute(q)
-        print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        insert into varDataUse
-        select
-        v.restarts
-        , v.conflicts
-
-        -- data about var
-        , v.var
-        , v.dec_depth
-        , v.decisions_below
-        , v.conflicts_below
-        , v.clauses_below
-
-        , (v.decided*1.0)/(v.sum_decisions_at_picktime*1.0)
-        , (v.decided_pos*1.0)/(v.decided*1.0)
-        , (v.propagated*1.0)/(v.sum_propagations_at_picktime*1.0)
-        , (v.propagated_pos*1.0)/(v.propagated*1.0)
-
-        , v.decided
-        , v.decided_pos
-        , v.propagated
-        , v.propagated_pos
-
-        , v.sum_decisions_at_picktime
-        , v.sum_propagations_at_picktime
-
-        , v.total_conflicts_below_when_picked
-        , v.total_decisions_below_when_picked
-        , v.avg_inside_per_confl_when_picked
-        , v.avg_inside_antecedents_when_picked
-
-        -- measures for good
-        , count(cls.num_used) as useful_clauses
-        , sum(cls.num_used) as useful_clauses_used
-        , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
-        , min(cls.first_confl_used) as useful_clauses_first_used
-        , max(cls.last_confl_used) as useful_clauses_last_used
-
-        FROM varData as v join sum_cl_use as cls
-        on cls.clauseID >= v.clid_start_incl
-        and cls.clauseID < v.clid_end_notincl
-
-        -- avoid division by zero below
-        where
-        v.propagated > 0
-        and v.sum_propagations_at_picktime > 0
-        and v.decided > 0
-        and v.sum_decisions_at_picktime > 0
-        group by var, conflicts
-        ;
-        """
-        if options.verbose:
-            print("query:", q)
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_used = 0
-        WHERE useful_clauses_used IS NULL
-        """
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_first_used = 0
-        WHERE useful_clauses_first_used IS NULL
-        """
-        self.c.execute(q)
-
-        q = """
-        UPDATE varDataUse SET useful_clauses_last_used = 0
-        WHERE useful_clauses_last_used IS NULL
-        """
-        self.c.execute(q)
-
-        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
 
     def fill_later_useful_data(self):
         t = time.time()
@@ -752,35 +667,6 @@ class QueryCls (QueryHelper):
         print("Queries finished. T: %-3.2f" % (time.time() - t))
         return True, pd.concat([df_ok, df_bad]), this_fixed
 
-class QueryVar (QueryHelper):
-    def __init__(self, dbfname):
-        super(QueryVar, self).__init__(dbfname)
-
-    def vardata(self):
-        q = """
-select
-*
-, (1.0*useful_clauses)/(1.0*clauses_below) as useful_ratio
-
-, CASE WHEN
- (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
-THEN "OK"
-ELSE "BAD"
-END AS `class`
-
-from varDataUse
-where
-clauses_below > 10
-and avg_inside_per_confl_when_picked > 0
-"""
-
-        df = pd.read_sql_query(q, self.conn)
-
-        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-        cleanname = re.sub(r'\.db$', '', dbfname)
-        cleanname += "-vardata"
-        dump_dataframe(df, cleanname)
-
 
 def transform(df):
     def check_clstat_row(self, row):
@@ -918,10 +804,6 @@ def one_database(dbfname):
         if not options.no_recreate_indexes:
             q.create_indexes()
             q.fill_later_useful_data()
-            q.fill_var_data_use()
-
-    # with QueryVar(dbfname) as q:
-    #    q.vardata()
 
     match = re.match(r"^([0-9]*)-([0-9]*)$", options.confs)
     if not match:
