@@ -4,7 +4,16 @@ FNAMEOUT="mydata"
 FIXED="30000"
 RATIO="0.60"
 
-if [ "$1" == "" ]; then
+EXTRA_GEN_PANDAS_OPTS=""
+if [ "$1" == "--csv" ]; then
+    EXTRA_GEN_PANDAS_OPTS="--csv"
+    echo "CSV will be generated (may take some disk space)"
+    NEXT_OP="$2"
+else
+    NEXT_OP="$1"
+fi
+
+if [ "$NEXT_OP" == "" ]; then
     while true; do
         echo "No CNF command line parameter, running predefined CNFs"
         echo "Options are:"
@@ -50,16 +59,16 @@ if [ "$1" == "" ]; then
         esac
     done
 else
-    if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    if [ "$NEXT_OP" == "-h" ] || [ "$NEXT_OP" == "--help" ]; then
         echo "You must give a CNF file as input"
         exit
     fi
-    initial="$(echo $1 | head -c 1)"
+    initial="$(echo ${NEXT_OP} | head -c 1)"
     if [ "$1" == "-" ]; then
         echo "Cannot understand opion, there are no options"
         exit -1
     fi
-    FNAME="$1"
+    FNAME="${NEXT_OP}"
 fi
 
 set -e
@@ -133,7 +142,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4 ${EXTRA_GEN_PANDAS_OPTS}
 
 ########################
 # Create the classifiers
