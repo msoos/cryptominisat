@@ -969,6 +969,7 @@ DLL_PUBLIC void SATSolver::set_drat(std::ostream* os, bool add_ID)
         exit(-1);
     }
 
+    data->solvers[0]->conf.doBreakid = false;
     data->solvers[0]->add_drat(os, add_ID);
 }
 
