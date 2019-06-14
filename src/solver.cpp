@@ -1395,6 +1395,15 @@ void Solver::check_config_parameters() const
         exit(-1);
     }
 
+    #ifdef USE_BREAKID
+    if ((drat->enabled() || solver->conf.simulate_drat) &&
+        conf.doBreakid
+    )  {
+        std::cerr << "ERROR: Cannot have both DRAT and BreakID on at the same time!" << endl;
+        exit(-1);
+    }
+    #endif
+
     check_xor_cut_config_sanity();
 }
 
