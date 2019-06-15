@@ -137,6 +137,7 @@ static bool equiv(Clause* cl1, Clause* cl2) {
     return true;
 }
 
+///returns whether we actually ran
 bool BreakID::doit()
 {
     assert(solver->okay());
@@ -149,7 +150,7 @@ bool BreakID::doit()
             << "it would find too many (bad) symmetries"
             << endl;
         }
-        return true;
+        return false;
     }
 
     solver->clauseCleaner->remove_and_clean_all();
@@ -174,7 +175,13 @@ bool BreakID::doit()
     if (cls.size() > solver->conf.breakid_long_cls_limit_K*1000ULL
         || cls.size()+solver->binTri.irredBins > solver->conf.breakid_cls_limit_K*1000ULL
     ) {
-        return true;
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] mem/CPU usage would be too much, not running."
+            << endl;
+        }
+
+        return false;
     }
 
     std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
@@ -210,6 +217,12 @@ bool BreakID::doit()
     breakid->start_dynamic_cnf(solver->nVars());
 
     if (solver->check_assumptions_contradict_foced_assignement()) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] forced assignements contradicted by assumptions, cannot run"
+            << endl;
+        }
+
         delete breakid;
         breakid = NULL;
         return false;

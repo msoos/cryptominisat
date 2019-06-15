@@ -2066,10 +2066,7 @@ lbool Solver::execute_inprocess_strategy(
                 && solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)
             ) {
 #ifdef USE_BREAKID
-                bool ret = breakid->doit();
-                if (conf.verbosity) {
-                    cout << "c [breakid] return val: " << ret << endl;
-                }
+                breakid->doit();
 #else
                 if (conf.verbosity) {
                     cout << "c [breakid] BreakID not compiled in, skipping" << endl;
