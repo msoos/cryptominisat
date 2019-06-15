@@ -785,14 +785,18 @@ class Tester:
     def fuzz_test_one(self):
         print("--- NORMAL TESTING ---")
         self.decisions_dumpfile = None
-        self.num_threads = random.choice([1, 1, 1, 1, 1, 1, 4])
+        self.num_threads = random.choice([1]+[random.randint(2,4)])
         self.num_threads = min(options.max_threads, self.num_threads)
         self.this_gauss_on = "autodisablegauss" in self.extra_opts_supported and random.choice([True, False, False])
-        if options.gauss:
-            self.this_gauss_on = True
-            assert "autodisablegauss" in self.extra_opts_supported
 
+        # if we are asked to do gauss, force it on.
+        if options.gauss:
+            assert "autodisablegauss" in self.extra_opts_supported
+            self.this_gauss_on = True
+
+        # drat turns off a bunch of systems, like symmetry breaking so use it about 50% of time
         self.drat = self.num_threads == 1 and random.randint(0, 10) < 5 and (not self.this_gauss_on)
+
         self.sqlitedbfname = None
         self.preproc = False
         self.dump_red = random.choice([None, None, None, None, None, True])
