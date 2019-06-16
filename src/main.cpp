@@ -436,7 +436,7 @@ void Main::add_supported_options()
     ("maxsol", po::value(&max_nr_of_solutions)->default_value(max_nr_of_solutions)
         , "Search for given amount of solutions. Thanks to Jannis Harder for the decision-based banning idea")
     ("debuglib", po::value<string>(&debugLib)
-        , "MainSolver at specific 'solve()' points in CNF file")
+        , "Parse special comments to run solve/simplify during parsing of CNF")
     ;
 
     po::options_description sls_options("Stochastic Local Search options");
