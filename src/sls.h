@@ -40,6 +40,7 @@ private:
 
     lbool run_walksat();
     lbool run_yalsat();
+    uint64_t approx_mem_needed();
 };
 
 } //end namespace CMSat
