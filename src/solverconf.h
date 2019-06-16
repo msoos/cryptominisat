@@ -270,6 +270,7 @@ class DLL_PUBLIC SolverConf
 
         //BreakID
         bool doBreakid;
+        bool breakid_use_assump; ///< If false breaks library use of solver
         uint32_t breakid_every_n;
         uint64_t breakid_long_cls_limit_K;
         uint64_t breakid_cls_limit_K;

@@ -302,17 +302,21 @@ void BreakID::break_symms()
     for(uint32_t i = 0; i < breakid->get_num_aux_vars(); i++) {
         solver->new_var(true);
     }
-    if (symm_var == var_Undef) {
-        solver->new_var(true);
-        symm_var = solver->nVars()-1;
-        solver->add_assumption(Lit(symm_var, true));
+    if (solver->conf.breakid_use_assump) {
+        if (symm_var == var_Undef) {
+            solver->new_var(true);
+            symm_var = solver->nVars()-1;
+            solver->add_assumption(Lit(symm_var, true));
+        }
+        assert(solver->varData[symm_var].removed == Removed::none);
     }
-    assert(solver->varData[symm_var].removed == Removed::none);
 
     auto brk = breakid->get_brk_cls();
     for (auto cl: brk) {
         vector<Lit>* cl2 = (vector<Lit>*)&cl;
-        cl2->push_back(Lit(symm_var, false));
+        if (solver->conf.breakid_use_assump) {
+            cl2->push_back(Lit(symm_var, false));
+        }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
             , ClauseStats() //stats
@@ -326,8 +330,6 @@ void BreakID::break_symms()
             solver->longIrredCls.push_back(offset);
         }
     }
-
-    assert(solver->varData[symm_var].removed == Removed::none);
 }
 
 void BreakID::finished_solving()

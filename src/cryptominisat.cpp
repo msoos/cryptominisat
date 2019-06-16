@@ -69,23 +69,30 @@ namespace CMSat {
         CMSatPrivateData& operator=(const CMSatPrivateData&) = delete;
 
         vector<Solver*> solvers;
-        vector<double> cpu_times;
         SharedData *shared_data = NULL;
         int which_solved = 0;
         std::atomic<bool>* must_interrupt;
         bool must_interrupt_needs_delete = false;
-        unsigned cls = 0;
-        unsigned vars_to_add = 0;
-        vector<Lit> cls_lits;
         bool okay = true;
         std::ofstream* log = NULL;
         int sql = 0;
         double timeout = std::numeric_limits<double>::max();
         bool interrupted = false;
 
+        //variables and clauses added/to add
+        unsigned cls = 0;
+        unsigned vars_to_add = 0;
+        vector<Lit> cls_lits;
+
+        //For single call setup
+        uint32_t num_solve_simplify_calls = 0;
+        bool promised_single_call = false;
+
+        //stats
         uint64_t previous_sum_conflicts = 0;
         uint64_t previous_sum_propagations = 0;
         uint64_t previous_sum_decisions = 0;
+        vector<double> cpu_times;
     };
 }
 
@@ -831,6 +838,15 @@ lbool calc(
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sampling_solution)
 {
+    if (data->num_solve_simplify_calls > 0) {
+        cout
+        << "ERROR: You promised to only call solve/simplify() once"
+        << "       by calling set_single_run(), but you violated it. Exiting."
+        << endl;
+        exit(-1);
+    }
+    data->num_solve_simplify_calls++;
+
     //set information data (props, confl, dec)
     data->previous_sum_conflicts = get_sum_conflicts();
     data->previous_sum_propagations = get_sum_propagations();
@@ -841,6 +857,15 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sa
 
 DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
 {
+    if (data->num_solve_simplify_calls > 0) {
+        cout
+        << "ERROR: You promised to only call solve/simplify() once"
+        << "       by calling set_single_run(), but you violated it. Exiting."
+        << endl;
+        exit(-1);
+    }
+    data->num_solve_simplify_calls++;
+
     //set information data (props, confl, dec)
     data->previous_sum_conflicts = get_sum_conflicts();
     data->previous_sum_propagations = get_sum_propagations();
@@ -1183,4 +1208,18 @@ DLL_PUBLIC bool SATSolver::get_decision_reaching_valid() const
 DLL_PUBLIC void SATSolver::add_empty_cl_to_drat()
 {
     data->solvers[data->which_solved]->add_empty_cl_to_drat();
+}
+
+DLL_PUBLIC void SATSolver::set_single_run()
+{
+    if (data->num_solve_simplify_calls > 0) {
+        cout << "ERROR: You must call set_single_run() before solving" << endl;
+        exit(-1);
+    }
+    data->promised_single_call = true;
+
+    for (size_t i = 0; i < data->solvers.size(); ++i) {
+        Solver& s = *data->solvers[i];
+        s.conf.breakid_use_assump = false;
+    }
 }

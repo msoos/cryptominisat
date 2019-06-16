@@ -1446,6 +1446,15 @@ void Main::dump_decisions_for_model()
 
 lbool Main::multi_solutions()
 {
+    if (max_nr_of_solutions == 1
+        && conf.preprocess == 0
+        && dratf == NULL
+        && !conf.simulate_drat
+        && debugLib.empty()
+    ) {
+        solver->set_single_run();
+    }
+
     unsigned long current_nr_of_solutions = 0;
     lbool ret = l_True;
     while(current_nr_of_solutions < max_nr_of_solutions && ret == l_True) {

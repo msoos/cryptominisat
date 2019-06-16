@@ -107,6 +107,7 @@ namespace CMSat {
         void set_up_for_scalmc(); //used to set the solver up for ScalMC configuration
         void set_need_decisions_reaching(); //set it before calling solve()
         bool get_decision_reaching_valid() const; //the get_decisions_reaching_model will work -- it may NOT be
+        void set_single_run(); //we promise to call solve() EXACTLY once
 
 
         ////////////////////////////
