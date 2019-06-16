@@ -139,17 +139,22 @@ static bool equiv(Clause* cl1, Clause* cl2) {
     return true;
 }
 
-void BreakID::set_up_steps_lim()
+void BreakID::set_up_time_lim()
 {
-    steps_lim = solver->conf.breakid_max_constr_per_permut;
+    set_time_lim = solver->conf.breakid_time_limit_K;
     if (solver->nVars() < 5000) {
-        steps_lim*=2;
+        set_time_lim*=2;
     }
     if (num_lits_in_graph < 100000) {
-        steps_lim*=2;
+        set_time_lim*=2;
     }
 
-    breakid->set_steps_lim(solver->conf.breakid_time_limit);
+    set_time_lim *= 1000LL;
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] set time lim: " << set_time_lim << endl;
+    }
+
+    breakid->set_steps_lim(set_time_lim);
 }
 
 bool BreakID::add_clauses()
@@ -228,7 +233,7 @@ bool BreakID::doit()
         ret = false;
         goto end;
     }
-    set_up_steps_lim();
+    set_up_time_lim();
 
     // Detect symmetries, detect subgroups
     breakid->end_dynamic_cnf();

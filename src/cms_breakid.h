@@ -62,7 +62,7 @@ private:
     void break_symms_in_cms();
     void get_outer_permutations();
     bool remove_duplicates();
-    void set_up_steps_lim();
+    void set_up_time_lim();
     bool add_clauses();
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
@@ -75,7 +75,7 @@ private:
 
     bool already_called = false;
     uint32_t symm_var = var_Undef;
-    int64_t steps_lim;
+    int64_t set_time_lim;
     uint64_t num_lits_in_graph;
 
 
