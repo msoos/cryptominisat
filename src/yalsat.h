@@ -36,7 +36,6 @@ class Solver;
 class Yalsat {
 public:
     lbool main();
-    uint64_t mem_needed();
     Yalsat(Solver* _solver);
     ~Yalsat();
 

@@ -337,50 +337,6 @@ void WalkSAT::init_for_round()
     #endif
 }
 
-uint64_t WalkSAT::mem_needed()
-{
-    numvars = solver->nVars();
-    numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    numliterals = solver->litStats.irredLits;
-    uint64_t needed = 0;
-
-    //LIT storage (all clause data)
-    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
-
-    //NOTE: this is underreporting here, but by VERY little
-    //best -> longestclause = ??
-    //needed += sizeof(uint32_t) * longestclause;
-
-    //clause
-    needed += sizeof(Lit *) * numclauses;
-    //clsize
-    needed += sizeof(uint32_t) * numclauses;
-
-    //false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //map_cl_to_false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //numtruelit
-    needed += sizeof(uint32_t) * numclauses;
-
-    //occurrence
-    needed += sizeof(uint32_t *) * (2 * numvars);
-    //numoccurrence
-    needed += sizeof(uint32_t) * (2 * numvars);
-    //assigns
-    needed += sizeof(lbool) * numvars;
-    //breakcount
-    needed += sizeof(uint32_t) * numvars;
-    //makecount
-    needed += sizeof(uint32_t) * numvars;
-
-    //occur_list_alloc
-    needed += sizeof(uint32_t) * numliterals;
-
-
-    return needed;
-}
-
 template<class T>
 WalkSAT::add_cl_ret WalkSAT::add_this_clause(const T& cl, uint32_t& i, uint32_t& storeused) {
     uint32_t sz = 0;

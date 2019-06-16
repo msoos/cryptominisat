@@ -35,7 +35,6 @@ class Solver;
 class WalkSAT {
 public:
     lbool main();
-    uint64_t mem_needed();
     WalkSAT(Solver* _solver);
     ~WalkSAT();
 

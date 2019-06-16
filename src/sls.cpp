@@ -51,7 +51,7 @@ lbool SLS::run()
 lbool SLS::run_walksat()
 {
     WalkSAT walksat(solver);
-    double mem_needed_mb = (double)walksat.mem_needed()/(1000.0*1000.0);
+    double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
     double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
     if (mem_needed_mb < maxmem) {
         lbool ret = walksat.main();
@@ -71,7 +71,7 @@ lbool SLS::run_walksat()
 lbool SLS::run_yalsat()
 {
     Yalsat yalsat(solver);
-    double mem_needed_mb = (double)yalsat.mem_needed()/(1000.0*1000.0);
+    double mem_needed_mb = (double)approx_mem_needed()/(1000.0*1000.0);
     double maxmem = solver->conf.sls_memoutMB*solver->conf.var_and_mem_out_mult;
     if (mem_needed_mb < maxmem) {
         lbool ret = yalsat.main();
@@ -86,4 +86,46 @@ lbool SLS::run_yalsat()
     }
 
     return l_Undef;
+}
+
+uint64_t SLS::approx_mem_needed()
+{
+    uint32_t numvars = solver->nVars();
+    uint32_t numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
+    uint64_t numliterals = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    uint64_t needed = 0;
+
+    //LIT storage (all clause data)
+    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
+
+    //This is just an estimation of yalsat's memory needs.
+
+    //clause
+    needed += sizeof(Lit *) * numclauses;
+    //clsize
+    needed += sizeof(uint32_t) * numclauses;
+
+    //false_cls
+    needed += sizeof(uint32_t) * numclauses;
+    //map_cl_to_false_cls
+    needed += sizeof(uint32_t) * numclauses;
+    //numtruelit
+    needed += sizeof(uint32_t) * numclauses;
+
+    //occurrence
+    needed += sizeof(uint32_t *) * (2 * numvars);
+    //numoccurrence
+    needed += sizeof(uint32_t) * (2 * numvars);
+    //assigns
+    needed += sizeof(lbool) * numvars;
+    //breakcount
+    needed += sizeof(uint32_t) * numvars;
+    //makecount
+    needed += sizeof(uint32_t) * numvars;
+
+    //occur_list_alloc
+    needed += sizeof(uint32_t) * numliterals;
+
+
+    return needed;
 }

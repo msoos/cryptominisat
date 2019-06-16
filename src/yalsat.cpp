@@ -53,48 +53,6 @@ Yalsat::~Yalsat()
     yals_del(yals);
 }
 
-uint64_t Yalsat::mem_needed()
-{
-    uint32_t numvars = solver->nVars();
-    uint32_t numclauses = solver->longIrredCls.size() + solver->binTri.irredBins;
-    uint64_t numliterals = solver->litStats.irredLits;
-    uint64_t needed = 0;
-
-    //LIT storage (all clause data)
-    needed += (solver->litStats.irredLits+solver->binTri.irredBins*2)*sizeof(Lit);
-
-    //This is just an estimation of yalsat's memory needs.
-
-    //clause
-    needed += sizeof(Lit *) * numclauses;
-    //clsize
-    needed += sizeof(uint32_t) * numclauses;
-
-    //false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //map_cl_to_false_cls
-    needed += sizeof(uint32_t) * numclauses;
-    //numtruelit
-    needed += sizeof(uint32_t) * numclauses;
-
-    //occurrence
-    needed += sizeof(uint32_t *) * (2 * numvars);
-    //numoccurrence
-    needed += sizeof(uint32_t) * (2 * numvars);
-    //assigns
-    needed += sizeof(lbool) * numvars;
-    //breakcount
-    needed += sizeof(uint32_t) * numvars;
-    //makecount
-    needed += sizeof(uint32_t) * numvars;
-
-    //occur_list_alloc
-    needed += sizeof(uint32_t) * numliterals;
-
-
-    return needed;
-}
-
 lbool Yalsat::main()
 {
     //It might not work well with few number of variables
