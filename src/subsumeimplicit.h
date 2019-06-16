@@ -42,7 +42,7 @@ class SubsumeImplicit
 {
 public:
     explicit SubsumeImplicit(Solver* solver);
-    void subsume_implicit(bool check_stats = true);
+    void subsume_implicit(bool check_stats = true, std::string caller = std::string());
     uint32_t subsume_at_watch(const uint32_t at,
                               int64_t *timeAvail,
                               TouchList* touched = NULL);

@@ -627,4 +627,18 @@ inline double float_div(const double a, const double b)
 
 } //end namespace
 
+namespace std {
+
+  template <>
+  struct hash<CMSat::Lit>
+  {
+    std::size_t operator()(const CMSat::Lit& k) const
+    {
+      return k.toInt();
+    }
+  };
+
+}
+
+
 #endif //SOLVERTYPES_H

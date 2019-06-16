@@ -24,9 +24,11 @@ THE SOFTWARE.
 #define CMS_BREAKID_H
 
 #include <vector>
+#include <unordered_map>
 #include "solvertypes.h"
 
 using std::vector;
+using std::unordered_map;
 
 namespace BID {
 class BreakID;
@@ -57,15 +59,26 @@ public:
     }
 
 private:
-    void break_symms();
+    void break_symms_in_cms();
+    void get_outer_permutations();
+    bool remove_duplicates();
+    void set_up_steps_lim();
+    bool add_clauses();
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
     template<class T>
     add_cl_ret add_this_clause(const T& cl);
     vector<Lit> brkid_lits;
 
+    ///Valid permutations. Contains outer lits
+    vector<unordered_map<Lit, Lit> > perms_outer;
+
     bool already_called = false;
     uint32_t symm_var = var_Undef;
+    int64_t steps_lim;
+    uint64_t num_lits_in_graph;
+
+
     Solver* solver;
     BID::BreakID* breakid = NULL;
 };

@@ -450,8 +450,13 @@ void Main::add_supported_options()
         , "Maximum number of long clauses in thousands. If exceeded, BreakID will not run")
     ("breakidmaxcls", po::value(&conf.breakid_cls_limit_K)->default_value(conf.breakid_cls_limit_K)
         , "Maximum number of clauses in thousands. If exceeded, BreakID will not run")
+    ("breakidmaxvars", po::value(&conf.breakid_vars_limit_K)->default_value(conf.breakid_vars_limit_K)
+        , "Maximum number of clauses in thousands. If exceeded, BreakID will not run")
     ("breakidtime", po::value(&conf.breakid_time_limit)->default_value(conf.breakid_time_limit)
         , "Maximum number of steps taken during automorphism finding.")
+    ("breakidcls", po::value(&conf.breakid_max_constr_per_permut)
+        ->default_value(conf.breakid_max_constr_per_permut)
+        , "Maximum number of breaking clauses per permutation.")
     ;
 #endif
 

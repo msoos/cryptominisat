@@ -119,7 +119,7 @@ uint32_t SubsumeImplicit::subsume_at_watch(const uint32_t at,
     return i-j;
 }
 
-void SubsumeImplicit::subsume_implicit(const bool check_stats)
+void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string caller)
 {
     assert(solver->okay());
     const double myTime = cpuTime();
@@ -156,7 +156,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats)
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
             solver
-            , "subsume implicit"
+            , std::string("subsume implicit")+caller
             , time_used
             , time_out
             , time_remain

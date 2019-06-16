@@ -274,7 +274,9 @@ class DLL_PUBLIC SolverConf
         uint32_t breakid_every_n;
         uint64_t breakid_long_cls_limit_K;
         uint64_t breakid_cls_limit_K;
+        uint32_t breakid_vars_limit_K;
         int64_t breakid_time_limit;
+        int breakid_max_constr_per_permut;
 
         //BVA
         int      do_bva;

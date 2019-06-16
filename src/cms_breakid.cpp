@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "varreplacer.h"
 #include "occsimplifier.h"
 #include "subsumeimplicit.h"
+#include "sqlstats.h"
 
 using namespace CMSat;
 
@@ -82,6 +83,7 @@ BreakID::add_cl_ret BreakID::add_this_clause(const T& cl)
         return add_cl_ret::unsat;
     }
 
+    num_lits_in_graph += brkid_lits.size();
     breakid->add_clause((BID::BLit*)brkid_lits.data(), brkid_lits.size());
     brkid_lits.clear();
 
@@ -137,11 +139,59 @@ static bool equiv(Clause* cl1, Clause* cl2) {
     return true;
 }
 
+void BreakID::set_up_steps_lim()
+{
+    steps_lim = solver->conf.breakid_max_constr_per_permut;
+    if (solver->nVars() < 5000) {
+        steps_lim*=2;
+    }
+    if (num_lits_in_graph < 100000) {
+        steps_lim*=2;
+    }
+
+    breakid->set_steps_lim(solver->conf.breakid_time_limit);
+}
+
+bool BreakID::add_clauses()
+{
+    //Add binary clauses
+    vector<Lit> this_clause;
+    for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
+        Lit lit = Lit::toLit(i2);
+        for(const Watched& w: solver->watches[lit]) {
+            if (w.isBin() && !w.red() && lit < w.lit2()) {
+                this_clause.clear();
+                this_clause.push_back(lit);
+                this_clause.push_back(w.lit2());
+
+                if (add_this_clause(this_clause) == add_cl_ret::unsat) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    //Add long clauses
+    for(ClOffset offs: solver->longIrredCls) {
+        const Clause* cl = solver->cl_alloc.ptr(offs);
+        assert(!cl->freed());
+        assert(!cl->getRemoved());
+
+        if (add_this_clause(*cl) == add_cl_ret::unsat) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 ///returns whether we actually ran
 bool BreakID::doit()
 {
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
+    num_lits_in_graph = 0;
+    bool ret = true;
 
     if (!solver->conf.doStrSubImplicit) {
         if (solver->conf.verbosity) {
@@ -153,13 +203,112 @@ bool BreakID::doit()
         return false;
     }
 
-    solver->clauseCleaner->remove_and_clean_all();
-    double myTime = cpuTime();
+    if (!remove_duplicates()) {
+        return false;
+    }
 
+    double myTime = cpuTime();
     assert(breakid == NULL);
     breakid = new BID::BreakID;
+    breakid->set_verbosity(0);
+    breakid->set_symBreakingFormLength(solver->conf.breakid_max_constr_per_permut);
+    breakid->start_dynamic_cnf(solver->nVars());
 
-    solver->subsumeImplicit->subsume_implicit();
+    if (solver->check_assumptions_contradict_foced_assignement()) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] forced assignements contradicted by assumptions, cannot run"
+            << endl;
+        }
+        ret = false;
+        goto end;
+    }
+
+    if (!add_clauses()) {
+        ret = false;
+        goto end;
+    }
+    set_up_steps_lim();
+
+    // Detect symmetries, detect subgroups
+    breakid->end_dynamic_cnf();
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] Generators: " << breakid->get_num_generators() << endl;
+    }
+    if (solver->conf.verbosity > 3) {
+        breakid->print_generators(std::cout);
+    }
+
+    if (solver->conf.verbosity >= 2) {
+        cout << "c [breakid] Detecting subgroups..." << endl;
+    }
+    breakid->detect_subgroups();
+
+    if (solver->conf.verbosity > 3) {
+        breakid->print_subgroups(cout);
+    }
+
+    // Break symmetries
+    breakid->break_symm();
+    if (breakid->get_num_break_cls() != 0) {
+        break_symms_in_cms();
+    }
+
+    get_outer_permutations();
+
+
+    // Finish up
+    end:
+    double time_used = cpuTime() - myTime;
+    int64_t remain = breakid->get_steps_remain();
+    bool time_out = remain <= 0;
+    double time_remain = (double)remain/(double)steps_lim;
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] finished "
+        << solver->conf.print_times(time_used, time_out)
+        << endl;
+    }
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed(
+            solver
+            , "breakid"
+            , time_used
+            , time_out
+            , time_remain
+        );
+    }
+
+    delete breakid;
+    breakid = NULL;
+
+    return ret;
+}
+
+void BreakID::get_outer_permutations()
+{
+    vector<unordered_map<BID::BLit, BID::BLit>> perms_inter;
+    breakid->get_perms(&perms_inter);
+    for(const auto& p: perms_inter) {
+        unordered_map<Lit, Lit> outer;
+        for(const auto& mymap: p) {
+            Lit from = Lit::toLit(mymap.first.toInt());
+            Lit to = Lit::toLit(mymap.second.toInt());
+
+            from = solver->map_inter_to_outer(from);
+            to = solver->map_inter_to_outer(to);
+
+            outer[from] = to;
+        }
+        perms_outer.push_back(outer);
+    }
+}
+
+bool BreakID::remove_duplicates()
+{
+    solver->clauseCleaner->remove_and_clean_all();
+    solver->subsumeImplicit->subsume_implicit(false, "-breakid");
+
+    double myTime = cpuTime();
     vector<ClOffset> cls;
     for(ClOffset offs: solver->occsimplifier->clauses) {
         Clause* cl = solver->cl_alloc.ptr(offs);
@@ -203,98 +352,26 @@ bool BreakID::doit()
         prev++;
         cls.resize(prev-cls.begin());
     }
+
+    double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 2) {
         cout << "c [breakid] sorted cls"
         << " dupl: " << print_value_kilo_mega(old_size-cls.size(), false)
-        << solver->conf.print_times(cpuTime() - myTime)
+        << solver->conf.print_times(time_used)
         <<  endl;
     }
-
-
-
-    breakid->set_verbosity(0);
-    // breakid->set_symBreakingFormLength(2);
-    breakid->set_steps_lim(solver->conf.breakid_time_limit);
-    breakid->start_dynamic_cnf(solver->nVars());
-
-    if (solver->check_assumptions_contradict_foced_assignement()) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [breakid] forced assignements contradicted by assumptions, cannot run"
-            << endl;
-        }
-
-        delete breakid;
-        breakid = NULL;
-        return false;
-    }
-
-    //Add binary clauses
-    vector<Lit> this_clause;
-    for(size_t i2 = 0; i2 < solver->nVars()*2; i2++) {
-        Lit lit = Lit::toLit(i2);
-        for(const Watched& w: solver->watches[lit]) {
-            if (w.isBin() && !w.red() && lit < w.lit2()) {
-                this_clause.clear();
-                this_clause.push_back(lit);
-                this_clause.push_back(w.lit2());
-
-                if (add_this_clause(this_clause) == add_cl_ret::unsat) {
-                    return false;
-                }
-            }
-        }
-    }
-
-    //Add long clauses
-    for(ClOffset offs: solver->longIrredCls) {
-        const Clause* cl = solver->cl_alloc.ptr(offs);
-        assert(!cl->freed());
-        assert(!cl->getRemoved());
-
-        if (add_this_clause(*cl) == add_cl_ret::unsat) {
-            return false;
-        }
-    }
-    breakid->end_dynamic_cnf();
-
-    if (solver->conf.verbosity > 3) {
-        breakid->print_graph();
-    }
-
-    if (solver->conf.verbosity) {
-        cout << "c [breakid] Generators: " << breakid->get_num_generators() << endl;
-        //breakid->print_generators();
-    }
-
-    if (solver->conf.verbosity > 1) {
-        cout << "c [breakid] Detecting subgroups..." << endl;
-    }
-    breakid->detect_subgroups();
-
-    if (solver->conf.verbosity > 2) {
-        breakid->print_subgroups();
-    }
-    breakid->break_symm();
-
-    if (breakid->get_num_break_cls() != 0) {
-        break_symms();
-    }
-    delete breakid;
-    breakid = NULL;
-
-    double time_used = cpuTime() - myTime;
-    bool time_out = false;
-    if (solver->conf.verbosity) {
-        cout << "c [breakid] finished "
-        << solver->conf.print_times(time_used, time_out)
-        << endl;
+    if (solver->sqlStats) {
+        solver->sqlStats->time_passed_min(
+            solver
+            , "breakid-rem-dup"
+            , time_used
+        );
     }
 
     return true;
 }
 
-void BreakID::break_symms()
+void BreakID::break_symms_in_cms()
 {
     if (solver->conf.verbosity) {
         cout << "c [breakid] Breaking cls: "<< breakid->get_num_break_cls() << endl;
