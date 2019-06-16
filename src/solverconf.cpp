@@ -147,9 +147,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doBreakid(false)
         , breakid_use_assump(true)
         , breakid_every_n(2)
-        , breakid_long_cls_limit_K(200)
-        , breakid_cls_limit_K(500)
         , breakid_vars_limit_K(300)
+        , breakid_cls_limit_K(600)
+        , breakid_lits_limit_K(1500)
         , breakid_time_limit_K(500)
         , breakid_max_constr_per_permut(50)
 

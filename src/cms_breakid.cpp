@@ -310,6 +310,37 @@ void BreakID::get_outer_permutations()
 
 bool BreakID::remove_duplicates()
 {
+    uint64_t tot_num_cls = solver->longIrredCls.size()+solver->binTri.irredBins;
+    uint64_t tot_num_lits = solver->litStats.irredLits + solver->binTri.irredBins*2;
+    if (solver->nVars() > solver->conf.breakid_vars_limit_K*1000ULL) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] max var limit exceeded, not running."
+            << " Num vars: " << print_value_kilo_mega(solver->nVars(), false)
+            << endl;
+        }
+        return false;
+    }
+
+    if (tot_num_cls > solver->conf.breakid_cls_limit_K*1000ULL) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] max clause limit exceeded, not running."
+            << " Num clauses: " << print_value_kilo_mega(tot_num_cls, false)
+            << endl;
+        }
+        return false;
+    }
+    if (tot_num_lits > solver->conf.breakid_lits_limit_K*1000ULL) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] max literals limit exceeded, not running."
+            << " Num lits: " << print_value_kilo_mega(tot_num_lits, false)
+            << endl;
+        }
+        return false;
+    }
+
     solver->clauseCleaner->remove_and_clean_all();
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
 
@@ -324,18 +355,6 @@ bool BreakID::remove_duplicates()
         cls.push_back(offs);
 
         assert(std::is_sorted(cl->begin(), cl->end()));
-    }
-
-    if (cls.size() > solver->conf.breakid_long_cls_limit_K*1000ULL
-        || cls.size()+solver->binTri.irredBins > solver->conf.breakid_cls_limit_K*1000ULL
-    ) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [breakid] mem/CPU usage would be too much, not running."
-            << endl;
-        }
-
-        return false;
     }
 
     std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
