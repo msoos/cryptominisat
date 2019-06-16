@@ -397,7 +397,9 @@ void BreakID::break_symms_in_cms()
         }
         for(const Lit& l: *cl2) {
             assert(l.var() < solver->nVars());
-            assert(solver->value(l) == l_Undef);
+            if (solver->conf.breakid_use_assump) {
+                assert(solver->value(l) == l_Undef);
+            }
         }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
