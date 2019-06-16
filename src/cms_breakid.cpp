@@ -267,10 +267,10 @@ bool BreakID::doit()
     double time_used = cpuTime() - myTime;
     int64_t remain = breakid->get_steps_remain();
     bool time_out = remain <= 0;
-    double time_remain = (double)remain/(double)steps_lim;
+    double time_remain = float_div(remain, set_time_lim);
     if (solver->conf.verbosity) {
         cout << "c [breakid] finished "
-        << solver->conf.print_times(time_used, time_out)
+        << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
     if (solver->sqlStats) {
