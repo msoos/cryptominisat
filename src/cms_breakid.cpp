@@ -395,6 +395,10 @@ void BreakID::break_symms_in_cms()
         if (solver->conf.breakid_use_assump) {
             cl2->push_back(Lit(symm_var, false));
         }
+        for(const Lit& l: *cl2) {
+            assert(l.var() < solver->nVars());
+            assert(solver->value(l) == l_Undef);
+        }
         Clause* newcl = solver->add_clause_int(*cl2
             , false //redundant
             , ClauseStats() //stats
