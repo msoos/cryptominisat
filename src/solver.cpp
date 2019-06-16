@@ -1118,7 +1118,7 @@ void Solver::set_assumptions()
             outside_lit = outside_assumptions[i];
         }
 
-        const Lit outer_lit = map_inter_to_outer(inter_assumptions[i]);
+        const Lit outer_lit = map_inter_to_outer(inter_lit);
         assumptions.push_back(AssumptionPair(outer_lit, outside_lit));
     }
 
