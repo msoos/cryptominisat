@@ -838,7 +838,9 @@ lbool calc(
 
 DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sampling_solution)
 {
-    if (data->num_solve_simplify_calls > 0) {
+    if (data->promised_single_call
+        && data->num_solve_simplify_calls > 0
+    ) {
         cout
         << "ERROR: You promised to only call solve/simplify() once"
         << "       by calling set_single_run(), but you violated it. Exiting."
@@ -857,7 +859,9 @@ DLL_PUBLIC lbool SATSolver::solve(const vector< Lit >* assumptions, bool only_sa
 
 DLL_PUBLIC lbool SATSolver::simplify(const vector< Lit >* assumptions)
 {
-    if (data->num_solve_simplify_calls > 0) {
+    if (data->promised_single_call
+        && data->num_solve_simplify_calls > 0
+    ) {
         cout
         << "ERROR: You promised to only call solve/simplify() once"
         << "       by calling set_single_run(), but you violated it. Exiting."
