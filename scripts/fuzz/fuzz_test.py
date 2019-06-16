@@ -320,6 +320,8 @@ class Tester:
         if "breakid" in self.extra_opts_supported:
             cmd += "--breakid %d " % random.choice([1]*10+[0])
             cmd += "--breakideveryn %d " % random.choice([1]*10+[3])
+            cmd += "--breakidcls %d " % random.choice([0, 1, 2, 3, 10, 50])
+            cmd += "--breakidtime %d " % random.choice([1, 10, 100, 1000])
 
         sls = 0
         if options.sls:
