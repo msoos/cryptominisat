@@ -150,7 +150,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , breakid_vars_limit_K(300)
         , breakid_cls_limit_K(600)
         , breakid_lits_limit_K(1500)
-        , breakid_time_limit_K(500)
+        , breakid_time_limit_K(800)
         , breakid_max_constr_per_permut(50)
 
         //Bounded variable addition
