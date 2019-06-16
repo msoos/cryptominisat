@@ -400,7 +400,7 @@ static bool {funcname}(
         df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
         if not options.no_rdb1:
             df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
-        df['goodcl.avg_hist_used'].replace(['None'], 0, inplace=True)
+        df['sum_cl_use.avg_hist_used'].replace(['None'], 0, inplace=True)
         df.fillna(0, inplace=True)
 
         if options.check_row_data:
@@ -617,7 +617,7 @@ static bool {funcname}(
     def learn(self):
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
-            features, ["x.num_used", "x.class", "x.lifetime", "fname", "clust", "goodcl"])
+            features, ["x.num_used", "x.class", "x.lifetime", "fname", "clust", "sum_cl_use"])
         if options.no_rdb1:
             features = self.rem_features(features, ["rdb1", "rdb.rel"])
             features = self.rem_features(features, ["rdb.rel"])
@@ -888,7 +888,7 @@ public:
 
         self.df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
         self.df.fillna(0, inplace=True)
-        # print(df[["fname", "goodcl.num_used"]])
+        # print(df[["fname", "sum_cl_use.num_used"]])
         files = df[["fname", "rdb0.dump_no"]].groupby("fname").mean()
         fs = files[files["rdb0.dump_no"] >= options.min_avg_dumpno].index.values
         filenames = list(fs)

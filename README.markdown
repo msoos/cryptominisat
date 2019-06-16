@@ -22,7 +22,53 @@ When citing, always reference our [SAT 2009 conference paper](https://link.sprin
 License
 -----
 
-Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is unfortunately GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
+Please read LICENSE.txt for a discussion. Everything that is needed to build is MIT licensed. The M4RI library (not included) is GPL, so in case you have M4RI installed, you must build with `-DNOM4RI=ON` or `-DMIT=ON` in case you need a pure MIT build.
+
+CrystalBall
+-----
+
+Build and use instructions below. Please see the [associated blog post](https://www.msoos.org/2019/06/crystalball-sat-solving-data-gathering-and-machine-learning/) for more information.
+
+```
+# prerequisites on a modern Debian/Ubuntu installation
+sudo apt-get install build-essential cmake git
+sudo apt-get install zlib1g-dev libsqlite3-dev
+sudo apt-get install libboost-program-options-dev
+sudo apt-get install python3-pip
+sudo pip3 install sklearn pandas numpy lit matplotlib
+
+# getting the code
+git clone https://github.com/msoos/cryptominisat
+cd cryptominisat
+git checkout crystalball
+git submodule update --init
+mkdir build && cd build
+ln -s ../scripts/crystal/* .
+ln -s ../scripts/build_scripts/* .
+
+# Let's get an unsatisfiable CNF
+wget https://www.msoos.org/largefiles/goldb-heqc-i10mul.cnf.gz
+gunzip goldb-heqc-i10mul.cnf.gz
+
+# Gather the data, denormalize, label, output CSV,
+# create the classifier, generate C++,
+# and build the final SAT solver
+./ballofcrystal.sh --csv goldb-heqc-i10mul.cnf
+[...compilations and the full data pipeline...]
+
+# let's use our newly built tool
+# we are using configuration number short:3 long:3
+./cryptominisat5 --predshort 3 --predlong 3 goldb-heqc-i10mul.cnf
+[ ... ]
+s UNSATISFIABLE
+
+# Let's look at the data
+cd goldb-heqc-i10mul.cnf-dir
+sqlite3 mydata.db
+sqlite> select count() from sum_cl_use;
+94507
+```
+
 
 Docker usage
 -----
