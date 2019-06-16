@@ -214,6 +214,7 @@ bool BreakID::doit()
 
     breakid->set_verbosity(0);
     // breakid->set_symBreakingFormLength(2);
+    breakid->set_steps_lim(solver->conf.breakid_time_limit);
     breakid->start_dynamic_cnf(solver->nVars());
 
     if (solver->check_assumptions_contradict_foced_assignement()) {
