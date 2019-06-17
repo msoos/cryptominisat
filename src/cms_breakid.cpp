@@ -218,6 +218,9 @@ bool BreakID::doit()
     breakid->set_verbosity(0);
     breakid->set_symBreakingFormLength(solver->conf.breakid_max_constr_per_permut);
     breakid->start_dynamic_cnf(solver->nVars());
+    if (solver->conf.verbosity) {
+        cout << "c [breakid] version " << breakid->get_sha1_version() << endl;
+    }
 
     if (solver->check_assumptions_contradict_foced_assignement()) {
         if (solver->conf.verbosity) {
