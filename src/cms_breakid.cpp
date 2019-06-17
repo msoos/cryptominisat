@@ -196,13 +196,21 @@ bool BreakID::doit()
     assert(solver->okay());
     assert(solver->decisionLevel() == 0);
     num_lits_in_graph = 0;
-    bool ret = true;
 
     if (!solver->conf.doStrSubImplicit) {
         if (solver->conf.verbosity) {
             cout
             << "c [breakid] cannot run BreakID without implicit submsumption, "
             << "it would find too many (bad) symmetries"
+            << endl;
+        }
+        return false;
+    }
+
+    if (solver->check_assumptions_contradict_foced_assignement()) {
+        if (solver->conf.verbosity) {
+            cout
+            << "c [breakid] forced assignements contradicted by assumptions, cannot run"
             << endl;
         }
         return false;
@@ -222,19 +230,10 @@ bool BreakID::doit()
         cout << "c [breakid] version " << breakid->get_sha1_version() << endl;
     }
 
-    if (solver->check_assumptions_contradict_foced_assignement()) {
-        if (solver->conf.verbosity) {
-            cout
-            << "c [breakid] forced assignements contradicted by assumptions, cannot run"
-            << endl;
-        }
-        ret = false;
-        goto end;
-    }
-
     if (!add_clauses()) {
-        ret = false;
-        goto end;
+        delete breakid;
+        breakid = NULL;
+        return false;
     }
     set_up_time_lim();
 
@@ -266,7 +265,6 @@ bool BreakID::doit()
 
 
     // Finish up
-    end:
     double time_used = cpuTime() - myTime;
     int64_t remain = breakid->get_steps_remain();
     bool time_out = remain <= 0;
@@ -286,10 +284,11 @@ bool BreakID::doit()
         );
     }
 
+    end:
     delete breakid;
     breakid = NULL;
 
-    return ret;
+    return false;
 }
 
 void BreakID::get_outer_permutations()
