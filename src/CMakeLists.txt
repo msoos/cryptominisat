@@ -104,7 +104,6 @@ set(cryptoms_lib_files
     satzilla_features.cpp
     searchstats.cpp
     xorfinder.cpp
-    cardfinder.cpp
     cryptominisat_c.cpp
     yalsat.cpp
     yals.c
