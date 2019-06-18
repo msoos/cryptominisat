@@ -61,7 +61,6 @@ class SolutionExtender;
 class ImplCache;
 class CompFinder;
 class CompHandler;
-class CardFinder;
 class SubsumeStrengthen;
 class SubsumeImplicit;
 class DataSync;
@@ -165,7 +164,6 @@ class Solver : public Searcher
         DistillerLongWithImpl* dist_long_with_impl = NULL;
         StrImplWImplStamp* dist_impl_with_impl = NULL;
         CompHandler*           compHandler = NULL;
-        CardFinder*            card_finder = NULL;
 
         SearchStats sumSearchStats;
         PropStats sumPropStats;
