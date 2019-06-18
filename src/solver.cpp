@@ -65,6 +65,7 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"
+#include "cardfinder.h"
 #include "sls.h"
 
 #ifdef USE_BREAKID
@@ -104,6 +105,9 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     if (conf.perform_occur_based_simp) {
         occsimplifier = new OccSimplifier(this);
     }
+    if (conf.doFindCard) {
+        card_finder = new CardFinder(this);
+    }
     distill_long_cls = new DistillerLong(this);
     dist_long_with_impl = new DistillerLongWithImpl(this);
     dist_impl_with_impl = new StrImplWImplStamp(this);
@@ -142,6 +146,7 @@ Solver::~Solver()
     delete datasync;
     delete reduceDB;
     delete breakid;
+    delete card_finder;
 }
 
 void Solver::set_sqlite(string
@@ -1965,6 +1970,11 @@ lbool Solver::execute_inprocess_strategy(
             if (conf.doFindAndReplaceEqLits) {
                 varReplacer->replace_if_enough_is_found(
                     std::floor((double)get_num_free_vars()*0.001));
+            }
+        } else if (token == "card-find") {
+            if (conf.doFindCard) {
+                card_finder->find_cards();
+                exit(0);
             }
         } else if (token == "cache-clean") {
             if (conf.doCache) {

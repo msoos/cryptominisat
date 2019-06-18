@@ -313,6 +313,9 @@ class DLL_PUBLIC SolverConf
         int      allow_elim_xor_vars;
         unsigned xor_var_per_cut;
 
+        //Cardinality
+        int      doFindCard;
+
         //Predictor system
         int pred_conf_short;
         int pred_conf_long;

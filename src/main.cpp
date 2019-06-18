@@ -586,6 +586,8 @@ void Main::add_supported_options()
         , "Skip BVE resolvents in case they belong to a gate")
     ("agrelimtimelim", po::value(&conf.aggressive_elim_time_limitM)->default_value(conf.aggressive_elim_time_limitM)
         , "Time-out in bogoprops M of aggressive(=uses reverse distillation) var-elimination")
+    ("cardfind", po::value(&conf.doFindCard)->default_value(conf.doFindCard)
+        , "Find cardinality constraints")
     ;
 
     po::options_description xorOptions("XOR-related options");
