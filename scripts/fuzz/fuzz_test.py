@@ -273,6 +273,7 @@ class Tester:
 
         return sched
 
+    # TODO: add "breakid" in the list below
     def rnd_schedule_all(self, preproc):
         sched_opts = "handle-comps,"
         sched_opts += "scc-vrepl, cache-clean, cache-tryboth,"
@@ -282,7 +283,7 @@ class Tester:
         sched_opts += "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl,"
         sched_opts += "occ-backw-sub-str, occ-xor, occ-clean-implicit, occ-bve, occ-bva,"
         sched_opts += "check-cache-size, renumber, must-renumber,"
-        sched_opts += "sls, breakid, card-find"
+        sched_opts += "sls, card-find"
 
         # type of schedule
         cmd = ""
