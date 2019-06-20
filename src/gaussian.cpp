@@ -27,14 +27,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/
 
-#include "EGaussian.h"
-
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <set>
 
-#include "EGaussian.h"
+#include "gaussian.h"
 #include "clause.h"
 #include "clausecleaner.h"
 #include "datasync.h"

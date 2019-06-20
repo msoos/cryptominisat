@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "time_mem.h"
 #include "sqlstats.h"
 #ifdef USE_GAUSS
-#include "EGaussian.h"
+#include "gaussian.h"
 #endif
 
 #ifdef USE_VALGRIND

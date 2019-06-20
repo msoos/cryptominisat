@@ -44,7 +44,7 @@ THE SOFTWARE.
 #include "xorfinder.h"
 #include "matrixfinder.h"
 #ifdef USE_GAUSS
-#include "EGaussian.h"
+#include "gaussian.h"
 #endif
 //#define DEBUG_RESOLV
 //#define VERBOSE_DEBUG

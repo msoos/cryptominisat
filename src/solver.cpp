@@ -61,7 +61,7 @@ THE SOFTWARE.
 #include "satzilla_features_to_reconf.h"
 #include "trim.h"
 #include "streambuffer.h"
-#include "EGaussian.h"
+#include "gaussian.h"
 #include "sqlstats.h"
 #include "drat.h"
 #include "xorfinder.h"

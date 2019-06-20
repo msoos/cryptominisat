@@ -26,7 +26,7 @@ THE SOFTWARE.
 using std::set;
 
 #include "src/solver.h"
-#include "src/EGaussian.h"
+#include "src/gaussian.h"
 #include "src/solverconf.h"
 using namespace CMSat;
 #include "test_helper.h"
