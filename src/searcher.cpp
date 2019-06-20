@@ -833,7 +833,9 @@ Clause* Searcher::analyze_conflict(
     print_debug_resolution_data(confl);
     Clause* last_resolved_cl = create_learnt_clause<update_bogoprops>(confl);
     stats.litsRedNonMin += learnt_clause.size();
+    #ifdef STATS_NEEDED
     old_glue = calc_glue(learnt_clause);
+    #endif
     minimize_learnt_clause<update_bogoprops>();
     stats.litsRedFinal += learnt_clause.size();
 
