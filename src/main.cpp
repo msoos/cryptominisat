@@ -457,6 +457,9 @@ void Main::add_supported_options()
     ("breakidcls", po::value(&conf.breakid_max_constr_per_permut)
         ->default_value(conf.breakid_max_constr_per_permut)
         , "Maximum number of breaking clauses per permutation.")
+    ("breakidmatrix", po::value(&conf.breakid_matrix_detect)
+        ->default_value(conf.breakid_matrix_detect)
+        , "Detect matrix row interchangability")
     ;
 #endif
 

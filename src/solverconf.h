@@ -277,6 +277,7 @@ class DLL_PUBLIC SolverConf
         uint64_t breakid_lits_limit_K;
         int64_t breakid_time_limit_K;
         int breakid_max_constr_per_permut;
+        bool breakid_matrix_detect;
 
         //BVA
         int      do_bva;

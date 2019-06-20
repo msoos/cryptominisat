@@ -224,7 +224,7 @@ bool BreakID::doit()
     assert(breakid == NULL);
     breakid = new BID::BreakID;
     breakid->set_verbosity(0);
-    breakid->set_useMatrixDetection(true);
+    breakid->set_useMatrixDetection(solver->conf.breakid_matrix_detect);
     breakid->set_symBreakingFormLength(solver->conf.breakid_max_constr_per_permut);
     breakid->start_dynamic_cnf(solver->nVars());
     if (solver->conf.verbosity) {
