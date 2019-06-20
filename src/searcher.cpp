@@ -1315,8 +1315,8 @@ lbool Searcher::new_decision()
 
         //Update stats
         stats.decisions++;
+        sumDecisions++;
     }
-    sumDecisions++;
 
     // Increase decision level and enqueue 'next'
     assert(value(next) == l_Undef);
