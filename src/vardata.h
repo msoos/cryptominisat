@@ -42,10 +42,10 @@ struct VarData
     //Reason this got propagated. NULL means decision/toplevel
     PropBy reason = PropBy();
 
+    lbool assumption = l_Undef;
+
     ///Whether var has been eliminated (var-elim, different component, etc.)
     Removed removed = Removed::none;
-
-    lbool assumption = l_Undef;
 
     ///The preferred polarity of each variable.
     bool polarity = false;
