@@ -1894,7 +1894,7 @@ bool Searcher::handle_conflict(const PropBy confl)
         confl
         , backtrack_level  //return backtrack level here
         , glue             //return glue here
-        , old_glue             //return glue before minimization here
+        , old_glue         //return glue before minimization here
     );
     print_learnt_clause();
 
