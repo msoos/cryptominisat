@@ -234,6 +234,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
             "handle-comps,"
+//             These below work with pidgeonhole20 otherwise it's messy and we cannot break it
+//             "occ-backw-sub-str,"
+//             "breakid, "
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
