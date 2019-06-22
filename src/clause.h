@@ -129,18 +129,20 @@ struct ClauseStats
         activity = INIT_ACTIVITY;
         ttl = 0;
         marked_clause = false;
+        drop_if_not_used = false;
     }
 
     //Stored data
-    uint32_t glue:27;
+    uint32_t glue:26;
     uint32_t marked_clause:1;
     uint32_t ttl:2;
     uint32_t which_red_array:2;
+    uint32_t drop_if_not_used:1;
     union {
         float   activity;
         uint32_t hash_val;
     };
-    uint32_t last_touched = 0;
+    uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
     float       glue_rel                    = 0;
     float       glue_rel_long               = 0;

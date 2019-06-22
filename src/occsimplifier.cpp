@@ -1554,7 +1554,9 @@ bool OccSimplifier::ternary_res()
     const double time_remain =  float_div(*limit_to_decrease, orig_ternary_res_time_limit);
     if (solver->conf.verbosity) {
         cout
-        << "c [occ-ternary-res] Ternary res added: " << runStats.ternary_added
+        << "c [occ-ternary-res] Ternary"
+        << " res-tri: " << runStats.ternary_added_tri
+        << " res-bin: " << runStats.ternary_added_bin
         << solver->conf.print_times(time_used, time_out, time_remain)
         << endl;
     }
@@ -1605,10 +1607,16 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
 
     //Add new ternary resolvents
     for(vector<Lit>& newcl: cl_to_add_ternary) {
+
+        ClauseStats stats;
+        stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
+        stats.which_red_array = 1;
+        stats.drop_if_not_used = true;
+        stats.last_touched = solver->sumConflicts;
         Clause* newCl = solver->add_clause_int(
             newcl //Literals in new clause
             , true //Is the new clause redundant?
-            , ClauseStats() //Statistics for this new clause (usage, etc.)
+            , stats
             , false //Should clause be attached if long?
         );
         *limit_to_decrease-=20;
@@ -1618,8 +1626,6 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
             break;
 
         if (newCl != NULL) {
-            newCl->stats.glue = 3;
-            newCl->stats.which_red_array = 1;
             linkInClause(*newCl);
             ClOffset offset = solver->cl_alloc.get_offset(newCl);
             clauses.push_back(offset);
@@ -1663,25 +1669,40 @@ void OccSimplifier::check_ternary_cl(Clause* cl, ClOffset offs, watch_subarray w
             }
 
             //Not tri resolveeable or the wrong side of the symmetry
-            if (num_vars != 4 || num_lits != 5 || lit_clash == lit_Error) {
+            if (lit_clash == lit_Error) {
                 continue;
             }
-            vector<Lit> newcl;
-            for(Lit l: *cl) {
-                if (l.var() != lit_clash.var())
-                    newcl.push_back(l);
-            }
-            for(Lit l: *cl2) {
-                if (l.var() != lit_clash.var()
-                    && !seen[l.toInt()]
-                ) {
-                    newcl.push_back(l);
+
+            //Becomes tri
+            if ((num_vars == 4 && num_lits == 5)
+                || (num_vars == 3 && num_lits == 4)
+            ) {
+                *limit_to_decrease-=20;
+                runStats.ternary_added_tri++;
+
+                vector<Lit> newcl;
+                for(Lit l: *cl) {
+                    if (l.var() != lit_clash.var())
+                        newcl.push_back(l);
                 }
+                for(Lit l: *cl2) {
+                    if (l.var() != lit_clash.var()
+                        && !seen[l.toInt()]
+                    ) {
+                        newcl.push_back(l);
+                    }
+                }
+
+                if (newcl.size() == 2) {
+                    runStats.ternary_added_bin++;
+                    solver->attach_bin_clause(newcl[0], newcl[1], true);
+                } else {
+                    assert(newcl.size() == 3);
+                    runStats.ternary_added_tri++;
+                    cl_to_add_ternary.push_back(newcl);
+                }
+                //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
             }
-            cl_to_add_ternary.push_back(newcl);
-            *limit_to_decrease-=20;
-            runStats.ternary_added++;
-            //cout << "tri: " << *cl << " , " << *cl2 << " Resolve on: " << lit_clash << endl;
         }
     }
 }
@@ -3192,7 +3213,8 @@ OccSimplifier::Stats& OccSimplifier::Stats::operator+=(const Stats& other)
     triresolveTime += other.triresolveTime;
     finalCleanupTime += other.finalCleanupTime;
     zeroDepthAssings += other.zeroDepthAssings;
-    ternary_added += other.ternary_added;
+    ternary_added_tri += other.ternary_added_tri;
+    ternary_added_bin += other.ternary_added_bin;
 
     return *this;
 }

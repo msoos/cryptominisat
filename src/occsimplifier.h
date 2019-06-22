@@ -238,7 +238,8 @@ public:
         double total_time(OccSimplifier* occs) const;
 
         uint64_t numCalls = 0;
-        uint64_t ternary_added = 0;
+        uint64_t ternary_added_tri = 0;
+        uint64_t ternary_added_bin = 0;
 
         //Time stats
         double linkInTime = 0;

@@ -238,6 +238,8 @@ void ReduceDB::handle_lev1()
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
+    uint32_t non_recent_use_dropped = 0;
+    uint32_t kept_droppable = 0;
     double myTime = cpuTime();
 
     size_t j = 0;
@@ -253,23 +255,36 @@ void ReduceDB::handle_lev1()
         } else if (cl->stats.which_red_array == 2) {
             assert(false && "we should never move up through any other means");
         } else {
+            uint32_t must_touch = solver->conf.must_touch_lev1_within;
+            if (cl->stats.drop_if_not_used) {
+                must_touch *= 2;
+            }
             if (!solver->clause_locked(*cl, offset)
-                && cl->stats.last_touched + solver->conf.must_touch_lev1_within < solver->sumConflicts
+                && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {
-                solver->longRedCls[2].push_back(offset);
-                cl->stats.which_red_array = 2;
+                if (cl->stats.drop_if_not_used) {
+                    solver->detachClause(*cl);
+                    solver->cl_alloc.clauseFree(cl);
+                    non_recent_use_dropped++;
+                } else {
+                    solver->longRedCls[2].push_back(offset);
+                    cl->stats.which_red_array = 2;
 
-                //when stats are needed, activities are correctly updated
-                //across all clauses
-                //WARNING this changes the way things behave during STATS relative to non-STATS!
-                #ifndef STATS_NEEDED
-                cl->stats.activity = 0;
-                solver->bump_cl_act<false>(cl);
-                #endif
-                non_recent_use++;
+                    //when stats are needed, activities are correctly updated
+                    //across all clauses
+                    //WARNING this changes the way things behave during STATS relative to non-STATS!
+                    #ifndef STATS_NEEDED
+                    cl->stats.activity = 0;
+                    solver->bump_cl_act<false>(cl);
+                    #endif
+                    non_recent_use++;
+                }
             } else {
                 solver->longRedCls[1][j++] = offset;
                 used_recently++;
+                if (cl->stats.drop_if_not_used) {
+                    kept_droppable++;
+                }
             }
         }
     }
@@ -278,7 +293,9 @@ void ReduceDB::handle_lev1()
     if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev1]"
         << " used recently: " << used_recently
-        << " not used recently: " << non_recent_use
+        << " not used recently&moved: " << non_recent_use
+        << " not used recently&dropped: " << non_recent_use_dropped
+        << " kept droppable: " << kept_droppable
         << " moved w0: " << moved_w0
         << solver->conf.print_times(cpuTime()-myTime)
         << endl;
