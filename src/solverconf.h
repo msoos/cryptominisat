@@ -303,9 +303,11 @@ class DLL_PUBLIC SolverConf
         int      allow_elim_xor_vars;
         unsigned xor_var_per_cut;
 
+        #ifdef FINAL_PREDICTOR
         //Predictor system
         int pred_conf_short;
         int pred_conf_long;
+        #endif
 
         //Var-replacement
         int doFindAndReplaceEqLits;

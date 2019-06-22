@@ -186,9 +186,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , allow_elim_xor_vars(1)
         , xor_var_per_cut(2)
 
+        #ifdef FINAL_PREDICTOR
         //Predict system
         , pred_conf_short(0)
         , pred_conf_long(0)
+        #endif
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
