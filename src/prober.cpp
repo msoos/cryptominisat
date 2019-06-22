@@ -763,7 +763,7 @@ bool Prober::propagate(Lit& failed)
                 confl
                 , backtrack_level  //return backtrack level here
                 , glue             //return glue here
-                , old_glue             //return unminimised glue here
+                , old_glue         //return unminimised glue here
             );
             if (solver->learnt_clause.empty()) {
                 solver->ok = false;
