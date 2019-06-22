@@ -124,7 +124,7 @@ struct ClauseStats
         #else
         which_red_array = 2;
         #endif
-        activity = 0;
+        activity = 1.0;
         ttl = 0;
         marked_clause = false;
     }

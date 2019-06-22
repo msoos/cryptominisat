@@ -200,9 +200,11 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Cardinality
         , doFindCard(0)
 
+        #ifdef FINAL_PREDICTOR
         //Predict system
         , pred_conf_short(0)
         , pred_conf_long(0)
+        #endif
 
         //Var-replacer
         , doFindAndReplaceEqLits(true)
