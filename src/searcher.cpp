@@ -461,7 +461,18 @@ Clause* Searcher::add_literals_from_confl_to_learnt(
                     update_clause_glue_from_analysis(cl);
                 }
                 #endif
+
+                #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
                 cl->stats.last_touched = sumConflicts;
+                #else
+                if (conf.broken_last_touched) {
+                    if (cl->stats.which_red_array == 1) {
+                        cl->stats.last_touched = sumConflicts;
+                    }
+                } else {
+                    cl->stats.last_touched = sumConflicts;
+                }
+                #endif
 
                 //If stats or predictor, bump all because during final
                 //we will need this data and during dump when stats is on
@@ -1801,6 +1812,16 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
             cl->stats.which_red_array = which_arr;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
+
+            #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
+            if (cl->stats.which_red_array == 2)
+            #endif
+            {
+                if (solver->conf.bump_new_learnt_cls) {
+                    bump_cl_act<false>(cl);
+                }
+            }
+
             *drat << add << *cl
             #ifdef STATS_NEEDED
             << sumConflicts

@@ -51,6 +51,8 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
 
         , clause_decay(0.999)
+        , broken_last_touched(true)
+        , bump_new_learnt_cls(false)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver

@@ -393,6 +393,10 @@ void Main::add_supported_options()
         , "Reduce lev2 clauses every N")
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")
+    ("brokentouched", po::value(&conf.broken_last_touched)->default_value(conf.broken_last_touched)
+        , "Normally should update last_touched all the time. This breaks this.")
+    ("bumpnewcl", po::value(&conf.bump_new_learnt_cls)->default_value(conf.bump_new_learnt_cls)
+        , "Bump new learnt clauses' activity")
     ;
 
     po::options_description red_cl_dump_opts("Clause dumping after problem finishing");
