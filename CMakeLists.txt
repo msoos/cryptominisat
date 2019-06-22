@@ -549,7 +549,7 @@ endif()
 
 
 # -----------------------------------------------------------------------------
-# Look for M4RI (for Gauss)
+# MIT option
 # -----------------------------------------------------------------------------
 option(REQUIRE_M4RI "Must use m4ri" OFF)
 option(NOM4RI "Don't use m4ri" OFF)
@@ -567,6 +567,25 @@ if (MIT)
     endif()
 endif()
 
+# -----------------------------------------------------------------------------
+# Look for M4RI (for Gauss)
+# -----------------------------------------------------------------------------
+if (NOT NOM4RI)
+    find_package(M4RI)
+    IF (M4RI_FOUND)
+        MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
+        add_definitions( -DUSE_M4RI )
+    ELSE (M4RI_FOUND)
+        MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
+        if (REQUIRE_M4RI)
+            MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
+        endif()
+    ENDIF (M4RI_FOUND)
+endif()
+
+# -----------------------------------------------------------------------------
+# Look for Boshphorus
+# -----------------------------------------------------------------------------
 if (NOT NOBOSPHORUS)
     find_package(bosphorus)
     if (NOT BOSPHORUS_LIBRARIES)
@@ -582,6 +601,9 @@ if (NOT NOBOSPHORUS)
     endif()
 endif()
 
+# -----------------------------------------------------------------------------
+# Look for BreakID
+# -----------------------------------------------------------------------------
 find_package(breakid)
 if (NOT BREAKID_LIBRARIES)
     message(WARNING "BreakID NOT found")
@@ -592,19 +614,6 @@ else()
     add_definitions(-DUSE_BREAKID)
 endif()
 
-
-if (NOT NOM4RI)
-    find_package(M4RI)
-    IF (M4RI_FOUND)
-        MESSAGE(STATUS "OK, Found M4RI lib at ${M4RI_LIBRARIES} and includes at ${M4RI_INCLUDE_DIRS}")
-        add_definitions( -DUSE_M4RI )
-    ELSE (M4RI_FOUND)
-        MESSAGE(WARNING "Did not find M4RI, XOR detection&manipulation disabled")
-        if (REQUIRE_M4RI)
-            MESSAGE(FATAL_ERROR "REQUIRE_M4RI was set but M4RI was not found!")
-        endif()
-    ENDIF (M4RI_FOUND)
-endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
