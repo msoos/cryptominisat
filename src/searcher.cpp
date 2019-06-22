@@ -1734,7 +1734,10 @@ void Searcher::set_clause_data(
 Clause* Searcher::handle_last_confl_otf_subsumption(
     Clause* cl
     , const uint32_t glue
-    , const uint32_t old_glue
+    , const uint32_t
+    #ifdef STATS_NEEDED
+    old_glue
+    #endif
     , const uint32_t
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_decision_level
@@ -1950,7 +1953,11 @@ bool Searcher::handle_conflict(const PropBy confl)
         std::swap(decision_clause[0], decision_clause[i]);
         learnt_clause = decision_clause;
         decision_based_cl++;
-        cl = handle_last_confl_otf_subsumption(NULL, learnt_clause.size(), learnt_clause.size(), decisionLevel());  //Arijit : This is not sure
+        cl = handle_last_confl_otf_subsumption(
+            NULL                   //orig cl to minimise
+            , learnt_clause.size() //glue
+            , learnt_clause.size() //old_glue
+            , decisionLevel());
         attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 
