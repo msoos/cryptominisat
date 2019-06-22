@@ -310,9 +310,9 @@ class Searcher : public HyperEngine
         template<bool update_bogoprops>
         Clause* analyze_conflict(
             PropBy confl //The conflict that we are investigating
-            , uint32_t& out_btlevel      //backtrack level
+            , uint32_t& out_btlevel  //backtrack level
             , uint32_t &glue         //glue of the learnt clause
-            , uint32_t &old_glue         //glue of the unminimised learnt clause
+            , uint32_t &old_glue     //glue of the unminimised learnt clause
         );
         void update_clause_glue_from_analysis(Clause* cl);
         template<bool update_bogoprops>
