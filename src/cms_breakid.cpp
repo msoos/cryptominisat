@@ -216,6 +216,10 @@ bool BreakID::doit()
         return false;
     }
 
+    if (!check_limits()) {
+        return false;
+    }
+
     if (!remove_duplicates()) {
         return false;
     }
@@ -311,7 +315,7 @@ void BreakID::get_outer_permutations()
     }
 }
 
-bool BreakID::remove_duplicates()
+bool BreakID::check_limits()
 {
     uint64_t tot_num_cls = solver->longIrredCls.size()+solver->binTri.irredBins;
     uint64_t tot_num_lits = solver->litStats.irredLits + solver->binTri.irredBins*2;
@@ -344,6 +348,11 @@ bool BreakID::remove_duplicates()
         return false;
     }
 
+    return true;
+}
+
+bool BreakID::remove_duplicates()
+{
     solver->clauseCleaner->remove_and_clean_all();
     solver->subsumeImplicit->subsume_implicit(false, "-breakid");
 
@@ -381,8 +390,8 @@ bool BreakID::remove_duplicates()
     }
 
     double time_used = cpuTime() - myTime;
-    if (solver->conf.verbosity >= 2) {
-        cout << "c [breakid] sorted cls"
+    if (solver->conf.verbosity >= 1) {
+        cout << "c [breakid] tmp-rem-dup cls"
         << " dupl: " << print_value_kilo_mega(old_size-cls.size(), false)
         << solver->conf.print_times(time_used)
         <<  endl;

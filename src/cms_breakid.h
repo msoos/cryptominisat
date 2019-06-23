@@ -64,6 +64,7 @@ private:
     bool remove_duplicates();
     void set_up_time_lim();
     bool add_clauses();
+    bool check_limits();
 
     enum class add_cl_ret {added_cl, skipped_cl, unsat};
     template<class T>
