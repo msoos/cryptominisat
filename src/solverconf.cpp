@@ -56,7 +56,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         // 884 vs 870
         , broken_last_touched(true)
 
-        , bump_new_learnt_cls(false)
+        , bump_new_learnt_cls(0)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)
         //NOTE: The "Scavel" system's "usedt" does NOT speed up the solver

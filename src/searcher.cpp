@@ -1813,13 +1813,8 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             cl->stats.which_red_array = which_arr;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
 
-            #if !defined(STATS_NEEDED) && !defined(FINAL_PREDICTOR)
-            if (cl->stats.which_red_array == 2)
-            #endif
-            {
-                if (solver->conf.bump_new_learnt_cls) {
-                    bump_cl_act<false>(cl);
-                }
+            for(uint32_t i = 0; i < solver->conf.bump_new_learnt_cls; i++) {
+                bump_cl_act<false>(cl);
             }
 
             *drat << add << *cl

@@ -396,7 +396,7 @@ void Main::add_supported_options()
     ("brokentouched", po::value(&conf.broken_last_touched)->default_value(conf.broken_last_touched)
         , "Normally should update last_touched all the time. This breaks this.")
     ("bumpnewcl", po::value(&conf.bump_new_learnt_cls)->default_value(conf.bump_new_learnt_cls)
-        , "Bump new learnt clauses' activity")
+        , "Bump new learnt clauses' activity this many times")
     ;
 
     po::options_description red_cl_dump_opts("Clause dumping after problem finishing");
