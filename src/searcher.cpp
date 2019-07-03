@@ -36,7 +36,6 @@ THE SOFTWARE.
 #include "sqlstats.h"
 #include "datasync.h"
 #include "reducedb.h"
-#include "sqlstats.h"
 #include "watchalgos.h"
 #include "hasher.h"
 #include "solverconf.h"
@@ -2997,7 +2996,7 @@ Searcher::gauss_ret Searcher::gauss_jordan_elim()
                 cout << "Handled long GJ conflict" << endl;
                 #endif
 
-                solver->cl_alloc.clauseFree(gqd.confl.get_offset());
+                solver->free_cl(gqd.confl.get_offset());
                 if (!ret) return gauss_ret::g_false;
                 return gauss_ret::g_cont;
             }

@@ -141,7 +141,7 @@ void ReduceDB::handle_lev2()
 
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset offset: delayed_clause_free) {
-        solver->cl_alloc.clauseFree(offset);
+        solver->free_cl(offset);
     }
     delayed_clause_free.clear();
 
@@ -264,7 +264,7 @@ void ReduceDB::handle_lev1()
             ) {
                 if (cl->stats.drop_if_not_used) {
                     solver->detachClause(*cl);
-                    solver->cl_alloc.clauseFree(cl);
+                    solver->free_cl(cl);
                     non_recent_use_dropped++;
                 } else {
                     solver->longRedCls[2].push_back(offset);
@@ -452,7 +452,7 @@ void ReduceDB::handle_lev1_final_predictor()
     //Cleanup
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset offset: delayed_clause_free) {
-        solver->cl_alloc.clauseFree(offset);
+        solver->free_cl(offset);
     }
     delayed_clause_free.clear();
 

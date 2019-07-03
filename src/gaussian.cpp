@@ -74,14 +74,14 @@ EGaussian::EGaussian(Solver* _solver, const GaussConf& _config, const uint32_t _
 EGaussian::~EGaussian() {
     delete_gauss_watch_this_matrix();
     for (uint32_t i = 0; i < clauses_toclear.size(); i++) {
-        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
+        solver->free_cl(clauses_toclear[i].first);
     }
 }
 
 void EGaussian::canceling(const uint32_t sublevel) {
     uint32_t a = 0;
     for (int32_t i = (int32_t)clauses_toclear.size() - 1; i >= 0 && clauses_toclear[i].second > sublevel; i--) {
-        solver->cl_alloc.clauseFree(clauses_toclear[i].first);
+        solver->free_cl(clauses_toclear[i].first);
         a++;
     }
     clauses_toclear.resize(clauses_toclear.size() - a);

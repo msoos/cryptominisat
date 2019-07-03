@@ -151,7 +151,7 @@ void CompleteDetachReatacher::cleanAndAttachClauses(
             solver->attachClause(*cl);
             *j++ = *i;
         } else {
-            solver->cl_alloc.clauseFree(*i);
+            solver->free_cl(*i);
         }
     }
     cs.resize(cs.size() - (i-j));

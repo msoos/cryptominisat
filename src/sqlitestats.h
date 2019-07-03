@@ -84,6 +84,11 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
+    virtual void cl_deleted(
+        const Solver* solver
+        , const uint64_t clid
+    ) override;
+
     void dump_clause_stats(
         const Solver* solver
         , uint64_t clid
@@ -125,10 +130,12 @@ private:
     void addStartupData();
     void initRestartSTMT();
     void initTimePassedSTMT();
+    void init_cl_deleted_STMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
     void init_satzilla_features();
     void init_var_data_STMT();
+    void run_sqlite_step(sqlite3_stmt* stmt, const char* name);
 
     void writeQuestionMarks(size_t num, std::stringstream& ss);
     void initReduceDBSTMT();
@@ -139,6 +146,7 @@ private:
     sqlite3_stmt *stmtRst = NULL;
     sqlite3_stmt *stmtFeat = NULL;
     sqlite3_stmt *stmt_clause_stats = NULL;
+    sqlite3_stmt *stmt_delete_cl = NULL;
     sqlite3_stmt *stmt_var_data = NULL;
 
     sqlite3 *db = NULL;

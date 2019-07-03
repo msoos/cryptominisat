@@ -61,6 +61,8 @@ class QueryFill (QueryHelper):
         t = time.time()
         q += """
         create index `idxclid3` on `goodClauses` (`clauseID`);
+        create index `idxclid-del` on `clDeletedBySolver` (`clauseID`);
+        create index `idxclid-del2` on `usedClauses` (`clauseID`);
         create index `idxclid1-2` on `clauseStats` (`clauseID`, `conflicts`);
         create index `idxclidM` on `reduceDB` (`clauseID`, `propagations_made`);
         """
@@ -75,6 +77,36 @@ class QueryFill (QueryHelper):
                 print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
+
+    def del_deleted_cls(self):
+        """
+        delete from usedClauses, goodClauses, clauseStats all clauseIDs
+        that are in clDeletedBySolver
+        """
+        print("Removing clauses that are in clDeletedBySolver from everywehre...")
+        t = time.time()
+
+        tables=["goodClauses", "clauseStats", "usedClauses"]
+        for table in tables:
+            q = """
+            select count() from
+            clDeletedBySolver, {table}
+            where clDeletedBySolver.clauseID = {table}.clauseID
+            """.format(table=table)
+            ret = self.c.execute(q)
+            rows = self.c.fetchall()
+            num = rows[0][0]
+            print("Will delete {num} rows from {table}".format(
+                num=num, table=table))
+
+            q = """
+            delete from {table}
+            where clauseID in (select clauseID from clDeletedBySolver)
+            """.format(table=table)
+            self.c.execute(q)
+            print("Removed solver-deleted clIDs from %s T: %-3.2f s" %
+                  (table, time.time() - t))
+
 
     def fill_last_prop(self):
         print("Adding last prop...")
@@ -232,6 +264,7 @@ if __name__ == "__main__":
 
     with QueryFill(args[0]) as q:
         q.create_indexes()
+        q.del_deleted_cls()
         q.fill_last_prop()
         q.fill_sum_cl_use()
         q.drop_idxs_tables()

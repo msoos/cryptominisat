@@ -391,3 +391,9 @@ create table `varDataUse` (
     -- features when picked
     --`activity` double NOT NULL
 );
+
+DROP TABLE IF EXISTS `clDeletedBySolver`;
+create table `clDeletedBySolver` (
+  `conflicts` bigint(20) NOT NULL,
+  `clauseID` bigint(20) NOT NULL
+);

@@ -98,6 +98,11 @@ public:
         , const uint64_t end_clid_notincl
     ) = 0;
 
+    virtual void cl_deleted(
+        const Solver* solver
+        , const uint64_t clid
+    ) = 0;
+
     virtual void dump_clause_stats(
         const Solver* solver
         , uint64_t clid

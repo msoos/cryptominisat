@@ -4058,3 +4058,20 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
     }
     return false;
 }
+
+#ifdef STATS_NEEDED
+void Solver::stats_del_cl(Clause* cl)
+{
+    if (cl->stats.ID != 0 && solver->sqlStats) {
+        solver->sqlStats->cl_deleted(solver, cl->stats.ID);
+    }
+}
+
+void Solver::stats_del_cl(ClOffset offs)
+{
+    Clause* cl = cl_alloc.ptr(offs);
+    if (cl->stats.ID != 0 && solver->sqlStats) {
+        solver->sqlStats->cl_deleted(solver, cl->stats.ID);
+    }
+}
+#endif

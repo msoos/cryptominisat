@@ -337,7 +337,7 @@ bool DistillerLongWithImpl::remove_or_shrink_clause(Clause& cl, ClOffset& offset
     Clause* c2 = solver->add_clause_int(lits, cl.red(), cl.stats);
     if (c2 != NULL) {
         solver->detachClause(offset);
-        solver->cl_alloc.clauseFree(offset);
+        solver->free_cl(offset);
         offset = solver->cl_alloc.get_offset(c2);
         return false;
     }
@@ -448,7 +448,7 @@ bool DistillerLongWithImpl::shorten_all_cl_with_cache_watch_stamp(
 
         if (sub_str_cl_with_cache_watch_stamp(offset, red, alsoStrengthen)) {
             solver->detachClause(offset);
-            solver->cl_alloc.clauseFree(offset);
+            solver->free_cl(offset);
             continue;
         }
 

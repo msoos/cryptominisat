@@ -165,7 +165,7 @@ bool DistillerLong::go_through_clauses(
         maxNumProps -= cl.size();
         if (solver->satisfied_cl(cl)) {
             solver->detachClause(cl);
-            solver->cl_alloc.clauseFree(&cl);
+            solver->free_cl(&cl);
             continue;
         }
 
@@ -337,7 +337,7 @@ bool DistillerLong::distill_long_cls_all(
 
         //Detach and free old clause
         solver->detachClause(offset);
-        solver->cl_alloc.clauseFree(offset);
+        solver->free_cl(offset);
 
         if (cl2 != NULL) {
             cl2->set_distilled(true);
@@ -460,7 +460,7 @@ ClOffset DistillerLong::try_distill_clause_and_return_new(
         lits.resize(cl.size());
         std::copy(cl.begin(), cl.end(), lits.begin());
     }
-    solver->cl_alloc.clauseFree(offset);
+    solver->free_cl(offset);
     Clause *cl2 = solver->add_clause_int(lits, red, stats);
     (*solver->drat) << findelay;
 

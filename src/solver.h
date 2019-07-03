@@ -272,6 +272,10 @@ class Solver : public Searcher
         //Contains _outer_ variables
         vector<bool> undef_must_set_vars;
 
+        //Deleting clauses with free
+        void free_cl(Clause* cl, bool varelim_or_subs = false);
+        void free_cl(ClOffset offs, bool varelim_or_subs = false);
+
         //Helper
         void renumber_xors_to_outside(const vector<Xor>& xors, vector<Xor>& xors_ret);
         void testing_set_solver_not_fresh();
@@ -388,6 +392,14 @@ class Solver : public Searcher
         // Clauses
         bool addClauseHelper(vector<Lit>& ps);
         bool addClauseInt(vector<Lit>& ps, const bool red = false);
+
+
+        ////////////////
+        // stats del
+        #ifdef STATS_NEEDED
+        void stats_del_cl(Clause* cl);
+        void stats_del_cl(ClOffset offs);
+        #endif
 
         /////////////////
         // Debug
@@ -613,6 +625,26 @@ inline void Solver::testing_set_solver_not_fresh()
 inline bool Solver::get_decision_reaching_valid() const
 {
     return decisions_reaching_model_valid;
+}
+
+inline void Solver::free_cl(Clause* cl, bool varelim_or_subs)
+{
+    #ifdef STATS_NEEDED
+    if (varelim_or_subs) {
+        stats_del_cl(cl);
+    }
+    #endif
+    cl_alloc.clauseFree(cl);
+}
+
+inline void Solver::free_cl(ClOffset offs, bool varelim_or_subs)
+{
+    #ifdef STATS_NEEDED
+    if (varelim_or_subs) {
+        stats_del_cl(offs);
+    }
+    #endif
+    cl_alloc.clauseFree(offs);
 }
 
 } //end namespace

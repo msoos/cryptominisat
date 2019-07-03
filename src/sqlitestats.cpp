@@ -82,6 +82,12 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmt_delete_cl);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     ret = sqlite3_finalize(stmt_var_data);
     if (ret != SQLITE_OK) {
         cout << "Error closing prepared statement" << endl;
@@ -116,6 +122,7 @@ bool SQLiteStats::setup(const Solver* solver)
     init_satzilla_features();
     init_clause_stats_STMT();
     init_var_data_STMT();
+    init_cl_deleted_STMT();
 
     return true;
 }
@@ -270,6 +277,31 @@ void SQLiteStats::writeQuestionMarks(
     ss << ")";
 }
 
+void SQLiteStats::run_sqlite_step(sqlite3_stmt* stmt, const char* name)
+{
+    int rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        cout
+        << "ERROR: while executing '" << name << "' SQLite prepared statement"
+        << endl;
+
+        cout << "Error from sqlite: "
+        << sqlite3_errmsg(db)
+        << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_reset(stmt)) {
+        cerr << "Error calling sqlite3_reset on cl_deleted" << endl;
+        std::exit(-1);
+    }
+
+    if (sqlite3_clear_bindings(stmt)) {
+        cerr << "Error calling sqlite3_clear_bindings on '"
+        << name << "'" << endl;
+        std::exit(-1);
+    }
+}
 
 void SQLiteStats::initMemUsedSTMT()
 {
@@ -427,26 +459,7 @@ void SQLiteStats::time_passed_min(
     sqlite3_bind_null(stmtTimePassed, bindAt++);
     sqlite3_bind_null(stmtTimePassed, bindAt++);
 
-    int rc = sqlite3_step(stmtTimePassed);
-    if (rc != SQLITE_DONE) {
-        cerr << "ERROR while executing time_passed prepared statement (time_passed_min function)"
-        << endl
-        << "Error from sqlite: "
-        << sqlite3_errmsg(db)
-        << " error code: " << rc
-        << endl;
-
-        std::exit(-1);
-    }
-
-    if (sqlite3_reset(stmtTimePassed)) {
-        cerr << "Error calling sqlite3_reset on stmtTimePassed" << endl;
-        std::exit(-1);
-    }
-    if (sqlite3_clear_bindings(stmtTimePassed)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtTimePassed" << endl;
-        std::exit(-1);
-    }
+    run_sqlite_step(stmtTimePassed, "time_passed_min");
 }
 
 void SQLiteStats::init_satzilla_features() {
@@ -710,25 +723,7 @@ void SQLiteStats::satzilla_features(
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_mean);
     sqlite3_bind_double(stmtFeat, bindAt++, satzilla_feat.irred_cl_distrib.activity_distr_var);
 
-    int rc = sqlite3_step(stmtFeat);
-    if (rc != SQLITE_DONE) {
-        cerr << "ERROR  while executing restart insertion SQLite prepared statement"
-        << endl
-        << "Error from sqlite: "
-        << sqlite3_errmsg(db)
-        << endl;
-
-        std::exit(-1);
-    }
-
-    if (sqlite3_reset(stmtFeat)) {
-        cerr << "Error calling sqlite3_reset on stmtFeat" << endl;
-        std::exit(-1);
-    }
-    if (sqlite3_clear_bindings(stmtFeat)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtFeat" << endl;
-        std::exit(-1);
-    }
+    run_sqlite_step(stmtFeat, "satzilla_features");
 }
 
 void SQLiteStats::restart(
@@ -836,25 +831,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_start_inclusive);
     sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_end_exclusive);
 
-    int rc = sqlite3_step(stmtRst);
-    if (rc != SQLITE_DONE) {
-        cerr << "ERROR  while executing restart insertion SQLite prepared statement"
-        << endl
-        << "Error from sqlite: "
-        << sqlite3_errmsg(db)
-        << endl;
-
-        std::exit(-1);
-    }
-
-    if (sqlite3_reset(stmtRst)) {
-        cerr << "Error calling sqlite3_reset on stmtRst" << endl;
-        std::exit(-1);
-    }
-    if (sqlite3_clear_bindings(stmtRst)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtRst" << endl;
-        std::exit(-1);
-    }
+    run_sqlite_step(stmtRst, "restart");
 }
 
 
@@ -957,27 +934,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_delta_confl_uip1_used);
 
-    int rc = sqlite3_step(stmtReduceDB);
-    if (rc != SQLITE_DONE) {
-        cout
-        << "ERROR: while executing clause DB cleaning SQLite prepared statement"
-        << endl;
-
-        cout << "Error from sqlite: "
-        << sqlite3_errmsg(db)
-        << endl;
-        std::exit(-1);
-    }
-
-    if (sqlite3_reset(stmtReduceDB)) {
-        cerr << "Error calling sqlite3_reset on stmtReduceDB" << endl;
-        std::exit(-1);
-    }
-
-    if (sqlite3_clear_bindings(stmtReduceDB)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmtReduceDB" << endl;
-        std::exit(-1);
-    }
+    run_sqlite_step(stmtReduceDB, "reduceDB");
 }
 
 void SQLiteStats::init_clause_stats_STMT()
@@ -1191,27 +1148,7 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.avg_nocheck());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHist.getLongtTerm().avg());
 
-    int rc = sqlite3_step(stmt_clause_stats);
-    if (rc != SQLITE_DONE) {
-        cout
-        << "ERROR: while executing clause DB cleaning SQLite prepared statement"
-        << endl;
-
-        cout << "Error from sqlite: "
-        << sqlite3_errmsg(db)
-        << endl;
-        std::exit(-1);
-    }
-
-    if (sqlite3_reset(stmt_clause_stats)) {
-        cerr << "Error calling sqlite3_reset on stmt_clause_stats" << endl;
-        std::exit(-1);
-    }
-
-    if (sqlite3_clear_bindings(stmt_clause_stats)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmt_clause_stats" << endl;
-        std::exit(-1);
-    }
+    run_sqlite_step(stmt_clause_stats, "dump_clause_stats");
 }
 
 void SQLiteStats::init_var_data_STMT()
@@ -1311,25 +1248,47 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, end_clid_notincl);
 
-    int rc = sqlite3_step(stmt_var_data);
-    if (rc != SQLITE_DONE) {
+    run_sqlite_step(stmt_var_data, "var_data");
+}
+
+void SQLiteStats::init_cl_deleted_STMT()
+{
+    const size_t numElems = 2;
+
+    std::stringstream ss;
+    ss << "insert into `clDeletedBySolver`"
+    << "("
+    << " `conflicts`,"
+    << " `clauseID`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    int rc = sqlite3_prepare(db, ss.str().c_str(), -1, &stmt_delete_cl, NULL);
+    if (rc) {
         cout
-        << "ERROR: while executing clause DB cleaning SQLite prepared statement"
-        << endl;
-
-        cout << "Error from sqlite: "
+        << "Error in sqlite_prepare(), INSERT failed"
+        << endl
         << sqlite3_errmsg(db)
+        << endl
+        << "Query was: " << ss.str()
         << endl;
         std::exit(-1);
     }
 
-    if (sqlite3_reset(stmt_var_data)) {
-        cerr << "Error calling sqlite3_reset on stmt_var_data" << endl;
-        std::exit(-1);
-    }
+}
 
-    if (sqlite3_clear_bindings(stmt_var_data)) {
-        cerr << "Error calling sqlite3_clear_bindings on stmt_var_data" << endl;
-        std::exit(-1);
-    }
+void SQLiteStats::cl_deleted(
+    const Solver* solver
+    , const uint64_t clid)
+{
+    int bindAt = 1;
+    sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int64(stmt_delete_cl, bindAt++, clid);
+
+    run_sqlite_step(stmt_delete_cl, "cl_deleted");
 }

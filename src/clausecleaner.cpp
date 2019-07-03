@@ -265,7 +265,7 @@ void ClauseCleaner::clean_clauses_post()
 {
     solver->clean_occur_from_removed_clauses_only_smudged();
     for(ClOffset off: delayed_free) {
-        solver->cl_alloc.clauseFree(off);
+        solver->free_cl(off);
     }
     delayed_free.clear();
 }

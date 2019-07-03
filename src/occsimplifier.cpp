@@ -317,7 +317,7 @@ void OccSimplifier::unlink_clause(
     }
 
     if (!only_set_is_removed) {
-        solver->cl_alloc.clauseFree(&cl);
+        solver->free_cl(&cl);
     } else {
         cl_to_free_later.push_back(offset);
     }
@@ -637,7 +637,7 @@ void OccSimplifier::add_back_to_solver()
             } else {
                 solver->litStats.irredLits -= cl->size();
             }
-            solver->cl_alloc.clauseFree(cl);
+            solver->free_cl(cl);
             continue;
         }
 
@@ -662,7 +662,7 @@ void OccSimplifier::add_back_to_solver()
                 solver->longIrredCls.push_back(offs);
             }
         } else {
-            solver->cl_alloc.clauseFree(cl);
+            solver->free_cl(cl);
         }
     }
 }
@@ -1221,7 +1221,7 @@ void OccSimplifier::free_clauses_to_free()
 {
     for(ClOffset off: cl_to_free_later) {
         Clause* cl = solver->cl_alloc.ptr(off);
-        solver->cl_alloc.clauseFree(cl);
+        solver->free_cl(cl, true);
     }
     cl_to_free_later.clear();
 }

@@ -476,7 +476,7 @@ void CompHandler::moveClausesLong(
             //In both comps, remove it
             if (thisComp && otherComp) {
                 solver->detachClause(cl);
-                solver->cl_alloc.clauseFree(&cl);
+                solver->free_cl(&cl);
                 continue;
             }
 
@@ -513,7 +513,7 @@ void CompHandler::moveClausesLong(
 
         //Remove from here
         solver->detachClause(cl);
-        solver->cl_alloc.clauseFree(&cl);
+        solver->free_cl(&cl);
     }
     cs.resize(cs.size() - (i-j));
 }
