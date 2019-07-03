@@ -25,7 +25,8 @@ import sklearn.svm
 import sklearn.tree
 import sklearn.cluster
 from sklearn.preprocessing import StandardScaler
-import optparse
+import argparse
+import sys
 import numpy as np
 import sklearn.metrics
 import time
@@ -662,7 +663,7 @@ static bool {funcname}(
 
             # these don't allow for "fresh" claues to be correctly dealt with
             best_features.append('rdb0.dump_no')
-            if options.name != "short":
+            if options.longsh != "short":
                 best_features.append('rdb0.sum_uip1_used')
                 best_features.append('rdb0.sum_delta_confl_uip1_used')
             # best_features.append('rdb0.avg_confl')
@@ -710,7 +711,7 @@ class Clustering:
         assert len(sz_feats_clean) == len(sz_feats)
 
         f = open("{basedir}/clustering_{name}_conf{conf_num}.h".format(
-            basedir=options.basedir, name=options.name,
+            basedir=options.basedir, name=options.longsh,
             conf_num=options.conf_num), 'w')
 
         write_mit_header(f)
@@ -736,7 +737,7 @@ public:
     SatZillaFeatures center[{clusters}];
     std::vector<int> used_clusters;
 
-""".format(clusters=options.clusters, name=options.name,
+""".format(clusters=options.clusters, name=options.longsh,
            conf_num=options.conf_num))
 
         f.write("    virtual void set_up_centers() {\n")
@@ -795,13 +796,13 @@ public:
 
     def write_all_predictors_file(self, fnames, functs):
         f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
-                basedir=options.basedir, name=options.name,
+                basedir=options.basedir, name=options.longsh,
                 conf_num=options.conf_num), "w")
 
         write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
 #ifndef ALL_PREDICTORS_{name}_conf{conf_num}_H
-#define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=options.name, conf_num=options.conf_num))
+#define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=options.longsh, conf_num=options.conf_num))
         f.write('#include "clause.h"\n')
         f.write('#include "predict_func_type.h"\n\n')
         for _, fname in fnames.items():
@@ -813,7 +814,7 @@ public:
         f.write("namespace CMSat {\n")
 
         f.write("\nvector<keep_func_type> should_keep_{name}_conf{conf_num}_funcs = {{\n".format(
-            conf_num=options.conf_num, name=options.name, clusters=options.clusters))
+            conf_num=options.conf_num, name=options.longsh, clusters=options.clusters))
 
         for i in range(options.clusters):
             dummy = ""
@@ -973,11 +974,11 @@ public:
         functs = {}
         for clno in self.used_clusters:
             funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
-                clno=clno, name=options.name, conf_num=options.conf_num)
+                clno=clno, name=options.longsh, conf_num=options.conf_num)
             functs[clno] = funcname
 
             fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
-                clno=clno, name=options.name, conf_num=options.conf_num)
+                clno=clno, name=options.longsh, conf_num=options.conf_num)
             fnames[clno] = fname
 
             if options.basedir is not None:
@@ -995,89 +996,90 @@ public:
 
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] file.pandas"
-    parser = optparse.OptionParser(usage=usage)
+    usage = "usage: %(prog)s [options] file.pandas"
+    parser = argparse.ArgumentParser(usage=usage)
 
-    parser.add_option("--verbose", "-v", action="store_true", default=False,
+    parser.add_argument("fname", type=str, metavar='PANDASFILE')
+    parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
     # tree options
-    parser.add_option("--depth", default=None, type=int,
+    parser.add_argument("--depth", default=None, type=int,
                       dest="tree_depth", help="Depth of the tree to create")
-    parser.add_option("--split", default=0.01, type=float, metavar="RATIO",
+    parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
 
     # generation of predictor
-    parser.add_option("--dot", type=str, default=None,
+    parser.add_argument("--dot", type=str, default=None,
                       dest="dot", help="Create DOT file")
-    parser.add_option("--filterdot", default=0.05, type=float,
+    parser.add_argument("--filterdot", default=0.05, type=float,
                       dest="filter_dot", help="Filter the DOT output from outliers so the graph looks nicer")
-    parser.add_option("--show", action="store_true", default=False,
+    parser.add_argument("--show", action="store_true", default=False,
                       dest="show", help="Show visual graphs")
-    parser.add_option("--check", action="store_true", default=False,
+    parser.add_argument("--check", action="store_true", default=False,
                       dest="check_row_data", help="Check row data for NaN or float overflow")
-    parser.add_option("--rawplots", action="store_true", default=False,
+    parser.add_argument("--rawplots", action="store_true", default=False,
                       dest="raw_data_plots", help="Display raw data plots")
 
-    parser.add_option("--name", default=None, type=str,
-                      dest="name", help="Get raw C-like code into this function and file name")
-    parser.add_option("--basedir", type=str,
+    parser.add_argument("--name", default=None, type=str,
+                      dest="longsh", help="Raw C-like code will be written to this function and file name")
+    parser.add_argument("--basedir", type=str,
                       dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
-    parser.add_option("--conf", default=0, type=int,
+    parser.add_argument("--conf", default=0, type=int,
                       dest="conf_num", help="Which predict configuration this is")
 
     # data filtering
-    parser.add_option("--only", default=0.999, type=float,
+    parser.add_argument("--only", default=0.999, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
-    parser.add_option("--nordb1", default=False, action="store_true",
+    parser.add_argument("--nordb1", default=False, action="store_true",
                       dest="no_rdb1", help="Delete RDB1 data")
-    parser.add_option("--mindump", default=0, type=float,
+    parser.add_argument("--mindump", default=0, type=float,
                       dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # final generator
-    parser.add_option("--final", default=False, action="store_true",
+    parser.add_argument("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
-    parser.add_option("--greedy", default=False, action="store_true",
+    parser.add_argument("--greedy", default=False, action="store_true",
                       dest="calc_best_feats", help="Calculate the greedy best features")
-    parser.add_option("--greedybest", default=15, type=int, metavar="TOPN",
+    parser.add_argument("--greedybest", default=15, type=int, metavar="TOPN",
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_option("--top", default=40, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=40, type=int, metavar="TOPN",
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # clustering
-    parser.add_option("--clusters", default=1, type=int,
+    parser.add_argument("--clusters", default=1, type=int,
                       dest="clusters", help="How many clusters to use")
-    parser.add_option("--clustmin", default=0.05, type=float, metavar="RATIO",
-                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data. Default: %default")
-    parser.add_option("--scale", default=False, action="store_true",
+    parser.add_argument("--clustmin", default=0.05, type=float, metavar="RATIO",
+                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data.")
+    parser.add_argument("--scale", default=False, action="store_true",
                       dest="scale", help="Scale clustering")
-    parser.add_option("--distr", default=False, action="store_true",
+    parser.add_argument("--distr", default=False, action="store_true",
                       dest="show_class_dist", help="Show class distribution")
 
     # type of predictor
-    parser.add_option("--tree", default=False, action="store_true",
+    parser.add_argument("--tree", default=False, action="store_true",
                       dest="final_is_tree", help="Final predictor should be a tree")
-    parser.add_option("--svm", default=False, action="store_true",
+    parser.add_argument("--svm", default=False, action="store_true",
                       dest="final_is_svm", help="Final predictor should be an svm")
-    parser.add_option("--lreg", default=False, action="store_true",
+    parser.add_argument("--lreg", default=False, action="store_true",
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
-    parser.add_option("--forest", default=False, action="store_true",
+    parser.add_argument("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
 
-    parser.add_option("--numtrees", default=5, type=int,
+    parser.add_argument("--numtrees", default=5, type=int,
                       dest="num_trees", help="How many trees to generate for the forest")
 
-    parser.add_option("--prefok", default=2.0, type=float,
+    parser.add_argument("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
-    if len(args) < 1:
+    if options.fname is None:
         print("ERROR: You must give the pandas file!")
         exit(-1)
 
-    if options.name is None:
-        print("ERROR: You must give short or long")
+    if options.longsh is None:
+        print("ERROR: You must give option '--name' as 'short' or 'long'")
         exit(-1)
 
     if options.clusters <= 0:
@@ -1085,12 +1087,11 @@ if __name__ == "__main__":
         exit(-1)
 
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
-
-    fname = args[0]
-    if not os.path.isfile(fname):
-        print("ERROR: '%s' is not a file" % fname)
+    if not os.path.isfile(options.fname):
+        print("ERROR: '%s' is not a file" % options.fname)
         exit(-1)
-    df = pd.read_pickle(fname)
+
+    df = pd.read_pickle(options.fname)
     c = Clustering(df)
     c.filter_min_avg_dump_no()
     c.cluster()
