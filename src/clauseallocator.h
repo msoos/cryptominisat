@@ -84,7 +84,7 @@ class ClauseAllocator {
             return (Clause*)(&dataStart[offset]);
         }
 
-        void clauseFree(Clause* c); ///Frees memory and associated clause number
+        void clauseFree(Clause* c);
         void clauseFree(ClOffset offset);
 
         void consolidate(
