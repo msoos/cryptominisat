@@ -1172,15 +1172,17 @@ MODULE_INIT_FUNC(pycryptosat)
         return NULL;
     }
 
-    Py_INCREF(&pycryptosat_SolverType);
-    PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("${CMS_FULL_VERSION}"));
-
-    if (PyErr_Occurred())
-    {
-        PyErr_SetString(PyExc_ImportError, "pycryptosat: initialisation failed");
-        Py_DECREF(m);
-        m = NULL;
+    // Add the version string so users know what version of CryptoMiniSat
+    // they're using.
+    if (PyModule_AddStringConstant(m, "__version__", "${CMS_FULL_VERSION}") == -1) {
+        return NULL;
     }
+
+    // Add the Solver type.
+    Py_INCREF(&pycryptosat_SolverType);
+    if (PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType)) {
+        return NULL;
+    }
+
     return m;
 }
