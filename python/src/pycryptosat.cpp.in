@@ -1027,10 +1027,6 @@ static PyObject* get_conflict(Solver *self)
 
 /*************************** Method definitions *************************/
 
-static PyMethodDef module_methods[] = {
-    {NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
-};
-
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, solve_doc},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
@@ -1055,22 +1051,6 @@ Solver_dealloc(Solver* self)
     Py_TYPE(self)->tp_free ((PyObject*) self);
 }
 
-static PyObject *
-Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    Solver *self;
-
-    self = (Solver *)type->tp_alloc(type, 0);
-    if (self != NULL) {
-        setup_solver(self, args, kwds);
-        if (self->cmsat == NULL) {
-            Py_DECREF(self);
-            return NULL;
-        }
-    }
-    return (PyObject *)self;
-}
-
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
@@ -1084,16 +1064,6 @@ Solver_init(Solver *self, PyObject *args, PyObject *kwds)
     }
     return 0;
 }
-
-static PyMemberDef Solver_members[] = {
-    /*{"first", T_OBJECT_EX, offsetof(Noddy, first), 0,
-     "first name"},
-    {"last", T_OBJECT_EX, offsetof(Noddy, last), 0,
-     "last name"},
-    {"number", T_INT, offsetof(Noddy, number), 0,
-     "noddy number"},*/
-    {NULL}  /* Sentinel */
-};
 
 static PyTypeObject pycryptosat_SolverType = {
     PyVarObject_HEAD_INIT(NULL, 0) /*ob_size*/
@@ -1124,7 +1094,7 @@ static PyTypeObject pycryptosat_SolverType = {
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
     Solver_methods,             /* tp_methods */
-    Solver_members,             /* tp_members */
+    0,                          /* tp_members */
     0,                          /* tp_getset */
     0,                          /* tp_base */
     0,                          /* tp_dict */
@@ -1132,8 +1102,6 @@ static PyTypeObject pycryptosat_SolverType = {
     0,                          /* tp_descr_set */
     0,                          /* tp_dictoffset */
     (initproc)Solver_init,      /* tp_init */
-    0,                          /* tp_alloc */
-    Solver_new,                 /* tp_new */
 };
 
 MODULE_INIT_FUNC(pycryptosat)
@@ -1153,7 +1121,7 @@ MODULE_INIT_FUNC(pycryptosat)
         MODULE_NAME,            /* m_name */
         MODULE_DOC,             /* m_doc */
         -1,                     /* m_size */
-        module_methods,         /* m_methods */
+        NULL,                   /* m_methods */
         NULL,                   /* m_reload */
         NULL,                   /* m_traverse */
         NULL,                   /* m_clear */
@@ -1162,7 +1130,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     m = PyModule_Create(&moduledef);
     #else
-    m = Py_InitModule3(MODULE_NAME, module_methods, MODULE_DOC);
+    m = Py_InitModule3(MODULE_NAME, NULL, MODULE_DOC);
     #endif
 
     // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
