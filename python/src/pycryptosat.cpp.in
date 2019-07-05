@@ -1079,16 +1079,6 @@ Solver_init(Solver *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
-static PyMemberDef Solver_members[] = {
-    /*{"first", T_OBJECT_EX, offsetof(Noddy, first), 0,
-     "first name"},
-    {"last", T_OBJECT_EX, offsetof(Noddy, last), 0,
-     "last name"},
-    {"number", T_INT, offsetof(Noddy, number), 0,
-     "noddy number"},*/
-    {NULL}  /* Sentinel */
-};
-
 static PyTypeObject pycryptosat_SolverType = {
     PyVarObject_HEAD_INIT(NULL, 0) /*ob_size*/
     "pycryptosat.Solver",       /*tp_name*/
@@ -1118,7 +1108,7 @@ static PyTypeObject pycryptosat_SolverType = {
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
     Solver_methods,             /* tp_methods */
-    Solver_members,             /* tp_members */
+    0,                          /* tp_members */
     0,                          /* tp_getset */
     0,                          /* tp_base */
     0,                          /* tp_dict */
