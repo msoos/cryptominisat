@@ -102,12 +102,12 @@ class QueryDatRem(QueryHelper):
             t2 = time.time()
 
             if options.verbose:
-                print("Creating index: ", l)
+                print("Creating/dropping index: ", l)
             self.c.execute(l)
             if options.verbose:
-                print("Index creation T: %-3.2f s" % (time.time() - t2))
+                print("Index dropping&creation T: %-3.2f s" % (time.time() - t2))
 
-        print("indexes created T: %-3.2f s" % (time.time() - t))
+        print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
 
     def fill_later_useful_data(self):
         t = time.time()

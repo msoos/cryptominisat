@@ -20,7 +20,7 @@
 
 from __future__ import print_function
 import sqlite3
-import optparse
+import argparse
 import time
 import pickle
 import re
@@ -63,27 +63,45 @@ class QueryVar (QueryHelper):
     def __init__(self, dbfname):
         super(QueryVar, self).__init__(dbfname)
 
-    def create_index(self):
+    def create_indexes(self):
         t = time.time()
-        queries = """create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);"""
+
+        print("Recreating indexes...")
+        print("Getting indexes to drop...")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
+
+        t = time.time()
+        queries += """
+        create index `idxclid8` on `varData` ( `var`, `conflicts`, `clid_start_incl`, `clid_end_notincl`);
+
+        create index `idxclid-a1` on `varData` ( `clid_start_incl`, `clid_end_notincl`);
+        create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
+        """
 
         for l in queries.split('\n'):
             t2 = time.time()
 
             if options.verbose:
-                print("Creating index: ", l)
+                print("Creating/dropping index: ", l)
             self.c.execute(l)
             if options.verbose:
-                print("Index creation T: %-3.2f s" % (time.time() - t2))
+                print("Index dropping&creation T: %-3.2f s" % (time.time() - t2))
 
-        print("indexes created T: %-3.2f s" % (time.time() - t))
+        print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
 
-    def vardata(self):
+    def create_vardata_df(self,fname):
         q = """
 select
 *
 , (1.0*useful_clauses)/(1.0*clauses_below) as useful_ratio
-
 , CASE WHEN
  (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
 THEN "OK"
@@ -98,8 +116,8 @@ and avg_inside_per_confl_when_picked > 0
 
         df = pd.read_sql_query(q, self.conn)
 
-        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', dbfname)
-        cleanname = re.sub(r'\.db$', '', dbfname)
+        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
+        cleanname = re.sub(r'\.db$', '', fname)
         cleanname += "-vardata"
         dump_dataframe(df, cleanname)
 
@@ -109,11 +127,43 @@ and avg_inside_per_confl_when_picked > 0
         t = time.time()
         q = "delete from `varDataUse`;"
         self.c.execute(q)
-        print("varDataUse deleted T: %-3.2f s" % (time.time() - t))
+        print("varDataUse cleared T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
         insert into varDataUse
+
+        (`restarts`,
+        `conflicts`,
+
+        `var`,
+        `dec_depth`,
+        `decisions_below`,
+        `conflicts_below`,
+        `clauses_below`,
+
+        `decided_avg`,
+        `decided_pos_perc`,
+        `propagated_avg`,
+        `propagated_pos_perc`,
+
+        `propagated`,
+        `propagated_pos`,
+        `decided`,
+        `decided_pos`,
+
+        `sum_decisions_at_picktime`,
+        `sum_propagations_at_picktime`,
+
+        `total_conflicts_below_when_picked`,
+        `total_decisions_below_when_picked`,
+        `avg_inside_per_confl_when_picked`,
+        `avg_inside_antecedents_when_picked`,
+
+        `cls_marked`,
+        `useful_clauses_used`,
+        `useful_clauses_sum_hist_used`)
+
         select
         v.restarts
         , v.conflicts
@@ -144,11 +194,9 @@ and avg_inside_per_confl_when_picked > 0
         , v.avg_inside_antecedents_when_picked
 
         -- measures for good
-        , count(cls.num_used) as useful_clauses
+        , count(cls.num_used) as cls_marked
         , sum(cls.num_used) as useful_clauses_used
         , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
-        , min(cls.first_confl_used) as useful_clauses_first_used
-        , max(cls.last_confl_used) as useful_clauses_last_used
 
         FROM varData as v join sum_cl_use as cls
         on cls.clauseID >= v.clid_start_incl
@@ -167,46 +215,37 @@ and avg_inside_per_confl_when_picked > 0
             print("query:", q)
         self.c.execute(q)
 
+        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
         q = """
         UPDATE varDataUse SET useful_clauses_used = 0
         WHERE useful_clauses_used IS NULL
         """
         self.c.execute(q)
 
-        q = """
-        UPDATE varDataUse SET useful_clauses_first_used = 0
-        WHERE useful_clauses_first_used IS NULL
-        """
-        self.c.execute(q)
+        print("varDataUse updated T: %-3.2f s" % (time.time() - t))
 
-        q = """
-        UPDATE varDataUse SET useful_clauses_last_used = 0
-        WHERE useful_clauses_last_used IS NULL
-        """
-        self.c.execute(q)
-
-        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
-
-
-def one_database(dbfname):
-    with QueryVar(dbfname) as q:
-        q.crete_indexes()
-        q.fill_var_data_use()
-        q.vardata()
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] file.sqlite"
-    parser = optparse.OptionParser(usage=usage)
+    parser = argparse.ArgumentParser(usage=usage)
 
-    parser.add_option("--verbose", "-v", action="store_true", default=False,
+    parser.add_argument("fname", type=str, metavar='SQLITEFILE')
+    parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_argument("--csv", action="store_true", default=False,
+                      dest="dump_csv", help="Dump CSV (for weka)")
 
-    (options, args) = parser.parse_args()
 
-    if len(args) != 1:
+    options = parser.parse_args()
+
+    if options.fname is None:
         print("ERROR: You must give exactly one file")
         exit(-1)
 
     np.random.seed(2097483)
-    dbfname = args[0]
-    one_database(dbfname)
+    with QueryVar(options.fname) as q:
+        q.create_indexes()
+        q.fill_var_data_use()
+        q.create_vardata_df(options.fname)

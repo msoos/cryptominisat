@@ -289,7 +289,6 @@ bool BreakID::doit()
         );
     }
 
-    end:
     delete breakid;
     breakid = NULL;
 

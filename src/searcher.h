@@ -131,7 +131,7 @@ class Searcher : public HyperEngine
             }
         }
         template<bool do_insert_var_order = true, bool update_bogoprops = false>
-        void cancelUntil(uint32_t level, bool clid_plus_one = false); ///<Backtrack until a certain level.
+        void cancelUntil(uint32_t level, uint32_t clid_plus = 0); ///<Backtrack until a certain level.
         bool check_order_heap_sanity() const;
 
         SQLStats* sqlStats = NULL;

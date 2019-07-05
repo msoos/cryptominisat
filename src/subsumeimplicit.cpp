@@ -151,7 +151,7 @@ void SubsumeImplicit::subsume_implicit(const bool check_stats, std::string calle
     runStats.time_used += time_used;
     runStats.time_out += time_out;
     if (solver->conf.verbosity) {
-        runStats.print_short(solver);
+        runStats.print_short(solver, caller.c_str());
     }
     if (solver->sqlStats) {
         solver->sqlStats->time_passed(
@@ -183,19 +183,19 @@ SubsumeImplicit::Stats SubsumeImplicit::Stats::operator+=(const SubsumeImplicit:
     return *this;
 }
 
-void SubsumeImplicit::Stats::print_short(const Solver* _solver) const
+void SubsumeImplicit::Stats::print_short(const Solver* _solver, const char* caller) const
 {
     cout
-    << "c [impl sub]"
+    << "c [impl sub" << caller << "]"
     << " bin: " << remBins
     << _solver->conf.print_times(time_used, time_out)
     << " w-visit: " << numWatchesLooked
     << endl;
 }
 
-void SubsumeImplicit::Stats::print() const
+void SubsumeImplicit::Stats::print(const char* caller) const
 {
-    cout << "c -------- IMPLICIT SUB STATS --------" << endl;
+    cout << "c -------- IMPLICIT SUB " << caller << " STATS --------" << endl;
     print_stats_line("c time"
         , time_used
         , float_div(time_used, numCalled)

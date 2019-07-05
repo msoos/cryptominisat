@@ -53,8 +53,8 @@ public:
             *this = Stats();
         }
         Stats operator+=(const Stats& other);
-        void print_short(const Solver* solver) const;
-        void print() const;
+        void print_short(const Solver* solver, const char* caller) const;
+        void print(const char* caller) const;
 
         double time_used = 0.0;
         uint64_t numCalled = 0;

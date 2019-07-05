@@ -428,27 +428,31 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
             varData[v].num_decided++;
             if (!sign) varData[v].num_decided_pos++;
 
-            varData[v].sum_decisions_at_picktime = sumDecisions;
-            varData[v].num_conflicts_at_picktime = sumConflicts;
-            varData[v].num_confl_cl_lits_at_picktime = sumConflictClauseLits;
-            varData[v].num_confl_cl_atecedent_lits_at_picktime = sumConflictClauseAntecedentsLits;
-            varData[v].sum_propagations_at_picktime = sumPropagations;
+            varData[v].sumDecisions_at_picktime = sumDecisions;
+            varData[v].sumConflicts_at_picktime = sumConflicts;
+            varData[v].sumAntecedents_at_picktime = sumAntecedents;
+            varData[v].sumAntecedentsLits_at_picktime = sumAntecedentsLits;
+            varData[v].sumConflictClauseLits_at_picktime = sumConflictClauseLits;
+            varData[v].sumPropagations_at_picktime = sumPropagations;
+            varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
 
-            varData[v].num_decision_based_cl_till_now = decision_based_cl;
+            varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;
+            varData[v].inside_conflict_clause_antecedents_at_picktime = varData[v].inside_conflict_clause_antecedents;
+
+
             varData[v].clid_at_picking = clauseID;
 
             double avg_inside_per_confl_lit = 0;
-            if (sumConflictClauseLits != 0 ) {
+            double avg_inside_per_confl_atecedent_lits = 0;
+            if (varData[v].total_conflicts_below_when_picked != 0 ) {
                 avg_inside_per_confl_lit =
-                (double)varData[v].inside_conflict_clause/(double)sumConflictClauseLits;
+                (double)varData[v].inside_conflict_clause/(double)varData[v].total_conflicts_below_when_picked;
+            }
+            if (varData[v].total_antecedents_below_when_picked != 0 ) {
+                avg_inside_per_confl_atecedent_lits =
+                (double)varData[v].inside_conflict_clause_antecedents/(double)varData[v].total_antecedents_below_when_picked;
             }
             varData[v].avg_inside_per_confl_when_picked = avg_inside_per_confl_lit;
-
-            double avg_inside_per_confl_atecedent_lits = 0;
-            if (sumConflictClauseAntecedentsLits != 0) {
-                avg_inside_per_confl_atecedent_lits =
-                (double)varData[v].inside_conflict_clause_antecedents/(double)sumConflictClauseAntecedentsLits;
-            }
             varData[v].avg_inside_antecedents_when_picked = avg_inside_per_confl_atecedent_lits;
         } else {
             sumPropagations++;

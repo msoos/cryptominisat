@@ -70,7 +70,6 @@ struct AtecedentData
         glue_long_reds += other.glue_long_reds;
         size_longs += other.size_longs;
         age_long_reds += other.age_long_reds;
-        vsids_vars += other.vsids_vars;
 
         return *this;
     }
@@ -86,7 +85,6 @@ struct AtecedentData
         glue_long_reds -= other.glue_long_reds;
         size_longs -= other.size_longs;
         age_long_reds -= other.age_long_reds;
-        vsids_vars -= other.vsids_vars;
 
         return *this;
     }
@@ -108,12 +106,6 @@ struct AtecedentData
     AvgCalc<uint32_t> glue_long_reds;
     AvgCalc<uint32_t> size_longs;
     AvgCalc<uint32_t> age_long_reds;
-    AvgCalc<float, float> vsids_all_incoming_vars;
-    AvgCalc<float, float> vsids_vars;
-    AvgCalc<float, float> vsids_of_resolving_literals;
-    #ifdef STATS_NEEDED
-    AvgCalc<float, float> vsids_of_ants;
-    #endif
 };
 
 struct ClauseStats

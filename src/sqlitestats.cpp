@@ -939,7 +939,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 67;
+    const size_t numElems = 55;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -977,11 +977,6 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `atedecents_longIrred`,"
     << " `atedecents_longRed`,"
 
-    << " `vsids_vars_avg`,"
-    << " `vsids_vars_var`,"
-    << " `vsids_vars_min`,"
-    << " `vsids_vars_max`,"
-
     << " `antecedents_glue_long_reds_avg`,"
     << " `antecedents_glue_long_reds_var`,"
     << " `antecedents_glue_long_reds_min`,"
@@ -991,16 +986,6 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `antecedents_long_red_age_var`,"
     << " `antecedents_long_red_age_min`,"
     << " `antecedents_long_red_age_max`,"
-
-    << " `vsids_of_resolving_literals_avg`,"
-    << " `vsids_of_resolving_literals_var`,"
-    << " `vsids_of_resolving_literals_min`,"
-    << " `vsids_of_resolving_literals_max`,"
-
-    << " `vsids_of_all_incoming_lits_avg`,"
-    << " `vsids_of_all_incoming_lits_var`,"
-    << " `vsids_of_all_incoming_lits_min`,"
-    << " `vsids_of_all_incoming_lits_max`,"
 
     << " `antecedents_antecedents_vsids_avg`,"
 
@@ -1100,11 +1085,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longIrred);
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.longRed);
 
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.avg());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.var());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.getMin());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_vars.getMax());
-
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.var());
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.glue_long_reds.getMin());
@@ -1114,18 +1094,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.age_long_reds.var() );
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.age_long_reds.getMin() );
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, antec_data.age_long_reds.getMax() );
-
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.avg());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.var());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.getMin());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_resolving_literals.getMax());
-
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.avg());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.var());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMin());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_all_incoming_vars.getMax());
-
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, antec_data.vsids_of_ants.avg());
 
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.decisionLevelHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHistLT.avg());
@@ -1172,9 +1140,12 @@ void SQLiteStats::init_var_data_STMT()
     ", `decided_pos`"
     ", `propagated`"
     ", `propagated_pos`"
+
+    ", `inside_conflict_clause_during`"
+    ", `inside_conflict_clause_antecedents_during`"
+
     ", `sum_decisions_at_picktime`"
     ", `sum_propagations_at_picktime`"
-
     ", `total_conflicts_below_when_picked`"
     ", `total_decisions_below_when_picked`"
     ", `avg_inside_per_confl_when_picked`"
@@ -1222,25 +1193,28 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, conflicts_below);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, cls_below);
 
-    /////
-    /////data at picked time data
-    /////
 
-    //these are not updated while working below.
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided_pos);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
 
-    //to average above data
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sum_decisions_at_picktime);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sum_propagations_at_picktime);
+
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
+
+
+
+    sqlite3_bind_int64 (stmt_var_data, bindAt++
+        , vardata.inside_conflict_clause - vardata.inside_conflict_clause_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++
+        , vardata.inside_conflict_clause_antecedents - vardata.inside_conflict_clause_antecedents_at_picktime);
 
     //data about stuff that's below
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
-
-    //data about variable in general
+    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
+    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
     sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
     sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
 

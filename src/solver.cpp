@@ -2499,7 +2499,7 @@ void Solver::print_full_restart_stat(const double cpu_time, const double cpu_tim
     dist_long_with_impl->get_stats().print();
 
     if (conf.doStrSubImplicit) {
-        subsumeImplicit->get_stats().print();
+        subsumeImplicit->get_stats().print("");
     }
 
     if (conf.doCache) {

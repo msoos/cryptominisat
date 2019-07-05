@@ -627,8 +627,12 @@ inline bool Solver::get_decision_reaching_valid() const
     return decisions_reaching_model_valid;
 }
 
-inline void Solver::free_cl(Clause* cl, bool varelim_or_subs)
-{
+inline void Solver::free_cl(Clause* cl
+    , bool
+    #ifdef STATS_NEEDED
+    varelim_or_subs
+    #endif
+) {
     #ifdef STATS_NEEDED
     if (varelim_or_subs) {
         stats_del_cl(cl);
@@ -637,8 +641,12 @@ inline void Solver::free_cl(Clause* cl, bool varelim_or_subs)
     cl_alloc.clauseFree(cl);
 }
 
-inline void Solver::free_cl(ClOffset offs, bool varelim_or_subs)
-{
+inline void Solver::free_cl(ClOffset offs
+    , bool
+    #ifdef STATS_NEEDED
+    varelim_or_subs
+    #endif
+) {
     #ifdef STATS_NEEDED
     if (varelim_or_subs) {
         stats_del_cl(offs);

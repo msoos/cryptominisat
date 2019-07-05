@@ -343,8 +343,8 @@ create table `varData` (
 
     `total_conflicts_below_when_picked` bigint(20) NOT NULL,
     `total_decisions_below_when_picked` bigint(20) NOT NULL,
-    `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
-    `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
+    `avg_inside_per_confl_when_picked` double NOT NULL,
+    `avg_inside_antecedents_when_picked` double NOT NULL,
 
     `clid_start_incl` bigint(20) NOT NULL,
     `clid_end_notincl` bigint(20) NOT NULL
@@ -379,14 +379,15 @@ create table `varDataUse` (
 
     `total_conflicts_below_when_picked` bigint(20) NOT NULL,
     `total_decisions_below_when_picked` bigint(20) NOT NULL,
-    `avg_inside_per_confl_when_picked` bigint(20) NOT NULL,
-    `avg_inside_antecedents_when_picked` bigint(20) NOT NULL,
+    `avg_inside_per_confl_when_picked` double NOT NULL,
+    `avg_inside_antecedents_when_picked` double NOT NULL,
 
+    `cls_marked` int(2) DEFAULT NULL,
     `useful_clauses` int(20) DEFAULT NULL,
     `useful_clauses_used` int(20) DEFAULT NULL,
-    `useful_clauses_sum_hist_used` int(20) DEFAULT NULL,
-    `useful_clauses_first_used` int(20) DEFAULT NULL,
-    `useful_clauses_last_used` int(20) DEFAULT NULL
+    `useful_clauses_sum_hist_used` int(20) DEFAULT NULL
+--     `useful_clauses_first_used` int(20) DEFAULT NULL,  -- CANNOT DO! what if we marked very few?
+--     `useful_clauses_last_used` int(20) DEFAULT NULL -- CANNOT DO! what if we marked very few?
 
     -- features when picked
     --`activity` double NOT NULL

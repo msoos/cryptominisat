@@ -106,9 +106,12 @@ public:
 
     uint64_t sumConflicts = 0;
     uint64_t sumDecisions = 0;
+    uint64_t sumAntecedents = 0;
     uint64_t sumPropagations = 0;
     uint64_t sumConflictClauseLits = 0;
-    uint64_t sumConflictClauseAntecedentsLits = 0;
+    uint64_t sumAntecedentsLits = 0;
+    uint64_t sumDecisionBasedCl = 0;
+
     uint32_t latest_satzilla_feature_calc = 0;
     uint64_t last_satzilla_feature_calc_confl = 0;
     unsigned  cur_max_temp_red_lev2_cls = conf.max_temp_lev2_learnt_clauses;
@@ -133,7 +136,6 @@ public:
     BinTriStats binTri;
     LitStats litStats;
     int64_t clauseID = 1;
-    int64_t decision_based_cl = 0;
 
     //Temporaries
     vector<uint16_t> seen;
