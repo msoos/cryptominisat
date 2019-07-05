@@ -1168,19 +1168,22 @@ MODULE_INIT_FUNC(pycryptosat)
     // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
     // In pure Python2: return nothing.
     if (!m) {
-        Py_XDECREF(m);
         return NULL;
     }
 
-    Py_INCREF(&pycryptosat_SolverType);
-    PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType);
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("${CMS_FULL_VERSION}"));
-
-    if (PyErr_Occurred())
-    {
-        PyErr_SetString(PyExc_ImportError, "pycryptosat: initialisation failed");
+    // Add the version string so users know what version of CryptoMiniSat
+    // they're using.
+    if (PyModule_AddStringConstant(m, "__version__", "${CMS_FULL_VERSION}") == -1) {
         Py_DECREF(m);
-        m = NULL;
+        return NULL;
     }
+
+    // Add the Solver type.
+    Py_INCREF(&pycryptosat_SolverType);
+    if (PyModule_AddObject(m, "Solver", (PyObject *)&pycryptosat_SolverType)) {
+        Py_DECREF(m);
+        return NULL;
+    }
+
     return m;
 }
