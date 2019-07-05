@@ -322,20 +322,7 @@ class QueryCls (QueryHelper):
             , "restarts"
             , "prev_restart"
             , "latest_satzilla_feature_calc"
-            , "clauseID"
-            , "vsids_vars_avg"
-            , "vsids_vars_var"
-            , "vsids_vars_min"
-            , "vsids_vars_max"
-            , "vsids_of_resolving_literals_avg"
-            , "vsids_of_resolving_literals_var"
-            , "vsids_of_resolving_literals_min"
-            , "vsids_of_resolving_literals_max"
-            , "vsids_of_all_incoming_lits_avg"
-            , "vsids_of_all_incoming_lits_var"
-            , "vsids_of_all_incoming_lits_min"
-            , "vsids_of_all_incoming_lits_max"
-            , "antecedents_antecedents_vsids_avg"]
+            , "clauseID"]
         self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
 
 
@@ -343,12 +330,8 @@ class QueryCls (QueryHelper):
             "simplifications"
             , "restarts"
             , "latest_satzilla_feature_calc"
-            , "red_activity_distr_mean"
-            , "red_activity_distr_var"
             , "irred_glue_distr_mean"
-            , "irred_glue_distr_var"
-            , "irred_activity_distr_mean"
-            , "irred_activity_distr_var"]
+            , "irred_glue_distr_var"]
         self.satzfeat_dat = self.query_fragment("satzilla_features", not_cols, "szfeat")
 
         self.common_limits = """
@@ -675,7 +658,6 @@ def transform(df):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
                 row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
                 row[self.ntoc["cl.trail_depth_level_hist"]] == 0 or \
-                row[self.ntoc["cl.vsids_vars_hist"]] == 0 or \
                 row[self.ntoc["cl.size_hist"]] == 0 or \
                 row[self.ntoc["cl.glue_hist"]] == 0 or \
                 row[self.ntoc["cl.num_antecedents_hist"]] == 0:
