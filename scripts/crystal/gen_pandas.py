@@ -493,8 +493,8 @@ class QueryCls (QueryHelper):
         {rdb0_dat}
         {rdb1_dat}
         {sum_cl_use}
-        , sum_cl_use.num_used as `x.num_used`
-        , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.lifetime`
+        , sum_cl_use.num_used as `x.xnum_used`
+        , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.xlifetime`
         , {case_stmt}
         """
 

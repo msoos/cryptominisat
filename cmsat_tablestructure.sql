@@ -290,7 +290,6 @@ create table `goodClauses` (
     `num_used` bigint(20) NOT NULL,
     `first_confl_used` bigint(20) NOT NULL,
     `last_confl_used` bigint(20) NOT NULL,
-    `sum_hist_used` bigint(20) DEFAULT NULL,
     `last_prop_used` bigint(20) DEFAULT NULL
 );
 

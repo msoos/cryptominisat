@@ -142,8 +142,7 @@ class QueryVar (QueryHelper):
         , `propagated_pos_perc`
 
         , `cls_marked`
-        , `useful_clauses_used`
-        , `useful_clauses_sum_hist_used`)
+        , `useful_clauses_used`)
 
         select
         v.var
@@ -158,7 +157,6 @@ class QueryVar (QueryHelper):
         -- measures for good
         , count(cls.num_used) as cls_marked
         , sum(cls.num_used) as useful_clauses_used
-        , sum(cls.sum_hist_used) as useful_clauses_sum_hist_used
 
         FROM varData as v join sum_cl_use as cls
         on cls.clauseID >= v.clid_start_incl

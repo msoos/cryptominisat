@@ -401,7 +401,6 @@ static bool {funcname}(
         df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
         if not options.no_rdb1:
             df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
-        df['sum_cl_use.avg_hist_used'].replace(['None'], 0, inplace=True)
         df.fillna(0, inplace=True)
 
         if options.check_row_data:

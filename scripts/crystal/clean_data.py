@@ -135,9 +135,6 @@ class QueryFill (QueryHelper):
             `num_used` bigint(20) NOT NULL,
             `first_confl_used` bigint(20),
             `last_confl_used` bigint(20),
-            `sum_hist_used` bigint(20) DEFAULT NULL,
-            `avg_hist_used` double,
-            `var_hist_used` double,
             `last_prop_used` bigint(20) DEFAULT NULL
         );"""
         self.c.execute(q)
@@ -150,8 +147,6 @@ class QueryFill (QueryHelper):
         `num_used`,
         `first_confl_used`,
         `last_confl_used`,
-        `sum_hist_used`,
-        `avg_hist_used`,
         `last_prop_used`
         )
         select
@@ -159,8 +154,6 @@ class QueryFill (QueryHelper):
         , sum(num_used)
         , min(first_confl_used)
         , max(last_confl_used)
-        , sum(sum_hist_used)
-        , (1.0*sum(sum_hist_used))/(1.0*sum(num_used))
         , max(last_prop_used)
         from goodClauses as c group by clauseID;"""
         self.c.execute(q)
@@ -168,29 +161,14 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        create index `idxclid20` on `sum_cl_use` (`clauseID`, num_used, avg_hist_used);
+        create index `idxclid20` on `sum_cl_use` (`clauseID`, num_used);
         create index `idxclid21` on `sum_cl_use` (`clauseID`);
-        create index `idxclid21-2` on `sum_cl_use` (`clauseID`, avg_hist_used);
+        create index `idxclid21-2` on `sum_cl_use` (`clauseID`);
         create index `idxusedClauses` on `usedClauses` (`clauseID`, `used_at`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
         print("sum_cl_use indexes added T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """update sum_cl_use
-        set `var_hist_used` = (
-        select
-        sum(1.0*(u.used_at-cs.conflicts-sum_cl_use.avg_hist_used)*(u.used_at-cs.conflicts-sum_cl_use.avg_hist_used))/(sum_cl_use.num_used*1.0)
-        from
-        clauseStats as cs,
-        usedClauses as u
-        where sum_cl_use.clauseID = u.clauseID
-        and cs.clauseID = u.clauseID
-        group by u.clauseID );
-        """
-        self.c.execute(q)
-        print("sum_cl_use added variance T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q="""
@@ -200,16 +178,13 @@ class QueryFill (QueryHelper):
         `num_used`,
         `first_confl_used`,
         `last_confl_used`,
-        `sum_hist_used`,
-        `avg_hist_used`,
         `last_prop_used`
         )
-        select cl.clauseID,
+        select
+        cl.clauseID, -- `clauseID`
         0,     --  `num_used`,
         NULL,   --  `first_confl_used`,
         NULL,   --  `last_confl_used`,
-        0,      --  `sum_hist_used`,
-        NULL,   --  `avg_hist_used`,
         NULL   --  `last_prop_used`
         from clauseStats as cl left join sum_cl_use as goodcl
         on cl.clauseID = goodcl.clauseID
