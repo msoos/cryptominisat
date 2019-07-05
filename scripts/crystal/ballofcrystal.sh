@@ -33,7 +33,7 @@ if [ "$NEXT_OP" == "" ]; then
                 RATIO="0.30";
                 break;;
             [2]* )
-                ORIGTIME="27";
+                ORIGTIME="16";
                 FNAME="goldb-heqc-i10mul.cnf";
                 RATIO="0.60";
                 break;;
