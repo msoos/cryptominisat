@@ -266,7 +266,6 @@ Start getting clauses."
 static PyObject* get_next_small_clause(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {NULL};
-    PyObject *max_len;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) {
         return NULL;
     }
@@ -300,7 +299,6 @@ End getting clauses."
 static PyObject* end_getting_small_clauses(Solver *self, PyObject *args, PyObject *kwds)
 {
     static char* kwlist[] = {NULL};
-    PyObject *max_len;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) {
         return NULL;
     }
