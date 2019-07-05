@@ -1583,7 +1583,9 @@ void Searcher::attach_and_enqueue_learnt_clause(Clause* cl, bool enq)
             stats.learntLongs++;
             solver->attachClause(*cl, enq);
             if (enq) enqueue(learnt_clause[0], PropBy(cl_alloc.get_offset(cl)));
-            bump_cl_act<update_bogoprops>(cl);
+            for(uint32_t i = 0; i < solver->conf.bump_new_learnt_cls; i++) {
+                bump_cl_act<update_bogoprops>(cl);
+            }
 
             #ifdef STATS_NEEDED
             cl->stats.antec_data = antec_data;
@@ -1791,10 +1793,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
 
             cl->stats.which_red_array = which_arr;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
-
-            for(uint32_t i = 0; i < solver->conf.bump_new_learnt_cls; i++) {
-                bump_cl_act<false>(cl);
-            }
 
             *drat << add << *cl
             #ifdef STATS_NEEDED
