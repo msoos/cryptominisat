@@ -100,12 +100,19 @@ class QueryVar (QueryHelper):
     def create_vardata_df(self,fname):
         q = """
         select
-        *
+        varData.*
+        , varDataUse.`decided_avg`
+        , varDataUse.`decided_pos_perc`
+        , varDataUse.`propagated_avg`
+        , varDataUse.`propagated_pos_perc`
+        , varDataUse.`cls_marked`
+        , varDataUse.`useful_clauses`
+        , varDataUse.`useful_clauses_used`
         , CASE WHEN
-         (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
+         (1.0*useful_clauses_used)/(1.0*clauses_below) > 0.5
         THEN "OK"
         ELSE "BAD"
-        END AS `class`
+        END AS `x.class`
 
         from varData, varDataUse
         where
@@ -115,6 +122,33 @@ class QueryVar (QueryHelper):
         """
 
         df = pd.read_sql_query(q, self.conn)
+        print("Relative data...")
+        df["inside_conflict_clause_during"] = \
+            df["inside_conflict_clause_at_fintime"]-df["inside_conflict_clause_at_picktime"]
+        df["inside_conflict_antecedents_during"] = \
+            df["inside_conflict_antecedents_at_fintime"]-df["inside_conflict_antecedents_at_picktime"]
+        df["inside_conflict_clause_glue_during"] = \
+            df["inside_conflict_clause_glue_at_fintime"]-df["inside_conflict_clause_glue_at_picktime"]
+
+        df["sumDecisions_during"] = \
+            df["sumDecisions_at_fintime"]-df["sumDecisions_at_picktime"]
+        df["sumPropagations_during"] = \
+            df["sumPropagations_at_fintime"]-df["sumPropagations_at_picktime"]
+        df["sumConflicts_during"] = \
+            df["sumConflicts_at_fintime"]-df["sumConflicts_at_picktime"]
+        df["sumAntecedents_during"] = \
+            df["sumAntecedents_at_fintime"]-df["sumAntecedents_at_picktime"]
+        df["sumAntecedentsLits_during"] = \
+            df["sumAntecedentsLits_at_fintime"]-df["sumAntecedentsLits_at_picktime"]
+        df["sumConflictClauseLits_during"] = \
+            df["sumConflictClauseLits_at_fintime"]-df["sumConflictClauseLits_at_picktime"]
+        df["sumDecisionBasedCl_during"] = \
+            df["sumDecisionBasedCl_at_fintime"]-df["sumDecisionBasedCl_at_picktime"]
+
+        df["rel_inside_confl_cl"] = df["inside_conflict_clause_during"]/df["sumConflicts_during"]
+        df["rel_inside_confl_cl_ant"] = df["inside_conflict_antecedents_during"]/df["antecedents_below"]
+        df["rel_inside_confl_cl_glue"] = df["inside_conflict_clause_glue_during"]/df["antecedents_below"]
+
 
         cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
         cleanname = re.sub(r'\.db$', '', fname)

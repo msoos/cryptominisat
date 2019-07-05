@@ -108,8 +108,6 @@ public:
         const Solver* solver
         , const uint32_t var
         , const VarData& vardata
-        , const uint32_t decisions_below
-        , const uint32_t conflicts_below
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
     ) override;

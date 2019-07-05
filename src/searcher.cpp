@@ -3503,8 +3503,6 @@ void Searcher::cancelUntil(uint32_t level
                             solver
                             , outer_var
                             , varData[var]
-                            , decisions
-                            , conflicts
                             , cls_below
                             , clauseID+clid_plus
                         );

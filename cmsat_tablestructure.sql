@@ -306,8 +306,6 @@ create table `varData` (
 
     , `var` int(20) NOT NULL
     , `dec_depth` int(20) NOT NULL
-    , `decisions_below` int(20) NOT NULL
-    , `conflicts_below` int(20) NOT NULL
     , `clauses_below` int(20) NOT NULL
 
     , `decided` bigint(20) NOT NULL
@@ -315,11 +313,11 @@ create table `varData` (
     , `propagated` bigint(20) NOT NULL
     , `propagated_pos` bigint(20) NOT NULL
 
-    , `inside_conflict_clause` bigint(20) NOT NULL
+    , `inside_conflict_clause_at_fintime` bigint(20) NOT NULL
     , `inside_conflict_clause_at_picktime` bigint(20) NOT NULL
-    , `inside_conflict_clause_antecedents` bigint(20) NOT NULL
+    , `inside_conflict_clause_antecedents_at_fintime` bigint(20) NOT NULL
     , `inside_conflict_clause_antecedents_at_picktime` bigint(20) NOT NULL
-    , `inside_conflict_clause_glue` bigint(20) NOT NULL
+    , `inside_conflict_clause_glue_at_fintime` bigint(20) NOT NULL
     , `inside_conflict_clause_glue_at_picktime` bigint(20) NOT NULL
 
     , `sumDecisions_at_picktime` bigint(20) NOT NULL
@@ -329,6 +327,14 @@ create table `varData` (
     , `sumAntecedentsLits_at_picktime` bigint(20) NOT NULL
     , `sumConflictClauseLits_at_picktime` bigint(20) NOT NULL
     , `sumDecisionBasedCl_at_picktime` bigint(20) NOT NULL
+
+    , `sumDecisions_at_fintime` bigint(20) NOT NULL
+    , `sumPropagations_at_fintime` bigint(20) NOT NULL
+    , `sumConflicts_at_fintime` bigint(20) NOT NULL
+    , `sumAntecedents_at_fintime` bigint(20) NOT NULL
+    , `sumAntecedentsLits_at_fintime` bigint(20) NOT NULL
+    , `sumConflictClauseLits_at_fintime` bigint(20) NOT NULL
+    , `sumDecisionBasedCl_at_fintime` bigint(20) NOT NULL
 
     , `clid_start_incl` bigint(20) NOT NULL
     , `clid_end_notincl` bigint(20) NOT NULL
