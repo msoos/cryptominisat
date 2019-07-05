@@ -1055,22 +1055,6 @@ Solver_dealloc(Solver* self)
     Py_TYPE(self)->tp_free ((PyObject*) self);
 }
 
-static PyObject *
-Solver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    Solver *self;
-
-    self = (Solver *)type->tp_alloc(type, 0);
-    if (self != NULL) {
-        setup_solver(self, args, kwds);
-        if (self->cmsat == NULL) {
-            Py_DECREF(self);
-            return NULL;
-        }
-    }
-    return (PyObject *)self;
-}
-
 static int
 Solver_init(Solver *self, PyObject *args, PyObject *kwds)
 {
@@ -1132,8 +1116,6 @@ static PyTypeObject pycryptosat_SolverType = {
     0,                          /* tp_descr_set */
     0,                          /* tp_dictoffset */
     (initproc)Solver_init,      /* tp_init */
-    0,                          /* tp_alloc */
-    Solver_new,                 /* tp_new */
 };
 
 MODULE_INIT_FUNC(pycryptosat)
