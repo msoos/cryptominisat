@@ -99,20 +99,20 @@ class QueryVar (QueryHelper):
 
     def create_vardata_df(self,fname):
         q = """
-select
-*
-, (1.0*useful_clauses)/(1.0*clauses_below) as useful_ratio
-, CASE WHEN
- (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
-THEN "OK"
-ELSE "BAD"
-END AS `class`
+        select
+        *
+        , CASE WHEN
+         (1.0*useful_clauses)/(1.0*clauses_below) > 0.5
+        THEN "OK"
+        ELSE "BAD"
+        END AS `class`
 
-from varDataUse
-where
-clauses_below > 10
-and avg_inside_per_confl_when_picked > 0
-"""
+        from varData, varDataUse
+        where
+        clauses_below > 10
+        and varData.var = varDataUse.var
+        and varData.conflicts = varDataUse.conflicts
+        """
 
         df = pd.read_sql_query(q, self.conn)
 
@@ -133,65 +133,27 @@ and avg_inside_per_confl_when_picked > 0
         q = """
         insert into varDataUse
 
-        (`restarts`,
-        `conflicts`,
+        (`var`
+        , `conflicts`
 
-        `var`,
-        `dec_depth`,
-        `decisions_below`,
-        `conflicts_below`,
-        `clauses_below`,
+        , `decided_avg`
+        , `decided_pos_perc`
+        , `propagated_avg`
+        , `propagated_pos_perc`
 
-        `decided_avg`,
-        `decided_pos_perc`,
-        `propagated_avg`,
-        `propagated_pos_perc`,
-
-        `propagated`,
-        `propagated_pos`,
-        `decided`,
-        `decided_pos`,
-
-        `sum_decisions_at_picktime`,
-        `sum_propagations_at_picktime`,
-
-        `total_conflicts_below_when_picked`,
-        `total_decisions_below_when_picked`,
-        `avg_inside_per_confl_when_picked`,
-        `avg_inside_antecedents_when_picked`,
-
-        `cls_marked`,
-        `useful_clauses_used`,
-        `useful_clauses_sum_hist_used`)
+        , `cls_marked`
+        , `useful_clauses_used`
+        , `useful_clauses_sum_hist_used`)
 
         select
-        v.restarts
+        v.var
         , v.conflicts
 
         -- data about var
-        , v.var
-        , v.dec_depth
-        , v.decisions_below
-        , v.conflicts_below
-        , v.clauses_below
-
-        , (v.decided*1.0)/(v.sum_decisions_at_picktime*1.0)
+        , (v.decided*1.0)/(v.sumDecisions_at_picktime*1.0)
         , (v.decided_pos*1.0)/(v.decided*1.0)
-        , (v.propagated*1.0)/(v.sum_propagations_at_picktime*1.0)
+        , (v.propagated*1.0)/(v.sumPropagations_at_picktime*1.0)
         , (v.propagated_pos*1.0)/(v.propagated*1.0)
-
-        , v.decided
-        , v.decided_pos
-        , v.propagated
-        , v.propagated_pos
-
-        , v.sum_decisions_at_picktime
-        , v.sum_propagations_at_picktime
-
-        , v.total_conflicts_below_when_picked
-        , v.total_decisions_below_when_picked
-        , v.avg_inside_per_confl_when_picked
-        , v.avg_inside_antecedents_when_picked
 
         -- measures for good
         , count(cls.num_used) as cls_marked
@@ -205,9 +167,9 @@ and avg_inside_per_confl_when_picked > 0
         -- avoid division by zero below
         where
         v.propagated > 0
-        and v.sum_propagations_at_picktime > 0
+        and v.sumPropagations_at_picktime > 0
         and v.decided > 0
-        and v.sum_decisions_at_picktime > 0
+        and v.sumDecisions_at_picktime > 0
         group by var, conflicts
         ;
         """

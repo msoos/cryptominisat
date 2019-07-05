@@ -169,6 +169,6 @@ done
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --printsol 0 --predshort 3 --predlong 3 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" --printsol 0 --predshort 2 --predlong 2 | tee cms-final-run.out
 )
 exit

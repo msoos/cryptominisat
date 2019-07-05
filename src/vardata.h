@@ -57,16 +57,9 @@ struct VarData
     uint64_t num_decided = 0;
     uint64_t num_decided_pos = 0;
 
-    uint64_t total_conflicts_below_when_picked = 0;
-    uint64_t total_decisions_below_when_picked = 0;
-    uint64_t total_antecedents_below_when_picked = 0;
-    uint64_t total_antecedents_lits_below_when_picked = 0;
-
-    uint64_t inside_conflict_clause_at_picktime;
-    uint64_t inside_conflict_clause_antecedents_at_picktime;
-
     //picktime data
     uint64_t clid_at_picking = std::numeric_limits<uint64_t>::max();
+
     uint64_t sumDecisions_at_picktime = std::numeric_limits<uint64_t>::max();
     uint64_t sumPropagations_at_picktime = std::numeric_limits<uint64_t>::max();
     uint64_t sumConflicts_at_picktime = std::numeric_limits<uint64_t>::max();
@@ -75,13 +68,20 @@ struct VarData
     uint64_t sumConflictClauseLits_at_picktime = std::numeric_limits<uint64_t>::max();
     uint64_t sumDecisionBasedCl_at_picktime = std::numeric_limits<uint64_t>::max();
 
-    uint64_t num_confl_cl_atecedent_lits_at_picktime = std::numeric_limits<uint64_t>::max();
+    uint64_t sumDecisions_below_at_picktime = 0;
+    uint64_t sumConflicts_below_at_picktime = 0;
+    uint64_t sumAntecedents_below_at_picktime = 0;
+    uint64_t sumAntecedentsLits_below_at_picktime = 0;
+    uint64_t sumConflictClauseLits_below_at_picktime = 0;
+
 
     uint64_t inside_conflict_clause = 0;
-    double avg_inside_per_confl_when_picked;
-
+    uint64_t inside_conflict_clause_glue = 0;
     uint64_t inside_conflict_clause_antecedents = 0;
-    double avg_inside_antecedents_when_picked = 0;
+
+    uint64_t inside_conflict_clause_at_picktime;
+    uint64_t inside_conflict_clause_glue_at_picktime;
+    uint64_t inside_conflict_clause_antecedents_at_picktime;
     #endif
 };
 

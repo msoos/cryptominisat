@@ -102,10 +102,6 @@ public:
         , uint64_t conflicts_this_restart
         , const std::string& rest_type
         , const SearchHist& hist
-        , const double last_dec_var_act_0
-        , const double last_dec_var_act_1
-        , const double first_dec_var_act_0
-        , const double first_dec_var_act_1
     ) override;
 
     void var_data(

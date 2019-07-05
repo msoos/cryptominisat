@@ -413,7 +413,9 @@ class QueryCls (QueryHelper):
             ELSE "BAD"
             END AS `x.class`
             """
-
+        ############
+        # LONG magic here
+        ############
         if self.conf == 0:
             self.case_stmt_100k = """
             CASE WHEN

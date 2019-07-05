@@ -939,7 +939,7 @@ void SQLiteStats::reduceDB(
 
 void SQLiteStats::init_clause_stats_STMT()
 {
-    const size_t numElems = 55;
+    const size_t numElems = 49;
 
     std::stringstream ss;
     ss << "insert into `clauseStats`"
@@ -959,11 +959,6 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `num_antecedents`,"
     << " `num_total_lits_antecedents`,"
     << " `antecedents_avg_size`,"
-
-    << " `last_dec_var_act_vsids_0`,"
-    << " `last_dec_var_act_vsids_1`,"
-    << " `first_dec_var_act_vsids_0`,"
-    << " `first_dec_var_act_vsids_1`,"
 
     << " `backtrack_level`,"
     << " `decision_level`,"
@@ -987,12 +982,9 @@ void SQLiteStats::init_clause_stats_STMT()
     << " `antecedents_long_red_age_min`,"
     << " `antecedents_long_red_age_max`,"
 
-    << " `antecedents_antecedents_vsids_avg`,"
-
     << " `decision_level_hist`,"
     << " `backtrack_level_hist_lt`,"
     << " `trail_depth_level_hist`,"
-    << " `vsids_vars_hist`,"
     << " `size_hist`,"
     << " `glue_hist`,"
     << " `num_antecedents_hist`,"
@@ -1041,10 +1033,6 @@ void SQLiteStats::dump_clause_stats(
     , uint64_t conflicts_this_restart
     , const std::string& restart_type
     , const SearchHist& hist
-    , const double last_dec_var_act_vsids_0
-    , const double last_dec_var_act_vsids_1
-    , const double first_dec_var_act_vsids_0
-    , const double first_dec_var_act_vsids_1
 ) {
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-size;
 
@@ -1068,10 +1056,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.num());
     sqlite3_bind_int(stmt_clause_stats, bindAt++, antec_data.sum_size());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, (double)antec_data.sum_size()/(double)antec_data.num() );
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_vsids_0);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, last_dec_var_act_vsids_1);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, first_dec_var_act_vsids_0);
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, first_dec_var_act_vsids_1);
 
     sqlite3_bind_int(stmt_clause_stats, bindAt++, backtrack_level);
     sqlite3_bind_int64(stmt_clause_stats, bindAt++, decision_level);
@@ -1098,7 +1082,6 @@ void SQLiteStats::dump_clause_stats(
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.decisionLevelHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.backtrackLevelHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.trailDepthHistLT.avg());
-    sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.vsidsVarsAvgLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.conflSizeHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.glueHistLT.avg());
     sqlite3_bind_double(stmt_clause_stats, bindAt++, hist.numResolutionsHistLT.avg());
@@ -1121,7 +1104,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 19;
+    const size_t numElems = 26;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1141,15 +1124,20 @@ void SQLiteStats::init_var_data_STMT()
     ", `propagated`"
     ", `propagated_pos`"
 
-    ", `inside_conflict_clause_during`"
-    ", `inside_conflict_clause_antecedents_during`"
+    ", `inside_conflict_clause`"
+    ", `inside_conflict_clause_at_picktime`"
+    ", `inside_conflict_clause_antecedents`"
+    ", `inside_conflict_clause_antecedents_at_picktime`"
+    ", `inside_conflict_clause_glue`"
+    ", `inside_conflict_clause_glue_at_picktime`"
 
-    ", `sum_decisions_at_picktime`"
-    ", `sum_propagations_at_picktime`"
-    ", `total_conflicts_below_when_picked`"
-    ", `total_decisions_below_when_picked`"
-    ", `avg_inside_per_confl_when_picked`"
-    ", `avg_inside_antecedents_when_picked`"
+    ", `sumDecisions_at_picktime`"
+    ", `sumPropagations_at_picktime`"
+    ", `sumConflicts_at_picktime`"
+    ", `sumAntecedents_at_picktime`"
+    ", `sumAntecedentsLits_at_picktime`"
+    ", `sumConflictClauseLits_at_picktime`"
+    ", `sumDecisionBasedCl_at_picktime`"
 
     ", `clid_start_incl`"
     ", `clid_end_notincl`"
@@ -1200,23 +1188,21 @@ void SQLiteStats::var_data(
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
 
 
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_propagated_pos);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_antecedents);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_antecedents_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_glue);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.inside_conflict_clause_glue_at_picktime);
 
 
-
-    sqlite3_bind_int64 (stmt_var_data, bindAt++
-        , vardata.inside_conflict_clause - vardata.inside_conflict_clause_at_picktime);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++
-        , vardata.inside_conflict_clause_antecedents - vardata.inside_conflict_clause_antecedents_at_picktime);
-
-    //data about stuff that's below
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_conflicts_below_when_picked);
-    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.total_decisions_below_when_picked);
-    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
-    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
-    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_per_confl_when_picked);
-    sqlite3_bind_double(stmt_var_data, bindAt++, vardata.avg_inside_antecedents_when_picked);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumDecisions_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumPropagations_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumConflicts_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumAntecedents_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumAntecedentsLits_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumConflictClauseLits_at_picktime);
+    sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.sumDecisionBasedCl_at_picktime);
 
     //to get usage data good cl/bad cl, etc.
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.clid_at_picking);

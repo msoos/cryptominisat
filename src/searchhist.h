@@ -40,7 +40,6 @@ struct SearchHist {
 
     AvgCalc<uint32_t>   backtrackLevelHistLT;
     AvgCalc<uint32_t>   trailDepthHistLT;
-    AvgCalc<uint32_t>   vsidsVarsAvgLT; //vsids_vars.avg()
 
     bqueue<uint32_t>    trailDepthHistLonger; ///<total depth, incl. props, decisions and assumps
     AvgCalc<uint32_t>   trailDepthDeltaHist; ///<for THIS restart only

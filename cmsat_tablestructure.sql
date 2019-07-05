@@ -170,16 +170,6 @@ CREATE TABLE `clauseStats` (
   `atedecents_longIrred` int(20) NOT NULL,
   `atedecents_longRed` int(20) NOT NULL,
 
-  `last_dec_var_act_vsids_0` float NOT NULL,
-  `last_dec_var_act_vsids_1` float NOT NULL,
-  `first_dec_var_act_vsids_0` float NOT NULL,
-  `first_dec_var_act_vsids_1` float NOT NULL,
-
-  `vsids_vars_avg` float NOT NULL,
-  `vsids_vars_var` float NOT NULL,
-  `vsids_vars_min` float NOT NULL,
-  `vsids_vars_max` float NOT NULL,
-
   `antecedents_glue_long_reds_avg` float NOT NULL,
   `antecedents_glue_long_reds_var` float NOT NULL,
   `antecedents_glue_long_reds_min` int(20) NOT NULL,
@@ -190,22 +180,9 @@ CREATE TABLE `clauseStats` (
   `antecedents_long_red_age_min` bigint(20) NOT NULL,
   `antecedents_long_red_age_max` bigint(20) NOT NULL,
 
-  `vsids_of_resolving_literals_avg` float NOT NULL,
-  `vsids_of_resolving_literals_var` float NOT NULL,
-  `vsids_of_resolving_literals_min` float NOT NULL,
-  `vsids_of_resolving_literals_max` float NOT NULL,
-
-  `vsids_of_all_incoming_lits_avg` float NOT NULL,
-  `vsids_of_all_incoming_lits_var` float NOT NULL,
-  `vsids_of_all_incoming_lits_min` float NOT NULL,
-  `vsids_of_all_incoming_lits_max` float NOT NULL,
-
-  `antecedents_antecedents_vsids_avg` float NOT NULL,
-
   `decision_level_hist` float NOT NULL,
   `backtrack_level_hist_lt` float NOT NULL,
   `trail_depth_level_hist` float NOT NULL,
-  `vsids_vars_hist` float NOT NULL,
   `size_hist` float NOT NULL,
   `glue_hist` float NOT NULL,
   `num_antecedents_hist` float NOT NULL,
@@ -325,29 +302,37 @@ create table `usedClauses` (
 
 DROP TABLE IF EXISTS `varData`;
 create table `varData` (
-    `restarts` int(20) NOT NULL,
-    `conflicts` bigint(20) NOT NULL,
+    `restarts` int(20) NOT NULL
+    , `conflicts` bigint(20) NOT NULL
 
-    `var` int(20) NOT NULL,
-    `dec_depth` int(20) NOT NULL,
-    `decisions_below` int(20) NOT NULL,
-    `conflicts_below` int(20) NOT NULL,
-    `clauses_below` int(20) NOT NULL,
+    , `var` int(20) NOT NULL
+    , `dec_depth` int(20) NOT NULL
+    , `decisions_below` int(20) NOT NULL
+    , `conflicts_below` int(20) NOT NULL
+    , `clauses_below` int(20) NOT NULL
 
-    `decided` bigint(20) NOT NULL,
-    `decided_pos` bigint(20) NOT NULL,
-    `propagated` bigint(20) NOT NULL,
-    `propagated_pos` bigint(20) NOT NULL,
-    `sum_decisions_at_picktime` bigint(20) NOT NULL,
-    `sum_propagations_at_picktime` bigint(20) NOT NULL,
+    , `decided` bigint(20) NOT NULL
+    , `decided_pos` bigint(20) NOT NULL
+    , `propagated` bigint(20) NOT NULL
+    , `propagated_pos` bigint(20) NOT NULL
 
-    `total_conflicts_below_when_picked` bigint(20) NOT NULL,
-    `total_decisions_below_when_picked` bigint(20) NOT NULL,
-    `avg_inside_per_confl_when_picked` double NOT NULL,
-    `avg_inside_antecedents_when_picked` double NOT NULL,
+    , `inside_conflict_clause` bigint(20) NOT NULL
+    , `inside_conflict_clause_at_picktime` bigint(20) NOT NULL
+    , `inside_conflict_clause_antecedents` bigint(20) NOT NULL
+    , `inside_conflict_clause_antecedents_at_picktime` bigint(20) NOT NULL
+    , `inside_conflict_clause_glue` bigint(20) NOT NULL
+    , `inside_conflict_clause_glue_at_picktime` bigint(20) NOT NULL
 
-    `clid_start_incl` bigint(20) NOT NULL,
-    `clid_end_notincl` bigint(20) NOT NULL
+    , `sumDecisions_at_picktime` bigint(20) NOT NULL
+    , `sumPropagations_at_picktime` bigint(20) NOT NULL
+    , `sumConflicts_at_picktime` bigint(20) NOT NULL
+    , `sumAntecedents_at_picktime` bigint(20) NOT NULL
+    , `sumAntecedentsLits_at_picktime` bigint(20) NOT NULL
+    , `sumConflictClauseLits_at_picktime` bigint(20) NOT NULL
+    , `sumDecisionBasedCl_at_picktime` bigint(20) NOT NULL
+
+    , `clid_start_incl` bigint(20) NOT NULL
+    , `clid_end_notincl` bigint(20) NOT NULL
 
     -- features when picked
     --`activity` double NOT NULL
@@ -355,32 +340,13 @@ create table `varData` (
 
 DROP TABLE IF EXISTS `varDataUse`;
 create table `varDataUse` (
-    `restarts` int(20) NOT NULL,
     `conflicts` bigint(20) NOT NULL,
-
     `var` int(20) NOT NULL,
-    `dec_depth` int(20) NOT NULL,
-    `decisions_below` int(20) NOT NULL,
-    `conflicts_below` int(20) NOT NULL,
-    `clauses_below` int(20) NOT NULL,
 
     `decided_avg` double NOT NULL,
     `decided_pos_perc` double NOT NULL,
     `propagated_avg` double NOT NULL,
     `propagated_pos_perc` double NOT NULL,
-
-    `propagated` bigint(20) NOT NULL,
-    `propagated_pos` bigint(20) NOT NULL,
-    `decided` bigint(20) NOT NULL,
-    `decided_pos` bigint(20) NOT NULL,
-
-    `sum_decisions_at_picktime` bigint(20) NOT NULL,
-    `sum_propagations_at_picktime` bigint(20) NOT NULL,
-
-    `total_conflicts_below_when_picked` bigint(20) NOT NULL,
-    `total_decisions_below_when_picked` bigint(20) NOT NULL,
-    `avg_inside_per_confl_when_picked` double NOT NULL,
-    `avg_inside_antecedents_when_picked` double NOT NULL,
 
     `cls_marked` int(2) DEFAULT NULL,
     `useful_clauses` int(20) DEFAULT NULL,
