@@ -1027,10 +1027,6 @@ static PyObject* get_conflict(Solver *self)
 
 /*************************** Method definitions *************************/
 
-static PyMethodDef module_methods[] = {
-    {NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
-};
-
 static PyMethodDef Solver_methods[] = {
     {"solve",     (PyCFunction) solve,       METH_VARARGS | METH_KEYWORDS, solve_doc},
     {"add_clause",(PyCFunction) add_clause,  METH_VARARGS | METH_KEYWORDS, add_clause_doc},
@@ -1153,7 +1149,7 @@ MODULE_INIT_FUNC(pycryptosat)
         MODULE_NAME,            /* m_name */
         MODULE_DOC,             /* m_doc */
         -1,                     /* m_size */
-        module_methods,         /* m_methods */
+        NULL,                   /* m_methods */
         NULL,                   /* m_reload */
         NULL,                   /* m_traverse */
         NULL,                   /* m_clear */
@@ -1162,7 +1158,7 @@ MODULE_INIT_FUNC(pycryptosat)
 
     m = PyModule_Create(&moduledef);
     #else
-    m = Py_InitModule3(MODULE_NAME, module_methods, MODULE_DOC);
+    m = Py_InitModule3(MODULE_NAME, NULL, MODULE_DOC);
     #endif
 
     // Return NULL on Python3 and on Python2 with MODULE_INIT_FUNC macro
