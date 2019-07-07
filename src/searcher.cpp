@@ -1119,8 +1119,9 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
     cout << endl;*/
 
     uint32_t at_assump = 0;
+    uint32_t j = 0;
     for(size_t i = 0; i < out_conflict.size(); i++) {
-        Lit& lit = out_conflict[i];
+        Lit lit = out_conflict[i];
 
         //lit_outer is actually INTER here, because we updated above
         while(lit != ~inter_assumptions[at_assump].lit_outer) {
@@ -1129,9 +1130,15 @@ void Searcher::update_assump_conflict_to_orig_outside(vector<Lit>& out_conflict)
         }
         assert(lit == ~inter_assumptions[at_assump].lit_outer);
 
-        //Update to correct outside lit
-        lit = ~inter_assumptions[at_assump].lit_orig_outside;
+        //in case of symmetry breaking, we can be in trouble
+        //then, the orig_outside is actually lit_Undef
+        //in these cases, the symmetry breaking literal needs to be taken out
+        if (inter_assumptions[at_assump].lit_orig_outside != lit_Undef) {
+            //Update to correct outside lit
+            out_conflict[j++] = ~inter_assumptions[at_assump].lit_orig_outside;
+        }
     }
+    out_conflict.resize(j);
 }
 
 void Searcher::check_blocking_restart()

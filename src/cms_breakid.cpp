@@ -465,6 +465,16 @@ void BreakID::start_new_solving()
     }
 
     assert(solver->varData[symm_var].removed == Removed::none);
+    assert(solver->value(symm_var) != l_False
+        && "The symm var can never be foreced to FALSE, logic error");
+
+    //In certain conditions, in particular when the problem is UNSAT
+    //the symmetry assumption var can be forced to TRUE at level 0
+    if (solver->value(symm_var) == l_True) {
+        symm_var = var_Undef;
+        return;
+    }
+
     assert(solver->value(symm_var) == l_Undef);
     solver->enqueue(Lit(symm_var, false));
     PropBy ret = solver->propagate<false>();
