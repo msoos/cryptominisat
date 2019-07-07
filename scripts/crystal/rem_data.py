@@ -404,7 +404,7 @@ class QueryDatRem(QueryHelper):
         print("Finally have %d lines of RDB" % (rdb_rows))
 
 
-    def vacuum(self):
+    def del_table_and_vacuum(self):
         t = time.time()
 
         q = """
@@ -471,7 +471,7 @@ if __name__ == "__main__":
         q.create_used_ID_table_and_add_idxs()
         q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
-        q.vacuum()
+        q.del_table_and_vacuum()
         print("-------------")
         print("-------------")
 
@@ -480,4 +480,4 @@ if __name__ == "__main__":
         q.fill_later_useful_data()
         q.delete_too_many_rdb_rows()
 
-        q.vacuum()
+        q.del_table_and_vacuum()
