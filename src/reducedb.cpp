@@ -258,7 +258,7 @@ void ReduceDB::handle_lev1()
         } else {
             uint32_t must_touch = solver->conf.must_touch_lev1_within;
             if (cl->stats.drop_if_not_used) {
-                must_touch *= 0.5;
+                must_touch *= solver->conf.ternary_keep_mult;
             }
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.last_touched + must_touch < solver->sumConflicts

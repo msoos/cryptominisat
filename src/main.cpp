@@ -533,12 +533,17 @@ void Main::add_supported_options()
         , "Simp rounds increment by this power of N")
     ;
 
+    std::ostringstream tern_keep;
+    tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
+
     po::options_description tern_res_options("Ternary resolution");
     tern_res_options.add_options()
     ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
         , "Perform Ternary resolution'")
     ("terntimelim", po::value(&conf.ternary_res_time_limitM)->default_value(conf.ternary_res_time_limitM)
         , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
+    ("ternkeep", po::value(&conf.ternary_keep_mult)->default_value(conf.ternary_keep_mult, tern_keep.str())
+        , "Keep ternary clauses only if they are touched within this multiple of 'lev1usewithin'")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");
