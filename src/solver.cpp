@@ -4063,7 +4063,7 @@ bool Solver::check_assumptions_contradict_foced_assignement() const
 void Solver::stats_del_cl(Clause* cl)
 {
     if (cl->stats.ID != 0 && solver->sqlStats) {
-        solver->sqlStats->cl_deleted(solver, cl->stats.ID);
+        solver->sqlStats->cl_last_in_solver(this, cl->stats.ID);
     }
 }
 
@@ -4071,7 +4071,7 @@ void Solver::stats_del_cl(ClOffset offs)
 {
     Clause* cl = cl_alloc.ptr(offs);
     if (cl->stats.ID != 0 && solver->sqlStats) {
-        solver->sqlStats->cl_deleted(solver, cl->stats.ID);
+        solver->sqlStats->cl_last_in_solver(this, cl->stats.ID);
     }
 }
 #endif

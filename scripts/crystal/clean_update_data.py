@@ -60,7 +60,7 @@ class QueryFill (QueryHelper):
         print("Creating needed indexes...")
         t = time.time()
         q += """
-        create index `idxclid-del` on `clDeletedBySolver` (`clauseID`);
+        create index `idxclid-del` on `cl_last_in_solver` (`clauseID`);
         create index `idxclid-del2` on `usedClauses` (`clauseID`);
         create index `idxclid-del3` on `usedClauses` (`clauseID`, `used_at`);
         create index `idxclid1-2` on `clauseStats` (`clauseID`);
@@ -76,35 +76,6 @@ class QueryFill (QueryHelper):
                 print("Index creation T: %-3.2f s" % (time.time() - t2))
 
         print("indexes created T: %-3.2f s" % (time.time() - t))
-
-    def del_deleted_cls(self):
-        """
-        delete from usedClauses, clauseStats all clauseIDs
-        that are in clDeletedBySolver
-        """
-        print("Removing clauses that are in clDeletedBySolver from everywehre...")
-        t = time.time()
-
-        tables=["clauseStats", "usedClauses"]
-        for table in tables:
-            q = """
-            select count() from
-            clDeletedBySolver, {table}
-            where clDeletedBySolver.clauseID = {table}.clauseID
-            """.format(table=table)
-            ret = self.c.execute(q)
-            rows = self.c.fetchall()
-            num = rows[0][0]
-            print("Will delete {num} rows from {table}".format(
-                num=num, table=table))
-
-            q = """
-            delete from {table}
-            where clauseID in (select clauseID from clDeletedBySolver)
-            """.format(table=table)
-            self.c.execute(q)
-            print("Removed solver-deleted clIDs from %s T: %-3.2f s" %
-                  (table, time.time() - t))
 
     def fill_sum_cl_use(self):
         print("Filling sum_cl_use...")
@@ -214,7 +185,6 @@ if __name__ == "__main__":
 
     with QueryFill(args[0]) as q:
         q.create_indexes()
-        q.del_deleted_cls()
         q.fill_sum_cl_use()
         q.drop_idxs_tables()
 

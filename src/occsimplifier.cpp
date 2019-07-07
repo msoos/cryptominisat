@@ -1221,7 +1221,7 @@ void OccSimplifier::free_clauses_to_free()
 {
     for(ClOffset off: cl_to_free_later) {
         Clause* cl = solver->cl_alloc.ptr(off);
-        solver->free_cl(cl, true);
+        solver->free_cl(cl);
     }
     cl_to_free_later.clear();
 }

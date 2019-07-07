@@ -1621,6 +1621,21 @@ void Searcher::print_learnt_clause() const
 }
 
 #ifdef STATS_NEEDED
+void Searcher::sql_dump_last_in_solver()
+{
+    if (!sqlStats)
+        return;
+
+    for(auto& red_cls: longRedCls) {
+        for(auto& offs: red_cls) {
+            Clause* cl = cl_alloc.ptr(offs);
+            if (cl->stats.ID != 0) {
+                sqlStats->cl_last_in_solver(solver, cl->stats.ID);
+            }
+        }
+    }
+}
+
 void Searcher::dump_sql_clause_data(
     const uint32_t glue
     , const uint32_t old_glue
@@ -2509,6 +2524,10 @@ void Searcher::finish_up_solve(const lbool status)
         }
         cancelUntil(0);
     }
+
+    #ifdef STATS_NEEDED
+    sql_dump_last_in_solver();
+    #endif
 
     stats.cpu_time = cpuTime() - startTime;
     if (conf.verbosity >= 4) {

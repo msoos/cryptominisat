@@ -447,6 +447,7 @@ class Searcher : public HyperEngine
             , const uint64_t clid
         );
         int dump_this_many_cldata_in_stream = 0;
+        void sql_dump_last_in_solver();
         #endif
 
 

@@ -355,8 +355,8 @@ create table `varDataUse` (
     --`activity` double NOT NULL
 );
 
-DROP TABLE IF EXISTS `clDeletedBySolver`;
-create table `clDeletedBySolver` (
+DROP TABLE IF EXISTS `cl_last_in_solver`;
+create table `cl_last_in_solver` (
   `conflicts` bigint(20) NOT NULL,
   `clauseID` bigint(20) NOT NULL
 );

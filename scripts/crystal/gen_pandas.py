@@ -95,6 +95,8 @@ class QueryFill (QueryHelper):
         create index `idxclid7` on `satzilla_features` (`latest_satzilla_feature_calc`);
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
         create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
+        create index `idxcl_last_in_solver-1` on `cl_last_in_solver` ( `clauseID`, `conflicts`);
+
         """
         for l in queries.split('\n'):
             t2 = time.time()
@@ -493,6 +495,7 @@ class QueryCls (QueryHelper):
         , used_later
         , used_later10k
         , used_later100k
+        , cl_last_in_solver
         WHERE
 
         cl.clauseID = sum_cl_use.clauseID
@@ -509,6 +512,10 @@ class QueryCls (QueryHelper):
 
         and used_later100k.clauseID = cl.clauseID
         and used_later100k.rdb0conflicts = rdb0.conflicts
+
+        -- to avoid missing clauses and their missing data to affect results
+        and cl_last_in_solver.clauseID = cl.clauseID
+        and rdb0.conflicts + 100000 > cl_last_in_solver.conflicts
 
         and cl.restarts > 1 -- to avoid history being invalid
         and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc

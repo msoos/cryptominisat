@@ -122,7 +122,7 @@ bool SQLiteStats::setup(const Solver* solver)
     init_satzilla_features();
     init_clause_stats_STMT();
     init_var_data_STMT();
-    init_cl_deleted_STMT();
+    init_cl_last_in_solver_STMT();
 
     return true;
 }
@@ -292,7 +292,7 @@ void SQLiteStats::run_sqlite_step(sqlite3_stmt* stmt, const char* name)
     }
 
     if (sqlite3_reset(stmt)) {
-        cerr << "Error calling sqlite3_reset on cl_deleted" << endl;
+        cerr << "Error calling sqlite3_reset on cl_last_in_solver" << endl;
         std::exit(-1);
     }
 
@@ -1223,12 +1223,12 @@ void SQLiteStats::var_data(
     run_sqlite_step(stmt_var_data, "var_data");
 }
 
-void SQLiteStats::init_cl_deleted_STMT()
+void SQLiteStats::init_cl_last_in_solver_STMT()
 {
     const size_t numElems = 2;
 
     std::stringstream ss;
-    ss << "insert into `clDeletedBySolver`"
+    ss << "insert into `cl_last_in_solver`"
     << "("
     << " `conflicts`,"
     << " `clauseID`"
@@ -1254,13 +1254,15 @@ void SQLiteStats::init_cl_deleted_STMT()
 
 }
 
-void SQLiteStats::cl_deleted(
+void SQLiteStats::cl_last_in_solver(
     const Solver* solver
     , const uint64_t clid)
 {
+    assert(clid != 0);
+
     int bindAt = 1;
     sqlite3_bind_int64(stmt_delete_cl, bindAt++, solver->sumConflicts);
     sqlite3_bind_int64(stmt_delete_cl, bindAt++, clid);
 
-    run_sqlite_step(stmt_delete_cl, "cl_deleted");
+    run_sqlite_step(stmt_delete_cl, "cl_last_in_solver");
 }

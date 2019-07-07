@@ -84,7 +84,7 @@ public:
         , uint64_t mem_used_mb
     ) override;
 
-    virtual void cl_deleted(
+    virtual void cl_last_in_solver(
         const Solver* solver
         , const uint64_t clid
     ) override;
@@ -124,7 +124,7 @@ private:
     void addStartupData();
     void initRestartSTMT();
     void initTimePassedSTMT();
-    void init_cl_deleted_STMT();
+    void init_cl_last_in_solver_STMT();
     void initMemUsedSTMT();
     void init_clause_stats_STMT();
     void init_satzilla_features();

@@ -96,7 +96,7 @@ public:
         , const uint64_t end_clid_notincl
     ) = 0;
 
-    virtual void cl_deleted(
+    virtual void cl_last_in_solver(
         const Solver* solver
         , const uint64_t clid
     ) = 0;
