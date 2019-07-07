@@ -336,9 +336,25 @@ class QueryDatRem(QueryHelper):
             and used_later.rdb0conflicts=rdb0.conflicts
             and used_later.used_later > 0
             order by random()
-            limit %d""" % options.goal_rdb
+            limit %d""" % int(options.goal_rdb*0.5)
             self.c.execute(q)
             print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
+
+
+            t = time.time()
+            q = """
+            insert into only_keep_rdb (id)
+            select
+            rdb0.rowid
+            from reduceDB as rdb0, used_later
+            where
+            used_later.clauseID=rdb0.clauseID
+            and used_later.rdb0conflicts=rdb0.conflicts
+            and used_later.used_later > 2
+            order by random()
+            limit %d""" % int(options.goal_rdb*0.2)
+            self.c.execute(q)
+            print("Insert more good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
             t = time.time()
             ret = self.c.execute("select count() from only_keep_rdb")
@@ -353,7 +369,7 @@ class QueryDatRem(QueryHelper):
         rdb0.rowid
         from reduceDB as rdb0
         order by random()
-        limit %d""" % options.goal_rdb
+        limit %d""" % int(options.goal_rdb*0.7)
         self.c.execute(q)
         print("Insert random to only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
