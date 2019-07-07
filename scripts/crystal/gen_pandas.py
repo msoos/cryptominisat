@@ -148,7 +148,7 @@ class QueryFill (QueryHelper):
         print("used_later100k recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""insert into used_later
+        q = """insert into used_later
         (
         `clauseID`,
         `rdb0conflicts`,
@@ -174,7 +174,7 @@ class QueryFill (QueryHelper):
         print("used_later filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""
+        q = """
         insert into used_later10k
         (
         `clauseID`,
