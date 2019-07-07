@@ -60,11 +60,10 @@ class QueryFill (QueryHelper):
         print("Creating needed indexes...")
         t = time.time()
         q += """
-        create index `idxclid3` on `goodClauses` (`clauseID`);
         create index `idxclid-del` on `clDeletedBySolver` (`clauseID`);
         create index `idxclid-del2` on `usedClauses` (`clauseID`);
-        create index `idxclid1-2` on `clauseStats` (`clauseID`, `conflicts`);
-        create index `idxclidM` on `reduceDB` (`clauseID`, `propagations_made`);
+        create index `idxclid-del3` on `usedClauses` (`clauseID`, `used_at`);
+        create index `idxclid1-2` on `clauseStats` (`clauseID`);
         """
 
         for l in q.split('\n'):
@@ -80,13 +79,13 @@ class QueryFill (QueryHelper):
 
     def del_deleted_cls(self):
         """
-        delete from usedClauses, goodClauses, clauseStats all clauseIDs
+        delete from usedClauses, clauseStats all clauseIDs
         that are in clDeletedBySolver
         """
         print("Removing clauses that are in clDeletedBySolver from everywehre...")
         t = time.time()
 
-        tables=["goodClauses", "clauseStats", "usedClauses"]
+        tables=["clauseStats", "usedClauses"]
         for table in tables:
             q = """
             select count() from
@@ -107,22 +106,6 @@ class QueryFill (QueryHelper):
             print("Removed solver-deleted clIDs from %s T: %-3.2f s" %
                   (table, time.time() - t))
 
-
-    def fill_last_prop(self):
-        print("Adding last prop...")
-        t = time.time()
-        q = """
-        update goodClauses
-        set last_prop_used =
-        (select max(conflicts)
-            from reduceDB
-            where reduceDB.clauseID = goodClauses.clauseID
-                and reduceDB.propagations_made > 0
-        );
-        """
-        self.c.execute(q)
-        print("last_prop_used filled T: %-3.2f s" % (time.time() - t))
-
     def fill_sum_cl_use(self):
         print("Filling sum_cl_use...")
 
@@ -134,8 +117,7 @@ class QueryFill (QueryHelper):
             `clauseID` bigint(20) NOT NULL,
             `num_used` bigint(20) NOT NULL,
             `first_confl_used` bigint(20),
-            `last_confl_used` bigint(20),
-            `last_prop_used` bigint(20) DEFAULT NULL
+            `last_confl_used` bigint(20)
         );"""
         self.c.execute(q)
         print("sum_cl_use recreated T: %-3.2f s" % (time.time() - t))
@@ -143,28 +125,23 @@ class QueryFill (QueryHelper):
         t = time.time()
         q = """insert into sum_cl_use
         (
-        `clauseID`,
-        `num_used`,
-        `first_confl_used`,
-        `last_confl_used`,
-        `last_prop_used`
+        `clauseID`
+        , `num_used`
+        , `first_confl_used`
+        , `last_confl_used`
         )
         select
         clauseID
-        , sum(num_used)
-        , min(first_confl_used)
-        , max(last_confl_used)
-        , max(last_prop_used)
-        from goodClauses as c group by clauseID;"""
+        , count()
+        , min(used_at)
+        , max(used_at)
+        from usedClauses as c group by clauseID;"""
         self.c.execute(q)
         print("sum_cl_use filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
-        create index `idxclid20` on `sum_cl_use` (`clauseID`, num_used);
         create index `idxclid21` on `sum_cl_use` (`clauseID`);
-        create index `idxclid21-2` on `sum_cl_use` (`clauseID`);
-        create index `idxusedClauses` on `usedClauses` (`clauseID`, `used_at`);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -174,23 +151,21 @@ class QueryFill (QueryHelper):
         q="""
         insert into sum_cl_use
         (
-        `clauseID`,
-        `num_used`,
-        `first_confl_used`,
-        `last_confl_used`,
-        `last_prop_used`
+        `clauseID`
+        , `num_used`
+        , `first_confl_used`
+        , `last_confl_used`
         )
         select
-        cl.clauseID, -- `clauseID`
-        0,     --  `num_used`,
-        NULL,   --  `first_confl_used`,
-        NULL,   --  `last_confl_used`,
-        NULL   --  `last_prop_used`
-        from clauseStats as cl left join sum_cl_use as goodcl
-        on cl.clauseID = goodcl.clauseID
+        clstats.clauseID -- `clauseID`
+        , 0     --  `num_used`,
+        , NULL   --  `first_confl_used`
+        , NULL   --  `last_confl_used`
+        from clauseStats as clstats left join sum_cl_use
+        on clstats.clauseID = sum_cl_use.clauseID
         where
-        goodcl.clauseID is NULL
-        and cl.clauseID != 0;
+        sum_cl_use.clauseID is NULL
+        and clstats.clauseID != 0;
         """
         self.c.execute(q)
         print("sum_cl_use added bad claues T: %-3.2f s" % (time.time() - t))
@@ -240,7 +215,6 @@ if __name__ == "__main__":
     with QueryFill(args[0]) as q:
         q.create_indexes()
         q.del_deleted_cls()
-        q.fill_last_prop()
         q.fill_sum_cl_use()
         q.drop_idxs_tables()
 

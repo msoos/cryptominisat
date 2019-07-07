@@ -284,15 +284,6 @@ CREATE TABLE `satzilla_features` (
   `irred_activity_distr_var` double NOT NULL
 );
 
-DROP TABLE IF EXISTS `goodClauses`;
-create table `goodClauses` (
-    `clauseID` bigint(20) NOT NULL,
-    `num_used` bigint(20) NOT NULL,
-    `first_confl_used` bigint(20) NOT NULL,
-    `last_confl_used` bigint(20) NOT NULL,
-    `last_prop_used` bigint(20) DEFAULT NULL
-);
-
 DROP TABLE IF EXISTS `usedClauses`;
 create table `usedClauses` (
     `clauseID` bigint(20) NOT NULL,

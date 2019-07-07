@@ -125,7 +125,7 @@ a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
 else
     rm -f final.cnf
     touch final.cnf
@@ -133,17 +133,17 @@ else
     cat dec_list >> final.cnf
     grep ^v cms-pred-run.out | sed "s/v//" | tr -d "\n" | sed "s/  / /g" | sed -e "s/ -/X/g" -e "s/ /Y/g" | sed "s/X/ /g" | sed -E "s/Y([1-9])/ -\1/g" | sed "s/Y0/ 0\n/" >> final.cnf
     ../../utils/cnf-utils/xor_to_cnf.py final.cnf final_good.cnf
-    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -x "$FNAMEOUT.goodCls" -o "$FNAMEOUT.usedCls" -i
+    ../tests/drat-trim/drat-trim final_good.cnf "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
 fi
 
 ########################
 # Augment, fix up and sample the SQLite data
 ########################
-../add_lemma_ind.py "$FNAMEOUT.db-raw" "$FNAMEOUT.goodCls" "$FNAMEOUT.usedCls"
+/usr/bin/time -v ../add_lemma_ind.py "$FNAMEOUT.db-raw" "$FNAMEOUT.usedCls"
 cp "$FNAMEOUT.db-raw" "$FNAMEOUT.db"
-../clean_data.py "$FNAMEOUT.db"
+/usr/bin/time -v ../clean_update_data.py "$FNAMEOUT.db"
 cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
-../rem_data.py "$FNAMEOUT-min.db"
+/usr/bin/time -v ../rem_data.py "$FNAMEOUT-min.db"
 
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it

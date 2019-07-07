@@ -49,7 +49,7 @@ class QueryDatRem(QueryHelper):
         self.c.execute("PRAGMA synchronous = OFF")
         pass
 
-    def create_used_ID_table(self):
+    def create_used_ID_table_and_add_idxs(self):
         q = """
         DROP TABLE IF EXISTS `used_cl_ids`;
         """
@@ -65,8 +65,20 @@ class QueryDatRem(QueryHelper):
         print("Recreated used_cl_ids table")
 
         print("Creating needed indexes...")
+
+        print("Recreating indexes & dropping all others...")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
+
         t = time.time()
-        queries = """
+        queries += """
         create index `idxclid30` on `used_cl_ids` (`clauseID`);
         create index `idxclid31` on `clauseStats` (`clauseID`);
         create index `idxclid32` on `reduceDB` (`clauseID`);
@@ -78,6 +90,135 @@ class QueryDatRem(QueryHelper):
             self.c.execute(q)
 
         print("Recreated indexes needed")
+
+    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
+    def fill_used_cl_ids_table(self):
+        if not options.fair:
+            t = time.time()
+            val = int(options.limit)
+            q = """
+            insert into used_cl_ids
+            select
+            clauseID from sum_cl_use
+            where num_used > 20
+            order by random() limit %d;
+            """ % int(val/4)
+            self.c.execute(q)
+            print("Added >20 from sum_cl_use T: %-3.2f s" % (time.time() - t))
+
+            t = time.time()
+            val = int(options.limit)
+            q = """
+            insert into used_cl_ids
+            select
+            clauseID from sum_cl_use
+            where num_used > 5
+            order by random() limit %d;
+            """ % int(val/2)
+            self.c.execute(q)
+            print("Added >5 from sum_cl_use T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        val = int(options.limit)
+        q = """
+        insert into used_cl_ids
+        select
+        clauseID from sum_cl_use
+        order by random() limit %d;
+        """ % val
+        self.c.execute(q)
+        print("Added any from sum_cl_use T: %-3.2f s" % (time.time() - t))
+
+        q = """
+        select count()
+        from used_cl_ids, sum_cl_use
+        where
+        used_cl_ids.clauseID = sum_cl_use.clauseID
+        and sum_cl_use.num_used > 0
+        """
+        ret = self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        good_ids = rows[0][0]
+
+        q = """
+        select count()
+        from used_cl_ids, sum_cl_use
+        where
+        used_cl_ids.clauseID = sum_cl_use.clauseID
+        and sum_cl_use.num_used = 0
+        """
+        ret = self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        bad_ids = rows[0][0]
+        print("IDs in used_cl_ids that are good: %d" % good_ids)
+        print("IDs in used_cl_ids that are bad : %d" % bad_ids)
+        print("   T: %-3.2f s" % (time.time() - t))
+
+    def print_idxs(self):
+        print("Using indexes: ")
+        q = """
+        SELECT * FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            print("-> index:", row)
+
+    def filter_tables_of_ids(self):
+        self.print_idxs()
+
+        tables = ["clauseStats", "reduceDB", "sum_cl_use", "usedClauses"]
+        q = """
+        DELETE FROM {table} WHERE clauseID NOT IN
+        (SELECT clauseID from used_cl_ids );"""
+
+        for table in tables:
+            t = time.time()
+            self.c.execute(q.format(table=table))
+            print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
+
+    def check_db_sanity(self):
+        print("Checking tables in DB...")
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'table'
+        """
+        found_sum_cl_use = False
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        for row in rows:
+            if row[0] == "sum_cl_use":
+                found_sum_cl_use = True
+
+            print("-> We have table: ", row[0])
+            if row[0] == "used_later10k" or row[0] == "used_later100k":
+                print("ERROR: 'gen_pandas.py' has been already ran on this DB")
+                print("       this will be a mess. We cannot run. ")
+                print("       Exiting.")
+                exit(-1)
+
+        if not found_sum_cl_use:
+            print("ERROR: Did not find sum_cl_use table. You probably didn't run")
+            print("       the 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
+        q = """
+        SELECT count() FROM sum_cl_use where num_used = 0
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        num = int(rows[0][0])
+        print("Unused clauses in sum_cl_use: ", num)
+        if num == 0:
+            print("ERROR: You most likely didn't run 'clean_data.py' on this database")
+            print("       Exiting.")
+            exit(-1)
+
+        print("Tables seem OK")
 
     def create_indexes(self):
         print("Recreating indexes...")
@@ -94,16 +235,15 @@ class QueryDatRem(QueryHelper):
 
         t = time.time()
         queries += """
-        create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`)
+        create index `idxclid6-4` on `reduceDB` (`clauseID`, `conflicts`);
         create index `idxclidUCLS-1` on `usedClauses` ( `clauseID`, `used_at`);
-        create index `idxclidUCLS-2` on `usedClauses` ( `used_at`);
         """
-        for l in q.split('\n'):
+        for q in queries.split('\n'):
             t2 = time.time()
 
             if options.verbose:
-                print("Creating/dropping index: ", l)
-            self.c.execute(l)
+                print("Creating/dropping index: ", q)
+            self.c.execute(q)
             if options.verbose:
                 print("Index dropping&creation T: %-3.2f s" % (time.time() - t2))
 
@@ -118,6 +258,8 @@ class QueryDatRem(QueryHelper):
             self.c.execute(l)
         print("used_later dropped T: %-3.2f s" % (time.time() - t))
 
+        self.print_idxs()
+
         q = """
         create table `used_later` (
             `clauseID` bigint(20) NOT NULL,
@@ -128,31 +270,30 @@ class QueryDatRem(QueryHelper):
         print("used_later recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""insert into used_later
+        q = """insert into used_later
         (
         `clauseID`,
         `rdb0conflicts`,
         `used_later`
         )
         SELECT
-        rdb0.clauseID
-        , rdb0.conflicts
+        rdb.clauseID
+        , rdb.conflicts
         , count(ucl.used_at) as `useful_later`
         FROM
-        reduceDB as rdb0
+        reduceDB as rdb
         left join usedClauses as ucl
 
         -- for any point later than now
-        on (ucl.clauseID = rdb0.clauseID
-            and ucl.used_at > rdb0.conflicts)
+        on (ucl.clauseID = rdb.clauseID
+            and ucl.used_at > rdb.conflicts)
 
         WHERE
-        rdb0.clauseID != 0
+        rdb.clauseID != 0
 
-        group by rdb0.clauseID, rdb0.conflicts;"""
+        group by rdb.clauseID, rdb.conflicts;"""
         self.c.execute(q)
         print("used_later filled T: %-3.2f s" % (time.time() - t))
-
 
         t = time.time()
         q = """
@@ -246,122 +387,6 @@ class QueryDatRem(QueryHelper):
         rdb_rows = rows[0][0]
         print("Finally have %d lines of RDB" % (rdb_rows))
 
-    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
-    def fill_used_cl_ids_table(self):
-        if not options.fair:
-            t = time.time()
-            val = int(options.limit)
-            q = """
-            insert into used_cl_ids
-            select
-            clauseID from sum_cl_use
-            where num_used > 20
-            order by random() limit %d;
-            """ % int(val/4)
-            self.c.execute(q)
-            print("Added >20 from sum_cl_use T: %-3.2f s" % (time.time() - t))
-
-            t = time.time()
-            val = int(options.limit)
-            q = """
-            insert into used_cl_ids
-            select
-            clauseID from sum_cl_use
-            where num_used > 5
-            order by random() limit %d;
-            """ % int(val/2)
-            self.c.execute(q)
-            print("Added >5 from sum_cl_use T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        val = int(options.limit)
-        q = """
-        insert into used_cl_ids
-        select
-        clauseID from sum_cl_use
-        order by random() limit %d;
-        """ % val
-        self.c.execute(q)
-        print("Added any from sum_cl_use T: %-3.2f s" % (time.time() - t))
-
-        q = """
-        select count()
-        from used_cl_ids, sum_cl_use
-        where
-        used_cl_ids.clauseID = sum_cl_use.clauseID
-        and sum_cl_use.num_used > 0
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        good_ids = rows[0][0]
-
-        q = """
-        select count()
-        from used_cl_ids, sum_cl_use
-        where
-        used_cl_ids.clauseID = sum_cl_use.clauseID
-        and sum_cl_use.num_used = 0
-        """
-        ret = self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        bad_ids = rows[0][0]
-        print("IDs in used_cl_ids that are good: %d" % good_ids)
-        print("IDs in used_cl_ids that are bad : %d" % bad_ids)
-        print("   T: %-3.2f s" % (time.time() - t))
-
-    def filter_tables_of_ids(self):
-        tables = ["clauseStats", "reduceDB", "sum_cl_use", "usedClauses"]
-        q = """
-        DELETE FROM {table} WHERE clauseID NOT IN
-        (SELECT clauseID from used_cl_ids );"""
-
-        for table in tables:
-            t = time.time()
-            self.c.execute(q.format(table=table))
-            print("Filtered table '%s' T: %-3.2f s" % (table, time.time() - t))
-
-    def check_db_sanity(self):
-        print("Checking tables in DB...")
-        q = """
-        SELECT name FROM sqlite_master WHERE type == 'table'
-        """
-        found_sum_cl_use = False
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        for row in rows:
-            if row[0] == "sum_cl_use":
-                found_sum_cl_use = True
-
-            print("-> We have table: ", row[0])
-            if row[0] == "used_later10k" or row[0] == "used_later100k":
-                print("ERROR: 'gen_pandas.py' has been already ran on this DB")
-                print("       this will be a mess. We cannot run. ")
-                print("       Exiting.")
-                exit(-1)
-
-        if not found_sum_cl_use:
-            print("ERROR: Did not find sum_cl_use table. You probably didn't run")
-            print("       the 'clean_data.py' on this database")
-            print("       Exiting.")
-            exit(-1)
-
-        q = """
-        SELECT count() FROM sum_cl_use where num_used = 0
-        """
-        self.c.execute(q)
-        rows = self.c.fetchall()
-        assert len(rows) == 1
-        num = int(rows[0][0])
-        print("Unused clauses in sum_cl_use: ", num)
-        if num == 0:
-            print("ERROR: You most likely didn't run 'clean_data.py' on this database")
-            print("       Exiting.")
-            exit(-1)
-
-
-        print("Tables seem OK")
 
     def vacuum(self):
         t = time.time()
@@ -425,17 +450,16 @@ if __name__ == "__main__":
 
     with QueryDatRem(args[0]) as q:
         q.check_db_sanity()
-        q.dangerous()
-        q.vacuum()
 
         q.dangerous()
-        q.create_indexes()
-        q.create_used_ID_table()
+        q.create_used_ID_table_and_add_idxs()
         q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
         q.vacuum()
-        q.dangerous()
+        print("-------------")
+        print("-------------")
 
+        q.dangerous()
         q.create_indexes()
         q.fill_later_useful_data()
         q.delete_too_many_rdb_rows()

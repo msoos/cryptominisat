@@ -20,20 +20,16 @@
 
 from __future__ import print_function
 import sqlite3
-import optparse
+import argparse
 import os
 import struct
+import time
 
 
 class Query:
     def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
-        # zero out goodClauses
-        self.c.execute('delete from goodClauses;')
-        self.good_ids = []
-        self.good_ids_num = 0
-        self.good_ids_total = 0
 
         self.cl_used = []
         self.cl_used_num = 0
@@ -45,6 +41,24 @@ class Query:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.commit()
         self.conn.close()
+
+    def delete_tbls(self):
+        queries = """
+        delete from usedClauses;
+        drop table if exists goodClauses;
+        DROP TABLE IF EXISTS `sum_cl_use`;
+        DROP TABLE IF EXISTS `used_later`;
+        DROP TABLE IF EXISTS `used_later10k`;
+        DROP TABLE IF EXISTS `used_later100k`;
+        """
+        for l in queries.split('\n'):
+            t2 = time.time()
+
+            if options.verbose:
+                print("Runnin query: ", l)
+            self.c.execute(l)
+            if options.verbose:
+                print("Query T: %-3.2f s" % (time.time() - t2))
 
     def get_last_good(self, basefname):
         last_good = -1
@@ -61,81 +75,11 @@ class Query:
 
         return last_good
 
-    def add_goodClauses(self, goodClFname):
-        last_good = self.get_last_good(goodClFname)
-        tfname = "%s-%d" % (goodClFname, last_good)
-        print("Using goodClauses file", tfname)
-        with open(tfname, "r") as f:
-            for line in f:
-                line = line.strip().split(" ")
-                self.parse_one_line(line)
-
-        # final dump
-        self.dump_goodClauses()
-
-        print("Parsed %d number of good lemmas" % self.good_ids_total)
-
-    def parse_one_line(self, line):
-        self.good_ids_num += 1
-        self.good_ids_total += 1
-
-        # get ID
-        myid = int(line[0])
-        assert myid >= 0, "ID is always at least 0"
-        assert myid != 0, "ID with 0 should not even be printed"
-
-        num_used = int(line[1])
-        first_used = int(line[2])
-        last_used = int(line[3])
-
-        # append to good_ids
-        self.good_ids.append(
-            (myid, num_used, first_used, last_used))
-
-        # don't run out of memory, dump early
-        if self.good_ids_num > 10000:
-            self.dump_goodClauses()
-
-    def delete_goodClauses(self):
-        q = """
-        delete from goodClauses;
-        """
-        self.c.execute(q)
-        print("Deleted data from goodClauses")
-
-    def delete_usedClauses(self):
-        q = """
-        delete from usedClauses;
-        """
-        self.c.execute(q)
-        print("Deleted data from usedClauses")
-
-    def dump_goodClauses(self):
-        self.c.executemany("""
-        INSERT INTO goodClauses (
-        `clauseID`
-        , `num_used`
-        , `first_confl_used`
-        , `last_confl_used`)
-        VALUES (?, ?, ?, ?);""", self.good_ids)
-        self.good_ids = []
-        self.good_ids_num = 0
-
-    def vacuum(self):
-        q = """
-        vacuum;
-        """
-
-        lev = self.conn.isolation_level
-        self.conn.isolation_level = None
-        self.c.execute(q)
-        self.conn.isolation_level = lev
-        print("Vacuumed database")
-
     def add_usedClauses(self, usedClFname):
         last_good = self.get_last_good(usedClFname)
         tfname = "%s-%d" % (usedClFname, last_good)
-        print("Using usedClauses file", tfname)
+        print("Adding data from usedClauses file ", tfname)
+        t = time.time()
 
         self.cl_used = []
         self.cl_used_num = 0
@@ -155,7 +99,7 @@ class Query:
                     self.dump_usedClauses()
 
         self.dump_usedClauses()
-        print("Added used data:", self.cl_used_total)
+        print("Added use data: %d time: T: %-3.2f s" % (self.cl_used_total, time.time() - t))
 
     def dump_usedClauses(self):
         self.c.executemany("""
@@ -168,38 +112,37 @@ class Query:
 
 
 if __name__ == "__main__":
-    usage = """usage: %prog [options] sqlite_db goodClFname usedClFname
+    usage = """usage: %(prog)s [options] sqlite_db usedCls
 
-It adds goodClauses and usedClauses to the SQLite database"""
+Adds usedClauses to the SQLite database"""
 
-    parser = optparse.OptionParser(usage=usage)
+    parser = argparse.ArgumentParser(usage=usage)
 
-    parser.add_option("--verbose", "-v", action="store_true", default=False,
+
+    parser.add_argument("sqlitedb", type=str, metavar='USEDCLS')
+    parser.add_argument("usedcls", type=str, metavar='USEDCLS')
+    parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
-    if len(args) != 3:
-        print("Error. Please follow usage")
+    if options.sqlitedb is None:
+        print("Error you must give an SQLite DB. Please follow usage.")
         print(usage)
         exit(-1)
 
-    dbfname = args[0]
-    goodClFname = args[1]
-    usedClFname = args[2]
-    print("Using sqlite3db file %s" % dbfname)
-    print("Base goodClauses file is %s" % goodClFname)
-    print("Base usedClauses file is %s" % usedClFname)
+    if options.usedcls is None:
+        print("Error you must give an Used CLS list. Please follow usage.")
+        print(usage)
+        exit(-1)
 
-    with Query(dbfname) as q:
-        q.delete_goodClauses()
-        q.add_goodClauses(goodClFname)
+    print("Using sqlite3db file %s" % options.sqlitedb)
+    print("Base usedClauses file is %s" % options.usedcls)
 
-        q.delete_usedClauses()
-        q.add_usedClauses(usedClFname)
+    with Query(options.sqlitedb) as q:
+        q.delete_tbls()
+        q.add_usedClauses(options.usedcls)
 
-        q.vacuum()
-
-    print("Finished adding good lemma indicators to db %s" % dbfname)
+    print("Finished adding good lemma indicators to db %s" % options.sqlitedb)
 
     exit(0)
