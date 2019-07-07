@@ -234,6 +234,7 @@ void ReduceDB::handle_lev1()
     assert(false);
     #endif
 
+    assert(delayed_clause_free.empty());
     nbReduceDB_lev1++;
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
@@ -257,15 +258,19 @@ void ReduceDB::handle_lev1()
         } else {
             uint32_t must_touch = solver->conf.must_touch_lev1_within;
             if (cl->stats.drop_if_not_used) {
-                must_touch *= 2;
+                must_touch *= 0.5;
             }
             if (!solver->clause_locked(*cl, offset)
                 && cl->stats.last_touched + must_touch < solver->sumConflicts
             ) {
                 if (cl->stats.drop_if_not_used) {
-                    solver->detachClause(*cl);
-                    solver->free_cl(cl);
+                    solver->watches.smudge((*cl)[0]);
+                    solver->watches.smudge((*cl)[1]);
                     non_recent_use_dropped++;
+                    solver->litStats.redLits -= cl->size();
+                    *solver->drat << del << *cl << fin;
+                    cl->setRemoved();
+                    delayed_clause_free.push_back(offset);
                 } else {
                     solver->longRedCls[2].push_back(offset);
                     cl->stats.which_red_array = 2;
@@ -289,6 +294,13 @@ void ReduceDB::handle_lev1()
         }
     }
     solver->longRedCls[1].resize(j);
+
+    //Cleanup
+    solver->clean_occur_from_removed_clauses_only_smudged();
+    for(ClOffset offset: delayed_clause_free) {
+        solver->free_cl(offset);
+    }
+    delayed_clause_free.clear();
 
     if (solver->conf.verbosity >= 2) {
         cout << "c [DBclean lev1]"
