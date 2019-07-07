@@ -91,43 +91,29 @@ class QueryDatRem(QueryHelper):
 
         print("Recreated indexes needed")
 
-    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
-    def fill_used_cl_ids_table(self):
-        if not options.fair:
-            t = time.time()
-            val = int(options.limit)
-            q = """
-            insert into used_cl_ids
-            select
-            clauseID from sum_cl_use
-            where num_used > 20
-            order by random() limit %d;
-            """ % int(val/4)
-            self.c.execute(q)
-            print("Added >20 from sum_cl_use T: %-3.2f s" % (time.time() - t))
-
-            t = time.time()
-            val = int(options.limit)
-            q = """
-            insert into used_cl_ids
-            select
-            clauseID from sum_cl_use
-            where num_used > 5
-            order by random() limit %d;
-            """ % int(val/2)
-            self.c.execute(q)
-            print("Added >5 from sum_cl_use T: %-3.2f s" % (time.time() - t))
+    def insert_into_used_cls_ids(self, min_used, limit):
+        min_used = int(min_used)
 
         t = time.time()
-        val = int(options.limit)
+        val = int()
         q = """
         insert into used_cl_ids
         select
         clauseID from sum_cl_use
-        order by random() limit %d;
-        """ % val
+        where num_used >= {min_used}
+        order by random() limit {limit}
+        """.foirmat(min_used=min_used, limit=limit)
         self.c.execute(q)
-        print("Added any from sum_cl_use T: %-3.2f s" % (time.time() - t))
+        print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
+              % (min_used, time.time() - t))
+
+    # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
+    def fill_used_cl_ids_table(self):
+        if not options.fair:
+            self.insert_into_used_cls_ids(20, options.limit/4)
+            self.insert_into_used_cls_ids(5, options.limit/2)
+
+        self.insert_into_used_cls_ids(0, options.limit)
 
         q = """
         select count()
@@ -152,6 +138,7 @@ class QueryDatRem(QueryHelper):
         rows = self.c.fetchall()
         assert len(rows) == 1
         bad_ids = rows[0][0]
+
         print("IDs in used_cl_ids that are good: %d" % good_ids)
         print("IDs in used_cl_ids that are bad : %d" % bad_ids)
         print("   T: %-3.2f s" % (time.time() - t))
@@ -304,6 +291,25 @@ class QueryDatRem(QueryHelper):
             self.c.execute(l)
         print("used_later indexes added T: %-3.2f s" % (time.time() - t))
 
+
+    def insert_into_only_keep_rdb(self, min_used_later, limit):
+        limit = int(limit)
+        t = time.time()
+        q = """
+        insert into only_keep_rdb (id)
+        select
+        rdb0.rowid
+        from reduceDB as rdb0, used_later
+        where
+        used_later.clauseID=rdb0.clauseID
+        and used_later.rdb0conflicts=rdb0.conflicts
+        and used_later.used_later >= {min_used_later}
+        order by random()
+        limit {limit}""".format(min_used_later=min_used_later, limit=limit)
+        self.c.execute(q)
+        print("Insert only_keep_rdb where used_later >= %d T: %-3.2f s" %
+              (min_used_later, time.time() - t))
+
     def delete_too_many_rdb_rows(self):
         t = time.time()
         val = int(options.limit)
@@ -325,53 +331,11 @@ class QueryDatRem(QueryHelper):
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         if not options.fair:
-            t = time.time()
-            q = """
-            insert into only_keep_rdb (id)
-            select
-            rdb0.rowid
-            from reduceDB as rdb0, used_later
-            where
-            used_later.clauseID=rdb0.clauseID
-            and used_later.rdb0conflicts=rdb0.conflicts
-            and used_later.used_later > 0
-            order by random()
-            limit %d""" % int(options.goal_rdb*0.5)
-            self.c.execute(q)
-            print("Insert good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
+            self.insert_into_only_keep_rdb(1, options.goal_rdb*0.3)
+            self.insert_into_only_keep_rdb(5, options.goal_rdb*0.1)
+            self.insert_into_only_keep_rdb(10, options.goal_rdb*0.05)
 
-
-            t = time.time()
-            q = """
-            insert into only_keep_rdb (id)
-            select
-            rdb0.rowid
-            from reduceDB as rdb0, used_later
-            where
-            used_later.clauseID=rdb0.clauseID
-            and used_later.rdb0conflicts=rdb0.conflicts
-            and used_later.used_later > 2
-            order by random()
-            limit %d""" % int(options.goal_rdb*0.2)
-            self.c.execute(q)
-            print("Insert more good to only_keep_rdb T: %-3.2f s" % (time.time() - t))
-
-            t = time.time()
-            ret = self.c.execute("select count() from only_keep_rdb")
-            rows = self.c.fetchall()
-            rdb_rows = rows[0][0]
-            print("We now have %d lines only_keep_rdb" % (rdb_rows))
-
-        t = time.time()
-        q = """
-        insert into only_keep_rdb (id)
-        select
-        rdb0.rowid
-        from reduceDB as rdb0
-        order by random()
-        limit %d""" % int(options.goal_rdb*0.7)
-        self.c.execute(q)
-        print("Insert random to only_keep_rdb T: %-3.2f s" % (time.time() - t))
+        self.insert_into_only_keep_rdb(0, options.goal_rdb*0.6)
 
         t = time.time()
         ret = self.c.execute("select count() from only_keep_rdb")
