@@ -84,6 +84,7 @@ class QueryVar (QueryHelper):
 
         create index `idxclid-a1` on `varData` ( `clid_start_incl`, `clid_end_notincl`);
         create index `idxclid-s1` on `sum_cl_use` ( `clauseID`);
+        create index `idxclid-s2` on `restart_dat_for_var` (`conflicts`);
         """
 
         for l in queries.split('\n'):
@@ -101,6 +102,7 @@ class QueryVar (QueryHelper):
         q = """
         select
         varData.*
+        , restart_dat_for_var.*
         , varDataUse.`decided_avg`
         , varDataUse.`decided_pos_perc`
         , varDataUse.`propagated_avg`
@@ -108,17 +110,19 @@ class QueryVar (QueryHelper):
         , varDataUse.`cls_marked`
         , varDataUse.`useful_clauses`
         , varDataUse.`useful_clauses_used`
+        , (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
         , CASE WHEN
-         (1.0*useful_clauses_used)/(1.0*clauses_below) > 1
+         (1.0*useful_clauses_used)/(1.0*cls_marked) > 2
         THEN "OK"
         ELSE "BAD"
         END AS `x.class`
 
-        from varData, varDataUse
+        from varData, varDataUse, restart_dat_for_var
         where
         clauses_below > 10
         and varData.var = varDataUse.var
         and varData.conflicts = varDataUse.conflicts
+        and restart_dat_for_var.conflicts = varDataUse.conflicts
         """
 
         df = pd.read_sql_query(q, self.conn)
@@ -168,6 +172,12 @@ class QueryVar (QueryHelper):
             del df["clauses_below"]
             del df["var"]
             del df["dec_depth"]
+
+            torem = ["free", "set", "runtime", "clauseIDstartInclusive"
+                     , "clauseIDendExclusive"]
+            for rem in torem:
+                del df[rem]
+
             cols = list(df)
             for c in cols:
                 if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":

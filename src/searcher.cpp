@@ -3455,18 +3455,19 @@ void Searcher::cancelUntil(uint32_t level
     cout << endl;
     #endif
 
-    #ifdef STATS_NEEDED
-    bool dump_this_canceluntil = false;
-    if (solver->sqlStats
-        //we need a lot less of this data
-        && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.2
-    ) {
-        dump_this_canceluntil = true;
-        solver->sqlStats->begin_transaction();
-    }
-    #endif
-
     if (decisionLevel() > level) {
+        #ifdef STATS_NEEDED
+        bool dump_this_canceluntil = false;
+        if (solver->sqlStats
+            && !update_bogoprops
+            //we need a lot less of this data
+            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.2
+        ) {
+            dump_this_canceluntil = true;
+            solver->sqlStats->begin_transaction();
+        }
+        #endif
+
         #ifdef USE_GAUSS
         for (EGaussian* gauss: gmatrices)
             if (gauss) {
@@ -3581,16 +3582,16 @@ void Searcher::cancelUntil(uint32_t level
         qhead = trail_lim[level];
         trail.resize(trail_lim[level]);
         trail_lim.resize(level);
-    }
 
-    #ifdef STATS_NEEDED
-    if (dump_this_canceluntil) {
-        solver->sqlStats->end_transaction();
-        if (sqlStats) {
-            dump_restart_sql(false);
+        #ifdef STATS_NEEDED
+        if (dump_this_canceluntil) {
+            solver->sqlStats->end_transaction();
+            if (sqlStats) {
+                dump_restart_sql(false);
+            }
         }
+        #endif
     }
-    #endif
 
     #ifdef VERBOSE_DEBUG
     cout
