@@ -115,11 +115,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //decision-based clause generation. These values have been validated
         //see 8099966.wlm01
-#ifdef STATS_NEEDED
-        , do_decision_based_cl(0)
-#else
         , do_decision_based_cl(1)
-#endif
         , decision_based_cl_max_levels(9)
         , decision_based_cl_min_learned_size(50)
 
