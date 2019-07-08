@@ -125,8 +125,8 @@ class QueryVar (QueryHelper):
         print("Relative data...")
         df["inside_conflict_clause_during"] = \
             df["inside_conflict_clause_at_fintime"]-df["inside_conflict_clause_at_picktime"]
-        df["inside_conflict_antecedents_during"] = \
-            df["inside_conflict_antecedents_at_fintime"]-df["inside_conflict_antecedents_at_picktime"]
+        df["inside_conflict_clause_antecedents_during"] = \
+            df["inside_conflict_clause_antecedents_at_fintime"]-df["inside_conflict_clause_antecedents_at_picktime"]
         df["inside_conflict_clause_glue_during"] = \
             df["inside_conflict_clause_glue_at_fintime"]-df["inside_conflict_clause_glue_at_picktime"]
 
@@ -146,8 +146,8 @@ class QueryVar (QueryHelper):
             df["sumDecisionBasedCl_at_fintime"]-df["sumDecisionBasedCl_at_picktime"]
 
         df["rel_inside_confl_cl"] = df["inside_conflict_clause_during"]/df["sumConflicts_during"]
-        df["rel_inside_confl_cl_ant"] = df["inside_conflict_antecedents_during"]/df["antecedents_below"]
-        df["rel_inside_confl_cl_glue"] = df["inside_conflict_clause_glue_during"]/df["antecedents_below"]
+        df["rel_inside_confl_cl_ant"] = df["inside_conflict_clause_antecedents_during"]/df["sumAntecedents_during"]
+        df["rel_inside_confl_cl_glue"] = df["inside_conflict_clause_glue_during"]/df["sumConflicts_during"]
 
 
         cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
