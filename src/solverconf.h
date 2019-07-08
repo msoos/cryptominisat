@@ -271,6 +271,8 @@ class DLL_PUBLIC SolverConf
         //Ternary resolution
         bool doTernary;
         long long ternary_res_time_limitM;
+        double ternary_keep_mult;
+        double ternary_max_create;
 
         //BVA
         int      do_bva;
