@@ -355,7 +355,9 @@ class QueryCls (QueryHelper):
         limit {limit}
         """
 
-        # TODO magic queries
+        ############
+        # SHORT magic here
+        ############
         if self.conf == 0:
             self.case_stmt_10k = """
             CASE WHEN

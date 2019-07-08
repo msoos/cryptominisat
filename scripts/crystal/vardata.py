@@ -154,24 +154,24 @@ class QueryVar (QueryHelper):
         df["propagated_per_sumprop"]=df["propagated"]/df["sumPropagations_at_fintime"]
         df["clauses_below_per_sumDecisions_during"]=df["clauses_below"]/df["sumDecisions_during"]
 
-        del df["useful_clauses"]
-        del df["restarts"]
-        del df["conflicts"]
-        del df["clid_start_incl"]
-        del df["clid_end_notincl"]
-        del df["propagated"]
-        del df["propagated_pos"]
-        del df["propagated_pos_perc"]
-        del df["decided"]
-        del df["decided_pos"]
-        del df["clauses_below"]
-        del df["var"]
-        del df["dec_depth"]
-
-        cols = sorted(list(df))
-        for c in cols:
-            if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":
-                del df[c]
+        if True:
+            del df["useful_clauses"]
+            del df["restarts"]
+            del df["conflicts"]
+            del df["clid_start_incl"]
+            del df["clid_end_notincl"]
+            del df["propagated"]
+            del df["propagated_pos"]
+            del df["propagated_pos_perc"]
+            del df["decided"]
+            del df["decided_pos"]
+            del df["clauses_below"]
+            del df["var"]
+            del df["dec_depth"]
+            cols = list(df)
+            for c in cols:
+                if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":
+                    del df[c]
 
         df.rename(columns={'useful_clauses_used':'x.useful_clauses_used',
                            'cls_marked':'x.cls_marked'}
