@@ -2055,7 +2055,7 @@ void OccSimplifier::set_limits()
         *solver->conf.global_timeout_multiplier;
     ternary_res_time_limit     = 1000ULL*1000ULL*solver->conf.ternary_res_time_limitM
         *solver->conf.global_timeout_multiplier;
-    ternary_res_cls_limit = link_in_data_irred.cl_linked * 0.5;
+    ternary_res_cls_limit = link_in_data_irred.cl_linked * solver->conf.ternary_max_create;
 
     //If variable elimination isn't going so well
     if (bvestats_global.testedToElimVars > 0

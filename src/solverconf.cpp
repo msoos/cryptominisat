@@ -149,6 +149,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , doTernary(false)
         , ternary_res_time_limitM(100)
         , ternary_keep_mult(0.5)
+        , ternary_max_create(0.5)
 
         //BreakID
         , doBreakid(false)

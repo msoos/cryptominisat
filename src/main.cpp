@@ -536,6 +536,9 @@ void Main::add_supported_options()
     std::ostringstream tern_keep;
     tern_keep << std::setprecision(2) << conf.ternary_keep_mult;
 
+    std::ostringstream tern_max_create;
+    tern_max_create << std::setprecision(2) << conf.ternary_max_create;
+
     po::options_description tern_res_options("Ternary resolution");
     tern_res_options.add_options()
     ("tern", po::value(&conf.doTernary)->default_value(conf.doTernary)
@@ -544,6 +547,8 @@ void Main::add_supported_options()
         , "Time-out in bogoprops M of ternary resolution as per paper 'Look-Ahead Versus Look-Back for Satisfiability Problems'")
     ("ternkeep", po::value(&conf.ternary_keep_mult)->default_value(conf.ternary_keep_mult, tern_keep.str())
         , "Keep ternary clauses only if they are touched within this multiple of 'lev1usewithin'")
+    ("terncreate", po::value(&conf.ternary_max_create)->default_value(conf.ternary_max_create, tern_max_create.str())
+        , "Create only this multiple (of linked in cls) ternary clauses per simp run")
     ;
 
     po::options_description occ_mem_limits("Occ-based simplification memory limits");

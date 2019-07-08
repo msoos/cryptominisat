@@ -269,6 +269,7 @@ class DLL_PUBLIC SolverConf
         bool doTernary;
         long long ternary_res_time_limitM;
         double ternary_keep_mult;
+        double ternary_max_create;
 
         //BreakID
         bool doBreakid;
