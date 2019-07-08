@@ -396,13 +396,6 @@ static bool {funcname}(
         print("-> Number of datapoints:", df.shape)
         print("-> Predicting          :", to_predict)
 
-        values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
-        df.loc[:, ('cl.cur_restart_type')] = df.loc[:, ('cl.cur_restart_type')].map(values2nums)
-        df.loc[:, ('rdb0.cur_restart_type')] = df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
-        if not options.no_rdb1:
-            df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
-        df.fillna(0, inplace=True)
-
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)
 
@@ -694,6 +687,24 @@ static bool {funcname}(
 class Clustering:
     def __init__(self, df):
         self.df = df
+
+    def clear_data_from_str(self):
+        values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
+        df.loc[:, ('cl.cur_restart_type')] = \
+            df.loc[:, ('cl.cur_restart_type')].map(values2nums)
+
+        df.loc[:, ('rdb0.cur_restart_type')] = \
+            df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+
+        df.loc[:, ('rst_cur_dat.restart_type')] = \
+            df.loc[:, ('rst_cur_dat.restart_type')].map(values2nums)
+
+        df.loc[:, ('rst.restart_type')] = \
+            df.loc[:, ('rst.restart_type')].map(values2nums)
+
+        if not options.no_rdb1:
+            df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
+        df.fillna(0, inplace=True)
 
     def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
         sz_feats_clean = []
@@ -1091,6 +1102,8 @@ if __name__ == "__main__":
         exit(-1)
 
     df = pd.read_pickle(options.fname)
+
     c = Clustering(df)
+    c.clear_data_from_str();
     c.filter_min_avg_dump_no()
     c.cluster()

@@ -322,6 +322,23 @@ class QueryCls (QueryHelper):
             , "clauseIDendExclusive"]
         self.restart_dat = self.query_fragment("restart", not_cols, "rst")
 
+        # cur restart data
+        not_cols = [
+            "simplifications"
+            , "restarts"
+            , "conflicts"
+            , "latest_satzilla_feature_calc"
+            , "runtime"
+            , "propagations"
+            , "decisions"
+            , "flipped"
+            , "replaced"
+            , "eliminated"
+            , "set"
+            , "clauseIDstartInclusive"
+            , "clauseIDendExclusive"]
+        self.rst_cur_dat = self.query_fragment("restart_dat_for_cl", not_cols, "rst_cur_dat")
+
         # RDB data
         not_cols = [
             "simplifications"
@@ -489,6 +506,7 @@ class QueryCls (QueryHelper):
         SELECT
         tags.tag as `fname`
         {clause_dat}
+        {rst_cur_dat}
         {restart_dat}
         {satzfeat_dat_cur}
         {rdb0_dat}
@@ -504,6 +522,7 @@ class QueryCls (QueryHelper):
         clauseStats as cl
         , sum_cl_use as sum_cl_use
         , restart as rst
+        , restart_dat_for_cl as rst_cur_dat
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
         , reduceDB as rdb1
@@ -522,6 +541,8 @@ class QueryCls (QueryHelper):
         and rdb0.clauseID = cl.clauseID
         and rdb1.clauseID = cl.clauseID
         and rdb0.dump_no = rdb1.dump_no+1
+
+        and rst_cur_dat.conflicts = cl.conflicts
 
         and used_later10k.clauseID = cl.clauseID
         and used_later10k.rdb0conflicts = rdb0.conflicts
@@ -546,7 +567,8 @@ class QueryCls (QueryHelper):
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
-            "sum_cl_use": self.sum_cl_use
+            "sum_cl_use": self.sum_cl_use,
+            "rst_cur_dat": self.rst_cur_dat
             }
 
     def add_dump_no_filter(self, q):
