@@ -301,6 +301,7 @@ create table `varData` (
     , `dec_depth` int(20) NOT NULL
     , `clauses_below` int(20) NOT NULL
 
+    -- these are both for pick and fintime  :)
     , `decided` bigint(20) NOT NULL
     , `decided_pos` bigint(20) NOT NULL
     , `propagated` bigint(20) NOT NULL
@@ -341,20 +342,14 @@ create table `varDataUse` (
     `conflicts` bigint(20) NOT NULL,
     `var` int(20) NOT NULL,
 
-    `decided_avg` double NOT NULL,
-    `decided_pos_perc` double NOT NULL,
-    `propagated_avg` double NOT NULL,
-    `propagated_pos_perc` double NOT NULL,
+    `decided_this_var_per_all_decisions` double NOT NULL,
+    `decided_this_var_pos_perc` double NOT NULL,
+    `prop_this_var_per_all_decisions` double NOT NULL,
+    `propagated_this_var_pos_perc` double NOT NULL,
 
     `cls_marked` int(2) DEFAULT NULL,
     `useful_clauses` int(20) DEFAULT NULL,
-    `useful_clauses_used` int(20) DEFAULT NULL,
-    `useful_clauses_sum_hist_used` int(20) DEFAULT NULL
---     `useful_clauses_first_used` int(20) DEFAULT NULL,  -- CANNOT DO! what if we marked very few?
---     `useful_clauses_last_used` int(20) DEFAULT NULL -- CANNOT DO! what if we marked very few?
-
-    -- features when picked
-    --`activity` double NOT NULL
+    `useful_clauses_used` int(20) DEFAULT NULL
 );
 
 DROP TABLE IF EXISTS `cl_last_in_solver`;

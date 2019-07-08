@@ -98,102 +98,146 @@ class QueryVar (QueryHelper):
 
         print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
 
+    def get_columns(self, tablename):
+        q="SELECT name FROM PRAGMA_TABLE_INFO('%s');" % tablename
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        columns = []
+        for row in rows:
+            if options.verbose:
+                print("Using column in table {tablename}: {col}".format(
+                    tablename=tablename
+                    , col=row[0]))
+            columns.append(row[0])
+
+        return columns
+
+    def query_fragment(self, tablename, not_cols, short_name):
+        cols = self.get_columns(tablename)
+        filtered_cols = list(set(cols).difference(not_cols))
+        ret = ""
+        for col in filtered_cols:
+            ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
+                col=col
+                , short_name=short_name)
+
+        if options.verbose:
+            print("query for short name {short_name}: {ret}".format(
+                short_name=short_name
+                , ret=ret))
+
+        return ret
+
     def create_vardata_df(self,fname):
+
+        not_cols = [
+            "clid_start_incl"
+            , "clid_end_notincl"
+            , "decided_pos"
+            , "propagated_pos"
+            , "propagated_pos_perc"]
+        var_data = self.query_fragment("varData", not_cols, "var_data")
+
+        not_cols =[
+            "simplifications"
+            , "restarts"
+            , "conflicts"
+            , "latest_satzilla_feature_calc"
+            , "runtime"
+            , "propagations"
+            , "decisions"
+            , "flipped"
+            , "replaced"
+            , "eliminated"
+            , "set"
+            , "clauseIDstartInclusive"
+            , "clauseIDendExclusive"]
+        rst = self.query_fragment("restart_dat_for_var", not_cols, "rst")
+
+        not_cols =[
+            "useful_clauses"
+            , "var"
+            , "conflicts"]
+        var_data_use = self.query_fragment("varDataUse", not_cols, "var_data_use")
+
         q = """
         select
-        varData.*
-        , restart_dat_for_var.*
-        , varDataUse.`decided_avg`
-        , varDataUse.`decided_pos_perc`
-        , varDataUse.`propagated_avg`
-        , varDataUse.`propagated_pos_perc`
-        , varDataUse.`cls_marked`
-        , varDataUse.`useful_clauses`
-        , varDataUse.`useful_clauses_used`
-        , (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
+        (1.0*useful_clauses_used)/(1.0*cls_marked) as `x.useful_times_per_marked`
+        {rst}
+        {var_data_use}
+        {var_data}
         , CASE WHEN
          (1.0*useful_clauses_used)/(1.0*cls_marked) > 2
         THEN "OK"
         ELSE "BAD"
         END AS `x.class`
 
-        from varData, varDataUse, restart_dat_for_var
-        where
+        FROM
+        varData as var_data
+        , varDataUse as var_data_use
+        , restart_dat_for_var as rst
+
+        WHERE
         clauses_below > 10
-        and varData.var = varDataUse.var
-        and varData.conflicts = varDataUse.conflicts
-        and restart_dat_for_var.conflicts = varDataUse.conflicts
-        """
+        and var_data.var = var_data_use.var
+        and var_data.conflicts = var_data_use.conflicts
+        and rst.conflicts = var_data_use.conflicts
+        """.format(rst=rst, var_data_use=var_data_use, var_data=var_data)
 
         df = pd.read_sql_query(q, self.conn)
         print("Relative data...")
-        df["inside_conflict_clause_during"] = \
-            df["inside_conflict_clause_at_fintime"]-df["inside_conflict_clause_at_picktime"]
-        df["inside_conflict_clause_antecedents_during"] = \
-            df["inside_conflict_clause_antecedents_at_fintime"]-df["inside_conflict_clause_antecedents_at_picktime"]
-        df["inside_conflict_clause_glue_during"] = \
-            df["inside_conflict_clause_glue_at_fintime"]-df["inside_conflict_clause_glue_at_picktime"]
+        df["var_data.inside_conflict_clause_during"] = \
+            df["var_data.inside_conflict_clause_at_fintime"]-df["var_data.inside_conflict_clause_at_picktime"]
+        df["var_data.inside_conflict_clause_antecedents_during"] = \
+            df["var_data.inside_conflict_clause_antecedents_at_fintime"]-df["var_data.inside_conflict_clause_antecedents_at_picktime"]
+        df["var_data.inside_conflict_clause_glue_during"] = \
+            df["var_data.inside_conflict_clause_glue_at_fintime"]-df["var_data.inside_conflict_clause_glue_at_picktime"]
 
-        df["sumDecisions_during"] = \
-            df["sumDecisions_at_fintime"]-df["sumDecisions_at_picktime"]
-        df["sumPropagations_during"] = \
-            df["sumPropagations_at_fintime"]-df["sumPropagations_at_picktime"]
-        df["sumConflicts_during"] = \
-            df["sumConflicts_at_fintime"]-df["sumConflicts_at_picktime"]
-        df["sumAntecedents_during"] = \
-            df["sumAntecedents_at_fintime"]-df["sumAntecedents_at_picktime"]
-        df["sumAntecedentsLits_during"] = \
-            df["sumAntecedentsLits_at_fintime"]-df["sumAntecedentsLits_at_picktime"]
-        df["sumConflictClauseLits_during"] = \
-            df["sumConflictClauseLits_at_fintime"]-df["sumConflictClauseLits_at_picktime"]
-        df["sumDecisionBasedCl_during"] = \
-            df["sumDecisionBasedCl_at_fintime"]-df["sumDecisionBasedCl_at_picktime"]
+        df["var_data.sumDecisions_during"] = \
+            df["var_data.sumDecisions_at_fintime"]-df["var_data.sumDecisions_at_picktime"]
+        df["var_data.sumPropagations_during"] = \
+            df["var_data.sumPropagations_at_fintime"]-df["var_data.sumPropagations_at_picktime"]
+        df["var_data.sumConflicts_during"] = \
+            df["var_data.sumConflicts_at_fintime"]-df["var_data.sumConflicts_at_picktime"]
+        df["var_data.sumAntecedents_during"] = \
+            df["var_data.sumAntecedents_at_fintime"]-df["var_data.sumAntecedents_at_picktime"]
+        df["var_data.sumAntecedentsLits_during"] = \
+            df["var_data.sumAntecedentsLits_at_fintime"]-df["var_data.sumAntecedentsLits_at_picktime"]
+        df["var_data.sumConflictClauseLits_during"] = \
+            df["var_data.sumConflictClauseLits_at_fintime"]-df["var_data.sumConflictClauseLits_at_picktime"]
+        df["var_data.sumDecisionBasedCl_during"] = \
+            df["var_data.sumDecisionBasedCl_at_fintime"]-df["var_data.sumDecisionBasedCl_at_picktime"]
 
-        df["rel_inside_confl_cl"] = df["inside_conflict_clause_during"]/df["sumConflicts_during"]
-        df["rel_inside_confl_cl_ant"] = df["inside_conflict_clause_antecedents_during"]/df["sumAntecedents_during"]
-        df["rel_inside_confl_cl_glue"] = df["inside_conflict_clause_glue_during"]/df["sumConflicts_during"]
+        df["var_data.rel_inside_confl_cl"] = df["var_data.inside_conflict_clause_during"]/df["var_data.sumConflicts_during"]
+        df["var_data.rel_inside_confl_cl_ant"] = df["var_data.inside_conflict_clause_antecedents_during"]/df["var_data.sumAntecedents_during"]
+        df["var_data.rel_inside_confl_cl_glue"] = df["var_data.inside_conflict_clause_glue_during"]/df["var_data.sumConflicts_during"]
 
-        df["cl_below_per_dec_depth"]=df["clauses_below"]/df["dec_depth"]
-        df["propagated_per_sumconfl"]=df["propagated"]/df["sumConflicts_at_fintime"]
-        df["propagated_per_sumprop"]=df["propagated"]/df["sumPropagations_at_fintime"]
-        df["clauses_below_per_sumDecisions_during"]=df["clauses_below"]/df["sumDecisions_during"]
+        df["cl_below_per_dec_depth"]=df["var_data.clauses_below"]/df["var_data.dec_depth"]
+        df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
+        df["var_data.propagated_per_sumprop"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
+        df["var_data.clauses_below_per_sumDecisions_during"]=df["var_data.clauses_below"]/df["var_data.sumDecisions_during"]
 
         if True:
-            del df["useful_clauses"]
-            del df["restarts"]
-            del df["conflicts"]
-            del df["clid_start_incl"]
-            del df["clid_end_notincl"]
-            del df["propagated"]
-            del df["propagated_pos"]
-            del df["propagated_pos_perc"]
-            del df["decided"]
-            del df["decided_pos"]
-            del df["clauses_below"]
-            del df["var"]
-            del df["dec_depth"]
 
-            torem = ["free", "set", "runtime", "clauseIDstartInclusive"
-                     , "clauseIDendExclusive"]
-            for rem in torem:
-                del df[rem]
+            del df["var_data.propagated"]
+            del df["var_data.decided"]
+            del df["var_data.clauses_below"]
+            del df["var_data.dec_depth"]
 
             cols = list(df)
             for c in cols:
                 if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":
                     del df[c]
 
-        df.rename(columns={'useful_clauses_used':'x.useful_clauses_used',
-                           'cls_marked':'x.cls_marked'}
-                  , inplace=True)
-
-        df2 = df[df["x.cls_marked"] >= 10]
+        df2 = df[df["var_data_use.cls_marked"] >= 10]
         # df2 = df2[df["conflicts_below"] >= 20]
 
-
         # to make things easier for me
-        del df2["x.cls_marked"]
-        del df2["x.useful_clauses_used"]
+        del df2["var_data_use.useful_clauses_used"]
+        del df2["var_data_use.cls_marked"]
+
+        # rename columns if we have to:
+        # df.rename(columns={'abc':'d'}, inplace=True)
 
         cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
         cleanname = re.sub(r'\.db$', '', fname)
@@ -215,10 +259,10 @@ class QueryVar (QueryHelper):
         (`var`
         , `conflicts`
 
-        , `decided_avg`
-        , `decided_pos_perc`
-        , `propagated_avg`
-        , `propagated_pos_perc`
+        , `decided_this_var_per_all_decisions`
+        , `decided_this_var_pos_perc`
+        , `prop_this_var_per_all_decisions`
+        , `propagated_this_var_pos_perc`
 
         , `cls_marked`
         , `useful_clauses_used`)
@@ -228,10 +272,10 @@ class QueryVar (QueryHelper):
         , v.conflicts
 
         -- data about var
-        , (v.decided*1.0)/(v.sumDecisions_at_picktime*1.0)
-        , (v.decided_pos*1.0)/(v.decided*1.0)
-        , (v.propagated*1.0)/(v.sumPropagations_at_picktime*1.0)
-        , (v.propagated_pos*1.0)/(v.propagated*1.0)
+        , (v.decided*1.0)/(v.sumDecisions_at_fintime*1.0) as `decided_this_var_per_all_decisions`
+        , (v.decided_pos*1.0)/(v.decided*1.0) as `decided_this_var_pos_perc`
+        , (v.propagated*1.0)/(v.sumPropagations_at_fintime*1.0) as `prop_this_var_per_all_decisions`
+        , (v.propagated_pos*1.0)/(v.propagated*1.0) as `propagated_this_var_pos_perc`
 
         -- measures for good
         , count(cls.num_used) as cls_marked
