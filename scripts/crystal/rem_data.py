@@ -102,13 +102,14 @@ class QueryDatRem(QueryHelper):
         clauseID from sum_cl_use
         where num_used >= {min_used}
         order by random() limit {limit}
-        """.foirmat(min_used=min_used, limit=limit)
+        """.format(min_used=min_used, limit=limit)
         self.c.execute(q)
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
 
     # inserts less than 1-1 ratio, inserting only 0.3*N from unused ones
     def fill_used_cl_ids_table(self):
+        t = time.time()
         if not options.fair:
             self.insert_into_used_cls_ids(20, options.limit/4)
             self.insert_into_used_cls_ids(5, options.limit/2)
