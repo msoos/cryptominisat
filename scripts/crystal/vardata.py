@@ -109,7 +109,7 @@ class QueryVar (QueryHelper):
         , varDataUse.`useful_clauses`
         , varDataUse.`useful_clauses_used`
         , CASE WHEN
-         (1.0*useful_clauses_used)/(1.0*clauses_below) > 0.5
+         (1.0*useful_clauses_used)/(1.0*clauses_below) > 1
         THEN "OK"
         ELSE "BAD"
         END AS `x.class`
@@ -149,11 +149,46 @@ class QueryVar (QueryHelper):
         df["rel_inside_confl_cl_ant"] = df["inside_conflict_clause_antecedents_during"]/df["sumAntecedents_during"]
         df["rel_inside_confl_cl_glue"] = df["inside_conflict_clause_glue_during"]/df["sumConflicts_during"]
 
+        df["cl_below_per_dec_depth"]=df["clauses_below"]/df["dec_depth"]
+        df["propagated_per_sumconfl"]=df["propagated"]/df["sumConflicts_at_fintime"]
+        df["propagated_per_sumprop"]=df["propagated"]/df["sumPropagations_at_fintime"]
+        df["clauses_below_per_sumDecisions_during"]=df["clauses_below"]/df["sumDecisions_during"]
+
+        del df["useful_clauses"]
+        del df["restarts"]
+        del df["conflicts"]
+        del df["clid_start_incl"]
+        del df["clid_end_notincl"]
+        del df["propagated"]
+        del df["propagated_pos"]
+        del df["propagated_pos_perc"]
+        del df["decided"]
+        del df["decided_pos"]
+        del df["clauses_below"]
+        del df["var"]
+        del df["dec_depth"]
+
+        cols = sorted(list(df))
+        for c in cols:
+            if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":
+                del df[c]
+
+        df.rename(columns={'useful_clauses_used':'x.useful_clauses_used',
+                           'cls_marked':'x.cls_marked'}
+                  , inplace=True)
+
+        df2 = df[df["x.cls_marked"] >= 10]
+        # df2 = df2[df["conflicts_below"] >= 20]
+
+
+        # to make things easier for me
+        del df2["x.cls_marked"]
+        del df2["x.useful_clauses_used"]
 
         cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
         cleanname = re.sub(r'\.db$', '', fname)
         cleanname += "-vardata"
-        dump_dataframe(df, cleanname)
+        dump_dataframe(df2, cleanname)
 
     def fill_var_data_use(self):
         print("Filling var data use...")
