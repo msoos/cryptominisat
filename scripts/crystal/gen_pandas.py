@@ -165,11 +165,15 @@ class QueryFill (QueryHelper):
         left join usedClauses as ucl
 
         -- for any point later than now
+        -- reduceDB is always present, used_later may not be, hence left join
         on (ucl.clauseID = rdb0.clauseID
             and ucl.used_at > rdb0.conflicts)
+        , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
+        and cl_last_in_solver.clauseID = rdb0.clauseID
+        and cl_last_in_solver.conflicts > rdb0.conflicts
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -191,12 +195,17 @@ class QueryFill (QueryHelper):
         FROM
         reduceDB as rdb0
         left join usedClauses as ucl10k
+
+        -- reduceDB is always present, used_later may not be, hence left join
         on (ucl10k.clauseID = rdb0.clauseID
             and ucl10k.used_at > rdb0.conflicts
             and ucl10k.used_at <= (rdb0.conflicts+10000))
+        , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
+        and cl_last_in_solver.clauseID = rdb0.clauseID
+        and cl_last_in_solver.conflicts > rdb0.conflicts + 10000
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -218,12 +227,17 @@ class QueryFill (QueryHelper):
         FROM
         reduceDB as rdb0
         left join usedClauses as ucl100k
+
+        -- reduceDB is always present, used_later may not be, hence left join
         on (ucl100k.clauseID = rdb0.clauseID
             and ucl100k.used_at > rdb0.conflicts
             and ucl100k.used_at <= (rdb0.conflicts+100000))
+        , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
+        and cl_last_in_solver.clauseID = rdb0.clauseID
+        and cl_last_in_solver.conflicts > rdb0.conflicts + 100000
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
