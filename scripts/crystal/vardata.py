@@ -257,14 +257,14 @@ class QueryVar (QueryHelper):
 
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] file.sqlite"
+    usage = "usage: %(prog)s [options] file.sqlite"
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument("fname", type=str, metavar='SQLITEFILE')
-    parser.add_argument("--verbose", "-v", action="store_true", default=False,
-                      dest="verbose", help="Print more output")
-    parser.add_argument("--csv", action="store_true", default=False,
-                      dest="dump_csv", help="Dump CSV (for weka)")
+    parser.add_argument("--verbose", "-v", action="store_true", default=False
+                        , dest="verbose", help="Print more output")
+    parser.add_argument("--csv", action="store_true", default=False
+                        , dest="dump_csv", help="Dump CSV (for weka)")
 
 
     options = parser.parse_args()

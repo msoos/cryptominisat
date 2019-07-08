@@ -50,6 +50,7 @@ public:
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
+        , const bool full_restart = true
     ) = 0;
 
     virtual void time_passed(

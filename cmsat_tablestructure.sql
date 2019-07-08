@@ -103,6 +103,8 @@ CREATE TABLE `restart` (
   `clauseIDendExclusive` int(20) NOT NULL
 );
 
+CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
+
 DROP TABLE IF EXISTS `timepassed`;
 CREATE TABLE `timepassed` (
   `simplifications` bigint(20) NOT NULL,

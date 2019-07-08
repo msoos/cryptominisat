@@ -2098,13 +2098,15 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql()
+inline void Searcher::dump_restart_sql(bool full_restart)
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
-    thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
-    thisStats.clauseID_at_end_exclusive = clauseID;
+    if (full_restart) {
+        thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
+        thisStats.clauseID_at_end_exclusive = clauseID;
+    }
 
     solver->sqlStats->restart(
         restart_type_to_short_string(params.rest_type)
@@ -2112,10 +2114,13 @@ inline void Searcher::dump_restart_sql()
         , thisStats
         , solver
         , this
+        , full_restart
     );
 
-    lastSQLPropStats = propStats;
-    lastSQLGlobalStats = stats;
+    if (full_restart) {
+        lastSQLPropStats = propStats;
+        lastSQLGlobalStats = stats;
+    }
 }
 #endif
 
@@ -2238,7 +2243,7 @@ inline void Searcher::dump_search_loop_stats(double myTime)
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses
     ) {
-        dump_restart_sql();
+        dump_restart_sql(true);
     }
     #endif
 }
@@ -3581,6 +3586,9 @@ void Searcher::cancelUntil(uint32_t level
     #ifdef STATS_NEEDED
     if (dump_this_canceluntil) {
         solver->sqlStats->end_transaction();
+        if (sqlStats) {
+            dump_restart_sql(false);
+        }
     }
     #endif
 

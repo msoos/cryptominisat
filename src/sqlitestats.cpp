@@ -53,6 +53,12 @@ SQLiteStats::~SQLiteStats()
         std::exit(-1);
     }
 
+    ret = sqlite3_finalize(stmtVarRst);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+
     ret = sqlite3_finalize(stmtFeat);
     if (ret != SQLITE_OK) {
         cout << "Error closing prepared statement" << endl;
@@ -115,7 +121,8 @@ bool SQLiteStats::setup(const Solver* solver)
 
     add_solverrun(solver);
     addStartupData();
-    initRestartSTMT();
+    initRestartSTMT("restart", &stmtRst);
+    initRestartSTMT("restart_dat_for_var", &stmtVarRst);
     initReduceDBSTMT();
     initTimePassedSTMT();
     initMemUsedSTMT();
@@ -288,6 +295,7 @@ void SQLiteStats::run_sqlite_step(sqlite3_stmt* stmt, const char* name)
         cout << "Error from sqlite: "
         << sqlite3_errmsg(db)
         << endl;
+        cout << "Error code from sqlite: " << rc << endl;
         std::exit(-1);
     }
 
@@ -567,74 +575,6 @@ void SQLiteStats::init_satzilla_features() {
     }
 }
 
-//Prepare statement for restart
-void SQLiteStats::initRestartSTMT()
-{
-    const size_t numElems = 66;
-
-    std::stringstream ss;
-    ss << "insert into `restart`"
-    << "("
-    //Position
-    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
-    << ", `runtime` "
-
-    //Clause stats
-    << ", numIrredBins, numIrredLongs"
-    << ", numRedBins, numRedLongs"
-    << ", numIrredLits, numRedLits"
-
-    //Conflict stats
-    << ", `restart_type`"
-    << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
-    << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
-    << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
-
-    //Search stats
-    << ", `branchDepth`, `branchDepthSD`, `branchDepthMin`, `branchDepthMax`"
-    << ", `branchDepthDelta`, `branchDepthDeltaSD`, `branchDepthDeltaMin`, `branchDepthDeltaMax`"
-    << ", `trailDepth`, `trailDepthSD`, `trailDepthMin`, `trailDepthMax`"
-    << ", `trailDepthDelta`, `trailDepthDeltaSD`, `trailDepthDeltaMin`,`trailDepthDeltaMax`"
-
-    //Propagations
-    << ", `propBinIrred` , `propBinRed` "
-    << ", `propLongIrred` , `propLongRed`"
-
-    //Conflicts
-    << ", `conflBinIrred`, `conflBinRed`"
-    << ", `conflLongIrred`, `conflLongRed`"
-
-    //Reds
-    << ", `learntUnits`, `learntBins`, `learntLongs`"
-
-    //Resolutions
-    << ", `resolBinIrred`, `resolBinRed`, `resolLIrred`, `resolLRed`"
-
-    //Var stats
-    << ", `propagations`"
-    << ", `decisions`"
-    << ", `flipped`, `varSetPos`, `varSetNeg`"
-    << ", `free`, `replaced`, `eliminated`, `set`"
-    << ", `clauseIDstartInclusive`, `clauseIDendExclusive`"
-    << ") values ";
-    writeQuestionMarks(
-        numElems
-        , ss
-    );
-    ss << ";";
-
-    //Prepare the statement
-    if (sqlite3_prepare(db, ss.str().c_str(), -1, &stmtRst, NULL)) {
-        cerr << "ERROR in sqlite_stmt_prepare(), INSERT failed"
-        << endl
-        << sqlite3_errmsg(db)
-        << endl
-        << "Query was: " << ss.str()
-        << endl;
-        std::exit(-1);
-    }
-}
-
 void SQLiteStats::satzilla_features(
     const Solver* solver
     , const Searcher* search
@@ -726,112 +666,187 @@ void SQLiteStats::satzilla_features(
     run_sqlite_step(stmtFeat, "satzilla_features");
 }
 
+//Prepare statement for restart
+void SQLiteStats::initRestartSTMT(const char* tablename, sqlite3_stmt** stmt)
+{
+    const size_t numElems = 66;
+
+    std::stringstream ss;
+    ss << "insert into `" << tablename << "`"
+    << "("
+    //Position
+    << "  `simplifications`, `restarts`, `conflicts`, `latest_satzilla_feature_calc`"
+    << ", `runtime` "
+
+    //Clause stats
+    << ", numIrredBins, numIrredLongs"
+    << ", numRedBins, numRedLongs"
+    << ", numIrredLits, numRedLits"
+
+    //Conflict stats
+    << ", `restart_type`"
+    << ", `glue`, `glueSD`, `glueMin`, `glueMax`"
+    << ", `size`, `sizeSD`, `sizeMin`, `sizeMax`"
+    << ", `resolutions`, `resolutionsSD`, `resolutionsMin`, `resolutionsMax`"
+
+    //Search stats
+    << ", `branchDepth`, `branchDepthSD`, `branchDepthMin`, `branchDepthMax`"
+    << ", `branchDepthDelta`, `branchDepthDeltaSD`, `branchDepthDeltaMin`, `branchDepthDeltaMax`"
+    << ", `trailDepth`, `trailDepthSD`, `trailDepthMin`, `trailDepthMax`"
+    << ", `trailDepthDelta`, `trailDepthDeltaSD`, `trailDepthDeltaMin`,`trailDepthDeltaMax`"
+
+    //Propagations
+    << ", `propBinIrred` , `propBinRed` "
+    << ", `propLongIrred` , `propLongRed`"
+
+    //Conflicts
+    << ", `conflBinIrred`, `conflBinRed`"
+    << ", `conflLongIrred`, `conflLongRed`"
+
+    //Reds
+    << ", `learntUnits`, `learntBins`, `learntLongs`"
+
+    //Resolutions
+    << ", `resolBinIrred`, `resolBinRed`, `resolLIrred`, `resolLRed`"
+
+    //Var stats
+    << ", `propagations`"
+    << ", `decisions`"
+    << ", `flipped`, `varSetPos`, `varSetNeg`"
+    << ", `free`, `replaced`, `eliminated`, `set`"
+    << ", `clauseIDstartInclusive`, `clauseIDendExclusive`"
+    << ") values ";
+    writeQuestionMarks(
+        numElems
+        , ss
+    );
+    ss << ";";
+
+    //Prepare the statement
+    if (sqlite3_prepare(db, ss.str().c_str(), -1, stmt, NULL)) {
+        cerr << "ERROR in sqlite_stmt_prepare(), INSERT failed"
+        << endl
+        << sqlite3_errmsg(db)
+        << endl
+        << "Query was: " << ss.str()
+        << endl;
+        std::exit(-1);
+    }
+}
+
 void SQLiteStats::restart(
     const std::string& restart_type
     , const PropStats& thisPropStats
     , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
+    , const bool full_restart
 ) {
+    sqlite3_stmt* stmt;
+    if (full_restart) {
+        stmt = stmtRst;
+    } else {
+        stmt = stmtVarRst;
+    }
     const SearchHist& searchHist = search->getHistory();
     const BinTriStats& binTri = solver->getBinTriStats();
 
     int bindAt = 1;
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_solve_stats().num_simplify);
-    sqlite3_bind_int64(stmtRst, bindAt++, search->sumRestarts());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->sumConflicts);
-    sqlite3_bind_int(stmtRst, bindAt++, solver->latest_satzilla_feature_calc);
-    sqlite3_bind_double(stmtRst, bindAt++, cpuTime());
+    sqlite3_bind_int64(stmt, bindAt++, solver->get_solve_stats().num_simplify);
+    sqlite3_bind_int64(stmt, bindAt++, search->sumRestarts());
+    sqlite3_bind_int64(stmt, bindAt++, solver->sumConflicts);
+    sqlite3_bind_int(stmt, bindAt++, solver->latest_satzilla_feature_calc);
+    sqlite3_bind_double(stmt, bindAt++, cpuTime());
 
 
-    sqlite3_bind_int64(stmtRst, bindAt++, binTri.irredBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_irred_cls());
+    sqlite3_bind_int64(stmt, bindAt++, binTri.irredBins);
+    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_irred_cls());
 
-    sqlite3_bind_int64(stmtRst, bindAt++, binTri.redBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_long_red_cls());
+    sqlite3_bind_int64(stmt, bindAt++, binTri.redBins);
+    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_long_red_cls());
 
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.irredLits);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->litStats.redLits);
+    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.irredLits);
+    sqlite3_bind_int64(stmt, bindAt++, solver->litStats.redLits);
 
     //Conflict stats
-    sqlite3_bind_text(stmtRst, bindAt++, restart_type.c_str(), -1, NULL);
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.glueHist.getLongtTerm().avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.glueHist.getLongtTerm().getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.glueHist.getLongtTerm().getMax());
+    sqlite3_bind_text(stmt, bindAt++, restart_type.c_str(), -1, NULL);
+    sqlite3_bind_double(stmt, bindAt++, searchHist.glueHist.getLongtTerm().avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.glueHist.getLongtTerm().var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.glueHist.getLongtTerm().getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.glueHist.getLongtTerm().getMax());
 
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.conflSizeHist.avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.conflSizeHist.var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.conflSizeHist.getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.conflSizeHist.getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.conflSizeHist.avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.conflSizeHist.var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.conflSizeHist.getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.conflSizeHist.getMax());
 
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.numResolutionsHist.avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.numResolutionsHist.var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.numResolutionsHist.getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.numResolutionsHist.getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.numResolutionsHist.avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.numResolutionsHist.var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.numResolutionsHist.getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.numResolutionsHist.getMax());
 
     //Search stats
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthHist.avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.branchDepthHist.var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthHist.getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthHist.getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthHist.avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthHist.var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthHist.getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthHist.getMax());
 
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthDeltaHist.avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.branchDepthDeltaHist.var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthDeltaHist.getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.branchDepthDeltaHist.getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthDeltaHist.avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.branchDepthDeltaHist.var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthDeltaHist.getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.branchDepthDeltaHist.getMax());
 
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthHist.getLongtTerm().avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.trailDepthHist.getLongtTerm().var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthHist.getLongtTerm().getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthHist.getLongtTerm().getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthHist.getLongtTerm().avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthHist.getLongtTerm().var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthHist.getLongtTerm().getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthHist.getLongtTerm().getMax());
 
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthDeltaHist.avg());
-    sqlite3_bind_double(stmtRst, bindAt++, std:: sqrt(searchHist.trailDepthDeltaHist.var()));
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthDeltaHist.getMin());
-    sqlite3_bind_double(stmtRst, bindAt++, searchHist.trailDepthDeltaHist.getMax());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthDeltaHist.avg());
+    sqlite3_bind_double(stmt, bindAt++, std:: sqrt(searchHist.trailDepthDeltaHist.var()));
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthDeltaHist.getMin());
+    sqlite3_bind_double(stmt, bindAt++, searchHist.trailDepthDeltaHist.getMax());
 
     //Prop
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsBinIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsBinRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsLongIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propsLongRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsBinIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsBinRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsLongIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propsLongRed);
 
     //Confl
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsBinIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsBinRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsLongIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.conflStats.conflsLongRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsBinIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsBinRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsLongIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.conflStats.conflsLongRed);
 
     //Red
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntUnits);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntBins);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.learntLongs);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntUnits);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntBins);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.learntLongs);
 
     //Resolv stats
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.binRed);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longIrred);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.resolvs.longRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.binIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.binRed);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.longIrred);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.resolvs.longRed);
 
 
     //Var stats
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.propagations);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.decisions);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.propagations);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.decisions);
 
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varFlipped);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varSetPos);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisPropStats.varSetNeg);
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_free_vars());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->varReplacer->get_num_replaced_vars());
-    sqlite3_bind_int64(stmtRst, bindAt++, solver->get_num_vars_elimed());
-    sqlite3_bind_int64(stmtRst, bindAt++, search->getTrailSize());
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varFlipped);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetPos);
+    sqlite3_bind_int64(stmt, bindAt++, thisPropStats.varSetNeg);
+    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_free_vars());
+    sqlite3_bind_int64(stmt, bindAt++, solver->varReplacer->get_num_replaced_vars());
+    sqlite3_bind_int64(stmt, bindAt++, solver->get_num_vars_elimed());
+    sqlite3_bind_int64(stmt, bindAt++, search->getTrailSize());
 
     //ClauseID
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_start_inclusive);
-    sqlite3_bind_int64(stmtRst, bindAt++, thisStats.clauseID_at_end_exclusive);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_start_inclusive);
+    sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_end_exclusive);
 
-    run_sqlite_step(stmtRst, "restart");
+    run_sqlite_step(stmt, full_restart ? "full_restart" : "restart");
 }
 
 
