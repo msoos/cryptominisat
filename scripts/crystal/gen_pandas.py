@@ -306,7 +306,7 @@ class QueryCls (QueryHelper):
         self.sum_cl_use = self.query_fragment("sum_cl_use", [], "sum_cl_use")
 
         # restart data
-        not_cols =[
+        not_cols = [
             "simplifications"
             , "restarts"
             , "conflicts"
