@@ -104,6 +104,7 @@ CREATE TABLE `restart` (
 );
 
 CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
+CREATE TABLE `restart_dat_for_cl` AS SELECT * FROM `restart` WHERE 0;
 
 DROP TABLE IF EXISTS `timepassed`;
 CREATE TABLE `timepassed` (

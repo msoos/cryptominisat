@@ -173,6 +173,8 @@ inline std::ostream& operator<<(std::ostream& cout, const lbool val)
     return cout;
 }
 
+enum class rst_dat_type {norm, var, cl};
+
 }
 
 #endif //__SOLVERTYPESMINI_H__

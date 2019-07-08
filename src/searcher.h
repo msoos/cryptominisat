@@ -437,7 +437,7 @@ class Searcher : public HyperEngine
             , const uint32_t glue
             , const uint32_t old_decision_level);
         #ifdef STATS_NEEDED
-        void dump_restart_sql(bool full_restart);
+        void dump_restart_sql(rst_dat_type type);
         PropStats lastSQLPropStats;
         SearchStats lastSQLGlobalStats;
         void dump_sql_clause_data(

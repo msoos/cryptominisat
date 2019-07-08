@@ -41,64 +41,49 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+const char* rst_dat_type_to_str(rst_dat_type type) {
+    static const char* const norm ="restart_norm";
+    static const char* const var ="restart_var";
+    static const char* const cl ="restart_cl";
+    if (type == rst_dat_type::norm) {
+        return norm;
+    } else if (type == rst_dat_type::var) {
+        return var;
+    } else if (type == rst_dat_type::cl) {
+        return cl;
+    } else {
+        assert(false);
+    }
+    assert(false);
+    exit(-1);
+}
+
+void SQLiteStats::del_prepared_stmt(sqlite3_stmt* stmt)
+{
+    int ret = sqlite3_finalize(stmt);
+    if (ret != SQLITE_OK) {
+        cout << "Error closing prepared statement" << endl;
+        std::exit(-1);
+    }
+}
+
+
 SQLiteStats::~SQLiteStats()
 {
     if (!setup_ok)
         return;
 
     //Free all the prepared statements
-    int ret = sqlite3_finalize(stmtRst);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmtVarRst);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmtFeat);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-    ret = sqlite3_finalize(stmtReduceDB);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmtTimePassed);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmtMemUsed);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmt_clause_stats);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmt_delete_cl);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
-
-    ret = sqlite3_finalize(stmt_var_data);
-    if (ret != SQLITE_OK) {
-        cout << "Error closing prepared statement" << endl;
-        std::exit(-1);
-    }
+    del_prepared_stmt(stmtRst);
+    del_prepared_stmt(stmtVarRst);
+    del_prepared_stmt(stmtClRst);
+    del_prepared_stmt(stmtFeat);
+    del_prepared_stmt(stmtReduceDB);
+    del_prepared_stmt(stmtTimePassed);
+    del_prepared_stmt(stmtMemUsed);
+    del_prepared_stmt(stmt_clause_stats);
+    del_prepared_stmt(stmt_delete_cl);
+    del_prepared_stmt(stmt_var_data);
 
     //Close clonnection
     sqlite3_close(db);
@@ -123,6 +108,7 @@ bool SQLiteStats::setup(const Solver* solver)
     addStartupData();
     initRestartSTMT("restart", &stmtRst);
     initRestartSTMT("restart_dat_for_var", &stmtVarRst);
+    initRestartSTMT("restart_dat_for_cl", &stmtClRst);
     initReduceDBSTMT();
     initTimePassedSTMT();
     initMemUsedSTMT();
@@ -740,14 +726,19 @@ void SQLiteStats::restart(
     , const SearchStats& thisStats
     , const Solver* solver
     , const Searcher* search
-    , const bool full_restart
+    , const rst_dat_type type
 ) {
     sqlite3_stmt* stmt;
-    if (full_restart) {
+    if (type == rst_dat_type::norm) {
         stmt = stmtRst;
-    } else {
+    } else if (type == rst_dat_type::var) {
         stmt = stmtVarRst;
+    } else if (type == rst_dat_type::cl) {
+        stmt = stmtClRst;
+    } else {
+        assert(false);
     }
+
     const SearchHist& searchHist = search->getHistory();
     const BinTriStats& binTri = solver->getBinTriStats();
 
@@ -846,7 +837,7 @@ void SQLiteStats::restart(
     sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_start_inclusive);
     sqlite3_bind_int64(stmt, bindAt++, thisStats.clauseID_at_end_exclusive);
 
-    run_sqlite_step(stmt, full_restart ? "full_restart" : "restart");
+    run_sqlite_step(stmt, rst_dat_type_to_str(type));
 }
 
 

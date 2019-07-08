@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 namespace CMSat {
 
-
 class SQLiteStats: public SQLStats
 {
 public:
@@ -45,7 +44,7 @@ public:
         , const SearchStats& thisStats
         , const Solver* solver
         , const Searcher* searcher
-        , const bool full_restart = true
+        , const rst_dat_type type
     ) override;
 
     void reduceDB(
@@ -123,6 +122,7 @@ private:
     bool add_solverrun(const Solver* solver);
 
     void addStartupData();
+    void del_prepared_stmt(sqlite3_stmt* stmt);
     void initRestartSTMT(const char* tablename, sqlite3_stmt** stmt);
     void initTimePassedSTMT();
     void init_cl_last_in_solver_STMT();
@@ -140,6 +140,7 @@ private:
     sqlite3_stmt *stmtReduceDB = NULL;
     sqlite3_stmt *stmtRst = NULL;
     sqlite3_stmt *stmtVarRst = NULL;
+    sqlite3_stmt *stmtClRst = NULL;
     sqlite3_stmt *stmtFeat = NULL;
     sqlite3_stmt *stmt_clause_stats = NULL;
     sqlite3_stmt *stmt_delete_cl = NULL;

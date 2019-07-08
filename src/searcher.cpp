@@ -1779,6 +1779,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             double myrnd = mtrand.randDblExc();
             if (myrnd <= conf.dump_individual_cldata_ratio) {
                 to_dump = true;
+                if (sqlStats) {
+                    dump_restart_sql(rst_dat_type::cl);
+                }
             }
             #endif
 
@@ -2098,12 +2101,12 @@ struct MyPolarData
 };
 
 #ifdef STATS_NEEDED
-inline void Searcher::dump_restart_sql(bool full_restart)
+inline void Searcher::dump_restart_sql(rst_dat_type type)
 {
     //Propagation stats
     PropStats thisPropStats = propStats - lastSQLPropStats;
     SearchStats thisStats = stats - lastSQLGlobalStats;
-    if (full_restart) {
+    if (type == rst_dat_type::norm) {
         thisStats.clauseID_at_start_inclusive = stats.clauseID_at_start_inclusive;
         thisStats.clauseID_at_end_exclusive = clauseID;
     }
@@ -2114,10 +2117,10 @@ inline void Searcher::dump_restart_sql(bool full_restart)
         , thisStats
         , solver
         , this
-        , full_restart
+        , type
     );
 
-    if (full_restart) {
+    if (type == rst_dat_type::norm) {
         lastSQLPropStats = propStats;
         lastSQLGlobalStats = stats;
     }
@@ -2243,7 +2246,7 @@ inline void Searcher::dump_search_loop_stats(double myTime)
     if (sqlStats
         && conf.dump_individual_restarts_and_clauses
     ) {
-        dump_restart_sql(true);
+        dump_restart_sql(rst_dat_type::norm);
     }
     #endif
 }
@@ -3587,7 +3590,7 @@ void Searcher::cancelUntil(uint32_t level
         if (dump_this_canceluntil) {
             solver->sqlStats->end_transaction();
             if (sqlStats) {
-                dump_restart_sql(false);
+                dump_restart_sql(rst_dat_type::var);
             }
         }
         #endif
