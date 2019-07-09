@@ -357,15 +357,14 @@ bool BreakID::remove_duplicates()
 
     double myTime = cpuTime();
     vector<ClOffset> cls;
-    for(ClOffset offs: solver->occsimplifier->clauses) {
+    for(ClOffset offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
-        if (cl->freed() || cl->getRemoved() || cl->red()) {
-            continue;
-        }
+        assert(!cl->freed());
+        assert(!cl->getRemoved());
+        assert(!cl->red());
+        assert(std::is_sorted(cl->begin(), cl->end()));
         cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
         cls.push_back(offs);
-
-        assert(std::is_sorted(cl->begin(), cl->end()));
     }
 
     std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
