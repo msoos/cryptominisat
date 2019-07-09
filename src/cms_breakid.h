@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <vector>
 #include <unordered_map>
 #include "solvertypes.h"
+#include "cloffset.h"
 
 using std::vector;
 using std::unordered_map;
@@ -78,7 +79,7 @@ private:
     uint32_t symm_var = var_Undef;
     int64_t set_time_lim;
     uint64_t num_lits_in_graph;
-
+    vector<ClOffset> dedup_cls;
 
     Solver* solver;
     BID::BreakID* breakid = NULL;

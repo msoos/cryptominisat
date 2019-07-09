@@ -178,7 +178,7 @@ bool BreakID::add_clauses()
     }
 
     //Add long clauses
-    for(ClOffset offs: solver->longIrredCls) {
+    for(ClOffset offs: dedup_cls) {
         const Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
         assert(!cl->getRemoved());
@@ -368,7 +368,8 @@ bool BreakID::check_limits()
 bool BreakID::remove_duplicates()
 {
     double myTime = cpuTime();
-    vector<ClOffset> cls;
+    dedup_cls.clear();
+
     for(ClOffset offs: solver->longIrredCls) {
         Clause* cl = solver->cl_alloc.ptr(offs);
         assert(!cl->freed());
@@ -376,18 +377,18 @@ bool BreakID::remove_duplicates()
         assert(!cl->red());
         std::sort(cl->begin(), cl->end());
         cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
-        cls.push_back(offs);
+        dedup_cls.push_back(offs);
     }
 
-    std::sort(cls.begin(), cls.end(), EqCls(solver->cl_alloc));
+    std::sort(dedup_cls.begin(), dedup_cls.end(), EqCls(solver->cl_alloc));
 
-    size_t old_size = cls.size();
-    if (cls.size() > 1 && true) {
-        vector<ClOffset>::iterator prev = cls.begin();
-        vector<ClOffset>::iterator i = cls.begin();
+    size_t old_size = dedup_cls.size();
+    if (dedup_cls.size() > 1 && true) {
+        vector<ClOffset>::iterator prev = dedup_cls.begin();
+        vector<ClOffset>::iterator i = dedup_cls.begin();
         i++;
         Clause* prevcl = solver->cl_alloc.ptr(*prev);
-        for(vector<ClOffset>::iterator end = cls.end(); i != end; i++) {
+        for(vector<ClOffset>::iterator end = dedup_cls.end(); i != end; i++) {
             Clause* cl = solver->cl_alloc.ptr(*i);
             if (!equiv(cl, prevcl)) {
                 prev++;
@@ -396,13 +397,13 @@ bool BreakID::remove_duplicates()
             }
         }
         prev++;
-        cls.resize(prev-cls.begin());
+        dedup_cls.resize(prev-dedup_cls.begin());
     }
 
     double time_used = cpuTime() - myTime;
     if (solver->conf.verbosity >= 1) {
         cout << "c [breakid] tmp-rem-dup cls"
-        << " dupl: " << print_value_kilo_mega(old_size-cls.size(), false)
+        << " dupl: " << print_value_kilo_mega(old_size-dedup_cls.size(), false)
         << solver->conf.print_times(time_used)
         <<  endl;
     }
