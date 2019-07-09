@@ -359,6 +359,7 @@ class QueryCls (QueryHelper):
         self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
 
 
+        # satzilla data
         not_cols = [
             "simplifications"
             , "restarts"
