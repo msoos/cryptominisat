@@ -368,7 +368,7 @@ class Tester:
             cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--terncreate %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--xorcache %d " % random.choice([0, 1])
-            if not options.rate:
+            if not options.rate and "clid" in self.extra_opts_supported:
                 if random.choice([True, True, True, False]):
                     self.clid_added = True
                     cmd += "--clid "
