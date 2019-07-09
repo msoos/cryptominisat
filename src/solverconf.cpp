@@ -142,9 +142,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
 
         //Ternary resolution
-        , doTernary(false)
+        , doTernary(true)
         , ternary_res_time_limitM(100)
-        , ternary_keep_mult(0.5)
+        , ternary_keep_mult(4)
         , ternary_max_create(0.5)
 
         //BreakID
