@@ -91,7 +91,7 @@ SQLiteStats::~SQLiteStats()
 
 bool SQLiteStats::setup(const Solver* solver)
 {
-    setup_ok = connectServer(solver->conf.verbosity);
+    setup_ok = connectServer(solver);
     if (!setup_ok) {
         return false;
     }
@@ -127,9 +127,9 @@ bool file_exists (const std::string& name) {
 }
 
 
-bool SQLiteStats::connectServer(const int verbosity)
+bool SQLiteStats::connectServer(const Solver* solver)
 {
-    if (file_exists(filename)) {
+    if (file_exists(filename) && !solver->conf.sql_overwrite_file) {
         cout << "ERROR -- the database already exists: " << filename << endl;
         cout << "ERROR -- We cannot store more than one run in the same database"
         << endl
@@ -157,7 +157,7 @@ bool SQLiteStats::connectServer(const int verbosity)
     }
 
 
-    if (verbosity) {
+    if (solver->conf.verbosity) {
         cout << "c writing to SQLite file: " << filename << endl;
     }
 

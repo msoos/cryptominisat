@@ -361,9 +361,12 @@ class Tester:
             cmd += "--sampling "
             cmd += ",".join(["%s" % x for x in self.sampling_vars]) + " "
 
-        if random.choice([True, False]) and "clid" in self.extra_opts_supported:
+        if random.choice([True, False]):
             cmd += "--varsperxorcut %d " % random.randint(4, 6)
             cmd += "--tern %d " % random.choice([0, 1])
+            cmd += "--terntimelim %d " % random.choice([1, 10, 100])
+            cmd += "--ternkeep %d " % random.choice([0, 0.001, 0.5, 300])
+            cmd += "--terncreate %d " % random.choice([0, 0.001, 0.5, 300])
             cmd += "--xorcache %d " % random.choice([0, 1])
             if not options.rate:
                 if random.choice([True, True, True, False]):
@@ -379,7 +382,6 @@ class Tester:
                 cmd += "--reconf %d " % random.choice([3, 4, 6, 7, 12, 13, 14, 15, 16])
             # cmd += "--undef %d " % random.choice([0, 1])
             cmd += " --reconfat %d " % random.randint(0, 2)
-            cmd += "--ml  %s " % random.randint(0, 10)
             cmd += "--restart %s " % random.choice(
                 ["geom", "glue", "luby"])
             cmd += "--adjustglue %f " % random.choice([0, 0.5, 0.7, 1.0])
@@ -429,6 +431,7 @@ class Tester:
                 cmd += "--sql 2 "
                 self.sqlitedbfname = unique_file("fuzz", ".sqlitedb")
                 cmd += "--sqlitedb %s " % self.sqlitedbfname
+                cmd += "--sqlitedboverwrite 1 "
                 cmd += "--cldatadumpratio %0.3f " % random.choice([0.9, 0.1, 0.7])
 
         # the most buggy ones, don't turn them off much, please
@@ -655,7 +658,7 @@ class Tester:
             self.sol_parser.check_debug_lib(checkAgainst, must_check_unsat)
 
         if retcode != 0:
-            print("Return code is not 0, error!")
+            print("Return code of CryptoMiniSat is not 0, it is: %d -- error!" % retcode)
             exit(-1)
 
         print("Checking console output...")
@@ -929,7 +932,7 @@ class Tester:
         else:
             print("Within time limit: %.2f s" % diff_time)
             if retcode != 0:
-                print("Return code is not 0, error!")
+                print("Return code of CMS is not 0, it is: %d -- error!" % retcode)
                 exit(-1)
 
             solution = "%s-solution.sol" % fname

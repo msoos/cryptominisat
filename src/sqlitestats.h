@@ -118,7 +118,7 @@ public:
 
 private:
 
-    bool connectServer(const int verbosity);
+    bool connectServer(const Solver* solver);
     bool add_solverrun(const Solver* solver);
 
     void addStartupData();
