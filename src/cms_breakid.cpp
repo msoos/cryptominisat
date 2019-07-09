@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "occsimplifier.h"
 #include "subsumeimplicit.h"
 #include "sqlstats.h"
+#include "completedetachreattacher.h"
 
 using namespace CMSat;
 
@@ -220,6 +221,12 @@ bool BreakID::doit()
         return false;
     }
 
+    solver->clauseCleaner->remove_and_clean_all();
+    solver->subsumeImplicit->subsume_implicit(false, "-breakid");
+
+    CompleteDetachReatacher reattacher(solver);
+    reattacher.detach_nonbins_nontris();
+
     if (!remove_duplicates()) {
         return false;
     }
@@ -238,6 +245,9 @@ bool BreakID::doit()
     if (!add_clauses()) {
         delete breakid;
         breakid = NULL;
+
+        bool ok = reattacher.reattachLongs();
+        assert(ok);
         return false;
     }
     set_up_time_lim();
@@ -262,6 +272,11 @@ bool BreakID::doit()
 
     // Break symmetries
     breakid->break_symm();
+
+    //reattach clauses
+    bool ok = reattacher.reattachLongs();
+    assert(ok);
+
     if (breakid->get_num_break_cls() != 0) {
         break_symms_in_cms();
     }
@@ -352,9 +367,6 @@ bool BreakID::check_limits()
 
 bool BreakID::remove_duplicates()
 {
-    solver->clauseCleaner->remove_and_clean_all();
-    solver->subsumeImplicit->subsume_implicit(false, "-breakid");
-
     double myTime = cpuTime();
     vector<ClOffset> cls;
     for(ClOffset offs: solver->longIrredCls) {
@@ -362,7 +374,7 @@ bool BreakID::remove_duplicates()
         assert(!cl->freed());
         assert(!cl->getRemoved());
         assert(!cl->red());
-        assert(std::is_sorted(cl->begin(), cl->end()));
+        std::sort(cl->begin(), cl->end());
         cl->stats.hash_val = hash_clause(cl->getData(), cl->size());
         cls.push_back(offs);
     }
