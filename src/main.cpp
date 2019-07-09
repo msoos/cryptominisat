@@ -871,9 +871,7 @@ void Main::add_supported_options()
     .add(eqLitOpts)
     .add(componentOptions)
     .add(mem_save_opts)
-    #if defined(USE_M4RI) || defined(USE_GAUSS)
     .add(xorOptions)
-    #endif
     .add(gateOptions)
     #ifdef USE_GAUSS
     .add(gaussOptions)
