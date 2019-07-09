@@ -1985,6 +1985,9 @@ void OccSimplifier::finishUp(
     if (solver->ok) {
         check_elimed_vars_are_unassignedAndStats();
     }
+
+    //Let's just clean up ourselves a bit
+    clauses.clear();
 }
 
 void OccSimplifier::sanityCheckElimedVars()
