@@ -103,6 +103,8 @@ CREATE TABLE `restart` (
   `clauseIDendExclusive` int(20) NOT NULL
 );
 
+DROP TABLE IF EXISTS `restart_dat_for_var`;
+DROP TABLE IF EXISTS `restart_dat_for_cl`;
 CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
 CREATE TABLE `restart_dat_for_cl` AS SELECT * FROM `restart` WHERE 0;
 

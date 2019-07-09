@@ -60,6 +60,10 @@ const char* rst_dat_type_to_str(rst_dat_type type) {
 
 void SQLiteStats::del_prepared_stmt(sqlite3_stmt* stmt)
 {
+    if (stmt == NULL) {
+        return;
+    }
+
     int ret = sqlite3_finalize(stmt);
     if (ret != SQLITE_OK) {
         cout << "Error closing prepared statement" << endl;
@@ -106,16 +110,18 @@ bool SQLiteStats::setup(const Solver* solver)
 
     add_solverrun(solver);
     addStartupData();
+    initTimePassedSTMT();
+    initMemUsedSTMT();
+    init_satzilla_features();
+#ifdef STATS_NEEDED
     initRestartSTMT("restart", &stmtRst);
     initRestartSTMT("restart_dat_for_var", &stmtVarRst);
     initRestartSTMT("restart_dat_for_cl", &stmtClRst);
     initReduceDBSTMT();
-    initTimePassedSTMT();
-    initMemUsedSTMT();
-    init_satzilla_features();
     init_clause_stats_STMT();
     init_var_data_STMT();
     init_cl_last_in_solver_STMT();
+#endif
 
     return true;
 }
@@ -652,6 +658,7 @@ void SQLiteStats::satzilla_features(
     run_sqlite_step(stmtFeat, "satzilla_features");
 }
 
+#ifdef STATS_NEEDED
 //Prepare statement for restart
 void SQLiteStats::initRestartSTMT(const char* tablename, sqlite3_stmt** stmt)
 {
@@ -1272,3 +1279,5 @@ void SQLiteStats::cl_last_in_solver(
 
     run_sqlite_step(stmt_delete_cl, "cl_last_in_solver");
 }
+
+#endif

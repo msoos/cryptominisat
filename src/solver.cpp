@@ -1856,6 +1856,7 @@ void Solver::check_too_many_low_glues()
 
 void Solver::handle_found_solution(const lbool status, const bool only_sampling_solution)
 {
+    double mytime = cpuTime();
     if (status == l_True) {
         extend_solution(only_sampling_solution);
         cancelUntil(0);
@@ -1885,6 +1886,10 @@ void Solver::handle_found_solution(const lbool status, const bool only_sampling_
     #ifdef DEBUG_IMPLICIT_STATS
     check_implicit_stats();
     #endif
+
+    if (sqlStats) {
+        sqlStats->time_passed_min(this, "solution extend", cpuTime() - mytime);
+    }
 }
 
 lbool Solver::execute_inprocess_strategy(

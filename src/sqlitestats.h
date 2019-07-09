@@ -38,6 +38,34 @@ public:
     void end_transaction() override;
     void begin_transaction() override;
 
+    void time_passed(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+        , bool time_out
+        , double percent_time_remain
+    ) override;
+
+    void time_passed_min(
+        const Solver* solver
+        , const string& name
+        , double time_passed
+    ) override;
+
+    void mem_used(
+        const Solver* solver
+        , const string& name
+        , double given_time
+        , uint64_t mem_used_mb
+    ) override;
+
+    void satzilla_features(
+        const Solver* solver
+        , const Searcher* search
+        , const SatZillaFeatures& satzilla_feat
+    ) override;
+
+    #ifdef STATS_NEEDED
     void restart(
         const std::string& restart_type
         , const PropStats& thisPropStats
@@ -54,34 +82,6 @@ public:
         , const string& cur_restart_type
         , const uint32_t act_ranking_top_10
         , const uint32_t act_ranking
-    ) override;
-
-    void time_passed(
-        const Solver* solver
-        , const string& name
-        , double time_passed
-        , bool time_out
-        , double percent_time_remain
-    ) override;
-
-    void time_passed_min(
-        const Solver* solver
-        , const string& name
-        , double time_passed
-    ) override;
-
-
-    void satzilla_features(
-        const Solver* solver
-        , const Searcher* search
-        , const SatZillaFeatures& satzilla_feat
-    ) override;
-
-    void mem_used(
-        const Solver* solver
-        , const string& name
-        , double given_time
-        , uint64_t mem_used_mb
     ) override;
 
     virtual void cl_last_in_solver(
@@ -111,6 +111,7 @@ public:
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
     ) override;
+    #endif
 
     bool setup(const Solver* solver) override;
     void finishup(lbool status) override;

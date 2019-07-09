@@ -56,7 +56,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat.h.in" "${CMAKE_CURRENT
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/solvertypesmini.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/solvertypesmini.h" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cryptominisat_c.h.in" "${CMAKE_CURRENT_BINARY_DIR}/cryptominisat5/cryptominisat_c.h" @ONLY)
 
-if (SQLITE3_FOUND AND STATS)
+if (SQLITE3_FOUND)
     if (NOT PYTHON_EXECUTABLE)
         MESSAGE(FATAL_ERROR "Unfortunately, the python interpreter is needed for statistics because of SQL text generation")
     endif()
@@ -158,7 +158,7 @@ if (BREAKID_LIBRARIES)
     SET(cryptoms_lib_link_libs ${cryptoms_lib_link_libs} ${BREAKID_LIBRARIES})
 endif()
 
-if (SQLITE3_FOUND AND STATS)
+if (SQLITE3_FOUND)
     SET(cryptoms_lib_files ${cryptoms_lib_files}
         sqlitestats.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/sql_tablestructure.cpp

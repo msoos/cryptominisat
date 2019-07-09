@@ -44,15 +44,6 @@ public:
     virtual void end_transaction() = 0;
     virtual void begin_transaction() = 0;
 
-    virtual void restart(
-        const std::string& restart_type
-        , const PropStats& thisPropStats
-        , const SearchStats& thisStats
-        , const Solver* solver
-        , const Searcher* searcher
-        , const rst_dat_type type
-    ) = 0;
-
     virtual void time_passed(
         const Solver* solver
         , const string& name
@@ -67,17 +58,27 @@ public:
         , double time_passed
     ) = 0;
 
+    virtual void mem_used(
+        const Solver* solver
+        , const string& name
+        , const double given_time
+        , uint64_t mem_used_mb
+    ) = 0;
+
     virtual void satzilla_features(
         const Solver* solver
         , const Searcher* search
         , const SatZillaFeatures& satzilla_feat
     ) = 0;
 
-    virtual void mem_used(
-        const Solver* solver
-        , const string& name
-        , const double given_time
-        , uint64_t mem_used_mb
+    #ifdef STATS_NEEDED
+    virtual void restart(
+        const std::string& restart_type
+        , const PropStats& thisPropStats
+        , const SearchStats& thisStats
+        , const Solver* solver
+        , const Searcher* searcher
+        , const rst_dat_type type
     ) = 0;
 
     virtual void reduceDB(
@@ -116,6 +117,7 @@ public:
         , const std::string& rest_type
         , const SearchHist& hist
     ) = 0;
+    #endif
 
     virtual bool setup(const Solver* solver) = 0;
     virtual void finishup(lbool status) = 0;
