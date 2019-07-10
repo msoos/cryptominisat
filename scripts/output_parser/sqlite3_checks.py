@@ -8,7 +8,7 @@ import operator
 
 
 class Query:
-    def __init__(self):
+    def __init__(self, dbfname):
         self.conn = sqlite3.connect(dbfname)
         self.c = self.conn.cursor()
 
@@ -23,8 +23,12 @@ class Query:
         query = """
         select tags.tag, name, elapsed
         from timepassed,tags
-        where name != 'search' and elapsed > %d and
-        tags.tagname="filename"
+        where
+        name != 'search'
+        and elapsed > %d
+        and tags.tagname="filename"
+        and tags.runid = timepassed.runid
+
         order by elapsed desc;
         """ % (options.maxtime)
 
@@ -40,11 +44,14 @@ class Query:
         query = """
         select tags.tag, memused.name, max(memused.MB)
         from memused,tags
-        where  tags.tagname="filename"
+        where
+        tags.tagname="filename"
         and memused.MB > %d
         and memused.name != 'vm'
         and memused.name != 'rss'
         and memused.name != 'longclauses'
+        and tags.runid = memused.runid
+
         group by tags.tag, memused.name
         order by MB desc;
         """ % (options.maxmemory)
@@ -61,9 +68,12 @@ class Query:
         query = """
         select tags.tag, memused.name, max(memused.MB)
         from memused,tags
-        where  tags.tagname="filename"
+        where
+        tags.tagname="filename"
         and memused.MB > %d
         and memused.name == 'rss'
+        and tags.runid = memused.runid
+
         group by tags.tag, memused.name
         order by MB desc;
         """ % (options.maxmemory*2)
@@ -81,13 +91,13 @@ class Query:
             a.mysum as counted, b.rss as total
         from tags,
 
-        (select `runtime`, sum(MB) as mysum
+        (select runid, `runtime`, sum(MB) as mysum
         from memused
         where name != 'rss'
         and name != 'vm'
         group by `runtime`) as a,
 
-        (select name, `runtime`, MB as rss
+        (select runid, name, `runtime`, MB as rss
         from memused
         where name = 'rss') as b
 
@@ -95,6 +105,8 @@ class Query:
         tags.tagname="filename"
         and a.`runtime` = b.`runtime`
         and total > %d
+        and a.runid = tags.runid
+        and b.runid = tags.runid
 
         order by differperc desc
         """ % (options.minmemory)
@@ -202,24 +214,34 @@ class Query:
 
         #last conflict > 60000, UNSAT, solvetime under 500s
         query = """
-        select tags.tag, a.maxtime, a.maxconfl, mems.maxmem from
-            (select max(conflicts) as maxconfl, max(`runtime`) as maxtime
-            from timepassed
-            ) as a,
-            (select *
-            from finishup
-            where status = "l_False"
-            ) as b,
-            (select max(MB) as maxmem
-            from memused
-            ) as mems, tags
+        select tags.tag, a.maxtime, a.maxconfl, mems.maxmem
 
-            where a.maxconfl > 20000
-            and a.maxconfl < 400000
-            and a.maxtime < 400
-            and a.maxtime > 10
-            and tags.tagname = "filename"
-            order by maxtime desc
+        from
+        (select runid, max(conflicts) as maxconfl, max(`runtime`) as maxtime
+        from timepassed
+        ) as a
+
+        , (select *
+        from finishup
+        where status = "l_False"
+        ) as b
+
+        , (select runid, max(MB) as maxmem
+        from memused
+        ) as mems
+
+        , tags
+
+        where a.maxconfl > 20000
+        and a.maxconfl < 400000
+        and a.maxtime < 400
+        and a.maxtime > 10
+        and tags.tagname = "filename"
+        and tags.runid = a.runid
+        and tags.runid = b.runid
+
+
+        order by maxtime desc
         """
 
         for row in self.c.execute(query):
@@ -261,7 +283,7 @@ if __name__ == "__main__":
     print("Using sqlite3db file %s" % dbfname)
 
     #peform queries
-    with Query() as q:
+    with Query(dbfname) as q:
         q.find_intersting_problems()
         q.find_worst_unaccounted_memory()
         q.check_memory_rss()

@@ -4,6 +4,43 @@ CREATE TABLE `tags` (
   `tag` varchar(500) NOT NULL
 );
 
+DROP TABLE IF EXISTS `timepassed`;
+CREATE TABLE `timepassed` (
+  `simplifications` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
+  `runtime` float NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `elapsed` float NOT NULL,
+  `timeout` int(20) DEFAULT NULL,
+  `percenttimeremain` float DEFAULT NULL
+);
+
+DROP TABLE IF EXISTS `memused`;
+CREATE TABLE `memused` (
+  `simplifications` bigint(20) NOT NULL,
+  `conflicts` bigint(20) NOT NULL,
+  `runtime` float NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `MB` int(20) NOT NULL
+);
+
+DROP TABLE IF EXISTS `solverRun`;
+CREATE TABLE `solverRun` (
+  `runtime` float NOT NULL,
+  `gitrev` varchar(100) NOT NULL
+);
+
+DROP TABLE IF EXISTS `startup`;
+CREATE TABLE `startup` (
+  `startTime` datetime NOT NULL
+);
+
+DROP TABLE IF EXISTS `finishup`;
+CREATE TABLE `finishup` (
+  `endTime` datetime NOT NULL,
+  `status` varchar(255) NOT NULL
+);
+
 -- TODO Add more features here!
 DROP TABLE IF EXISTS `reduceDB`;
 CREATE TABLE `reduceDB` (
@@ -108,42 +145,6 @@ DROP TABLE IF EXISTS `restart_dat_for_cl`;
 CREATE TABLE `restart_dat_for_var` AS SELECT * FROM `restart` WHERE 0;
 CREATE TABLE `restart_dat_for_cl` AS SELECT * FROM `restart` WHERE 0;
 
-DROP TABLE IF EXISTS `timepassed`;
-CREATE TABLE `timepassed` (
-  `simplifications` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
-  `runtime` float NOT NULL,
-  `name` varchar(200) NOT NULL,
-  `elapsed` float NOT NULL,
-  `timeout` int(20) DEFAULT NULL,
-  `percenttimeremain` float DEFAULT NULL
-);
-
-DROP TABLE IF EXISTS `memused`;
-CREATE TABLE `memused` (
-  `simplifications` bigint(20) NOT NULL,
-  `conflicts` bigint(20) NOT NULL,
-  `runtime` float NOT NULL,
-  `name` varchar(200) NOT NULL,
-  `MB` int(20) NOT NULL
-);
-
-DROP TABLE IF EXISTS `solverRun`;
-CREATE TABLE `solverRun` (
-  `runtime` float NOT NULL,
-  `gitrev` varchar(100) NOT NULL
-);
-
-DROP TABLE IF EXISTS `startup`;
-CREATE TABLE `startup` (
-  `startTime` datetime NOT NULL
-);
-
-DROP TABLE IF EXISTS `finishup`;
-CREATE TABLE `finishup` (
-  `endTime` datetime NOT NULL,
-  `status` varchar(255) NOT NULL
-);
 
 DROP TABLE IF EXISTS `clauseStats`;
 CREATE TABLE `clauseStats` (
