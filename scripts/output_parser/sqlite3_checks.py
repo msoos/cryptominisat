@@ -5,6 +5,7 @@ from __future__ import print_function
 import sqlite3
 import optparse
 import operator
+import time
 
 
 class Query:
@@ -17,6 +18,38 @@ class Query:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.close()
+
+    def create_indexes(self):
+        print("Deleting & recreating indexes...")
+        t = time.time()
+        q = """
+        SELECT name FROM sqlite_master WHERE type == 'index'
+        """
+        self.c.execute(q)
+        rows = self.c.fetchall()
+        queries = ""
+        for row in rows:
+            if options.verbose:
+                print("Will delete index:", row[0])
+            queries += "drop index if exists `%s`;\n" % row[0]
+
+        queries += """
+        create index `idx1` on `tags` (`runid`, `tagname`);
+        create index `idx2` on `timepassed` (`runid`, `elapsed`);
+        create index `idx3` on `timepassed` (`runid`, `elapsed`, `name`);
+        create index `idx4` on `memused` (`runid`, `MB`, `name`);
+
+        """
+        for l in queries.split('\n'):
+            t2 = time.time()
+
+            if options.verbose:
+                print("Creating index: ", l)
+            self.c.execute(l)
+            if options.verbose:
+                print("Index creation T: %-3.2f s" % (time.time() - t2))
+
+        print("indexes created T: %-3.2f s" % (time.time() - t))
 
     def find_time_outliers(self):
         print("----------- TIME OUTLIERS --------------")
@@ -258,6 +291,9 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
 
+    parser.add_option("--createind", action="store_true", default=False,
+                      dest="create_indexes", help="Create indexes")
+
     parser.add_option("--maxtime", metavar="CUTOFF",
                       dest="maxtime", default=20, type=int,
                       help="Max time for an operation")
@@ -284,6 +320,8 @@ if __name__ == "__main__":
 
     #peform queries
     with Query(dbfname) as q:
+        if options.create_indexes:
+            q.create_indexes()
         q.find_intersting_problems()
         q.find_worst_unaccounted_memory()
         q.check_memory_rss()

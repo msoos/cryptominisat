@@ -93,19 +93,27 @@ class Query:
         self.c.executescript(query)
 
     def merge_data(self, files):
-        query = """
+        header = """
         attach '{fname}' as toMerge;
         BEGIN;
-        insert into {table} select * from toMerge.{table};
+        """
+
+        q = "insert into {table} select * from toMerge.{table};"
+
+        footer = """
         COMMIT;
         detach toMerge;
         """
 
         for f in files:
             print("Merging file %s" % f)
+            toexec = str(header)
             for table in tables:
                 print("-> Merging table %s" % table)
-                self.c.executescript(query.format(fname=f, table=table))
+                toexec += q
+
+            toexec += footer;
+            self.c.executescript(toexec.format(fname=f, table=table))
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
