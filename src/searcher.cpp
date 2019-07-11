@@ -3468,7 +3468,7 @@ void Searcher::cancelUntil(uint32_t level
         if (solver->sqlStats
             && !update_bogoprops
             //we need a lot less of this data
-            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.2
+            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.3
         ) {
             dump_this_canceluntil = true;
             solver->sqlStats->begin_transaction();
