@@ -93,33 +93,27 @@ class Query:
         self.c.executescript(query)
 
     def merge_data(self, files):
-        header = """
+        query = """
         attach '{fname}' as toMerge;
         BEGIN;
-        """
-
-        q = "insert into {table} select * from toMerge.{table};"
-
-        footer = """
+        insert into {table} select * from toMerge.{table};
         COMMIT;
         detach toMerge;
         """
 
         for f in files:
             print("Merging file %s" % f)
-            toexec = str(header)
             for table in tables:
                 print("-> Merging table %s" % table)
-                toexec += q
-
-            toexec += footer;
-            self.c.executescript(toexec.format(fname=f, table=table))
+                self.c.executescript(query.format(fname=f, table=table))
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] sqlitedb"
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_option("--onlyconcat", action="store_true", default=False,
+                      dest="onlyconcat", help="Only concatenate")
 
     (options, args) = parser.parse_args()
 
@@ -127,14 +121,15 @@ if __name__ == "__main__":
         print("ERROR: You must give at least two arguments, the sqlite3 database files")
         exit(-1)
 
-    for fname in args:
-        print("Using sqlite3db file %s" % fname)
+    if not options.onlyconcat:
+        for fname in args:
+            print("Using sqlite3db file %s" % fname)
 
-        #peform queries
-        with Query(fname) as q:
-            q.add_ids()
+            #peform queries
+            with Query(fname) as q:
+                q.add_ids()
 
-    print("Finished adding IDs to all tables in all files")
+        print("Finished adding IDs to all tables in all files")
 
     print("Merging tables...")
     with Query("merged.sqlitedb") as q:
