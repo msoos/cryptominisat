@@ -87,7 +87,7 @@ class QueryFill (QueryHelper):
         create index `idxclid1-5` on `clauseStats` (`clauseID`, prev_restart);
         create index `idxclid2` on `clauseStats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid4` on `restart` ( `restarts`);
-        create index `idxclid5` on `tags` ( `tagname`);
+        create index `idxclid5` on `tags` ( `name`);
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
         create index `idxclid6-3` on `reduceDB` (`clauseID`, `conflicts`, `dump_no`);
@@ -505,7 +505,7 @@ class QueryCls (QueryHelper):
         # GOOD clauses
         self.q_ok_select = """
         SELECT
-        tags.tag as `fname`
+        tags.val as `fname`
         {clause_dat}
         {rst_cur_dat}
         {restart_dat}
@@ -558,7 +558,7 @@ class QueryCls (QueryHelper):
         and cl.restarts > 1 -- to avoid history being invalid
         and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
         and rst.restarts = cl.prev_restart
-        and tags.tagname = "filename"
+        and tags.name = "filename"
         """
 
         self.myformat = {

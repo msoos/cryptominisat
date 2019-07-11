@@ -44,8 +44,8 @@ class Query:
         query="""
         DROP TABLE IF EXISTS `tags`;
         CREATE TABLE `tags` (
-          `tagname` varchar(500) NOT NULL,
-          `tag` varchar(500) NOT NULL
+          `name` varchar(500) NOT NULL,
+          `val` varchar(500) NOT NULL
           , runid bigint(2) default null
         );
 

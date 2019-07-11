@@ -83,7 +83,7 @@ class Solver : public Searcher
         Solver(const SolverConf *_conf = NULL, std::atomic<bool>* _must_interrupt_inter = NULL);
         ~Solver() override;
 
-        void add_sql_tag(const string& tagname, const string& tag);
+        void add_sql_tag(const string& name, const string& val);
         const vector<std::pair<string, string> >& get_sql_tags() const;
         void new_external_var();
         void new_external_vars(size_t n);

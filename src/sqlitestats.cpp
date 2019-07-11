@@ -215,7 +215,7 @@ void SQLiteStats::add_tag(const std::pair<string, string>& tag)
 {
     std::stringstream ss;
     ss
-    << "INSERT INTO `tags` (`tagname`, `tag`) VALUES("
+    << "INSERT INTO `tags` (`name`, `val`) VALUES("
     << "'" << tag.first << "'"
     << ", '" << tag.second << "'"
     << ");";

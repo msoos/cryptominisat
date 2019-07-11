@@ -34,7 +34,7 @@ class Query:
             queries += "drop index if exists `%s`;\n" % row[0]
 
         queries += """
-        create index `idx1` on `tags` (`runid`, `tagname`);
+        create index `idx1` on `tags` (`runid`, `name`);
         create index `idx2` on `timepassed` (`runid`, `elapsed`);
         create index `idx3` on `timepassed` (`runid`, `elapsed`, `name`);
         create index `idx4` on `memused` (`runid`, `MB`, `name`);
@@ -54,12 +54,12 @@ class Query:
     def find_time_outliers(self):
         print("----------- TIME OUTLIERS --------------")
         query = """
-        select tags.tag, name, elapsed
+        select tags.val, name, elapsed
         from timepassed,tags
         where
         name != 'search'
         and elapsed > %d
-        and tags.tagname="filename"
+        and tags.name="filename"
         and tags.runid = timepassed.runid
 
         order by elapsed desc;
@@ -75,17 +75,17 @@ class Query:
         print("----------- MEMORY OUTLIERS --------------")
 
         query = """
-        select tags.tag, memused.name, max(memused.MB)
+        select tags.val, memused.name, max(memused.MB)
         from memused,tags
         where
-        tags.tagname="filename"
+        tags.name="filename"
         and memused.MB > %d
         and memused.name != 'vm'
         and memused.name != 'rss'
         and memused.name != 'longclauses'
         and tags.runid = memused.runid
 
-        group by tags.tag, memused.name
+        group by tags.val, memused.name
         order by MB desc;
         """ % (options.maxmemory)
 
@@ -99,10 +99,10 @@ class Query:
         print("----------- MEMORY OUTLIERS RSS --------------")
 
         query = """
-        select tags.tag, memused.name, max(memused.MB)
+        select tags.val, memused.name, max(memused.MB)
         from memused,tags
         where
-        tags.tagname="filename"
+        tags.name="filename"
         and memused.MB > %d
         and memused.name == 'rss'
         and tags.runid = memused.runid
@@ -135,7 +135,7 @@ class Query:
         where name = 'rss') as b
 
         where
-        tags.tagname="filename"
+        tags.name="filename"
         and a.`runtime` = b.`runtime`
         and total > %d
         and a.runid = tags.runid
@@ -269,7 +269,7 @@ class Query:
         and a.maxconfl < 400000
         and a.maxtime < 400
         and a.maxtime > 10
-        and tags.tagname = "filename"
+        and tags.name = "filename"
         and tags.runid = a.runid
         and tags.runid = b.runid
 

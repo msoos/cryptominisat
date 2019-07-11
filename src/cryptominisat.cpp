@@ -914,10 +914,10 @@ DLL_PUBLIC void SATSolver::new_vars(const size_t n)
     data->vars_to_add += n;
 }
 
-DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& tagname, const std::string& tag)
+DLL_PUBLIC void SATSolver::add_sql_tag(const std::string& name, const std::string& val)
 {
     for(Solver* solver: data->solvers) {
-        solver->add_sql_tag(tagname, tag);
+        solver->add_sql_tag(name, val);
     }
 }
 
