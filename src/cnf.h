@@ -111,6 +111,8 @@ public:
     uint64_t sumConflictClauseLits = 0;
     uint64_t sumAntecedentsLits = 0;
     uint64_t sumDecisionBasedCl = 0;
+    uint64_t sumClLBD = 0;
+    uint64_t sumClSize = 0;
 
     uint32_t latest_satzilla_feature_calc = 0;
     uint64_t last_satzilla_feature_calc_confl = 0;

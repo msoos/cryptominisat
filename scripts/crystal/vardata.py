@@ -135,6 +135,8 @@ class QueryVar (QueryHelper):
             , "clid_end_notincl"
             , "decided_pos"
             , "propagated_pos"
+            , "restarts"
+            , "conflicts"
             , "propagated_pos_perc"]
         var_data = self.query_fragment("varData", not_cols, "var_data")
 
@@ -207,9 +209,54 @@ class QueryVar (QueryHelper):
             df["var_data.sumConflictClauseLits_at_fintime"]-df["var_data.sumConflictClauseLits_at_picktime"]
         df["var_data.sumDecisionBasedCl_during"] = \
             df["var_data.sumDecisionBasedCl_at_fintime"]-df["var_data.sumDecisionBasedCl_at_picktime"]
+        df["var_data.sumClLBD_during"] = \
+            df["var_data.sumClLBD_at_fintime"]-df["var_data.sumClLBD_at_picktime"]
+        df["var_data.sumClSize_during"] = \
+            df["var_data.sumClSize_at_fintime"]-df["var_data.sumClSize_at_picktime"]
 
-        df["var_data.rel_inside_confl_cl"] = df["var_data.inside_conflict_clause_during"]/df["var_data.sumConflicts_during"]
-        df["var_data.rel_inside_confl_cl_ant"] = df["var_data.inside_conflict_clause_antecedents_during"]/df["var_data.sumAntecedents_during"]
+        # per-conflicts, per-decisions, per-lits
+        sets = [["var_data.sumDecisions_during", "decs_below"]
+                , ["var_data.sumPropagations_during", "props_below"]
+                , ["var_data.sumConflicts_during", "confls_below"]
+                , ["var_data.sumAntecedents_during", "clantecs_below"]
+                , ["var_data.sumConflictClauseLits_during", "confcllits_below"]
+                , ["var_data.sumAntecedentsLits_during", "anteclits_below"]
+                , ["var_data.sumClSize_during", "clsize_below"]
+                , ["var_data.sumClLBD_during", "cllbd_below"]
+                ]
+
+        for realname,name in sets:
+            divby=df[realname]
+            name="_per_"+name
+
+            #sum
+            df["var_data.decisions"+name]=df["var_data.sumDecisions_during"]/divby
+            df["var_data.propagations"+name]=df["var_data.sumPropagations_during"]/divby
+            df["var_data.antecedents"+name]=df["var_data.sumAntecedents_during"]/divby
+            df["var_data.antecedentsLits"+name]=df["var_data.sumAntecedentsLits_during"]/divby
+            df["var_data.conflictClauseLits"+name]=df["var_data.sumConflictClauseLits_during"]/divby
+            df["var_data.decisionBasedCl"+name]=df["var_data.sumDecisionBasedCl_during"]/divby
+            df["var_data.clLBD"+name]=df["var_data.sumClLBD_during"]/divby
+            df["var_data.clSize"+name]=df["var_data.sumClSize_during"]/divby
+
+            #inside
+            df["var_data.inside_confl_cl"+name] = df["var_data.inside_confl_cl_during"]/divby
+            df["var_data.inside_confl_cl_ant"+name] = df["var_data.inside_confl_cl_antecedents_during"]/divby
+            df["var_data.inside_confl_cl_glue"+name] = df["var_data.inside_conflict_clause_glue_during"]/divby
+
+            # fun
+            df["var_data.lbd_times_cls"+name] = \
+            df["var_data.sumClLBD_during"]*df["var_data.sumConflicts_during"]/divby
+
+
+
+        # more complicated
+
+
+
+
+
+
         df["var_data.rel_inside_confl_cl_glue"] = df["var_data.inside_conflict_clause_glue_during"]/df["var_data.sumConflicts_during"]
 
         df["cl_below_per_dec_depth"]=df["var_data.clauses_below"]/df["var_data.dec_depth"]
@@ -218,11 +265,29 @@ class QueryVar (QueryHelper):
         df["var_data.clauses_below_per_sumDecisions_during"]=df["var_data.clauses_below"]/df["var_data.sumDecisions_during"]
 
         if True:
+            torem = [
+                "var_data.propagated"
+                , "var_data.decided"
+                , "var_data.clauses_below"
+                , "var_data.dec_depth"
+                , "var_data.sumDecisions_during"
+                , "var_data.sumPropagations_during"
+                , "var_data.sumConflicts_during"
+                , "var_data.sumAntecedents_during"
+                , "var_data.sumAntecedentsLits_during"
+                , "var_data.sumConflictClauseLits_during"
+                , "var_data.sumDecisionBasedCl_during"
+                , "var_data.sumClLBD_during"
+                , "var_data.sumClSize_during"
+                ]
+            cols = list(df)
+            for col in cols:
+                if "rst." in col:
+                    torem.append(col)
+                    pass
 
-            del df["var_data.propagated"]
-            del df["var_data.decided"]
-            del df["var_data.clauses_below"]
-            del df["var_data.dec_depth"]
+            for x in torem:
+                del df[x]
 
             cols = list(df)
             for c in cols:

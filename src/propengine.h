@@ -436,6 +436,8 @@ void PropEngine::enqueue(const Lit p, const PropBy from)
             varData[v].sumPropagations_at_picktime = sumPropagations;
             varData[v].sumDecisionBasedCl_at_picktime = sumDecisionBasedCl;
             varData[v].sumConflictClauseLits_below_at_picktime = sumConflictClauseLits;
+            varData[v].sumClLBD_at_picktime = sumClLBD;
+            varData[v].sumClSize_at_picktime = sumClSize;
 
             varData[v].inside_conflict_clause_glue_at_picktime = varData[v].inside_conflict_clause_glue;
             varData[v].inside_conflict_clause_at_picktime = varData[v].inside_conflict_clause;

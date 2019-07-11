@@ -325,6 +325,8 @@ create table `varData` (
     , `sumAntecedentsLits_at_picktime` bigint(20) NOT NULL
     , `sumConflictClauseLits_at_picktime` bigint(20) NOT NULL
     , `sumDecisionBasedCl_at_picktime` bigint(20) NOT NULL
+    , `sumClLBD_at_picktime` bigint(20) NOT NULL
+    , `sumClSize_at_picktime` bigint(20) NOT NULL
 
     , `sumDecisions_at_fintime` bigint(20) NOT NULL
     , `sumPropagations_at_fintime` bigint(20) NOT NULL
@@ -333,6 +335,8 @@ create table `varData` (
     , `sumAntecedentsLits_at_fintime` bigint(20) NOT NULL
     , `sumConflictClauseLits_at_fintime` bigint(20) NOT NULL
     , `sumDecisionBasedCl_at_fintime` bigint(20) NOT NULL
+    , `sumClLBD_at_fintime` bigint(20) NOT NULL
+    , `sumClSize_at_fintime` bigint(20) NOT NULL
 
     , `clid_start_incl` bigint(20) NOT NULL
     , `clid_end_notincl` bigint(20) NOT NULL

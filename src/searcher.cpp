@@ -1554,6 +1554,10 @@ void Searcher::update_history_stats(size_t backtrack_level, uint32_t glue)
     }
     hist.glueHistLT.push(glue);
     hist.glueHist.push(glue);
+
+    //Global stats from cnf.h
+    sumClLBD += glue;
+    sumClSize += learnt_clause.size();
 }
 
 template<bool update_bogoprops>
@@ -3527,6 +3531,8 @@ void Searcher::cancelUntil(uint32_t level
                     uint64_t antecedentsLits = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
                     uint64_t decisionCls = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
                     uint64_t conflictLits = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
+                    uint64_t lbd = sumClLBD - varData[var].sumClLBD_at_picktime;
+                    uint64_t size = sumClSize - varData[var].sumClSize_at_picktime;
 
                     if (dump_this_canceluntil) {
                         uint64_t cls_below = conflicts + decisionCls;
@@ -3545,6 +3551,8 @@ void Searcher::cancelUntil(uint32_t level
                     varData[var].sumDecisions_below_at_picktime += decisions;
                     varData[var].sumAntecedentsLits_below_at_picktime += antecedentsLits;
                     varData[var].sumConflictClauseLits_below_at_picktime += conflictLits;
+                    varData[var].sumClLBD_below_at_picktime += lbd;
+                    varData[var].sumClSize_below_at_picktime += size;
                 }
                 /*
                 if (varData[var].reason == PropBy()) {
