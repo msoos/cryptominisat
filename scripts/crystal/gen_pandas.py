@@ -710,7 +710,7 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
 
     df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
-    df["cl.antecedents_avg_size"] = df["num_total_lits_antecedents"]/df["num_antecedents"]
+    df["cl.antecedents_avg_size"] = df["cl.num_total_lits_antecedents"]/df["cl.num_antecedents"]
 
     orig_cols = list(df)
     for col in orig_cols:
