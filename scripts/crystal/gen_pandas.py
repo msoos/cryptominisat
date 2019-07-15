@@ -562,13 +562,21 @@ class QueryCls (QueryHelper):
 
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
-        q = "select avg(used_later10k) from used_later10k, used_later where used_later.clauseID = used_later10k.clauseID and used_later > 0;"
+        q = """
+        select avg(used_later10k)
+        from used_later10k, used_later
+        where
+        used_later.clauseID = used_later10k.clauseID
+        and used_later > 0;
+        """
         if long_or_short == "long":
             q = q.replace("used_later10k", "used_later100k")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) == 1
         if rows[0][0] is None:
+            print("ERROR: No data for avg generation, not a single line for '%s'"
+                  % long_or_short)
             return False, None
 
         avg = float(rows[0][0])
@@ -592,10 +600,12 @@ class QueryCls (QueryHelper):
         rows = cur.fetchall()
         assert len(rows) <= 1
         if len(rows) == 0 or rows[0][0] is None:
+            print("ERROR: No data for median generation, not a single line for '%s'"
+                  % long_or_short)
             return False, None
 
         avg = float(rows[0][0])
-        print("%s avg used_later is: %.2f"  % (long_or_short, avg))
+        print("%s median used_later is: %.2f"  % (long_or_short, avg))
         return True, avg
 
     def one_query(self, q, ok_or_bad):

@@ -104,7 +104,7 @@ class QueryDatRem(QueryHelper):
         clauseID from sum_cl_use
         where num_used >= {min_used}
         order by random() limit {limit}
-        """.format(min_used=min_used, limit=limit)
+        """.format(min_used=min_used, limit=int(limit))
         self.c.execute(q)
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
