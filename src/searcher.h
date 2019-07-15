@@ -278,6 +278,7 @@ class Searcher : public HyperEngine
             , const uint32_t glue
             , const uint32_t old_glue
             , const uint32_t old_decision_level
+            , const bool decision_cl
         );
         template<bool update_bogoprops>
         lbool new_decision();  // Handles the case when decision must be made
@@ -446,6 +447,8 @@ class Searcher : public HyperEngine
             , const uint32_t old_glue
             , const uint32_t old_decision_level
             , const uint64_t clid
+            , const bool decision_cl
+            , const bool ternary_resol_cl
         );
         int dump_this_many_cldata_in_stream = 0;
         void sql_dump_last_in_solver();

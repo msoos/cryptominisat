@@ -1654,6 +1654,8 @@ void Searcher::dump_sql_clause_data(
     , const uint32_t old_glue
     , const uint32_t old_decision_level
     , const uint64_t clid
+    , const bool decision_cl
+    , const bool ternary_resol_cl
 ) {
     vector<double> last_dec_var_act;
     for(int i = (int)decisionLevel()-1; i >= 0; i--) {
@@ -1698,6 +1700,8 @@ void Searcher::dump_sql_clause_data(
         , params.conflictsDoneThisRestart
         , restart_type_to_short_string(params.rest_type)
         , hist
+        , decision_cl
+        , ternary_resol_cl
     );
 }
 #endif
@@ -1761,6 +1765,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     #if defined(STATS_NEEDED) || defined(FINAL_PREDICTOR)
     old_decision_level
     #endif
+    , bool decision_cl
 ) {
     #ifdef STATS_NEEDED
     bool to_dump = false;
@@ -1829,6 +1834,7 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             }
 
             cl->stats.which_red_array = which_arr;
+            cl->stats.is_decision_cl = decision_cl;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
 
             *drat << add << *cl
@@ -1881,6 +1887,8 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             , old_glue
             , old_decision_level
             , cl->stats.ID
+            , decision_cl //decision_clause
+            , false //ternary clause
         );
     }
     #endif
@@ -1960,7 +1968,13 @@ bool Searcher::handle_conflict(const PropBy confl)
     print_learning_debug_info();
     assert(value(learnt_clause[0]) == l_Undef);
     glue = std::min<uint32_t>(glue, std::numeric_limits<uint32_t>::max());
-    Clause* cl = handle_last_confl_otf_subsumption(subsumed_cl, glue, old_glue, old_decision_level);
+    Clause* cl = handle_last_confl_otf_subsumption(
+        subsumed_cl
+        , glue
+        , old_glue
+        , old_decision_level
+        , false //decision clause?
+    );
     assert(learnt_clause.size() <= 2 || cl != NULL);
     attach_and_enqueue_learnt_clause<update_bogoprops>(cl);
 
@@ -1983,7 +1997,9 @@ bool Searcher::handle_conflict(const PropBy confl)
             NULL                   //orig cl to minimise
             , learnt_clause.size() //glue
             , learnt_clause.size() //old_glue
-            , decisionLevel());
+            , old_decision_level
+            , true //decision clause?
+        );
         attach_and_enqueue_learnt_clause<update_bogoprops>(cl, false);
     }
 

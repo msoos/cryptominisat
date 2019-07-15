@@ -1609,6 +1609,7 @@ bool OccSimplifier::perform_ternary(Clause* cl, ClOffset offs)
     for(vector<Lit>& newcl: cl_to_add_ternary) {
 
         ClauseStats stats;
+        stats.is_ternary_resol_cl = true;
         stats.glue = solver->conf.glue_put_lev1_if_below_or_eq;
         stats.which_red_array = 1;
         stats.drop_if_not_used = true;

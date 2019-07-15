@@ -698,10 +698,9 @@ def transform(df):
     # df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
     #df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
-    df["cl.branch_depth_rel_queue"] = df["cl.decision_level"]/df["cl.branch_depth_hist_queue"]
 
     df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
-    df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
+    df["cl.antecedents_avg_size"] = df["num_total_lits_antecedents"]/df["num_antecedents"]
 
     orig_cols = list(df)
     for col in orig_cols:
@@ -723,7 +722,8 @@ def transform(df):
             # , ["cl.backtrack_level_hist", "_per_cl.backtrack_level_hist"]
             , ["cl.branch_depth_hist_queue", "_per_cl.branch_depth_hist_queue"]
             , ["cl.antec_overlap_hist", "_per_cl.antec_overlap_hist"]
-            # , ["cl.num_total_lits_antecedents", "_per_cl.num_total_lits_antecedents"]
+            , ["cl.antecedents_avg_size", "_per_cl.antecedents_avg_size"]
+            , ["cl.num_antecedents", "_per_cl.num_antecedents"]
             # , ["cl.num_overlap_literals", "_per_cl.num_overlap_literals"]
             # , ["rst_cur.resolutions", "per_rst_cur.resolutions"]
 

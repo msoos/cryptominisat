@@ -102,6 +102,8 @@ public:
         , uint64_t conflicts_this_restart
         , const std::string& rest_type
         , const SearchHist& hist
+        , const bool decision_cl
+        , const bool ternary_resol_cl
     ) override;
 
     void var_data(
