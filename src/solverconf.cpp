@@ -126,7 +126,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , dump_individual_restarts_and_clauses(true)
         , dump_individual_cldata_ratio(0.005)
         , sql_overwrite_file(0)
-        , lock_for_data_gen_ratio(0.2)
+        , lock_for_data_gen_ratio(0.5)
 
         //Var-elim
         , doVarElim        (true)
