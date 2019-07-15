@@ -126,8 +126,8 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     set_up_sql_writer();
     next_lev1_reduce = conf.every_lev1_reduce;
     next_lev2_reduce =  conf.every_lev2_reduce;
-    #ifdef FINAL_PREDICTOR
-    next_lev3_reduce =  conf.every_lev4_reduce;
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    next_lev3_reduce =  conf.every_lev3_reduce;
     #endif
 
     check_xor_cut_config_sanity();

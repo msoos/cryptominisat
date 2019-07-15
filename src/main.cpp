@@ -391,9 +391,9 @@ void Main::add_supported_options()
         , "Reduce lev1 clauses every N")
     ("everylev2", po::value(&conf.every_lev2_reduce)->default_value(conf.every_lev2_reduce)
         , "Reduce lev2 clauses every N")
-    #ifdef FINAL_PREDICTOR
-    ("everylev4", po::value(&conf.every_lev4_reduce)->default_value(conf.every_lev4_reduce)
-        , "Reduce final predictor (lev4) clauses every N")
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    ("everylev4", po::value(&conf.every_lev3_reduce)->default_value(conf.every_lev3_reduce)
+        , "Reduce final predictor (lev3) clauses every N, and produce data at every N in case of STATS_NEEDED")
     #endif
     ("lev1usewithin", po::value(&conf.must_touch_lev1_within)->default_value(conf.must_touch_lev1_within)
         , "Learnt clause must be used in lev1 within this timeframe or be dropped to lev2")

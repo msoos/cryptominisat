@@ -2176,7 +2176,7 @@ void Searcher::reset_temp_cl_num()
 void Searcher::reduce_db_if_needed()
 {
     #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
-    if (conf.every_lev4_reduce != 0
+    if (conf.every_lev3_reduce != 0
         && sumConflicts >= next_lev3_reduce
     ) {
         #ifdef STATS_NEEDED
@@ -2188,7 +2188,7 @@ void Searcher::reduce_db_if_needed()
         solver->reduceDB->handle_lev4_final_predictor();
         cl_alloc.consolidate(solver);
         #endif
-        next_lev3_reduce = sumConflicts + conf.every_lev4_reduce;
+        next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
     }
     #endif
 
