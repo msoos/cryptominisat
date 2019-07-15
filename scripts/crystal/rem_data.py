@@ -24,6 +24,7 @@ import optparse
 import time
 import os.path
 
+
 class QueryHelper:
     def __init__(self, dbfname):
         if not os.path.isfile(dbfname):
@@ -39,6 +40,7 @@ class QueryHelper:
     def __exit__(self, exc_type, exc_value, traceback):
         self.conn.commit()
         self.conn.close()
+
 
 class QueryDatRem(QueryHelper):
     def __init__(self, dbfname):

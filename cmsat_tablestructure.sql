@@ -163,6 +163,8 @@ CREATE TABLE `clauseStats` (
   `num_antecedents` int(20) NOT NULL,
   `num_total_lits_antecedents` int(20) NOT NULL,
   `antecedents_avg_size` float(20) NOT NULL,
+  `decision_cl` int(20) NOT NULL,
+  `ternary_resol_cl` int(20) NOT NULL,
 
   `backtrack_level` int(20) NOT NULL,
   `decision_level` int(20) NOT NULL,

@@ -126,6 +126,9 @@ Solver::Solver(const SolverConf *_conf, std::atomic<bool>* _must_interrupt_inter
     set_up_sql_writer();
     next_lev1_reduce = conf.every_lev1_reduce;
     next_lev2_reduce =  conf.every_lev2_reduce;
+    #ifdef FINAL_PREDICTOR
+    next_lev3_reduce =  conf.every_lev4_reduce;
+    #endif
 
     check_xor_cut_config_sanity();
 }
@@ -735,6 +738,7 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
         if (!red) {
             longIrredCls.push_back(offset);
         } else {
+            #ifndef FINAL_PREDICTOR
             cl->stats.which_red_array = 2;
             if (cl->stats.glue <= conf.glue_put_lev0_if_below_or_eq) {
                 cl->stats.which_red_array = 0;
@@ -743,9 +747,8 @@ bool Solver::addClauseInt(vector<Lit>& ps, bool red)
             ) {
                 cl->stats.which_red_array = 1;
             }
-            #ifdef FINAL_PREDICTOR_TOTAL
-            if (cl->stats.which_red_array != 0)
-                cl->stats.which_red_array = 1;
+            #else
+            cl->stats.which_red_array = 3;
             #endif
             longRedCls[cl->stats.which_red_array].push_back(offset);
         }

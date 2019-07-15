@@ -110,11 +110,6 @@ void ReduceDB::sort_red_cls(ClauseClean clean_type)
 //kept no. of clauses as other solvers do
 void ReduceDB::handle_lev2()
 {
-    #ifdef FINAL_PREDICTOR
-    assert(false);
-    #endif
-
-    nbReduceDB_lev1++;
     solver->dump_memory_stats_to_sql();
 
     const double myTime = cpuTime();
@@ -209,8 +204,8 @@ void ReduceDB::dump_sql_cl_data(
                 , locked
                 , cl
                 , cur_rst_type
-                , act_ranking_top_10
-                , i
+                , act_ranking_top_10+1
+                , i+1
             );
             added_to_db++;
             cl->stats.dump_number++;
@@ -230,12 +225,7 @@ void ReduceDB::dump_sql_cl_data(
 
 void ReduceDB::handle_lev1()
 {
-    #ifdef FINAL_PREDICTOR
-    assert(false);
-    #endif
-
     assert(delayed_clause_free.empty());
-    nbReduceDB_lev1++;
     uint32_t moved_w0 = 0;
     uint32_t used_recently = 0;
     uint32_t non_recent_use = 0;
@@ -324,10 +314,9 @@ void ReduceDB::handle_lev1()
 }
 
 #ifdef FINAL_PREDICTOR
-void ReduceDB::handle_lev1_final_predictor()
+void ReduceDB::handle_lev4_final_predictor()
 {
     assert(delayed_clause_free.empty());
-    nbReduceDB_lev1++;
     uint32_t deleted = 0;
     uint32_t kept_short = 0;
     uint32_t kept_locked = 0;
@@ -339,14 +328,10 @@ void ReduceDB::handle_lev1_final_predictor()
     uint32_t moved_w0 = 0;
     uint32_t marked_long_keep = 0;
     uint32_t kept_long = 0;
-
     uint32_t tot_short_keep = 0;
 
-    #ifdef FINAL_PREDICTOR_TOTAL
-    assert(solver->conf.glue_put_lev0_if_below_or_eq > 0 || solver->longRedCls[0].size() == 0);
-    assert(solver->longRedCls[2].size() == 0);
-    #endif
-    std::sort(solver->longRedCls[1].begin(), solver->longRedCls[1].end(), SortRedClsAct(solver->cl_alloc));
+    std::sort(solver->longRedCls[3].begin(), solver->longRedCls[3].end(),
+              SortRedClsAct(solver->cl_alloc));
 
     const Clustering* long_clust = get_long_cluster(solver->conf.pred_conf_long);
     if (long_clust == NULL) {
@@ -367,17 +352,17 @@ void ReduceDB::handle_lev1_final_predictor()
 
     size_t j = 0;
     for(size_t i = 0
-        ; i < solver->longRedCls[1].size()
+        ; i < solver->longRedCls[3].size()
         ; i++
     ) {
-        const ClOffset offset = solver->longRedCls[1][i];
+        const ClOffset offset = solver->longRedCls[3][i];
         Clause* cl = solver->cl_alloc.ptr(offset);
 
         if (cl->stats.which_red_array == 0) {
             solver->longRedCls[0].push_back(offset);
             moved_w0++;
         } else {
-            const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)solver->longRedCls[1].size()/10.0));
+            const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)solver->longRedCls[3].size()/10.0));
 
             uint32_t last_touched_diff;
             if (cl->stats.last_touched == 0) {
@@ -447,7 +432,7 @@ void ReduceDB::handle_lev1_final_predictor()
                     assert(short_keep);
                     kept_short++;
                 }
-                solver->longRedCls[1][j++] = offset;
+                solver->longRedCls[3][j++] = offset;
                 tot_dumpno += cl->stats.dump_number;
                 dumpno_zero += (cl->stats.dump_number == 0);
                 dumpno_nonz += (cl->stats.dump_number != 0);
@@ -459,7 +444,7 @@ void ReduceDB::handle_lev1_final_predictor()
             }
         }
     }
-    solver->longRedCls[1].resize(j);
+    solver->longRedCls[3].resize(j);
 
     //Cleanup
     solver->clean_occur_from_removed_clauses_only_smudged();
@@ -489,7 +474,7 @@ void ReduceDB::handle_lev1_final_predictor()
 
         cout << "c [DBCL pred]"
         << " avg dumpno: " << std::fixed << std::setprecision(2)
-        << ratio_for_stat(tot_dumpno, solver->longRedCls[1].size())
+        << ratio_for_stat(tot_dumpno, solver->longRedCls[3].size())
         << " dumpno_zero: "   << print_value_kilo_mega(dumpno_zero)
         << " dumpno_nonz: "   << print_value_kilo_mega(dumpno_nonz)
         << " tot_short_keep:" << print_value_kilo_mega(tot_short_keep)

@@ -79,7 +79,11 @@ public:
         assert(_must_interrupt_inter != NULL);
         must_interrupt_inter = _must_interrupt_inter;
 
+        #ifdef FINAL_PREDICTOR
+        longRedCls.resize(4);
+        #else
         longRedCls.resize(3);
+        #endif
     }
 
     virtual ~CNF()

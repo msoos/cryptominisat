@@ -387,14 +387,17 @@ static bool {funcname}(
         return precision, recall, accuracy
 
     def one_classifier(self, features, to_predict, final):
+        print("-> Number of features  :", len(features))
+        print("-> Number of datapoints:", self.df.shape)
+        print("-> Predicting          :", to_predict)
+
         # get smaller part to work on
         # also, copy it so we don't get warning about setting a slice of a DF
-        _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
-        df = df_tmp.copy()
-
-        print("-> Number of features  :", len(features))
-        print("-> Number of datapoints:", df.shape)
-        print("-> Predicting          :", to_predict)
+        if options.only_pecr >= 0.98:
+            df = self.df.copy()
+        else:
+            _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
+            df = df_tmp.copy()
 
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)
@@ -610,7 +613,7 @@ static bool {funcname}(
     def learn(self):
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
-            features, ["x.num_used", "x.class", "x.lifetime", "fname", "clust", "sum_cl_use"])
+            features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "clust", "sum_cl_use"])
         if options.no_rdb1:
             features = self.rem_features(features, ["rdb1", "rdb.rel"])
             features = self.rem_features(features, ["rdb.rel"])
@@ -696,11 +699,8 @@ class Clustering:
         df.loc[:, ('rdb0.cur_restart_type')] = \
             df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
 
-        df.loc[:, ('rst_cur_dat.restart_type')] = \
-            df.loc[:, ('rst_cur_dat.restart_type')].map(values2nums)
-
-        df.loc[:, ('rst.restart_type')] = \
-            df.loc[:, ('rst.restart_type')].map(values2nums)
+        df.loc[:, ('rst_cur.restart_type')] = \
+            df.loc[:, ('rst_cur.restart_type')].map(values2nums)
 
         if not options.no_rdb1:
             df.loc[:, ('rdb1.cur_restart_type')] = df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
@@ -1039,7 +1039,7 @@ if __name__ == "__main__":
                       dest="conf_num", help="Which predict configuration this is")
 
     # data filtering
-    parser.add_argument("--only", default=0.999, type=float,
+    parser.add_argument("--only", default=0.99, type=float,
                       dest="only_pecr", help="Only use this percentage of data")
     parser.add_argument("--nordb1", default=False, action="store_true",
                       dest="no_rdb1", help="Delete RDB1 data")
@@ -1075,10 +1075,8 @@ if __name__ == "__main__":
                       dest="final_is_logreg", help="Final predictor should be a logistic regression")
     parser.add_argument("--forest", default=False, action="store_true",
                       dest="final_is_forest", help="Final predictor should be a forest")
-
     parser.add_argument("--numtrees", default=5, type=int,
                       dest="num_trees", help="How many trees to generate for the forest")
-
     parser.add_argument("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
 

@@ -644,11 +644,11 @@ void OccSimplifier::add_back_to_solver()
         if (complete_clean_clause(*cl)) {
             solver->attachClause(*cl);
             if (cl->red()) {
-                #ifdef FINAL_PREDICTOR_TOTAL
-                assert(cl->stats.which_red_array == 1);
-                #else
                 assert(cl->stats.which_red_array < solver->longRedCls.size());
-                if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
+                #ifndef FINAL_PREDICTOR
+                if (cl->stats.locked_for_data_gen) {
+                    assert(cl->stats.which_red_array == 0);
+                } else if (cl->stats.glue <= solver->conf.glue_put_lev0_if_below_or_eq) {
                     cl->stats.which_red_array = 0;
                 } else if (
                     cl->stats.glue <= solver->conf.glue_put_lev1_if_below_or_eq
@@ -1796,8 +1796,8 @@ bool OccSimplifier::fill_occur()
     }
     //Sort, so we get the shortest ones in at least
     uint32_t arr_to_link = 0;
-    #ifdef FINAL_PREDICTOR_TOTAL
-    arr_to_link = 1;
+    #ifdef FINAL_PREDICTOR
+    arr_to_link = 3;
     #endif
     std::sort(solver->longRedCls[arr_to_link].begin(), solver->longRedCls[arr_to_link].end()
         , ClauseSizeSorter(solver->cl_alloc));

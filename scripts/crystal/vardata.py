@@ -188,11 +188,11 @@ class QueryVar (QueryHelper):
 
         df = pd.read_sql_query(q, self.conn)
         print("Relative data...")
-        df["var_data.inside_conflict_clause_during"] = \
+        df["var_data.inside_confl_cl_during"] = \
             df["var_data.inside_conflict_clause_at_fintime"]-df["var_data.inside_conflict_clause_at_picktime"]
-        df["var_data.inside_conflict_clause_antecedents_during"] = \
+        df["var_data.inside_confl_cl_antecs_during"] = \
             df["var_data.inside_conflict_clause_antecedents_at_fintime"]-df["var_data.inside_conflict_clause_antecedents_at_picktime"]
-        df["var_data.inside_conflict_clause_glue_during"] = \
+        df["var_data.inside_confl_cl_glue_during"] = \
             df["var_data.inside_conflict_clause_glue_at_fintime"]-df["var_data.inside_conflict_clause_glue_at_picktime"]
 
         df["var_data.sumDecisions_during"] = \
@@ -241,8 +241,8 @@ class QueryVar (QueryHelper):
 
             #inside
             df["var_data.inside_confl_cl"+name] = df["var_data.inside_confl_cl_during"]/divby
-            df["var_data.inside_confl_cl_ant"+name] = df["var_data.inside_confl_cl_antecedents_during"]/divby
-            df["var_data.inside_confl_cl_glue"+name] = df["var_data.inside_conflict_clause_glue_during"]/divby
+            df["var_data.inside_confl_cl_ant"+name] = df["var_data.inside_confl_cl_antecs_during"]/divby
+            df["var_data.inside_confl_cl_glue"+name] = df["var_data.inside_confl_cl_glue_during"]/divby
 
             # fun
             df["var_data.lbd_times_cls"+name] = \
@@ -257,7 +257,7 @@ class QueryVar (QueryHelper):
 
 
 
-        df["var_data.rel_inside_confl_cl_glue"] = df["var_data.inside_conflict_clause_glue_during"]/df["var_data.sumConflicts_during"]
+        df["var_data.rel_inside_confl_cl_glue"] = df["var_data.inside_confl_cl_glue_during"]/df["var_data.sumConflicts_during"]
 
         df["cl_below_per_dec_depth"]=df["var_data.clauses_below"]/df["var_data.dec_depth"]
         df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]

@@ -113,7 +113,8 @@ set -x
 # Obtain dynamic data in SQLite and DRAT info
 ########################
 cd "$FNAME-dir"
-../cryptominisat5 --decbased 0 --tern 0 --bva 0 --gluecut0 100 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
+# removed: --decbased 0 --tern 0 --bva 0 --gluecut0 100
+../cryptominisat5 --dumpdecformodel dec_list --cldatadumpratio "$RATIO" --clid --sql 2 --sqlitedb "$FNAMEOUT.db-raw" --drat "$FNAMEOUT.drat" --zero-exit-status "../$FNAME" | tee cms-pred-run.out
 # --bva 0 --updateglueonanalysis 0 --otfsubsume 0
 grep "c conflicts" cms-pred-run.out
 
@@ -169,6 +170,6 @@ done
 ./build_final_predictor.sh
 (
 cd "$FNAME-dir"
-../cryptominisat5 "../$FNAME" --decbased 0 --tern 0 --bva 0 --printsol 0 --predshort 2 --predlong 2 | tee cms-final-run.out
+../cryptominisat5 "../$FNAME" --printsol 0 --predshort 2 --predlong 2 | tee cms-final-run.out
 )
 exit

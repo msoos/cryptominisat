@@ -35,6 +35,11 @@ if (NOT WIN32)
     add_cxx_flag_if_supported("-Wextra-semi")
     add_cxx_flag_if_supported("-pedantic")
     #add_cxx_flag_if_supported("-Wdeprecated")
+
+    if (FINAL_PREDICTOR)
+    add_cxx_flag_if_supported("-Wno-unused-parameter")
+    add_cxx_flag_if_supported("-Wno-unused-but-set-variable")
+    endif()
 endif()
 add_sanitize_flags()
 

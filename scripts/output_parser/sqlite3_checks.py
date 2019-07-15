@@ -54,11 +54,11 @@ class Query:
     def find_time_outliers(self):
         print("----------- TIME OUTLIERS --------------")
         query = """
-        select tags.val, name, elapsed
+        select tags.val, timepassed.name, timepassed.elapsed
         from timepassed,tags
         where
-        name != 'search'
-        and elapsed > %d
+        timepassed.name != 'search'
+        and timepassed.elapsed > %d
         and tags.name="filename"
         and tags.runid = timepassed.runid
 
@@ -107,7 +107,7 @@ class Query:
         and memused.name == 'rss'
         and tags.runid = memused.runid
 
-        group by tags.tag, memused.name
+        group by tags.val, memused.name
         order by MB desc;
         """ % (options.maxmemory*2)
 
@@ -120,7 +120,7 @@ class Query:
     def find_worst_unaccounted_memory(self):
         print("----------- Largest RSS vs counted differences --------------")
         query = """
-        select tags.tag, a.`runtime`, abs((b.rss-a.mysum)/b.rss) as differperc,
+        select tags.val, a.`runtime`, abs((b.rss-a.mysum)/b.rss) as differperc,
             a.mysum as counted, b.rss as total
         from tags,
 
@@ -247,7 +247,7 @@ class Query:
 
         #last conflict > 60000, UNSAT, solvetime under 500s
         query = """
-        select tags.tag, a.maxtime, a.maxconfl, mems.maxmem
+        select tags.val, a.maxtime, a.maxconfl, mems.maxmem
 
         from
         (select runid, max(conflicts) as maxconfl, max(`runtime`) as maxtime

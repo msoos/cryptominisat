@@ -62,7 +62,7 @@ bool DistillerLong::distill(const bool red, bool fullstats)
         runStats.clear();
         int lev_to_distill = 0;
         #ifdef FINAL_PREDICTOR
-        lev_to_distill = 1;
+        lev_to_distill = 3;
         #endif
         if (!distill_long_cls_all(solver->longRedCls[lev_to_distill], 10.0)) {
             goto end;

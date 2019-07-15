@@ -166,6 +166,10 @@ class DLL_PUBLIC SolverConf
         //Otherwise we geometrically keep around max_temp_lev2_learnt_clauses*(inc**N)
         unsigned every_lev2_reduce;
 
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        unsigned every_lev4_reduce;
+        #endif
+
         uint32_t must_touch_lev1_within;
         unsigned  max_temp_lev2_learnt_clauses;
         double    inc_max_temp_lev2_red_cls;
@@ -243,6 +247,7 @@ class DLL_PUBLIC SolverConf
         bool      dump_individual_restarts_and_clauses;
         double    dump_individual_cldata_ratio;
         int       sql_overwrite_file;
+        double    lock_for_data_gen_ratio;
 
         //Steps
         double orig_step_size = 0.40;

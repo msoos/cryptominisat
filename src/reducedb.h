@@ -39,10 +39,10 @@ public:
     }
     void handle_lev1();
     void handle_lev2();
-    void handle_lev1_final_predictor();
+    #ifdef FINAL_PREDICTOR
+    void handle_lev4_final_predictor();
+    #endif
     void dump_sql_cl_data(const string& cur_rst_type);
-    uint64_t nbReduceDB_lev1 = 0;
-    uint64_t nbReduceDB_lev2 = 0;
 
 private:
     Solver* solver;

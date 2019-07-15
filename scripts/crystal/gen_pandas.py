@@ -87,6 +87,7 @@ class QueryFill (QueryHelper):
         create index `idxclid1-5` on `clauseStats` (`clauseID`, prev_restart);
         create index `idxclid2` on `clauseStats` (clauseID, `prev_restart`, conflicts, restarts, latest_satzilla_feature_calc);
         create index `idxclid4` on `restart` ( `restarts`);
+        create index `idxclid88` on `restart_dat_for_cl` ( `conflicts`);
         create index `idxclid5` on `tags` ( `name`);
         create index `idxclid6` on `reduceDB` (`clauseID`, conflicts, latest_satzilla_feature_calc);
         create index `idxclid6-2` on `reduceDB` (`clauseID`, `dump_no`);
@@ -173,7 +174,7 @@ class QueryFill (QueryHelper):
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts > rdb0.conflicts
+        and cl_last_in_solver.conflicts >= rdb0.conflicts
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -205,7 +206,7 @@ class QueryFill (QueryHelper):
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts > rdb0.conflicts + 10000
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + 10000
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -237,7 +238,7 @@ class QueryFill (QueryHelper):
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts > rdb0.conflicts + 100000
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + 100000
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
@@ -246,13 +247,6 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        drop index if exists `used_later_idx1`;
-        drop index if exists `used_later_idx2`;
-        drop index if exists `used_later10k_idx1`;
-        drop index if exists `used_later10k_idx2`;
-        drop index if exists `used_later100k_idx1`;
-        drop index if exists `used_later100k_idx2`;
-
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
         create index `used_later10k_idx1` on `used_later10k` (`clauseID`, rdb0conflicts);
@@ -318,35 +312,27 @@ class QueryCls (QueryHelper):
             , "replaced"
             , "eliminated"
             , "set"
+            , "free"
+            , "numredLits"
+            , "numIrredLits"
+            , "all_props"
             , "clauseIDstartInclusive"
             , "clauseIDendExclusive"]
-        self.restart_dat = self.query_fragment("restart", not_cols, "rst")
+        self.rst_cur = self.query_fragment("restart_dat_for_cl", not_cols, "rst_cur")
 
-        # cur restart data
+        # RDB data
         not_cols = [
             "simplifications"
             , "restarts"
             , "conflicts"
             , "latest_satzilla_feature_calc"
             , "runtime"
-            , "propagations"
-            , "decisions"
-            , "flipped"
-            , "replaced"
-            , "eliminated"
-            , "set"
-            , "clauseIDstartInclusive"
-            , "clauseIDendExclusive"]
-        self.rst_cur_dat = self.query_fragment("restart_dat_for_cl", not_cols, "rst_cur_dat")
-
-        # RDB data
-        not_cols = [
-            "simplifications"
-            , "restarts"
-            , "runtime"
             , "clauseID"
             , "glue"
-            , "size"]
+            , "size"
+            , "in_xor"
+            , "locked"
+            , "activity_rel"]
         self.rdb0_dat = self.query_fragment("reduceDB", not_cols, "rdb0")
 
         # clause data
@@ -355,6 +341,8 @@ class QueryCls (QueryHelper):
             , "restarts"
             , "prev_restart"
             , "latest_satzilla_feature_calc"
+            , "antecedents_long_red_age_max"
+            , "antecedents_long_red_age_min"
             , "clauseID"]
         self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
 
@@ -503,12 +491,11 @@ class QueryCls (QueryHelper):
         """
 
         # GOOD clauses
-        self.q_ok_select = """
+        self.q_select = """
         SELECT
         tags.val as `fname`
         {clause_dat}
-        {rst_cur_dat}
-        {restart_dat}
+        {rst_cur}
         {satzfeat_dat_cur}
         {rdb0_dat}
         {rdb1_dat}
@@ -518,12 +505,11 @@ class QueryCls (QueryHelper):
         , {case_stmt}
         """
 
-        self.q_ok = """
+        self.q = """
         FROM
         clauseStats as cl
         , sum_cl_use as sum_cl_use
-        , restart as rst
-        , restart_dat_for_cl as rst_cur_dat
+        , restart_dat_for_cl as rst_cur
         , satzilla_features as szfeat_cur
         , reduceDB as rdb0
         , reduceDB as rdb1
@@ -543,7 +529,7 @@ class QueryCls (QueryHelper):
         and rdb1.clauseID = cl.clauseID
         and rdb0.dump_no = rdb1.dump_no+1
 
-        and rst_cur_dat.conflicts = cl.conflicts
+        and rst_cur.conflicts = cl.conflicts
 
         and used_later10k.clauseID = cl.clauseID
         and used_later10k.rdb0conflicts = rdb0.conflicts
@@ -553,42 +539,26 @@ class QueryCls (QueryHelper):
 
         -- to avoid missing clauses and their missing data to affect results
         and cl_last_in_solver.clauseID = cl.clauseID
-        and rdb0.conflicts + 100000 > cl_last_in_solver.conflicts
+        and rdb0.conflicts + {del_at_least} < cl_last_in_solver.conflicts
 
         and cl.restarts > 1 -- to avoid history being invalid
         and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
-        and rst.restarts = cl.prev_restart
         and tags.name = "filename"
         """
 
         self.myformat = {
             "limit": 1000*1000*1000,
-            "restart_dat": self.restart_dat,
             "clause_dat": self.clause_dat,
             "satzfeat_dat_cur": self.satzfeat_dat.replace("szfeat.", "szfeat_cur."),
             "rdb0_dat": self.rdb0_dat,
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "sum_cl_use": self.sum_cl_use,
-            "rst_cur_dat": self.rst_cur_dat
+            "rst_cur": self.rst_cur
             }
 
     def add_dump_no_filter(self, q):
         q += self.dump_no_larger_than_zero
         return q
-
-    def get_ok(self):
-        t = time.time()
-
-        # calc OK -> which can be both BAD and OK
-        q = self.q_count + self.q_ok
-        q = self.add_dump_no_filter(q)
-        q = q.format(**self.myformat)
-        if options.dump_sql:
-            print("query:\n %s" % q)
-        cur = self.conn.execute(q.format(**self.myformat))
-        num_lines = int(cur.fetchone()[0])
-        print("Num datapoints (K): %-3.5f T: %-3.1f" % ((num_lines/1000.0), time.time()-t))
-        return num_lines
 
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
@@ -670,9 +640,11 @@ class QueryCls (QueryHelper):
 
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k.format(**subformat)
+            self.myformat["del_at_least"] = 10000
             fixed_mult = 1.0
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k.format(**subformat)
+            self.myformat["del_at_least"] = 100000
             fixed_mult = 0.2
 
         print("Fixed multiplier set to  %s " % fixed_mult)
@@ -683,7 +655,7 @@ class QueryCls (QueryHelper):
             this_fixed *= fixed_mult
         print("this_fixed is set to:", this_fixed)
 
-        q = self.q_ok_select + self.q_ok
+        q = self.q_select + self.q
         q = self.add_dump_no_filter(q)
         self.myformat["limit"] = this_fixed
 
@@ -715,103 +687,92 @@ def transform(df):
 
     # relative overlaps
     print("Relative overlaps...")
-    df["cl.num_overlap_literals_rel"] = df["cl.num_overlap_literals"]/df["cl.antec_overlap_hist"]
     df["cl.antec_num_total_lits_rel"] = df["cl.num_total_lits_antecedents"]/df["cl.antec_sum_size_hist"]
-    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"]/df["cl.num_antecedents_hist"]
-    df["rst.varset_neg_polar_ratio"] = df["rst.varSetNeg"]/(df["rst.varSetPos"]+df["rst.varSetNeg"])
-
-    # relative RDB
-    print("Relative RDB...")
-    df["rdb.rel_conflicts_made"] = (df["rdb0.conflicts_made"] > df["rdb1.conflicts_made"]).astype(int)
-    df["rdb.rel_propagations_made"] = (df["rdb0.propagations_made"] > df["rdb1.propagations_made"]).astype(int)
-    df["rdb.rel_clause_looked_at"] = (df["rdb0.clause_looked_at"] > df["rdb1.clause_looked_at"]).astype(int)
-    df["rdb.rel_used_for_uip_creation"] = (df["rdb0.used_for_uip_creation"] > df["rdb1.used_for_uip_creation"]).astype(int)
-    df["rdb.rel_last_touched_diff"] = (df["rdb0.last_touched_diff"] > df["rdb1.last_touched_diff"]).astype(int)
-    df["rdb.rel_activity_rel"] = (df["rdb0.activity_rel"] > df["rdb1.activity_rel"]).astype(int)
 
     # ************
     # TODO decision level and branch depth are the same, right???
     # ************
     print("size/glue/trail rel...")
-    df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
-    df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
-    df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
-    df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
+    # df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
+    # df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
+    # df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
+    #df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
     df["cl.branch_depth_rel_queue"] = df["cl.decision_level"]/df["cl.branch_depth_hist_queue"]
 
-    # smaller-than larger-than for glue and size
-    print("smaller-than larger-than for glue and size...")
-    df["cl.size_smaller_than_hist"] = (df["cl.size"] < df["cl.size_hist"]).astype(int)
-    df["cl.glue_smaller_than_hist"] = (df["cl.glue"] < df["cl.glue_hist"]).astype(int)
-    df["cl.glue_smaller_than_hist_lt"] = (df["cl.glue"] < df["cl.glue_hist_long"]).astype(int)
-    df["cl.glue_smaller_than_hist_queue"] = (df["cl.glue"] < df["cl.glue_hist_queue"]).astype(int)
+    df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
+    df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
 
-    # relative decisions
-    print("relative decisions...")
-    df["cl.decision_level_rel"] = df["cl.decision_level"]/df["cl.decision_level_hist"]
-    df["cl.decision_level_pre1_rel"] = df["cl.decision_level_pre1"]/df["cl.decision_level_hist"]
-    df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
-    df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
-    df["cl.decision_level_pre2_rel"] = df["cl.decision_level_pre2"]/df["cl.decision_level_hist"]
-    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"]/df["cl.decision_level_hist"]
+    orig_cols = list(df)
+    for col in orig_cols:
+        if ("rdb0" in col) and "restart_type" not in col:
+            col2 = col.replace("rdb0", "rdb1")
+            cboth = col.replace("rdb0", "rdb0_plus_rdb1")
+            df[cboth]=df[col]+df[col2]
 
-    # relative props
-    print("relative props...")
-    df["rst.all_props"] = df["rst.propBinRed"] + df["rst.propBinIrred"] + df["rst.propLongRed"] + df["rst.propLongIrred"]
-    df["rst.propBinRed_ratio"] = df["rst.propBinRed"]/df["rst.all_props"]
-    df["rst.propBinIrred_ratio"] = df["rst.propBinIrred"]/df["rst.all_props"]
-    df["rst.propLongRed_ratio"] = df["rst.propLongRed"]/df["rst.all_props"]
-    df["rst.propLongIrred_ratio"] = df["rst.propLongIrred"]/df["rst.all_props"]
+    cols = list(df)
+    for col in cols:
+        todiv = [
+            ["cl.size_hist", "_per_cl.size_hist"]
+            , ["cl.glue_hist", "_per_cl.glue_hist"]
+            , ["cl.glue_hist_queue", "_per_cl.glue_hist_queue"]
+            , ["cl.glue_hist_long", "_per_cl.glue_hist_long"]
+            # , ["cl.decision_level_hist", "_per_cl.decision_level_hist"]
+            , ["cl.num_antecedents_hist", "_per_cl.num_antecedents_hist"]
+            # , ["cl.trail_depth_level_hist", "_per_cl.trail_depth_level_hist"]
+            # , ["cl.backtrack_level_hist", "_per_cl.backtrack_level_hist"]
+            , ["cl.branch_depth_hist_queue", "_per_cl.branch_depth_hist_queue"]
+            , ["cl.antec_overlap_hist", "_per_cl.antec_overlap_hist"]
+            # , ["cl.num_total_lits_antecedents", "_per_cl.num_total_lits_antecedents"]
+            # , ["cl.num_overlap_literals", "_per_cl.num_overlap_literals"]
+            # , ["rst_cur.resolutions", "per_rst_cur.resolutions"]
 
-    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["rst.free"]
+            # produced NA -- BEFORE, TODO: add them again
+            , ["rdb0.act_ranking_top_10", "_per_rdb0.act_ranking_top_10"]
+            , ["rdb0.act_ranking", "_per_rdb0.act_ranking"]
 
-    # relative resolutions
-    print("relative resolutions...")
-    df["rst.resolBinIrred_ratio"] = df["rst.resolBinIrred"]/df["rst.resolutions"]
-    df["rst.resolBinRed_ratio"] = df["rst.resolBinRed"]/df["rst.resolutions"]
-    df["rst.resolLRed_ratio"] = df["rst.resolLRed"]/df["rst.resolutions"]
-    df["rst.resolLIrred_ratio"] = df["rst.resolLIrred"]/df["rst.resolutions"]
+            # produces_NA
+            #, ["rst_cur.all_props", "_per_rst_cur.all_props"]
+            #, ["rdb0.last_touched_diff", "_per_rdb0.last_touched_diff"]
+            #, ["rdb0.sum_delta_confl_uip1_used", "_per_rdb0.sum_delta_confl_uip1_used"]
+            #, ["rdb0.used_for_uip_creation", "_per_rdb0.used_for_uip_creation"]
+            #, ["rdb0.conflicts", "_per_rdb0.conflicts"]
+            # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
+            ]
+        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+            for divper,name in todiv:
+                df[col+name] = df[col]/df[divper]
+                df[col+"_smaller_than_"+divper] = (df[col]<df[divper]).astype(int)
+                pass
+    # relative RDB
+    print("Relative RDB...")
+    for col in orig_cols:
+        if "rdb0" in col and "restart_type" not in col:
+            rdb0 = col
+            rdb1 = col.replace("rdb0", "rdb1")
+            name_per = col.replace("rdb0", "rdb0_per_rdb1")
+            name_larger = col.replace("rdb0", "rdb0_larger_rdb1")
+            df[name_larger]=(df[rdb0]>df[rdb1]).astype(int)
 
-    df["cl.num_antecedents_rel"] = df["cl.num_antecedents"] / df["cl.num_antecedents_hist"]
-    df["cl.decision_level_rel"] = df["cl.decision_level"] / df["cl.decision_level_hist"]
-    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"] / df["cl.trail_depth_level_hist"]
-    df["cl.backtrack_level_rel"] = df["cl.backtrack_level"] / df["cl.backtrack_level_hist"]
+            raw_col = col.replace("rdb0.", "")
+            if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff"]:
+                df[name_per]=df[rdb0]/df[rdb1]
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")
-    df["cl.decision_level_smaller_than_hist"] = (df["cl.decision_level"] < df["cl.decision_level_hist"]).astype(int)
-    df["cl.backtrack_level_smaller_than_hist"] = (df["cl.backtrack_level"] < df["cl.backtrack_level_hist"]).astype(int)
-    df["cl.trail_depth_level_smaller_than_hist"] = (df["cl.trail_depth_level"] < df["cl.trail_depth_level_hist"]).astype(int)
-    df["cl.num_antecedents_smaller_than_hist"] = (df["cl.num_antecedents"] < df["cl.num_antecedents_hist"]).astype(int)
     df["cl.antec_sum_size_smaller_than_hist"] = (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
+
     df["cl.antec_overlap_smaller_than_hist"] = (df["cl.antec_overlap_hist"] < df["cl.num_overlap_literals"]).astype(int)
-    df["cl.overlap_smaller_than_hist"] = (df["cl.num_overlap_literals"]<df["cl.antec_overlap_hist"]).astype(int)
-    df["cl.branch_smaller_than_hist_queue"] = (df["cl.decision_level"]<df["cl.branch_depth_hist_queue"]).astype(int)
 
-    # avg conf/used_per confl
-    print("avg conf/used_per confl 1...")
-    # df["rdb0.avg_confl"] = df["rdb0.sum_uip1_used"]/df["rdb0.sum_delta_confl_uip1_used"]
-    # df["rdb0.avg_confl"].fillna(0, inplace=True)
-
-    print("avg conf/used_per confl 2...")
-    # df["rdb0.used_per_confl"] = df["rdb0.sum_uip1_used"]/(df["rdb0.conflicts"] - df["cl.conflicts"])
-    # df["rdb0.used_per_confl"].fillna(0, inplace=True)
-
-    print("flatten/list...")
-    old = set(df.columns.values.flatten().tolist())
-    df = df.dropna(how="all")
-    new = set(df.columns.values.flatten().tolist())
-    if len(old - new) > 0:
-        print("ERROR: a NaN number turned up")
-        print("columns: ", (old - new))
-        assert(False)
-        exit(-1)
-
-    # making sure "x.class" is the last one
-    new_no_class = list(new)
-    new_no_class.remove("x.class")
-    df = df[new_no_class + ["x.class"]]
+    #print("flatten/list...")
+    #old = set(df.columns.values.flatten().tolist())
+    #df = df.dropna(how="all")
+    #new = set(df.columns.values.flatten().tolist())
+    #if len(old - new) > 0:
+        #print("ERROR: a NaN number turned up")
+        #print("columns: ", (old - new))
+        #assert(False)
+        #exit(-1)
 
     return df
 

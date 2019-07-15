@@ -113,8 +113,10 @@ struct ClauseStats
     ClauseStats()
     {
         glue = 1000;
-        #ifdef FINAL_PREDICTOR_TOTAL
-        which_red_array = 1;
+        is_decision_cl = false;
+        is_ternary_resol_cl = false;
+        #ifdef FINAL_PREDICTOR
+        which_red_array = 3;
         #else
         which_red_array = 2;
         #endif
@@ -122,14 +124,19 @@ struct ClauseStats
         ttl = 0;
         marked_clause = false;
         drop_if_not_used = false;
+        used_for_uip_creation = 0;
+        locked_for_data_gen = 0;
     }
 
     //Stored data
-    uint32_t glue:26;
+    uint32_t glue:22;
     uint32_t marked_clause:1;
     uint32_t ttl:2;
-    uint32_t which_red_array:2;
+    uint32_t which_red_array:3;
+    uint32_t is_decision_cl:1;
+    uint32_t is_ternary_resol_cl:1;
     uint32_t drop_if_not_used:1;
+    uint32_t locked_for_data_gen:1;
     union {
         float   activity;
         uint32_t hash_val;
@@ -187,6 +194,7 @@ struct ClauseStats
     {
         ttl = 0;
         used_for_uip_creation = 0;
+        locked_for_data_gen = 0;
         #if defined(STATS_NEEDED)
         clause_looked_at = 0;
         propagations_made = 0;

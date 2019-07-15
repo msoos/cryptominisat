@@ -378,10 +378,12 @@ void Searcher::update_clause_glue_from_analysis(Clause* cl)
         }
         cl->stats.glue = new_glue;
 
-        //move to lev0 if very low glue
-        if (new_glue <= conf.glue_put_lev0_if_below_or_eq
+        if (cl->stats.locked_for_data_gen) {
+            assert(cl->stats.which_red_array == 0);
+        } else if (new_glue <= conf.glue_put_lev0_if_below_or_eq
             && cl->stats.which_red_array >= 1
         ) {
+            //move to lev0 if very low glue
             cl->stats.which_red_array = 0;
         } else {
             //move to lev1 if low glue
@@ -1800,7 +1802,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             ClOffset offset = cl_alloc.get_offset(cl);
             unsigned which_arr = 2;
 
-            if (glue <= conf.glue_put_lev0_if_below_or_eq) {
+            #ifdef STATS_NEEDED
+            cl->stats.locked_for_data_gen =
+                mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
+            #endif
+
+            if (cl->stats.locked_for_data_gen) {
+                which_arr = 0;
+            } else if (glue <= conf.glue_put_lev0_if_below_or_eq) {
                 which_arr = 0;
             } else if (
                 glue <= conf.glue_put_lev1_if_below_or_eq
@@ -1808,17 +1817,16 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             ) {
                 which_arr = 1;
             } else {
+                #ifdef FINAL_PREDICTOR
+                which_arr = 3;
+                #else
                 which_arr = 2;
+                #endif
             }
 
             if (which_arr == 0) {
                 stats.red_cl_in_which0++;
             }
-
-            #if defined(FINAL_PREDICTOR)
-            if (which_arr != 0)
-                which_arr = 1;
-            #endif
 
             cl->stats.which_red_array = which_arr;
             solver->longRedCls[cl->stats.which_red_array].push_back(offset);
@@ -2151,21 +2159,26 @@ void Searcher::reset_temp_cl_num()
 
 void Searcher::reduce_db_if_needed()
 {
-    #ifdef FINAL_PREDICTOR
-    if (conf.every_lev1_reduce != 0
-        && sumConflicts >= next_lev1_reduce
+    #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+    if (conf.every_lev4_reduce != 0
+        && sumConflicts >= next_lev3_reduce
     ) {
-        solver->reduceDB->handle_lev1_final_predictor();
-        next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
-        cl_alloc.consolidate(solver);
-    }
-    #else
-    if (conf.every_lev1_reduce != 0
-        && sumConflicts >= next_lev1_reduce
-    ) {
+        #ifdef STATS_NEEDED
         if (solver->sqlStats) {
             solver->reduceDB->dump_sql_cl_data(restart_type_to_short_string(params.rest_type));
         }
+        #endif
+        #ifdef FINAL_PREDICTOR
+        solver->reduceDB->handle_lev4_final_predictor();
+        cl_alloc.consolidate(solver);
+        #endif
+        next_lev3_reduce = sumConflicts + conf.every_lev4_reduce;
+    }
+    #endif
+
+    if (conf.every_lev1_reduce != 0
+        && sumConflicts >= next_lev1_reduce
+    ) {
         solver->reduceDB->handle_lev1();
         next_lev1_reduce = sumConflicts + conf.every_lev1_reduce;
     }
@@ -2183,7 +2196,6 @@ void Searcher::reduce_db_if_needed()
             cl_alloc.consolidate(solver);
         }
     }
-    #endif
 }
 
 bool Searcher::clean_clauses_if_needed()

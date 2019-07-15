@@ -38,18 +38,21 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //Clause cleaning
         , every_lev1_reduce(10000) // kept for a while then moved to lev2
         , every_lev2_reduce(15000) // cleared regularly
+        #if defined(FINAL_PREDICTOR) || defined(STATS_NEEDED)
+        , every_lev4_reduce(10000)
+        #endif
         , must_touch_lev1_within(30000)
 
         , max_temp_lev2_learnt_clauses(30000) //only used if every_lev2_reduce==0
         , inc_max_temp_lev2_red_cls(1.0)      //only used if every_lev2_reduce==0
         , protect_cl_if_improved_glue_below_this_glue_for_one_turn(30)
-        #ifndef FINAL_PREDICTOR_TOTAL
-        , glue_put_lev0_if_below_or_eq(3) // never removed
+        #ifdef FINAL_PREDICTOR
+        , glue_put_lev0_if_below_or_eq(0)
+        , glue_put_lev1_if_below_or_eq(0)
         #else
-        , glue_put_lev0_if_below_or_eq(0) // never removed
-        #endif
+        , glue_put_lev0_if_below_or_eq(3) // never removed
         , glue_put_lev1_if_below_or_eq(6) // kept for a while then moved to lev2
-
+        #endif
         , clause_decay(0.999)
 
         // validated with out-pred-final-8644010.wlm01-2-drat0 vs out-pred-final-8644010.wlm01-1-drat0
@@ -123,6 +126,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , dump_individual_restarts_and_clauses(true)
         , dump_individual_cldata_ratio(0.005)
         , sql_overwrite_file(0)
+        , lock_for_data_gen_ratio(0.2)
 
         //Var-elim
         , doVarElim        (true)
