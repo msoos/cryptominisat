@@ -454,6 +454,7 @@ static bool {funcname}(
 
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                     n_estimators=options.num_trees,
+                    max_features="log2",
                     class_weight={"OK": prefer_ok, "BAD": 1},
                     min_samples_leaf=split_point)
 
@@ -470,7 +471,9 @@ static bool {funcname}(
                 clf = sklearn.ensemble.VotingClassifier(mylist)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=80,
+                n_estimators=400,
+                max_features="log2",
+                class_weight={"OK": prefer_ok, "BAD": 1},
                 min_samples_leaf=split_point)
 
         clf.fit(X_train, y_train)
