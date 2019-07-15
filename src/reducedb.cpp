@@ -194,7 +194,7 @@ void ReduceDB::dump_sql_cl_data(
         Clause* cl = solver->cl_alloc.ptr(offs);
 
         //Only if selected to be dumped
-        if (cl->stats.dump_number != std::numeric_limits<uint32_t>::max()) {
+        if (cl->stats.dump_number != std::numeric_limits<uint16_t>::max()) {
             const bool locked = solver->clause_locked(*cl, offs);
             const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
             //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
