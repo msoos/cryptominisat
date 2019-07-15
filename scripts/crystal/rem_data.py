@@ -113,8 +113,10 @@ class QueryDatRem(QueryHelper):
     def fill_used_cl_ids_table(self):
         t = time.time()
         if not options.fair:
+            self.insert_into_used_cls_ids(30, options.limit/5)
             self.insert_into_used_cls_ids(20, options.limit/4)
-            self.insert_into_used_cls_ids(5, options.limit/2)
+            self.insert_into_used_cls_ids(5, options.limit/3)
+            self.insert_into_used_cls_ids(1, options.limit/2)
 
         self.insert_into_used_cls_ids(0, options.limit)
 
@@ -334,11 +336,12 @@ class QueryDatRem(QueryHelper):
         print("Created only_keep_rdb T: %-3.2f s" % (time.time() - t))
 
         if not options.fair:
-            self.insert_into_only_keep_rdb(1, options.goal_rdb*0.3)
-            self.insert_into_only_keep_rdb(5, options.goal_rdb*0.1)
-            self.insert_into_only_keep_rdb(10, options.goal_rdb*0.05)
+            self.insert_into_only_keep_rdb(20, options.goal_rdb/5)
+            self.insert_into_only_keep_rdb(10, options.goal_rdb/5)
+            self.insert_into_only_keep_rdb(5, options.goal_rdb/3)
+            self.insert_into_only_keep_rdb(1, options.goal_rdb/2)
 
-        self.insert_into_only_keep_rdb(0, options.goal_rdb*0.6)
+        self.insert_into_only_keep_rdb(0, options.goal_rdb)
 
         t = time.time()
         ret = self.c.execute("select count() from only_keep_rdb")
