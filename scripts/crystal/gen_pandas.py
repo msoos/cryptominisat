@@ -200,15 +200,16 @@ class QueryFill (QueryHelper):
         -- reduceDB is always present, used_later may not be, hence left join
         on (ucl10k.clauseID = rdb0.clauseID
             and ucl10k.used_at > rdb0.conflicts
-            and ucl10k.used_at <= (rdb0.conflicts+10000))
+            and ucl10k.used_at <= (rdb0.conflicts+{short_duration}))
         , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + 10000
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + {short_duration}
 
-        group by rdb0.clauseID, rdb0.conflicts;"""
+        group by rdb0.clauseID, rdb0.conflicts;""".format(
+            short_duration=options.short_duration)
         self.c.execute(q)
         print("used_later_short filled T: %-3.2f s" % (time.time() - t))
 
@@ -232,15 +233,16 @@ class QueryFill (QueryHelper):
         -- reduceDB is always present, used_later may not be, hence left join
         on (ucl100k.clauseID = rdb0.clauseID
             and ucl100k.used_at > rdb0.conflicts
-            and ucl100k.used_at <= (rdb0.conflicts+100000))
+            and ucl100k.used_at <= (rdb0.conflicts+{long_duration}))
         , cl_last_in_solver
 
         WHERE
         rdb0.clauseID != 0
         and cl_last_in_solver.clauseID = rdb0.clauseID
-        and cl_last_in_solver.conflicts >= rdb0.conflicts + 100000
+        and cl_last_in_solver.conflicts >= rdb0.conflicts + {long_duration}
 
-        group by rdb0.clauseID, rdb0.conflicts;"""
+        group by rdb0.clauseID, rdb0.conflicts;""".format(
+            long_duration=options.long_duration)
         self.c.execute(q)
         print("used_later_long filled T: %-3.2f s" % (time.time() - t))
 
@@ -427,7 +429,7 @@ class QueryCls (QueryHelper):
             self.case_stmt_100k = """
             CASE WHEN
 
-            sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
+            sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
             (
                 -- used a lot over a wide range
                    (used_later_long.used_later_long > 10 and used_later.used_later > 20)
@@ -438,12 +440,12 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
         elif self.conf == 1:
             self.case_stmt_100k = """
             CASE WHEN
 
-            sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
+            sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
             (
                 -- used a lot over a wide range
                    (used_later_long.used_later_long > 13 and used_later.used_later > 24)
@@ -454,7 +456,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
         elif self.conf == 2:
             self.case_stmt_100k = """
             CASE WHEN
@@ -464,7 +466,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
         elif self.conf == 3:
             self.case_stmt_100k = """
             CASE WHEN
@@ -474,7 +476,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
         elif self.conf == 4:
             self.case_stmt_100k = """
             CASE WHEN
@@ -484,7 +486,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
 
         # GOOD clauses
         self.q_select = """
@@ -535,7 +537,7 @@ class QueryCls (QueryHelper):
 
         -- to avoid missing clauses and their missing data to affect results
         and cl_last_in_solver.clauseID = cl.clauseID
-        and rdb0.conflicts + {del_at_least} < cl_last_in_solver.conflicts
+        and rdb0.conflicts + {del_at_least} <= cl_last_in_solver.conflicts
 
         and cl.restarts > 1 -- to avoid history being invalid
         and szfeat_cur.latest_satzilla_feature_calc = rdb0.latest_satzilla_feature_calc
@@ -642,11 +644,11 @@ class QueryCls (QueryHelper):
 
         if long_or_short == "short":
             self.myformat["case_stmt"] = self.case_stmt_10k.format(**subformat)
-            self.myformat["del_at_least"] = 10000
+            self.myformat["del_at_least"] = options.short_duration
             fixed_mult = 1.0
         else:
             self.myformat["case_stmt"] = self.case_stmt_100k.format(**subformat)
-            self.myformat["del_at_least"] = 100000
+            self.myformat["del_at_least"] = options.long_duration
             fixed_mult = 0.2
 
         print("Fixed multiplier set to  %s " % fixed_mult)
@@ -920,6 +922,11 @@ if __name__ == "__main__":
 
     parser.add_option("--confs", default="0-0", type=str,
                       dest="confs", help="Configs to generate. Default: %default")
+
+    parser.add_option("--short", default="10000", type=str,
+                      dest="short_duration", help="Short duration. Default: %default")
+    parser.add_option("--long", default="50000", type=str,
+                      dest="long_duration", help="Long duration. Default: %default")
 
     (options, args) = parser.parse_args()
 

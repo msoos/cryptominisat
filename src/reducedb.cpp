@@ -313,7 +313,7 @@ void ReduceDB::handle_lev1()
 }
 
 #ifdef FINAL_PREDICTOR
-void ReduceDB::handle_lev4_final_predictor()
+void ReduceDB::handle_lev3_final_predictor()
 {
     assert(delayed_clause_free.empty());
     uint32_t deleted = 0;
@@ -381,7 +381,7 @@ void ReduceDB::handle_lev4_final_predictor()
                 , act_ranking_top_10
             )) {
                 marked_long_keep++;
-                cl->stats.locked_long = 10; //will be immediately decremented below
+                cl->stats.locked_long = 5; //will be immediately decremented below
             }
 
             const bool short_keep  = short_pred_keep(

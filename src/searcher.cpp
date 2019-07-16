@@ -2187,7 +2187,7 @@ void Searcher::reduce_db_if_needed()
         }
         #endif
         #ifdef FINAL_PREDICTOR
-        solver->reduceDB->handle_lev4_final_predictor();
+        solver->reduceDB->handle_lev3_final_predictor();
         cl_alloc.consolidate(solver);
         #endif
         next_lev3_reduce = sumConflicts + conf.every_lev3_reduce;
