@@ -486,10 +486,6 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
 
-        self.dump_no_larger_than_zero = """
-        and rdb0.dump_no > 0
-        """
-
         # GOOD clauses
         self.q_select = """
         SELECT
@@ -555,10 +551,6 @@ class QueryCls (QueryHelper):
             "sum_cl_use": self.sum_cl_use,
             "rst_cur": self.rst_cur
             }
-
-    def add_dump_no_filter(self, q):
-        q += self.dump_no_larger_than_zero
-        return q
 
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
@@ -666,19 +658,33 @@ class QueryCls (QueryHelper):
         print("this_fixed is set to:", this_fixed)
 
         q = self.q_select + self.q
-        q = self.add_dump_no_filter(q)
-        self.myformat["limit"] = this_fixed
 
         #get OK data
-        df_ok = self.one_query(q, "OK")
-        print("size of data:", df_ok.shape)
+        df = {}
+        for type_data in ["OK", "BAD"]:
+            df_parts = []
 
-        #get BAD data
-        df_bad = self.one_query(q, "BAD")
-        print("size of data:", df_bad.shape)
+            self.myformat["limit"] = this_fixed/2
+            extra = " and rdb0.dump_no = 1 "
+            df_parts.append(self.one_query(q + extra, type_data))
+            print("shape for %s: %s" % (extra, df_parts[0].shape))
+
+            self.myformat["limit"] = this_fixed/2
+            extra = " and rdb0.dump_no = 2 "
+            df_parts.append(self.one_query(q + extra, type_data))
+            print("shape for %s: %s" % (extra, df_parts[1].shape))
+
+            self.myformat["limit"] = this_fixed/2
+            extra = " and rdb0.dump_no > 2 "
+            df_parts.append(self.one_query(q + extra, type_data))
+            print("shape for %s: %s" % (extra, df_parts[2].shape))
+
+            df[type_data] = pd.concat(df_parts)
+            print("size of {type} data: {size}".format(
+                type=type_data, size=df[type_data].shape))
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df_ok, df_bad]), this_fixed
+        return True, pd.concat([df["OK"], df["BAD"]]), this_fixed
 
 
 def transform(df):
