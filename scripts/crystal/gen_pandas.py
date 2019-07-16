@@ -777,22 +777,22 @@ def transform(df):
 
     # satzilla stuff
     todiv = [
-        "szfeat.numVars",
-        "szfeat.numClauses",
-        "szfeat.var_cl_ratio",
-        "szfeat.binary",
-        "szfeat.horn",
-        "szfeat.avg_confl_size",
-        "szfeat.avg_branch_depth",
-        "szfeat.props_per_confl",
-        "szfeat.irred_glue_distr_mean"
+        "szfeat_cur.numVars",
+        "szfeat_cur.numClauses",
+        "szfeat_cur.var_cl_ratio",
+        "szfeat_cur.binary",
+        "szfeat_cur.horn",
+        "szfeat_cur.avg_confl_size",
+        "szfeat_cur.avg_branch_depth",
+        "szfeat_cur.red_glue_distr_mean"
         ]
     for col in orig_cols:
         if "szfeat" in col:
-            for divper in todiv and "min" not in todiv and "max" not in todiv:
-                df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
-                df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
-                pass
+            for divper in todiv:
+                if "min" not in todiv and "max" not in todiv:
+                    df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
+                    df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
+                    pass
 
     # relative RDB
     print("Relative RDB...")
