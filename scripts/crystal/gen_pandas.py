@@ -486,7 +486,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """.format(long_duration=options.long_duration)
+            """
 
         # GOOD clauses
         self.q_select = """
