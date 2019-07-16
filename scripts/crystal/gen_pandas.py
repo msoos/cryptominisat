@@ -781,7 +781,8 @@ def transform(df):
             df[name_larger]=(df[rdb0]>df[rdb1]).astype(int)
 
             raw_col = col.replace("rdb0.", "")
-            if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff"]:
+            if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
+                print(rdb0)
                 df[name_per]=df[rdb0]/df[rdb1]
 
     # smaller-or-greater comparisons
