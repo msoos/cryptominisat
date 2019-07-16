@@ -454,7 +454,7 @@ static bool {funcname}(
 
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                     n_estimators=options.num_trees,
-                    max_features="log2",
+                    max_features="sqrt",
                     class_weight={"OK": prefer_ok, "BAD": 1},
                     min_samples_leaf=split_point)
 
