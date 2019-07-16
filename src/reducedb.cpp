@@ -194,22 +194,23 @@ void ReduceDB::dump_sql_cl_data(
         Clause* cl = solver->cl_alloc.ptr(offs);
 
         //Only if selected to be dumped
-        if (cl->stats.dump_number != std::numeric_limits<uint16_t>::max()) {
-            const bool locked = solver->clause_locked(*cl, offs);
-            const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
-            //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
-            solver->sqlStats->reduceDB(
-                solver
-                , locked
-                , cl
-                , cur_rst_type
-                , act_ranking_top_10+1
-                , i+1
-            );
-            added_to_db++;
-            cl->stats.dump_number++;
-            cl->stats.reset_rdb_stats();
+        if (cl->stats.ID == 0) {
+            continue;
         }
+        const bool locked = solver->clause_locked(*cl, offs);
+        const uint32_t act_ranking_top_10 = std::ceil((double)i/((double)all_learnt.size()/10.0));
+        //cout << "Ranking top 10: " << act_ranking_top_10 << " act: " << cl->stats.activity << endl;
+        solver->sqlStats->reduceDB(
+            solver
+            , locked
+            , cl
+            , cur_rst_type
+            , act_ranking_top_10+1
+            , i+1
+        );
+        added_to_db++;
+        cl->stats.dump_number++;
+        cl->stats.reset_rdb_stats();
     }
     solver->sqlStats->end_transaction();
 
