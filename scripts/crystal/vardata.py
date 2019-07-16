@@ -28,6 +28,13 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
+import sklearn
+ver = sklearn.__version__.split(".")
+if int(ver[1]) < 20:
+    from sklearn.cross_validation import train_test_split
+else:
+    from sklearn.model_selection import train_test_split
+import sklearn.ensemble
 
 
 def dump_dataframe(df, name):
@@ -128,8 +135,89 @@ class QueryVar (QueryHelper):
 
         return ret
 
-    def create_vardata_df(self,fname):
+    def add_computed_features(self, df):
+        print("Relative data...")
+        cols = list(df)
+        for col in cols:
+            if "_at_fintime" in col:
+                during_name = col.replace("_at_fintime", "_during")
+                at_picktime_name = col.replace("_at_fintime", "_at_picktime")
+                if options.verbose:
+                    print("fintime name: ", col)
+                    print("picktime name: ", at_picktime_name)
+                df[during_name] = df[col]-df[at_picktime_name]
 
+        # remove stuff
+        del df["var_data_use.useful_clauses_used"]
+        del df["var_data_use.cls_marked"]
+
+        # more complicated
+        df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
+        df["var_data.propagated_per_sumprop"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
+
+        # remove picktime & fintime
+        cols = list(df)
+        for c in cols:
+            if "at_picktime" in c or "at_fintime" in c:
+                del df[c]
+
+        # per-conflicts, per-decisions, per-lits
+        names = [
+            "var_data.sumDecisions_during"
+            , "var_data.sumPropagations_during"
+            , "var_data.sumConflicts_during"
+            , "var_data.sumAntecedents_during"
+            , "var_data.sumConflictClauseLits_during"
+            , "var_data.sumAntecedentsLits_during"
+            , "var_data.sumClSize_during"
+            , "var_data.sumClLBD_during"
+            , "var_data.dec_depth"
+            ]
+
+        cols = list(df)
+        for col in cols:
+            if "restart_type" not in col and "x." not in col and "useful_clauses" not in col:
+                for name in names:
+                    if options.verbose:
+                        print("dividing col '%s' with '%s' " % (col, name))
+                    df["(" + col + "/" + name + ")"]=df[col]/df[name]
+
+        # remove sum
+        #cols = list(df)
+        #for c in cols:
+            #if c[0:3] == "sum":
+                #del df[c]
+
+        if True:
+            # remove these
+            torem = [
+                "var_data.propagated"
+                , "var_data.decided"
+                , "var_data.clauses_below"
+                , "var_data.dec_depth"
+                , "var_data.sumDecisions_during"
+                , "var_data.sumPropagations_during"
+                , "var_data.sumConflicts_during"
+                , "var_data.sumAntecedents_during"
+                , "var_data.sumAntecedentsLits_during"
+                , "var_data.sumConflictClauseLits_during"
+                , "var_data.sumDecisionBasedCl_during"
+                , "var_data.sumClLBD_during"
+                , "var_data.sumClSize_during"
+                ]
+            cols = list(df)
+
+            # also remove rst
+            for col in cols:
+                if "rst." in col:
+                    torem.append(col)
+                    pass
+
+            # actually remove
+            for x in torem:
+                del df[x]
+
+    def create_vardata_df(self):
         not_cols = [
             "clid_start_incl"
             , "clid_end_notincl"
@@ -137,6 +225,7 @@ class QueryVar (QueryHelper):
             , "propagated_pos"
             , "restarts"
             , "conflicts"
+            , "var"
             , "propagated_pos_perc"]
         var_data = self.query_fragment("varData", not_cols, "var_data")
 
@@ -168,11 +257,11 @@ class QueryVar (QueryHelper):
         {rst}
         {var_data_use}
         {var_data}
-        , CASE WHEN
-         (1.0*useful_clauses_used)/(1.0*cls_marked) > 2
-        THEN "OK"
-        ELSE "BAD"
-        END AS `x.class`
+--        , CASE WHEN
+--         (1.0*useful_clauses_used)/(1.0*cls_marked) > 2
+--        THEN "OK"
+--        ELSE "BAD"
+--        END AS `x.class`
 
         FROM
         varData as var_data
@@ -181,133 +270,29 @@ class QueryVar (QueryHelper):
 
         WHERE
         clauses_below > 10
+        and var_data_use.cls_marked > 10
         and var_data.var = var_data_use.var
         and var_data.conflicts = var_data_use.conflicts
         and rst.conflicts = var_data_use.conflicts
-        """.format(rst=rst, var_data_use=var_data_use, var_data=var_data)
+
+        order by random()
+        limit {limit}
+        """.format(
+            rst=rst, var_data_use=var_data_use,
+            var_data=var_data,
+            limit=options.limit)
 
         df = pd.read_sql_query(q, self.conn)
-        print("Relative data...")
-        df["var_data.inside_confl_cl_during"] = \
-            df["var_data.inside_conflict_clause_at_fintime"]-df["var_data.inside_conflict_clause_at_picktime"]
-        df["var_data.inside_confl_cl_antecs_during"] = \
-            df["var_data.inside_conflict_clause_antecedents_at_fintime"]-df["var_data.inside_conflict_clause_antecedents_at_picktime"]
-        df["var_data.inside_confl_cl_glue_during"] = \
-            df["var_data.inside_conflict_clause_glue_at_fintime"]-df["var_data.inside_conflict_clause_glue_at_picktime"]
+        print("DF dimensions:", df.shape)
+        return df
 
-        df["var_data.sumDecisions_during"] = \
-            df["var_data.sumDecisions_at_fintime"]-df["var_data.sumDecisions_at_picktime"]
-        df["var_data.sumPropagations_during"] = \
-            df["var_data.sumPropagations_at_fintime"]-df["var_data.sumPropagations_at_picktime"]
-        df["var_data.sumConflicts_during"] = \
-            df["var_data.sumConflicts_at_fintime"]-df["var_data.sumConflicts_at_picktime"]
-        df["var_data.sumAntecedents_during"] = \
-            df["var_data.sumAntecedents_at_fintime"]-df["var_data.sumAntecedents_at_picktime"]
-        df["var_data.sumAntecedentsLits_during"] = \
-            df["var_data.sumAntecedentsLits_at_fintime"]-df["var_data.sumAntecedentsLits_at_picktime"]
-        df["var_data.sumConflictClauseLits_during"] = \
-            df["var_data.sumConflictClauseLits_at_fintime"]-df["var_data.sumConflictClauseLits_at_picktime"]
-        df["var_data.sumDecisionBasedCl_during"] = \
-            df["var_data.sumDecisionBasedCl_at_fintime"]-df["var_data.sumDecisionBasedCl_at_picktime"]
-        df["var_data.sumClLBD_during"] = \
-            df["var_data.sumClLBD_at_fintime"]-df["var_data.sumClLBD_at_picktime"]
-        df["var_data.sumClSize_during"] = \
-            df["var_data.sumClSize_at_fintime"]-df["var_data.sumClSize_at_picktime"]
-
-        # per-conflicts, per-decisions, per-lits
-        sets = [["var_data.sumDecisions_during", "decs_below"]
-                , ["var_data.sumPropagations_during", "props_below"]
-                , ["var_data.sumConflicts_during", "confls_below"]
-                , ["var_data.sumAntecedents_during", "clantecs_below"]
-                , ["var_data.sumConflictClauseLits_during", "confcllits_below"]
-                , ["var_data.sumAntecedentsLits_during", "anteclits_below"]
-                , ["var_data.sumClSize_during", "clsize_below"]
-                , ["var_data.sumClLBD_during", "cllbd_below"]
-                ]
-
-        for realname,name in sets:
-            divby=df[realname]
-            name="_per_"+name
-
-            #sum
-            df["var_data.decisions"+name]=df["var_data.sumDecisions_during"]/divby
-            df["var_data.propagations"+name]=df["var_data.sumPropagations_during"]/divby
-            df["var_data.antecedents"+name]=df["var_data.sumAntecedents_during"]/divby
-            df["var_data.antecedentsLits"+name]=df["var_data.sumAntecedentsLits_during"]/divby
-            df["var_data.conflictClauseLits"+name]=df["var_data.sumConflictClauseLits_during"]/divby
-            df["var_data.decisionBasedCl"+name]=df["var_data.sumDecisionBasedCl_during"]/divby
-            df["var_data.clLBD"+name]=df["var_data.sumClLBD_during"]/divby
-            df["var_data.clSize"+name]=df["var_data.sumClSize_during"]/divby
-
-            #inside
-            df["var_data.inside_confl_cl"+name] = df["var_data.inside_confl_cl_during"]/divby
-            df["var_data.inside_confl_cl_ant"+name] = df["var_data.inside_confl_cl_antecs_during"]/divby
-            df["var_data.inside_confl_cl_glue"+name] = df["var_data.inside_confl_cl_glue_during"]/divby
-
-            # fun
-            df["var_data.lbd_times_cls"+name] = \
-            df["var_data.sumClLBD_during"]*df["var_data.sumConflicts_during"]/divby
-
-
-
-        # more complicated
-
-
-
-
-
-
-        df["var_data.rel_inside_confl_cl_glue"] = df["var_data.inside_confl_cl_glue_during"]/df["var_data.sumConflicts_during"]
-
-        df["cl_below_per_dec_depth"]=df["var_data.clauses_below"]/df["var_data.dec_depth"]
-        df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
-        df["var_data.propagated_per_sumprop"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
-        df["var_data.clauses_below_per_sumDecisions_during"]=df["var_data.clauses_below"]/df["var_data.sumDecisions_during"]
-
-        if True:
-            torem = [
-                "var_data.propagated"
-                , "var_data.decided"
-                , "var_data.clauses_below"
-                , "var_data.dec_depth"
-                , "var_data.sumDecisions_during"
-                , "var_data.sumPropagations_during"
-                , "var_data.sumConflicts_during"
-                , "var_data.sumAntecedents_during"
-                , "var_data.sumAntecedentsLits_during"
-                , "var_data.sumConflictClauseLits_during"
-                , "var_data.sumDecisionBasedCl_during"
-                , "var_data.sumClLBD_during"
-                , "var_data.sumClSize_during"
-                ]
-            cols = list(df)
-            for col in cols:
-                if "rst." in col:
-                    torem.append(col)
-                    pass
-
-            for x in torem:
-                del df[x]
-
-            cols = list(df)
-            for c in cols:
-                if "at_picktime" in c or "at_fintime" in c or c[0:3] == "sum":
-                    del df[c]
-
-        df2 = df[df["var_data_use.cls_marked"] >= 10]
-        # df2 = df2[df["conflicts_below"] >= 20]
-
-        # to make things easier for me
-        del df2["var_data_use.useful_clauses_used"]
-        del df2["var_data_use.cls_marked"]
-
+    def dump_df(self, df):
         # rename columns if we have to:
         # df.rename(columns={'abc':'d'}, inplace=True)
 
-        cleanname = re.sub(r'\.cnf.gz.sqlite$', '', fname)
-        cleanname = re.sub(r'\.db$', '', fname)
+        cleanname = re.sub(r'\.db$', '', options.fname)
         cleanname += "-vardata"
-        dump_dataframe(df2, cleanname)
+        dump_dataframe(df, cleanname)
 
     def fill_var_data_use(self):
         print("Filling var data use...")
@@ -374,6 +359,106 @@ class QueryVar (QueryHelper):
 
         print("varDataUse updated T: %-3.2f s" % (time.time() - t))
 
+class Predict:
+    def __init__(self):
+        pass
+
+    def calc_min_split_point(self, df):
+        split_point = int(float(df.shape[0])*options.min_samples_split)
+        if split_point < 10:
+            split_point = 10
+        print("Minimum split point: ", split_point)
+        return split_point
+
+    def print_confusion_matrix(self, cm, classes,
+                               normalize=False,
+                               title='Confusion matrix'):
+        """
+        This function prints and plots the confusion matrix.
+        Normalization can be applied by setting `normalize=True`.
+        """
+        if normalize:
+            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print(title)
+
+        np.set_printoptions(precision=2)
+        print(cm)
+
+    def conf_matrixes(self, test2, features, to_predict, clf):
+        # get test data
+        X_test = test2[features]
+        y_test = test2[to_predict]
+        print("Number of elements:", X_test.shape)
+        if test2.shape[0] == 0:
+            print("Cannot calculate confusion matrix, too few elements")
+            return 0, 0, 0
+
+        # Preform prediction
+        y_pred = clf.predict(X_test)
+
+        # calc acc, precision, recall
+        accuracy = sklearn.metrics.accuracy_score(
+            y_test, y_pred)
+        precision = sklearn.metrics.precision_score(
+            y_test, y_pred, pos_label="OK", average="micro")
+        recall = sklearn.metrics.recall_score(
+            y_test, y_pred, pos_label="OK", average="micro")
+        print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+            precision, recall, accuracy))
+
+        # Plot "test" confusion matrix
+        cnf_matrix = sklearn.metrics.confusion_matrix(
+            y_true=y_test, y_pred=y_pred)
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_,
+            title='Confusion matrix, without normalization -- test')
+        self.print_confusion_matrix(
+            cnf_matrix, classes=clf.classes_, normalize=True,
+            title='Normalized confusion matrix -- test')
+
+        return precision, recall, accuracy
+
+    def get_top_features(self, df):
+        split_point = self.calc_min_split_point(df)
+        df["x.class"]=pd.qcut(df["x.useful_times_per_marked"],
+                             q=4,
+                             labels=False)
+        features = list(df)
+        features.remove("x.class")
+        features.remove("x.useful_times_per_marked")
+        to_predict="x.class"
+
+        print("-> Number of features  :", len(features))
+        print("-> Number of datapoints:", df.shape)
+        print("-> Predicting          :", to_predict)
+
+        train, test = train_test_split(df, test_size=0.33)
+        X_train = train[features]
+        y_train = train[to_predict]
+        split_point = self.calc_min_split_point(df)
+        clf = sklearn.ensemble.RandomForestClassifier(
+                    n_estimators=400,
+                    max_features="sqrt",
+                    min_samples_leaf=split_point)
+
+        t = time.time()
+        clf.fit(X_train, y_train)
+        print("Training finished. T: %-3.2f" % (time.time() - t))
+
+        best_features = []
+        importances = clf.feature_importances_
+        std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+        indices = np.argsort(importances)[::-1]
+        indices = indices[:options.top_num_features]
+        myrange = min(X_train.shape[1], options.top_num_features)
+
+        # Print the feature ranking
+        print("Feature ranking:")
+        for f in range(myrange):
+            print("%-3d  %-55s -- %8.4f" %
+                  (f + 1, features[indices[f]], importances[indices[f]]))
+
+        self.conf_matrixes(test, features, to_predict, clf)
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.sqlite"
@@ -384,6 +469,16 @@ if __name__ == "__main__":
                         , dest="verbose", help="Print more output")
     parser.add_argument("--csv", action="store_true", default=False
                         , dest="dump_csv", help="Dump CSV (for weka)")
+    parser.add_argument("--limit", type=int, default=10000
+                        , dest="limit", help="How many data points")
+
+    # dataframe
+    parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
+                      dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
+    parser.add_argument("--prefok", default=2.0, type=float,
+                      dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
+    parser.add_argument("--top", default=40, type=int, metavar="TOPN",
+                      dest="top_num_features", help="Candidates are top N features for greedy selector")
 
 
     options = parser.parse_args()
@@ -396,4 +491,9 @@ if __name__ == "__main__":
     with QueryVar(options.fname) as q:
         q.create_indexes()
         q.fill_var_data_use()
-        q.create_vardata_df(options.fname)
+        df = q.create_vardata_df()
+        q.add_computed_features(df)
+        q.dump_df(df)
+
+    p = Predict()
+    p.get_top_features(df)
