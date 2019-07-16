@@ -473,7 +473,7 @@ if __name__ == "__main__":
                         , dest="limit", help="How many data points")
 
     # dataframe
-    parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
+    parser.add_argument("--split", default=0.002, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
