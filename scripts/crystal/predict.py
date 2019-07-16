@@ -1015,6 +1015,8 @@ if __name__ == "__main__":
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
+    parser.add_argument("--printfeat", action="store_true", default=False,
+                      dest="print_features", help="Print features")
 
     # tree options
     parser.add_argument("--depth", default=None, type=int,
@@ -1103,6 +1105,10 @@ if __name__ == "__main__":
         exit(-1)
 
     df = pd.read_pickle(options.fname)
+    if options.print_features:
+        feats = sorted(list(df))
+        for f in feats:
+            print(f)
 
     c = Clustering(df)
     c.clear_data_from_str();
