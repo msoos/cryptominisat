@@ -456,7 +456,7 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """
+            """.format(long_duration=options.long_duration)
         elif self.conf == 2:
             self.case_stmt_long = """
             CASE WHEN
