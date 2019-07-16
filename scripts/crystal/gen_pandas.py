@@ -758,7 +758,7 @@ def transform(df):
         # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
         ]
 
-    if False:
+    if True:
         extra_todiv = []
         for a in todiv:
             sqrt_name = "sqrt("+a+")"
