@@ -724,38 +724,39 @@ def transform(df):
             col2 = col.replace("rdb0", "rdb1")
             cboth = col.replace("rdb0", "rdb0_plus_rdb1")
             df[cboth]=df[col]+df[col2]
+
     todiv = [
-            "cl.size_hist"
-            , "cl.glue_hist"
-            , "cl.glue"
-            , "cl.old_glue"
-            , "cl.glue_hist_queue"
-            , "cl.glue_hist_long"
-            # , "cl.decision_level_hist"
-            , "cl.num_antecedents_hist"
-            # , "cl.trail_depth_level_hist"
-            # , "cl.backtrack_level_hist"
-            , "cl.branch_depth_hist_queue"
-            , "cl.antec_overlap_hist"
-            , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
-            , "cl.num_antecedents"
-            # , "cl.num_overlap_literals"
-            # , "rst_cur.resolutions"
+        "cl.size_hist"
+        , "cl.glue_hist"
+        , "cl.glue"
+        , "cl.old_glue"
+        , "cl.glue_hist_queue"
+        , "cl.glue_hist_long"
+        # , "cl.decision_level_hist"
+        , "cl.num_antecedents_hist"
+        # , "cl.trail_depth_level_hist"
+        # , "cl.backtrack_level_hist"
+        , "cl.branch_depth_hist_queue"
+        , "cl.antec_overlap_hist"
+        , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
+        , "cl.num_antecedents"
+        # , "cl.num_overlap_literals"
+        # , "rst_cur.resolutions"
 
-            # produced NA -- BEFORE, TODO: add them again
-            , "rdb0.act_ranking_top_10"
-            , "rdb0.act_ranking"
+        # produced NA -- BEFORE, TODO: add them again
+        , "rdb0.act_ranking_top_10"
+        , "rdb0.act_ranking"
 
-            # produces NA
-            #, "rst_cur.all_props"
-            #, "rdb0.last_touched_diff"
-            #, "rdb0.sum_delta_confl_uip1_used"
-            #, "rdb0.used_for_uip_creation"
-            #, "rdb0.conflicts"
-            # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
-            ]
+        # produces NA
+        #, "rst_cur.all_props"
+        #, "rdb0.last_touched_diff"
+        #, "rdb0.sum_delta_confl_uip1_used"
+        #, "rdb0.used_for_uip_creation"
+        #, "rdb0.conflicts"
+        # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
+        ]
 
-    if True:
+    if False:
         extra_todiv = []
         for a in todiv:
             sqrt_name = "sqrt("+a+")"
@@ -763,6 +764,7 @@ def transform(df):
             extra_todiv.append(sqrt_name)
         todiv.extend(extra_todiv)
 
+    # relative data
     cols = list(df)
     for col in cols:
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
@@ -770,6 +772,26 @@ def transform(df):
                 df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
                 df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
                 pass
+
+    # satzilla stuff
+    todiv = [
+        "szfeat.numVars",
+        "szfeat.numClauses",
+        "szfeat.var_cl_ratio",
+        "szfeat.binary",
+        "szfeat.horn",
+        "szfeat.avg_confl_size",
+        "szfeat.avg_branch_depth",
+        "szfeat.props_per_confl",
+        "szfeat.irred_glue_distr_mean"
+        ]
+    for col in orig_cols:
+        if "szfeat" in col:
+            for divper in todiv and "min" not in todiv and "max" not in todiv:
+                df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
+                df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
+                pass
+
     # relative RDB
     print("Relative RDB...")
     for col in orig_cols:

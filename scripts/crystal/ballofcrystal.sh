@@ -2,7 +2,7 @@
 
 FNAMEOUT="mydata"
 FIXED="30000"
-RATIO="0.60"
+RATIO="0.99"
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
@@ -30,37 +30,30 @@ if [ "$NEXT_OP" == "" ]; then
             ["1"]* )
                 ORIGTIME="101";
                 FNAME="countbitswegner064.cnf";
-                RATIO="0.30";
                 break;;
             [2]* )
                 ORIGTIME="16";
                 FNAME="goldb-heqc-i10mul.cnf";
-                RATIO="0.60";
                 break;;
             [3]* )
                 ORIGTIME="70.84";
                 FNAME="goldb-heqc-alu4mul.cnf";
-                RATIO="0.60";
                 break;;
             [4]* )
                 # !!SATISFIABLE!!
                 FNAME="g2-mizh-md5-48-2.cnf";
-                RATIO="1.0";
                 FIXED="10000";
                 break;;
             [5]* )
                 ORIGTIME="98s";
                 FNAME="AProVE07-16.cnf";
-                RATIO="0.60";
                 break;;
             [6]* )
                 FNAME="UTI-20-10p0.cnf-unz";
-                RATIO="0.20";
                 break;;
             [7]* )
                 ORIGTIME="197";
                 FNAME="UCG-20-5p0.cnf";
-                RATIO="0.10";
                 break;;
             * ) echo "Please answer 1-7";;
         esac
