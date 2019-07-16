@@ -471,8 +471,8 @@ static bool {funcname}(
                 clf = sklearn.ensemble.VotingClassifier(mylist)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=400,
-                max_features="log2",
+                n_estimators=800,
+                max_features="sqrt",
                 class_weight={"OK": prefer_ok, "BAD": 1},
                 min_samples_leaf=split_point)
 
