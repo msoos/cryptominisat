@@ -114,8 +114,8 @@ class QueryFill (QueryHelper):
         t = time.time()
         q = """
         DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later10k`;
-        DROP TABLE IF EXISTS `used_later100k`;
+        DROP TABLE IF EXISTS `used_later_short`;
+        DROP TABLE IF EXISTS `used_later_long`;
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -132,23 +132,23 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        create table `used_later10k` (
+        create table `used_later_short` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later10k` bigint(20)
+            `used_later_short` bigint(20)
         );"""
         self.c.execute(q)
-        print("used_later10k recreated T: %-3.2f s" % (time.time() - t))
+        print("used_later_short recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """
-        create table `used_later100k` (
+        create table `used_later_long` (
             `clauseID` bigint(20) NOT NULL,
             `rdb0conflicts` bigint(20) NOT NULL,
-            `used_later100k` bigint(20)
+            `used_later_long` bigint(20)
         );"""
         self.c.execute(q)
-        print("used_later100k recreated T: %-3.2f s" % (time.time() - t))
+        print("used_later_long recreated T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q = """insert into used_later
@@ -182,16 +182,16 @@ class QueryFill (QueryHelper):
 
         t = time.time()
         q = """
-        insert into used_later10k
+        insert into used_later_short
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later10k`
+        `used_later_short`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl10k.used_at) as `used_later10k`
+        , count(ucl10k.used_at) as `used_later_short`
 
         FROM
         reduceDB as rdb0
@@ -210,20 +210,20 @@ class QueryFill (QueryHelper):
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
-        print("used_later10k filled T: %-3.2f s" % (time.time() - t))
+        print("used_later_short filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
         q="""
-        insert into used_later100k
+        insert into used_later_long
         (
         `clauseID`,
         `rdb0conflicts`,
-        `used_later100k`
+        `used_later_long`
         )
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl100k.used_at) as `used_later100k`
+        , count(ucl100k.used_at) as `used_later_long`
 
         FROM
         reduceDB as rdb0
@@ -242,17 +242,17 @@ class QueryFill (QueryHelper):
 
         group by rdb0.clauseID, rdb0.conflicts;"""
         self.c.execute(q)
-        print("used_later100k filled T: %-3.2f s" % (time.time() - t))
+        print("used_later_long filled T: %-3.2f s" % (time.time() - t))
 
 
         t = time.time()
         q = """
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
         create index `used_later_idx2` on `used_later` (`clauseID`, rdb0conflicts, used_later);
-        create index `used_later10k_idx1` on `used_later10k` (`clauseID`, rdb0conflicts);
-        create index `used_later10k_idx2` on `used_later10k` (`clauseID`, rdb0conflicts, used_later10k);
-        create index `used_later100k_idx1` on `used_later100k` (`clauseID`, rdb0conflicts);
-        create index `used_later100k_idx2` on `used_later100k` (`clauseID`, rdb0conflicts, used_later100k);
+        create index `used_later_short_idx1` on `used_later_short` (`clauseID`, rdb0conflicts);
+        create index `used_later_short_idx2` on `used_later_short` (`clauseID`, rdb0conflicts, used_later_short);
+        create index `used_later_long_idx1` on `used_later_long` (`clauseID`, rdb0conflicts);
+        create index `used_later_long_idx2` on `used_later_long` (`clauseID`, rdb0conflicts, used_later_long);
         """
         for l in q.split('\n'):
             self.c.execute(l)
@@ -371,10 +371,10 @@ class QueryCls (QueryHelper):
             sum_cl_use.last_confl_used > rdb0.conflicts and
             (
                 -- useful in the next round
-                   used_later10k.used_later10k > 3
+                   used_later_short.used_later_short > 3
 
                    or
-                   (used_later10k.used_later10k > 2 and used_later100k.used_later100k > 40)
+                   (used_later_short.used_later_short > 2 and used_later_long.used_later_long > 40)
             )
             THEN "OK"
             ELSE "BAD"
@@ -385,7 +385,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k > 5
+                   used_later_short.used_later_short > 5
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -395,7 +395,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= max(cast({avg_used_later10k}+0.5 as int),1)
+                   used_later_short.used_later_short >= max(cast({avg_used_later_short}+0.5 as int),1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -405,7 +405,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= max(cast({avg_used_later10k}/2+0.5 as int),1)
+                   used_later_short.used_later_short >= max(cast({avg_used_later_short}/2+0.5 as int),1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -415,7 +415,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
             -- useful in the next round
-                   used_later10k.used_later10k >= max({median_used_later10k},1)
+                   used_later_short.used_later_short >= max({median_used_later_short},1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -430,10 +430,10 @@ class QueryCls (QueryHelper):
             sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (used_later100k.used_later100k > 10 and used_later.used_later > 20)
+                   (used_later_long.used_later_long > 10 and used_later.used_later > 20)
 
                 -- used quite a bit but less dispersion
-                or (used_later100k.used_later100k > 6 and used_later.used_later > 30)
+                or (used_later_long.used_later_long > 6 and used_later.used_later > 30)
             )
             THEN "OK"
             ELSE "BAD"
@@ -446,10 +446,10 @@ class QueryCls (QueryHelper):
             sum_cl_use.last_confl_used > rdb0.conflicts+100000 and
             (
                 -- used a lot over a wide range
-                   (used_later100k.used_later100k > 13 and used_later.used_later > 24)
+                   (used_later_long.used_later_long > 13 and used_later.used_later > 24)
 
                 -- used quite a bit but less dispersion
-                or (used_later100k.used_later100k > 8 and used_later.used_later > 40)
+                or (used_later_long.used_later_long > 8 and used_later.used_later > 40)
             )
             THEN "OK"
             ELSE "BAD"
@@ -460,7 +460,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= max(cast({avg_used_later100k}+0.5 as int), 1)
+               used_later_long.used_later_long >= max(cast({avg_used_later_long}+0.5 as int), 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -470,7 +470,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= max(cast({avg_used_later100k}/2+0.5 as int), 1)
+               used_later_long.used_later_long >= max(cast({avg_used_later_long}/2+0.5 as int), 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -480,7 +480,7 @@ class QueryCls (QueryHelper):
             CASE WHEN
 
            -- useful in the next round
-               used_later100k.used_later100k >= max({median_used_later100k}, 1)
+               used_later_long.used_later_long >= max({median_used_later_long}, 1)
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
@@ -511,8 +511,8 @@ class QueryCls (QueryHelper):
         , reduceDB as rdb1
         , tags
         , used_later
-        , used_later10k
-        , used_later100k
+        , used_later_short
+        , used_later_long
         , cl_last_in_solver
         WHERE
 
@@ -527,11 +527,11 @@ class QueryCls (QueryHelper):
 
         and rst_cur.conflicts = cl.conflicts
 
-        and used_later10k.clauseID = cl.clauseID
-        and used_later10k.rdb0conflicts = rdb0.conflicts
+        and used_later_short.clauseID = cl.clauseID
+        and used_later_short.rdb0conflicts = rdb0.conflicts
 
-        and used_later100k.clauseID = cl.clauseID
-        and used_later100k.rdb0conflicts = rdb0.conflicts
+        and used_later_long.clauseID = cl.clauseID
+        and used_later_long.rdb0conflicts = rdb0.conflicts
 
         -- to avoid missing clauses and their missing data to affect results
         and cl_last_in_solver.clauseID = cl.clauseID
@@ -555,14 +555,14 @@ class QueryCls (QueryHelper):
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
         q = """
-        select avg(used_later10k)
-        from used_later10k, used_later
+        select avg(used_later_short)
+        from used_later_short, used_later
         where
-        used_later.clauseID = used_later10k.clauseID
+        used_later.clauseID = used_later_short.clauseID
         and used_later > 0;
         """
         if long_or_short == "long":
-            q = q.replace("used_later10k", "used_later100k")
+            q = q.replace("used_later_short", "used_later_long")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) == 1
@@ -577,17 +577,17 @@ class QueryCls (QueryHelper):
 
     def get_median_used_later(self, long_or_short):
         cur = self.conn.cursor()
-        q = """select used_later10k
-            from used_later10k
-            where used_later10k > 0
-            order by used_later10k
+        q = """select used_later_short
+            from used_later_short
+            where used_later_short > 0
+            order by used_later_short
             limit 1
             OFFSET (
-            SELECT count(*) from used_later10k
-            where used_later10k > 0
+            SELECT count(*) from used_later_short
+            where used_later_short > 0
             ) / 2;"""
         if long_or_short == "long":
-            q = q.replace("used_later10k", "used_later100k")
+            q = q.replace("used_later_short", "used_later_long")
         cur.execute(q)
         rows = cur.fetchall()
         assert len(rows) <= 1
@@ -633,10 +633,10 @@ class QueryCls (QueryHelper):
     def get_data(self, long_or_short, this_fixed=None):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok0, subformat["avg_used_later100k"] = self.get_avg_used_later("long");
-        ok1, subformat["avg_used_later10k"] = self.get_avg_used_later("short");
-        ok2, subformat["median_used_later100k"] = self.get_median_used_later("long");
-        ok3, subformat["median_used_later10k"] = self.get_median_used_later("short");
+        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long");
+        ok1, subformat["avg_used_later_short"] = self.get_avg_used_later("short");
+        ok2, subformat["median_used_later_long"] = self.get_median_used_later("long");
+        ok3, subformat["median_used_later_short"] = self.get_median_used_later("short");
         if not ok0 or not ok1 or not ok2 or not ok3:
             return False, None, None
 

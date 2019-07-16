@@ -185,7 +185,7 @@ class QueryDatRem(QueryHelper):
                 found_sum_cl_use = True
 
             print("-> We have table: ", row[0])
-            if row[0] == "used_later10k" or row[0] == "used_later100k":
+            if row[0] == "used_later_short" or row[0] == "used_later_long":
                 print("ERROR: 'gen_pandas.py' has been already ran on this DB")
                 print("       this will be a mess. We cannot run. ")
                 print("       Exiting.")

@@ -48,8 +48,8 @@ class Query:
         drop table if exists goodClauses;
         DROP TABLE IF EXISTS `sum_cl_use`;
         DROP TABLE IF EXISTS `used_later`;
-        DROP TABLE IF EXISTS `used_later10k`;
-        DROP TABLE IF EXISTS `used_later100k`;
+        DROP TABLE IF EXISTS `used_later_short`;
+        DROP TABLE IF EXISTS `used_later_long`;
         """
         for l in queries.split('\n'):
             t2 = time.time()
