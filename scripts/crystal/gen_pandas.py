@@ -710,7 +710,7 @@ def transform(df):
     df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
 
     df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
-    df["cl.antecedents_avg_size"] = df["cl.num_total_lits_antecedents"]/df["cl.num_antecedents"]
+    df["(cl.num_total_lits_antecedents_/_cl.num_antecedents)"] = df["cl.num_total_lits_antecedents"]/df["cl.num_antecedents"]
 
     orig_cols = list(df)
     for col in orig_cols:
@@ -718,41 +718,51 @@ def transform(df):
             col2 = col.replace("rdb0", "rdb1")
             cboth = col.replace("rdb0", "rdb0_plus_rdb1")
             df[cboth]=df[col]+df[col2]
+    todiv = [
+            "cl.size_hist"
+            , "cl.glue_hist"
+            , "cl.glue"
+            , "cl.old_glue"
+            , "cl.glue_hist_queue"
+            , "cl.glue_hist_long"
+            # , "cl.decision_level_hist"
+            , "cl.num_antecedents_hist"
+            # , "cl.trail_depth_level_hist"
+            # , "cl.backtrack_level_hist"
+            , "cl.branch_depth_hist_queue"
+            , "cl.antec_overlap_hist"
+            , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
+            , "cl.num_antecedents"
+            # , "cl.num_overlap_literals"
+            # , "rst_cur.resolutions"
+
+            # produced NA -- BEFORE, TODO: add them again
+            , "rdb0.act_ranking_top_10"
+            , "rdb0.act_ranking"
+
+            # produces NA
+            #, "rst_cur.all_props"
+            #, "rdb0.last_touched_diff"
+            #, "rdb0.sum_delta_confl_uip1_used"
+            #, "rdb0.used_for_uip_creation"
+            #, "rdb0.conflicts"
+            # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
+            ]
+
+    if True:
+        extra_todiv = []
+        for a in todiv:
+            sqrt_name = "sqrt("+a+")"
+            df[sqrt_name] = df[a].apply(np.sqrt)
+            extra_todiv.append(sqrt_name)
+        todiv.extend(extra_todiv)
 
     cols = list(df)
     for col in cols:
-        todiv = [
-            ["cl.size_hist", "_per_cl.size_hist"]
-            , ["cl.glue_hist", "_per_cl.glue_hist"]
-            , ["cl.glue_hist_queue", "_per_cl.glue_hist_queue"]
-            , ["cl.glue_hist_long", "_per_cl.glue_hist_long"]
-            # , ["cl.decision_level_hist", "_per_cl.decision_level_hist"]
-            , ["cl.num_antecedents_hist", "_per_cl.num_antecedents_hist"]
-            # , ["cl.trail_depth_level_hist", "_per_cl.trail_depth_level_hist"]
-            # , ["cl.backtrack_level_hist", "_per_cl.backtrack_level_hist"]
-            , ["cl.branch_depth_hist_queue", "_per_cl.branch_depth_hist_queue"]
-            , ["cl.antec_overlap_hist", "_per_cl.antec_overlap_hist"]
-            , ["cl.antecedents_avg_size", "_per_cl.antecedents_avg_size"]
-            , ["cl.num_antecedents", "_per_cl.num_antecedents"]
-            # , ["cl.num_overlap_literals", "_per_cl.num_overlap_literals"]
-            # , ["rst_cur.resolutions", "per_rst_cur.resolutions"]
-
-            # produced NA -- BEFORE, TODO: add them again
-            , ["rdb0.act_ranking_top_10", "_per_rdb0.act_ranking_top_10"]
-            , ["rdb0.act_ranking", "_per_rdb0.act_ranking"]
-
-            # produces_NA
-            #, ["rst_cur.all_props", "_per_rst_cur.all_props"]
-            #, ["rdb0.last_touched_diff", "_per_rdb0.last_touched_diff"]
-            #, ["rdb0.sum_delta_confl_uip1_used", "_per_rdb0.sum_delta_confl_uip1_used"]
-            #, ["rdb0.used_for_uip_creation", "_per_rdb0.used_for_uip_creation"]
-            #, ["rdb0.conflicts", "_per_rdb0.conflicts"]
-            # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
-            ]
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
-            for divper,name in todiv:
-                df[col+name] = df[col]/df[divper]
-                df[col+"_smaller_than_"+divper] = (df[col]<df[divper]).astype(int)
+            for divper in todiv:
+                df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
+                df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
                 pass
     # relative RDB
     print("Relative RDB...")
