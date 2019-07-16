@@ -367,7 +367,7 @@ class QueryCls (QueryHelper):
         # SHORT magic here
         ############
         if self.conf == 0:
-            self.case_stmt_10k = """
+            self.case_stmt_short = """
             CASE WHEN
 
             sum_cl_use.last_confl_used > rdb0.conflicts and
@@ -383,7 +383,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
         elif self.conf == 1:
-            self.case_stmt_10k = """
+            self.case_stmt_short = """
             CASE WHEN
 
             -- useful in the next round
@@ -393,7 +393,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
         elif self.conf == 2:
-            self.case_stmt_10k = """
+            self.case_stmt_short = """
             CASE WHEN
 
             -- useful in the next round
@@ -403,7 +403,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
         elif self.conf == 3:
-            self.case_stmt_10k = """
+            self.case_stmt_short = """
             CASE WHEN
 
             -- useful in the next round
@@ -413,7 +413,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """
         elif self.conf == 4:
-            self.case_stmt_10k = """
+            self.case_stmt_short = """
             CASE WHEN
 
             -- useful in the next round
@@ -426,7 +426,7 @@ class QueryCls (QueryHelper):
         # LONG magic here
         ############
         if self.conf == 0:
-            self.case_stmt_100k = """
+            self.case_stmt_long = """
             CASE WHEN
 
             sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
@@ -442,7 +442,7 @@ class QueryCls (QueryHelper):
             END AS `x.class`
             """.format(long_duration=options.long_duration)
         elif self.conf == 1:
-            self.case_stmt_100k = """
+            self.case_stmt_long = """
             CASE WHEN
 
             sum_cl_use.last_confl_used > rdb0.conflicts+{long_duration} and
@@ -456,9 +456,9 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """.format(long_duration=options.long_duration)
+            """
         elif self.conf == 2:
-            self.case_stmt_100k = """
+            self.case_stmt_long = """
             CASE WHEN
 
            -- useful in the next round
@@ -466,9 +466,9 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """.format(long_duration=options.long_duration)
+            """
         elif self.conf == 3:
-            self.case_stmt_100k = """
+            self.case_stmt_long = """
             CASE WHEN
 
            -- useful in the next round
@@ -476,9 +476,9 @@ class QueryCls (QueryHelper):
             THEN "OK"
             ELSE "BAD"
             END AS `x.class`
-            """.format(long_duration=options.long_duration)
+            """
         elif self.conf == 4:
-            self.case_stmt_100k = """
+            self.case_stmt_long = """
             CASE WHEN
 
            -- useful in the next round
@@ -643,11 +643,11 @@ class QueryCls (QueryHelper):
             return False, None, None
 
         if long_or_short == "short":
-            self.myformat["case_stmt"] = self.case_stmt_10k.format(**subformat)
+            self.myformat["case_stmt"] = self.case_stmt_short.format(**subformat)
             self.myformat["del_at_least"] = options.short_duration
             fixed_mult = 1.0
         else:
-            self.myformat["case_stmt"] = self.case_stmt_100k.format(**subformat)
+            self.myformat["case_stmt"] = self.case_stmt_long.format(**subformat)
             self.myformat["del_at_least"] = options.long_duration
             fixed_mult = 0.2
 
