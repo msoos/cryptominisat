@@ -384,15 +384,7 @@ class Predict:
         np.set_printoptions(precision=2)
         print(cm)
 
-    def conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
-        # filter test data
-        if dump_no is not None:
-            print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
-            data = data[data["rdb0.dump_no"] == dump_no]
-        else:
-            print("\nCalculating confusion matrix -- ALL dump_no")
-            data = data
-
+    def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
         # get data
         X_data = data[features]
         y_data = data[to_predict]
@@ -466,8 +458,8 @@ class Predict:
             print("%-3d  %-55s -- %8.4f" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
 
-        self.conf_matrixes(None, test, features, to_predict, clf)
-        self.conf_matrixes(None, train, features, to_predict, clf, "train")
+        self.conf_matrixes(test, features, to_predict, clf)
+        self.conf_matrixes(train, features, to_predict, clf, "train")
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.sqlite"
