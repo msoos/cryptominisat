@@ -73,7 +73,6 @@ if(NOT ONLY_SIMPLE)
 
     # Needed for fuzz-testing
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/cnf-utils cnf-utils)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/utils/drat-trim drat-trim)
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/sha1-sat sha1-sat)
     add_subdirectory(${PROJECT_SOURCE_DIR}/utils/minisat minisat)
 endif()

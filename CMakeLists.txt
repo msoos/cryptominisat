@@ -737,6 +737,7 @@ endforeach()
 message(STATUS "All defines at startup: ${COMPILE_DEFINES}")
 
 add_subdirectory(src cmsat5-src)
+add_subdirectory(${PROJECT_SOURCE_DIR}/utils/drat-trim drat-trim)
 
 # -----------------------------------------------------------------------------
 # Add uninstall target for makefiles
