@@ -3495,10 +3495,11 @@ void Searcher::cancelUntil(uint32_t level
     if (decisionLevel() > level) {
         #ifdef STATS_NEEDED
         bool dump_this_canceluntil = false;
+        double rnd_num = mtrand.randDblExc();
         if (solver->sqlStats
             && !update_bogoprops
             //we need a lot less of this data
-            && mtrand.randDblExc() <= conf.dump_individual_cldata_ratio*0.3
+            && rnd_num <= conf.dump_individual_cldata_ratio*0.01
         ) {
             dump_this_canceluntil = true;
             solver->sqlStats->begin_transaction();
@@ -3539,20 +3540,6 @@ void Searcher::cancelUntil(uint32_t level
                 //WARNING We assume a new clause will be created (hence the clid_plus_one),
                 //WARNING but not a decision clause...
 
-                /*if (varData[var].reason == PropBy()) {
-                    uint64_t conf = sumConflicts - varData[var].sum_conflicts_at_picktime;
-                    uint64_t cl_ids = clauseID+((uint64_t)clid_plus_one)-varData[var].clid_at_picking;
-                    uint64_t cls = conf + sumDecisionBasedCl - varData[var].num_decision_based_cl_at_picktime;
-                    if (cls < cl_ids ) {
-                        cout << "SumConflicts " << sumConflicts << endl;
-                        cout << "varData[var].sum_conflicts_at_picktime: " << varData[var].sum_conflicts_at_picktime << endl;
-                        cout << "clauseID " << clauseID << endl;
-                        cout << "varData[var].clid_at_picking: " << varData[var].clid_at_picking << endl;
-                        cout << "OOps, conf: " << conf << " cls: " << cls << endl;
-                        //exit(-1);
-                    }
-                }*/
-
                 //we want to dump & this was a decision var
                 bool decision_var = varData[var].reason == PropBy();
                 uint64_t conflicts = sumConflicts - varData[var].sumConflicts_at_picktime;
@@ -3564,7 +3551,10 @@ void Searcher::cancelUntil(uint32_t level
                 uint64_t lbd = sumClLBD - varData[var].sumClLBD_at_picktime;
                 uint64_t size = sumClSize - varData[var].sumClSize_at_picktime;
 
-                if (dump_this_canceluntil) {
+                if (dump_this_canceluntil
+                    && (rnd_num < conf.dump_individual_cldata_ratio*0.0008 ||
+                        varData[var].reason == PropBy())
+                ) {
                     uint64_t cls_below = conflicts + decisionCls;
                     uint64_t outer_var = map_inter_to_outer(var);
 
