@@ -1121,7 +1121,7 @@ void SQLiteStats::dump_clause_stats(
 
 void SQLiteStats::init_var_data_STMT()
 {
-    const size_t numElems = 35;
+    const size_t numElems = 36;
 
     std::stringstream ss;
     ss << "insert into `varData`"
@@ -1133,6 +1133,7 @@ void SQLiteStats::init_var_data_STMT()
     ", `var`"
     ", `dec_depth`"
     ", `clauses_below`"
+    ", `decision_var`"
 
     ", `decided`"
     ", `decided_pos`"
@@ -1196,6 +1197,7 @@ void SQLiteStats::var_data(
     , const VarData& vardata
     , const uint32_t cls_below
     , const uint64_t end_clid_notincl
+    , const bool decision_var
 ) {
     int bindAt = 1;
     sqlite3_bind_int64(stmt_var_data, bindAt++, solver->sumRestarts());
@@ -1204,6 +1206,7 @@ void SQLiteStats::var_data(
     sqlite3_bind_int   (stmt_var_data, bindAt++, var);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.level);
     sqlite3_bind_int64 (stmt_var_data, bindAt++, cls_below);
+    sqlite3_bind_int   (stmt_var_data, bindAt++, decision_var);
 
 
     sqlite3_bind_int64 (stmt_var_data, bindAt++, vardata.num_decided);

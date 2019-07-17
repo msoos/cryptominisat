@@ -305,6 +305,7 @@ create table `varData` (
     , `var` int(20) NOT NULL
     , `dec_depth` int(20) NOT NULL
     , `clauses_below` int(20) NOT NULL
+    , `decision_var` int(20) NOT NULL
 
     -- these are both for pick and fintime  :)
     , `decided` bigint(20) NOT NULL

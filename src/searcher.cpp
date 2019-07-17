@@ -3554,44 +3554,36 @@ void Searcher::cancelUntil(uint32_t level
                 }*/
 
                 //we want to dump & this was a decision var
-                if (varData[var].reason == PropBy()) {
-                    uint64_t conflicts = sumConflicts - varData[var].sumConflicts_at_picktime;
-                    uint64_t decisions = sumDecisions - varData[var].sumDecisions_at_picktime;
-                    uint64_t antecedents = sumAntecedents - varData[var].sumAntecedents_at_picktime;
-                    uint64_t antecedentsLits = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
-                    uint64_t decisionCls = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
-                    uint64_t conflictLits = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
-                    uint64_t lbd = sumClLBD - varData[var].sumClLBD_at_picktime;
-                    uint64_t size = sumClSize - varData[var].sumClSize_at_picktime;
+                bool decision_var = varData[var].reason == PropBy();
+                uint64_t conflicts = sumConflicts - varData[var].sumConflicts_at_picktime;
+                uint64_t decisions = sumDecisions - varData[var].sumDecisions_at_picktime;
+                uint64_t antecedents = sumAntecedents - varData[var].sumAntecedents_at_picktime;
+                uint64_t antecedentsLits = sumAntecedentsLits - varData[var].sumAntecedentsLits_at_picktime;
+                uint64_t decisionCls = sumDecisionBasedCl - varData[var].sumDecisionBasedCl_at_picktime;
+                uint64_t conflictLits = sumConflictClauseLits - varData[var].sumConflictClauseLits_at_picktime;
+                uint64_t lbd = sumClLBD - varData[var].sumClLBD_at_picktime;
+                uint64_t size = sumClSize - varData[var].sumClSize_at_picktime;
 
-                    if (dump_this_canceluntil) {
-                        uint64_t cls_below = conflicts + decisionCls;
-                        uint64_t outer_var = map_inter_to_outer(var);
+                if (dump_this_canceluntil) {
+                    uint64_t cls_below = conflicts + decisionCls;
+                    uint64_t outer_var = map_inter_to_outer(var);
 
-                        solver->sqlStats->var_data(
-                            solver
-                            , outer_var
-                            , varData[var]
-                            , cls_below
-                            , clauseID+clid_plus
-                        );
-                    }
-                    varData[var].sumAntecedents_below_at_picktime += antecedents;
-                    varData[var].sumConflicts_below_at_picktime += conflicts;
-                    varData[var].sumDecisions_below_at_picktime += decisions;
-                    varData[var].sumAntecedentsLits_below_at_picktime += antecedentsLits;
-                    varData[var].sumConflictClauseLits_below_at_picktime += conflictLits;
-                    varData[var].sumClLBD_below_at_picktime += lbd;
-                    varData[var].sumClSize_below_at_picktime += size;
+                    solver->sqlStats->var_data(
+                        solver
+                        , outer_var
+                        , varData[var]
+                        , cls_below
+                        , clauseID+clid_plus
+                        , decision_var
+                    );
                 }
-                /*
-                if (varData[var].reason == PropBy()) {
-                    cout << "responsible " << map_inter_to_outer(var)+1 << " var cls -- "
-                    << " incl: " << varData[var].clid_at_picking
-                    << " not incl: " << clauseID+((uint64_t)clid_plus_one)
-                    << endl;
-                }
-                */
+                varData[var].sumAntecedents_below_at_picktime += antecedents;
+                varData[var].sumConflicts_below_at_picktime += conflicts;
+                varData[var].sumDecisions_below_at_picktime += decisions;
+                varData[var].sumAntecedentsLits_below_at_picktime += antecedentsLits;
+                varData[var].sumConflictClauseLits_below_at_picktime += conflictLits;
+                varData[var].sumClLBD_below_at_picktime += lbd;
+                varData[var].sumClSize_below_at_picktime += size;
             }
             #endif
 

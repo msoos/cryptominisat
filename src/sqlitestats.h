@@ -112,6 +112,7 @@ public:
         , const VarData& vardata
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
+        , const bool decision_var
     ) override;
     #endif
 

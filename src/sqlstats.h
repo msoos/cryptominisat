@@ -96,6 +96,7 @@ public:
         , const VarData& varData
         , const uint32_t cls_below
         , const uint64_t end_clid_notincl
+        , const bool decision_var
     ) = 0;
 
     virtual void cl_last_in_solver(
