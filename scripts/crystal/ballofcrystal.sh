@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FNAMEOUT="mydata"
-FIXED="30000"
+FIXED="8000"
 RATIO="0.99"
 
 EXTRA_GEN_PANDAS_OPTS=""

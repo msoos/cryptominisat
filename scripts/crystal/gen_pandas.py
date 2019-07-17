@@ -666,17 +666,17 @@ class QueryCls (QueryHelper):
         for type_data in ["OK", "BAD"]:
             df_parts = []
 
-            self.myformat["limit"] = this_fixed/3
+            self.myformat["limit"] = int(this_fixed/2)
             extra = " and rdb0.dump_no = 1 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[0].shape))
 
-            self.myformat["limit"] = this_fixed/3
+            self.myformat["limit"] = int(this_fixed/3)
             extra = " and rdb0.dump_no = 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[1].shape))
 
-            self.myformat["limit"] = this_fixed/3
+            self.myformat["limit"] = int(this_fixed/4)
             extra = " and rdb0.dump_no > 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[2].shape))

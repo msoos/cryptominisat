@@ -398,6 +398,7 @@ static bool {funcname}(
         else:
             _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
             df = df_tmp.copy()
+            print("-> Number of datapoints after applying '--only':", self.df.shape)
 
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)

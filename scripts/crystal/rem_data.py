@@ -144,8 +144,8 @@ class QueryDatRem(QueryHelper):
         assert len(rows) == 1
         bad_ids = rows[0][0]
 
-        print("IDs in used_cl_ids that are good: %d" % good_ids)
-        print("IDs in used_cl_ids that are bad : %d" % bad_ids)
+        print("IDs in used_cl_ids that are 'good' (sum_cl_use.num_used > 0) : %d" % good_ids)
+        print("IDs in used_cl_ids that are 'bad'  (sum_cl_use.num_used = 0) : %d" % bad_ids)
         print("   T: %-3.2f s" % (time.time() - t))
 
     def print_idxs(self):
