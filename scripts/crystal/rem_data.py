@@ -86,12 +86,70 @@ class QueryDatRem(QueryHelper):
         create index `idxclid32` on `reduceDB` (`clauseID`);
         create index `idxclid33` on `sum_cl_use` (`clauseID`);
         create index `idxclid34` on `usedClauses` (`clauseID`);
+        create index `idxclid35` on `varData` (`conflicts`, `var`);
         """
 
         for q in queries.split("\n"):
             self.c.execute(q)
 
         print("Recreated indexes needed")
+
+    def remove_too_many_vardata(self):
+        t = time.time()
+        q = """
+        select count()
+        from varData
+        """
+        ret = self.c.execute(q)
+        rows = self.c.fetchall()
+        assert len(rows) == 1
+        num_vardata = rows[0][0]
+        print("Current number of elements in varData: %d" % num_vardata)
+
+        if num_vardata < options.goal_vardata:
+            print("No too many in varData, skipping removal.")
+            return
+
+        q = """
+        DROP TABLE IF EXISTS `used_vardat`;
+        """
+        self.c.execute(q)
+
+        q = """
+        CREATE TABLE `used_vardat` (
+          `myid` bigint(20) NOT NULL
+        );
+        """
+        self.c.execute(q)
+
+        q = """
+        insert into `used_vardat`
+        SELECT
+        rowid
+        FROM varData
+        order by random()
+        limit {limit}
+        """.format(limit=options.goal_vardata)
+        self.c.execute(q)
+        print("Added {limit} to `used_vardat`".format(limit=options.goal_vardata))
+
+        q = """
+        DELETE FROM varData WHERE rowid NOT IN
+        (SELECT `myid` from `used_vardat` );"""
+        self.c.execute(q)
+        print("Deleted unused data from varData")
+
+        q = """
+        DELETE FROM restart_dat_for_var WHERE `conflicts` NOT IN
+        (SELECT `conflicts` from `varData` group by conflicts );"""
+        self.c.execute(q)
+        print("Deleted unused data from restart_dat_for_var")
+
+        q = """
+        DROP TABLE IF EXISTS `used_vardat`;
+        """
+        self.c.execute(q)
+        print("T: %-3.2f s"% (time.time() - t))
 
     def insert_into_used_cls_ids(self, min_used, limit):
         min_used = int(min_used)
@@ -416,6 +474,8 @@ if __name__ == "__main__":
                       dest="limit", help="Number of clauses to limit ourselves to")
     parser.add_option("--goalrdb", default=200000, type=int,
                       dest="goal_rdb", help="Number of RDB neeeded")
+    parser.add_option("--goalvardata", default=50000, type=int,
+                      dest="goal_vardata", help="Number of varData points neeeded")
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
     parser.add_option("--fair", "-f", action="store_true", default=False,
@@ -439,6 +499,7 @@ if __name__ == "__main__":
 
         q.dangerous()
         q.create_used_ID_table_and_add_idxs()
+        q.remove_too_many_vardata()
         q.fill_used_cl_ids_table()
         q.filter_tables_of_ids()
         q.del_table_and_vacuum()
