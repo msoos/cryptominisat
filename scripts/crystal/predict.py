@@ -69,11 +69,13 @@ THE SOFTWARE.
 
 
 class Learner:
-    def __init__(self, df, funcname, fname, df_nofilter):
+    def __init__(self, df, funcname, fname, df_nofilter, cluster_no):
         self.df = df
         self.funcname = funcname
         self.fname = fname
         self.df_nofilter = df_nofilter
+        self.cluster_no = cluster_no
+
 
     def output_to_classical_dot(self, clf, features):
         fname = options.dot + "-" + self.funcname
@@ -344,45 +346,45 @@ static bool {funcname}(
         print("Minimum split point: ", split_point)
         return split_point
 
-    def conf_matrixes(self, dump_no, test, features, to_predict, clf):
+    def conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
         # filter test data
         if dump_no is not None:
-            print("Calculating confusion matrix -- dump_no == %s" % dump_no)
-            test2 = test[test["rdb0.dump_no"] == dump_no]
+            print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
+            data = data[data["rdb0.dump_no"] == dump_no]
         else:
-            print("Calculating confusion matrix -- ALL dump_no")
-            test2 = test
+            print("\nCalculating confusion matrix -- ALL dump_no")
+            data = data
 
         # get test data
-        X_test = test2[features]
-        y_test = test2[to_predict]
-        print("Number of elements:", X_test.shape)
-        if test2.shape[0] == 0:
+        X_data = data[features]
+        y_data = data[to_predict]
+        print("Number of elements:", X_data.shape)
+        if data.shape[0] <= 1:
             print("Cannot calculate confusion matrix, too few elements")
             return 0, 0, 0
 
         # Preform prediction
-        y_pred = clf.predict(X_test)
+        y_pred = clf.predict(X_data)
 
         # calc acc, precision, recall
         accuracy = sklearn.metrics.accuracy_score(
-            y_test, y_pred)
+            y_data, y_pred)
         precision = sklearn.metrics.precision_score(
-            y_test, y_pred, pos_label="OK", average="binary")
+            y_data, y_pred, pos_label="OK", average="binary")
         recall = sklearn.metrics.recall_score(
-            y_test, y_pred, pos_label="OK", average="binary")
+            y_data, y_pred, pos_label="OK", average="binary")
         print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
             precision, recall, accuracy))
 
         # Plot "test" confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_test, y_pred=y_pred)
+            y_true=y_data, y_pred=y_pred)
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization -- test')
+            title='Confusion matrix, without normalization (test)')
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix -- test')
+            title='Normalized confusion matrix (test)')
 
         return precision, recall, accuracy
 
@@ -398,7 +400,7 @@ static bool {funcname}(
         else:
             _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
             df = df_tmp.copy()
-            print("-> Number of datapoints after applying '--only':", self.df.shape)
+            print("-> Number of datapoints after applying '--only':", df.shape)
 
         if options.check_row_data:
             self.check_too_large_or_nan_values(df, features)
@@ -526,34 +528,32 @@ static bool {funcname}(
             c.print_full_code()
 
         # filtered data == filtered to avg_dump_no and on cluster
-        print("---  Filtered data  --- ")
-        for dump_no in [0, 1, 3, 10, 20, 40, None]:
+        print("--------------------------")
+        print("-   Filtered test data   -")
+        print("-   Cluster: %04d        -" % self.cluster_no)
+        print("- min avg dumpno: %1.3f  -" % options.min_avg_dumpno)
+        print("--------------------------")
+        for dump_no in [1, 3, 10, 20, 40, None]:
             prec, recall, acc = self.conf_matrixes(
                 dump_no, test, features, to_predict, clf)
 
-        # not filtered data == not filtered to avg_dump_no, and not filtered on cluster
-        print("---  Unfiltered data  --- ")
-        for dump_no in [None, 0, 1]:
+        print("--------------------------------")
+        print("-- Unfiltered train+test data --")
+        print("-      no cluster applied      -")
+        print("-   no min avg dumpno applied  -")
+        print("--------------------------------")
+        for dump_no in [1, None]:
             self.conf_matrixes(
                 dump_no, self.df_nofilter, features, to_predict, clf)
 
         # Plot "train" confusion matrix
-        print("---  Train data  --- ")
-        y_pred_train = clf.predict(X_train)
-        train_accuracy = sklearn.metrics.accuracy_score(
-            y_train, y_pred_train)
-        train_precision = sklearn.metrics.precision_score(
-            y_train, y_pred_train, pos_label="OK", average="binary")
-        train_recall = sklearn.metrics.recall_score(
-            y_train, y_pred_train, pos_label="OK", average="binary")
-        print("train prec: %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            train_precision, train_recall, train_accuracy))
-
-        cnf_matrix_train = sklearn.metrics.confusion_matrix(
-            y_true=y_train, y_pred=y_pred_train)
-        self.print_confusion_matrix(
-            cnf_matrix_train, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix -- train')
+        print("--------------------------")
+        print("-  Filtered train data  - ")
+        print("-   Cluster: %04d       -" % self.cluster_no)
+        print("- min avg dumpno: %1.3f -" % options.min_avg_dumpno)
+        print("-------------------------")
+        self.conf_matrixes(
+                dump_no, train, features, to_predict, clf, "train")
 
         # TODO do L1 regularization
 
@@ -999,7 +999,12 @@ public:
                 f = options.basedir+"/"+fname
             else:
                 f = None
-            learner = Learner(self.df[(self.df.clust == clno)], funcname, f, self.df_nofilter)
+            learner = Learner(
+                self.df[(self.df.clust == clno)],
+                funcname=funcname,
+                fname=f,
+                df_nofilter=self.df_nofilter,
+                cluster_no = clno)
 
             print("================ Cluster %3d ================" % clno)
             learner.learn()
