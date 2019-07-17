@@ -124,7 +124,6 @@ struct ClauseStats
         ttl = 0;
         marked_clause = false;
         drop_if_not_used = false;
-        used_for_uip_creation = 0;
         locked_for_data_gen = 0;
     }
 

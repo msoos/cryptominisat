@@ -1802,14 +1802,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             , to_dump ? clauseID : 0
             #endif
             );
-            if (to_dump) {
-                clauseID++;
-            }
             cl->makeRed(glue);
             ClOffset offset = cl_alloc.get_offset(cl);
             unsigned which_arr = 2;
 
             #ifdef STATS_NEEDED
+            if (to_dump) {
+                clauseID++;
+            }
             cl->stats.locked_for_data_gen = to_dump &&
                 mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
             #endif
