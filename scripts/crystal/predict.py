@@ -355,7 +355,7 @@ static bool {funcname}(
             print("\nCalculating confusion matrix -- ALL dump_no")
             data = data
 
-        # get test data
+        # get data
         X_data = data[features]
         y_data = data[to_predict]
         print("Number of elements:", X_data.shape)
@@ -373,18 +373,18 @@ static bool {funcname}(
             y_data, y_pred, pos_label="OK", average="binary")
         recall = sklearn.metrics.recall_score(
             y_data, y_pred, pos_label="OK", average="binary")
-        print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            precision, recall, accuracy))
+        print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+            toprint, precision, recall, accuracy))
 
-        # Plot "test" confusion matrix
+        # Plot confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_data, y_pred=y_pred)
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization (test)')
+            title='Confusion matrix, without normalization (%s)' % toprint)
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix (test)')
+            title='Normalized confusion matrix (%s)' % toprint)
 
         return precision, recall, accuracy
 

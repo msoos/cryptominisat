@@ -384,37 +384,45 @@ class Predict:
         np.set_printoptions(precision=2)
         print(cm)
 
-    def conf_matrixes(self, test2, features, to_predict, clf):
-        # get test data
-        X_test = test2[features]
-        y_test = test2[to_predict]
-        print("Number of elements:", X_test.shape)
-        if test2.shape[0] == 0:
+    def conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
+        # filter test data
+        if dump_no is not None:
+            print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
+            data = data[data["rdb0.dump_no"] == dump_no]
+        else:
+            print("\nCalculating confusion matrix -- ALL dump_no")
+            data = data
+
+        # get data
+        X_data = data[features]
+        y_data = data[to_predict]
+        print("Number of elements:", X_data.shape)
+        if data.shape[0] <= 1:
             print("Cannot calculate confusion matrix, too few elements")
             return 0, 0, 0
 
         # Preform prediction
-        y_pred = clf.predict(X_test)
+        y_pred = clf.predict(X_data)
 
         # calc acc, precision, recall
         accuracy = sklearn.metrics.accuracy_score(
-            y_test, y_pred)
+            y_data, y_pred)
         precision = sklearn.metrics.precision_score(
-            y_test, y_pred, pos_label="OK", average="micro")
+            y_data, y_pred, average="micro")
         recall = sklearn.metrics.recall_score(
-            y_test, y_pred, pos_label="OK", average="micro")
-        print("test prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            precision, recall, accuracy))
+            y_data, y_pred, average="micro")
+        print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+            toprint, precision, recall, accuracy))
 
-        # Plot "test" confusion matrix
+        # Plot confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_test, y_pred=y_pred)
+            y_true=y_data, y_pred=y_pred)
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization -- test')
+            title='Confusion matrix, without normalization (%s)' % toprint)
         self.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix -- test')
+            title='Normalized confusion matrix (%s)' % toprint)
 
         return precision, recall, accuracy
 
@@ -458,7 +466,8 @@ class Predict:
             print("%-3d  %-55s -- %8.4f" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
 
-        self.conf_matrixes(test, features, to_predict, clf)
+        self.conf_matrixes(None, test, features, to_predict, clf)
+        self.conf_matrixes(None, train, features, to_predict, clf, "train")
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.sqlite"
@@ -473,7 +482,7 @@ if __name__ == "__main__":
                         , dest="limit", help="How many data points")
 
     # dataframe
-    parser.add_argument("--split", default=0.002, type=float, metavar="RATIO",
+    parser.add_argument("--split", default=0.001, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
