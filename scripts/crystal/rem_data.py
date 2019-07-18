@@ -251,7 +251,7 @@ class QueryDatRem(QueryHelper):
 
         if not found_sum_cl_use:
             print("ERROR: Did not find sum_cl_use table. You probably didn't run")
-            print("       the 'clean_data.py' on this database")
+            print("       the 'clean_update_data.py' on this database")
             print("       Exiting.")
             exit(-1)
 
