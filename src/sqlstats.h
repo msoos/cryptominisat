@@ -88,6 +88,7 @@ public:
         , const string& cur_restart_type
         , const uint32_t act_ranking_top_10
         , const uint32_t act_ranking
+        , const uint32_t tot_cls_in_db
     ) = 0;
 
     virtual void var_data(

@@ -727,6 +727,10 @@ def transform(df):
             cboth = col.replace("rdb0", "rdb0_plus_rdb1")
             df[cboth]=df[col]+df[col2]
 
+    df["rdb0.act_ranking_rel"] = df["rdb0.act_ranking"]/df["rdb0.tot_cls_in_db"]
+    df["rdb1.act_ranking_rel"] = df["rdb1.act_ranking"]/df["rdb1.tot_cls_in_db"]
+    df["rdb0_and_rdb1.act_ranking_rel_avg"] = (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
+
     todiv = [
         "cl.size_hist"
         , "cl.glue_hist"
@@ -742,12 +746,15 @@ def transform(df):
         , "cl.antec_overlap_hist"
         , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
         , "cl.num_antecedents"
+        , "rdb0.act_ranking_rel"
+        #, "rdb1.act_ranking_rel"
+        , "rdb0_and_rdb1.act_ranking_rel_avg"
+        #, "sqrt(rdb0.act_ranking_rel)"
+        #, "sqrt(rdb1.act_ranking_rel)"
+        #, "sqrt(rdb0_and_rdb1.act_ranking_rel_avg)"
         # , "cl.num_overlap_literals"
         # , "rst_cur.resolutions"
-
-        # produced NA -- BEFORE, TODO: add them again
         , "rdb0.act_ranking_top_10"
-        , "rdb0.act_ranking"
 
         # produces NA
         #, "rst_cur.all_props"

@@ -207,6 +207,7 @@ void ReduceDB::dump_sql_cl_data(
             , cur_rst_type
             , act_ranking_top_10+1
             , i+1
+            , all_learnt.size()
         );
         added_to_db++;
         cl->stats.dump_number++;

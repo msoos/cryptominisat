@@ -66,6 +66,7 @@ CREATE TABLE `reduceDB` (
   `ttl` int(20) NOT NULL,
   `act_ranking_top_10` int(20) NOT NULL,
   `act_ranking` int(20) NOT NULL,
+  `tot_cls_in_db` int(20) NOT NULL,
   `sum_uip1_used`  int(20) NOT NULL,
   `sum_delta_confl_uip1_used` int(20) NOT NULL
 );

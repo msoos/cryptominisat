@@ -851,7 +851,7 @@ void SQLiteStats::restart(
 //Prepare statement for restart
 void SQLiteStats::initReduceDBSTMT()
 {
-    const size_t numElems = 23;
+    const size_t numElems = 24;
 
     std::stringstream ss;
     ss << "insert into `reduceDB`"
@@ -879,6 +879,7 @@ void SQLiteStats::initReduceDBSTMT()
     << ", `ttl`"
     << ", `act_ranking_top_10`"
     << ", `act_ranking`"
+    << ", `tot_cls_in_db`"
     << ", `sum_uip1_used`"
     << ", `sum_delta_confl_uip1_used`"
     << ") values ";
@@ -909,6 +910,7 @@ void SQLiteStats::reduceDB(
     , const string& cur_restart_type
     , const uint32_t act_ranking_top_10
     , const uint32_t act_ranking
+    , const uint32_t tot_cls_in_db
 ) {
     assert(cl->stats.dump_number != std::numeric_limits<uint32_t>::max());
 
@@ -944,6 +946,7 @@ void SQLiteStats::reduceDB(
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.ttl);
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking_top_10);
     sqlite3_bind_int(stmtReduceDB, bindAt++, act_ranking);
+    sqlite3_bind_int(stmtReduceDB, bindAt++, tot_cls_in_db);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_uip1_used);
     sqlite3_bind_int(stmtReduceDB, bindAt++, cl->stats.sum_delta_confl_uip1_used);
 
