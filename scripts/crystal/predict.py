@@ -68,6 +68,11 @@ THE SOFTWARE.
 ***********************************************/\n\n""")
 
 
+def check_long_short():
+    if options.longsh is None:
+        print("ERROR: You must give option '--name' as 'short' or 'long'")
+        exit(-1)
+
 class Learner:
     def __init__(self, df, funcname, fname, df_nofilter, cluster_no):
         self.df = df
@@ -662,6 +667,7 @@ static bool {funcname}(
 
             # these don't allow for "fresh" claues to be correctly dealt with
             best_features.append('rdb0.dump_no')
+            check_long_short()
             if options.longsh != "short":
                 best_features.append('rdb0.sum_uip1_used')
                 best_features.append('rdb0.sum_delta_confl_uip1_used')
@@ -724,6 +730,7 @@ class Clustering:
             sz_feats_clean.append(c)
         assert len(sz_feats_clean) == len(sz_feats)
 
+        check_long_short()
         f = open("{basedir}/clustering_{name}_conf{conf_num}.h".format(
             basedir=options.basedir, name=options.longsh,
             conf_num=options.conf_num), 'w')
@@ -809,6 +816,7 @@ public:
 """)
 
     def write_all_predictors_file(self, fnames, functs):
+        check_long_short()
         f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
                 basedir=options.basedir, name=options.longsh,
                 conf_num=options.conf_num), "w")
@@ -987,6 +995,7 @@ public:
         fnames = {}
         functs = {}
         for clno in self.used_clusters:
+            check_long_short()
             funcname = "should_keep_{name}_conf{conf_num}_cluster{clno}".format(
                 clno=clno, name=options.longsh, conf_num=options.conf_num)
             functs[clno] = funcname
@@ -1095,10 +1104,6 @@ if __name__ == "__main__":
 
     if options.fname is None:
         print("ERROR: You must give the pandas file!")
-        exit(-1)
-
-    if options.longsh is None:
-        print("ERROR: You must give option '--name' as 'short' or 'long'")
         exit(-1)
 
     if options.clusters <= 0:
