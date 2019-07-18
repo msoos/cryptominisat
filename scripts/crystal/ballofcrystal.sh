@@ -3,6 +3,7 @@
 FNAMEOUT="mydata"
 FIXED="8000"
 RATIO="0.99"
+CONF=2
 
 EXTRA_GEN_PANDAS_OPTS=""
 if [ "$1" == "--csv" ]; then
