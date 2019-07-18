@@ -760,14 +760,6 @@ def transform(df):
         # , "cl.num_overlap_literals"
         # , "rst_cur.resolutions"
         , "rdb0.act_ranking_top_10"
-
-        # produces NA
-        #, "rst_cur.all_props"
-        #, "rdb0.last_touched_diff"
-        #, "rdb0.sum_delta_confl_uip1_used"
-        #, "rdb0.used_for_uip_creation"
-        #, "rdb0.conflicts"
-        # could be fixed with: df["rdb0.avg_confl"].fillna(0, inplace=True)
         ]
 
     if True:
@@ -784,6 +776,19 @@ def transform(df):
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
             for divper in todiv:
                 df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
+
+    todiv.extend([
+        "rst_cur.all_props"
+        , "rdb0.last_touched_diff"
+        , "rdb0.sum_delta_confl_uip1_used"
+        , "rdb0.used_for_uip_creation"
+        , "rdb0.sum_uip1_used_per_tot_confl"
+        , "rdb1.sum_uip1_used_per_tot_confl"])
+
+    # relative data
+    for col in cols:
+        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+            for divper in todiv:
                 df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
                 pass
 
