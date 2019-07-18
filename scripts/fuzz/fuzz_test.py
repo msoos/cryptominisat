@@ -693,7 +693,7 @@ class Tester:
         # it's UNSAT, let's check with DRAT
         if fname2:
             if not options.rate:
-                toexec = "../../build/tests/drat-trim/drat-trim {cnf} {dratf} {opt}"
+                toexec = "../../build/utils/drat-trim/drat-trim {cnf} {dratf} {opt}"
                 opt = ""
             else:
                 assert self.clid_added == False, "Error: 'rate' DRAT checker cannot handle clids"

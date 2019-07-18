@@ -119,7 +119,7 @@ a=$(grep "s SATIS" cms-pred-run.out)
 retval=$?
 set -e
 if [[ retval -eq 1 ]]; then
-    ../tests/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
+    ../utils/drat-trim/drat-trim "../$FNAME" "$FNAMEOUT.drat" -o "$FNAMEOUT.usedCls" -i
 else
     rm -f final.cnf
     touch final.cnf
