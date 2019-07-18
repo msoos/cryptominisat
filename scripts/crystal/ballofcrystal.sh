@@ -142,14 +142,14 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 ########################
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
-../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 0-4 ${EXTRA_GEN_PANDAS_OPTS}
+../gen_pandas.py "${FNAMEOUT}-min.db" --fixed "$FIXED" --conf 2-2 ${EXTRA_GEN_PANDAS_OPTS}
 
 ########################
 # Create the classifiers
 ########################
 mkdir -p ../../src/predict
 rm -f ../../src/predict/*.h
-for CONF in {0..4}; do
+for CONF in {2..2}; do
     ../predict.py "${FNAMEOUT}-min.db-short-conf-$CONF.dat" --name short --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
 
     ../predict.py "${FNAMEOUT}-min.db-long-conf-$CONF.dat" --name long   --basedir "../../src/predict/" --final --forest --split 0.1 --conf $CONF
