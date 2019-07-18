@@ -717,6 +717,8 @@ void Main::add_supported_options()
         , "Overwrite the SQLite database file if it exists")
     ("cldatadumpratio", po::value(&conf.dump_individual_cldata_ratio)->default_value(conf.dump_individual_cldata_ratio)
         , "Only dump this ratio of clauses' data, randomly selected. Since machine learning doesn't need that much data, this can reduce the data you have to deal with.")
+    ("cllockdatagen", po::value(&conf.lock_for_data_gen_ratio)->default_value(conf.lock_for_data_gen_ratio)
+        , "Lock for data generation into lev0, setting locked_for_data_gen. Only works when clause is marked for dumping ('--cldatadumpratio' )")
     ;
 
     po::options_description printOptions("Printing options");
