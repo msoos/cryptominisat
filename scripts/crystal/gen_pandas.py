@@ -498,6 +498,7 @@ class QueryCls (QueryHelper):
         {rdb0_dat}
         {rdb1_dat}
         {sum_cl_use}
+        , (rdb0.conflicts - cl.conflicts) as `cl.time_inside_solver`
         , sum_cl_use.num_used as `x.a_num_used`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
         , {case_stmt}
@@ -731,6 +732,9 @@ def transform(df):
     df["rdb1.act_ranking_rel"] = df["rdb1.act_ranking"]/df["rdb1.tot_cls_in_db"]
     df["rdb0_and_rdb1.act_ranking_rel_avg"] = (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
 
+    df["rdb0.sum_uip1_used_per_tot_confl"]=df["rdb0.sum_uip1_used"]/df["cl.time_inside_solver"]
+    df["rdb1.sum_uip1_used_per_tot_confl"]=df["rdb1.sum_uip1_used"]/df["cl.time_inside_solver"]
+
     todiv = [
         "cl.size_hist"
         , "cl.glue_hist"
@@ -747,6 +751,7 @@ def transform(df):
         , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
         , "cl.num_antecedents"
         , "rdb0.act_ranking_rel"
+        , "cl.time_inside_solver"
         #, "rdb1.act_ranking_rel"
         , "rdb0_and_rdb1.act_ranking_rel_avg"
         #, "sqrt(rdb0.act_ranking_rel)"
