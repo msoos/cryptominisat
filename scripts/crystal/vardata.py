@@ -180,7 +180,9 @@ class QueryVar (QueryHelper):
                 for name in names:
                     if options.verbose:
                         print("dividing col '%s' with '%s' " % (col, name))
+
                     df["(" + col + "/" + name + ")"]=df[col]/df[name]
+                    pass
 
         # remove sum
         #cols = list(df)
@@ -210,12 +212,16 @@ class QueryVar (QueryHelper):
             # also remove rst
             for col in cols:
                 if "rst." in col:
-                    torem.append(col)
+                    #torem.append(col)
                     pass
+
+            torem.append("rst.restart_type")
 
             # actually remove
             for x in torem:
                 del df[x]
+        else:
+            del df["rst.restart_type"]
 
     def create_vardata_df(self):
         not_cols = [

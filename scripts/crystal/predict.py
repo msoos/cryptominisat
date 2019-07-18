@@ -693,6 +693,37 @@ static bool {funcname}(
         if options.no_rdb1:
             best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
 
+        best_features = [ "(rdb0_plus_rdb1.propagations_made_/_rdb0_and_rdb1.act_ranking_rel_avg)"
+, "(rdb0_plus_rdb1.propagations_made_/_cl.branch_depth_hist_queue)"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.glue))"
+, "(rdb0_plus_rdb1.propagations_made_/_rdb0.act_ranking_rel)"
+, "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.old_glue))"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0_and_rdb1.act_ranking_rel_avg))"
+, "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.num_antecedents))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.old_glue))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_rdb0_and_rdb1.act_ranking_rel_avg)"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt((cl.num_total_lits_antecedents_/_cl.num_antecedents)))"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0.act_ranking_rel))"
+, "(rdb0_plus_rdb1.propagations_made_/_(cl.num_total_lits_antecedents_/_cl.num_antecedents))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(rdb0.act_ranking_top_10))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.num_antecedents))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.branch_depth_hist_queue))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.old_glue)"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.time_inside_solver))"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.num_antecedents))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.glue_hist))"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(rdb0_and_rdb1.act_ranking_rel_avg))"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.glue_hist))"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0.act_ranking_top_10))"
+, "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.glue))"
+, "(rdb0_plus_rdb1.propagations_made_/_cl.time_inside_solver)"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.glue_hist)"
+, "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.glue)"
+, "rdb0_plus_rdb1.used_for_uip_creation"
+, "(rdb0_plus_rdb1.propagations_made_/_rdb0.act_ranking_top_10)"
+, "(rdb0_plus_rdb1.propagations_made_/_cl.num_antecedents)"
+, "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.num_antecedents_hist))"]
+
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -1075,7 +1106,7 @@ if __name__ == "__main__":
                       dest="only_final", help="Only generate final predictor")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
-    parser.add_argument("--top", default=40, type=int, metavar="TOPN",
+    parser.add_argument("--top", default=None, type=int, metavar="TOPN",
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
 
     # clustering
