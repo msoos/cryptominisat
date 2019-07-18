@@ -393,7 +393,7 @@ static bool {funcname}(
 
         return precision, recall, accuracy
 
-    def one_classifier(self, features, to_predict, final):
+    def one_classifier(self, features, to_predict, final, write_code=False):
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
@@ -474,9 +474,12 @@ static bool {funcname}(
                 clf = clf_logreg
             elif options.final_is_forest:
                 clf = clf_forest
-            else:
-                mylist = [["tree", clf_tree], ["svm", clf_svm], ["logreg", clf_logreg]]
+            elif options.final_is_voting:
+                mylist = [["forest", clf_forest], ["svm", clf_svm], ["logreg", clf_logreg]]
                 clf = sklearn.ensemble.VotingClassifier(mylist)
+            else:
+                print("ERROR: You MUST give one of: tree/forest/svm/logreg/voting classifier")
+                exit(-1)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=4000,
@@ -528,7 +531,7 @@ static bool {funcname}(
 
             self.output_to_classical_dot(clf, features)
 
-        if options.basedir:
+        if options.basedir and final and write_code:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)
             c.print_full_code()
 
@@ -635,63 +638,64 @@ static bool {funcname}(
             self.df.hist()
             self.df.boxplot()
 
-        best_features = []
-        if options.only_final:
-            best_features = ['rdb0.used_for_uip_creation']
-            best_features.append('rdb1.used_for_uip_creation')
-            best_features.append('cl.size')
-            best_features.append('cl.size_rel')
-            best_features.append('cl.glue_rel_long')
-            best_features.append('cl.glue_rel_queue')
-            best_features.append('cl.glue')
-            best_features.append('rdb0.act_ranking_top_10')
-
-            # must NOT be used!!
-            # this depends on how many clauses are in the database and that will DEFINIETELY
-            # not be the same during a "normal" run!
-            # best_features.append('rdb0.act_ranking')
-            # best_features.append('rdb1.act_ranking')
-
-            best_features.append('rdb0.last_touched_diff')
-            best_features.append('rdb1.act_ranking_top_10')
-            best_features.append('rdb1.last_touched_diff')
-            best_features.append('rdb.rel_used_for_uip_creation')
-
-            # expensive, not really useful?
-            best_features.append('cl.num_antecedents_rel') # should we?
-            best_features.append('cl.antec_num_total_lits_rel')
-
-            # best_features.append('cl.glue_smaller_than_hist_queue')
-            best_features.append('cl.num_overlap_literals')
-            best_features.append('cl.num_overlap_literals_rel')
-
-            # these don't allow for "fresh" claues to be correctly dealt with
-            best_features.append('rdb0.dump_no')
-            check_long_short()
-            if options.longsh != "short":
-                best_features.append('rdb0.sum_uip1_used')
-                best_features.append('rdb0.sum_delta_confl_uip1_used')
-            # best_features.append('rdb0.avg_confl')
-            # best_features.append('rdb0.used_per_confl')
-
-            best_features.append('cl.antecedents_glue_long_reds_var')
-            best_features.append('cl.num_total_lits_antecedents')
-
-            #best_features.append('cl.cur_restart_type')
-
-            if options.no_rdb1:
-                best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
-        else:
-            top_feats = self.one_classifier(features, "x.class", False)
+        if not options.only_final:
+            top_n_feats = self.one_classifier(features, "x.class", False)
             if options.show:
                 plt.show()
 
-            if options.calc_best_feats:
-                best_features = self.calc_greedy_best_features(top_feats)
-            else:
-                return
+            if options.get_best_topn_feats is not None:
+                greedy_features = self.calc_greedy_best_features(top_n_feats)
 
-        self.one_classifier(best_features, "x.class", True)
+            return
+
+        best_features = ['rdb0.used_for_uip_creation']
+        best_features.append('rdb1.used_for_uip_creation')
+        best_features.append('cl.size')
+        best_features.append('cl.size_rel')
+        best_features.append('cl.glue_rel_long')
+        best_features.append('cl.glue_rel_queue')
+        best_features.append('cl.glue')
+        best_features.append('rdb0.act_ranking_top_10')
+
+        # must NOT be used!!
+        # this depends on how many clauses are in the database and that will DEFINIETELY
+        # not be the same during a "normal" run!
+        # best_features.append('rdb0.act_ranking')
+        # best_features.append('rdb1.act_ranking')
+
+        best_features.append('rdb0.last_touched_diff')
+        best_features.append('rdb1.act_ranking_top_10')
+        best_features.append('rdb1.last_touched_diff')
+        best_features.append('rdb.rel_used_for_uip_creation')
+
+        # expensive, not really useful?
+        best_features.append('cl.num_antecedents_rel') # should we?
+        best_features.append('cl.antec_num_total_lits_rel')
+
+        # best_features.append('cl.glue_smaller_than_hist_queue')
+        best_features.append('cl.num_overlap_literals')
+        best_features.append('cl.num_overlap_literals_rel')
+
+        # these don't allow for "fresh" claues to be correctly dealt with
+        best_features.append('rdb0.dump_no')
+        check_long_short()
+        if options.longsh != "short":
+            best_features.append('rdb0.sum_uip1_used')
+            best_features.append('rdb0.sum_delta_confl_uip1_used')
+        # best_features.append('rdb0.avg_confl')
+        # best_features.append('rdb0.used_per_confl')
+
+        best_features.append('cl.antecedents_glue_long_reds_var')
+        best_features.append('cl.num_total_lits_antecedents')
+
+        #best_features.append('cl.cur_restart_type')
+
+        if options.no_rdb1:
+            best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
+
+        self.one_classifier(best_features, "x.class",
+                            final=True,
+                            write_code=True)
 
         if options.show:
             plt.show()
@@ -1066,12 +1070,10 @@ if __name__ == "__main__":
     parser.add_argument("--mindump", default=0, type=float,
                       dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
-    # final generator
+    # final generator or greedy
     parser.add_argument("--final", default=False, action="store_true",
                       dest="only_final", help="Only generate final predictor")
-    parser.add_argument("--greedy", default=False, action="store_true",
-                      dest="calc_best_feats", help="Calculate the greedy best features")
-    parser.add_argument("--greedybest", default=15, type=int, metavar="TOPN",
+    parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                       dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
@@ -1086,17 +1088,23 @@ if __name__ == "__main__":
     parser.add_argument("--distr", default=False, action="store_true",
                       dest="show_class_dist", help="Show class distribution")
 
-    # type of predictor
+    # type of classifier
     parser.add_argument("--tree", default=False, action="store_true",
-                      dest="final_is_tree", help="Final predictor should be a tree")
+                      dest="final_is_tree", help="Final classifier should be a tree")
     parser.add_argument("--svm", default=False, action="store_true",
-                      dest="final_is_svm", help="Final predictor should be an svm")
+                      dest="final_is_svm", help="Final classifier should be an svm")
     parser.add_argument("--lreg", default=False, action="store_true",
-                      dest="final_is_logreg", help="Final predictor should be a logistic regression")
+                      dest="final_is_logreg", help="Final classifier should be a logistic regression")
     parser.add_argument("--forest", default=False, action="store_true",
-                      dest="final_is_forest", help="Final predictor should be a forest")
+                      dest="final_is_forest", help="Final classifier should be a forest")
+    parser.add_argument("--voting", default=False, action="store_true",
+                      dest="final_is_voting", help="Final classifier should be a voting of all of: forest, svm, logreg")
+
+    # classifier
     parser.add_argument("--numtrees", default=5, type=int,
                       dest="num_trees", help="How many trees to generate for the forest")
+
+    # classifier weights
     parser.add_argument("--prefok", default=2.0, type=float,
                       dest="prefer_ok", help="Prefer OK if >1.0, equal weight if = 1.0, prefer BAD if < 1.0")
 
@@ -1108,6 +1116,14 @@ if __name__ == "__main__":
 
     if options.clusters <= 0:
         print("ERROR: You must give a '--clusters' option that is greater than 0")
+        exit(-1)
+
+    if options.get_best_topn_feats and options.only_final:
+        print("Can't do both greedy best and only final")
+        exit(-1)
+
+    if options.top_num_features and options.only_final:
+        print("Can't do both top N features and only final")
         exit(-1)
 
     assert options.min_samples_split <= 1.0, "You must give min_samples_split that's smaller than 1.0"
