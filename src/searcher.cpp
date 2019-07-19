@@ -1771,6 +1771,16 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     bool to_dump = false;
     #endif
 
+    #ifdef STATS_NEEDED
+    double myrnd = mtrand.randDblExc();
+    if (myrnd <= conf.dump_individual_cldata_ratio) {
+        to_dump = true;
+        if (sqlStats) {
+            dump_restart_sql(rst_dat_type::cl);
+        }
+    }
+    #endif
+
     if (learnt_clause.size() <= 2 ||
         cl == NULL ||
         cl->gauss_temp_cl() ||
@@ -1780,22 +1790,12 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
         if (learnt_clause.size() <= 2) {
             *drat << add << learnt_clause
             #ifdef STATS_NEEDED
-            << 0
+            << (to_dump ? clauseID : 0)
             << sumConflicts
             #endif
             << fin;
             cl = NULL;
         } else {
-            #ifdef STATS_NEEDED
-            double myrnd = mtrand.randDblExc();
-            if (myrnd <= conf.dump_individual_cldata_ratio) {
-                to_dump = true;
-                if (sqlStats) {
-                    dump_restart_sql(rst_dat_type::cl);
-                }
-            }
-            #endif
-
             cl = cl_alloc.Clause_new(learnt_clause
             , sumConflicts
             #ifdef STATS_NEEDED
@@ -1807,9 +1807,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             unsigned which_arr = 2;
 
             #ifdef STATS_NEEDED
-            if (to_dump) {
-                clauseID++;
-            }
             cl->stats.locked_for_data_gen = to_dump &&
                 mtrand.randDblExc() < conf.lock_for_data_gen_ratio;
             #endif
@@ -1846,6 +1843,9 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             << fin;
         }
     } else {
+        #ifdef STATS_NEEDED
+        assert(false);
+        #endif
         //On-the-fly subsumption
         assert(cl->size() > 2);
         *drat << deldelay << *cl << fin;
@@ -1879,7 +1879,6 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
     if (solver->sqlStats
         && drat
         && conf.dump_individual_restarts_and_clauses
-        && cl
         && to_dump
     ) {
         cl->stats.dump_number = 0;
@@ -1888,10 +1887,14 @@ Clause* Searcher::handle_last_confl_otf_subsumption(
             glue
             , old_glue
             , old_decision_level
-            , cl->stats.ID
+            , clauseID
             , decision_cl //decision_clause
-            , false //ternary clause
+            , false //ternary reslution clause
         );
+    }
+
+    if (to_dump) {
+        clauseID++;
     }
     #endif
 
