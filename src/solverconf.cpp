@@ -55,10 +55,6 @@ DLL_PUBLIC SolverConf::SolverConf() :
         #endif
         , clause_decay(0.999)
 
-        // validated with out-pred-final-8644010.wlm01-2-drat0 vs out-pred-final-8644010.wlm01-1-drat0
-        // 884 vs 870
-        , broken_last_touched(true)
-
         , bump_new_learnt_cls(1)
         , adjust_glue_if_too_many_low(0.7)
         , min_num_confl_adjust_glue_cutoff(150ULL*1000ULL)

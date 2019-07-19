@@ -40,8 +40,6 @@ THE SOFTWARE.
 #include "constants.h"
 #include "searchhist.h"
 
-#define INIT_ACTIVITY 1.0
-
 namespace CMSat {
 
 class ClauseAllocator;
@@ -120,7 +118,7 @@ struct ClauseStats
         #else
         which_red_array = 2;
         #endif
-        activity = INIT_ACTIVITY;
+        activity = 0.0;
         ttl = 0;
         marked_clause = false;
         drop_if_not_used = false;
@@ -413,10 +411,10 @@ public:
         isRed = false;
     }
 
-    void makeRed(const uint32_t newGlue, const double init_activity = INIT_ACTIVITY)
+    void makeRed(const uint32_t newGlue)
     {
         stats.glue = newGlue;
-        stats.activity = init_activity;
+        stats.activity = 0.0;
         isRed = true;
     }
 
