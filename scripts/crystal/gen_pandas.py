@@ -930,14 +930,14 @@ if __name__ == "__main__":
     parser.add_option("--sql", action="store_true", default=False,
                       dest="dump_sql", help="Dump SQL queries")
 
-    parser.add_option("--fixed", default=20000, type=int,
-                      dest="fixed", help="Exact number of examples to take. -1 is to take all. Default: %default")
+    parser.add_option("--limit", default=20000, type=int,
+                      dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
 
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
-    parser.add_option("--confs", default="0-0", type=str,
+    parser.add_option("--confs", default="2-2", type=str,
                       dest="confs", help="Configs to generate. Default: %default")
 
     parser.add_option("--short", default="10000", type=str,
