@@ -694,7 +694,8 @@ static bool {funcname}(
         if options.no_rdb1:
             best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
 
-        best_features = [ "(rdb0_plus_rdb1.propagations_made_/_rdb0_and_rdb1.act_ranking_rel_avg)"
+        best_features = [
+        "(rdb0_plus_rdb1.propagations_made_/_rdb0_and_rdb1.act_ranking_rel_avg)"
         , "(rdb0_plus_rdb1.propagations_made_/_cl.branch_depth_hist_queue)"
         , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.glue))"
         , "(rdb0_plus_rdb1.propagations_made_/_rdb0.act_ranking_rel)"
