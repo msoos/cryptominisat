@@ -151,8 +151,12 @@ class QueryDatRem(QueryHelper):
         self.c.execute(q)
         print("T: %-3.2f s"% (time.time() - t))
 
-    def insert_into_used_cls_ids(self, min_used, limit):
+    def insert_into_used_cls_ids(self, min_used, limit, max_used=None):
         min_used = int(min_used)
+
+        max_const = ""
+        if max_used is not None:
+            max_const = " and num_used <= %d" % max_used
 
         t = time.time()
         val = int()
@@ -160,9 +164,16 @@ class QueryDatRem(QueryHelper):
         insert into used_cl_ids
         select
         clauseID from sum_cl_use
-        where num_used >= {min_used}
+        where
+        num_used >= {min_used}
+        {max_const}
         order by random() limit {limit}
-        """.format(min_used=min_used, limit=int(limit))
+        """.format(
+            min_used=min_used,
+            limit=int(limit),
+            max_const=max_const)
+
+
         self.c.execute(q)
         print("Added num_used >= %d from sum_cl_use to used_cls_ids T: %-3.2f s"
               % (min_used, time.time() - t))
@@ -176,7 +187,7 @@ class QueryDatRem(QueryHelper):
             self.insert_into_used_cls_ids(5, options.limit/3)
             self.insert_into_used_cls_ids(1, options.limit/2)
 
-        self.insert_into_used_cls_ids(0, options.limit)
+        self.insert_into_used_cls_ids(0, options.limit, max_used=0)
 
         q = """
         select count()
