@@ -71,6 +71,7 @@ THE SOFTWARE.
 def check_long_short():
     if options.longsh is None:
         print("ERROR: You must give option '--name' as 'short' or 'long'")
+        assert False
         exit(-1)
 
 class Learner:
