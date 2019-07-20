@@ -46,6 +46,10 @@ if __name__ == "__main__":
         print("ERROR: you must either dump CSV or Pandas. Give either '--out' or '--csv' options")
         exit(-1)
 
+    if options.csvratio < 0.0:
+        print("ERROR: CSV ratio cannot be less than 0.0")
+        exit(-1)
+
     if options.csvratio > 1.0:
         print("ERROR: CSV ratio cannot be more than 1.0")
         exit(-1)
