@@ -750,6 +750,7 @@ def transform(df):
         , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
         , "cl.num_antecedents"
         , "rdb0.act_ranking_rel"
+        , "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         #, "rdb1.act_ranking_rel"
         , "rdb0_and_rdb1.act_ranking_rel_avg"
@@ -796,8 +797,6 @@ def transform(df):
         "szfeat_cur.numVars",
         "szfeat_cur.numClauses",
         "szfeat_cur.var_cl_ratio",
-        "szfeat_cur.binary",
-        "szfeat_cur.horn",
         "szfeat_cur.avg_confl_size",
         "szfeat_cur.avg_branch_depth",
         "szfeat_cur.red_glue_distr_mean"
