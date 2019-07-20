@@ -99,7 +99,7 @@ class Predict:
     def get_top_features(self, df):
         split_point = self.calc_min_split_point(df)
         df["x.class"]=pd.qcut(df["x.useful_times_per_marked"],
-                             q=4,
+                             q=options.quantiles,
                              labels=False)
         features = list(df)
         features.remove("x.class")
@@ -150,6 +150,8 @@ if __name__ == "__main__":
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
+    parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
+                      dest="quantiles", help="Number of quantiles we want")
 
     options = parser.parse_args()
 
