@@ -242,6 +242,8 @@ class QueryVar (QueryHelper):
             , "restarts"
             , "conflicts"
             , "var"
+            , "useful_clauses_used"
+            , "cls_marked"
             , "propagated_pos_perc"]
         var_data = self.query_fragment("varData", not_cols, "var_data")
 
@@ -273,11 +275,6 @@ class QueryVar (QueryHelper):
         {rst}
         {var_data_use}
         {var_data}
---        , CASE WHEN
---         (1.0*useful_clauses_used)/(1.0*cls_marked) > 2
---        THEN "OK"
---        ELSE "BAD"
---        END AS `x.class`
 
         FROM
         varData as var_data
