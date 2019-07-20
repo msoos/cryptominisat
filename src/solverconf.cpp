@@ -151,7 +151,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
         //BreakID
         , doBreakid(false)
         , breakid_use_assump(true)
-        , breakid_every_n(2)
+        , breakid_every_n(3)
         , breakid_vars_limit_K(300)
         , breakid_cls_limit_K(600)
         , breakid_lits_limit_K(1500)
@@ -228,9 +228,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , max_num_simplify_per_solve_call(25)
         , simplify_schedule_startup(
             "sub-impl,"
+            "breakid, "
             "occ-backw-sub-str, occ-clean-implicit, occ-bve,"
             "occ-ternary-res, occ-backw-sub-str, occ-xor, "
-            "breakid, "
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "scc-vrepl,"
@@ -249,9 +249,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "sub-impl, intree-probe, probe,"
             "sub-str-cls-with-bin, distill-cls,"
             "scc-vrepl, sub-impl, str-impl, sub-impl,"
+            "breakid, "
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"//occ-gates,"
             "occ-ternary-res, occ-xor,"
-            "breakid, "
             "card-find,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
@@ -263,9 +263,9 @@ DLL_PUBLIC SolverConf::SolverConf() :
             "scc-vrepl, cache-clean, cache-tryboth,"
             "sub-impl,"
             "sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"
+            "breakid, "
             "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"
             "occ-ternary-res, occ-xor,"
-            "breakid, "
             //"occ-gates,"
             "cl-consolidate," //consolidate after OCC
             "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls, scc-vrepl, sub-impl,"

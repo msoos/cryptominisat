@@ -2071,7 +2071,8 @@ lbool Solver::execute_inprocess_strategy(
             }
         } else if (token == "breakid") {
             if (conf.doBreakid
-                && solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)
+                && (solveStats.num_simplify == 0 ||
+                   (solveStats.num_simplify % conf.breakid_every_n == (conf.breakid_every_n-1)))
             ) {
 #ifdef USE_BREAKID
                 breakid->doit();
