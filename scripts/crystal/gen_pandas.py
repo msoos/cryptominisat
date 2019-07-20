@@ -649,7 +649,7 @@ class QueryCls (QueryHelper):
         else:
             self.myformat["case_stmt"] = self.case_stmt_long.format(**subformat)
             self.myformat["del_at_least"] = options.long_duration
-            fixed_mult = 0.2
+            fixed_mult = options.fixed_mult_long
 
         print("Fixed multiplier set to  %s " % fixed_mult)
 
@@ -920,25 +920,30 @@ if __name__ == "__main__":
     usage = "usage: %prog [options] file1.sqlite [file2.sqlite ...]"
     parser = optparse.OptionParser(usage=usage)
 
+    # verbosity level
     parser.add_option("--verbose", "-v", action="store_true", default=False,
                       dest="verbose", help="Print more output")
-
+    parser.add_option("--sql", action="store_true", default=False,
+                      dest="dump_sql", help="Dump SQL queries")
     parser.add_option("--csv", action="store_true", default=False,
                       dest="dump_csv", help="Dump CSV (for weka)")
 
-    parser.add_option("--sql", action="store_true", default=False,
-                      dest="dump_sql", help="Dump SQL queries")
-
+    # limits
     parser.add_option("--limit", default=20000, type=int,
                       dest="limit", help="Exact number of examples to take. -1 is to take all. Default: %default")
+    parser.add_option("--limitlongmult", default="0.2", type=float,
+                      dest="fixed_mult_long", help="Use this much less samples for long")
 
+    # debugging is faster with this
     parser.add_option("--noind", action="store_true", default=False,
                       dest="no_recreate_indexes",
                       help="Don't recreate indexes")
 
+    # configs
     parser.add_option("--confs", default="2-2", type=str,
                       dest="confs", help="Configs to generate. Default: %default")
 
+    # lengths of short/long
     parser.add_option("--short", default="10000", type=str,
                       dest="short_duration", help="Short duration. Default: %default")
     parser.add_option("--long", default="50000", type=str,
