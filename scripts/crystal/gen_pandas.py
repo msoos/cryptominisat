@@ -621,7 +621,7 @@ class QueryCls (QueryHelper):
     def get_one_data_all_dumpnos(self, long_or_short):
         df = None
 
-        ok, df, this_fixed = self.get_data(long_or_short)
+        ok, df, this_limit = self.get_data(long_or_short)
         if not ok:
             return False, None
 
@@ -633,7 +633,7 @@ class QueryCls (QueryHelper):
         return True, df
 
 
-    def get_data(self, long_or_short, this_fixed=None):
+    def get_data(self, long_or_short, this_limit=None):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
         ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long");
@@ -655,10 +655,10 @@ class QueryCls (QueryHelper):
         print("Fixed multiplier set to  %s " % fixed_mult)
 
         t = time.time()
-        if this_fixed is None:
-            this_fixed = options.fixed
-            this_fixed *= fixed_mult
-        print("this_fixed is set to:", this_fixed)
+        if this_limit is None:
+            this_limit = options.limit
+            this_limit *= fixed_mult
+        print("this_limit is set to:", this_limit)
 
         q = self.q_select + self.q
 
@@ -667,17 +667,17 @@ class QueryCls (QueryHelper):
         for type_data in ["OK", "BAD"]:
             df_parts = []
 
-            self.myformat["limit"] = int(this_fixed/2)
+            self.myformat["limit"] = int(this_limit/2)
             extra = " and rdb0.dump_no = 1 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[0].shape))
 
-            self.myformat["limit"] = int(this_fixed/3)
+            self.myformat["limit"] = int(this_limit/3)
             extra = " and rdb0.dump_no = 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[1].shape))
 
-            self.myformat["limit"] = int(this_fixed/4)
+            self.myformat["limit"] = int(this_limit/4)
             extra = " and rdb0.dump_no > 2 "
             df_parts.append(self.one_query(q + extra, type_data))
             print("shape for %s: %s" % (extra, df_parts[2].shape))
@@ -687,7 +687,7 @@ class QueryCls (QueryHelper):
                 type=type_data, size=df[type_data].shape))
 
         print("Queries finished. T: %-3.2f" % (time.time() - t))
-        return True, pd.concat([df["OK"], df["BAD"]]), this_fixed
+        return True, pd.concat([df["OK"], df["BAD"]]), this_limit
 
 
 def transform(df):
