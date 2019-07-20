@@ -246,7 +246,6 @@ class QueryFill (QueryHelper):
         self.c.execute(q)
         print("used_later_long filled T: %-3.2f s" % (time.time() - t))
 
-
         t = time.time()
         q = """
         create index `used_later_idx1` on `used_later` (`clauseID`, rdb0conflicts);
