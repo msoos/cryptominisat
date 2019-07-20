@@ -115,6 +115,71 @@ class QueryVar (QueryHelper):
 
         print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
 
+    def fill_var_data_use(self):
+        print("Filling var data use...")
+
+        t = time.time()
+        q = "delete from `varDataUse`;"
+        self.c.execute(q)
+        print("varDataUse cleared T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        insert into varDataUse
+
+        (`var`
+        , `conflicts`
+
+        , `decided_this_var_per_all_decisions`
+        , `decided_this_var_pos_perc`
+        , `prop_this_var_per_all_decisions`
+        , `propagated_this_var_pos_perc`
+
+        , `cls_marked`
+        , `useful_clauses_used`)
+
+        select
+        v.var
+        , v.conflicts
+
+        -- data about var
+        , (v.decided*1.0)/(v.sumDecisions_at_fintime*1.0) as `decided_this_var_per_all_decisions`
+        , (v.decided_pos*1.0)/(v.decided*1.0) as `decided_this_var_pos_perc`
+        , (v.propagated*1.0)/(v.sumPropagations_at_fintime*1.0) as `prop_this_var_per_all_decisions`
+        , (v.propagated_pos*1.0)/(v.propagated*1.0) as `propagated_this_var_pos_perc`
+
+        -- measures for good
+        , count(cls.num_used) as cls_marked
+        , sum(cls.num_used) as useful_clauses_used
+
+        FROM varData as v join sum_cl_use as cls
+        on cls.clauseID >= v.clid_start_incl
+        and cls.clauseID < v.clid_end_notincl
+
+        -- avoid division by zero below
+        where
+        v.propagated > 0
+        and v.sumPropagations_at_picktime > 0
+        and v.decided > 0
+        and v.sumDecisions_at_picktime > 0
+        group by var, conflicts
+        ;
+        """
+        if options.verbose:
+            print("query:", q)
+        self.c.execute(q)
+
+        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
+
+        t = time.time()
+        q = """
+        UPDATE varDataUse SET useful_clauses_used = 0
+        WHERE useful_clauses_used IS NULL
+        """
+        self.c.execute(q)
+
+        print("varDataUse updated T: %-3.2f s" % (time.time() - t))
+
     def get_columns(self, tablename):
         q="SELECT name FROM PRAGMA_TABLE_INFO('%s');" % tablename
         self.c.execute(q)
@@ -298,71 +363,6 @@ class QueryVar (QueryHelper):
         df = pd.read_sql_query(q, self.conn)
         print("DF dimensions:", df.shape)
         return df
-
-    def fill_var_data_use(self):
-        print("Filling var data use...")
-
-        t = time.time()
-        q = "delete from `varDataUse`;"
-        self.c.execute(q)
-        print("varDataUse cleared T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        insert into varDataUse
-
-        (`var`
-        , `conflicts`
-
-        , `decided_this_var_per_all_decisions`
-        , `decided_this_var_pos_perc`
-        , `prop_this_var_per_all_decisions`
-        , `propagated_this_var_pos_perc`
-
-        , `cls_marked`
-        , `useful_clauses_used`)
-
-        select
-        v.var
-        , v.conflicts
-
-        -- data about var
-        , (v.decided*1.0)/(v.sumDecisions_at_fintime*1.0) as `decided_this_var_per_all_decisions`
-        , (v.decided_pos*1.0)/(v.decided*1.0) as `decided_this_var_pos_perc`
-        , (v.propagated*1.0)/(v.sumPropagations_at_fintime*1.0) as `prop_this_var_per_all_decisions`
-        , (v.propagated_pos*1.0)/(v.propagated*1.0) as `propagated_this_var_pos_perc`
-
-        -- measures for good
-        , count(cls.num_used) as cls_marked
-        , sum(cls.num_used) as useful_clauses_used
-
-        FROM varData as v join sum_cl_use as cls
-        on cls.clauseID >= v.clid_start_incl
-        and cls.clauseID < v.clid_end_notincl
-
-        -- avoid division by zero below
-        where
-        v.propagated > 0
-        and v.sumPropagations_at_picktime > 0
-        and v.decided > 0
-        and v.sumDecisions_at_picktime > 0
-        group by var, conflicts
-        ;
-        """
-        if options.verbose:
-            print("query:", q)
-        self.c.execute(q)
-
-        print("varDataUse filled T: %-3.2f s" % (time.time() - t))
-
-        t = time.time()
-        q = """
-        UPDATE varDataUse SET useful_clauses_used = 0
-        WHERE useful_clauses_used IS NULL
-        """
-        self.c.execute(q)
-
-        print("varDataUse updated T: %-3.2f s" % (time.time() - t))
 
 
 if __name__ == "__main__":
