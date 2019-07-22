@@ -237,6 +237,8 @@ if __name__ == "__main__":
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
     parser.add_argument("--split", default=0.001, type=float, metavar="RATIO",
                       dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
+    parser.add_argument("--verbose", "-v", action="store_true", default=False,
+                        dest="verbose", help="Print more output")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
     parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
