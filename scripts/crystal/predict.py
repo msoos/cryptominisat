@@ -675,36 +675,6 @@ static bool {funcname}(
 
         return feat_less
 
-    def calc_greedy_best_features(self, top_feats):
-        best_features = [top_feats[0]]
-        for i in range(options.get_best_topn_feats-1):
-            print("*** Round %d Best feature set until now: %s"
-                  % (i, best_features))
-
-            best_sum = 0.0
-            best_feat = None
-            feats_to_try = [i for i in top_feats if i not in best_features]
-            print("Will try to get next best from ", feats_to_try)
-            for feat in feats_to_try:
-                this_feats = list(best_features)
-                this_feats.append(feat)
-                print("Trying feature set: ", this_feats)
-                mysum = self.one_classifier(this_feats, "x.class", True)
-                print("Reported mysum: ", mysum)
-                if mysum > best_sum:
-                    best_sum = mysum
-                    best_feat = feat
-                    print("-> Making this best accuracy")
-
-            print("*** Best feature for round %d was: %s with mysum: %lf"
-                  % (i, best_feat, mysum))
-            best_features.append(best_feat)
-
-            print("\n\n")
-            print("Final best feature selection is: ", best_features)
-
-        return best_features
-
     def learn(self):
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
@@ -727,7 +697,7 @@ static bool {funcname}(
                 plt.show()
 
             if options.get_best_topn_feats is not None:
-                greedy_features = self.calc_greedy_best_features(top_n_feats)
+                greedy_features = helper.calc_greedy_best_features(top_n_feats)
 
             return
 

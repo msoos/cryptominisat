@@ -182,6 +182,8 @@ class Predict:
 
         helper.conf_matrixes(test, features, to_predict, clf)
         helper.conf_matrixes(train, features, to_predict, clf, "train")
+        if options.get_best_topn_feats is not None:
+                greedy_features = helper.calc_greedy_best_features(top_n_feats)
 
 
 if __name__ == "__main__":
@@ -202,6 +204,8 @@ if __name__ == "__main__":
                       dest="no_computed", help="Don't add computed features")
     parser.add_argument("--check", action="store_true", default=False,
                       dest="check_row_data", help="Check row data for NaN or float overflow")
+    parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
+                      dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
 
     options = parser.parse_args()
 
