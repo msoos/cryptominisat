@@ -55,8 +55,8 @@ def add_computed_features(df):
     del df["var_data_use.cls_marked"]
 
     # more complicated
-    df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
-    df["var_data.propagated_per_sumprop"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
+    df["(var_data.propagated/var_data.sumConflicts_at_fintime)"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
+    df["(var_data.propagated/var_data.sumPropagations_at_fintime)"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
 
     # remove picktime & fintime
     cols = list(df)

@@ -91,25 +91,22 @@ def add_computed_features(df):
     # TODO decision level and branch depth are the same, right???
     # ************
     print("size/glue/trail rel...")
-    # df["cl.size_rel"] = df["cl.size"] / df["cl.size_hist"]
-    # df["cl.glue_rel_queue"] = df["cl.glue"] / df["cl.glue_hist_queue"]
-    # df["cl.glue_rel_long"] = df["cl.glue"] / df["cl.glue_hist_long"]
-    #df["cl.glue_rel"] = df["cl.glue"] / df["cl.glue_hist"]
-    df["cl.trail_depth_level_rel"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
+    df["(cl.trail_depth_level/cl.trail_depth_level_hist)"] = df["cl.trail_depth_level"]/df["cl.trail_depth_level_hist"]
 
     df["rst_cur.all_props"] = df["rst_cur.propBinRed"] + df["rst_cur.propBinIrred"] + df["rst_cur.propLongRed"] + df["rst_cur.propLongIrred"]
-    df["(cl.num_total_lits_antecedents_/_cl.num_antecedents)"] = df["cl.num_total_lits_antecedents"]/df["cl.num_antecedents"]
+    df["(cl.num_total_lits_antecedents/cl.num_antecedents)"] = df["cl.num_total_lits_antecedents"]/df["cl.num_antecedents"]
 
     orig_cols = list(df)
     for col in orig_cols:
         if ("rdb0" in col) and "restart_type" not in col:
             col2 = col.replace("rdb0", "rdb1")
-            cboth = col.replace("rdb0", "rdb0_plus_rdb1")
+            cboth = "("+col+"+"+col2+")"
             df[cboth]=df[col]+df[col2]
 
     df["rdb0.act_ranking_rel"] = df["rdb0.act_ranking"]/df["rdb0.tot_cls_in_db"]
     df["rdb1.act_ranking_rel"] = df["rdb1.act_ranking"]/df["rdb1.tot_cls_in_db"]
-    df["rdb0_and_rdb1.act_ranking_rel_avg"] = (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
+    df["((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"] = \
+        (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
 
     df["rdb0.sum_uip1_used_per_tot_confl"]=df["rdb0.sum_uip1_used"]/df["cl.time_inside_solver"]
     df["rdb1.sum_uip1_used_per_tot_confl"]=df["rdb1.sum_uip1_used"]/df["cl.time_inside_solver"]
@@ -127,7 +124,7 @@ def add_computed_features(df):
         # , "cl.backtrack_level_hist"
         , "cl.branch_depth_hist_queue"
         , "cl.antec_overlap_hist"
-        , "(cl.num_total_lits_antecedents_/_cl.num_antecedents)"
+        , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , "rdb0.act_ranking_rel"
         , "szfeat_cur.var_cl_ratio"
@@ -155,7 +152,7 @@ def add_computed_features(df):
     for col in cols:
         if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
             for divper in todiv:
-                df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
+                df["("+col+"/"+divper+")"] = df[col]/df[divper]
 
     todiv.extend([
         "rst_cur.all_props"
@@ -185,8 +182,8 @@ def add_computed_features(df):
         if "szfeat" in col:
             for divper in todiv:
                 if "min" not in todiv and "max" not in todiv:
-                    df["("+col+"_/_"+divper+")"] = df[col]/df[divper]
-                    df["("+col+"_<_"+divper+")"] = (df[col]<df[divper]).astype(int)
+                    df["("+col+"/"+divper+")"] = df[col]/df[divper]
+                    df["("+col+"<"+divper+")"] = (df[col]<df[divper]).astype(int)
                     pass
 
     # relative RDB
@@ -348,7 +345,7 @@ static double estimator_{funcname}_0(
     const CMSat::Clause* cl
     , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
-    , const uint32_t rdb0_act_ranking
+    , const double rdb0_act_ranking_rel
     , const uint32_t rdb0_act_ranking_top_10
 ) {{\n""".format(funcname=self.funcname))
                 if options.verbose:
@@ -365,7 +362,7 @@ static double estimator_{funcname}_{est_num}(
     const CMSat::Clause* cl
     , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
-    , const uint32_t rdb0_act_ranking
+    , const double rdb0_act_ranking_rel
     , const uint32_t rdb0_act_ranking_top_10
 ) {{\n""".format(est_num=i, funcname=self.funcname))
                     self.define_avg_for_cls()
@@ -379,7 +376,7 @@ static bool {funcname}(
     const CMSat::Clause* cl
     , const uint64_t sumConflicts
     , const uint32_t rdb0_last_touched_diff
-    , const uint32_t rdb0_act_ranking
+    , const double rdb0_act_ranking_rel
     , const uint32_t rdb0_act_ranking_top_10
 ) {{\n""".format(funcname=self.funcname))
             self.f.write("    int votes = 0;\n")
@@ -388,7 +385,7 @@ static bool {funcname}(
     cl
     , sumConflicts
     , rdb0_last_touched_diff
-    , rdb0_act_ranking
+    , rdb0_act_ranking_rel
     , rdb0_act_ranking_top_10
     ) < 1.0;\n""".format(est_num=i, funcname=self.funcname))
             self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
@@ -412,13 +409,7 @@ static bool {funcname}(
                     pass
                 elif feat_name == "rdb0_act_ranking_top_10":
                     pass
-                elif feat_name == "rdb0_act_ranking":
-                    pass
-                elif feat_name == "rdb0_avg_confl":
-                    pass
-                elif feat_name == "rdb0_used_per_confl":
-                    pass
-                elif feat_name == "rdb_rel_used_for_uip_creation":
+                elif feat_name == "rdb0_act_ranking_rel":
                     pass
                 else:
                     feat_name = "cl->stats." + feat_name
@@ -701,82 +692,7 @@ static bool {funcname}(
 
             return
 
-        best_features = ['rdb0.used_for_uip_creation']
-        best_features.append('rdb1.used_for_uip_creation')
-        best_features.append('cl.size')
-        best_features.append('cl.size_rel')
-        best_features.append('cl.glue_rel_long')
-        best_features.append('cl.glue_rel_queue')
-        best_features.append('cl.glue')
-        best_features.append('rdb0.act_ranking_top_10')
-
-        # must NOT be used!!
-        # this depends on how many clauses are in the database and that will DEFINIETELY
-        # not be the same during a "normal" run!
-        # best_features.append('rdb0.act_ranking')
-        # best_features.append('rdb1.act_ranking')
-
-        best_features.append('rdb0.last_touched_diff')
-        best_features.append('rdb1.act_ranking_top_10')
-        best_features.append('rdb1.last_touched_diff')
-        best_features.append('rdb.rel_used_for_uip_creation')
-
-        # expensive, not really useful?
-        best_features.append('cl.num_antecedents_rel') # should we?
-        best_features.append('cl.antec_num_total_lits_rel')
-
-        # best_features.append('cl.glue_smaller_than_hist_queue')
-        best_features.append('cl.num_overlap_literals')
-        best_features.append('cl.num_overlap_literals_rel')
-
-        # these don't allow for "fresh" claues to be correctly dealt with
-        best_features.append('rdb0.dump_no')
-        check_long_short()
-        if options.longsh != "short":
-            best_features.append('rdb0.sum_uip1_used')
-            best_features.append('rdb0.sum_delta_confl_uip1_used')
-        # best_features.append('rdb0.avg_confl')
-        # best_features.append('rdb0.used_per_confl')
-
-        best_features.append('cl.antecedents_glue_long_reds_var')
-        best_features.append('cl.num_total_lits_antecedents')
-
-        #best_features.append('cl.cur_restart_type')
-
-        if options.no_rdb1:
-            best_features = self.rem_features(best_features, ["rdb.rel", "rdb1."])
-
-        best_features = [
-        "(rdb0_plus_rdb1.propagations_made_/_rdb0_and_rdb1.act_ranking_rel_avg)"
-        , "(rdb0_plus_rdb1.propagations_made_/_cl.branch_depth_hist_queue)"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.glue))"
-        , "(rdb0_plus_rdb1.propagations_made_/_rdb0.act_ranking_rel)"
-        , "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.old_glue))"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0_and_rdb1.act_ranking_rel_avg))"
-        , "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.num_antecedents))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.old_glue))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_rdb0_and_rdb1.act_ranking_rel_avg)"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt((cl.num_total_lits_antecedents_/_cl.num_antecedents)))"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0.act_ranking_rel))"
-        , "(rdb0_plus_rdb1.propagations_made_/_(cl.num_total_lits_antecedents_/_cl.num_antecedents))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(rdb0.act_ranking_top_10))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.num_antecedents))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.branch_depth_hist_queue))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.old_glue)"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.time_inside_solver))"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.num_antecedents))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(cl.glue_hist))"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_sqrt(rdb0_and_rdb1.act_ranking_rel_avg))"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.glue_hist))"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(rdb0.act_ranking_top_10))"
-        , "(rdb0.sum_uip1_used_per_tot_confl_/_sqrt(cl.glue))"
-        , "(rdb0_plus_rdb1.propagations_made_/_cl.time_inside_solver)"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.glue_hist)"
-        , "(rdb0_plus_rdb1.used_for_uip_creation_/_cl.glue)"
-        , "rdb0_plus_rdb1.used_for_uip_creation"
-        , "(rdb0_plus_rdb1.propagations_made_/_rdb0.act_ranking_top_10)"
-        , "(rdb0_plus_rdb1.propagations_made_/_cl.num_antecedents)"
-        , "(rdb0_plus_rdb1.propagations_made_/_sqrt(cl.num_antecedents_hist))"]
+        best_features = []
 
         self.one_classifier(best_features, "x.class",
                             final=True,

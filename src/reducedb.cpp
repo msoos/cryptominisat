@@ -379,7 +379,7 @@ void ReduceDB::handle_lev3_final_predictor()
                 cl
                 , solver->sumConflicts
                 , last_touched_diff
-                , i
+                , (double)i/(double)solver->longRedCls[3].size()
                 , act_ranking_top_10
             )) {
                 marked_long_keep++;
