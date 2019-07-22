@@ -243,6 +243,8 @@ if __name__ == "__main__":
                       dest="top_num_features", help="Candidates are top N features for greedy selector")
     parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
                       dest="quantiles", help="Number of quantiles we want")
+    parser.add_argument("--nocomputed", default=False, action="store_true",
+                      dest="no_computed", help="Don't add computed features")
 
     options = parser.parse_args()
 
@@ -251,6 +253,9 @@ if __name__ == "__main__":
         exit(-1)
 
     df = pd.read_pickle(options.fname)
-    add_computed_features(df)
+
+    if not options.no_computed:
+        add_computed_features(df)
+
     p = Predict()
     p.get_top_features(df)
