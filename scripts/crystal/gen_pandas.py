@@ -352,6 +352,7 @@ class QueryCls (QueryHelper):
         not_cols = [
             "simplifications"
             , "restarts"
+            , "conflicts"
             , "latest_satzilla_feature_calc"
             , "irred_glue_distr_mean"
             , "irred_glue_distr_var"]
