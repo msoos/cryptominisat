@@ -181,7 +181,7 @@ class QueryVar (QueryHelper):
         print("varDataUse updated T: %-3.2f s" % (time.time() - t))
 
     def get_columns(self, tablename):
-        q="SELECT name FROM PRAGMA_TABLE_INFO('%s');" % tablename
+        q = "pragma table_info(%s);" % tablename
         self.c.execute(q)
         rows = self.c.fetchall()
         columns = []
@@ -189,8 +189,8 @@ class QueryVar (QueryHelper):
             if options.verbose:
                 print("Using column in table {tablename}: {col}".format(
                     tablename=tablename
-                    , col=row[0]))
-            columns.append(row[0])
+                    , col=row[1]))
+            columns.append(row[1])
 
         return columns
 
