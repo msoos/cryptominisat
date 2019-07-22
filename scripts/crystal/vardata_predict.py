@@ -28,6 +28,7 @@ import pandas as pd
 import numpy as np
 import os.path
 import sys
+import helper
 import sklearn
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
@@ -92,6 +93,8 @@ def add_computed_features(df):
         #if c[0:3] == "sum":
             #del df[c]
 
+
+def rem_useless_features(df):
     if True:
         # remove these
         torem = [
@@ -121,7 +124,8 @@ def add_computed_features(df):
 
         # actually remove
         for x in torem:
-            del df[x]
+            if x in df:
+                del df[x]
     else:
         del df["rst.restart_type"]
 
@@ -129,27 +133,6 @@ def add_computed_features(df):
 class Predict:
     def __init__(self):
         pass
-
-    def calc_min_split_point(self, df):
-        split_point = int(float(df.shape[0])*options.min_samples_split)
-        if split_point < 10:
-            split_point = 10
-        print("Minimum split point: ", split_point)
-        return split_point
-
-    def print_confusion_matrix(self, cm, classes,
-                               normalize=False,
-                               title='Confusion matrix'):
-        """
-        This function prints and plots the confusion matrix.
-        Normalization can be applied by setting `normalize=True`.
-        """
-        if normalize:
-            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print(title)
-
-        np.set_printoptions(precision=2)
-        print(cm)
 
     def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
         # get data
@@ -176,24 +159,31 @@ class Predict:
         # Plot confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_data, y_pred=y_pred)
-        self.print_confusion_matrix(
+        helper.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
             title='Confusion matrix, without normalization (%s)' % toprint)
-        self.print_confusion_matrix(
+        helper.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_, normalize=True,
             title='Normalized confusion matrix (%s)' % toprint)
 
         return precision, recall, accuracy
 
     def get_top_features(self, df):
-        split_point = self.calc_min_split_point(df)
         df["x.class"]=pd.qcut(df["x.useful_times_per_marked"],
                              q=options.quantiles,
                              labels=False)
+        df["x.class"]=pd.cut(df["x.useful_times_per_marked"],
+                             bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
+                             labels=False)
+
         features = list(df)
         features.remove("x.class")
         features.remove("x.useful_times_per_marked")
         to_predict="x.class"
+
+        if options.check_row_data:
+            helper.check_too_large_or_nan_values(df, features+["x.class"])
+            print("Checked, all good!")
 
         print("-> Number of features  :", len(features))
         print("-> Number of datapoints:", df.shape)
@@ -202,11 +192,10 @@ class Predict:
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-        split_point = self.calc_min_split_point(df)
+        split_point = helper.calc_min_split_point(df, options.min_samples_split)
         clf = sklearn.ensemble.RandomForestClassifier(
-                    n_estimators=400,
-                    max_features="sqrt",
-                    min_samples_leaf=split_point)
+                    n_estimators=1000,
+                    max_features="sqrt")
 
         t = time.time()
         clf.fit(X_train, y_train)
@@ -245,6 +234,8 @@ if __name__ == "__main__":
                       dest="quantiles", help="Number of quantiles we want")
     parser.add_argument("--nocomputed", default=False, action="store_true",
                       dest="no_computed", help="Don't add computed features")
+    parser.add_argument("--check", action="store_true", default=False,
+                      dest="check_row_data", help="Check row data for NaN or float overflow")
 
     options = parser.parse_args()
 
@@ -256,6 +247,8 @@ if __name__ == "__main__":
 
     if not options.no_computed:
         add_computed_features(df)
+
+    rem_useless_features(df)
 
     p = Predict()
     p.get_top_features(df)

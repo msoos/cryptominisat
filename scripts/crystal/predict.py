@@ -35,6 +35,7 @@ import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
+import helper
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -280,21 +281,6 @@ class Learner:
         del df
         del df2
 
-    def print_confusion_matrix(self, cm, classes,
-                               normalize=False,
-                               title='Confusion matrix',
-                               cmap=plt.cm.Blues):
-        """
-        This function prints and plots the confusion matrix.
-        Normalization can be applied by setting `normalize=True`.
-        """
-        if normalize:
-            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print(title)
-
-        np.set_printoptions(precision=2)
-        print(cm)
-
         if options.show:
             plt.figure()
             plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -314,23 +300,6 @@ class Learner:
             plt.tight_layout()
             plt.ylabel('True label')
             plt.xlabel('Predicted label')
-
-    # to check for too large or NaN values:
-    def check_too_large_or_nan_values(self, df, features):
-        # features = df.columns.values.flatten().tolist()
-        index = 0
-        for index, row in df[features].iterrows():
-            for x, name in zip(row, features):
-                try:
-                    np.isfinite(x)
-                except:
-                    print("Name:", name)
-                    print("Prolbem with value:", x)
-                    print(row)
-
-                if not np.isfinite(x) or x > np.finfo(np.float32).max:
-                    print("issue with data for features: ", name, x)
-                index += 1
 
     class CodeWriter:
         def __init__(self, clf, features, funcname, code_file):
@@ -496,13 +465,6 @@ static bool {funcname}(
 
             self.recurse(left, right, threshold, features, 0, starttab)
 
-    def calc_min_split_point(self, df):
-        split_point = int(float(df.shape[0])*options.min_samples_split)
-        if split_point < 10:
-            split_point = 10
-        print("Minimum split point: ", split_point)
-        return split_point
-
     def conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
         # filter test data
         if dump_no is not None:
@@ -536,10 +498,10 @@ static bool {funcname}(
         # Plot confusion matrix
         cnf_matrix = sklearn.metrics.confusion_matrix(
             y_true=y_data, y_pred=y_pred)
-        self.print_confusion_matrix(
+        helper.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_,
             title='Confusion matrix, without normalization (%s)' % toprint)
-        self.print_confusion_matrix(
+        helper.print_confusion_matrix(
             cnf_matrix, classes=clf.classes_, normalize=True,
             title='Normalized confusion matrix (%s)' % toprint)
 
@@ -560,7 +522,7 @@ static bool {funcname}(
             print("-> Number of datapoints after applying '--only':", df.shape)
 
         if options.check_row_data:
-            self.check_too_large_or_nan_values(df, features)
+            helper.check_too_large_or_nan_values(df, features)
 
         # count good and bad
         files = df[["x.class", "rdb0.dump_no"]].groupby("x.class").count()
@@ -589,7 +551,7 @@ static bool {funcname}(
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-        split_point = self.calc_min_split_point(df)
+        split_point = helper.calc_min_split_point(df, options.min_samples_split)
         del df
 
         t = time.time()
@@ -1220,6 +1182,8 @@ if __name__ == "__main__":
                       dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
                       dest="print_features", help="Print features")
+    parser.add_argument("--nocomputed", default=False, action="store_true",
+                      dest="no_computed", help="Don't add computed features")
 
     # tree options
     parser.add_argument("--depth", default=None, type=int,
@@ -1321,7 +1285,8 @@ if __name__ == "__main__":
         for f in feats:
             print(f)
 
-    add_computed_features(df)
+    if not options.no_computed:
+        add_computed_features(df)
 
     c = Clustering(df)
     c.clear_data_from_str();
