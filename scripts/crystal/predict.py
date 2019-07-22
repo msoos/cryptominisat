@@ -68,7 +68,7 @@ THE SOFTWARE.
 ***********************************************/\n\n""")
 
 
-def transform(df):
+def add_computed_features(df):
     def check_clstat_row(self, row):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
                 row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
@@ -1321,7 +1321,7 @@ if __name__ == "__main__":
         for f in feats:
             print(f)
 
-    transform(df)
+    add_computed_features(df)
 
     c = Clustering(df)
     c.clear_data_from_str();
