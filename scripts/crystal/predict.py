@@ -45,30 +45,6 @@ import re
 import operator
 
 
-def write_mit_header(f):
-    f.write("""/******************************************
-Copyright (c) 2018, Mate Soos
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-***********************************************/\n\n""")
-
-
 def add_computed_features(df):
     def check_clstat_row(self, row):
         if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
@@ -302,7 +278,7 @@ class Learner:
         def __init__(self, clf, features, funcname, code_file):
             self.f = open(code_file, 'w')
             self.code_file = code_file
-            write_mit_header(self.f)
+            helper.write_mit_header(self.f)
             self.clf = clf
             self.feat = features
             self.funcname = funcname
@@ -740,7 +716,7 @@ class Clustering:
             basedir=options.basedir, name=options.longsh,
             conf_num=options.conf_num), 'w')
 
-        write_mit_header(f)
+        helper.write_mit_header(f)
         f.write("""
 #ifndef CLUSTERING_{name}_conf{conf_num}_H
 #define CLUSTERING_{name}_conf{conf_num}_H
@@ -826,7 +802,7 @@ public:
                 basedir=options.basedir, name=options.longsh,
                 conf_num=options.conf_num), "w")
 
-        write_mit_header(f)
+        helper.write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
 #ifndef ALL_PREDICTORS_{name}_conf{conf_num}_H
 #define ALL_PREDICTORS_{name}_conf{conf_num}_H\n\n""".format(name=options.longsh, conf_num=options.conf_num))
