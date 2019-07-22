@@ -272,7 +272,6 @@ class QueryCls (QueryHelper):
         rows = self.c.fetchall()
         columns = []
         for row in rows:
-            print(row)
             if options.verbose:
                 print("Using column in table {tablename}: {col}".format(
                     tablename=tablename
