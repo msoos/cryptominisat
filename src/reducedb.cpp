@@ -395,18 +395,6 @@ void ReduceDB::handle_lev3_final_predictor()
             );
             const bool locked = solver->clause_locked(*cl, offset);
             tot_short_keep += short_keep;
-            if (short_keep) {
-                /*if (short_keep && locked) {
-                    cout << "short + locked" << endl;
-                } else if (short_keep && cl->stats.locked_long > 0) {
-                    cout << "short + locked long" << endl;
-                } else if (short_keep && cl->stats.dump_number == 0) {
-                    cout << "short + dump no is 0" << endl;
-                } else {
-                    cout << "WTFFFFFFFFFFFFFFFFFFFFFFF" << endl;
-                }*/
-            }
-
             if (cl->stats.locked_long == 0
                 && cl->stats.dump_number > 0 //don't delete 1st time around
                 && !locked
