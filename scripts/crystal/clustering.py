@@ -47,9 +47,6 @@ import operator
 def add_computed_features(df):
     print("Adding computed features...")
 
-    if "szfeat_cur.conflicts" in df:
-        del df["szfeat_cur.conflicts"]
-
     todiv = []
     for x in list(df):
         if "szfeat_cur" in x and "std" not in x and "min" not in x and "mean" not in x and "_per_" not in x and x[-3:] != "var" and "binary" not in x:
@@ -255,33 +252,19 @@ public:
         features = self.df.columns.values.flatten().tolist()
 
         # features from dataframe
-        sz_all = []
+        self.final_feats = []
         for x in features:
-            if "szfeat_cur" in x:
-                sz_all.append(x)
+            if "szfeat_cur" in x and "szfeat_cur.conflicts" not in x:
+                self.final_feats.append(x)
 
-        if options.verbose:
-            print("All features would be: ", sz_all)
-
-        if False:
-            sz_all = []
-            sz_all.append("szfeat_cur.var_cl_ratio")
-            sz_all.append("szfeat_cur.numClauses")
-            # sz_all.append("szfeat_cur.avg_confl_glue")
-            sz_all.append("szfeat_cur.avg_num_resolutions")
-            sz_all.append("szfeat_cur.irred_size_distr_mean")
-            # sz_all.append("szfeat_cur.irred_size_distr_var")
-            if options.verbose:
-                print("Using features for clustering: ", sz_all)
-
-        print("Features used: ", sz_all)
-        print("Number of features used: ", len(sz_all))
+        # print("Features used: ", self.final_feats)
+        print("Number of features used: ", len(self.final_feats))
 
         if options.check_row_data:
-            helper.check_too_large_or_nan_values(df, sz_all)
+            helper.check_too_large_or_nan_values(df, self.final_feats)
 
         # fit to slice that only includes CNF features
-        df_clust = self.df[sz_all].astype(float).copy()
+        df_clust = self.df[self.final_feats].astype(float).copy()
         if options.scale:
             scaler = StandardScaler()
             scaler.fit(df_clust)
@@ -292,7 +275,7 @@ public:
 
             if options.verbose:
                 df_clust_back = df_clust.copy()
-            df_clust[sz_all] = scaler.transform(df_clust)
+            df_clust[self.final_feats] = scaler.transform(df_clust)
         else:
             class ScalerNone:
                 def __init__(self):
@@ -307,7 +290,7 @@ public:
             # for scaler.scale_
             # for cluster.cluster_centers_
             for i in range(df_clust_back.shape[1]):
-                assert df_clust_back.columns[i] == sz_all[i]
+                assert df_clust_back.columns[i] == self.final_feats[i]
 
             # checking that scaler works as expected
             for feat in range(df_clust_back.shape[1]):
@@ -318,24 +301,24 @@ public:
             print(df_clust_back.head())
             print(df_clust.head())
 
-        clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
-        clust.fit(df_clust)
-        self.df["clust"] = clust.labels_
+        self.clust = sklearn.cluster.KMeans(n_clusters=options.clusters)
+        self.clust.fit(df_clust)
+        self.df["clust"] = self.clust.labels_
 
         # print information about the clusters
         if options.verbose:
-            print(sz_all)
-            print(clust.labels_)
-            print(clust.cluster_centers_)
-            print(clust.get_params())
-        self.check_clust_distr(clust)
+            print(self.final_feats)
+            print(self.clust.labels_)
+            print(self.clust.cluster_centers_)
+            print(self.clust.get_params())
+        self.check_clust_distr(self.clust)
 
         # code for clusters
         if options.basedir is None:
             return
 
         # code for cluster centers
-        self.create_code_for_cluster_centers(clust, scaler, sz_all)
+        self.create_code_for_cluster_centers(self.clust, scaler, self.final_feats)
 
         # code for predictors
         fnames = {}
@@ -352,9 +335,13 @@ public:
                     fnames[clno] = fname
                 self.write_all_predictors_file(fnames, functs, conf_num=conf, longsh=name)
 
-    def dump_clustered(self, fname):
+    def dump_clustered(self, orig_feats, fname):
+        print("Used clusters: ", self.used_clusters)
+        df = self.df[self.df["clust"].isin(self.used_clusters)]
         with open(fname, "wb") as f:
-            pickle.dump(self.df, f)
+            pickle.dump(df[orig_feats+["clust"]], f)
+
+        print("Dumped to file %s" % fname)
 
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
@@ -409,11 +396,12 @@ if __name__ == "__main__":
         for f in feats:
             print(f)
 
+    orig_feats = list(df)
     if not options.no_computed:
         add_computed_features(df)
 
     c = Clustering(df)
     c.cluster()
     cleanname = re.sub(r'\.dat$', '', options.fname)
-    c.dump_clustered(cleanname+"-clustered.dat")
+    c.dump_clustered(orig_feats, cleanname+"-clustered.dat")
 

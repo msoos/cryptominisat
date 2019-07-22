@@ -156,3 +156,38 @@ def calc_greedy_best_features(top_feats):
         print("Final best feature selection is: ", best_features)
 
     return best_features
+
+def clear_data_from_str(df):
+        values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
+        df.loc[:, ('cl.cur_restart_type')] = \
+            df.loc[:, ('cl.cur_restart_type')].map(values2nums)
+
+        df.loc[:, ('rdb0.cur_restart_type')] = \
+            df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+
+        df.loc[:, ('rst_cur.restart_type')] = \
+            df.loc[:, ('rst_cur.restart_type')].map(values2nums)
+
+        if "rdb1.cur_restart_type" in df:
+            df.loc[:, ('rdb1.cur_restart_type')] = \
+                df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
+
+        df.fillna(0, inplace=True)
+
+def filter_min_avg_dump_no(df, min_avg_dumpno):
+    print("Filtering to minimum average dump_no of {min_avg_dumpno}...".format(
+        min_avg_dumpno=min_avg_dumpno))
+    print("Pre-filter number of datapoints:", df.shape)
+    df_nofilter = df.copy()
+
+    df['rdb0.dump_no'].replace(['None'], 0, inplace=True)
+    df.fillna(0, inplace=True)
+    # print(df[["fname", "sum_cl_use.num_used"]])
+    files = df[["fname", "rdb0.dump_no"]].groupby("fname").mean()
+    fs = files[files["rdb0.dump_no"] >= min_avg_dumpno].index.values
+    filenames = list(fs)
+    print("Left with {num} files".format(num=len(filenames)))
+    df = df[df["fname"].isin(fs)].copy()
+
+    print("Post-filter number of datapoints:", df.shape)
+    return df_nofilter, df
