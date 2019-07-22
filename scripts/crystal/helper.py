@@ -62,3 +62,38 @@ def calc_min_split_point(df, min_samples_split):
         split_point = 10
     print("Minimum split point: ", split_point)
     return split_point
+
+
+def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
+    # get data
+    X_data = data[features]
+    y_data = data[to_predict]
+    print("Number of elements:", X_data.shape)
+    if data.shape[0] <= 1:
+        print("Cannot calculate confusion matrix, too few elements")
+        return 0, 0, 0
+
+    # Preform prediction
+    y_pred = clf.predict(X_data)
+
+    # calc acc, precision, recall
+    accuracy = sklearn.metrics.accuracy_score(
+        y_data, y_pred)
+    precision = sklearn.metrics.precision_score(
+        y_data, y_pred, pos_label="OK", average="binary")
+    recall = sklearn.metrics.recall_score(
+        y_data, y_pred, pos_label="OK", average="binary")
+    print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
+        toprint, precision, recall, accuracy))
+
+    # Plot confusion matrix
+    cnf_matrix = sklearn.metrics.confusion_matrix(
+        y_true=y_data, y_pred=y_pred)
+    helper.print_confusion_matrix(
+        cnf_matrix, classes=clf.classes_,
+        title='Confusion matrix, without normalization (%s)' % toprint)
+    helper.print_confusion_matrix(
+        cnf_matrix, classes=clf.classes_, normalize=True,
+        title='Normalized confusion matrix (%s)' % toprint)
+
+    return precision, recall, accuracy

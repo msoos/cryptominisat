@@ -465,47 +465,16 @@ static bool {funcname}(
 
             self.recurse(left, right, threshold, features, 0, starttab)
 
-    def conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
+    def filtered_conf_matrixes(self, dump_no, data, features, to_predict, clf, toprint="test"):
         # filter test data
         if dump_no is not None:
             print("\nCalculating confusion matrix -- dump_no == %s" % dump_no)
-            data = data[data["rdb0.dump_no"] == dump_no]
+            data2 = data[data["rdb0.dump_no"] == dump_no]
         else:
             print("\nCalculating confusion matrix -- ALL dump_no")
-            data = data
+            data2 = data
 
-        # get data
-        X_data = data[features]
-        y_data = data[to_predict]
-        print("Number of elements:", X_data.shape)
-        if data.shape[0] <= 1:
-            print("Cannot calculate confusion matrix, too few elements")
-            return 0, 0, 0
-
-        # Preform prediction
-        y_pred = clf.predict(X_data)
-
-        # calc acc, precision, recall
-        accuracy = sklearn.metrics.accuracy_score(
-            y_data, y_pred)
-        precision = sklearn.metrics.precision_score(
-            y_data, y_pred, pos_label="OK", average="binary")
-        recall = sklearn.metrics.recall_score(
-            y_data, y_pred, pos_label="OK", average="binary")
-        print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            toprint, precision, recall, accuracy))
-
-        # Plot confusion matrix
-        cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_data, y_pred=y_pred)
-        helper.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization (%s)' % toprint)
-        helper.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix (%s)' % toprint)
-
-        return precision, recall, accuracy
+        helper.conf_matrixes(data2, features, to_predict, clf, toprint)
 
     def one_classifier(self, features, to_predict, final, write_code=False):
         print("-> Number of features  :", len(features))
@@ -656,7 +625,7 @@ static bool {funcname}(
         print("- min avg dumpno: %1.3f  -" % options.min_avg_dumpno)
         print("--------------------------")
         for dump_no in [1, 3, 10, 20, 40, None]:
-            prec, recall, acc = self.conf_matrixes(
+            prec, recall, acc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf)
 
         print("--------------------------------")
@@ -665,7 +634,7 @@ static bool {funcname}(
         print("-   no min avg dumpno applied  -")
         print("--------------------------------")
         for dump_no in [1, None]:
-            self.conf_matrixes(
+            self.filtered_conf_matrixes(
                 dump_no, self.df_nofilter, features, to_predict, clf)
 
         # Plot "train" confusion matrix
@@ -674,7 +643,7 @@ static bool {funcname}(
         print("-   Cluster: %04d       -" % self.cluster_no)
         print("- min avg dumpno: %1.3f -" % options.min_avg_dumpno)
         print("-------------------------")
-        self.conf_matrixes(
+        self.filtered_conf_matrixes(
                 dump_no, train, features, to_predict, clf, "train")
 
         # TODO do L1 regularization

@@ -134,40 +134,6 @@ class Predict:
     def __init__(self):
         pass
 
-    def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
-        # get data
-        X_data = data[features]
-        y_data = data[to_predict]
-        print("Number of elements:", X_data.shape)
-        if data.shape[0] <= 1:
-            print("Cannot calculate confusion matrix, too few elements")
-            return 0, 0, 0
-
-        # Preform prediction
-        y_pred = clf.predict(X_data)
-
-        # calc acc, precision, recall
-        accuracy = sklearn.metrics.accuracy_score(
-            y_data, y_pred)
-        precision = sklearn.metrics.precision_score(
-            y_data, y_pred, average="micro")
-        recall = sklearn.metrics.recall_score(
-            y_data, y_pred, average="micro")
-        print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
-            toprint, precision, recall, accuracy))
-
-        # Plot confusion matrix
-        cnf_matrix = sklearn.metrics.confusion_matrix(
-            y_true=y_data, y_pred=y_pred)
-        helper.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_,
-            title='Confusion matrix, without normalization (%s)' % toprint)
-        helper.print_confusion_matrix(
-            cnf_matrix, classes=clf.classes_, normalize=True,
-            title='Normalized confusion matrix (%s)' % toprint)
-
-        return precision, recall, accuracy
-
     def get_top_features(self, df):
         df["x.class"]=pd.qcut(df["x.useful_times_per_marked"],
                              q=options.quantiles,
@@ -214,8 +180,8 @@ class Predict:
             print("%-3d  %-55s -- %8.4f" %
                   (f + 1, features[indices[f]], importances[indices[f]]))
 
-        self.conf_matrixes(test, features, to_predict, clf)
-        self.conf_matrixes(train, features, to_predict, clf, "train")
+        helper.conf_matrixes(test, features, to_predict, clf)
+        helper.conf_matrixes(train, features, to_predict, clf, "train")
 
 
 if __name__ == "__main__":
