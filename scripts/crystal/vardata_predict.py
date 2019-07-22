@@ -37,6 +37,95 @@ else:
 import sklearn.ensemble
 
 
+def add_computed_features(df):
+    print("Relative data...")
+    cols = list(df)
+    for col in cols:
+        if "_at_fintime" in col:
+            during_name = col.replace("_at_fintime", "_during")
+            at_picktime_name = col.replace("_at_fintime", "_at_picktime")
+            if options.verbose:
+                print("fintime name: ", col)
+                print("picktime name: ", at_picktime_name)
+            df[during_name] = df[col]-df[at_picktime_name]
+
+    # remove stuff
+    del df["var_data_use.useful_clauses_used"]
+    del df["var_data_use.cls_marked"]
+
+    # more complicated
+    df["var_data.propagated_per_sumconfl"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
+    df["var_data.propagated_per_sumprop"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
+
+    # remove picktime & fintime
+    cols = list(df)
+    for c in cols:
+        if "at_picktime" in c or "at_fintime" in c:
+            del df[c]
+
+    # per-conflicts, per-decisions, per-lits
+    names = [
+        "var_data.sumDecisions_during"
+        , "var_data.sumPropagations_during"
+        , "var_data.sumConflicts_during"
+        , "var_data.sumAntecedents_during"
+        , "var_data.sumConflictClauseLits_during"
+        , "var_data.sumAntecedentsLits_during"
+        , "var_data.sumClSize_during"
+        , "var_data.sumClLBD_during"
+        , "var_data.dec_depth"
+        ]
+
+    cols = list(df)
+    for col in cols:
+        if "restart_type" not in col and "x." not in col and "useful_clauses" not in col:
+            for name in names:
+                if options.verbose:
+                    print("dividing col '%s' with '%s' " % (col, name))
+
+                df["(" + col + "/" + name + ")"]=df[col]/df[name]
+                pass
+
+    # remove sum
+    #cols = list(df)
+    #for c in cols:
+        #if c[0:3] == "sum":
+            #del df[c]
+
+    if True:
+        # remove these
+        torem = [
+            "var_data.propagated"
+            , "var_data.decided"
+            , "var_data.clauses_below"
+            , "var_data.dec_depth"
+            , "var_data.sumDecisions_during"
+            , "var_data.sumPropagations_during"
+            , "var_data.sumConflicts_during"
+            , "var_data.sumAntecedents_during"
+            , "var_data.sumAntecedentsLits_during"
+            , "var_data.sumConflictClauseLits_during"
+            , "var_data.sumDecisionBasedCl_during"
+            , "var_data.sumClLBD_during"
+            , "var_data.sumClSize_during"
+            ]
+        cols = list(df)
+
+        # also remove rst
+        for col in cols:
+            if "rst." in col:
+                #torem.append(col)
+                pass
+
+        torem.append("rst.restart_type")
+
+        # actually remove
+        for x in torem:
+            del df[x]
+    else:
+        del df["rst.restart_type"]
+
+
 class Predict:
     def __init__(self):
         pass
@@ -160,5 +249,6 @@ if __name__ == "__main__":
         exit(-1)
 
     df = pd.read_pickle(options.fname)
+    add_computed_features(df)
     p = Predict()
     p.get_top_features(df)
