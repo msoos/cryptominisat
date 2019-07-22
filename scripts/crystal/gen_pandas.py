@@ -191,16 +191,16 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl10k.used_at) as `used_later_short`
+        , count(ucl.used_at) as `used_later_short`
 
         FROM
         reduceDB as rdb0
-        left join usedClauses as ucl10k
+        left join usedClauses as ucl
 
         -- reduceDB is always present, used_later may not be, hence left join
-        on (ucl10k.clauseID = rdb0.clauseID
-            and ucl10k.used_at > rdb0.conflicts
-            and ucl10k.used_at <= (rdb0.conflicts+{short_duration}))
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > rdb0.conflicts
+            and ucl.used_at <= (rdb0.conflicts+{short_duration}))
         , cl_last_in_solver
 
         WHERE
@@ -224,16 +224,16 @@ class QueryFill (QueryHelper):
         SELECT
         rdb0.clauseID
         , rdb0.conflicts
-        , count(ucl100k.used_at) as `used_later_long`
+        , count(ucl.used_at) as `used_later_long`
 
         FROM
         reduceDB as rdb0
-        left join usedClauses as ucl100k
+        left join usedClauses as ucl
 
         -- reduceDB is always present, used_later may not be, hence left join
-        on (ucl100k.clauseID = rdb0.clauseID
-            and ucl100k.used_at > rdb0.conflicts
-            and ucl100k.used_at <= (rdb0.conflicts+{long_duration}))
+        on (ucl.clauseID = rdb0.clauseID
+            and ucl.used_at > rdb0.conflicts
+            and ucl.used_at <= (rdb0.conflicts+{long_duration}))
         , cl_last_in_solver
 
         WHERE
