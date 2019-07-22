@@ -62,7 +62,7 @@ if __name__ == "__main__":
         dfs.append(df)
 
     print("Concatenating dataframes...")
-    df_full = pd.concat(dfs)
+    df_full = pd.concat(dfs, sort=False)
     print("Concated frame size: %d" % df_full.shape[0])
 
     if options.out is not None:
