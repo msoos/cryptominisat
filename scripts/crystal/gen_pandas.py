@@ -501,9 +501,7 @@ class QueryCls (QueryHelper):
         , sum_cl_use.num_used as `x.a_num_used`
         , `sum_cl_use`.`last_confl_used`-`cl`.`conflicts` as `x.a_lifetime`
         , {case_stmt}
-        """
 
-        self.q = """
         FROM
         clauseStats as cl
         , sum_cl_use as sum_cl_use
@@ -516,8 +514,8 @@ class QueryCls (QueryHelper):
         , used_later_short
         , used_later_long
         , cl_last_in_solver
-        WHERE
 
+        WHERE
         cl.clauseID = sum_cl_use.clauseID
         and cl.clauseID != 0
         and used_later.clauseID = cl.clauseID
@@ -659,7 +657,7 @@ class QueryCls (QueryHelper):
             this_limit *= fixed_mult
         print("this_limit is set to:", this_limit)
 
-        q = self.q_select + self.q
+        q = str(self.q_select)
 
         #get OK data
         df = {}
