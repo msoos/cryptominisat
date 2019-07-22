@@ -19,8 +19,8 @@
 # 02110-1301, USA.
 
 import pandas as pd
-import pickle
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def write_mit_header(f):
@@ -49,6 +49,7 @@ THE SOFTWARE.
 
 # to check for too large or NaN values:
 def check_too_large_or_nan_values(df, features):
+    print("Checking for too large or NaN values...")
     # features = df.columns.values.flatten().tolist()
     index = 0
     for index, row in df[features].iterrows():
@@ -63,6 +64,8 @@ def check_too_large_or_nan_values(df, features):
             if not np.isfinite(x) or x > np.finfo(np.float32).max:
                 print("issue with data for features: ", name, x)
             index += 1
+
+    print("Checking finished.")
 
 
 def print_confusion_matrix(cm, classes,
