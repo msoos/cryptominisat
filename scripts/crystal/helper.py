@@ -157,22 +157,24 @@ def calc_greedy_best_features(top_feats):
 
     return best_features
 
+
 def clear_data_from_str(df):
-        values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
-        df.loc[:, ('cl.cur_restart_type')] = \
-            df.loc[:, ('cl.cur_restart_type')].map(values2nums)
+    values2nums = {'luby': 0, 'glue': 1, 'geom': 2}
+    df.loc[:, ('cl.cur_restart_type')] = \
+        df.loc[:, ('cl.cur_restart_type')].map(values2nums)
 
-        df.loc[:, ('rdb0.cur_restart_type')] = \
-            df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
+    df.loc[:, ('rdb0.cur_restart_type')] = \
+        df.loc[:, ('rdb0.cur_restart_type')].map(values2nums)
 
-        df.loc[:, ('rst_cur.restart_type')] = \
-            df.loc[:, ('rst_cur.restart_type')].map(values2nums)
+    df.loc[:, ('rst_cur.restart_type')] = \
+        df.loc[:, ('rst_cur.restart_type')].map(values2nums)
 
-        if "rdb1.cur_restart_type" in df:
-            df.loc[:, ('rdb1.cur_restart_type')] = \
-                df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
+    if "rdb1.cur_restart_type" in df:
+        df.loc[:, ('rdb1.cur_restart_type')] = \
+            df.loc[:, ('rdb1.cur_restart_type')].map(values2nums)
 
-        df.fillna(0, inplace=True)
+    df.fillna(0, inplace=True)
+
 
 def filter_min_avg_dump_no(df, min_avg_dumpno):
     print("Filtering to minimum average dump_no of {min_avg_dumpno}...".format(
