@@ -188,11 +188,11 @@ def add_computed_features(df):
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")
-    df["cl.antec_sum_size_smaller_than_hist"] = (
-        df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
+    df["(cl.antec_sum_size_hist<cl.num_total_lits_antecedents)"] = \
+        (df["cl.antec_sum_size_hist"] < df["cl.num_total_lits_antecedents"]).astype(int)
 
-    df["cl.antec_overlap_smaller_than_hist"] = (
-        df["cl.antec_overlap_hist"] < df["cl.num_overlap_literals"]).astype(int)
+    df["(cl.antec_overlap_hist<cl.num_overlap_literals)"] = \
+        (df["cl.antec_overlap_hist"] < df["cl.num_overlap_literals"]).astype(int)
 
     # print("flatten/list...")
     #old = set(df.columns.values.flatten().tolist())
@@ -218,18 +218,6 @@ class Learner:
         self.fname = fname
         self.cluster_no = cluster_no
 
-    def output_to_classical_dot(self, clf, features):
-        fname = options.dot + "-" + self.funcname
-        sklearn.tree.export_graphviz(clf, out_file=fname,
-                                     feature_names=features,
-                                     class_names=clf.classes_,
-                                     filled=True, rounded=True,
-                                     special_characters=True,
-                                     proportion=True)
-        print("Run dot:")
-        print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
-        print("gwenview {fname}.png".format(fname=fname))
-
     def filter_percentile(self, df, features, perc):
         low = df.quantile(perc, axis=0)
         high = df.quantile(1.0-perc, axis=0)
@@ -242,48 +230,6 @@ class Learner:
         print("Original size:", df.shape)
         print("New size:", df2.shape)
         return df2
-
-    def output_to_dot(self, clf, features, to_predict, name, df):
-        import dtreeviz.trees
-        df2 = self.filter_percentile(df, features, options.filter_dot)
-        X_train = df2[features]
-        y_train = df2[to_predict]
-
-        values2nums = {'OK': 1, 'BAD': 0}
-        y_train = y_train.map(values2nums)
-        print("clf.classes_:", clf.classes_)
-
-
-        #try:
-        viz = dtreeviz.trees.dtreeviz(
-            clf, X_train, y_train, target_name=name,
-            feature_names=features, class_names=list(clf.classes_))
-        viz.view()
-        #except:
-            #print("It doesn't have both OK or BAD -- it instead has:")
-            #print("y_train head:", y_train.head())
-        del df
-        del df2
-
-        if options.show:
-            plt.figure()
-            plt.imshow(cm, interpolation='nearest', cmap=cmap)
-            plt.title(title)
-            plt.colorbar()
-            tick_marks = np.arange(len(classes))
-            plt.xticks(tick_marks, classes, rotation=45)
-            plt.yticks(tick_marks, classes)
-
-            fmt = '.2f' if normalize else 'd'
-            thresh = cm.max() / 2.
-            for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-                plt.text(j, i, format(cm[i, j], fmt),
-                         horizontalalignment="center",
-                         color="white" if cm[i, j] > thresh else "black")
-
-            plt.tight_layout()
-            plt.ylabel('True label')
-            plt.xlabel('Predicted label')
 
     class CodeWriter:
         def __init__(self, clf, features, funcname, code_file):
@@ -596,10 +542,14 @@ static bool {funcname}(
                 #x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
                 #print(x)
                 #xdf = df[df["rdb0.dump_no"] <= filt]
-                #self.output_to_dot(clf, features, to_predict, x, xdf)
+                #helper.output_to_dot(
+                    #self.filter_percentile(df, features, options.filter_dot),
+                    #clf, features, to_predict, x, xdf)
                 #del xdf
 
-            self.output_to_classical_dot(clf, features)
+            helper.output_to_classical_dot(
+                clf, features,
+                fname=options.dot + "-" + self.funcname)
 
         if options.basedir and final and write_code:
             c = self.CodeWriter(clf, features, self.funcname, self.fname)

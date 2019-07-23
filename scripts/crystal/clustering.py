@@ -45,25 +45,6 @@ else:
     from sklearn.model_selection import train_test_split
 
 
-def add_computed_features(df):
-    print("Adding computed features...")
-
-    todiv = []
-    for x in list(df):
-        if "szfeat_cur" in x and "std" not in x and "min" not in x and "mean" not in x and "_per_" not in x and x[-3:] != "var" and "binary" not in x:
-            todiv.append(x)
-
-    # relative data
-    cols = list(df)
-    for col in cols:
-        if "szfeat_cur" in col:
-            for divper in todiv:
-                df["("+col+"/"+divper+")"] = df[col]/df[divper]
-                df["("+col+"<"+divper+")"] = (df[col] < df[divper]).astype(int)
-
-    print("Added computed features.")
-
-
 class Clustering:
     def __init__(self, df):
         self.df = df
@@ -339,6 +320,7 @@ public:
                     fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
                         clno=clno, name=name, conf_num=conf)
                     fnames[clno] = fname
+
                 self.write_all_predictors_file(
                     fnames, functs, conf_num=conf, longsh=name)
 
@@ -405,7 +387,7 @@ if __name__ == "__main__":
 
     orig_feats = list(df)
     if not options.no_computed:
-        add_computed_features(df)
+        helper.add_computed_features_clustering(df)
 
     c = Clustering(df)
     c.cluster()

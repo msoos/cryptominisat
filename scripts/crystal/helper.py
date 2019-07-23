@@ -46,6 +46,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ***********************************************/\n\n""")
 
+def add_computed_features_clustering(df):
+    print("Adding computed clustering features...")
+
+    todiv = []
+    for x in list(df):
+        if "szfeat_cur" in x and "std" not in x and "min" not in x and "mean" not in x and "_per_" not in x and x[-3:] != "var" and "binary" not in x:
+            todiv.append(x)
+
+    # relative data
+    cols = list(df)
+    for col in cols:
+        if "szfeat_cur" in col:
+            for divper in todiv:
+                df["("+col+"/"+divper+")"] = df[col]/df[divper]
+                df["("+col+"<"+divper+")"] = (df[col] < df[divper]).astype(int)
+
+    print("Added computed features.")
+
 
 # to check for too large or NaN values:
 def check_too_large_or_nan_values(df, features):
@@ -193,3 +211,55 @@ def filter_min_avg_dump_no(df, min_avg_dumpno):
 
     print("Post-filter number of datapoints:", df.shape)
     return df_nofilter, df
+
+def output_to_classical_dot(clf, features, fname):
+    sklearn.tree.export_graphviz(clf, out_file=fname,
+                                 feature_names=features,
+                                 class_names=clf.classes_,
+                                 filled=True, rounded=True,
+                                 special_characters=True,
+                                 proportion=True)
+    print("Run dot:")
+    print("dot -Tpng {fname} -o {fname}.png".format(fname=fname))
+    print("gwenview {fname}.png".format(fname=fname))
+
+def output_to_dot(df2, clf, features, to_predict, name, df):
+    import dtreeviz.trees
+    X_train = df2[features]
+    y_train = df2[to_predict]
+
+    values2nums = {'OK': 1, 'BAD': 0}
+    y_train = y_train.map(values2nums)
+    print("clf.classes_:", clf.classes_)
+
+
+    #try:
+    viz = dtreeviz.trees.dtreeviz(
+        clf, X_train, y_train, target_name=name,
+        feature_names=features, class_names=list(clf.classes_))
+    viz.view()
+    #except:
+        #print("It doesn't have both OK or BAD -- it instead has:")
+        #print("y_train head:", y_train.head())
+    del df
+    del df2
+
+    if options.show:
+        plt.figure()
+        plt.imshow(cm, interpolation='nearest', cmap=cmap)
+        plt.title(title)
+        plt.colorbar()
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes, rotation=45)
+        plt.yticks(tick_marks, classes)
+
+        fmt = '.2f' if normalize else 'd'
+        thresh = cm.max() / 2.
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], fmt),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
