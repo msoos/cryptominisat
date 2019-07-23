@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import sklearn.ensemble
 from __future__ import print_function
 import sqlite3
 import argparse
@@ -34,7 +35,6 @@ if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
 else:
     from sklearn.model_selection import train_test_split
-import sklearn.ensemble
 
 
 def dump_df(df):
@@ -111,7 +111,8 @@ class QueryVar (QueryHelper):
                 print("Creating/dropping index: ", l)
             self.c.execute(l)
             if options.verbose:
-                print("Index dropping&creation T: %-3.2f s" % (time.time() - t2))
+                print("Index dropping&creation T: %-3.2f s" %
+                      (time.time() - t2))
 
         print("indexes dropped&created T: %-3.2f s" % (time.time() - t))
 
@@ -188,8 +189,7 @@ class QueryVar (QueryHelper):
         for row in rows:
             if options.verbose:
                 print("Using column in table {tablename}: {col}".format(
-                    tablename=tablename
-                    , col=row[1]))
+                    tablename=tablename, col=row[1]))
             columns.append(row[1])
 
         return columns
@@ -200,13 +200,11 @@ class QueryVar (QueryHelper):
         ret = ""
         for col in filtered_cols:
             ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
-                col=col
-                , short_name=short_name)
+                col=col, short_name=short_name)
 
         if options.verbose:
             print("query for short name {short_name}: {ret}".format(
-                short_name=short_name
-                , ret=ret))
+                short_name=short_name, ret=ret))
 
         return ret
 
@@ -282,13 +280,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument("fname", type=str, metavar='SQLITEFILE')
-    parser.add_argument("--verbose", "-v", action="store_true", default=False
-                        , dest="verbose", help="Print more output")
-    parser.add_argument("--csv", action="store_true", default=False
-                        , dest="dump_csv", help="Dump CSV (for weka)")
-    parser.add_argument("--limit", type=int, default=10000
-                        , dest="limit", help="How many data points")
-
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        default=False, dest="verbose", help="Print more output")
+    parser.add_argument("--csv", action="store_true", default=False,
+                        dest="dump_csv", help="Dump CSV (for weka)")
+    parser.add_argument("--limit", type=int, default=10000,
+                        dest="limit", help="How many data points")
 
     options = parser.parse_args()
 
