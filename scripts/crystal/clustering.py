@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import operator
+import re
 import pandas as pd
 import pickle
 import sklearn
@@ -41,8 +43,7 @@ if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
 else:
     from sklearn.model_selection import train_test_split
-import re
-import operator
+
 
 def add_computed_features(df):
     print("Adding computed features...")
@@ -58,9 +59,10 @@ def add_computed_features(df):
         if "szfeat_cur" in col:
             for divper in todiv:
                 df["("+col+"/"+divper+")"] = df[col]/df[divper]
-                df["("+col+"<"+divper+")"] = (df[col]<df[divper]).astype(int)
+                df["("+col+"<"+divper+")"] = (df[col] < df[divper]).astype(int)
 
     print("Added computed features.")
+
 
 class Clustering:
     def __init__(self, df):
@@ -163,8 +165,8 @@ public:
 
     def write_all_predictors_file(self, fnames, functs, conf_num, longsh):
         f = open("{basedir}/all_predictors_{name}_conf{conf_num}.h".format(
-                basedir=options.basedir, name=longsh,
-                conf_num=conf_num), "w")
+            basedir=options.basedir, name=longsh,
+            conf_num=conf_num), "w")
 
         helper.write_mit_header(f)
         f.write("""///auto-generated code. Under MIT license.
@@ -241,7 +243,8 @@ public:
                 print("\n\nFile name distribution in {skipped} cluster {clno} **".format(
                     clno=clno, skipped=skipped))
 
-                sorted_x = sorted(fname_dist.items(), key=operator.itemgetter(0))
+                sorted_x = sorted(fname_dist.items(),
+                                  key=operator.itemgetter(0))
                 for a, b in sorted_x:
                     print("--> %-10s : %s" % (b, a))
             print("\n\nClass contents finished.\n")
@@ -294,8 +297,10 @@ public:
 
             # checking that scaler works as expected
             for feat in range(df_clust_back.shape[1]):
-                df_clust_back[df_clust_back.columns[feat]] -= scaler.mean_[feat]
-                df_clust_back[df_clust_back.columns[feat]] /= scaler.scale_[feat]
+                df_clust_back[df_clust_back.columns[feat]
+                              ] -= scaler.mean_[feat]
+                df_clust_back[df_clust_back.columns[feat]
+                              ] /= scaler.scale_[feat]
 
             print(df_clust_back.head()-df_clust.head())
             print(df_clust_back.head())
@@ -318,7 +323,8 @@ public:
             return
 
         # code for cluster centers
-        self.create_code_for_cluster_centers(self.clust, scaler, self.final_feats)
+        self.create_code_for_cluster_centers(
+            self.clust, scaler, self.final_feats)
 
         # code for predictors
         fnames = {}
@@ -333,7 +339,8 @@ public:
                     fname = "final_predictor_{name}_conf{conf_num}_cluster{clno}.h".format(
                         clno=clno, name=name, conf_num=conf)
                     fnames[clno] = fname
-                self.write_all_predictors_file(fnames, functs, conf_num=conf, longsh=name)
+                self.write_all_predictors_file(
+                    fnames, functs, conf_num=conf, longsh=name)
 
     def dump_clustered(self, orig_feats, fname):
         print("Used clusters: ", self.used_clusters)
@@ -343,42 +350,42 @@ public:
 
         print("Dumped to file %s" % fname)
 
+
 if __name__ == "__main__":
     usage = "usage: %(prog)s [options] file.pandas"
     parser = argparse.ArgumentParser(usage=usage)
 
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
-                      dest="verbose", help="Print more output")
+                        dest="verbose", help="Print more output")
     parser.add_argument("--printfeat", action="store_true", default=False,
-                      dest="print_features", help="Print features")
+                        dest="print_features", help="Print features")
     parser.add_argument("--check", action="store_true", default=False,
-                      dest="check_row_data", help="Check row data for NaN or float overflow")
-
+                        dest="check_row_data", help="Check row data for NaN or float overflow")
 
     # clustering
     parser.add_argument("--clusters", default=1, type=int,
-                      dest="clusters", help="How many clusters to use")
+                        dest="clusters", help="How many clusters to use")
     parser.add_argument("--clustmin", default=0.05, type=float, metavar="RATIO",
-                      dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data.")
+                        dest="minimum_cluster_rel", help="What's the minimum size of the cluster relative to the original set of data.")
     parser.add_argument("--scale", default=False, action="store_true",
-                      dest="scale", help="Scale clustering")
+                        dest="scale", help="Scale clustering")
     parser.add_argument("--distr", default=False, action="store_true",
-                      dest="show_class_dist", help="Show class distribution")
+                        dest="show_class_dist", help="Show class distribution")
     parser.add_argument("--nocomputed", default=False, action="store_true",
-                      dest="no_computed", help="Don't add computed features")
+                        dest="no_computed", help="Don't add computed features")
 
     # number of configs to generate
     parser.add_argument("--numconfs", default=4, type=float,
-                      dest="num_confs", help="Number of configs to generate")
+                        dest="num_confs", help="Number of configs to generate")
 
     # filtering
     parser.add_argument("--mindump", default=0, type=float,
-                      dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
+                        dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # code
     parser.add_argument("--basedir", type=str,
-                      dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
+                        dest="basedir", help="The base directory of where the CryptoMiniSat source code is")
 
     options = parser.parse_args()
 
@@ -404,4 +411,3 @@ if __name__ == "__main__":
     c.cluster()
     cleanname = re.sub(r'\.dat$', '', options.fname)
     c.dump_clustered(orig_feats, cleanname+"-clustered.dat")
-
