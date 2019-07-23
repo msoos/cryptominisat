@@ -214,7 +214,7 @@ class QueryFill (QueryHelper):
         print("used_later_short filled T: %-3.2f s" % (time.time() - t))
 
         t = time.time()
-        q="""
+        q = """
         insert into used_later_long
         (
         `clauseID`,
@@ -267,15 +267,14 @@ class QueryCls (QueryHelper):
         self.fill_sql_query()
 
     def get_columns(self, tablename):
-        q="pragma table_info(%s);" % tablename
+        q = "pragma table_info(%s);" % tablename
         self.c.execute(q)
         rows = self.c.fetchall()
         columns = []
         for row in rows:
             if options.verbose:
                 print("Using column in table {tablename}: {col}".format(
-                    tablename=tablename
-                    , col=row[1]))
+                    tablename=tablename, col=row[1]))
             columns.append(row[1])
 
         return columns
@@ -286,13 +285,11 @@ class QueryCls (QueryHelper):
         ret = ""
         for col in filtered_cols:
             ret += ", {short_name}.`{col}` as `{short_name}.{col}`\n".format(
-                col=col
-                , short_name=short_name)
+                col=col, short_name=short_name)
 
         if options.verbose:
             print("query for short name {short_name}: {ret}".format(
-                short_name=short_name
-                , ret=ret))
+                short_name=short_name, ret=ret))
 
         return ret
 
@@ -346,7 +343,6 @@ class QueryCls (QueryHelper):
             , "antecedents_long_red_age_min"
             , "clauseID"]
         self.clause_dat = self.query_fragment("clauseStats", not_cols, "cl")
-
 
         # satzilla data
         not_cols = [
@@ -551,7 +547,7 @@ class QueryCls (QueryHelper):
             "rdb1_dat": self.rdb0_dat.replace("rdb0", "rdb1"),
             "sum_cl_use": self.sum_cl_use,
             "rst_cur": self.rst_cur
-            }
+        }
 
     def get_avg_used_later(self, long_or_short):
         cur = self.conn.cursor()
@@ -573,7 +569,7 @@ class QueryCls (QueryHelper):
             return False, None
 
         avg = float(rows[0][0])
-        print("%s avg used_later is: %.2f"  % (long_or_short, avg))
+        print("%s avg used_later is: %.2f" % (long_or_short, avg))
         return True, avg
 
     def get_median_used_later(self, long_or_short):
@@ -598,7 +594,7 @@ class QueryCls (QueryHelper):
             return False, None
 
         avg = float(rows[0][0])
-        print("%s median used_later is: %.2f"  % (long_or_short, avg))
+        print("%s median used_later is: %.2f" % (long_or_short, avg))
         return True, avg
 
     def one_query(self, q, ok_or_bad):
@@ -630,23 +626,27 @@ class QueryCls (QueryHelper):
 
         return True, df
 
-
     def get_data(self, long_or_short, this_limit=None):
         # TODO magic numbers: SHORT vs LONG data availability guess
         subformat = {}
-        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long");
-        ok1, subformat["avg_used_later_short"] = self.get_avg_used_later("short");
-        ok2, subformat["median_used_later_long"] = self.get_median_used_later("long");
-        ok3, subformat["median_used_later_short"] = self.get_median_used_later("short");
+        ok0, subformat["avg_used_later_long"] = self.get_avg_used_later("long")
+        ok1, subformat["avg_used_later_short"] = self.get_avg_used_later(
+            "short")
+        ok2, subformat["median_used_later_long"] = self.get_median_used_later(
+            "long")
+        ok3, subformat["median_used_later_short"] = self.get_median_used_later(
+            "short")
         if not ok0 or not ok1 or not ok2 or not ok3:
             return False, None, None
 
         if long_or_short == "short":
-            self.myformat["case_stmt"] = self.case_stmt_short.format(**subformat)
+            self.myformat["case_stmt"] = self.case_stmt_short.format(
+                **subformat)
             self.myformat["del_at_least"] = options.short_duration
             fixed_mult = 1.0
         else:
-            self.myformat["case_stmt"] = self.case_stmt_long.format(**subformat)
+            self.myformat["case_stmt"] = self.case_stmt_long.format(
+                **subformat)
             self.myformat["del_at_least"] = options.long_duration
             fixed_mult = options.fixed_mult_long
 
