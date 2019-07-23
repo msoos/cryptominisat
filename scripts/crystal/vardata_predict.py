@@ -18,9 +18,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from __future__ import print_function
 import sklearn.ensemble
 import sklearn.tree
-from __future__ import print_function
 import sqlite3
 import argparse
 import time
@@ -152,6 +152,15 @@ class Predict:
         print("-> Number of datapoints:", self.df.shape)
         print("-> Predicting          :", to_predict)
 
+        # get smaller part to work on
+        # also, copy it so we don't get warning about setting a slice of a DF
+        if options.only_pecr >= 0.98:
+            df = self.df.copy()
+        else:
+            _, df_tmp = train_test_split(self.df, test_size=options.only_pecr)
+            df = df_tmp.copy()
+            print("-> Number of datapoints after applying '--only':", df.shape)
+
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features+["x.class"])
             print("Checked, all good!")
@@ -167,13 +176,13 @@ class Predict:
                 df, options.min_samples_split)
             clf = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
-                class_weight={"OK": prefer_ok, "BAD": 1},
                 min_samples_split=split_point)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=1000,
                 max_features="sqrt")
 
+        del df
         clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
@@ -182,6 +191,7 @@ class Predict:
             best_features = helper.print_feature_ranking(
                 clf, X_train,
                 top_num_features=options.top_num_features,
+                features=features,
                 plot=options.show)
         else:
             if options.dot is not None:
@@ -193,12 +203,12 @@ class Predict:
                     clf, features,
                     fname=options.dot + "-" + self.funcname)
 
-            if options.basedir and write_code:
+            if write_code and options.basedir:
                 c = self.CodeWriter(clf, features, self.funcname, self.fname)
                 c.print_full_code()
 
-        prec, recall, acc = helper.conf_matrixes(test, features, to_predict, clf)
-        helper.conf_matrixes(train, features, to_predict, clf, "train")
+        prec, recall, acc = helper.conf_matrixes(test, features, to_predict, clf, average="micro")
+        helper.conf_matrixes(train, features, to_predict, clf, "train", average="micro")
 
         # TODO do L1 regularization
         # TODO do principal component analysis
@@ -210,7 +220,7 @@ class Predict:
 
     def learn(self):
         self.cut_into_chunks()
-        features = list(df)
+        features = list(self.df)
         features.remove("x.class")
         features.remove("x.useful_times_per_marked")
 
@@ -263,6 +273,10 @@ if __name__ == "__main__":
                         dest="show", help="Show graphs")
     parser.add_argument("--final", default=False, action="store_true",
                         dest="only_final", help="Only generate final predictor")
+    parser.add_argument("--rawplots", action="store_true", default=False,
+                        dest="raw_data_plots", help="Display raw data plots")
+    parser.add_argument("--dot", type=str, default=None,
+                        dest="dot", help="Create DOT file")
 
     # tree/forest options
     parser.add_argument("--depth", default=None, type=int,
@@ -271,6 +285,10 @@ if __name__ == "__main__":
                         dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--numtrees", default=5, type=int,
                         dest="num_trees", help="How many trees to generate for the forest")
+
+    # data filtering
+    parser.add_argument("--only", default=0.99, type=float,
+                        dest="only_pecr", help="Only use this percentage of data")
 
     options = parser.parse_args()
 

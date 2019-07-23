@@ -112,7 +112,7 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
-def conf_matrixes(data, features, to_predict, clf, toprint="test"):
+def conf_matrixes(data, features, to_predict, clf, toprint="test", average="binary"):
     # get data
     X_data = data[features]
     y_data = data[to_predict]
@@ -128,9 +128,9 @@ def conf_matrixes(data, features, to_predict, clf, toprint="test"):
     accuracy = sklearn.metrics.accuracy_score(
         y_data, y_pred)
     precision = sklearn.metrics.precision_score(
-        y_data, y_pred, pos_label="OK", average="binary")
+        y_data, y_pred, pos_label="OK", average=average)
     recall = sklearn.metrics.recall_score(
-        y_data, y_pred, pos_label="OK", average="binary")
+        y_data, y_pred, pos_label="OK", average=average)
     print("%s prec : %-3.4f  recall: %-3.4f accuracy: %-3.4f" % (
         toprint, precision, recall, accuracy))
 
