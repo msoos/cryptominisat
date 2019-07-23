@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import sklearn.ensemble
 from __future__ import print_function
 import sqlite3
 import argparse
@@ -35,7 +36,6 @@ if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
 else:
     from sklearn.model_selection import train_test_split
-import sklearn.ensemble
 
 
 def add_computed_features(df):
@@ -55,8 +55,10 @@ def add_computed_features(df):
     del df["var_data_use.cls_marked"]
 
     # more complicated
-    df["(var_data.propagated/var_data.sumConflicts_at_fintime)"]=df["var_data.propagated"]/df["var_data.sumConflicts_at_fintime"]
-    df["(var_data.propagated/var_data.sumPropagations_at_fintime)"]=df["var_data.propagated"]/df["var_data.sumPropagations_at_fintime"]
+    df["(var_data.propagated/var_data.sumConflicts_at_fintime)"] = df["var_data.propagated"] / \
+        df["var_data.sumConflicts_at_fintime"]
+    df["(var_data.propagated/var_data.sumPropagations_at_fintime)"] = df["var_data.propagated"] / \
+        df["var_data.sumPropagations_at_fintime"]
 
     # remove picktime & fintime
     cols = list(df)
@@ -84,13 +86,13 @@ def add_computed_features(df):
                 if options.verbose:
                     print("dividing col '%s' with '%s' " % (col, name))
 
-                df["(" + col + "/" + name + ")"]=df[col]/df[name]
+                df["(" + col + "/" + name + ")"] = df[col]/df[name]
                 pass
 
     # remove sum
     #cols = list(df)
-    #for c in cols:
-        #if c[0:3] == "sum":
+    # for c in cols:
+        # if c[0:3] == "sum":
             #del df[c]
 
 
@@ -117,7 +119,7 @@ def rem_useless_features(df):
         # also remove rst
         for col in cols:
             if "rst." in col:
-                #torem.append(col)
+                # torem.append(col)
                 pass
 
         torem.append("rst.restart_type")
@@ -135,17 +137,18 @@ class Predict:
         pass
 
     def get_top_features(self, df):
-        df["x.class"]=pd.qcut(df["x.useful_times_per_marked"],
-                             q=options.quantiles,
-                             labels=False)
-        df["x.class"]=pd.cut(df["x.useful_times_per_marked"],
-                             bins=[-1000, 1, 5, 10, 20, 40, 100, 200, 10**20],
-                             labels=False)
+        df["x.class"] = pd.qcut(df["x.useful_times_per_marked"],
+                                q=options.quantiles,
+                                labels=False)
+        df["x.class"] = pd.cut(df["x.useful_times_per_marked"],
+                               bins=[-1000, 1, 5, 10, 20,
+                                     40, 100, 200, 10**20],
+                               labels=False)
 
         features = list(df)
         features.remove("x.class")
         features.remove("x.useful_times_per_marked")
-        to_predict="x.class"
+        to_predict = "x.class"
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features+["x.class"])
@@ -158,10 +161,11 @@ class Predict:
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-        split_point = helper.calc_min_split_point(df, options.min_samples_split)
+        split_point = helper.calc_min_split_point(
+            df, options.min_samples_split)
         clf = sklearn.ensemble.RandomForestClassifier(
-                    n_estimators=1000,
-                    max_features="sqrt")
+            n_estimators=1000,
+            max_features="sqrt")
 
         t = time.time()
         clf.fit(X_train, y_train)
@@ -169,7 +173,8 @@ class Predict:
 
         best_features = []
         importances = clf.feature_importances_
-        std = np.std([tree.feature_importances_ for tree in clf.estimators_], axis=0)
+        std = np.std(
+            [tree.feature_importances_ for tree in clf.estimators_], axis=0)
         indices = np.argsort(importances)[::-1]
         indices = indices[:options.top_num_features]
         myrange = min(X_train.shape[1], options.top_num_features)
@@ -183,7 +188,7 @@ class Predict:
         helper.conf_matrixes(test, features, to_predict, clf)
         helper.conf_matrixes(train, features, to_predict, clf, "train")
         if options.get_best_topn_feats is not None:
-                greedy_features = helper.calc_greedy_best_features(top_n_feats)
+            greedy_features = helper.calc_greedy_best_features(top_n_feats)
 
 
 if __name__ == "__main__":
@@ -193,19 +198,19 @@ if __name__ == "__main__":
     # dataframe
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
     parser.add_argument("--split", default=0.001, type=float, metavar="RATIO",
-                      dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
+                        dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                         dest="verbose", help="Print more output")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
-                      dest="top_num_features", help="Candidates are top N features for greedy selector")
+                        dest="top_num_features", help="Candidates are top N features for greedy selector")
     parser.add_argument("-q", default=4, type=int, metavar="QUANTS",
-                      dest="quantiles", help="Number of quantiles we want")
+                        dest="quantiles", help="Number of quantiles we want")
     parser.add_argument("--nocomputed", default=False, action="store_true",
-                      dest="no_computed", help="Don't add computed features")
+                        dest="no_computed", help="Don't add computed features")
     parser.add_argument("--check", action="store_true", default=False,
-                      dest="check_row_data", help="Check row data for NaN or float overflow")
+                        dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
-                      dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
+                        dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
 
     options = parser.parse_args()
 
