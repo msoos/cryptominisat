@@ -21,6 +21,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sklearn
+import sklearn.metrics
 
 
 def write_mit_header(f):
@@ -110,7 +112,7 @@ def calc_min_split_point(df, min_samples_split):
     return split_point
 
 
-def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
+def conf_matrixes(data, features, to_predict, clf, toprint="test"):
     # get data
     X_data = data[features]
     y_data = data[to_predict]
@@ -135,19 +137,19 @@ def conf_matrixes(self, data, features, to_predict, clf, toprint="test"):
     # Plot confusion matrix
     cnf_matrix = sklearn.metrics.confusion_matrix(
         y_true=y_data, y_pred=y_pred)
-    helper.print_confusion_matrix(
+    print_confusion_matrix(
         cnf_matrix, classes=clf.classes_,
         title='Confusion matrix, without normalization (%s)' % toprint)
-    helper.print_confusion_matrix(
+    print_confusion_matrix(
         cnf_matrix, classes=clf.classes_, normalize=True,
         title='Normalized confusion matrix (%s)' % toprint)
 
     return precision, recall, accuracy
 
 
-def calc_greedy_best_features(top_feats):
+def calc_greedy_best_features(top_feats, get_best_topn_feats, myobj):
     best_features = [top_feats[0]]
-    for i in range(options.get_best_topn_feats-1):
+    for i in range(get_best_topn_feats-1):
         print("*** Round %d Best feature set until now: %s"
               % (i, best_features))
 
@@ -159,7 +161,7 @@ def calc_greedy_best_features(top_feats):
             this_feats = list(best_features)
             this_feats.append(feat)
             print("Trying feature set: ", this_feats)
-            mysum = self.one_classifier(this_feats, "x.class", True)
+            mysum = myobj.one_classifier(this_feats, "x.class", final=True)
             print("Reported mysum: ", mysum)
             if mysum > best_sum:
                 best_sum = mysum
@@ -265,7 +267,7 @@ def output_to_dot(df2, clf, features, to_predict, name, df):
         plt.xlabel('Predicted label')
 
 
-def print_feature_ranking(clf, X_train, top_num_features, plot=False):
+def print_feature_ranking(clf, X_train, top_num_features, features, plot=False):
     best_features = []
     importances = clf.feature_importances_
     std = np.std(

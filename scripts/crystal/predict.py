@@ -48,19 +48,6 @@ else:
 def add_computed_features(df):
     print("Adding computed features...")
 
-    def check_clstat_row(self, row):
-        if row[self.ntoc["cl.decision_level_hist"]] == 0 or \
-                row[self.ntoc["cl.backtrack_level_hist"]] == 0 or \
-                row[self.ntoc["cl.trail_depth_level_hist"]] == 0 or \
-                row[self.ntoc["cl.size_hist"]] == 0 or \
-                row[self.ntoc["cl.glue_hist"]] == 0 or \
-                row[self.ntoc["cl.num_antecedents_hist"]] == 0:
-            print("ERROR: Data is in error:", row)
-            assert(False)
-            exit(-1)
-
-        return row
-
     # relative overlaps
     print("Relative overlaps...")
     df["cl.antec_num_total_lits_rel"] = df["cl.num_total_lits_antecedents"] / \
@@ -78,6 +65,7 @@ def add_computed_features(df):
     df["(cl.num_total_lits_antecedents/cl.num_antecedents)"] = df["cl.num_total_lits_antecedents"] / \
         df["cl.num_antecedents"]
 
+    # sum RDB
     orig_cols = list(df)
     for col in orig_cols:
         if ("rdb0" in col) and "restart_type" not in col:
@@ -114,22 +102,21 @@ def add_computed_features(df):
         , "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         #, "rdb1.act_ranking_rel"
-        , "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
+        #, "((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"
         #, "sqrt(rdb0.act_ranking_rel)"
         #, "sqrt(rdb1.act_ranking_rel)"
         #, "sqrt(rdb0_and_rdb1.act_ranking_rel_avg)"
         # , "cl.num_overlap_literals"
         # , "rst_cur.resolutions"
-        , "rdb0.act_ranking_top_10"
+        #, "rdb0.act_ranking_top_10"
         ]
 
-    if True:
-        extra_todiv = []
+    # add SQRT
+    if False:
         for a in todiv:
             sqrt_name = "sqrt("+a+")"
             df[sqrt_name] = df[a].apply(np.sqrt)
-            extra_todiv.append(sqrt_name)
-        todiv.extend(extra_todiv)
+            todiv.append(sqrt_name)
 
     # relative data
     cols = list(df)
@@ -146,45 +133,47 @@ def add_computed_features(df):
         , "rdb0.sum_uip1_used_per_tot_confl"
         , "rdb1.sum_uip1_used_per_tot_confl"])
 
-    # relative data
-    for col in cols:
-        if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
-            for divper in todiv:
-                df["("+col+"_<_"+divper+")"] = (df[col] < df[divper]).astype(int)
-                pass
+    # smaller/larger than
+    if False:
+        for col in cols:
+            if ("rdb" in col or "cl." in col or "rst" in col) and "restart_type" not in col:
+                for divper in todiv:
+                    df["("+col+"_<_"+divper+")"] = (df[col] < df[divper]).astype(int)
 
     # satzilla stuff
-    todiv = [
-        "szfeat_cur.numVars",
-        "szfeat_cur.numClauses",
-        "szfeat_cur.var_cl_ratio",
-        "szfeat_cur.avg_confl_size",
-        "szfeat_cur.avg_branch_depth",
-        "szfeat_cur.red_glue_distr_mean"
-    ]
-    for col in orig_cols:
-        if "szfeat" in col:
-            for divper in todiv:
-                if "min" not in todiv and "max" not in todiv:
-                    df["("+col+"/"+divper+")"] = df[col]/df[divper]
-                    df["("+col+"<"+divper+")"] = (df[col]
-                                                  < df[divper]).astype(int)
-                    pass
+    if False:
+        todiv = [
+            "szfeat_cur.numVars",
+            "szfeat_cur.numClauses",
+            "szfeat_cur.var_cl_ratio",
+            "szfeat_cur.avg_confl_size",
+            "szfeat_cur.avg_branch_depth",
+            "szfeat_cur.red_glue_distr_mean"
+        ]
+        for col in orig_cols:
+            if "szfeat" in col:
+                for divper in todiv:
+                    if "min" not in divper:
+                        df["("+col+"/"+divper+")"] = df[col]/df[divper]
+                        df["("+col+"<"+divper+")"] = (df[col]
+                                                      < df[divper]).astype(int)
+                        pass
 
     # relative RDB
-    print("Relative RDB...")
-    for col in orig_cols:
-        if "rdb0" in col and "restart_type" not in col:
-            rdb0 = col
-            rdb1 = col.replace("rdb0", "rdb1")
-            name_per = col.replace("rdb0", "rdb0_per_rdb1")
-            name_larger = col.replace("rdb0", "rdb0_larger_rdb1")
-            df[name_larger] = (df[rdb0] > df[rdb1]).astype(int)
+    if True:
+        print("Relative RDB...")
+        for col in orig_cols:
+            if "rdb0" in col and "restart_type" not in col:
+                rdb0 = col
+                rdb1 = col.replace("rdb0", "rdb1")
+                name_per = col.replace("rdb0", "rdb0_per_rdb1")
+                name_larger = col.replace("rdb0", "rdb0_larger_rdb1")
+                df[name_larger] = (df[rdb0] > df[rdb1]).astype(int)
 
-            raw_col = col.replace("rdb0.", "")
-            if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
-                print(rdb0)
-                df[name_per] = df[rdb0]/df[rdb1]
+                raw_col = col.replace("rdb0.", "")
+                if raw_col not in ["propagations_made", "dump_no", "conflicts_made", "used_for_uip_creation", "sum_uip1_used", "clause_looked_at", "sum_delta_confl_uip1_used", "activity_rel", "last_touched_diff", "ttl"]:
+                    print(rdb0)
+                    df[name_per] = df[rdb0]/df[rdb1]
 
     # smaller-or-greater comparisons
     print("smaller-or-greater comparisons...")
@@ -402,7 +391,7 @@ static bool {funcname}(
             print("\nCalculating confusion matrix -- ALL dump_no")
             data2 = data
 
-        helper.conf_matrixes(data2, features, to_predict, clf, toprint)
+        return helper.conf_matrixes(data2, features, to_predict, clf, toprint)
 
     def one_classifier(self, features, to_predict, final, write_code=False):
         print("-> Number of features  :", len(features))
@@ -448,30 +437,27 @@ static bool {funcname}(
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-        split_point = helper.calc_min_split_point(
-            df, options.min_samples_split)
-        del df
 
         t = time.time()
         clf = None
         # clf = sklearn.linear_model.LogisticRegression()
 
         if final:
+            split_point = helper.calc_min_split_point(
+                df, options.min_samples_split)
+
             clf_tree = sklearn.tree.DecisionTreeClassifier(
                 max_depth=options.tree_depth,
                 class_weight={"OK": prefer_ok, "BAD": 1},
                 min_samples_split=split_point)
-
             clf_svm_pre = sklearn.svm.SVC(C=500, gamma=10**-5)
             clf_svm = sklearn.ensemble.BaggingClassifier(
                 clf_svm_pre,
                 n_estimators=3,
                 max_samples=0.5, max_features=0.5)
-
             clf_logreg = sklearn.linear_model.LogisticRegression(
                 C=0.3,
                 penalty="l1")
-
             clf_forest = sklearn.ensemble.RandomForestClassifier(
                 n_estimators=options.num_trees,
                 max_features="sqrt",
@@ -496,48 +482,46 @@ static bool {funcname}(
                 exit(-1)
         else:
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=4000,
+                n_estimators=1000,
                 max_features="sqrt",
-                class_weight={"OK": prefer_ok, "BAD": 1},
-                min_samples_leaf=split_point)
+                class_weight={"OK": prefer_ok, "BAD": 1})
 
+        del df
         clf.fit(X_train, y_train)
-
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
         if not final:
             best_features = helper.print_feature_ranking(
                 clf, X_train,
                 top_num_features=options.top_num_features,
+                features=features,
                 plot=options.show)
+        else:
+            if options.dot is not None:
+                if not options.final_is_tree:
+                    print("ERROR: You cannot use the DOT function on non-trees")
+                    exit(-1)
 
-        if options.dot is not None and final:
-            if not options.final_is_tree:
-                print("ERROR: You cannot use the DOT function on non-trees")
-                exit(-1)
+                #for filt in [1, 3, 10, 10000]:
+                    #x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
+                    #print(x)
+                    #xdf = df[df["rdb0.dump_no"] <= filt]
+                    #helper.output_to_dot(
+                        #self.filter_percentile(df, features, options.filter_dot),
+                        #clf, features, to_predict, x, xdf)
+                    #del xdf
 
-            #for filt in [1, 3, 10, 10000]:
-                #x = "Keep these clauses -- filtered to %d and smaller dump_no" % filt
-                #print(x)
-                #xdf = df[df["rdb0.dump_no"] <= filt]
-                #helper.output_to_dot(
-                    #self.filter_percentile(df, features, options.filter_dot),
-                    #clf, features, to_predict, x, xdf)
-                #del xdf
+                helper.output_to_classical_dot(
+                    clf, features,
+                    fname=options.dot + "-" + self.funcname)
 
-            helper.output_to_classical_dot(
-                clf, features,
-                fname=options.dot + "-" + self.funcname)
+            if options.basedir and write_code:
+                c = self.CodeWriter(clf, features, self.funcname, self.fname)
+                c.print_full_code()
 
-        if options.basedir and final and write_code:
-            c = self.CodeWriter(clf, features, self.funcname, self.fname)
-            c.print_full_code()
-
-        # filtered data == filtered to avg_dump_no and on cluster
         print("--------------------------")
         print("-   Filtered test data   -")
         print("-   Cluster: %04d        -" % self.cluster_no)
-        print("- min avg dumpno: %1.3f  -" % options.min_avg_dumpno)
         print("--------------------------")
         for dump_no in [1, 3, 10, 20, 40, None]:
             prec, recall, acc = self.filtered_conf_matrixes(
@@ -546,7 +530,6 @@ static bool {funcname}(
         print("--------------------------------")
         print("--      train+test data        -")
         print("-      no cluster applied      -")
-        print("-   no min avg dumpno applied  -")
         print("--------------------------------")
         for dump_no in [1, None]:
             self.filtered_conf_matrixes(
@@ -556,28 +539,17 @@ static bool {funcname}(
         print("--------------------------")
         print("-  Filtered train data  - ")
         print("-   Cluster: %04d       -" % self.cluster_no)
-        print("- min avg dumpno: %1.3f -" % options.min_avg_dumpno)
         print("-------------------------")
         self.filtered_conf_matrixes(
             dump_no, train, features, to_predict, clf, "train")
 
         # TODO do L1 regularization
+        # TODO do principal component analysis
 
         if not final:
             return best_features
         else:
             return prec+recall+acc
-
-    def remove_old_clause_features(self, features):
-        todel = []
-        for name in features:
-            if "cl2" in name or "cl3" in name or "cl4" in name:
-                todel.append(name)
-
-        for x in todel:
-            features.remove(x)
-            if options.verbose:
-                print("Removing old clause feature:", x)
 
     def rem_features(self, feat, to_remove):
         feat_less = list(feat)
@@ -594,27 +566,25 @@ static bool {funcname}(
         features = self.df.columns.values.flatten().tolist()
         features = self.rem_features(
             features, ["x.a_num_used", "x.class", "x.a_lifetime", "fname", "clust", "sum_cl_use"])
-
-        if True:
-            self.remove_old_clause_features(features)
-
         if options.raw_data_plots:
             pd.options.display.mpl_style = "default"
             self.df.hist()
             self.df.boxplot()
 
         if not options.only_final:
-            top_n_feats = self.one_classifier(features, "x.class", False)
+            top_n_feats = self.one_classifier(features, "x.class", final=False)
             if options.show:
                 plt.show()
 
             if options.get_best_topn_feats is not None:
-                greedy_features = helper.calc_greedy_best_features(top_n_feats)
+                greedy_features = helper.calc_greedy_best_features(
+                    top_n_feats, options.get_best_topn_feats,
+                    self)
 
             return
 
         best_features = []
-
+        # TODO fill best_features here
         self.one_classifier(best_features, "x.class",
                             final=True,
                             write_code=True)
@@ -714,8 +684,7 @@ if __name__ == "__main__":
 
     df = pd.read_pickle(options.fname)
     if options.print_features:
-        feats = sorted(list(df))
-        for f in feats:
+        for f in sorted(list(df)):
             print(f)
 
     # feature manipulation

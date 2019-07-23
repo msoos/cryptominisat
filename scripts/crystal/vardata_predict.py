@@ -19,6 +19,7 @@
 # 02110-1301, USA.
 
 import sklearn.ensemble
+import sklearn.tree
 from __future__ import print_function
 import sqlite3
 import argparse
@@ -133,55 +134,111 @@ def rem_useless_features(df):
 
 
 class Predict:
-    def __init__(self):
+    def __init__(self, df):
+        self.df = df
         pass
 
-    def get_top_features(self, df):
+    def cut_into_chunks(self):
         df["x.class"] = pd.qcut(df["x.useful_times_per_marked"],
-                                q=options.quantiles,
-                                labels=False)
+                        q=options.quantiles,
+                        labels=False)
         df["x.class"] = pd.cut(df["x.useful_times_per_marked"],
                                bins=[-1000, 1, 5, 10, 20,
                                      40, 100, 200, 10**20],
                                labels=False)
 
-        features = list(df)
-        features.remove("x.class")
-        features.remove("x.useful_times_per_marked")
-        to_predict = "x.class"
+    def one_classifier(self, features, to_predict, final, write_code=False):
+        print("-> Number of features  :", len(features))
+        print("-> Number of datapoints:", self.df.shape)
+        print("-> Predicting          :", to_predict)
 
         if options.check_row_data:
             helper.check_too_large_or_nan_values(df, features+["x.class"])
             print("Checked, all good!")
 
-        print("-> Number of features  :", len(features))
-        print("-> Number of datapoints:", df.shape)
-        print("-> Predicting          :", to_predict)
-
         train, test = train_test_split(df, test_size=0.33)
         X_train = train[features]
         y_train = train[to_predict]
-        split_point = helper.calc_min_split_point(
-            df, options.min_samples_split)
-
-        clf = sklearn.ensemble.RandomForestClassifier(
-            n_estimators=1000,
-            max_features="sqrt")
 
         t = time.time()
+        clf = None
+        if final:
+            split_point = helper.calc_min_split_point(
+                df, options.min_samples_split)
+            clf = sklearn.tree.DecisionTreeClassifier(
+                max_depth=options.tree_depth,
+                class_weight={"OK": prefer_ok, "BAD": 1},
+                min_samples_split=split_point)
+        else:
+            clf = sklearn.ensemble.RandomForestClassifier(
+                n_estimators=1000,
+                max_features="sqrt")
+
         clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
-        best_features = helper.print_feature_ranking(
+
+        if not final:
+            best_features = helper.print_feature_ranking(
                 clf, X_train,
                 top_num_features=options.top_num_features,
                 plot=options.show)
+        else:
+            if options.dot is not None:
+                if not options.final_is_tree:
+                    print("ERROR: You cannot use the DOT function on non-trees")
+                    exit(-1)
 
-        helper.conf_matrixes(test, features, to_predict, clf)
+                helper.output_to_classical_dot(
+                    clf, features,
+                    fname=options.dot + "-" + self.funcname)
+
+            if options.basedir and write_code:
+                c = self.CodeWriter(clf, features, self.funcname, self.fname)
+                c.print_full_code()
+
+        prec, recall, acc = helper.conf_matrixes(test, features, to_predict, clf)
         helper.conf_matrixes(train, features, to_predict, clf, "train")
 
-        if options.get_best_topn_feats is not None:
-            greedy_features = helper.calc_greedy_best_features(top_n_feats)
+        # TODO do L1 regularization
+        # TODO do principal component analysis
+
+        if not final:
+            return best_features
+        else:
+            return prec+recall+acc
+
+    def learn(self):
+        self.cut_into_chunks()
+        features = list(df)
+        features.remove("x.class")
+        features.remove("x.useful_times_per_marked")
+
+        if options.raw_data_plots:
+            pd.options.display.mpl_style = "default"
+            self.df.hist()
+            self.df.boxplot()
+
+        if not options.only_final:
+            top_n_feats = self.one_classifier(features, "x.class", final=False)
+            if options.show:
+                plt.show()
+
+            if options.get_best_topn_feats is not None:
+                greedy_features = helper.calc_greedy_best_features(
+                    top_n_feats, options.get_best_topn_feats,
+                    self)
+
+            return
+
+        best_features = []
+        # TODO fill best_features here
+        self.one_classifier(best_features, "x.class",
+                            final=True,
+                            write_code=True)
+
+        if options.show:
+            plt.show()
 
 
 if __name__ == "__main__":
@@ -190,8 +247,6 @@ if __name__ == "__main__":
 
     # dataframe
     parser.add_argument("fname", type=str, metavar='PANDASFILE')
-    parser.add_argument("--split", default=0.001, type=float, metavar="RATIO",
-                        dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
     parser.add_argument("--verbose", "-v", action="store_true", default=False,
                         dest="verbose", help="Print more output")
     parser.add_argument("--top", default=40, type=int, metavar="TOPN",
@@ -206,6 +261,16 @@ if __name__ == "__main__":
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
     parser.add_argument("--show", default=False, action="store_true",
                         dest="show", help="Show graphs")
+    parser.add_argument("--final", default=False, action="store_true",
+                        dest="only_final", help="Only generate final predictor")
+
+    # tree/forest options
+    parser.add_argument("--depth", default=None, type=int,
+                        dest="tree_depth", help="Depth of the tree to create")
+    parser.add_argument("--split", default=0.01, type=float, metavar="RATIO",
+                        dest="min_samples_split", help="Split in tree if this many samples or above. Used as a percentage of datapoints")
+    parser.add_argument("--numtrees", default=5, type=int,
+                        dest="num_trees", help="How many trees to generate for the forest")
 
     options = parser.parse_args()
 
@@ -220,5 +285,6 @@ if __name__ == "__main__":
 
     rem_useless_features(df)
 
-    p = Predict()
-    p.get_top_features(df)
+    p = Predict(df)
+    features = p.cut_into_chunks()
+    p.learn()
