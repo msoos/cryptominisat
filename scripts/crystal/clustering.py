@@ -49,20 +49,22 @@ class Clustering:
     def __init__(self, df):
         self.df = df
 
-    def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
+    def clean_sz_feats(self, sz_feats):
         sz_feats_clean = []
         for feat in sz_feats:
             assert "szfeat_cur.conflicts" not in feat
+            c = str(feat)
+            c = c.replace(".irred_", ".irred_cl_distrib.")
+            c = c.replace(".red_", ".red_cl_distrib.")
+            c = c.replace("szfeat_cur.", "{val}.")
 
-            # removing "szfeat_cur."
-            c = feat[11:]
-            if c[:4] == "red_":
-                c = c.replace("red_", "red_cl_distrib.")
-            if c[:6] == "irred_":
-                c = c.replace("irred_", "irred_cl_distrib.")
             sz_feats_clean.append(c)
         assert len(sz_feats_clean) == len(sz_feats)
 
+        return sz_feats_clean
+
+    def create_code_for_cluster_centers(self, clust, scaler, sz_feats):
+        sz_feats_clean = self.clean_sz_feats(sz_feats)
         f = open("{basedir}/clustering.h".format(basedir=options.basedir), 'w')
 
         helper.write_mit_header(f)
@@ -85,7 +87,7 @@ public:
     virtual ~Clustering() {{
     }}
 
-    SatZillaFeatures center[{clusters}];
+    vector<map<std::string, std::double>>\ center[{clusters}];
     std::vector<int> used_clusters;
 
 """.format(clusters=options.clusters))
@@ -97,8 +99,8 @@ public:
             for i2 in range(len(sz_feats_clean)):
                 feat = sz_feats_clean[i2]
                 center = clust.cluster_centers_[i][i2]
-                f.write("        center[{num}].{feat} = {center}L;\n".format(
-                    num=i, feat=feat, center=center))
+                f.write("        center[{num}][\"{feat}\"] = {center}L;\n".format(
+                    num=i, feat=feat.format(val="x"), center=center))
 
         f.write("    }\n")
 
@@ -107,14 +109,20 @@ public:
         return x*x;
     }
 
-    virtual double norm_dist(const SatZillaFeatures& a, const SatZillaFeatures& b) const {
+    virtual double norm_dist(const SatZillaFeatures& a, const map<std::string, double>& center) const {
         double dist = 0;
         double tmp;
 """)
-        for feat, i in zip(sz_feats_clean, range(100)):
-            f.write("        tmp = (a.%s-%-3.9fL)/%-3.8fL;\n" %
-                    (feat, scaler.mean_[i], scaler.scale_[i]))
-            f.write("        dist+=sq(tmp-b.{feat});\n\n".format(feat=feat))
+        for feat, i in zip(sz_feats_clean, range(10000)):
+            f.write("        tmp = ((double){feat}-{mean:3.9f})/{scale:3.9f};\n".format(
+                feat=feat.format(val="a"),
+                 mean=scaler.mean_[i],
+                 scale=scaler.scale_[i]
+                 ))
+
+            f.write("        dist+=sq(tmp-center[\"{feat}\"]);\n\n".format(
+                feat=feat.format(val="x")
+                ))
 
         f.write("""
         return dist;
@@ -358,12 +366,8 @@ if __name__ == "__main__":
                         dest="no_computed", help="Don't add computed features")
 
     # number of configs to generate
-    parser.add_argument("--numconfs", default=4, type=float,
+    parser.add_argument("--numconfs", default=4, type=int,
                         dest="num_confs", help="Number of configs to generate")
-
-    # filtering
-    parser.add_argument("--mindump", default=0, type=float,
-                        dest="min_avg_dumpno", help="Minimum average dump_no. To filter out simple problems.")
 
     # code
     parser.add_argument("--basedir", type=str,
