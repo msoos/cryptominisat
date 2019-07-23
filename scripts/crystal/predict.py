@@ -203,7 +203,7 @@ def check_long_short():
 class Learner:
     def __init__(self, df, funcname, fname, cluster_no):
         self.df = df
-        self.funcname = funcname
+        self.func_name = funcname
         self.fname = fname
         self.cluster_no = cluster_no
 
@@ -227,31 +227,14 @@ class Learner:
             helper.write_mit_header(self.f)
             self.clf = clf
             self.feat = features
-            self.funcname = funcname
-
-        def define_avg_for_cls(self):
-            self.f.write("""
-    double rdb_rel_used_for_uip_creation = 0;
-    if (cl->stats.used_for_uip_creation > cl->stats.rdb1_used_for_uip_creation) {
-        rdb_rel_used_for_uip_creation = 1.0;
-    } else {
-        rdb_rel_used_for_uip_creation = 0.0;
-    }
-
-    double rdb0_avg_confl;
-    if (cl->stats.sum_delta_confl_uip1_used == 0) {
-        rdb0_avg_confl = 0;
-    } else {
-        rdb0_avg_confl = ((double)cl->stats.sum_uip1_used)/((double)cl->stats.sum_delta_confl_uip1_used);
-    }
-
-    double rdb0_used_per_confl;
-    if (sumConflicts-cl->stats.introduced_at_conflict == 0) {
-        rdb0_used_per_confl = 0;
-    } else {
-        rdb0_used_per_confl = ((double)cl->stats.sum_uip1_used)/((double)sumConflicts-(double)cl->stats.introduced_at_conflict);
-    }
-""")
+            self.func_name = funcname
+            self.func_signature = """
+const CMSat::Clause* cl
+, const uint64_t sumConflicts
+, const uint32_t rdb0_last_touched_diff
+, const double rdb0_act_ranking_rel
+, const uint32_t rdb0_act_ranking_top_10
+"""
 
         def print_full_code(self):
             self.f.write("""#include "clause.h"
@@ -263,30 +246,19 @@ namespace CMSat {
             num_trees = 1
             if type(self.clf) is sklearn.tree.tree.DecisionTreeClassifier:
                 self.f.write("""
-static double estimator_{funcname}_0(
-    const CMSat::Clause* cl
-    , const uint64_t sumConflicts
-    , const uint32_t rdb0_last_touched_diff
-    , const double rdb0_act_ranking_rel
-    , const uint32_t rdb0_act_ranking_top_10
-) {{\n""".format(funcname=self.funcname))
+static double estimator_{funcname}_0({func_signature}) {{\n
+""".format(funcname=self.func_name, func_signature=self.func_signature))
                 if options.verbose:
                     print(self.clf)
                     print(self.clf.get_params())
-                self.define_avg_for_cls()
                 self.get_code(self.clf, 1)
                 self.f.write("}\n")
             else:
                 num_trees = len(self.clf.estimators_)
                 for tree, i in zip(self.clf.estimators_, range(200)):
                     self.f.write("""
-static double estimator_{funcname}_{est_num}(
-    const CMSat::Clause* cl
-    , const uint64_t sumConflicts
-    , const uint32_t rdb0_last_touched_diff
-    , const double rdb0_act_ranking_rel
-    , const uint32_t rdb0_act_ranking_top_10
-) {{\n""".format(est_num=i, funcname=self.funcname))
+static double estimator_{funcname}_{est_num}({func_signature}) {{\n
+""".format(est_num=i, funcname=self.func_name), func_signature=self.func_signature)
                     self.define_avg_for_cls()
                     self.get_code(tree, 1)
                     self.f.write("}\n")
@@ -294,13 +266,8 @@ static double estimator_{funcname}_{est_num}(
             #######################
             # Final tally
             self.f.write("""
-static bool {funcname}(
-    const CMSat::Clause* cl
-    , const uint64_t sumConflicts
-    , const uint32_t rdb0_last_touched_diff
-    , const double rdb0_act_ranking_rel
-    , const uint32_t rdb0_act_ranking_top_10
-) {{\n""".format(funcname=self.funcname))
+static bool {funcname}({func_signature}) {{\n
+""".format(funcname=self.func_name, func_signature=self.func_signature))
             self.f.write("    int votes = 0;\n")
             for i in range(num_trees):
                 self.f.write("""    votes += estimator_{funcname}_{est_num}(
@@ -309,7 +276,7 @@ static bool {funcname}(
     , rdb0_last_touched_diff
     , rdb0_act_ranking_rel
     , rdb0_act_ranking_top_10
-    ) < 1.0;\n""".format(est_num=i, funcname=self.funcname))
+    ) < 1.0;\n""".format(est_num=i, funcname=self.func_name))
             self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
             self.f.write("}\n")
             self.f.write("}\n")
@@ -513,10 +480,10 @@ static bool {funcname}(
 
                 helper.output_to_classical_dot(
                     clf, features,
-                    fname=options.dot + "-" + self.funcname)
+                    fname=options.dot + "-" + self.func_name)
 
             if options.basedir and write_code:
-                c = self.CodeWriter(clf, features, self.funcname, self.fname)
+                c = self.CodeWriter(clf, features, self.func_name, self.fname)
                 c.print_full_code()
 
         print("--------------------------")
