@@ -263,3 +263,38 @@ def output_to_dot(df2, clf, features, to_predict, name, df):
         plt.tight_layout()
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
+
+
+def print_feature_ranking(clf, X_train, top_num_features, plot=False):
+    best_features = []
+    importances = clf.feature_importances_
+    std = np.std(
+        [tree.feature_importances_ for tree in clf.estimators_], axis=0)
+    indices = np.argsort(importances)[::-1]
+    indices = indices[:top_num_features]
+    myrange = min(X_train.shape[1], top_num_features)
+
+    # Print the feature ranking
+    print("Feature ranking:")
+
+    for f in range(myrange):
+        print("%-3d  %-55s -- %8.4f" %
+              (f + 1, features[indices[f]], importances[indices[f]]))
+        best_features.append(features[indices[f]])
+
+    # Plot the feature importances of the clf
+    if plot:
+        plot_feature_importances(importances, indices, myrange)
+
+    return best_features
+
+
+def plot_feature_importances(importances):
+        plt.figure()
+        plt.title("Feature importances")
+        plt.bar(range(myrange), importances[indices],
+                color="r", align="center",
+                yerr=std[indices])
+        plt.xticks(range(myrange), [features[x]
+                                    for x in indices], rotation=45)
+        plt.xlim([-1, myrange])

@@ -505,33 +505,11 @@ static bool {funcname}(
 
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
-        best_features = []
         if not final:
-            importances = clf.feature_importances_
-            std = np.std(
-                [tree.feature_importances_ for tree in clf.estimators_], axis=0)
-            indices = np.argsort(importances)[::-1]
-            indices = indices[:options.top_num_features]
-            myrange = min(X_train.shape[1], options.top_num_features)
-
-            # Print the feature ranking
-            print("Feature ranking:")
-
-            for f in range(myrange):
-                print("%-3d  %-55s -- %8.4f" %
-                      (f + 1, features[indices[f]], importances[indices[f]]))
-                best_features.append(features[indices[f]])
-
-            # Plot the feature importances of the clf
-            if options.show:
-                plt.figure()
-                plt.title("Feature importances")
-                plt.bar(range(myrange), importances[indices],
-                        color="r", align="center",
-                        yerr=std[indices])
-                plt.xticks(range(myrange), [features[x]
-                                            for x in indices], rotation=45)
-                plt.xlim([-1, myrange])
+            best_features = helper.print_feature_ranking(
+                clf, X_train,
+                top_num_features=options.top_num_features,
+                plot=options.show)
 
         if options.dot is not None and final:
             if not options.final_is_tree:

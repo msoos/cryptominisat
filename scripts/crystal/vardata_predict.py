@@ -163,6 +163,7 @@ class Predict:
         y_train = train[to_predict]
         split_point = helper.calc_min_split_point(
             df, options.min_samples_split)
+
         clf = sklearn.ensemble.RandomForestClassifier(
             n_estimators=1000,
             max_features="sqrt")
@@ -171,22 +172,14 @@ class Predict:
         clf.fit(X_train, y_train)
         print("Training finished. T: %-3.2f" % (time.time() - t))
 
-        best_features = []
-        importances = clf.feature_importances_
-        std = np.std(
-            [tree.feature_importances_ for tree in clf.estimators_], axis=0)
-        indices = np.argsort(importances)[::-1]
-        indices = indices[:options.top_num_features]
-        myrange = min(X_train.shape[1], options.top_num_features)
-
-        # Print the feature ranking
-        print("Feature ranking:")
-        for f in range(myrange):
-            print("%-3d  %-55s -- %8.4f" %
-                  (f + 1, features[indices[f]], importances[indices[f]]))
+        best_features = helper.print_feature_ranking(
+                clf, X_train,
+                top_num_features=options.top_num_features,
+                plot=options.show)
 
         helper.conf_matrixes(test, features, to_predict, clf)
         helper.conf_matrixes(train, features, to_predict, clf, "train")
+
         if options.get_best_topn_feats is not None:
             greedy_features = helper.calc_greedy_best_features(top_n_feats)
 
@@ -211,6 +204,8 @@ if __name__ == "__main__":
                         dest="check_row_data", help="Check row data for NaN or float overflow")
     parser.add_argument("--greedy", default=None, type=int, metavar="TOPN",
                         dest="get_best_topn_feats", help="Greedy Best K top features from the top N features given by '--top N'")
+    parser.add_argument("--show", default=False, action="store_true",
+                        dest="show", help="Show graphs")
 
     options = parser.parse_args()
 
