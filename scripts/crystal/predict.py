@@ -37,7 +37,9 @@ import math
 import matplotlib.pyplot as plt
 import sklearn.ensemble
 import os
+import ast
 import helper
+import crystalcodegen as ccg
 ver = sklearn.__version__.split(".")
 if int(ver[1]) < 20:
     from sklearn.cross_validation import train_test_split
@@ -75,12 +77,12 @@ def add_computed_features(df):
 
     df["rdb0.act_ranking_rel"] = df["rdb0.act_ranking"]/df["rdb0.tot_cls_in_db"]
     df["rdb1.act_ranking_rel"] = df["rdb1.act_ranking"]/df["rdb1.tot_cls_in_db"]
-    df["((double)(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"] = \
+    df["(rdb0.act_ranking_rel+rdb1.act_ranking_rel)/2.0)"] = \
         (df["rdb0.act_ranking_rel"]+df["rdb1.act_ranking_rel"])/2
 
-    df["rdb0.sum_uip1_used_per_tot_confl"] = df["rdb0.sum_uip1_used"] / \
+    df["(rdb0.sum_uip1_used/cl.time_inside_solver)"] = df["rdb0.sum_uip1_used"] / \
         df["cl.time_inside_solver"]
-    df["rdb1.sum_uip1_used_per_tot_confl"] = df["rdb1.sum_uip1_used"] / \
+    df["(rdb1.sum_uip1_used/cl.time_inside_solver)"] = df["rdb1.sum_uip1_used"] / \
         df["cl.time_inside_solver"]
 
     todiv = [
@@ -99,6 +101,7 @@ def add_computed_features(df):
         , "(cl.num_total_lits_antecedents/cl.num_antecedents)"
         , "cl.num_antecedents"
         , "rdb0.act_ranking_rel"
+        , "rdb1.act_ranking_rel"
         , "szfeat_cur.var_cl_ratio"
         , "cl.time_inside_solver"
         #, "rdb1.act_ranking_rel"
@@ -112,11 +115,13 @@ def add_computed_features(df):
         ]
 
     # add SQRT
-    if False:
+    if True:
+        toadd = []
         for a in todiv:
             sqrt_name = "sqrt("+a+")"
             df[sqrt_name] = df[a].apply(np.sqrt)
-            todiv.append(sqrt_name)
+            toadd.append(sqrt_name)
+        todiv.extend(toadd)
 
     # relative data
     cols = list(df)
@@ -130,8 +135,8 @@ def add_computed_features(df):
         , "rdb0.last_touched_diff"
         , "rdb0.sum_delta_confl_uip1_used"
         , "rdb0.used_for_uip_creation"
-        , "rdb0.sum_uip1_used_per_tot_confl"
-        , "rdb1.sum_uip1_used_per_tot_confl"])
+        , "(rdb0.sum_uip1_used/cl.time_inside_solver)"
+        , "(rdb1.sum_uip1_used/cl.time_inside_solver)"])
 
     # smaller/larger than
     if False:
@@ -231,14 +236,49 @@ class Learner:
             self.func_signature = """
 const CMSat::Clause* cl
 , const uint64_t sumConflicts
-, const uint32_t rdb0_last_touched_diff
-, const double rdb0_act_ranking_rel
-, const uint32_t rdb0_act_ranking_top_10
+, const uint32_t last_touched_diff
+, const double   act_ranking_rel
+, const uint32_t act_ranking_top_10
 """
+            self.func_call = """
+cl
+, sumConflicts
+, last_touched_diff
+, act_ranking_rel
+, act_ranking_top_10
+"""
+            self.node_defines = """
+uint32_t time_inside_solver = solver->sumConflicts - cl->introduced_at_conflict;
+"""
+        @staticmethod
+        def fix_feat_name(x):
+            print("x:" , x)
+            x = re.sub(r"dump_no", r"dump_number", x)
+            x = re.sub(r"^cl_", r"", x)
+            x = re.sub(r"^rdb0_", r"", x)
+
+            if x == "dump_number":
+                pass
+            elif x == "last_touched_diff":
+                pass
+            elif x == "act_ranking_top_10":
+                pass
+            elif x == "act_ranking_rel":
+                pass
+            elif x == "time_inside_solver":
+                pass
+            elif x == "size":
+                x = "cl->" + x + "()"
+            else:
+                x = "cl->stats." + x
+
+            return x
 
         def print_full_code(self):
-            self.f.write("""#include "clause.h"
+            self.f.write("""
+#include "clause.h"
 #include "reducedb.h"
+#include <cmath>
 
 namespace CMSat {
 """)
@@ -255,60 +295,40 @@ static double estimator_{funcname}_0({func_signature}) {{\n
                 self.f.write("}\n")
             else:
                 num_trees = len(self.clf.estimators_)
-                for tree, i in zip(self.clf.estimators_, range(200)):
+                for tree, i in zip(self.clf.estimators_, range(1000)):
                     self.f.write("""
 static double estimator_{funcname}_{est_num}({func_signature}) {{\n
 """.format(est_num=i, funcname=self.func_name), func_signature=self.func_signature)
-                    self.define_avg_for_cls()
                     self.get_code(tree, 1)
                     self.f.write("}\n")
 
             #######################
             # Final tally
             self.f.write("""
-static bool {funcname}({func_signature}) {{\n
+static bool {funcname}({func_signature}) {{
 """.format(funcname=self.func_name, func_signature=self.func_signature))
             self.f.write("    int votes = 0;\n")
             for i in range(num_trees):
-                self.f.write("""    votes += estimator_{funcname}_{est_num}(
-    cl
-    , sumConflicts
-    , rdb0_last_touched_diff
-    , rdb0_act_ranking_rel
-    , rdb0_act_ranking_top_10
-    ) < 1.0;\n""".format(est_num=i, funcname=self.func_name))
+                self.f.write("""
+votes += estimator_{funcname}_{est_num}({func_call}) < 1.0;
+""".format(est_num=i, funcname=self.func_name, func_call=self.func_call))
             self.f.write("    return votes >= %d;\n" % math.ceil(float(num_trees)/2.0))
-            self.f.write("}\n")
-            self.f.write("}\n")
+            self.f.write("}\n}\n")
             print("Wrote code to: ", self.code_file)
 
         def recurse(self, left, right, threshold, features, node, tabs):
             tabsize = tabs*"    "
             if (threshold[node] != -2):
+                # decision node
                 feat_name = features[node]
-                if feat_name[:3] == "cl.":
-                    feat_name = feat_name[3:]
                 feat_name = feat_name.replace(".", "_")
-                if feat_name == "dump_no":
-                    feat_name = "dump_number"
+                feat_name = ccg.to_source(ast.parse(feat_name), self.fix_feat_name)
 
-                if feat_name == "size":
-                    feat_name = "cl->" + feat_name + "()"
-                elif feat_name == "rdb0_last_touched_diff":
-                    pass
-                elif feat_name == "rdb0_act_ranking_top_10":
-                    pass
-                elif feat_name == "rdb0_act_ranking_rel":
-                    pass
-                else:
-                    feat_name = "cl->stats." + feat_name
-
-                feat_name = re.sub(r"dump_no", r"dump_number", feat_name)
-                feat_name = feat_name.replace("cl->stats.rdb0_", "cl->stats.")
-
+                self.f.write("{tabs}{defines}".format(
+                    tabs=tabsize,defines=self.node_defines))
                 self.f.write("{tabs}if ( {feat} <= {threshold}f ) {{\n".format(
-                    tabs=tabsize,
-                    feat=feat_name, threshold=str(threshold[node])))
+                tabs=tabsize,
+                feat=feat_name, threshold=str(threshold[node])))
 
                 # recruse left
                 if left[node] != -1:
@@ -324,6 +344,7 @@ static bool {funcname}({func_signature}) {{\n
 
                 self.f.write("{tabs}}}\n".format(tabs=tabsize))
             else:
+                # leaf node
                 x = self.value[node][0][0]
                 y = self.value[node][0][1]
                 if y == 0:
@@ -490,7 +511,7 @@ static bool {funcname}({func_signature}) {{\n
         print("-   Filtered test data   -")
         print("-   Cluster: %04d        -" % self.cluster_no)
         print("--------------------------")
-        for dump_no in [1, 3, 10, 20, 40, None]:
+        for dump_no in [1, 3, 10, 20, 40, None, 1]:
             prec, recall, acc = self.filtered_conf_matrixes(
                 dump_no, test, features, to_predict, clf)
 
@@ -550,7 +571,13 @@ static bool {funcname}({func_signature}) {{\n
 
             return
 
-        best_features = []
+        best_features = [
+            '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt(rdb0.act_ranking_rel))',
+            # '(rdb0.sum_uip1_used/sqrt(cl.branch_depth_hist_queue))',
+            # '((rdb0.sum_uip1_used/cl.time_inside_solver)/sqrt((cl.num_total_lits_antecedents/cl.num_antecedents)))',
+            #'((rdb0.used_for_uip_creation+rdb1.used_for_uip_creation)/cl.glue)',
+            #'(rdb0.sum_uip1_used/sqrt(cl.old_glue))'
+            ]
         # TODO fill best_features here
         self.one_classifier(best_features, "x.class",
                             final=True,

@@ -140,23 +140,15 @@ struct ClauseStats
     };
     uint32_t last_touched;
     #ifdef FINAL_PREDICTOR
-    float       glue_rel                    = 0;
-    float       glue_rel_long               = 0;
-    float       glue_rel_queue              = 0;
+    float       glue_hist_long              = 0;
+    float       glue_hist_queue             = 0;
+    float       glue_hist                   = 0;
+    float       size_hist                   = 0;
     uint32_t    num_overlap_literals        = 0;
-    float       antec_num_total_lits_rel    = 0;
-    float       size_rel                    = 0;
-    float       antecedents_glue_long_reds_var = 0.0;
+    float       antec_overlap_hist          = 0;
     uint32_t    num_total_lits_antecedents = 0;
     uint32_t    rdb1_last_touched_diff;
-    float      num_antecedents_rel         = 0;
-    //division of:
-    // cl.num_antecedents -- antec_data.num()
-    // cl.num_antecedents_hist -- hist.numResolutionsHistLT.avg()
-
-    float       num_overlap_literals_rel    = 0;
-    //df["cl.num_overlap_literals_rel"] = df["cl.num_overlap_literals"]/df["cl.antec_overlap_hist"]
-    //where df["cl.antec_overlap_hist"] =  hist.overlapHistLT.avg()
+    uint32_t    num_antecedents         = 0;
 
 
     //for locking in for long

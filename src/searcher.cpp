@@ -1696,10 +1696,7 @@ void Searcher::set_clause_data(
     , const uint32_t glue
     , const uint32_t old_decision_level
 ) {
-    double glue_hist = hist.glueHistLT.avg();
-    double glue_hist_long = hist.glueHist.getLongtTerm().avg();
-    double glue_hist_queue = hist.glueHist.avg_nocheck();
-    double size_hist = hist.conflSizeHistLT.avg();
+
 
     uint32_t num_total_lits_antecedents = antec_data.sum_size();
     //definitely a BUG here I think -- should be 2*antec_data.num(), no?
@@ -1707,34 +1704,15 @@ void Searcher::set_clause_data(
     uint32_t num_overlap_literals = antec_data.sum_size()-(antec_data.num()-1)-cl->size();
 
 
-    cl->stats.glue_rel = (double)cl->stats.glue/glue_hist;
-    cl->stats.glue_rel_long = (double)cl->stats.glue/glue_hist_long;
-    cl->stats.glue_rel_queue = (double)cl->stats.glue/(double)glue_hist_queue;
+    cl->stats.glue_hist = hist.glueHistLT.avg();
+    cl->stats.size_hist = hist.conflSizeHistLT.avg();
+    cl->stats.glue_hist_queue = hist.glueHist.getLongtTerm().avg();
+    cl->stats.glue_hist_long = hist.glueHist.avg_nocheck();
 
-    cl->stats.num_antecedents_rel = (double)antec_data.num()/hist.numResolutionsHistLT.avg();
+    cl->stats.num_antecedents = antec_data.num();
     cl->stats.num_overlap_literals = num_overlap_literals;
-    if (num_overlap_literals == 0) {
-        cl->stats.num_overlap_literals_rel = 0;
-    } else {
-        cl->stats.num_overlap_literals_rel = hist.overlapHistLT.avg()/(double)num_overlap_literals;
-    }
+    cl->stats.antec_overlap_hist = hist.overlapHistLT.avg();
     cl->stats.num_total_lits_antecedents = num_total_lits_antecedents;
-    if (hist.antec_data_sum_sizeHistLT.avg() == 0) {
-        cl->stats.antec_num_total_lits_rel = 0;
-    } else {
-        cl->stats.antec_num_total_lits_rel = (double)num_total_lits_antecedents/hist.antec_data_sum_sizeHistLT.avg();
-    }
-
-    if (size_hist == 0) {
-        cl->stats.size_rel = 0;
-    } else {
-        cl->stats.size_rel = (double)cl->size() / (double)size_hist;
-    }
-    cl->stats.antecedents_glue_long_reds_var = antec_data.glue_long_reds.var();
-
-//     cout << "cl->stats.glue: " << cl->stats.glue << endl;
-//     cout << "glue_hist_long: " << glue_hist_long << endl;
-//     cout << "glue_rel_long set to:" << cl->stats.glue_rel_long << endl;
 }
 #endif
 
