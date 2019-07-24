@@ -149,13 +149,13 @@ DLL_PUBLIC SolverConf::SolverConf() :
         , ternary_max_create(0.5)
 
         //BreakID
-        , doBreakid(false)
+        , doBreakid(true)
         , breakid_use_assump(true)
-        , breakid_every_n(2)
+        , breakid_every_n(1)
         , breakid_vars_limit_K(300)
         , breakid_cls_limit_K(600)
-        , breakid_lits_limit_K(1500)
-        , breakid_time_limit_K(800)
+        , breakid_lits_limit_K(3500)
+        , breakid_time_limit_K(2000)
         , breakid_max_constr_per_permut(50)
         , breakid_matrix_detect(true)
 
@@ -240,23 +240,7 @@ DLL_PUBLIC SolverConf::SolverConf() :
 
         //validated with run 8114195.wlm01
         , simplify_schedule_nonstartup(
-            "handle-comps,"
-
-            //This below works with pidgeonhole20 otherwise it's messy and we cannot break it
-            //"occ-backw-sub-str, breakid, "
-
-            "scc-vrepl, cache-clean, cache-tryboth,"
-            "sub-impl, intree-probe, probe,"
-            "sub-str-cls-with-bin, distill-cls,"
-            "scc-vrepl, sub-impl, str-impl, sub-impl,"
-            "occ-backw-sub-str, occ-clean-implicit, occ-bve, occ-bva,"//occ-gates,"
-            "occ-ternary-res, occ-xor,"
-            "breakid, "
-            "card-find,"
-            "cl-consolidate," //consolidate after OCC
-            "str-impl, cache-clean, sub-str-cls-with-bin, distill-cls,"
-            "scc-vrepl, check-cache-size, renumber,"
-            "sls,"
+            "scc-vrepl,cache-clean,cache-tryboth,sub-impl,intree-probe,probe,sub-str-cls-with-bin,distill-cls,scc-vrepl,sub-impl,str-impl,sub-impl,breakid,occ-backw-sub-str,occ-clean-implicit,occ-bve,occ-bva,occ-ternary-res,occ-xor,card-find,cl-consolidate,str-impl,cache-clean,sub-str-cls-with-bin,distill-cls,scc-vrepl,check-cache-size,renumber,sls"
         )
         , simplify_schedule_preproc(
             "handle-comps,"
