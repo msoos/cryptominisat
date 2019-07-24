@@ -144,7 +144,7 @@ cp "$FNAMEOUT.db" "$FNAMEOUT-min.db"
 # Denormalize the data into a Pandas Table, label it and sample it
 ########################
 ../gen_pandas.py "${FNAMEOUT}-min.db" --limit "$FIXED" --conf $CONF-$CONF ${EXTRA_GEN_PANDAS_OPTS}
-../clustering.py short-2-comb.dat --numconfs 4 --basedir ../src/predict/ --clusters 2 --scale
+../clustering.py short-2-comb.dat --numconfs 4 --basedir ../src/predict/ --clusters 1 --scale
 
 ########################
 # Create the classifiers
